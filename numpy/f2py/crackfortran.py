@@ -147,6 +147,7 @@ import os
 import copy
 import platform
 import codecs
+from pathlib import Path
 try:
     import charset_normalizer
 except ImportError:
@@ -289,21 +290,14 @@ def undo_rmbadname(names):
     return [undo_rmbadname1(_m) for _m in names]
 
 
-def getextension(name):
-    i = name.rfind('.')
-    if i == -1:
-        return ''
-    if '\\' in name[i:]:
-        return ''
-    if '/' in name[i:]:
-        return ''
-    return name[i + 1:]
-
-is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
 _has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
 _has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
+
+# Extensions
+COMMON_FREE_EXTENSIONS = ['.f90', '.f95', '.f03', '.f08']
+COMMON_FIXED_EXTENSIONS = ['.for', '.ftn', '.f77', '.f']
 
 
 def openhook(filename, mode):
@@ -337,26 +331,28 @@ def openhook(filename, mode):
     return open(filename, mode, encoding=encoding)
 
 
-def is_free_format(file):
+def is_free_format(fname):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
-    result = 0
-    with openhook(file, 'r') as f:
-        line = f.readline()
+    result = False
+    if Path(fname).suffix.lower() in COMMON_FREE_EXTENSIONS:
+        result = True
+    with openhook(fname, 'r') as fhandle:
+        line = fhandle.readline()
         n = 15  # the number of non-comment lines to scan for hints
         if _has_f_header(line):
             n = 0
         elif _has_f90_header(line):
             n = 0
-            result = 1
+            result = True
         while n > 0 and line:
             if line[0] != '!' and line.strip():
                 n -= 1
                 if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
-                    result = 1
+                    result = True
                     break
-            line = f.readline()
+            line = fhandle.readline()
     return result
 
 
@@ -412,7 +408,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             strictf77 = 0
             sourcecodeform = 'fix'
             ext = os.path.splitext(currentfilename)[1]
-            if is_f_file(currentfilename) and \
+            if Path(currentfilename).suffix.lower() in COMMON_FIXED_EXTENSIONS and \
                     not (_has_f90_header(l) or _has_fix_header(l)):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
