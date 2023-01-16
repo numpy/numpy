@@ -204,19 +204,15 @@ def atleast_3d(*arys):
         return res
 
 
-def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
-    if not hasattr(arrays, '__getitem__') and hasattr(arrays, '__iter__'):
-        warnings.warn('arrays to stack must be passed as a "sequence" type '
-                      'such as list or tuple. Support for non-sequence '
-                      'iterables such as generators is deprecated as of '
-                      'NumPy 1.16 and will raise an error in the future.',
-                      FutureWarning, stacklevel=stacklevel)
-        return ()
-    return arrays
+def _arrays_for_stack_dispatcher(arrays):
+    if not hasattr(arrays, "__getitem__"):
+        raise TypeError('arrays to stack must be passed as a "sequence" type '
+                        'such as list or tuple.')
+
+    return tuple(arrays)
 
 
-def _vhstack_dispatcher(tup, *, 
-                        dtype=None, casting=None):
+def _vhstack_dispatcher(tup, *, dtype=None, casting=None):
     return _arrays_for_stack_dispatcher(tup)
 
 
@@ -288,8 +284,8 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+        # reject non-sequences (and make tuple)
+        tup = _arrays_for_stack_dispatcher(tup)
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
@@ -357,8 +353,8 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+        # reject non-sequences (and make tuple)
+        tup = _arrays_for_stack_dispatcher(tup)
 
     arrs = atleast_1d(*tup)
     if not isinstance(arrs, list):
@@ -372,7 +368,7 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
 
 def _stack_dispatcher(arrays, axis=None, out=None, *,
                       dtype=None, casting=None):
-    arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
+    arrays = _arrays_for_stack_dispatcher(arrays)
     if out is not None:
         # optimize for the typical case where only arrays is provided
         arrays = list(arrays)
@@ -452,8 +448,8 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(arrays, stacklevel=2)
+        # reject non-sequences (and make tuple)
+        arrays = _arrays_for_stack_dispatcher(arrays)
 
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:

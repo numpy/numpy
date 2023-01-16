@@ -644,8 +644,8 @@ def column_stack(tup):
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+        # reject non-sequences (and make tuple)
+        tup = _arrays_for_stack_dispatcher(tup)
 
     arrays = []
     for v in tup:
@@ -714,8 +714,8 @@ def dstack(tup):
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+        # reject non-sequences (and make tuple)
+        tup = _arrays_for_stack_dispatcher(tup)
 
     arrs = atleast_3d(*tup)
     if not isinstance(arrs, list):

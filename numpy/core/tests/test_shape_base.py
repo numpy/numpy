@@ -152,9 +152,9 @@ class TestHstack:
         assert_array_equal(res, desired)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack((np.arange(3) for _ in range(2)))
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(map(lambda x: x, np.ones((3, 2))))
 
     def test_casting_and_dtype(self):
@@ -207,7 +207,7 @@ class TestVstack:
         assert_array_equal(res, desired)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             vstack((np.arange(3) for _ in range(2)))
 
     def test_casting_and_dtype(self):
@@ -472,10 +472,11 @@ def test_stack():
                         stack, [np.zeros((3, 3)), np.zeros(3)], axis=1)
     assert_raises_regex(ValueError, 'must have the same shape',
                         stack, [np.arange(2), np.arange(3)])
-    # generator is deprecated
-    with assert_warns(FutureWarning):
-        result = stack((x for x in range(3)))
-    assert_array_equal(result, np.array([0, 1, 2]))
+
+    # do not accept generators
+    with pytest.raises(TypeError, match="arrays to stack must be"):
+        stack((x for x in range(3)))
+
     #casting and dtype test
     a = np.array([1, 2, 3])
     b = np.array([2.5, 3.5, 4.5])
