@@ -7096,6 +7096,38 @@ def diag(v, k=0):
     --------
     numpy.diag : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    
+    Create an array with negative values masked:
+
+    >>> import numpy as np
+    >>> x = np.array([[11.2, -3.973, 18], [0.801, -1.41, 12], [7, 33, -12]])
+    >>> masked_x = np.ma.masked_array(x, mask=x < 0)
+    >>> masked_x
+    masked_array(
+      data=[[11.2, --, 18.0],
+            [0.801, --, 12.0],
+            [7.0, 33.0, --]],
+      mask=[[False,  True, False],
+            [False,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+
+    Isolate the main diagonal from the masked array:
+
+    >>> np.ma.diag(masked_x)
+    masked_array(data=[11.2, --, --],
+                 mask=[False,  True,  True],
+           fill_value=1e+20)
+
+    Isolate the first diagonal below the main diagonal:
+
+    >>> np.ma.diag(masked_x, -1)
+    masked_array(data=[0.801, 33.0],
+                 mask=[False, False],
+           fill_value=1e+20)
+
     """
     output = np.diag(v, k).view(MaskedArray)
     if getmask(v) is not nomask:
