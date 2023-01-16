@@ -2258,7 +2258,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("count_nonzero", args, len_args, NULL,
-            "a", PyArray_Converter, &array,
+            "", PyArray_Converter, &array,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -2575,8 +2575,8 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("vdot", args, len_args, NULL,
-            "a", NULL, &op1,
-            "b", NULL, &op2,
+            "", NULL, &op1,
+            "", NULL, &op2,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -4451,7 +4451,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"count_nonzero",
         (PyCFunction)array_count_nonzero,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_FASTCALL, NULL},
     {"empty",
         (PyCFunction)array_empty,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -4487,7 +4487,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"vdot",
         (PyCFunction)array_vdot,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_FASTCALL, NULL},
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
