@@ -7,7 +7,6 @@ Structured arrays
 Introduction
 ============
 
-
 Structured arrays are ndarrays whose datatype is a composition of simpler
 datatypes organized as a sequence of named :term:`fields <field>`. For example,
 ::
@@ -167,6 +166,11 @@ attribute of the dtype object::
  >>> d.names
  ('x', 'y')
 
+The dtype of each individual field can be looked up by name::
+
+ >>> d['x']
+ dtype('int64')
+
 The field names may be modified by assigning to the ``names`` attribute using a
 sequence of strings of the same length.
 
@@ -185,15 +189,6 @@ with 0 fields.
 The string representation of a structured datatype is shown in the "list of
 tuples" form if possible, otherwise numpy falls back to using the more general
 dictionary form.
-
-The dtype object can also be accessed with both keys and values individual:
-
->>> d = np.dtype([('x', 'i8'), ('y', 'f4')])
->>> for key in d.names:
-...     value = d[key]
-...     print(key, value)
-x int64
-y float32
 
 .. _offsets-and-alignment:
 
