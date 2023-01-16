@@ -3154,13 +3154,16 @@ PyArray_GetNDArrayCFeatureVersion(void)
 }
 
 static PyObject *
-array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy),
+                             PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
-    static char *kwlist[] = {NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("_get_ndarray_c_version", args, len_args, kwnames,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
     return PyLong_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
@@ -4406,7 +4409,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_reconstruct",
         (PyCFunction)array__reconstruct,
         METH_VARARGS, NULL},
