@@ -10,6 +10,7 @@ endif
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
+is_msvc = is_windows and cc.get_id() == 'msvc'
 
 if is_windows
   # For mingw-w64, link statically against the UCRT.
@@ -28,6 +29,9 @@ if is_windows
       add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
     endif
   endif
+endif
+if is_msvc
+      add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
 endif
 
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
