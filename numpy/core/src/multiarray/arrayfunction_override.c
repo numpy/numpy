@@ -227,11 +227,11 @@ get_args_and_kwargs(
         PyTuple_SET_ITEM(args, i, fast_args[i]);
     }
     kwargs = PyDict_New();
+    if (kwargs == NULL) {
+        Py_DECREF(args);
+        return -1;
+    }
     if (kwnames != NULL) {
-        if (kwargs == NULL) {
-            Py_DECREF(args);
-            return -1;
-        }
         Py_ssize_t nkwargs = PyTuple_GET_SIZE(kwnames);
         for (Py_ssize_t i = 0; i < nkwargs; i++) {
             PyObject *key = PyTuple_GET_ITEM(kwnames, i);
@@ -301,12 +301,7 @@ array_implement_c_array_function_creation(
         return Py_NotImplemented;
     }
 
-    dispatch_types = PyTuple_Pack(1, Py_TYPE(like));
-    if (dispatch_types == NULL) {
-        goto finish;
-    }
-
-    /* We have to call __array_function__ properly, which needs some prep */
+    /* We needs args and kwargs for __array_function__ (when not using it). */
     if (fast_args != NULL) {
         assert(args == NULL);
         assert(kwargs == NULL);
@@ -314,6 +309,15 @@ array_implement_c_array_function_creation(
                 fast_args, len_args, kwnames, &args, &kwargs) < 0) {
             goto finish;
         }
+    }
+    else {
+        Py_INCREF(args);
+        Py_INCREF(kwargs);
+    }
+
+    dispatch_types = PyTuple_Pack(1, Py_TYPE(like));
+    if (dispatch_types == NULL) {
+        goto finish;
     }
 
     /* The like argument must be present in the keyword arguments, remove it */
@@ -342,6 +346,7 @@ array_implement_c_array_function_creation(
             public_api, dispatch_types, args, kwargs);
 
     if (result == Py_NotImplemented) {
+        /* This shouldn't really happen as there is only one type, but... */
         Py_DECREF(result);
         result = NULL;
         set_no_matching_types_error(public_api, dispatch_types);
