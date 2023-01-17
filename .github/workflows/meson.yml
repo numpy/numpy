@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest ] # macos-latest ]
         python_version: [ '3.10' ]
 
     timeout-minutes: 30
@@ -47,14 +47,17 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
-    - name: Install OpenBLAS
+    - name: Install pkg-config
+      if: ${{ startswith( matrix.os, 'windows') }}
+        choco install pkg-config --no-progress
+
+    - name: Setup OpenBLAS
       run: |
         target=$(python tools/openblas_support.py)
-        mkdir openblas
-        cp -r $target/* openblas/
-        echo "OPENBLAS=$target" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=$target/lib/pkgconfig" >> $GITHUB_ENV
+
     - name: Build
-      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      # shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run:
