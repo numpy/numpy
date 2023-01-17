@@ -224,17 +224,6 @@ MyPyLong_AsUnsigned@Type@(PyObject *obj)
  **                         GETITEM AND SETITEM                             **
  *****************************************************************************
  */
-/* GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
-   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
-   clang versions < 8.0.0 have the same bug.  */
-#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
-     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
-  && !defined __clang__) \
-     || (defined __clang__ && __clang_major__ < 8))
-# define _ALIGN(type) offsetof(struct {char c; type v;}, v)
-#else
-# define _ALIGN(type) _Alignof(type)
-#endif
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.

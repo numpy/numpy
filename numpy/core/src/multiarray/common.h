@@ -178,9 +178,11 @@ check_and_adjust_axis(int *axis, int ndim)
 }
 
 /* used for some alignment checks */
-/* GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
-   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
-   clang versions < 8.0.0 have the same bug.  */
+/* 
+ * GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
+ * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
+ * clang versions < 8.0.0 have the same bug.
+ */
 #if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
      || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
   && !defined __clang__) \
