@@ -2313,7 +2313,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         warnings.warn(
             "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
             "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
-            DeprecationWarning, stacklevel=3)
+            DeprecationWarning, stacklevel=2)
 
         res = _sum_(a)
         if out is not None:

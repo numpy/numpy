@@ -760,13 +760,6 @@ def _ensure_ndmin_ndarray(a, *, ndmin: int):
 _loadtxt_chunksize = 50000
 
 
-def _loadtxt_dispatcher(
-        fname, dtype=None, comments=None, delimiter=None,
-        converters=None, skiprows=None, usecols=None, unpack=None,
-        ndmin=None, encoding=None, max_rows=None, *, like=None):
-    return (like,)
-
-
 def _check_nonneg_int(value, name="argument"):
     try:
         operator.index(value)
@@ -1331,10 +1324,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _loadtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
             converters=converters, skiprows=skiprows, usecols=usecols,
             unpack=unpack, ndmin=ndmin, encoding=encoding,
-            max_rows=max_rows, like=like
+            max_rows=max_rows
         )
 
     if isinstance(delimiter, bytes):
@@ -1361,9 +1354,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     return arr
 
 
-_loadtxt_with_like = array_function_dispatch(
-    _loadtxt_dispatcher
-)(loadtxt)
+_loadtxt_with_like = array_function_dispatch()(loadtxt)
 
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
@@ -1724,17 +1715,6 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
-def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
-                           skip_header=None, skip_footer=None, converters=None,
-                           missing_values=None, filling_values=None, usecols=None,
-                           names=None, excludelist=None, deletechars=None,
-                           replace_space=None, autostrip=None, case_sensitive=None,
-                           defaultfmt=None, unpack=None, usemask=None, loose=None,
-                           invalid_raise=None, max_rows=None, encoding=None,
-                           *, ndmin=None, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -1932,7 +1912,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _genfromtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
             skip_header=skip_header, skip_footer=skip_footer,
             converters=converters, missing_values=missing_values,
             filling_values=filling_values, usecols=usecols, names=names,
@@ -1942,7 +1922,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             unpack=unpack, usemask=usemask, loose=loose,
             invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
             ndmin=ndmin,
-            like=like
         )
 
     _ensure_ndmin_ndarray_check_param(ndmin)
@@ -2471,9 +2450,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     return output
 
 
-_genfromtxt_with_like = array_function_dispatch(
-    _genfromtxt_dispatcher
-)(genfromtxt)
+_genfromtxt_with_like = array_function_dispatch()(genfromtxt)
 
 
 def recfromtxt(fname, **kwargs):

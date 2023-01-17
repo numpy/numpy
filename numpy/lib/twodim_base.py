@@ -155,10 +155,6 @@ def flipud(m):
     return m[::-1, ...]
 
 
-def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
@@ -209,7 +205,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     """
     if like is not None:
-        return _eye_with_like(N, M=M, k=k, dtype=dtype, order=order, like=like)
+        return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, order=order)
@@ -228,9 +224,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     return m
 
 
-_eye_with_like = array_function_dispatch(
-    _eye_dispatcher
-)(eye)
+_eye_with_like = array_function_dispatch()(eye)
 
 
 def _diag_dispatcher(v, k=None):
@@ -369,10 +363,6 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
-def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
@@ -416,7 +406,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     """
     if like is not None:
-        return _tri_with_like(N, M=M, k=k, dtype=dtype, like=like)
+        return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
@@ -430,9 +420,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     return m
 
 
-_tri_with_like = array_function_dispatch(
-    _tri_dispatcher
-)(tri)
+_tri_with_like = array_function_dispatch()(tri)
 
 
 def _trilu_dispatcher(m, k=None):

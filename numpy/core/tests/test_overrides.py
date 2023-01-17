@@ -394,6 +394,56 @@ class TestArrayFunctionImplementation:
         except TypeError as exc:
             assert exc is error  # unmodified exception
 
+    def test_properties(self):
+        # Check that str and repr are sensible
+        func = dispatched_two_arg
+        assert str(func) == str(func._implementation)
+        repr_no_id = repr(func).split("at ")[0]
+        repr_no_id_impl = repr(func._implementation).split("at ")[0]
+        assert repr_no_id == repr_no_id_impl
+
+    @pytest.mark.parametrize("func", [
+            lambda x, y: 0,  # no like argument
+            lambda like=None: 0,  # not keyword only
+            lambda *, like=None, a=3: 0,  # not last (not that it matters)
+        ])
+    def test_bad_like_sig(self, func):
+        # We sanity check the signature, and these should fail.
+        with pytest.raises(RuntimeError):
+            array_function_dispatch()(func)
+
+    def test_bad_like_passing(self):
+        # Cover internal sanity check for passing like as first positional arg
+        def func(*, like=None):
+            pass
+
+        func_with_like = array_function_dispatch()(func)
+        with pytest.raises(TypeError):
+            func_with_like()
+        with pytest.raises(TypeError):
+            func_with_like(like=234)
+
+    def test_too_many_args(self):
+        # Mainly a unit-test to increase coverage
+        objs = []
+        for i in range(40):
+            class MyArr:
+                def __array_function__(self, *args, **kwargs):
+                    return NotImplemented
+
+            objs.append(MyArr())
+
+        def _dispatch(*args):
+            return args
+
+        @array_function_dispatch(_dispatch)
+        def func(*args):
+            pass
+
+        with pytest.raises(TypeError, match="maximum number"):
+            func(*objs)
+
+
 
 class TestNDArrayMethods:
 

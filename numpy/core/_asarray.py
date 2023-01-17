@@ -24,10 +24,6 @@ POSSIBLE_FLAGS = {
 }
 
 
-def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def require(a, dtype=None, requirements=None, *, like=None):
@@ -100,10 +96,10 @@ def require(a, dtype=None, requirements=None, *, like=None):
     """
     if like is not None:
         return _require_with_like(
+            like,
             a,
             dtype=dtype,
             requirements=requirements,
-            like=like,
         )
 
     if not requirements:
@@ -135,6 +131,4 @@ def require(a, dtype=None, requirements=None, *, like=None):
     return arr
 
 
-_require_with_like = array_function_dispatch(
-    _require_dispatcher
-)(require)
+_require_with_like = array_function_dispatch()(require)
