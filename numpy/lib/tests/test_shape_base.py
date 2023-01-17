@@ -492,7 +492,7 @@ class TestColumnStack:
         assert_equal(actual, expected)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             column_stack((np.arange(3) for _ in range(2)))
 
 
@@ -529,7 +529,7 @@ class TestDstack:
         assert_array_equal(res, desired)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             dstack((np.arange(3) for _ in range(2)))
 
 
