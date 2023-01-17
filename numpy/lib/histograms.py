@@ -494,7 +494,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Maximum of the 'sturges' and 'fd' estimators. Provides good
+            Minimum of the 'sturges' and 'fd' estimators. Provides good
             all around performance.
 
         'fd' (Freedman Diaconis Estimator)
