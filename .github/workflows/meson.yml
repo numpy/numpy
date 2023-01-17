@@ -26,7 +26,16 @@ permissions:
 
 jobs:
   meson_devpy:
-    runs-on: ubuntu-latest
+    name: meson ${{ matrix.os }}/$${ matrix.python_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python_version: [ '3.10' ]
+
+    timeout-minutes: 30
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -34,17 +43,22 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: ${{ matrix.python_version }}
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
-        sudo apt-get install -y libopenblas-serial-dev
+    - name: Install OpenBLAS
+      run: |
+        target=$(python tools/openblas_support.py)
+        mkdir openblas
+        cp -r $target/* openblas/
+        echo "OPENBLAS=$target" >> $GITHUB_ENV
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run:
-        ./dev.py build -- --werror
+        python -m dev.py build -- --werror
     - name: Check build-internal dependencies
       run:
         ninja -C build -t missingdeps
@@ -52,9 +66,13 @@ jobs:
       run:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
     - name: Test
-      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest hypothesis typing_extensions
-        ./dev.py test
+        python -m pip install pytest hypothesis typing_extensions
+        python dev.py test
+    - name: Show runtime
+      run: |
+        python -m pip install threadpoolctl
+        python tools/openblas_support.py --check_version
+        python -c "import numpy as np; np.show_runtime()"
