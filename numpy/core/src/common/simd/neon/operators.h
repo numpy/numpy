@@ -249,9 +249,9 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
  */
     npyv_b32 ret;
     #if NPY_SIMD_F64
-        asm ("fcmeq %0.4s, %1.4s, %1.4s" : "=w" (ret) : "w" (a));
+        __asm("fcmeq %0.4s, %1.4s, %1.4s" : "=w" (ret) : "w" (a));
     #else
-        asm ("vceq.f32 %q0, %q1, %q1" : "=w" (ret) : "w" (a));
+        __asm("vceq.f32 %q0, %q1, %q1" : "=w" (ret) : "w" (a));
     #endif
     return ret;
 #else
@@ -263,7 +263,7 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
     {
     #if defined(__clang__)
         npyv_b64 ret;
-        asm ("fcmeq %0.2d, %1.2d, %1.2d" : "=w" (ret) : "w" (a));
+        __asm("fcmeq %0.2d, %1.2d, %1.2d" : "=w" (ret) : "w" (a));
         return ret;
     #else
         return vceqq_f64(a, a);
