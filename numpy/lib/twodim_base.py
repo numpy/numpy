@@ -1007,7 +1007,7 @@ def tril_indices_from(arr, k=0):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
 
-    Pass the array to get the incides of the lower triangular elements. 
+    Pass the array to get the indices of the lower triangular elements.
 
     >>> trili = np.tril_indices_from(a)
     >>> trili
@@ -1021,9 +1021,10 @@ def tril_indices_from(arr, k=0):
     >>> np.tril_indices(a.shape[0])
     (array([0, 1, 1, 2, 2, 2, 3, 3, 3, 3]), array([0, 0, 1, 0, 1, 2, 0, 1, 2, 3]))
 
-    Positive k results in part of the upper triangular area being returned.
+    Use the `k` parameter to return the indices for the lower triangular array
+    up to the k-th diagonal.
 
-    >>> trili1 = np.tril_indices_from(a, 1)
+    >>> trili1 = np.tril_indices_from(a, k=1)
     >>> a[trili1]
     array([ 0,  1,  4,  5,  6,  8,  9, 10, 11, 12, 13, 14, 15])
 
@@ -1158,7 +1159,7 @@ def triu_indices_from(arr, k=0):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
 
-    Pass the array to get the incides of the upper triangular elements. 
+    Pass the array to get the indices of the upper triangular elements.
 
     >>> triui = np.triu_indices_from(a)
     >>> triui
@@ -1172,11 +1173,13 @@ def triu_indices_from(arr, k=0):
     >>> np.triu_indices(a.shape[0])
     (array([0, 0, 0, 0, 1, 1, 1, 2, 2, 3]), array([0, 1, 2, 3, 1, 2, 3, 2, 3, 3]))
 
-    Negative k results in part of the lower triangular area being returned.
+    Use the `k` parameter to return the indices for the upper triangular array
+    from the k-th diagonal.
 
-    >>> triuim1 = np.triu_indices_from(a, 1)
+    >>> triuim1 = np.triu_indices_from(a, k=1)
     >>> a[triuim1]
-    array([ 0,  1,  2,  3,  4,  5,  6,  7,  9, 10, 11, 14, 15])
+    array([ 1,  2,  3,  6,  7, 11])
+
 
     See Also
     --------
