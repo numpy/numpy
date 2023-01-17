@@ -49,8 +49,10 @@ add_docstring(
         ``_ArrayFunctionDispatcher`` must be called with ``like`` as the
         first (additional and positional) argument.
     implementation : function
-        Function that implements the operation on NumPy array without
-        overrides when called like.
+        Function that implements the operation on NumPy arrays without
+        overrides.  Arguments passed calling the ``_ArrayFunctionDispatcher``
+        will be forwarded to this (and the ``dispatcher``) as if using
+        ``*args, **kwargs``.
 
     Attributes
     ----------
