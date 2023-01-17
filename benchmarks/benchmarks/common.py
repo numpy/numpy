@@ -26,6 +26,18 @@ TYPES1 = [
 if 'complex256' in numpy.sctypeDict:
     TYPES1.append('complex256')
 
+DLPACK_TYPES = [
+    'int16', 'float16',
+    'int32', 'float32',
+    'int64', 'float64',  'complex64',
+    'complex128',
+]
+
+INT_BOOL_TYPES = [
+    'int16', 'bool',
+    'int32', 'int64',
+]
+
 
 def memoize(func):
     result = []

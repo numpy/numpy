@@ -1,4 +1,4 @@
-from .common import Benchmark, get_squares_, TYPES1
+from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
 
 import numpy as np
 
@@ -18,14 +18,6 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'radians', 'real', 'reciprocal', 'remainder', 'right_shift',
           'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
           'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
-
-meth_0arg = ['__abs__', '__dlpack__', '__dlpack_device__',
-             '__neg__', '__pos__']
-
-# Array arguments
-meth_1arg_arr = ['__add__', '__eq__', '__ge__', '__gt__',
-                 '__matmul__', '__le__', '__lt__', '__mul__',
-                 '__ne__', '__pow__', '__sub__', '__truediv__']
 
 # Index arguments
 meth_1arg_ind = ['__getitem__']
@@ -96,8 +88,28 @@ class UFunc(Benchmark):
     def time_ufunc_types(self, ufuncname):
         [self.ufn(*arg) for arg in self.args]
 
+class MethodsV0(Benchmark):
+    """ Benchmark for the methods which do not take any arguments
+    """
+    params = [['__abs__', '__neg__', '__pos__'], TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_()
+        self.xarg = values.get(npdtypes)[0]
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
 class MethodsV1(Benchmark):
-    params = [meth_1arg_arr, TYPES1]
+    """ Benchmark for the methods which take an argument
+    """
+    params = [['__add__', '__eq__', '__ge__', '__gt__',
+                 '__matmul__', '__le__', '__lt__', '__mul__',
+                 '__ne__', '__pow__', '__sub__', '__truediv__'],
+              TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
@@ -110,8 +122,26 @@ class MethodsV1(Benchmark):
         meth = getattr(self.xarg_one, methname)
         meth(self.xarg_two)
 
+class DLPMethods(Benchmark):
+    """ Benchmark for DLPACK helpers
+    """
+    params = [['__dlpack__', '__dlpack_device__'], DLPACK_TYPES]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_()
+        if npdtypes == 'bool':
+            self.xarg = values.get('int16')[0].astype('bool')
+        else:
+            self.xarg = values.get('int16')[0]
+
+    def time_ndarray_dlp(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
 class UFuncSmall(Benchmark):
-    """  Benchmark for a selection of ufuncs on a small arrays and scalars 
+    """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
     Since the arrays and scalars are small, we are benchmarking the overhead 
     of the numpy ufunc functionality
