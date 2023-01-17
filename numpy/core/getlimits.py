@@ -472,9 +472,10 @@ class finfo:
 
     def __new__(cls, dtype):
         if dtype is None:
+            # Deprecated in NumPy 1.25, 2022-01-16
             warnings.warn(
-                "dtype cannot be None. This behavior "
-                "will raise an error in the future.",
+                "finfo() dtype cannot be None. This behavior will "
+                "raise an error in the future. (Deprecated in NumPy 1.25)",
                 DeprecationWarning,
                 stacklevel=2
             )
