@@ -891,7 +891,7 @@ def vdot(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
 def bincount(x, weights=None, minlength=None):
     """
-    bincount(x, weights=None, minlength=0)
+    bincount(x, weights=None, minlength=None)
 
     Count number of occurrences of each value in array of non-negative ints.
 
