@@ -3458,13 +3458,19 @@ fail:
 #undef INNER_WHERE_LOOP
 
 static PyObject *
-array_where(PyObject *NPY_UNUSED(ignored), PyObject *args)
+array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj = NULL, *x = NULL, *y = NULL;
 
-    if (!PyArg_ParseTuple(args, "O|OO:where", &obj, &x, &y)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("where", args, len_args, NULL,
+            "", PyArray_Converter, &obj,
+            "|", PyArray_Converter, &x,
+            "|", PyArray_Converter, &y,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
     return PyArray_Where(obj, x, y);
 }
 
@@ -4466,7 +4472,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"where",
         (PyCFunction)array_where,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"lexsort",
         (PyCFunction)array_lexsort,
         METH_VARARGS | METH_KEYWORDS, NULL},
