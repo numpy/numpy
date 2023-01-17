@@ -4564,7 +4564,7 @@ static struct PyMethodDef array_module_methods[] = {
         "Insert vals sequentially into equivalent 1-d positions "
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_monotonicity", (PyCFunction)arr__monotonicity,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,

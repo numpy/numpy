@@ -109,7 +109,8 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
  * output array.
  */
 NPY_NO_EXPORT PyObject *
-arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
+                            Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
@@ -117,11 +118,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("bincount", args, len_args, kwnames,
+                "list", NULL, &list,
+                "|weights", NULL, &weight,
+                "|minlength", NULL, &mlength,
+                NULL, NULL, NULL) < 0) {
+        return NULL;
     }
 
     lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
