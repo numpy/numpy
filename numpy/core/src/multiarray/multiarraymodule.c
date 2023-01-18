@@ -3482,13 +3482,12 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t l
     PyObject *obj;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("lexsort", args, len_args, NULL,
-            "", NULL, &obj,
-            "|", &PyArray_PythonPyIntFromInt, &axis,
+    if (npy_parse_arguments("lexsort", args, len_args, kwnames,
+            "keys", NULL, &obj,
+            "|axis", PyArray_PythonPyIntFromInt, &axis,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-
     return PyArray_Return((PyArrayObject *)PyArray_LexSort(obj, axis));
 }
 
