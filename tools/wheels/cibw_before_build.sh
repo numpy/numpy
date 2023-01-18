@@ -15,13 +15,13 @@ fi
 # Install Openblas
 if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
     basedir=$(python tools/openblas_support.py)
-    cp -r $basedir/lib/* /usr/local/lib
-    cp $basedir/include/* /usr/local/include
+    cp -r $basedir/usr/local/lib/* /usr/local/lib
+    cp $basedir/usr/local/include/* /usr/local/include
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         sudo mkdir -p /opt/arm64-builds/lib /opt/arm64-builds/include
         sudo chown -R $USER /opt/arm64-builds
-        cp -r $basedir/lib/* /opt/arm64-builds/lib
-        cp $basedir/include/* /opt/arm64-builds/include
+        cp -r $basedir/usr/local/lib/* /opt/arm64-builds/lib
+        cp $basedir/usr/local/include/* /opt/arm64-builds/include
     fi
 elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"

@@ -16,6 +16,7 @@ defaults:
 
 env:
   PYTHON_VERSION: 3.11
+  NPY_USE_BLAS_ILP64: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -47,15 +48,24 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
-    - name: Install pkg-config
+    - name: Install pkg-config, OpenBLAS (windows)
       if: ${{ startswith( matrix.os, 'windows') }}
-      run:
+      run: |
         choco install pkg-config --no-progress
+        target=$(python tools/openblas_support.py)
+        # This is the 64-bit interface version
+        # If you unset NPY_USE_BLAS_ILP64, use "32" here
+        echo "PKG_CONFIG_PATH=$target/64/lib/pkgconfig" >> $GITHUB_ENV
+        # This will be prepended to the directives in pkgconfig.pc
+        echo "PKG_CONFIG_SYSROOT_DIR=$target" >> $GITHUB_ENV
 
-    - name: Setup OpenBLAS
+    - name: Setup OpenBLAS (posix)
+      if: ${{ ! startswith( matrix.os, 'windows') }}
       run: |
         target=$(python tools/openblas_support.py)
-        echo "PKG_CONFIG_PATH=$target/lib/pkgconfig" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=$target/usr/local/lib/pkgconfig" >> $GITHUB_ENV
+        # This will be prepended to the directives in pkgconfig.pc
+        echo "PKG_CONFIG_SYSROOT_DIR=$target" >> $GITHUB_ENV
 
     - name: Build
       # shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
@@ -73,7 +83,7 @@ jobs:
       env:
         TERM: xterm-256color
       run: |
-        python -m pip install pytest hypothesis typing_extensions
+        python -m pip install -r test_requirements.txt
         python dev.py test
     - name: Show runtime
       run: |

@@ -166,9 +166,7 @@ def unpack_targz(fname):
     if not os.path.exists(target):
         os.mkdir(target)
     with tarfile.open(fname, 'r') as zf:
-        # Strip common prefix from paths when unpacking
-        prefix = os.path.commonpath(zf.getnames())
-        extract_tarfile_to(zf, target, prefix)
+        extract_tarfile_to(zf, target, '')
         return target
 
 

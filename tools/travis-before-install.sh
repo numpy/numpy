@@ -53,8 +53,8 @@ pip install `grep cython test_requirements.txt`
 if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd
   target=$(python tools/openblas_support.py)
-  sudo cp -r $target/lib/* /usr/lib
-  sudo cp $target/include/* /usr/include
+  sudo cp -r $target/usr/local/lib/* /usr/lib
+  sudo cp $target/usr/local/include/* /usr/include
 fi
 
 
