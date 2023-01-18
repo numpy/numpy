@@ -7,6 +7,10 @@ import importlib
 needs_sphinx = '4.3'
 
 
+# -----------------
+# Specialized hacks
+# -----------------
+
 # This is a nasty hack to use platform-agnostic names for types in the
 # documentation.
 
@@ -61,6 +65,38 @@ def replace_scalar_type_names():
     import numpy.core._add_newdocs_scalars
 
 replace_scalar_type_names()
+
+
+# As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
+# For some reasons, the doc build accesses these, so ignore them.
+import warnings
+warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
+
+
+# Need to ensure that all our functions end up as :py:function in object.inv
+
+def monkeypatch_function_documenter():
+    """
+    Monkeypatch FunctionDocumenter to also match NumPy's array-function
+    dispatching functions.  Which are C-objects and not instances of
+    python functions or C methods that are recognized by the default.
+    (Python doesn't really have a "function-like" type.)
+    """
+    from numpy.core._multiarray_umath import _ArrayFunctionDispatcher
+    from sphinx.ext.autodoc import FunctionDocumenter
+
+    orig_can_doc = FunctionDocumenter.can_document_member
+
+    def can_document_member(member, membername, isattr, parent):
+        if isinstance(member, _ArrayFunctionDispatcher):
+            return True
+        return orig_can_doc(member, membername, isattr, parent)
+
+    FunctionDocumenter.can_document_member = can_document_member
+
+
+monkeypatch_function_documenter()
+
 
 # -----------------------------------------------------------------------------
 # General configuration
