@@ -494,7 +494,8 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
 #undef LIKELY_IN_CACHE_SIZE
 
 NPY_NO_EXPORT PyObject *
-arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -505,12 +506,16 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     const npy_double *dy, *dx, *dz;
     npy_double *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -659,7 +664,8 @@ fail:
 
 /* As for arr_interp but for complex fp values */
 NPY_NO_EXPORT PyObject *
-arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -672,12 +678,16 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
-                                     kwlist, &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
