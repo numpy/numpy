@@ -1116,6 +1116,6 @@ class TestRemovedGlobals:
 
 
 class TestDeprecatedFinfo(_DeprecationTestCase):
-    # Deprecated in NumPy 1.25, 2022-01-16
+    # Deprecated in NumPy 1.25, 2023-01-16
     def test_deprecated_none(self):
         self.assert_deprecated(np.finfo, args=(None,))
