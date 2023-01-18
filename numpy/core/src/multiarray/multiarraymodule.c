@@ -3464,9 +3464,9 @@ array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("where", args, len_args, NULL,
-            "", PyArray_Converter, &obj,
-            "|", PyArray_Converter, &x,
-            "|", PyArray_Converter, &y,
+            "", NULL, &obj,
+            "|", NULL, &x,
+            "|", NULL, &y,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -3475,15 +3475,20 @@ array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len
 }
 
 static PyObject *
-array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
     int axis = -1;
     PyObject *obj;
-    static char *kwlist[] = {"keys", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i:lexsort", kwlist, &obj, &axis)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("lexsort", args, len_args, NULL,
+            "", NULL, &obj,
+            "|", &PyArray_PythonPyIntFromInt, &axis,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
     return PyArray_Return((PyArrayObject *)PyArray_LexSort(obj, axis));
 }
 
@@ -4475,7 +4480,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL, NULL},
     {"lexsort",
         (PyCFunction)array_lexsort,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"putmask",
         (PyCFunction)array_putmask,
         METH_VARARGS | METH_KEYWORDS, NULL},
