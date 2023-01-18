@@ -637,6 +637,19 @@ dispatcher_repr(PyObject *self)
     return PyUnicode_FromFormat("<function %S at %p>", name, self);
 }
 
+
+static PyObject *
+func_dispatcher___get__(PyObject *self, PyObject *obj, PyObject *cls)
+{
+    if (obj == NULL) {
+        /* Act like a static method, no need to bind */
+        Py_INCREF(self);
+        return self;
+    }
+    return PyMethod_New(self, obj);
+}
+
+
 static PyObject *
 dispatcher_get_implementation(
         PyArray_ArrayFunctionDispatcherObject *self, void *NPY_UNUSED(closure))
@@ -677,9 +690,11 @@ NPY_NO_EXPORT PyTypeObject PyArrayFunctionDispatcher_Type = {
      .tp_new = (newfunc)dispatcher_new,
      .tp_str = (reprfunc)dispatcher_str,
      .tp_repr = (reprfunc)dispatcher_repr,
-     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_VECTORCALL,
+     .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_VECTORCALL
+                  | Py_TPFLAGS_METHOD_DESCRIPTOR),
      .tp_methods = func_dispatcher_methods,
      .tp_getset = func_dispatcher_getset,
+     .tp_descr_get = func_dispatcher___get__,
      .tp_call = &PyVectorcall_Call,
      .tp_vectorcall_offset = offsetof(PyArray_ArrayFunctionDispatcherObject, vectorcall),
 };
