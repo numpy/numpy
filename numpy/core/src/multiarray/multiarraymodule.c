@@ -1494,17 +1494,24 @@ fail:
 
 
 static PyObject *
-array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
+array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
     PyObject *mask, *values;
     PyObject *array;
 
-    static char *kwlist[] = {"arr", "mask", "values", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:putmask", kwlist,
-                &PyArray_Type, &array, &mask, &values)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("putmask", args, len_args, kwnames,
+            "", NULL, &array,
+            "", NULL, &mask,
+            "", NULL, &values,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
+    if (!PyArray_Check(array)) {
+        PyErr_SetString(PyExc_RuntimeError, "argument array of putmask should be a numpy array");
+    }
+
     return PyArray_PutMask((PyArrayObject *)array, values, mask);
 }
 
@@ -4482,7 +4489,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"putmask",
         (PyCFunction)array_putmask,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"fromstring",
         (PyCFunction)array_fromstring,
         METH_VARARGS|METH_KEYWORDS, NULL},
