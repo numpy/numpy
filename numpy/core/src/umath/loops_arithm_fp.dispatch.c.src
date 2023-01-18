@@ -546,6 +546,18 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         }
     }
 }
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(char const *ip1, npy_intp const *indx, char *value, 
+                      npy_intp const *dimensions, npy_intp const *steps) {
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    for(i = 0; i < n; i++, indx += is2, value += os1) {
+        @type@ op1 = *(@type@ *)(ip1 + is1 * indx[0]) +  value[0];
+    }
+}
+
 /**end repeat1**/
 /**end repeat**/
 
