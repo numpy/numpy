@@ -3465,8 +3465,8 @@ array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("where", args, len_args, NULL,
             "", NULL, &obj,
-            "|", NULL, &x,
-            "|", NULL, &y,
+            "|x", NULL, &x,
+            "|y", NULL, &y,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -4610,10 +4610,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"seterrobj",
         (PyCFunction) ufunc_seterr,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"get_handler_name",
         (PyCFunction) get_handler_name,
         METH_VARARGS, NULL},
