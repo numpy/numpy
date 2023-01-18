@@ -1394,7 +1394,7 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
+arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
@@ -1406,7 +1406,15 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_RETURN_NONE;
     }
 
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("add_docstring", args, len_args, NULL,
+            "", NULL, &obj,
+            "", NULL, &str,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    if (!PyUnicode_Check(str)) {
+        PyErr_SetString(PyExc_RuntimeError, "argument of docstring of add_docstring should be a str");
         return NULL;
     }
 

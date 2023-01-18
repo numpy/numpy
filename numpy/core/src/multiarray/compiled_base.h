@@ -18,7 +18,7 @@ arr_ravel_multi_index(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
 arr_unravel_index(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *, PyObject *);
+arr_add_docstring(PyObject *, PyObject *const *, Py_ssize_t);
 NPY_NO_EXPORT PyObject *
 io_pack(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
