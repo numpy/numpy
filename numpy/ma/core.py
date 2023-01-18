@@ -7392,7 +7392,10 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     >>> u8_arr = np.array([1, 0], dtype=np.uint8)
     >>> np.ma.diff(u8_arr)
-    array([255], dtype=uint8)
+    masked_array(data=[255],
+                 mask=False,
+           fill_value=999999,
+                dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     255
 
@@ -7401,7 +7404,10 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     >>> i16_arr = u8_arr.astype(np.int16)
     >>> np.ma.diff(i16_arr)
-    array([-1], dtype=int16)
+    masked_array(data=[-1],
+                 mask=False,
+           fill_value=999999,
+                dtype=int16)
 
     Examples
     --------
@@ -7438,6 +7444,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     if n < 0:
         raise ValueError("order must be non-negative but got " + repr(n))
 
+    a = np.ma.asanyarray(a)
     if a.ndim == 0:
         raise ValueError(
             "diff requires input that is at least one dimensional"
