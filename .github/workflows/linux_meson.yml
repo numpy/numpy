@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   meson_devpy:
-    name: meson ${{ matrix.os }}/$${ matrix.python_version }}
+    name: meson ${{ matrix.os }} / $${ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -51,7 +51,7 @@ jobs:
     - name: Install pkg-config, OpenBLAS (windows)
       if: ${{ startswith( matrix.os, 'windows') }}
       run: |
-        choco install pkg-config --no-progress
+        choco install pkgconfiglite --no-progress
         target=$(python tools/openblas_support.py)
         # This is the 64-bit interface version
         # If you unset NPY_USE_BLAS_ILP64, use "32" here
@@ -63,7 +63,7 @@ jobs:
       if: ${{ ! startswith( matrix.os, 'windows') }}
       run: |
         target=$(python tools/openblas_support.py)
-        echo "PKG_CONFIG_PATH=$target/usr/local/lib/pkgconfig" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$target/usr/local/lib/pkgconfig" >> $GITHUB_ENV
         # This will be prepended to the directives in pkgconfig.pc
         echo "PKG_CONFIG_SYSROOT_DIR=$target" >> $GITHUB_ENV
 
