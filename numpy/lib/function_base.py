@@ -1949,10 +1949,6 @@ def place(arr, mask, vals):
            [44, 55, 44]])
 
     """
-    if not isinstance(arr, np.ndarray):
-        raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(arr).__name__))
-
     return _insert(arr, mask, vals)
 
 
