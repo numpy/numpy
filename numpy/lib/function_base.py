@@ -2273,6 +2273,7 @@ class vectorize:
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
+        self.__name__ = pyfunc.__name__
         self._ufunc = {}    # Caching to improve default performance
 
         if doc is None:

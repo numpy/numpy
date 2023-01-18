@@ -1780,6 +1780,13 @@ class TestVectorize:
         assert_equal(type(r), subclass)
         assert_equal(r, m * v)
 
+    def test_name(self):
+        #See gh-23021
+        @np.vectorize
+        def f2(a, b):
+            return a + b
+
+        assert f2.__name__ == 'f2'
 
 class TestLeaks:
     class A:
