@@ -4093,6 +4093,23 @@ class TestMaskedArrayMathMethods:
                          mask=np.zeros((10000, 10000)))
         assert_equal(a.mean(), 65535.0)
 
+    def test_mean_float32(self):
+        x = masked_array([[1, 2], [2, 4]], dtype=np.float32,
+                         mask=[[True, False], [False, True]])
+        y = x.mean(axis=0)
+        z = x.mean(axis=0, dtype=np.float32)
+        assert_equal(y.dtype, np.float32)
+        assert_equal(z.dtype, np.float32)
+
+    def test_std_float32(self):
+        x = masked_array([[1, 2], [2, 4]], dtype=np.float32,
+                         mask=[[True, False], [False, True]])
+        y = x.std(axis=0)
+        z = x.std(axis=0, dtype=np.float32)
+        assert_equal(y.dtype, np.float32)
+        assert_equal(z.dtype, np.float32)
+
+
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
     def setup_method(self):
