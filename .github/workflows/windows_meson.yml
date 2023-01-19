@@ -25,7 +25,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-          branch: meson
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -49,8 +48,7 @@ jobs:
           echo "PKG_CONFIG_PATH=c:\opt\openblas\if_32\64\lib\pkgconfig;" >> $env:GITHUB_ENV
       - name: meson-configure
         run: |
-          
-          meson setup build --prefix=$PWD\build
+          meson setup build -DHAVE_CBLAS=1 --prefix=$PWD\build --buildtype plain --vsenv
       - name: meson-build
         run: |
           ninja -v -j 2 -C build
