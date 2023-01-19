@@ -53,7 +53,7 @@ jobs:
           meson setup build --prefix=$PWD\build
       - name: meson-build
         run: |
-          ninja -j 2 -C build
+          ninja -v -j 2 -C build
       - name: meson-install
         run: |
           cd build
@@ -78,4 +78,4 @@ jobs:
         run: |
           mkdir tmp
           cd tmp
-          python -c 'import numpy; numpy.test(verbose=2)'
+          python -c 'import numpy; numpy.test(verbose=3)'

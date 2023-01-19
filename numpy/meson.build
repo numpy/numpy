@@ -32,6 +32,7 @@ if is_windows
 endif
 if is_msvc
       add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
+      add_project_arguments('-O2', language: ['c', 'cpp'])
 endif
 
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
