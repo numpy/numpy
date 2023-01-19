@@ -8,7 +8,6 @@ import shutil
 import tarfile
 import textwrap
 import zipfile
-from packaging.tags import sys_tags
 
 from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
@@ -71,11 +70,19 @@ def get_musllinux(arch):
 
 
 def get_linux(arch):
-    tags = list(sys_tags())
-    if 'manylinux' in tags[0].platform:
+    # best way of figuring out whether manylinux or musllinux is to look
+    # at the packaging tags. If packaging isn't installed (it's not by default)
+    # fallback to assuming it's manylinux
+    try:
+        from packaging.tags import sys_tags
+
+        tags = list(sys_tags())
+        if 'manylinux' in tags[0].platform:
+            return get_manylinux(arch)
+        elif 'musllinux' in tags[0].platform:
+            return get_musllinux(arch)
+    except ImportError:
         return get_manylinux(arch)
-    elif 'musllinux' in tags[0].platform:
-        return get_musllinux(arch)
 
 
 def download_openblas(target, plat, ilp64):
