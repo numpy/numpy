@@ -589,11 +589,17 @@ c_args_common = [
 ]
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
-cpp_args_common = c_args_common + [
-  '-D__STDC_VERSION__=0',  # for compatibility with C headers
-  '-fno-exceptions',  # no exception support
-  '-fno-rtti',  # no runtime type information
-]
+if cc.get_id() == 'msvc'
+  cpp_args_common = c_args_common + [
+    '-D__STDC_VERSION__=0',  # for compatibility with C headers
+  ]
+else
+  cpp_args_common = c_args_common + [
+    '-D__STDC_VERSION__=0',  # for compatibility with C headers
+    '-fno-exceptions',  # no exception support
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
 
 # Other submodules depend on generated headers and include directories from
 # core, wrap those up into a reusable dependency. Also useful for some test

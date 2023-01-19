@@ -30,6 +30,9 @@ if is_windows
     endif
   endif
 endif
+if is_msvc
+      add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
+endif
 
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
 # lseek -> lseek64, etc.)
@@ -77,6 +80,9 @@ dependency_map = {
 # TODO: add ILP64 support
 have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
+if have_blas
+  add_project_arguments('-DHAVE_CBLAS', language: ['c', 'cpp'])
+endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
