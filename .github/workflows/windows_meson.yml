@@ -25,10 +25,15 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          branch: meson
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Activate Developer Command Prompt (MSVC)
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install dependencies
         run: |
           pip install -r build_requirements.txt
@@ -44,6 +49,7 @@ jobs:
           echo "PKG_CONFIG_PATH=c:\opt\openblas\if_32\64\lib\pkgconfig;" >> $env:GITHUB_ENV
       - name: meson-configure
         run: |
+          
           meson setup build --prefix=$PWD\build
       - name: meson-build
         run: |
