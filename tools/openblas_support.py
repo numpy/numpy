@@ -59,7 +59,7 @@ def get_manylinux(arch):
     default = '2014'
     ml_ver = os.environ.get("MB_ML_VER", default)
     # XXX For PEP 600 this can be a glibc version
-    assert ml_ver in ('1', '2010', '2014', '_2_24'), f'invalid MB_ML_VER {ml_ver}'
+    assert ml_ver in ('2010', '2014', '_2_24'), f'invalid MB_ML_VER {ml_ver}'
     suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
     return suffix
 

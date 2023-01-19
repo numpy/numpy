@@ -32,7 +32,6 @@ jobs:
     - name: setup
       run: |
         apk update --quiet
-        apk add openblas-dev openblas
 
         # using git commands to clone because versioneer doesn't work when
         # actions/checkout is used for the clone step in a container
@@ -55,9 +54,13 @@ jobs:
       run: |
         python -m venv test_env
         source test_env/bin/activate
-        python -m pip install -r test_requirements.txt
+        
+        # install openblas by co-opting the CIBW setup script
+        RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
 
-        # calculate version information. Note that this doesn't work when
-        # actions/checkout is used for the cloning.
-        python setup.py version
-        python runtests.py --show-build-log --cpu-baseline=native --debug-info --mode=full -- -rsfx -v
+        pip install -r build_requirements.txt
+        pip install pytest hypothesis typing_extensions
+
+        # use meson to build and test 
+        ./dev.py build
+        ./dev.py test
