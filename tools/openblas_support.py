@@ -20,7 +20,7 @@ BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
     'linux-aarch64',
     'linux-x86_64',
-    'musllinux-x86_64'
+    'musllinux-x86_64',
     'linux-i686',
     'linux-ppc64le',
     'linux-s390x',
