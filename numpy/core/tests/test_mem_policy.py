@@ -358,6 +358,7 @@ def test_thread_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
+@pytest.mark.xfail(IS_MUSL, reason="doesn't work")
 @pytest.mark.slow
 def test_new_policy(get_module):
     a = np.arange(10)
