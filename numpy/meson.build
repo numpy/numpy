@@ -76,6 +76,9 @@ lapack = dependency(lapack_name, required: false)
 # TODO: add ILP64 support
 have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
+if have_blas
+  add_project_arguments('-DHAVE_CBLAS', language: ['c', 'cpp'])
+endif
 
 
 # TODO: generate __config__.py (see scipy/meson.build)
