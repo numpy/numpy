@@ -72,17 +72,21 @@ def get_musllinux(arch):
 def get_linux(arch):
     # best way of figuring out whether manylinux or musllinux is to look
     # at the packaging tags. If packaging isn't installed (it's not by default)
-    # fallback to assuming it's manylinux
+    # fallback to sysconfig (which may be flakier)
     try:
         from packaging.tags import sys_tags
-
         tags = list(sys_tags())
-        if 'manylinux' in tags[0].platform:
-            return get_manylinux(arch)
-        elif 'musllinux' in tags[0].platform:
-            return get_musllinux(arch)
+        plat = tags[0].platform
     except ImportError:
+        # fallback to sysconfig for figuring out if you're using musl
+        plat = 'manylinux'
+        if 'musl' in sysconfig.get_config_var('HOST_GNU_TYPE'):
+            plat = 'musllinux'
+
+    if 'manylinux' in plat:
         return get_manylinux(arch)
+    elif 'musllinux' in plat:
+        return get_musllinux(arch)
 
 
 def download_openblas(target, plat, ilp64):
