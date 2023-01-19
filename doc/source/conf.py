@@ -62,6 +62,13 @@ def replace_scalar_type_names():
 
 replace_scalar_type_names()
 
+
+# As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
+# For some reasons, the doc build accesses these, so ignore them.
+import warnings
+warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
+
+
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
