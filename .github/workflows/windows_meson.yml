@@ -1,0 +1,75 @@
+name: Test Meson build (Windows)
+
+on:
+  push:
+    branches:
+      - meson
+
+env:
+  PYTHON_VERSION: 3.11
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  meson:
+    name: Meson windows build/test
+    runs-on: windows-2019
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r build_requirements.txt
+      - name: openblas-libs
+        run: |
+          # Download and install pre-built OpenBLAS library
+          # Built with mingw-w64, -ucrt -static.
+          # https://github.com/matthew-brett/openblas-libs/blob/ucrt-build/build_openblas.ps1
+          choco install unzip -y
+          choco install wget -y
+          wget https://github.com/scipy/scipy-ci-artifacts/raw/main/openblas_32_if.zip
+          unzip -d c:\ openblas_32_if.zip
+          echo "PKG_CONFIG_PATH=c:\opt\openblas\if_32\64\lib\pkgconfig;" >> $env:GITHUB_ENV
+      - name: meson-configure
+        run: |
+          meson setup build --prefix=$PWD\build
+      - name: meson-build
+        run: |
+          ninja -j 2 -C build
+      - name: meson-install
+        run: |
+          cd build
+          meson install
+      - name: build-path
+        run: |
+          echo "installed_path=$PWD\build\Lib\site-packages" >> $env:GITHUB_ENV
+      - name: post-install
+        run: |
+          $numpy_path = "${env:installed_path}\numpy"
+          $libs_path = "${numpy_path}\.libs"
+          mkdir ${libs_path}
+          $ob_path = (pkg-config --variable libdir openblas) -replace "lib", "bin"
+          cp $ob_path/*.dll $libs_path
+          # Write _distributor_init.py to scipy dir to load .libs DLLs.
+          & python tools\openblas_support.py --write-init $numpy_path
+      - name: prep-test
+        run: |
+          echo "PYTHONPATH=${env:installed_path}" >> $env:GITHUB_ENV
+          python -m pip install -r test_requirements.txt
+      - name: test
+        run: |
+          mkdir tmp
+          cd tmp
+          python -c 'import numpy; numpy.test(verbose=2)'

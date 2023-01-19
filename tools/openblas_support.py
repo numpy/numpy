@@ -314,11 +314,16 @@ if __name__ == '__main__':
     parser.add_argument('--check_version', nargs='?', default='',
                         help='Check provided OpenBLAS version string '
                              'against available OpenBLAS')
+    parser.add_argument('--write-init', nargs=1,
+                        metavar='OUT_SCIPY_DIR',
+                        help='Write distribution init to named dir')
     args = parser.parse_args()
     if args.check_version != '':
         test_version(args.check_version)
     elif args.test is None:
         print(setup_openblas())
+    elif args.write_init:
+        make_init(args.write_init[0])
     else:
         if len(args.test) == 0 or 'all' in args.test:
             test_setup(SUPPORTED_PLATFORMS)
