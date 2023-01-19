@@ -471,6 +471,15 @@ class finfo:
     _finfo_cache = {}
 
     def __new__(cls, dtype):
+        if dtype is None:
+            # Deprecated in NumPy 1.25, 2023-01-16
+            warnings.warn(
+                "finfo() dtype cannot be None. This behavior will "
+                "raise an error in the future. (Deprecated in NumPy 1.25)",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
         try:
             dtype = numeric.dtype(dtype)
         except TypeError:
