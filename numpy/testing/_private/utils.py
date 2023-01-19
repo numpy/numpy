@@ -65,8 +65,8 @@ try:
         IS_MUSL = True
 except ImportError:
     # fallback to sysconfig (might be flaky)
-    # key could be missing or value could be None.
-    v = sysconfig.get_config_var('HOST_GNU_TYPE', '') or ''
+    # value could be None.
+    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
     if 'musl' in v:
         IS_MUSL = True
 

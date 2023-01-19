@@ -80,8 +80,8 @@ def get_linux(arch):
     except ImportError:
         # fallback to sysconfig for figuring out if you're using musl
         plat = 'manylinux'
-        # key could be missing or value could be None
-        v = sysconfig.get_config_var('HOST_GNU_TYPE', '') or ''
+        # value could be None
+        v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
         if 'musl' in v:
             plat = 'musllinux'
 
