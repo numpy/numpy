@@ -43,6 +43,7 @@ jobs:
           # https://github.com/matthew-brett/openblas-libs/blob/ucrt-build/build_openblas.ps1
           choco install unzip -y
           choco install wget -y
+          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           wget https://github.com/scipy/scipy-ci-artifacts/raw/main/openblas_32_if.zip
           unzip -d c:\ openblas_32_if.zip
           echo "PKG_CONFIG_PATH=c:\opt\openblas\if_32\64\lib\pkgconfig;" >> $env:GITHUB_ENV
