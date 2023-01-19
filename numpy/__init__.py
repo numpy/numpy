@@ -307,24 +307,18 @@ else:
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr])
 
-        # Importing Tester requires importing all of UnitTest which is not a
-        # cheap import Since it is mainly used in test suits, we lazy import it
-        # here to save on the order of 10 ms of import time for most users
-        #
-        # The previous way Tester was imported also had a side effect of adding
-        # the full `numpy.testing` namespace
         if attr == 'testing':
             import numpy.testing as testing
             return testing
         elif attr == 'Tester':
-            from .testing import Tester
-            return Tester
+            "Removed in NumPy 1.25.0"
+            raise RuntimeError("Tester was removed in NumPy 1.25.")
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols = globals().keys() | {'testing'}
         public_symbols -= {
             "core", "matrixlib",
             # These were moved in 1.25 and may be deprecated eventually:

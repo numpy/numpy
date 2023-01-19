@@ -29,7 +29,6 @@ hiddenimports = ['numpy.core._dtype_ctypes']
 excludedimports = [
     "scipy",
     "pytest",
-    "nose",
     "f2py",
     "setuptools",
     "numpy.f2py",

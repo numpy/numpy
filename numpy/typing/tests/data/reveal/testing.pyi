@@ -113,7 +113,6 @@ reveal_type(np.testing.rundocs())  # E: None
 reveal_type(np.testing.rundocs("test.py"))  # E: None
 reveal_type(np.testing.rundocs(Path("test.py"), raise_on_error=True))  # E: None
 
-@np.testing.raises(RuntimeError, RuntimeWarning)
 def func3(a: int) -> bool: ...
 
 reveal_type(func3)  # E: def (a: builtins.int) -> builtins.bool
@@ -175,4 +174,3 @@ reveal_type(np.testing.assert_no_gc_cycles(func3, 5))  # E: None
 reveal_type(np.testing.break_cycles())  # E: None
 
 reveal_type(np.testing.TestCase())  # E: unittest.case.TestCase
-reveal_type(np.testing.run_module_suite(file_to_run="numpy/tests/test_matlib.py"))  # E: None
