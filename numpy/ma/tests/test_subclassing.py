@@ -23,7 +23,7 @@ def assert_startswith(a, b):
 class SubArray(np.ndarray):
     # Defines a generic np.ndarray subclass, that stores some metadata
     # in the  dictionary `info`.
-    def __new__(cls,arr,info={}):
+    def __new__(cls, arr, info={}):
         x = np.asanyarray(arr).view(cls)
         x.info = info.copy()
         return x
@@ -49,6 +49,7 @@ subarray = SubArray
 
 class SubMaskedArray(MaskedArray):
     """Pure subclass of MaskedArray, keeping some info on subclass."""
+
     def __new__(cls, info=None, **kwargs):
         obj = super().__new__(cls, **kwargs)
         obj._optinfo['info'] = info
@@ -69,6 +70,7 @@ class MSubArray(SubArray, MaskedArray):
         _view._sharedmask = False
         return _view
 
+
 msubarray = MSubArray
 
 
@@ -84,6 +86,7 @@ class CSAIterator:
     see https://github.com/numpy/numpy/issues/4564)
     roughly following MaskedIterator
     """
+
     def __init__(self, a):
         self._original = a
         self._dataiter = a.view(np.ndarray).flat
@@ -154,6 +157,7 @@ class WrappedArray(NDArrayOperatorsMixin):
     ufunc deferrals are commutative.
     See: https://github.com/numpy/numpy/issues/15200)
     """
+
     __array_priority__ = 20
 
     def __init__(self, array, **attrs):
@@ -254,7 +258,7 @@ class TestSubclassing:
         ym._series._set_mask([0, 0, 0, 0, 1])
         assert_equal(ym._mask, [0, 0, 0, 0, 1])
         #
-        xsub = subarray(x, info={'name':'x'})
+        xsub = subarray(x, info={'name': 'x'})
         mxsub = masked_array(xsub)
         assertTrue(hasattr(mxsub, 'info'))
         assert_equal(mxsub.info, xsub.info)
@@ -264,7 +268,7 @@ class TestSubclassing:
         x = np.arange(5)
         m = [0, 0, 1, 0, 0]
         xinfo = [(i, j) for (i, j) in zip(x, m)]
-        xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
+        xsub = MSubArray(x, mask=m, info={'xsub': xinfo})
         #
         mxsub = masked_array(xsub, subok=False)
         assertTrue(not isinstance(mxsub, MSubArray))
@@ -294,14 +298,14 @@ class TestSubclassing:
         # getter should  return a ComplicatedSubArray, even for single item
         # first check we wrote ComplicatedSubArray correctly
         assertTrue(isinstance(xcsub[1], ComplicatedSubArray))
-        assertTrue(isinstance(xcsub[1,...], ComplicatedSubArray))
+        assertTrue(isinstance(xcsub[1, ...], ComplicatedSubArray))
         assertTrue(isinstance(xcsub[1:4], ComplicatedSubArray))
 
         # now that it propagates inside the MaskedArray
         assertTrue(isinstance(mxcsub[1], ComplicatedSubArray))
-        assertTrue(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[1, ...].data, ComplicatedSubArray))
         assertTrue(mxcsub[0] is masked)
-        assertTrue(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[0, ...].data, ComplicatedSubArray))
         assertTrue(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
 
         # also for flattened version (which goes via MaskedIterator)
@@ -328,15 +332,16 @@ class TestSubclassing:
         xcsub = ComplicatedSubArray(x)
         mxcsub_nomask = masked_array(xcsub)
 
-        assertTrue(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
-        assertTrue(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[1, ...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[0, ...].data, ComplicatedSubArray))
 
         assertTrue(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
         assertTrue(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
 
     def test_subclass_repr(self):
         """test that repr uses the name of the subclass
-        and 'array' for np.ndarray"""
+        and 'array' for np.ndarray
+        """
         x = np.arange(5)
         mx = masked_array(x, mask=[True, False, True, False, False])
         assert_startswith(repr(mx), 'masked_array')
@@ -362,8 +367,8 @@ class TestSubclassing:
     def test_pure_subclass_info_preservation(self):
         # Test that ufuncs and methods conserve extra information consistently;
         # see gh-7122.
-        arr1 = SubMaskedArray('test', data=[1,2,3,4,5,6])
-        arr2 = SubMaskedArray(data=[0,1,2,3,4,5])
+        arr1 = SubMaskedArray('test', data=[1, 2, 3, 4, 5, 6])
+        arr2 = SubMaskedArray(data=[0, 1, 2, 3, 4, 5])
         diff1 = np.subtract(arr1, arr2)
         assertTrue('info' in diff1._optinfo)
         assertTrue(diff1._optinfo['info'] == 'test')
@@ -374,6 +379,7 @@ class TestSubclassing:
 
 class ArrayNoInheritance:
     """Quantity-like class that does not inherit from ndarray"""
+
     def __init__(self, data, units):
         self.magnitude = data
         self.units = units

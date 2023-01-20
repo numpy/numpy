@@ -116,8 +116,8 @@ class TestMaskedArray:
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
         assert_equal(zm.dtype, z.dtype)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assert_array_equal(xm, xf)
         assert_array_equal(filled(xm, 1.e20), xf)
         assert_array_equal(x, xm)
@@ -136,8 +136,8 @@ class TestMaskedArray:
             assertTrue(isMaskedArray(xm))
             assert_equal(shape(xm), s)
             assert_equal(xm.shape, s)
-            assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-            assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+            assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+            assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
             assert_equal(xm, xf)
             assert_equal(filled(xm, 1.e20), xf)
             assert_equal(x, xm)
@@ -263,8 +263,8 @@ class TestMaskedArray:
 
     def test_creation_from_ndarray_with_padding(self):
         x = np.array([('A', 0)], dtype={'names': ['f0', 'f1'],
-                                        'formats':['S4', 'i8'],
-                                        'offsets':[0, 8]})
+                                        'formats': ['S4', 'i8'],
+                                        'offsets': [0, 8]})
         array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
     def test_unknown_keyword_parameter(self):
@@ -527,7 +527,8 @@ class TestMaskedArray:
         assert_equal(
             repr(a),
             textwrap.dedent('''\
-            masked_array(data=[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+            masked_array(data=[ 0,  1,  2,  3,  4,\
+                  5,  6,  7,  8,  9, 10, 11, 12, 13,
                                14, 15, 16, 17, 18, 19],
                          mask=False,
                    fill_value=999999)''')
@@ -585,7 +586,8 @@ class TestMaskedArray:
             assert_equal(
                 repr(a),
                 'masked_array(data = [0 -- -- ..., 1997 1998 1999],\n'
-                '             mask = [False  True  True ..., False False False],\n'
+                '             mask = [False  True \
+                     True ..., False False False],\n'
                 '       fill_value = 999999)\n'
             )
         finally:
@@ -785,7 +787,7 @@ class TestMaskedArray:
         assert_equal(test, control)
 
         # test if mask gets set correctly (see #6760)
-        Z = numpy.ma.zeros(2, numpy.dtype([("A", "(2,2)i1,(2,2)i1", (2,2))]))
+        Z = numpy.ma.zeros(2, numpy.dtype([("A", "(2,2)i1,(2,2)i1", (2, 2))]))
         assert_equal(Z.data.dtype, numpy.dtype([('A', [('f0', 'i1', (2, 2)),
                                           ('f1', 'i1', (2, 2))], (2, 2))]))
         assert_equal(Z.mask.dtype, numpy.dtype([('A', [('f0', '?', (2, 2)),
@@ -960,21 +962,21 @@ class TestMaskedArray:
 
         # additional tests with structured arrays
 
-        t_2d = masked_array(data = [([[1, 2], [3,4]],)],
+        t_2d = masked_array(data = [([[1, 2], [3, 4]],)],
                             mask = [([[False, True], [True, False]],)],
-                            dtype = [('a', '<i4', (2,2))])
+                            dtype = [('a', '<i4', (2, 2))])
         assertTrue(str(t_2d[0]) == "([[1, --], [--, 4]],)")
         assertTrue(repr(t_2d[0]) == "([[1, --], [--, 4]],)")
 
-        t_0d = masked_array(data = [(1,2)],
+        t_0d = masked_array(data = [(1, 2)],
                             mask = [(True,False)],
                             dtype = [('a', '<i4'), ('b', '<i4')])
         assertTrue(str(t_0d[0]) == "(--, 2)")
         assertTrue(repr(t_0d[0]) == "(--, 2)")
 
-        t_2d = masked_array(data = [([[1, 2], [3,4]], 1)],
+        t_2d = masked_array(data = [([[1, 2], [3, 4]], 1)],
                             mask = [([[False, True], [True, False]], False)],
-                            dtype = [('a', '<i4', (2,2)), ('b', float)])
+                            dtype = [('a', '<i4', (2, 2)), ('b', float)])
         assertTrue(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
         assertTrue(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 

@@ -323,11 +323,16 @@ class TestModulus:
 
         # Check nans, inf
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
-            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
-            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
+            sup.filter(RuntimeWarning,
+                    "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning,
+                    "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning,
+                    "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning,
+                    "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning,
+                    "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -512,38 +517,52 @@ class TestConversion:
                     "type %s failed" % (dt1,))
 
             for dt2 in np.typecodes['AllInteger']:
-                assertTrue(np.array(1, dtype=dt1)[()] > np.array(0, dtype=dt2)[()],
+                assertTrue(np.array(1, dtype=dt1)[()] >
+                        np.array(0, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
-                assertTrue(not np.array(1, dtype=dt1)[()] < np.array(0, dtype=dt2)[()],
+                assertTrue(not np.array(1, dtype=dt1)[()] <
+                        np.array(0, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
         #Unsigned integers
         for dt1 in 'BHILQP':
-            assertTrue(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assertTrue(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assertTrue(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(-1 < np.array(1,
+                    dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(not -1 > np.array(1,
+                    dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(-1 != np.array(1,
+                    dtype=dt1)[()], "type %s failed" % (dt1,))
 
             #unsigned vs signed
             for dt2 in 'bhilqp':
-                assertTrue(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
+                assertTrue(np.array(1,
+                        dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
-                assertTrue(not np.array(1, dtype=dt1)[()] < np.array(-1, dtype=dt2)[()],
+                assertTrue(not np.array(1,
+                        dtype=dt1)[()] < np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
-                assertTrue(np.array(1, dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
+                assertTrue(np.array(1,
+                        dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
         #Signed integers and floats
         for dt1 in 'bhlqp' + np.typecodes['Float']:
-            assertTrue(1 > np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assertTrue(not 1 < np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assertTrue(-1 == np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(1 > np.array(-1,
+                dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(not 1 < np.array(-1,
+                dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(-1 == np.array(-1,
+                dtype=dt1)[()], "type %s failed" % (dt1,))
 
             for dt2 in 'bhlqp' + np.typecodes['Float']:
-                assertTrue(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
+                assertTrue(np.array(1, dtype=dt1)[()] > 
+                        np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
-                assertTrue(not np.array(1, dtype=dt1)[()] < np.array(-1, dtype=dt2)[()],
+                assertTrue(not np.array(1, dtype=dt1)[()] <
+                        np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
-                assertTrue(np.array(-1, dtype=dt1)[()] == np.array(-1, dtype=dt2)[()],
+                assertTrue(np.array(-1, dtype=dt1)[()] ==
+                        np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
     def test_scalar_comparison_to_none(self):

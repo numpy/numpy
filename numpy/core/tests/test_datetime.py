@@ -843,9 +843,11 @@ class TestDateTime:
     def test_setstate(self):
         "Verify that datetime dtype __setstate__ can handle bad arguments"
         dt = np.dtype('>M8[us]')
-        assert_raises(ValueError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, 1))
+        assert_raises(ValueError, dt.__setstate__, (4, '>',
+                None, None, None, -1, -1, 0, 1))
         assertTrue(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
-        assert_raises(TypeError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, ({}, 'xxx')))
+        assert_raises(TypeError, dt.__setstate__, (4, '>',
+                None, None, None, -1, -1, 0, ({}, 'xxx')))
         assertTrue(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
 
     def test_dtype_promotion(self):
@@ -1816,30 +1818,38 @@ class TestDateTime:
 
         # unit='auto' parameter
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T12:23:34.123456', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T12:23:34.123456', 'us'),
+                unit='auto'),
                 '2032-07-18T12:23:34.123456')
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T12:23:34.12', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T12:23:34.12', 'us'),
+                unit='auto'),
                 '2032-07-18T12:23:34.120')
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T12:23:34', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T12:23:34', 'us'),
+                unit='auto'),
                 '2032-07-18T12:23:34')
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T12:23:00', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T12:23:00', 'us'),
+                unit='auto'),
                 '2032-07-18T12:23')
         # 'auto' doesn't split up hour and minute
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T12:00:00', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T12:00:00', 'us'),
+                unit='auto'),
                 '2032-07-18T12:00')
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-18T00:00:00', 'us'), unit='auto'),
+                np.datetime64('2032-07-18T00:00:00', 'us'),
+                unit='auto'),
                 '2032-07-18')
         # 'auto' doesn't split up the date
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-07-01T00:00:00', 'us'), unit='auto'),
+                np.datetime64('2032-07-01T00:00:00', 'us'),
+                unit='auto'),
                 '2032-07-01')
         assert_equal(np.datetime_as_string(
-                np.datetime64('2032-01-01T00:00:00', 'us'), unit='auto'),
+                np.datetime64('2032-01-01T00:00:00', 'us'),
+                unit='auto'),
                 '2032-01-01')
 
     @pytest.mark.skipif(not _has_pytz, reason="The pytz module is not available.")
@@ -2491,7 +2501,8 @@ class TestDateTime:
         pytest.param("W", marks=pytest.mark.xfail(reason="gh-13197")),
         "D", "h", "m",
         "s", "ms", "us", "ns", "ps", "fs", "as",
-        pytest.param("10D", marks=pytest.mark.xfail(reason="similar to gh-13197")),
+        pytest.param("10D", marks=pytest.mark.xfail(
+            reason="similar to gh-13197")),
     ])
     @pytest.mark.parametrize("sign", [-1, 1])
     def test_limit_str_roundtrip(self, time_unit, sign):

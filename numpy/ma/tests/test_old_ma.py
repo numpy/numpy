@@ -58,7 +58,7 @@ class TestMa:
         assert_equal(shape(xm), s)
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
         assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assertTrue(eq(xm, xf))
         assertTrue(eq(filled(xm, 1.e20), xf))
@@ -417,12 +417,17 @@ class TestMa:
         assertTrue(eq(masked_where(greater_equal(x, 2), x),
                    masked_greater_equal(x, 2)))
         assertTrue(eq(masked_where(less(x, 2), x), masked_less(x, 2)))
-        assertTrue(eq(masked_where(less_equal(x, 2), x), masked_less_equal(x, 2)))
-        assertTrue(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
+        assertTrue(eq(masked_where(less_equal(x, 2), x),
+                    masked_less_equal(x, 2)))
+        assertTrue(eq(masked_where(not_equal(x, 2), x),
+                    masked_not_equal(x, 2)))
         assertTrue(eq(masked_where(equal(x, 2), x), masked_equal(x, 2)))
-        assertTrue(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
-        assertTrue(eq(masked_inside(list(range(5)), 1, 3), [0, 199, 199, 199, 4]))
-        assertTrue(eq(masked_outside(list(range(5)), 1, 3), [199, 1, 2, 3, 199]))
+        assertTrue(eq(masked_where(not_equal(x, 2), x),
+                    masked_not_equal(x, 2)))
+        assertTrue(eq(masked_inside(list(range(5)), 1, 3),
+                    [0, 199, 199, 199, 4]))
+        assertTrue(eq(masked_outside(list(range(5)), 1, 3),
+                    [199, 1, 2, 3, 199]))
         assertTrue(eq(masked_inside(array(list(range(5)),
                                        mask=[1, 0, 0, 0, 0]), 1, 3).mask,
                    [1, 1, 1, 1, 0]))
@@ -623,11 +628,13 @@ class TestMa:
         r1, w1 = average([[a, b], [b, a]], axis=1, returned=True)
         assert_equal(shape(r1), shape(w1))
         assert_equal(r1.shape, w1.shape)
-        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=True)
+        r2, w2 = average(ones((2, 2, 3)),
+            axis=0, weights=[3, 1], returned=True)
         assert_equal(shape(w2), shape(r2))
         r2, w2 = average(ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=True)
+        r2, w2 = average(ones((2, 2, 3)),
+            weights=ones((2, 2, 3)), returned=True)
         assertTrue(shape(w2) == shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
         a2dm = masked_array(a2d, [[0, 0], [1, 0]])

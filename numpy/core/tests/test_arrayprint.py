@@ -252,7 +252,8 @@ class TestArray2String:
         assertTrue(np.array2string(x,
                     formatter={'float_kind': lambda x: "%.2f" % x}) ==
                    "[0.00 1.00 2.00]")
-        assertTrue(np.array2string(x, formatter={'float': lambda x: "%.2f" % x}) ==
+        assertTrue(np.array2string(x,
+                formatter={'float': lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
@@ -700,9 +701,12 @@ class TestPrintOptions:
         assert_equal(repr(z),
             "array([0. , 0.1, 0.2, 0.3, 0.4, 0.5], dtype=float16)")
         assert_equal(repr(w),
-            "array([1.e+00, 1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06, 1.e+07,\n"
-            "       1.e+08, 1.e+09, 1.e+10, 1.e+11, 1.e+12, 1.e+13, 1.e+14, 1.e+15,\n"
-            "       1.e+16, 1.e+17, 1.e+18, 1.e+19, 1.e+20, 1.e+21, 1.e+22, 1.e+23,\n"
+            "array([1.e+00, 1.e+01, 1.e+02, 1.e+03, \
+                1.e+04, 1.e+05, 1.e+06, 1.e+07,\n"
+            "       1.e+08, 1.e+09, 1.e+10, 1.e+11, \
+                1.e+12, 1.e+13, 1.e+14, 1.e+15,\n"
+            "       1.e+16, 1.e+17, 1.e+18, 1.e+19, \
+                1.e+20, 1.e+21, 1.e+22, 1.e+23,\n"
             "       1.e+24])")
         assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
         assert_equal(repr(c),
@@ -727,12 +731,15 @@ class TestPrintOptions:
         # fixed mode, precision=4
         np.set_printoptions(floatmode='fixed', precision=4)
         assert_equal(repr(x),
-            "array([0.6104, 0.9219, 0.4570, 0.0906, 0.3733, 0.0072, 0.5933, 0.9468,\n"
+            "array([0.6104, 0.9219, 0.4570, 0.0906, 0.3733,\
+                0.0072, 0.5933, 0.9468,\n"
             "       0.2383, 0.4226], dtype=float16)")
         assert_equal(repr(y),
-            "array([0.2919, 0.5064, 0.2849, 0.4343, 0.7327, 0.3460, 0.0862, 0.3911])")
+            "array([0.2919, 0.5064, 0.2849, 0.4343, 0.7327,\
+                0.3460, 0.0862, 0.3911])")
         assert_equal(repr(z),
-            "array([0.0000, 0.1000, 0.2000, 0.3000, 0.3999, 0.5000], dtype=float16)")
+            "array([0.0000, 0.1000, 0.2000, 0.3000, 0.3999,\
+                0.5000], dtype=float16)")
         assert_equal(repr(w[::5]),
             "array([1.0000e+00, 1.0000e+05,\
                  1.0000e+10, 1.0000e+15, 1.0000e+20])")
