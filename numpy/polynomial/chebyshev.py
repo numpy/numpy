@@ -1844,11 +1844,11 @@ def chebinterpolate(func, deg, args=()):
     >>> real_domain = (0, 2*np.pi)
     >>> cheb_domain = (-1, 1)
     >>> interp_f = lambda x: np.sin(x[0]) + x[0]*np.cos(x[2]) + np.sin(x[1])
-    >>> f_mapped = lambda x: interp_f(pu.mapdomain(x, cheb_domain, real_domain))
+    >>> f_mapped = lambda x: interp_f(pu.mapdomain(x,cheb_domain,real_domain))
     >>> coeffs = cheb.chebinterpolate(f_mapped, (20, 20, 20))
     
-    Now let's test this on a 3D grid [0, 2*pi]x[0, 2*pi]x[0, 2*pi] to see how well
-    our interpolation works.
+    Now let's test this on a 3D grid [0, 2*pi]x[0, 2*pi]x[0, 2*pi] to see 
+    how well our interpolation works.
 
     >>> X = np.linspace(0, 2*np.pi, 3)
     >>> Y = np.linspace(0, 2*np.pi, 3)
@@ -1881,8 +1881,9 @@ def chebinterpolate(func, deg, args=()):
 
     The Chebyshev polynomials are only defined on the range [-1, 1] so the
     provided function will only be interpolated on this domain. To interpolate
-    on a different domain, the function should be rescaled to the range [-1, 1].
-    This can be done for example, via `numpy.polynomial.polyutils.mapdomain`.
+    on a different domain, the function should be rescaled 
+    to the range [-1, 1]. This can be done for example, 
+    via `numpy.polynomial.polyutils.mapdomain`.
 
     Chebyshev coefficients can be evaluated using 
     `chebval` or `chebval2d` or `chebval3d`.
