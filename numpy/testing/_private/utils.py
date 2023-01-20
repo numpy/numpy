@@ -715,6 +715,31 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def istime(x):
         return x.dtype.char in "Mm"
 
+    def check_shape(x, y, strict):
+        if strict:
+            cond = x.shape == y.shape and x.dtype == y.dtype
+        else:
+            cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
+        if not cond:
+            names = ('x', 'y')
+            if x.shape != y.shape:
+                reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
+            else:
+                reason = f'\n(dtypes {x.dtype}, {y.dtype} mismatch)'
+            msg = build_err_msg([x, y],
+                                err_msg
+                                + reason,
+                                verbose=verbose, header=header,
+                                names=names, precision=precision)
+            raise AssertionError(msg)
+
+    def iter_field_views(arr, field_name=()):
+        if not arr.dtype.names:
+            yield arr, field_name
+        else:
+            for name in arr.dtype.names:
+                yield from iter_field_views(arr[name], field_name+(name,))
+
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
 
@@ -752,23 +777,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             return y_id
 
-    try:
-        if strict:
-            cond = x.shape == y.shape and x.dtype == y.dtype
-        else:
-            cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
-        if not cond:
-            if x.shape != y.shape:
-                reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
-            else:
-                reason = f'\n(dtypes {x.dtype}, {y.dtype} mismatch)'
-            msg = build_err_msg([x, y],
-                                err_msg
-                                + reason,
-                                verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
-            raise AssertionError(msg)
-
+    def check_flagged_comparison(x, y, err_msg):
+        check_shape(x, y, strict=strict)
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
@@ -852,6 +862,21 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
+    try:
+        rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
+        x_structures = iter_field_views(x)
+        y_structures = iter_field_views(y)
+        for (_x, x_spec), (_y, y_spec) in zip(x_structures, y_structures):
+            if rec_arrs and x_spec != y_spec:
+                msg = build_err_msg([x, y],
+                                    err_msg
+                                    + '\nfield name mismatch for record arrays'
+                                    + f' ({x_spec} vs {y_spec})',
+                                    verbose=verbose, header=header,
+                                    names=('x', 'y'), precision=precision)
+                raise AssertionError(msg)
+            check_shape(_x, _y, strict=strict)
+            check_flagged_comparison(_x, _y, err_msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()

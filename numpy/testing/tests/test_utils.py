@@ -4,6 +4,8 @@ import os
 import itertools
 import pytest
 import weakref
+from hypothesis import given
+import hypothesis.extra.numpy as npst
 
 import numpy as np
 from numpy.testing import (
@@ -149,15 +151,28 @@ class TestArrayEqual(_GenericTest):
         a['floupa'] = [1, 2]
         b = a.copy()
 
+        r_a = np.core.records.array(a)
+        r_b = np.core.records.array(b)
         self._test_equal(a, b)
+        self._test_equal(r_a, r_b)
+        self._test_equal(r_a, b)
 
-        c = np.empty(2, [('floupipi', float),
+        c = np.zeros(2, [('floupipi', float),
                          ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
+        r_c = np.core.records.array(c)
 
-        with pytest.raises(TypeError):
-            self._test_not_equal(c, b)
+        self._test_not_equal(c, b)
+        self._test_not_equal(r_c, r_b)
+
+        d = np.empty(2, [('f1', float), ('f2', float)])
+        d['f1'] = a['floupi'].copy()
+        d['f2'] = a['floupa'].copy()
+        r_d = np.core.records.array(d)
+        self._test_equal(a, d)
+        self._test_not_equal(r_a, r_d)
+        self._test_not_equal(r_a, d)
 
     def test_masked_nan_inf(self):
         # Regression test for gh-11121
@@ -251,6 +266,14 @@ class TestArrayEqual(_GenericTest):
         with pytest.raises(AssertionError):
             assert_array_equal(a, b, strict=True)
 
+    @given(
+        npst.arrays(
+            dtype=npst.nested_dtypes(),  # includes subarrays
+            shape=npst.array_shapes(max_side=3),
+        )
+    )
+    def test_all_arrays_are_equal_to_themselves(self, arr):
+        self._assert_func(arr, arr)
 
 class TestBuildErrorMessage:
 
