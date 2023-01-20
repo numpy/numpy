@@ -486,87 +486,105 @@ class TestInterpolate:
 
     def f(self, x):
         return x * (x - 1) * (x - 2)
-    
+
     def f2d(self, x):
-        return x[0] * (x[1]*x[0] - 1)
+        return x[0] * (x[1] * x[0] - 1)
 
     def f3d(self, x):
-        return x[0] * (x[1]*x[0] - 1) * (x[2]*x[0] - 1)
+        return x[0] * (x[1] * x[0] - 1) * (x[2] * x[0] - 1)
 
     def test_raises(self):
         assert_raises(ValueError, cheb.chebinterpolate, self.f, -1)
-        assert_raises(ValueError, cheb.chebinterpolate, self.f2d, [-1, 2])
-        assert_raises(ValueError, cheb.chebinterpolate, self.f3d, [-1, 2, -3])
-        assert_raises(TypeError, cheb.chebinterpolate, self.f3d, [[2,2,3]])
+        assert_raises(ValueError, cheb.chebinterpolate, self.f2d, [-1,
+                      2])
+        assert_raises(ValueError, cheb.chebinterpolate, self.f3d, [-1,
+                      2, -3])
+        assert_raises(TypeError, cheb.chebinterpolate, self.f3d, [[2,
+                      2, 3]])
         assert_raises(TypeError, cheb.chebinterpolate, self.f, [])
-        assert_raises(TypeError, cheb.chebinterpolate, self.f2d, [5,5,5,5])
+        assert_raises(TypeError, cheb.chebinterpolate, self.f2d, [5, 5,
+                      5, 5])
         assert_raises(TypeError, cheb.chebinterpolate, self.f, 10.)
-        assert_raises(TypeError, cheb.chebinterpolate, self.f2d, [10., 5])
-        assert_raises(TypeError, cheb.chebinterpolate, self.f3d, [2., 3, 3])
+        assert_raises(TypeError, cheb.chebinterpolate, self.f2d, [10.,
+                      5])
+        assert_raises(TypeError, cheb.chebinterpolate, self.f3d, [2.,
+                      3, 3])
 
     def test_dimensions(self):
         for deg in range(1, 5):
-            assert_(cheb.chebinterpolate(self.f, deg).shape == (deg + 1,))
-        
-        for deg1 in range(1, 5):
-            for deg2 in range(1,5):
-                deg = np.asarray((deg1, deg2))
-                assert_(cheb.chebinterpolate(self.f2d, deg).shape == 
-                        (deg1+1, deg2+1,))
-        
-        for deg1 in range(1, 5):
-            for deg2 in range(1,5):
-                for deg3 in range(1,5):
-                    deg = np.asarray((deg1, deg2, deg3))
-                    assert_(
-                        cheb.chebinterpolate(self.f3d, deg).shape == 
-                        (deg1+1, deg2+1, deg3+1,))
+            assert_(cheb.chebinterpolate(self.f, deg).shape == (deg
+                    + 1, ))
 
+        for deg1 in range(1, 5):
+            for deg2 in range(1, 5):
+                deg = np.asarray((deg1, deg2))
+                assert_(cheb.chebinterpolate(self.f2d, deg).shape
+                        == (deg1 + 1, deg2 + 1))
+
+        for deg1 in range(1, 5):
+            for deg2 in range(1, 5):
+                for deg3 in range(1, 5):
+                    deg = np.asarray((deg1, deg2, deg3))
+                    assert_(cheb.chebinterpolate(self.f3d, deg).shape
+                            == (deg1 + 1, deg2 + 1, deg3 + 1))
 
     def test_approximation(self):
 
         # 1d test
+
         def powx(x, p):
-            return x**p
+            return x ** p
 
         x = np.linspace(-1, 1, 10)
         for deg in range(0, 10):
             for p in range(0, deg + 1):
-                c = cheb.chebinterpolate(powx, deg, (p,))
-                assert_almost_equal(cheb.chebval(x, c), powx(x, p), decimal=12)
+                c = cheb.chebinterpolate(powx, deg, (p, ))
+                assert_almost_equal(cheb.chebval(x, c), powx(x, p),
+                                    decimal=12)
 
         # 2d test
+
         def powx2d(x, p):
-            return (x[0]**p) * (x[1]**p)
+            return x[0] ** p * x[1] ** p
 
         x = np.linspace(-1, 1, 100)
         for deg in range(0, 10):
             for p in range(0, deg + 1):
-                c = cheb.chebinterpolate(powx2d, deg=[deg, deg], args=(p,))
-                interp = [cheb.chebval2d(x, y, c) for x, y in zip(x, x)]
-                true = [powx2d((x, y), p) for x, y in zip(x, x)]
+                c = cheb.chebinterpolate(powx2d, deg=[deg, deg],
+                        args=(p, ))
+                interp = [cheb.chebval2d(x, y, c) for (x, y) in zip(x,
+                          x)]
+                true = [powx2d((x, y), p) for (x, y) in zip(x, x)]
                 assert_almost_equal(interp, true, decimal=12)
 
         # 3d test
+
         def powx3d(x, p):
-            return (x[0]**p) * (x[1]**p) * (x[2]**p)
+            return x[0] ** p * x[1] ** p * x[2] ** p
 
         x = np.linspace(-1, 1, 100)
         for deg in range(0, 10):
             for p in range(0, deg + 1):
-                c = cheb.chebinterpolate(powx3d, deg=[deg, deg, deg], args=(p,))
-                interp = [cheb.chebval3d(x, y, z, c) for x, y, z in zip(x, x, x)]
-                true = [powx3d((x, y, z), p) for x, y, z in zip(x, x, x)]
+                c = cheb.chebinterpolate(powx3d, deg=[deg, deg, deg],
+                        args=(p, ))
+                interp = [cheb.chebval3d(x, y, z, c) for (x, y, z) in
+                          zip(x, x, x)]
+                true = [powx3d((x, y, z), p) for (x, y, z) in zip(x, x,
+                        x)]
                 assert_almost_equal(interp, true, decimal=12)
-        
+
         # a pretty difficult interpolation
+
         def challenging_3d(x):
-            return np.tan(x[0]) + x[0]*np.cos(x[2]) + np.sin(x[1])*np.tanh(x[0])
+            return np.tan(x[0]) + x[0] * np.cos(x[2]) + np.sin(x[1]) \
+                * np.tanh(x[0])
 
         x = np.linspace(-1, 1, 100)
         c = cheb.chebinterpolate(challenging_3d, deg=[30, 20, 20])
-        interp = np.asarray([cheb.chebval3d(x, y, z, c) for x, y, z in zip(x, x, x)])
-        true = np.asarray([challenging_3d([x, y, z]) for x, y, z in zip(x, x, x)])
+        interp = np.asarray([cheb.chebval3d(x, y, z, c) for (x, y,
+                            z) in zip(x, x, x)])
+        true = np.asarray([challenging_3d([x, y, z]) for (x, y, z) in
+                          zip(x, x, x)])
         assert_almost_equal(interp, true, decimal=12)
 
 

@@ -1887,71 +1887,84 @@ def chebinterpolate(func, deg, args=()):
     Chebyshev coefficients can be evaluated using 
     `chebval` or `chebval2d` or `chebval3d`.
     """
+
     deg = np.asarray(deg)
 
     # check arguments:
-    if (deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0 or
-        deg.size > 3):
+
+    if deg.ndim > 1 or deg.dtype.kind not in "iu" or deg.size == 0 \
+        or deg.size > 3:
         raise TypeError("deg must be an int or 1-D array of ints")
     if np.any(deg) < 0:
         raise ValueError("all values of deg must be >= 0")
 
     # if deg is a scalar, convert it to a 1-D array
+
     if deg.ndim == 0:
         deg = np.asarray([deg])
 
     order = deg + 1
 
-    if deg.size==1:
+    if deg.size == 1:
         chebnodes = chebpts1(order[0])
-        yfunc = np.asarray(list(map(lambda x: func(np.asarray([x]), *args), chebnodes)))
+        yfunc = np.asarray(list(map(lambda x: func(np.asarray([x]),
+                           *args), chebnodes)))
         m = chebvander(chebnodes, deg[0])
         c = np.dot(m.T, yfunc).reshape(order)
         c[0] /= order
-        c[1:] /= 0.5*order
-
+        c[1:] /= 0.5 * order
     elif deg.size == 2:
+
         # create chebyshev nodes in 2d by making a grid out of the 1d nodes
         # chebnodes is an array of shape (order[0]*order[1], 2)
+
         chebnodes_x = chebpts1(order[0])
         chebnodes_y = chebpts1(order[1])
         g = np.meshgrid(chebnodes_x, chebnodes_y)
         chebnodes = np.vstack(list(map(np.ravel, g))).T
 
-        # evaluate the function at the chebyshev nodes and 
+        # evaluate the function at the chebyshev nodes and
         # calculate vandermonde matrix
-        func_val = np.asarray(list(map(lambda x: func(x, *args), chebnodes)))
-        m = chebvander2d(chebnodes[:,0], chebnodes[:,1], deg)
+
+        func_val = np.asarray(list(map(lambda x: func(x, *args),
+                              chebnodes)))
+        m = chebvander2d(chebnodes[:, 0], chebnodes[:, 1], deg)
 
         # calculate the coefficients and apply normalization
+
         c = np.dot(m.T, func_val).reshape(order)
-        c[0,:] /= order[0]
-        c[:,0] /= order[1]
-        c[1:,:] /= 0.5*order[0]
-        c[:,1:] /= 0.5*order[1]
-    
+        c[0, :] /= order[0]
+        c[:, 0] /= order[1]
+        c[1:, :] /= 0.5 * order[0]
+        c[:, 1:] /= 0.5 * order[1]
     elif deg.size == 3:
+
         # create chebyshev nodes in 3d by making a grid out of the 1d nodes
         # chebnodes is an array of shape (order[0]*order[1]*order[2], 3)
+
         chebnodes_x = chebpts1(order[0])
         chebnodes_y = chebpts1(order[1])
         chebnodes_z = chebpts1(order[2])
         g = np.meshgrid(chebnodes_x, chebnodes_y, chebnodes_z)
         chebnodes = np.vstack(list(map(np.ravel, g))).T
 
-        # evaluate the function at the chebyshev nodes and 
+        # evaluate the function at the chebyshev nodes and
         # calculate vandermonde matrix
-        func_val = np.asarray(list(map(lambda x: func(x, *args), chebnodes)))
-        m = chebvander3d(chebnodes[:,0], chebnodes[:,1], chebnodes[:,2], deg)
+
+        func_val = np.asarray(list(map(lambda x: func(x, *args),
+                              chebnodes)))
+        m = chebvander3d(chebnodes[:, 0], chebnodes[:, 1], chebnodes[:,
+                         2], deg)
 
         # calculate the coefficients and apply normalization
+
         c = np.dot(m.T, func_val).reshape(order)
-        c[0,:,:] /= order[0]
-        c[:,0,:] /= order[1]
-        c[:,:,0] /= order[2]
-        c[1:,:,:] /= 0.5*order[0]
-        c[:,1:,:] /= 0.5*order[1]
-        c[:,:,1:] /= 0.5*order[2]
+        c[0, :, :] /= order[0]
+        c[:, 0, :] /= order[1]
+        c[:, :, 0] /= order[2]
+        c[1:, :, :] /= 0.5 * order[0]
+        c[:, 1:, :] /= 0.5 * order[1]
+        c[:, :, 1:] /= 0.5 * order[2]
 
     return c
     
