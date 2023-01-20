@@ -447,7 +447,7 @@ sfloat_to_bool_resolve_descriptors(
 
 
 static int
-init_casts(void)
+sfloat_init_casts(void)
 {
     PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
     PyType_Slot slots[4] = {{0, NULL}};
@@ -697,7 +697,7 @@ translate_loop_descrs(
 
 
 static PyObject *
-get_ufunc(const char *ufunc_name)
+sfloat_get_ufunc(const char *ufunc_name)
 {
     PyObject *mod = PyImport_ImportModule("numpy");
     if (mod == NULL) {
@@ -716,10 +716,10 @@ get_ufunc(const char *ufunc_name)
 
 
 static int
-add_loop(const char *ufunc_name,
+sfloat_add_loop(const char *ufunc_name,
         PyArray_DTypeMeta *dtypes[3], PyObject *meth_or_promoter)
 {
-    PyObject *ufunc = get_ufunc(ufunc_name);
+    PyObject *ufunc = sfloat_get_ufunc(ufunc_name);
     if (ufunc == NULL) {
         return -1;
     }
@@ -742,9 +742,9 @@ add_loop(const char *ufunc_name,
 
 
 static int
-add_wrapping_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3])
+sfloat_add_wrapping_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3])
 {
-    PyObject *ufunc = get_ufunc(ufunc_name);
+    PyObject *ufunc = sfloat_get_ufunc(ufunc_name);
     if (ufunc == NULL) {
         return -1;
     }
@@ -786,7 +786,7 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
  * get less so with the introduction of public API).
  */
 static int
-init_ufuncs(void) {
+sfloat_init_ufuncs(void) {
     PyArray_DTypeMeta *dtypes[3] = {
             &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
     PyType_Slot slots[3] = {{0, NULL}};
@@ -807,7 +807,7 @@ init_ufuncs(void) {
     if (bmeth == NULL) {
         return -1;
     }
-    int res = add_loop("multiply",
+    int res = sfloat_add_loop("multiply",
             bmeth->dtypes, (PyObject *)bmeth->method);
     Py_DECREF(bmeth);
     if (res < 0) {
@@ -825,7 +825,7 @@ init_ufuncs(void) {
     if (bmeth == NULL) {
         return -1;
     }
-    res = add_loop("add",
+    res = sfloat_add_loop("add",
             bmeth->dtypes, (PyObject *)bmeth->method);
     Py_DECREF(bmeth);
     if (res < 0) {
@@ -833,7 +833,7 @@ init_ufuncs(void) {
     }
 
     /* N.B.: Wrapping isn't actually correct if scaling can be negative */
-    if (add_wrapping_loop("hypot", dtypes) < 0) {
+    if (sfloat_add_wrapping_loop("hypot", dtypes) < 0) {
         return -1;
     }
 
@@ -851,14 +851,14 @@ init_ufuncs(void) {
     if (promoter == NULL) {
         return -1;
     }
-    res = add_loop("multiply", promoter_dtypes, promoter);
+    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
     if (res < 0) {
         Py_DECREF(promoter);
         return -1;
     }
     promoter_dtypes[0] = double_DType;
     promoter_dtypes[1] = &PyArray_SFloatDType;
-    res = add_loop("multiply", promoter_dtypes, promoter);
+    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
     Py_DECREF(promoter);
     if (res < 0) {
         return -1;
@@ -899,11 +899,11 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    if (init_casts() < 0) {
+    if (sfloat_init_casts() < 0) {
         return NULL;
     }
 
-    if (init_ufuncs() < 0) {
+    if (sfloat_init_ufuncs() < 0) {
         return NULL;
     }
 
