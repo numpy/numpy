@@ -732,7 +732,8 @@ class TestPrintOptions:
             "array([0.0000, 0.1000, 0.2000, 0.3000, 0.3999, 0.5000], dtype=float16)")
         assert_equal(repr(w[::5]),
             "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
-        assert_equal(repr(wp), "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
+        assert_equal(repr(wp),
+                        "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
         assert_equal(repr(np.zeros(3)), "array([0.0000, 0.0000, 0.0000])")
         assert_equal(repr(c),
             "array([1.0000+1.0000j, 1.1235+1.1235j])")
