@@ -11,7 +11,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
-import numpy.core._multiarray_tests
+
 
 ###############################################################################
 #
