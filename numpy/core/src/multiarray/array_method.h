@@ -229,7 +229,7 @@ typedef struct PyArrayMethodObject_tag {
     translate_given_descrs_func *translate_given_descrs;
     translate_loop_descrs_func *translate_loop_descrs;
     /* Chunk reserved for use by the legacy fallback arraymethod */
-    char initial[sizeof(npy_clongdouble)];  /* initial value storage */
+    char legacy_initial[sizeof(npy_clongdouble)];  /* initial value storage */
 } PyArrayMethodObject;
 
 

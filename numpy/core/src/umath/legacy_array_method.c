@@ -247,7 +247,8 @@ copy_cached_initial(
         PyArrayMethod_Context *context, npy_bool NPY_UNUSED(reduction_is_empty),
         char *initial)
 {
-    memcpy(initial, context->method->initial, context->descriptors[0]->elsize);
+    memcpy(initial, context->method->legacy_initial,
+           context->descriptors[0]->elsize);
     return 1;
 }
 
@@ -316,7 +317,8 @@ get_initial_from_ufunc(
 
     if (PyTypeNum_ISNUMBER(context->descriptors[0]->type_num)) {
         /* For numbers we can cache to avoid going via Python ints */
-        memcpy(context->method->initial, initial, context->descriptors[0]->elsize);
+        memcpy(context->method->legacy_initial, initial,
+               context->descriptors[0]->elsize);
         context->method->get_reduction_initial = &copy_cached_initial;
     }
 
