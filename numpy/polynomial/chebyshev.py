@@ -1780,38 +1780,87 @@ def chebroots(c):
 def chebinterpolate(func, deg, args=()):
     """Interpolate a function at the Chebyshev points of the first kind.
 
-    Returns the Chebyshev series that interpolates `func` at the Chebyshev
-    points of the first kind in the interval [-1, 1]. The interpolating
-    series tends to a minmax approximation to `func` with increasing `deg`
-    if the function is continuous in the interval.
+    Returns the coefficients for a Chebyshev series that interpolates `func` 
+    at the Chebyshev points of the first kind in the interval [-1, 1]. The 
+    interpolating series tends to a minmax approximation to `func` with 
+    increasing `deg` if the function is continuous in the interval. 
+    `func` can be a function of one, two, or three variables.
 
     .. versionadded:: 1.14.0
 
     Parameters
     ----------
     func : function
-        The function to be approximated. It must be a function of a single
-        variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
-        extra arguments passed in the `args` parameter.
-    deg : int
-        Degree of the interpolating polynomial
+        The function to be approximated. It must be a 1-D, 2-D or 3-D function 
+        of variable of the form ``f(x, *args)``. ``x`` is a 1-D array
+        of shape (n,). The function must return a scalar.
+    deg : int or array_like
+        Degree of the interpolating polynomial. If in 2 or 3 dimensions,
+        ``deg`` must be a 1-D array with length 2 or 3, respectively.
     args : tuple, optional
         Extra arguments to be used in the function call. Default is no extra
         arguments.
 
     Returns
     -------
-    coef : ndarray, shape (deg + 1,)
-        Chebyshev coefficients of the interpolating series ordered from low to
-        high.
+    coef : ndarray, shape (deg + 1, )
+        Chebyshev coefficients of the interpolating series.
 
     Examples
     --------
-    >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
-    array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
-            -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
-             2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
+    Let us find the Chebyshev coefficients (up to 8 degrees) of 
+    a function of one variable. This will return an (8+1,) array of
+    Chebyshev coefficients.
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> cheb.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
+    array([ 5.00000000e-01,  8.11675684e-01, -1.23358114e-16, -5.42457905e-02,
+            -2.83723662e-16,  4.51658839e-03,  2.46716228e-17, -3.79694221e-04,
+            -3.45402719e-16])
+
+    Likewise, we can do this for a 2-D function with degrees (12, 20)
+    >>> interp_f = lambda x: x[0] + np.cos(x[1])*np.tanh(x[0])
+    >>> coeffs = chebinterpolate(interp_f, (12, 20))
+    
+    We can evaluate the interpolating series on a grid with `chebval2d`.
+    >>> X = np.linspace(-1, 1, 4)
+    >>> Y = np.linspace(-1, 1, 4)
+    >>> XY_grid = np.meshgrid(X, Y)
+    >>> XY = np.vstack(list(map(np.ravel, XY_grid))).T
+    >>> interpolated_points = chebval2d(x=XY[:,0], y=XY[:,1], c=coeffs)
+    >>> true_points = np.array([interp_f(xy) for xy in XY])
+    >>> interpolated_points - true_points
+    array([ 1.06470865e-07 -1.37010050e-07  1.37010049e-07 -1.06470864e-07
+            1.86211270e-07 -2.39622520e-07  2.39622519e-07 -1.86211270e-07
+            1.86211271e-07 -2.39622520e-07  2.39622519e-07 -1.86211270e-07
+            1.06470864e-07 -1.37010051e-07  1.37010050e-07 -1.06470864e-07])
+
+    To interpolate beyond [-1,1] we can use
+    `numpy.polynomial.polyutils.mapdomain`.
+    >>> from numpy.polynomial import polyutils as pu
+    >>> real_domain = (0, 2*np.pi)
+    >>> cheb_domain = (-1, 1)
+    >>> interp_f = lambda x: np.sin(x[0]) + x[0]*np.cos(x[2]) + np.sin(x[1])
+    >>> f_mapped = lambda x: interp_f(pu.mapdomain(x, cheb_domain, real_domain))
+    >>> coeffs = chebinterpolate(f_mapped, (20, 20, 20))
+    
+    Now let's test this on a 3D grid [0, 2*pi]x[0, 2*pi]x[0, 2*pi].
+    >>> X = np.linspace(0, 2*np.pi, 3)
+    >>> Y = np.linspace(0, 2*np.pi, 3)
+    >>> Z = np.linspace(0, 2*np.pi, 3)
+    >>> XYZ_grid = np.meshgrid(X, Y, Z)
+    >>> XYZ = np.vstack(list(map(np.ravel, XYZ_grid))).T
+    >>> XYZ_cheb = pu.mapdomain(XYZ, real_domain, cheb_domain)
+    >>> interpolated_points = chebval3d(x=XYZ_cheb[:,0], y=XYZ_cheb[:,1], 
+    ...                                 z=XYZ_cheb[:,2], c=coeffs)
+    >>> true_points = np.array([interp_f(xyz) for xyz in XYZ])
+    >>> interpolated_points - true_points
+    >>> array([-2.46439697e-16 -1.00035424e-15  5.49706495e-16 -2.39808173e-14
+            1.24344979e-14 -2.13162821e-14 -6.39488462e-14  4.44089210e-14
+            -6.03961325e-14 -7.93826392e-15  1.80697225e-15 -6.27469763e-15
+            -2.53130850e-14  2.26485497e-14 -2.75335310e-14 -6.12843110e-14
+            4.52970994e-14 -5.59552404e-14 -2.89594369e-14  1.26623055e-14
+            -2.93184954e-14 -3.81916720e-14  2.30926389e-14 -3.59712260e-14
+            -8.43769499e-14  6.21724894e-14 -7.99360578e-14])
 
     Notes
     -----
@@ -1824,26 +1873,82 @@ def chebinterpolate(func, deg, args=()):
     zero. For instance, if the function is even then the coefficients of the
     terms of odd degree in the result can be set to zero.
 
+    The Chebyshev polynomials are only defined on the range [-1, 1] so the
+    provided function will only be interpolated on this domain. To interpolate
+    on a different domain, the function should be rescaled to the range [-1, 1].
+    This can be done for example, via `numpy.polynomial.polyutils.mapdomain`.
+
+    Chebyshev coefficients can be evaluated using 
+    `chebval` or `chebval2d` or `chebval3d`.
     """
     deg = np.asarray(deg)
 
-    # check arguments.
-    if deg.ndim > 0 or deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int")
-    if deg < 0:
-        raise ValueError("expected deg >= 0")
+    # check arguments:
+    if (deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0 or
+        deg.size > 3):
+        raise TypeError("deg must be an int or 1-D array of ints")
+    if np.any(deg) < 0:
+        raise ValueError("all values of deg must be >= 0")
+
+    # if deg is a scalar, convert it to a 1-D array
+    if deg.ndim == 0:
+        deg = np.asarray([deg])
 
     order = deg + 1
-    xcheb = chebpts1(order)
-    yfunc = func(xcheb, *args)
-    m = chebvander(xcheb, deg)
-    c = np.dot(m.T, yfunc)
-    c[0] /= order
-    c[1:] /= 0.5*order
+
+    if deg.size==1:
+        chebnodes = chebpts1(order[0])
+        yfunc = np.asarray(list(map(lambda x: func([x], *args), chebnodes)))
+        m = chebvander(chebnodes, deg[0])
+        c = np.dot(m.T, yfunc).reshape(order)
+        c[0] /= order
+        c[1:] /= 0.5*order
+
+    elif deg.size == 2:
+        # create chebyshev nodes in 2d by making a grid out of the 1d nodes
+        # chebnodes is an array of shape (order[0]*order[1], 2)
+        chebnodes_x = chebpts1(order[0])
+        chebnodes_y = chebpts1(order[1])
+        g = np.meshgrid(chebnodes_x, chebnodes_y)
+        chebnodes = np.vstack(list(map(np.ravel, g))).T
+
+        # evaluate the function at the chebyshev nodes and 
+        # calculate vandermonde matrix
+        func_val = np.asarray(list(map(lambda x: func(x, *args), chebnodes)))
+        m = chebvander2d(chebnodes[:,0], chebnodes[:,1], deg)
+
+        # calculate the coefficients and apply normalization
+        c = np.dot(m.T, func_val).reshape(order)
+        c[0,:] /= order[0]
+        c[:,0] /= order[1]
+        c[1:,:] /= 0.5*order[0]
+        c[:,1:] /= 0.5*order[1]
+    
+    elif deg.size == 3:
+        # create chebyshev nodes in 3d by making a grid out of the 1d nodes
+        # chebnodes is an array of shape (order[0]*order[1]*order[2], 3)
+        chebnodes_x = chebpts1(order[0])
+        chebnodes_y = chebpts1(order[1])
+        chebnodes_z = chebpts1(order[2])
+        g = np.meshgrid(chebnodes_x, chebnodes_y, chebnodes_z)
+        chebnodes = np.vstack(list(map(np.ravel, g))).T
+
+        # evaluate the function at the chebyshev nodes and 
+        # calculate vandermonde matrix
+        func_val = np.asarray(list(map(lambda x: func(x, *args), chebnodes)))
+        m = chebvander3d(chebnodes[:,0], chebnodes[:,1], chebnodes[:,2], deg)
+
+        # calculate the coefficients and apply normalization
+        c = np.dot(m.T, func_val).reshape(order)
+        c[0,:,:] /= order[0]
+        c[:,0,:] /= order[1]
+        c[:,:,0] /= order[2]
+        c[1:,:,:] /= 0.5*order[0]
+        c[:,1:,:] /= 0.5*order[1]
+        c[:,:,1:] /= 0.5*order[2]
 
     return c
-
-
+    
 def chebgauss(deg):
     """
     Gauss-Chebyshev quadrature.
