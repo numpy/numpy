@@ -34,7 +34,6 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        'Tester': 'numpy.testing._private.nosetester.NoseTester',
         '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
         'add_newdoc': 'numpy.core.function_base.add_newdoc',
@@ -64,7 +63,7 @@ def test_numpy_namespace():
 
 
 @pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
-@pytest.mark.parametrize('name', ['testing', 'Tester'])
+@pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
 
