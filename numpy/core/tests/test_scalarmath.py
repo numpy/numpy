@@ -289,7 +289,7 @@ class TestModulus:
                 fa = a.astype(dt)
                 fb = b.astype(dt)
                 # use list comprehension so a_ and b_ are scalars
-                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                div, rem = zip(*[op(a_, b_) for a_, b_ in zip(fa, fb)])
                 assert_equal(div, tgtdiv, err_msg=msg)
                 assert_equal(rem, tgtrem, err_msg=msg)
 
@@ -386,8 +386,8 @@ class TestComplexDivision:
                     ((0.0, -1.0), (-0.0, -1.0), (1.0, 0.0)),
                     ((0.0, -1.0), (-0.0, 1.0), (-1.0, 0.0)),
                     ((0.0, 1.0), (0.0, -1.0), (-1.0, 0.0)),
-                    ((0.0,-1.0), (0.0, -1.0), (1.0, -0.0)),
-                    ((-0.0,-1.0), (0.0, -1.0), (1.0, -0.0)),
+                    ((0.0, -1.0), (0.0, -1.0), (1.0, -0.0)),
+                    ((-0.0, -1.0), (0.0, -1.0), (1.0, -0.0)),
                     ((-0.0, 1.0), (0.0, -1.0), (-1.0, -0.0))
                 )
                 for cases in data:
@@ -409,14 +409,14 @@ class TestComplexDivision:
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by else condition as neither are == 0
-                data.append((( 2.0, 1.0), ( 2.0, 1.0), (1.0, 0.0)))
+                data.append(((2.0, 1.0), (2.0, 1.0), (1.0, 0.0)))
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by if condition as both are == 0
                 # is performed in test_zero_division(), so this is skipped
 
                 # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
-                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+                data.append(((1.0, 2.0), (1.0, 2.0), (1.0, 0.0)))
 
                 for cases in data:
                     n = cases[0]
@@ -506,8 +506,10 @@ class TestConversion:
     def test_numpy_scalar_relational_operators(self):
         # All integer
         for dt1 in np.typecodes['AllInteger']:
-            assertTrue(1 > np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assertTrue(not 1 < np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assertTrue(1 > np.array(0, dtype=dt1)[()],
+                    "type %s failed" % (dt1,))
+            assertTrue(not 1 < np.array(0, dtype=dt1)[()],
+                    "type %s failed" % (dt1,))
 
             for dt2 in np.typecodes['AllInteger']:
                 assertTrue(np.array(1, dtype=dt1)[()] > np.array(0, dtype=dt2)[()],

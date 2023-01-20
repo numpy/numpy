@@ -211,7 +211,8 @@ class TestArray2String:
         """Basic test of array2string."""
         a = np.arange(3)
         assertTrue(np.array2string(a) == '[0 1 2]')
-        assertTrue(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
+        assertTrue(np.array2string(a, 
+                max_line_width=4, legacy='1.13') == '[0 1\n 2]')
         assertTrue(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
 
     def test_unexpected_kwarg(self):
@@ -272,8 +273,10 @@ class TestArray2String:
             assert_equal(
                 np.array2string(A),
                 textwrap.dedent("""\
-                [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
-                 ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
+                [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)\
+                     ('1970-01-01T00:00:00',)
+                 ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)\
+                     ('NaT',) ('NaT',)
                  ('NaT',) ('NaT',) ('NaT',)]""")
             )
         finally:
@@ -731,7 +734,8 @@ class TestPrintOptions:
         assert_equal(repr(z),
             "array([0.0000, 0.1000, 0.2000, 0.3000, 0.3999, 0.5000], dtype=float16)")
         assert_equal(repr(w[::5]),
-            "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
+            "array([1.0000e+00, 1.0000e+05,\
+                 1.0000e+10, 1.0000e+15, 1.0000e+20])")
         assert_equal(repr(wp),
                         "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
         assert_equal(repr(np.zeros(3)), "array([0.0000, 0.0000, 0.0000])")
@@ -746,7 +750,8 @@ class TestPrintOptions:
         # maxprec_equal  mode, precision=8
         np.set_printoptions(floatmode='maxprec_equal', precision=8)
         assert_equal(repr(x),
-            "array([0.610352, 0.921875, 0.457031, 0.090576, 0.373291, 0.007244,\n"
+            "array([0.610352, 0.921875, 0.457031,\
+                 0.090576, 0.373291, 0.007244,\n"
             "       0.593262, 0.946777, 0.238281, 0.422607], dtype=float16)")
         assert_equal(repr(y),
             "array([0.29188210, 0.50641726, 0.28487506, 0.43429653, 0.73265384,\n"
@@ -777,18 +782,21 @@ class TestPrintOptions:
 
     def test_legacy_stray_comma(self):
         np.set_printoptions(legacy='1.13')
-        assert_equal(str(np.arange(10000)), '[   0    1    2 ..., 9997 9998 9999]')
+        assert_equal(str(np.arange(10000)),
+            '[   0    1    2 ..., 9997 9998 9999]')
 
         np.set_printoptions(legacy=False)
-        assert_equal(str(np.arange(10000)), '[   0    1    2 ... 9997 9998 9999]')
+        assert_equal(str(np.arange(10000)),
+             '[   0    1    2 ... 9997 9998 9999]')
 
     def test_dtype_linewidth_wrapping(self):
         np.set_printoptions(linewidth=75)
         assert_equal(repr(np.arange(10, 20., dtype='f4')),
-            "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.], dtype=float32)")
+            "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],\
+                 dtype=float32)")
         assert_equal(repr(np.arange(10, 23., dtype='f4')), textwrap.dedent("""\
-            array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22.],
-                  dtype=float32)"""))
+            array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,\
+                 22.],dtype=float32)"""))
 
         styp = '<U4'
         assert_equal(repr(np.ones(3, dtype=styp)),
