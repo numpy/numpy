@@ -16,6 +16,7 @@ from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
+import sysconfig
 
 import numpy as np
 from numpy.core import(
@@ -36,7 +37,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION'
+        '_OLD_PROMOTION', 'IS_MUSL'
         ]
 
 
@@ -55,6 +56,19 @@ HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 _OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
+
+IS_MUSL = False
+try:
+    from packaging.tags import sys_tags
+    _tags = list(sys_tags())
+    if 'musllinux' in _tags[0].platform:
+        IS_MUSL = True
+except ImportError:
+    # fallback to sysconfig (might be flaky)
+    # value could be None.
+    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+    if 'musl' in v:
+        IS_MUSL = True
 
 
 def assert_(val, msg=''):

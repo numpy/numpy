@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import threading
 import warnings
-from numpy.testing import extbuild, assert_warns, IS_WASM
+from numpy.testing import extbuild, assert_warns, IS_WASM, IS_MUSL
 import sys
 
 
@@ -358,6 +358,7 @@ def test_thread_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
+@pytest.mark.xfail(IS_MUSL, reason="gh23050")
 @pytest.mark.slow
 def test_new_policy(get_module):
     a = np.arange(10)
