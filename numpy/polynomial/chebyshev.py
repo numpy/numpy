@@ -1811,6 +1811,7 @@ def chebinterpolate(func, deg, args=()):
     Let us find the Chebyshev coefficients (up to 8 degrees) of 
     a function of one variable. This will return an (8+1,) array of
     Chebyshev coefficients.
+
     >>> import numpy.polynomial.chebyshev as cheb
     >>> cheb.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
     array([ 5.00000000e-01,  8.11675684e-01, -1.23358114e-16, -5.42457905e-02,
@@ -1818,15 +1819,17 @@ def chebinterpolate(func, deg, args=()):
             -3.45402719e-16])
 
     Likewise, we can do this for a 2-D function with degrees (12, 20)
+
     >>> interp_f = lambda x: x[0] + np.cos(x[1])*np.tanh(x[0])
-    >>> coeffs = chebinterpolate(interp_f, (12, 20))
+    >>> coeffs = cheb.chebinterpolate(interp_f, (12, 20))
     
     We can evaluate the interpolating series on a grid with `chebval2d`.
+
     >>> X = np.linspace(-1, 1, 4)
     >>> Y = np.linspace(-1, 1, 4)
     >>> XY_grid = np.meshgrid(X, Y)
     >>> XY = np.vstack(list(map(np.ravel, XY_grid))).T
-    >>> interpolated_points = chebval2d(x=XY[:,0], y=XY[:,1], c=coeffs)
+    >>> interpolated_points = cheb.chebval2d(x=XY[:,0], y=XY[:,1], c=coeffs)
     >>> true_points = np.array([interp_f(xy) for xy in XY])
     >>> interpolated_points - true_points
     array([ 1.06470865e-07 -1.37010050e-07  1.37010049e-07 -1.06470864e-07
@@ -1836,31 +1839,34 @@ def chebinterpolate(func, deg, args=()):
 
     To interpolate beyond [-1,1] we can use
     `numpy.polynomial.polyutils.mapdomain`.
+
     >>> from numpy.polynomial import polyutils as pu
     >>> real_domain = (0, 2*np.pi)
     >>> cheb_domain = (-1, 1)
     >>> interp_f = lambda x: np.sin(x[0]) + x[0]*np.cos(x[2]) + np.sin(x[1])
     >>> f_mapped = lambda x: interp_f(pu.mapdomain(x, cheb_domain, real_domain))
-    >>> coeffs = chebinterpolate(f_mapped, (20, 20, 20))
+    >>> coeffs = cheb.chebinterpolate(f_mapped, (20, 20, 20))
     
-    Now let's test this on a 3D grid [0, 2*pi]x[0, 2*pi]x[0, 2*pi].
+    Now let's test this on a 3D grid [0, 2*pi]x[0, 2*pi]x[0, 2*pi] to see how well
+    our interpolation works.
+
     >>> X = np.linspace(0, 2*np.pi, 3)
     >>> Y = np.linspace(0, 2*np.pi, 3)
     >>> Z = np.linspace(0, 2*np.pi, 3)
     >>> XYZ_grid = np.meshgrid(X, Y, Z)
     >>> XYZ = np.vstack(list(map(np.ravel, XYZ_grid))).T
     >>> XYZ_cheb = pu.mapdomain(XYZ, real_domain, cheb_domain)
-    >>> interpolated_points = chebval3d(x=XYZ_cheb[:,0], y=XYZ_cheb[:,1], 
+    >>> interpolated_points = cheb.chebval3d(x=XYZ_cheb[:,0], y=XYZ_cheb[:,1], 
     ...                                 z=XYZ_cheb[:,2], c=coeffs)
     >>> true_points = np.array([interp_f(xyz) for xyz in XYZ])
     >>> interpolated_points - true_points
     >>> array([-2.46439697e-16 -1.00035424e-15  5.49706495e-16 -2.39808173e-14
-            1.24344979e-14 -2.13162821e-14 -6.39488462e-14  4.44089210e-14
-            -6.03961325e-14 -7.93826392e-15  1.80697225e-15 -6.27469763e-15
-            -2.53130850e-14  2.26485497e-14 -2.75335310e-14 -6.12843110e-14
-            4.52970994e-14 -5.59552404e-14 -2.89594369e-14  1.26623055e-14
-            -2.93184954e-14 -3.81916720e-14  2.30926389e-14 -3.59712260e-14
-            -8.43769499e-14  6.21724894e-14 -7.99360578e-14])
+                1.24344979e-14 -2.13162821e-14 -6.39488462e-14  4.44089210e-14
+                -6.03961325e-14 -7.93826392e-15  1.80697225e-15 -6.27469763e-15
+                -2.53130850e-14  2.26485497e-14 -2.75335310e-14 -6.12843110e-14
+                4.52970994e-14 -5.59552404e-14 -2.89594369e-14  1.26623055e-14
+                -2.93184954e-14 -3.81916720e-14  2.30926389e-14 -3.59712260e-14
+                -8.43769499e-14  6.21724894e-14 -7.99360578e-14])
 
     Notes
     -----
@@ -1898,7 +1904,7 @@ def chebinterpolate(func, deg, args=()):
 
     if deg.size==1:
         chebnodes = chebpts1(order[0])
-        yfunc = np.asarray(list(map(lambda x: func([x], *args), chebnodes)))
+        yfunc = np.asarray(list(map(lambda x: func(np.asarray([x]), *args), chebnodes)))
         m = chebvander(chebnodes, deg[0])
         c = np.dot(m.T, yfunc).reshape(order)
         c[0] /= order
