@@ -62,7 +62,7 @@ def _check_assignment(srcidx, dstidx):
     cpy[dstidx] = arr[srcidx]
     arr[dstidx] = arr[srcidx]
 
-    assert_(np.all(arr == cpy),
+    assertTrue(np.all(arr == cpy),
             'assigning arr[%s] = arr[%s]' % (dstidx, srcidx))
 
 
@@ -115,7 +115,7 @@ def test_diophantine_fuzz():
             if X is None:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert_(X_simplified is None, (A, U, b, X_simplified))
+                assertTrue(X_simplified is None, (A, U, b, X_simplified))
 
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
@@ -126,16 +126,16 @@ def test_diophantine_fuzz():
                 for r in ranges:
                     size *= len(r)
                 if size < 100000:
-                    assert_(not any(sum(w) == b for w in itertools.product(*ranges)))
+                    assertTrue(not any(sum(w) == b for w in itertools.product(*ranges)))
                     infeasible_count += 1
             else:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert_(X_simplified is not None, (A, U, b, X_simplified))
+                assertTrue(X_simplified is not None, (A, U, b, X_simplified))
 
                 # Check validity
-                assert_(sum(a*x for a, x in zip(A, X)) == b)
-                assert_(all(0 <= x <= ub for x, ub in zip(X, U)))
+                assertTrue(sum(a*x for a, x in zip(A, X)) == b)
+                assertTrue(all(0 <= x <= ub for x, ub in zip(X, U)))
                 feasible_count += 1
 
 
@@ -198,8 +198,8 @@ def test_may_share_memory_manual():
 
     for x in xs:
         # The default is a simple extent check
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:]))
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
+        assertTrue(np.may_share_memory(x[:,0,:], x[:,1,:]))
+        assertTrue(np.may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
 
         # Exact checks
         check_may_share_memory_exact(x[:,0,:], x[:,1,:])
@@ -402,14 +402,14 @@ def test_internal_overlap_diophantine():
             exists = (X is not None)
 
         if X is not None:
-            assert_(sum(a*x for a, x in zip(A, X)) == sum(a*u//2 for a, u in zip(A, U)))
-            assert_(all(0 <= x <= u for x, u in zip(X, U)))
-            assert_(any(x != u//2 for x, u in zip(X, U)))
+            assertTrue(sum(a*x for a, x in zip(A, X)) == sum(a*u//2 for a, u in zip(A, U)))
+            assertTrue(all(0 <= x <= u for x, u in zip(X, U)))
+            assertTrue(any(x != u//2 for x, u in zip(X, U)))
 
         if exists:
-            assert_(X is not None, repr(X))
+            assertTrue(X is not None, repr(X))
         else:
-            assert_(X is None, repr(X))
+            assertTrue(X is None, repr(X))
 
     # Smoke tests
     check((3, 2), (2*2, 3*2), exists=True)
@@ -443,7 +443,7 @@ def test_internal_overlap_slices():
         s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
         a = x[s1].transpose(t1)
 
-        assert_(not internal_overlap(a))
+        assertTrue(not internal_overlap(a))
         cases += 1
 
 
@@ -557,11 +557,11 @@ def test_non_ndarray_inputs():
     for cls in [MyArray, MyArray2]:
         x = np.arange(5)
 
-        assert_(np.may_share_memory(cls(x[::2]), x[1::2]))
-        assert_(not np.shares_memory(cls(x[::2]), x[1::2]))
+        assertTrue(np.may_share_memory(cls(x[::2]), x[1::2]))
+        assertTrue(not np.shares_memory(cls(x[::2]), x[1::2]))
 
-        assert_(np.shares_memory(cls(x[1::3]), x[::2]))
-        assert_(np.may_share_memory(cls(x[1::3]), x[::2]))
+        assertTrue(np.shares_memory(cls(x[1::3]), x[::2]))
+        assertTrue(np.may_share_memory(cls(x[1::3]), x[::2]))
 
 
 def view_element_first_byte(x):

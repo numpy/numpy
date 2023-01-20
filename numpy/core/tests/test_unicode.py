@@ -54,15 +54,15 @@ class CreateZeros:
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        assert_(int(ua.dtype.str[2:]) == self.ulen)
+        assertTrue(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        assert_(buffer_length(ua) == nbytes)
+        assertTrue(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        assert_(ua_scalar == '')
+        assertTrue(ua_scalar == '')
         # Encode to ascii and double check
-        assert_(ua_scalar.encode('ascii') == b'')
+        assertTrue(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars
-        assert_(buffer_length(ua_scalar) == 0)
+        assertTrue(buffer_length(ua_scalar) == 0)
 
     def test_zeros0D(self):
         # Check creation of 0-dimensional objects
@@ -103,23 +103,23 @@ class CreateValues:
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        assert_(int(ua.dtype.str[2:]) == self.ulen)
+        assertTrue(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        assert_(buffer_length(ua) == nbytes)
+        assertTrue(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        assert_(ua_scalar == self.ucs_value*self.ulen)
+        assertTrue(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        assert_(ua_scalar.encode('utf-8') ==
+        assertTrue(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if self.ucs_value == ucs4_value:
             # In UCS2, the \U0010FFFF will be represented using a
             # surrogate *pair*
-            assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
+            assertTrue(buffer_length(ua_scalar) == 2*2*self.ulen)
         else:
             # In UCS2, the \uFFFF will be represented using a
             # regular 2-byte word
-            assert_(buffer_length(ua_scalar) == 2*self.ulen)
+            assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check creation of 0-dimensional objects with values
@@ -185,23 +185,23 @@ class AssignValues:
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        assert_(int(ua.dtype.str[2:]) == self.ulen)
+        assertTrue(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        assert_(buffer_length(ua) == nbytes)
+        assertTrue(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        assert_(ua_scalar == self.ucs_value*self.ulen)
+        assertTrue(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        assert_(ua_scalar.encode('utf-8') ==
+        assertTrue(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if self.ucs_value == ucs4_value:
             # In UCS2, the \U0010FFFF will be represented using a
             # surrogate *pair*
-            assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
+            assertTrue(buffer_length(ua_scalar) == 2*2*self.ulen)
         else:
             # In UCS2, the \uFFFF will be represented using a
             # regular 2-byte word
-            assert_(buffer_length(ua_scalar) == 2*self.ulen)
+            assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check assignment of 0-dimensional objects with values
@@ -276,7 +276,7 @@ class ByteorderValues:
         # This changes the interpretation of the data region (but not the
         #  actual data), therefore the returned scalars are not
         #  the same (they are byte-swapped versions of each other).
-        assert_(ua[()] != ua2[()])
+        assertTrue(ua[()] != ua2[()])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -285,8 +285,8 @@ class ByteorderValues:
         # Check byteorder of single-dimensional objects
         ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        assert_((ua != ua2).all())
-        assert_(ua[-1] != ua2[-1])
+        assertTrue((ua != ua2).all())
+        assertTrue(ua[-1] != ua2[-1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -296,8 +296,8 @@ class ByteorderValues:
         ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4,
                       dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        assert_((ua != ua2).all())
-        assert_(ua[-1, -1, -1] != ua2[-1, -1, -1])
+        assertTrue((ua != ua2).all())
+        assertTrue(ua[-1, -1, -1] != ua2[-1, -1, -1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -309,8 +309,8 @@ class ByteorderValues:
         test2 = np.repeat(test1, 2)[::2]
         for ua in (test1, test2):
             ua2 = ua.astype(dtype=ua.dtype.newbyteorder())
-            assert_((ua == ua2).all())
-            assert_(ua[-1] == ua2[-1])
+            assertTrue((ua == ua2).all())
+            assertTrue(ua[-1] == ua2[-1])
             ua3 = ua2.astype(dtype=ua.dtype)
             # Arrays must be equal after the round-trip
             assert_equal(ua, ua3)
@@ -324,8 +324,8 @@ class ByteorderValues:
             # Cast to a longer type with zero padding
             longer_type = np.dtype('U%s' % (self.ulen+1)).newbyteorder()
             ua2 = ua.astype(dtype=longer_type)
-            assert_((ua == ua2).all())
-            assert_(ua[-1] == ua2[-1])
+            assertTrue((ua == ua2).all())
+            assertTrue(ua[-1] == ua2[-1])
             # Cast back again with truncating:
             ua3 = ua2.astype(dtype=ua.dtype)
             # Arrays must be equal after the round-trip

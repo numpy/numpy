@@ -17,7 +17,7 @@ if is_standalone:
         finally:
             shutil.rmtree(tmpdir)
 
-    def assert_(expr, msg=''):
+    def assertTrue(expr, msg=''):
         if not expr:
             raise AssertionError(msg)
 else:
@@ -279,10 +279,10 @@ class _Test_CCompilerOpt:
         wrong_arch = "ppc64" if self.arch != "ppc64" else "x86"
         wrong_cc   = "clang" if self.cc   != "clang" else "icc"
         opt = self.opt()
-        assert_(getattr(opt, "cc_on_" + self.arch))
-        assert_(not getattr(opt, "cc_on_" + wrong_arch))
-        assert_(getattr(opt, "cc_is_" + self.cc))
-        assert_(not getattr(opt, "cc_is_" + wrong_cc))
+        assertTrue(getattr(opt, "cc_on_" + self.arch))
+        assertTrue(not getattr(opt, "cc_on_" + wrong_arch))
+        assertTrue(getattr(opt, "cc_is_" + self.cc))
+        assertTrue(not getattr(opt, "cc_is_" + wrong_cc))
 
     def test_args_empty(self):
         for baseline, dispatch in (

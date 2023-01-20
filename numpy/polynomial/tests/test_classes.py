@@ -37,8 +37,8 @@ random = np.random.random
 
 def assert_poly_almost_equal(p1, p2, msg=""):
     try:
-        assert_(np.all(p1.domain == p2.domain))
-        assert_(np.all(p1.window == p2.window))
+        assertTrue(np.all(p1.domain == p2.domain))
+        assertTrue(np.all(p1.window == p2.window))
         assert_almost_equal(p1.coef, p2.coef)
     except AssertionError:
         msg = f"Result: {p1}\nTarget: {p2}"
@@ -190,10 +190,10 @@ def test_equal(Poly):
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
     p4 = Poly([1, 2, 3], domain=[0, 1], window=[1, 2])
-    assert_(p1 == p1)
-    assert_(not p1 == p2)
-    assert_(not p1 == p3)
-    assert_(not p1 == p4)
+    assertTrue(p1 == p1)
+    assertTrue(not p1 == p2)
+    assertTrue(not p1 == p3)
+    assertTrue(not p1 == p4)
 
 
 def test_not_equal(Poly):
@@ -201,10 +201,10 @@ def test_not_equal(Poly):
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
     p4 = Poly([1, 2, 3], domain=[0, 1], window=[1, 2])
-    assert_(not p1 != p1)
-    assert_(p1 != p2)
-    assert_(p1 != p3)
-    assert_(p1 != p4)
+    assertTrue(not p1 != p1)
+    assertTrue(p1 != p2)
+    assertTrue(p1 != p3)
+    assertTrue(p1 != p4)
 
 
 def test_add(Poly):
@@ -420,11 +420,11 @@ def test_degree(Poly):
 def test_copy(Poly):
     p1 = Poly.basis(5)
     p2 = p1.copy()
-    assert_(p1 == p2)
-    assert_(p1 is not p2)
-    assert_(p1.coef is not p2.coef)
-    assert_(p1.domain is not p2.domain)
-    assert_(p1.window is not p2.window)
+    assertTrue(p1 == p2)
+    assertTrue(p1 is not p2)
+    assertTrue(p1.coef is not p2.coef)
+    assertTrue(p1.domain is not p2.domain)
+    assertTrue(p1.window is not p2.window)
 
 
 def test_integ(Poly):
@@ -586,7 +586,7 @@ class TestInterpolate:
 
     def test_dimensions(self):
         for deg in range(1, 5):
-            assert_(Chebyshev.interpolate(self.f, deg).degree() == deg)
+            assertTrue(Chebyshev.interpolate(self.f, deg).degree() == deg)
 
     def test_approximation(self):
 

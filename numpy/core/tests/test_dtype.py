@@ -27,8 +27,8 @@ def assert_dtype_equal(a, b):
                  "two equivalent types do not hash to the same value !")
 
 def assert_dtype_not_equal(a, b):
-    assert_(a != b)
-    assert_(hash(a) != hash(b),
+    assertTrue(a != b)
+    assertTrue(hash(a) != hash(b),
             "two different types hash to the same value !")
 
 class TestBuiltin:
@@ -47,10 +47,10 @@ class TestBuiltin:
         dt2 = dt.newbyteorder("<")
         dt3 = dt.newbyteorder(">")
         if dt == dt2:
-            assert_(dt.byteorder != dt2.byteorder, "bogus test")
+            assertTrue(dt.byteorder != dt2.byteorder, "bogus test")
             assert_dtype_equal(dt, dt2)
         else:
-            assert_(dt.byteorder != dt3.byteorder, "bogus test")
+            assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
             assert_dtype_equal(dt, dt3)
 
     def test_equivalent_dtype_hashing(self):
@@ -62,8 +62,8 @@ class TestBuiltin:
         else:
             left = uintp
             right = np.dtype(np.ulonglong)
-        assert_(left == right)
-        assert_(hash(left) == hash(right))
+        assertTrue(left == right)
+        assertTrue(hash(left) == hash(right))
 
     def test_invalid_types(self):
         # Make sure invalid type strings raise an error
@@ -621,11 +621,11 @@ class TestSubarray:
         l = [1, 2, 3]
         # Array gets converted
         dt = np.dtype([('a', 'f4', a)])
-        assert_(isinstance(dt['a'].shape, tuple))
-        assert_(isinstance(dt['a'].shape[0], int))
+        assertTrue(isinstance(dt['a'].shape, tuple))
+        assertTrue(isinstance(dt['a'].shape[0], int))
         # List gets converted
         dt = np.dtype([('a', 'f4', l)])
-        assert_(isinstance(dt['a'].shape, tuple))
+        assertTrue(isinstance(dt['a'].shape, tuple))
         #
 
         class IntLike:
@@ -637,11 +637,11 @@ class TestSubarray:
                 return 3
 
         dt = np.dtype([('a', 'f4', IntLike())])
-        assert_(isinstance(dt['a'].shape, tuple))
-        assert_(isinstance(dt['a'].shape[0], int))
+        assertTrue(isinstance(dt['a'].shape, tuple))
+        assertTrue(isinstance(dt['a'].shape[0], int))
         dt = np.dtype([('a', 'f4', (IntLike(),))])
-        assert_(isinstance(dt['a'].shape, tuple))
-        assert_(isinstance(dt['a'].shape[0], int))
+        assertTrue(isinstance(dt['a'].shape, tuple))
+        assertTrue(isinstance(dt['a'].shape[0], int))
 
     def test_shape_matches_ndim(self):
         dt = np.dtype([('a', 'f4', ())])
@@ -923,11 +923,11 @@ class TestMonsterType:
 class TestMetadata:
     def test_no_metadata(self):
         d = np.dtype(int)
-        assert_(d.metadata is None)
+        assertTrue(d.metadata is None)
 
     def test_metadata_takes_dict(self):
         d = np.dtype(int, metadata={'datum': 1})
-        assert_(d.metadata == {'datum': 1})
+        assertTrue(d.metadata == {'datum': 1})
 
     def test_metadata_rejects_nondict(self):
         assert_raises(TypeError, np.dtype, int, metadata='datum')
@@ -936,11 +936,11 @@ class TestMetadata:
 
     def test_nested_metadata(self):
         d = np.dtype([('a', np.dtype(int, metadata={'datum': 1}))])
-        assert_(d['a'].metadata == {'datum': 1})
+        assertTrue(d['a'].metadata == {'datum': 1})
 
     def test_base_metadata_copied(self):
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
-        assert_(d.metadata == {'datum': 1})
+        assertTrue(d.metadata == {'datum': 1})
 
 class TestString:
     def test_complex_dtype_str(self):

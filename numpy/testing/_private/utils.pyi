@@ -132,7 +132,7 @@ IS_PYSTON: Final[bool]
 HAS_REFCOUNT: Final[bool]
 HAS_LAPACK64: Final[bool]
 
-def assert_(val: object, msg: str | Callable[[], str] = ...) -> None: ...
+def assertTrue(val: object, msg: str | Callable[[], str] = ...) -> None: ...
 
 # Contrary to runtime we can't do `os.name` checks while type checking,
 # only `sys.platform` checks

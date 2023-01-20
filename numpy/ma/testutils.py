@@ -282,7 +282,7 @@ def assert_mask_equal(m1, m2, err_msg=''):
 
     """
     if m1 is nomask:
-        assert_(m2 is nomask)
+        assertTrue(m2 is nomask)
     if m2 is nomask:
-        assert_(m1 is nomask)
+        assertTrue(m1 is nomask)
     assert_array_equal(m1, m2, err_msg=err_msg)

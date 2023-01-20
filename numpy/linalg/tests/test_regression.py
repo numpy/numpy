@@ -93,15 +93,15 @@ class TestRegression:
 
         norm = linalg.norm(testvector)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         norm = linalg.norm(testvector, ord=1)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype != np.dtype('float64'))
+        assertTrue(norm.dtype != np.dtype('float64'))
 
         norm = linalg.norm(testvector, ord=2)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         assert_raises(ValueError, linalg.norm, testvector, ord='fro')
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
@@ -116,11 +116,11 @@ class TestRegression:
 
         norm = linalg.norm(testmatrix)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         norm = linalg.norm(testmatrix, ord='fro')
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         assert_raises(TypeError, linalg.norm, testmatrix, ord='nuc')
         assert_raises(ValueError, linalg.norm, testmatrix, ord=np.inf)

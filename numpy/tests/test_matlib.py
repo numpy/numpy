@@ -4,8 +4,8 @@ from numpy.testing import assert_array_equal, assert_
 
 def test_empty():
     x = numpy.matlib.empty((2,))
-    assert_(isinstance(x, np.matrix))
-    assert_(x.shape, (1, 2))
+    assertTrue(isinstance(x, np.matrix))
+    assertTrue(x.shape, (1, 2))
 
 def test_ones():
     assert_array_equal(numpy.matlib.ones((2, 3)),
@@ -43,12 +43,12 @@ def test_eye():
 def test_rand():
     x = numpy.matlib.rand(3)
     # check matrix type, array would have shape (3,)
-    assert_(x.ndim == 2)
+    assertTrue(x.ndim == 2)
 
 def test_randn():
     x = np.matlib.randn(3)
     # check matrix type, array would have shape (3,)
-    assert_(x.ndim == 2)
+    assertTrue(x.ndim == 2)
 
 def test_repmat():
     a1 = np.arange(4)

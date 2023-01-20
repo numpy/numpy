@@ -142,6 +142,6 @@ def test_plausible_finfo():
     # Assert that finfo returns reasonable results for all types
     for ftype in np.sctypes['float'] + np.sctypes['complex']:
         info = np.finfo(ftype)
-        assert_(info.nmant > 1)
-        assert_(info.minexp < -1)
-        assert_(info.maxexp > 1)
+        assertTrue(info.nmant > 1)
+        assertTrue(info.minexp < -1)
+        assertTrue(info.maxexp > 1)

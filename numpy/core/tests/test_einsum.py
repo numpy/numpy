@@ -107,36 +107,36 @@ class TestEinsum:
             a.shape = (2, 3)
 
             b = np.einsum("...", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
 
             b = np.einsum(a, [Ellipsis], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
 
             b = np.einsum("ij", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a)
 
             b = np.einsum(a, [0, 1], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a)
 
             # output is writeable whenever input is writeable
             b = np.einsum("...", a, optimize=do_opt)
-            assert_(b.flags['WRITEABLE'])
+            assertTrue(b.flags['WRITEABLE'])
             a.flags['WRITEABLE'] = False
             b = np.einsum("...", a, optimize=do_opt)
-            assert_(not b.flags['WRITEABLE'])
+            assertTrue(not b.flags['WRITEABLE'])
 
             # transpose
             a = np.arange(6)
             a.shape = (2, 3)
 
             b = np.einsum("ji", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a.T)
 
             b = np.einsum(a, [1, 0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a.T)
 
             # diagonal
@@ -144,11 +144,11 @@ class TestEinsum:
             a.shape = (3, 3)
 
             b = np.einsum("ii->i", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[i, i] for i in range(3)])
 
             b = np.einsum(a, [0, 0], [0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[i, i] for i in range(3)])
 
             # diagonal with various ways of broadcasting an additional dimension
@@ -156,62 +156,62 @@ class TestEinsum:
             a.shape = (3, 3, 3)
 
             b = np.einsum("...ii->...i", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)] for x in a])
 
             b = np.einsum(a, [Ellipsis, 0, 0], [Ellipsis, 0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)] for x in a])
 
             b = np.einsum("ii...->...i", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)]
                              for x in a.transpose(2, 0, 1)])
 
             b = np.einsum(a, [0, 0, Ellipsis], [Ellipsis, 0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)]
                              for x in a.transpose(2, 0, 1)])
 
             b = np.einsum("...ii->i...", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[:, i, i] for i in range(3)])
 
             b = np.einsum(a, [Ellipsis, 0, 0], [0, Ellipsis], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[:, i, i] for i in range(3)])
 
             b = np.einsum("jii->ij", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[:, i, i] for i in range(3)])
 
             b = np.einsum(a, [1, 0, 0], [0, 1], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[:, i, i] for i in range(3)])
 
             b = np.einsum("ii...->i...", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a.transpose(2, 0, 1)[:, i, i] for i in range(3)])
 
             b = np.einsum(a, [0, 0, Ellipsis], [0, Ellipsis], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a.transpose(2, 0, 1)[:, i, i] for i in range(3)])
 
             b = np.einsum("i...i->i...", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a.transpose(1, 0, 2)[:, i, i] for i in range(3)])
 
             b = np.einsum(a, [0, Ellipsis, 0], [0, Ellipsis], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a.transpose(1, 0, 2)[:, i, i] for i in range(3)])
 
             b = np.einsum("i...i->...i", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)]
                              for x in a.transpose(1, 0, 2)])
 
             b = np.einsum(a, [0, Ellipsis, 0], [Ellipsis, 0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [[x[i, i] for i in range(3)]
                              for x in a.transpose(1, 0, 2)])
 
@@ -220,11 +220,11 @@ class TestEinsum:
             a.shape = (3, 3, 3)
 
             b = np.einsum("iii->i", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[i, i, i] for i in range(3)])
 
             b = np.einsum(a, [0, 0, 0], [0], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, [a[i, i, i] for i in range(3)])
 
             # swap axes
@@ -232,11 +232,11 @@ class TestEinsum:
             a.shape = (2, 3, 4)
 
             b = np.einsum("ijk->jik", a, optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a.swapaxes(0, 1))
 
             b = np.einsum(a, [0, 1, 2], [1, 0, 2], optimize=do_opt)
-            assert_(b.base is a)
+            assertTrue(b.base is a)
             assert_equal(b, a.swapaxes(0, 1))
 
     @np._no_nep50_warning()
@@ -941,31 +941,31 @@ class TestEinsum:
 
         for opt in [True, False]:
             tmp = np.einsum('...ft,mf->...mt', a, b, order='a', optimize=opt)
-            assert_(tmp.flags.f_contiguous)
+            assertTrue(tmp.flags.f_contiguous)
 
             tmp = np.einsum('...ft,mf->...mt', a, b, order='f', optimize=opt)
-            assert_(tmp.flags.f_contiguous)
+            assertTrue(tmp.flags.f_contiguous)
 
             tmp = np.einsum('...ft,mf->...mt', a, b, order='c', optimize=opt)
-            assert_(tmp.flags.c_contiguous)
+            assertTrue(tmp.flags.c_contiguous)
 
             tmp = np.einsum('...ft,mf->...mt', a, b, order='k', optimize=opt)
-            assert_(tmp.flags.c_contiguous is False)
-            assert_(tmp.flags.f_contiguous is False)
+            assertTrue(tmp.flags.c_contiguous is False)
+            assertTrue(tmp.flags.f_contiguous is False)
 
             tmp = np.einsum('...ft,mf->...mt', a, b, optimize=opt)
-            assert_(tmp.flags.c_contiguous is False)
-            assert_(tmp.flags.f_contiguous is False)
+            assertTrue(tmp.flags.c_contiguous is False)
+            assertTrue(tmp.flags.f_contiguous is False)
 
         c = np.ones((4, 3), order='C')
         for opt in [True, False]:
             tmp = np.einsum('...ft,mf->...mt', a, c, order='a', optimize=opt)
-            assert_(tmp.flags.c_contiguous)
+            assertTrue(tmp.flags.c_contiguous)
 
         d = np.ones((2, 3, 5), order='C')
         for opt in [True, False]:
             tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
-            assert_(tmp.flags.c_contiguous)
+            assertTrue(tmp.flags.c_contiguous)
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):
@@ -982,11 +982,11 @@ class TestEinsumPath:
     def assert_path_equal(self, comp, benchmark):
         # Checks if list of tuples are equivalent
         ret = (len(comp) == len(benchmark))
-        assert_(ret)
+        assertTrue(ret)
         for pos in range(len(comp) - 1):
             ret &= isinstance(comp[pos + 1], tuple)
             ret &= (comp[pos + 1] == benchmark[pos + 1])
-        assert_(ret)
+        assertTrue(ret)
 
     def test_memory_contraints(self):
         # Ensure memory constraints are satisfied

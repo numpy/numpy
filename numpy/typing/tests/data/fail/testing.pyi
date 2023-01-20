@@ -5,7 +5,7 @@ AR_U: npt.NDArray[np.str_]
 
 def func() -> bool: ...
 
-np.testing.assert_(True, msg=1)  # E: incompatible type
+np.testing.assertTrue(True, msg=1)  # E: incompatible type
 np.testing.build_err_msg(1, "test")  # E: incompatible type
 np.testing.assert_almost_equal(AR_U, AR_U)  # E: incompatible type
 np.testing.assert_approx_equal([1, 2, 3], [1, 2, 3])  # E: incompatible type

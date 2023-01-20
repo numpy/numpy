@@ -79,7 +79,7 @@ def import_nose():
     return nose
 
 
-def assert_(val, msg=''):
+def assertTrue(val, msg=''):
     """
     Assert that works in release mode.
     Accepts callable msg to allow deferring evaluation until failure.
@@ -1517,7 +1517,7 @@ def _assert_valid_refcount(op):
         rc = sys.getrefcount(i)
         for j in range(15):
             d = op(b, c)
-        assert_(sys.getrefcount(i) >= rc)
+        assertTrue(sys.getrefcount(i) >= rc)
     finally:
         gc.enable()
     del d  # for pyflakes
@@ -2151,8 +2151,8 @@ class suppress_warnings:
             # The FutureWarning was given once, the filtered warnings were
             # ignored. All other warnings abide outside settings (may be
             # printed/error)
-            assert_(len(log) == 1)
-            assert_(len(sup.log) == 1)  # also stored in log attribute
+            assertTrue(len(log) == 1)
+            assertTrue(len(sup.log) == 1)  # also stored in log attribute
 
     Or as a decorator::
 
@@ -2376,7 +2376,7 @@ def _assert_no_gc_cycles_context(name=None):
         yield
         return
 
-    assert_(gc.isenabled())
+    assertTrue(gc.isenabled())
     gc.disable()
     gc_debug = gc.get_debug()
     try:

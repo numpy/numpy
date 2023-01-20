@@ -56,12 +56,12 @@ class TestRegression:
     def test_asarray_with_order(self):
         # Check that nothing is done when order='F' and array C/F-contiguous
         a = np.ones(2)
-        assert_(a is np.asarray(a, order='F'))
+        assertTrue(a is np.asarray(a, order='F'))
 
     def test_ravel_with_order(self):
         # Check that ravel works when order='F' and array C/F-contiguous
         a = np.ones(2)
-        assert_(not a.ravel('F').flags.owndata)
+        assertTrue(not a.ravel('F').flags.owndata)
 
     def test_sort_bigendian(self):
         # Ticket #47
@@ -125,11 +125,11 @@ class TestRegression:
         # https://github.com/numpy/numpy/issues/565
         a = np.array(['test', 'auto'])
         assert_array_equal(a == 'auto', np.array([False, True]))
-        assert_(a[1] == 'auto')
-        assert_(a[0] != 'auto')
+        assertTrue(a[1] == 'auto')
+        assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
         assert_array_equal(b != 'auto', np.ones(11, dtype=bool))
-        assert_(b[0] != 'auto')
+        assertTrue(b[0] != 'auto')
 
     def test_unicode_swapping(self):
         # Ticket #79
@@ -158,8 +158,8 @@ class TestRegression:
         yb = ((b > 2) & (b < 6))
         assert_array_almost_equal(xa, ya.nonzero())
         assert_array_almost_equal(xb, yb.nonzero())
-        assert_(np.all(a[ya] > 0.5))
-        assert_(np.all(b[yb] > 0.5))
+        assertTrue(np.all(a[ya] > 0.5))
+        assertTrue(np.all(b[yb] > 0.5))
 
     def test_endian_where(self):
         # GitHub issue #369
@@ -185,7 +185,7 @@ class TestRegression:
         d = buf[0]['data'][0]
         buf[0]['head'] = h
         buf[0]['data'][0] = d
-        assert_(buf[0]['head'] == 1)
+        assertTrue(buf[0]['head'] == 1)
 
     def test_mem_dot(self):
         # Ticket #106
@@ -266,8 +266,8 @@ class TestRegression:
         # Ticket #133
         a = np.array([3])
         b = np.array(3)
-        assert_(type(a.squeeze()) is np.ndarray)
-        assert_(type(b.squeeze()) is np.ndarray)
+        assertTrue(type(a.squeeze()) is np.ndarray)
+        assertTrue(type(b.squeeze()) is np.ndarray)
 
     def test_add_identity(self):
         # Ticket #143
@@ -481,7 +481,7 @@ class TestRegression:
 
             if isinstance(result, np.ndarray) and result.dtype.names is not None:
                 for name in result.dtype.names:
-                    assert_(isinstance(name, str))
+                    assertTrue(isinstance(name, str))
 
     def test_pickle_dtype(self):
         # Ticket #251
@@ -497,7 +497,7 @@ class TestRegression:
 
     def test_object_array_from_list(self):
         # Ticket #270 (gh-868)
-        assert_(np.array([1, None, 'A']).shape == (3,))
+        assertTrue(np.array([1, None, 'A']).shape == (3,))
 
     def test_multiple_assign(self):
         # Ticket #273
@@ -511,7 +511,7 @@ class TestRegression:
         dt = np.dtype([('one', '<i4'), ('two', '<i4')])
         x = np.array((1, 2), dtype=dt)
         x = x.byteswap()
-        assert_(x['one'] > 1 and x['two'] > 2)
+        assertTrue(x['one'] > 1 and x['two'] > 2)
 
     def test_method_args(self):
         # Make sure methods and functions have same default axis
@@ -537,9 +537,9 @@ class TestRegression:
                 res1 = arr
 
             if res1.dtype.kind in 'uib':
-                assert_((res1 == res2).all(), func)
+                assertTrue((res1 == res2).all(), func)
             else:
-                assert_(abs(res1-res2).max() < 1e-8, func)
+                assertTrue(abs(res1-res2).max() < 1e-8, func)
 
         for func in funcs2:
             arr1 = np.random.rand(8, 7)
@@ -553,7 +553,7 @@ class TestRegression:
             if res1 is None:
                 res1 = getattr(arr1, func)(arr2)
             res2 = getattr(np, func)(arr1, arr2)
-            assert_(abs(res1-res2).max() < 1e-8, func)
+            assertTrue(abs(res1-res2).max() < 1e-8, func)
 
     def test_mem_lexsort_strings(self):
         # Ticket #298
@@ -571,7 +571,7 @@ class TestRegression:
         ra = np.array([(1, 2.3)], dtype=dt)
         rb = np.rec.array(ra, dtype=dt)
         rb['x'] = 2.
-        assert_(ra['x'] != rb['x'])
+        assertTrue(ra['x'] != rb['x'])
 
     def test_rec_fromarray(self):
         # Ticket #322
@@ -593,10 +593,10 @@ class TestRegression:
 
     def test_ndmin_order(self):
         # Issue #465 and related checks
-        assert_(np.array([1, 2], order='C', ndmin=3).flags.c_contiguous)
-        assert_(np.array([1, 2], order='F', ndmin=3).flags.f_contiguous)
-        assert_(np.array(np.ones((2, 2), order='F'), ndmin=3).flags.f_contiguous)
-        assert_(np.array(np.ones((2, 2), order='C'), ndmin=3).flags.c_contiguous)
+        assertTrue(np.array([1, 2], order='C', ndmin=3).flags.c_contiguous)
+        assertTrue(np.array([1, 2], order='F', ndmin=3).flags.f_contiguous)
+        assertTrue(np.array(np.ones((2, 2), order='F'), ndmin=3).flags.f_contiguous)
+        assertTrue(np.array(np.ones((2, 2), order='C'), ndmin=3).flags.c_contiguous)
 
     def test_mem_axis_minimization(self):
         # Ticket #327
@@ -609,7 +609,7 @@ class TestRegression:
 
     def test_dtype_tuple(self):
         # Ticket #334
-        assert_(np.dtype('i4') == np.dtype(('i4', ())))
+        assertTrue(np.dtype('i4') == np.dtype(('i4', ())))
 
     def test_dtype_posttuple(self):
         # Ticket #335
@@ -642,7 +642,7 @@ class TestRegression:
         # Issue #380, test reshaping of zero strided arrays
         a = np.ones(1)
         a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
-        assert_(a.reshape(5, 1).strides[0] == 0)
+        assertTrue(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self):
         # GitHub Issue #2700, setting shape failed for 0-sized arrays
@@ -675,7 +675,7 @@ class TestRegression:
 
     def test_object_argmax(self):
         a = np.array([1, 2, 3], dtype=object)
-        assert_(a.argmax() == 2)
+        assertTrue(a.argmax() == 2)
 
     def test_recarray_fields(self):
         # Ticket #372
@@ -686,7 +686,7 @@ class TestRegression:
                   np.rec.array([(1, 2), (3, 4)]),
                   np.rec.fromarrays([(1, 2), (3, 4)], "i4,i4"),
                   np.rec.fromarrays([(1, 2), (3, 4)])]:
-            assert_(a.dtype in [dt0, dt1])
+            assertTrue(a.dtype in [dt0, dt1])
 
     def test_random_shuffle(self):
         # Ticket #374
@@ -733,7 +733,7 @@ class TestRegression:
     def test_junk_in_string_fields_of_recarray(self):
         # Ticket #483
         r = np.array([[b'abc']], dtype=[('var1', '|S20')])
-        assert_(asbytes(r['var1'][0][0]) == b'abc')
+        assertTrue(asbytes(r['var1'][0][0]) == b'abc')
 
     def test_take_output(self):
         # Ensure that 'take' honours output parameter.
@@ -754,7 +754,7 @@ class TestRegression:
         except IndexError:
             pass
         if HAS_REFCOUNT:
-            assert_(ref_d == sys.getrefcount(d))
+            assertTrue(ref_d == sys.getrefcount(d))
 
     def test_array_str_64bit(self):
         # Ticket #501
@@ -790,7 +790,7 @@ class TestRegression:
     def test_argmax_byteorder(self):
         # Ticket #546
         a = np.arange(3, dtype='>f')
-        assert_(a[a.argmax()] == a.max())
+        assertTrue(a[a.argmax()] == a.max())
 
     def test_rand_seed(self):
         # Ticket #555
@@ -960,16 +960,16 @@ class TestRegression:
         arr0 = np.zeros(2, dtype=np.object_)
 
         arr0[0] = a
-        assert_(cnt(a) == cnt0_a + 1)
+        assertTrue(cnt(a) == cnt0_a + 1)
         arr0[1] = b
-        assert_(cnt(b) == cnt0_b + 1)
+        assertTrue(cnt(b) == cnt0_b + 1)
 
         arr[:, :] = arr0
-        assert_(cnt(a) == cnt0_a + 6)
-        assert_(cnt(b) == cnt0_b + 6)
+        assertTrue(cnt(a) == cnt0_a + 6)
+        assertTrue(cnt(b) == cnt0_b + 6)
 
         arr[:, 0] = None
-        assert_(cnt(a) == cnt0_a + 1)
+        assertTrue(cnt(a) == cnt0_a + 1)
 
         del arr, arr0
 
@@ -979,20 +979,20 @@ class TestRegression:
 
         arr[:, 0] = a
         arr[:, 1] = b
-        assert_(cnt(a) == cnt0_a + 5)
-        assert_(cnt(b) == cnt0_b + 5)
+        assertTrue(cnt(a) == cnt0_a + 5)
+        assertTrue(cnt(b) == cnt0_b + 5)
 
         arr2 = arr.copy()
-        assert_(cnt(a) == cnt0_a + 10)
-        assert_(cnt(b) == cnt0_b + 10)
+        assertTrue(cnt(a) == cnt0_a + 10)
+        assertTrue(cnt(b) == cnt0_b + 10)
 
         arr2 = arr[:, 0].copy()
-        assert_(cnt(a) == cnt0_a + 10)
-        assert_(cnt(b) == cnt0_b + 5)
+        assertTrue(cnt(a) == cnt0_a + 10)
+        assertTrue(cnt(b) == cnt0_b + 5)
 
         arr2 = arr.flatten()
-        assert_(cnt(a) == cnt0_a + 10)
-        assert_(cnt(b) == cnt0_b + 10)
+        assertTrue(cnt(a) == cnt0_a + 10)
+        assertTrue(cnt(b) == cnt0_b + 10)
 
         del arr, arr2
 
@@ -1003,23 +1003,23 @@ class TestRegression:
 
         arr1[...] = a
         arr2[...] = b
-        assert_(cnt(a) == cnt0_a + 5)
-        assert_(cnt(b) == cnt0_b + 5)
+        assertTrue(cnt(a) == cnt0_a + 5)
+        assertTrue(cnt(b) == cnt0_b + 5)
 
         tmp = np.concatenate((arr1, arr2))
-        assert_(cnt(a) == cnt0_a + 5 + 5)
-        assert_(cnt(b) == cnt0_b + 5 + 5)
+        assertTrue(cnt(a) == cnt0_a + 5 + 5)
+        assertTrue(cnt(b) == cnt0_b + 5 + 5)
 
         tmp = arr1.repeat(3, axis=0)
-        assert_(cnt(a) == cnt0_a + 5 + 3*5)
+        assertTrue(cnt(a) == cnt0_a + 5 + 3*5)
 
         tmp = arr1.take([1, 2, 3], axis=0)
-        assert_(cnt(a) == cnt0_a + 5 + 3)
+        assertTrue(cnt(a) == cnt0_a + 5 + 3)
 
         x = np.array([[0], [1], [0], [1], [1]], int)
         tmp = x.choose(arr1, arr2)
-        assert_(cnt(a) == cnt0_a + 5 + 2)
-        assert_(cnt(b) == cnt0_b + 5 + 3)
+        assertTrue(cnt(a) == cnt0_a + 5 + 2)
+        assertTrue(cnt(b) == cnt0_b + 5 + 3)
 
         del tmp  # Avoid pyflakes unused variable warning
 
@@ -1045,9 +1045,9 @@ class TestRegression:
         arr[:] = d
         del d
         arr[:] = arr  # refcount of 'd' might hit zero here
-        assert_(not arr[0].deleted)
+        assertTrue(not arr[0].deleted)
         arr[:] = arr  # trying to induce a segfault by doing it again...
-        assert_(not arr[0].deleted)
+        assertTrue(not arr[0].deleted)
 
     def test_mem_fromiter_invalid_dtype_string(self):
         x = [1, 2, 3]
@@ -1058,7 +1058,7 @@ class TestRegression:
         # Ticket #713
         oldsize = np.setbufsize(10*16)
         a = np.array([None]*161, object)
-        assert_(not np.any(a))
+        assertTrue(not np.any(a))
         np.setbufsize(oldsize)
 
     def test_mem_0d_array_index(self):
@@ -1095,7 +1095,7 @@ class TestRegression:
         with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
         xpd = xp.astype(np.float64)
-        assert_((xp.__array_interface__['data'][0] !=
+        assertTrue((xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0]))
 
     def test_compress_small_type(self):
@@ -1125,64 +1125,64 @@ class TestRegression:
                 self.info = getattr(obj, 'info', '')
 
         dat = TestArray([[1, 2, 3, 4], [5, 6, 7, 8]], 'jubba')
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.resize((4, 2))
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.sort()
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.fill(2)
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.put([2, 3, 4], [6, 3, 4])
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.setfield(4, np.int32, 0)
-        assert_(dat.info == 'jubba')
+        assertTrue(dat.info == 'jubba')
         dat.setflags()
-        assert_(dat.info == 'jubba')
-        assert_(dat.all(1).info == 'jubba')
-        assert_(dat.any(1).info == 'jubba')
-        assert_(dat.argmax(1).info == 'jubba')
-        assert_(dat.argmin(1).info == 'jubba')
-        assert_(dat.argsort(1).info == 'jubba')
-        assert_(dat.astype(TestArray).info == 'jubba')
-        assert_(dat.byteswap().info == 'jubba')
-        assert_(dat.clip(2, 7).info == 'jubba')
-        assert_(dat.compress([0, 1, 1]).info == 'jubba')
-        assert_(dat.conj().info == 'jubba')
-        assert_(dat.conjugate().info == 'jubba')
-        assert_(dat.copy().info == 'jubba')
+        assertTrue(dat.info == 'jubba')
+        assertTrue(dat.all(1).info == 'jubba')
+        assertTrue(dat.any(1).info == 'jubba')
+        assertTrue(dat.argmax(1).info == 'jubba')
+        assertTrue(dat.argmin(1).info == 'jubba')
+        assertTrue(dat.argsort(1).info == 'jubba')
+        assertTrue(dat.astype(TestArray).info == 'jubba')
+        assertTrue(dat.byteswap().info == 'jubba')
+        assertTrue(dat.clip(2, 7).info == 'jubba')
+        assertTrue(dat.compress([0, 1, 1]).info == 'jubba')
+        assertTrue(dat.conj().info == 'jubba')
+        assertTrue(dat.conjugate().info == 'jubba')
+        assertTrue(dat.copy().info == 'jubba')
         dat2 = TestArray([2, 3, 1, 0], 'jubba')
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
                    [20, 21, 22, 23], [30, 31, 32, 33]]
-        assert_(dat2.choose(choices).info == 'jubba')
-        assert_(dat.cumprod(1).info == 'jubba')
-        assert_(dat.cumsum(1).info == 'jubba')
-        assert_(dat.diagonal().info == 'jubba')
-        assert_(dat.flatten().info == 'jubba')
-        assert_(dat.getfield(np.int32, 0).info == 'jubba')
-        assert_(dat.imag.info == 'jubba')
-        assert_(dat.max(1).info == 'jubba')
-        assert_(dat.mean(1).info == 'jubba')
-        assert_(dat.min(1).info == 'jubba')
-        assert_(dat.newbyteorder().info == 'jubba')
-        assert_(dat.prod(1).info == 'jubba')
-        assert_(dat.ptp(1).info == 'jubba')
-        assert_(dat.ravel().info == 'jubba')
-        assert_(dat.real.info == 'jubba')
-        assert_(dat.repeat(2).info == 'jubba')
-        assert_(dat.reshape((2, 4)).info == 'jubba')
-        assert_(dat.round().info == 'jubba')
-        assert_(dat.squeeze().info == 'jubba')
-        assert_(dat.std(1).info == 'jubba')
-        assert_(dat.sum(1).info == 'jubba')
-        assert_(dat.swapaxes(0, 1).info == 'jubba')
-        assert_(dat.take([2, 3, 5]).info == 'jubba')
-        assert_(dat.transpose().info == 'jubba')
-        assert_(dat.T.info == 'jubba')
-        assert_(dat.var(1).info == 'jubba')
-        assert_(dat.view(TestArray).info == 'jubba')
+        assertTrue(dat2.choose(choices).info == 'jubba')
+        assertTrue(dat.cumprod(1).info == 'jubba')
+        assertTrue(dat.cumsum(1).info == 'jubba')
+        assertTrue(dat.diagonal().info == 'jubba')
+        assertTrue(dat.flatten().info == 'jubba')
+        assertTrue(dat.getfield(np.int32, 0).info == 'jubba')
+        assertTrue(dat.imag.info == 'jubba')
+        assertTrue(dat.max(1).info == 'jubba')
+        assertTrue(dat.mean(1).info == 'jubba')
+        assertTrue(dat.min(1).info == 'jubba')
+        assertTrue(dat.newbyteorder().info == 'jubba')
+        assertTrue(dat.prod(1).info == 'jubba')
+        assertTrue(dat.ptp(1).info == 'jubba')
+        assertTrue(dat.ravel().info == 'jubba')
+        assertTrue(dat.real.info == 'jubba')
+        assertTrue(dat.repeat(2).info == 'jubba')
+        assertTrue(dat.reshape((2, 4)).info == 'jubba')
+        assertTrue(dat.round().info == 'jubba')
+        assertTrue(dat.squeeze().info == 'jubba')
+        assertTrue(dat.std(1).info == 'jubba')
+        assertTrue(dat.sum(1).info == 'jubba')
+        assertTrue(dat.swapaxes(0, 1).info == 'jubba')
+        assertTrue(dat.take([2, 3, 5]).info == 'jubba')
+        assertTrue(dat.transpose().info == 'jubba')
+        assertTrue(dat.T.info == 'jubba')
+        assertTrue(dat.var(1).info == 'jubba')
+        assertTrue(dat.view(TestArray).info == 'jubba')
         # These methods do not preserve subclasses
-        assert_(type(dat.nonzero()[0]) is np.ndarray)
-        assert_(type(dat.nonzero()[1]) is np.ndarray)
+        assertTrue(type(dat.nonzero()[0]) is np.ndarray)
+        assertTrue(type(dat.nonzero()[1]) is np.ndarray)
 
     def test_recarray_tolist(self):
         # Ticket #793, changeset r5215
@@ -1191,8 +1191,8 @@ class TestRegression:
         buf = np.zeros(40, dtype=np.int8)
         a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
         b = a.tolist()
-        assert_( a[0].tolist() == b[0])
-        assert_( a[1].tolist() == b[1])
+        assertTrue( a[0].tolist() == b[0])
+        assertTrue( a[1].tolist() == b[1])
 
     def test_nonscalar_item_method(self):
         # Make sure that .item() fails graciously when it should
@@ -1227,8 +1227,8 @@ class TestRegression:
         b = list(a.dtype.names)
         b[0] = "notfoo"
         a.dtype.names = b
-        assert_(a.dtype.names[0] == "notfoo")
-        assert_(a.dtype.names[1] == "bar")
+        assertTrue(a.dtype.names[0] == "notfoo")
+        assertTrue(a.dtype.names[1] == "bar")
 
     def test_for_object_scalar_creation(self):
         # Ticket #816
@@ -1237,12 +1237,12 @@ class TestRegression:
         b2 = np.object_(3.0)
         c = np.object_([4, 5])
         d = np.object_([None, {}, []])
-        assert_(a is None)
-        assert_(type(b) is int)
-        assert_(type(b2) is float)
-        assert_(type(c) is np.ndarray)
-        assert_(c.dtype == object)
-        assert_(d.dtype == object)
+        assertTrue(a is None)
+        assertTrue(type(b) is int)
+        assertTrue(type(b2) is float)
+        assertTrue(type(c) is np.ndarray)
+        assertTrue(c.dtype == object)
+        assertTrue(d.dtype == object)
 
     def test_array_resize_method_system_error(self):
         # Ticket #840 - order should be an invalid keyword.
@@ -1263,8 +1263,8 @@ class TestRegression:
         data = [('john', 4), ('mary', 5)]
         dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
         arr = np.array(data, dtype=dtype1)
-        assert_(arr[0][0] == 'john')
-        assert_(arr[0][1] == 4)
+        assertTrue(arr[0][0] == 'john')
+        assertTrue(arr[0][1] == 4)
 
     def test_void_scalar_constructor(self):
         #Issue #1550
@@ -1275,7 +1275,7 @@ class TestRegression:
         test_string_void_scalar = np.core.multiarray.scalar(
             np.dtype(("V", test_string.dtype.itemsize)), test_string.tobytes())
 
-        assert_(test_string_void_scalar.view(test_string.dtype) == test_string)
+        assertTrue(test_string_void_scalar.view(test_string.dtype) == test_string)
 
         #Create record scalar, construct from data and assert that
         #reconstructed scalar is correct.
@@ -1283,13 +1283,13 @@ class TestRegression:
         test_record_void_scalar = np.core.multiarray.scalar(
             test_record.dtype, test_record.tobytes())
 
-        assert_(test_record_void_scalar == test_record)
+        assertTrue(test_record_void_scalar == test_record)
 
         # Test pickle and unpickle of void and record scalars
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            assert_(pickle.loads(
+            assertTrue(pickle.loads(
                 pickle.dumps(test_string, protocol=proto)) == test_string)
-            assert_(pickle.loads(
+            assertTrue(pickle.loads(
                 pickle.dumps(test_record, protocol=proto)) == test_record)
 
     @_no_tracing
@@ -1312,8 +1312,8 @@ class TestRegression:
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
-                    assert_(np.all(z == 0))
-                    assert_(z.shape == (m, n))
+                    assertTrue(np.all(z == 0))
+                    assertTrue(z.shape == (m, n))
 
     def test_zeros(self):
         # Regression test for #1061.
@@ -1330,14 +1330,14 @@ class TestRegression:
         with assert_raises_regex(ValueError,
                                  'Maximum allowed size exceeded'):
             np.arange(sz)
-            assert_(np.size == sz)
+            assertTrue(np.size == sz)
 
     def test_fromiter_bytes(self):
         # Ticket #1058
         a = np.fromiter(list(range(10)), dtype='b')
         b = np.fromiter(list(range(10)), dtype='B')
-        assert_(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        assert_(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assertTrue(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assertTrue(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_array_from_sequence_scalar_array(self):
         # Ticket #1078: segfaults when creating an array with a sequence of
@@ -1408,15 +1408,15 @@ class TestRegression:
 
     def test_mixed_string_byte_array_creation(self):
         a = np.array(['1234', b'123'])
-        assert_(a.itemsize == 16)
+        assertTrue(a.itemsize == 16)
         a = np.array([b'123', '1234'])
-        assert_(a.itemsize == 16)
+        assertTrue(a.itemsize == 16)
         a = np.array(['1234', b'123', '12345'])
-        assert_(a.itemsize == 20)
+        assertTrue(a.itemsize == 20)
         a = np.array([b'123', '1234', b'12345'])
-        assert_(a.itemsize == 20)
+        assertTrue(a.itemsize == 20)
         a = np.array([b'123', '1234', b'1234'])
-        assert_(a.itemsize == 16)
+        assertTrue(a.itemsize == 16)
 
     def test_misaligned_objects_segfault(self):
         # Ticket #1198 and #1267
@@ -1469,7 +1469,7 @@ class TestRegression:
         strb = 'bbbb'
         x = np.array([[(0, stra), (1, strb)]], 'i8,O')
         x[x.nonzero()] = x.ravel()[:1]
-        assert_(x[0, 1] == x[0, 0])
+        assertTrue(x[0, 1] == x[0, 0])
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_structured_arrays_with_objects2(self):
@@ -1480,8 +1480,8 @@ class TestRegression:
         numa = sys.getrefcount(stra)
         x = np.array([[(0, stra), (1, strb)]], 'i8,O')
         x[x.nonzero()] = x.ravel()[:1]
-        assert_(sys.getrefcount(strb) == numb)
-        assert_(sys.getrefcount(stra) == numa + 2)
+        assertTrue(sys.getrefcount(strb) == numb)
+        assertTrue(sys.getrefcount(stra) == numa + 2)
 
     def test_duplicate_title_and_name(self):
         # Ticket #1254
@@ -1510,13 +1510,13 @@ class TestRegression:
 
     def test_log1p_compiler_shenanigans(self):
         # Check if log1p is behaving on 32 bit intel systems.
-        assert_(np.isfinite(np.log1p(np.exp2(-53))))
+        assertTrue(np.isfinite(np.log1p(np.exp2(-53))))
 
     def test_fromiter_comparison(self):
         a = np.fromiter(list(range(10)), dtype='b')
         b = np.fromiter(list(range(10)), dtype='B')
-        assert_(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        assert_(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assertTrue(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assertTrue(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
@@ -1553,11 +1553,11 @@ class TestRegression:
         out = np.zeros((3,))
 
         ret = data.var(axis=1, out=out)
-        assert_(ret is out)
+        assertTrue(ret is out)
         assert_array_equal(ret, data.var(axis=1))
 
         ret = data.std(axis=1, out=out)
-        assert_(ret is out)
+        assertTrue(ret is out)
         assert_array_equal(ret, data.std(axis=1))
 
     def test_complex_nan_maximum(self):
@@ -1642,8 +1642,8 @@ class TestRegression:
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = np.array([0, 0+0.5j, 0.5+0j], dtype=tp)
             assert_equal(x.astype(bool), np.array([0, 1, 1], dtype=bool))
-            assert_(np.any(x))
-            assert_(np.all(x[1:]))
+            assertTrue(np.any(x))
+            assertTrue(np.all(x[1:]))
 
     def test_uint_int_conversion(self):
         x = 2**64 - 1
@@ -1671,7 +1671,7 @@ class TestRegression:
 
     def test_find_common_type_boolean(self):
         # Ticket #1695
-        assert_(np.find_common_type([], ['?', '?']) == '?')
+        assertTrue(np.find_common_type([], ['?', '?']) == '?')
 
     def test_empty_mul(self):
         a = np.array([1.])
@@ -1691,8 +1691,8 @@ class TestRegression:
     def test_any_float(self):
         # all and any for floats
         a = np.array([0.1, 0.9])
-        assert_(np.any(a))
-        assert_(np.all(a))
+        assertTrue(np.any(a))
+        assertTrue(np.all(a))
 
     def test_large_float_sum(self):
         a = np.arange(10000, dtype='f')
@@ -1707,18 +1707,18 @@ class TestRegression:
 
     def test_array_scalar_contiguous(self):
         # Array scalars are both C and Fortran contiguous
-        assert_(np.array(1.0).flags.c_contiguous)
-        assert_(np.array(1.0).flags.f_contiguous)
-        assert_(np.array(np.float32(1.0)).flags.c_contiguous)
-        assert_(np.array(np.float32(1.0)).flags.f_contiguous)
+        assertTrue(np.array(1.0).flags.c_contiguous)
+        assertTrue(np.array(1.0).flags.f_contiguous)
+        assertTrue(np.array(np.float32(1.0)).flags.c_contiguous)
+        assertTrue(np.array(np.float32(1.0)).flags.f_contiguous)
 
     def test_squeeze_contiguous(self):
         # Similar to GitHub issue #387
         a = np.zeros((1, 2)).squeeze()
         b = np.zeros((2, 2, 2), order='F')[:, :, ::2].squeeze()
-        assert_(a.flags.c_contiguous)
-        assert_(a.flags.f_contiguous)
-        assert_(b.flags.f_contiguous)
+        assertTrue(a.flags.c_contiguous)
+        assertTrue(a.flags.f_contiguous)
+        assertTrue(b.flags.f_contiguous)
 
     def test_squeeze_axis_handling(self):
         # Issue #10779
@@ -1785,9 +1785,9 @@ class TestRegression:
         # GitHub issue #387
         a = np.add.reduce(np.zeros((2, 1, 2)), (0, 1))
         b = np.add.reduce(np.zeros((2, 1, 2)), 1)
-        assert_(a.flags.c_contiguous)
-        assert_(a.flags.f_contiguous)
-        assert_(b.flags.c_contiguous)
+        assertTrue(a.flags.c_contiguous)
+        assertTrue(a.flags.f_contiguous)
+        assertTrue(b.flags.c_contiguous)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_object_array_self_reference(self):
@@ -1829,7 +1829,7 @@ class TestRegression:
         a = np.array(object(), dtype=object)
         np.copyto(a, a)
         if HAS_REFCOUNT:
-            assert_(sys.getrefcount(a[()]) == 2)
+            assertTrue(sys.getrefcount(a[()]) == 2)
         a[()].__class__  # will segfault if object was deleted
 
     def test_zerosize_accumulate(self):
@@ -1888,9 +1888,9 @@ class TestRegression:
     def test_alignment_update(self):
         # Check that alignment flag is updated on stride setting
         a = np.arange(10)
-        assert_(a.flags.aligned)
+        assertTrue(a.flags.aligned)
         a.strides = 3
-        assert_(not a.flags.aligned)
+        assertTrue(not a.flags.aligned)
 
     def test_ticket_1770(self):
         "Should not segfault on python 3k"
@@ -1983,7 +1983,7 @@ class TestRegression:
                 # but are different in koi8-r, resulting to silent
                 # bogus results
                 result = pickle.loads(data, encoding='koi8-r')
-                assert_(result != original)
+                assertTrue(result != original)
             elif koi8r_validity == 'invalid':
                 # Unicode code points outside latin1, so results
                 # to an encoding exception
@@ -2088,7 +2088,7 @@ class TestRegression:
         # This used to segfault:
         y = str(x)
         # Check the final string:
-        assert_(y == "[0 0]")
+        assertTrue(y == "[0 0]")
 
     def test_searchsorted_wrong_dtype(self):
         # Ticket #2189, it used to segfault, so we check that it raises the
@@ -2124,10 +2124,10 @@ class TestRegression:
         a = np.empty((2, 2), order='F')
         b = copy.copy(a)
         c = copy.deepcopy(a)
-        assert_(b.flags.fortran)
-        assert_(b.flags.f_contiguous)
-        assert_(c.flags.fortran)
-        assert_(c.flags.f_contiguous)
+        assertTrue(b.flags.fortran)
+        assertTrue(b.flags.f_contiguous)
+        assertTrue(c.flags.fortran)
+        assertTrue(c.flags.f_contiguous)
 
     def test_fortran_order_buffer(self):
         import numpy as np
@@ -2159,8 +2159,8 @@ class TestRegression:
         assert_equal(arr, arr_cp)
         assert_equal(arr.shape, arr_cp.shape)
         assert_equal(int(arr), int(arr_cp))
-        assert_(arr is not arr_cp)
-        assert_(isinstance(arr_cp, type(arr)))
+        assertTrue(arr is not arr_cp)
+        assertTrue(isinstance(arr_cp, type(arr)))
 
     def test_deepcopy_F_order_object_array(self):
         # Ticket #6456.
@@ -2170,20 +2170,20 @@ class TestRegression:
         arr_cp = copy.deepcopy(arr)
 
         assert_equal(arr, arr_cp)
-        assert_(arr is not arr_cp)
+        assertTrue(arr is not arr_cp)
         # Ensure that we have actually copied the item.
-        assert_(arr[0, 1] is not arr_cp[1, 1])
+        assertTrue(arr[0, 1] is not arr_cp[1, 1])
         # Ensure we are allowed to have references to the same object.
-        assert_(arr[0, 1] is arr[1, 1])
+        assertTrue(arr[0, 1] is arr[1, 1])
         # Check the references hold for the copied objects.
-        assert_(arr_cp[0, 1] is arr_cp[1, 1])
+        assertTrue(arr_cp[0, 1] is arr_cp[1, 1])
 
     def test_deepcopy_empty_object_array(self):
         # Ticket #8536.
         # Deepcopy should succeed
         a = np.array([], dtype=object)
         b = copy.deepcopy(a)
-        assert_(a.shape == b.shape)
+        assertTrue(a.shape == b.shape)
 
     def test_bool_subscript_crash(self):
         # gh-4494
@@ -2208,8 +2208,8 @@ class TestRegression:
         lhs = np.array(1)
         for f in [op.lt, op.le, op.gt, op.ge]:
             assert_raises(TypeError, f, lhs, rhs)
-        assert_(not op.eq(lhs, rhs))
-        assert_(op.ne(lhs, rhs))
+        assertTrue(not op.eq(lhs, rhs))
+        assertTrue(op.ne(lhs, rhs))
 
     def test_richcompare_scalar_and_subclass(self):
         # gh-4709
@@ -2266,7 +2266,7 @@ class TestRegression:
         a = np.zeros(2, dtype=recordtype)
         for i in range(100):
             a == a
-        assert_(sys.getrefcount(a) < 10)
+        assertTrue(sys.getrefcount(a) < 10)
 
         # The case in the bug report.
         before = sys.getrefcount(a)
@@ -2339,7 +2339,7 @@ class TestRegression:
             except TypeError as e:
                 assert_equal(t.__hash__, None)
             else:
-                assert_(t.__hash__ != None)
+                assertTrue(t.__hash__ != None)
 
     def test_scalar_copy(self):
         scalar_types = set(np.sctypeDict.values())
@@ -2363,10 +2363,10 @@ class TestRegression:
 
     def test_void_getitem(self):
         # Test fix for gh-11668.
-        assert_(np.array([b'a'], 'V1').astype('O') == b'a')
-        assert_(np.array([b'ab'], 'V2').astype('O') == b'ab')
-        assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
-        assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
+        assertTrue(np.array([b'a'], 'V1').astype('O') == b'a')
+        assertTrue(np.array([b'ab'], 'V2').astype('O') == b'ab')
+        assertTrue(np.array([b'abc'], 'V3').astype('O') == b'abc')
+        assertTrue(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY
@@ -2404,7 +2404,7 @@ class TestRegression:
         for i in range(10):
             str(data[['f1']])
             if HAS_REFCOUNT:
-                assert_(base <= sys.getrefcount(s))
+                assertTrue(base <= sys.getrefcount(s))
 
     @pytest.mark.parametrize('val', [
         # arrays and scalars

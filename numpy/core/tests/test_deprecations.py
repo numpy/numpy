@@ -253,7 +253,7 @@ class TestNPY_CHAR(_DeprecationTestCase):
     def test_npy_char_deprecation(self):
         from numpy.core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
-        assert_(npy_char_deprecation() == 'S1')
+        assertTrue(npy_char_deprecation() == 'S1')
 
 
 class TestPyArray_AS1D(_DeprecationTestCase):
@@ -700,7 +700,7 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
             def slow_func(x, y, z):
                 pass
 
-            assert_(slow_func.slow)
+            assertTrue(slow_func.slow)
         self.assert_deprecated(_test_slow)
 
     def test_setastest(self):
@@ -717,9 +717,9 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
             def f_isnottest(a):
                 pass
 
-            assert_(f_default.__test__)
-            assert_(f_istest.__test__)
-            assert_(not f_isnottest.__test__)
+            assertTrue(f_default.__test__)
+            assertTrue(f_istest.__test__)
+            assertTrue(not f_isnottest.__test__)
         self.assert_deprecated(_test_setastest, num=3)
 
     def test_skip_functions_hardcoded(self):
@@ -882,13 +882,13 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
                     (2, 1, 2),
                     (2, 2, 4)])
             def check_parametrize(base, power, expected):
-                assert_(base**power == expected)
+                assertTrue(base**power == expected)
 
             count = 0
             for test in check_parametrize():
                 test[0](*test[1:])
                 count += 1
-            assert_(count == 3)
+            assertTrue(count == 3)
         self.assert_deprecated(_test_parametrize)
 
 

@@ -476,13 +476,13 @@ class TestSlidingWindowView:
     def test_writeable(self):
         arr = np.arange(5)
         view = sliding_window_view(arr, 2, writeable=False)
-        assert_(not view.flags.writeable)
+        assertTrue(not view.flags.writeable)
         with pytest.raises(
                 ValueError,
                 match='assignment destination is read-only'):
             view[0, 0] = 3
         view = sliding_window_view(arr, 2, writeable=True)
-        assert_(view.flags.writeable)
+        assertTrue(view.flags.writeable)
         view[0, 1] = 3
         assert_array_equal(arr, np.array([0, 3, 2, 3, 4]))
 
@@ -491,22 +491,22 @@ class TestSlidingWindowView:
             pass
 
         arr = np.arange(5).view(MyArray)
-        assert_(not isinstance(sliding_window_view(arr, 2,
+        assertTrue(not isinstance(sliding_window_view(arr, 2,
                                                    subok=False),
                                MyArray))
-        assert_(isinstance(sliding_window_view(arr, 2, subok=True), MyArray))
+        assertTrue(isinstance(sliding_window_view(arr, 2, subok=True), MyArray))
         # Default behavior
-        assert_(not isinstance(sliding_window_view(arr, 2), MyArray))
+        assertTrue(not isinstance(sliding_window_view(arr, 2), MyArray))
 
 
 def as_strided_writeable():
     arr = np.ones(10)
     view = as_strided(arr, writeable=False)
-    assert_(not view.flags.writeable)
+    assertTrue(not view.flags.writeable)
 
     # Check that writeable also is fine:
     view = as_strided(arr, writeable=True)
-    assert_(view.flags.writeable)
+    assertTrue(view.flags.writeable)
     view[...] = 3
     assert_array_equal(arr, np.full_like(arr, 3))
 
@@ -514,7 +514,7 @@ def as_strided_writeable():
     arr.flags.writeable = False
     view = as_strided(arr, writeable=False)
     view = as_strided(arr, writeable=True)
-    assert_(not view.flags.writeable)
+    assertTrue(not view.flags.writeable)
 
 
 class VerySimpleSubClass(np.ndarray):
@@ -535,38 +535,38 @@ class SimpleSubClass(VerySimpleSubClass):
 def test_subclasses():
     # test that subclass is preserved only if subok=True
     a = VerySimpleSubClass([1, 2, 3, 4])
-    assert_(type(a) is VerySimpleSubClass)
+    assertTrue(type(a) is VerySimpleSubClass)
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,))
-    assert_(type(a_view) is np.ndarray)
+    assertTrue(type(a_view) is np.ndarray)
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
-    assert_(type(a_view) is VerySimpleSubClass)
+    assertTrue(type(a_view) is VerySimpleSubClass)
     # test that if a subclass has __array_finalize__, it is used
     a = SimpleSubClass([1, 2, 3, 4])
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,), subok=True)
-    assert_(type(a_view) is SimpleSubClass)
-    assert_(a_view.info == 'simple finalized')
+    assertTrue(type(a_view) is SimpleSubClass)
+    assertTrue(a_view.info == 'simple finalized')
 
     # similar tests for broadcast_arrays
     b = np.arange(len(a)).reshape(-1, 1)
     a_view, b_view = broadcast_arrays(a, b)
-    assert_(type(a_view) is np.ndarray)
-    assert_(type(b_view) is np.ndarray)
-    assert_(a_view.shape == b_view.shape)
+    assertTrue(type(a_view) is np.ndarray)
+    assertTrue(type(b_view) is np.ndarray)
+    assertTrue(a_view.shape == b_view.shape)
     a_view, b_view = broadcast_arrays(a, b, subok=True)
-    assert_(type(a_view) is SimpleSubClass)
-    assert_(a_view.info == 'simple finalized')
-    assert_(type(b_view) is np.ndarray)
-    assert_(a_view.shape == b_view.shape)
+    assertTrue(type(a_view) is SimpleSubClass)
+    assertTrue(a_view.info == 'simple finalized')
+    assertTrue(type(b_view) is np.ndarray)
+    assertTrue(a_view.shape == b_view.shape)
 
     # and for broadcast_to
     shape = (2, 4)
     a_view = broadcast_to(a, shape)
-    assert_(type(a_view) is np.ndarray)
-    assert_(a_view.shape == shape)
+    assertTrue(type(a_view) is np.ndarray)
+    assertTrue(a_view.shape == shape)
     a_view = broadcast_to(a, shape, subok=True)
-    assert_(type(a_view) is SimpleSubClass)
-    assert_(a_view.info == 'simple finalized')
-    assert_(a_view.shape == shape)
+    assertTrue(type(a_view) is SimpleSubClass)
+    assertTrue(a_view.info == 'simple finalized')
+    assertTrue(a_view.shape == shape)
 
 
 def test_writeable():
@@ -613,7 +613,7 @@ def test_writeable():
     tricky_array = as_strided(np.array(0), shape, strides)
     other = np.zeros((1,))
     first, second = broadcast_arrays(tricky_array, other)
-    assert_(first.shape == second.shape)
+    assertTrue(first.shape == second.shape)
 
 
 def test_writeable_memoryview():

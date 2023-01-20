@@ -128,7 +128,7 @@ class TestNameValidator:
         "Test validate no names"
         namelist = None
         validator = NameValidator()
-        assert_(validator(namelist) is None)
+        assertTrue(validator(namelist) is None)
         assert_equal(validator(namelist, nbfields=3), ['f0', 'f1', 'f2'])
 
 # -----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ class TestStringConverter:
         # unicode conversion (8).
         for s in ['a', b'a']:
             res = converter.upgrade(s)
-            assert_(type(res) is str)
+            assertTrue(type(res) is str)
             assert_equal(res, 'a')
             assert_equal(converter._status, 8 + status_offset)
 
@@ -219,7 +219,7 @@ class TestStringConverter:
         old_mapper = StringConverter._mapper[:]  # copy of list
         conv = StringConverter(_bytes_to_date)
         assert_equal(conv._mapper, old_mapper)
-        assert_(hasattr(conv, 'default'))
+        assertTrue(hasattr(conv, 'default'))
 
     def test_keep_default(self):
         "Make sure we don't lose an explicit default"
@@ -252,15 +252,15 @@ class TestStringConverter:
         "Check that int64 integer types can be specified"
         converter = StringConverter(np.int64, default=0)
         val = "-9223372036854775807"
-        assert_(converter(val) == -9223372036854775807)
+        assertTrue(converter(val) == -9223372036854775807)
         val = "9223372036854775807"
-        assert_(converter(val) == 9223372036854775807)
+        assertTrue(converter(val) == 9223372036854775807)
 
     def test_uint64_dtype(self):
         "Check that uint64 integer types can be specified"
         converter = StringConverter(np.uint64, default=0)
         val = "9223372043271415339"
-        assert_(converter(val) == 9223372043271415339)
+        assertTrue(converter(val) == 9223372043271415339)
 
 
 class TestMiscFunctions:

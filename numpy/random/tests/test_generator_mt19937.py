@@ -83,7 +83,7 @@ class TestBinomial:
         # This test addresses issue #3480.
         zeros = np.zeros(2, dtype='int')
         for p in [0, .5, 1]:
-            assert_(random.binomial(0, p) == 0)
+            assertTrue(random.binomial(0, p) == 0)
             assert_array_equal(random.binomial(zeros, p), zeros)
 
     def test_p_is_nan(self):
@@ -99,10 +99,10 @@ class TestMultinomial:
         random.multinomial(100, [0.2, 0.8, 0.0, 0.0, 0.0])
 
     def test_int_negative_interval(self):
-        assert_(-5 <= random.integers(-5, -1) < -1)
+        assertTrue(-5 <= random.integers(-5, -1) < -1)
         x = random.integers(-5, -1, 5)
-        assert_(np.all(-5 <= x))
-        assert_(np.all(x < -1))
+        assertTrue(np.all(-5 <= x))
+        assertTrue(np.all(x < -1))
 
     def test_size(self):
         # gh-3173
@@ -232,8 +232,8 @@ class TestMultivariateHypergeometric:
         else:
             expected_shape = size + colors.shape
         assert_equal(sample.shape, expected_shape)
-        assert_((sample >= 0).all())
-        assert_((sample <= colors).all())
+        assertTrue((sample >= 0).all())
+        assertTrue((sample <= colors).all())
         assert_array_equal(sample.sum(axis=-1),
                            np.full(size, fill_value=nsample, dtype=int))
         if isinstance(size, int) and size >= 100000:
@@ -294,7 +294,7 @@ class TestSetState:
         old = self.rg.standard_normal(size=3)
         self.bit_generator.state = self.state
         new = self.rg.standard_normal(size=3)
-        assert_(np.all(old == new))
+        assertTrue(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
@@ -305,7 +305,7 @@ class TestSetState:
         old = self.rg.standard_normal(size=3)
         self.bit_generator.state = state
         new = self.rg.standard_normal(size=3)
-        assert_(np.all(old == new))
+        assertTrue(np.all(old == new))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
@@ -455,13 +455,13 @@ class TestIntegers:
             for ubnd in [4, 8, 16]:
                 vals = self.rfunc(2, ubnd - endpoint, size=2 ** 16,
                                   endpoint=endpoint, dtype=dt)
-                assert_(vals.max() < ubnd)
-                assert_(vals.min() >= 2)
+                assertTrue(vals.max() < ubnd)
+                assertTrue(vals.min() >= 2)
 
         vals = self.rfunc(0, 2 - endpoint, size=2 ** 16, endpoint=endpoint,
                           dtype=bool)
-        assert_(vals.max() < 2)
-        assert_(vals.min() >= 0)
+        assertTrue(vals.max() < 2)
+        assertTrue(vals.min() >= 0)
 
     def test_scalar_array_equiv(self, endpoint):
         for dt in self.itype:
@@ -510,14 +510,14 @@ class TestIntegers:
                                  dtype=dt).byteswap()
 
             res = hashlib.sha256(val).hexdigest()
-            assert_(tgt[np.dtype(dt).name] == res)
+            assertTrue(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         random = Generator(MT19937(1234))
         val = random.integers(0, 2 - endpoint, size=1000, endpoint=endpoint,
                          dtype=bool).view(np.int8)
         res = hashlib.sha256(val).hexdigest()
-        assert_(tgt[np.dtype(bool).name] == res)
+        assertTrue(tgt[np.dtype(bool).name] == res)
 
     def test_repeatability_broadcasting(self, endpoint):
         for dt in self.itype:
@@ -849,29 +849,29 @@ class TestRandomDist:
     def test_choice_return_shape(self):
         p = [0.1, 0.9]
         # Check scalar
-        assert_(np.isscalar(random.choice(2, replace=True)))
-        assert_(np.isscalar(random.choice(2, replace=False)))
-        assert_(np.isscalar(random.choice(2, replace=True, p=p)))
-        assert_(np.isscalar(random.choice(2, replace=False, p=p)))
-        assert_(np.isscalar(random.choice([1, 2], replace=True)))
-        assert_(random.choice([None], replace=True) is None)
+        assertTrue(np.isscalar(random.choice(2, replace=True)))
+        assertTrue(np.isscalar(random.choice(2, replace=False)))
+        assertTrue(np.isscalar(random.choice(2, replace=True, p=p)))
+        assertTrue(np.isscalar(random.choice(2, replace=False, p=p)))
+        assertTrue(np.isscalar(random.choice([1, 2], replace=True)))
+        assertTrue(random.choice([None], replace=True) is None)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a
-        assert_(random.choice(arr, replace=True) is a)
+        assertTrue(random.choice(arr, replace=True) is a)
 
         # Check 0-d array
         s = tuple()
-        assert_(not np.isscalar(random.choice(2, s, replace=True)))
-        assert_(not np.isscalar(random.choice(2, s, replace=False)))
-        assert_(not np.isscalar(random.choice(2, s, replace=True, p=p)))
-        assert_(not np.isscalar(random.choice(2, s, replace=False, p=p)))
-        assert_(not np.isscalar(random.choice([1, 2], s, replace=True)))
-        assert_(random.choice([None], s, replace=True).ndim == 0)
+        assertTrue(not np.isscalar(random.choice(2, s, replace=True)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=False)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=True, p=p)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=False, p=p)))
+        assertTrue(not np.isscalar(random.choice([1, 2], s, replace=True)))
+        assertTrue(random.choice([None], s, replace=True).ndim == 0)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a
-        assert_(random.choice(arr, s, replace=True).item() is a)
+        assertTrue(random.choice(arr, s, replace=True).item() is a)
 
         # Check multi dimensional array
         s = (2, 3)
@@ -925,7 +925,7 @@ class TestRandomDist:
         if sys.byteorder != 'little':
             actual = actual.byteswap()
         res = hashlib.sha256(actual.view(np.int8)).hexdigest()
-        assert_(choice_hash == res)
+        assertTrue(choice_hash == res)
 
     def test_bytes(self):
         random = Generator(MT19937(self.seed))
@@ -1781,12 +1781,12 @@ class TestRandomDist:
         # check infinite loop, gh-4720
         random = Generator(MT19937(self.seed))
         r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
-        assert_(np.isfinite(r).all())
+        assertTrue(np.isfinite(r).all())
 
     def test_vonmises_nan(self):
         random = Generator(MT19937(self.seed))
         r = random.vonmises(mu=0., kappa=np.nan)
-        assert_(np.isnan(r))
+        assertTrue(np.isnan(r))
 
     @pytest.mark.parametrize("kappa", [1e4, 1e15])
     def test_vonmises_large_kappa(self, kappa):
@@ -1807,7 +1807,7 @@ class TestRandomDist:
     def test_vonmises_large_kappa_range(self, mu, kappa):
         random = Generator(MT19937(self.seed))
         r = random.vonmises(mu, kappa, 50)
-        assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
+        assertTrue(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_wald(self):
         random = Generator(MT19937(self.seed))

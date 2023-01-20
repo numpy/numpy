@@ -224,7 +224,7 @@ class TestLinebreaking:
         with printoptions(linewidth=lw):
             assert_equal(str(p), tgt)
             for line in str(p).split('\n'):
-                assert_(len(line) < lw)
+                assertTrue(len(line) < lw)
 
 
 def test_set_default_printoptions():

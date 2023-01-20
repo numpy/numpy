@@ -13,7 +13,7 @@ class TestCtor:
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
         mA = matrix(A)
-        assert_(np.all(mA.A == A))
+        assertTrue(np.all(mA.A == A))
 
         B = bmat("A,A;A,A")
         C = bmat([[A, A], [A, A]])
@@ -21,16 +21,16 @@ class TestCtor:
                       [3, 4, 3, 4],
                       [1, 2, 1, 2],
                       [3, 4, 3, 4]])
-        assert_(np.all(B.A == D))
-        assert_(np.all(C.A == D))
+        assertTrue(np.all(B.A == D))
+        assertTrue(np.all(C.A == D))
 
         E = np.array([[5, 6], [7, 8]])
         AEresult = matrix([[1, 2, 5, 6], [3, 4, 7, 8]])
-        assert_(np.all(bmat([A, E]) == AEresult))
+        assertTrue(np.all(bmat([A, E]) == AEresult))
 
         vec = np.arange(5)
         mvec = matrix(vec)
-        assert_(mvec.shape == (1, 5))
+        assertTrue(mvec.shape == (1, 5))
 
     def test_exceptions(self):
         # Check for ValueError when called with invalid string data.
@@ -47,13 +47,13 @@ class TestCtor:
                               [3, 4, 7, 8],
                               [5, 6, 1, 2],
                               [7, 8, 3, 4]])
-        assert_(np.all(bmat("A,A;A,A") == Aresult))
-        assert_(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
+        assertTrue(np.all(bmat("A,A;A,A") == Aresult))
+        assertTrue(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
         assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A':B})
-        assert_(
+        assertTrue(
             np.all(bmat("A,A;A,A", ldict={'A':A}, gdict={'A':B}) == Aresult))
         b2 = bmat("A,B;C,D", ldict={'A':A,'B':B}, gdict={'C':B,'D':A})
-        assert_(np.all(b2 == mixresult))
+        assertTrue(np.all(b2 == mixresult))
 
 
 class TestProperties:
@@ -87,7 +87,7 @@ class TestProperties:
         assert_equal(np.prod(x, axis=1), matrix([[6], [120]]))
 
         y = matrix([0, 1, 3])
-        assert_(y.prod() == 0)
+        assertTrue(y.prod() == 0)
 
     def test_max(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])
@@ -111,9 +111,9 @@ class TestProperties:
 
     def test_ptp(self):
         x = np.arange(4).reshape((2, 2))
-        assert_(x.ptp() == 3)
-        assert_(np.all(x.ptp(0) == np.array([2, 2])))
-        assert_(np.all(x.ptp(1) == np.array([1, 1])))
+        assertTrue(x.ptp() == 3)
+        assertTrue(np.all(x.ptp(0) == np.array([2, 2])))
+        assertTrue(np.all(x.ptp(1) == np.array([1, 1])))
 
     def test_var(self):
         x = np.arange(9).reshape((3, 3))
@@ -127,16 +127,16 @@ class TestProperties:
         A = np.array([[1., 2.],
                       [3., 4.]])
         mA = matrix(A)
-        assert_(np.allclose(linalg.inv(A), mA.I))
-        assert_(np.all(np.array(np.transpose(A) == mA.T)))
-        assert_(np.all(np.array(np.transpose(A) == mA.H)))
-        assert_(np.all(A == mA.A))
+        assertTrue(np.allclose(linalg.inv(A), mA.I))
+        assertTrue(np.all(np.array(np.transpose(A) == mA.T)))
+        assertTrue(np.all(np.array(np.transpose(A) == mA.H)))
+        assertTrue(np.all(A == mA.A))
 
         B = A + 2j*A
         mB = matrix(B)
-        assert_(np.allclose(linalg.inv(B), mB.I))
-        assert_(np.all(np.array(np.transpose(B) == mB.T)))
-        assert_(np.all(np.array(np.transpose(B).conj() == mB.H)))
+        assertTrue(np.allclose(linalg.inv(B), mB.I))
+        assertTrue(np.all(np.array(np.transpose(B) == mB.T)))
+        assertTrue(np.all(np.array(np.transpose(B).conj() == mB.H)))
 
     def test_pinv(self):
         x = matrix(np.arange(6).reshape(2, 3))
@@ -149,40 +149,40 @@ class TestProperties:
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
-        assert_(np.all(mB == A+0.1))
-        assert_(np.all(mB == matrix(A+0.1)))
-        assert_(not np.any(mB == matrix(A-0.1)))
-        assert_(np.all(mA < mB))
-        assert_(np.all(mA <= mB))
-        assert_(np.all(mA <= mA))
-        assert_(not np.any(mA < mA))
+        assertTrue(np.all(mB == A+0.1))
+        assertTrue(np.all(mB == matrix(A+0.1)))
+        assertTrue(not np.any(mB == matrix(A-0.1)))
+        assertTrue(np.all(mA < mB))
+        assertTrue(np.all(mA <= mB))
+        assertTrue(np.all(mA <= mA))
+        assertTrue(not np.any(mA < mA))
 
-        assert_(not np.any(mB < mA))
-        assert_(np.all(mB >= mA))
-        assert_(np.all(mB >= mB))
-        assert_(not np.any(mB > mB))
+        assertTrue(not np.any(mB < mA))
+        assertTrue(np.all(mB >= mA))
+        assertTrue(np.all(mB >= mB))
+        assertTrue(not np.any(mB > mB))
 
-        assert_(np.all(mA == mA))
-        assert_(not np.any(mA == mB))
-        assert_(np.all(mB != mA))
+        assertTrue(np.all(mA == mA))
+        assertTrue(not np.any(mA == mB))
+        assertTrue(np.all(mB != mA))
 
-        assert_(not np.all(abs(mA) > 0))
-        assert_(np.all(abs(mB > 0)))
+        assertTrue(not np.all(abs(mA) > 0))
+        assertTrue(np.all(abs(mB > 0)))
 
     def test_asmatrix(self):
         A = np.arange(100).reshape(10, 10)
         mA = asmatrix(A)
         A[0, 0] = -10
-        assert_(A[0, 0] == mA[0, 0])
+        assertTrue(A[0, 0] == mA[0, 0])
 
     def test_noaxis(self):
         A = matrix([[1, 0], [0, 1]])
-        assert_(A.sum() == matrix(2))
-        assert_(A.mean() == matrix(0.5))
+        assertTrue(A.sum() == matrix(2))
+        assertTrue(A.mean() == matrix(0.5))
 
     def test_repr(self):
         A = matrix([[1, 0], [0, 1]])
-        assert_(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
+        assertTrue(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
 
     def test_make_bool_matrix_from_str(self):
         A = matrix('True; True; False')
@@ -197,15 +197,15 @@ class TestCasting:
         mB = mA.copy()
         O = np.ones((10, 10), np.float64) * 0.1
         mB = mB + O
-        assert_(mB.dtype.type == np.float64)
-        assert_(np.all(mA != mB))
-        assert_(np.all(mB == mA+0.1))
+        assertTrue(mB.dtype.type == np.float64)
+        assertTrue(np.all(mA != mB))
+        assertTrue(np.all(mB == mA+0.1))
 
         mC = mA.copy()
         O = np.ones((10, 10), np.complex128)
         mC = mC * O
-        assert_(mC.dtype.type == np.complex128)
-        assert_(np.all(mA != mB))
+        assertTrue(mC.dtype.type == np.complex128)
+        assertTrue(np.all(mA != mB))
 
 
 class TestAlgebra:
@@ -217,22 +217,22 @@ class TestAlgebra:
 
         B = np.identity(2)
         for i in range(6):
-            assert_(np.allclose((mA ** i).A, B))
+            assertTrue(np.allclose((mA ** i).A, B))
             B = np.dot(B, A)
 
         Ainv = linalg.inv(A)
         B = np.identity(2)
         for i in range(6):
-            assert_(np.allclose((mA ** -i).A, B))
+            assertTrue(np.allclose((mA ** -i).A, B))
             B = np.dot(B, Ainv)
 
-        assert_(np.allclose((mA * mA).A, np.dot(A, A)))
-        assert_(np.allclose((mA + mA).A, (A + A)))
-        assert_(np.allclose((3*mA).A, (3*A)))
+        assertTrue(np.allclose((mA * mA).A, np.dot(A, A)))
+        assertTrue(np.allclose((mA + mA).A, (A + A)))
+        assertTrue(np.allclose((3*mA).A, (3*A)))
 
         mA2 = matrix(A)
         mA2 *= 3
-        assert_(np.allclose(mA2.A, 3*A))
+        assertTrue(np.allclose(mA2.A, 3*A))
 
     def test_pow(self):
         """Test raising a matrix to an integer power works as expected."""
@@ -301,12 +301,12 @@ class TestMatrixReturn:
                 else:
                     args = ()
                 b = f(*args)
-                assert_(type(b) is matrix, "%s" % attrib)
-        assert_(type(a.real) is matrix)
-        assert_(type(a.imag) is matrix)
+                assertTrue(type(b) is matrix, "%s" % attrib)
+        assertTrue(type(a.real) is matrix)
+        assertTrue(type(a.imag) is matrix)
         c, d = matrix([0.0]).nonzero()
-        assert_(type(c) is np.ndarray)
-        assert_(type(d) is np.ndarray)
+        assertTrue(type(c) is np.ndarray)
+        assertTrue(type(d) is np.ndarray)
 
 
 class TestIndexing:
@@ -338,13 +338,13 @@ class TestNewScalarIndexing:
     def test_fancy_indexing(self):
         a = self.a
         x = a[1, [0, 1, 0]]
-        assert_(isinstance(x, matrix))
+        assertTrue(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4,  3]]))
         x = a[[1, 0]]
-        assert_(isinstance(x, matrix))
+        assertTrue(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4], [1, 2]]))
         x = a[[[1], [0]], [[1, 0], [0, 1]]]
-        assert_(isinstance(x, matrix))
+        assertTrue(isinstance(x, matrix))
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 
     def test_matrix_element(self):
@@ -388,9 +388,9 @@ class TestNewScalarIndexing:
 class TestPower:
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
-        assert_(type(matrix_power(a, 2)) is np.ndarray)
+        assertTrue(type(matrix_power(a, 2)) is np.ndarray)
         a = mat(a)
-        assert_(type(matrix_power(a, 2)) is matrix)
+        assertTrue(type(matrix_power(a, 2)) is matrix)
 
     def test_list(self):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
@@ -437,12 +437,12 @@ class TestShape:
         assert_equal(x.T.ravel(order='A'), [[1, 2, 3, 4, 5, 6]])
 
     def test_array_memory_sharing(self):
-        assert_(np.may_share_memory(self.a, self.a.ravel()))
-        assert_(not np.may_share_memory(self.a, self.a.flatten()))
+        assertTrue(np.may_share_memory(self.a, self.a.ravel()))
+        assertTrue(not np.may_share_memory(self.a, self.a.flatten()))
 
     def test_matrix_memory_sharing(self):
-        assert_(np.may_share_memory(self.m, self.m.ravel()))
-        assert_(not np.may_share_memory(self.m, self.m.flatten()))
+        assertTrue(np.may_share_memory(self.m, self.m.ravel()))
+        assertTrue(not np.may_share_memory(self.m, self.m.flatten()))
 
     def test_expand_dims_matrix(self):
         # matrices are always 2d - so expand_dims only makes sense when the
@@ -450,4 +450,4 @@ class TestShape:
         a = np.arange(10).reshape((2, 5)).view(np.matrix)
         expanded = np.expand_dims(a, axis=1)
         assert_equal(expanded.ndim, 3)
-        assert_(not isinstance(expanded, np.matrix))
+        assertTrue(not isinstance(expanded, np.matrix))

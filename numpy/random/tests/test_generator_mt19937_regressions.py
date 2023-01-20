@@ -13,16 +13,16 @@ class TestRegression:
         # Regression test for ticket #986.
         for mu in np.linspace(-7., 7., 5):
             r = mt19937.vonmises(mu, 1, 50)
-            assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
+            assertTrue(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self):
         # Test for ticket #921
-        assert_(np.all(mt19937.hypergeometric(3, 18, 11, size=10) < 4))
-        assert_(np.all(mt19937.hypergeometric(18, 3, 11, size=10) > 0))
+        assertTrue(np.all(mt19937.hypergeometric(3, 18, 11, size=10) < 4))
+        assertTrue(np.all(mt19937.hypergeometric(18, 3, 11, size=10) > 0))
 
         # Test for ticket #5623
         args = (2**20 - 2, 2**20 - 2, 2**20 - 2)  # Check for 32-bit systems
-        assert_(mt19937.hypergeometric(*args) > 0)
+        assertTrue(mt19937.hypergeometric(*args) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923
@@ -34,11 +34,11 @@ class TestRegression:
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / N
         msg = f'Frequency was {freq:f}, should be > 0.45'
-        assert_(freq > 0.45, msg)
+        assertTrue(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / N
         msg = f'Frequency was {freq:f}, should be < 0.23'
-        assert_(freq < 0.23, msg)
+        assertTrue(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
@@ -74,7 +74,7 @@ class TestRegression:
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
         mt19937 = Generator(MT19937(1234567890))
         x = mt19937.beta(0.0001, 0.0001, size=100)
-        assert_(not np.any(np.isnan(x)), 'Nans in mt19937.beta')
+        assertTrue(not np.any(np.isnan(x)), 'Nans in mt19937.beta')
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
@@ -86,7 +86,7 @@ class TestRegression:
         for dt in np.float16, np.float32, np.float64:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = mt19937.choice(a, p=probs)
-            assert_(c in a)
+            assertTrue(c in a)
             with pytest.raises(ValueError):
                 mt19937.choice(a, p=probs*0.9)
 

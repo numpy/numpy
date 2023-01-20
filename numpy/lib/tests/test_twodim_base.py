@@ -293,16 +293,16 @@ class TestHistogram2d:
         s_d = ShouldDispatch()
         r = histogram2d(s_d, xy)
         # Cannot use assert_equal since that dispatches...
-        assert_(r == ((ShouldDispatch,), (s_d, xy), {}))
+        assertTrue(r == ((ShouldDispatch,), (s_d, xy), {}))
         r = histogram2d(xy, s_d)
-        assert_(r == ((ShouldDispatch,), (xy, s_d), {}))
+        assertTrue(r == ((ShouldDispatch,), (xy, s_d), {}))
         r = histogram2d(xy, xy, bins=s_d)
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=s_d)))
+        assertTrue(r, ((ShouldDispatch,), (xy, xy), dict(bins=s_d)))
         r = histogram2d(xy, xy, bins=[s_d, 5])
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=[s_d, 5])))
+        assertTrue(r, ((ShouldDispatch,), (xy, xy), dict(bins=[s_d, 5])))
         assert_raises(Exception, histogram2d, xy, xy, bins=[s_d])
         r = histogram2d(xy, xy, weights=s_d)
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
+        assertTrue(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
 
     @pytest.mark.parametrize(("x_len", "y_len"), [(10, 11), (20, 19)])
     def test_bad_length(self, x_len, y_len):

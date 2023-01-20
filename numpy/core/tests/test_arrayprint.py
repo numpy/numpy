@@ -210,9 +210,9 @@ class TestArray2String:
     def test_basic(self):
         """Basic test of array2string."""
         a = np.arange(3)
-        assert_(np.array2string(a) == '[0 1 2]')
-        assert_(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
-        assert_(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
+        assertTrue(np.array2string(a) == '[0 1 2]')
+        assertTrue(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
+        assertTrue(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
 
     def test_unexpected_kwarg(self):
         # ensure than an appropriate TypeError
@@ -236,11 +236,11 @@ class TestArray2String:
         x = np.arange(3)
         x_hex = "[0x0 0x1 0x2]"
         x_oct = "[0o0 0o1 0o2]"
-        assert_(np.array2string(x, formatter={'all':_format_function}) ==
+        assertTrue(np.array2string(x, formatter={'all':_format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==
+        assertTrue(np.array2string(x, formatter={'int_kind':_format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) ==
+        assertTrue(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) ==
                 "[0.0000 1.0000 2.0000]")
         assert_equal(np.array2string(x, formatter={'int':lambda x: hex(x)}),
                 x_hex)
@@ -248,13 +248,13 @@ class TestArray2String:
                 x_oct)
 
         x = np.arange(3.)
-        assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) ==
+        assertTrue(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
-        assert_(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) ==
+        assertTrue(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
-        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
+        assertTrue(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
 
@@ -493,7 +493,7 @@ class TestArray2String:
         r2 = sys.getrefcount(a)
         gc.collect()
         gc.enable()
-        assert_(r1 == r2)
+        assertTrue(r1 == r2)
 
 class TestPrintOptions:
     """Test getting and setting global print options."""

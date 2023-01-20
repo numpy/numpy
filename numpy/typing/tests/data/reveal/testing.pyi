@@ -50,8 +50,8 @@ reveal_type(np.testing.IS_PYPY)  # E: bool
 reveal_type(np.testing.HAS_REFCOUNT)  # E: bool
 reveal_type(np.testing.HAS_LAPACK64)  # E: bool
 
-reveal_type(np.testing.assert_(1, msg="test"))  # E: None
-reveal_type(np.testing.assert_(2, msg=lambda: "test"))  # E: None
+reveal_type(np.testing.assertTrue(1, msg="test"))  # E: None
+reveal_type(np.testing.assertTrue(2, msg=lambda: "test"))  # E: None
 
 if sys.platform == "win32" or sys.platform == "cygwin":
     reveal_type(np.testing.memusage())  # E: builtins.int

@@ -15,15 +15,15 @@ def dtype(request):
 
 def params_0(f):
     val = f()
-    assert_(np.isscalar(val))
+    assertTrue(np.isscalar(val))
     val = f(10)
-    assert_(val.shape == (10,))
+    assertTrue(val.shape == (10,))
     val = f((10, 10))
-    assert_(val.shape == (10, 10))
+    assertTrue(val.shape == (10, 10))
     val = f((10, 10, 10))
-    assert_(val.shape == (10, 10, 10))
+    assertTrue(val.shape == (10, 10, 10))
     val = f(size=(5, 5))
-    assert_(val.shape == (5, 5))
+    assertTrue(val.shape == (5, 5))
 
 
 def params_1(f, bounded=False):
@@ -120,13 +120,13 @@ class RNG:
         rg.standard_normal(1)
         rg.bit_generator.state = state
         new_state = rg.bit_generator.state
-        assert_(comp_state(state, new_state))
+        assertTrue(comp_state(state, new_state))
 
     def test_advance(self):
         state = self.rg.bit_generator.state
         if hasattr(self.rg.bit_generator, 'advance'):
             self.rg.bit_generator.advance(self.advance)
-            assert_(not comp_state(state, self.rg.bit_generator.state))
+            assertTrue(not comp_state(state, self.rg.bit_generator.state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
             pytest.skip(f'Advance is not supported by {bitgen_name}')
@@ -136,12 +136,12 @@ class RNG:
         if hasattr(self.rg.bit_generator, 'jumped'):
             bit_gen2 = self.rg.bit_generator.jumped()
             jumped_state = bit_gen2.state
-            assert_(not comp_state(state, jumped_state))
+            assertTrue(not comp_state(state, jumped_state))
             self.rg.random(2 * 3 * 5 * 7 * 11 * 13 * 17)
             self.rg.bit_generator.state = state
             bit_gen3 = self.rg.bit_generator.jumped()
             rejumped_state = bit_gen3.state
-            assert_(comp_state(jumped_state, rejumped_state))
+            assertTrue(comp_state(jumped_state, rejumped_state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
             if bitgen_name not in ('SFC64',):
@@ -150,82 +150,82 @@ class RNG:
 
     def test_uniform(self):
         r = self.rg.uniform(-1.0, 0.0, size=10)
-        assert_(len(r) == 10)
-        assert_((r > -1).all())
-        assert_((r <= 0).all())
+        assertTrue(len(r) == 10)
+        assertTrue((r > -1).all())
+        assertTrue((r <= 0).all())
 
     def test_uniform_array(self):
         r = self.rg.uniform(np.array([-1.0] * 10), 0.0, size=10)
-        assert_(len(r) == 10)
-        assert_((r > -1).all())
-        assert_((r <= 0).all())
+        assertTrue(len(r) == 10)
+        assertTrue((r > -1).all())
+        assertTrue((r <= 0).all())
         r = self.rg.uniform(np.array([-1.0] * 10),
                             np.array([0.0] * 10), size=10)
-        assert_(len(r) == 10)
-        assert_((r > -1).all())
-        assert_((r <= 0).all())
+        assertTrue(len(r) == 10)
+        assertTrue((r > -1).all())
+        assertTrue((r <= 0).all())
         r = self.rg.uniform(-1.0, np.array([0.0] * 10), size=10)
-        assert_(len(r) == 10)
-        assert_((r > -1).all())
-        assert_((r <= 0).all())
+        assertTrue(len(r) == 10)
+        assertTrue((r > -1).all())
+        assertTrue((r <= 0).all())
 
     def test_random(self):
-        assert_(len(self.rg.random(10)) == 10)
+        assertTrue(len(self.rg.random(10)) == 10)
         params_0(self.rg.random)
 
     def test_standard_normal_zig(self):
-        assert_(len(self.rg.standard_normal(10)) == 10)
+        assertTrue(len(self.rg.standard_normal(10)) == 10)
 
     def test_standard_normal(self):
-        assert_(len(self.rg.standard_normal(10)) == 10)
+        assertTrue(len(self.rg.standard_normal(10)) == 10)
         params_0(self.rg.standard_normal)
 
     def test_standard_gamma(self):
-        assert_(len(self.rg.standard_gamma(10, 10)) == 10)
-        assert_(len(self.rg.standard_gamma(np.array([10] * 10), 10)) == 10)
+        assertTrue(len(self.rg.standard_gamma(10, 10)) == 10)
+        assertTrue(len(self.rg.standard_gamma(np.array([10] * 10), 10)) == 10)
         params_1(self.rg.standard_gamma)
 
     def test_standard_exponential(self):
-        assert_(len(self.rg.standard_exponential(10)) == 10)
+        assertTrue(len(self.rg.standard_exponential(10)) == 10)
         params_0(self.rg.standard_exponential)
 
     def test_standard_exponential_float(self):
         randoms = self.rg.standard_exponential(10, dtype='float32')
-        assert_(len(randoms) == 10)
+        assertTrue(len(randoms) == 10)
         assert randoms.dtype == np.float32
         params_0(partial(self.rg.standard_exponential, dtype='float32'))
 
     def test_standard_exponential_float_log(self):
         randoms = self.rg.standard_exponential(10, dtype='float32',
                                                method='inv')
-        assert_(len(randoms) == 10)
+        assertTrue(len(randoms) == 10)
         assert randoms.dtype == np.float32
         params_0(partial(self.rg.standard_exponential, dtype='float32',
                          method='inv'))
 
     def test_standard_cauchy(self):
-        assert_(len(self.rg.standard_cauchy(10)) == 10)
+        assertTrue(len(self.rg.standard_cauchy(10)) == 10)
         params_0(self.rg.standard_cauchy)
 
     def test_standard_t(self):
-        assert_(len(self.rg.standard_t(10, 10)) == 10)
+        assertTrue(len(self.rg.standard_t(10, 10)) == 10)
         params_1(self.rg.standard_t)
 
     def test_binomial(self):
-        assert_(self.rg.binomial(10, .5) >= 0)
-        assert_(self.rg.binomial(1000, .5) >= 0)
+        assertTrue(self.rg.binomial(10, .5) >= 0)
+        assertTrue(self.rg.binomial(1000, .5) >= 0)
 
     def test_reset_state(self):
         state = self.rg.bit_generator.state
         int_1 = self.rg.integers(2**31)
         self.rg.bit_generator.state = state
         int_2 = self.rg.integers(2**31)
-        assert_(int_1 == int_2)
+        assertTrue(int_1 == int_2)
 
     def test_entropy_init(self):
         rg = Generator(self.bit_generator())
         rg2 = Generator(self.bit_generator())
-        assert_(not comp_state(rg.bit_generator.state,
+        assertTrue(not comp_state(rg.bit_generator.state,
                                rg2.bit_generator.state))
 
     def test_seed(self):
@@ -233,7 +233,7 @@ class RNG:
         rg2 = Generator(self.bit_generator(*self.seed))
         rg.random()
         rg2.random()
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assertTrue(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
 
     def test_reset_state_gauss(self):
         rg = Generator(self.bit_generator(*self.seed))
@@ -263,185 +263,185 @@ class RNG:
         rg2 = Generator(self.bit_generator())
         rg2.bit_generator.state = state
         n2 = rg2.random(size=10, dtype='float32')
-        assert_((n1 == n2).all())
+        assertTrue((n1 == n2).all())
 
     def test_shuffle(self):
         original = np.arange(200, 0, -1)
         permuted = self.rg.permutation(original)
-        assert_((original != permuted).any())
+        assertTrue((original != permuted).any())
 
     def test_permutation(self):
         original = np.arange(200, 0, -1)
         permuted = self.rg.permutation(original)
-        assert_((original != permuted).any())
+        assertTrue((original != permuted).any())
 
     def test_beta(self):
         vals = self.rg.beta(2.0, 2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.beta(np.array([2.0] * 10), 2.0)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.beta(2.0, np.array([2.0] * 10))
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.beta(np.array([2.0] * 10), np.array([2.0] * 10))
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.beta(np.array([2.0] * 10), np.array([[2.0]] * 10))
-        assert_(vals.shape == (10, 10))
+        assertTrue(vals.shape == (10, 10))
 
     def test_bytes(self):
         vals = self.rg.bytes(10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_chisquare(self):
         vals = self.rg.chisquare(2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         params_1(self.rg.chisquare)
 
     def test_exponential(self):
         vals = self.rg.exponential(2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         params_1(self.rg.exponential)
 
     def test_f(self):
         vals = self.rg.f(3, 1000, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_gamma(self):
         vals = self.rg.gamma(3, 2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_geometric(self):
         vals = self.rg.geometric(0.5, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         params_1(self.rg.exponential, bounded=True)
 
     def test_gumbel(self):
         vals = self.rg.gumbel(2.0, 2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_laplace(self):
         vals = self.rg.laplace(2.0, 2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_logitic(self):
         vals = self.rg.logistic(2.0, 2.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_logseries(self):
         vals = self.rg.logseries(0.5, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_negative_binomial(self):
         vals = self.rg.negative_binomial(10, 0.2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_noncentral_chisquare(self):
         vals = self.rg.noncentral_chisquare(10, 2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_noncentral_f(self):
         vals = self.rg.noncentral_f(3, 1000, 2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.noncentral_f(np.array([3] * 10), 1000, 2)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.noncentral_f(3, np.array([1000] * 10), 2)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.noncentral_f(3, 1000, np.array([2] * 10))
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_normal(self):
         vals = self.rg.normal(10, 0.2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_pareto(self):
         vals = self.rg.pareto(3.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_poisson(self):
         vals = self.rg.poisson(10, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.poisson(np.array([10] * 10))
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         params_1(self.rg.poisson)
 
     def test_power(self):
         vals = self.rg.power(0.2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_integers(self):
         vals = self.rg.integers(10, 20, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_rayleigh(self):
         vals = self.rg.rayleigh(0.2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         params_1(self.rg.rayleigh, bounded=True)
 
     def test_vonmises(self):
         vals = self.rg.vonmises(10, 0.2, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_wald(self):
         vals = self.rg.wald(1.0, 1.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_weibull(self):
         vals = self.rg.weibull(1.0, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
 
     def test_zipf(self):
         vals = self.rg.zipf(10, 10)
-        assert_(len(vals) == 10)
+        assertTrue(len(vals) == 10)
         vals = self.rg.zipf(self.vec_1d)
-        assert_(len(vals) == 100)
+        assertTrue(len(vals) == 100)
         vals = self.rg.zipf(self.vec_2d)
-        assert_(vals.shape == (1, 100))
+        assertTrue(vals.shape == (1, 100))
         vals = self.rg.zipf(self.mat)
-        assert_(vals.shape == (100, 100))
+        assertTrue(vals.shape == (100, 100))
 
     def test_hypergeometric(self):
         vals = self.rg.hypergeometric(25, 25, 20)
-        assert_(np.isscalar(vals))
+        assertTrue(np.isscalar(vals))
         vals = self.rg.hypergeometric(np.array([25] * 10), 25, 20)
-        assert_(vals.shape == (10,))
+        assertTrue(vals.shape == (10,))
 
     def test_triangular(self):
         vals = self.rg.triangular(-5, 0, 5)
-        assert_(np.isscalar(vals))
+        assertTrue(np.isscalar(vals))
         vals = self.rg.triangular(-5, np.array([0] * 10), 5)
-        assert_(vals.shape == (10,))
+        assertTrue(vals.shape == (10,))
 
     def test_multivariate_normal(self):
         mean = [0, 0]
         cov = [[1, 0], [0, 100]]  # diagonal covariance
         x = self.rg.multivariate_normal(mean, cov, 5000)
-        assert_(x.shape == (5000, 2))
+        assertTrue(x.shape == (5000, 2))
         x_zig = self.rg.multivariate_normal(mean, cov, 5000)
-        assert_(x.shape == (5000, 2))
+        assertTrue(x.shape == (5000, 2))
         x_inv = self.rg.multivariate_normal(mean, cov, 5000)
-        assert_(x.shape == (5000, 2))
-        assert_((x_zig != x_inv).any())
+        assertTrue(x.shape == (5000, 2))
+        assertTrue((x_zig != x_inv).any())
 
     def test_multinomial(self):
         vals = self.rg.multinomial(100, [1.0 / 3, 2.0 / 3])
-        assert_(vals.shape == (2,))
+        assertTrue(vals.shape == (2,))
         vals = self.rg.multinomial(100, [1.0 / 3, 2.0 / 3], size=10)
-        assert_(vals.shape == (10, 2))
+        assertTrue(vals.shape == (10, 2))
 
     def test_dirichlet(self):
         s = self.rg.dirichlet((10, 5, 3), 20)
-        assert_(s.shape == (20, 3))
+        assertTrue(s.shape == (20, 3))
 
     def test_pickle(self):
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
-        assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state,
+        assertTrue((type(self.rg) == type(unpick)))
+        assertTrue(comp_state(self.rg.bit_generator.state,
                            unpick.bit_generator.state))
 
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
-        assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state,
+        assertTrue((type(self.rg) == type(unpick)))
+        assertTrue(comp_state(self.rg.bit_generator.state,
                            unpick.bit_generator.state))
 
     def test_seed_array(self):
@@ -458,21 +458,21 @@ class RNG:
         state1 = bg.state
         bg = self.bit_generator(1)
         state2 = bg.state
-        assert_(comp_state(state1, state2))
+        assertTrue(comp_state(state1, state2))
 
         seed = np.arange(4, dtype=dtype)
         bg = self.bit_generator(seed)
         state1 = bg.state
         bg = self.bit_generator(seed[0])
         state2 = bg.state
-        assert_(not comp_state(state1, state2))
+        assertTrue(not comp_state(state1, state2))
 
         seed = np.arange(1500, dtype=dtype)
         bg = self.bit_generator(seed)
         state1 = bg.state
         bg = self.bit_generator(seed[0])
         state2 = bg.state
-        assert_(not comp_state(state1, state2))
+        assertTrue(not comp_state(state1, state2))
 
         seed = 2 ** np.mod(np.arange(1500, dtype=dtype),
                            self.seed_vector_bits - 1) + 1
@@ -480,7 +480,7 @@ class RNG:
         state1 = bg.state
         bg  = self.bit_generator(seed[0])
         state2 = bg.state
-        assert_(not comp_state(state1, state2))
+        assertTrue(not comp_state(state1, state2))
 
     def test_uniform_float(self):
         rg = Generator(self.bit_generator(12345))
@@ -493,7 +493,7 @@ class RNG:
         r2 = rg2.random(11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assertTrue(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
 
     def test_gamma_floats(self):
         rg = Generator(self.bit_generator())
@@ -506,7 +506,7 @@ class RNG:
         r2 = rg2.standard_gamma(4.0, 11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assertTrue(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
 
     def test_normal_floats(self):
         rg = Generator(self.bit_generator())
@@ -519,7 +519,7 @@ class RNG:
         r2 = rg2.standard_normal(11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assertTrue(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
 
     def test_normal_zig_floats(self):
         rg = Generator(self.bit_generator())
@@ -532,7 +532,7 @@ class RNG:
         r2 = rg2.standard_normal(11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assertTrue(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
 
     def test_output_fill(self):
         rg = self.rg
@@ -734,8 +734,8 @@ class TestMT19937(RNG):
         state = nprg.get_state()
         self.rg.bit_generator.state = state
         state2 = self.rg.bit_generator.state
-        assert_((state[1] == state2['state']['key']).all())
-        assert_((state[2] == state2['state']['pos']))
+        assertTrue((state[1] == state2['state']['key']).all())
+        assertTrue((state[2] == state2['state']['pos']))
 
 
 class TestPhilox(RNG):
@@ -802,7 +802,7 @@ class TestDefaultRNG(RNG):
     def test_default_is_pcg64(self):
         # In order to change the default BitGenerator, we'll go through
         # a deprecation cycle to move to a different function.
-        assert_(isinstance(self.rg.bit_generator, PCG64))
+        assertTrue(isinstance(self.rg.bit_generator, PCG64))
 
     def test_seed(self):
         np.random.default_rng()

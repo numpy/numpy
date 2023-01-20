@@ -139,11 +139,11 @@ class TestEquality:
 
     def test_eq(self):
         other = poly.Polynomial([1, 2, 3], symbol='x')
-        assert_(self.p == other)
+        assertTrue(self.p == other)
 
     def test_neq(self):
         other = poly.Polynomial([1, 2, 3], symbol='y')
-        assert_(not self.p == other)
+        assertTrue(not self.p == other)
 
 
 class TestExtraMethods:

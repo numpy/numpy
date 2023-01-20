@@ -430,7 +430,7 @@ def roundtrip_truncated(arr):
 
 
 def assert_equal_(o1, o2):
-    assert_(o1 == o2)
+    assertTrue(o1 == o2)
 
 
 def test_roundtrip():
@@ -557,12 +557,12 @@ def test_pickle_python2_python3():
                 data = data_f
 
             if encoding == 'latin1' and fname.startswith('py2'):
-                assert_(isinstance(data[3], str))
+                assertTrue(isinstance(data[3], str))
                 assert_array_equal(data[:-1], expected[:-1])
                 # mojibake occurs
                 assert_array_equal(data[-1].encode(encoding), expected[-1])
             else:
-                assert_(isinstance(data[3], bytes))
+                assertTrue(isinstance(data[3], bytes))
                 assert_array_equal(data, expected)
 
         if fname.startswith('py2'):
@@ -663,12 +663,12 @@ def test_version_2_0():
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', '', UserWarning)
         format.write_array(f, d)
-        assert_(w[0].category is UserWarning)
+        assertTrue(w[0].category is UserWarning)
 
     # check alignment of data portion
     f.seek(0)
     header = f.readline()
-    assert_(len(header) % format.ARRAY_ALIGN == 0)
+    assertTrue(len(header) % format.ARRAY_ALIGN == 0)
 
     f.seek(0)
     n = format.read_array(f, max_header_size=200000)
@@ -701,7 +701,7 @@ def test_version_2_0_memmap(tmpdir):
         warnings.filterwarnings('always', '', UserWarning)
         ma = format.open_memmap(tf2, mode='w+', dtype=d.dtype,
                                 shape=d.shape, version=None)
-        assert_(w[0].category is UserWarning)
+        assertTrue(w[0].category is UserWarning)
         ma[...] = d
         ma.flush()
 
@@ -809,11 +809,11 @@ def test_read_magic():
     version1 = format.read_magic(s1)
     version2 = format.read_magic(s2)
 
-    assert_(version1 == (1, 0))
-    assert_(version2 == (2, 0))
+    assertTrue(version1 == (1, 0))
+    assertTrue(version2 == (2, 0))
 
-    assert_(s1.tell() == format.MAGIC_LEN)
-    assert_(s2.tell() == format.MAGIC_LEN)
+    assertTrue(s1.tell() == format.MAGIC_LEN)
+    assertTrue(s2.tell() == format.MAGIC_LEN)
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
@@ -853,8 +853,8 @@ def test_read_array_header_1_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_1_0(s)
 
-    assert_(s.tell() % format.ARRAY_ALIGN == 0)
-    assert_((shape, fortran, dtype) == ((3, 6), False, float))
+    assertTrue(s.tell() % format.ARRAY_ALIGN == 0)
+    assertTrue((shape, fortran, dtype) == ((3, 6), False, float))
 
 
 def test_read_array_header_2_0():
@@ -866,8 +866,8 @@ def test_read_array_header_2_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_2_0(s)
 
-    assert_(s.tell() % format.ARRAY_ALIGN == 0)
-    assert_((shape, fortran, dtype) == ((3, 6), False, float))
+    assertTrue(s.tell() % format.ARRAY_ALIGN == 0)
+    assertTrue((shape, fortran, dtype) == ((3, 6), False, float))
 
 
 def test_bad_header():

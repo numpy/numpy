@@ -37,13 +37,13 @@ class TestBasic:
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
         B[0, 0] = 'changed'
-        assert_(B[0, 0] != A[0, 0])
+        assertTrue(B[0, 0] != A[0, 0])
         C = np.char.asarray(A)
         assert_array_equal(C, A)
         assert_equal(C.dtype, A.dtype)
         C[0, 0] = 'changed again'
-        assert_(C[0, 0] != B[0, 0])
-        assert_(C[0, 0] == A[0, 0])
+        assertTrue(C[0, 0] != B[0, 0])
+        assertTrue(C[0, 0] == A[0, 0])
 
     def test_from_unicode_array(self):
         A = np.array([['abc', 'Sigma \u03a3'],
@@ -66,20 +66,20 @@ class TestBasic:
     def test_unicode_upconvert(self):
         A = np.char.array(['abc'])
         B = np.char.array(['\u03a3'])
-        assert_(issubclass((A + B).dtype.type, np.unicode_))
+        assertTrue(issubclass((A + B).dtype.type, np.unicode_))
 
     def test_from_string(self):
         A = np.char.array(b'abc')
         assert_equal(len(A), 1)
         assert_equal(len(A[0]), 3)
-        assert_(issubclass(A.dtype.type, np.string_))
+        assertTrue(issubclass(A.dtype.type, np.string_))
 
     def test_from_unicode(self):
         A = np.char.array('\u03a3')
         assert_equal(len(A), 1)
         assert_equal(len(A[0]), 1)
         assert_equal(A.itemsize, 4)
-        assert_(issubclass(A.dtype.type, np.unicode_))
+        assertTrue(issubclass(A.dtype.type, np.unicode_))
 
 class TestVecString:
     def test_non_existent_method(self):
@@ -140,12 +140,12 @@ class TestWhitespace:
                            ['789', 'xyz']]).view(np.chararray)
 
     def test1(self):
-        assert_(np.all(self.A == self.B))
-        assert_(np.all(self.A >= self.B))
-        assert_(np.all(self.A <= self.B))
-        assert_(not np.any(self.A > self.B))
-        assert_(not np.any(self.A < self.B))
-        assert_(not np.any(self.A != self.B))
+        assertTrue(np.all(self.A == self.B))
+        assertTrue(np.all(self.A >= self.B))
+        assertTrue(np.all(self.A <= self.B))
+        assertTrue(not np.any(self.A > self.B))
+        assertTrue(not np.any(self.A < self.B))
+        assertTrue(not np.any(self.A != self.B))
 
 class TestChar:
     def setup_method(self):
@@ -183,8 +183,8 @@ class TestComparisons:
     def test_type(self):
         out1 = np.char.equal(self.A, self.B)
         out2 = np.char.equal('a', 'a')
-        assert_(isinstance(out1, np.ndarray))
-        assert_(isinstance(out2, np.ndarray))
+        assertTrue(isinstance(out1, np.ndarray))
+        assertTrue(isinstance(out2, np.ndarray))
 
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""
@@ -212,12 +212,12 @@ class TestInformation:
                            ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
 
     def test_len(self):
-        assert_(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
+        assertTrue(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
         assert_array_equal(np.char.str_len(self.A), [[5, 0], [5, 9], [12, 5]])
         assert_array_equal(np.char.str_len(self.B), [[3, 0], [5, 9], [12, 5]])
 
     def test_count(self):
-        assert_(issubclass(self.A.count('').dtype.type, np.integer))
+        assertTrue(issubclass(self.A.count('').dtype.type, np.integer))
         assert_array_equal(self.A.count('a'), [[1, 0], [0, 1], [0, 0]])
         assert_array_equal(self.A.count('123'), [[0, 0], [1, 0], [1, 0]])
         # Python doesn't seem to like counting NULL characters
@@ -228,7 +228,7 @@ class TestInformation:
         # assert_array_equal(self.B.count('\0'), [[0, 0], [0, 0], [1, 0]])
 
     def test_endswith(self):
-        assert_(issubclass(self.A.endswith('').dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.endswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.endswith(' '), [[1, 0], [0, 0], [1, 0]])
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -238,7 +238,7 @@ class TestInformation:
         assert_raises(TypeError, fail)
 
     def test_find(self):
-        assert_(issubclass(self.A.find('a').dtype.type, np.integer))
+        assertTrue(issubclass(self.A.find('a').dtype.type, np.integer))
         assert_array_equal(self.A.find('a'), [[1, -1], [-1, 6], [-1, -1]])
         assert_array_equal(self.A.find('3'), [[-1, -1], [2, -1], [2, -1]])
         assert_array_equal(self.A.find('a', 0, 2), [[1, -1], [-1, -1], [-1, -1]])
@@ -250,39 +250,39 @@ class TestInformation:
             self.A.index('a')
 
         assert_raises(ValueError, fail)
-        assert_(np.char.index('abcba', 'b') == 1)
-        assert_(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
+        assertTrue(np.char.index('abcba', 'b') == 1)
+        assertTrue(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
 
     def test_isalnum(self):
-        assert_(issubclass(self.A.isalnum().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.isalnum().dtype.type, np.bool_))
         assert_array_equal(self.A.isalnum(), [[False, False], [True, True], [False, True]])
 
     def test_isalpha(self):
-        assert_(issubclass(self.A.isalpha().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.isalpha().dtype.type, np.bool_))
         assert_array_equal(self.A.isalpha(), [[False, False], [False, True], [False, True]])
 
     def test_isdigit(self):
-        assert_(issubclass(self.A.isdigit().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.isdigit().dtype.type, np.bool_))
         assert_array_equal(self.A.isdigit(), [[False, False], [True, False], [False, False]])
 
     def test_islower(self):
-        assert_(issubclass(self.A.islower().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.islower().dtype.type, np.bool_))
         assert_array_equal(self.A.islower(), [[True, False], [False, False], [False, False]])
 
     def test_isspace(self):
-        assert_(issubclass(self.A.isspace().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.isspace().dtype.type, np.bool_))
         assert_array_equal(self.A.isspace(), [[False, False], [False, False], [False, False]])
 
     def test_istitle(self):
-        assert_(issubclass(self.A.istitle().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.istitle().dtype.type, np.bool_))
         assert_array_equal(self.A.istitle(), [[False, False], [False, False], [False, False]])
 
     def test_isupper(self):
-        assert_(issubclass(self.A.isupper().dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.isupper().dtype.type, np.bool_))
         assert_array_equal(self.A.isupper(), [[False, False], [False, False], [False, True]])
 
     def test_rfind(self):
-        assert_(issubclass(self.A.rfind('a').dtype.type, np.integer))
+        assertTrue(issubclass(self.A.rfind('a').dtype.type, np.integer))
         assert_array_equal(self.A.rfind('a'), [[1, -1], [-1, 6], [-1, -1]])
         assert_array_equal(self.A.rfind('3'), [[-1, -1], [2, -1], [6, -1]])
         assert_array_equal(self.A.rfind('a', 0, 2), [[1, -1], [-1, -1], [-1, -1]])
@@ -294,11 +294,11 @@ class TestInformation:
             self.A.rindex('a')
 
         assert_raises(ValueError, fail)
-        assert_(np.char.rindex('abcba', 'b') == 3)
-        assert_(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
+        assertTrue(np.char.rindex('abcba', 'b') == 3)
+        assertTrue(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
 
     def test_startswith(self):
-        assert_(issubclass(self.A.startswith('').dtype.type, np.bool_))
+        assertTrue(issubclass(self.A.startswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.startswith(' '), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
 
@@ -322,41 +322,41 @@ class TestMethods:
         tgt = [[b' abc ', b''],
                [b'12345', b'Mixedcase'],
                [b'123 \t 345 \0 ', b'Upper']]
-        assert_(issubclass(self.A.capitalize().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.capitalize().dtype.type, np.string_))
         assert_array_equal(self.A.capitalize(), tgt)
 
         tgt = [[' \u03c3 ', ''],
                ['12345', 'Mixedcase'],
                ['123 \t 345 \0 ', 'Upper']]
-        assert_(issubclass(self.B.capitalize().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.capitalize().dtype.type, np.unicode_))
         assert_array_equal(self.B.capitalize(), tgt)
 
     def test_center(self):
-        assert_(issubclass(self.A.center(10).dtype.type, np.string_))
+        assertTrue(issubclass(self.A.center(10).dtype.type, np.string_))
         C = self.A.center([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
 
         C = self.A.center(20, b'#')
-        assert_(np.all(C.startswith(b'#')))
-        assert_(np.all(C.endswith(b'#')))
+        assertTrue(np.all(C.startswith(b'#')))
+        assertTrue(np.all(C.endswith(b'#')))
 
         C = np.char.center(b'FOO', [[10, 20], [15, 8]])
         tgt = [[b'   FOO    ', b'        FOO         '],
                [b'      FOO      ', b'  FOO   ']]
-        assert_(issubclass(C.dtype.type, np.string_))
+        assertTrue(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
     def test_decode(self):
         A = np.char.array([b'\\u03a3'])
-        assert_(A.decode('unicode-escape')[0] == '\u03a3')
+        assertTrue(A.decode('unicode-escape')[0] == '\u03a3')
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        assert_(B[0][0] == str(' \\u03a3 ').encode('latin1'))
+        assertTrue(B[0][0] == str(' \\u03a3 ').encode('latin1'))
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
-        assert_(T[2, 0] == b'123      345 \0')
+        assertTrue(T[2, 0] == b'123      345 \0')
 
     def test_join(self):
         # NOTE: list(b'123') == [49, 50, 51]
@@ -364,14 +364,14 @@ class TestMethods:
         A0 = self.A.decode('ascii')
 
         A = np.char.join([',', '#'], A0)
-        assert_(issubclass(A.dtype.type, np.unicode_))
+        assertTrue(issubclass(A.dtype.type, np.unicode_))
         tgt = np.array([[' ,a,b,c, ', ''],
                         ['1,2,3,4,5', 'M#i#x#e#d#C#a#s#e'],
                         ['1,2,3, ,\t, ,3,4,5, ,\x00, ', 'U#P#P#E#R']])
         assert_array_equal(np.char.join([',', '#'], A0), tgt)
 
     def test_ljust(self):
-        assert_(issubclass(self.A.ljust(10).dtype.type, np.string_))
+        assertTrue(issubclass(self.A.ljust(10).dtype.type, np.string_))
 
         C = self.A.ljust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
@@ -379,32 +379,32 @@ class TestMethods:
         C = self.A.ljust(20, b'#')
         assert_array_equal(C.startswith(b'#'), [
                 [False, True], [False, False], [False, False]])
-        assert_(np.all(C.endswith(b'#')))
+        assertTrue(np.all(C.endswith(b'#')))
 
         C = np.char.ljust(b'FOO', [[10, 20], [15, 8]])
         tgt = [[b'FOO       ', b'FOO                 '],
                [b'FOO            ', b'FOO     ']]
-        assert_(issubclass(C.dtype.type, np.string_))
+        assertTrue(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
     def test_lower(self):
         tgt = [[b' abc ', b''],
                [b'12345', b'mixedcase'],
                [b'123 \t 345 \0 ', b'upper']]
-        assert_(issubclass(self.A.lower().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.lower().dtype.type, np.string_))
         assert_array_equal(self.A.lower(), tgt)
 
         tgt = [[' \u03c3 ', ''],
                ['12345', 'mixedcase'],
                ['123 \t 345 \0 ', 'upper']]
-        assert_(issubclass(self.B.lower().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.lower().dtype.type, np.unicode_))
         assert_array_equal(self.B.lower(), tgt)
 
     def test_lstrip(self):
         tgt = [[b'abc ', b''],
                [b'12345', b'MixedCase'],
                [b'123 \t 345 \0 ', b'UPPER']]
-        assert_(issubclass(self.A.lstrip().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.lstrip().dtype.type, np.string_))
         assert_array_equal(self.A.lstrip(), tgt)
 
         tgt = [[b' abc', b''],
@@ -415,7 +415,7 @@ class TestMethods:
         tgt = [['\u03a3 ', ''],
                ['12345', 'MixedCase'],
                ['123 \t 345 \0 ', 'UPPER']]
-        assert_(issubclass(self.B.lstrip().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.lstrip().dtype.type, np.unicode_))
         assert_array_equal(self.B.lstrip(), tgt)
 
     def test_partition(self):
@@ -423,7 +423,7 @@ class TestMethods:
         tgt = [[(b' abc ', b'', b''), (b'', b'', b'')],
                [(b'12', b'3', b'45'), (b'', b'M', b'ixedCase')],
                [(b'12', b'3', b' \t 345 \0 '), (b'UPPER', b'', b'')]]
-        assert_(issubclass(P.dtype.type, np.string_))
+        assertTrue(issubclass(P.dtype.type, np.string_))
         assert_array_equal(P, tgt)
 
     def test_replace(self):
@@ -432,24 +432,24 @@ class TestMethods:
         tgt = [[b' abc ', b''],
                [b'12##########45', b'MixedC@se'],
                [b'12########## \t ##########45 \x00', b'UPPER']]
-        assert_(issubclass(R.dtype.type, np.string_))
+        assertTrue(issubclass(R.dtype.type, np.string_))
         assert_array_equal(R, tgt)
 
     def test_rjust(self):
-        assert_(issubclass(self.A.rjust(10).dtype.type, np.string_))
+        assertTrue(issubclass(self.A.rjust(10).dtype.type, np.string_))
 
         C = self.A.rjust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
 
         C = self.A.rjust(20, b'#')
-        assert_(np.all(C.startswith(b'#')))
+        assertTrue(np.all(C.startswith(b'#')))
         assert_array_equal(C.endswith(b'#'),
                            [[False, True], [False, False], [False, False]])
 
         C = np.char.rjust(b'FOO', [[10, 20], [15, 8]])
         tgt = [[b'       FOO', b'                 FOO'],
                [b'            FOO', b'     FOO']]
-        assert_(issubclass(C.dtype.type, np.string_))
+        assertTrue(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
     def test_rpartition(self):
@@ -457,7 +457,7 @@ class TestMethods:
         tgt = [[(b'', b'', b' abc '), (b'', b'', b'')],
                [(b'12', b'3', b'45'), (b'', b'M', b'ixedCase')],
                [(b'123 \t ', b'3', b'45 \0 '), (b'', b'', b'UPPER')]]
-        assert_(issubclass(P.dtype.type, np.string_))
+        assertTrue(issubclass(P.dtype.type, np.string_))
         assert_array_equal(P, tgt)
 
     def test_rsplit(self):
@@ -465,11 +465,11 @@ class TestMethods:
         tgt = [[[b' abc '], [b'']],
                [[b'12', b'45'], [b'MixedCase']],
                [[b'12', b' \t ', b'45 \x00 '], [b'UPPER']]]
-        assert_(issubclass(A.dtype.type, np.object_))
+        assertTrue(issubclass(A.dtype.type, np.object_))
         assert_equal(A.tolist(), tgt)
 
     def test_rstrip(self):
-        assert_(issubclass(self.A.rstrip().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.rstrip().dtype.type, np.string_))
 
         tgt = [[b' abc', b''],
                [b'12345', b'MixedCase'],
@@ -485,14 +485,14 @@ class TestMethods:
         tgt = [[' \u03a3', ''],
                ['12345', 'MixedCase'],
                ['123 \t 345', 'UPPER']]
-        assert_(issubclass(self.B.rstrip().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.rstrip().dtype.type, np.unicode_))
         assert_array_equal(self.B.rstrip(), tgt)
 
     def test_strip(self):
         tgt = [[b'abc', b''],
                [b'12345', b'MixedCase'],
                [b'123 \t 345', b'UPPER']]
-        assert_(issubclass(self.A.strip().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.strip().dtype.type, np.string_))
         assert_array_equal(self.A.strip(), tgt)
 
         tgt = [[b' abc ', b''],
@@ -503,7 +503,7 @@ class TestMethods:
         tgt = [['\u03a3', ''],
                ['12345', 'MixedCase'],
                ['123 \t 345', 'UPPER']]
-        assert_(issubclass(self.B.strip().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.strip().dtype.type, np.unicode_))
         assert_array_equal(self.B.strip(), tgt)
 
     def test_split(self):
@@ -512,52 +512,52 @@ class TestMethods:
                [[b' abc '], [b'']],
                [[b'12', b'45'], [b'MixedCase']],
                [[b'12', b' \t ', b'45 \x00 '], [b'UPPER']]]
-        assert_(issubclass(A.dtype.type, np.object_))
+        assertTrue(issubclass(A.dtype.type, np.object_))
         assert_equal(A.tolist(), tgt)
 
     def test_splitlines(self):
         A = np.char.array(['abc\nfds\nwer']).splitlines()
-        assert_(issubclass(A.dtype.type, np.object_))
-        assert_(A.shape == (1,))
-        assert_(len(A[0]) == 3)
+        assertTrue(issubclass(A.dtype.type, np.object_))
+        assertTrue(A.shape == (1,))
+        assertTrue(len(A[0]) == 3)
 
     def test_swapcase(self):
         tgt = [[b' ABC ', b''],
                [b'12345', b'mIXEDcASE'],
                [b'123 \t 345 \0 ', b'upper']]
-        assert_(issubclass(self.A.swapcase().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.swapcase().dtype.type, np.string_))
         assert_array_equal(self.A.swapcase(), tgt)
 
         tgt = [[' \u03c3 ', ''],
                ['12345', 'mIXEDcASE'],
                ['123 \t 345 \0 ', 'upper']]
-        assert_(issubclass(self.B.swapcase().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.swapcase().dtype.type, np.unicode_))
         assert_array_equal(self.B.swapcase(), tgt)
 
     def test_title(self):
         tgt = [[b' Abc ', b''],
                [b'12345', b'Mixedcase'],
                [b'123 \t 345 \0 ', b'Upper']]
-        assert_(issubclass(self.A.title().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.title().dtype.type, np.string_))
         assert_array_equal(self.A.title(), tgt)
 
         tgt = [[' \u03a3 ', ''],
                ['12345', 'Mixedcase'],
                ['123 \t 345 \0 ', 'Upper']]
-        assert_(issubclass(self.B.title().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.title().dtype.type, np.unicode_))
         assert_array_equal(self.B.title(), tgt)
 
     def test_upper(self):
         tgt = [[b' ABC ', b''],
                [b'12345', b'MIXEDCASE'],
                [b'123 \t 345 \0 ', b'UPPER']]
-        assert_(issubclass(self.A.upper().dtype.type, np.string_))
+        assertTrue(issubclass(self.A.upper().dtype.type, np.string_))
         assert_array_equal(self.A.upper(), tgt)
 
         tgt = [[' \u03a3 ', ''],
                ['12345', 'MIXEDCASE'],
                ['123 \t 345 \0 ', 'UPPER']]
-        assert_(issubclass(self.B.upper().dtype.type, np.unicode_))
+        assertTrue(issubclass(self.B.upper().dtype.type, np.unicode_))
         assert_array_equal(self.B.upper(), tgt)
 
     def test_isnumeric(self):
@@ -566,7 +566,7 @@ class TestMethods:
             self.A.isnumeric()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isnumeric().dtype.type, np.bool_))
+        assertTrue(issubclass(self.B.isnumeric().dtype.type, np.bool_))
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
 
@@ -576,7 +576,7 @@ class TestMethods:
             self.A.isdecimal()
 
         assert_raises(TypeError, fail)
-        assert_(issubclass(self.B.isdecimal().dtype.type, np.bool_))
+        assertTrue(issubclass(self.B.isdecimal().dtype.type, np.bool_))
         assert_array_equal(self.B.isdecimal(), [
                 [False, False], [True, False], [False, False]])
 
@@ -592,7 +592,7 @@ class TestOperations:
         AB = np.array([['abcefg', '123456'],
                        ['789051', 'xyztuv']]).view(np.chararray)
         assert_array_equal(AB, (self.A + self.B))
-        assert_(len((self.A + self.B)[0][0]) == 6)
+        assertTrue(len((self.A + self.B)[0][0]) == 6)
 
     def test_radd(self):
         QA = np.array([['qabc', 'q123'],
@@ -640,8 +640,8 @@ class TestOperations:
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
-        assert_(("%s" % self.A) == str(self.A))
-        assert_(("%r" % self.A) == repr(self.A))
+        assertTrue(("%s" % self.A) == str(self.A))
+        assertTrue(("%r" % self.A) == repr(self.A))
 
         for ob in [42, object()]:
             with assert_raises_regex(
@@ -655,15 +655,15 @@ class TestOperations:
                        dtype='S4').view(np.chararray)
         sl1 = arr[:]
         assert_array_equal(sl1, arr)
-        assert_(sl1.base is arr)
-        assert_(sl1.base.base is arr.base)
+        assertTrue(sl1.base is arr)
+        assertTrue(sl1.base.base is arr.base)
 
         sl2 = arr[:, :]
         assert_array_equal(sl2, arr)
-        assert_(sl2.base is arr)
-        assert_(sl2.base.base is arr.base)
+        assertTrue(sl2.base is arr)
+        assertTrue(sl2.base.base is arr.base)
 
-        assert_(arr[0, 0] == b'abc')
+        assertTrue(arr[0, 0] == b'abc')
 
 
 def test_empty_indexing():
@@ -671,7 +671,7 @@ def test_empty_indexing():
     # Check that indexing a chararray with an empty list/array returns an
     # empty chararray instead of a chararray with a single empty string in it.
     s = np.chararray((4,))
-    assert_(s[[]].size == 0)
+    assertTrue(s[[]].size == 0)
 
 
 @pytest.mark.parametrize(["dt1", "dt2"],

@@ -10,10 +10,10 @@ def test_isfileobj():
         filename = join(folder, 'a.bin')
 
         with open(filename, 'wb') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))
 
         with open(filename, 'ab') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))
 
         with open(filename, 'rb') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))

@@ -184,9 +184,9 @@ class TestArrayEqual(_GenericTest):
 
         a = np.array([1., 2.]).view(MyArray)
         b = np.array([2., 3.]).view(MyArray)
-        assert_(type(a == a), bool)
-        assert_(a == a)
-        assert_(a != b)
+        assertTrue(type(a == a), bool)
+        assertTrue(a == a)
+        assertTrue(a != b)
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
@@ -913,7 +913,7 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Mismatched elements: 1 / 4 (25%)\n'
+        assertTrue('Mismatched elements: 1 / 4 (25%)\n'
                 'Max absolute difference: 1\n'
                 'Max relative difference: 0.5' in msg)
 
@@ -946,7 +946,7 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Max relative difference: 0.5' in msg)
+        assertTrue('Max relative difference: 0.5' in msg)
 
     def test_timedelta(self):
         # see gh-18286
@@ -1550,7 +1550,7 @@ def test_tempdir():
         fpath = os.path.join(tdir, 'tmp')
         with open(fpath, 'w'):
             pass
-    assert_(not os.path.isdir(tdir))
+    assertTrue(not os.path.isdir(tdir))
 
     raised = False
     try:
@@ -1558,15 +1558,15 @@ def test_tempdir():
             raise ValueError()
     except ValueError:
         raised = True
-    assert_(raised)
-    assert_(not os.path.isdir(tdir))
+    assertTrue(raised)
+    assertTrue(not os.path.isdir(tdir))
 
 
 def test_temppath():
     with temppath() as fpath:
         with open(fpath, 'w'):
             pass
-    assert_(not os.path.isfile(fpath))
+    assertTrue(not os.path.isfile(fpath))
 
     raised = False
     try:
@@ -1574,8 +1574,8 @@ def test_temppath():
             raise ValueError()
     except ValueError:
         raised = True
-    assert_(raised)
-    assert_(not os.path.isfile(fpath))
+    assertTrue(raised)
+    assertTrue(not os.path.isfile(fpath))
 
 
 class my_cacw(clear_and_catch_warnings):

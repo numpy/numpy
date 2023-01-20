@@ -30,9 +30,9 @@ class TestDateTime:
                      'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
-            assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
+            assertTrue(dt1 == np.dtype('datetime64[750%s]' % unit))
             dt2 = np.dtype('m8[%s]' % unit)
-            assert_(dt2 == np.dtype('timedelta64[%s]' % unit))
+            assertTrue(dt2 == np.dtype('timedelta64[%s]' % unit))
 
         # Generic units shouldn't add [] to the end
         assert_equal(str(np.dtype("M8")), "datetime64")
@@ -40,19 +40,19 @@ class TestDateTime:
         # Should be possible to specify the endianness
         assert_equal(np.dtype("=M8"), np.dtype("M8"))
         assert_equal(np.dtype("=M8[s]"), np.dtype("M8[s]"))
-        assert_(np.dtype(">M8") == np.dtype("M8") or
+        assertTrue(np.dtype(">M8") == np.dtype("M8") or
                 np.dtype("<M8") == np.dtype("M8"))
-        assert_(np.dtype(">M8[D]") == np.dtype("M8[D]") or
+        assertTrue(np.dtype(">M8[D]") == np.dtype("M8[D]") or
                 np.dtype("<M8[D]") == np.dtype("M8[D]"))
-        assert_(np.dtype(">M8") != np.dtype("<M8"))
+        assertTrue(np.dtype(">M8") != np.dtype("<M8"))
 
         assert_equal(np.dtype("=m8"), np.dtype("m8"))
         assert_equal(np.dtype("=m8[s]"), np.dtype("m8[s]"))
-        assert_(np.dtype(">m8") == np.dtype("m8") or
+        assertTrue(np.dtype(">m8") == np.dtype("m8") or
                 np.dtype("<m8") == np.dtype("m8"))
-        assert_(np.dtype(">m8[D]") == np.dtype("m8[D]") or
+        assertTrue(np.dtype(">m8[D]") == np.dtype("m8[D]") or
                 np.dtype("<m8[D]") == np.dtype("m8[D]"))
-        assert_(np.dtype(">m8") != np.dtype("<m8"))
+        assertTrue(np.dtype(">m8") != np.dtype("<m8"))
 
         # Check that the parser rejects bad datetime types
         assert_raises(TypeError, np.dtype, 'M8[badunit]')
@@ -68,76 +68,76 @@ class TestDateTime:
 
     def test_datetime_casting_rules(self):
         # Cannot cast safely/same_kind between timedelta and datetime
-        assert_(not np.can_cast('m8', 'M8', casting='same_kind'))
-        assert_(not np.can_cast('M8', 'm8', casting='same_kind'))
-        assert_(not np.can_cast('m8', 'M8', casting='safe'))
-        assert_(not np.can_cast('M8', 'm8', casting='safe'))
+        assertTrue(not np.can_cast('m8', 'M8', casting='same_kind'))
+        assertTrue(not np.can_cast('M8', 'm8', casting='same_kind'))
+        assertTrue(not np.can_cast('m8', 'M8', casting='safe'))
+        assertTrue(not np.can_cast('M8', 'm8', casting='safe'))
 
         # Can cast safely/same_kind from integer to timedelta
-        assert_(np.can_cast('i8', 'm8', casting='same_kind'))
-        assert_(np.can_cast('i8', 'm8', casting='safe'))
-        assert_(np.can_cast('i4', 'm8', casting='same_kind'))
-        assert_(np.can_cast('i4', 'm8', casting='safe'))
-        assert_(np.can_cast('u4', 'm8', casting='same_kind'))
-        assert_(np.can_cast('u4', 'm8', casting='safe'))
+        assertTrue(np.can_cast('i8', 'm8', casting='same_kind'))
+        assertTrue(np.can_cast('i8', 'm8', casting='safe'))
+        assertTrue(np.can_cast('i4', 'm8', casting='same_kind'))
+        assertTrue(np.can_cast('i4', 'm8', casting='safe'))
+        assertTrue(np.can_cast('u4', 'm8', casting='same_kind'))
+        assertTrue(np.can_cast('u4', 'm8', casting='safe'))
 
         # Cannot cast safely from unsigned integer of the same size, which
         # could overflow
-        assert_(np.can_cast('u8', 'm8', casting='same_kind'))
-        assert_(not np.can_cast('u8', 'm8', casting='safe'))
+        assertTrue(np.can_cast('u8', 'm8', casting='same_kind'))
+        assertTrue(not np.can_cast('u8', 'm8', casting='safe'))
 
         # Cannot cast safely/same_kind from float to timedelta
-        assert_(not np.can_cast('f4', 'm8', casting='same_kind'))
-        assert_(not np.can_cast('f4', 'm8', casting='safe'))
+        assertTrue(not np.can_cast('f4', 'm8', casting='same_kind'))
+        assertTrue(not np.can_cast('f4', 'm8', casting='safe'))
 
         # Cannot cast safely/same_kind from integer to datetime
-        assert_(not np.can_cast('i8', 'M8', casting='same_kind'))
-        assert_(not np.can_cast('i8', 'M8', casting='safe'))
+        assertTrue(not np.can_cast('i8', 'M8', casting='same_kind'))
+        assertTrue(not np.can_cast('i8', 'M8', casting='safe'))
 
         # Cannot cast safely/same_kind from bool to datetime
-        assert_(not np.can_cast('b1', 'M8', casting='same_kind'))
-        assert_(not np.can_cast('b1', 'M8', casting='safe'))
+        assertTrue(not np.can_cast('b1', 'M8', casting='same_kind'))
+        assertTrue(not np.can_cast('b1', 'M8', casting='safe'))
         # Can cast safely/same_kind from bool to timedelta
-        assert_(np.can_cast('b1', 'm8', casting='same_kind'))
-        assert_(np.can_cast('b1', 'm8', casting='safe'))
+        assertTrue(np.can_cast('b1', 'm8', casting='same_kind'))
+        assertTrue(np.can_cast('b1', 'm8', casting='safe'))
 
         # Can cast datetime safely from months/years to days
-        assert_(np.can_cast('M8[M]', 'M8[D]', casting='safe'))
-        assert_(np.can_cast('M8[Y]', 'M8[D]', casting='safe'))
+        assertTrue(np.can_cast('M8[M]', 'M8[D]', casting='safe'))
+        assertTrue(np.can_cast('M8[Y]', 'M8[D]', casting='safe'))
         # Cannot cast timedelta safely from months/years to days
-        assert_(not np.can_cast('m8[M]', 'm8[D]', casting='safe'))
-        assert_(not np.can_cast('m8[Y]', 'm8[D]', casting='safe'))
+        assertTrue(not np.can_cast('m8[M]', 'm8[D]', casting='safe'))
+        assertTrue(not np.can_cast('m8[Y]', 'm8[D]', casting='safe'))
         # Can cast datetime same_kind from months/years to days
-        assert_(np.can_cast('M8[M]', 'M8[D]', casting='same_kind'))
-        assert_(np.can_cast('M8[Y]', 'M8[D]', casting='same_kind'))
+        assertTrue(np.can_cast('M8[M]', 'M8[D]', casting='same_kind'))
+        assertTrue(np.can_cast('M8[Y]', 'M8[D]', casting='same_kind'))
         # Can't cast timedelta same_kind from months/years to days
-        assert_(not np.can_cast('m8[M]', 'm8[D]', casting='same_kind'))
-        assert_(not np.can_cast('m8[Y]', 'm8[D]', casting='same_kind'))
+        assertTrue(not np.can_cast('m8[M]', 'm8[D]', casting='same_kind'))
+        assertTrue(not np.can_cast('m8[Y]', 'm8[D]', casting='same_kind'))
         # Can cast datetime same_kind across the date/time boundary
-        assert_(np.can_cast('M8[D]', 'M8[h]', casting='same_kind'))
+        assertTrue(np.can_cast('M8[D]', 'M8[h]', casting='same_kind'))
         # Can cast timedelta same_kind across the date/time boundary
-        assert_(np.can_cast('m8[D]', 'm8[h]', casting='same_kind'))
-        assert_(np.can_cast('m8[h]', 'm8[D]', casting='same_kind'))
+        assertTrue(np.can_cast('m8[D]', 'm8[h]', casting='same_kind'))
+        assertTrue(np.can_cast('m8[h]', 'm8[D]', casting='same_kind'))
 
         # Cannot cast safely if the integer multiplier doesn't divide
-        assert_(not np.can_cast('M8[7h]', 'M8[3h]', casting='safe'))
-        assert_(not np.can_cast('M8[3h]', 'M8[6h]', casting='safe'))
+        assertTrue(not np.can_cast('M8[7h]', 'M8[3h]', casting='safe'))
+        assertTrue(not np.can_cast('M8[3h]', 'M8[6h]', casting='safe'))
         # But can cast same_kind
-        assert_(np.can_cast('M8[7h]', 'M8[3h]', casting='same_kind'))
+        assertTrue(np.can_cast('M8[7h]', 'M8[3h]', casting='same_kind'))
         # Can cast safely if the integer multiplier does divide
-        assert_(np.can_cast('M8[6h]', 'M8[3h]', casting='safe'))
+        assertTrue(np.can_cast('M8[6h]', 'M8[3h]', casting='safe'))
 
         # We can always cast types with generic units (corresponding to NaT) to
         # more specific types
-        assert_(np.can_cast('m8', 'm8[h]', casting='same_kind'))
-        assert_(np.can_cast('m8', 'm8[h]', casting='safe'))
-        assert_(np.can_cast('M8', 'M8[h]', casting='same_kind'))
-        assert_(np.can_cast('M8', 'M8[h]', casting='safe'))
+        assertTrue(np.can_cast('m8', 'm8[h]', casting='same_kind'))
+        assertTrue(np.can_cast('m8', 'm8[h]', casting='safe'))
+        assertTrue(np.can_cast('M8', 'M8[h]', casting='same_kind'))
+        assertTrue(np.can_cast('M8', 'M8[h]', casting='safe'))
         # but not the other way around
-        assert_(not np.can_cast('m8[h]', 'm8', casting='same_kind'))
-        assert_(not np.can_cast('m8[h]', 'm8', casting='safe'))
-        assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
-        assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
+        assertTrue(not np.can_cast('m8[h]', 'm8', casting='same_kind'))
+        assertTrue(not np.can_cast('m8[h]', 'm8', casting='safe'))
+        assertTrue(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
+        assertTrue(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
     def test_datetime_prefix_conversions(self):
         # regression tests related to gh-19631;
@@ -177,10 +177,10 @@ class TestDateTime:
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
-        assert_(np.datetime64('NaT') !=
+        assertTrue(np.datetime64('NaT') !=
                 np.datetime64('2000') + np.timedelta64('NaT'))
-        assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
-        assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
+        assertTrue(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
+        assertTrue(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
 
     @pytest.mark.parametrize("size", [
         3, 21, 217, 1000])
@@ -663,10 +663,10 @@ class TestDateTime:
                     datetime.date(2001, 3, 22))
 
     def test_dtype_comparison(self):
-        assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
-        assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
-        assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
-        assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
+        assertTrue(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
+        assertTrue(np.dtype('M8[us]') != np.dtype('M8[ms]'))
+        assertTrue(np.dtype('M8[2D]') != np.dtype('M8[D]'))
+        assertTrue(np.dtype('M8[D]') != np.dtype('M8[2D]'))
 
     def test_pydatetime_creation(self):
         a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
@@ -844,9 +844,9 @@ class TestDateTime:
         "Verify that datetime dtype __setstate__ can handle bad arguments"
         dt = np.dtype('>M8[us]')
         assert_raises(ValueError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, 1))
-        assert_(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
+        assertTrue(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
         assert_raises(TypeError, dt.__setstate__, (4, '>', None, None, None, -1, -1, 0, ({}, 'xxx')))
-        assert_(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
+        assertTrue(dt.__reduce__()[2] == np.dtype('>M8[us]').__reduce__()[2])
 
     def test_dtype_promotion(self):
         # datetime <op> datetime computes the metadata gcd
@@ -995,10 +995,10 @@ class TestDateTime:
             dt1 = np.dtype('M8[%s]' % unit1)
             for unit2 in ['D', 'h', 'm', 's', 'ms', 'us']:
                 dt2 = np.dtype('M8[%s]' % unit2)
-                assert_(np.equal(np.array('1932-02-17', dtype='M').astype(dt1),
+                assertTrue(np.equal(np.array('1932-02-17', dtype='M').astype(dt1),
                      np.array('1932-02-17T00:00:00', dtype='M').astype(dt2),
                      casting='unsafe'))
-                assert_(np.equal(np.array('10000-04-27', dtype='M').astype(dt1),
+                assertTrue(np.equal(np.array('10000-04-27', dtype='M').astype(dt1),
                      np.array('10000-04-27T00:00:00', dtype='M').astype(dt2),
                      casting='unsafe'))
 
@@ -1479,21 +1479,21 @@ class TestDateTime:
 
         for op in [np.equal, np.less, np.less_equal,
                    np.greater, np.greater_equal]:
-            assert_(not op(dt_nat, dt_nat))
-            assert_(not op(dt_nat, dt_other))
-            assert_(not op(dt_other, dt_nat))
+            assertTrue(not op(dt_nat, dt_nat))
+            assertTrue(not op(dt_nat, dt_other))
+            assertTrue(not op(dt_other, dt_nat))
 
-            assert_(not op(td_nat, td_nat))
-            assert_(not op(td_nat, td_other))
-            assert_(not op(td_other, td_nat))
+            assertTrue(not op(td_nat, td_nat))
+            assertTrue(not op(td_nat, td_other))
+            assertTrue(not op(td_other, td_nat))
 
-        assert_(np.not_equal(dt_nat, dt_nat))
-        assert_(np.not_equal(dt_nat, dt_other))
-        assert_(np.not_equal(dt_other, dt_nat))
+        assertTrue(np.not_equal(dt_nat, dt_nat))
+        assertTrue(np.not_equal(dt_nat, dt_other))
+        assertTrue(np.not_equal(dt_other, dt_nat))
 
-        assert_(np.not_equal(td_nat, td_nat))
-        assert_(np.not_equal(td_nat, td_other))
-        assert_(np.not_equal(td_other, td_nat))
+        assertTrue(np.not_equal(td_nat, td_nat))
+        assertTrue(np.not_equal(td_nat, td_other))
+        assertTrue(np.not_equal(td_other, td_nat))
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
@@ -1557,42 +1557,42 @@ class TestDateTime:
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
         t[0] = 60*60*24 + 60*60*10
-        assert_(t[0].item().hour == 10)
+        assertTrue(t[0].item().hour == 10)
 
     def test_divisor_conversion_year(self):
-        assert_(np.dtype('M8[Y/4]') == np.dtype('M8[3M]'))
-        assert_(np.dtype('M8[Y/13]') == np.dtype('M8[4W]'))
-        assert_(np.dtype('M8[3Y/73]') == np.dtype('M8[15D]'))
+        assertTrue(np.dtype('M8[Y/4]') == np.dtype('M8[3M]'))
+        assertTrue(np.dtype('M8[Y/13]') == np.dtype('M8[4W]'))
+        assertTrue(np.dtype('M8[3Y/73]') == np.dtype('M8[15D]'))
 
     def test_divisor_conversion_month(self):
-        assert_(np.dtype('M8[M/2]') == np.dtype('M8[2W]'))
-        assert_(np.dtype('M8[M/15]') == np.dtype('M8[2D]'))
-        assert_(np.dtype('M8[3M/40]') == np.dtype('M8[54h]'))
+        assertTrue(np.dtype('M8[M/2]') == np.dtype('M8[2W]'))
+        assertTrue(np.dtype('M8[M/15]') == np.dtype('M8[2D]'))
+        assertTrue(np.dtype('M8[3M/40]') == np.dtype('M8[54h]'))
 
     def test_divisor_conversion_week(self):
-        assert_(np.dtype('m8[W/7]') == np.dtype('m8[D]'))
-        assert_(np.dtype('m8[3W/14]') == np.dtype('m8[36h]'))
-        assert_(np.dtype('m8[5W/140]') == np.dtype('m8[360m]'))
+        assertTrue(np.dtype('m8[W/7]') == np.dtype('m8[D]'))
+        assertTrue(np.dtype('m8[3W/14]') == np.dtype('m8[36h]'))
+        assertTrue(np.dtype('m8[5W/140]') == np.dtype('m8[360m]'))
 
     def test_divisor_conversion_day(self):
-        assert_(np.dtype('M8[D/12]') == np.dtype('M8[2h]'))
-        assert_(np.dtype('M8[D/120]') == np.dtype('M8[12m]'))
-        assert_(np.dtype('M8[3D/960]') == np.dtype('M8[270s]'))
+        assertTrue(np.dtype('M8[D/12]') == np.dtype('M8[2h]'))
+        assertTrue(np.dtype('M8[D/120]') == np.dtype('M8[12m]'))
+        assertTrue(np.dtype('M8[3D/960]') == np.dtype('M8[270s]'))
 
     def test_divisor_conversion_hour(self):
-        assert_(np.dtype('m8[h/30]') == np.dtype('m8[2m]'))
-        assert_(np.dtype('m8[3h/300]') == np.dtype('m8[36s]'))
+        assertTrue(np.dtype('m8[h/30]') == np.dtype('m8[2m]'))
+        assertTrue(np.dtype('m8[3h/300]') == np.dtype('m8[36s]'))
 
     def test_divisor_conversion_minute(self):
-        assert_(np.dtype('m8[m/30]') == np.dtype('m8[2s]'))
-        assert_(np.dtype('m8[3m/300]') == np.dtype('m8[600ms]'))
+        assertTrue(np.dtype('m8[m/30]') == np.dtype('m8[2s]'))
+        assertTrue(np.dtype('m8[3m/300]') == np.dtype('m8[600ms]'))
 
     def test_divisor_conversion_second(self):
-        assert_(np.dtype('m8[s/100]') == np.dtype('m8[10ms]'))
-        assert_(np.dtype('m8[3s/10000]') == np.dtype('m8[300us]'))
+        assertTrue(np.dtype('m8[s/100]') == np.dtype('m8[10ms]'))
+        assertTrue(np.dtype('m8[3s/10000]') == np.dtype('m8[300us]'))
 
     def test_divisor_conversion_fs(self):
-        assert_(np.dtype('M8[fs/100]') == np.dtype('M8[10as]'))
+        assertTrue(np.dtype('M8[fs/100]') == np.dtype('M8[10as]'))
         assert_raises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
 
     def test_divisor_conversion_as(self):
@@ -1851,7 +1851,7 @@ class TestDateTime:
                 '2010-03-15T06:30')
         assert_equal(np.datetime_as_string(a, timezone='UTC'),
                 '2010-03-15T06:30Z')
-        assert_(np.datetime_as_string(a, timezone='local') !=
+        assertTrue(np.datetime_as_string(a, timezone='local') !=
                 '2010-03-15T06:30')
 
         b = np.datetime64('2010-02-15T06:30', 'm')
@@ -2390,12 +2390,12 @@ class TestDateTime:
         assert_equal(str(a), '2038-01-20T13:21:14')
 
     def test_isnat(self):
-        assert_(np.isnat(np.datetime64('NaT', 'ms')))
-        assert_(np.isnat(np.datetime64('NaT', 'ns')))
-        assert_(not np.isnat(np.datetime64('2038-01-19T03:14:07')))
+        assertTrue(np.isnat(np.datetime64('NaT', 'ms')))
+        assertTrue(np.isnat(np.datetime64('NaT', 'ns')))
+        assertTrue(not np.isnat(np.datetime64('2038-01-19T03:14:07')))
 
-        assert_(np.isnat(np.timedelta64('NaT', "ms")))
-        assert_(not np.isnat(np.timedelta64(34, "ms")))
+        assertTrue(np.isnat(np.timedelta64('NaT', "ms")))
+        assertTrue(not np.isnat(np.timedelta64(34, "ms")))
 
         res = np.array([False, False, True])
         for unit in ['Y', 'M', 'W', 'D',
@@ -2418,12 +2418,12 @@ class TestDateTime:
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
     def test_isfinite_scalar(self):
-        assert_(not np.isfinite(np.datetime64('NaT', 'ms')))
-        assert_(not np.isfinite(np.datetime64('NaT', 'ns')))
-        assert_(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
+        assertTrue(not np.isfinite(np.datetime64('NaT', 'ms')))
+        assertTrue(not np.isfinite(np.datetime64('NaT', 'ns')))
+        assertTrue(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
 
-        assert_(not np.isfinite(np.timedelta64('NaT', "ms")))
-        assert_(np.isfinite(np.timedelta64(34, "ms")))
+        assertTrue(not np.isfinite(np.timedelta64('NaT', "ms")))
+        assertTrue(np.isfinite(np.timedelta64(34, "ms")))
 
     @pytest.mark.parametrize('unit', ['Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
                                       'us', 'ns', 'ps', 'fs', 'as'])

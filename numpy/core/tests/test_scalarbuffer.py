@@ -70,7 +70,7 @@ class TestScalarPEP3118:
     def test_void_scalar_structured_data(self):
         dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
         x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
-        assert_(isinstance(x, np.void))
+        assertTrue(isinstance(x, np.void))
         mv_x = memoryview(x)
         expected_size = 16 * np.dtype((np.unicode_, 1)).itemsize
         expected_size += 2 * np.dtype(np.float64).itemsize
@@ -82,7 +82,7 @@ class TestScalarPEP3118:
 
         # check scalar format string against ndarray format string
         a = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
-        assert_(isinstance(a, np.ndarray))
+        assertTrue(isinstance(a, np.ndarray))
         mv_a = memoryview(a)
         assert_equal(mv_x.itemsize, mv_a.itemsize)
         assert_equal(mv_x.format, mv_a.format)

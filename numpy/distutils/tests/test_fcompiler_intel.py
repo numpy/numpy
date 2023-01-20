@@ -19,7 +19,7 @@ class TestIntelFCompilerVersions:
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='intel')
         for vs, version in intel_32bit_version_strings:
             v = fc.version_match(vs)
-            assert_(v == version)
+            assertTrue(v == version)
 
 
 class TestIntelEM64TFCompilerVersions:
@@ -27,4 +27,4 @@ class TestIntelEM64TFCompilerVersions:
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='intelem')
         for vs, version in intel_64bit_version_strings:
             v = fc.version_match(vs)
-            assert_(v == version)
+            assertTrue(v == version)

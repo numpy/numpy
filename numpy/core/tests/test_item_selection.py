@@ -44,7 +44,7 @@ class TestTake:
                             assert_array_equal(res, tresult[real_index])
                         else:
                             res = ta.take(index_array, mode=mode, axis=1)
-                            assert_(res.shape == (2,) + index_array.shape)
+                            assertTrue(res.shape == (2,) + index_array.shape)
 
     def test_refcounting(self):
         objects = [object() for i in range(10)]
@@ -54,13 +54,13 @@ class TestTake:
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == 3 for o in objects))
+                assertTrue(all(sys.getrefcount(o) == 3 for o in objects))
             # not contiguous, example:
             a = np.array(objects * 2)[::2]
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == 3 for o in objects))
+                assertTrue(all(sys.getrefcount(o) == 3 for o in objects))
 
     def test_unicode_mode(self):
         d = np.arange(10)

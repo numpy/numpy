@@ -106,30 +106,30 @@ class CreateZeros:
     def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
         h = np.zeros((), dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
-        assert_(h.dtype.fields['x'][0].name[:4] == 'void')
-        assert_(h.dtype.fields['x'][0].char == 'V')
-        assert_(h.dtype.fields['x'][0].type == np.void)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(h.dtype.fields['x'][0].name[:4] == 'void')
+        assertTrue(h.dtype.fields['x'][0].char == 'V')
+        assertTrue(h.dtype.fields['x'][0].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((), dtype='u1'))
 
     def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
         h = np.zeros((2,), dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
-        assert_(h.dtype['y'].name[:4] == 'void')
-        assert_(h.dtype['y'].char == 'V')
-        assert_(h.dtype['y'].type == np.void)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(h.dtype['y'].name[:4] == 'void')
+        assertTrue(h.dtype['y'].char == 'V')
+        assertTrue(h.dtype['y'].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2,), dtype='u1'))
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
         h = np.zeros((2, 3), dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
-        assert_(h.dtype['z'].name == 'uint8')
-        assert_(h.dtype['z'].char == 'B')
-        assert_(h.dtype['z'].type == np.uint8)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(h.dtype['z'].name == 'uint8')
+        assertTrue(h.dtype['z'].char == 'B')
+        assertTrue(h.dtype['z'].type == np.uint8)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2, 3), dtype='u1'))
 
@@ -149,29 +149,29 @@ class CreateValues:
     def test_tuple(self):
         """Check creation from tuples"""
         h = np.array(self._buffer, dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            assert_(h.shape == (2,))
+            assertTrue(h.shape == (2,))
         else:
-            assert_(h.shape == ())
+            assertTrue(h.shape == ())
 
     def test_list_of_tuple(self):
         """Check creation from list of tuples"""
         h = np.array([self._buffer], dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            assert_(h.shape == (1, 2))
+            assertTrue(h.shape == (1, 2))
         else:
-            assert_(h.shape == (1,))
+            assertTrue(h.shape == (1,))
 
     def test_list_of_list_of_tuple(self):
         """Check creation from list of list of tuples"""
         h = np.array([[self._buffer]], dtype=self._descr)
-        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            assert_(h.shape == (1, 1, 2))
+            assertTrue(h.shape == (1, 1, 2))
         else:
-            assert_(h.shape == (1, 1))
+            assertTrue(h.shape == (1, 1))
 
 
 class TestCreateValuesPlainSingle(CreateValues):
@@ -209,12 +209,12 @@ class ReadValuesPlain:
     def test_access_fields(self):
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            assert_(h.shape == ())
+            assertTrue(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[1], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[2], dtype='u1'))
         else:
-            assert_(len(h) == 2)
+            assertTrue(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                              self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][1],
@@ -242,12 +242,12 @@ class ReadValuesNested:
         """Check reading the top fields of a nested array"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            assert_(h.shape == ())
+            assertTrue(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[4], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[5], dtype='u1'))
         else:
-            assert_(len(h) == 2)
+            assertTrue(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                            self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][4],
@@ -306,16 +306,16 @@ class ReadValuesNested:
     def test_nested1_descriptor(self):
         """Check access nested descriptors of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        assert_(h.dtype['Info']['value'].name == 'complex128')
-        assert_(h.dtype['Info']['y2'].name == 'float64')
-        assert_(h.dtype['info']['Name'].name == 'str256')
-        assert_(h.dtype['info']['Value'].name == 'complex128')
+        assertTrue(h.dtype['Info']['value'].name == 'complex128')
+        assertTrue(h.dtype['Info']['y2'].name == 'float64')
+        assertTrue(h.dtype['info']['Name'].name == 'str256')
+        assertTrue(h.dtype['info']['Value'].name == 'complex128')
 
     def test_nested2_descriptor(self):
         """Check access nested descriptors of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        assert_(h.dtype['Info']['Info2']['value'].name == 'void256')
-        assert_(h.dtype['Info']['Info2']['z3'].name == 'void64')
+        assertTrue(h.dtype['Info']['Info2']['value'].name == 'void256')
+        assertTrue(h.dtype['Info']['Info2']['z3'].name == 'void64')
 
 
 class TestReadValuesNestedSingle(ReadValuesNested):
@@ -334,29 +334,29 @@ class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
         a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
-        assert_(a['int'].shape == (5, 0))
-        assert_(a['float'].shape == (5, 2))
+        assertTrue(a['int'].shape == (5, 0))
+        assertTrue(a['float'].shape == (5, 2))
 
 class TestCommonType:
     def test_scalar_loses1(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['f8'])
-        assert_(res == 'f4')
+        assertTrue(res == 'f4')
 
     def test_scalar_loses2(self):
         res = np.find_common_type(['f4', 'f4'], ['i8'])
-        assert_(res == 'f4')
+        assertTrue(res == 'f4')
 
     def test_scalar_wins(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['c8'])
-        assert_(res == 'c8')
+        assertTrue(res == 'c8')
 
     def test_scalar_wins2(self):
         res = np.find_common_type(['u4', 'i4', 'i4'], ['f4'])
-        assert_(res == 'f8')
+        assertTrue(res == 'f8')
 
     def test_scalar_wins3(self):  # doesn't go up to 'f16' on purpose
         res = np.find_common_type(['u8', 'i8', 'i8'], ['f8'])
-        assert_(res == 'f8')
+        assertTrue(res == 'f8')
 
 class TestMultipleFields:
     def setup_method(self):
@@ -370,7 +370,7 @@ class TestMultipleFields:
 
     def test_return(self):
         res = self.ary[['f0', 'f2']].tolist()
-        assert_(res == [(1, 3), (5, 7)])
+        assertTrue(res == [(1, 3), (5, 7)])
 
 
 class TestIsSubDType:
@@ -378,30 +378,30 @@ class TestIsSubDType:
     wrappers = [np.dtype, lambda x: x]
 
     def test_both_abstract(self):
-        assert_(np.issubdtype(np.floating, np.inexact))
-        assert_(not np.issubdtype(np.inexact, np.floating))
+        assertTrue(np.issubdtype(np.floating, np.inexact))
+        assertTrue(not np.issubdtype(np.inexact, np.floating))
 
     def test_same(self):
         for cls in (np.float32, np.int32):
             for w1, w2 in itertools.product(self.wrappers, repeat=2):
-                assert_(np.issubdtype(w1(cls), w2(cls)))
+                assertTrue(np.issubdtype(w1(cls), w2(cls)))
 
     def test_subclass(self):
         # note we cannot promote floating to a dtype, as it would turn into a
         # concrete type
         for w in self.wrappers:
-            assert_(np.issubdtype(w(np.float32), np.floating))
-            assert_(np.issubdtype(w(np.float64), np.floating))
+            assertTrue(np.issubdtype(w(np.float32), np.floating))
+            assertTrue(np.issubdtype(w(np.float64), np.floating))
 
     def test_subclass_backwards(self):
         for w in self.wrappers:
-            assert_(not np.issubdtype(np.floating, w(np.float32)))
-            assert_(not np.issubdtype(np.floating, w(np.float64)))
+            assertTrue(not np.issubdtype(np.floating, w(np.float32)))
+            assertTrue(not np.issubdtype(np.floating, w(np.float64)))
 
     def test_sibling_class(self):
         for w1, w2 in itertools.product(self.wrappers, repeat=2):
-            assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
-            assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
+            assertTrue(not np.issubdtype(w1(np.float32), w2(np.float64)))
+            assertTrue(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
     def test_nondtype_nonscalartype(self):
         # See gh-14619 and gh-9505 which introduced the deprecation to fix
@@ -435,14 +435,14 @@ class TestIsSubDType:
 
 class TestSctypeDict:
     def test_longdouble(self):
-        assert_(np.sctypeDict['f8'] is not np.longdouble)
-        assert_(np.sctypeDict['c16'] is not np.clongdouble)
+        assertTrue(np.sctypeDict['f8'] is not np.longdouble)
+        assertTrue(np.sctypeDict['c16'] is not np.clongdouble)
 
     def test_ulong(self):
         # Test that 'ulong' behaves like 'long'. np.sctypeDict['long'] is an
         # alias for np.int_, but np.long is not supported for historical
         # reasons (gh-21063)
-        assert_(np.sctypeDict['ulong'] is np.uint)
+        assertTrue(np.sctypeDict['ulong'] is np.uint)
         with pytest.warns(FutureWarning):
             # We will probably allow this in the future:
             assert not hasattr(np, 'ulong')
@@ -530,9 +530,9 @@ def test_issctype(rep, expected):
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:
-            assert_('int64' in np.int_.__doc__)
+            assertTrue('int64' in np.int_.__doc__)
         elif np.int64 is np.longlong:
-            assert_('int64' in np.longlong.__doc__)
+            assertTrue('int64' in np.longlong.__doc__)
 
 
 class TestScalarTypeNames:

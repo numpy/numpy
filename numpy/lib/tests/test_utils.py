@@ -20,7 +20,7 @@ def test_lookfor():
     utils.lookfor('eigenvalue', module='numpy', output=out,
                   import_modules=False)
     out = out.getvalue()
-    assert_('numpy.linalg.eig' in out)
+    assertTrue('numpy.linalg.eig' in out)
 
 
 @deprecate
@@ -70,20 +70,20 @@ def old_func7(self,x):
 
 
 def test_deprecate_decorator():
-    assert_('deprecated' in old_func.__doc__)
+    assertTrue('deprecated' in old_func.__doc__)
 
 
 def test_deprecate_decorator_message():
-    assert_('Rather use new_func2' in old_func2.__doc__)
+    assertTrue('Rather use new_func2' in old_func2.__doc__)
 
 
 def test_deprecate_fn():
-    assert_('old_func3' in new_func3.__doc__)
-    assert_('new_func3' in new_func3.__doc__)
+    assertTrue('old_func3' in new_func3.__doc__)
+    assertTrue('new_func3' in new_func3.__doc__)
 
 
 def test_deprecate_with_doc_decorator_message():
-    assert_('Rather use new_func7' in old_func7.__doc__)
+    assertTrue('Rather use new_func7' in old_func7.__doc__)
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="-OO discards docstrings")
@@ -112,11 +112,11 @@ def _compare_docs(old_func, new_func):
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="-OO discards docstrings")
 def test_deprecate_preserve_whitespace():
-    assert_('\n        Bizarre' in new_func5.__doc__)
+    assertTrue('\n        Bizarre' in new_func5.__doc__)
 
 
 def test_deprecate_module():
-    assert_(old_func.__module__ == __name__)
+    assertTrue(old_func.__module__ == __name__)
 
 
 def test_safe_eval_nameconstant():

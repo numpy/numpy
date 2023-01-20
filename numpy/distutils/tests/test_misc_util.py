@@ -52,9 +52,9 @@ class TestGpaths:
     def test_gpaths(self):
         local_path = minrelpath(join(dirname(__file__), '..'))
         ls = gpaths('command/*.py', local_path)
-        assert_(join(local_path, 'command', 'build_src.py') in ls, repr(ls))
+        assertTrue(join(local_path, 'command', 'build_src.py') in ls, repr(ls))
         f = gpaths('system_info.py', local_path)
-        assert_(join(local_path, 'system_info.py') == f[0], repr(f))
+        assertTrue(join(local_path, 'system_info.py') == f[0], repr(f))
 
 class TestSharedExtension:
 
@@ -70,7 +70,7 @@ class TestSharedExtension:
         elif sys.platform.startswith('win'):
             assert_equal(ext, '.dll')
         # just check for no crash
-        assert_(get_shared_lib_extension(is_python_ext=True))
+        assertTrue(get_shared_lib_extension(is_python_ext=True))
 
 
 def test_installed_npymath_ini():

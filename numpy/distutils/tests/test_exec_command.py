@@ -102,88 +102,88 @@ class TestExecCommand:
 
     def check_nt(self, **kws):
         s, o = exec_command.exec_command('cmd /C echo path=%path%')
-        assert_(s == 0)
-        assert_(o != '')
+        assertTrue(s == 0)
+        assertTrue(o != '')
 
         s, o = exec_command.exec_command(
          '"%s" -c "import sys;sys.stderr.write(sys.platform)"' % self.pyexe)
-        assert_(s == 0)
-        assert_(o == 'win32')
+        assertTrue(s == 0)
+        assertTrue(o == 'win32')
 
     def check_posix(self, **kws):
         s, o = exec_command.exec_command("echo Hello", **kws)
-        assert_(s == 0)
-        assert_(o == 'Hello')
+        assertTrue(s == 0)
+        assertTrue(o == 'Hello')
 
         s, o = exec_command.exec_command('echo $AAA', **kws)
-        assert_(s == 0)
-        assert_(o == '')
+        assertTrue(s == 0)
+        assertTrue(o == '')
 
         s, o = exec_command.exec_command('echo "$AAA"', AAA='Tere', **kws)
-        assert_(s == 0)
-        assert_(o == 'Tere')
+        assertTrue(s == 0)
+        assertTrue(o == 'Tere')
 
         s, o = exec_command.exec_command('echo "$AAA"', **kws)
-        assert_(s == 0)
-        assert_(o == '')
+        assertTrue(s == 0)
+        assertTrue(o == '')
 
         if 'BBB' not in os.environ:
             os.environ['BBB'] = 'Hi'
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            assert_(s == 0)
-            assert_(o == 'Hi')
+            assertTrue(s == 0)
+            assertTrue(o == 'Hi')
 
             s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', **kws)
-            assert_(s == 0)
-            assert_(o == 'Hey')
+            assertTrue(s == 0)
+            assertTrue(o == 'Hey')
 
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            assert_(s == 0)
-            assert_(o == 'Hi')
+            assertTrue(s == 0)
+            assertTrue(o == 'Hi')
 
             del os.environ['BBB']
 
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            assert_(s == 0)
-            assert_(o == '')
+            assertTrue(s == 0)
+            assertTrue(o == '')
 
 
         s, o = exec_command.exec_command('this_is_not_a_command', **kws)
-        assert_(s != 0)
-        assert_(o != '')
+        assertTrue(s != 0)
+        assertTrue(o != '')
 
         s, o = exec_command.exec_command('echo path=$PATH', **kws)
-        assert_(s == 0)
-        assert_(o != '')
+        assertTrue(s == 0)
+        assertTrue(o != '')
 
         s, o = exec_command.exec_command(
              '"%s" -c "import sys,os;sys.stderr.write(os.name)"' %
              self.pyexe, **kws)
-        assert_(s == 0)
-        assert_(o == 'posix')
+        assertTrue(s == 0)
+        assertTrue(o == 'posix')
 
     def check_basic(self, *kws):
         s, o = exec_command.exec_command(
                      '"%s" -c "raise \'Ignore me.\'"' % self.pyexe, **kws)
-        assert_(s != 0)
-        assert_(o != '')
+        assertTrue(s != 0)
+        assertTrue(o != '')
 
         s, o = exec_command.exec_command(
              '"%s" -c "import sys;sys.stderr.write(\'0\');'
              'sys.stderr.write(\'1\');sys.stderr.write(\'2\')"' %
              self.pyexe, **kws)
-        assert_(s == 0)
-        assert_(o == '012')
+        assertTrue(s == 0)
+        assertTrue(o == '012')
 
         s, o = exec_command.exec_command(
                  '"%s" -c "import sys;sys.exit(15)"' % self.pyexe, **kws)
-        assert_(s == 15)
-        assert_(o == '')
+        assertTrue(s == 15)
+        assertTrue(o == '')
 
         s, o = exec_command.exec_command(
                      '"%s" -c "print(\'Heipa\'")' % self.pyexe, **kws)
-        assert_(s == 0)
-        assert_(o == 'Heipa')
+        assertTrue(s == 0)
+        assertTrue(o == 'Heipa')
 
     def check_execute_in(self, **kws):
         with tempdir() as tmpdir:
@@ -195,13 +195,13 @@ class TestExecCommand:
             s, o = exec_command.exec_command(
                  '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %
                  (self.pyexe, fn), **kws)
-            assert_(s != 0)
-            assert_(o != '')
+            assertTrue(s != 0)
+            assertTrue(o != '')
             s, o = exec_command.exec_command(
                      '"%s" -c "f = open(\'%s\', \'r\'); print(f.read()); '
                      'f.close()"' % (self.pyexe, fn), execute_in=tmpdir, **kws)
-            assert_(s == 0)
-            assert_(o == 'Hello')
+            assertTrue(s == 0)
+            assertTrue(o == 'Hello')
 
     def test_basic(self):
         with redirect_stdout(StringIO()):

@@ -68,10 +68,10 @@ class TestNdpointer:
     def test_dtype(self):
         dt = np.intc
         p = ndpointer(dtype=dt)
-        assert_(p.from_param(np.array([1], dt)))
+        assertTrue(p.from_param(np.array([1], dt)))
         dt = '<i4'
         p = ndpointer(dtype=dt)
-        assert_(p.from_param(np.array([1], dt)))
+        assertTrue(p.from_param(np.array([1], dt)))
         dt = np.dtype('>i4')
         p = ndpointer(dtype=dt)
         p.from_param(np.array([1], dt))
@@ -82,52 +82,52 @@ class TestNdpointer:
         dtdescr = {'names': dtnames, 'formats': dtformats}
         dt = np.dtype(dtdescr)
         p = ndpointer(dtype=dt)
-        assert_(p.from_param(np.zeros((10,), dt)))
+        assertTrue(p.from_param(np.zeros((10,), dt)))
         samedt = np.dtype(dtdescr)
         p = ndpointer(dtype=samedt)
-        assert_(p.from_param(np.zeros((10,), dt)))
+        assertTrue(p.from_param(np.zeros((10,), dt)))
         dt2 = np.dtype(dtdescr, align=True)
         if dt.itemsize != dt2.itemsize:
             assert_raises(TypeError, p.from_param, np.zeros((10,), dt2))
         else:
-            assert_(p.from_param(np.zeros((10,), dt2)))
+            assertTrue(p.from_param(np.zeros((10,), dt2)))
 
     def test_ndim(self):
         p = ndpointer(ndim=0)
-        assert_(p.from_param(np.array(1)))
+        assertTrue(p.from_param(np.array(1)))
         assert_raises(TypeError, p.from_param, np.array([1]))
         p = ndpointer(ndim=1)
         assert_raises(TypeError, p.from_param, np.array(1))
-        assert_(p.from_param(np.array([1])))
+        assertTrue(p.from_param(np.array([1])))
         p = ndpointer(ndim=2)
-        assert_(p.from_param(np.array([[1]])))
+        assertTrue(p.from_param(np.array([[1]])))
 
     def test_shape(self):
         p = ndpointer(shape=(1, 2))
-        assert_(p.from_param(np.array([[1, 2]])))
+        assertTrue(p.from_param(np.array([[1, 2]])))
         assert_raises(TypeError, p.from_param, np.array([[1], [2]]))
         p = ndpointer(shape=())
-        assert_(p.from_param(np.array(1)))
+        assertTrue(p.from_param(np.array(1)))
 
     def test_flags(self):
         x = np.array([[1, 2], [3, 4]], order='F')
         p = ndpointer(flags='FORTRAN')
-        assert_(p.from_param(x))
+        assertTrue(p.from_param(x))
         p = ndpointer(flags='CONTIGUOUS')
         assert_raises(TypeError, p.from_param, x)
         p = ndpointer(flags=x.flags.num)
-        assert_(p.from_param(x))
+        assertTrue(p.from_param(x))
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
     def test_cache(self):
-        assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
+        assertTrue(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
 
         # shapes are normalized
-        assert_(ndpointer(shape=2) is ndpointer(shape=(2,)))
+        assertTrue(ndpointer(shape=2) is ndpointer(shape=(2,)))
 
         # 1.12 <= v < 1.16 had a bug that made these fail
-        assert_(ndpointer(shape=2) is not ndpointer(ndim=2))
-        assert_(ndpointer(ndim=2) is not ndpointer(shape=2))
+        assertTrue(ndpointer(shape=2) is not ndpointer(ndim=2))
+        assertTrue(ndpointer(ndim=2) is not ndpointer(shape=2))
 
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available on this python installation")
@@ -182,7 +182,7 @@ class TestNdpointerCFunc:
         c_forward_pointer.argtypes = (ptr_type,)
 
         ret = c_forward_pointer(arr)
-        assert_(isinstance(ret, ptr_type))
+        assertTrue(isinstance(ret, ptr_type))
 
 
 @pytest.mark.skipif(ctypes is None,
@@ -270,7 +270,7 @@ class TestAsArray:
         del arr
 
         # check the reference wasn't cleaned up
-        assert_(arr_ref() is not None)
+        assertTrue(arr_ref() is not None)
 
         # check we avoid the segfault
         c_arr[0][0][0]
@@ -305,7 +305,7 @@ class TestAsCtypesType:
         ])
 
         ct = np.ctypeslib.as_ctypes_type(dt)
-        assert_(issubclass(ct, ctypes.Structure))
+        assertTrue(issubclass(ct, ctypes.Structure))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
         assert_equal(ct._fields_, [
             ('a', ctypes.c_uint16),
@@ -319,7 +319,7 @@ class TestAsCtypesType:
         ], align=True)
 
         ct = np.ctypeslib.as_ctypes_type(dt)
-        assert_(issubclass(ct, ctypes.Structure))
+        assertTrue(issubclass(ct, ctypes.Structure))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
         assert_equal(ct._fields_, [
             ('a', ctypes.c_uint16),
@@ -335,7 +335,7 @@ class TestAsCtypesType:
         ))
 
         ct = np.ctypeslib.as_ctypes_type(dt)
-        assert_(issubclass(ct, ctypes.Union))
+        assertTrue(issubclass(ct, ctypes.Union))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
         assert_equal(ct._fields_, [
             ('a', ctypes.c_uint16),
@@ -351,7 +351,7 @@ class TestAsCtypesType:
         ))
 
         ct = np.ctypeslib.as_ctypes_type(dt)
-        assert_(issubclass(ct, ctypes.Union))
+        assertTrue(issubclass(ct, ctypes.Union))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
         assert_equal(ct._fields_, [
             ('a', ctypes.c_uint16),

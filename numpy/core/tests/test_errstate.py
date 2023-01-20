@@ -47,10 +47,10 @@ class TestErrstate:
 
         olderrcall = np.geterrcall()
         with np.errstate(call=foo):
-            assert_(np.geterrcall() is foo, 'call is not foo')
+            assertTrue(np.geterrcall() is foo, 'call is not foo')
             with np.errstate(call=None):
-                assert_(np.geterrcall() is None, 'call is not None')
-        assert_(np.geterrcall() is olderrcall, 'call is not olderrcall')
+                assertTrue(np.geterrcall() is None, 'call is not None')
+        assertTrue(np.geterrcall() is olderrcall, 'call is not olderrcall')
 
     def test_errstate_decorator(self):
         @np.errstate(all='ignore')

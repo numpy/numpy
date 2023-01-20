@@ -366,17 +366,17 @@ class TestRealScalars:
         a = np.float128('2')/np.float128('3')
         b = np.float128(str(a))
         assert_equal(str(a), str(b))
-        assert_(a != b)
+        assertTrue(a != b)
 
     def float32_roundtrip(self):
         # gh-9360
         x = np.float32(1024 - 2**-14)
         y = np.float32(1024 - 2**-13)
-        assert_(repr(x) != repr(y))
+        assertTrue(repr(x) != repr(y))
         assert_equal(np.float32(repr(x)), x)
         assert_equal(np.float32(repr(y)), y)
 
     def float64_vs_python(self):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
-        assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
+        assertTrue(repr(np.float64(0.20000000000000004)) != repr(0.2))

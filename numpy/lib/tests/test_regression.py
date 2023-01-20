@@ -75,8 +75,8 @@ class TestRegression:
         # Ticket #554
         x = np.poly1d([1, 2, 3])
         y = np.poly1d([3, 4])
-        assert_(x != y)
-        assert_(x == x)
+        assertTrue(x != y)
+        assertTrue(x == x)
 
     def test_polyfit_build(self):
         # Ticket #628
@@ -104,11 +104,11 @@ class TestRegression:
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=complex)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == complex, msg)
+        assertTrue(q.dtype == complex, msg)
         msg = "Wrong type, should be float"
         x = np.ones(3, dtype=int)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == float, msg)
+        assertTrue(q.dtype == float, msg)
 
     def test_histogramdd_too_many_bins(self):
         # Ticket 928.
@@ -118,10 +118,10 @@ class TestRegression:
         # Ticket #944
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=complex)
-        assert_(np.polyint(x).dtype == complex, msg)
+        assertTrue(np.polyint(x).dtype == complex, msg)
         msg = "Wrong type, should be float"
         x = np.ones(3, dtype=int)
-        assert_(np.polyint(x).dtype == float, msg)
+        assertTrue(np.polyint(x).dtype == float, msg)
 
     def test_ndenumerate_crash(self):
         # Ticket 1140
@@ -155,7 +155,7 @@ class TestRegression:
     def test_void_coercion(self):
         dt = np.dtype([('a', 'f4'), ('b', 'i4')])
         x = np.zeros((1,), dt)
-        assert_(np.r_[x, x].dtype == dt)
+        assertTrue(np.r_[x, x].dtype == dt)
 
     def test_who_with_0dim_array(self):
         # ticket #1243
@@ -179,15 +179,15 @@ class TestRegression:
         # related to ticket #1405.
         include_dirs = [np.get_include()]
         for path in include_dirs:
-            assert_(isinstance(path, str))
-            assert_(path != '')
+            assertTrue(isinstance(path, str))
+            assertTrue(path != '')
 
     def test_polyder_return_type(self):
         # Ticket #1249
-        assert_(isinstance(np.polyder(np.poly1d([1]), 0), np.poly1d))
-        assert_(isinstance(np.polyder([1], 0), np.ndarray))
-        assert_(isinstance(np.polyder(np.poly1d([1]), 1), np.poly1d))
-        assert_(isinstance(np.polyder([1], 1), np.ndarray))
+        assertTrue(isinstance(np.polyder(np.poly1d([1]), 0), np.poly1d))
+        assertTrue(isinstance(np.polyder([1], 0), np.ndarray))
+        assertTrue(isinstance(np.polyder(np.poly1d([1]), 1), np.poly1d))
+        assertTrue(isinstance(np.polyder([1], 1), np.ndarray))
 
     def test_append_fields_dtype_list(self):
         # Ticket #1676

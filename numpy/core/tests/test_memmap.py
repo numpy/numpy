@@ -39,7 +39,7 @@ class TestMemmap:
         # Read data back from file
         newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
                        shape=self.shape)
-        assert_(allclose(self.data, newfp))
+        assertTrue(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
         assert_equal(newfp.flags.writeable, False)
 
@@ -124,28 +124,28 @@ class TestMemmap:
                     shape=self.shape)
         tmp = (fp + 10)
         if isinstance(tmp, memmap):
-            assert_(tmp._mmap is not fp._mmap)
+            assertTrue(tmp._mmap is not fp._mmap)
 
     def test_indexing_drops_references(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         tmp = fp[(1, 2), (2, 3)]
         if isinstance(tmp, memmap):
-            assert_(tmp._mmap is not fp._mmap)
+            assertTrue(tmp._mmap is not fp._mmap)
 
     def test_slicing_keeps_references(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
-        assert_(fp[:2, :2]._mmap is fp._mmap)
+        assertTrue(fp[:2, :2]._mmap is fp._mmap)
 
     def test_view(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         new1 = fp.view()
         new2 = new1.view()
-        assert_(new1.base is fp)
-        assert_(new2.base is fp)
+        assertTrue(new1.base is fp)
+        assertTrue(new2.base is fp)
         new_array = asarray(fp)
-        assert_(new_array.base is fp)
+        assertTrue(new_array.base is fp)
 
     def test_ufunc_return_ndarray(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
@@ -155,16 +155,16 @@ class TestMemmap:
             sup.filter(FutureWarning, "np.average currently does not preserve")
             for unary_op in [sum, average, product]:
                 result = unary_op(fp)
-                assert_(isscalar(result))
-                assert_(result.__class__ is self.data[0, 0].__class__)
+                assertTrue(isscalar(result))
+                assertTrue(result.__class__ is self.data[0, 0].__class__)
 
-                assert_(unary_op(fp, axis=0).__class__ is ndarray)
-                assert_(unary_op(fp, axis=1).__class__ is ndarray)
+                assertTrue(unary_op(fp, axis=0).__class__ is ndarray)
+                assertTrue(unary_op(fp, axis=1).__class__ is ndarray)
 
         for binary_op in [add, subtract, multiply]:
-            assert_(binary_op(fp, self.data).__class__ is ndarray)
-            assert_(binary_op(self.data, fp).__class__ is ndarray)
-            assert_(binary_op(fp, fp).__class__ is ndarray)
+            assertTrue(binary_op(fp, self.data).__class__ is ndarray)
+            assertTrue(binary_op(self.data, fp).__class__ is ndarray)
+            assertTrue(binary_op(fp, fp).__class__ is ndarray)
 
         fp += 1
         assert(fp.__class__ is memmap)
@@ -175,9 +175,9 @@ class TestMemmap:
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         fp[:] = self.data
 
-        assert_(fp[1:, :-1].__class__ is memmap)
+        assertTrue(fp[1:, :-1].__class__ is memmap)
         # Fancy indexing returns a copy that is not memmapped
-        assert_(fp[[0, 1]].__class__ is ndarray)
+        assertTrue(fp[[0, 1]].__class__ is ndarray)
 
     def test_memmap_subclass(self):
         class MemmapSubClass(memmap):
@@ -188,16 +188,16 @@ class TestMemmap:
 
         # We keep previous behavior for subclasses of memmap, i.e. the
         # ufunc and __getitem__ output is never turned into a ndarray
-        assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
-        assert_(sum(fp).__class__ is MemmapSubClass)
-        assert_(fp[1:, :-1].__class__ is MemmapSubClass)
+        assertTrue(sum(fp, axis=0).__class__ is MemmapSubClass)
+        assertTrue(sum(fp).__class__ is MemmapSubClass)
+        assertTrue(fp[1:, :-1].__class__ is MemmapSubClass)
         assert(fp[[0, 1]].__class__ is MemmapSubClass)
 
     def test_mmap_offset_greater_than_allocation_granularity(self):
         size = 5 * mmap.ALLOCATIONGRANULARITY
         offset = mmap.ALLOCATIONGRANULARITY + 1
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
-        assert_(fp.offset == offset)
+        assertTrue(fp.offset == offset)
 
     def test_no_shape(self):
         self.tmpfp.write(b'a'*16)

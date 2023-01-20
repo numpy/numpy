@@ -20,7 +20,7 @@ def test_fancy_indexing():
     # 2018-04-29: moved here from core.tests.test_index.
     m = np.matrix([[1, 2], [3, 4]])
 
-    assert_(isinstance(m[[0, 1, 0], :], np.matrix))
+    assertTrue(isinstance(m[[0, 1, 0], :], np.matrix))
 
     # gh-3110. Note the transpose currently because matrices do *not*
     # support dimension fixing for fancy indexing correctly.
@@ -35,7 +35,7 @@ def test_polynomial_mapdomain():
     dom2 = [1, 3]
     x = np.matrix([dom1, dom1])
     res = np.polynomial.polyutils.mapdomain(x, dom1, dom2)
-    assert_(isinstance(res, np.matrix))
+    assertTrue(isinstance(res, np.matrix))
 
 
 def test_sort_matrix_none():
@@ -44,7 +44,7 @@ def test_sort_matrix_none():
     actual = np.sort(a, axis=None)
     expected = np.matrix([[0, 1, 2]])
     assert_equal(actual, expected)
-    assert_(type(expected) is np.matrix)
+    assertTrue(type(expected) is np.matrix)
 
 
 def test_partition_matrix_none():
@@ -54,7 +54,7 @@ def test_partition_matrix_none():
     actual = np.partition(a, 1, axis=None)
     expected = np.matrix([[0, 1, 2]])
     assert_equal(actual, expected)
-    assert_(type(expected) is np.matrix)
+    assertTrue(type(expected) is np.matrix)
 
 
 def test_dot_scalar_and_matrix_of_objects():
@@ -95,8 +95,8 @@ def test_iter_allocate_output_subtype():
     b = np.arange(4).reshape(2, 2).T
     i = np.nditer([a, b, None], [],
                   [['readonly'], ['readonly'], ['writeonly', 'allocate']])
-    assert_(type(i.operands[2]) is np.matrix)
-    assert_(type(i.operands[2]) is not np.ndarray)
+    assertTrue(type(i.operands[2]) is np.matrix)
+    assertTrue(type(i.operands[2]) is not np.ndarray)
     assert_equal(i.operands[2].shape, (2, 2))
 
     # matrix always wants things to be 2D
@@ -107,8 +107,8 @@ def test_iter_allocate_output_subtype():
     i = np.nditer([a, b, None], [],
                   [['readonly'], ['readonly'],
                    ['writeonly', 'allocate', 'no_subtype']])
-    assert_(type(i.operands[2]) is np.ndarray)
-    assert_(type(i.operands[2]) is not np.matrix)
+    assertTrue(type(i.operands[2]) is np.ndarray)
+    assertTrue(type(i.operands[2]) is not np.matrix)
     assert_equal(i.operands[2].shape, (1, 2, 2))
 
 
@@ -117,10 +117,10 @@ def like_function():
     a = np.matrix([[1, 2], [3, 4]])
     for like_function in np.zeros_like, np.ones_like, np.empty_like:
         b = like_function(a)
-        assert_(type(b) is np.matrix)
+        assertTrue(type(b) is np.matrix)
 
         c = like_function(a, subok=False)
-        assert_(type(c) is not np.matrix)
+        assertTrue(type(c) is not np.matrix)
 
 
 def test_array_astype():
@@ -128,7 +128,7 @@ def test_array_astype():
     # subok=True passes through a matrix
     a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
     b = a.astype('f4', subok=True, copy=False)
-    assert_(a is b)
+    assertTrue(a is b)
 
     # subok=True is default, and creates a subtype on a cast
     b = a.astype('i4', copy=False)
@@ -138,8 +138,8 @@ def test_array_astype():
     # subok=False never returns a matrix
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
-    assert_(not (a is b))
-    assert_(type(b) is not np.matrix)
+    assertTrue(not (a is b))
+    assertTrue(type(b) is not np.matrix)
 
 
 def test_stack():
@@ -166,38 +166,38 @@ def test_nanfunctions_matrices():
     mat = np.matrix(np.eye(3))
     for f in [np.nanmin, np.nanmax]:
         res = f(mat, axis=0)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (1, 3))
         res = f(mat, axis=1)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (3, 1))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (3, 1))
         res = f(mat)
-        assert_(np.isscalar(res))
+        assertTrue(np.isscalar(res))
     # check that rows of nan are dealt with for subclasses (#4628)
     mat[1] = np.nan
     for f in [np.nanmin, np.nanmax]:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             res = f(mat, axis=0)
-            assert_(isinstance(res, np.matrix))
-            assert_(not np.any(np.isnan(res)))
-            assert_(len(w) == 0)
+            assertTrue(isinstance(res, np.matrix))
+            assertTrue(not np.any(np.isnan(res)))
+            assertTrue(len(w) == 0)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             res = f(mat, axis=1)
-            assert_(isinstance(res, np.matrix))
-            assert_(np.isnan(res[1, 0]) and not np.isnan(res[0, 0])
+            assertTrue(isinstance(res, np.matrix))
+            assertTrue(np.isnan(res[1, 0]) and not np.isnan(res[0, 0])
                     and not np.isnan(res[2, 0]))
-            assert_(len(w) == 1, 'no warning raised')
-            assert_(issubclass(w[0].category, RuntimeWarning))
+            assertTrue(len(w) == 1, 'no warning raised')
+            assertTrue(issubclass(w[0].category, RuntimeWarning))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             res = f(mat)
-            assert_(np.isscalar(res))
-            assert_(res != np.nan)
-            assert_(len(w) == 0)
+            assertTrue(np.isscalar(res))
+            assertTrue(res != np.nan)
+            assertTrue(len(w) == 0)
 
 
 def test_nanfunctions_matrices_general():
@@ -208,24 +208,24 @@ def test_nanfunctions_matrices_general():
     for f in (np.nanargmin, np.nanargmax, np.nansum, np.nanprod,
               np.nanmean, np.nanvar, np.nanstd):
         res = f(mat, axis=0)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (1, 3))
         res = f(mat, axis=1)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (3, 1))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (3, 1))
         res = f(mat)
-        assert_(np.isscalar(res))
+        assertTrue(np.isscalar(res))
 
     for f in np.nancumsum, np.nancumprod:
         res = f(mat, axis=0)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (3, 3))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (3, 3))
         res = f(mat, axis=1)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (3, 3))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (3, 3))
         res = f(mat)
-        assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3*3))
+        assertTrue(isinstance(res, np.matrix))
+        assertTrue(res.shape == (1, 3*3))
 
 
 def test_average_matrix():
@@ -270,11 +270,11 @@ def test_apply_along_axis_matrix():
     expected = np.matrix([[0, 2], [4, 6]])
 
     result = np.apply_along_axis(double, 0, m)
-    assert_(isinstance(result, np.matrix))
+    assertTrue(isinstance(result, np.matrix))
     assert_array_equal(result, expected)
 
     result = np.apply_along_axis(double, 1, m)
-    assert_(isinstance(result, np.matrix))
+    assertTrue(isinstance(result, np.matrix))
     assert_array_equal(result, expected)
 
 

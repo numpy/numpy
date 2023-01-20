@@ -17,12 +17,12 @@ class TestRegression:
         # Regression test for ticket #986.
         for mu in np.linspace(-7., 7., 5):
             r = random.vonmises(mu, 1, 50)
-            assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
+            assertTrue(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self):
         # Test for ticket #921
-        assert_(np.all(random.hypergeometric(3, 18, 11, size=10) < 4))
-        assert_(np.all(random.hypergeometric(18, 3, 11, size=10) > 0))
+        assertTrue(np.all(random.hypergeometric(3, 18, 11, size=10) < 4))
+        assertTrue(np.all(random.hypergeometric(18, 3, 11, size=10) > 0))
 
         # Test for ticket #5623
         args = [
@@ -33,7 +33,7 @@ class TestRegression:
             # Check for 64-bit systems
             args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
         for arg in args:
-            assert_(random.hypergeometric(*arg) > 0)
+            assertTrue(random.hypergeometric(*arg) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923
@@ -45,11 +45,11 @@ class TestRegression:
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / N
         msg = f'Frequency was {freq:f}, should be > 0.45'
-        assert_(freq > 0.45, msg)
+        assertTrue(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / N
         msg = f'Frequency was {freq:f}, should be < 0.23'
-        assert_(freq < 0.23, msg)
+        assertTrue(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
@@ -86,7 +86,7 @@ class TestRegression:
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
         random.seed(1234567890)
         x = random.beta(0.0001, 0.0001, size=100)
-        assert_(not np.any(np.isnan(x)), 'Nans in random.beta')
+        assertTrue(not np.any(np.isnan(x)), 'Nans in random.beta')
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
@@ -98,7 +98,7 @@ class TestRegression:
         for dt in np.float16, np.float32, np.float64:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = random.choice(a, p=probs)
-            assert_(c in a)
+            assertTrue(c in a)
             assert_raises(ValueError, random.choice, a, p=probs*0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):

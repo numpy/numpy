@@ -12,16 +12,16 @@ class PhysicalQuantity(float):
         return float.__new__(cls, value)
 
     def __add__(self, x):
-        assert_(isinstance(x, PhysicalQuantity))
+        assertTrue(isinstance(x, PhysicalQuantity))
         return PhysicalQuantity(float(x) + float(self))
     __radd__ = __add__
 
     def __sub__(self, x):
-        assert_(isinstance(x, PhysicalQuantity))
+        assertTrue(isinstance(x, PhysicalQuantity))
         return PhysicalQuantity(float(self) - float(x))
 
     def __rsub__(self, x):
-        assert_(isinstance(x, PhysicalQuantity))
+        assertTrue(isinstance(x, PhysicalQuantity))
         return PhysicalQuantity(float(x) - float(self))
 
     def __mul__(self, x):
@@ -43,11 +43,11 @@ class TestLogspace:
 
     def test_basic(self):
         y = logspace(0, 6)
-        assert_(len(y) == 50)
+        assertTrue(len(y) == 50)
         y = logspace(0, 6, num=100)
-        assert_(y[-1] == 10 ** 6)
+        assertTrue(y[-1] == 10 ** 6)
         y = logspace(0, 6, endpoint=False)
-        assert_(y[-1] < 10 ** 6)
+        assertTrue(y[-1] < 10 ** 6)
         y = logspace(0, 6, num=7)
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
 
@@ -93,11 +93,11 @@ class TestGeomspace:
 
     def test_basic(self):
         y = geomspace(1, 1e6)
-        assert_(len(y) == 50)
+        assertTrue(len(y) == 50)
         y = geomspace(1, 1e6, num=100)
-        assert_(y[-1] == 10 ** 6)
+        assertTrue(y[-1] == 10 ** 6)
         y = geomspace(1, 1e6, endpoint=False)
-        assert_(y[-1] < 10 ** 6)
+        assertTrue(y[-1] < 10 ** 6)
         y = geomspace(1, 1e6, num=7)
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
 
@@ -138,14 +138,14 @@ class TestGeomspace:
             y = geomspace(-3, 3, num=4)
 
         assert_equal(y[0], -3.0)
-        assert_(isnan(y[1:-1]).all())
+        assertTrue(isnan(y[1:-1]).all())
         assert_equal(y[3], 3.0)
 
         with errstate(invalid='ignore'):
             y = geomspace(-3, 3, num=4, endpoint=False)
 
         assert_equal(y[0], -3.0)
-        assert_(isnan(y[1:]).all())
+        assertTrue(isnan(y[1:]).all())
 
     def test_complex(self):
         # Purely imaginary
@@ -257,16 +257,16 @@ class TestLinspace:
 
     def test_basic(self):
         y = linspace(0, 10)
-        assert_(len(y) == 50)
+        assertTrue(len(y) == 50)
         y = linspace(2, 10, num=100)
-        assert_(y[-1] == 10)
+        assertTrue(y[-1] == 10)
         y = linspace(2, 10, endpoint=False)
-        assert_(y[-1] < 10)
+        assertTrue(y[-1] < 10)
         assert_raises(ValueError, linspace, 0, 10, num=-1)
 
     def test_corner(self):
         y = list(linspace(0, 1, 1))
-        assert_(y == [0.0], y)
+        assertTrue(y == [0.0], y)
         assert_raises(TypeError, linspace, 0, 1, num=2.5)
 
     def test_type(self):
@@ -374,7 +374,7 @@ class TestLinspace:
         # with ICC, which flushes denormals to zero
         for ftype in sctypes['float']:
             stop = nextafter(ftype(0), ftype(1)) * 5  # A denormal number
-            assert_(any(linspace(0, stop, 10, endpoint=False, dtype=ftype)))
+            assertTrue(any(linspace(0, stop, 10, endpoint=False, dtype=ftype)))
 
     def test_equivalent_to_arange(self):
         for j in range(1000):

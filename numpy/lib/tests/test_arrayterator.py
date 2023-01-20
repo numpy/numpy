@@ -22,10 +22,10 @@ def test():
 
     # Check that each block has at most ``buf_size`` elements
     for block in b:
-        assert_(len(block.flat) <= (buf_size or els))
+        assertTrue(len(block.flat) <= (buf_size or els))
 
     # Check that all elements are iterated correctly
-    assert_(list(b.flat) == list(a.flat))
+    assertTrue(list(b.flat) == list(a.flat))
 
     # Slice arrayterator
     start = [randint(dim) for dim in shape]
@@ -37,10 +37,10 @@ def test():
 
     # Check that each block has at most ``buf_size`` elements
     for block in c:
-        assert_(len(block.flat) <= (buf_size or els))
+        assertTrue(len(block.flat) <= (buf_size or els))
 
     # Check that the arrayterator is sliced correctly
-    assert_(np.all(c.__array__() == d))
+    assertTrue(np.all(c.__array__() == d))
 
     # Check that all elements are iterated correctly
-    assert_(list(c.flat) == list(d.flat))
+    assertTrue(list(c.flat) == list(d.flat))

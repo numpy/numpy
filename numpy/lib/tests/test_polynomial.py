@@ -103,20 +103,20 @@ class TestPolynomial:
         assert_array_almost_equal(np.poly(A), [1, -6, -72, -27])
 
         # Should produce real output for perfect conjugates
-        assert_(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
-        assert_(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
+        assertTrue(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
+        assertTrue(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
                                       1-2j, 1.+3.5j, 1-3.5j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
-        assert_(np.isrealobj(np.poly([1j, -1j])))
-        assert_(np.isrealobj(np.poly([1, -1])))
+        assertTrue(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
+        assertTrue(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
+        assertTrue(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
+        assertTrue(np.isrealobj(np.poly([1j, -1j])))
+        assertTrue(np.isrealobj(np.poly([1, -1])))
 
-        assert_(np.iscomplexobj(np.poly([1j, -1.0000001j])))
+        assertTrue(np.iscomplexobj(np.poly([1j, -1.0000001j])))
 
         np.random.seed(42)
         a = np.random.randn(100) + 1j*np.random.randn(100)
-        assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
+        assertTrue(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
@@ -211,13 +211,13 @@ class TestPolynomial:
         from decimal import Decimal
         p = np.poly1d([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')])
         p2 = p * Decimal('1.333333333333333')
-        assert_(p2[1] == Decimal("3.9999999999999990"))
+        assertTrue(p2[1] == Decimal("3.9999999999999990"))
         p2 = p.deriv()
-        assert_(p2[1] == Decimal('8.0'))
+        assertTrue(p2[1] == Decimal('8.0'))
         p2 = p.integ()
-        assert_(p2[3] == Decimal("1.333333333333333333333333333"))
-        assert_(p2[2] == Decimal('1.5'))
-        assert_(np.issubdtype(p2.coeffs.dtype, np.object_))
+        assertTrue(p2[3] == Decimal("1.333333333333333333333333333"))
+        assertTrue(p2[2] == Decimal('1.5'))
+        assertTrue(np.issubdtype(p2.coeffs.dtype, np.object_))
         p = np.poly([Decimal(1), Decimal(2)])
         assert_equal(np.poly([Decimal(1), Decimal(2)]),
                      [1, Decimal(-3), Decimal(2)])
@@ -225,14 +225,14 @@ class TestPolynomial:
     def test_complex(self):
         p = np.poly1d([3j, 2j, 1j])
         p2 = p.integ()
-        assert_((p2.coeffs == [1j, 1j, 1j, 0]).all())
+        assertTrue((p2.coeffs == [1j, 1j, 1j, 0]).all())
         p2 = p.deriv()
-        assert_((p2.coeffs == [6j, 2j]).all())
+        assertTrue((p2.coeffs == [6j, 2j]).all())
 
     def test_integ_coeffs(self):
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
-        assert_(
+        assertTrue(
             (p2.coeffs == [1/4./5., 1/3./4., 1/2./3., 9/1./2., 7, 6]).all())
 
     def test_zero_dims(self):

@@ -88,9 +88,9 @@ class TestIndexing:
         # Empty tuple index creates a view
         a = np.array([1, 2, 3])
         assert_equal(a[()], a)
-        assert_(a[()].base is a)
+        assertTrue(a[()].base is a)
         a = np.array(0)
-        assert_(isinstance(a[()], np.int_))
+        assertTrue(isinstance(a[()], np.int_))
 
     def test_void_scalar_empty_tuple(self):
         s = np.zeros((), dtype='V4')
@@ -136,10 +136,10 @@ class TestIndexing:
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
-        assert_(a[...] is not a)
+        assertTrue(a[...] is not a)
         assert_equal(a[...], a)
         # `a[...]` was `a` in numpy <1.9.
-        assert_(a[...].base is a)
+        assertTrue(a[...].base is a)
 
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
@@ -310,15 +310,15 @@ class TestIndexing:
         #assert_equal(a[True, :], a[None, :])
         #assert_equal(a[:, True], a[:, None])
         #
-        #assert_(not np.may_share_memory(a, a[True, :]))
+        #assertTrue(not np.may_share_memory(a, a[True, :]))
 
     def test_everything_returns_views(self):
         # Before `...` would return a itself.
         a = np.arange(5)
 
-        assert_(a is not a[()])
-        assert_(a is not a[...])
-        assert_(a is not a[:])
+        assertTrue(a is not a[()])
+        assertTrue(a is not a[...])
+        assertTrue(a is not a[:])
 
     def test_broaderrors_indexing(self):
         a = np.zeros((5, 5))
@@ -362,15 +362,15 @@ class TestIndexing:
         s.fill(1)
 
         a[[0, 1, 2, 3, 4], :] = s
-        assert_((a == 1).all())
+        assertTrue((a == 1).all())
 
         # Subspace is last, so transposing might want to finalize
         a[:, [0, 1, 2, 3, 4]] = s
-        assert_((a == 1).all())
+        assertTrue((a == 1).all())
 
         a.fill(0)
         a[...] = s
-        assert_((a == 1).all())
+        assertTrue((a == 1).all())
 
     def test_array_like_values(self):
         # Similar to the above test, but use a memoryview instead
@@ -390,22 +390,22 @@ class TestIndexing:
         d = np.rec.array([('NGC1001', 11), ('NGC1002', 1.), ('NGC1003', 1.)],
                          dtype=[('target', 'S20'), ('V_mag', '>f4')])
         ind = np.array([False,  True,  True], dtype=bool)
-        assert_(d[ind].flags.writeable)
+        assertTrue(d[ind].flags.writeable)
         ind = np.array([0, 1])
-        assert_(d[ind].flags.writeable)
-        assert_(d[...].flags.writeable)
-        assert_(d[0].flags.writeable)
+        assertTrue(d[ind].flags.writeable)
+        assertTrue(d[...].flags.writeable)
+        assertTrue(d[0].flags.writeable)
 
     def test_memory_order(self):
         # This is not necessary to preserve. Memory layouts for
         # more complex indices are not as simple.
         a = np.arange(10)
         b = np.arange(10).reshape(5,2).T
-        assert_(a[b].flags.f_contiguous)
+        assertTrue(a[b].flags.f_contiguous)
 
         # Takes a different implementation branch:
         a = a.reshape(-1, 1)
-        assert_(a[b, 0].flags.f_contiguous)
+        assertTrue(a[b, 0].flags.f_contiguous)
 
     def test_scalar_return_type(self):
         # Full scalar indices should return scalars and object
@@ -423,23 +423,23 @@ class TestIndexing:
                 return np.array(0)
 
         a = np.zeros(())
-        assert_(isinstance(a[()], np.float_))
+        assertTrue(isinstance(a[()], np.float_))
         a = np.zeros(1)
-        assert_(isinstance(a[z], np.float_))
+        assertTrue(isinstance(a[z], np.float_))
         a = np.zeros((1, 1))
-        assert_(isinstance(a[z, np.array(0)], np.float_))
-        assert_(isinstance(a[z, ArrayLike()], np.float_))
+        assertTrue(isinstance(a[z, np.array(0)], np.float_))
+        assertTrue(isinstance(a[z, ArrayLike()], np.float_))
 
         # And object arrays do not call it too often:
         b = np.array(0)
         a = np.array(0, dtype=object)
         a[()] = b
-        assert_(isinstance(a[()], np.ndarray))
+        assertTrue(isinstance(a[()], np.ndarray))
         a = np.array([b, None])
-        assert_(isinstance(a[z], np.ndarray))
+        assertTrue(isinstance(a[z], np.ndarray))
         a = np.array([[b, None]])
-        assert_(isinstance(a[z, np.array(0)], np.ndarray))
-        assert_(isinstance(a[z, ArrayLike()], np.ndarray))
+        assertTrue(isinstance(a[z, np.array(0)], np.ndarray))
+        assertTrue(isinstance(a[z, ArrayLike()], np.ndarray))
 
     def test_small_regressions(self):
         # Reference count of intp for index checks
@@ -487,9 +487,9 @@ class TestIndexing:
             pass
         index = ([1], [1])
         index = TupleSubclass(index)
-        assert_(arr[index].shape == (1,))
+        assertTrue(arr[index].shape == (1,))
         # Unlike the non nd-index:
-        assert_(arr[index,].shape != (1,))
+        assertTrue(arr[index,].shape != (1,))
 
     def test_broken_sequence_not_nd_index(self):
         # See gh-5063:
@@ -600,8 +600,8 @@ class TestFieldIndexing:
         # Field access on an array should return an array, even if it
         # is 0-d.
         a = np.zeros((), [('a','f8')])
-        assert_(isinstance(a['a'], np.ndarray))
-        assert_(isinstance(a[['a']], np.ndarray))
+        assertTrue(isinstance(a['a'], np.ndarray))
+        assertTrue(isinstance(a[['a']], np.ndarray))
 
 
 class TestBroadcastedAssignments:
@@ -661,14 +661,14 @@ class TestBroadcastedAssignments:
         a = np.zeros((5, 5))
         a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
 
-        assert_((a[:3, :3] == [2, 3, 4]).all())
+        assertTrue((a[:3, :3] == [2, 3, 4]).all())
 
     def test_broadcast_subspace(self):
         a = np.zeros((100, 100))
         v = np.arange(100)[:,None]
         b = np.arange(100)[::-1]
         a[b] = v
-        assert_((a[::-1] == v).all())
+        assertTrue((a[::-1] == v).all())
 
 
 class TestSubclasses:
@@ -683,21 +683,21 @@ class TestSubclasses:
         a = np.arange(5)
         s = a.view(SubClass)
         s_slice = s[:3]
-        assert_(type(s_slice) is SubClass)
-        assert_(s_slice.base is s)
+        assertTrue(type(s_slice) is SubClass)
+        assertTrue(s_slice.base is s)
         assert_array_equal(s_slice, a[:3])
 
         s_fancy = s[[0, 1, 2]]
-        assert_(type(s_fancy) is SubClass)
-        assert_(s_fancy.base is not s)
-        assert_(type(s_fancy.base) is np.ndarray)
+        assertTrue(type(s_fancy) is SubClass)
+        assertTrue(s_fancy.base is not s)
+        assertTrue(type(s_fancy.base) is np.ndarray)
         assert_array_equal(s_fancy, a[[0, 1, 2]])
         assert_array_equal(s_fancy.base, a[[0, 1, 2]])
 
         s_bool = s[s > 0]
-        assert_(type(s_bool) is SubClass)
-        assert_(s_bool.base is not s)
-        assert_(type(s_bool.base) is np.ndarray)
+        assertTrue(type(s_bool) is SubClass)
+        assertTrue(s_bool.base is not s)
+        assertTrue(type(s_bool.base) is np.ndarray)
         assert_array_equal(s_bool, a[a > 0])
         assert_array_equal(s_bool.base, a[a > 0])
 
@@ -711,7 +711,7 @@ class TestSubclasses:
         s = a.view(SubClass)
         s.flags.writeable = False
         s_fancy = s[[0, 1, 2]]
-        assert_(s_fancy.flags.writeable)
+        assertTrue(s_fancy.flags.writeable)
 
 
     def test_finalize_gets_full_info(self):
@@ -1152,7 +1152,7 @@ class TestMultiIndexingAutomated:
         # Check if we got a view, unless its a 0-sized or 0-d array.
         # (then its not a view, and that does not matter)
         if indexed_arr.size != 0 and indexed_arr.ndim != 0:
-            assert_(np.may_share_memory(indexed_arr, arr) == no_copy)
+            assertTrue(np.may_share_memory(indexed_arr, arr) == no_copy)
             # Check reference count of the original array
             if HAS_REFCOUNT:
                 if no_copy:
@@ -1410,7 +1410,7 @@ class TestCApiAccess:
 
         a = np.arange(10)
         assign(a, 4, 10)
-        assert_(a[4] == 10)
+        assertTrue(a[4] == 10)
 
         a = a.reshape(5, 2)
         assign(a, 4, 10)

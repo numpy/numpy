@@ -11,11 +11,11 @@ class TestRegression:
     def test_matrix_properties(self):
         # Ticket #125
         a = np.matrix([1.0], dtype=float)
-        assert_(type(a.real) is np.matrix)
-        assert_(type(a.imag) is np.matrix)
+        assertTrue(type(a.real) is np.matrix)
+        assertTrue(type(a.imag) is np.matrix)
         c, d = np.matrix([0.0]).nonzero()
-        assert_(type(c) is np.ndarray)
-        assert_(type(d) is np.ndarray)
+        assertTrue(type(c) is np.ndarray)
+        assertTrue(type(d) is np.ndarray)
 
     def test_matrix_multiply_by_1d_vector(self):
         # Ticket #473

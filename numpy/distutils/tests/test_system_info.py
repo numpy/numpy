@@ -229,7 +229,7 @@ class TestSystemInfoReading:
             os.chdir(self._dir1)
             c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src1.replace('.c', '.o')) or
+            assertTrue(os.path.isfile(self._src1.replace('.c', '.o')) or
                     os.path.isfile(self._src1.replace('.c', '.obj')))
         finally:
             os.chdir(previousDir)
@@ -249,7 +249,7 @@ class TestSystemInfoReading:
             c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
                       extra_postargs=extra_link_args)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src2.replace('.c', '.o')))
+            assertTrue(os.path.isfile(self._src2.replace('.c', '.o')))
         finally:
             os.chdir(previousDir)
 

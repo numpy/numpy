@@ -42,10 +42,10 @@ class TestLibraryInfo:
             pkg = os.path.splitext(path)[0]
             out = read_config(pkg)
 
-        assert_(out.cflags() == simple_d['cflags'])
-        assert_(out.libs() == simple_d['libflags'])
-        assert_(out.name == simple_d['name'])
-        assert_(out.version == simple_d['version'])
+        assertTrue(out.cflags() == simple_d['cflags'])
+        assertTrue(out.libs() == simple_d['libflags'])
+        assertTrue(out.name == simple_d['name'])
+        assertTrue(out.version == simple_d['version'])
 
     def test_simple_variable(self):
         with temppath('foo.ini') as path:
@@ -54,31 +54,31 @@ class TestLibraryInfo:
             pkg = os.path.splitext(path)[0]
             out = read_config(pkg)
 
-        assert_(out.cflags() == simple_variable_d['cflags'])
-        assert_(out.libs() == simple_variable_d['libflags'])
-        assert_(out.name == simple_variable_d['name'])
-        assert_(out.version == simple_variable_d['version'])
+        assertTrue(out.cflags() == simple_variable_d['cflags'])
+        assertTrue(out.libs() == simple_variable_d['libflags'])
+        assertTrue(out.name == simple_variable_d['name'])
+        assertTrue(out.version == simple_variable_d['version'])
         out.vars['prefix'] = '/Users/david'
-        assert_(out.cflags() == '-I/Users/david/include')
+        assertTrue(out.cflags() == '-I/Users/david/include')
 
 class TestParseFlags:
     def test_simple_cflags(self):
         d = parse_flags("-I/usr/include")
-        assert_(d['include_dirs'] == ['/usr/include'])
+        assertTrue(d['include_dirs'] == ['/usr/include'])
 
         d = parse_flags("-I/usr/include -DFOO")
-        assert_(d['include_dirs'] == ['/usr/include'])
-        assert_(d['macros'] == ['FOO'])
+        assertTrue(d['include_dirs'] == ['/usr/include'])
+        assertTrue(d['macros'] == ['FOO'])
 
         d = parse_flags("-I /usr/include -DFOO")
-        assert_(d['include_dirs'] == ['/usr/include'])
-        assert_(d['macros'] == ['FOO'])
+        assertTrue(d['include_dirs'] == ['/usr/include'])
+        assertTrue(d['macros'] == ['FOO'])
 
     def test_simple_lflags(self):
         d = parse_flags("-L/usr/lib -lfoo -L/usr/lib -lbar")
-        assert_(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        assert_(d['libraries'] == ['foo', 'bar'])
+        assertTrue(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        assertTrue(d['libraries'] == ['foo', 'bar'])
 
         d = parse_flags("-L /usr/lib -lfoo -L/usr/lib -lbar")
-        assert_(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        assert_(d['libraries'] == ['foo', 'bar'])
+        assertTrue(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        assertTrue(d['libraries'] == ['foo', 'bar'])

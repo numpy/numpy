@@ -177,15 +177,15 @@ class TestEvaluation:
 
         # check empty input
         assert_equal(poly.polyvalfromroots([], [1]).size, 0)
-        assert_(poly.polyvalfromroots([], [1]).shape == (0,))
+        assertTrue(poly.polyvalfromroots([], [1]).shape == (0,))
 
         # check empty input + multidimensional roots
         assert_equal(poly.polyvalfromroots([], [[1] * 5]).size, 0)
-        assert_(poly.polyvalfromroots([], [[1] * 5]).shape == (5, 0))
+        assertTrue(poly.polyvalfromroots([], [[1] * 5]).shape == (5, 0))
 
         # check scalar input
         assert_equal(poly.polyvalfromroots(1, 1), 0)
-        assert_(poly.polyvalfromroots(1, np.ones((3, 3))).shape == (3,))
+        assertTrue(poly.polyvalfromroots(1, np.ones((3, 3))).shape == (3,))
 
         # check normal input)
         x = np.linspace(-1, 1)
@@ -249,7 +249,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = poly.polyval2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_polyval3d(self):
         x1, x2, x3 = self.x
@@ -267,7 +267,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = poly.polyval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_polygrid2d(self):
         x1, x2, x3 = self.x
@@ -281,7 +281,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = poly.polygrid2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3)*2)
+        assertTrue(res.shape == (2, 3)*2)
 
     def test_polygrid3d(self):
         x1, x2, x3 = self.x
@@ -295,7 +295,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = poly.polygrid3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3)*3)
+        assertTrue(res.shape == (2, 3)*3)
 
 
 class TestIntegral:
@@ -445,7 +445,7 @@ class TestVander:
         # check for 1d x
         x = np.arange(3)
         v = poly.polyvander(x, 3)
-        assert_(v.shape == (3, 4))
+        assertTrue(v.shape == (3, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], poly.polyval(x, coef))
@@ -453,7 +453,7 @@ class TestVander:
         # check for 2d x
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = poly.polyvander(x, 3)
-        assert_(v.shape == (3, 2, 4))
+        assertTrue(v.shape == (3, 2, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], poly.polyval(x, coef))
@@ -469,7 +469,7 @@ class TestVander:
 
         # check shape
         van = poly.polyvander2d([x1], [x2], [1, 2])
-        assert_(van.shape == (1, 5, 6))
+        assertTrue(van.shape == (1, 5, 6))
 
     def test_polyvander3d(self):
         # also tests polyval3d for non-square coefficient array
@@ -482,7 +482,7 @@ class TestVander:
 
         # check shape
         van = poly.polyvander3d([x1], [x2], [x3], [1, 2, 3])
-        assert_(van.shape == (1, 5, 24))
+        assertTrue(van.shape == (1, 5, 24))
 
     def test_polyvandernegdeg(self):
         x = np.arange(3)
@@ -498,10 +498,10 @@ class TestCompanion:
     def test_dimensions(self):
         for i in range(1, 5):
             coef = [0]*i + [1]
-            assert_(poly.polycompanion(coef).shape == (i, i))
+            assertTrue(poly.polycompanion(coef).shape == (i, i))
 
     def test_linear_root(self):
-        assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
+        assertTrue(poly.polycompanion([1, 2])[0, 0] == -.5)
 
 
 class TestMisc:
