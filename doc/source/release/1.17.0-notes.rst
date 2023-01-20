@@ -7,7 +7,7 @@ NumPy 1.17.0 Release Notes
 This NumPy release contains a number of new features that should substantially
 improve its performance and usefulness, see Highlights below for a summary. The
 Python versions supported are 3.5-3.7, note that Python 2.7 has been dropped.
-Python 3.8b2 should work with the released source packages, but there are no
+Python 3.9b2 should work with the released source packages, but there are no
 future guarantees.
 
 Downstream developers should use Cython >= 0.29.11 for Python 3.8 support and

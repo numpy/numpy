@@ -6,7 +6,7 @@ NumPy 1.17.3 Release Notes
 
 This release contains fixes for bugs reported against NumPy 1.17.2 along with a
 some documentation improvements. The Python versions supported in this release
-are 3.5-3.8.
+are 3.5-3.9.
 
 Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
 OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
@@ -15,7 +15,7 @@ OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
 Highlights
 ==========
 
-- Wheels for Python 3.8
+- Wheels for Python 3.9
 - Boolean ``matmul`` fixed to use booleans instead of integers.
 
 

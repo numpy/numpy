@@ -11,7 +11,7 @@ Before beginning to make a release, use the ``*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
 software. Note that at this time the documentation cannot be built with Python
-3.10, for that use 3.8-3.9 instead. You will also need a GitHub personal access
+3.10, for that use 3.9 instead. You will also need a GitHub personal access
 token (PAT) to push the documentation. There are a few ways to streamline things.
 
 - Git can be set up to use a keyring to store your GitHub personal access token.

@@ -8,7 +8,7 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
+      # circleci/python3.9 images come with old versions of Doxygen(1.6.x),
       # therefore a new base image chose instead to guarantee to
       # have a newer version >= 1.8.10 to avoid warnings
       # that related to the default behaviors or non-exist config options
@@ -35,7 +35,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y python3.8 python3.8-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
               texlive-latex-extra latexmk texlive-xetex doxygen
-            python3.8 -m venv venv
+            python3.9 -m venv venv
             . venv/bin/activate
 
       - run:

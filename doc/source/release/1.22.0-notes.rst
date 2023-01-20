@@ -120,7 +120,7 @@ function.
 Python 3.7 is no longer supported
 ---------------------------------
 Python support has been dropped. This is rather strict, there are changes that
-require Python >= 3.8.
+require Python >= 3.9.
 
 (`gh-19665 <https://github.com/numpy/numpy/pull/19665>`__)
 

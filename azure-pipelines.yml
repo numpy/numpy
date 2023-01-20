@@ -57,7 +57,7 @@ stages:
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.8'
+        versionSpec: '3.9'
         addToPath: true
         architecture: 'x64'
     - script: >-
@@ -114,10 +114,10 @@ stages:
       maxParallel: 3
       matrix:
           Python38:
-            PYTHON_VERSION: '3.8'
+            PYTHON_VERSION: '3.9'
             USE_OPENBLAS: '1'
           Python38-ILP64:
-            PYTHON_VERSION: '3.8'
+            PYTHON_VERSION: '3.9'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
@@ -235,12 +235,12 @@ stages:
       maxParallel: 6
       matrix:
           Python38-32bit-fast:
-            PYTHON_VERSION: '3.8'
+            PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
           Python38-64bit-full:
-            PYTHON_VERSION: '3.8'
+            PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64

@@ -10,7 +10,7 @@ keys are of type (u)int8 or (u)int16. If you are currently using 1.17 you
 should upgrade.
 
 The Python versions supported in this release are 3.5-3.7, Python 2.7 has been
-dropped.  Python 3.8b4 should work with the released source packages, but there
+dropped.  Python 3.9b4 should work with the released source packages, but there
 are no future guarantees.
 
 Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
