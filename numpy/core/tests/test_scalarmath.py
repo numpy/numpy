@@ -664,6 +664,7 @@ class TestMultiply:
         class ArrayLike:
             def __init__(self, arr):
                 self.arr = arr
+
             def __array__(self):
                 return self.arr
 

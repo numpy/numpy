@@ -59,7 +59,7 @@ class TestMa:
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
         assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assertTrue(eq(xm, xf))
         assertTrue(eq(filled(xm, 1.e20), xf))
         assertTrue(eq(x, xm))

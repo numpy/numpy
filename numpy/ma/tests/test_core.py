@@ -262,9 +262,9 @@ class TestMaskedArray:
         assert_array_equal(res.mask, [[True, False], [False, False]])
 
     def test_creation_from_ndarray_with_padding(self):
-        x = np.array([('A', 0)], dtype={'names':['f0','f1'],
-                                        'formats':['S4','i8'],
-                                        'offsets':[0,8]})
+        x = np.array([('A', 0)], dtype={'names': ['f0', 'f1'],
+                                        'formats':['S4', 'i8'],
+                                        'offsets':[0, 8]})
         array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
     def test_unknown_keyword_parameter(self):
@@ -457,8 +457,8 @@ class TestMaskedArray:
 
     def test_copy_on_python_builtins(self):
         # Tests copy works on python builtins (issue#8019)
-        assertTrue(isMaskedArray(np.ma.copy([1,2,3])))
-        assertTrue(isMaskedArray(np.ma.copy((1,2,3))))
+        assertTrue(isMaskedArray(np.ma.copy([1, 2, 3])))
+        assertTrue(isMaskedArray(np.ma.copy((1, 2, 3))))
 
     def test_copy_immutable(self):
         # Tests that the copy method is immutable, GitHub issue #5247
