@@ -239,7 +239,8 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 
 /*
  * We can shave off a bit of time by just caching the initial and this is
- * trivial for all numeric types.  (Wrapped ufuncs never use byte-swapping.)
+ * trivial for all internal numeric types.  (Wrapped ufuncs never use
+ * byte-swapping.)
  */
 static int
 copy_cached_initial(
@@ -255,10 +256,10 @@ copy_cached_initial(
  * The default `get_reduction_initial` attempts to look up the identity
  * from the calling ufunc.  This might fail, so we only call it when necessary.
  *
- * For our numbers, we can easily cache it, so do so after the first call
- * by overriding the function with `copy_cache_initial`.  This path is not
- * publically available.  That could be added, and for a custom initial getter
- * it will usually be static/compile time data anyway.
+ * For internal number dtypes, we can easily cache it, so do so after the
+ * first call by overriding the function with `copy_cache_initial`.
+ * This path is not publically available.  That could be added, and for a
+ * custom initial getter it should be static/compile time data anyway.
  */
 static int
 get_initial_from_ufunc(

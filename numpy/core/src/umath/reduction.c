@@ -292,9 +292,11 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     result = NpyIter_GetOperandArray(iter)[0];
 
     /*
-     * Get the initial value (if it may exists).  If the iteration is empty
-     * then we assume the reduction is (in the other case, we do not need
-     * the initial value anyway).
+     * Get the initial value (if it exists).  If the iteration is empty
+     * then we assume the reduction is also empty.  The reason is that when
+     * the outer iteration is empty we just won't use the initial value
+     * in any case.  (`np.sum(np.zeros((0, 3)), axis=0)` is a length 3
+     * reduction but has an empty result.)
      */
     if ((initial == NULL && context->method->get_reduction_initial == NULL)
             || initial == Py_None) {

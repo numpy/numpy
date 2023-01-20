@@ -332,11 +332,13 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
  *
  * @param context The arraymethod context, mainly to access the descriptors.
  * @param reduction_is_empty Whether the reduction is empty. When it is, the
- *     default value for the identity might differ, for example:
+ *     value returned may differ.  In this case it is a "default" value that
+ *     may differ from the "identity" value normally used.  For example:
  *     - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
  *       identity otherwise as it preserves the sign for `sum([-0.0])`.
  *     - We use no identity for object, but return the default of `0` and `1`
-         for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
+ *       for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
+ *       This allows `np.sum(np.array(["a", "b"], dtype=object))` to work.
  *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
  *       not a good *default* when there are no items.
  * @param initial Pointer to initial data to be filled (if possible)
