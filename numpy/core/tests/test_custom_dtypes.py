@@ -45,6 +45,9 @@ class TestSFloat:
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"
 
+    def test_dtype_name(self):
+        assert SF(1.).name == "_ScaledFloatTestDType64"
+
     @pytest.mark.parametrize("scaling", [1., -1., 2.])
     def test_sfloat_from_float(self, scaling):
         a = np.array([1., 2., 3.]).astype(dtype=SF(scaling))
