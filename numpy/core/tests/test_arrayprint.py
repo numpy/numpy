@@ -248,8 +248,9 @@ class TestArray2String:
                 x_oct)
 
         x = np.arange(3.)
-        assertTrue(np.array2string(x, formatter={'float_kind': lambda x: "%.2f" % x}) ==
-                "[0.00 1.00 2.00]")
+        assertTrue(np.array2string(x,
+                    formatter={'float_kind': lambda x: "%.2f" % x}) ==
+                   "[0.00 1.00 2.00]")
         assertTrue(np.array2string(x, formatter={'float': lambda x: "%.2f" % x}) ==
                 "[0.00 1.00 2.00]")
 
