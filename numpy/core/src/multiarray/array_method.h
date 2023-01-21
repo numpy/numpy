@@ -13,21 +13,21 @@ extern "C" {
 
 typedef enum {
     /* Flag for whether the GIL is required */
-    NPY_METH_REQUIRES_PYAPI = 1 << 1,
+    NPY_METH_REQUIRES_PYAPI = 1 << 0,
     /*
      * Some functions cannot set floating point error flags, this flag
      * gives us the option (not requirement) to skip floating point error
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
-    /*
-     * TODO: Change this into a positive flag?  That would make "combing"
-     *       multiple methods easier. OTOH, if we add more flags, the default
-     *       would be 0 just like it is here.
-     */
-    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
+    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 1,
     /* Whether the method supports unaligned access (not runtime) */
-    NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
+    NPY_METH_SUPPORTS_UNALIGNED = 1 << 2,
+    /*
+     * Used for reductions to allow reordering the operation.  At this point
+     * assume that if set, it also applies to normal operations though!
+     */
+    NPY_METH_IS_REORDERABLE = 1 << 3,
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -103,6 +103,30 @@ typedef int (get_loop_function)(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+
+/**
+ * Query an ArrayMethod for the initial value for use in reduction.
+ *
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param reduction_is_empty Whether the reduction is empty. When it is, the
+ *     value returned may differ.  In this case it is a "default" value that
+ *     may differ from the "identity" value normally used.  For example:
+ *     - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
+ *       identity otherwise as it preserves the sign for `sum([-0.0])`.
+ *     - We use no identity for object, but return the default of `0` and `1`
+ *       for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
+ *       This allows `np.sum(np.array(["a", "b"], dtype=object))` to work.
+ *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
+ *       not a good *default* when there are no items.
+ * @param initial Pointer to initial data to be filled (if possible)
+ *
+ * @returns -1, 0, or 1 indicating error, no initial value, and initial being
+ *     successfully filled.  Errors must not be given where 0 is correct, NumPy
+ *     may call this even when not strictly necessary.
+ */
+typedef int (get_reduction_initial_function)(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        char *initial);
 
 /*
  * The following functions are only used be the wrapping array method defined
@@ -193,6 +217,7 @@ typedef struct PyArrayMethodObject_tag {
     NPY_ARRAYMETHOD_FLAGS flags;
     resolve_descriptors_function *resolve_descriptors;
     get_loop_function *get_strided_loop;
+    get_reduction_initial_function  *get_reduction_initial;
     /* Typical loop functions (contiguous ones are used in current casts) */
     PyArrayMethod_StridedLoop *strided_loop;
     PyArrayMethod_StridedLoop *contiguous_loop;
@@ -203,6 +228,8 @@ typedef struct PyArrayMethodObject_tag {
     PyArray_DTypeMeta **wrapped_dtypes;
     translate_given_descrs_func *translate_given_descrs;
     translate_loop_descrs_func *translate_loop_descrs;
+    /* Chunk reserved for use by the legacy fallback arraymethod */
+    char legacy_initial[sizeof(npy_clongdouble)];  /* initial value storage */
 } PyArrayMethodObject;
 
 
@@ -233,10 +260,12 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
  */
 #define NPY_METH_resolve_descriptors 1
 #define NPY_METH_get_loop 2
-#define NPY_METH_strided_loop 3
-#define NPY_METH_contiguous_loop 4
-#define NPY_METH_unaligned_strided_loop 5
-#define NPY_METH_unaligned_contiguous_loop 6
+#define NPY_METH_get_reduction_initial 3
+/* specific loops for constructions/default get_loop: */
+#define NPY_METH_strided_loop 4
+#define NPY_METH_contiguous_loop 5
+#define NPY_METH_unaligned_strided_loop 6
+#define NPY_METH_unaligned_contiguous_loop 7
 
 
 /*

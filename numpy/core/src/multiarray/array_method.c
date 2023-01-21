@@ -27,15 +27,18 @@
  *    weak reference to the input DTypes.
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 
 /*
@@ -248,6 +251,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_reduction_initial = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -283,6 +287,9 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_reduction_initial:
+                meth->get_reduction_initial = slot->pfunc;
                 continue;
             default:
                 break;

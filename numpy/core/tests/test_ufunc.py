@@ -1650,6 +1650,19 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         self.check_identityless_reduction(a)
 
+    def test_reduce_identity_depends_on_loop(self):
+        """
+        The type of the result should always depend on the selected loop, not
+        necessarily the output (only relevant for object arrays).
+        """
+        # For an object loop, the default value 0 with type int is used:
+        assert type(np.add.reduce([], dtype=object)) is int
+        out = np.array(None, dtype=object)
+        # When the loop is float64 but `out` is object this does not happen,
+        # the result is float64 cast to object (which gives Python `float`).
+        np.add.reduce([], out=out, dtype=np.float64)
+        assert type(out[()]) is float
+
     def test_initial_reduction(self):
         # np.minimum.reduce is an identityless reduction
 
@@ -1670,6 +1683,9 @@ class TestUfunc:
         # Check initial=None raises ValueError for both types of ufunc reductions
         assert_raises(ValueError, np.minimum.reduce, [], initial=None)
         assert_raises(ValueError, np.add.reduce, [], initial=None)
+        # Also in the somewhat special object case:
+        with pytest.raises(ValueError):
+            np.add.reduce([], initial=None, dtype=object)
 
         # Check that np._NoValue gives default behavior.
         assert_equal(np.add.reduce([], initial=np._NoValue), 0)
@@ -1678,6 +1694,23 @@ class TestUfunc:
         a = np.array([10], dtype=object)
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
+
+    def test_empty_reduction_and_idenity(self):
+        arr = np.zeros((0, 5))
+        # OK, since the reduction itself is *not* empty, the result is
+        assert np.true_divide.reduce(arr, axis=1).shape == (0,)
+        # Not OK, the reduction itself is empty and we have no idenity
+        with pytest.raises(ValueError):
+            np.true_divide.reduce(arr, axis=0)
+
+        # Test that an empty reduction fails also if the result is empty
+        arr = np.zeros((0, 0, 5))
+        with pytest.raises(ValueError):
+            np.true_divide.reduce(arr, axis=1)
+
+        # Division reduction makes sense with `initial=1` (empty or not):
+        res = np.true_divide.reduce(arr, axis=1, initial=1)
+        assert_array_equal(res, np.ones((0, 5)))
 
     @pytest.mark.parametrize('axis', (0, 1, None))
     @pytest.mark.parametrize('where', (np.array([False, True, True]),
@@ -2617,13 +2650,24 @@ def test_reduce_casterrors(offset):
     with pytest.raises(ValueError, match="invalid literal"):
         # This is an unsafe cast, but we currently always allow that.
         # Note that the double loop is picked, but the cast fails.
-        np.add.reduce(arr, dtype=np.intp, out=out)
+        # `initial=None` disables the use of an identity here to test failures
+        # while copying the first values path (not used when identity exists).
+        np.add.reduce(arr, dtype=np.intp, out=out, initial=None)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
     # the error occurs (the result of which would be `value * offset`) and -1
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+def test_object_reduce_cleanup_on_failure():
+    # Test cleanup, including of the initial value (manually provided or not)
+    with pytest.raises(TypeError):
+        np.add.reduce([1, 2, None], initial=4)
+
+    with pytest.raises(TypeError):
+        np.add.reduce([1, 2, None])
 
 
 @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")

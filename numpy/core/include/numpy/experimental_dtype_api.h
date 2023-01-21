@@ -182,22 +182,28 @@ typedef struct {
  */
 typedef enum {
     /* Flag for whether the GIL is required */
-    NPY_METH_REQUIRES_PYAPI = 1 << 1,
+    NPY_METH_REQUIRES_PYAPI = 1 << 0,
     /*
      * Some functions cannot set floating point error flags, this flag
      * gives us the option (not requirement) to skip floating point error
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
-    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
+    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 1,
     /* Whether the method supports unaligned access (not runtime) */
-    NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
+    NPY_METH_SUPPORTS_UNALIGNED = 1 << 2,
+    /*
+     * Used for reductions to allow reordering the operation.  At this point
+     * assume that if set, it also applies to normal operations though!
+     */
+    NPY_METH_IS_REORDERABLE = 1 << 3,
 
     /* All flags which can change at runtime */
     NPY_METH_RUNTIME_FLAGS = (
             NPY_METH_REQUIRES_PYAPI |
             NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
+
 
 
 /*
@@ -301,10 +307,10 @@ typedef NPY_CASTING (resolve_descriptors_function)(
  *
  * NOTE: As of now, NumPy will NOT use unaligned loops in ufuncs!
  */
-#define NPY_METH_strided_loop 3
-#define NPY_METH_contiguous_loop 4
-#define NPY_METH_unaligned_strided_loop 5
-#define NPY_METH_unaligned_contiguous_loop 6
+#define NPY_METH_strided_loop 4
+#define NPY_METH_contiguous_loop 5
+#define NPY_METH_unaligned_strided_loop 6
+#define NPY_METH_unaligned_contiguous_loop 7
 
 
 typedef struct {
@@ -321,6 +327,30 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
         NpyAuxData *transferdata);
 
 
+/**
+ * Query an ArrayMethod for the initial value for use in reduction.
+ *
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param reduction_is_empty Whether the reduction is empty. When it is, the
+ *     value returned may differ.  In this case it is a "default" value that
+ *     may differ from the "identity" value normally used.  For example:
+ *     - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
+ *       identity otherwise as it preserves the sign for `sum([-0.0])`.
+ *     - We use no identity for object, but return the default of `0` and `1`
+ *       for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
+ *       This allows `np.sum(np.array(["a", "b"], dtype=object))` to work.
+ *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
+ *       not a good *default* when there are no items.
+ * @param initial Pointer to initial data to be filled (if possible)
+ *
+ * @returns -1, 0, or 1 indicating error, no initial value, and initial being
+ *     successfully filled.  Errors must not be given where 0 is correct, NumPy
+ *     may call this even when not strictly necessary.
+ */
+#define NPY_METH_get_reduction_initial 3
+typedef int (get_reduction_initial_function)(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        char *initial);
 
 /*
  * ****************************
@@ -458,7 +488,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
  */
 #if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
 
-#define __EXPERIMENTAL_DTYPE_VERSION 5
+#define __EXPERIMENTAL_DTYPE_VERSION 6
 
 static int
 import_experimental_dtype_api(int version)

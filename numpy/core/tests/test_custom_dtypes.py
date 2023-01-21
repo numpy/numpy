@@ -202,3 +202,19 @@ class TestSFloat:
         # The output casting does not match the bool, bool -> bool loop:
         with pytest.raises(TypeError):
             ufunc(a, a, out=np.empty(a.shape, dtype=int), casting="equiv")
+
+    def test_wrapped_and_wrapped_reductions(self):
+        a = self._get_array(2.)
+        float_equiv = a.astype(float)
+
+        expected = np.hypot(float_equiv, float_equiv)
+        res = np.hypot(a, a)
+        assert res.dtype == a.dtype
+        res_float = res.view(np.float64) * 2
+        assert_array_equal(res_float, expected)
+
+        # Also check reduction (keepdims, due to incorrect getitem)
+        res = np.hypot.reduce(a, keepdims=True)
+        assert res.dtype == a.dtype
+        expected = np.hypot.reduce(float_equiv, keepdims=True)
+        assert res.view(np.float64) * 2 == expected
