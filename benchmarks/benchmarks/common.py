@@ -33,13 +33,6 @@ DLPACK_TYPES = [
     'complex128',
 ]
 
-INT_BOOL_DTYPES = [
-    int, bool, np.intp,
-    np.int8, np.int16, np.int32, np.int64,
-    np.uint8, np.uint16, np.uint32, np.uint64,
-]
-
-
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
 # and generate some redundancy
