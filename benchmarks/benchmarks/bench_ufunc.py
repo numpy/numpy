@@ -22,12 +22,6 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
 # Index arguments
 meth_1arg_ind = ['__getitem__']
 
-# Valid for 0d arrays
-meth_0d = ['__bool__', '__complex__', '__float__']
-
-# Valid for size-1 arrays
-meth_1d = ['__int__']
-
 # type_only
 meth_int_scalar = ['__index__', '__lshift__', '__rshift__']
 meth_int_bool = ['__invert__', '__xor__']
@@ -101,6 +95,25 @@ class MethodsV0(Benchmark):
 
     def time_ndarray_meth(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
+        meth()
+
+class Methods0D(Benchmark):
+    """Zero dimension array methods
+    """
+    params = [['__bool__', '__complex__',
+               '__float__', '__int__'], TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+
+    def time_ndarray__0d__(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        if npdtypes in ['complex64',
+                        'complex128',
+                        'complex256'] and methname in ['__float__', '__int__']:
+            return
         meth()
 
 class MethodsV1(Benchmark):
