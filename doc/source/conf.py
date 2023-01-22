@@ -163,7 +163,6 @@ def setup(app):
 # If we deemed it desirable, we could in future make these real modules, which
 # would make `from numpy.char import split` work.
 sys.modules['numpy.char'] = numpy.char
-sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output
