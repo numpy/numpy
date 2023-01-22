@@ -215,13 +215,39 @@ class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
 
-class VarComplex(Benchmark):
-    params = [10**n for n in range(0, 9)]
-    def setup(self, n):
-        self.arr = np.random.randn(n) + 1j * np.random.randn(n)
+class StdStatsMethods(Benchmark):
+    params = [['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+              'int64', 'uint64', 'float32', 'float64', 'intp',
+              'complex64', 'complex128', 'complex256',
+                'bool', 'float', 'int', 'complex'],
+              [1000**n for n in range(0, 2)]]
+    param_names = ['dtype', 'size']
 
-    def teardown(self, n):
-        del self.arr
+    def setup(self, dtype, size):
+        try:
+            self.data = np.ones(size, dtype=getattr(np, dtype))
+        except AttributeError: # builtins throw AttributeError after 1.20
+            self.data = np.ones(size, dtype=dtype)
+        if dtype.startswith('complex'):
+            self.data = np.random.randn(size) + 1j * np.random.randn(size)
 
-    def time_var(self, n):
-        self.arr.var()
+    def time_min(self, dtype, size):
+        self.data.min()
+
+    def time_max(self, dtype, size):
+        self.data.max()
+
+    def time_mean(self, dtype, size):
+        self.data.mean()
+
+    def time_std(self, dtype, size):
+        self.data.std()
+
+    def time_prod(self, dtype, size):
+        self.data.prod()
+
+    def time_var(self, dtype, size):
+        self.data.var()
+
+    def time_sum(self, dtype, size):
+        self.data.sum()
