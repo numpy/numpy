@@ -19,17 +19,11 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
           'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
 
-# Index arguments
-meth_1arg_ind = ['__getitem__']
-
 # type_only
 meth_int_scalar = ['__index__', '__lshift__', '__rshift__']
 meth_int_bool = ['__invert__', '__xor__']
 meth_int_only = ['__and__', '__or__']
 meth_no_complex = ['__mod__', '__floordiv__']
-
-# Special
-meth_special = ['__setitem__']
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
@@ -134,6 +128,38 @@ class MethodsV1(Benchmark):
     def time_ndarray_meth(self, methname, npdtypes):
         meth = getattr(self.xarg_one, methname)
         meth(self.xarg_two)
+
+class NDArrayGetItem(Benchmark):
+    param_names = ['margs', 'msize']
+    params = [[0, (0, 0), (-1, 0), [0, -1]],
+              ['small', 'big']]
+
+    def setup(self, margs, msize):
+        self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+
+    def time_methods_getitem(self, margs, msize):
+        if msize == 'small':
+            mdat = self.xs
+        elif msize == 'big':
+            mdat = self.xl
+        getattr(mdat, '__getitem__')(margs)
+
+class NDArraySetItem(Benchmark):
+    param_names = ['margs', 'msize']
+    params = [[0, (0, 0), (-1, 0), [0, -1]],
+              ['small', 'big']]
+
+    def setup(self, margs, msize):
+        self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+
+    def time_methods_setitem(self, margs, msize):
+        if msize == 'small':
+            mdat = self.xs
+        elif msize == 'big':
+            mdat = self.xl
+        getattr(mdat, '__setitem__')(margs, 17)
 
 class DLPMethods(Benchmark):
     """ Benchmark for DLPACK helpers
