@@ -1,7 +1,7 @@
-import numpy
+import numpy as np
 import random
 import os
-import functools
+from functools import lru_cache
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!
@@ -9,7 +9,7 @@ import functools
 # sequences
 random.seed(1)
 # but will seed it nevertheless
-numpy.random.seed(1)
+np.random.seed(1)
 
 nx, ny = 1000, 1000
 # reduced squares based on indexes_rand, primarily for testing more
@@ -23,7 +23,7 @@ TYPES1 = [
     'int64', 'float64',  'complex64',
     'longfloat', 'complex128',
 ]
-if 'complex256' in numpy.sctypeDict:
+if 'complex256' in np.sctypeDict:
     TYPES1.append('complex256')
 
 DLPACK_TYPES = [
@@ -33,37 +33,29 @@ DLPACK_TYPES = [
     'complex128',
 ]
 
-INT_BOOL_TYPES = [
-    'int16', 'bool',
-    'int32', 'int64',
+INT_BOOL_DTYPES = [
+    int, bool, np.intp,
+    np.int8, np.int16, np.int32, np.int64,
+    np.uint8, np.uint16, np.uint32, np.uint64,
 ]
-
-
-def memoize(func):
-    result = []
-    def wrapper():
-        if not result:
-            result.append(func())
-        return result[0]
-    return wrapper
 
 
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
 # and generate some redundancy
 
-@memoize
+@lru_cache(typed=True)
 def get_values():
-    rnd = numpy.random.RandomState(1)
-    values = numpy.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
+    rnd = np.random.RandomState(1)
+    values = np.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
     return values
 
 
-@memoize
+@lru_cache(typed=True)
 def get_squares():
     values = get_values()
-    squares = {t: numpy.array(values,
-                              dtype=getattr(numpy, t)).reshape((nx, ny))
+    squares = {t: np.array(values,
+                              dtype=getattr(np, t)).reshape((nx, ny))
                for t in TYPES1}
 
     # adjust complex ones to have non-degenerated imagery part -- use
@@ -74,42 +66,42 @@ def get_squares():
     return squares
 
 
-@memoize
+@lru_cache(typed=True)
 def get_squares_():
     # smaller squares
     squares_ = {t: s[:nxs, :nys] for t, s in get_squares().items()}
     return squares_
 
 
-@memoize
+@lru_cache(typed=True)
 def get_vectors():
     # vectors
     vectors = {t: s[0] for t, s in get_squares().items()}
     return vectors
 
 
-@memoize
+@lru_cache(typed=True)
 def get_indexes():
     indexes = list(range(nx))
     # so we do not have all items
     indexes.pop(5)
     indexes.pop(95)
 
-    indexes = numpy.array(indexes)
+    indexes = np.array(indexes)
     return indexes
 
 
-@memoize
+@lru_cache(typed=True)
 def get_indexes_rand():
     rnd = random.Random(1)
 
     indexes_rand = get_indexes().tolist()       # copy
     rnd.shuffle(indexes_rand)         # in-place shuffle
-    indexes_rand = numpy.array(indexes_rand)
+    indexes_rand = np.array(indexes_rand)
     return indexes_rand
 
 
-@memoize
+@lru_cache(typed=True)
 def get_indexes_():
     # smaller versions
     indexes = get_indexes()
@@ -117,7 +109,7 @@ def get_indexes_():
     return indexes_
 
 
-@memoize
+@lru_cache(typed=True)
 def get_indexes_rand_():
     indexes_rand = get_indexes_rand()
     indexes_rand_ = indexes_rand[indexes_rand < nxs]
@@ -130,7 +122,7 @@ CACHE_ROOT = os.path.abspath(
 )
 
 
-@functools.cache
+@lru_cache(typed=True)
 def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
     """
     Generates a cached random array that covers several scenarios that
