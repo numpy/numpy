@@ -226,7 +226,7 @@ class StdStatsMethods(Benchmark):
     def setup(self, dtype, size):
         try:
             self.data = np.ones(size, dtype=getattr(np, dtype))
-        except AttributeError: # builtins throw AttributeError after 1.20
+        except AttributeError:  # builtins throw AttributeError after 1.20
             self.data = np.ones(size, dtype=dtype)
         if dtype.startswith('complex'):
             self.data = np.random.randn(size) + 1j * np.random.randn(size)

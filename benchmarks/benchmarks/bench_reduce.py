@@ -55,7 +55,7 @@ class StdStatsReductions(Benchmark):
     def setup(self, dtype):
         try:
             self.data = np.ones(20000, dtype=getattr(np, dtype))
-        except AttributeError: # builtins throw AttributeError after 1.20
+        except AttributeError:  # builtins throw AttributeError after 1.20
             self.data = np.ones(20000, dtype=dtype)
         if dtype.startswith('complex'):
             self.data = self.data * self.data.T*1j
