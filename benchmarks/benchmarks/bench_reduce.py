@@ -45,19 +45,38 @@ class AnyAll(Benchmark):
         self.zeros.any()
 
 
-class MinMax(Benchmark):
-    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-              np.int64, np.uint64, np.float32, np.float64, np.intp]
+class StdStatsReductions(Benchmark):
+    params = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+              'int64', 'uint64', 'float32', 'float64', 'intp',
+              'complex64', 'complex128', 'complex256',
+              'bool', 'float', 'int', 'complex']
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.ones(20000, dtype=dtype)
+        try:
+            self.data = np.ones(20000, dtype=getattr(np, dtype))
+        except AttributeError: # builtins throw AttributeError after 1.20
+            self.data = np.ones(20000, dtype=dtype)
+        if dtype.startswith('complex'):
+            self.data = self.data * self.data.T*1j
 
     def time_min(self, dtype):
-        np.min(self.d)
+        np.min(self.data)
 
     def time_max(self, dtype):
-        np.max(self.d)
+        np.max(self.data)
+
+    def time_mean(self, dtype):
+        np.mean(self.data)
+
+    def time_std(self, dtype):
+        np.std(self.data)
+
+    def time_prod(self, dtype):
+        np.prod(self.data)
+
+    def time_var(self, dtype):
+        np.var(self.data)
 
 class FMinMax(Benchmark):
     params = [np.float32, np.float64]
