@@ -1788,6 +1788,36 @@ class TestVectorize:
 
         assert f2.__name__ == 'f2'
 
+    def test_decorator(self):
+        @vectorize
+        def addsubtract(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        r = addsubtract([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
+    def test_signature_otypes_decorator(self):
+        @vectorize(signature='(n)->(n)', otypes=['float64'])
+        def f(x):
+            return x
+
+        r = f([1, 2, 3])
+        assert_equal(r.dtype, np.dtype('float64'))
+        assert_array_equal(r, [1, 2, 3])
+        assert f.__name__ == 'f'
+
+    def test_positional_regression_9477(self):
+        # This supplies the first keyword argument as a positional,
+        # to ensure that they are still properly forwarded after the
+        # enhancement for #9477
+        f = vectorize((lambda x: x), ['float64'])
+        r = f([2])
+        assert_equal(r.dtype, np.dtype('float64'))
+
+
 class TestLeaks:
     class A:
         iters = 20
