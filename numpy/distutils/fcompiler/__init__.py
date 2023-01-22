@@ -571,8 +571,7 @@ class FCompiler(CCompiler):
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
         src_flags = {}
-        if Path(src).suffix.lower() in COMMON_FIXED_EXTENSIONS \
-           and not has_f90_header(src):
+        if is_f_file(src) and not has_f90_header(src):
             flavor = ':f77'
             compiler = self.compiler_f77
             src_flags = get_f77flags(src)

@@ -338,8 +338,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
                 if self.compiler_type=='absoft':
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
-                if Path(src).suffix.lower() in COMMON_FIXED_EXTENSIONS \
-                   and not has_f90_header(src):
+                if is_f_file(src) and not has_f90_header(src):
                     f77_objects.append((obj, (src, ext)))
                 else:
                     other_objects.append((obj, (src, ext)))
