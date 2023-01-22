@@ -101,13 +101,14 @@ class Methods0D(Benchmark):
 
     def setup(self, methname, npdtypes):
         self.xarg = np.array(3, dtype=npdtypes)
-
-    def time_ndarray__0d__(self, methname, npdtypes):
-        meth = getattr(self.xarg, methname)
         if npdtypes in ['complex64',
                         'complex128',
                         'complex256'] and methname in ['__float__', '__int__']:
-            return
+            # Skip
+            raise NotImplementedError
+
+    def time_ndarray__0d__(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
         meth()
 
 class MethodsV1(Benchmark):
