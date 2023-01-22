@@ -2491,7 +2491,7 @@ class vectorize:
 
             if outputs is None:
                 for result, core_dims in zip(results, output_core_dims):
-                        _update_dim_sizes(dim_sizes, result, core_dims)
+                    _update_dim_sizes(dim_sizes, result, core_dims)
 
                 outputs = _create_arrays(broadcast_shape, dim_sizes,
                                          output_core_dims, otypes, results)
