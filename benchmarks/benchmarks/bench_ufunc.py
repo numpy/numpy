@@ -19,12 +19,6 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
           'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
 
-# type_only
-meth_int_scalar = ['__index__', '__lshift__', '__rshift__']
-meth_int_bool = ['__invert__', '__xor__']
-meth_int_only = ['__and__', '__or__']
-meth_no_complex = ['__mod__', '__floordiv__']
-
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
         print("Missing ufunc %r" % (name,))
@@ -91,19 +85,38 @@ class MethodsV0(Benchmark):
         meth = getattr(self.xarg, methname)
         meth()
 
+class NDArrayLRShifts(Benchmark):
+    """ Benchmark for the shift methods
+    """
+    params = [['__lshift__', '__rshift__'],
+              ['intp', 'int8', 'int16',
+                'int32', 'int64', 'uint8',
+                'uint16', 'uint32', 'uint64']]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.vals = np.ones(1000,
+                            dtype=getattr(np, npdtypes)) * \
+                            np.random.randint(9)
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        mshift = getattr(self.vals, methname)
+        mshift(2)
+
 class Methods0D(Benchmark):
     """Zero dimension array methods
     """
-    params = [['__bool__', '__complex__',
+    params = [['__bool__', '__complex__', '__invert__',
                '__float__', '__int__'], TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
     def setup(self, methname, npdtypes):
         self.xarg = np.array(3, dtype=npdtypes)
-        if npdtypes in ['complex64',
-                        'complex128',
-                        'complex256'] and methname in ['__float__', '__int__']:
+        if (npdtypes.startswith('complex') and \
+           methname in ['__float__', '__int__']) or \
+           (npdtypes.startswith('int') and methname == '__invert__'):
             # Skip
             raise NotImplementedError
 
@@ -114,17 +127,23 @@ class Methods0D(Benchmark):
 class MethodsV1(Benchmark):
     """ Benchmark for the methods which take an argument
     """
-    params = [['__add__', '__eq__', '__ge__', '__gt__',
-                 '__matmul__', '__le__', '__lt__', '__mul__',
-                 '__ne__', '__pow__', '__sub__', '__truediv__'],
+    params = [['__and__', '__add__', '__eq__', '__floordiv__', '__ge__',
+               '__gt__', '__le__', '__lt__', '__matmul__',
+               '__mod__', '__mul__', '__ne__', '__or__',
+               '__pow__', '__sub__', '__truediv__', '__xor__'],
               TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
     def setup(self, methname, npdtypes):
-        values = get_squares_()
-        self.xarg_one = values.get(npdtypes)[0]
-        self.xarg_two = values.get(npdtypes)[1]
+        if (npdtypes.startswith('complex') and \
+           methname in ['__floordiv__', '__mod__']) or \
+           (not npdtypes.startswith('int') and \
+            methname in ['__and__', '__or__', '__xor__']):
+            raise NotImplementedError # skip
+        values = get_squares_().get(npdtypes)
+        self.xarg_one = values[0]
+        self.xarg_two = values[1]
 
     def time_ndarray_meth(self, methname, npdtypes):
         meth = getattr(self.xarg_one, methname)
