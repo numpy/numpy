@@ -19,6 +19,8 @@ parser.add_argument('--committer', default='numpy-commit-bot',
                     help='Name of the git committer')
 parser.add_argument('--email', default='numpy-commit-bot@nomail',
                     help='Email of the git committer')
+parser.add_argument('--count', default=1, type=int,
+                    help="minimum number of expected files, defaults to 1")
 
 parser.add_argument(
     '--force', action='store_true',
@@ -31,6 +33,11 @@ if not os.path.exists(args.dir):
     print('Content directory does not exist')
     sys.exit(1)
 
+count = len([name for name in os.listdir(args.dir) if os.path.isfile(os.path.join(args.dir, name))])
+
+if count < args.count:
+    print(f"Expected {args.count} top-directory files to upload, got {count}")
+    sys.exit(1)
 
 def run(cmd, stdout=True):
     pipe = None if stdout else subprocess.DEVNULL

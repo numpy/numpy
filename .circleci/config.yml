@@ -88,6 +88,10 @@ jobs:
             cd doc
             # Don't use -q, show warning summary"
             SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
+                echo "doc build failed: build/html is empty"
+                exit -1
+            fi
 
       - run:
           name: build neps
@@ -128,11 +132,12 @@ jobs:
             touch doc/build/html/.nojekyll
 
             ./tools/ci/push_docs_to_repo.py doc/build/html \
-                git@github.com:numpy/devdocs.git \
                 --committer "numpy-circleci-bot" \
                 --email "numpy-circleci-bot@nomail" \
                 --message "Docs build of $CIRCLE_SHA1" \
-                --force
+                --count 5 \
+                --force \
+                git@github.com:numpy/devdocs.git
 
       - add_ssh_keys:
           fingerprints:
@@ -153,11 +158,12 @@ jobs:
             touch doc/neps/_build/html/.nojekyll
 
             ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
-                git@github.com:numpy/neps.git \
                 --committer "numpy-circleci-bot" \
                 --email "numpy-circleci-bot@nomail" \
                 --message "Docs build of $CIRCLE_SHA1" \
-                --force
+                --count 5 \
+                --force \
+                git@github.com:numpy/neps.git \
 
 workflows:
   version: 2
