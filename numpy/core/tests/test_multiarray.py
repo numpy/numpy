@@ -5086,15 +5086,15 @@ class TestPutmask:
             np.putmask(a, a >= 2, 3)
 
     def test_kwargs(self):
-        x=np.array([0, 0])
+        x = np.array([0, 0])
         np.putmask(x, [0, 1], [-1, -2])
         assert_array_equal(x, [0, -2])
 
-        x=np.array([0, 0])
-        np.putmask(x, mask=[0,1], values=[-1, -2])
+        x = np.array([0, 0])
+        np.putmask(x, mask=[0, 1], values=[-1, -2])
         assert_array_equal(x, [0, -2])
 
-        x=np.array([0, 0])
+        x = np.array([0, 0])
         np.putmask(x, values=[-1, -2],  mask=[0, 1])
         assert_array_equal(x, [0, -2])
 

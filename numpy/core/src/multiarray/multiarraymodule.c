@@ -1492,19 +1492,18 @@ fail:
     return NULL;
 }
 
-
 static PyObject *
-array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args, Py_ssize_t len_args,
-                             PyObject *kwnames)
+array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                Py_ssize_t len_args, PyObject *kwnames )
 {
     PyObject *mask, *values;
     PyObject *array;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("putmask", args, len_args, NULL,
+    if (npy_parse_arguments("putmask", args, len_args, kwnames,
             "", NULL, &array,
-            "", NULL, &mask,
-            "", NULL, &values,
+            "mask", NULL, &mask,
+            "values", NULL, &values,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -3465,13 +3464,13 @@ fail:
 #undef INNER_WHERE_LOOP
 
 static PyObject *
-array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+array_where(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj = NULL, *x = NULL, *y = NULL;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("where", args, len_args, kwnames,
-            "condition", NULL, &obj,
+    if (npy_parse_arguments("where", args, len_args, NULL,
+            "", NULL, &obj,
             "|x", NULL, &x,
             "|y", NULL, &y,
             NULL, NULL, NULL) < 0) {
@@ -4486,7 +4485,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"where",
         (PyCFunction)array_where,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_FASTCALL, NULL},
     {"lexsort",
         (PyCFunction)array_lexsort,
         METH_FASTCALL | METH_KEYWORDS, NULL},
