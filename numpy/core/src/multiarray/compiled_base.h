@@ -4,7 +4,7 @@
 #include "numpy/ndarraytypes.h"
 
 NPY_NO_EXPORT PyObject *
-arr_insert(PyObject *, PyObject *, PyObject *);
+arr_place(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *, PyObject *const *, Py_ssize_t, PyObject *);
 NPY_NO_EXPORT PyObject *

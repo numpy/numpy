@@ -270,7 +270,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
  * indicated by the mask
  */
 NPY_NO_EXPORT PyObject *
-arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     char *src, *dest;
     npy_bool *mask_data;
@@ -1424,7 +1424,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         return NULL;
     }
     if (!PyUnicode_Check(str)) {
-        PyErr_SetString(PyExc_RuntimeError, "argument docstring of add_docstring should be a str");
+        PyErr_SetString(PyExc_RuntimeError,
+                "argument docstring of add_docstring should be a str");
         return NULL;
     }
 

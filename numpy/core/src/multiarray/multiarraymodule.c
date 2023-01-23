@@ -1501,7 +1501,7 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args, Py_ssize_t le
     PyObject *array;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("putmask", args, len_args, kwnames,
+    if (npy_parse_arguments("putmask", args, len_args, NULL,
             "", NULL, &array,
             "", NULL, &mask,
             "", NULL, &values,
@@ -1509,7 +1509,7 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args, Py_ssize_t le
         return NULL;
     }
     if (!PyArray_Check(array)) {
-        PyErr_SetString(PyExc_RuntimeError, "argument array of putmask should be a numpy array");
+        PyErr_SetString(PyExc_RuntimeError, "argument a of putmask should be a numpy array");
     }
 
     return PyArray_PutMask((PyArrayObject *)array, values, mask);
@@ -4579,7 +4579,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"_vec_string",
         (PyCFunction)_vec_string,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"_insert", (PyCFunction)arr_insert,
+    {"_place", (PyCFunction)arr_place,
         METH_VARARGS | METH_KEYWORDS,
         "Insert vals sequentially into equivalent 1-d positions "
         "indicated by mask."},
@@ -4619,10 +4619,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"seterrobj",
         (PyCFunction) ufunc_seterr,
-        METH_FASTCALL, NULL},
+        METH_O, NULL},
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
-        METH_FASTCALL, NULL},
+        METH_NOARGS, NULL},
     {"get_handler_name",
         (PyCFunction) get_handler_name,
         METH_VARARGS, NULL},

@@ -5079,16 +5079,10 @@ ufunc_generic_vectorcall(PyObject *ufunc,
 
 
 NPY_NO_EXPORT PyObject *
-ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *arg)
 {
     PyObject *thedict;
     PyObject *res;
-
-    NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("geterrobj", args, len_args, NULL,
-                NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
     
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
@@ -5115,19 +5109,12 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_
 
 
 NPY_NO_EXPORT PyObject *
-ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *arg)
 {
     PyObject *thedict;
     int res;
-    PyObject *val;
+    PyObject *val = arg;
     static char *msg = "Error object must be a list of length 3";
-
-    NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("seterrobj", args, len_args, NULL,
-                "", NULL, &val,
-                NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
 
     if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
         PyErr_SetString(PyExc_ValueError, msg);
