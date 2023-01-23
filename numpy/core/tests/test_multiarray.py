@@ -8887,6 +8887,11 @@ class TestWhere:
             result = array.nonzero()
             assert_array_equal(benchmark, result)
 
+    def test_kwargs(self):
+        a = np.zeros(1)
+        with assert_raises(TypeError):
+            np.where(a, x=a, y=a)
+
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
