@@ -67,12 +67,14 @@ jobs:
           dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
       - name: Run NumPy test suite except F2PY
         # There seem to be too many compiled extension modules.
-        # Let's try splitting off the F2PY tests to see if that helps
+        # Let's try splitting off the tests by submodule to see if that helps.
+        # Not sure if that will run the top-level tests.
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -o pipefail {0}"
         run: >-
-          dash -c "/usr/bin/python3.9 runtests.py -n -- -k 'not f2py'"
-      - name: Run NumPy F2PY tests
-        run: >-
-          dash -c "/usr/bin/python3.9 runtests.py -n -- -k 'f2py'"
+          for submodule in array_api compat core distutils f2py fft lib linalg ma matrixlib polynomial random tests typing;
+          do 
+              /usr/bin/python3.9 runtests.py -n -s "${submodule}"; 
+          done
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
