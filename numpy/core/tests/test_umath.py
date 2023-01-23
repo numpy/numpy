@@ -1292,9 +1292,20 @@ class TestLog:
 
         # test log() of max for dtype does not raise
         for dt in ['f', 'd', 'g']:
-            with np.errstate(all='raise'):
-                x = np.finfo(dt).max
-                np.log(x)
+            try:
+                with np.errstate(all='raise'):
+                    x = np.finfo(dt).max
+                    np.log(x)
+            except FloatingPointError as exc:
+                if dt == 'g' and IS_MUSL:
+                    # FloatingPointError is known to occur on longdouble
+                    # for musllinux_x86_64 x is very large
+                    pytest.skip(
+                        "Overflow has occurred for"
+                        " np.log(np.finfo(np.longdouble).max)"
+                    )
+                else:
+                    raise exc
 
     def test_log_strides(self):
         np.random.seed(42)
@@ -4213,7 +4224,7 @@ def _test_spacing(t):
     nan = t(np.nan)
     inf = t(np.inf)
     with np.errstate(invalid='ignore'):
-        assert_(np.spacing(one) == eps)
+        assert_equal(np.spacing(one), eps)
         assert_(np.isnan(np.spacing(nan)))
         assert_(np.isnan(np.spacing(inf)))
         assert_(np.isnan(np.spacing(-inf)))
