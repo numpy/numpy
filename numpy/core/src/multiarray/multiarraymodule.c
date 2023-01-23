@@ -1508,7 +1508,8 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *const *args,
         return NULL;
     }
     if (!PyArray_Check(array)) {
-        PyErr_SetString(PyExc_RuntimeError, "argument a of putmask should be a numpy array");
+        PyErr_SetString(PyExc_TypeError,
+                "argument a of putmask must be a numpy array");
     }
 
     return PyArray_PutMask((PyArrayObject *)array, values, mask);
@@ -3160,16 +3161,9 @@ PyArray_GetNDArrayCFeatureVersion(void)
 }
 
 static PyObject *
-array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy),
-                             PyObject *const *args, Py_ssize_t len_args,
-                             PyObject *kwnames)
+array__get_ndarray_c_version(
+        PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(arg))
 {
-    NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("_get_ndarray_c_version", args, len_args, kwnames,
-                NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-
     return PyLong_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
@@ -4428,7 +4422,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_NOARGS, NULL},
     {"_reconstruct",
         (PyCFunction)array__reconstruct,
         METH_VARARGS, NULL},
