@@ -4,10 +4,10 @@
 #include <numpy/ufuncobject.h>
 
 NPY_NO_EXPORT PyObject *
-ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
+ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(arg));
 
 NPY_NO_EXPORT PyObject *
-ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
+ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *arg);
 
 NPY_NO_EXPORT const char*
 ufunc_get_name_cstr(PyUFuncObject *ufunc);

@@ -33,6 +33,7 @@ from numpy.testing import (
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
+from numpy.core.multiarray import _get_ndarray_c_version
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -5084,6 +5085,22 @@ class TestPutmask:
         with pytest.raises(ValueError):
             np.putmask(a, a >= 2, 3)
 
+    def test_kwargs(self):
+        x = np.array([0, 0])
+        np.putmask(x, [0, 1], [-1, -2])
+        assert_array_equal(x, [0, -2])
+
+        x = np.array([0, 0])
+        np.putmask(x, mask=[0, 1], values=[-1, -2])
+        assert_array_equal(x, [0, -2])
+
+        x = np.array([0, 0])
+        np.putmask(x, values=[-1, -2],  mask=[0, 1])
+        assert_array_equal(x, [0, -2])
+
+        with pytest.raises(TypeError):
+            np.putmask(a=x, values=[-1, -2],  mask=[0, 1])
+
 
 class TestTake:
     def tst_basic(self, x):
@@ -8870,6 +8887,11 @@ class TestWhere:
             result = array.nonzero()
             assert_array_equal(benchmark, result)
 
+    def test_kwargs(self):
+        a = np.zeros(1)
+        with assert_raises(TypeError):
+            np.where(a, x=a, y=a)
+
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
@@ -9882,3 +9904,6 @@ def test_sort_uint():
     arr = rng.integers(low=0, high=maxv, size=N).astype('uint32')
     arr[np.random.choice(arr.shape[0], 10)] = maxv
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
+
+def test_private_get_ndarray_c_version():
+    assert isinstance(_get_ndarray_c_version(), int)
