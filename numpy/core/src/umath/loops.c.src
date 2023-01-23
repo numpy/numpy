@@ -541,15 +541,21 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
     }
 }
 
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_@kind@@isa@_indexed(char const *ip1, npy_intp const *indx, char *value, 
-                      npy_intp const *dimensions, npy_intp const *steps) {
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ int
+@TYPE@_@kind@@isa@_indexed(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    npy_intp *indx = (npy_intp *)args[1];
+    char *value = args[2];
     npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
     npy_intp n = dimensions[0];
     npy_intp i;
+    @type@ *indexed;
     for(i = 0; i < n; i++, indx += is2, value += os1) {
-        @type@ op1 = *(@type@ *)(ip1 + is1 * indx[0]) +  value[0];
+        indexed = (@type@ *)(ip1 + is1 * indx[0]);
+        indexed[0] = indexed[0] @OP@ *(@type@ *)value;
     }
+    return 0;
 }
 
 #endif
@@ -1546,6 +1552,23 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
         }
     }
 }
+
+NPY_NO_EXPORT void
+LONGDOUBLE_@kind@_indexed(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    npy_intp *indx = (npy_intp *)args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_longdouble *indexed;
+    for(i = 0; i < n; i++, indx += is2, value += os1) {
+        indexed = (npy_longdouble *)(ip1 + is1 * indx[0]);
+        indexed[0] = indexed[0] @OP@ *(npy_longdouble *)value;
+    }
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1650,6 +1673,24 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
             *((npy_half *)op1) = npy_float_to_half(in1 @OP@ in2);
         }
     }
+}
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(void *NPY_UNUSED(context), char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    npy_intp *indx = (npy_intp *)args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += is2, value += os1) {
+        indexed = (npy_half *)(ip1 + is1 * indx[0]);
+        const float v = npy_half_to_float(*(npy_half *)value);
+        indexed[0] = npy_float_to_half(npy_half_to_float(indexed[0]) @OP@ v);
+    }
+    return 0; 
 }
 /**end repeat**/
 
