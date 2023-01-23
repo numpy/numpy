@@ -1424,7 +1424,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         return NULL;
     }
     if (!PyUnicode_Check(str)) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_TypeError,
                 "argument docstring of add_docstring should be a str");
         return NULL;
     }
