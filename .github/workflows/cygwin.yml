@@ -73,7 +73,8 @@ jobs:
         run: >-
           for submodule in array_api compat core distutils f2py fft lib linalg ma matrixlib polynomial random tests typing;
           do 
-              /usr/bin/python3.9 runtests.py -n -s "${submodule}"; 
+              echo "Testing numpy submodule ${submodule}";
+              /usr/bin/python3.9 runtests.py -n -s "${submodule}" || exit 1; 
           done
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
