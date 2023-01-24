@@ -98,6 +98,12 @@ _umath_strings_richcompare(
  * future.
  */
 int npy_legacy_print_mode = INT_MAX;
+/*
+ * Global variable to check whether NumPy 2.0 behavior is opted in.
+ * This flag is considered a runtime constant.
+ */
+int npy_numpy2_behavior = NPY_FALSE;
+
 
 static PyObject *
 set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -4910,6 +4916,17 @@ initialize_static_globals(void)
             "numpy.core._exceptions", "_UFuncNoLoopError",
             &npy_UFuncNoLoopError);
     if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
+
+    PyObject *_is_numpy2 = NULL;
+    npy_cache_import("numpy", "_numpy2_behavior", &_is_numpy2);
+    if (_is_numpy2 == NULL) {
+        return -1;
+    }
+    npy_numpy2_behavior = PyObject_IsTrue(_is_numpy2);
+    Py_DECREF(_is_numpy2);
+    if (npy_numpy2_behavior < 0) {
         return -1;
     }
 
