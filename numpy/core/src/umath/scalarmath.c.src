@@ -1179,6 +1179,11 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
  *         (Half, Float, Double, LongDouble,
  *             CFloat, CDouble, CLongDouble)*4,
  *         (Half, Float, Double, LongDouble)*3#
+ * #NAME = (BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *              LONG, ULONG, LONGLONG, ULONGLONG)*12,
+ *          (HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *              CFLOAT, CDOUBLE, CLONGDOUBLE)*4,
+ *          (HALF, FLOAT, DOUBLE, LONGDOUBLE)*3#
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
@@ -1202,24 +1207,12 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
  *         (npy_half, npy_float, npy_double, npy_longdouble,
  *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
  *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
- * #oname = (byte, ubyte, short, ushort, int, uint,
- *              long, ulong, longlong, ulonglong)*11,
- *          double*10,
- *          (half, float, double, longdouble,
- *              cfloat, cdouble, clongdouble)*4,
- *          (half, float, double, longdouble)*3#
  * #OName = (Byte, UByte, Short, UShort, Int, UInt,
  *              Long, ULong, LongLong, ULongLong)*11,
  *          Double*10,
  *          (Half, Float, Double, LongDouble,
  *              CFloat, CDouble, CLongDouble)*4,
  *          (Half, Float, Double, LongDouble)*3#
- * #ONAME = (BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *              LONG, ULONG, LONGLONG, ULONGLONG)*11,
- *          DOUBLE*10,
- *          (HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *              CFLOAT, CDOUBLE, CLONGDOUBLE)*4,
- *          (HALF, FLOAT, DOUBLE, LONGDOUBLE)*3#
  */
 #define IS_@name@
 /* drop the "true_" from "true_divide" for floating point warnings: */
@@ -1234,7 +1227,7 @@ static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
 {
     PyObject *ret;
-    @otype@ arg1, arg2, other_val;
+    @type@ arg1, arg2, other_val;
 
     /*
      * Check if this operation may be considered forward.  Note `is_forward`
@@ -1263,7 +1256,7 @@ static PyObject *
     PyObject *other = is_forward ? b : a;
 
     npy_bool may_need_deferring;
-    conversion_result res = convert_to_@oname@(
+    conversion_result res = convert_to_@name@(
             other, &other_val, &may_need_deferring);
     if (res == CONVERSION_ERROR) {
         return NULL;  /* an error occurred (should never happen) */
@@ -1305,7 +1298,7 @@ static PyObject *
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
         case CONVERT_PYSCALAR:
-            if (@ONAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
                 return NULL;
             }
             break;
@@ -1345,7 +1338,7 @@ static PyObject *
 #if @twoout@
     int retstatus = @name@_ctype_@oper@(arg1, arg2, &out, &out2);
 #else
-    int retstatus = @oname@_ctype_@oper@(arg1, arg2, &out);
+    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out);
 #endif
 
 #if @fperr@
