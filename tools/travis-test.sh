@@ -148,7 +148,7 @@ EOF
   fi
 
   if [ -n "$USE_GDB" ]; then
-    COMMAND="gdb --return-child-result --batch --eval-command=run --args $PYTHON"
+    COMMAND="gdb --return-child-result --batch --eval-command='set schedule-multiple' --eval-command=run --args $PYTHON"
   else
     COMMAND=$PYTHON
   fi
@@ -157,9 +157,11 @@ EOF
     # Travis has a limit on log length that is causeing test failutes.
     # The fix here is to remove the "-v" from the runtest arguments.
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    eval $COMMAND -b ../runtests.py -n --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
+    #eval $COMMAND -b ../runtests.py -n -vv --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    eval $COMMAND ../runtests.py -n $DURATIONS_FLAG -- -rs
+    eval sudo apt install -y valgrind
+    export PYTHONMALLOC=malloc_debug
+    eval valgrind $PYTHON ../runtests.py -n -vvv -t ../../numpy/f2py/tests/test_character.py $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
