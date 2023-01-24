@@ -170,7 +170,8 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     #ifdef NPY_HAVE_VXE2
         return vec_signed(a);
     #elif defined(NPY_HAVE_VXE)
-        return vec_packs(vec_signed(npyv_doublee(a)), vec_signed(npyv_doublee(vec_mergel(a, a))));
+        return vec_packs(vec_signed(__builtin_s390_vflls(vec_mergeh(a,a))),
+            vec_signed(__builtin_s390_vflls(vec_mergel(a, a))));
     // VSX
     #elif defined(__IBMC__)
         return vec_cts(a, 0);
