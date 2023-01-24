@@ -2122,7 +2122,7 @@ class vectorize:
     vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
     cache=False, signature=None)
 
-    Generalized function class.
+    Returns an object that acts like pyfunc, but takes arrays as input.
 
     Define a vectorized function which takes a nested sequence of objects or
     numpy arrays as inputs and returns a single numpy array or a tuple of numpy
