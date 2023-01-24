@@ -1494,160 +1494,6 @@ PyArray_GetArrayParamsFromObject(PyObject *NPY_UNUSED(op),
 }
 
 
-/*
- * This function is a legacy implementation to retain subarray dtype
- * behaviour in array coercion. The behaviour here makes sense if tuples
- * of matching dimensionality are being coerced. Due to the difficulty
- * that the result is ill-defined for lists of array-likes, this is deprecated.
- *
- * WARNING: Do not use this function, it exists purely to support a deprecated
- *          code path.
- */
-static int
-setArrayFromSequence(PyArrayObject *a, PyObject *s,
-                        int dim, PyArrayObject * dst)
-{
-    Py_ssize_t i, slen;
-    int res = -1;
-
-    /* first recursion, view equal destination */
-    if (dst == NULL)
-        dst = a;
-
-    /*
-     * This code is to ensure that the sequence access below will
-     * return a lower-dimensional sequence.
-     */
-
-    /* INCREF on entry DECREF on exit */
-    Py_INCREF(s);
-
-    PyObject *seq = NULL;
-
-    if (PyArray_Check(s)) {
-        if (!(PyArray_CheckExact(s))) {
-            /*
-             * make sure a base-class array is used so that the dimensionality
-             * reduction assumption is correct.
-             */
-            /* This will DECREF(s) if replaced */
-            s = PyArray_EnsureArray(s);
-            if (s == NULL) {
-                goto fail;
-            }
-        }
-
-        /* dst points to correct array subsection */
-        if (PyArray_CopyInto(dst, (PyArrayObject *)s) < 0) {
-            goto fail;
-        }
-
-        Py_DECREF(s);
-        return 0;
-    }
-
-    if (dim > PyArray_NDIM(a)) {
-        PyErr_Format(PyExc_ValueError,
-                 "setArrayFromSequence: sequence/array dimensions mismatch.");
-        goto fail;
-    }
-
-    /* Try __array__ before using s as a sequence */
-    PyObject *tmp = _array_from_array_like(s, NULL, 0, NULL, 0);
-    if (tmp == NULL) {
-        goto fail;
-    }
-    else if (tmp == Py_NotImplemented) {
-        Py_DECREF(tmp);
-    }
-    else {
-        int r = PyArray_CopyInto(dst, (PyArrayObject *)tmp);
-        Py_DECREF(tmp);
-        if (r < 0) {
-            goto fail;
-        }
-        Py_DECREF(s);
-        return 0;
-    }
-
-    seq = PySequence_Fast(s, "Could not convert object to sequence");
-    if (seq == NULL) {
-        goto fail;
-    }
-    slen = PySequence_Fast_GET_SIZE(seq);
-
-    /*
-     * Either the dimensions match, or the sequence has length 1 and can
-     * be broadcast to the destination.
-     */
-    if (slen != PyArray_DIMS(a)[dim] && slen != 1) {
-        PyErr_Format(PyExc_ValueError,
-                 "cannot copy sequence with size %zd to array axis "
-                 "with dimension %" NPY_INTP_FMT, slen, PyArray_DIMS(a)[dim]);
-        goto fail;
-    }
-
-    /* Broadcast the one element from the sequence to all the outputs */
-    if (slen == 1) {
-        PyObject *o = PySequence_Fast_GET_ITEM(seq, 0);
-        npy_intp alen = PyArray_DIM(a, dim);
-
-        for (i = 0; i < alen; i++) {
-            if ((PyArray_NDIM(a) - dim) > 1) {
-                PyArrayObject * tmp =
-                    (PyArrayObject *)array_item_asarray(dst, i);
-                if (tmp == NULL) {
-                    goto fail;
-                }
-
-                res = setArrayFromSequence(a, o, dim+1, tmp);
-                Py_DECREF(tmp);
-            }
-            else {
-                char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
-                res = PyArray_SETITEM(dst, b, o);
-            }
-            if (res < 0) {
-                goto fail;
-            }
-        }
-    }
-    /* Copy element by element */
-    else {
-        for (i = 0; i < slen; i++) {
-            PyObject * o = PySequence_Fast_GET_ITEM(seq, i);
-            if ((PyArray_NDIM(a) - dim) > 1) {
-                PyArrayObject * tmp =
-                    (PyArrayObject *)array_item_asarray(dst, i);
-                if (tmp == NULL) {
-                    goto fail;
-                }
-
-                res = setArrayFromSequence(a, o, dim+1, tmp);
-                Py_DECREF(tmp);
-            }
-            else {
-                char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
-                res = PyArray_SETITEM(dst, b, o);
-            }
-            if (res < 0) {
-                goto fail;
-            }
-        }
-    }
-
-    Py_DECREF(seq);
-    Py_DECREF(s);
-    return 0;
-
- fail:
-    Py_XDECREF(seq);
-    Py_DECREF(s);
-    return res;
-}
-
-
-
 /*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
@@ -1708,70 +1554,6 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     if (ndim < 0) {
         return NULL;
-    }
-
-    if (NPY_UNLIKELY(in_descr != NULL && PyDataType_HASSUBARRAY(dtype))) {
-        /*
-         * When a subarray dtype was passed in, its dimensions are appended
-         * to the array dimension (causing a dimension mismatch).
-         * There is a problem with that, because if we coerce from non-arrays
-         * we do this correctly by element (as defined by tuples), but for
-         * arrays we first append the dimensions and then assign to the base
-         * dtype and then assign which causes the problem.
-         *
-         * Thus, we check if there is an array included, in that case we
-         * give a FutureWarning.
-         * When the warning is removed, PyArray_Pack will have to ensure
-         * that it does not append the dimensions when creating the subarrays
-         * to assign `arr[0] = obj[0]`.
-         */
-        int includes_array = 0;
-        if (cache != NULL) {
-            /* This is not ideal, but it is a pretty special case */
-            coercion_cache_obj *next = cache;
-            while (next != NULL) {
-                if (!next->sequence) {
-                    includes_array = 1;
-                    break;
-                }
-                next = next->next;
-            }
-        }
-        if (includes_array) {
-            npy_free_coercion_cache(cache);
-
-            ret = (PyArrayObject *) PyArray_NewFromDescr(
-                    &PyArray_Type, dtype, ndim, dims, NULL, NULL,
-                    flags & NPY_ARRAY_F_CONTIGUOUS, NULL);
-            if (ret == NULL) {
-                return NULL;
-            }
-            assert(PyArray_NDIM(ret) != ndim);
-
-            /* NumPy 1.20, 2020-10-01 */
-            if (DEPRECATE_FUTUREWARNING(
-                    "creating an array with a subarray dtype will behave "
-                    "differently when the `np.array()` (or `asarray`, etc.) "
-                    "call includes an array or array object.\n"
-                    "If you are converting a single array or a list of arrays,"
-                    "you can opt-in to the future behaviour using:\n"
-                    "    np.array(arr, dtype=np.dtype(['f', dtype]))['f']\n"
-                    "    np.array([arr1, arr2], dtype=np.dtype(['f', dtype]))['f']\n"
-                    "\n"
-                    "By including a new field and indexing it after the "
-                    "conversion.\n"
-                    "This may lead to a different result or to current failures "
-                    "succeeding.  (FutureWarning since NumPy 1.20)") < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-
-            if (setArrayFromSequence(ret, op, 0, NULL) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-            return (PyObject *)ret;
-        }
     }
 
     if (dtype == NULL) {
@@ -2137,13 +1919,26 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         if ((flags & NPY_ARRAY_ENSUREARRAY)) {
             subok = 0;
         }
+        Py_INCREF(newtype);
         ret = (PyArrayObject *)PyArray_NewLikeArray(arr, order,
                                                     newtype, subok);
         if (ret == NULL) {
+            Py_DECREF(newtype);
             return NULL;
         }
 
-        if (PyArray_CopyInto(ret, arr) < 0) {
+        int actual_ndim = PyArray_NDIM(ret);
+        PyArray_Descr *actual_dtype = PyArray_DESCR(ret);
+        ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(arr);
+        ((PyArrayObject_fields *)ret)->descr = newtype;
+
+        int success = PyArray_CopyInto(ret, arr);
+
+        Py_DECREF(newtype);
+        ((PyArrayObject_fields *)ret)->nd = actual_ndim;
+        ((PyArrayObject_fields *)ret)->descr = actual_dtype;
+
+        if (success < 0) {
             Py_DECREF(ret);
             return NULL;
         }

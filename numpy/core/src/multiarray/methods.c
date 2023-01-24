@@ -924,29 +924,28 @@ array_astype(PyArrayObject *self,
 
     PyArrayObject *ret;
 
-    /* This steals the reference to dtype, so no DECREF of dtype */
+    /* This steals the reference to dtype */
+    Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewLikeArray(
                                 self, order, dtype, subok);
     if (ret == NULL) {
-        return NULL;
-    }
-    /* NumPy 1.20, 2020-10-01 */
-    if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
-            DEPRECATE_FUTUREWARNING(
-                "casting an array to a subarray dtype "
-                "will not use broadcasting in the future, but cast each "
-                "element to the new dtype and then append the dtype's shape "
-                "to the new array. You can opt-in to the new behaviour, by "
-                "additional field to the cast: "
-                "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
-                "This may lead to a different result or to current failures "
-                "succeeding.  "
-                "(FutureWarning since NumPy 1.20)") < 0) {
-        Py_DECREF(ret);
+        Py_DECREF(dtype);
         return NULL;
     }
 
-    if (PyArray_CopyInto(ret, self) < 0) {
+    /* Decrease the number of dimensions removing subarray ones again */
+    int out_ndim = PyArray_NDIM(ret);
+    PyArray_Descr *out_descr = PyArray_DESCR(ret);
+    ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
+    ((PyArrayObject_fields *)ret)->descr = dtype;
+
+    int success = PyArray_CopyInto(ret, self);
+
+    Py_DECREF(dtype);
+    ((PyArrayObject_fields *)ret)->nd = out_ndim;
+    ((PyArrayObject_fields *)ret)->descr = out_descr;
+
+    if (success < 0) {
         Py_DECREF(ret);
         return NULL;
     }
