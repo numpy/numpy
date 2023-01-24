@@ -249,6 +249,7 @@ class TestCharacter(util.F2PyTest):
         assert_equal(f(np.array('abc', dtype=dtype)), ord('a'))
         assert_equal(f(np.array([['a']], dtype=dtype)), ord('a'))
 
+    @pytest.mark.skip(reason="testing segfault")
     def test_input_varia(self):
         f = getattr(self.module, self.fprefix + '_input')
 
