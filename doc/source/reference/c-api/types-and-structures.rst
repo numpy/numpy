@@ -225,7 +225,7 @@ PyArrayDescr_Type and PyArray_Descr
 
    - Never declare a non-pointer instance of the struct
    - Never perform pointer arithmetic
-   - Never use ``sizof(PyArray_Descr)``
+   - Never use ``sizeof(PyArray_Descr)``
 
    It has the following structure:
 
