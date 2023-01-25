@@ -269,13 +269,14 @@ class TestCharacter(util.F2PyTest):
         a = np.array(['a'])
         assert_equal(f(a), ord('a'))
 
-        #try:
-            #f([])
-        #except IndexError as msg:
-            #if not str(msg).endswith(' got 0-list'):
-                #raise
-        #else:
-            #raise SystemError(f'{f.__name__} should have failed on empty list')
+        try:
+            f([])
+        except IndexError as msg:
+            print(str(msg))
+            if not str(msg).endswith(' got 0-list'):
+                raise
+        else:
+            raise SystemError(f'{f.__name__} should have failed on empty list')
 
         try:
             f(97)
