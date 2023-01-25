@@ -2,7 +2,6 @@
 
 """
 import functools
-import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
@@ -12,7 +11,7 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
 from .._utils import set_module
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, isnan, zeros
-from numpy.core import overrides
+from numpy.core import overrides, getlimits
 from .ufunclike import isneginf, isposinf
 
 
@@ -541,7 +540,8 @@ def real_if_close(a, tol=100):
         Input array.
     tol : float
         Tolerance in machine epsilons for the complex part of the elements
-        in the array.
+        in the array. If the tolerance is <=1, then the absolute tolerance
+        is used.
 
     Returns
     -------
@@ -574,8 +574,7 @@ def real_if_close(a, tol=100):
     a = asanyarray(a)
     if not issubclass(a.dtype.type, _nx.complexfloating):
         return a
-    if tol > 1:
-        from numpy.core import getlimits
+    if tol > 1:        
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
     if _nx.all(_nx.absolute(a.imag) < tol):
