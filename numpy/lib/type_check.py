@@ -572,10 +572,11 @@ def real_if_close(a, tol=100):
 
     """
     a = asanyarray(a)
-    if not issubclass(a.dtype.type, _nx.complexfloating):
+    type_ = a.dtype.type
+    if not issubclass(type_, _nx.complexfloating):
         return a
-    if tol > 1:        
-        f = getlimits.finfo(a.dtype.type)
+    if tol > 1:
+        f = getlimits.finfo(type_)
         tol = f.eps * tol
     if _nx.all(_nx.absolute(a.imag) < tol):
         a = a.real
