@@ -800,16 +800,23 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
         }
     }
     {
+        /* TODO: This error (and most other) error handling needs cleaning. */
         char mess[F2PY_MESSAGE_BUFFER_SIZE];
         strcpy(mess, errmess);
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
             err = PyExc_TypeError;
+            Py_INCREF(err);
+        }
+        else {
+            Py_INCREF(err);
+            PyErr_Clear();
         }
         sprintf(mess + strlen(mess),
                 " -- expected str|bytes|sequence-of-str-or-bytes, got ");
         f2py_describe(obj, mess + strlen(mess));
         PyErr_SetString(err, mess);
+        Py_DECREF(err);
     }
     return 0;
 }
@@ -1227,8 +1234,8 @@ static int try_pyarr_from_character(PyObject* obj, character* v) {
             strcpy(mess, "try_pyarr_from_character failed"
                          " -- expected bytes array-scalar|array, got ");
             f2py_describe(obj, mess + strlen(mess));
+            PyErr_SetString(err, mess);
         }
-        PyErr_SetString(err, mess);
     }
     return 0;
 }
