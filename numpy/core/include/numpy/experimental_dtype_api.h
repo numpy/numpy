@@ -289,7 +289,7 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* "method" is currently opaque (necessary e.g. to wrap Python) */
         PyObject *method,
         /* DTypes the method was created for */
-        PyObject **dtypes,
+        PyArray_DTypeMeta **dtypes,
         /* Input descriptors (instances).  Outputs may be NULL. */
         PyArray_Descr **given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
