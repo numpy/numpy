@@ -2342,10 +2342,12 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
 
         mps[i] = (PyArrayObject *)PyArray_FROM_O(tmp);
-        Py_DECREF(tmp);
         if (mps[i] == NULL) {
+            Py_DECREF(tmp);
             goto fail;
         }
+        npy_mark_tmp_array_if_pyscalar(tmp, mps[i], NULL);
+        Py_DECREF(tmp);
     }
 
     common_descr = PyArray_ResultType(n, mps, 0, NULL);

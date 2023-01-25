@@ -1423,6 +1423,8 @@ class TestPromotion:
         expected_dtype = np.result_type(np.array(val).dtype, np.array(0).dtype)
         assert np.result_type(val, 0) == expected_dtype
         # For completeness sake, also check with a NumPy scalar as second arg:
+        if np._get_promotion_state() == "legacy":
+            expected_dtype = np.int8  # the int8 will win out, no matter what
         assert np.result_type(val, np.int8(0)) == expected_dtype
 
     @pytest.mark.parametrize(["other", "expected"],

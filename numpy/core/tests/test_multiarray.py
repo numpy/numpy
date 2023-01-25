@@ -4975,8 +4975,13 @@ class TestClip:
 
             self._clip_type(
                 'uint', 1024, 0, 0, inplace=inplace)
-            self._clip_type(
-                'uint', 1024, -120, 100, inplace=inplace, expected_min=0)
+            if np._get_promotion_state() == "weak":
+                with pytest.raises(OverFlowError, match="Python integer -120"):
+                    self._clip_type(
+                        'uint', 1024, -120, 100, inplace=inplace)
+            else:
+                self._clip_type(
+                    'uint', 1024, -120, 100, inplace=inplace, expected_min=0)
 
     def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
@@ -7315,6 +7320,8 @@ class TestChoose:
          (1., np.float32(3)),
          (1., np.array([3], dtype=np.float32))],)
     def test_output_dtype(self, ops):
+        # TODO: Test changes with weak promotion, as it seems to call asarray()
+        #       on the integer argument (thus "upcasting").
         expected_dt = np.result_type(*ops)
         assert(np.choose([0], ops).dtype == expected_dt)
 

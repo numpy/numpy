@@ -712,6 +712,7 @@ PyArray_ConcatenateInto(PyObject *op,
             narrays = iarrays;
             goto fail;
         }
+        npy_mark_tmp_array_if_pyscalar(item, arrays[iarrays], NULL);
     }
 
     if (axis >= NPY_MAXDIMS) {

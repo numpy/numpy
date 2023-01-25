@@ -3063,9 +3063,9 @@ def bartlett(M):
 
     """
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=np.result_type(M, np.float64))
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=np.result_type(M, np.float64))
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3167,9 +3167,9 @@ def hanning(M):
 
     """
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=np.result_type(M, np.float64))
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=np.result_type(M, np.float64))
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3267,9 +3267,9 @@ def hamming(M):
 
     """
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=np.result_type(M, np.float64))
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=np.result_type(M, np.float64))
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
