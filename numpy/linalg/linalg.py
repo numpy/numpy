@@ -42,11 +42,11 @@ fortran_int = intc
 
 
 @set_module('numpy.linalg')
-class LinAlgError(Exception):
+class LinAlgError(ValueError):
     """
     Generic Python-exception-derived object raised by linalg functions.
 
-    General purpose exception class, derived from Python's exception.Exception
+    General purpose exception class, derived from Python's ValueError
     class, programmatically raised in linalg functions when a Linear
     Algebra-related condition would prevent further correct execution of the
     function.
