@@ -1,3 +1,5 @@
+# Copyright 2023 Arm Limited and/or its affiliates <open-source-office@arm.com>
+
 import os
 import sys
 import sysconfig
@@ -34,6 +36,12 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # useful to avoid improperly requiring SVML when cross compiling.
 NPY_DISABLE_SVML = (os.environ.get('NPY_DISABLE_SVML', "0") == "1")
 
+# Set NPY_DISABLE_AOR=1 in the environment to disable the vendored
+# Optimized Routines library. This option only has significance on
+# aarch64 host and is most useful to avoid improperly requiring
+# Optimized Routines when cross compiling.
+NPY_DISABLE_AOR = (os.environ.get('NPY_DISABLE_AOR', "0") == "1")
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -67,6 +75,20 @@ class CallOnceOnly:
         else:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
+
+def can_link_optimized_routines():
+    """Optimized Routines library is supported only on aarch64 architecture
+    """
+    if NPY_DISABLE_AOR:
+        return False
+    platform = sysconfig.get_platform()
+    return any(["aarch64" in platform, "arm64" in platform])
+
+def check_optimized_routines_submodule(optimized_routines_path):
+    if not os.path.exists(optimized_routines_path + "/README"):
+        raise RuntimeError("Missing `Optimized Routines` submodule! Run "
+                           "`git submodule update --init` to fix this.")
+    return True
 
 def can_link_svml():
     """SVML library is supported only on x86_64 architecture and currently
@@ -481,6 +503,8 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            if can_link_optimized_routines():
+                moredefs.append(('NPY_CAN_LINK_AOR', 1))
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
 
@@ -1047,6 +1071,28 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'ufunc_docstrings.py'),
             ]
 
+    optimized_routines_path = join(
+        'numpy', 'core', 'src', 'umath', 'optimized-routines'
+    )
+    optimized_routines_sources = []
+    if (
+        can_link_optimized_routines() and
+        check_optimized_routines_submodule(optimized_routines_path)
+    ):
+        # These are listed as explicitly enabled for now, over time this list
+        # should transition to universal intrinsics
+        config.add_include_dirs(join(
+            optimized_routines_path, 'math', 'include'
+        ))
+
+        optimized_routines = [
+            'cos', 'sin'
+        ]
+        optimized_routines_sources = [
+            join(optimized_routines_path, 'math', f'v_{routine}.c')
+            for routine in optimized_routines
+        ]
+
     svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
     svml_objs = []
     # we have converted the following into universal intrinsics
@@ -1070,7 +1116,9 @@ def configuration(parent_package='',top_path=None):
                          language = 'c',
                          sources=multiarray_src + umath_src +
                                  common_src +
-                                 [generate_config_h,
+                                 optimized_routines_sources +
+                                 [
+                                  generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   join(codegen_dir, 'generate_numpy_api.py'),

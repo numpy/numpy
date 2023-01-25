@@ -1,3 +1,5 @@
+# Copyright 2023 Arm Limited and/or its affiliates <open-source-office@arm.com>
+#
 # This file should contain what setup.py + setup_common.py do (WIP)
 #
 # Potential issues to address or keep track of:
@@ -71,6 +73,17 @@ cdata = configuration_data()
 
 cdata.set('NPY_ABI_VERSION', C_ABI_VERSION)
 cdata.set('NPY_API_VERSION', C_API_VERSION)
+
+use_optimized_routines = (
+  host_machine.cpu_family() == 'aarch64' and
+  not get_option('disable-optimized-routines')
+)
+if use_optimized_routines
+  cdata.set10('NPY_CAN_LINK_AOR', true)
+  if not fs.exists('src/umath/optimized-routines')
+    error('Missing the `Optimized Routines` git submodule! Run `git submodule update --init` to fix this.')
+  endif
+endif
 
 use_svml = (
   host_machine.system() == 'linux' and
@@ -779,6 +792,22 @@ src_umath = [
   'src/umath/_scaled_float_dtype.c',
 ]
 
+# Optimized Routines source files. If functionality is migrated to universal intrinsics and
+# the object files are no longer needed, comment out the relevant object files
+# here. Note that this migration is desirable; we then get the performance
+# benefits for all platforms rather than only for AArch64.
+src_optimized_routines = []
+optimized_routines_include = []
+if use_optimized_routines
+  optimized_routines_include += [
+    'src/umath/optimized-routines/math/include/'
+  ]
+  src_optimized_routines += [
+    'src/umath/optimized-routines/math/v_cos.c',
+    'src/umath/optimized-routines/math/v_sin.c',
+  ]
+endif
+
 # SVML object files. If functionality is migrated to universal intrinsics and
 # the object files are no longer needed, comment out the relevant object files
 # here. Note that this migration is desirable; we then get the performance
@@ -845,6 +874,7 @@ py.extension_module('_multiarray_umath',
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
     npy_math_internal_h,
+    src_optimized_routines,
   ],
   objects: svml_objects,
   c_args: c_args_common,
@@ -855,6 +885,7 @@ py.extension_module('_multiarray_umath',
     'src/multiarray',
     'src/npymath',
     'src/umath',
+    optimized_routines_include
   ],
   dependencies: blas,
   link_with: npymath_lib,
