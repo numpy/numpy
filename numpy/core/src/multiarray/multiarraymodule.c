@@ -714,11 +714,13 @@ PyArray_ConcatenateInto(PyObject *op,
             goto fail;
         }
         arrays[iarrays] = (PyArrayObject *)PyArray_FROM_O(item);
-        Py_DECREF(item);
         if (arrays[iarrays] == NULL) {
+            Py_DECREF(item);
             narrays = iarrays;
             goto fail;
         }
+        npy_mark_tmp_array_if_pyscalar(item, arrays[iarrays], NULL);
+        Py_DECREF(item);
     }
 
     if (axis >= NPY_MAXDIMS) {
