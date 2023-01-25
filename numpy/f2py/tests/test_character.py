@@ -277,13 +277,13 @@ class TestCharacter(util.F2PyTest):
         #else:
             #raise SystemError(f'{f.__name__} should have failed on empty list')
 
-        #try:
-            #f(97)
-        #except TypeError as msg:
-            #if not str(msg).endswith(' got int instance'):
-                #raise
-        #else:
-            #raise SystemError(f'{f.__name__} should have failed on int value')
+        try:
+            f(97)
+        except TypeError as msg:
+            if not str(msg).endswith(' got int instance'):
+                raise
+        else:
+            raise SystemError(f'{f.__name__} should have failed on int value')
 
     @pytest.mark.parametrize("dtype", ['c', 'S1', 'U1'])
     def test_array_input(self, dtype):
