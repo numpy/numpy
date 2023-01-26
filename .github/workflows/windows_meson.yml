@@ -65,10 +65,15 @@ jobs:
           $numpy_path = "${env:installed_path}\numpy"
           $libs_path = "${numpy_path}\.libs"
           mkdir ${libs_path}
-          $ob_path = "C:/opt/64/lib/"
+          $ob_path = "C:/opt/64/bin/"
+          echo "listing $ob_path"
+          dir $ob_path
+          echo "copying dll to $libs_path"
           cp $ob_path/*.dll $libs_path
-          # Write _distributor_init.py to scipy dir to load .libs DLLs.
-          & python tools\openblas_support.py --write-init $numpy_path
+          echo "listing $libs_path"
+          # Write _distributor_init.py to load .libs DLLs.
+          python tools\openblas_support.py --write-init $numpy_path
+          echo "ran python tools\openblas_support.py --write-init"
       - name: prep-test
         run: |
           echo "PYTHONPATH=${env:installed_path}" >> $env:GITHUB_ENV

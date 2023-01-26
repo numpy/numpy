@@ -213,6 +213,7 @@ def make_init(dirname):
             if os.name == 'nt':
                 # convention for storing / loading the DLL from
                 # numpy/.libs/, if present
+                DLL_filenames = []
                 try:
                     from ctypes import WinDLL
                     basedir = os.path.dirname(__file__)
@@ -220,7 +221,7 @@ def make_init(dirname):
                     pass
                 else:
                     libs_dir = os.path.abspath(os.path.join(basedir, '.libs'))
-                    DLL_filenames = []
+                    print(f"looking in {libs_dir} for dlls to preload")
                     if os.path.isdir(libs_dir):
                         for filename in glob.glob(os.path.join(libs_dir,
                                                                '*openblas*dll')):
@@ -233,6 +234,7 @@ def make_init(dirname):
                         warnings.warn("loaded more than 1 DLL from .libs:"
                                       "\\n%s" % "\\n".join(DLL_filenames),
                                       stacklevel=1)
+                print("loaded", DLL_filenames)
     """))
 
 
