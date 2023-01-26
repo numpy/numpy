@@ -30,6 +30,9 @@ from importlib import import_module
 _module_dir = None
 _module_num = 5403
 
+if sys.platform == "cygwin":
+    _module_list = []
+
 
 def _cleanup():
     global _module_dir
@@ -146,6 +149,19 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # Partial cleanup
         for fn in dst_sources:
             os.unlink(fn)
+
+    # Rebase
+    if sys.platform == "cygwin":
+        # If someone starts deleting modules after import, this will
+        # need to change to record how big each module is, rather than
+        # relying on rebase being able to find that from the files.
+        _module_list.extend(
+            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+        )
+        subprocess.check_call(
+            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
+            + _module_list
+        )
 
     # Import
     return import_module(module_name)
