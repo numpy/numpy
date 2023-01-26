@@ -16,8 +16,8 @@ import re
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
-if sys.version_info[:2] < (3, 8):
-    raise RuntimeError("Python version >= 3.8 required.")
+if sys.version_info[:2] < (3, 9):
+    raise RuntimeError("Python version >= 3.9 required.")
 
 
 import versioneer
