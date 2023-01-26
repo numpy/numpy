@@ -3,12 +3,22 @@ Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
 import tempfile
+import sys
 
 import hypothesis
 import pytest
 import numpy
 
 from numpy.core._multiarray_tests import get_fpu_mode
+
+
+if sys.platform == "cygwin":
+    # Forking on cygwin is buggy, so try to avoid its use in tests, see:
+    # https://docs.python.org/3/library/subprocess.html#disabling-use-of-vfork-or-posix-spawn
+    import subprocess
+
+    subprocess._USE_POSIX_SPAWN = False
+    subprocess._USE_VFORK = False
 
 
 _old_fpu_mode = None
