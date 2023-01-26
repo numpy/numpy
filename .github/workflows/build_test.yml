@@ -276,11 +276,17 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  no_array_func:
+  numpy2_flag_and_no_array_func:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
+      # Array func and numpy-2 should be involved, so use this
+      # to have a test for feature flagged behavior.
+      NPY_NUMPY_2_BEHAVIOR: 1
+      # Using the future "weak" state doesn't pass tests
+      # currently unfortunately
+      NPY_PROMOTION_STATE: legacy
     steps:
     - uses: actions/checkout@v3
       with:
