@@ -163,7 +163,7 @@ foreach name, compiler : compilers
   conf_data.set(name + '_COMP', compiler.get_id())
   conf_data.set(name + '_COMP_LINKER_ID', compiler.get_linker_id())
   conf_data.set(name + '_COMP_VERSION', compiler.version())
-  conf_data.set(name + '_COMP_CMD_ARRAY', compiler.cmd_array())
+  conf_data.set(name + '_COMP_CMD_ARRAY', ', '.join(compiler.cmd_array()))
 endforeach
 
 # Machines CPU and system information
