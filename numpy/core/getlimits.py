@@ -4,6 +4,7 @@
 __all__ = ['finfo', 'iinfo']
 
 import warnings
+from functools import lru_cache
 
 from .._utils import set_module
 from ._machar import MachAr
@@ -119,7 +120,7 @@ class MachArLike:
         return self.params['fmt'] % array(_fr0(value)[0], self.ftype)
 
 
-_convert_to_float = {
+_convert_complex_to_real_float = {
     ntypes.csingle: ntypes.single,
     ntypes.complex_: ntypes.float_,
     ntypes.clongfloat: ntypes.longfloat
@@ -470,10 +471,8 @@ class finfo:
 
     _finfo_cache = {}
 
+    @lru_cache
     def __new__(cls, dtype):
-        obj = cls._finfo_cache.get(dtype)  # most common path
-        if obj is not None:
-            return obj
 
         if dtype is None:
             # Deprecated in NumPy 1.25, 2023-01-16
@@ -490,37 +489,15 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype, None)
-        if obj is not None:
-            return obj
-        dtypes = [dtype]
-        newdtype = numeric.obj2sctype(dtype)
-        if newdtype is not dtype:
-            dtypes.append(newdtype)
-            dtype = newdtype
+        # we have a dtype object, convert it to the equivalent scalar dtype
+        dtype = numeric.obj2sctype(dtype)
         if not issubclass(dtype, numeric.inexact):
             raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype, None)
-        if obj is not None:
-            return obj
-        if not issubclass(dtype, numeric.floating):
-            newdtype = _convert_to_float[dtype]
-            if newdtype is not dtype:
-                # dtype changed, for example from complex128 to float64
-                dtypes.append(newdtype)
-                dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
-                if obj is not None:
-                    # the original dtype was not in the cache, but the new
-                    # dtype is in the cache. we add the original dtypes to
-                    # the cache and return the result
-                    for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
-                    return obj
+        if not issubclass(dtype, numeric.floating):
+            dtype = _convert_complex_to_real_float[dtype]
+
         obj = object.__new__(cls)._init(dtype)
-        for dt in dtypes:
-            cls._finfo_cache[dt] = obj
         return obj
 
     def _init(self, dtype):
@@ -668,7 +645,11 @@ class iinfo:
     _min_vals = {}
     _max_vals = {}
 
-    def __init__(self, int_type):
+    @lru_cache
+    def __new__(cls, int_type):
+        return object.__new__(cls)._init(int_type)
+
+    def _init(self, int_type):
         try:
             self.dtype = numeric.dtype(int_type)
         except TypeError:
@@ -678,6 +659,7 @@ class iinfo:
         self.key = "%s%d" % (self.kind, self.bits)
         if self.kind not in 'iu':
             raise ValueError("Invalid integer data type %r." % (self.kind,))
+        return self
 
     @property
     def min(self):
