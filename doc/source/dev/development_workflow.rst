@@ -481,6 +481,28 @@ usual::
      git commit -am 'ENH - much better code'
      git push origin my-feature-branch # pushes directly into your repo
 
+
+Checkout changes from an existing pull request
+==============================================
+
+If you want to test the changes in a pull request or continue the work in a
+new pull request, the commits are to be cloned into a local branch in your
+forked repository
+
+First ensure your upstream points to the main repo, as from :ref:`linking-to-upstream`
+
+Then, fetch the changes and create a local branch. Assuming ``$ID`` is the pull request number
+and ``$BRANCHNAME`` is the name of the *new local* branch you wish to create::
+
+    git fetch upstream pull/$ID/head:$BRANCHNAME
+
+Checkout the newly created branch::
+
+    git checkout $BRANCHNAME
+
+You now have the changes in the pull request.
+
+
 Exploring your repository
 =========================
 
