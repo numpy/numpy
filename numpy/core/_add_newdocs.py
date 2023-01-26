@@ -2703,6 +2703,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
     -----
     Does not include memory consumed by non-element attributes of the
     array object.
+    
+    See Also
+    --------
+    sys.getsizeof
+        Memory consumed by the object itself without parents in case view.
+        This does include memory consumed by non-element attributes.
 
     Examples
     --------
