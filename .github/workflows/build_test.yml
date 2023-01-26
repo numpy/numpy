@@ -16,7 +16,7 @@ defaults:
 
 env:
   DOWNLOAD_OPENBLAS: 1
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11-dev"]
+        python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.11"]
     env:
       EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
@@ -80,33 +80,26 @@ jobs:
 
   old_gcc:
     needs: [smoke_test]
-    # provides GCC 6, 7, 8
-    runs-on: ubuntu-18.04
+    # provides GCC  7, 8
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
         fetch-depth: 0
     # comes with python3.6
-    - name: Install Python3.8
+    - name: Install Python3.9
       run: |
         sudo apt update
         # for add-apt-repository
         sudo apt install software-properties-common -y
         sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install python3.8-dev -y
-        sudo ln -s /usr/bin/python3.8 /usr/bin/pythonx
+        sudo apt install python3.9-dev -y
+        sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
     - name: Install Compilers
-      run: sudo apt install g++-6 g++-7 g++-8 -y
-    - name: Build gcc-6
-      run: |
-        export CC=/usr/bin/gcc-6
-        export CXX=/usr/bin/g++-6
-        pythonx setup.py install --user
-    - name: Runtests gcc-6
-      run: pythonx runtests.py -n
+      run: sudo apt install g++-7 g++-8 -y
     - name: Build gcc-7
       run: |
         export CC=/usr/bin/gcc-7
@@ -127,6 +120,21 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WITHOUT_OPTIMIZATIONS: 1
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  with_baseline_only:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      CPU_DISPATCH: "none"
     steps:
     - uses: actions/checkout@v3
       with:
@@ -169,7 +177,7 @@ jobs:
 
   debug:
     needs: [smoke_test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       USE_DEBUG: 1
     steps:
@@ -199,7 +207,7 @@ jobs:
 
   full:
     needs: [smoke_test]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     env:
       USE_WHEEL: 1
       RUN_FULL_TESTS: 1
@@ -301,19 +309,6 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  pypy38:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@v4
-      with:
-        python-version: pypy-3.8-v7.3.9
-    - uses: ./.github/actions
-
   sdist:
     needs: [smoke_test]
     runs-on: ubuntu-latest
@@ -331,8 +326,8 @@ jobs:
 
   armv7_simd_test:
     needs: [smoke_test]
-    # make sure this (20.04) matches the base docker image (focal) below
-    runs-on: ubuntu-20.04
+    # make sure this matches the base docker image below
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
       with:
@@ -348,10 +343,10 @@ jobs:
         sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
         # Keep the `test_requirements.txt` dependency-subset synced
-        docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:focal /bin/bash -c "
+        docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:22.04 /bin/bash -c "
           apt update &&
-          apt install -y git python3 python3-dev python3-pip &&
-          pip3 install cython==0.29.30 setuptools\<49.2.0 hypothesis==6.23.3 pytest==6.2.5 'typing_extensions>=4.2.0' &&
+          apt install -y git python3 python3-dev python3-pip  &&
+          python3 -m pip install cython==0.29.30 setuptools\<49.2.0 hypothesis==6.23.3 pytest==6.2.5 'typing_extensions>=4.2.0' &&
           ln -s /host/lib64 /lib64 &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/arm-linux-gnueabihf /usr/arm-linux-gnueabihf &&

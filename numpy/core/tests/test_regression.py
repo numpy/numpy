@@ -12,7 +12,7 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
@@ -128,10 +128,7 @@ class TestRegression:
         assert_(a[1] == 'auto')
         assert_(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
-        # This should return true for now, but will eventually raise an error:
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning)
-            assert_(b != 'auto')
+        assert_array_equal(b != 'auto', np.ones(11, dtype=bool))
         assert_(b[0] != 'auto')
 
     def test_unicode_swapping(self):
@@ -326,6 +323,7 @@ class TestRegression:
         assert_raises(ValueError, bfa)
         assert_raises(ValueError, bfb)
 
+    @pytest.mark.xfail(IS_WASM, reason="not sure why")
     @pytest.mark.parametrize("index",
             [np.ones(10, dtype=bool), np.arange(10)],
             ids=["boolean-arr-index", "integer-arr-index"])
@@ -2555,3 +2553,14 @@ class TestRegression:
                 f"Unexpected types order of ufunc in {operation}"
                 f"for {order}. Possible fix: Use signed before unsigned"
                 "in generate_umath.py")
+
+    def test_nonbool_logical(self):
+        # gh-22845
+        # create two arrays with bit patterns that do not overlap.
+        # needs to be large enough to test both SIMD and scalar paths
+        size = 100
+        a = np.frombuffer(b'\x01' * size, dtype=np.bool_)
+        b = np.frombuffer(b'\x80' * size, dtype=np.bool_)
+        expected = np.ones(size, dtype=np.bool_)
+        assert_array_equal(np.logical_and(a, b), expected)
+

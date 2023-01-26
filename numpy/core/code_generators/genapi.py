@@ -6,16 +6,33 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from numpy.distutils.conv_template import process_file as process_c_file
-
 import hashlib
 import io
 import os
 import re
 import sys
-import textwrap
+import importlib.util
 
 from os.path import join
+
+
+def get_processor():
+    # Convoluted because we can't import from numpy.distutils
+    # (numpy is not yet built)
+    conv_template_path = os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'distutils', 'conv_template.py'
+    )
+    spec = importlib.util.spec_from_file_location(
+        'conv_template', conv_template_path
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.process_file
+
+
+process_c_file = get_processor()
+
 
 __docformat__ = 'restructuredtext'
 
@@ -112,21 +129,6 @@ class Function:
         else:
             doccomment = ''
         return '%s%s %s(%s)' % (doccomment, self.return_type, self.name, argstr)
-
-    def to_ReST(self):
-        lines = ['::', '', '  ' + self.return_type]
-        argstr = ',\000'.join([self._format_arg(*a) for a in self.args])
-        name = '  %s' % (self.name,)
-        s = textwrap.wrap('(%s)' % (argstr,), width=72,
-                          initial_indent=name,
-                          subsequent_indent=' ' * (len(name)+1),
-                          break_long_words=False)
-        for l in s:
-            lines.append(l.replace('\000', ' ').rstrip())
-        lines.append('')
-        if self.doc:
-            lines.append(textwrap.dedent(self.doc))
-        return '\n'.join(lines)
 
     def api_hash(self):
         m = hashlib.md5()

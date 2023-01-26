@@ -16,6 +16,7 @@ from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
+import sysconfig
 
 import numpy as np
 from numpy.core import(
@@ -29,14 +30,14 @@ __all__ = [
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
         'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
         'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-        'raises', 'rundocs', 'runstring', 'verbose', 'measure',
+        'rundocs', 'runstring', 'verbose', 'measure',
         'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
+        'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION'
+        '_OLD_PROMOTION', 'IS_MUSL'
         ]
 
 
@@ -48,6 +49,7 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
@@ -55,27 +57,18 @@ HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 _OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
-
-def import_nose():
-    """ Import nose only when needed.
-    """
-    nose_is_good = True
-    minimum_nose_version = (1, 0, 0)
-    try:
-        import nose
-    except ImportError:
-        nose_is_good = False
-    else:
-        if nose.__versioninfo__ < minimum_nose_version:
-            nose_is_good = False
-
-    if not nose_is_good:
-        msg = ('Need nose >= %d.%d.%d for tests - see '
-               'https://nose.readthedocs.io' %
-               minimum_nose_version)
-        raise ImportError(msg)
-
-    return nose
+IS_MUSL = False
+try:
+    from packaging.tags import sys_tags
+    _tags = list(sys_tags())
+    if 'musllinux' in _tags[0].platform:
+        IS_MUSL = True
+except ImportError:
+    # fallback to sysconfig (might be flaky)
+    # value could be None.
+    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+    if 'musl' in v:
+        IS_MUSL = True
 
 
 def assert_(val, msg=''):
@@ -898,6 +891,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
         type of the array_like objects does not match. The special
         handling for scalars mentioned in the Notes section is disabled.
 
+        .. versionadded:: 1.24.0
+
     Raises
     ------
     AssertionError
@@ -1302,43 +1297,6 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def raises(*args):
-    """Decorator to check for raised exceptions.
-
-    The decorated test function must raise one of the passed exceptions to
-    pass.  If you want to test many assertions about exceptions in a single
-    test, you may want to use `assert_raises` instead.
-
-    .. warning::
-       This decorator is nose specific, do not use it if you are using a
-       different test framework.
-
-    Parameters
-    ----------
-    args : exceptions
-        The test passes if any of the passed exceptions is raised.
-
-    Raises
-    ------
-    AssertionError
-
-    Examples
-    --------
-
-    Usage::
-
-        @raises(TypeError, ValueError)
-        def test_raises_type_error():
-            raise TypeError("This test passes")
-
-        @raises(Exception)
-        def test_that_fails_by_passing():
-            pass
-
-    """
-    nose = import_nose()
-    return nose.tools.raises(*args)
-
 #
 # assert_raises and assert_raises_regex are taken from unittest.
 #
@@ -1625,7 +1583,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     -----
     An assertion is raised if the following condition is not met::
 
-        abs(x - y) <= nulps * spacing(maximum(abs(x), abs(y)))
+        abs(x - y) <= nulp * spacing(maximum(abs(x), abs(y)))
 
     Examples
     --------

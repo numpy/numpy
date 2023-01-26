@@ -11,6 +11,7 @@
     #define NPY_SIMD_FMA3 0 // fast emulated
 #endif
 #define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 0
 // Enough limit to allow us to use _mm256_i32gather_*
 #define NPY_SIMD_MAXLOAD_STRIDE32 (0x7fffffff / 8)
 

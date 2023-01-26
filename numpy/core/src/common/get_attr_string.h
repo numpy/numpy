@@ -4,7 +4,7 @@
 #include <Python.h>
 #include "ufunc_object.h"
 
-static NPY_INLINE npy_bool
+static inline npy_bool
 _is_basic_python_type(PyTypeObject *tp)
 {
     return (
@@ -46,7 +46,7 @@ _is_basic_python_type(PyTypeObject *tp)
  *
  * In future, could be made more like _Py_LookupSpecial
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
 {
     PyTypeObject *tp = Py_TYPE(obj);
@@ -73,7 +73,7 @@ PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
  *
  * Kept for backwards compatibility. In future, we should deprecate this.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_LookupSpecial_OnInstance(PyObject *obj, PyObject *name_unicode)
 {
     PyTypeObject *tp = Py_TYPE(obj);

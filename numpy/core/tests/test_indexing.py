@@ -10,7 +10,7 @@ from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT,
+    assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
     )
 
 
@@ -563,6 +563,7 @@ class TestIndexing:
         with pytest.raises(IndexError):
             arr[(index,) * num] = 1.
 
+    @pytest.mark.skipif(IS_WASM, reason="no threading")
     def test_structured_advanced_indexing(self):
         # Test that copyswap(n) used by integer array indexing is threadsafe
         # for structured datatypes, see gh-15387. This test can behave randomly.

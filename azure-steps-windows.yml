@@ -4,26 +4,6 @@ steps:
     versionSpec: $(PYTHON_VERSION)
     addToPath: true
     architecture: $(PYTHON_ARCH)
-  condition: not(contains(variables['PYTHON_VERSION'], 'PyPy'))
-- powershell: |
-    # UsePythonVersion only supports pypy3.6, we need 3.8
-    # https://github.com/microsoft/azure-pipelines-tasks/pull/15553
-    $url = "https://downloads.python.org/pypy/pypy3.8-v7.3.9-win64.zip"
-    $output = "pypy.zip"
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($url, $output)
-    echo "downloaded $url to $output"
-    mkdir pypy3
-    Expand-Archive $output -DestinationPath pypy3
-    # move pypy3/pypy-c-*/* pypy3
-    move pypy3/pypy*/* pypy3
-    $pypypath = Join-Path (Get-Item .).FullName pypy3
-    $env:Path = $pypypath + ";" + $env:Path
-    setx PATH $env:Path
-    python -mensurepip
-    echo "##vso[task.prependpath]$pypypath"
-  condition: contains(variables['PYTHON_VERSION'], 'PyPy')
-  displayName: "Install PyPy3.8 "
 
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
@@ -32,21 +12,21 @@ steps:
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
-    choco install -y mingw --forcex86 --force --version=7.3.0
+    choco install -y rtools
     refreshenv
-  displayName: 'Install 32-bit mingw for 32-bit builds'
-  condition: eq(variables['BITS'], 32)
+  displayName: 'Install rtools'
 
 - powershell: |
     $ErrorActionPreference = "Stop"
-    # Download and get the path to "openblas.a". We cannot copy it
+    # Download and get the path to "openblas". We cannot copy it
     # to $PYTHON_EXE's directory since that is on a different drive which
     # mingw does not like. Instead copy it to a directory and set OPENBLAS,
     # since OPENBLAS will be picked up by the openblas discovery
     $target = $(python tools/openblas_support.py)
     mkdir openblas
     echo "Copying $target to openblas/"
-    cp $target openblas/
+    cp -r $target/* openblas/
+    $env:OPENBLAS = $target
   displayName: 'Download / Install OpenBLAS'
 
 # NOTE: for Windows builds it seems much more tractable to use runtests.py
@@ -57,7 +37,11 @@ steps:
     If ($(BITS) -eq 32) {
         $env:CFLAGS = "-m32"
         $env:LDFLAGS = "-m32"
-        $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
+    }
+    Else
+    {
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
     }
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         $env:OPENBLAS64_ = "openblas"
@@ -72,7 +56,22 @@ steps:
     }
   displayName: 'Build NumPy'
 
-- script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+- script: |
+    python -m pip install threadpoolctl
+    python tools/openblas_support.py --check_version
+  displayName: 'Check OpenBLAS version'
+
+- powershell: |
+    If ($(BITS) -eq 32) {
+        $env:CFLAGS = "-m32"
+        $env:LDFLAGS = "-m32"
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
+    }
+    Else
+    {
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
+    }
+    python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
   displayName: 'Run NumPy Test Suite'
 
 - task: PublishTestResults@2

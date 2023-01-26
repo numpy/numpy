@@ -188,10 +188,10 @@ Built-in Python types
     (all others)      :class:`object_`
     ================  ===============
 
-    Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targeting both Python 2 and 3
-    ``np.unicode_`` should be used as a dtype for strings.
-    See :ref:`Note on string types<string-dtype-note>`.
+    Note that ``str`` corresponds to UCS4 encoded unicode strings, while
+    ``string`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
+    available as an alias to ``np.str_``, see :ref:`Note on string
+    types<string-dtype-note>`.
 
     .. admonition:: Example
 
@@ -263,11 +263,11 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Note on string types
 
-    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and `numpy.string_` continues to alias
-    `numpy.bytes_`. To use actual strings in Python 3 use ``U`` or `numpy.str_`.
-    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
-    used.
+    For backward compatibility with existing code originally written to support
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes and
+    `numpy.string_` continues to alias `numpy.bytes_`. For unicode strings,
+    use ``U``, `numpy.str_`, or `numpy.unicode_`.  For signed bytes that do not
+    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is

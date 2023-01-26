@@ -27,7 +27,7 @@
  */
 #define MAX_STEP_SIZE 2097152
 
-static NPY_INLINE npy_uintp
+static inline npy_uintp
 abs_ptrdiff(char *a, char *b)
 {
     return (a > b) ? (a - b) : (b - a);
@@ -377,19 +377,6 @@ abs_ptrdiff(char *a, char *b)
      abs_ptrdiff(args[2], args[1]) >= (esize))
 
 #undef abs_ptrdiff
-
-#define IS_BLOCKABLE_BINARY_BOOL(esize, vsize) \
-    (steps[0] == (esize) && steps[0] == steps[1] && steps[2] == (1) && \
-     npy_is_aligned(args[1], (esize)) && \
-     npy_is_aligned(args[0], (esize)))
-
-#define IS_BLOCKABLE_BINARY_SCALAR1_BOOL(esize, vsize) \
-    (steps[0] == 0 && steps[1] == (esize) && steps[2] == (1) && \
-     npy_is_aligned(args[1], (esize)))
-
-#define IS_BLOCKABLE_BINARY_SCALAR2_BOOL(esize, vsize) \
-    (steps[0] == (esize) && steps[1] == 0 && steps[2] == (1) && \
-     npy_is_aligned(args[0], (esize)))
 
 /* align var to alignment */
 #define LOOP_BLOCK_ALIGN_VAR(var, type, alignment)\

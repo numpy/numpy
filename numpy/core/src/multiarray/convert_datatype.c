@@ -50,6 +50,9 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
  */
 NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
+NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
+NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
+
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -384,18 +387,14 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        PyObject *cls = NULL, *obj = NULL;
-        int ret;
-        obj = PyImport_ImportModule("numpy.core");
-
-        if (obj) {
-            cls = PyObject_GetAttrString(obj, "ComplexWarning");
-            Py_DECREF(obj);
+        static PyObject *cls = NULL;
+        npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
+        if (cls == NULL) {
+            return NULL;
         }
-        ret = PyErr_WarnEx(cls,
+        int ret = PyErr_WarnEx(cls,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
-        Py_XDECREF(cls);
         if (ret < 0) {
             return NULL;
         }
@@ -2613,7 +2612,7 @@ complex_to_noncomplex_get_loop(
 {
     static PyObject *cls = NULL;
     int ret;
-    npy_cache_import("numpy.core", "ComplexWarning", &cls);
+    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
     if (cls == NULL) {
         return -1;
     }
@@ -2639,8 +2638,8 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
             .nin = 1,
             .nout = 1,
             .flags = NPY_METH_SUPPORTS_UNALIGNED,
-            .slots = slots,
             .dtypes = dtypes,
+            .slots = slots,
     };
 
     npy_intp from_itemsize = from->singleton->elsize;
@@ -2881,7 +2880,7 @@ add_other_to_and_from_string_cast(
         .name = "legacy_cast_to_string",
         .nin = 1,
         .nout = 1,
-        .flags = NPY_METH_REQUIRES_PYAPI,
+        .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS,
         .dtypes = dtypes,
         .slots = slots,
     };
@@ -3018,9 +3017,9 @@ PyArray_InitializeStringCasts(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "string_to_string_cast",
-            .casting = NPY_UNSAFE_CASTING,
             .nin = 1,
             .nout = 1,
+            .casting = NPY_UNSAFE_CASTING,
             .flags = (NPY_METH_REQUIRES_PYAPI |
                       NPY_METH_NO_FLOATINGPOINT_ERRORS |
                       NPY_METH_SUPPORTS_UNALIGNED),
@@ -3717,9 +3716,9 @@ PyArray_InitializeVoidToVoidCast(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "void_to_void_cast",
-            .casting = -1,  /* may not cast at all */
             .nin = 1,
             .nout = 1,
+            .casting = -1,  /* may not cast at all */
             .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
             .dtypes = dtypes,
             .slots = slots,
@@ -3899,9 +3898,9 @@ PyArray_InitializeObjectToObjectCast(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",
-            .casting = NPY_NO_CASTING,
             .nin = 1,
             .nout = 1,
+            .casting = NPY_NO_CASTING,
             .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
             .dtypes = dtypes,
             .slots = slots,

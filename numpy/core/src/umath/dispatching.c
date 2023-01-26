@@ -43,6 +43,7 @@
 #include <convert_datatype.h>
 
 #include "numpy/ndarraytypes.h"
+#include "numpy/npy_3kcompat.h"
 #include "common.h"
 
 #include "dispatching.h"
@@ -58,7 +59,7 @@
 
 
 /* forward declaration */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
@@ -725,7 +726,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  * If value-based promotion is necessary, this is handled ahead of time by
  * `promote_and_get_ufuncimpl`.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
@@ -947,7 +948,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         int cacheable = 1;  /* unused, as we modify the original `op_dtypes` */
         if (legacy_promote_using_legacy_type_resolver(ufunc,
                 ops, signature, op_dtypes, &cacheable, NPY_FALSE) < 0) {
-            return NULL;
+            goto handle_error;
         }
     }
 
@@ -959,10 +960,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     npy_promotion_state = old_promotion_state;
 
     if (info == NULL) {
-        if (!PyErr_Occurred()) {
-            raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
-        }
-        return NULL;
+        goto handle_error;
     }
 
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
@@ -984,7 +982,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         /* Reset the promotion state: */
         npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
         if (res < 0) {
-            return NULL;
+            goto handle_error;
         }
     }
 
@@ -1018,12 +1016,29 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * If signature is forced the cache may contain an incompatible
              * loop found via promotion (signature not enforced).  Reject it.
              */
-            raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
-            return NULL;
+            goto handle_error;
         }
     }
 
     return method;
+
+  handle_error:
+    /* We only set the "no loop found error here" */
+    if (!PyErr_Occurred()) {
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+    }
+    /*
+     * Otherwise an error occurred, but if the error was DTypePromotionError
+     * then we chain it, because DTypePromotionError effectively means that there
+     * is no loop available.  (We failed finding a loop by using promotion.)
+     */
+    else if (PyErr_ExceptionMatches(npy_DTypePromotionError)) {
+        PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+        npy_PyErr_ChainExceptionsCause(err_type, err_value, err_traceback);
+    }
+    return NULL;
 }
 
 

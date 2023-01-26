@@ -16,7 +16,7 @@
  */
 
 template <typename Tag, typename type>
-NPY_INLINE NPY_NO_EXPORT
+inline NPY_NO_EXPORT
 int heapsort_(type *start, npy_intp n)
 {
     type tmp, *a;
@@ -67,7 +67,7 @@ int heapsort_(type *start, npy_intp n)
 }
 
 template <typename Tag, typename type>
-NPY_INLINE NPY_NO_EXPORT
+inline NPY_NO_EXPORT
 int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
 {
     type *v = vv;
@@ -123,7 +123,7 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
  */
 
 template <typename Tag, typename type>
-NPY_INLINE NPY_NO_EXPORT
+inline NPY_NO_EXPORT
 int string_heapsort_(type *start, npy_intp n, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
@@ -177,7 +177,7 @@ int string_heapsort_(type *start, npy_intp n, void *varr)
 }
 
 template <typename Tag, typename type>
-NPY_INLINE NPY_NO_EXPORT
+inline NPY_NO_EXPORT
 int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, void *varr)
 {
     type *v = vv;

@@ -380,6 +380,22 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
 
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
+
         References
         ----------
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
@@ -3533,8 +3549,8 @@ cdef class Generator:
         generalization of the one-dimensional normal distribution to higher
         dimensions.  Such a distribution is specified by its mean and
         covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
+        (average or "center") and variance (the squared standard deviation,
+        or "width") of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -3610,6 +3626,12 @@ cdef class Generator:
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed.
+
+        This function internally uses linear algebra routines, and thus results
+        may not be identical (even up to precision) across architectures, OSes,
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
 
         References
         ----------
@@ -4745,7 +4767,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)

@@ -10,6 +10,18 @@
 #define cldouble complex long double
 #endif
 
+// musl libc defines the following macros which breaks the declarations.
+// See https://git.musl-libc.org/cgit/musl/tree/include/complex.h#n108
+#undef crealf
+#undef cimagf
+#undef conjf
+#undef creal
+#undef cimag
+#undef conj
+#undef creall
+#undef cimagl
+#undef cconjl
+
 cfloat csinf(cfloat);
 cfloat ccosf(cfloat);
 cfloat ctanf(cfloat);

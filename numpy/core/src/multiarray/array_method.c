@@ -27,15 +27,18 @@
  *    weak reference to the input DTypes.
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 
 /*
@@ -99,7 +102,7 @@ default_resolve_descriptors(
 }
 
 
-NPY_INLINE static int
+static inline int
 is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {
@@ -248,6 +251,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_reduction_initial = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -283,6 +287,9 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_reduction_initial:
+                meth->get_reduction_initial = slot->pfunc;
                 continue;
             default:
                 break;
@@ -353,8 +360,9 @@ fill_arraymethod_from_slots(
     if ((meth->unaligned_strided_loop == NULL) !=
             !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
+                "Must provide unaligned strided inner loop when casting spec "
+                "has the NPY_METH_SUPPORTS_UNALIGNED flag. "
+                "(method: %s)", spec->name);
         return -1;
     }
 
@@ -482,8 +490,8 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._ArrayMethod",
     .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = arraymethod_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 
 
@@ -951,9 +959,9 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._BoundArrayMethod",
     .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
     .tp_dealloc = boundarraymethod_dealloc,
+    .tp_repr = (reprfunc)boundarraymethod_repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };

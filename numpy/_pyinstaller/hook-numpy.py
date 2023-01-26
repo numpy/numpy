@@ -20,18 +20,15 @@ if is_pure_conda:
     from PyInstaller.utils.hooks import conda_support
     datas = conda_support.collect_dynamic_libs("numpy", dependencies=True)
 
-# Submodules PyInstaller cannot detect (probably because they are only imported
-# by extension modules, which PyInstaller cannot read).
-hiddenimports = ['numpy.core._dtype_ctypes']
-if is_conda:
-    hiddenimports.append("six")
+# Submodules PyInstaller cannot detect.  `_dtype_ctypes` is only imported
+# from C and `_multiarray_tests` is used in tests (which are not packed).
+hiddenimports = ['numpy.core._dtype_ctypes', 'numpy.core._multiarray_tests']
 
 # Remove testing and building code and packages that are referenced throughout
 # NumPy but are not really dependencies.
 excludedimports = [
     "scipy",
     "pytest",
-    "nose",
     "f2py",
     "setuptools",
     "numpy.f2py",

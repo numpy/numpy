@@ -394,6 +394,56 @@ class TestArrayFunctionImplementation:
         except TypeError as exc:
             assert exc is error  # unmodified exception
 
+    def test_properties(self):
+        # Check that str and repr are sensible
+        func = dispatched_two_arg
+        assert str(func) == str(func._implementation)
+        repr_no_id = repr(func).split("at ")[0]
+        repr_no_id_impl = repr(func._implementation).split("at ")[0]
+        assert repr_no_id == repr_no_id_impl
+
+    @pytest.mark.parametrize("func", [
+            lambda x, y: 0,  # no like argument
+            lambda like=None: 0,  # not keyword only
+            lambda *, like=None, a=3: 0,  # not last (not that it matters)
+        ])
+    def test_bad_like_sig(self, func):
+        # We sanity check the signature, and these should fail.
+        with pytest.raises(RuntimeError):
+            array_function_dispatch()(func)
+
+    def test_bad_like_passing(self):
+        # Cover internal sanity check for passing like as first positional arg
+        def func(*, like=None):
+            pass
+
+        func_with_like = array_function_dispatch()(func)
+        with pytest.raises(TypeError):
+            func_with_like()
+        with pytest.raises(TypeError):
+            func_with_like(like=234)
+
+    def test_too_many_args(self):
+        # Mainly a unit-test to increase coverage
+        objs = []
+        for i in range(40):
+            class MyArr:
+                def __array_function__(self, *args, **kwargs):
+                    return NotImplemented
+
+            objs.append(MyArr())
+
+        def _dispatch(*args):
+            return args
+
+        @array_function_dispatch(_dispatch)
+        def func(*args):
+            pass
+
+        with pytest.raises(TypeError, match="maximum number"):
+            func(*objs)
+
+
 
 class TestNDArrayMethods:
 
@@ -640,3 +690,57 @@ class TestArrayLike:
             array_like.fill(1)
             expected.fill(1)
         assert_equal(array_like, expected)
+
+
+@requires_array_function
+def test_function_like():
+    # We provide a `__get__` implementation, make sure it works
+    assert type(np.mean) is np.core._multiarray_umath._ArrayFunctionDispatcher 
+
+    class MyClass:
+        def __array__(self):
+            # valid argument to mean:
+            return np.arange(3)
+
+        func1 = staticmethod(np.mean)
+        func2 = np.mean
+        func3 = classmethod(np.mean)
+
+    m = MyClass()
+    assert m.func1([10]) == 10
+    assert m.func2() == 1  # mean of the arange
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        # Tries to operate on the class
+        m.func3()
+
+    # Manual binding also works (the above may shortcut):
+    bound = np.mean.__get__(m, MyClass)
+    assert bound() == 1
+
+    bound = np.mean.__get__(None, MyClass)  # unbound actually
+    assert bound([10]) == 10
+
+    bound = np.mean.__get__(MyClass)  # classmethod
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        bound()
+
+
+def test_scipy_trapz_support_shim():
+    # SciPy 1.10 and earlier "clone" trapz in this way, so we have a
+    # support shim in place: https://github.com/scipy/scipy/issues/17811
+    # That should be removed eventually.  This test copies what SciPy does.
+    # Hopefully removable 1 year after SciPy 1.11; shim added to NumPy 1.25.
+    import types
+    import functools
+
+    def _copy_func(f):
+        # Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
+        g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                            argdefs=f.__defaults__, closure=f.__closure__)
+        g = functools.update_wrapper(g, f)
+        g.__kwdefaults__ = f.__kwdefaults__
+        return g
+
+    trapezoid = _copy_func(np.trapz)
+
+    assert np.trapz([1, 2]) == trapezoid([1, 2])

@@ -7,6 +7,9 @@
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <math.h>
 #include "numpy/npy_common.h"
 #include "npy_cblas.h"

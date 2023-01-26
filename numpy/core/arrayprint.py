@@ -724,7 +724,7 @@ def array2string(a, max_line_width=None, precision=None,
         # Deprecation 11-9-2017  v1.14
         warnings.warn("'style' argument is deprecated and no longer functional"
                       " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=3)
+                      DeprecationWarning, stacklevel=2)
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)
@@ -1394,10 +1394,6 @@ def _void_scalar_repr(x):
 
 
 _typelessdata = [int_, float_, complex_, bool_]
-if issubclass(intc, int):
-    _typelessdata.append(intc)
-if issubclass(longlong, int):
-    _typelessdata.append(longlong)
 
 
 def dtype_is_implied(dtype):

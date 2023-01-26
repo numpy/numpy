@@ -2,8 +2,23 @@
 # may be involved in their functionality.
 import pytest, math, re
 import itertools
-from numpy.core._simd import targets
+import operator
+from numpy.core._simd import targets, clear_floatstatus, get_floatstatus
 from numpy.core._multiarray_umath import __cpu_baseline__
+
+def check_floatstatus(divbyzero=False, overflow=False,
+                      underflow=False, invalid=False,
+                      all=False):
+    #define NPY_FPE_DIVIDEBYZERO  1
+    #define NPY_FPE_OVERFLOW      2
+    #define NPY_FPE_UNDERFLOW     4
+    #define NPY_FPE_INVALID       8
+    err = get_floatstatus()
+    ret = (all or divbyzero) and (err & 1) != 0
+    ret |= (all or overflow) and (err & 2) != 0
+    ret |= (all or underflow) and (err & 4) != 0
+    ret |= (all or invalid) and (err & 8) != 0
+    return ret
 
 class _Test_Utility:
     # submodule of the desired SIMD extension, e.g. targets["AVX512F"]
@@ -437,6 +452,16 @@ class _SIMD_FP(_Test_Utility):
                 _round = intrin(data)
                 assert _round == data_round
 
+        # test large numbers
+        for i in (
+            1.1529215045988576e+18, 4.6116860183954304e+18,
+            5.902958103546122e+20, 2.3611832414184488e+21
+        ):
+            x = self.setall(i)
+            y = intrin(x)
+            data_round = [func(n) for n in x]
+            assert y == data_round
+
         # signed zero
         if intrin_name == "floor":
             data_szero = (-0.0,)
@@ -543,7 +568,16 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
-    import operator
+    @pytest.mark.parametrize("intrin_name", [
+        "rint", "trunc", "ceil", "floor"
+    ])
+    def test_unary_invalid_fpexception(self, intrin_name):
+        intrin = getattr(self, intrin_name)
+        for d in [float("nan"), float("inf"), -float("inf")]:
+            v = self.setall(d)
+            clear_floatstatus()
+            intrin(v)
+            assert check_floatstatus(invalid=True) == False
 
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, "cmplt"),
@@ -561,7 +595,8 @@ class _SIMD_FP(_Test_Utility):
             return [lane == mask_true for lane in vector]
 
         intrin = getattr(self, np_comp)
-        cmp_cases = ((0, nan), (nan, 0), (nan, nan), (pinf, nan), (ninf, nan))
+        cmp_cases = ((0, nan), (nan, 0), (nan, nan), (pinf, nan),
+                     (ninf, nan), (-0.0, +0.0))
         for case_operand1, case_operand2 in cmp_cases:
             data_a = [case_operand1]*self.nlanes
             data_b = [case_operand2]*self.nlanes
@@ -871,41 +906,29 @@ class _SIMD_ALL(_Test_Utility):
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
 
-    def test_operators_comparison(self):
+    @pytest.mark.parametrize('func, intrin', [
+        (operator.lt, "cmplt"),
+        (operator.le, "cmple"),
+        (operator.gt, "cmpgt"),
+        (operator.ge, "cmpge"),
+        (operator.eq, "cmpeq")
+    ])
+    def test_operators_comparison(self, func, intrin):
         if self._is_fp():
             data_a = self._data()
         else:
             data_a = self._data(self._int_max() - self.nlanes)
         data_b = self._data(self._int_min(), reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+        intrin = getattr(self, intrin)
 
         mask_true = self._true_mask()
         def to_bool(vector):
             return [lane == mask_true for lane in vector]
-        # equal
-        data_eq = [a == b for a, b in zip(data_a, data_b)]
-        cmpeq = to_bool(self.cmpeq(vdata_a, vdata_b))
-        assert cmpeq == data_eq
-        # not equal
-        data_neq = [a != b for a, b in zip(data_a, data_b)]
-        cmpneq = to_bool(self.cmpneq(vdata_a, vdata_b))
-        assert cmpneq == data_neq
-        # greater than
-        data_gt = [a > b for a, b in zip(data_a, data_b)]
-        cmpgt = to_bool(self.cmpgt(vdata_a, vdata_b))
-        assert cmpgt == data_gt
-        # greater than and equal
-        data_ge = [a >= b for a, b in zip(data_a, data_b)]
-        cmpge = to_bool(self.cmpge(vdata_a, vdata_b))
-        assert cmpge == data_ge
-        # less than
-        data_lt  = [a < b for a, b in zip(data_a, data_b)]
-        cmplt = to_bool(self.cmplt(vdata_a, vdata_b))
-        assert cmplt == data_lt
-        # less than and equal
-        data_le  = [a <= b for a, b in zip(data_a, data_b)]
-        cmple = to_bool(self.cmple(vdata_a, vdata_b))
-        assert cmple == data_le
+
+        data_cmp = [func(a, b) for a, b in zip(data_a, data_b)]
+        cmp = to_bool(intrin(vdata_a, vdata_b))
+        assert cmp == data_cmp
 
     def test_operators_logical(self):
         if self._is_fp():

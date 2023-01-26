@@ -123,10 +123,6 @@ reveal_type(np.sinc(1j))  # E: complexfloating[Any, Any]
 reveal_type(np.sinc(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.sinc(AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 
-reveal_type(np.msort(CHAR_AR_U))  # E: Any
-reveal_type(np.msort(AR_U))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.msort(AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
-
 reveal_type(np.median(AR_f8, keepdims=False))  # E: floating[Any]
 reveal_type(np.median(AR_c16, overwrite_input=True))  # E: complexfloating[Any, Any]
 reveal_type(np.median(AR_m))  # E: timedelta64

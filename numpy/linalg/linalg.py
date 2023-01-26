@@ -18,6 +18,7 @@ import functools
 import operator
 import warnings
 
+from .._utils import set_module
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
@@ -28,7 +29,6 @@ from numpy.core import (
     reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import _umath_linalg
@@ -42,11 +42,11 @@ fortran_int = intc
 
 
 @set_module('numpy.linalg')
-class LinAlgError(Exception):
+class LinAlgError(ValueError):
     """
     Generic Python-exception-derived object raised by linalg functions.
 
-    General purpose exception class, derived from Python's exception.Exception
+    General purpose exception class, derived from Python's ValueError
     class, programmatically raised in linalg functions when a Linear
     Algebra-related condition would prevent further correct execution of the
     function.
@@ -899,12 +899,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'economic'
         else:
             raise ValueError(f"Unrecognized mode '{mode}'")
@@ -943,7 +943,7 @@ def qr(a, mode='reduced'):
         return wrap(a)
 
     # mc is the number of columns in the resulting q
-    # matrix. If the mode is complete then it is 
+    # matrix. If the mode is complete then it is
     # same as number of rows, and if the mode is reduced,
     # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
@@ -2267,7 +2267,7 @@ def lstsq(a, b, rcond="warn"):
                       "To use the future default and silence this warning "
                       "we advise to pass `rcond=None`, to keep using the old, "
                       "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=3)
+                      FutureWarning, stacklevel=2)
         rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)

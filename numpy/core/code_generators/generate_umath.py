@@ -3,6 +3,7 @@ import re
 import struct
 import sys
 import textwrap
+import argparse
 
 Zero = "PyLong_FromLong(0)"
 One = "PyLong_FromLong(1)"
@@ -89,6 +90,41 @@ class TypeDescription:
         assert len(self.out) == nout
         self.astype = self.astype_dict.get(self.type, None)
 
+
+def _check_order(types1, types2):
+    dtype_order = allP + "O"
+    for t1, t2 in zip(types1, types2):
+        # We have no opinion on object or time ordering for now:
+        if t1 in "OP" or t2 in "OP":
+            return True
+        if t1 in "mM" or t2 in "mM":
+            return True
+
+        t1i = dtype_order.index(t1)
+        t2i = dtype_order.index(t2)
+        if t1i < t2i:
+            return
+        if t2i > t1i:
+            break
+
+    raise TypeError(
+            f"Input dtypes are unsorted or duplicate: {types1} and {types2}")
+
+
+def check_td_order(tds):
+    # A quick check for whether the signatures make sense, it happened too
+    # often that SIMD additions added loops that do not even make some sense.
+    # TODO: This should likely be a test and it would be nice if it rejected
+    #       duplicate entries as well (but we have many as of writing this).
+    signatures = [t.in_+t.out for t in tds]
+
+    for prev_i, sign in enumerate(signatures[1:]):
+        if sign in signatures[:prev_i+1]:
+            continue  # allow duplicates...
+        
+        _check_order(signatures[prev_i], sign)
+
+
 _fdata_map = dict(
     e='npy_%sf',
     f='npy_%sf',
@@ -172,6 +208,9 @@ class Ufunc:
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
 
+        check_td_order(self.type_descriptions)
+
+
 # String-handling utilities to avoid locale-dependence.
 
 import string
@@ -245,7 +284,8 @@ chartoname = {
     'P': 'OBJECT',
 }
 
-noobj = '?bBhHiIlLqQefdgFDGmM'
+no_obj_bool = 'bBhHiIlLqQefdgFDGmM'
+noobj = '?' + no_obj_bool
 all = '?bBhHiIlLqQefdgFDGOmM'
 
 O = 'O'
@@ -279,6 +319,7 @@ nocmplxO = nocmplx+O
 nocmplxP = nocmplx+P
 notimes_or_obj = bints + inexact
 nodatetime_or_obj = bints + inexact
+no_bool_times_obj = ints + inexact
 
 # Find which code corresponds to int64.
 int64 = ''
@@ -298,7 +339,9 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
           'PyUFunc_AdditionTypeResolver',
-          TD(notimes_or_obj, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
+          TD(no_bool_times_obj, simd=[('avx2', ints)],
+                                dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'mM', 'M'),
@@ -309,7 +352,8 @@ defdict = {
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
-          TD(ints + inexact, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD(no_bool_times_obj, simd=[('avx2', ints)],
+                                dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
@@ -320,7 +364,10 @@ defdict = {
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.multiply'),
           'PyUFunc_MultiplicationTypeResolver',
-          TD(notimes_or_obj, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD('?', cfunc_alias='logical_and',
+                  dispatch=[('loops_logical', '?')]),
+          TD(no_bool_times_obj, simd=[('avx2', ints)],
+                                dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'qm', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
@@ -411,7 +458,8 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
           'PyUFunc_AbsoluteTypeResolver',
-          TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd')]),
+          TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd'),
+                                                 ('loops_logical', '?')]),
           TD(cmplx, simd=[('avx512f', cmplxvec)], out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
@@ -425,7 +473,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
           'PyUFunc_NegativeTypeResolver',
-          TD(ints+flts+timedeltaonly, simd=[('avx2', ints)]),
+          TD(ints+flts+timedeltaonly, dispatch=[('loops_unary', ints+'fdg')]),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
@@ -495,28 +543,33 @@ defdict = {
     Ufunc(2, 1, True_,
           docstrings.get('numpy.core.umath.logical_and'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
+          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
+                                dispatch=[('loops_logical', '?')]),
           TD(O, f='npy_ObjectLogicalAnd'),
           ),
 'logical_not':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.logical_not'),
           None,
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
+          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
+                                dispatch=[('loops_logical', '?')]),
           TD(O, f='npy_ObjectLogicalNot'),
           ),
 'logical_or':
     Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_or'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
+          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
+                                dispatch=[('loops_logical', '?')]),
           TD(O, f='npy_ObjectLogicalOr'),
           ),
 'logical_xor':
     Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_xor'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(nodatetime_or_obj, out='?'),
+          TD('?', out='?', cfunc_alias='not_equal',
+                           dispatch=[('loops_comparison', '?')]),
+          TD(no_bool_times_obj, out='?'),
           # TODO: using obj.logical_xor() seems pretty much useless:
           TD(P, f='logical_xor'),
           ),
@@ -524,14 +577,17 @@ defdict = {
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.maximum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj, dispatch=[('loops_minmax', ints+'fdg')]),
+          TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints+'fdg')]),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.minimum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj, dispatch=[('loops_minmax', ints+'fdg')]),
+          TD('?', cfunc_alias='logical_and',
+                  dispatch=[('loops_logical', '?')]),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints+'fdg')]),
           TD(O, f='npy_ObjectMin')
           ),
 'clip':
@@ -545,14 +601,17 @@ defdict = {
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
+          TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
+          TD(no_obj_bool, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
+          TD('?', cfunc_alias='logical_and',
+                  dispatch=[('loops_logical', '?')]),
+          TD(no_obj_bool, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMin')
           ),
 'logaddexp':
@@ -571,28 +630,35 @@ defdict = {
     Ufunc(2, 1, AllOnes,
           docstrings.get('numpy.core.umath.bitwise_and'),
           None,
-          TD(bints, simd=[('avx2', ints)]),
+          TD('?', cfunc_alias='logical_and',
+                  dispatch=[('loops_logical', '?')]),
+          TD(ints, simd=[('avx2', ints)]),
           TD(O, f='PyNumber_And'),
           ),
 'bitwise_or':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.bitwise_or'),
           None,
-          TD(bints, simd=[('avx2', ints)]),
+          TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
+          TD(ints, simd=[('avx2', ints)]),
           TD(O, f='PyNumber_Or'),
           ),
 'bitwise_xor':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.bitwise_xor'),
           None,
-          TD(bints, simd=[('avx2', ints)]),
+          TD('?', cfunc_alias='not_equal',
+                  dispatch=[('loops_comparison', '?')]),
+          TD(ints, simd=[('avx2', ints)]),
           TD(O, f='PyNumber_Xor'),
           ),
 'invert':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.invert'),
           None,
-          TD(bints, simd=[('avx2', ints)]),
+          TD('?', cfunc_alias='logical_not',
+                  dispatch=[('loops_logical', '?')]),
+          TD(ints, simd=[('avx2', ints)]),
           TD(O, f='PyNumber_Invert'),
           ),
 'left_shift':
@@ -691,18 +757,20 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.cos'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='cos'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='cos'),
           TD(P, f='cos'),
           ),
 'sin':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sin'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='sin'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='sin'),
           TD(P, f='sin'),
           ),
 'tan':
@@ -860,8 +928,9 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.arctan2'),
           None,
+          TD('e', f='atan2', astype={'e': 'f'}),
           TD('fd', dispatch=[('loops_umath_fp', 'fd')]),
-          TD(flts, f='atan2', astype={'e': 'f'}),
+          TD('g', f='atan2', astype={'e': 'f'}),
           TD(P, f='arctan2'),
           ),
 'remainder':
@@ -1224,8 +1293,29 @@ def make_code(funcdict, filename):
     return code
 
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
+    args = parser.parse_args()
+
+    # used to insert the name of this file into the generated file
     filename = __file__
     code = make_code(defdict, filename)
-    with open('__umath_generated.c', 'w') as fid:
-        fid.write(code)
+
+    if not args.outfile:
+        # This is the distutils-based build
+        outfile = '__umath_generated.c'
+    else:
+        outfile = os.path.join(os.getcwd(), args.outfile)
+
+    with open(outfile, 'w') as f:
+        f.write(code)
+
+
+if __name__ == "__main__":
+    main()

@@ -129,10 +129,9 @@ MANDATORY_FUNCS = [
     "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
     "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
     "expm1", "log1p", "acosh", "asinh", "atanh",
-    "rint", "trunc", "exp2", 
+    "rint", "trunc", "exp2",
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
-    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     "creal", "cimag", "conj"
 ]
 
@@ -154,6 +153,9 @@ C99_COMPLEX_TYPES = [
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
     "catanh", "cexp", "clog", "cpow", "csqrt",
+    # The long double variants (like csinl)  should be mandatory on C11,
+    # but are missing in FreeBSD. Issue gh-22850
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     ]
 
 OPTIONAL_HEADERS = [
@@ -178,7 +180,9 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
-                       ("__builtin_mul_overflow", '5, 5, (int*)5'),
+                       # Test `long long` for arm+clang 13 (gh-22811,
+                       # but we use all versions of __builtin_mul_overflow):
+                       ("__builtin_mul_overflow", '(long long)5, 5, (int*)5'),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE

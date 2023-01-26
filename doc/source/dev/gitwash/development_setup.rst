@@ -107,6 +107,10 @@ Make the local copy
 
     git submodule update --init
 
+#. Pull from upstream to get latest tag information: ::
+
+    git pull
+
 ******************************************************************************
 Look it over
 ******************************************************************************

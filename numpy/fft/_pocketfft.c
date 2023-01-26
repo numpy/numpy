@@ -22,8 +22,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define restrict NPY_RESTRICT
-
 #define RALLOC(type,num) \
   ((type *)malloc((num)*sizeof(type)))
 #define DEALLOC(ptr) \

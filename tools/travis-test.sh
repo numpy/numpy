@@ -33,7 +33,7 @@ werrors="$werrors -Werror=implicit-function-declaration"
 setup_base()
 {
   # use default python flags but remove sign-compare
-  sysflags="$($PYTHON -c "from distutils import sysconfig; \
+  sysflags="$($PYTHON -c "import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
 
@@ -143,6 +143,7 @@ EOF
   fi
 
   if [ -n "$CHECK_BLAS" ]; then
+    $PYTHON -m pip install threadpoolctl
     $PYTHON ../tools/openblas_support.py --check_version
   fi
 
@@ -180,7 +181,7 @@ EOF
     pushd ../benchmarks
     $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
-    $PYTHON `which asv` dev 2>&1| tee asv-output.log
+    $PYTHON `which asv` dev -q 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then
       echo "Some benchmarks have errors!"
       exit 1

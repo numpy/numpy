@@ -147,10 +147,11 @@ import os
 import copy
 import platform
 import codecs
+from pathlib import Path
 try:
-    import chardet
+    import charset_normalizer
 except ImportError:
-    chardet = None
+    charset_normalizer = None
 
 from . import __version__
 
@@ -289,69 +290,69 @@ def undo_rmbadname(names):
     return [undo_rmbadname1(_m) for _m in names]
 
 
-def getextension(name):
-    i = name.rfind('.')
-    if i == -1:
-        return ''
-    if '\\' in name[i:]:
-        return ''
-    if '/' in name[i:]:
-        return ''
-    return name[i + 1:]
-
-is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
 _has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
 _has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
 
+# Extensions
+COMMON_FREE_EXTENSIONS = ['.f90', '.f95', '.f03', '.f08']
+COMMON_FIXED_EXTENSIONS = ['.for', '.ftn', '.f77', '.f']
+
 
 def openhook(filename, mode):
     """Ensures that filename is opened with correct encoding parameter.
 
-    This function uses chardet package, when available, for
-    determining the encoding of the file to be opened. When chardet is
-    not available, the function detects only UTF encodings, otherwise,
-    ASCII encoding is used as fallback.
+    This function uses charset_normalizer package, when available, for
+    determining the encoding of the file to be opened. When charset_normalizer
+    is not available, the function detects only UTF encodings, otherwise, ASCII
+    encoding is used as fallback.
     """
-    bytes = min(32, os.path.getsize(filename))
-    with open(filename, 'rb') as f:
-        raw = f.read(bytes)
-    if raw.startswith(codecs.BOM_UTF8):
-        encoding = 'UTF-8-SIG'
-    elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
-        encoding = 'UTF-32'
-    elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
-        encoding = 'UTF-16'
+    # Reads in the entire file. Robust detection of encoding.
+    # Correctly handles comments or late stage unicode characters
+    # gh-22871
+    if charset_normalizer is not None:
+        encoding = charset_normalizer.from_path(filename).best().encoding
     else:
-        if chardet is not None:
-            encoding = chardet.detect(raw)['encoding']
-        else:
-            # hint: install chardet to ensure correct encoding handling
-            encoding = 'ascii'
+        # hint: install charset_normalizer for correct encoding handling
+        # No need to read the whole file for trying with startswith
+        nbytes = min(32, os.path.getsize(filename))
+        with open(filename, 'rb') as fhandle:
+            raw = fhandle.read(nbytes)
+            if raw.startswith(codecs.BOM_UTF8):
+                encoding = 'UTF-8-SIG'
+            elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+                encoding = 'UTF-32'
+            elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
+                encoding = 'UTF-16'
+            else:
+                # Fallback, without charset_normalizer
+                encoding = 'ascii'
     return open(filename, mode, encoding=encoding)
 
 
-def is_free_format(file):
+def is_free_format(fname):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
-    result = 0
-    with openhook(file, 'r') as f:
-        line = f.readline()
+    result = False
+    if Path(fname).suffix.lower() in COMMON_FREE_EXTENSIONS:
+        result = True
+    with openhook(fname, 'r') as fhandle:
+        line = fhandle.readline()
         n = 15  # the number of non-comment lines to scan for hints
         if _has_f_header(line):
             n = 0
         elif _has_f90_header(line):
             n = 0
-            result = 1
+            result = True
         while n > 0 and line:
             if line[0] != '!' and line.strip():
                 n -= 1
                 if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
-                    result = 1
+                    result = True
                     break
-            line = f.readline()
+            line = fhandle.readline()
     return result
 
 
@@ -394,7 +395,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         except UnicodeDecodeError as msg:
             raise Exception(
                 f'readfortrancode: reading {fin.filename()}#{fin.lineno()}'
-                f' failed with\n{msg}.\nIt is likely that installing chardet'
+                f' failed with\n{msg}.\nIt is likely that installing charset_normalizer'
                 ' package will help f2py determine the input file encoding'
                 ' correctly.')
         if not l:
@@ -407,7 +408,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             strictf77 = 0
             sourcecodeform = 'fix'
             ext = os.path.splitext(currentfilename)[1]
-            if is_f_file(currentfilename) and \
+            if Path(currentfilename).suffix.lower() in COMMON_FIXED_EXTENSIONS and \
                     not (_has_f90_header(l) or _has_fix_header(l)):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):

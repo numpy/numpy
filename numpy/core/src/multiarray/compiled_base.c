@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
+#include "npy_argparse.h"
 #include "npy_config.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
@@ -109,7 +110,8 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
  * output array.
  */
 NPY_NO_EXPORT PyObject *
-arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
+                            Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
@@ -117,11 +119,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("bincount", args, len_args, kwnames,
+                "list", NULL, &list,
+                "|weights", NULL, &weight,
+                "|minlength", NULL, &mlength,
+                NULL, NULL, NULL) < 0) {
+        return NULL;
     }
 
     lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
@@ -265,7 +270,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
  * indicated by the mask
  */
 NPY_NO_EXPORT PyObject *
-arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     char *src, *dest;
     npy_bool *mask_data;
@@ -378,7 +383,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 #ifdef __INTEL_COMPILER
 #pragma intel optimization_level 0
 #endif
-static NPY_INLINE npy_intp
+static inline npy_intp
 _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, const npy_intp i0)
 {
     npy_intp i;
@@ -489,7 +494,8 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
 #undef LIKELY_IN_CACHE_SIZE
 
 NPY_NO_EXPORT PyObject *
-arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -500,12 +506,16 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     const npy_double *dy, *dx, *dz;
     npy_double *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -654,7 +664,8 @@ fail:
 
 /* As for arr_interp but for complex fp values */
 NPY_NO_EXPORT PyObject *
-arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -667,12 +678,16 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
-                                     kwlist, &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -1389,7 +1404,7 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
+arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
@@ -1401,7 +1416,16 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_RETURN_NONE;
     }
 
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("add_docstring", args, len_args, NULL,
+            "", NULL, &obj,
+            "", NULL, &str,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    if (!PyUnicode_Check(str)) {
+        PyErr_SetString(PyExc_TypeError,
+                "argument docstring of add_docstring should be a str");
         return NULL;
     }
 
@@ -1491,7 +1515,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
  * byte array. Truth values are determined as usual: 0 is false, everything
  * else is true.
  */
-static NPY_GCC_OPT_3 NPY_INLINE void
+static NPY_GCC_OPT_3 inline void
 pack_inner(const char *inptr,
            npy_intp element_size,   /* in bytes */
            npy_intp n_in,

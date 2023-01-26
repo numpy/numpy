@@ -16,7 +16,7 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 5
+#define EXPERIMENTAL_DTYPE_API_VERSION 6
 
 
 typedef struct{
@@ -111,8 +111,8 @@ legacy_getitem_using_DType(void *data, void *arr)
  * from the user in the future and more could get defaults for compatibility.
  */
 PyArray_ArrFuncs default_funcs = {
+        .getitem = &legacy_getitem_using_DType,
         .setitem = &legacy_setitem_using_DType,
-        .getitem = &legacy_getitem_using_DType
 };
 
 
@@ -209,6 +209,12 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
+    if (NPY_DT_SLOTS(DType)->ensure_canonical == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "A DType must provide an ensure_canonical implementation.");
+        return -1;
+    }
+
     /*
      * Now that the spec is read we can check that all required functions were
      * defined by the user.
@@ -252,6 +258,14 @@ PyArrayInitDTypeMeta_FromSpec(
     /*
      * And now, register all the casts that are currently defined!
      */
+    if (spec->casts == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError,
+            "DType must at least provide a function to cast (or just copy) "
+            "between its own instances!");
+        return -1;
+    }
+
     PyArrayMethod_Spec **next_meth_spec = spec->casts;
     while (1) {
         PyArrayMethod_Spec *meth_spec = *next_meth_spec;

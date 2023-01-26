@@ -2,7 +2,7 @@ import pytest
 import sysconfig
 
 import numpy as np
-from numpy.testing import assert_, assert_raises
+from numpy.testing import assert_, assert_raises, IS_WASM
 
 # The floating point emulation on ARM EABI systems lacking a hardware FPU is
 # known to be buggy. This is an attempt to identify these hosts. It may not
@@ -12,6 +12,7 @@ hosttype = sysconfig.get_config_var('HOST_GNU_TYPE')
 arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
 
 class TestErrstate:
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.skipif(arm_softfloat,
                         reason='platform/cpu issue with FPU (gh-413,-15562)')
     def test_invalid(self):
@@ -24,6 +25,7 @@ class TestErrstate:
             with assert_raises(FloatingPointError):
                 np.sqrt(a)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.skipif(arm_softfloat,
                         reason='platform/cpu issue with FPU (gh-15562)')
     def test_divide(self):

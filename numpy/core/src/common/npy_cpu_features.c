@@ -1,6 +1,6 @@
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h" // To guarantee the CPU baseline definitions are in scope.
-#include "numpy/npy_common.h" // for NPY_INLINE
+#include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
 /******************** Private Definitions *********************/
@@ -166,7 +166,7 @@ npy_cpu_dispatch_list(void)
  * features that had been configured via --cpu-baseline
  * otherwise it returns 0
 */
-static NPY_INLINE int
+static inline int
 npy__cpu_baseline_fid(const char *feature)
 {
 #if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
@@ -179,7 +179,7 @@ npy__cpu_baseline_fid(const char *feature)
  * features that had been configured via --cpu-dispatch
  * otherwise it returns 0
 */
-static NPY_INLINE int
+static inline int
 npy__cpu_dispatch_fid(const char *feature)
 {
 #if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
@@ -513,7 +513,10 @@ npy__cpu_init_features(void)
 
 #elif defined(NPY_CPU_PPC64) || defined(NPY_CPU_PPC64LE)
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
+    #ifdef __FreeBSD__
+        #include <machine/cpu.h> // defines PPC_FEATURE_HAS_VSX
+    #endif
     #include <sys/auxv.h>
     #ifndef AT_HWCAP2
         #define AT_HWCAP2 26
@@ -533,12 +536,21 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+#if defined(__linux__) || defined(__FreeBSD__)
 #ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
     if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
         return;
 
     hwcap = getauxval(AT_HWCAP2);
+#else
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+    if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
+        return;
+
+    elf_aux_info(AT_HWCAP2, &hwcap, sizeof(hwcap));
+#endif // __linux__
     if (hwcap & PPC_FEATURE2_ARCH_3_1)
     {
         npy__cpu_have[NPY_CPU_FEATURE_VSX]  =
@@ -551,7 +563,7 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_VSX2] = (hwcap & PPC_FEATURE2_ARCH_2_07) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX3] = (hwcap & PPC_FEATURE2_ARCH_3_00) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX4] = (hwcap & PPC_FEATURE2_ARCH_3_1) != 0;
-// TODO: AIX, FreeBSD
+// TODO: AIX, OpenBSD
 #else
     npy__cpu_have[NPY_CPU_FEATURE_VSX]  = 1;
     #if defined(NPY_CPU_PPC64LE) || defined(NPY_HAVE_VSX2)
@@ -606,7 +618,7 @@ npy__cpu_init_features(void)
 
 #elif defined(__arm__) || defined(__aarch64__)
 
-static NPY_INLINE void
+static inline void
 npy__cpu_init_features_arm8(void)
 {
     npy__cpu_have[NPY_CPU_FEATURE_NEON]       =
