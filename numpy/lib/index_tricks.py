@@ -1001,6 +1001,14 @@ def diag_indices_from(arr):
     ----------
     arr : array, at least 2-D
 
+    See Also
+    --------
+    diag_indices
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     Examples
     --------
     
@@ -1009,9 +1017,9 @@ def diag_indices_from(arr):
     >>> a = np.arange(16).reshape(4, 4)
     >>> a
     array([[ 0,  1,  2,  3],
-       [ 4,  5,  6,  7],
-       [ 8,  9, 10, 11],
-       [12, 13, 14, 15]])
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
     
     Get the indices of the diagonal elements.
 
@@ -1026,14 +1034,6 @@ def diag_indices_from(arr):
 
     >>> np.diag_indices(a.shape[0])
     (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
-
-    See Also
-    --------
-    diag_indices
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     """
 
