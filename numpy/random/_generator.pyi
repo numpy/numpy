@@ -29,6 +29,7 @@ from numpy._typing import (
     _DTypeLikeUInt,
     _Float32Codes,
     _Float64Codes,
+    _FloatLike_co,
     _Int8Codes,
     _Int16Codes,
     _Int32Codes,
@@ -193,7 +194,7 @@ class Generator:
         self, a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def exponential(self, scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def exponential(self, scale: _FloatLike_co = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def exponential(
         self, scale: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...
