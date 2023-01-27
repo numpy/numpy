@@ -1799,6 +1799,14 @@ class TestVectorize:
         r = addsubtract([0, 3, 6, 9], [1, 3, 5, 7])
         assert_array_equal(r, [1, 6, 1, 2])
 
+    def test_docstring(self):
+        @vectorize
+        def f(x):
+            """Docstring"""
+            return x
+
+        assert f.__doc__ == "Docstring"
+
     def test_signature_otypes_decorator(self):
         @vectorize(signature='(n)->(n)', otypes=['float64'])
         def f(x):
