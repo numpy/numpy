@@ -328,7 +328,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     ValueError
         The file contains an object array, but ``allow_pickle=False`` given.
     EOFError
-        When calling `np.load` multiple times on the same file handle,
+        When calling ``np.load`` multiple times on the same file handle,
         if all data has already been read
 
     See Also
