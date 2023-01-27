@@ -3535,6 +3535,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
             break;
         }
     }
+    NPY_END_ALLOW_THREADS;
+
     if (num < 0) {
         const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
 
@@ -3551,7 +3553,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
             }
         }
     }
-    NPY_END_ALLOW_THREADS;
 
     free(clean_sep);
 
