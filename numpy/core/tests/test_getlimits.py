@@ -3,6 +3,7 @@
 """
 import warnings
 import numpy as np
+import pytest
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import assert_equal, assert_, assert_raises
@@ -86,7 +87,15 @@ class TestRepr:
 
 def test_instances():
     iinfo(10)
+    iinfo(np.int16(1))
     finfo(3.0)
+    finfo(np.float32(1.))
+    finfo(np.float64(-1.))
+
+    with pytest.raises(ValueError):
+        iinfo(10.)
+    with pytest.raises(ValueError):
+        finfo(np.int64(1))
 
 
 def assert_ma_equal(discovered, ma_like):
