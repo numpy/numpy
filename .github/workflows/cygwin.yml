@@ -56,7 +56,7 @@ jobs:
           dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
+          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions pytest-forked"
           dash -c "/usr/bin/python3.9 -m pip install -r test_requirements.txt"
           dash -c "/usr/bin/python3.9 setup.py bdist_wheel"
       - name: Install new NumPy
@@ -65,17 +65,19 @@ jobs:
       - name: Rebase NumPy compiled extensions
         run: |
           dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
-      - name: Run NumPy test suite except F2PY
+      - name: Run NumPy test suite
         # There seem to be too many compiled extension modules.
         # Let's try splitting off the tests by submodule to see if that helps.
         # Not sure if that will run the top-level tests.
         shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -o pipefail {0}"
         run: >-
-          for submodule in array_api compat core distutils f2py fft lib linalg ma matrixlib polynomial random tests typing;
+          for submodule in array_api compat core distutils fft lib linalg ma matrixlib polynomial random tests typing;
           do 
               echo "Testing numpy submodule ${submodule}";
               /usr/bin/python3.9 runtests.py -n -s "${submodule}" || exit 1; 
           done
+          echo "Testing numpy submodule f2py";
+          /usr/bin/python3.9 runtests.py -n -s f2py -- --forked
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
