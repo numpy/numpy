@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
@@ -14,10 +15,21 @@ def get_docdir():
         'doc', 'source', 'f2py', 'code'))
 
 
-pytestmark = pytest.mark.skipif(
-    not os.path.isdir(get_docdir()),
-    reason=('Could not find f2py documentation sources'
-            f' ({get_docdir()} does not exists)'))
+# Syntax borrowed from here:
+# https://docs.pytest.org/en/7.1.x/reference/reference.html#globalvar-pytestmark
+# https://docs.pytest.org/en/7.1.x/example/markers.html#marking-whole-classes-or-modules
+pytestmark = [
+    pytest.mark.skipif(
+        not os.path.isdir(get_docdir()),
+        reason=('Could not find f2py documentation sources'
+                f' ({get_docdir()} does not exists)')
+    ),
+    pytest.mark.xfail(
+        sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+        raises=BlockingIOError
+    )
+]
+
 
 
 def _path(*a):

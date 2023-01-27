@@ -6,6 +6,10 @@ import pytest
 
 from . import util
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestQuotedCharacter(util.F2PyTest):
     sources = [util.getpath("tests", "src", "quoted_character", "foo.f")]

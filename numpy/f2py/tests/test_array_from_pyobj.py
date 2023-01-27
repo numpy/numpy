@@ -11,6 +11,9 @@ from numpy.core.multiarray import typeinfo as _typeinfo
 from . import util
 
 wrap = None
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 # Extend core typeinfo with CHARACTER to test dtype('c')
 _ti = _typeinfo['STRING']

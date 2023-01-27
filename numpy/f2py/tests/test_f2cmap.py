@@ -1,5 +1,13 @@
+import sys
+import pytest
+
 from . import util
 import numpy as np
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestF2Cmap(util.F2PyTest):
     sources = [

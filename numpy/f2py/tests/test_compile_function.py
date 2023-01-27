@@ -11,6 +11,10 @@ import numpy.f2py
 
 from . import util
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 def setup_module():
     if not util.has_c_compiler():

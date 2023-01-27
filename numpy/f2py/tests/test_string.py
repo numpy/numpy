@@ -1,8 +1,13 @@
 import os
+import sys
 import pytest
 import textwrap
 import numpy as np
 from . import util
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestString(util.F2PyTest):

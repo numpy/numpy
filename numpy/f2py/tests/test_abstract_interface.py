@@ -1,9 +1,14 @@
 from pathlib import Path
 import pytest
+import sys
 import textwrap
 from . import util
 from numpy.f2py import crackfortran
 from numpy.testing import IS_WASM
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")

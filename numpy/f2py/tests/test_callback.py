@@ -10,6 +10,10 @@ import numpy as np
 from numpy.testing import IS_PYPY
 from . import util
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]

@@ -6,6 +6,10 @@ import textwrap
 from . import util
 from numpy.testing import IS_PYPY
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestModuleDocString(util.F2PyTest):
     sources = [

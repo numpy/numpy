@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 
 from numpy.f2py.crackfortran import (
@@ -6,6 +7,10 @@ from numpy.f2py.crackfortran import (
     _selected_real_kind_func as selected_real_kind,
 )
 from . import util
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestKind(util.F2PyTest):

@@ -1,8 +1,13 @@
 import os
 import pytest
+import sys
 import tempfile
 
 from . import util
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestAssumedShapeSumExample(util.F2PyTest):

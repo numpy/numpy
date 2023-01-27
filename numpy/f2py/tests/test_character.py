@@ -1,8 +1,13 @@
+import sys
 import pytest
 import textwrap
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
 import numpy as np
 from numpy.f2py.tests import util
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestCharacterString(util.F2PyTest):

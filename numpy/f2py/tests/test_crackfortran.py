@@ -1,5 +1,6 @@
 import importlib
 import codecs
+import sys
 import unicodedata
 import pytest
 import numpy as np
@@ -7,6 +8,10 @@ from numpy.f2py.crackfortran import markinnerspaces
 from . import util
 from numpy.f2py import crackfortran
 import textwrap
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestNoSpace(util.F2PyTest):

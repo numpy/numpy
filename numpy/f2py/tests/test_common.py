@@ -5,6 +5,10 @@ import pytest
 import numpy as np
 from . import util
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestCommonBlock(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "block.f")]

@@ -4,6 +4,10 @@ from . import util
 
 from numpy.testing import IS_PYPY
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
+
 
 class TestBlockDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "block_docstring", "foo.f")]

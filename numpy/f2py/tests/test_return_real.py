@@ -1,9 +1,14 @@
 import platform
+import sys
 import pytest
 import numpy as np
 
 from numpy import array
 from . import util
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestReturnReal(util.F2PyTest):

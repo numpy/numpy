@@ -1,3 +1,4 @@
+import sys
 import pytest
 
 from numpy import array
@@ -5,6 +6,10 @@ from . import util
 import platform
 
 IS_S390X = platform.machine() == "s390x"
+
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+)
 
 
 class TestReturnCharacter(util.F2PyTest):
