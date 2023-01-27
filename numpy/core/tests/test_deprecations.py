@@ -901,4 +901,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
     # Deprecated in NumPy 1.25, 2023-01-16
     def test_deprecated_none(self):
         np.finfo.cache_clear()  # the deprecation is only generated once
-        self.assert_deprecated(np.finfo, args=(None,))
+        with pytest.warns(DeprecationWarning):
+            np.finfo(None)
+            
