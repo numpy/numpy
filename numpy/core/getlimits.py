@@ -488,6 +488,8 @@ class finfo:
         except TypeError:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
+            # changed type, so we can recursively call finfo
+            return finfo(dtype)
 
         # we have a dtype object, convert it to the equivalent scalar dtype
         dtype = numeric.obj2sctype(dtype)
