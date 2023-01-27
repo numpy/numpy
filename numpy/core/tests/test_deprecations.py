@@ -900,7 +900,7 @@ class TestRemovedGlobals:
 class TestDeprecatedFinfo(_DeprecationTestCase):
     # Deprecated in NumPy 1.25, 2023-01-16
     def test_deprecated_none(self):
-        np.finfo.cache_clear()  # the deprecation is only generated once
+        # the deprecation is only generated once
+        np.finfo.__new__.cache_clear()
         with pytest.warns(DeprecationWarning):
             np.finfo(None)
-            
