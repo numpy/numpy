@@ -469,8 +469,6 @@ class finfo:
 
     """
 
-    _finfo_cache = {}
-
     @lru_cache
     def __new__(cls, dtype):
 
