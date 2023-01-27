@@ -328,8 +328,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     ValueError
         The file contains an object array, but ``allow_pickle=False`` given.
     EOFError
-        If the input file is empty or, when calling `np.load` multiple times
-        on the same file, if all data has already been read
+        When calling `np.load` multiple times on the same file handle,
+        if all data has already been read
 
     See Also
     --------
@@ -413,12 +413,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
+        if not magic:
+            raise EOFError("No data left in file")
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if not magic:
-            raise EOFError()
-        elif magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
+        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
