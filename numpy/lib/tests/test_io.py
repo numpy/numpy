@@ -2737,3 +2737,13 @@ def test_load_refcount():
     with assert_no_gc_cycles():
         x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))
+
+def test_load_multiple_arrays_until_eof():
+    f = BytesIO()
+    np.save(f, 1)
+    np.save(f, 2)
+    f.seek(0)
+    assert np.load(f) == 1
+    assert np.load(f) == 2
+    with pytest.raises(EOFError):
+        np.load(f)
