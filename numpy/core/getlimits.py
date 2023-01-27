@@ -490,7 +490,7 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype, None)
+        obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
         dtypes = [dtype]
@@ -500,7 +500,7 @@ class finfo:
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
             raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype, None)
+        obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
         if not issubclass(dtype, numeric.floating):
