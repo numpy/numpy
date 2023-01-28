@@ -79,7 +79,7 @@ jobs:
       - name: Run NumPy F2Py tests
         shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
         # I need the separate processes more than I need the parallelization
-        run: /usr/bin/python3.9 runtests.py -n -s f2py -- --numprocesses=4;
+        run: /usr/bin/python3.9 runtests.py -n -s f2py -- --numprocesses=6;
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
