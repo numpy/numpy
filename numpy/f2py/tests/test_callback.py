@@ -11,7 +11,8 @@ from numpy.testing import IS_PYPY
 from . import util
 
 pytestmark = pytest.mark.xfail(
-    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
 )
 
 

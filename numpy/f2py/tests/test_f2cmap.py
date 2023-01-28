@@ -5,7 +5,8 @@ from . import util
 import numpy as np
 
 pytestmark = pytest.mark.xfail(
-    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
 )
 
 

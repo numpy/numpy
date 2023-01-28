@@ -11,6 +11,11 @@ import subprocess
 import numpy as np
 from numpy.testing import assert_equal, IS_WASM
 
+pytestmark = pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
+)
+
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
 

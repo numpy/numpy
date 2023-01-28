@@ -12,7 +12,8 @@ from . import util
 
 wrap = None
 pytestmark = pytest.mark.xfail(
-    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
 )
 
 # Extend core typeinfo with CHARACTER to test dtype('c')

@@ -45,6 +45,10 @@ def test_novalue():
 
 
 @pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
+)
 def test_full_reimport():
     """At the time of writing this, it is *not* truly supported, but
     apparently enough users rely on it, for it to be an annoying change

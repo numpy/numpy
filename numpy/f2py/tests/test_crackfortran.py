@@ -10,7 +10,8 @@ from numpy.f2py import crackfortran
 import textwrap
 
 pytestmark = pytest.mark.xfail(
-    sys.platform == "cygwin", reason="Random fork() failures on Cygwin", raises=BlockingIOError
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
 )
 
 
