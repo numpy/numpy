@@ -20,7 +20,6 @@ array.dtype == float
 # Dtype construction
 np.dtype(float)
 np.dtype(np.float64)
-np.dtype(None)
 np.dtype("float64")
 np.dtype(np.dtype(float))
 np.dtype(("U", 10))
@@ -50,7 +49,6 @@ np.dtype((np.int32, (np.int8, 4)))
 # Dtype comparison
 np.dtype(float) == float
 np.dtype(float) != np.float64
-np.dtype(float) < None
 np.dtype(float) <= "float64"
 np.dtype(float) > np.dtype(float)
 np.dtype(float) >= np.dtype(("U", 10))

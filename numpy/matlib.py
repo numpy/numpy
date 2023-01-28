@@ -57,7 +57,10 @@ def empty(shape, dtype=None, order='C'):
             [ 6586976, 22740995]])
 
     """
-    return ndarray.__new__(matrix, shape, dtype, order=order)
+    if dtype:
+        return ndarray.__new__(matrix, shape, dtype, order=order)
+    else:
+        return ndarray.__new__(matrix, shape, order=order)
 
 def ones(shape, dtype=None, order='C'):
     """
@@ -100,7 +103,10 @@ def ones(shape, dtype=None, order='C'):
     matrix([[1.,  1.]])
 
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+    if dtype:
+        a = ndarray.__new__(matrix, shape, dtype, order=order)
+    else:
+        a = ndarray.__new__(matrix, shape, order=order)
     a.fill(1)
     return a
 
@@ -144,7 +150,10 @@ def zeros(shape, dtype=None, order='C'):
     matrix([[0.,  0.]])
 
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+    if dtype:
+        a = ndarray.__new__(matrix, shape, dtype, order=order)
+    else:
+        a = ndarray.__new__(matrix, shape, order=order)
     a.fill(0)
     return a
 

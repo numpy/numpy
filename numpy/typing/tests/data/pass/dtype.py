@@ -6,7 +6,6 @@ void_dtype_obj = np.dtype([("f0", np.float64), ("f1", np.float32)])
 np.dtype(dtype=np.int64)
 np.dtype(int)
 np.dtype("int")
-np.dtype(None)
 
 np.dtype((int, 2))
 np.dtype((int, (1,)))

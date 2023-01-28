@@ -900,7 +900,7 @@ class TestRemovedGlobals:
 class TestDeprecatedFinfo(_DeprecationTestCase):
     # Deprecated in NumPy 1.25, 2023-01-16
     def test_deprecated_none(self):
-        self.assert_deprecated(np.finfo, args=(None,))
+        self.assert_deprecated(np.finfo, args=(None,), num=2)
 
 class TestFromnumeric(_DeprecationTestCase):
     # 2023-02-28, 1.25.0
@@ -922,3 +922,9 @@ class TestFromnumeric(_DeprecationTestCase):
     # 2023-03-02, 1.25.0
     def test_alltrue(self):
         self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
+
+
+class TestDeprecatedDtype(_DeprecationTestCase):
+    # Deprecated in NumPy 1.25, 2023-01-27
+    def test_deprecated_none(self):
+        self.assert_deprecated(np.dtype, args=(None,), num=1)

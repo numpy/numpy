@@ -853,7 +853,7 @@ class TestTypes:
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
-        assert_(np.result_type(None) == np.dtype(None))
+        assert_(np.result_type(np.float64) == np.dtype(np.float64))
 
     def test_promote_types_endian(self):
         # promote_types should always return native-endian types
@@ -2908,11 +2908,14 @@ class TestLikeFuncs:
                     self.compare_array_value(sz, value, fill_value)
 
                 if (d.ndim != len(s)):
+                    if dtype:
+                        np_empty = np.empty(s, dtype=dtype, order='C')
+                    else:
+                        np_empty = np.empty(s, order='C')
                     assert_equal(np.argsort(like_function(d, dtype=dtype,
                                                           shape=s, order='K',
                                                           **fill_kwarg).strides),
-                                 np.argsort(np.empty(s, dtype=dtype,
-                                                     order='C').strides))
+                                 np.argsort(np_empty.strides))
                 else:
                     assert_equal(np.argsort(like_function(d, dtype=dtype,
                                                           shape=s, order='K',

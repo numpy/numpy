@@ -5061,14 +5061,18 @@ class MaskedArray(ndarray):
         (this docstring should be overwritten)
         """
         #!!!: implement out + test!
+        if dtype is None:
+            safe_dtype = np.float64
+        else:
+            safe_dtype = dtype
         m = self._mask
         if m is nomask:
             result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
                                    out=out)
-            return result.astype(dtype)
+            return result.astype(safe_dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
-            return D.astype(dtype).filled(0).sum(axis=-1, out=out)
+            return D.astype(safe_dtype).filled(0).sum(axis=-1, out=out)
     trace.__doc__ = ndarray.trace.__doc__
 
     def dot(self, b, out=None, strict=False):

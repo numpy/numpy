@@ -399,7 +399,11 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     if _nx.any(start == 0) or _nx.any(stop == 0):
         raise ValueError('Geometric sequence cannot include zero')
 
-    dt = result_type(start, stop, float(num), _nx.zeros((), dtype))
+    if dtype:
+        nx_zeros = _nx.zeros((), dtype)
+    else:
+        nx_zeros = _nx.zeros(())
+    dt = result_type(start, stop, float(num), nx_zeros)
     if dtype is None:
         dtype = dt
     else:
