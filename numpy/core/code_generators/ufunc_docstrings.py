@@ -667,7 +667,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     --------
     The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
-    then ``000111011``, or 29:
+    then ``00011101``, or 29:
 
     >>> np.bitwise_or(13, 16)
     29
