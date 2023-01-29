@@ -75,11 +75,15 @@ jobs:
           name: numpy-cygwin-wheel
           path: dist/numpy-*cp39*.whl
       - name: Check the extension modules on failure
+        timeout-minutes: 30
+        # Cygcheck has been hanging for some reason.
+        # Catch it if it does.
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -eo pipefail -o igncr {0}"
         if: failure()
         run: |
-          dash -c "/usr/bin/python3.9 -m pip show numpy"
-          dash -c "/usr/bin/python3.9 -m pip show -f numpy | grep .dll"
-          dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
+          /usr/bin/python3.9 -m pip show numpy
+          /usr/bin/python3.9 -m pip show -f numpy | grep .dll
+          /bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh
           dash "list_dlls_unix.sh" 3.9
       - name: Print installed package versions on failure
         if: failure()
