@@ -258,6 +258,22 @@ class UfuncsCreate(Benchmark):
     def time_empty_like(self, shape, order, npdtypes):
         np.empty_like(self.xarg, order=order)
 
+class UFuncMeshGrid(Benchmark):
+    """ Benchmark meshgrid generation
+    """
+    params = [[16, 32],
+              [2, 3, 4],
+              ['ij', 'xy'], TYPES1]
+    param_names = ['size', 'ndims', 'ind', 'ndtype']
+    timeout = 10
+
+    def setup(self, size, ndims, ind, ndtype):
+        self.grid_dims = [(np.random.ranf(size)).astype(ndtype) for
+                          x in range(ndims)]
+
+    def time_meshgrid(self, size, ndims, ind, ndtype):
+        np.meshgrid(*self.grid_dims, indexing=ind)
+
 class UFuncSmall(Benchmark):
     """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
