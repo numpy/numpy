@@ -1,6 +1,7 @@
 from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
 
 import numpy as np
+import itertools
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
@@ -199,6 +200,22 @@ class DLPMethods(Benchmark):
     def time_ndarray_dlp(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
         meth()
+
+class NDArrayAsType(Benchmark):
+    """ Benchmark for type conversion
+    """
+    params = [list(itertools.combinations(TYPES1, 2))]
+    param_names = ['typeconv']
+    timeout = 10
+
+    def setup(self, typeconv):
+        if typeconv[0] == typeconv[1]:
+            raise NotImplementedError(
+                    "Skipping test for converting to the same dtype")
+        self.xarg = get_squares_().get(typeconv[0])
+
+    def time_astype(self, typeconv):
+        self.xarg.astype(typeconv[1])
 
 class UfuncsCreate(Benchmark):
     """ Benchmark for creation functions
