@@ -199,6 +199,47 @@ class DLPMethods(Benchmark):
         meth = getattr(self.xarg, methname)
         meth()
 
+class UfuncsCreate(Benchmark):
+    """ Benchmark for creation functions
+    """
+    params = [[16, 32, 128, 256, 512,
+               (16, 16), (32, 32),
+               (64, 64), (128, 128),
+               (256, 256), (512, 512),
+               (1024, 1024)],
+              ['C', 'F'],
+              TYPES1]
+    param_names = ['shape', 'order', 'npdtypes']
+    timeout = 10
+
+    def setup(self, shape, order, npdtypes):
+        values = get_squares_()
+        self.xarg = values.get(npdtypes)[0]
+
+    def time_full(self, shape, order, npdtypes):
+        np.full(shape, self.xarg[1], dtype=npdtypes, order=order)
+
+    def time_full_like(self, shape, order, npdtypes):
+        np.full_like(self.xarg, self.xarg[0], order=order)
+
+    def time_ones(self, shape, order, npdtypes):
+        np.ones(shape, dtype=npdtypes, order=order)
+
+    def time_ones_like(self, shape, order, npdtypes):
+        np.ones_like(self.xarg, order=order)
+
+    def time_zeros(self, shape, order, npdtypes):
+        np.zeros(shape, dtype=npdtypes, order=order)
+
+    def time_zeros_like(self, shape, order, npdtypes):
+        np.zeros_like(self.xarg, order=order)
+
+    def time_empty(self, shape, order, npdtypes):
+        np.empty(shape, dtype=npdtypes, order=order)
+
+    def time_empty_like(self, shape, order, npdtypes):
+        np.empty_like(self.xarg, order=order)
+
 class UFuncSmall(Benchmark):
     """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
