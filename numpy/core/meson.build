@@ -758,6 +758,7 @@ src_umath = [
   src_file.process('src/umath/loops_umath_fp.dispatch.c.src'),
   src_file.process('src/umath/loops_unary.dispatch.c.src'),
   src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+  src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
   src_file.process('src/umath/simd.inc.src'),

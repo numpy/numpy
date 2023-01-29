@@ -1007,6 +1007,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'loops_unary.dispatch.c.src'),
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_unary_fp_le.dispatch.c.src'),
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
             join('src', 'umath', 'loops_logical.dispatch.c.src'),
