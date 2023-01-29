@@ -13,11 +13,12 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
-          'negative', 'nextafter', 'not_equal', 'positive', 'power', 'rad2deg',
-          'radians', 'real', 'reciprocal', 'remainder', 'right_shift',
-          'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
-          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
+          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'power', 'rad2deg', 'radians', 'real', 'reciprocal', 'remainder',
+          'right_shift', 'rint', 'round', 'sign', 'signbit', 'sin',
+          'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+          'true_divide', 'trunc']
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
