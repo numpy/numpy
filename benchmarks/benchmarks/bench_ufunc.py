@@ -258,6 +258,25 @@ class UfuncsCreate(Benchmark):
     def time_empty_like(self, shape, order, npdtypes):
         np.empty_like(self.xarg, order=order)
 
+
+class UfuncsFromDLP(Benchmark):
+    """ Benchmark for creation functions
+    """
+    params = [[16, 32, (16, 16),
+               (32, 32), (64, 64)],
+              TYPES1]
+    param_names = ['shape', 'npdtypes']
+    timeout = 10
+
+    def setup(self, shape, npdtypes):
+        if npdtypes in ['longfloat', 'complex256']:
+            raise NotImplementedError
+        values = get_squares_()
+        self.xarg = values.get(npdtypes)[0]
+
+    def time_from_dlpack(self, shape, npdtypes):
+        np.from_dlpack(self.xarg)
+
 class UFuncMeshGrid(Benchmark):
     """ Benchmark meshgrid generation
     """
