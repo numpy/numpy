@@ -63,6 +63,12 @@ def test_f2py_init_compile(extra_args):
                                          extra_args=extra_args,
                                          source_fn=source_fn)
 
+            if sys.platform == "cygwin" and ret_val == 127:
+                pytest.xfail(
+                    "Likely a fork() failure\n"
+                    "stderr will likely mention child_info_fork::abort"
+                )
+
             # check for compile success return value
             assert ret_val == 0
 
