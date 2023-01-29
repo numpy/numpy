@@ -39,7 +39,7 @@ jobs:
         git config --global --add safe.directory $PWD 
         
         if [ $GITHUB_EVENT_NAME != pull_request ]; then
-            git clone --recursive --branch=$GITHUB_REF https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git clone --recursive --branch=$GITHUB_REF_NAME https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
             git reset --hard $GITHUB_SHA
         else        
             git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
