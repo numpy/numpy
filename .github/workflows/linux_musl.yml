@@ -23,6 +23,7 @@ permissions:
 jobs:
   musllinux_x86_64:
     runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     container:
       # Use container used for building musllinux wheels
       # it has git installed, all the pythons, etc

@@ -22,7 +22,7 @@ permissions:
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - uses: actions/checkout@v3
         with:
