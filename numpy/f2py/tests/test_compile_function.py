@@ -95,6 +95,17 @@ def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
     # f2py.compile() when invalid Fortran is provided
     ret_val = numpy.f2py.compile(b"invalid")
+
+    if (
+            sys.platform == "cygwin"
+            and ret_val == 127
+            and numpy.f2py._compile_has_blockingioerror
+    ):
+        pytest.xfail(
+            "Likely a fork() failure\n"
+            "stderr should mention child_info_fork::abort"
+        )
+
     assert ret_val == 1
 
 
@@ -129,4 +140,15 @@ def test_compile_from_strings(tmpdir, fsource):
         ret_val = numpy.f2py.compile(fsource,
                                      modulename="test_compile_from_strings",
                                      extension=".f90")
+
+        if (
+                sys.platform == "cygwin"
+                and ret_val == 127
+                and numpy.f2py._compile_has_blockingioerror
+        ):
+            pytest.xfail(
+                "Likely a fork() failure\n"
+                "stderr should mention child_info_fork::abort"
+            )
+
         assert ret_val == 0

@@ -63,6 +63,10 @@ def test_numpy_namespace():
 
 
 @pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.xfail(
+    sys.platform == "cygwin", reason="Random fork() failures on Cygwin",
+    raises=BlockingIOError
+)
 @pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
