@@ -14,6 +14,9 @@ from . import diagnose
 run_main = f2py2e.run_main
 main = f2py2e.main
 
+if sys.platform == "cygwin":
+    _compile_has_blockingioerror = False
+
 
 def compile(source,
             modulename='untitled',
@@ -77,6 +80,9 @@ def compile(source,
     """
     import tempfile
     import shlex
+    if sys.platform == "cygwin":
+        global _compile_has_blockingioerror
+        _compile_has_blockingioerror = False
 
     if source_fn is None:
         f, fname = tempfile.mkstemp(suffix=extension)
@@ -105,7 +111,10 @@ def compile(source,
              'import numpy.f2py as f2py2e;f2py2e.main()'] + args
         try:
             cp = subprocess.run(c, capture_output=True)
-        except OSError:
+        except OSError as err:
+            if sys.platform == "cygwin" and isinstance(err, BlockingIOError):
+                # Most likely a fork() failure
+                _compile_has_blockingioerror = True
             # preserve historic status code used by exec_command()
             cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')
         else:
