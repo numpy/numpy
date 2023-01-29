@@ -132,7 +132,9 @@ class Unique(Benchmark):
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
-        base_array[base_array < percent_nans / 100.] = np.nan
+        n_nan = int(percent_nans * array_size)
+        nan_indices = np.random.randint(array_size, size=n_nan)
+        base_array[nan_indices] = np.nan
         self.arr = base_array
 
     def time_unique(self, array_size, percent_nans):
