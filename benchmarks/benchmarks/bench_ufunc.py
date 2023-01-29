@@ -270,7 +270,8 @@ class UfuncsFromDLP(Benchmark):
 
     def setup(self, shape, npdtypes):
         if npdtypes in ['longfloat', 'complex256']:
-            raise NotImplementedError
+            raise NotImplementedError(
+                'Only IEEE dtypes are supported')
         values = get_squares_()
         self.xarg = values.get(npdtypes)[0]
 
