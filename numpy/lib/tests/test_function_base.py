@@ -3618,6 +3618,8 @@ class TestQuantile:
         #  2. quantile(c * x) = c * quantile(x)
         #  3. quantile(-x) = -quantile(x, 1 - alpha)
         #     On the empirical quantiles, this equation does not hold exactly.
+        # Koenker (2005) "Quantile Regression" Chapter 2.2.3 calls these
+        # properties equivariance.
         rng = np.random.default_rng(4321)
         n = 100
         y = rng.random(n)
