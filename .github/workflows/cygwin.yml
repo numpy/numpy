@@ -56,7 +56,7 @@ jobs:
           dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions pytest-xdist"
+          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
           dash -c "/usr/bin/python3.9 -m pip install -r test_requirements.txt"
           dash -c "/usr/bin/python3.9 setup.py bdist_wheel"
       - name: Install new NumPy
@@ -71,15 +71,7 @@ jobs:
         # Not sure if that will run the top-level tests.
         shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
         run: |
-          for submodule in array_api compat core distutils fft lib linalg ma matrixlib polynomial random tests typing;
-          do 
-              echo "Testing numpy submodule ${submodule}";
-              /usr/bin/python3.9 runtests.py -n -s "${submodule}" || exit 1; 
-          done;
-      - name: Run NumPy F2Py tests
-        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
-        # I need the separate processes more than I need the parallelization
-        run: /usr/bin/python3.9 runtests.py -n -s f2py -- --numprocesses=auto;
+          /usr/bin/python3.9 runtests.py -n
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
