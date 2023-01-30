@@ -10,8 +10,13 @@ jobs:
   pr-labeler:
     runs-on: ubuntu-latest
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@18bf8ad2ca49c14cbb28b91346d626ccfb00c518 # v2.1.0
+      with:
+        egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
     - name: Label the PR
-      uses: gerrymanoim/pr-prefix-labeler@v3
+      uses: gerrymanoim/pr-prefix-labeler@c8062327f6de59a9ae1c19f7f07cacd0b976b6fa # v3
       continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
