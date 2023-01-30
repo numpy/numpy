@@ -3467,6 +3467,13 @@ class TestPercentile:
             np.percentile([1, 2, 3, 4.0], q)
 
 
+quantile_methods = [
+    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
+    'midpoint']
+
+
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
@@ -3548,11 +3555,7 @@ class TestQuantile:
                           method="nearest")
         assert res.dtype == dtype
 
-    @pytest.mark.parametrize("method",
-             ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-              'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-              'median_unbiased', 'normal_unbiased',
-              'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", quantile_methods)
     def test_quantile_monotonic(self, method):
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
@@ -3583,6 +3586,29 @@ class TestQuantile:
         assert np.isscalar(actual)
         assert_equal(np.quantile(a, 0.5), np.nan)
 
+    @pytest.mark.parametrize("method", quantile_methods)
+    @pytest.mark.parametrize("alpha", [0.1, 0.5, 0.7, 0.9])
+    def test_quantile_identification_equation(self, method, alpha):
+        # Test that the identification equation holds for the empirical
+        # CDF:
+        #   E[V(x, Y)] = 0  <=>  x is quantile
+        # with Y the random variable for which we have observed
+        # values and V(x, y) the canonical identification function for the
+        # quantile (at level alpha), see
+        # https://doi.org/10.48550/arXiv.0912.0902
+
+        def V(x, y, alpha):
+            return (x >= y) - alpha
+        
+        rng = np.random.default_rng(4321)
+        n = 100
+        y = rng.random(n)
+        x = np.quantile(y, alpha, method=method)
+        if method in ("higher", "nearest"):
+            # These methods do not fulfill the identification equation.
+            assert np.abs(np.mean(V(x, y, alpha))) > 0.1 / n
+        else:
+            assert_allclose(np.mean(V(x, y, alpha)))
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
