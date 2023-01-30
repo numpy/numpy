@@ -3479,7 +3479,7 @@ class TestQuantile:
 
     def V(x, y, alpha):
         # Identification function used in several tests.
-            return (x >= y) - alpha
+        return (x >= y) - alpha
 
     def test_max_ulp(self):
         x = [0.0, 0.2, 0.4]
