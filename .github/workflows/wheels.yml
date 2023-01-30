@@ -141,7 +141,9 @@ jobs:
 
       - name: Upload wheels
         if: success()
-        shell: bash
+        shell: bash -el {0}
+        # see https://github.com/marketplace/actions/setup-miniconda for why
+        # `-el {0}` is required.
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
@@ -221,7 +223,7 @@ jobs:
 
       - name: Upload sdist
         if: success()
-        shell: bash
+        shell: bash -el {0}
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
