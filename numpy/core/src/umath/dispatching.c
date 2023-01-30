@@ -914,8 +914,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     int nin = ufunc->nin, nargs = ufunc->nargs;
 
     /*
-     * Get the actual DTypes we operate with by mixing the operand array
-     * ones with the passed signature.
+     * Get the actual DTypes we operate with by setting op_dtypes[i] from
+     * signature[i].
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL) {

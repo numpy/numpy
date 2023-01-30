@@ -453,7 +453,7 @@ static inline int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out)
 {
     char *args[3] = {(char *)&a, (char *)&b, (char *)out};
-    npy_intp steps[3];
+    npy_intp steps[3] = {0, 0, 0};
     npy_intp size = 1;
     @TYPE@_divide(args, &size, steps, NULL);
     return 0;
