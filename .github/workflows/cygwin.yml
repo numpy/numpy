@@ -66,8 +66,9 @@ jobs:
         run: |
           dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
       - name: Run NumPy test suite
-        run: >-
-          dash -c "/usr/bin/python3.9 runtests.py -n"
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
+        run: |
+          /usr/bin/python3.9 runtests.py -n
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
