@@ -64,9 +64,17 @@ wheels_upload_task:
     NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[!196422e6c3419a3b1d79815e1026094a215cb0f346fe34ed0f9d3ca1c19339df7398d04556491b1e0420fc1fe3713289!]
 
   upload_script: |
-    apt-get install -y python3-venv python-is-python3 curl
+    apt-get update
+    apt-get install -y curl wget
     export IS_SCHEDULE_DISPATCH="false"
     export IS_PUSH="false"
+
+    # install miniconda for uploading to anaconda
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p ~/miniconda3
+    ~/miniconda3/bin/conda init bash
+    source ~/miniconda3/bin/activate
+    conda install -y anaconda-client
 
     # cron job
     if [[ "$CIRRUS_CRON" == "weekly" ]]; then

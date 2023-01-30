@@ -129,6 +129,16 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          # for installation of anaconda-client, required for upload to
+          # anaconda.org
+          # default (and activated) environment name is test
+          # Note that this step is *after* specific pythons have been used to
+          # build and test the wheel
+          auto-update-conda: true
+          python-version: "3.10"
+
       - name: Upload wheels
         if: success()
         shell: bash
@@ -136,6 +146,7 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
@@ -145,6 +156,7 @@ jobs:
           # https://anaconda.org/multibuild-wheels-staging/numpy
           # The tokens were originally generated at anaconda.org
           upload_wheels
+
   build_sdist:
     name: Build sdist
     needs: get_commit_message
@@ -197,6 +209,16 @@ jobs:
           name: sdist
           path: ./dist/*
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          # for installation of anaconda-client, required for upload to
+          # anaconda.org
+          # default (and activated) environment name is test
+          # Note that this step is *after* specific pythons have been used to
+          # build and test
+          auto-update-conda: true
+          python-version: "3.10"
+
       - name: Upload sdist
         if: success()
         shell: bash
@@ -204,6 +226,7 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
