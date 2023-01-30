@@ -32,7 +32,8 @@ _module_dir = None
 _module_num = 5403
 
 if sys.platform == "cygwin":
-    _module_list = []
+    NUMPY_INSTALL_ROOT = Path(__file__).parent.parent.parent
+    _module_list = list(NUMPY_INSTALL_ROOT.glob("**/*.dll"))
 
 
 def _cleanup():
