@@ -3477,6 +3477,10 @@ quantile_methods = [
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
+    def V(x, y, alpha):
+        # Identification function used in several tests.
+            return (x >= y) - alpha
+
     def test_max_ulp(self):
         x = [0.0, 0.2, 0.4]
         a = np.quantile(x, 0.45)
@@ -3595,20 +3599,52 @@ class TestQuantile:
         # with Y the random variable for which we have observed
         # values and V(x, y) the canonical identification function for the
         # quantile (at level alpha), see
-        # https://doi.org/10.48550/arXiv.0912.0902
-
-        def V(x, y, alpha):
-            return (x >= y) - alpha
-        
+        # https://doi.org/10.48550/arXiv.0912.0902        
         rng = np.random.default_rng(4321)
         n = 100
         y = rng.random(n)
         x = np.quantile(y, alpha, method=method)
         if method in ("higher", "nearest"):
             # These methods do not fulfill the identification equation.
-            assert np.abs(np.mean(V(x, y, alpha))) > 0.1 / n
+            assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         else:
-            assert_allclose(np.mean(V(x, y, alpha)))
+            assert_allclose(np.mean(self.V(x, y, alpha)))
+
+    @pytest.mark.parametrize("method", quantile_methods)
+    @pytest.mark.parametrize("alpha", [0.1, 0.5, 0.7, 0.9])
+    def test_quantile_add_and_multiply_constant(self, method, alpha):
+        # Test that
+        #  1. quantile(c + x) = c + quantile(x)
+        #  2. quantile(c * x) = c * quantile(x)
+        #  3. quantile(-x) = -quantile(x, 1 - alpha)
+        #     On the empirical quantiles, this equation does not hold exactly.
+        rng = np.random.default_rng(4321)
+        n = 100
+        y = rng.random(n)
+        q = np.quantile(y, alpha, method=method)
+        c = 13.5
+
+        # 1
+        assert_allclose(np.quantile(c + y, alpha, method=method), c + q)
+        # 2
+        assert_allclose(np.quantile(c * y, alpha, method=method), c * q)
+        # 3
+        if method in ("averaged_inverted_cdf", "hazen", "weibull", "linear",
+            "median_unbiased", "normal_unbiased", "midpoint", "nearest"):
+            assert_allclose(np.quantile(-y, 1 - alpha, method=method), -q)
+        elif method == "lower":
+            assert_allclose(np.quantile(-y, 1 - alpha, method="higher"), -q)
+        elif method == "higher":
+            assert_allclose(np.quantile(-y, 1 - alpha, method="lower"), -q)
+        else:
+            # "inverted_cdf", "closest_observation",
+            # "interpolated_inverted_cdf"
+            # np.quantile([0, 1], 0.5, ..) = 0 and
+            # -np.quantile([0, -1], 0.5, ..) = 1
+            # Therefore, they behave like "lower" and lie at the bounderies
+            # such that even the identification equation is not fulfilled.
+            q_minus = -np.quantile(-y, 1 - alpha, method=method)
+            assert np.abs(np.mean(self.V(q_minus, y, alpha))) > 0.1 / n
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
