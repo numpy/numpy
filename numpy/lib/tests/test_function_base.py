@@ -3608,7 +3608,7 @@ class TestQuantile:
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         else:
-            assert_allclose(np.mean(self.V(x, y, alpha)))
+            assert_allclose(np.mean(self.V(x, y, alpha)), 0)
 
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.1, 0.5, 0.7, 0.9])
