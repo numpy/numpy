@@ -3477,7 +3477,7 @@ quantile_methods = [
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
-    def V(x, y, alpha):
+    def V(self, x, y, alpha):
         # Identification function used in several tests.
         return (x >= y) - alpha
 
