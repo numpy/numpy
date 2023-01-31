@@ -150,7 +150,7 @@ class Mandelbrot(Benchmark):
         return np.sum(np.multiply(z,z) + c)
 
     def mandelbrot_numpy(self, c, maxiter):
-        output = np.zeros(c.shape, np.int)
+        output = np.zeros(c.shape, np.int32)
         z = np.empty(c.shape, np.complex64)
         for it in range(maxiter):
             notdone = self.f(z)
