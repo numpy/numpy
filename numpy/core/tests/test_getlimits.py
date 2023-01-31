@@ -41,18 +41,21 @@ class TestLongdouble:
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
+def assert_finfo_equal(f1, f2):
+    # assert two finfo instances have the same attributes
+    for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
+                 'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
+                 'nmant', 'precision', 'resolution', 'tiny',
+                 'smallest_normal', 'smallest_subnormal'):
+        assert_equal(getattr(f1, attr), getattr(f2, attr), f'finfo instances differ on {attr}')
+
 class TestFinfo:
     def test_basic(self):
         dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
                        [np.float16, np.float32, np.float64, np.complex64,
                         np.complex128]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
-                         'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
-                         'nmant', 'precision', 'resolution', 'tiny',
-                         'smallest_normal', 'smallest_subnormal'):
-                assert_equal(getattr(finfo(dt1), attr),
-                             getattr(finfo(dt2), attr), attr)
+            assert_finfo_equal(finfo(dt1), finfo(dt2))
         assert_raises(ValueError, finfo, 'i4')
 
 class TestIinfo:
@@ -97,11 +100,9 @@ def test_instances():
             assert getattr(class_info, key) == getattr(instance_info, key)
 
     for c in [float, np.float16, np.float32, np.float64]:
-        class_info = finfo(c)
-        instance_info = finfo(c(1.2))
-
-        for key in ['resolution', 'min', 'max', 'dtype']:
-            assert getattr(class_info, key) == getattr(instance_info, key)
+        class_finfo = finfo(c)
+        instance_finfo = finfo(c(1.2))
+        assert_finfo_equal(class_finfo, instance_finfo)
 
     with pytest.raises(ValueError):
         iinfo(10.)
