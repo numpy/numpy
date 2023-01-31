@@ -127,7 +127,7 @@ def check_td_order(tds):
     for prev_i, sign in enumerate(signatures[1:]):
         if sign in signatures[:prev_i+1]:
             continue  # allow duplicates...
-        
+
         _check_order(signatures[prev_i], sign)
 
 
@@ -1277,22 +1277,26 @@ def make_ufuncs(funcdict):
             fmt = textwrap.dedent("""
             {{
                 PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
-                PyObject *info = get_info_no_cast((PyUFuncObject *)f, dtype, {count});
+                PyObject *info = get_info_no_cast((PyUFuncObject *)f,
+                                                   dtype, {count});
                 if (info == NULL) {{
                     return -1;
                 }}
                 if (info == Py_None) {{
                     PyErr_SetString(PyExc_RuntimeError,
-                        "cannot add indexed loop to ufunc {name} with {typenum}");
+                        "cannot add indexed loop to ufunc "
+                        "{name} with {typenum}");
                     return -1;
                 }}
                 if (!PyObject_TypeCheck(info, &PyArrayMethod_Type)) {{
                     PyErr_SetString(PyExc_RuntimeError,
-                        "Not a PyArrayMethodObject in ufunc {name} with {typenum}");
+                        "Not a PyArrayMethodObject in ufunc "
+                        "{name} with {typenum}");
                 }}
-                ((PyArrayMethodObject*)info)->contiguous_indexed_loop = {funcname};
+                ((PyArrayMethodObject*)info)->contiguous_indexed_loop =
+                                                                 {funcname};
                 /* info is borrowed, no need to decref*/
-            }}    
+            }}
             """)
             cname = name
             if cname == "floor_divide":
@@ -1304,7 +1308,7 @@ def make_ufuncs(funcdict):
                 name=name,
                 funcname = f"{english_upper(chartoname[c])}_{cname}_indexed",
             ))
-            
+
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))
@@ -1336,9 +1340,10 @@ def make_code(funcdict, filename):
      * tuple of identical dtypes. Return a borrowed ref of the first match.
      */
     static PyObject *
-    get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype, int ndtypes)
+    get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                     int ndtypes)
     {
-        
+
         PyObject *t_dtypes = PyTuple_New(ndtypes);
         if (t_dtypes == NULL) {
             return NULL;
@@ -1351,7 +1356,8 @@ def make_code(funcdict, filename):
         for (Py_ssize_t i = 0; i < length; i++) {
             PyObject *item = PyList_GetItem(loops, i);
             PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-            int cmp = PyObject_RichCompareBool(cur_DType_tuple, t_dtypes, Py_EQ);
+            int cmp = PyObject_RichCompareBool(cur_DType_tuple,
+                                               t_dtypes, Py_EQ);
             if (cmp < 0) {
                 Py_DECREF(t_dtypes);
                 return NULL;
@@ -1361,7 +1367,7 @@ def make_code(funcdict, filename):
             }
             /* Got the match */
             Py_DECREF(t_dtypes);
-            return PyTuple_GetItem(item, 1); 
+            return PyTuple_GetItem(item, 1);
         }
         Py_DECREF(t_dtypes);
         Py_RETURN_NONE;
