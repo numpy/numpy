@@ -86,14 +86,29 @@ class TestRepr:
 
 
 def test_instances():
-    iinfo(10)
-    iinfo(np.int16(1))
-    finfo(3.0)
-    finfo(np.float32(1.))
-    finfo(np.float64(-1.))
+    # Test the finfo and iinfo results on instances agree with the results
+    # on the corresponding classes 
+
+    for c in [int, np.int16, np.int32, np.int64]:
+        class_info = iinfo(c)
+        instance_info = iinfo(c(12))
+
+        for key in ['bits', 'min', 'max']:
+            assert getattr(class_info, key) == getattr(instance_info, key)
+
+    for c in [float, np.float16, np.float32, np.float64]:
+        class_info = finfo(c)
+        instance_info = finfo(c(1.2))
+
+        for key in ['resolution', 'min', 'max', 'dtype']:
+            assert getattr(class_info, key) == getattr(instance_info, key)
 
     with pytest.raises(ValueError):
         iinfo(10.)
+
+    with pytest.raises(ValueError):
+        iinfo('hi')
+
     with pytest.raises(ValueError):
         finfo(np.int64(1))
 
