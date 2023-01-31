@@ -404,7 +404,8 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.conjugate'),
           None,
-          TD(ints+flts+cmplx, simd=[('avx2', ints), ('avx512f', cmplxvec)]),
+          TD(ints+flts+cmplx, simd=[('avx2', ints)],
+            dispatch=[('loops_arithm_fp', 'FD')]),
           TD(P, f='conjugate'),
           ),
 'fmod':
@@ -419,7 +420,8 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.square'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints), ('avx512f', 'FD')], dispatch=[('loops_unary_fp', 'fd')]),
+          TD(ints+inexact, simd=[('avx2', ints)],
+             dispatch=[('loops_unary_fp', 'fd'), ('loops_arithm_fp', 'FD')]),
           TD(O, f='Py_square'),
           ),
 'reciprocal':
@@ -460,7 +462,8 @@ defdict = {
           'PyUFunc_AbsoluteTypeResolver',
           TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd'),
                                                  ('loops_logical', '?')]),
-          TD(cmplx, simd=[('avx512f', cmplxvec)], out=('f', 'd', 'g')),
+          TD(cmplx, dispatch=[('loops_unary_complex', 'FD')],
+             out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
 '_arg':

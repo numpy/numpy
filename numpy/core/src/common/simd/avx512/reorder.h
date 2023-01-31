@@ -167,6 +167,140 @@ NPY_FINLINE npyv_f64x2 npyv_zip_f64(__m512d a, __m512d b)
     return r;
 }
 
+// deinterleave two vectors
+NPY_FINLINE npyv_u8x2 npyv_unzip_u8(npyv_u8 ab0, npyv_u8 ab1)
+{
+    npyv_u8x2 r;
+#ifdef NPY_HAVE_AVX512VBMI
+    const __m512i idx_a = npyv_set_u8(
+        0,  2,  4,   6,   8,   10,  12,  14,  16,  18,  20,  22,  24,  26,  28,  30,
+        32, 34, 36,  38,  40,  42,  44,  46,  48,  50,  52,  54,  56,  58,  60,  62,
+        64, 66, 68,  70,  72,  74,  76,  78,  80,  82,  84,  86,  88,  90,  92,  94,
+        96, 98, 100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124, 126
+    );
+    const __m512i idx_b = npyv_set_u8(
+        1,  3,  5,   7,   9,   11,  13,  15,  17,  19,  21,  23,  25,  27,  29,  31,
+        33, 35, 37,  39,  41,  43,  45,  47,  49,  51,  53,  55,  57,  59,  61,  63,
+        65, 67, 69,  71,  73,  75,  77,  79,  81,  83,  85,  87,  89,  91,  93,  95,
+        97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 127
+    );
+    r.val[0] = _mm512_permutex2var_epi8(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_epi8(ab0, idx_b, ab1);
+#else
+    #ifdef NPY_HAVE_AVX512BW
+        const __m512i idx = npyv_set_u8(
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+        );
+        __m512i abl = _mm512_shuffle_epi8(ab0, idx);
+        __m512i abh = _mm512_shuffle_epi8(ab1, idx);
+    #else
+        const __m256i idx = _mm256_setr_epi8(
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+            0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+        );
+        __m256i abl_lo = _mm256_shuffle_epi8(npyv512_lower_si256(ab0),  idx);
+        __m256i abl_hi = _mm256_shuffle_epi8(npyv512_higher_si256(ab0), idx);
+        __m256i abh_lo = _mm256_shuffle_epi8(npyv512_lower_si256(ab1),  idx);
+        __m256i abh_hi = _mm256_shuffle_epi8(npyv512_higher_si256(ab1), idx);
+        __m512i abl = npyv512_combine_si256(abl_lo, abl_hi);
+        __m512i abh = npyv512_combine_si256(abh_lo, abh_hi);
+    #endif
+    const __m512i idx_a = npyv_set_u64(0, 2, 4, 6, 8, 10, 12, 14);
+    const __m512i idx_b = npyv_set_u64(1, 3, 5, 7, 9, 11, 13, 15);
+    r.val[0] = _mm512_permutex2var_epi64(abl, idx_a, abh);
+    r.val[1] = _mm512_permutex2var_epi64(abl, idx_b, abh);
+#endif
+    return r;
+}
+#define npyv_unzip_s8 npyv_unzip_u8
+
+NPY_FINLINE npyv_u16x2 npyv_unzip_u16(npyv_u16 ab0, npyv_u16 ab1)
+{
+    npyv_u16x2 r;
+#ifdef NPY_HAVE_AVX512BW
+    const __m512i idx_a = npyv_set_u16(
+        0,  2,  4,  6,  8,  10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
+        32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62
+    );
+    const __m512i idx_b = npyv_set_u16(
+        1,  3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31,
+        33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63
+    );
+    r.val[0] = _mm512_permutex2var_epi16(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_epi16(ab0, idx_b, ab1);
+#else
+    const __m256i idx = _mm256_setr_epi8(
+        0,1, 4,5, 8,9, 12,13, 2,3, 6,7, 10,11, 14,15,
+        0,1, 4,5, 8,9, 12,13, 2,3, 6,7, 10,11, 14,15
+    );
+    __m256i abl_lo = _mm256_shuffle_epi8(npyv512_lower_si256(ab0),  idx);
+    __m256i abl_hi = _mm256_shuffle_epi8(npyv512_higher_si256(ab0), idx);
+    __m256i abh_lo = _mm256_shuffle_epi8(npyv512_lower_si256(ab1),  idx);
+    __m256i abh_hi = _mm256_shuffle_epi8(npyv512_higher_si256(ab1), idx);
+    __m512i abl = npyv512_combine_si256(abl_lo, abl_hi);
+    __m512i abh = npyv512_combine_si256(abh_lo, abh_hi);
+
+    const __m512i idx_a = npyv_set_u64(0, 2, 4, 6, 8, 10, 12, 14);
+    const __m512i idx_b = npyv_set_u64(1, 3, 5, 7, 9, 11, 13, 15);
+    r.val[0] = _mm512_permutex2var_epi64(abl, idx_a, abh);
+    r.val[1] = _mm512_permutex2var_epi64(abl, idx_b, abh);
+#endif
+    return r;
+}
+#define npyv_unzip_s16 npyv_unzip_u16
+
+NPY_FINLINE npyv_u32x2 npyv_unzip_u32(npyv_u32 ab0, npyv_u32 ab1)
+{
+    const __m512i idx_a = npyv_set_u32(
+        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+    );
+    const __m512i idx_b = npyv_set_u32(
+        1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31
+    );
+    npyv_u32x2 r;
+    r.val[0] = _mm512_permutex2var_epi32(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_epi32(ab0, idx_b, ab1);
+    return r;
+}
+#define npyv_unzip_s32 npyv_unzip_u32
+
+NPY_FINLINE npyv_u64x2 npyv_unzip_u64(npyv_u64 ab0, npyv_u64 ab1)
+{
+    const __m512i idx_a = npyv_set_u64(0, 2, 4, 6, 8, 10, 12, 14);
+    const __m512i idx_b = npyv_set_u64(1, 3, 5, 7, 9, 11, 13, 15);
+    npyv_u64x2 r;
+    r.val[0] = _mm512_permutex2var_epi64(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_epi64(ab0, idx_b, ab1);
+    return r;
+}
+#define npyv_unzip_s64 npyv_unzip_u64
+
+NPY_FINLINE npyv_f32x2 npyv_unzip_f32(npyv_f32 ab0, npyv_f32 ab1)
+{
+    const __m512i idx_a = npyv_set_u32(
+        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+    );
+    const __m512i idx_b = npyv_set_u32(
+        1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31
+    );
+    npyv_f32x2 r;
+    r.val[0] = _mm512_permutex2var_ps(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_ps(ab0, idx_b, ab1);
+    return r;
+}
+NPY_FINLINE npyv_f64x2 npyv_unzip_f64(npyv_f64 ab0, npyv_f64 ab1)
+{
+    const __m512i idx_a = npyv_set_u64(0, 2, 4, 6, 8, 10, 12, 14);
+    const __m512i idx_b = npyv_set_u64(1, 3, 5, 7, 9, 11, 13, 15);
+    npyv_f64x2 r;
+    r.val[0] = _mm512_permutex2var_pd(ab0, idx_a, ab1);
+    r.val[1] = _mm512_permutex2var_pd(ab0, idx_b, ab1);
+    return r;
+}
+
 // Reverse elements of each 64-bit lane
 NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
 {
@@ -222,5 +356,23 @@ NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
 {
     return _mm512_shuffle_ps(a, a, (_MM_PERM_ENUM)_MM_SHUFFLE(2, 3, 0, 1));
 }
+
+// Permuting the elements of each 128-bit lane by immediate index for
+// each element.
+#define npyv_permi128_u32(A, E0, E1, E2, E3) \
+    _mm512_shuffle_epi32(A, _MM_SHUFFLE(E3, E2, E1, E0))
+
+#define npyv_permi128_s32 npyv_permi128_u32
+
+#define npyv_permi128_u64(A, E0, E1) \
+    _mm512_shuffle_epi32(A, _MM_SHUFFLE(((E1)<<1)+1, ((E1)<<1), ((E0)<<1)+1, ((E0)<<1)))
+
+#define npyv_permi128_s64 npyv_permi128_u64
+
+#define npyv_permi128_f32(A, E0, E1, E2, E3) \
+    _mm512_permute_ps(A, _MM_SHUFFLE(E3, E2, E1, E0))
+
+#define npyv_permi128_f64(A, E0, E1) \
+    _mm512_permute_pd(A, (((E1)<<7) | ((E0)<<6) | ((E1)<<5) | ((E0)<<4) | ((E1)<<3) | ((E0)<<2) | ((E1)<<1) | (E0)))
 
 #endif // _NPY_SIMD_AVX512_REORDER_H
