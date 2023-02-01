@@ -184,7 +184,7 @@ stages:
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
 
-    - script: git submodules update --init
+    - script: git submodule update --init
       displayName: 'Fetch submodules'
 
     # prefer usage of clang over gcc proper
@@ -290,7 +290,6 @@ stages:
 
     steps:
     - template: azure-steps-windows.yml
-      submodules: true
 
 
   - job: Linux_conda
