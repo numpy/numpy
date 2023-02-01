@@ -1,0 +1,212 @@
+cff-version: 1.2.0
+message: If you use this software, please cite either the article from preferred-citation
+  or the software itself.
+type: software
+title: NumPy
+version: 1.24.1
+date-released: '2022-12-27'
+abstract: NumPy is the fundamental package for scientific computing with Python.
+repository-artifact: https://pypi.org/project/numpy
+repository-code: https://github.com/numpy/numpy
+license: BSD-3-Clause
+authors:
+- family-names: Oliphant
+  given-names: Travis E.
+  alias: teoliphant
+- family-names: Harris
+  given-names: Charles R.
+  alias: charris
+- family-names: Cournapeau
+  given-names: David
+  alias: cournape
+- family-names: Berg
+  given-names: Sebastian
+  alias: seberg
+- family-names: Peterson
+  given-names: Pearu
+  alias: pearu
+  orcid: https://orcid.org/0000-0001-7328-4305
+- family-names: Wieser
+  given-names: Eric
+  alias: eric-wieser
+  orcid: https://orcid.org/0000-0003-0412-4978
+- family-names: Picus
+  given-names: Matti
+  alias: mattip
+  orcid: https://orcid.org/0000-0002-1771-9949
+- family-names: Virtanen
+  given-names: Pauli
+  alias: pv
+  orcid: https://orcid.org/0000-0001-9957-1257
+- family-names: van Beek
+  given-names: Bas
+  alias: BvB93
+- family-names: Gommers
+  given-names: Ralf
+  alias: rgommers
+  orcid: https://orcid.org/0000-0002-0300-3333
+- family-names: Taylor
+  given-names: Julian
+  alias: juliantaylor
+- family-names: Wiebe
+  given-names: Mark
+  alias: mwiebe
+- family-names: van der Walt
+  given-names: Stéfan J.
+  alias: stefanv
+  orcid: https://orcid.org/0000-0001-9276-1891
+- family-names: Sheppard
+  given-names: Kevin
+  alias: bashtage
+- family-names: Kern
+  given-names: Robert
+  alias: rkern
+  orcid: https://orcid.org/0000-0002-4476-2563
+- family-names: Adel
+  given-names: Sayed
+  alias: seiko2plus
+- family-names: Meurer
+  given-names: Aaron
+  alias: asmeurer
+  orcid: https://orcid.org/0000-0003-3501-7841
+- family-names: Weckesser
+  given-names: Warren
+  alias: WarrenWeckesser
+- family-names: Haldane
+  given-names: Allan
+  alias: ahaldane
+- family-names: Barnowski
+  given-names: Ross
+  alias: rossbar
+- family-names: van Kerkwijk
+  given-names: Marten H.
+  alias: mhvk
+- family-names: Hoyer
+  given-names: Stephan
+  alias: shoyer
+  orcid: https://orcid.org/0000-0002-5207-0380
+- family-names: Millman
+  given-names: Jarrod
+  alias: jarrodmillman
+  orcid: https://orcid.org/0000-0002-5263-5070
+- family-names: Smith
+  given-names: Nathaniel J.
+  alias: njsmith
+- family-names: Reddy
+  given-names: Tyler
+  alias: tylerjereddy
+  orcid: https://orcid.org/0000-0003-2364-6157
+- family-names: Devulapalli
+  given-names: Raghuveer
+  alias: r-devulap
+- family-names: del Río
+  given-names: Jaime Fernández
+  alias: jaimefrio
+- family-names: Kathiresan
+  given-names: Ganesh
+  alias: ganesh-k13
+- family-names: Weber Mendonça
+  given-names: Melissa
+  alias: melissawm
+  orcid: https://orcid.org/0000-0002-3212-402X
+- family-names: Brett
+  given-names: Matthew
+  alias: matthew-brett
+- name: Chunlin
+  alias: Qiyu8
+- family-names: Goswami
+  given-names: Rohit
+  alias: HaoZeke
+  orcid: https://orcid.org/0000-0002-2393-8056
+- family-names: Singh
+  given-names: Gagandeep
+  alias: czgdp1807
+- family-names: Gohlke
+  given-names: Christoph
+  alias: cgohlke
+  orcid: https://orcid.org/0000-0001-8108-7707
+- family-names: Nathanson
+  given-names: Ben
+  alias: bjnath
+- family-names: Abbasi
+  given-names: Hameer
+  alias: hameerabbasi
+- family-names: Caswell
+  given-names: Thomas A.
+  alias: tacaswell
+  orcid: https://orcid.org/0000-0003-4692-608X
+- name: others
+preferred-citation:
+  type: article
+  authors:
+  - family-names: Harris
+    given-names: Charles R.
+  - family-names: Millman
+    given-names: K. Jarrod
+    orcid: https://orcid.org/0000-0002-5263-5070
+  - family-names: van der Walt
+    given-names: Stéfan J.
+    orcid: https://orcid.org/0000-0001-9276-1891
+  - family-names: Gommers
+    given-names: Ralf
+    orcid: https://orcid.org/0000-0002-0300-3333
+  - family-names: Virtanen
+    given-names: Pauli
+    orcid: https://orcid.org/0000-0001-9957-1257
+  - family-names: Cournapeau
+    given-names: David
+  - family-names: Wieser
+    given-names: Eric
+    orcid: https://orcid.org/0000-0003-0412-4978
+  - family-names: Taylor
+    given-names: Julian
+  - family-names: Berg
+    given-names: Sebastian
+  - family-names: Smith
+    given-names: Nathaniel J.
+  - family-names: Kern
+    given-names: Robert
+    orcid: https://orcid.org/0000-0002-4476-2563
+  - family-names: Picus
+    given-names: Matti
+    orcid: https://orcid.org/0000-0002-1771-9949
+  - family-names: Hoyer
+    given-names: Stephan
+    orcid: https://orcid.org/0000-0002-5207-0380
+  - family-names: van Kerkwijk
+    given-names: Marten H.
+  - family-names: Brett
+    given-names: Matthew
+  - family-names: Haldane
+    given-names: Allan
+  - family-names: del Río
+    given-names: Jaime Fernández
+  - family-names: Wiebe
+    given-names: Mark
+  - family-names: Peterson
+    given-names: Pearu
+    orcid: https://orcid.org/0000-0001-7328-4305
+  - family-names: Gérard-Marchant
+    given-names: Pierre
+  - family-names: Sheppard
+    given-names: Kevin
+  - family-names: Reddy
+    given-names: Tyler
+    orcid: https://orcid.org/0000-0003-2364-6157
+  - family-names: Weckesser
+    given-names: Warren
+  - family-names: Abbasi
+    given-names: Hameer
+  - family-names: Gohlke
+    given-names: Christoph
+    orcid: https://orcid.org/0000-0001-8108-7707
+  - family-names: Oliphant
+    given-names: Travis E.
+  title: Array programming with NumPy
+  doi: 10.1038/s41586-020-2649-2
+  journal: Nature
+  volume: 585
+  start: 357
+  end: 362
+  year: 2020
+  month: 9
