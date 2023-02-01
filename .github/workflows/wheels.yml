@@ -75,6 +75,7 @@ jobs:
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64]
+          - [ubuntu-20.04, musllinux_x86_64]
           - [macos-12, macosx_*]
           - [windows-2019, win_amd64]
           - [windows-2019, win32]
@@ -82,8 +83,8 @@ jobs:
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
-            python: "pp38"
-          - buildplat: [windows-2019, win32]
+            python: "pp39"
+          - buildplat: [ ubuntu-20.04, musllinux_x86_64 ]
             python: "pp39"
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
