@@ -1,10 +1,6 @@
 name: Build_Test
 
 on:
-  push:
-    branches:
-      - main
-      - maintenance/**
   pull_request:
     branches:
       - main
