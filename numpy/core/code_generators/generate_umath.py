@@ -415,6 +415,7 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'mm', 'd', cfunc_alias='divide'),
           ],
           TD(O, f='PyNumber_TrueDivide'),
+          indexed=flts
           ),
 'conjugate':
     Ufunc(1, 1, None,
@@ -1298,15 +1299,11 @@ def make_ufuncs(funcdict):
                 /* info is borrowed, no need to decref*/
             }}
             """)
-            cname = name
-            if cname == "floor_divide":
-                # XXX there must be a better way...
-                cname = "divide"
             mlist.append(fmt.format(
                 typenum=f"NPY_{english_upper(chartoname[c])}",
                 count=uf.nin+uf.nout,
                 name=name,
-                funcname = f"{english_upper(chartoname[c])}_{cname}_indexed",
+                funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
@@ -1335,44 +1332,10 @@ def make_code(funcdict, filename):
     #include "_umath_doc_generated.h"
 
     %s
-    /*
-     * Return the PyArrayMethodObject or PyCapsule that matches a registered
-     * tuple of identical dtypes. Return a borrowed ref of the first match.
-     */
-    static PyObject *
+    /* Returns a borrowed ref of the second value in the matching info tuple */
+    PyObject *
     get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
-                     int ndtypes)
-    {
-
-        PyObject *t_dtypes = PyTuple_New(ndtypes);
-        if (t_dtypes == NULL) {
-            return NULL;
-        }
-        for (int i=0; i < ndtypes; i++) {
-            PyTuple_SetItem(t_dtypes, i, (PyObject *)op_dtype);
-        }
-        PyObject *loops = ufunc->_loops;
-        Py_ssize_t length = PyList_Size(loops);
-        for (Py_ssize_t i = 0; i < length; i++) {
-            PyObject *item = PyList_GetItem(loops, i);
-            PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-            int cmp = PyObject_RichCompareBool(cur_DType_tuple,
-                                               t_dtypes, Py_EQ);
-            if (cmp < 0) {
-                Py_DECREF(t_dtypes);
-                return NULL;
-            }
-            if (cmp == 0) {
-                continue;
-            }
-            /* Got the match */
-            Py_DECREF(t_dtypes);
-            return PyTuple_GetItem(item, 1);
-        }
-        Py_DECREF(t_dtypes);
-        Py_RETURN_NONE;
-    }
-
+                     int ndtypes);
 
     static int
     InitOperators(PyObject *dictionary) {
