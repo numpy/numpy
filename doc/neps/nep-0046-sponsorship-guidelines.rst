@@ -113,6 +113,11 @@ maintaining the page reasonable; the level is the equivalent of, e.g., one GSoC
 or a person-week's worth of engineering time in a Western country, which seems
 like a reasonable lower limit.
 
+Additionally, accredidation for smaller focused support in implementing
+specific ehancements or fixes may be attributed in the release notes for that
+contribution. In this case the accredidation will take the form of something
+like "Thanks to <name and url> for sponsoring this work" in the appropriate
+release note blurb.
 
 Implementation
 --------------
