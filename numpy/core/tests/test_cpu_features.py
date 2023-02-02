@@ -128,7 +128,8 @@ class Test_X86_Features(AbstractTest):
                       "AVX512VBMI"],
         AVX512_ICL = ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
                       "AVX512VBMI", "AVX512VNNI", "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ"],
-        AVX512_SPR = ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512FP16"],
+        AVX512_SPR = ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ",
+                      "AVX512VL", "AVX512FP16"],
     )
     features_map = dict(
         SSE3="PNI", SSE41="SSE4_1", SSE42="SSE4_2", FMA3="FMA",
