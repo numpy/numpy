@@ -47,7 +47,8 @@ def assert_finfo_equal(f1, f2):
                  'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
                  'nmant', 'precision', 'resolution', 'tiny',
                  'smallest_normal', 'smallest_subnormal'):
-        assert_equal(getattr(f1, attr), getattr(f2, attr), f'finfo instances differ on {attr}')
+        assert_equal(getattr(f1, attr), getattr(f2, attr),
+                     f'finfo instances differ on {attr}')
 
 class TestFinfo:
     def test_basic(self):
