@@ -116,7 +116,7 @@ class Test_X86_Features(AbstractTest):
         "AVX", "F16C", "XOP", "FMA4", "FMA3", "AVX2", "AVX512F", "AVX512CD",
         "AVX512ER", "AVX512PF", "AVX5124FMAPS", "AVX5124VNNIW", "AVX512VPOPCNTDQ",
         "AVX512VL", "AVX512BW", "AVX512DQ", "AVX512VNNI", "AVX512IFMA",
-        "AVX512VBMI", "AVX512VBMI2", "AVX512BITALG",
+        "AVX512VBMI", "AVX512VBMI2", "AVX512BITALG, AVX512FP16",
     ]
     features_groups = dict(
         AVX512_KNL = ["AVX512F", "AVX512CD", "AVX512ER", "AVX512PF"],
@@ -128,6 +128,7 @@ class Test_X86_Features(AbstractTest):
                       "AVX512VBMI"],
         AVX512_ICL = ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
                       "AVX512VBMI", "AVX512VNNI", "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ"],
+        AVX512_SPR = ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512FP16"],
     )
     features_map = dict(
         SSE3="PNI", SSE41="SSE4_1", SSE42="SSE4_2", FMA3="FMA",
