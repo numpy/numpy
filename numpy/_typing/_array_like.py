@@ -83,7 +83,7 @@ _DualArrayLike = Union[
 #
 # https://github.com/python/typing/issues/593
 ArrayLike = _DualArrayLike[
-    dtype,
+    dtype[Any],
     Union[bool, int, float, complex, str, bytes],
 ]
 
