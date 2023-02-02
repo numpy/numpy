@@ -23,8 +23,11 @@ from ._nested_sequence import _NestedSequence
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
+_ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
+
+NDArray = ndarray[Any, dtype[_ScalarType_co]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
