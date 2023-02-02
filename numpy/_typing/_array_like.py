@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # NOTE: Import `Sequence` from `typing` as we it is needed for a type-alias,
 # not an annotation
+import sys
 from collections.abc import Collection, Callable
 from typing import Any, Sequence, Protocol, Union, TypeVar, runtime_checkable
 from numpy import (
@@ -82,10 +83,16 @@ _DualArrayLike = Union[
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = _DualArrayLike[
-    dtype,
-    Union[bool, int, float, complex, str, bytes],
-]
+if sys.version_info[:2] < (3, 9):
+    ArrayLike = _DualArrayLike[
+        dtype,
+        Union[bool, int, float, complex, str, bytes],
+    ]
+else:
+    ArrayLike = _DualArrayLike[
+        dtype[Any],
+        Union[bool, int, float, complex, str, bytes],
+    ]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
