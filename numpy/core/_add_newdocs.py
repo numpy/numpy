@@ -2703,7 +2703,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
     -----
     Does not include memory consumed by non-element attributes of the
     array object.
-    
+
     See Also
     --------
     sys.getsizeof
@@ -2997,10 +2997,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
 
     >>> np.ndarray[Any, np.dtype[Any]]
     numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
-
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
 
     See Also
     --------
@@ -6500,10 +6496,6 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
     >>> np.dtype[np.int64]
     numpy.dtype[numpy.int64]
 
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
-
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
@@ -7012,10 +7004,6 @@ add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
 
     >>> np.signedinteger[Any]
     numpy.signedinteger[typing.Any]
-
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
 
     See Also
     --------
