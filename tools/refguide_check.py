@@ -99,12 +99,6 @@ DOCTEST_SKIPDICT = {
     'numpy.lib.DataSource': None,
     'numpy.lib.Repository': None,
 }
-if sys.version_info < (3, 9):
-    DOCTEST_SKIPDICT.update({
-        "numpy.core.ndarray": {"__class_getitem__"},
-        "numpy.core.dtype": {"__class_getitem__"},
-        "numpy.core.number": {"__class_getitem__"},
-    })
 
 # Skip non-numpy RST files, historical release notes
 # Any single-directory exact match will skip the directory and all subdirs.
