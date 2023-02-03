@@ -244,13 +244,14 @@ NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
         return _mm_cvtsi32_si128(*ptr);
     case 2:
         return _mm_loadl_epi64((const __m128i*)ptr);
-    case 3:;
-        npyv_s32 a = _mm_loadl_epi64((const __m128i*)ptr);
-    #ifdef NPY_HAVE_SSE41
-        return _mm_insert_epi32(a, ptr[2], 2);
-    #else
-        return _mm_unpacklo_epi64(a, _mm_cvtsi32_si128(ptr[2]));
-    #endif
+    case 3: {
+            npyv_s32 a = _mm_loadl_epi64((const __m128i*)ptr);
+        #ifdef NPY_HAVE_SSE41
+            return _mm_insert_epi32(a, ptr[2], 2);
+        #else
+            return _mm_unpacklo_epi64(a, _mm_cvtsi32_si128(ptr[2]));
+        #endif
+        }
     default:
         return npyv_load_s32(ptr);
     }
@@ -371,23 +372,27 @@ npyv_loadn_tillz_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane)
     case 1:
         return _mm_cvtsi32_si128(ptr[0]);
     case 2:;
-        npyv_s32 a = _mm_cvtsi32_si128(ptr[0]);
-#ifdef NPY_HAVE_SSE41
-        return _mm_insert_epi32(a, ptr[stride], 1);
-#else
-        return _mm_unpacklo_epi32(a, _mm_cvtsi32_si128(ptr[stride]));
-#endif // NPY_HAVE_SSE41
-    case 3:;
-        a = _mm_cvtsi32_si128(ptr[0]);
-#ifdef NPY_HAVE_SSE41
-        a = _mm_insert_epi32(a, ptr[stride], 1);
-        a = _mm_insert_epi32(a, ptr[stride*2], 2);
-        return a;
-#else
-        a = _mm_unpacklo_epi32(a, _mm_cvtsi32_si128(ptr[stride]));
-        a = _mm_unpacklo_epi64(a, _mm_cvtsi32_si128(ptr[stride*2]));
-        return a;
-#endif // NPY_HAVE_SSE41
+        {
+            npyv_s32 a = _mm_cvtsi32_si128(ptr[0]);
+    #ifdef NPY_HAVE_SSE41
+            return _mm_insert_epi32(a, ptr[stride], 1);
+    #else
+            return _mm_unpacklo_epi32(a, _mm_cvtsi32_si128(ptr[stride]));
+    #endif // NPY_HAVE_SSE41
+        }
+    case 3:
+        {
+            npyv_s32 a = _mm_cvtsi32_si128(ptr[0]);
+    #ifdef NPY_HAVE_SSE41
+            a = _mm_insert_epi32(a, ptr[stride], 1);
+            a = _mm_insert_epi32(a, ptr[stride*2], 2);
+            return a;
+    #else
+            a = _mm_unpacklo_epi32(a, _mm_cvtsi32_si128(ptr[stride]));
+            a = _mm_unpacklo_epi64(a, _mm_cvtsi32_si128(ptr[stride*2]));
+            return a;
+    #endif // NPY_HAVE_SSE41
+        }
     default:
         return npyv_loadn_s32(ptr, stride);
     }
