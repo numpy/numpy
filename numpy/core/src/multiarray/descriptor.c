@@ -1470,7 +1470,7 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
 
     if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
         Py_INCREF(obj);
-        dt_info->dtype = obj;
+        dt_info->dtype = (PyArray_DTypeMeta *)obj;
         dt_info->descr = NULL;
         return NPY_SUCCEED;
     }
