@@ -18,6 +18,7 @@
 #include "can_cast_table.h"
 #include "common.h"
 #include "ctors.h"
+#include "descriptor.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "scalartypes.h"

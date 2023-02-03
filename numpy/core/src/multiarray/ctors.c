@@ -20,6 +20,7 @@
 #include "common.h"
 #include "ctors.h"
 #include "convert_datatype.h"
+#include "descriptor.h"
 #include "dtypemeta.h"
 #include "shape.h"
 #include "npy_buffer.h"
