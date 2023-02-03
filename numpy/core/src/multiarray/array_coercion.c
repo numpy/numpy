@@ -874,7 +874,7 @@ find_descriptor_from_array(
 
 /**
  * Given a dtype or DType object, find the correct descriptor to cast the
- * array to.  In some places, this function is use with dtype=NULL which
+ * array to.  In some places, this function is used with dtype=NULL which
  * means that legacy behavior is used: The dtype instances "S0", "U0", and
  * "V0" are converted to mean the DType classes instead.
  * When dtype != NULL, this path is ignored, and the function does nothing

@@ -1458,6 +1458,15 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
 }
 
 
+/**
+ * Converter function filling in an npy_dtype_info struct on success.
+ *
+ * @param obj representing a dtype instance (descriptor) or DType class.
+ * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ *         instance.  The class is always set while the instance may be NULL.
+ *         On error, both will be NULL.
+ * @return 0 on failure and 1 on success (as a converter)
+ */
 NPY_NO_EXPORT int
 PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
 {
@@ -1494,6 +1503,18 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
 }
 
 
+/**
+ * Converter function filling in an npy_dtype_info struct on success.  It
+ * accepts `None` and does nothing in that case (user must initialize to
+ * NULL anyway).
+ *
+ * @param obj None or obj representing a dtype instance (descr) or DType class.
+ * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ *         instance.  If `obj` is None, is not modified.  Otherwise the class
+ *         is always set while the instance may be NULL.
+ *         On error, both will be NULL.
+ * @return 0 on failure and 1 on success (as a converter)
+ */
 NPY_NO_EXPORT int
 PyArray_DTypeOrDescrConverterOptional(PyObject *obj, npy_dtype_info *dt_info)
 {
