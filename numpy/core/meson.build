@@ -744,6 +744,7 @@ src_umath = [
   src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
   src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
   src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
+  src_file.process('src/umath/loops_autovec_int.dispatch.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
   'src/umath/ufunc_type_resolution.c',
