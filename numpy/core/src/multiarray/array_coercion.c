@@ -874,42 +874,61 @@ find_descriptor_from_array(
 
 /**
  * Given a dtype or DType object, find the correct descriptor to cast the
- * array to.
+ * array to.  In some places, this function is use with dtype=NULL which
+ * means that legacy behavior is used: The dtype instances "S0", "U0", and
+ * "V0" are converted to mean the DType classes instead.
+ * When dtype != NULL, this path is ignored, and the function does nothing
+ * unless descr == NULL.
  *
  * This function is identical to normal casting using only the dtype, however,
  * it supports inspecting the elements when the array has object dtype
  * (and the given datatype describes a parametric DType class).
  *
  * @param arr
- * @param dtype A dtype instance or class.
+ * @param dtype NULL or a dtype class
+ * @param descr A dtype instance, if the dtype is NULL the dtype class is
+ *              found and e.g. "S0" is converted to denote only String.
  * @return A concrete dtype instance or NULL
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
+PyArray_AdaptDescriptorToArray(
+        PyArrayObject *arr, PyArray_DTypeMeta *dtype, PyArray_Descr *descr)
 {
     /* If the requested dtype is flexible, adapt it */
-    PyArray_Descr *new_dtype;
-    PyArray_DTypeMeta *new_DType;
+    PyArray_Descr *new_descr;
     int res;
 
-    res = PyArray_ExtractDTypeAndDescriptor((PyObject *)dtype,
-            &new_dtype, &new_DType);
-    if (res < 0) {
-        return NULL;
+    if (dtype != NULL && descr != NULL) {
+        /* descr was given and no special logic, return (call not necessary) */
+        Py_INCREF(descr);
+        return descr;
     }
-    if (new_dtype == NULL) {
-        res = find_descriptor_from_array(arr, new_DType, &new_dtype);
+    if (dtype == NULL) {
+        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (res < 0) {
-            Py_DECREF(new_DType);
             return NULL;
         }
-        if (new_dtype == NULL) {
-            /* This is an object array but contained no elements, use default */
-            new_dtype = NPY_DT_CALL_default_descr(new_DType);
+        if (new_descr != NULL) {
+            Py_DECREF(dtype);
+            return new_descr;
         }
     }
-    Py_DECREF(new_DType);
-    return new_dtype;
+    else {
+        assert(descr == NULL);  /* gueranteed above */
+        Py_INCREF(dtype);
+    }
+
+    res = find_descriptor_from_array(arr, dtype, &new_descr);
+    if (res < 0) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    if (new_descr == NULL) {
+        /* This is an object array but contained no elements, use default */
+        new_descr = NPY_DT_CALL_default_descr(dtype);
+    }
+    Py_DECREF(dtype);
+    return new_descr;
 }
 
 

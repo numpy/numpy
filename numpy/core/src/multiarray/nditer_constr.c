@@ -1118,7 +1118,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (op_request_dtype != NULL) {
             /* We just have a borrowed reference to op_request_dtype */
             Py_SETREF(*op_dtype, PyArray_AdaptDescriptorToArray(
-                                            *op, (PyObject *)op_request_dtype));
+                                            *op, NULL, op_request_dtype));
             if (*op_dtype == NULL) {
                 return 0;
             }

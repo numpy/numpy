@@ -82,7 +82,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_FindConcatenationDescriptor(
-        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
+        npy_intp n, PyArrayObject **arrays, PyArray_Descr *requested_dtype);
 
 NPY_NO_EXPORT int
 PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth);

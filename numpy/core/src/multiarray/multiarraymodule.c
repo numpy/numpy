@@ -467,7 +467,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         /* Get the priority subtype for the array */
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
         PyArray_Descr *descr = PyArray_FindConcatenationDescriptor(
-                narrays, arrays,  (PyObject *)dtype);
+                narrays, arrays, dtype);
         if (descr == NULL) {
             return NULL;
         }
@@ -583,7 +583,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
         PyArray_Descr *descr = PyArray_FindConcatenationDescriptor(
-                narrays, arrays, (PyObject *)dtype);
+                narrays, arrays, dtype);
         if (descr == NULL) {
             return NULL;
         }
