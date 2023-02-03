@@ -293,16 +293,7 @@ optional_function_attributes = [
   ['optimize("O3")', 'OPTIMIZE_OPT_3'],
   ['optimize("O2")', 'OPTIMIZE_OPT_2'],
   ['optimize("nonnull (1)")', 'NONNULL'],
-  ]
-if host_machine.cpu_family() in ['x86', 'x86_64']
-  optional_function_attributes += [
-    ['target("avx")', 'TARGET_AVX'],
-    ['target("avx2")', 'TARGET_AVX2'],
-    ['target("avx512f")', 'TARGET_AVX512F'],
-    ['target("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")', 'TARGET_AVX512_SKX'],
-  ]
-  # TODO: add the _WITH_INTRINSICS_AVX list
-endif
+]
 #foreach attr: optional_function_attributes
 #  if cc.has_function_attribute(attr[0])
 #    cdata.set10('HAVE_ATTRIBUTE_' + attr[1], true)
@@ -323,22 +314,8 @@ optional_intrinsics = [
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
 ]
 if host_machine.cpu_family() in ['x86', 'x86_64']
- optional_intrinsics += [
-    # MMX only needed for icc, but some clang's don't have it
-    ['_m_from_int64', '0', ['emmintrin.h'], []],
-    ['_mm_load_ps', '(float*)0', ['xmmintrin.h'], []],  # SSE
-    ['_mm_prefetch', '(float*)0, _MM_HINT_NTA', ['xmmintrin.h'], []],  # SSE
-    ['_mm_load_pd', '(double*)0', ['emmintrin.h'], []],  # SSE2
+  optional_intrinsics += [
     ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
-    # Check that the linker can handle AVX
-    ['__asm__ volatile', '"vpand %xmm1, %xmm2, %xmm3"', ['stdio.h'], ['HAVE_LINK_AVX']],
-    ['__asm__ volatile', '"vpand %ymm1, %ymm2, %ymm3"', ['stdio.h'], ['HAVE_LINK_AVX2']],
-    ['__asm__ volatile', '"vpaddd %zmm1, %zmm2, %zmm3"', ['stdio.h'], ['HAVE_LINK_AVX512F']],
-    ['__asm__ volatile',
-     '"vfpclasspd $0x40, %zmm15, %k6\\n vmovdqu8 %xmm0, %xmm1\\n vpbroadcastmb2q %k0, %xmm0"',
-     ['stdio.h'], ['HAVE_LINK_AVX512_SKX']
-    ],
-    ['__asm__ volatile', '"xgetbv"', ['stdio.h'], ['HAVE_XGETBV']],
   ]
 endif
 foreach intrin: optional_intrinsics
