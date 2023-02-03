@@ -3647,8 +3647,10 @@ class TestQuantile:
         # 3
         q = -np.quantile(-y, 1 - alpha, method=method)
         if method == "inverted_cdf":
-            if (n * alpha == int(n * alpha)
-                or np.round(n * alpha) == int(n * alpha) + 1):
+            if (
+                n * alpha == int(n * alpha)
+                or np.round(n * alpha) == int(n * alpha) + 1
+            ):
                 assert_allclose(q, np.quantile(y, alpha, method="higher"))
             else:
                 assert_allclose(q, np.quantile(y, alpha, method="lower"))
@@ -3667,7 +3669,7 @@ class TestQuantile:
                 assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
             else:
                 assert_allclose(q, np.quantile(y, alpha, method=method))
-        elif method =="lower":
+        elif method == "lower":
             assert_allclose(q, np.quantile(y, alpha, method="higher"))
         elif method == "higher":
             assert_allclose(q, np.quantile(y, alpha, method="lower"))
