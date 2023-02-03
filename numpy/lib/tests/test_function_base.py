@@ -3591,7 +3591,7 @@ class TestQuantile:
         assert_equal(np.quantile(a, 0.5), np.nan)
 
     @pytest.mark.parametrize("method", quantile_methods)
-    @pytest.mark.parametrize("alpha", [0.1, 0.5, 0.7, 0.9])
+    @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
     def test_quantile_identification_equation(self, method, alpha):
         # Test that the identification equation holds for the empirical
         # CDF:
@@ -3601,27 +3601,41 @@ class TestQuantile:
         # quantile (at level alpha), see
         # https://doi.org/10.48550/arXiv.0912.0902        
         rng = np.random.default_rng(4321)
-        n = 100
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
         x = np.quantile(y, alpha, method=method)
         if method in ("higher", "nearest"):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
+        elif int(n * alpha) == n * alpha:
+            # We can expect exact results, up to machine precision.
+            assert_allclose(np.mean(self.V(x, y, alpha)), 0, atol=1e-14)
         else:
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0)
+            # V = (x >= y) - alpha cannot sum to zero exactly but within
+            # "sample precision".
+            assert_allclose(np.mean(self.V(x, y, alpha)), 0,
+                atol=np.amin(alpha, (1 - alpha)) / n)
 
     @pytest.mark.parametrize("method", quantile_methods)
-    @pytest.mark.parametrize("alpha", [0.1, 0.5, 0.7, 0.9])
+    @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
     def test_quantile_add_and_multiply_constant(self, method, alpha):
         # Test that
         #  1. quantile(c + x) = c + quantile(x)
         #  2. quantile(c * x) = c * quantile(x)
         #  3. quantile(-x) = -quantile(x, 1 - alpha)
-        #     On the empirical quantiles, this equation does not hold exactly.
+        #     On empirical quantiles, this equation does not hold exactly.
         # Koenker (2005) "Quantile Regression" Chapter 2.2.3 calls these
         # properties equivariance.
         rng = np.random.default_rng(4321)
-        n = 100
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
         q = np.quantile(y, alpha, method=method)
         c = 13.5
@@ -3631,22 +3645,37 @@ class TestQuantile:
         # 2
         assert_allclose(np.quantile(c * y, alpha, method=method), c * q)
         # 3
-        if method in ("averaged_inverted_cdf", "hazen", "weibull", "linear",
-            "median_unbiased", "normal_unbiased", "midpoint", "nearest"):
-            assert_allclose(np.quantile(-y, 1 - alpha, method=method), -q)
-        elif method == "lower":
-            assert_allclose(np.quantile(-y, 1 - alpha, method="higher"), -q)
+        q = -np.quantile(-y, 1 - alpha, method=method)
+        if method == "inverted_cdf":
+            if (n * alpha == int(n * alpha)
+                or np.round(n * alpha) == int(n * alpha) + 1):
+                assert_allclose(q, np.quantile(y, alpha, method="higher"))
+            else:
+                assert_allclose(q, np.quantile(y, alpha, method="lower"))
+        elif method == "closest_observation":
+            if n * alpha == int(n * alpha):
+                assert_allclose(q, np.quantile(y, alpha, method="higher"))
+            elif np.round(n * alpha) == int(n * alpha) + 1:
+                assert_allclose(
+                    q, np.quantile(y, alpha + 1/n, method="higher"))
+            else:
+                assert_allclose(q, np.quantile(y, alpha, method="lower"))
+        elif method == "interpolated_inverted_cdf":
+            assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+        elif method == "nearest":
+            if n * alpha == int(n * alpha):
+                assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+            else:
+                assert_allclose(q, np.quantile(y, alpha, method=method))
+        elif method =="lower":
+            assert_allclose(q, np.quantile(y, alpha, method="higher"))
         elif method == "higher":
-            assert_allclose(np.quantile(-y, 1 - alpha, method="lower"), -q)
+            assert_allclose(q, np.quantile(y, alpha, method="lower"))
         else:
-            # "inverted_cdf", "closest_observation",
-            # "interpolated_inverted_cdf"
-            # np.quantile([0, 1], 0.5, ..) = 0 and
-            # -np.quantile([0, -1], 0.5, ..) = 1
-            # Therefore, they behave like "lower" and lie at the bounderies
-            # such that even the identification equation is not fulfilled.
-            q_minus = -np.quantile(-y, 1 - alpha, method=method)
-            assert np.abs(np.mean(self.V(q_minus, y, alpha))) > 0.1 / n
+            # "averaged_inverted_cdf", "hazen", "weibull", "linear",
+            # "median_unbiased", "normal_unbiased", "midpoint"
+            assert_allclose(q, np.quantile(y, alpha, method=method))
+
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
