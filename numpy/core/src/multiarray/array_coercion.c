@@ -16,6 +16,7 @@
 #include "common_dtype.h"
 #include "dtypemeta.h"
 
+#include "npy_argparse.h"
 #include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "ctors.h"
@@ -1380,111 +1381,25 @@ PyArray_DiscoverDTypeAndShape(
 }
 
 
-
-/**
- * Check the descriptor is a legacy "flexible" DType instance, this is
- * an instance which is (normally) not attached to an array, such as a string
- * of length 0 or a datetime with no unit.
- * These should be largely deprecated, and represent only the DType class
- * for most `dtype` parameters.
- *
- * TODO: This function should eventually receive a deprecation warning and
- *       be removed.
- *
- * @param descr
- * @return 1 if this is not a concrete dtype instance 0 otherwise
- */
-static int
-descr_is_legacy_parametric_instance(PyArray_Descr *descr,
-                                    PyArray_DTypeMeta *DType)
-{
-    if (!NPY_DT_is_legacy(DType)) {
-        return 0;
-    }
-
-    if (PyDataType_ISUNSIZED(descr)) {
-        return 1;
-    }
-    /* Flexible descr with generic time unit (which can be adapted) */
-    if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
-        if (meta->base == NPY_FR_GENERIC) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-/**
- * Given either a DType instance or class, (or legacy flexible instance),
- * ands sets output dtype instance and DType class. Both results may be
- * NULL, but if `out_descr` is set `out_DType` will always be the
- * corresponding class.
- *
- * @param dtype
- * @param out_descr
- * @param out_DType
- * @return 0 on success -1 on failure
- */
-NPY_NO_EXPORT int
-PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
-        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
-{
-    *out_DType = NULL;
-    *out_descr = NULL;
-
-    if (dtype != NULL) {
-        if (PyObject_TypeCheck(dtype, (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
-            assert(dtype != (PyObject * )&PyArrayDescr_Type);  /* not np.dtype */
-            *out_DType = (PyArray_DTypeMeta *)dtype;
-            Py_INCREF(*out_DType);
-        }
-        else if (PyObject_TypeCheck((PyObject *)Py_TYPE(dtype),
-                    (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
-            *out_DType = NPY_DTYPE(dtype);
-            Py_INCREF(*out_DType);
-            if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype,
-                                                     *out_DType)) {
-                *out_descr = (PyArray_Descr *)dtype;
-                Py_INCREF(*out_descr);
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "dtype parameter must be a DType instance or class.");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-
 /*
  * Python API function to expose the dtype+shape discovery functionality
  * directly.
  */
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
-                           PyObject *args, PyObject *kwargs)
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *kwlist[] = {"obj", "dtype", NULL};
-
     PyObject *obj;
-    PyObject *dtype = NULL;
-    PyArray_Descr *fixed_descriptor = NULL;
-    PyArray_DTypeMeta *fixed_DType = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     npy_intp shape[NPY_MAXDIMS];
 
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "O|O:_discover_array_parameters", kwlist,
-            &obj, &dtype)) {
-        return NULL;
-    }
-
-    if (PyArray_ExtractDTypeAndDescriptor(dtype,
-            &fixed_descriptor, &fixed_DType) < 0) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments(
+            "_discover_array_parameters", args, len_args, kwnames,
+            "", NULL, &obj,
+            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
+            NULL, NULL, NULL) < 0) {
+        /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }
 
@@ -1493,9 +1408,9 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype, 0);
-    Py_XDECREF(fixed_DType);
-    Py_XDECREF(fixed_descriptor);
+            dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0);
+    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF(dt_info.descr);
     if (ndim < 0) {
         return NULL;
     }
