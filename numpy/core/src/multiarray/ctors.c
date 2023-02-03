@@ -1622,7 +1622,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     PyArray_Descr *fixed_descriptor;
     PyArray_DTypeMeta *fixed_DType;
-    if (PyArray_ExtractDTypeAndDescriptor((PyObject *)newtype,
+    if (PyArray_ExtractDTypeAndDescriptor(newtype,
             &fixed_descriptor, &fixed_DType) < 0) {
         Py_XDECREF(newtype);
         return NULL;
