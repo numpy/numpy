@@ -215,7 +215,7 @@ NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, n
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane  = npyv_setall_s64(nlane > 4 ? 4 : (int)nlane);
     __m256i mask    = _mm256_cmpgt_epi64(vnlane, steps);
-    __m256i payload = _mm256_maskload_epi64((const void*)ptr, mask);
+    __m256i payload = _mm256_maskload_epi64((const long long*)ptr, mask);
     return _mm256_blendv_epi8(vfill, payload, mask);
 }
 // fill zero to rest lanes
@@ -225,7 +225,7 @@ NPY_FINLINE npyv_s64 npyv_load_tillz_s64(const npy_int64 *ptr, npy_uintp nlane)
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane  = npyv_setall_s64(nlane > 4 ? 4 : (int)nlane);
     __m256i mask    = _mm256_cmpgt_epi64(vnlane, steps);
-    return _mm256_maskload_epi64((const void*)ptr, mask);
+    return _mm256_maskload_epi64((const long long*)ptr, mask);
 }
 
 //// 64-bit nlane
@@ -240,7 +240,7 @@ NPY_FINLINE npyv_s32 npyv_load2_till_s32(const npy_int32 *ptr, npy_uintp nlane,
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane  = npyv_setall_s64(nlane > 4 ? 4 : (int)nlane);
     __m256i mask    = _mm256_cmpgt_epi64(vnlane, steps);
-    __m256i payload = _mm256_maskload_epi64((const void*)ptr, mask);
+    __m256i payload = _mm256_maskload_epi64((const long long*)ptr, mask);
     return _mm256_blendv_epi8(vfill, payload, mask);
 }
 // fill zero to rest lanes
@@ -253,7 +253,7 @@ NPY_FINLINE npyv_u64 npyv_load2_tillz_s64(const npy_int64 *ptr, npy_uintp nlane)
     assert(nlane > 0);
     npy_int64 m = -((npy_int64)(nlane > 1));
     __m256i mask = npyv_set_s64(-1, -1, m, m);
-    return _mm256_maskload_epi64((const void*)ptr, mask);
+    return _mm256_maskload_epi64((const long long*)ptr, mask);
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_u64 npyv_load2_till_s64(const npy_int64 *ptr, npy_uintp nlane,
@@ -262,7 +262,7 @@ NPY_FINLINE npyv_u64 npyv_load2_till_s64(const npy_int64 *ptr, npy_uintp nlane,
     const __m256i vfill = npyv_set_s64(0, 0, fill_lo, fill_hi);
     npy_int64 m = -((npy_int64)(nlane > 1));
     __m256i mask = npyv_set_s64(-1, -1, m, m);
-    __m256i payload = _mm256_maskload_epi64((const void*)ptr, mask);
+    __m256i payload = _mm256_maskload_epi64((const long long*)ptr, mask);
     return _mm256_blendv_epi8(vfill, payload, mask);
 }
 /*********************************
@@ -295,7 +295,7 @@ npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane  = npyv_setall_s64(nlane > 4 ? 4 : (int)nlane);
     __m256i mask    = _mm256_cmpgt_epi64(vnlane, steps);
-    return _mm256_mask_i64gather_epi64(vfill, (const void*)ptr, idx, mask, 8);
+    return _mm256_mask_i64gather_epi64(vfill, (const long long*)ptr, idx, mask, 8);
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s64
@@ -315,7 +315,7 @@ NPY_FINLINE npyv_s64 npyv_loadn2_till_s32(const npy_int32 *ptr, npy_intp stride,
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane  = npyv_setall_s64(nlane > 4 ? 4 : (int)nlane);
     __m256i mask    = _mm256_cmpgt_epi64(vnlane, steps);
-    return _mm256_mask_i64gather_epi64(vfill, (const void*)ptr, idx, mask, 4);
+    return _mm256_mask_i64gather_epi64(vfill, (const long long*)ptr, idx, mask, 4);
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s32 npyv_loadn2_tillz_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane)
@@ -361,7 +361,7 @@ NPY_FINLINE void npyv_store_till_s64(npy_int64 *ptr, npy_uintp nlane, npyv_s64 a
     const __m256i steps = npyv_set_s64(0, 1, 2, 3);
     __m256i vnlane = npyv_setall_s64(nlane > 8 ? 8 : (int)nlane);
     __m256i mask   = _mm256_cmpgt_epi64(vnlane, steps);
-    _mm256_maskstore_epi64((void*)ptr, mask, a);
+    _mm256_maskstore_epi64((long long*)ptr, mask, a);
 }
 
 //// 64-bit nlane
