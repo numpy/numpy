@@ -3618,7 +3618,7 @@ class TestQuantile:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".
             assert_allclose(np.mean(self.V(x, y, alpha)), 0,
-                atol=np.amin(alpha, (1 - alpha)) / n)
+                atol=np.amin([alpha, 1 - alpha]) / n)
 
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
