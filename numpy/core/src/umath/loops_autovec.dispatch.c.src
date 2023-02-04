@@ -1,9 +1,9 @@
 /*@targets
  ** $maxopt $autovec baseline
  ** sse2 avx2 avx512_skx
- ** neon asimd
- ** vsx2 vsx3
- ** vx vxe
+ ** neon
+ ** vsx2
+ ** vx
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -15,7 +15,11 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
-
+/*
+ *****************************************************************************
+ **                           INTEGER LOOPS
+ *****************************************************************************
+ */
 /*
  * Arithmetic bit shift operations.
  *
@@ -38,6 +42,13 @@
  * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  * #c = hh,uhh,h,uh,,u,l,ul,ll,ull#
  */
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_positive)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
+}
+
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_square)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
@@ -126,13 +137,112 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 }
 /**end repeat1**/
 
+NPY_FINLINE npy_bool @TYPE@_logical_xor_(@type@ in1, @type@ in2)
+{ return (!!in1) != (!!in2); }
+
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_logical_xor)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const int t1 = !!*(@type@ *)ip1;
-        const int t2 = !!*(@type@ *)ip2;
-        *((npy_bool *)op1) = (t1 != t2);
-    }
+    BINARY_LOOP_FAST(@type@, npy_bool, *out = @TYPE@_logical_xor_(in1, in2));
+}
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void  NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    /*
+     * The (void)in; suppresses an unused variable warning raised by gcc and allows
+     * us to re-use this macro even though we do not depend on in
+     */
+    UNARY_LOOP_FAST(@type@, npy_bool, (void)in; *out = @val@);
+}
+/**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #c    = ,,,l,ll#
+ */
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_absolute)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = (in >= 0) ? in : -in);
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_sign)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
+}
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = u,u,u,ul,ull#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_absolute)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in);
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_sign)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : 0);
+}
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                             BOOLEAN LOOPS                               **
+ *****************************************************************************
+ */
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
+{
+    NPY_CPU_DISPATCH_CURFX(UBYTE_@kind@)(args, dimensions, steps, func);
+}
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                          HALF-FLOAT LOOPS                               **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_absolute)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(npy_half, npy_half, *out = in&0x7fffu);
+}
+
+/*
+ *****************************************************************************
+ **                           DATETIME LOOPS                                **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #type = npy_datetime, npy_timedelta#
+ * #TYPE = DATETIME, TIMEDELTA#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_isinf)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
+{
+    NPY_CPU_DISPATCH_CURFX(ULONGLONG_isinf)(args, dimensions, steps, func);
 }
 /**end repeat**/

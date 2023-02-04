@@ -345,7 +345,7 @@ defdict = {
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
           TD(no_bool_times_obj, dispatch=[
               ('loops_arithm_fp', 'fdFD'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
@@ -360,7 +360,7 @@ defdict = {
           'PyUFunc_SubtractionTypeResolver',
           TD(no_bool_times_obj, dispatch=[
               ('loops_arithm_fp', 'fdFD'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
@@ -377,7 +377,7 @@ defdict = {
                   dispatch=[('loops_logical', '?')]),
           TD(no_bool_times_obj, dispatch=[
               ('loops_arithm_fp', 'fdFD'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'qm', 'm'),
@@ -420,7 +420,7 @@ defdict = {
           None,
           TD(ints+flts+cmplx, dispatch=[
               ('loops_arithm_fp', 'FD'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(P, f='conjugate'),
           ),
@@ -439,7 +439,7 @@ defdict = {
           TD(ints+inexact, dispatch=[
               ('loops_unary_fp', 'fd'),
               ('loops_arithm_fp', 'FD'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(O, f='Py_square'),
           ),
@@ -449,7 +449,7 @@ defdict = {
           None,
           TD(ints+inexact, dispatch=[
               ('loops_unary_fp', 'fd'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(O, f='Py_reciprocal'),
           ),
@@ -482,8 +482,11 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
           'PyUFunc_AbsoluteTypeResolver',
-          TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd'),
-                                                 ('loops_logical', '?')]),
+          TD(bints+flts+timedeltaonly, dispatch=[
+              ('loops_unary_fp', 'fd'),
+              ('loops_logical', '?'),
+              ('loops_autovec', ints + 'e'),
+          ]),
           TD(cmplx, dispatch=[('loops_unary_complex', 'FD')],
              out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
@@ -514,7 +517,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(nobool_or_datetime),
+          TD(nobool_or_datetime, dispatch=[('loops_autovec', ints)]),
           ),
 'greater':
     Ufunc(2, 1, None,
@@ -570,7 +573,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', dispatch=[
               ('loops_logical', '?'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(O, f='npy_ObjectLogicalAnd'),
           ),
@@ -580,7 +583,7 @@ defdict = {
           None,
           TD(nodatetime_or_obj, out='?', dispatch=[
               ('loops_logical', '?'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(O, f='npy_ObjectLogicalNot'),
           ),
@@ -590,7 +593,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', dispatch=[
               ('loops_logical', '?'),
-              ('loops_autovec_int', ints),
+              ('loops_autovec', ints),
           ]),
           TD(O, f='npy_ObjectLogicalOr'),
           ),
@@ -600,7 +603,9 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD('?', out='?', cfunc_alias='not_equal',
                            dispatch=[('loops_comparison', '?')]),
-          TD(no_bool_times_obj, out='?'),
+          TD(no_bool_times_obj, out='?', dispatch=[
+              ('loops_autovec', ints),
+          ]),
           # TODO: using obj.logical_xor() seems pretty much useless:
           TD(P, f='logical_xor'),
           ),
@@ -667,7 +672,7 @@ defdict = {
           None,
           TD('?', cfunc_alias='logical_and',
                   dispatch=[('loops_logical', '?')]),
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_And'),
           ),
 'bitwise_or':
@@ -675,7 +680,7 @@ defdict = {
           docstrings.get('numpy.core.umath.bitwise_or'),
           None,
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Or'),
           ),
 'bitwise_xor':
@@ -684,7 +689,7 @@ defdict = {
           None,
           TD('?', cfunc_alias='not_equal',
                   dispatch=[('loops_comparison', '?')]),
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Xor'),
           ),
 'invert':
@@ -693,21 +698,21 @@ defdict = {
           None,
           TD('?', cfunc_alias='logical_not',
                   dispatch=[('loops_logical', '?')]),
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Invert'),
           ),
 'left_shift':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.left_shift'),
           None,
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Lshift'),
           ),
 'right_shift':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.right_shift'),
           None,
-          TD(ints, dispatch=[('loops_autovec_int', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Rshift'),
           ),
 'heaviside':
@@ -997,7 +1002,10 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?', dispatch=[('loops_unary_fp_le', inexactvec)]),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints),
+          ]),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -1009,13 +1017,19 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?', dispatch=[('loops_unary_fp_le', inexactvec)]),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints + 'mM'),
+          ]),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?', dispatch=[('loops_unary_fp_le', inexactvec)]),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints),
+          ]),
           ),
 'signbit':
     Ufunc(1, 1, None,

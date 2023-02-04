@@ -995,7 +995,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_modulo.dispatch.c.src'),
             join('src', 'umath', 'loops_comparison.dispatch.c.src'),
             join('src', 'umath', 'loops_unary_complex.dispatch.c.src'),
-            join('src', 'umath', 'loops_autovec_int.dispatch.c.src'),
+            join('src', 'umath', 'loops_autovec.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),

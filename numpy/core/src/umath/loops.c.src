@@ -407,24 +407,6 @@ BOOL__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, 
     }
 }
 
-
-/**begin repeat
- * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
- * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
- **/
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*
-     * The (void)in; suppresses an unused variable warning raised by gcc and allows
-     * us to re-use this macro even though we do not depend on in
-     */
-    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = @val@);
-}
-
-/**end repeat**/
-
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -456,13 +438,6 @@ NPY_NO_EXPORT void
         *((@type@ *)op1) = 1;
     }
 }
-
-NPY_NO_EXPORT void
-@TYPE@_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
-}
-
 /**begin repeat1
  * Arithmetic
  * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor#
@@ -528,23 +503,6 @@ NPY_NO_EXPORT void
         *((@type@ *) op1) = out;
     }
 }
-
-/**begin repeat1
- * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
- * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*
-     * The (void)in; suppresses an unused variable warning raised by gcc and allows
-     * us to re-use this macro even though we do not depend on in
-     */
-    UNARY_LOOP_FAST(@type@, npy_bool, (void)in; *out = @val@);
-}
-/**end repeat1**/
-
 /**end repeat**/
 
 /**begin repeat
@@ -552,19 +510,6 @@ NPY_NO_EXPORT void
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  * #c    = ,,,l,ll#
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = (in >= 0) ? in : -in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
-}
-
 /**begin repeat1
  * #kind = gcd, lcm#
  **/
@@ -578,7 +523,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
 /**end repeat**/
 
 /**begin repeat
@@ -586,19 +530,6 @@ NPY_NO_EXPORT void
  * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  * #c    = u,u,u,ul,ull#
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : 0);
-}
-
 /**begin repeat1
  * #kind = gcd, lcm#
  **/
@@ -612,7 +543,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
 /**end repeat**/
 
 /*
@@ -688,12 +618,6 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((npy_bool *)op1) = (in1 != NPY_DATETIME_NAT);
     }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_isinf(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = NPY_FALSE);
 }
 
 NPY_NO_EXPORT void
@@ -1823,12 +1747,6 @@ HALF_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, v
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = in1;
     }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-HALF_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(npy_half, npy_half, *out = in&0x7fffu);
 }
 
 NPY_NO_EXPORT void
