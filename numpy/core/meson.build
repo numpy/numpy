@@ -312,12 +312,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
-if host_machine.cpu_family() in ['x86', 'x86_64']
-  optional_intrinsics += [
-    ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
-  ]
-endif
 foreach intrin: optional_intrinsics
   func = intrin[0]
   func_args = intrin[1]
