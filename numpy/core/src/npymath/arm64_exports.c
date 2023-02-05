@@ -23,8 +23,4 @@ double npy_log1p(double x) {
     return log1p(x);
 }
 
-double npy_nextafter(double x, double y) {
-    return nextafter(x, y);
-}
-
 #endif
