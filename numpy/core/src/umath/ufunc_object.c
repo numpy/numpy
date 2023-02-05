@@ -5906,10 +5906,6 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     int buffersize=0, errormask = 0;
     int res;
     char *args[3];
-    const char * ufunc_name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-    if (_get_bufsize_errmask(NULL, ufunc_name, &buffersize, &errormask) < 0) {
-        return -1;
-    }
     npy_intp dimensions = iter->size;
     npy_intp steps[3];
     args[0] = (char *) iter->baseoffset;
@@ -5929,6 +5925,12 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        const char * ufunc_name = 
+                        ufunc_get_name_cstr((PyUFuncObject *)context->caller);
+        if (_get_bufsize_errmask(NULL, ufunc_name,
+                                 &buffersize, &errormask) < 0) {
+            return -1;
+        }
         res = _check_ufunc_fperr(errormask, NULL, ufunc_name);
     }
     return res;

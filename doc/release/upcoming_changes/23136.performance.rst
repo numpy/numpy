@@ -1,17 +1,17 @@
 ``ufunc.at`` can be much faster
 -------------------------------
-If called on ufuncs with appropriate indexed loops, ``ufunc.at`` can be up to
-60x faster. Generic ``ufunc.at`` can be up to 9x faster. The conditions for
-any speedup::
+Generic ``ufunc.at`` can be up to 9x faster. The conditions for this speedup:
 
 - contiguous arguments
 - no casting
 
-The conditions for the extra speedup::
-
-- calling the ufuncs ``add``, ``subtract``, ``multiply``, ``divide`` (and
-  ``floor_divide``)
-- 1d arguments
+If ufuncs with appropriate indexed loops on 1d arguments with the above
+conditions, ``ufunc.at`` can be up to 60x faster (an additional 7x speedup).
+Appropriate indexed loops have been added to ``add``, ``subtract``,
+``multiply``, ``divide`` (and ``floor_divide``)
 
 The internal logic is similar to the logic used for regular ufuncs, which also
 have a fast path for contiguous, non-casting, 1d arrays.
+
+Thanks to the `D. E. Shaw group <https://deshaw.com/>`_ for sponsoring this
+work.

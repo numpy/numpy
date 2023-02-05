@@ -400,15 +400,15 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    npy_intp *indx = (npy_intp *)args[1];
+    char *indx = args[1];
     char *value = args[2];
-    npy_intp is1 = steps[0], isindex = steps[1] / sizeof(npy_intp), isb = steps[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp n = dimensions[0];
     npy_intp i;
     @type@ *indexed;
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@type@ *)(ip1 + is1 * indx[0]);
-        indexed[0] = floor_div_@TYPE@(indexed[0], *(@type@ *)value);
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = floor_div_@TYPE@(*indexed, *(@type@ *)value);
     }
     return 0;
 }
@@ -486,20 +486,20 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    npy_intp *indx = (npy_intp *)args[1];
+    char *indx = args[1];
     char *value = args[2];
-    npy_intp is1 = steps[0], isindex = steps[1] / sizeof(npy_intp), isb = steps[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp n = dimensions[0];
     npy_intp i;
     @type@ *indexed;
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@type@ *)(ip1 + is1 * indx[0]);
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
         @type@ in2 = *(@type@ *)value;
         if (NPY_UNLIKELY(in2 == 0)) {
             npy_set_floatstatus_divbyzero();
-            indexed[0] = 0;
+            *indexed = 0;
         } else {
-            indexed[0] = indexed[0] / in2;
+            *indexed = *indexed / in2;
         }
     }
     return 0;

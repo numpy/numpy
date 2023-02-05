@@ -557,7 +557,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ int
     @type@ *indexed;
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
         indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
-        indexed[0] = indexed[0] @OP@ *(@type@ *)value;
+        *indexed = *indexed @OP@ *(@type@ *)value;
     }
     return 0;
 }
@@ -1436,7 +1436,7 @@ NPY_NO_EXPORT int
     @type@ *indexed;
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
         indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
-        indexed[0] = npy_floor_divide@c@(indexed[0], *(@type@ *)value);
+        *indexed = npy_floor_divide@c@(*indexed, *(@type@ *)value);
     }
     return 0;
 }
@@ -1590,7 +1590,7 @@ LONGDOUBLE_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
     npy_longdouble *indexed;
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
         indexed = (npy_longdouble *)(ip1 + is1 * *(npy_intp *)indx);
-        indexed[0] = indexed[0] @OP@ *(npy_longdouble *)value;
+        *indexed = *indexed @OP@ *(npy_longdouble *)value;
     }
     return 0;
 }
@@ -1714,7 +1714,7 @@ HALF_@kind@_indexed(void *NPY_UNUSED(context), char **args, npy_intp const *dime
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
         indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
         const float v = npy_half_to_float(*(npy_half *)value);
-        indexed[0] = npy_float_to_half(npy_half_to_float(indexed[0]) @OP@ v);
+        *indexed = npy_float_to_half(npy_half_to_float(*indexed) @OP@ v);
     }
     return 0; 
 }
@@ -1869,8 +1869,8 @@ HALF_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
     for(i = 0; i < n; i++, indx += isindex, value += isb) {
         indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
         float v = npy_half_to_float(*(npy_half *)value);
-        float div = npy_floor_dividef(npy_half_to_float(indexed[0]), v);
-        indexed[0] = npy_float_to_half(div);
+        float div = npy_floor_dividef(npy_half_to_float(*indexed), v);
+        *indexed = npy_float_to_half(div);
     }
     return 0;
 }
