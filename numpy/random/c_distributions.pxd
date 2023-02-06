@@ -66,7 +66,7 @@ cdef extern from "numpy/random/distributions.h":
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
     double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
     double random_chisquare(bitgen_t *bitgen_state, double df) nogil
-    float random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
+    double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
     double random_standard_cauchy(bitgen_t *bitgen_state) nogil
     double random_pareto(bitgen_t *bitgen_state, double a) nogil
     double random_weibull(bitgen_t *bitgen_state, double a) nogil
