@@ -5039,7 +5039,7 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(arg))
 {
     PyObject *thedict;
     PyObject *res;
-    
+
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
@@ -5909,9 +5909,14 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     char *args[3];
     npy_intp steps[3];
     args[0] = (char *) iter->baseoffset;
-    args[2] = (char *)PyArray_DATA(op2_array);
     steps[0] = iter->fancy_strides[0];
-    steps[2] = PyArray_STRIDE(op2_array, 0);
+    if (ufuncimpl->nin == 1) {
+        args[2] = NULL;
+        steps[2] = 0;
+    } else {
+        args[2] = (char *)PyArray_DATA(op2_array);
+        steps[2] = PyArray_STRIDE(op2_array, 0);
+    }
 
     npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
 
@@ -5932,7 +5937,7 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        const char * ufunc_name = 
+        const char * ufunc_name =
                         ufunc_get_name_cstr((PyUFuncObject *)context->caller);
         if (_get_bufsize_errmask(NULL, ufunc_name,
                                  &buffersize, &errormask) < 0) {
@@ -6435,8 +6440,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
          */
         if ((ufuncimpl->contiguous_indexed_loop != NULL) &&
                 (PyArray_NDIM(op1_array) == 1)  &&
-                (ufuncimpl->nin == 1 || PyArray_NDIM(op2_array) == 1) && 
-                (iter->numiter == 1)) {
+                (op2_array != NULL && PyArray_NDIM(op2_array) == 1) &&
+                (iter->nd == 1)) {
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
 
