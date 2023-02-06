@@ -24,6 +24,7 @@ jobs:
   meson:
     name: Meson windows build/test
     runs-on: windows-2019
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
