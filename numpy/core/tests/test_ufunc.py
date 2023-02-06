@@ -2023,6 +2023,14 @@ class TestUfunc:
             assert w_at[0].category == w_loop[0].category
             assert str(w_at[0].message)[:10] == str(w_loop[0].message)[:10]
 
+    def test_cast_index_fastpath(self):
+        arr = np.zeros(10)
+        values = np.ones(100000)
+        # index must be cast, which may be buffered in chunks:
+        index = np.zeros(len(values), dtype=np.uint8)
+        np.add.at(arr, index, values)
+        assert arr[0] == len(values)
+
     def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)
         b = np.array([[100, 100, 100], [200, 200, 200], [300, 300, 300]])

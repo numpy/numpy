@@ -5907,15 +5907,21 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     int buffersize=0, errormask = 0;
     int res;
     char *args[3];
-    npy_intp dimensions = iter->size;
     npy_intp steps[3];
     args[0] = (char *) iter->baseoffset;
-    args[1] = (char *) iter->outer_ptrs[0];
     args[2] = (char *)PyArray_DATA(op2_array);
     steps[0] = iter->fancy_strides[0];
-    steps[1] = iter->outer_strides[0];
     steps[2] = PyArray_STRIDE(op2_array, 0);
-    res = ufuncimpl->contiguous_indexed_loop(context, args, &dimensions, steps, NULL);
+
+    npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
+
+    do {
+        args[1] = (char *) iter->outer_ptrs[0];
+        steps[1] = iter->outer_strides[0];
+
+        res = ufuncimpl->contiguous_indexed_loop(
+                context, args, inner_size, steps, NULL);
+    } while (res == 0 && iter->outer_next(iter->outer));
     /*
      * An error should only be possible if `res != 0` is already set.
      * But this is not strictly correct since old-style ufuncs (e.g. `power`
