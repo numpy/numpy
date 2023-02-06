@@ -5887,6 +5887,7 @@ static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};
+    Py_INCREF(PyArray_DESCR(op_array));  /* NewFromDescr steals a reference */
     PyObject *r = PyArray_NewFromDescr(&PyArray_Type, PyArray_DESCR(op_array),
                                        1, dims, NULL, data,
                                        NPY_ARRAY_WRITEABLE, NULL);
@@ -6033,14 +6034,11 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     }
     array_operands[0] = new_array_op(op1_array, iter->dataptr);
     if (iter2 != NULL) {
-        Py_INCREF(PyArray_DESCR(op2_array));
         array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
-        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[2] = new_array_op(op1_array, iter->dataptr);
         nop = 3;
     }
     else {
-        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[1] = new_array_op(op1_array, iter->dataptr);
         array_operands[2] = NULL;
         nop = 2;
@@ -6284,8 +6282,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayMethodObject *ufuncimpl = NULL;
     {
         /* Do all the dtype handling and find the correct ufuncimpl */
-        Py_INCREF(PyArray_DESCR(op1_array));
-
 
         PyArrayObject *tmp_operands[3] = {NULL, NULL, NULL};
         PyArray_DTypeMeta *signature[3] = {NULL, NULL, NULL};
