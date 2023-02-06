@@ -6,8 +6,8 @@
      * is enabled via `--cpu-baseline` or through env var `CFLAGS` otherwise
      * the test will be broken and leads to enable all possible features.
      */
-    #if !defined(__AVX512VL__) || !defined(__AVX512BW__) || !defined(__AVX512DQ__) || !defined(__AVX512FP16__)
-        #error "HOST/ARCH doesn't support Sapphire Rapids AVX512 features"
+    #if !defined(__AVX512FP16__)
+        #error "HOST/ARCH doesn't support Sapphire Rapids AVX512FP16 features"
     #endif
 #endif
 
@@ -15,15 +15,8 @@
 
 int main(int argc, char **argv)
 {
-    __m512i aa = _mm512_abs_epi32(_mm512_loadu_si512((const __m512i*)argv[argc-1]));
-    /* VL */
-    __m256i a = _mm256_abs_epi64(_mm512_extracti64x4_epi64(aa, 1));
-    /* DQ */
-    __m512i b = _mm512_broadcast_i32x8(a);
-    /* BW */
-    b = _mm512_abs_epi16(b);
-    /* FP16 */
-    __m256h temp = _mm512_cvtepi32_ph(b);
-    _mm256_storeu_epi32((void*)(argv[argc-1]), _mm256_castph_si256(temp));
+    __m512h a = _mm512_loadu_ph((void*)argv[argc-1]);
+    __m512h temp = _mm512_fmadd_ph(a, a, a);
+    _mm512_storeu_ph((void*)(argv[argc-1]), temp);
     return 0;
 }
