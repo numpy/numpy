@@ -5920,6 +5920,10 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
 
     npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
 
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier((char *)context);
+    }
+
     do {
         args[1] = (char *) iter->outer_ptrs[0];
         steps[1] = iter->outer_strides[0];
@@ -5927,14 +5931,6 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
         res = ufuncimpl->contiguous_indexed_loop(
                 context, args, inner_size, steps, NULL);
     } while (res == 0 && iter->outer_next(iter->outer));
-    /*
-     * An error should only be possible if `res != 0` is already set.
-     * But this is not strictly correct since old-style ufuncs (e.g. `power`
-     * released the GIL but manually set an Exception).
-     */
-    if (PyErr_Occurred()) {
-        res = -1;
-    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         const char * ufunc_name =
@@ -6355,10 +6351,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    /*
-     * Create a map iterator (there is no multi-mapiter, so we need at least 2
-     * iterators: one for the mapping, and another for the second operand)
-     */
     iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
         op1_array, idx, 1, op2_array);
     if (iter == NULL) {
