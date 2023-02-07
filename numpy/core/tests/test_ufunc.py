@@ -2030,6 +2030,13 @@ class TestUfunc:
         np.add.at(arr, slice(None), np.ones(5))
         assert_array_equal(arr, np.ones(5))
 
+    def test_ufunc_at_negative(self):
+        arr = np.ones(5, dtype=np.int32)
+        indx = np.arange(5)
+        umt.indexed_negative.at(arr, indx)
+        # If it is [-1, -1, -1, -100, 0] then the regular strided loop was used
+        assert np.all(arr == [-1, -1, -1, -200, -1])
+
     def test_cast_index_fastpath(self):
         arr = np.zeros(10)
         values = np.ones(100000)
