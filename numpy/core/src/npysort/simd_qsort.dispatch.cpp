@@ -8,8 +8,8 @@
 #include "simd_qsort.hpp"
 
 #if defined(NPY_HAVE_AVX512_SKX) && !defined(_MSC_VER)
-    #include "avx512-32bit-qsort.hpp"
-    #include "avx512-64bit-qsort.hpp"
+    #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
+    #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
 #endif
 
 namespace np { namespace qsort_simd {

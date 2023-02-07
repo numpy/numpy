@@ -650,7 +650,6 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
-    config.add_include_dirs(join('src', 'npysort', 'x86-simd-sort', 'src'))
     config.add_include_dirs(join('src', '_simd'))
 
     config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
