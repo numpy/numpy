@@ -291,6 +291,9 @@ fill_arraymethod_from_slots(
             case NPY_METH_get_reduction_initial:
                 meth->get_reduction_initial = slot->pfunc;
                 continue;
+            case NPY_METH_contiguous_indexed_loop:
+                meth->contiguous_indexed_loop = slot->pfunc;
+                continue;
             default:
                 break;
         }
@@ -891,7 +894,7 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 /*
  * Fetches a strided-loop function that supports a boolean mask as additional
  * (last) operand to the strided-loop.  It is otherwise largely identical to
- * the `get_loop` method which it wraps.
+ * the `get_strided_loop` method which it wraps.
  * This is the core implementation for the ufunc `where=...` keyword argument.
  *
  * NOTE: This function does not support `move_references` or inner dimensions.

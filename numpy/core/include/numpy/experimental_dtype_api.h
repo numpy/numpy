@@ -311,6 +311,7 @@ typedef NPY_CASTING (resolve_descriptors_function)(
 #define NPY_METH_contiguous_loop 5
 #define NPY_METH_unaligned_strided_loop 6
 #define NPY_METH_unaligned_contiguous_loop 7
+#define NPY_METH_contiguous_indexed_loop 8
 
 
 typedef struct {
@@ -488,7 +489,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
  */
 #if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
 
-#define __EXPERIMENTAL_DTYPE_VERSION 6
+#define __EXPERIMENTAL_DTYPE_VERSION 7
 
 static int
 import_experimental_dtype_api(int version)

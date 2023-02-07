@@ -1,3 +1,8 @@
+"""
+Generate the code to build all the internal ufuncs. At the base is the defdict:
+a dictionary ofUfunc classes. This is fed to make_code to generate
+__umath_generated.c
+"""
 import os
 import re
 import struct
@@ -5,6 +10,7 @@ import sys
 import textwrap
 import argparse
 
+# identity objects
 Zero = "PyLong_FromLong(0)"
 One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
@@ -121,11 +127,11 @@ def check_td_order(tds):
     for prev_i, sign in enumerate(signatures[1:]):
         if sign in signatures[:prev_i+1]:
             continue  # allow duplicates...
-        
+
         _check_order(signatures[prev_i], sign)
 
 
-_fdata_map = dict(
+_floatformat_map = dict(
     e='npy_%sf',
     f='npy_%sf',
     d='npy_%s',
@@ -136,11 +142,13 @@ _fdata_map = dict(
 )
 
 def build_func_data(types, f):
-    func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
+    func_data = [_floatformat_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
 def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
        simd=None, dispatch=None):
+    """Generate a TypeDescription instance for each item in types
+    """
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -188,12 +196,15 @@ class Ufunc:
     ----------
     nin : number of input arguments
     nout : number of output arguments
-    identity : identity element for a two-argument function
+    identity : identity element for a two-argument function (like Zero)
     docstring : docstring for the ufunc
-    type_descriptions : list of TypeDescription objects
+    typereso: type resolver function of type PyUFunc_TypeResolutionFunc
+    type_descriptions : TypeDescription objects
+    signature: a generalized ufunc signature (like for matmul)
+    indexed: add indexed loops (ufunc.at) for these type characters
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions, signature=None):
+                 *type_descriptions, signature=None, indexed=''):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -203,6 +214,7 @@ class Ufunc:
         self.typereso = typereso
         self.type_descriptions = []
         self.signature = signature
+        self.indexed = indexed
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
@@ -347,6 +359,7 @@ defdict = {
            TypeDescription('M', FullTypeDescr, 'mM', 'M'),
           ],
           TD(O, f='PyNumber_Add'),
+          indexed=flts + ints
           ),
 'subtract':
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
@@ -359,6 +372,7 @@ defdict = {
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
           ],
           TD(O, f='PyNumber_Subtract'),
+          indexed=flts + ints
           ),
 'multiply':
     Ufunc(2, 1, One,
@@ -374,6 +388,7 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'dm', 'm'),
           ],
           TD(O, f='PyNumber_Multiply'),
+          indexed=flts + ints
           ),
 #'true_divide' : aliased to divide in umathmodule.c:initumath
 'floor_divide':
@@ -388,6 +403,7 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'mm', 'q'),
           ],
           TD(O, f='PyNumber_FloorDivide'),
+          indexed=flts + ints
           ),
 'divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
@@ -399,6 +415,7 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'mm', 'd', cfunc_alias='divide'),
           ],
           TD(O, f='PyNumber_TrueDivide'),
+          indexed=flts
           ),
 'conjugate':
     Ufunc(1, 1, None,
@@ -1258,6 +1275,40 @@ def make_ufuncs(funcdict):
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
+        for c in uf.indexed:
+            # Handle indexed loops by getting the underlying ArrayMethodObject
+            # from the list in f._loops and setting its field appropriately
+            fmt = textwrap.dedent("""
+            {{
+                PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
+                PyObject *info = get_info_no_cast((PyUFuncObject *)f,
+                                                   dtype, {count});
+                if (info == NULL) {{
+                    return -1;
+                }}
+                if (info == Py_None) {{
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "cannot add indexed loop to ufunc "
+                        "{name} with {typenum}");
+                    return -1;
+                }}
+                if (!PyObject_TypeCheck(info, &PyArrayMethod_Type)) {{
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "Not a PyArrayMethodObject in ufunc "
+                        "{name} with {typenum}");
+                }}
+                ((PyArrayMethodObject*)info)->contiguous_indexed_loop =
+                                                                 {funcname};
+                /* info is borrowed, no need to decref*/
+            }}
+            """)
+            mlist.append(fmt.format(
+                typenum=f"NPY_{english_upper(chartoname[c])}",
+                count=uf.nin+uf.nout,
+                name=name,
+                funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
+            ))
+
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))
@@ -1280,8 +1331,14 @@ def make_code(funcdict, filename):
     #include "loops.h"
     #include "matmul.h"
     #include "clip.h"
+    #include "dtypemeta.h"
     #include "_umath_doc_generated.h"
+
     %s
+    /* Returns a borrowed ref of the second value in the matching info tuple */
+    PyObject *
+    get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                     int ndtypes);
 
     static int
     InitOperators(PyObject *dictionary) {

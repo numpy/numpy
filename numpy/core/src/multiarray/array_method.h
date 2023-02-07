@@ -73,7 +73,7 @@ struct PyArrayMethodObject_tag;
  * TODO: Before making this public, we should review which information should
  *       be stored on the Context/BoundArrayMethod vs. the ArrayMethod.
  */
-typedef struct {
+typedef struct PyArrayMethod_Context_tag {
     PyObject *caller;  /* E.g. the original ufunc, may be NULL */
     struct PyArrayMethodObject_tag *method;
 
@@ -223,6 +223,7 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_StridedLoop *contiguous_loop;
     PyArrayMethod_StridedLoop *unaligned_strided_loop;
     PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
+    PyArrayMethod_StridedLoop *contiguous_indexed_loop;
     /* Chunk only used for wrapping array method defined in umath */
     struct PyArrayMethodObject_tag *wrapped_meth;
     PyArray_DTypeMeta **wrapped_dtypes;
@@ -266,6 +267,7 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_contiguous_loop 5
 #define NPY_METH_unaligned_strided_loop 6
 #define NPY_METH_unaligned_contiguous_loop 7
+#define NPY_METH_contiguous_indexed_loop 8
 
 
 /*

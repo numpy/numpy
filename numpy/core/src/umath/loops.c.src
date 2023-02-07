@@ -453,6 +453,7 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
+#define @TYPE@_floor_divide_indexed @TYPE@_divide_indexed
 #define @TYPE@_fmax @TYPE@_maximum
 #define @TYPE@_fmin @TYPE@_minimum
 
@@ -524,7 +525,8 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 
 #if @CHK@
 NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions,
+                   npy_intp const *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP_FAST(@type@, io1 @OP@= in2);
@@ -533,6 +535,26 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
         BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
     }
 }
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ int
+@TYPE@_@kind@@isa@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+                           char * const*args, npy_intp const *dimensions,
+                           npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = *indexed @OP@ *(@type@ *)value;
+    }
+    return 0;
+}
+
 #endif
 
 /**end repeat2**/
@@ -1393,6 +1415,25 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT int
+@TYPE@_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = npy_floor_divide@c@(*indexed, *(@type@ *)value);
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1527,6 +1568,26 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
         }
     }
 }
+
+NPY_NO_EXPORT int
+LONGDOUBLE_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_longdouble *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_longdouble *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = *indexed @OP@ *(npy_longdouble *)value;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1631,6 +1692,24 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
             *((npy_half *)op1) = npy_float_to_half(in1 @OP@ in2);
         }
     }
+}
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(void *NPY_UNUSED(context), char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        const float v = npy_half_to_float(*(npy_half *)value);
+        *indexed = npy_float_to_half(npy_half_to_float(*indexed) @OP@ v);
+    }
+    return 0; 
 }
 /**end repeat**/
 
@@ -1766,6 +1845,27 @@ HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps
         div = npy_floor_dividef(fh1, fh2);
         *((npy_half *)op1) = npy_float_to_half(div);
     }
+}
+
+NPY_NO_EXPORT int
+HALF_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        float v = npy_half_to_float(*(npy_half *)value);
+        float div = npy_floor_dividef(npy_half_to_float(*indexed), v);
+        *indexed = npy_float_to_half(div);
+    }
+    return 0;
 }
 
 NPY_NO_EXPORT void
