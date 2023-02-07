@@ -2023,6 +2023,13 @@ class TestUfunc:
             assert w_at[0].category == w_loop[0].category
             assert str(w_at[0].message)[:10] == str(w_loop[0].message)[:10]
 
+    def test_ufunc_at_ellipsis(self):
+        # Make sure the indexed loop check does not choke on iters
+        # with subspaces
+        arr = np.zeros(5)
+        np.add.at(arr, slice(None), np.ones(5))
+        assert_array_equal(arr, np.ones(5))
+
     def test_cast_index_fastpath(self):
         arr = np.zeros(10)
         values = np.ones(100000)
