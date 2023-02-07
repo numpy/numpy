@@ -979,8 +979,8 @@ def configuration(parent_package='',top_path=None):
 
     if enable_avx512_qsort():
         multiarray_src += [
-                join('src', 'npysort', 'x86-qsort-skx.dispatch.cpp'),
-                join('src', 'npysort', 'x86-qsort-icl.dispatch.cpp'),
+                join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
+                join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
                 ]
 
     #######################################################################

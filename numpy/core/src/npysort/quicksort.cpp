@@ -54,6 +54,7 @@
 #include "npysort_common.h"
 #include "npysort_heapsort.h"
 #include "numpy_tag.h"
+#include "simd_qsort.hpp"
 
 #include <cstdlib>
 #include <utility>
@@ -68,197 +69,39 @@
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
 
+template<typename T>
+inline bool quicksort_dispatch(T *start, npy_intp num)
+{
+    using TF = typename np::meta::FixedWidth<T>::Type;
+    void (*dispfunc)(TF*, intptr_t) = nullptr;
+    if (sizeof(T) == sizeof(uint16_t)) {
+        #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "simd_qsort_16bit.dispatch.h"
+        #endif
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+    }
+    else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+        #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "simd_qsort.dispatch.h"
+        #endif
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+    }
+    if (dispfunc) {
+        (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
+        return true;
+    }
+    return false;
+}
 /*
  *****************************************************************************
  **                            NUMERIC SORTS                                **
  *****************************************************************************
  */
 
-namespace {
-
-template <typename Tag>
-struct x86_dispatch {
-    static bool quicksort(typename Tag::type *, npy_intp) { return false; }
-};
-
-// Currently disabled on WIN32 only
-#ifdef NPY_ENABLE_AVX512_QSORT
-#include "x86-qsort-skx.h"
-#include "x86-qsort-icl.h"
-
-#ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort-skx.dispatch.h"
-#endif
-
-#if NPY_SIZEOF_LONG == 8
-template <>
-struct x86_dispatch<npy::long_tag> {
-    static bool quicksort(npy_long *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_long);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-template <>
-struct x86_dispatch<npy::ulong_tag> {
-    static bool quicksort(npy_ulong *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ulong);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-#elif NPY_SIZEOF_LONGLONG == 8
-template <>
-struct x86_dispatch<npy::longlong_tag> {
-    static bool quicksort(npy_longlong *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_long);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-template <>
-struct x86_dispatch<npy::ulonglong_tag> {
-    static bool quicksort(npy_ulonglong *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ulong);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-#endif // NPY_SIZEOF_LONG
-
-template <>
-struct x86_dispatch<npy::double_tag> {
-    static bool quicksort(npy_double *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_double);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-template <>
-struct x86_dispatch<npy::int_tag> {
-    static bool quicksort(npy_int *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_int);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-template <>
-struct x86_dispatch<npy::uint_tag> {
-    static bool quicksort(npy_uint *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_uint);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-template <>
-struct x86_dispatch<npy::float_tag> {
-    static bool quicksort(npy_float *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_float);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-#ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort-icl.dispatch.h"
-#endif
-
-template <>
-struct x86_dispatch<npy::half_tag> {
-    static bool quicksort(npy_half *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_half);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-
-template <>
-struct x86_dispatch<npy::short_tag> {
-    static bool quicksort(npy_short *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_short);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-template <>
-struct x86_dispatch<npy::ushort_tag> {
-    static bool quicksort(npy_ushort *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ushort);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-#endif // NPY_ENABLE_AVX512_QSORT
-
-}  // end namespace
-
 template <typename Tag, typename type>
 static int
 quicksort_(type *start, npy_intp num)
 {
-    if (x86_dispatch<Tag>::quicksort(start, num))
-        return 0;
-
     type vp;
     type *pl = start;
     type *pr = pl + num - 1;
@@ -851,56 +694,89 @@ quicksort_ubyte(void *start, npy_intp n, void *NPY_UNUSED(varr))
 NPY_NO_EXPORT int
 quicksort_short(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_short *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::short_tag>((npy_short *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_ushort(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_ushort *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::ushort_tag>((npy_ushort *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_int(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_int *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::int_tag>((npy_int *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_uint(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_uint *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::uint_tag>((npy_uint *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_long(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_long *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::long_tag>((npy_long *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_ulong(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_ulong *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::ulong_tag>((npy_ulong *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_longlong(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_longlong *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::longlong_tag>((npy_longlong *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_ulonglong(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_ulonglong *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::ulonglong_tag>((npy_ulonglong *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_half(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((np::Half *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::half_tag>((npy_half *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_float(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_float *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::float_tag>((npy_float *)start, n);
 }
 NPY_NO_EXPORT int
 quicksort_double(void *start, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (quicksort_dispatch((npy_double *)start, n)) {
+        return 0;
+    }
     return quicksort_<npy::double_tag>((npy_double *)start, n);
 }
 NPY_NO_EXPORT int
