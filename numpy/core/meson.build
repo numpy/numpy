@@ -599,7 +599,8 @@ np_core_dep = declare_dependency(
     '.',
     'include',
     'src/common',
-  ]
+  ],
+  compile_args: disable_simd_optimizations
 )
 
 
