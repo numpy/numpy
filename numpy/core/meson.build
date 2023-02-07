@@ -453,6 +453,11 @@ if cc.get_id() == 'msvc'
      staticlib_cflags +=  '-d2VolatileMetadata-'
    endif
 endif
+# TODO: change to "feature" option in meson_options.txt? See
+# https://mesonbuild.com/Build-options.html#build-options
+if get_option('disable-simd-optimizations')
+  staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
+endif
 
 npy_math_internal_h = custom_target(
   output: 'npy_math_internal.h',
