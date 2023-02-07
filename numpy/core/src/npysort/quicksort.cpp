@@ -69,6 +69,15 @@
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
 
+// Temporarily disable AVX512 sorting on WIN32 until we can figure
+//  out why it has test failures
+#ifdef _MSC_VER
+template<typename T>
+inline bool quicksort_dispatch(T*, npy_intp)
+{
+    return false;
+}
+#else
 template<typename T>
 inline bool quicksort_dispatch(T *start, npy_intp num)
 {
@@ -92,6 +101,8 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     }
     return false;
 }
+#endif // _MSC_VER
+
 /*
  *****************************************************************************
  **                            NUMERIC SORTS                                **

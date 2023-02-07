@@ -68,14 +68,6 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
-# Temporarily disable AVX512 sorting on WIN32 until we can figure
-# out why it has test failures
-def enable_avx512_qsort():
-    enable = True
-    if "win32" in sysconfig.get_platform():
-        enable = False
-    return enable
-
 def can_link_svml():
     """SVML library is supported only on x86_64 architecture and currently
     only on linux
@@ -491,9 +483,6 @@ def configuration(parent_package='',top_path=None):
 
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
-
-            if enable_avx512_qsort():
-                moredefs.append(('NPY_ENABLE_AVX512_QSORT', 1))
 
             # Use bogus stride debug aid to flush out bugs where users use
             # strides of dimensions with length 1 to index a full contiguous
@@ -975,13 +964,9 @@ def configuration(parent_package='',top_path=None):
             # links to the arm64 npymath library,
             # see gh-22673
             join('src', 'npymath', 'arm64_exports.c'),
+            join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
+            join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
             ]
-
-    if enable_avx512_qsort():
-        multiarray_src += [
-                join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
-                join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
-                ]
 
     #######################################################################
     #             _multiarray_umath module - umath part                   #

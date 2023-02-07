@@ -7,13 +7,13 @@
 
 #include "simd_qsort.hpp"
 
-#ifdef NPY_HAVE_AVX512_ICL
+#if defined(NPY_HAVE_AVX512_ICL) && !defined(_MSC_VER)
     #include "avx512-16bit-qsort.hpp"
 #endif
 
 namespace np { namespace qsort_simd {
 
-#ifdef NPY_HAVE_AVX512_ICL
+#if defined(NPY_HAVE_AVX512_ICL) && !defined(_MSC_VER)
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, intptr_t size)
 {
     avx512_qsort_fp16(reinterpret_cast<uint16_t*>(arr), size);
