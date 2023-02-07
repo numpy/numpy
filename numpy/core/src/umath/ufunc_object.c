@@ -6436,12 +6436,15 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         /*
          * Try to use trivial loop (1d, no casting, aligned) if
          * - the matching info has a indexed loop
+         * - idx must be exactly one integer index array
          * - all operands are 1d
+         * A future enhancement could loosen the restriction on 1d operands
+         * by adding an iteration loop inside trivial_at_loop
          */
         if ((ufuncimpl->contiguous_indexed_loop != NULL) &&
                 (PyArray_NDIM(op1_array) == 1)  &&
                 (op2_array != NULL && PyArray_NDIM(op2_array) == 1) &&
-                (iter->nd == 1)) {
+                (iter->subspace_iter == NULL) && (iter->numiter == 1)) {
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
 
