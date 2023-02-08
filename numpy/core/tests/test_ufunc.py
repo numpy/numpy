@@ -25,6 +25,14 @@ UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 
+@pytest.fixture
+def explain_chain():
+    from numpy.core._ufunc_config import explain_chain as _explain_chain
+    token = _explain_chain.set([])
+    yield _explain_chain
+    _explain_chain.reset(token)
+
+
 class TestUfuncKwargs:
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
@@ -1980,21 +1988,21 @@ class TestUfunc:
         assert_equal(aa, [0, 1, 202, 3, 4, 105, 6, 7, 8, 9])
 
         with pytest.raises(ValueError):
-            # extraneous second operand 
+            # extraneous second operand
             np.negative.at(a, [2, 5, 3], [1, 2, 3])
 
         with pytest.raises(ValueError):
             # second operand cannot be converted to an array
             np.add.at(a, [2, 5, 3], [[1, 2], 1])
-    
+
     # ufuncs with indexed loops for perfomance in ufunc.at
     indexed_ufuncs = [np.add, np.subtract, np.multiply,
-                      np.floor_divide, np.divide]
+                      np.floor_divide, np.maximum, np.minimum]
 
     @pytest.mark.parametrize(
                 "typecode", np.typecodes['AllInteger'] + np.typecodes['Float'])
     @pytest.mark.parametrize("ufunc", indexed_ufuncs)
-    def test_ufunc_at_inner_loops(self, typecode, ufunc):
+    def test_ufunc_at_inner_loops(self, explain_chain, typecode, ufunc):
         if ufunc is np.divide and typecode in np.typecodes['AllInteger']:
             # Avoid divide-by-zero and inf for integer divide
             a = np.ones(100, dtype=typecode)
@@ -2022,6 +2030,9 @@ class TestUfunc:
             assert len(w_at) > 0
             assert w_at[0].category == w_loop[0].category
             assert str(w_at[0].message)[:10] == str(w_loop[0].message)[:10]
+        # Make sure the indexed loop was used
+        chain = explain_chain.get()
+        assert 'trivial_at_loop' in ''.join(chain)
 
     def test_ufunc_at_ellipsis(self):
         # Make sure the indexed loop check does not choke on iters
@@ -2195,7 +2206,7 @@ class TestUfunc:
     def test_at_output_casting(self):
         arr = np.array([-1])
         np.equal.at(arr, [0], [0])
-        assert arr[0] == 0 
+        assert arr[0] == 0
 
     def test_at_broadcast_failure(self):
         arr = np.arange(5)
