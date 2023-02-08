@@ -36,7 +36,7 @@ class Broadcast(Benchmark):
 
 class At(Benchmark):
     def setup(self):
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(1)
         self.vals = rng.random(10_000_000, dtype=np.float64)
         self.idx = rng.integers(1000, size=10_000_000).astype(np.intp)
         self.res = np.zeros(1000, dtype=self.vals.dtype)
