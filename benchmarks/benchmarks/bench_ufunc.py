@@ -43,6 +43,9 @@ class At(Benchmark):
     def time_sum_at(self):
         np.add.at(self.res, self.idx, self.vals)
 
+    def time_maximum_at(self):
+        np.maximum.at(self.res, self.idx, self.vals)
+
 
 class UFunc(Benchmark):
     params = [ufuncs]
