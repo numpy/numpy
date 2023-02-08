@@ -5915,7 +5915,12 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
         steps[2] = 0;
     } else {
         args[2] = (char *)PyArray_DATA(op2_array);
-        steps[2] = PyArray_STRIDE(op2_array, 0);
+        if (PyArray_NDIM(op2_array) == 0
+            || PyArray_DIM(op2_array, 0) <= 1) {
+            steps[2] = 0;
+        } else {
+            steps[2] = PyArray_STRIDE(op2_array, 0);
+        }
     }
 
     npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
@@ -6435,7 +6440,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
          */
         if ((ufuncimpl->contiguous_indexed_loop != NULL) &&
                 (PyArray_NDIM(op1_array) == 1)  &&
-                (op2_array == NULL || PyArray_NDIM(op2_array) == 1) &&
+                (op2_array == NULL || PyArray_NDIM(op2_array) <= 1) &&
                 (iter->subspace_iter == NULL) && (iter->numiter == 1)) {
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
