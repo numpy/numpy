@@ -6271,26 +6271,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    PyObject *explain_chain_ctx = NULL;
-    PyObject *explain_chain = NULL;
-    npy_cache_import(
-            "numpy.core._ufunc_config", "explain_chain",
-            &explain_chain_ctx);
-    if (explain_chain_ctx == NULL) {
-        PyErr_WriteUnraisable(NULL);
-        return NULL;
-    }
-
-    if (PyContextVar_Get(explain_chain_ctx, Py_None, &explain_chain) < 0) {
-        /* Errors should not really happen, but if it does assume we warn. */
-        PyErr_WriteUnraisable(NULL);
-        return NULL;
-    }
-    if (!PyList_Check(explain_chain)) {
-        Py_DECREF(explain_chain);
-        explain_chain = NULL;
-    }
-
     op1_array = (PyArrayObject *)op1;
 
     /* Create second operand from number array if needed. */
@@ -6457,28 +6437,16 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                 (PyArray_NDIM(op1_array) == 1)  &&
                 (op2_array == NULL || PyArray_NDIM(op2_array) == 1) &&
                 (iter->subspace_iter == NULL) && (iter->numiter == 1)) {
-            if (explain_chain != NULL) {
-                PyList_Append(explain_chain,
-                              PyUnicode_FromString("ufunc.at using 'trivial_at_loop'"));
-            }
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
 
         }
         else {
             /* Couldn't use the fastest path, use the faster path */
-            if (explain_chain != NULL) {
-                PyList_Append(explain_chain,
-                              PyUnicode_FromString("ufunc.at using 'ufunc_at_fast_iter'"));
-            }
             res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array,
                         op2_array, strided_loop, &context, auxdata);
         }
     } else {
-        if (explain_chain != NULL) {
-            PyList_Append(explain_chain,
-                          PyUnicode_FromString("ufunc.at using 'ufunc_at_slow_iter'"));
-        }
         res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array,
                         op2_array, operation_descrs, strided_loop, &context,
                         auxdata);

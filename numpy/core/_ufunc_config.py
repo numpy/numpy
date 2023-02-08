@@ -448,7 +448,6 @@ _setdef()
 
 
 NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
-explain_chain = contextvars.ContextVar("_explain_chain", default=None)
 
 @set_module('numpy')
 @contextlib.contextmanager
