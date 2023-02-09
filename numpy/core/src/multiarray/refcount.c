@@ -44,9 +44,10 @@ PyArray_ClearBuffer(
     }
 
     NPY_traverse_info clear_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
     if (PyArray_GetClearFunction(
-            aligned, stride, descr, &clear_info, &flags) < 0) {
+            aligned, stride, descr, &clear_info, &flags_unused) < 0) {
         return -1;
     }
 
@@ -96,9 +97,10 @@ PyArray_ClearBuffer(
     npy_intp inner_stride = strides_it[0];
     npy_intp inner_shape = shape_it[0];
     NPY_traverse_info clear_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
     if (PyArray_GetClearFunction(
-            aligned, inner_stride, descr, &clear_info, &flags) < 0) {
+            aligned, inner_stride, descr, &clear_info, &flags_unused) < 0) {
         return -1;
     }
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
