@@ -2286,6 +2286,25 @@ class vectorize:
     """
     def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
                  excluded=None, cache=False, signature=None):
+
+        if not callable(pyfunc):
+            p_temp = pyfunc
+            pyfunc = np._NoValue
+            if p_temp is not None and p_temp is not np._NoValue:
+                o_temp = otypes
+                otypes = p_temp
+                if o_temp is not None:
+                    d_temp = doc
+                    doc = o_temp
+                    if d_temp is not None:
+                        e_temp = excluded
+                        excluded = d_temp
+                        if e_temp is True or e_temp is False:
+                            c_temp = cache
+                            cache = e_temp
+                            if c_temp is not None:
+                                signature = c_temp
+
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
