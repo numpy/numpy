@@ -67,8 +67,11 @@ wheels_upload_task:
     export IS_SCHEDULE_DISPATCH="false"
     export IS_PUSH="false"
 
+    printenv
+    echo $PWD
+
     # install miniconda for uploading to anaconda
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p ~/miniconda3
     ~/miniconda3/bin/conda init bash
     source ~/miniconda3/bin/activate
