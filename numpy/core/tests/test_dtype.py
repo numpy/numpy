@@ -1579,6 +1579,18 @@ class TestDTypeClasses:
         assert type(np.dtype).__module__ == "numpy"
         assert np.dtype._abstract
 
+    def test_is_numeric(self):
+        all_codes = set(np.typecodes['All'])
+        numeric_codes = set(np.typecodes['AllInteger'] +
+                            np.typecodes['AllFloat'] + '?')
+        non_numeric_codes = all_codes - numeric_codes
+
+        for code in numeric_codes:
+            assert type(np.dtype(code))._is_numeric
+
+        for code in non_numeric_codes:
+            assert not type(np.dtype(code))._is_numeric
+
 
 class TestFromCTypes:
 

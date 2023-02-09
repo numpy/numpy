@@ -7,10 +7,9 @@ extern "C" {
 
 #include "numpy/_dtype_api.h"
 
-/* DType flags, currently private, since we may just expose functions */
+/* DType flags, currently private, since we may just expose functions 
+   Other publicly visible flags are in _dtype_api.h                   */
 #define NPY_DT_LEGACY 1 << 0
-#define NPY_DT_ABSTRACT 1 << 1
-#define NPY_DT_PARAMETRIC 1 << 2
 
 
 typedef struct {
@@ -53,6 +52,7 @@ typedef struct {
 #define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)
 #define NPY_DT_is_abstract(dtype) (((dtype)->flags & NPY_DT_ABSTRACT) != 0)
 #define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
+#define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
 #define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
 
 /*

@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 7
+#define __EXPERIMENTAL_DTYPE_API_VERSION 8
 
 struct PyArrayMethodObject_tag;
 
@@ -263,6 +263,7 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 
 #define NPY_DT_ABSTRACT 1 << 1
 #define NPY_DT_PARAMETRIC 1 << 2
+#define NPY_DT_NUMERIC 1 << 3
 
 #define NPY_DT_discover_descr_from_pyobject 1
 #define _NPY_DT_is_known_scalar_type 2

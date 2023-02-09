@@ -231,3 +231,7 @@ def test_type_pickle():
     assert res is SF
 
     del np._ScaledFloatTestDType
+
+
+def test_is_numeric():
+    assert SF._is_numeric
