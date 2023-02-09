@@ -258,6 +258,17 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = r'''
+\newfontfamily\FontForChinese{FandolSong-Regular}[Extension=.otf]
+\catcode`琴\active\protected\def琴{{\FontForChinese\string琴}}
+\catcode`春\active\protected\def春{{\FontForChinese\string春}}
+\catcode`鈴\active\protected\def鈴{{\FontForChinese\string鈴}}
+\catcode`猫\active\protected\def猫{{\FontForChinese\string猫}}
+\catcode`傅\active\protected\def傅{{\FontForChinese\string傅}}
+\catcode`立\active\protected\def立{{\FontForChinese\string立}}
+\catcode`业\active\protected\def业{{\FontForChinese\string业}}
+\catcode`（\active\protected\def（{{\FontForChinese\string（}}
+\catcode`）\active\protected\def）{{\FontForChinese\string）}}
+
 % In the parameters section, place a newline after the Parameters
 % header.  This is default with Sphinx 5.0.0+, so no need for
 % the old hack then.
