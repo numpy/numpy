@@ -455,7 +455,9 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 #define @TYPE@_floor_divide @TYPE@_divide
 #define @TYPE@_floor_divide_indexed @TYPE@_divide_indexed
 #define @TYPE@_fmax @TYPE@_maximum
+#define @TYPE@_fmax_indexed @TYPE@_maximum_indexed
 #define @TYPE@_fmin @TYPE@_minimum
+#define @TYPE@_fmin_indexed @TYPE@_minimum_indexed
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -538,8 +540,8 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ int
 @TYPE@_@kind@@isa@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
-                           char * const*args, npy_intp const *dimensions,
-                           npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
     char *indx = args[1];
@@ -902,6 +904,7 @@ NPY_NO_EXPORT void
         }
     }
 }
+
 /**end repeat1**/
 
 /**begin repeat1
@@ -1695,7 +1698,9 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 }
 
 NPY_NO_EXPORT int
-HALF_@kind@_indexed(void *NPY_UNUSED(context), char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+HALF_@kind@_indexed(void *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
     char *indx = args[1];
@@ -1812,6 +1817,27 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     }
     /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
 }
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        npy_half v = *(npy_half *)value;
+        *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1827,8 +1853,29 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
-    /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
+    /* no need to clear floatstatus_invalid */
 }
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for (i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        npy_half v = *(npy_half *)value;
+        *indexed = (@OP@(*indexed, v) || npy_half_isnan(v)) ? *indexed: v;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 NPY_NO_EXPORT void

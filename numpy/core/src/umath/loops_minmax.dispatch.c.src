@@ -451,6 +451,24 @@ clear_fp:
 #endif
 }
 
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char *const *args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = SCALAR_OP(*indexed, *(@type@ *)value);
+    }
+    return 0;
+}
+
 #undef SCALAR_OP
 
 #endif // !fp_only || (is_fp && fp_only)
