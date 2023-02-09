@@ -457,9 +457,10 @@ class TestMiscCharacter(util.F2PyTest):
          character(len=*), intent(in) :: x(:)
          !f2py intent(out) x
          integer :: i
-         do i=1, size(x)
-           print*, "x(",i,")=", x(i)
-         end do
+         ! Uncomment for debug printing:
+         !do i=1, size(x)
+         !   print*, "x(",i,")=", x(i)
+         !end do
        end subroutine {fprefix}_gh4519
 
        pure function {fprefix}_gh3425(x) result (y)
