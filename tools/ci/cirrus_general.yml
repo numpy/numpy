@@ -67,7 +67,7 @@ wheels_upload_task:
     export IS_SCHEDULE_DISPATCH="false"
     export IS_PUSH="false"
 
-    printenv
+    echo $HOME
     echo $PWD
 
     # install miniconda for uploading to anaconda
