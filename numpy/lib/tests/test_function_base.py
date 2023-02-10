@@ -1817,16 +1817,15 @@ class TestVectorize:
         assert_array_equal(r, [1, 2, 3])
         assert f.__name__ == 'f'
 
-    def test_decorator_positional_args(self):
-        A = np.vectorize(abs, ['float64'], "return float absolute value")
-        y1 = A([1, -1, 0, 0.3, 5])
+    def test_bad_input(self):
+        with assert_raises(TypeError):
+            A = np.vectorize(pyfunc = 3)
 
-        @vectorize(['float64'], "return float absolute value")
-        def myabs(a):
-            return abs(a)
-
-        y2 = myabs([1, -1, 0, 0.3, 5])
-        assert_array_equal(y1, y2)
+    def test_no_keywords(self):
+        with assert_raises(TypeError):
+            @np.vectorize("string")
+            def foo():
+                return "bar"
 
     def test_positional_regression_9477(self):
         # This supplies the first keyword argument as a positional,
