@@ -250,6 +250,8 @@ cdef class Generator:
         Please see `numpy.random.SeedSequence` for additional notes on
         spawning children.
 
+        .. versionadded:: 1.25.0
+
         Returns
         -------
         child_generators : list of Generators

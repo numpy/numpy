@@ -556,6 +556,8 @@ cdef class BitGenerator():
         """
         Get the seed sequence used to initialize the bit generator.
 
+        .. versionadded:: 1.25.0
+
         Returns
         -------
         seed_seq : ISeedSequence
@@ -575,6 +577,8 @@ cdef class BitGenerator():
 
         Please see `numpy.random.SeedSequence` for additional notes on
         spawning children.
+
+        .. versionadded:: 1.25.0
 
         Returns
         -------
