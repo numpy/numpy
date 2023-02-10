@@ -569,3 +569,15 @@ class TestMiscCharacter(util.F2PyTest):
         assert_equal(len(a), 2)
 
         assert_raises(Exception, lambda: f(b'c'))
+
+
+class TestStringScalar(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
+
+    @pytest.mark.slow
+    def test_char(self):
+        out = self.module.string_test.string
+        expected = ()
+        assert out.shape == expected
+        expected = '|S8'
+        assert out.dtype == expected
