@@ -310,9 +310,9 @@ result as dimensions with size one::
     <BLANKLINE>
            [[2, 2, 2, 2, 2]]])
 	   
-To get the indices of each maximum or minimum value for each (N-1)-dimensional array in an N-dimensional array, use :meth:`reshape` to reshape the array to a 2D array, apply argmax or argmin along ``axis=1`` and use :meth:`unravel_index` to recover the index of the values per slice::
+To get the indices of each maximum or minimum value for each (N-1)-dimensional array in an N-dimensional array, use :meth:`reshape` to reshape the array to a 2D array, apply :meth:`argmax` or :meth:`argmin` along ``axis=1`` and use :meth:`unravel_index` to recover the index of the values per slice::
 
-    >>> x = np.arange(2*2*3).reshape(2,2,3) % 7  # 3D example array
+    >>> x = np.arange(2*2*3).reshape(2, 2, 3) % 7  # 3D example array
     >>> x
     array([[[0, 1, 2],
             [3, 4, 5]],
@@ -326,7 +326,7 @@ To get the indices of each maximum or minimum value for each (N-1)-dimensional a
     >>> np.unravel_index(indices_2d, x.shape[1:])
     (array([1, 0]), array([2, 0]))
     
-The first array returned contains the indices along axis 1 in the original array, the second array contains the indices along axis 2. The highest value in ``x[0]`` is therefore ``x[0,1,2]``.
+The first array returned contains the indices along axis 1 in the original array, the second array contains the indices along axis 2. The highest value in ``x[0]`` is therefore ``x[0, 1, 2]``.
 
 Index the same ndarray multiple times efficiently
 =================================================
