@@ -551,6 +551,44 @@ cdef class BitGenerator():
     def state(self, value):
         raise NotImplementedError('Not implemented in base BitGenerator')
 
+    @property
+    def seed_seq(self):
+        """
+        Get the seed sequence used to initialize the bit generator.
+
+        Returns
+        -------
+        seed_seq : ISeedSequence
+            The SeedSequence object used to initialize the BitGenerator.
+            This is normally a `np.random.SeedSequence` instance.
+
+        """
+        return self._seed_seq
+
+    def spawn(self, int n_children):
+        """
+        Create new independent child bit generators.
+
+        This is a convenience method to safely spawn new random number
+        generators via the `numpy.random.SeedSequence.spawn` mechanism.
+        The original seed sequence is accessible as ``bit_generator.seed_seq``.
+
+        Please see `numpy.random.SeedSequence` for additional notes on
+        spawning children.
+
+        Returns
+        -------
+        child_bit_generators : list of BitGenerators
+
+        """
+        if not isinstance(self._seed_seq, ISpawnableSeedSequence):
+            raise TypeError(
+                "The underlying SeedSequence does not implement spawning. "
+                "You must ensure a custom SeedSequence used for initializing "
+                "the random state implements spawning (and registers it).")
+
+        return [type(self)(seed=s) for s in self._seed_seq.spawn(n_children)]
+
     def random_raw(self, size=None, output=True):
         """
         random_raw(self, size=None)

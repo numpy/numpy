@@ -238,6 +238,25 @@ cdef class Generator:
         """
         return self._bit_generator
 
+    def spawn(self, int n_children):
+        """
+        Create new independent child generators.
+
+        This is a convenience method to safely spawn new random number
+        generators via the `numpy.random.SeedSequence.spawn` mechanism.
+        The original seed sequence is used by the bit generator and accessible
+        as ``Generator.bit_generator.seed_seq``.
+
+        Please see `numpy.random.SeedSequence` for additional notes on
+        spawning children.
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
+
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype=np.float64, out=None)
