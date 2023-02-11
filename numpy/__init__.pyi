@@ -1534,7 +1534,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     # NOTE: In practice any object is accepted by `obj`, but as `__array_finalize__`
     # is a pseudo-abstract method the type has been narrowed down in order to
-    # grant subclasses a bit more flexiblity
+    # grant subclasses a bit more flexibility
     def __array_finalize__(self, obj: None | NDArray[Any], /) -> None: ...
 
     def __array_wrap__(

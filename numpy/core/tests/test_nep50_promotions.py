@@ -131,7 +131,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
 
 @pytest.mark.parametrize("op", [operator.add, operator.pow, operator.eq])
 def test_weak_promotion_scalar_path(op):
-    # Some additional paths excercising the weak scalars.
+    # Some additional paths exercising the weak scalars.
     np._set_promotion_state("weak")
 
     # Integer path:

@@ -197,7 +197,7 @@ else:
         "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
 
     # Some of these are awkward (since `np.str` may be preferable in the long
-    # term), but overall the names ending in 0 seem undesireable
+    # term), but overall the names ending in 0 seem undesirable
     _type_info = [
         ("bool8", bool_, "np.bool_"),
         ("int0", intp, "np.intp"),

@@ -466,7 +466,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 
     const int loadable0 = npyv_loadable_stride_s64(ssrc0);
     const int loadable1 = npyv_loadable_stride_s64(ssrc1);
-    const int storeable = npyv_storable_stride_s64(sdst);
+    const int storable = npyv_storable_stride_s64(sdst);
 
     // lots**lots of specializations, to squeeze out max performance
     // contig
@@ -512,7 +512,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             }
         }
         // non-contig
-        else if (loadable1 && storeable) {
+        else if (loadable1 && storable) {
             for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
                 npyv_@sfx@ b0 = npyv_loadn2_@sfx@(src1, ssrc1);
                 npyv_@sfx@ b1 = npyv_loadn2_@sfx@(src1 + ssrc1*hstep, ssrc1);
@@ -558,7 +558,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             }
         }
         // non-contig
-        else if (loadable0 && storeable) {
+        else if (loadable0 && storable) {
             for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
                 npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src0, ssrc0);
                 npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src0 + ssrc0*hstep, ssrc0);
@@ -583,7 +583,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     }
     #if @is_mul@
     // non-contig
-    else if (loadable0 && loadable1 && storeable) {
+    else if (loadable0 && loadable1 && storable) {
         for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
                             src1 += ssrc1*vstep, dst += sdst*vstep
         ) {

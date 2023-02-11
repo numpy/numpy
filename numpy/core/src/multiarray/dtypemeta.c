@@ -664,7 +664,7 @@ static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     /*
-     * Timedelta/datetime shouldn't actuall promote at all.  That they
+     * Timedelta/datetime shouldn't actually promote at all.  That they
      * currently do means that we need additional hacks in the comparison
      * type resolver.  For comparisons we have to make sure we reject it
      * nicely in order to return an array of True/False values.
