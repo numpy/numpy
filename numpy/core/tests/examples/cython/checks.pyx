@@ -46,7 +46,7 @@ def convert_datetime_to_datetimestruct():
     return dts
 
 
-def make_iso_8601_datetime(dt: datetime):
+def make_iso_8601_datetime(dt: "datetime"):
     cdef:
         cnp.npy_datetimestruct dts
         char* result
