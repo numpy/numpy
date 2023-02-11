@@ -1059,6 +1059,7 @@ static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     PyObject *arr, *ret;
+    double self_prio, other_prio;
 
     /*
      * If the other object is None, False is always right. This avoids
@@ -1075,6 +1076,18 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         }
         if (cmp_op == Py_NE) {
             Py_RETURN_TRUE;
+        }
+    }
+
+    // Check if we need to defer to the other object's method xref GH#17017
+    if (PyObject_HasAttrString(other, "__array_priority__") &&
+            PyObject_HasAttrString(self, "__array_priority__")) {
+
+        self_prio = PyArray_GetPriority(self, NPY_SCALAR_PRIORITY);
+        other_prio = PyArray_GetPriority(other, NPY_SCALAR_PRIORITY);
+        if (other_prio > self_prio) {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
     }
 
