@@ -1311,6 +1311,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
+    elif np._using_numpy2_behavior():
+        return tuple(outvals)
     else:
         return outvals
 

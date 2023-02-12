@@ -415,13 +415,17 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+    del use_hugepage
 
     # Give a warning if NumPy is reloaded or imported on a sub-interpreter
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+    # default to "weak" promotion for "NumPy 2".
+    core._set_promotion_state(
+        os.environ.get("NPY_PROMOTION_STATE",
+                       "weak" if _using_numpy2_behavior() else "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():
