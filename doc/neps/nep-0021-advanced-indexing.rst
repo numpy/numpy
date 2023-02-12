@@ -143,7 +143,7 @@ exactly.
 
 Vectorized indexing in particular can be challenging to implement with array
 storage backends not based on NumPy. In contrast, indexing by 1D arrays along
-at least one dimension in the style of outer indexing is much more acheivable.
+at least one dimension in the style of outer indexing is much more achievable.
 This has led many libraries (including dask and h5py) to attempt to define a
 safe subset of NumPy-style indexing that is equivalent to outer indexing, e.g.,
 by only allowing indexing with an array along at most one dimension. However,
