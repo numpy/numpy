@@ -994,7 +994,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      * TODO: If/once we correctly push structured comparisons into the ufunc
      *       we could consider pushing this path into the ufunc itself as a
      *       fallback loop (which ignores the input arrays).
-     *       This would have the advantage that subclasses implemementing
+     *       This would have the advantage that subclasses implementing
      *       `__array_ufunc__` do not explicitly need `__eq__` and `__ne__`.
      */
     if (result == NULL

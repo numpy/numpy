@@ -424,7 +424,7 @@ class TestDivision:
     def test_division_int_boundary(self, dtype, ex_val):
         fo = np.iinfo(dtype)
         neg = -1 if fo.min < 0 else 1
-        # Large enough to test SIMD loops and remaind elements
+        # Large enough to test SIMD loops and remainder elements
         lsize = 512 + 7
         a, b, divisors = eval(ex_val)
         a_lst, b_lst = a.tolist(), b.tolist()

@@ -9534,7 +9534,7 @@ def test_equal_override():
 
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
 @pytest.mark.parametrize(["dt1", "dt2"], [
-        ([("f", "i")], [("f", "i")]),  # structured comparison (successfull)
+        ([("f", "i")], [("f", "i")]),  # structured comparison (successful)
         ("M8", "d"),  # impossible comparison: result is all True or False
         ("d", "d"),  # valid comparison
         ])
