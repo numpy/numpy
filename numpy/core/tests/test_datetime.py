@@ -2540,7 +2540,7 @@ def test_comparisons_return_not_implemented():
     obj = custom()
 
     dt = np.datetime64('2000', 'ns')
-    td = dt - dti
+    td = dt - dt
 
     for item in [dt, td]:
         assert item.__eq__(obj) is NotImplemented
