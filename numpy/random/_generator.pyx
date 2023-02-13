@@ -242,8 +242,8 @@ cdef class Generator:
         """
         Create new independent child generators.
 
-        See :ref:`seeding_and_entropy` for additional notes on seeding and
-        spawning children.
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
 
         .. versionadded:: 1.25.0
 

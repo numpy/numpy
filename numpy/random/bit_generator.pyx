@@ -212,6 +212,9 @@ class ISpawnableSeedSequence(ISeedSequence):
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -451,6 +454,9 @@ cdef class SeedSequence():
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -577,8 +583,8 @@ cdef class BitGenerator():
         """
         Create new independent child bit generators.
 
-        See :ref:`seeding_and_entropy` for additional notes on seeding and
-        spawning children.  Some bit generators also implement ``jumped``
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.  Some bit generators also implement ``jumped``
         as a different approach for creating independent streams.
 
         .. versionadded:: 1.25.0
