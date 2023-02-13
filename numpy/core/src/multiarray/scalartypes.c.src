@@ -1059,7 +1059,6 @@ static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     PyObject *arr, *ret;
-    double self_prio, other_prio;
 
     /*
      * If the other object is None, False is always right. This avoids
