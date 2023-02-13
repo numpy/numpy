@@ -57,29 +57,19 @@ struct side_to_generic_cmp<right> {
  *****************************************************************************
  */
 template <class Tag, side_t side>
-static void
-binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
-          npy_intp key_len, npy_intp arr_str, npy_intp key_str,
-          npy_intp ret_str, PyArrayObject *)
+static void binsearch(const char *arr, const char *key, char *ret, 
+                      npy_intp arr_len, npy_intp key_len, 
+                      npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                      PyArrayObject *)
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
-    T last_key_val;
+    T last_key_val = *(const T *)key;
 
-    if (key_len == 0) {
-        return;
-    }
-    last_key_val = *(const T *)key;
-
-    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
+    for (npy_intp i = 0; i < key_len; ++i, key += key_str, ret += ret_str) {
         const T key_val = *(const T *)key;
-        /*
-         * Updating only one of the indices based on the previous key
-         * gives the search a big boost when keys are sorted, but slightly
-         * slows down things for purely random ones.
-         */
         if (cmp(last_key_val, key_val)) {
             max_idx = arr_len;
         }
@@ -87,7 +77,6 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
             min_idx = 0;
             max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
         }
-
         last_key_val = key_val;
 
         while (min_idx < max_idx) {
