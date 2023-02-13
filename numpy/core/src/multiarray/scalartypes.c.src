@@ -1079,17 +1079,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         }
     }
 
-    // Check if we need to defer to the other object's method xref GH#17017
-    if (PyObject_HasAttrString(other, "__array_priority__") &&
-            PyObject_HasAttrString(self, "__array_priority__")) {
-
-        self_prio = PyArray_GetPriority(self, NPY_SCALAR_PRIORITY);
-        other_prio = PyArray_GetPriority(other, NPY_SCALAR_PRIORITY);
-        if (other_prio > self_prio) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-    }
+   RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
     arr = PyArray_FromScalar(self, NULL);
     if (arr == NULL) {
