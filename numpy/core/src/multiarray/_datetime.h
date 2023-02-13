@@ -267,26 +267,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 NPY_CASTING casting, npy_timedelta *out);
 
 /*
- * Converts a datetime into a PyObject *.
- *
- * For days or coarser, returns a datetime.date.
- * For microseconds or coarser, returns a datetime.datetime.
- * For units finer than microseconds, returns an integer.
- */
-NPY_NO_EXPORT PyObject *
-convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
-
-/*
- * Converts a timedelta into a PyObject *.
- *
- * Not-a-time is returned as the string "NaT".
- * For microseconds or coarser, returns a datetime.timedelta.
- * For units finer than microseconds, returns an integer.
- */
-NPY_NO_EXPORT PyObject *
-convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
-
-/*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int

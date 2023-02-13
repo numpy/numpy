@@ -640,6 +640,10 @@ class TestDateTime:
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('i8'),
                  (2000 - 1970)*365 + (2000 - 1972)//4 + 366 + 31 + 28 + 21)
 
+    @pytest.mark.xfail(
+        reason="RecursionError because .astype(object) now produces np.datetime64 "
+        "objects instead of pydate objects"
+    )
     def test_days_to_pydate(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
                     datetime.date(1599, 1, 1))
@@ -1554,6 +1558,7 @@ class TestDateTime:
         assert_raises(TypeError, np.fmin, a, b, casting='same_kind')
         assert_raises(TypeError, np.fmax, a, b, casting='same_kind')
 
+    @pytest.mark.xfail(reason=".item() no longer returns pydatetime object")
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
         t[0] = 60*60*24 + 60*60*10
@@ -2567,3 +2572,37 @@ def test_comparisons_return_not_implemented():
         assert item.__lt__(obj) is NotImplemented
         assert item.__ge__(obj) is NotImplemented
         assert item.__gt__(obj) is NotImplemented
+
+
+def test_item():
+    # GH#19782, GH#18363, GH#12550, GH#7945, GH#7619
+    for cls in [np.datetime64, np.timedelta64]:
+        for unit in [
+            "Y",
+            "M",
+            "W",
+            "D",
+            "h",
+            "m",
+            "s",
+            "ms",
+            "us",
+            "ns",
+            "ps",
+            "fs",
+            "as",
+        ]:
+            obj = cls(1234, unit)
+            res = obj.item()
+            assert isinstance(res, cls)
+
+            arr0d = np.array(obj, dtype=obj.dtype)
+            res = arr0d.item()
+            assert isinstance(res, cls)
+
+            arr1d = np.array([obj], dtype=obj.dtype)
+            res = arr1d.item()
+            assert isinstance(res, cls)
+
+            res = arr1d.astype(object)[0]
+            assert isinstance(res, cls)

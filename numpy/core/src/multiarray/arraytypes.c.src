@@ -1176,7 +1176,7 @@ DATETIME_getitem(void *ip, void *vap)
         PyArray_DESCR(ap)->f->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
-    return convert_datetime_to_pyobject(dt, meta);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
 
@@ -1200,7 +1200,7 @@ TIMEDELTA_getitem(void *ip, void *vap)
         PyArray_DESCR(ap)->f->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
-    return convert_timedelta_to_pyobject(td, meta);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
 static int
