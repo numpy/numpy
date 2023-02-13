@@ -48,7 +48,13 @@ def assert_finfo_equal(f1, f2):
                  'nmant', 'precision', 'resolution', 'tiny',
                  'smallest_normal', 'smallest_subnormal'):
         assert_equal(getattr(f1, attr), getattr(f2, attr),
-                     f'finfo instances differ on {attr}')
+                     f'finfo instances {f1} and {f2} differ on {attr}')
+
+def assert_iinfo_equal(i1, i2):
+    # assert two iinfo instances have the same attributes
+    for attr in ('bits', 'min', 'max'):
+        assert_equal(getattr(i1, attr), getattr(i2, attr),
+                     f'iinfo instances {i1} and {i2} differ on {attr}')
 
 class TestFinfo:
     def test_basic(self):
@@ -57,6 +63,7 @@ class TestFinfo:
                         np.complex128]))
         for dt1, dt2 in dts:
             assert_finfo_equal(finfo(dt1), finfo(dt2))
+
         assert_raises(ValueError, finfo, 'i4')
 
 class TestIinfo:
@@ -66,9 +73,8 @@ class TestIinfo:
                   [np.int8, np.int16, np.int32, np.int64,
                    np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'min', 'max'):
-                assert_equal(getattr(iinfo(dt1), attr),
-                             getattr(iinfo(dt2), attr), attr)
+            assert_iinfo_equal(dt1, dt2)
+
         assert_raises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):
@@ -90,15 +96,14 @@ class TestRepr:
 
 
 def test_instances():
-    # Test the finfo and iinfo results on instances agree with the results
-    # on the corresponding classes 
+    # Test the finfo and iinfo results on numeric instances agree with the results
+    # on the corresponding types
 
     for c in [int, np.int16, np.int32, np.int64]:
-        class_info = iinfo(c)
-        instance_info = iinfo(c(12))
+        class_iinfo = iinfo(c)
+        instance_iinfo = iinfo(c(12))
 
-        for key in ['bits', 'min', 'max']:
-            assert getattr(class_info, key) == getattr(instance_info, key)
+        assert_iinfo_equal(class_iinfo, instance_iinfo)
 
     for c in [float, np.float16, np.float32, np.float64]:
         class_finfo = finfo(c)
