@@ -345,6 +345,8 @@ class TestIntegers:
                           endpoint=endpoint, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, [0],
                           endpoint=endpoint, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [ubnd+1], [ubnd],
+                          endpoint=endpoint, dtype=dt)
 
     def test_bounds_checking_array(self, endpoint):
         for dt in self.itype:
