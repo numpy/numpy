@@ -169,6 +169,7 @@ def _register_known_types():
                             minexp=-14,
                             maxexp=16,
                             it=10,
+                            it_2=11,
                             iexp=5,
                             ibeta=2,
                             irnd=5,
@@ -188,6 +189,7 @@ def _register_known_types():
                             minexp=-126,
                             maxexp=128,
                             it=23,
+                            it_2=24,
                             iexp=8,
                             ibeta=2,
                             irnd=5,
@@ -209,6 +211,7 @@ def _register_known_types():
                             minexp=-1022,
                             maxexp=1024,
                             it=52,
+                            it_2=53,
                             iexp=11,
                             ibeta=2,
                             irnd=5,
@@ -233,6 +236,7 @@ def _register_known_types():
                              minexp=-16382,
                              maxexp=16384,
                              it=112,
+                             it_2=113,
                              iexp=15,
                              ibeta=2,
                              irnd=5,
@@ -258,6 +262,7 @@ def _register_known_types():
                             minexp=-16382,
                             maxexp=16384,
                             it=63,
+                            it_2=64,
                             iexp=15,
                             ibeta=2,
                             irnd=5,
@@ -286,6 +291,7 @@ def _register_known_types():
                              minexp=-1022,
                              maxexp=1024,
                              it=105,
+                             it_2=106,
                              iexp=11,
                              ibeta=2,
                              irnd=5,
@@ -418,6 +424,13 @@ class finfo:
         The number of bits in the exponent including its sign and bias.
     nmant : int
         The number of bits in the mantissa.
+        .. note::
+        ``finfo.nmant`` only shows the explicitly stored digits, which is
+        always off because floating point numbers have an implicitly
+        leading 1. Because of this, finfo.nmant is due to be deprecated.
+        To get the number of bits in the mantissa, use ``finfo.mant_dig``.
+    mant_dig: int
+        The number of bits in the mantissa.
     precision : int
         The approximate number of decimal digits to which this kind of
         float is precise.
@@ -539,6 +552,7 @@ class finfo:
         self.eps = machar.eps.flat[0]
         self.nexp = machar.iexp
         self.nmant = machar.it
+        self.mant_dig = machar.it_2
         self._machar = machar
         self._str_tiny = machar._str_xmin.strip()
         self._str_max = machar._str_xmax.strip()
