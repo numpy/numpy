@@ -66,7 +66,7 @@ class TestFinfo:
 
         assert_raises(ValueError, finfo, 'i4')
 
-    def test_regression_gh23108():
+    def test_regression_gh23108(self):
         # np.float32(1.0) and np.float64(1.0) have the same hash and are
         # equal under the == operator
         f1 = np.finfo(np.float32(1.0))
