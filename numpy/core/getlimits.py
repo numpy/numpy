@@ -485,42 +485,35 @@ class finfo:
             )
 
         try:
-            dtype = numeric.dtype(dtype)
+            derived_dtype = numeric.dtype(dtype)
         except TypeError:
-            # In case a float instance was given
-            dtype = numeric.dtype(type(dtype))
+            # In case a float instance was given we update the dtype so
+            # that not all floats enter into the cache
+            derived_dtype = dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype)
+        # dtype is the entry that will be added to the cache, derived_dtype 
+        # will be modified untill we have an finfo object
+        obj = cls._finfo_cache.get(derived_dtype)
         if obj is not None:
             return obj
-        dtypes = [dtype]
-        newdtype = numeric.obj2sctype(dtype)
-        if newdtype is not dtype:
-            dtypes.append(newdtype)
-            dtype = newdtype
-        if not issubclass(dtype, numeric.inexact):
-            raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype)
-        if obj is not None:
-            return obj
-        if not issubclass(dtype, numeric.floating):
-            newdtype = _convert_to_float[dtype]
-            if newdtype is not dtype:
-                # dtype changed, for example from complex128 to float64
-                dtypes.append(newdtype)
-                dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
-                if obj is not None:
-                    # the original dtype was not in the cache, but the new
-                    # dtype is in the cache. we add the original dtypes to
-                    # the cache and return the result
-                    for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
-                    return obj
-        obj = object.__new__(cls)._init(dtype)
-        for dt in dtypes:
-            cls._finfo_cache[dt] = obj
+        derived_dtype = numeric.obj2sctype(derived_dtype)
+        if not issubclass(derived_dtype, numeric.inexact):
+            raise ValueError("data type %r not inexact" % (derived_dtype))
+        obj = cls._finfo_cache.get(derived_dtype)
+        if obj is not None:
+            cls._finfo_cache[dtype] = obj
+            return obj
+
+        if not issubclass(derived_dtype, numeric.floating):
+            derived_dtype = _convert_to_float[derived_dtype]
+            obj = cls._finfo_cache.get(derived_dtype)
+            if obj is not None:
+                cls._finfo_cache[dtype] = obj
+                return obj
+
+        obj = object.__new__(cls)._init(derived_dtype)
+        cls._finfo_cache[dtype] = obj
         return obj
 
     def _init(self, dtype):
