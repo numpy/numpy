@@ -4039,7 +4039,7 @@ def percentile(a,
     of the percentile in the sorted sample:
 
     .. math::
-        i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
+        i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha - 1
 
     The different methods then work as follows
 
@@ -4334,7 +4334,7 @@ def quantile(a,
     of the quantile in the sorted sample:
 
     .. math::
-        i + g = q * ( n - alpha - beta + 1 ) + alpha
+        i + g = q * ( n - alpha - beta + 1 ) + alpha - 1
 
     The different methods then work as follows
 
