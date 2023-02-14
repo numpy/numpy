@@ -66,6 +66,13 @@ class TestFinfo:
 
         assert_raises(ValueError, finfo, 'i4')
 
+    def test_regression_gh23108():
+        # np.float32(1.0) and np.float64(1.0) have the same hash and are
+        # equal under the == operator
+        f1 = np.finfo(np.float32(1.0))
+        f2 = np.finfo(np.float64(1.0))
+        assert f1 != f2
+
 class TestIinfo:
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
