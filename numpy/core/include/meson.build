@@ -2,6 +2,7 @@ installed_headers = [
   'numpy/_neighborhood_iterator_imp.h',
   'numpy/arrayobject.h',
   'numpy/arrayscalars.h',
+  'numpy/_dtype_api.h',
   'numpy/experimental_dtype_api.h',
   'numpy/halffloat.h',
   'numpy/ndarrayobject.h',
