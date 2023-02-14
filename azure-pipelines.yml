@@ -194,7 +194,7 @@ stages:
 
     # wait until after dev build of NumPy to pip
     # install matplotlib to avoid pip install of older numpy
-    - script: python -m pip install matplotlib==3.6.3
+    - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
 
     - script: python runtests.py -g --refguide-check
