@@ -418,7 +418,7 @@ class TestTimeScalars:
 
         ass = np.ones((), dtype=dtype)
         if issubclass(dtype, np.integer):
-            if isinstance(scalar, (np.timelta64, np.datetime64)):
+            if isinstance(scalar, (np.timedelta64, np.datetime64)):
                 return  # FIXME: segfault
             with pytest.raises(TypeError):
                 # raises, as would np.array([scalar], dtype=dtype), this is

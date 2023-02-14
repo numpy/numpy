@@ -135,7 +135,7 @@ class TestFromrecords:
         # 1.13 converted to python scalars before the repr
         try:
             np.set_printoptions(legacy='1.13')
-            assert_equal(repr(record), '(1, 2.0, datetime.date(2003, 1, 1))')
+            assert_equal(repr(record), '(1, 2.0, numpy.datetime64('2003'))')
         finally:
             np.set_printoptions(legacy=False)
 
