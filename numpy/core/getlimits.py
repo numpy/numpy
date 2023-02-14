@@ -469,7 +469,7 @@ class finfo:
 
     """
 
-    @lru_cache
+    @lru_cache(typed=True)
     def __new__(cls, dtype):
 
         if dtype is None:
