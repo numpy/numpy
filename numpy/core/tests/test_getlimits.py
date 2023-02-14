@@ -73,7 +73,7 @@ class TestIinfo:
                   [np.int8, np.int16, np.int32, np.int64,
                    np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
-            assert_iinfo_equal(dt1, dt2)
+            assert_iinfo_equal(iinfo(dt1), iinfo(dt2))
 
         assert_raises(ValueError, iinfo, 'f4')
 
@@ -96,8 +96,8 @@ class TestRepr:
 
 
 def test_instances():
-    # Test the finfo and iinfo results on numeric instances agree with the results
-    # on the corresponding types
+    # Test the finfo and iinfo results on numeric instances agree with
+    # the results on the corresponding types
 
     for c in [int, np.int16, np.int32, np.int64]:
         class_iinfo = iinfo(c)
