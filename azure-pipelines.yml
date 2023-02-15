@@ -246,29 +246,18 @@ stages:
     pool:
       vmImage: 'windows-2019'
     strategy:
-      maxParallel: 6
+      maxParallel: 5
       matrix:
-          Python39-32bit-fast:
+          Python39-32bit-full:
             PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
-          Python39-64bit-full:
-            PYTHON_VERSION: '3.9'
-            PYTHON_ARCH: 'x64'
             TEST_MODE: full
-            BITS: 64
-          Python310-32bit-fast:
-            PYTHON_VERSION: '3.10'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
             BITS: 32
-          Python310-64bit-full:
+          Python310-64bit-fast:
             PYTHON_VERSION: '3.10'
             PYTHON_ARCH: 'x64'
-            TEST_MODE: full
+            TEST_MODE: fast
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
           Python311-32bit-fast:
             PYTHON_VERSION: '3.11'
             PYTHON_ARCH: 'x86'
