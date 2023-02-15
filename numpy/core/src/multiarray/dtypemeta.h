@@ -5,40 +5,12 @@
 extern "C" {
 #endif
 
+#include "numpy/_dtype_api.h"
+
 /* DType flags, currently private, since we may just expose functions */
 #define NPY_DT_LEGACY 1 << 0
 #define NPY_DT_ABSTRACT 1 << 1
 #define NPY_DT_PARAMETRIC 1 << 2
-
-
-typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-        PyArray_DTypeMeta *cls, PyObject *obj);
-
-/*
- * Before making this public, we should decide whether it should pass
- * the type, or allow looking at the object. A possible use-case:
- * `np.array(np.array([0]), dtype=np.ndarray)`
- * Could consider arrays that are not `dtype=ndarray` "scalars".
- */
-typedef int (is_known_scalar_type_function)(
-        PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-typedef PyArray_DTypeMeta *(common_dtype_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
-typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
-typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
-
-/*
- * TODO: These two functions are currently only used for experimental DType
- *       API support.  Their relation should be "reversed": NumPy should
- *       always use them internally.
- *       There are open points about "casting safety" though, e.g. setting
- *       elements is currently always unsafe.
- */
-typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
-typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
 
 
 typedef struct {

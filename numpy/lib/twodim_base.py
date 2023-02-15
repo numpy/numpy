@@ -754,7 +754,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     >>> xcenters = (xedges[:-1] + xedges[1:]) / 2
     >>> ycenters = (yedges[:-1] + yedges[1:]) / 2
     >>> im.set_data(xcenters, ycenters, H)
-    >>> ax.images.append(im)
+    >>> ax.add_image(im)
     >>> plt.show()
 
     It is also possible to construct a 2-D histogram without specifying bin

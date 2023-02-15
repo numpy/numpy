@@ -723,7 +723,7 @@ err:
 
 static int
 add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
-    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_VERSION) < 0) {
+    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_API_VERSION) < 0) {
         return -1;
     }
 
