@@ -526,6 +526,10 @@ class TestConversion:
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
         # use exponent that avoids bug in Darwin pow function.
+
+        a = np.finfo(np.double)
+        b = np.finfo(np.longdouble)
+
         exp = np.finfo(np.double).maxexp - 1
         huge_ld = 2 * 1234 * np.longdouble(2) ** exp
         huge_i = 2 * 1234 * 2 ** exp
