@@ -35,9 +35,16 @@ typedef struct {
      */
     PyArrayMethodObject *within_dtype_castingimpl;
     /*
-     * Implementation which clears a dtype or NULL.  If not given, setting
-     * NPY_ITEM_REFCOUNT on the dtype is invalid.  Note that NPY_ITEM_REFCOUNT
-     * may inidicate references that are not Python objects.
+     * Either NULL or fetches a clearing function.  Clearing means deallocating
+     * any referenced data and setting it to a safe state.  For Python objects
+     * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
+     * setting the `PyObject *` to NULL.
+     * After the clear, the data must be fillable via cast/copy and calling
+     * clear a second time must be safe.
+     * If the DType class does not implement `get_clear_loop` setting
+     * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
+     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * Python objects.
      */
     get_traverse_loop_function *get_clear_loop;
     /*

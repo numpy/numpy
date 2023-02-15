@@ -5,7 +5,7 @@
  *
  * As of writing, it is only used for CLEARing, which means mainly
  * Python object DECREF/dealloc followed by NULL'ing the data
- * (to support double clearing on errors).
+ * (to support double clearing and ensure data is again in a usable state).
  * However, memory initialization and traverse follows similar
  * protocols (although traversal needs additional arguments).
  */
@@ -68,7 +68,10 @@ get_clear_function(
 }
 
 /*
- * Helper to set up a strided loop used for clearing.
+ * Helper to set up a strided loop used for clearing.  Clearing means
+ * deallocating any references (e.g. via Py_DECREF) and resetting the data
+ * back into a usable/initialized state (e.g. by NULLing any references).
+ *
  * The function will error when called on a dtype which does not have
  * references (and thus the get_clear_loop slot NULL).
  * Note that old-style user-dtypes use the "void" version.

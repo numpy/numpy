@@ -27,7 +27,7 @@ typedef int (get_traverse_loop_function)(
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 
-/* NumPy DType clear implementations */
+/* NumPy DType clear (object DECREF + NULLing) implementations */
 
 NPY_NO_EXPORT int
 npy_get_clear_object_strided_loop(
