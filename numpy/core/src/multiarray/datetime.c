@@ -4100,7 +4100,7 @@ PyArray_InitializeDatetimeCasts()
     };
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_time_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &time_to_time_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4130,7 +4130,7 @@ PyArray_InitializeDatetimeCasts()
 
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &datetime_to_timedelta_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &legacy_cast_get_strided_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4203,7 +4203,7 @@ PyArray_InitializeDatetimeCasts()
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_string_resolve_descriptors;
     /* Strided loop differs for the two */
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
@@ -4252,7 +4252,7 @@ PyArray_InitializeDatetimeCasts()
     /* The default type resolution should work fine. */
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &string_to_datetime_cast_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &string_to_datetime_cast_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
