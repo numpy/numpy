@@ -473,7 +473,8 @@ class TestMaximumSctype:
     def test_complex(self, t):
         assert_equal(np.maximum_sctype(t), np.sctypes['complex'][-1])
 
-    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.unicode_, np.bytes_, np.void])
+    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
+                                   np.void])
     def test_other(self, t):
         assert_equal(np.maximum_sctype(t), t)
 
@@ -485,7 +486,7 @@ class Test_sctype2char:
     def test_scalar_type(self):
         assert_equal(np.sctype2char(np.double), 'd')
         assert_equal(np.sctype2char(np.int_), 'l')
-        assert_equal(np.sctype2char(np.unicode_), 'U')
+        assert_equal(np.sctype2char(np.str_), 'U')
         assert_equal(np.sctype2char(np.bytes_), 'S')
 
     def test_other_type(self):

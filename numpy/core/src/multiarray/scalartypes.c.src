@@ -1078,6 +1078,8 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         }
     }
 
+   RICHCMP_GIVE_UP_IF_NEEDED(self, other);
+
     arr = PyArray_FromScalar(self, NULL);
     if (arr == NULL) {
         return NULL;
@@ -1850,10 +1852,7 @@ gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 static PyObject *
 numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
 {
-    PyObject *generic_alias;
-
-#ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
+    const Py_ssize_t args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
     int args_len_expected;
 
     /* complexfloating should take 2 parameters, all others take 1 */
@@ -1865,20 +1864,13 @@ numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
         args_len_expected = 1;
     }
 
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
     if ((args_len > args_len_expected) || (args_len == 0)) {
         return PyErr_Format(PyExc_TypeError,
                             "Too %s arguments for %s",
                             args_len > args_len_expected ? "many" : "few",
                             ((PyTypeObject *)cls)->tp_name);
     }
-    generic_alias = Py_GenericAlias(cls, args);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-    generic_alias = NULL;
-#endif
-    return generic_alias;
+    return Py_GenericAlias(cls, args);
 }
 
 /*
@@ -1889,14 +1881,9 @@ numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
 static PyObject *
 numbertype_class_getitem(PyObject *cls, PyObject *args)
 {
-#ifdef Py_GENERICALIASOBJECT_H
     PyErr_Format(PyExc_TypeError,
                  "There are no type variables left in %s",
                  ((PyTypeObject *)cls)->tp_name);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-#endif
     return NULL;
 }
 
@@ -2284,7 +2271,7 @@ static PyGetSetDef inttype_getsets[] = {
 };
 
 static PyMethodDef numbertype_methods[] = {
-    /* for typing; requires python >= 3.9 */
+    /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem_abc,
         METH_CLASS | METH_O, NULL},
@@ -2298,7 +2285,7 @@ static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    /* for typing; requires python >= 3.9 */
+    /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
@@ -2339,7 +2326,7 @@ static PyMethodDef @name@type_methods[] = {
     {"is_integer",
         (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
-    /* for typing; requires python >= 3.9 */
+    /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
@@ -2351,7 +2338,7 @@ static PyMethodDef @name@type_methods[] = {
  * #name = timedelta, cdouble#
  */
 static PyMethodDef @name@type_methods[] = {
-    /* for typing; requires python >= 3.9 */
+    /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
@@ -2364,7 +2351,7 @@ static PyMethodDef @name@type_methods[] = {
  *         long, ulong, longlong, ulonglong#
  */
 static PyMethodDef @name@type_methods[] = {
-    /* for typing; requires python >= 3.9 */
+    /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},

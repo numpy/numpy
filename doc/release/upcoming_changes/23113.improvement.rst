@@ -1,0 +1,3 @@
+- The ``NDArrayOperatorsMixin`` class now specifies that it contains no
+  ``__slots__`` ensureing that subclasses can now make use of this feature in
+  Python.

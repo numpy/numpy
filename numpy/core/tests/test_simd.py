@@ -35,6 +35,9 @@ class _Test_Utility:
         """
         return getattr(self.npyv, attr + "_" + self.sfx)
 
+    def _x2(self, intrin_name):
+        return getattr(self.npyv, f"{intrin_name}_{self.sfx}x2")
+
     def _data(self, start=None, count=None, reverse=False):
         """
         Create list of consecutive numbers according to number of vector's lanes.
@@ -380,6 +383,11 @@ class _SIMD_FP(_Test_Utility):
         nfms = self.nmulsub(vdata_a, vdata_b, vdata_c)
         data_nfms = self.mul(data_fma, self.setall(-1))
         assert nfms == data_nfms
+        # multiply, add for odd elements and subtract even elements.
+        # (a * b) -+ c
+        fmas = list(self.muladdsub(vdata_a, vdata_b, vdata_c))
+        assert fmas[0::2] == list(data_fms)[0::2]
+        assert fmas[1::2] == list(data_fma)[1::2]
 
     def test_abs(self):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
@@ -678,25 +686,34 @@ class _SIMD_ALL(_Test_Utility):
         assert store_h[:self.nlanes//2] == data[self.nlanes//2:]
         assert store_h != vdata  # detect overflow
 
-    def test_memory_partial_load(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale, fill", [
+        ("self.load_tillz, self.load_till", (32, 64), 1, [0xffff]),
+        ("self.load2_tillz, self.load2_till", (32, 64), 2, [0xffff, 0x7fff]),
+    ])
+    def test_memory_partial_load(self, intrin, elsizes, scale, fill):
+        if self._scalar_size() not in elsizes:
             return
-
+        npyv_load_tillz, npyv_load_till = eval(intrin)
         data = self._data()
         lanes = list(range(1, self.nlanes + 1))
         lanes += [self.nlanes**2, self.nlanes**4] # test out of range
         for n in lanes:
-            load_till  = self.load_till(data, n, 15)
-            data_till  = data[:n] + [15] * (self.nlanes-n)
+            load_till = npyv_load_till(data, n, *fill)
+            load_tillz = npyv_load_tillz(data, n)
+            n *= scale
+            data_till = data[:n] + fill * ((self.nlanes-n) // scale)
             assert load_till == data_till
-            load_tillz = self.load_tillz(data, n)
             data_tillz = data[:n] + [0] * (self.nlanes-n)
             assert load_tillz == data_tillz
 
-    def test_memory_partial_store(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale", [
+        ("self.store_till", (32, 64), 1),
+        ("self.store2_till", (32, 64), 2),
+    ])
+    def test_memory_partial_store(self, intrin, elsizes, scale):
+        if self._scalar_size() not in elsizes:
             return
-
+        npyv_store_till = eval(intrin)
         data = self._data()
         data_rev = self._data(reverse=True)
         vdata = self.load(data)
@@ -704,105 +721,159 @@ class _SIMD_ALL(_Test_Utility):
         lanes += [self.nlanes**2, self.nlanes**4]
         for n in lanes:
             data_till = data_rev.copy()
-            data_till[:n] = data[:n]
+            data_till[:n*scale] = data[:n*scale]
             store_till = self._data(reverse=True)
-            self.store_till(store_till, n, vdata)
+            npyv_store_till(store_till, n, vdata)
             assert store_till == data_till
 
-    def test_memory_noncont_load(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale", [
+        ("self.loadn", (32, 64), 1),
+        ("self.loadn2", (32, 64), 2),
+    ])
+    def test_memory_noncont_load(self, intrin, elsizes, scale):
+        if self._scalar_size() not in elsizes:
             return
-
-        for stride in range(1, 64):
-            data = self._data(count=stride*self.nlanes)
-            data_stride = data[::stride]
-            loadn = self.loadn(data, stride)
+        npyv_loadn = eval(intrin)
+        for stride in range(-64, 64):
+            if stride < 0:
+                data = self._data(stride, -stride*self.nlanes)
+                data_stride = list(itertools.chain(
+                    *zip(*[data[-i::stride] for i in range(scale, 0, -1)])
+                ))
+            elif stride == 0:
+                data = self._data()
+                data_stride = data[0:scale] * (self.nlanes//scale)
+            else:
+                data = self._data(count=stride*self.nlanes)
+                data_stride = list(itertools.chain(
+                    *zip(*[data[i::stride] for i in range(scale)]))
+                )
+            data_stride = self.load(data_stride)  # cast unsigned
+            loadn = npyv_loadn(data, stride)
             assert loadn == data_stride
 
-        for stride in range(-64, 0):
-            data = self._data(stride, -stride*self.nlanes)
-            data_stride = self.load(data[::stride]) # cast unsigned
-            loadn = self.loadn(data, stride)
-            assert loadn == data_stride
-
-    def test_memory_noncont_partial_load(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale, fill", [
+        ("self.loadn_tillz, self.loadn_till", (32, 64), 1, [0xffff]),
+        ("self.loadn2_tillz, self.loadn2_till", (32, 64), 2, [0xffff, 0x7fff]),
+    ])
+    def test_memory_noncont_partial_load(self, intrin, elsizes, scale, fill):
+        if self._scalar_size() not in elsizes:
             return
-
+        npyv_loadn_tillz, npyv_loadn_till = eval(intrin)
         lanes = list(range(1, self.nlanes + 1))
         lanes += [self.nlanes**2, self.nlanes**4]
-        for stride in range(1, 64):
-            data = self._data(count=stride*self.nlanes)
-            data_stride = data[::stride]
+        for stride in range(-64, 64):
+            if stride < 0:
+                data = self._data(stride, -stride*self.nlanes)
+                data_stride = list(itertools.chain(
+                    *zip(*[data[-i::stride] for i in range(scale, 0, -1)])
+                ))
+            elif stride == 0:
+                data = self._data()
+                data_stride = data[0:scale] * (self.nlanes//scale)
+            else:
+                data = self._data(count=stride*self.nlanes)
+                data_stride = list(itertools.chain(
+                    *zip(*[data[i::stride] for i in range(scale)])
+                ))
+            data_stride = list(self.load(data_stride))  # cast unsigned
             for n in lanes:
-                data_stride_till = data_stride[:n] + [15] * (self.nlanes-n)
-                loadn_till = self.loadn_till(data, stride, n, 15)
+                nscale = n * scale
+                llanes = self.nlanes - nscale
+                data_stride_till = (
+                    data_stride[:nscale] + fill * (llanes//scale)
+                )
+                loadn_till = npyv_loadn_till(data, stride, n, *fill)
                 assert loadn_till == data_stride_till
-                data_stride_tillz = data_stride[:n] + [0] * (self.nlanes-n)
-                loadn_tillz = self.loadn_tillz(data, stride, n)
+                data_stride_tillz = data_stride[:nscale] + [0] * llanes
+                loadn_tillz = npyv_loadn_tillz(data, stride, n)
                 assert loadn_tillz == data_stride_tillz
 
-        for stride in range(-64, 0):
-            data = self._data(stride, -stride*self.nlanes)
-            data_stride = list(self.load(data[::stride])) # cast unsigned
-            for n in lanes:
-                data_stride_till = data_stride[:n] + [15] * (self.nlanes-n)
-                loadn_till = self.loadn_till(data, stride, n, 15)
-                assert loadn_till == data_stride_till
-                data_stride_tillz = data_stride[:n] + [0] * (self.nlanes-n)
-                loadn_tillz = self.loadn_tillz(data, stride, n)
-                assert loadn_tillz == data_stride_tillz
-
-    def test_memory_noncont_store(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale", [
+        ("self.storen", (32, 64), 1),
+        ("self.storen2", (32, 64), 2),
+    ])
+    def test_memory_noncont_store(self, intrin, elsizes, scale):
+        if self._scalar_size() not in elsizes:
             return
-
-        vdata = self.load(self._data())
+        npyv_storen = eval(intrin)
+        data = self._data()
+        vdata = self.load(data)
+        hlanes = self.nlanes // scale
         for stride in range(1, 64):
-            data = [15] * stride * self.nlanes
-            data[::stride] = vdata
-            storen = [15] * stride * self.nlanes
-            storen += [127]*64
-            self.storen(storen, stride, vdata)
-            assert storen[:-64] == data
-            assert storen[-64:] == [127]*64 # detect overflow
+            data_storen = [0xff] * stride * self.nlanes
+            for s in range(0, hlanes*stride, stride):
+                i = (s//stride)*scale
+                data_storen[s:s+scale] = data[i:i+scale]
+            storen = [0xff] * stride * self.nlanes
+            storen += [0x7f]*64
+            npyv_storen(storen, stride, vdata)
+            assert storen[:-64] == data_storen
+            assert storen[-64:] == [0x7f]*64  # detect overflow
 
         for stride in range(-64, 0):
-            data = [15] * -stride * self.nlanes
-            data[::stride] = vdata
-            storen = [127]*64
-            storen += [15] * -stride * self.nlanes
-            self.storen(storen, stride, vdata)
-            assert storen[64:] == data
-            assert storen[:64] == [127]*64 # detect overflow
+            data_storen = [0xff] * -stride * self.nlanes
+            for s in range(0, hlanes*stride, stride):
+                i = (s//stride)*scale
+                data_storen[s-scale:s or None] = data[i:i+scale]
+            storen = [0x7f]*64
+            storen += [0xff] * -stride * self.nlanes
+            npyv_storen(storen, stride, vdata)
+            assert storen[64:] == data_storen
+            assert storen[:64] == [0x7f]*64  # detect overflow
+        # stride 0
+        data_storen = [0x7f] * self.nlanes
+        storen = data_storen.copy()
+        data_storen[0:scale] = data[-scale:]
+        npyv_storen(storen, 0, vdata)
+        assert storen == data_storen
 
-    def test_memory_noncont_partial_store(self):
-        if self.sfx in ("u8", "s8", "u16", "s16"):
+    @pytest.mark.parametrize("intrin, elsizes, scale", [
+        ("self.storen_till", (32, 64), 1),
+        ("self.storen2_till", (32, 64), 2),
+    ])
+    def test_memory_noncont_partial_store(self, intrin, elsizes, scale):
+        if self._scalar_size() not in elsizes:
             return
-
+        npyv_storen_till = eval(intrin)
         data = self._data()
         vdata = self.load(data)
         lanes = list(range(1, self.nlanes + 1))
         lanes += [self.nlanes**2, self.nlanes**4]
+        hlanes = self.nlanes // scale
         for stride in range(1, 64):
             for n in lanes:
-                data_till = [15] * stride * self.nlanes
-                data_till[::stride] = data[:n] + [15] * (self.nlanes-n)
-                storen_till = [15] * stride * self.nlanes
-                storen_till += [127]*64
-                self.storen_till(storen_till, stride, n, vdata)
+                data_till = [0xff] * stride * self.nlanes
+                tdata = data[:n*scale] + [0xff] * (self.nlanes-n*scale)
+                for s in range(0, hlanes*stride, stride)[:n]:
+                    i = (s//stride)*scale
+                    data_till[s:s+scale] = tdata[i:i+scale]
+                storen_till = [0xff] * stride * self.nlanes
+                storen_till += [0x7f]*64
+                npyv_storen_till(storen_till, stride, n, vdata)
                 assert storen_till[:-64] == data_till
-                assert storen_till[-64:] == [127]*64 # detect overflow
+                assert storen_till[-64:] == [0x7f]*64  # detect overflow
 
         for stride in range(-64, 0):
             for n in lanes:
-                data_till = [15] * -stride * self.nlanes
-                data_till[::stride] = data[:n] + [15] * (self.nlanes-n)
-                storen_till = [127]*64
-                storen_till += [15] * -stride * self.nlanes
-                self.storen_till(storen_till, stride, n, vdata)
+                data_till = [0xff] * -stride * self.nlanes
+                tdata = data[:n*scale] + [0xff] * (self.nlanes-n*scale)
+                for s in range(0, hlanes*stride, stride)[:n]:
+                    i = (s//stride)*scale
+                    data_till[s-scale:s or None] = tdata[i:i+scale]
+                storen_till = [0x7f]*64
+                storen_till += [0xff] * -stride * self.nlanes
+                npyv_storen_till(storen_till, stride, n, vdata)
                 assert storen_till[64:] == data_till
-                assert storen_till[:64] == [127]*64 # detect overflow
+                assert storen_till[:64] == [0x7f]*64  # detect overflow
+
+        # stride 0
+        for n in lanes:
+            data_till = [0x7f] * self.nlanes
+            storen_till = data_till.copy()
+            data_till[0:scale] = data[:n*scale][-scale:]
+            npyv_storen_till(storen_till, 0, n, vdata)
+            assert storen_till == data_till
 
     @pytest.mark.parametrize("intrin, table_size, elsize", [
         ("self.lut32", 32, 32),
@@ -886,13 +957,27 @@ class _SIMD_ALL(_Test_Utility):
         combineh = self.combineh(vdata_a, vdata_b)
         assert combineh == data_a_hi + data_b_hi
         # combine x2
-        combine  = self.combine(vdata_a, vdata_b)
+        combine = self.combine(vdata_a, vdata_b)
         assert combine == (data_a_lo + data_b_lo, data_a_hi + data_b_hi)
+
         # zip(interleave)
-        data_zipl = [v for p in zip(data_a_lo, data_b_lo) for v in p]
-        data_ziph = [v for p in zip(data_a_hi, data_b_hi) for v in p]
-        vzip  = self.zip(vdata_a, vdata_b)
+        data_zipl = self.load([
+            v for p in zip(data_a_lo, data_b_lo) for v in p
+        ])
+        data_ziph = self.load([
+            v for p in zip(data_a_hi, data_b_hi) for v in p
+        ])
+        vzip = self.zip(vdata_a, vdata_b)
         assert vzip == (data_zipl, data_ziph)
+        vzip = [0]*self.nlanes*2
+        self._x2("store")(vzip, (vdata_a, vdata_b))
+        assert vzip == list(data_zipl) + list(data_ziph)
+
+        # unzip(deinterleave)
+        unzip = self.unzip(data_zipl, data_ziph)
+        assert unzip == (data_a, data_b)
+        unzip = self._x2("load")(list(data_zipl) + list(data_ziph))
+        assert unzip == (data_a, data_b)
 
     def test_reorder_rev64(self):
         # Reverse elements of each 64-bit lane
@@ -905,6 +990,28 @@ class _SIMD_ALL(_Test_Utility):
         ]
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
+
+    def test_reorder_permi128(self):
+        """
+        Test permuting elements for each 128-bit lane.
+        npyv_permi128_##sfx
+        """
+        ssize = self._scalar_size()
+        if ssize < 32:
+            return
+        data = self.load(self._data())
+        permn = 128//ssize
+        permd = permn-1
+        nlane128 = self.nlanes//permn
+        shfl = [0, 1] if ssize == 64 else [0, 2, 4, 6]
+        for i in range(permn):
+            indices = [(i >> shf) & permd for shf in shfl]
+            vperm = self.permi128(data, *indices)
+            data_vperm = [
+                data[j + (e & -permn)]
+                for e, j in enumerate(indices*nlane128)
+            ]
+            assert vperm == data_vperm
 
     @pytest.mark.parametrize('func, intrin', [
         (operator.lt, "cmplt"),
@@ -1167,6 +1274,18 @@ class _SIMD_ALL(_Test_Utility):
         assert ifadd == data_add
         ifadd = self.ifadd(false_mask, vdata_a, vdata_b, vdata_b)
         assert ifadd == vdata_b
+
+        if not self._is_fp():
+            return
+        data_div = self.div(vdata_b, vdata_a)
+        ifdiv = self.ifdiv(true_mask, vdata_b, vdata_a, vdata_b)
+        assert ifdiv == data_div
+        ifdivz = self.ifdivz(true_mask, vdata_b, vdata_a)
+        assert ifdivz == data_div
+        ifdiv = self.ifdiv(false_mask, vdata_a, vdata_b, vdata_b)
+        assert ifdiv == vdata_b
+        ifdivz = self.ifdivz(false_mask, vdata_a, vdata_b)
+        assert ifdivz == self.zero()
 
 bool_sfx = ("b8", "b16", "b32", "b64")
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")

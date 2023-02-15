@@ -102,45 +102,59 @@ cmplx_bfuncs = ['add',
 cmplxstride = [1, 2, 4]
 cmplxdtype  = ['F', 'D']
 
-class AVX_cmplx_arithmetic(Benchmark):
-    params = [cmplx_bfuncs, cmplxstride, cmplxdtype]
-    param_names = ['bfunc', 'stride', 'dtype']
+class BinaryComplex(Benchmark):
+    params = [cmplx_bfuncs, cmplxstride, cmplxstride, cmplxstride, cmplxdtype]
+    param_names = ['bfunc', 'stride_in0', 'stride_in1' 'stride_out', 'dtype']
     timeout = 10
 
-    def setup(self, bfuncname, stride, dtype):
+    def setup(self, bfuncname, stride_in0, stride_in1, stride_out, dtype):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, bfuncname)
         except AttributeError:
             raise NotImplementedError(f"No bfunc {bfuncname} found") from None
         N = 10000
-        self.arr1 = np.ones(stride*N, dtype)
-        self.arr2 = np.ones(stride*N, dtype)
+        self.arr1 = np.ones(stride_in0*N, dtype)
+        self.arr2 = np.ones(stride_in1*N, dtype)
+        self.arr_out = np.empty(stride_out*N, dtype)
 
-    def time_ufunc(self, bfuncname, stride, dtype):
-        self.f(self.arr1[::stride], self.arr2[::stride])
+    def time_ufunc(self, bfuncname, stride_in0, stride_in1, stride_out,
+                   dtype):
+        self.f(self.arr1[::stride_in0], self.arr2[::stride_in1],
+               self.arr_out[::stride_out])
+
+    def time_ufunc_scalar_in0(self, bfuncname, stride_in0, stride_in1,
+                              stride_out, dtype):
+        self.f(self.arr1[0], self.arr2[::stride_in1],
+               self.arr_out[::stride_out])
+
+    def time_ufunc_scalar_in1(self, bfuncname, stride_in0, stride_in1,
+                              stride_out, dtype):
+        self.f(self.arr1[::stride_in0], self.arr2[0],
+               self.arr_out[::stride_out])
 
 cmplx_ufuncs = ['reciprocal',
                 'absolute',
                 'square',
                 'conjugate']
 
-class AVX_cmplx_funcs(Benchmark):
-    params = [cmplx_ufuncs, cmplxstride, cmplxdtype]
-    param_names = ['bfunc', 'stride', 'dtype']
+class UnaryComplex(Benchmark):
+    params = [cmplx_ufuncs, cmplxstride, cmplxstride, cmplxdtype]
+    param_names = ['bfunc', 'stride_in', 'stride_out', 'dtype']
     timeout = 10
 
-    def setup(self, bfuncname, stride, dtype):
+    def setup(self, bfuncname, stride_in, stride_out, dtype):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, bfuncname)
         except AttributeError:
             raise NotImplementedError(f"No bfunc {bfuncname} found") from None
         N = 10000
-        self.arr1 = np.ones(stride*N, dtype)
+        self.arr1 = np.ones(stride_in*N, dtype)
+        self.arr_out = np.empty(stride_out*N, dtype)
 
-    def time_ufunc(self, bfuncname, stride, dtype):
-        self.f(self.arr1[::stride])
+    def time_ufunc(self, bfuncname, stride_in, stride_out, dtype):
+        self.f(self.arr1[::stride_in], self.arr_out[::stride_out])
 
 class Mandelbrot(Benchmark):
     def f(self,z):
@@ -150,7 +164,7 @@ class Mandelbrot(Benchmark):
         return np.sum(np.multiply(z,z) + c)
 
     def mandelbrot_numpy(self, c, maxiter):
-        output = np.zeros(c.shape, np.int)
+        output = np.zeros(c.shape, np.int32)
         z = np.empty(c.shape, np.complex64)
         for it in range(maxiter):
             notdone = self.f(z)

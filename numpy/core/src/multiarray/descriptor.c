@@ -3138,25 +3138,15 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 static PyObject *
 arraydescr_class_getitem(PyObject *cls, PyObject *args)
 {
-    PyObject *generic_alias;
+    const Py_ssize_t args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
 
-#ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
-
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
     if (args_len != 1) {
         return PyErr_Format(PyExc_TypeError,
                             "Too %s arguments for %s",
                             args_len > 1 ? "many" : "few",
                             ((PyTypeObject *)cls)->tp_name);
     }
-    generic_alias = Py_GenericAlias(cls, args);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-    generic_alias = NULL;
-#endif
-    return generic_alias;
+    return Py_GenericAlias(cls, args);
 }
 
 static PyMethodDef arraydescr_methods[] = {

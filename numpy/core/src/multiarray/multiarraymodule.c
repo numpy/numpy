@@ -98,6 +98,12 @@ _umath_strings_richcompare(
  * future.
  */
 int npy_legacy_print_mode = INT_MAX;
+/*
+ * Global variable to check whether NumPy 2.0 behavior is opted in.
+ * This flag is considered a runtime constant.
+ */
+int npy_numpy2_behavior = NPY_FALSE;
+
 
 static PyObject *
 set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -4416,6 +4422,15 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
     Py_RETURN_NONE;
 }
 
+
+static PyObject *
+_using_numpy2_behavior(
+        PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    return PyBool_FromLong(npy_numpy2_behavior);
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4641,6 +4656,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
+    {"_using_numpy2_behavior", (PyCFunction)_using_numpy2_behavior,
+        METH_NOARGS, NULL},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
@@ -4911,6 +4928,12 @@ initialize_static_globals(void)
             &npy_UFuncNoLoopError);
     if (npy_UFuncNoLoopError == NULL) {
         return -1;
+    }
+
+    /* Initialize from certain environment variabels: */
+    char *env = getenv("NPY_NUMPY_2_BEHAVIOR");
+    if (env != NULL && strcmp(env, "0") != 0) {
+        npy_numpy2_behavior = NPY_TRUE;
     }
 
     return 0;

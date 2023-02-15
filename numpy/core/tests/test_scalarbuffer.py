@@ -68,11 +68,11 @@ class TestScalarPEP3118:
             get_buffer_info(x, ["WRITABLE"])
 
     def test_void_scalar_structured_data(self):
-        dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+        dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
         assert_(isinstance(x, np.void))
         mv_x = memoryview(x)
-        expected_size = 16 * np.dtype((np.unicode_, 1)).itemsize
+        expected_size = 16 * np.dtype((np.str_, 1)).itemsize
         expected_size += 2 * np.dtype(np.float64).itemsize
         assert_equal(mv_x.itemsize, expected_size)
         assert_equal(mv_x.ndim, 0)

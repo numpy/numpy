@@ -292,7 +292,7 @@ class TestRegression:
 
     def test_unicode_string_comparison(self):
         # Ticket #190
-        a = np.array('hello', np.unicode_)
+        a = np.array('hello', np.str_)
         b = np.array('world')
         a == b
 
@@ -455,7 +455,7 @@ class TestRegression:
 
         test_data = [
             # (original, py2_pickle)
-            (np.unicode_('\u6f2c'),
+            (np.str_('\u6f2c'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
              b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
              b"I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."),
@@ -1685,7 +1685,7 @@ class TestRegression:
         # number 2, and the exception hung around until something checked
         # PyErr_Occurred() and returned an error.
         assert_equal(np.dtype('S10').itemsize, 10)
-        np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.string_)
+        np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.bytes_)
         assert_equal(np.dtype('S10').itemsize, 10)
 
     def test_any_float(self):
@@ -1954,7 +1954,7 @@ class TestRegression:
         # Python2 output for pickle.dumps(...)
         datas = [
             # (original, python2_pickle, koi8r_validity)
-            (np.unicode_('\u6bd2'),
+            (np.str_('\u6bd2'),
              (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
               b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
               b"tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
@@ -2078,7 +2078,7 @@ class TestRegression:
         # Ticket #1578, the mismatch only showed up when running
         # python-debug for python versions >= 2.7, and then as
         # a core dump and error message.
-        a = np.array(['abc'], dtype=np.unicode_)[0]
+        a = np.array(['abc'], dtype=np.str_)[0]
         del a
 
     def test_refcount_error_in_clip(self):
@@ -2225,7 +2225,7 @@ class TestRegression:
     def test_pickle_empty_string(self):
         # gh-3926
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            test_string = np.string_('')
+            test_string = np.bytes_('')
             assert_equal(pickle.loads(
                 pickle.dumps(test_string, protocol=proto)), test_string)
 
@@ -2346,7 +2346,7 @@ class TestRegression:
         values = {
             np.void: b"a",
             np.bytes_: b"a",
-            np.unicode_: "a",
+            np.str_: "a",
             np.datetime64: "2017-08-25",
         }
         for sctype in scalar_types:

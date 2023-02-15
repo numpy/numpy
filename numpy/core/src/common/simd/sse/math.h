@@ -298,7 +298,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
     const __m128d szero = _mm_set1_pd(-0.0);
     const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
     __m128d nan_mask = _mm_cmpunord_pd(a, a);
-    // elminate nans to avoid invalid fp errors within cmpge
+    // eliminate nans to avoid invalid fp errors within cmpge
     __m128d abs_x = npyv_abs_f64(_mm_xor_pd(nan_mask, a));
     // round by add magic number 2^52
     // assuming that MXCSR register is set to rounding
@@ -344,7 +344,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
         const __m128d szero = _mm_set1_pd(-0.0);
         const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
         __m128d nan_mask = _mm_cmpunord_pd(a, a);
-        // elminate nans to avoid invalid fp errors within cmpge
+        // eliminate nans to avoid invalid fp errors within cmpge
         __m128d x = _mm_xor_pd(nan_mask, a);
         __m128d abs_x = npyv_abs_f64(x);
         __m128d sign_x = _mm_and_pd(x, szero);
@@ -377,7 +377,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
                 nfinite_mask = _mm_and_si128(nfinite_mask, exp_mask);
                 nfinite_mask = _mm_cmpeq_epi32(nfinite_mask, exp_mask);
 
-        // elminate nans/inf to avoid invalid fp errors
+        // eliminate nans/inf to avoid invalid fp errors
         __m128 x = _mm_xor_ps(a, _mm_castsi128_ps(nfinite_mask));
         __m128i trunci = _mm_cvttps_epi32(x);
         __m128 trunc = _mm_cvtepi32_ps(trunci);
@@ -394,7 +394,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
         const __m128d szero = _mm_set1_pd(-0.0);
         const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
         __m128d nan_mask = _mm_cmpunord_pd(a, a);
-        // elminate nans to avoid invalid fp errors within cmpge
+        // eliminate nans to avoid invalid fp errors within cmpge
         __m128d abs_x = npyv_abs_f64(_mm_xor_pd(nan_mask, a));
         // round by add magic number 2^52
         // assuming that MXCSR register is set to rounding
@@ -443,7 +443,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
         const __m128d szero = _mm_set1_pd(-0.0f);
         const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
         __m128d nan_mask = _mm_cmpunord_pd(a, a);
-        // elminate nans to avoid invalid fp errors within cmpge
+        // eliminate nans to avoid invalid fp errors within cmpge
         __m128d x = _mm_xor_pd(nan_mask, a);
         __m128d abs_x = npyv_abs_f64(x);
         __m128d sign_x = _mm_and_pd(x, szero);

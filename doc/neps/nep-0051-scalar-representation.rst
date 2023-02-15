@@ -70,7 +70,7 @@ Even ``np.float64``, which is very similar to Python's ``float`` and inherits
 from it, does behave differently for example when dividing by zero.
 
 Another common source of confusion are the NumPy booleans.  Python programmers
-somtimes write ``obj is True`` and will surprised when an object that shows
+sometimes write ``obj is True`` and will surprised when an object that shows
 as ``True`` fails to pass the test.
 It is much easier to understand this behavior when the value is
 shown as ``np.True_``.
@@ -96,7 +96,7 @@ Jupyter notebook cells will often show the type information intact.
 
     np.longdouble('3.0')
 
-to allow round-tripping.  Addtionally to this change, ``float128`` will
+to allow round-tripping.  Additionally to this change, ``float128`` will
 now always be printed as ``longdouble`` since the old name gives a false
 impression of precision.
 
@@ -137,7 +137,7 @@ The proposal is to change the default (back) to use ``str`` rather than
 Detailed description
 ====================
 
-This NEP proposes to change the represenatation for NumPy scalars to:
+This NEP proposes to change the representation for NumPy scalars to:
 
 * ``np.True_`` and ``np.False_`` for booleans (their singleton instances)
 * ``np.scalar(<value>)``, i.e. ``np.float64(3.0)`` for all numerical dtypes.
@@ -202,8 +202,8 @@ to always print as ``longdouble`` and never ``float128`` or ``float96``.
 It does not include deprecating the ``np.float128`` alias.
 However, such a deprecation may occur independently of the NEP.
 
-Integer scalar type name and instance represenatation
------------------------------------------------------
+Integer scalar type name and instance representation
+----------------------------------------------------
 
 One detail is that due to NumPy scalar types being based on the C types,
 NumPy sometimes distinguishes them, for example on most 64 bit systems
@@ -263,7 +263,7 @@ allowing customized formatting for all DTypes.
 
 Making ``get_formatter`` public allows it to be used for ``np.record`` and
 masked arrays.
-Currenlty, the formatters themselves seem semi-public; using a single
+Currently, the formatters themselves seem semi-public; using a single
 entry-point will hopefully provide a clear API for formatting NumPy values.
 
 The large part for the scalar representation changes had previously been done

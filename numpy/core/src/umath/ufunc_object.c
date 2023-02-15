@@ -5039,7 +5039,7 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(arg))
 {
     PyObject *thedict;
     PyObject *res;
-    
+
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
@@ -5887,10 +5887,66 @@ static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};
+    Py_INCREF(PyArray_DESCR(op_array));  /* NewFromDescr steals a reference */
     PyObject *r = PyArray_NewFromDescr(&PyArray_Type, PyArray_DESCR(op_array),
                                        1, dims, NULL, data,
                                        NPY_ARRAY_WRITEABLE, NULL);
     return (PyArrayObject *)r;
+}
+
+/*
+ * Use an indexed loop to do the work
+ * Returns 0 if successful
+ */
+static int
+trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
+                    PyArrayMapIterObject *iter,
+                    PyArrayObject *op1_array, PyArrayObject *op2_array,
+                    PyArrayMethod_Context *context)
+{
+    int buffersize=0, errormask = 0;
+    int res;
+    char *args[3];
+    npy_intp steps[3];
+    args[0] = (char *) iter->baseoffset;
+    steps[0] = iter->fancy_strides[0];
+    if (ufuncimpl->nin == 1) {
+        args[2] = NULL;
+        steps[2] = 0;
+    } else {
+        args[2] = (char *)PyArray_DATA(op2_array);
+        if (PyArray_NDIM(op2_array) == 0
+            || PyArray_DIM(op2_array, 0) <= 1) {
+            steps[2] = 0;
+        } else {
+            steps[2] = PyArray_STRIDE(op2_array, 0);
+        }
+    }
+
+    npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier((char *)context);
+    }
+
+    do {
+        args[1] = (char *) iter->outer_ptrs[0];
+        steps[1] = iter->outer_strides[0];
+
+        res = ufuncimpl->contiguous_indexed_loop(
+                context, args, inner_size, steps, NULL);
+    } while (res == 0 && iter->outer_next(iter->outer));
+
+    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        const char * ufunc_name =
+                        ufunc_get_name_cstr((PyUFuncObject *)context->caller);
+        if (_get_bufsize_errmask(NULL, ufunc_name,
+                                 &buffersize, &errormask) < 0) {
+            return -1;
+        }
+        res = _check_ufunc_fperr(errormask, NULL, ufunc_name);
+    }
+    return res;
 }
 
 static int
@@ -5899,7 +5955,6 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                     PyArrayObject *op1_array, PyArrayObject *op2_array,
                     PyArrayMethod_StridedLoop *strided_loop,
                     PyArrayMethod_Context *context,
-                    npy_intp strides[3],
                     NpyAuxData *auxdata
                     )
 {
@@ -5921,6 +5976,7 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
         NPY_BEGIN_THREADS;
     }
 
+    npy_intp strides[3] = {0, 0, 0};
     /*
      * Iterate over first and second operands and call ufunc
      * for each pair of inputs
@@ -5972,7 +6028,6 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                     PyArray_Descr *operation_descrs[3],
                     PyArrayMethod_StridedLoop *strided_loop,
                     PyArrayMethod_Context *context,
-                    npy_intp strides[3],
                     NpyAuxData *auxdata
                     )
 {
@@ -5991,14 +6046,11 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     }
     array_operands[0] = new_array_op(op1_array, iter->dataptr);
     if (iter2 != NULL) {
-        Py_INCREF(PyArray_DESCR(op2_array));
         array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
-        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[2] = new_array_op(op1_array, iter->dataptr);
         nop = 3;
     }
     else {
-        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[1] = new_array_op(op1_array, iter->dataptr);
         array_operands[2] = NULL;
         nop = 2;
@@ -6070,6 +6122,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
         npy_clear_floatstatus_barrier((char*)&iter);
     }
 
+    npy_intp strides[3] = {0, 0, 0};
     if (!needs_api) {
         NPY_BEGIN_THREADS;
     }
@@ -6238,47 +6291,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    /* 
-     * Create a map iterator (there is no multi-mapiter, so we need at least 2
-     * iterators: one for the mapping, and another for the second operand)
-     */
-    iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
-        op1_array, idx, 1, op2_array);
-    if (iter == NULL) {
-        goto fail;
-    }
-    op1_array = iter->array;  /* May be updateifcopied on overlap */
-
-    if (op2_array != NULL) {
-        /*
-         * May need to swap axes so that second operand is
-         * iterated over correctly
-         */
-        if ((iter->subspace != NULL) && (iter->consec)) {
-            PyArray_MapIterSwapAxes(iter, &op2_array, 0);
-            if (op2_array == NULL) {
-                /* only on memory allocation failure */
-                goto fail;
-            }
-        }
-
-        /*
-         * Create array iter object for second operand that
-         * "matches" the map iter object for the first operand.
-         * Then we can just iterate over the first and second
-         * operands at the same time and not have to worry about
-         * picking the correct elements from each operand to apply
-         * the ufunc to.
-         */
-        if ((iter2 = (PyArrayIterObject *)\
-             PyArray_BroadcastToShape((PyObject *)op2_array,
-                                        iter->dimensions, iter->nd))==NULL) {
-            goto fail;
-        }
-    }
-
     PyArrayMethodObject *ufuncimpl = NULL;
-
     {
         /* Do all the dtype handling and find the correct ufuncimpl */
 
@@ -6343,7 +6356,40 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    Py_INCREF(PyArray_DESCR(op1_array));
+    iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
+        op1_array, idx, 1, op2_array);
+    if (iter == NULL) {
+        goto fail;
+    }
+    op1_array = iter->array;  /* May be updateifcopied on overlap */
+
+    if (op2_array != NULL) {
+        /*
+         * May need to swap axes so that second operand is
+         * iterated over correctly
+         */
+        if ((iter->subspace != NULL) && (iter->consec)) {
+            PyArray_MapIterSwapAxes(iter, &op2_array, 0);
+            if (op2_array == NULL) {
+                /* only on memory allocation failure */
+                goto fail;
+            }
+        }
+
+        /*
+         * Create array iter object for second operand that
+         * "matches" the map iter object for the first operand.
+         * Then we can just iterate over the first and second
+         * operands at the same time and not have to worry about
+         * picking the correct elements from each operand to apply
+         * the ufunc to.
+         */
+        if ((iter2 = (PyArrayIterObject *)\
+             PyArray_BroadcastToShape((PyObject *)op2_array,
+                                        iter->dimensions, iter->nd))==NULL) {
+            goto fail;
+        }
+    }
 
     PyArrayMethod_Context context = {
             .caller = (PyObject *)ufunc,
@@ -6384,11 +6430,31 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
     if (fast_path == 1) {
-    res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
-                                  strided_loop, &context, strides, auxdata);
+        /*
+         * Try to use trivial loop (1d, no casting, aligned) if
+         * - the matching info has a indexed loop
+         * - idx must be exactly one integer index array
+         * - all operands are 1d
+         * A future enhancement could loosen the restriction on 1d operands
+         * by adding an iteration loop inside trivial_at_loop
+         */
+        if ((ufuncimpl->contiguous_indexed_loop != NULL) &&
+                (PyArray_NDIM(op1_array) == 1)  &&
+                (op2_array == NULL || PyArray_NDIM(op2_array) <= 1) &&
+                (iter->subspace_iter == NULL) && (iter->numiter == 1)) {
+            res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
+                        op2_array, &context);
+
+        }
+        else {
+            /* Couldn't use the fastest path, use the faster path */
+            res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array,
+                        op2_array, strided_loop, &context, auxdata);
+        }
     } else {
-        res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
-                                  operation_descrs, strided_loop, &context, strides, auxdata);
+        res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array,
+                        op2_array, operation_descrs, strided_loop, &context,
+                        auxdata);
     }
 
 fail:

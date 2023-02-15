@@ -8,7 +8,7 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import assert_, assert_equal, assert_raises, IS_MUSL
 
 class TestRealScalars:
     def test_str(self):
@@ -260,10 +260,10 @@ class TestRealScalars:
         assert_equal(fpos64('324', unique=False, precision=5,
                                    fractional=False), "324.00")
 
-
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
-        if hasattr(np, 'float128'):
+        # test is flaky for musllinux on np.float128
+        if hasattr(np, 'float128') and not IS_MUSL:
             tps.append(np.float128)
 
         fpos = np.format_float_positional

@@ -114,13 +114,13 @@ def _scalar_str(dtype, short):
         # platforms, so it should never include the itemsize here.
         return "'O'"
 
-    elif dtype.type == np.string_:
+    elif dtype.type == np.bytes_:
         if _isunsized(dtype):
             return "'S'"
         else:
             return "'S%d'" % dtype.itemsize
 
-    elif dtype.type == np.unicode_:
+    elif dtype.type == np.str_:
         if _isunsized(dtype):
             return "'%sU'" % byteorder
         else:

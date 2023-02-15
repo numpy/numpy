@@ -62,7 +62,8 @@ wheels_upload_task:
     NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[!196422e6c3419a3b1d79815e1026094a215cb0f346fe34ed0f9d3ca1c19339df7398d04556491b1e0420fc1fe3713289!]
 
   upload_script: |
-    apt-get install -y python3-venv python-is-python3 curl
+    apt-get update
+    apt-get install -y curl wget
     export IS_SCHEDULE_DISPATCH="false"
     export IS_PUSH="false"
 
@@ -82,16 +83,28 @@ wheels_upload_task:
       export IS_PUSH="true"    
     fi
 
-    # The name of the zip file is derived from the `wheels_artifact` line.
-    # If you change the artifact line to `myfile_artifact` then it would be
-    # called myfile.zip
+    if [[ $IS_PUSH == "true" ]] || [[ $IS_SCHEDULE_DISPATCH == "true" ]]; then
+        # install miniconda in the home directory. For some reason HOME isn't set by Cirrus
+        export HOME=$PWD
     
-    curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
-    unzip wheels.zip
+        # install miniconda for uploading to anaconda
+        wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+        bash miniconda.sh -b -p $HOME/miniconda3
+        $HOME/miniconda3/bin/conda init bash
+        source $HOME/miniconda3/bin/activate
+        conda install -y anaconda-client
     
-    source ./tools/wheels/upload_wheels.sh
-    # IS_PUSH takes precedence over IS_SCHEDULE_DISPATCH
-    set_upload_vars
-    
-    # Will be skipped if not a push/tag/scheduled build
-    upload_wheels
+        # The name of the zip file is derived from the `wheels_artifact` line.
+        # If you change the artifact line to `myfile_artifact` then it would be
+        # called myfile.zip
+        
+        curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
+        unzip wheels.zip
+        
+        source ./tools/wheels/upload_wheels.sh
+        # IS_PUSH takes precedence over IS_SCHEDULE_DISPATCH
+        set_upload_vars
+        
+        # Will be skipped if not a push/tag/scheduled build
+        upload_wheels
+    fi

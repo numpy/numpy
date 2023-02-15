@@ -19,15 +19,15 @@ permissions:
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-22.04
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     env:
-      PYODIDE_VERSION: 0.22.0a3
+      PYODIDE_VERSION: 0.22.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
       PYTHON_VERSION: 3.10.7
-      EMSCRIPTEN_VERSION: 3.1.24
+      EMSCRIPTEN_VERSION: 3.1.27
       NODE_VERSION: 18
     steps:
       - name: Checkout numpy
@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: mymindstorm/setup-emsdk@v11
+      - uses: mymindstorm/setup-emsdk@v12
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache

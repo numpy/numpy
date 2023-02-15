@@ -327,6 +327,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
         The file contains an object array, but ``allow_pickle=False`` given.
+    EOFError
+        When calling ``np.load`` multiple times on the same file handle,
+        if all data has already been read
 
     See Also
     --------
@@ -410,6 +413,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
+        if not magic:
+            raise EOFError("No data left in file")
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
@@ -2314,7 +2319,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column_types = [conv.type for conv in converters]
         # Find the columns with strings...
         strcolidx = [i for (i, v) in enumerate(column_types)
-                     if v == np.unicode_]
+                     if v == np.str_]
 
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility

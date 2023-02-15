@@ -259,7 +259,7 @@ copy_cached_initial(
  *
  * For internal number dtypes, we can easily cache it, so do so after the
  * first call by overriding the function with `copy_cache_initial`.
- * This path is not publically available.  That could be added, and for a
+ * This path is not publicly available.  That could be added, and for a
  * custom initial getter it should be static/compile time data anyway.
  */
 static int
@@ -398,7 +398,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     }
 
     PyType_Slot slots[4] = {
-        {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
+        {_NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
         {NPY_METH_get_reduction_initial, get_reduction_intial},
         {0, NULL},

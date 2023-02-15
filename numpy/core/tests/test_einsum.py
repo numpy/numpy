@@ -755,7 +755,7 @@ class TestEinsum:
         # Test originally added to cover broken float16 path: gh-20305
         # Likely most are covered elsewhere, at least partially.
         dtype = np.dtype(dtype)
-        # Simple test, designed to excersize most specialized code paths,
+        # Simple test, designed to exercise most specialized code paths,
         # note the +0.5 for floats.  This makes sure we use a float value
         # where the results must be exact.
         arr = (np.arange(7) + 0.5).astype(dtype)
