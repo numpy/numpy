@@ -656,7 +656,7 @@ class iinfo:
     _min_vals = {}
     _max_vals = {}
 
-    @lru_cache
+    @lru_cache(typed=True)
     def __new__(cls, int_type):
         return object.__new__(cls)._init(int_type)
 
