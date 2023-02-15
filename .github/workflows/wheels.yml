@@ -38,7 +38,7 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
@@ -75,6 +75,7 @@ jobs:
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64]
+          - [ubuntu-20.04, musllinux_x86_64]
           - [macos-12, macosx_*]
           - [windows-2019, win_amd64]
           - [windows-2019, win32]
@@ -82,8 +83,8 @@ jobs:
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
-            python: "pp38"
-          - buildplat: [windows-2019, win32]
+            python: "pp39"
+          - buildplat: [ ubuntu-20.04, musllinux_x86_64 ]
             python: "pp39"
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
@@ -122,13 +123,26 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          # for installation of anaconda-client, required for upload to
+          # anaconda.org
+          # default (and activated) environment name is test
+          # Note that this step is *after* specific pythons have been used to
+          # build and test the wheel
+          auto-update-conda: true
+          python-version: "3.10"
+
       - name: Upload wheels
         if: success()
-        shell: bash
+        shell: bash -el {0}
+        # see https://github.com/marketplace/actions/setup-miniconda for why
+        # `-el {0}` is required.
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
@@ -138,6 +152,7 @@ jobs:
           # https://anaconda.org/multibuild-wheels-staging/numpy
           # The tokens were originally generated at anaconda.org
           upload_wheels
+
   build_sdist:
     name: Build sdist
     needs: get_commit_message
@@ -152,7 +167,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-      IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      # commented out so the sdist doesn't upload to nightly
+      # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
         uses: actions/checkout@v3
@@ -190,13 +206,25 @@ jobs:
           name: sdist
           path: ./dist/*
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          # for installation of anaconda-client, required for upload to
+          # anaconda.org
+          # default (and activated) environment name is test
+          # Note that this step is *after* specific pythons have been used to
+          # build and test
+          auto-update-conda: true
+          python-version: "3.10"
+
       - name: Upload sdist
         if: success()
-        shell: bash
+        shell: bash -el {0}
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
-          NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
+          # commented out so the sdist doesn't upload to nightly
+          # NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
+          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to

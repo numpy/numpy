@@ -664,7 +664,7 @@ static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     /*
-     * Timedelta/datetime shouldn't actuall promote at all.  That they
+     * Timedelta/datetime shouldn't actually promote at all.  That they
      * currently do means that we need additional hacks in the comparison
      * type resolver.  For comparisons we have to make sure we reject it
      * nicely in order to return an array of True/False values.
@@ -918,6 +918,11 @@ dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
 }
 
 static PyObject *
+dtypemeta_get_legacy(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_legacy(self));
+}
+
+static PyObject *
 dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
 }
@@ -927,6 +932,7 @@ dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
  */
 static PyGetSetDef dtypemeta_getset[] = {
         {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
+        {"_legacy", (getter)dtypemeta_get_legacy, NULL, NULL, NULL},
         {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
         {NULL, NULL, NULL, NULL, NULL}
 };

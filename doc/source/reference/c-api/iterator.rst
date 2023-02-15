@@ -26,8 +26,10 @@ which may be of interest for those using this C API. In many instances,
 testing out ideas by creating the iterator in Python is a good idea
 before writing the C iteration code.
 
+.. _iteration-example:
+
 Iteration Example
-------------------------
+-----------------
 
 The best way to become familiar with the iterator is to look at its
 usage within the NumPy codebase itself. For example, here is a slightly

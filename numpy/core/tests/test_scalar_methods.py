@@ -10,7 +10,7 @@ from typing import Any, Type
 import pytest
 import numpy as np
 
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_equal, assert_raises, IS_MUSL
 
 
 class TestAsIntegerRatio:
@@ -99,6 +99,8 @@ class TestAsIntegerRatio:
             try:
                 nf = np.longdouble(n)
                 df = np.longdouble(d)
+                if not np.isfinite(df):
+                    raise OverflowError
             except (OverflowError, RuntimeWarning):
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")

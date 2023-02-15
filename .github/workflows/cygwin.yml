@@ -22,7 +22,7 @@ permissions:
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -66,8 +66,9 @@ jobs:
         run: |
           dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
       - name: Run NumPy test suite
-        run: >-
-          dash -c "/usr/bin/python3.9 runtests.py -n"
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
+        run: |
+          /usr/bin/python3.9 runtests.py -n
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()

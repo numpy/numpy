@@ -1009,6 +1009,32 @@ def diag_indices_from(arr):
     -----
     .. versionadded:: 1.4.0
 
+    Examples
+    --------
+    
+    Create a 4 by 4 array.
+
+    >>> a = np.arange(16).reshape(4, 4)
+    >>> a
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+    
+    Get the indices of the diagonal elements.
+
+    >>> di = np.diag_indices_from(a)
+    >>> di
+    (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
+
+    >>> a[di]
+    array([ 0,  5, 10, 15])
+
+    This is simply syntactic sugar for diag_indices.
+
+    >>> np.diag_indices(a.shape[0])
+    (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
+
     """
 
     if not arr.ndim >= 2:

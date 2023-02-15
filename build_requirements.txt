@@ -1,5 +1,5 @@
 meson-python>=0.10.0
 Cython>=0.29.30,<3.0
-wheel==0.37.0
+wheel==0.38.1
 ninja
 git+https://github.com/scientific-python/devpy

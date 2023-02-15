@@ -1,0 +1,18 @@
+``ufunc.at`` can be much faster
+-------------------------------
+Generic ``ufunc.at`` can be up to 9x faster. The conditions for this speedup:
+
+- operands are aligned
+- no casting
+
+If ufuncs with appropriate indexed loops on 1d arguments with the above
+conditions, ``ufunc.at`` can be up to 60x faster (an additional 7x speedup).
+Appropriate indexed loops have been added to ``add``, ``subtract``,
+``multiply``, ``floor_divide``, ``maximum``, ``minimum``, ``fmax``, and
+``fmin``.
+
+The internal logic is similar to the logic used for regular ufuncs, which also
+have fast paths.
+
+Thanks to the `D. E. Shaw group <https://deshaw.com/>`_ for sponsoring this
+work.

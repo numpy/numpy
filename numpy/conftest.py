@@ -40,6 +40,8 @@ hypothesis.settings.load_profile(
     "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
 )
 
+# The experimentalAPI is used in _umath_tests
+os.environ["NUMPY_EXPERIMENTAL_DTYPE_API"] = "1"
 
 def pytest_configure(config):
     config.addinivalue_line("markers",

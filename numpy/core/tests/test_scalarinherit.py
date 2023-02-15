@@ -58,8 +58,8 @@ class TestInherit:
 class TestCharacter:
     def test_char_radd(self):
         # GH issue 9620, reached gentype_add and raise TypeError
-        np_s = np.string_('abc')
-        np_u = np.unicode_('abc')
+        np_s = np.bytes_('abc')
+        np_u = np.str_('abc')
         s = b'def'
         u = 'def'
         assert_(np_s.__radd__(np_s) is NotImplemented)
@@ -90,8 +90,8 @@ class TestCharacter:
         assert ret == b"defabc"
 
     def test_char_repeat(self):
-        np_s = np.string_('abc')
-        np_u = np.unicode_('abc')
+        np_s = np.bytes_('abc')
+        np_u = np.str_('abc')
         res_s = b'abc' * 5
         res_u = 'abc' * 5
         assert_(np_s * 5 == res_s)

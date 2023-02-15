@@ -130,7 +130,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
     # Strings and unstructured void:
     yield param(np.bytes_(b"1234"), id="bytes")
-    yield param(np.unicode_("2345"), id="unicode")
+    yield param(np.str_("2345"), id="unicode")
     yield param(np.void(b"4321"), id="unstructured_void")
 
 

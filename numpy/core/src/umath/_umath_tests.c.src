@@ -9,6 +9,9 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
@@ -19,6 +22,9 @@
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
+#include "npy_import.h"
+#include "numpy/experimental_dtype_api.h"
+#include "dtypemeta.h"
 
 /*
  *****************************************************************************
@@ -300,7 +306,7 @@ static void
                     ptr_this += stride_d;
                     ptr_that += stride_d;
                 }
-                *(@typ@ *)data_out = npy_@sqrt_func@(out);
+                *(@typ@ *)data_out = @sqrt_func@(out);
                 data_that += stride_n;
                 data_out += stride_p;
             }
@@ -342,6 +348,50 @@ static void
 }
 
 /**end repeat**/
+
+static int
+INT32_negative(PyArrayMethod_Context *NPY_UNUSED(context),
+               char **args, npy_intp const *dimensions,
+               npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is=steps[0], os=steps[1];
+    char *ip=args[0], *op=args[1];
+    for (i = 0; i < di; i++, ip += is, op += os) {
+        if (i == 3) {
+            *(int32_t *)op = - 100;
+        } else {
+            *(int32_t *)op = - *(int32_t *)ip;
+        }
+    }
+    return 0;
+}
+
+
+static int
+INT32_negative_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+                           char * const*args, npy_intp const *dimensions,
+                           npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    npy_intp is1 = steps[0], isindex = steps[1];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    int32_t *indexed;
+    for(i = 0; i < n; i++, indx += isindex) {
+        indexed = (int32_t *)(ip1 + is1 * *(npy_intp *)indx);
+        if (i == 3) {
+            *indexed = -200;
+        } else {
+            *indexed = - *indexed;
+        }
+    }
+    return 0;
+}
+
+
 
 /*  The following lines were generated using a slightly modified
     version of code_generators/generate_umath.py and adding these
@@ -671,6 +721,44 @@ err:
     return NULL;
 }
 
+static int
+add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
+    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_API_VERSION) < 0) {
+        return -1;
+    }
+
+    PyObject * negative = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 1, 1,
+                                    PyUFunc_Zero, "indexed_negative", NULL, 0);
+    if (negative == NULL) {
+        return -1;
+    }
+    PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum(NPY_INT32);
+    PyArray_DTypeMeta *dtypes[] = {dtype, dtype};
+
+    PyType_Slot slots[] = {
+        {NPY_METH_contiguous_indexed_loop, INT32_negative_indexed},
+        {NPY_METH_strided_loop, INT32_negative},
+        {0, NULL}
+    };
+
+    PyArrayMethod_Spec spec = {
+        .name = "negative_indexed_loop",
+        .nin = 1,
+        .nout = 1,
+        .dtypes = dtypes,
+        .slots = slots,
+        .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS
+    };
+
+    if (PyUFunc_AddLoopFromSpec(negative, &spec) < 0) {
+        Py_DECREF(negative);
+        return -1;
+    }
+    PyDict_SetItemString(dict, "indexed_negative", negative);
+    Py_DECREF(negative);
+    return 0;
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -727,6 +815,14 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     /* Load the ufunc operators into the module's namespace */
     if (addUfuncs(d) < 0) {
+        Py_DECREF(m);
+        PyErr_Print();
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load _umath_tests module.");
+        return NULL;
+    }
+
+    if (add_INT32_negative_indexed(m, d) < 0) {
         Py_DECREF(m);
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
