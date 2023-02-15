@@ -140,6 +140,9 @@ stages:
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
     # with version of Python selected
