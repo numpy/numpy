@@ -1217,6 +1217,13 @@ class TestGradient:
         dfdx = gradient(f, x)
         assert_array_equal(dfdx, [0.5, 0.5])
 
+    def test_return_type(self):
+        res = np.gradient(([1, 2], [2, 3]))
+        if np._using_numpy2_behavior():
+            assert type(res) is tuple
+        else:
+            assert type(res) is list
+
 
 class TestAngle:
 

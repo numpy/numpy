@@ -322,6 +322,20 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     NPY_FINLINE npyv_f64 npyv_nmulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
     { return vec_neg(vec_madd(a, b, c)); }
 #endif
+// multiply, add for odd elements and subtract even elements.
+// (a * b) -+ c
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_f32 npyv_muladdsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+{
+    const npyv_f32 msign = npyv_set_f32(-0.0f, 0.0f, -0.0f, 0.0f);
+    return npyv_muladd_f32(a, b, npyv_xor_f32(msign, c));
+}
+#endif
+NPY_FINLINE npyv_f64 npyv_muladdsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+{
+    const npyv_f64 msign = npyv_set_f64(-0.0, 0.0);
+    return npyv_muladd_f64(a, b, npyv_xor_f64(msign, c));
+}
 /***************************
  * Summation
  ***************************/

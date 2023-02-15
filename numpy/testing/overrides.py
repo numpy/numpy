@@ -25,7 +25,7 @@ def get_overridable_numpy_ufuncs():
     
 
 def allows_array_ufunc_override(func):
-    """Determine if a function can be overriden via `__array_ufunc__`
+    """Determine if a function can be overridden via `__array_ufunc__`
 
     Parameters
     ----------
@@ -67,7 +67,7 @@ def get_overridable_numpy_array_functions():
     return _array_functions.copy()
 
 def allows_array_function_override(func):
-    """Determine if a Numpy function can be overriden via `__array_function__`
+    """Determine if a Numpy function can be overridden via `__array_function__`
 
     Parameters
     ----------

@@ -15,7 +15,7 @@ np.dtype({"names": ["a", "b"], "formats": [int, float]})
 np.dtype({"names": ["a"], "formats": [int], "titles": [object]})
 np.dtype({"names": ["a"], "formats": [int], "titles": [object()]})
 
-np.dtype([("name", np.unicode_, 16), ("grades", np.float64, (2,)), ("age", "int32")])
+np.dtype([("name", np.str_, 16), ("grades", np.float64, (2,)), ("age", "int32")])
 
 np.dtype(
     {

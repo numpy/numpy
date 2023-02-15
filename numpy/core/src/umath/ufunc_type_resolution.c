@@ -362,7 +362,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                 && PyArray_ISDATETIME(operands[1])
                 && type_num1 != type_num2) {
             /*
-             * Reject mixed datetime and timedelta explictly, this was always
+             * Reject mixed datetime and timedelta explicitly, this was always
              * implicitly rejected because casting fails (except with
              * `casting="unsafe"` admittedly).
              * This is required to ensure that `==` and `!=` can correctly

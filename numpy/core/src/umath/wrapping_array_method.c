@@ -275,7 +275,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
 
     PyType_Slot slots[] = {
         {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {NPY_METH_get_loop, &wrapping_method_get_loop},
+        {_NPY_METH_get_loop, &wrapping_method_get_loop},
         {NPY_METH_get_reduction_initial,
             &wrapping_method_get_identity_function},
         {0, NULL}

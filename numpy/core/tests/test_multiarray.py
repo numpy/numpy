@@ -1706,7 +1706,7 @@ class TestBool:
 
     @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
-        self._test_cast_from_flexible(np.unicode_)
+        self._test_cast_from_flexible(np.str_)
 
     @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
@@ -2088,7 +2088,7 @@ class TestMethods:
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
                 assert_equal(c, arr, msg)
 
-    @pytest.mark.parametrize('dtype', [np.bytes_, np.unicode_])
+    @pytest.mark.parametrize('dtype', [np.bytes_, np.str_])
     def test_sort_string(self, dtype):
         # np.array will perform the encoding to bytes for us in the bytes test
         a = np.array(['aaaaaaaa' + chr(i) for i in range(101)], dtype=dtype)
@@ -2362,7 +2362,7 @@ class TestMethods:
 
         # test unicode argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.str_)
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -2445,7 +2445,7 @@ class TestMethods:
         a = np.array(['aaaaaaaaa' for i in range(100)])
         assert_equal(a.argsort(kind='m'), r)
         # unicode
-        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode_)
+        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
 
     def test_sort_unicode_kind(self):
@@ -2589,7 +2589,7 @@ class TestMethods:
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'],
-                     dtype=np.unicode_)
+                     dtype=np.str_)
         ind = np.arange(len(a))
         assert_equal([a.searchsorted(v, 'left') for v in a], ind)
         assert_equal([a.searchsorted(v, 'right') for v in a], ind + 1)
@@ -8701,7 +8701,7 @@ class TestConversion:
             # gh-9972
             assert_equal(4, int_func(np.array('4')))
             assert_equal(5, int_func(np.bytes_(b'5')))
-            assert_equal(6, int_func(np.unicode_('6')))
+            assert_equal(6, int_func(np.str_('6')))
 
             # The delegation of int() to __trunc__ was deprecated in
             # Python 3.11.
@@ -9073,33 +9073,33 @@ class TestUnicodeEncoding:
     def test_assign_scalar(self):
         # gh-3258
         l = np.array(['aa', 'bb'])
-        l[:] = np.unicode_('cc')
+        l[:] = np.str_('cc')
         assert_equal(l, ['cc', 'cc'])
 
     def test_fill_scalar(self):
         # gh-7227
         l = np.array(['aa', 'bb'])
-        l.fill(np.unicode_('cc'))
+        l.fill(np.str_('cc'))
         assert_equal(l, ['cc', 'cc'])
 
 
 class TestUnicodeArrayNonzero:
 
     def test_empty_ustring_array_is_falsey(self):
-        assert_(not np.array([''], dtype=np.unicode_))
+        assert_(not np.array([''], dtype=np.str_))
 
     def test_whitespace_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = '  \0\0'
         assert_(not a)
 
     def test_all_null_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = '\0\0\0\0'
         assert_(not a)
 
     def test_null_inside_ustring_array_is_truthy(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = ' \0 \0'
         assert_(a)
 
@@ -9534,7 +9534,7 @@ def test_equal_override():
 
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
 @pytest.mark.parametrize(["dt1", "dt2"], [
-        ([("f", "i")], [("f", "i")]),  # structured comparison (successfull)
+        ([("f", "i")], [("f", "i")]),  # structured comparison (successful)
         ("M8", "d"),  # impossible comparison: result is all True or False
         ("d", "d"),  # valid comparison
         ])

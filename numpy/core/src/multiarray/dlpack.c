@@ -171,7 +171,10 @@ array_dlpack(PyArrayObject *self,
     managed_dtype.bits = 8 * itemsize;
     managed_dtype.lanes = 1;
 
-    if (PyDataType_ISSIGNED(dtype)) {
+    if (PyDataType_ISBOOL(dtype)) {
+        managed_dtype.code = kDLBool;
+    }
+    else if (PyDataType_ISSIGNED(dtype)) {
         managed_dtype.code = kDLInt;
     }
     else if (PyDataType_ISUNSIGNED(dtype)) {
@@ -331,6 +334,11 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     const uint8_t bits = managed->dl_tensor.dtype.bits;
     const npy_intp itemsize = bits / 8;
     switch (managed->dl_tensor.dtype.code) {
+    case kDLBool:
+        if (bits == 8) {
+            typenum = NPY_BOOL;
+        }
+        break;
     case kDLInt:
         switch (bits)
         {

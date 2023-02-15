@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Any
+from typing import Union, Any
 
 import numpy as np
 
@@ -27,4 +27,4 @@ _ScalarLike_co = Union[
 ]
 
 # `_VoidLike_co` is technically not a scalar, but it's close enough
-_VoidLike_co = Union[Tuple[Any, ...], np.void]
+_VoidLike_co = Union[tuple[Any, ...], np.void]

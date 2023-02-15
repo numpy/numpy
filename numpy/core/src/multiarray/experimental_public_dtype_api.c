@@ -16,18 +16,6 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 6
-
-
-typedef struct{
-    PyTypeObject *typeobj;    /* type of python scalar or NULL */
-    int flags;                /* flags, including parametric and abstract */
-    /* NULL terminated cast definitions. Use NULL for the newly created DType */
-    PyArrayMethod_Spec **casts;
-    PyType_Slot *slots;
-} PyArrayDTypeMeta_Spec;
-
-
 
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
@@ -116,10 +104,6 @@ PyArray_ArrFuncs default_funcs = {
 };
 
 
-/* other slots are in order, so keep only last around: */
-#define NUM_DTYPE_SLOTS 8
-
-
 int
 PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
@@ -187,7 +171,7 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if (slot > NUM_DTYPE_SLOTS || slot < 0) {
+        if (slot > _NPY_NUM_DTYPE_SLOTS || slot < 0) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
@@ -443,12 +427,12 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
     if (error_converting(version)) {
         return NULL;
     }
-    if (version != EXPERIMENTAL_DTYPE_API_VERSION) {
+    if (version != __EXPERIMENTAL_DTYPE_API_VERSION) {
         PyErr_Format(PyExc_RuntimeError,
                 "Experimental DType API version %d requested, but NumPy "
                 "is exporting version %d.  Recompile your DType and/or upgrade "
                 "NumPy to match.",
-                version, EXPERIMENTAL_DTYPE_API_VERSION);
+                version, __EXPERIMENTAL_DTYPE_API_VERSION);
         return NULL;
     }
 

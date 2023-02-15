@@ -12,6 +12,7 @@ numpy/linalg/lapack_lite/f2c.h linguist-vendored
 tools/npy_tempita/* linguist-vendored
 numpy/core/include/numpy/libdivide/* linguist-vendored
 numpy/core/src/umath/svml/* linguist-vendored
+numpy/core/src/common/dlpack/dlpack.h linguist-vendored
 
 # Mark some files as generated
 numpy/linalg/lapack_lite/f2c_*.c linguist-generated

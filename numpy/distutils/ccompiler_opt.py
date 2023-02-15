@@ -1167,7 +1167,7 @@ class _CCompiler:
                 continue
             lower_flags = flags[:-(i+1)]
             upper_flags = flags[-i:]
-            filterd = list(filter(
+            filtered = list(filter(
                 self._cc_normalize_unix_frgx.search, lower_flags
             ))
             # gather subflags
@@ -1179,7 +1179,7 @@ class _CCompiler:
                         subflags = xsubflags + subflags
                 cur_flag = arch + '+' + '+'.join(subflags)
 
-            flags = filterd + [cur_flag]
+            flags = filtered + [cur_flag]
             if i > 0:
                 flags += upper_flags
             break
