@@ -364,7 +364,8 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
                     const npy_bool *weekmask, int busdays_in_weekmask,
                     npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
-    npy_int64 count, whole_weeks;
+    npy_int64 whole_weeks;
+    npy_int64 count = 0;
     int day_of_week = 0;
     int swapped = 0;
 
@@ -386,6 +387,10 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
         date_begin = date_end;
         date_end = tmp;
         swapped = 1;
+        // we swapped date_begin and date_end, so we need to correct for the
+        // original date_end that should not be included. gh-23197
+        date_begin++;
+        date_end++;
     }
 
     /* Remove any earlier holidays */
@@ -396,7 +401,7 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
                                         holidays_begin, holidays_end);
 
     /* Start the count as negative the number of holidays in the range */
-    count = -(holidays_end - holidays_begin);
+    count += -(holidays_end - holidays_begin);
 
     /* Add the whole weeks between date_begin and date_end */
     whole_weeks = (date_end - date_begin) / 7;

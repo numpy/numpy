@@ -2330,16 +2330,21 @@ class TestDateTime:
         assert_equal(np.busday_count('2011-01-01', dates, busdaycal=bdd),
                      np.arange(366))
         # Returns negative value when reversed
+        # -1 since the '2011-01-01' is not a busday
         assert_equal(np.busday_count(dates, '2011-01-01', busdaycal=bdd),
-                     -np.arange(366))
+                     -np.arange(366) - 1)
 
+        # 2011-12-31 is a saturday
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
+        # only the first generated date is in the future of 2011-12-31
+        expected = np.arange(366); expected[0] = -1
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
-                     np.arange(366))
+                     expected)
         # Returns negative value when reversed
+        expected = -np.arange(366)+1; expected[0] = 0
         assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
-                     -np.arange(366))
+                     expected)
 
         # Can't supply both a weekmask/holidays and busdaycal
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
