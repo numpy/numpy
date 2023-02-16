@@ -19,7 +19,7 @@ import pprint
 import sysconfig
 
 import numpy as np
-from numpy.core import(
+from numpy.core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 import numpy.linalg.lapack_lite
 
@@ -470,7 +470,7 @@ def print_assert_equal(test_string, actual, desired):
 
 
 @np._no_nep50_warning()
-def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
+def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     Raises an AssertionError if two items are not equal up to desired
     precision.
@@ -597,7 +597,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
 
 @np._no_nep50_warning()
-def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
+def assert_approx_equal(actual, desired, significant=7, err_msg='',
+                        verbose=True):
     """
     Raises an AssertionError if two items are not equal up to significant
     digits.
@@ -701,7 +702,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
+    from numpy.core import (array2string, isnan, inf, bool_, errstate,
+                            all, max, object_)
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
@@ -827,10 +829,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     max_abs_error = max(error)
                     if getattr(error, 'dtype', object_) == object_:
                         remarks.append('Max absolute difference: '
-                                        + str(max_abs_error))
+                                       + str(max_abs_error))
                     else:
                         remarks.append('Max absolute difference: '
-                                        + array2string(max_abs_error))
+                                       + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
@@ -842,10 +844,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         max_rel_error = max(error[nonzero] / abs(y[nonzero]))
                     if getattr(error, 'dtype', object_) == object_:
                         remarks.append('Max relative difference: '
-                                        + str(max_rel_error))
+                                       + str(max_rel_error))
                     else:
                         remarks.append('Max relative difference: '
-                                        + array2string(max_rel_error))
+                                       + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
@@ -1058,13 +1060,13 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, float_, result_type, array
+    from numpy.core import number, float_, result_type
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 
     def compare(x, y):
         try:
-            if npany(gisinf(x)) or npany( gisinf(y)):
+            if npany(gisinf(x)) or npany(gisinf(y)):
                 xinfid = gisinf(x)
                 yinfid = gisinf(y)
                 if not (xinfid == yinfid).all():
@@ -1106,8 +1108,6 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     compared, no assertion is raised if both objects have NaNs in the same
     positions.
 
-
-
     Parameters
     ----------
     x : array_like
@@ -1128,8 +1128,6 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     --------
     assert_array_equal: tests objects for equality
     assert_array_almost_equal: test objects for equality up to precision
-
-
 
     Examples
     --------
@@ -1307,7 +1305,9 @@ class _Dummy(unittest.TestCase):
     def nop(self):
         pass
 
+
 _d = _Dummy('nop')
+
 
 def assert_raises(*args, **kwargs):
     """
@@ -1335,7 +1335,7 @@ def assert_raises(*args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    return _d.assertRaises(*args,**kwargs)
+    return _d.assertRaises(*args, **kwargs)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
@@ -1486,7 +1486,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Given two array_like objects, check that their shapes and all elements
     are equal (but see the Notes for the special handling of a scalar). An
-    exception is raised if the shapes mismatch or any values conflict. In 
+    exception is raised if the shapes mismatch or any values conflict. In
     contrast to the standard usage in numpy, NaNs are compared like numbers,
     no assertion is raised if both objects have NaNs in the same positions.
 
@@ -2408,6 +2408,7 @@ def assert_no_gc_cycles(*args, **kwargs):
     with _assert_no_gc_cycles_context(name=func.__name__):
         func(*args, **kwargs)
 
+
 def break_cycles():
     """
     Break reference cycles by calling gc.collect
@@ -2540,7 +2541,7 @@ def _no_tracing(func):
 def _get_glibc_version():
     try:
         ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
-    except Exception as inst:
+    except Exception:
         ver = '0.0'
 
     return ver
