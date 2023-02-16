@@ -14,6 +14,7 @@ tasks:
       conda activate numpy-dev
       git pull --unshallow  # need to force this else the prebuild fails
       git fetch --tags
+      git submodule update --init
       python setup.py build_ext --inplace
       echo "🛠 Completed rebuilding NumPy!! 🛠 "
       echo "📖 Building docs 📖 "
