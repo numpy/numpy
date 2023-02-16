@@ -3,10 +3,6 @@
 # if: github.repository == 'numpy/numpy'
 name: Test on Cygwin
 on:
-  push:
-    branches:
-      - main
-      - maintenance/**
   pull_request:
     branches:
       - main
