@@ -205,6 +205,7 @@ fragments in your commit message:
 * ``[skip travis]``: skip TravisCI jobs
 * ``[skip azp]``: skip Azure jobs
 * ``[skip circle]``: skip CircleCI jobs
+* ``[skip cirrus]``: skip Cirrus jobs
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
