@@ -2338,11 +2338,13 @@ class TestDateTime:
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
         # only the first generated date is in the future of 2011-12-31
-        expected = np.arange(366); expected[0] = -1
+        expected = np.arange(366)
+        expected[0] = -1
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
                      expected)
         # Returns negative value when reversed
-        expected = -np.arange(366)+1; expected[0] = 0
+        expected = -np.arange(366)+1
+        expected[0] = 0
         assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
                      expected)
 
