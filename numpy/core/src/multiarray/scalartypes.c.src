@@ -15,6 +15,7 @@
 
 #include "npy_pycompat.h"
 
+#include "arraytypes.h"
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
@@ -3581,7 +3582,7 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 
 NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.object_",
+    .tp_name = "numpy." NPY_OBJECT_name,
     .tp_basicsize = sizeof(PyObjectScalarObject),
     .tp_dealloc = (destructor)object_arrtype_dealloc,
     .tp_as_sequence = &object_arrtype_as_sequence,
@@ -3617,60 +3618,29 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 }
 
 
-#define NAME_bool "bool"
-#define NAME_void "void"
-#define NAME_string "bytes"
-#define NAME_unicode "str"
-
 /**begin repeat
- * #name = bool, string, unicode, void#
- * #NAME = Bool, String, Unicode, Void#
- * #ex = _,_,_,#
+ * #Name = Bool,
+ *         Byte, Short, Int, Long, LongLong,
+ *         UByte, UShort, UInt, ULong, ULongLong,
+ *         Half, Float, Double, LongDouble,
+ *         CFloat, CDouble, CLongDouble,
+ *         String, Unicode, Void,
+ *         Datetime, Timedelta#
+ * #NAME = BOOL,
+ *         BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         STRING, UNICODE, VOID,
+ *         DATETIME, TIMEDELTA#
  */
-NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy." NAME_@name@ "@ex@",
-    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
-};
-/**end repeat**/
 
-#undef NAME_bool
-#undef NAME_void
-#undef NAME_string
-#undef NAME_unicode
-
-/**begin repeat
- * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
- *         ULongLong, Half, Float, Double, LongDouble, Datetime, Timedelta#
- * #name = int*5, uint*5, float*4, datetime, timedelta#
- * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, HALF, FLOAT, DOUBLE,
- *          LONGDOUBLE, DATETIME, TIMEDELTA#
- */
-#if NPY_BITSOF_@CNAME@ == 8
-#define _THIS_SIZE "8"
-#elif NPY_BITSOF_@CNAME@ == 16
-#define _THIS_SIZE "16"
-#elif NPY_BITSOF_@CNAME@ == 32
-#define _THIS_SIZE "32"
-#elif NPY_BITSOF_@CNAME@ == 64
-#define _THIS_SIZE "64"
-#elif NPY_BITSOF_@CNAME@ == 80
-#define _THIS_SIZE "80"
-#elif NPY_BITSOF_@CNAME@ == 96
-#define _THIS_SIZE "96"
-#elif NPY_BITSOF_@CNAME@ == 128
-#define _THIS_SIZE "128"
-#elif NPY_BITSOF_@CNAME@ == 256
-#define _THIS_SIZE "256"
-#endif
-NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
+NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.@name@" _THIS_SIZE,
-    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
+    .tp_name = "numpy." NPY_@NAME@_name,
+    .tp_basicsize = sizeof(Py@Name@ScalarObject),
 };
 
-
-#undef _THIS_SIZE
 /**end repeat**/
 
 
@@ -3678,37 +3648,6 @@ static PyMappingMethods gentype_as_mapping = {
     .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
 
-
-/**begin repeat
- * #NAME = CFloat, CDouble, CLongDouble#
- * #name = complex*3#
- * #CNAME = FLOAT, DOUBLE, LONGDOUBLE#
- */
-#if NPY_BITSOF_@CNAME@ == 16
-#define _THIS_SIZE "32"
-#elif NPY_BITSOF_@CNAME@ == 32
-#define _THIS_SIZE "64"
-#elif NPY_BITSOF_@CNAME@ == 64
-#define _THIS_SIZE "128"
-#elif NPY_BITSOF_@CNAME@ == 80
-#define _THIS_SIZE "160"
-#elif NPY_BITSOF_@CNAME@ == 96
-#define _THIS_SIZE "192"
-#elif NPY_BITSOF_@CNAME@ == 128
-#define _THIS_SIZE "256"
-#elif NPY_BITSOF_@CNAME@ == 256
-#define _THIS_SIZE "512"
-#endif
-
-NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-    PyVarObject_HEAD_INIT(0, 0)
-    .tp_name = "numpy.@name@" _THIS_SIZE,
-    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-};
-#undef _THIS_SIZE
-
-/**end repeat**/
 
 /*
  * This table maps the built-in type numbers to their scalar
@@ -4098,36 +4037,6 @@ initialize_numeric_types(void)
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
-
-    /*
-     * Give types different names when they are the same size (gh-9799).
-     * `np.intX` always refers to the first int of that size in the sequence
-     * `['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']`.
-     */
-#if (NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT)
-    PyByteArrType_Type.tp_name = "numpy.byte";
-    PyUByteArrType_Type.tp_name = "numpy.ubyte";
-#endif
-#if (NPY_SIZEOF_SHORT == NPY_SIZEOF_INT)
-    PyShortArrType_Type.tp_name = "numpy.short";
-    PyUShortArrType_Type.tp_name = "numpy.ushort";
-#endif
-#if (NPY_SIZEOF_INT == NPY_SIZEOF_LONG)
-    PyIntArrType_Type.tp_name = "numpy.intc";
-    PyUIntArrType_Type.tp_name = "numpy.uintc";
-#endif
-#if (NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG)
-    PyLongLongArrType_Type.tp_name = "numpy.longlong";
-    PyULongLongArrType_Type.tp_name = "numpy.ulonglong";
-#endif
-
-    /*
-    Do the same for longdouble
-    */
-#if (NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE)
-    PyLongDoubleArrType_Type.tp_name = "numpy.longdouble";
-    PyCLongDoubleArrType_Type.tp_name = "numpy.clongdouble";
-#endif
 }
 
 typedef struct {
