@@ -1,5 +1,7 @@
 import numpy
 import random
+import os
+import functools
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!
@@ -109,6 +111,113 @@ def get_indexes_rand_():
     indexes_rand_ = indexes_rand[indexes_rand < nxs]
     return indexes_rand_
 
+
+CACHE_ROOT = os.path.dirname(__file__)
+CACHE_ROOT = os.path.abspath(
+    os.path.join(CACHE_ROOT, '..', 'env', 'numpy_benchdata')
+)
+
+
+@functools.cache
+def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
+    """
+    Generates a cached random array that covers several scenarios that
+    may affect the benchmark for fairness and to stabilize the benchmark.
+
+    Parameters
+    ----------
+    size: int
+        Array length.
+
+    dtype: dtype or dtype specifier
+
+    ip_num: int
+        Input number, to avoid memory overload
+        and to provide unique data for each operand.
+
+    zeros: bool
+        Spreading zeros along with generated data.
+
+    finite: bool
+        Avoid spreading fp special cases nan/inf.
+
+    denormal:
+        Spreading subnormal numbers along with generated data.
+    """
+    np = numpy
+    dtype = np.dtype(dtype)
+    dname = dtype.name
+    cache_name = f'{dname}_{size}_{ip_num}_{int(zeros)}'
+    if dtype.kind in 'fc':
+        cache_name += f'{int(finite)}{int(denormal)}'
+    cache_name += '.bin'
+    cache_path = os.path.join(CACHE_ROOT, cache_name)
+    if os.path.exists(cache_path):
+        return np.fromfile(cache_path, dtype)
+
+    array = np.ones(size, dtype)
+    rands = []
+    if dtype.kind == 'i':
+        dinfo = np.iinfo(dtype)
+        scale = 8
+        if zeros:
+            scale += 1
+        lsize = size // scale
+        for low, high in (
+            (-0x80, -1),
+            (1, 0x7f),
+            (-0x8000, -1),
+            (1, 0x7fff),
+            (-0x80000000, -1),
+            (1, 0x7fffffff),
+            (-0x8000000000000000, -1),
+            (1, 0x7fffffffffffffff),
+        ):
+            rands += [np.random.randint(
+                max(low, dinfo.min),
+                min(high, dinfo.max),
+                lsize, dtype
+            )]
+    elif dtype.kind == 'u':
+        dinfo = np.iinfo(dtype)
+        scale = 4
+        if zeros:
+            scale += 1
+        lsize = size // scale
+        for high in (0xff, 0xffff, 0xffffffff, 0xffffffffffffffff):
+            rands += [np.random.randint(1, min(high, dinfo.max), lsize, dtype)]
+    elif dtype.kind in 'fc':
+        scale = 1
+        if zeros:
+            scale += 1
+        if not finite:
+            scale += 2
+        if denormal:
+            scale += 1
+        dinfo = np.finfo(dtype)
+        lsize = size // scale
+        rands = [np.random.rand(lsize).astype(dtype)]
+        if not finite:
+            rands += [
+                np.empty(lsize, dtype=dtype), np.empty(lsize, dtype=dtype)
+            ]
+            rands[1].fill(float('nan'))
+            rands[2].fill(float('inf'))
+        if denormal:
+            rands += [np.empty(lsize, dtype=dtype)]
+            rands[-1].fill(dinfo.smallest_subnormal)
+
+    if rands:
+        if zeros:
+            rands += [np.zeros(lsize, dtype)]
+        stride = len(rands)
+        for start, r in enumerate(rands):
+            array[start:len(r)*stride:stride] = r
+
+    if not os.path.exists(CACHE_ROOT):
+        os.mkdir(CACHE_ROOT)
+    array.tofile(cache_path)
+    return array
 
 class Benchmark:
     pass
