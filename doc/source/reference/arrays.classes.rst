@@ -71,10 +71,11 @@ NumPy provides several hooks that classes can customize:
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the input or output arguments has a :func:`__array_ufunc__`
+   If one of the input, output, or ``where`` arguments has a :func:`__array_ufunc__`
    method, it is executed *instead* of the ufunc.  If more than one of the
    arguments implements :func:`__array_ufunc__`, they are tried in the
-   order: subclasses before superclasses, inputs before outputs, otherwise
+   order: subclasses before superclasses, inputs before outputs,
+   outputs before ``where``, otherwise
    left to right. The first routine returning something other than
    :obj:`NotImplemented` determines the result. If all of the
    :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a

@@ -4843,6 +4843,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
 
 static int
 intern_strings(void)
@@ -4897,6 +4898,10 @@ intern_strings(void)
     }
     npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
     if (npy_ma_str_numpy == NULL) {
+        return -1;
+    }
+    npy_ma_str_where = PyUnicode_InternFromString("where");
+    if (npy_ma_str_where == NULL) {
         return -1;
     }
     return 0;

@@ -28,6 +28,7 @@
 #include "strfuncs.h"
 #include "array_assign.h"
 #include "npy_dlpack.h"
+#include "multiarraymodule.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -1102,7 +1103,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int nin, nout;
     PyObject *out_kwd_obj;
     PyObject *fast;
-    PyObject **in_objs, **out_objs;
+    PyObject **in_objs, **out_objs, *where_obj;
 
     /* check inputs */
     nin = PyTuple_Size(args);
@@ -1133,6 +1134,17 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         }
     }
     Py_DECREF(out_kwd_obj);
+    /* check where if it exists */
+    where_obj = PyDict_GetItemWithError(kwds, npy_ma_str_where);
+    if (where_obj == NULL) {
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+    } else {
+        if (PyUFunc_HasOverride(where_obj)){
+            return 1;
+        }
+    }
     return 0;
 }
 
