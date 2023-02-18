@@ -45,7 +45,7 @@ class AnyAll(Benchmark):
         self.zeros.any()
 
 
-class StdStatsReductions(Benchmark):
+class StatsReductions(Benchmark):
     params = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
               'int64', 'uint64', 'float32', 'float64', 'intp',
               'complex64', 'complex128', 'complex256',

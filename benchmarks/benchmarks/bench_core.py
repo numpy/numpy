@@ -215,7 +215,7 @@ class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
 
-class StdStatsMethods(Benchmark):
+class StatsMethods(Benchmark):
     params = [['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
               'int64', 'uint64', 'float32', 'float64', 'intp',
               'complex64', 'complex128', 'complex256',
