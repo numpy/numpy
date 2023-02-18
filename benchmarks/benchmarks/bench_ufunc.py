@@ -3,6 +3,7 @@ from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
 import numpy as np
 import itertools
 from packaging import version
+import operator
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
@@ -85,8 +86,7 @@ class MethodsV0(Benchmark):
         self.xarg = values.get(npdtypes)[0]
 
     def time_ndarray_meth(self, methname, npdtypes):
-        meth = getattr(self.xarg, methname)
-        meth()
+        getattr(operator, methname)(self.xarg)
 
 class NDArrayLRShifts(Benchmark):
     """ Benchmark for the shift methods
@@ -104,8 +104,7 @@ class NDArrayLRShifts(Benchmark):
                             np.random.randint(9)
 
     def time_ndarray_meth(self, methname, npdtypes):
-        mshift = getattr(self.vals, methname)
-        mshift(2)
+        getattr(operator, methname)(*[self.vals, 2])
 
 class Methods0D(Benchmark):
     """Zero dimension array methods
@@ -147,12 +146,10 @@ class MethodsV1(Benchmark):
         ):
             raise NotImplementedError  # skip
         values = get_squares_().get(npdtypes)
-        self.xarg_one = values[0]
-        self.xarg_two = values[1]
+        self.xargs = [values[0], values[1]]
 
     def time_ndarray_meth(self, methname, npdtypes):
-        meth = getattr(self.xarg_one, methname)
-        meth(self.xarg_two)
+        getattr(operator, methname)(*self.xargs)
 
 class NDArrayGetItem(Benchmark):
     param_names = ['margs', 'msize']
@@ -184,7 +181,7 @@ class NDArraySetItem(Benchmark):
             mdat = self.xs
         elif msize == 'big':
             mdat = self.xl
-        getattr(mdat, '__setitem__')(margs, 17)
+            mdat[margs] = 17
 
 class DLPMethods(Benchmark):
     """ Benchmark for DLPACK helpers
