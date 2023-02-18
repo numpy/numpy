@@ -133,7 +133,7 @@ class Unique(Benchmark):
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
         n_nan = int(percent_nans * array_size)
-        nan_indices = np.random.randint(array_size, size=n_nan)
+        nan_indices = np.random.choice(np.arange(array_size), size=n_nan)
         base_array[nan_indices] = np.nan
         self.arr = base_array
 

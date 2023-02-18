@@ -27,10 +27,11 @@ class BroadcastArraysTo(Benchmark):
     timeout = 10
 
     def setup(self, size, ndtype):
-        self.xarg = np.random.ranf(size)
+        self.rng = np.random.default_rng()
+        self.xarg = self.rng.random(size)
         self.xarg = self.xarg.astype(ndtype)
         if ndtype.startswith('complex'):
-            self.xarg += np.random.ranf(1)*1j
+            self.xarg += self.rng.random(1)*1j
 
     def time_broadcast_to(self, size, ndtype):
         np.broadcast_to(self.xarg, (size, size))
