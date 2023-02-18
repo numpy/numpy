@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 7
+#define __EXPERIMENTAL_DTYPE_API_VERSION 8
 
 struct PyArrayMethodObject_tag;
 
@@ -98,7 +98,7 @@ typedef enum {
 
 typedef struct PyArrayMethod_Context_tag {
     /* The caller, which is typically the original ufunc.  May be NULL */
-    PyObject *caller; 
+    PyObject *caller;
     /* The method "self".  Publically currentl an opaque object. */
     struct PyArrayMethodObject_tag *method;
 
@@ -125,7 +125,7 @@ typedef struct {
 /*
  * ArrayMethod slots
  * -----------------
- * 
+ *
  * SLOTS IDs For the ArrayMethod creation, once fully public, IDs are fixed
  * but can be deprecated and arbitrarily extended.
  */
@@ -142,6 +142,7 @@ typedef struct {
 
 /* other slots are in order, so note last one (internal use!) */
 #define _NPY_NUM_DTYPE_SLOTS 8
+#define _NPY_NUM_DTYPE_PYARRAY_ARRFUNC_SLOTS 22 + (1 << 10)
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -272,6 +273,44 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 #define NPY_DT_ensure_canonical 6
 #define NPY_DT_setitem 7
 #define NPY_DT_getitem 8
+
+// These PyArray_ArrFunc slots will be deprecated and replaced eventually
+// getitem and setitem can be defined as a performance optimization;
+// by default the user dtypes call `legacy_getitem_using_DType` and
+// `legacy_setitem_using_DType`, respectively. This functionality is
+// only supported for basic NumPy DTypes.
+
+// Cast is disabled
+// #define NPY_DT_PyArray_ArrFuncs_cast 0 + (1 << 10)
+
+#define NPY_DT_PyArray_ArrFuncs_getitem 1 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_setitem 2 + (1 << 10)
+
+#define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_copyswap 4 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_compare 5 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_argmax 6 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_dotfunc 7 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_scanfunc 8 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_fromstr 9 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_nonzero 10 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_fill 11 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_fillwithscalar 12 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_sort 13 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_argsort 14 + (1 << 10)
+
+// Casting related slots are disabled. See
+// https://github.com/numpy/numpy/pull/23173#discussion_r1101098163
+// #define NPY_DT_PyArray_ArrFuncs_castdict 15 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_scalarkind 16 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_cancastscalarkindto 17 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_cancastto 18 + (1 << 10)
+
+// These are deprecated in NumPy 1.19, so are disabled here.
+// #define NPY_DT_PyArray_ArrFuncs_fastclip 19 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_fastputmask 20 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_argmin 22 + (1 << 10)
 
 
 // TODO: These slots probably still need some thought, and/or a way to "grow"?

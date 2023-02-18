@@ -16,7 +16,6 @@
 #include "common_dtype.h"
 
 
-
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
         PyArray_DTypeMeta *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(other))
@@ -162,6 +161,7 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->common_instance = NULL;
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
     while (1) {
@@ -171,7 +171,7 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if (slot > _NPY_NUM_DTYPE_SLOTS || slot < 0) {
+        if (slot > _NPY_NUM_DTYPE_PYARRAY_ARRFUNC_SLOTS || slot < 0) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
@@ -180,11 +180,88 @@ PyArrayInitDTypeMeta_FromSpec(
          * It is up to the user to get this right, and slots are sorted
          * exactly like they are stored right now:
          */
-        void **current = (void **)(&(
-                NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
-        current += slot - 1;
-        *current = pfunc;
+        if (slot <= _NPY_NUM_DTYPE_SLOTS) {
+            // slot > 8 are PyArray_ArrFuncs
+            void **current = (void **)(&(
+                    NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
+            current += slot - 1;
+            *current = pfunc;
+        }
+        else {
+            // Remove PyArray_ArrFuncs offset
+            int f_slot = slot - (1 << 10);
+            if (1 <= f_slot && f_slot <= 22) {
+                switch (f_slot) {
+                    case 1:
+                        NPY_DT_SLOTS(DType)->f.getitem = pfunc;
+                        break;
+                    case 2:
+                        NPY_DT_SLOTS(DType)->f.setitem = pfunc;
+                        break;
+                    case 3:
+                        NPY_DT_SLOTS(DType)->f.copyswapn = pfunc;
+                        break;
+                    case 4:
+                        NPY_DT_SLOTS(DType)->f.copyswap = pfunc;
+                        break;
+                    case 5:
+                        NPY_DT_SLOTS(DType)->f.compare = pfunc;
+                        break;
+                    case 6:
+                        NPY_DT_SLOTS(DType)->f.argmax = pfunc;
+                        break;
+                    case 7:
+                        NPY_DT_SLOTS(DType)->f.dotfunc = pfunc;
+                        break;
+                    case 8:
+                        NPY_DT_SLOTS(DType)->f.scanfunc = pfunc;
+                        break;
+                    case 9:
+                        NPY_DT_SLOTS(DType)->f.fromstr = pfunc;
+                        break;
+                    case 10:
+                        NPY_DT_SLOTS(DType)->f.nonzero = pfunc;
+                        break;
+                    case 11:
+                        NPY_DT_SLOTS(DType)->f.fill = pfunc;
+                        break;
+                    case 12:
+                        NPY_DT_SLOTS(DType)->f.fillwithscalar = pfunc;
+                        break;
+                    case 13:
+                        *NPY_DT_SLOTS(DType)->f.sort = pfunc;
+                        break;
+                    case 14:
+                        *NPY_DT_SLOTS(DType)->f.argsort = pfunc;
+                        break;
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+                    case 19:
+                    case 20:
+                    case 21:
+                        PyErr_Format(
+                            PyExc_RuntimeError,
+                            "PyArray_ArrFunc casting slot with value %d is disabled.",
+                            f_slot
+                        );
+                        return -1;
+                    case 22:
+                        NPY_DT_SLOTS(DType)->f.argmin = pfunc;
+                        break;
+                }
+            } else {
+                    PyErr_Format(
+                        PyExc_RuntimeError,
+                        "Invalid PyArray_ArrFunc slot with value %d passed in.",
+                        f_slot
+                    );
+                    return -1;
+            }
+        }
     }
+
     if (NPY_DT_SLOTS(DType)->setitem == NULL
             || NPY_DT_SLOTS(DType)->getitem == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -213,7 +290,6 @@ PyArrayInitDTypeMeta_FromSpec(
             return -1;
         }
     }
-    NPY_DT_SLOTS(DType)->f = default_funcs;
     /* invalid type num. Ideally, we get away with it! */
     DType->type_num = -1;
 
