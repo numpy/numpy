@@ -21,10 +21,10 @@ TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',
     'int64', 'float64',  'complex64',
-    'longfloat', 'complex128',
+    'longdouble', 'complex128',
 ]
 if 'complex256' in np.sctypeDict:
-    TYPES1.append('complex256')
+    TYPES1.append('clongdouble')
 
 DLPACK_TYPES = [
     'int16', 'float16',

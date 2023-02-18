@@ -138,10 +138,12 @@ class MethodsV1(Benchmark):
     timeout = 10
 
     def setup(self, methname, npdtypes):
-        if (npdtypes.startswith('complex') and
-           methname in ['__floordiv__', '__mod__']) or \
-           (not npdtypes.startswith('int') and
-             methname in ['__and__', '__or__', '__xor__']):
+        if (
+            npdtypes.startswith("complex") and methname in ["__floordiv__", "__mod__"]
+        ) or (
+            not npdtypes.startswith("int")
+            and methname in ["__and__", "__or__", "__xor__"]
+        ):
             raise NotImplementedError  # skip
         values = get_squares_().get(npdtypes)
         self.xarg_one = values[0]
@@ -269,7 +271,7 @@ class UfuncsFromDLP(Benchmark):
     timeout = 10
 
     def setup(self, shape, npdtypes):
-        if npdtypes in ['longfloat', 'complex256']:
+        if npdtypes in ['longdouble', 'clongdouble']:
             raise NotImplementedError(
                 'Only IEEE dtypes are supported')
         values = get_squares_()
