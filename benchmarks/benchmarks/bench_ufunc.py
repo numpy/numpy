@@ -74,6 +74,7 @@ class UFunc(Benchmark):
     def time_ufunc_types(self, ufuncname):
         [self.ufn(*arg) for arg in self.args]
 
+
 class MethodsV0(Benchmark):
     """ Benchmark for the methods which do not take any arguments
     """
@@ -87,6 +88,7 @@ class MethodsV0(Benchmark):
 
     def time_ndarray_meth(self, methname, npdtypes):
         getattr(operator, methname)(self.xarg)
+
 
 class NDArrayLRShifts(Benchmark):
     """ Benchmark for the shift methods
@@ -105,6 +107,7 @@ class NDArrayLRShifts(Benchmark):
 
     def time_ndarray_meth(self, methname, npdtypes):
         getattr(operator, methname)(*[self.vals, 2])
+
 
 class Methods0D(Benchmark):
     """Zero dimension array methods
@@ -125,6 +128,7 @@ class Methods0D(Benchmark):
     def time_ndarray__0d__(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
         meth()
+
 
 class MethodsV1(Benchmark):
     """ Benchmark for the methods which take an argument
@@ -151,6 +155,7 @@ class MethodsV1(Benchmark):
     def time_ndarray_meth(self, methname, npdtypes):
         getattr(operator, methname)(*self.xargs)
 
+
 class NDArrayGetItem(Benchmark):
     param_names = ['margs', 'msize']
     params = [[0, (0, 0), (-1, 0), [0, -1]],
@@ -167,6 +172,7 @@ class NDArrayGetItem(Benchmark):
             mdat = self.xl
         getattr(mdat, '__getitem__')(margs)
 
+
 class NDArraySetItem(Benchmark):
     param_names = ['margs', 'msize']
     params = [[0, (0, 0), (-1, 0), [0, -1]],
@@ -182,6 +188,7 @@ class NDArraySetItem(Benchmark):
         elif msize == 'big':
             mdat = self.xl
             mdat[margs] = 17
+
 
 class DLPMethods(Benchmark):
     """ Benchmark for DLPACK helpers
@@ -204,6 +211,7 @@ class DLPMethods(Benchmark):
         meth = getattr(self.xarg, methname)
         meth()
 
+
 class NDArrayAsType(Benchmark):
     """ Benchmark for type conversion
     """
@@ -219,6 +227,7 @@ class NDArrayAsType(Benchmark):
 
     def time_astype(self, typeconv):
         self.xarg.astype(typeconv[1])
+
 
 class UfuncsCreate(Benchmark):
     """ Benchmark for creation functions
@@ -280,6 +289,7 @@ class UfuncsFromDLP(Benchmark):
 
     def time_from_dlpack(self, shape, npdtypes):
         np.from_dlpack(self.xarg)
+
 
 class UFuncMeshGrid(Benchmark):
     """ Benchmark meshgrid generation

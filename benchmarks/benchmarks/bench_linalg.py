@@ -191,6 +191,7 @@ class Einsum(Benchmark):
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
 
+
 class LinAlgTransposeVdot(Benchmark):
     params = [[(16, 16), (32, 32),
                (64, 64), (128, 128),

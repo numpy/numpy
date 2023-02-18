@@ -20,6 +20,7 @@ class BroadcastArrays(Benchmark):
     def time_broadcast_arrays(self, shape, ndtype):
         np.broadcast_arrays(self.xarg, np.ones(1))
 
+
 class BroadcastArraysTo(Benchmark):
     params = [[16, 32, 64, 128, 256, 512],
               TYPES1]
@@ -35,6 +36,7 @@ class BroadcastArraysTo(Benchmark):
 
     def time_broadcast_to(self, size, ndtype):
         np.broadcast_to(self.xarg, (size, size))
+
 
 class ConcatenateStackArrays(Benchmark):
     params = [[(16, 32), (32, 64),
@@ -63,6 +65,7 @@ class ConcatenateStackArrays(Benchmark):
 
     def time_stack_ax1(self, size, narrays, ndtype):
         np.stack(self.xarg, axis=1)
+
 
 class DimsManipulations(Benchmark):
     params = [
