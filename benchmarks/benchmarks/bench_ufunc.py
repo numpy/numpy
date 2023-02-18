@@ -2,6 +2,7 @@ from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
 
 import numpy as np
 import itertools
+from packaging import version
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
@@ -195,7 +196,10 @@ class DLPMethods(Benchmark):
     def setup(self, methname, npdtypes):
         values = get_squares_()
         if npdtypes == 'bool':
-            self.xarg = values.get('int16')[0].astype('bool')
+            if version.parse(np.__version__) > version.parse("1.25"):
+                self.xarg = values.get('int16')[0].astype('bool')
+            else:
+                raise NotImplementedError("Not supported before v1.25")
         else:
             self.xarg = values.get('int16')[0]
 

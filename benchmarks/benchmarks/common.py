@@ -30,7 +30,7 @@ DLPACK_TYPES = [
     'int16', 'float16',
     'int32', 'float32',
     'int64', 'float64',  'complex64',
-    'complex128',
+    'complex128', 'bool',
 ]
 
 # values which will be used to construct our sample data matrices
