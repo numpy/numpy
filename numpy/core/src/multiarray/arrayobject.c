@@ -453,7 +453,7 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free any internal references by clearing the buffer */
+        /* Free any internal references */
         if (PyDataType_REFCHK(fa->descr)) {
             PyArray_ClearArray(self);
         }

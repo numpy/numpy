@@ -347,8 +347,8 @@ fill_arraymethod_from_slots(
     if (meth->flags & NPY_METH_SUPPORTS_UNALIGNED) {
         if (meth->unaligned_strided_loop == NULL) {
             PyErr_Format(PyExc_TypeError,
-                    "Must provide unaligned strided inner loop for method to "
-                    "indicate unaligned support (method: %s)",
+                    "Must provide unaligned strided inner loop when using "
+                    "NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
                     spec->name);
             return -1;
         }
@@ -356,8 +356,8 @@ fill_arraymethod_from_slots(
     else {
         if (meth->unaligned_strided_loop != NULL) {
             PyErr_Format(PyExc_TypeError,
-                    "Method indicates unaligned support but provides no "
-                    "unaligned strided loop (method: %s)",
+                    "Must not provide unaligned strided inner loop when not "
+                    "using NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
                     spec->name);
             return -1;
         }

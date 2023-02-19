@@ -28,7 +28,7 @@
 #include "dtype_traversal.h"
 
 
-/* Same as in dtype_transfer.c */
+/* Buffer size with the same use case as the one in dtype_transfer.c */
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
 
@@ -49,8 +49,8 @@ get_clear_function(
     get_traverse_loop_function *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
     if (get_clear == NULL) {
         PyErr_Format(PyExc_RuntimeError,
-                "Internal error, tried to fetch decref/clear function for the "
-                "unsupported DType '%S'.", dtype);
+                "Internal error, `get_clear_loop` not set for the DType '%S'",
+                dtype);
         return -1;
     }
 
