@@ -314,7 +314,12 @@ subarray_clear_data_free(NpyAuxData *data)
 }
 
 
-/* transfer data copy function */
+/*
+ * transfer data copy function;  This particular function seems unreachable
+ * by normal code and is thus not tested.
+ * The only path would be casting with subarrays and nditer.copy(), but this
+ * will not use the subarray clearing in a step that gets copied/cloned.
+ */
 static NpyAuxData *
 subarray_clear_data_clone(NpyAuxData *data)
 {
