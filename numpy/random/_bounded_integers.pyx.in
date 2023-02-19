@@ -99,8 +99,12 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
     is_open = not closed
     low_arr = <np.ndarray>low
     high_arr = <np.ndarray>high
-    if np.any(np.less(low_arr, {{lb}})):
+
+    if np.can_cast(low_arr, np.{{otype}}):
+        pass  # cannot be out-of-bounds
+    elif np.any(np.less(low_arr, np.{{otype}}({{lb}}))):
         raise ValueError('low is out of bounds for {{nptype}}')
+
     if closed:
         high_comp = np.greater_equal
         low_high_comp = np.greater
@@ -108,8 +112,11 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
         high_comp = np.greater
         low_high_comp = np.greater_equal
 
-    if np.any(high_comp(high_arr, {{ub}})):
+    if np.can_cast(high_arr, np.{{otype}}):
+        pass  # cannot be out-of-bounds
+    elif np.any(high_comp(high_arr, np.{{nptype_up}}({{ub}}))):
         raise ValueError('high is out of bounds for {{nptype}}')
+
     if np.any(low_high_comp(low_arr, high_arr)):
         raise ValueError(format_bounds_error(closed, low_arr))
 
@@ -165,50 +172,69 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
     64 bit integer type.
     """
 
-    cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
+    cdef np.ndarray low_arr, low_arr_orig, high_arr, high_arr_orig, out_arr
     cdef np.npy_intp i, cnt, n
     cdef np.broadcast it
     cdef object closed_upper
     cdef uint64_t *out_data
     cdef {{nptype}}_t *highm1_data
     cdef {{nptype}}_t low_v, high_v
-    cdef uint64_t rng, last_rng, val, mask, off, out_val
+    cdef uint64_t rng, last_rng, val, mask, off, out_val, is_open
 
-    low_arr = <np.ndarray>low
-    high_arr = <np.ndarray>high
+    low_arr_orig = <np.ndarray>low
+    high_arr_orig = <np.ndarray>high
 
-    if np.any(np.less(low_arr, {{lb}})):
-        raise ValueError('low is out of bounds for {{nptype}}')
-    dt = high_arr.dtype
-    if closed or np.issubdtype(dt, np.integer):
-        # Avoid object dtype path if already an integer
-        high_lower_comp = np.less if closed else np.less_equal
-        if np.any(high_lower_comp(high_arr, {{lb}})):
-            raise ValueError(format_bounds_error(closed, low_arr))
-        high_m1 = high_arr if closed else high_arr - dt.type(1)
-        if np.any(np.greater(high_m1, {{ub}})):
-            raise ValueError('high is out of bounds for {{nptype}}')
-        highm1_arr = <np.ndarray>np.PyArray_FROM_OTF(high_m1, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+    is_open = not closed
+
+    # The following code tries to cast safely, but failing that goes via
+    # Python `int()` because it is very difficult to cast integers in a
+    # truly safe way (i.e. so it raises on out-of-bound).
+    # We correct if the interval is not closed in this step if we go the long
+    # route.  (Not otherwise, since the -1 could overflow in theory.)
+    if np.can_cast(low_arr_orig, np.{{otype}}):
+        low_arr = <np.ndarray>np.PyArray_FROM_OTF(low_arr_orig, np.{{npctype}}, np.NPY_ALIGNED)
     else:
-        # If input is object or a floating type
-        highm1_arr = <np.ndarray>np.empty_like(high_arr, dtype=np.{{otype}})
-        highm1_data = <{{nptype}}_t *>np.PyArray_DATA(highm1_arr)
-        cnt = np.PyArray_SIZE(high_arr)
-        flat = high_arr.flat
+        low_arr = <np.ndarray>np.empty_like(low_arr_orig, dtype=np.{{otype}})
+        flat = low_arr_orig.flat
+        low_data = <{{nptype}}_t *>np.PyArray_DATA(low_arr)
+        cnt = np.PyArray_SIZE(low_arr)
         for i in range(cnt):
-            # Subtract 1 since generator produces values on the closed int [off, off+rng]
-            closed_upper = int(flat[i]) - 1
+            lower = int(flat[i])
+            if lower < {{lb}} or lower > {{ub}}:
+                raise ValueError('low is out of bounds for {{nptype}}')
+            low_data[i] = lower
+
+    del low_arr_orig
+
+    if np.can_cast(high_arr_orig, np.{{otype}}):
+        high_arr = <np.ndarray>np.PyArray_FROM_OTF(high_arr_orig, np.{{npctype}}, np.NPY_ALIGNED)
+    else:
+        high_arr = np.empty_like(high_arr_orig, dtype=np.{{otype}})
+        flat = high_arr_orig.flat
+        high_data = <{{nptype}}_t *>np.PyArray_DATA(high_arr)
+        cnt = np.PyArray_SIZE(high_arr)
+        for i in range(cnt):
+            closed_upper = int(flat[i]) - is_open
             if closed_upper > {{ub}}:
                 raise ValueError('high is out of bounds for {{nptype}}')
             if closed_upper < {{lb}}:
                 raise ValueError(format_bounds_error(closed, low_arr))
-            highm1_data[i] = <{{nptype}}_t>closed_upper
+            high_data[i] = closed_upper
 
-    if np.any(np.greater(low_arr, highm1_arr)):
+        is_open = 0  # we applied is_open in this path already
+
+    del high_arr_orig
+
+    # Since we have the largest supported integer dtypes, they must be within
+    # range at this point; otherwise conversion would have failed.  Check that
+    # it is never true that `high <= low`` if closed and `high < low` if not
+    if not is_open:
+        low_high_comp = np.greater
+    else:
+        low_high_comp = np.greater_equal
+
+    if np.any(low_high_comp(low_arr, high_arr)):
         raise ValueError(format_bounds_error(closed, low_arr))
-
-    high_arr = highm1_arr
-    low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
 
     if size is not None:
         out_arr = <np.ndarray>np.empty(size, np.{{otype}})
@@ -224,8 +250,8 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
         for i in range(n):
             low_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
             high_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
-            # Generator produces values on the closed int [off, off+rng], -1 subtracted above
-            rng = <{{utype}}_t>(high_v - low_v)
+            # Generator produces values on the closed int [off, off+rng]
+            rng = <{{utype}}_t>((high_v - is_open) - low_v)
             off = <{{utype}}_t>(<{{nptype}}_t>low_v)
 
             if rng != last_rng:
