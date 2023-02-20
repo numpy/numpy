@@ -14,5 +14,4 @@ would implicitly create a static method::
 
 Since numpy 1.25, the vectorized function now binds ``self`` as the first
 argument, and the earlier example will fail.  To recover the earlier behavior,
-explicitly wrap ``func`` using ``staticmethod`` before passing it to
-``np.vectorize``.
+use `static = staticmethod(np.vectorize(func))`.
