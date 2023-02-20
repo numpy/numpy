@@ -632,11 +632,12 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
     PyArrayObject *mask, *values;
     PyArray_Descr *dtype;
-    npy_intp chunk, ni, nv;
+    npy_intp itemsize, ni, nv;
     char *src, *dest;
     npy_bool *mask_data;
     int copied = 0;
     int overlap = 0;
+    NPY_BEGIN_THREADS_DEF;
 
     mask = NULL;
     values = NULL;
@@ -697,30 +698,46 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         self = obj;
     }
 
-    chunk = PyArray_DESCR(self)->elsize;
+    itemsize = PyArray_DESCR(self)->elsize;
     dest = PyArray_DATA(self);
 
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp strides[2] = {itemsize, itemsize};
+
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                &cast_info, &flags) < 0) {
+            return NULL;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+
         for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
             if (j >= nv) {
                 j = 0;
             }
             if (mask_data[i]) {
-                char *src_ptr = src + j*chunk;
-                char *dest_ptr = dest + i*chunk;
-
-                PyArray_Item_INCREF(src_ptr, PyArray_DESCR(self));
-                PyArray_Item_XDECREF(dest_ptr, PyArray_DESCR(self));
-                memmove(dest_ptr, src_ptr, chunk);
+                char *data[2] = {src + j*itemsize, dest + i*itemsize};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    goto fail;
+                }
             }
         }
     }
     else {
-        NPY_BEGIN_THREADS_DEF;
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
-        npy_fastputmask(dest, src, mask_data, ni, nv, chunk);
-        NPY_END_THREADS;
+        NPY_BEGIN_THREADS;
+        npy_fastputmask(dest, src, mask_data, ni, nv, itemsize);
     }
+
+    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
