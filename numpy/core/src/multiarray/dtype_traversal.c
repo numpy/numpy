@@ -148,7 +148,7 @@ typedef struct {
 } fields_clear_data;
 
 
-/* transfer data free function */
+/* traverse data free function */
 static void
 fields_clear_data_free(NpyAuxData *data)
 {
@@ -161,7 +161,7 @@ fields_clear_data_free(NpyAuxData *data)
 }
 
 
-/* transfer data copy function */
+/* traverse data copy function (untested due to no direct use currently) */
 static NpyAuxData *
 fields_clear_data_clone(NpyAuxData *data)
 {
@@ -303,7 +303,7 @@ typedef struct {
 } subarray_clear_data;
 
 
-/* transfer data free function */
+/* traverse data free function */
 static void
 subarray_clear_data_free(NpyAuxData *data)
 {
@@ -314,12 +314,7 @@ subarray_clear_data_free(NpyAuxData *data)
 }
 
 
-/*
- * transfer data copy function;  This particular function seems unreachable
- * by normal code and is thus not tested.
- * The only path would be casting with subarrays and nditer.copy(), but this
- * will not use the subarray clearing in a step that gets copied/cloned.
- */
+/* traverse data copy function (untested due to no direct use currently) */
 static NpyAuxData *
 subarray_clear_data_clone(NpyAuxData *data)
 {
