@@ -436,7 +436,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_BYTES(values) + itemsize*(i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
+                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
                     goto fail;
                 }
                 char *data[2] = {src, dest + tmp*itemsize};
