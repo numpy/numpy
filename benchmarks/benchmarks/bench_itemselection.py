@@ -7,7 +7,7 @@ class Take(Benchmark):
     params = [
         [(1000, 1), (1000, 2), (2, 1000, 1), (1000, 3)],
         ["raise", "wrap", "clip"],
-        TYPES1]
+        TYPES1 + ["O", "i,O"]]
     param_names = ["shape", "mode", "dtype"]
 
     def setup(self, shape, mode, dtype):

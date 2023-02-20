@@ -17,6 +17,7 @@
 
 #include "multiarraymodule.h"
 #include "common.h"
+#include "dtype_transfer.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
@@ -39,7 +40,26 @@ npy_fasttake_impl(
         PyArray_Descr *dtype, int axis)
 {
     NPY_BEGIN_THREADS_DEF;
-    NPY_BEGIN_THREADS_DESCR(dtype);
+
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_cast_info_init(&cast_info);
+
+    if (!needs_refcounting) {
+        /* if "refcounting" is not needed memcpy is safe for a simple copy  */
+        NPY_BEGIN_THREADS;
+    }
+    else {
+        if (PyArray_GetDTypeTransferFunction(
+                1, itemsize, itemsize, dtype, dtype, 0,
+                &cast_info, &flags) < 0) {
+            return -1;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+    }
+
     switch (clipmode) {
         case NPY_RAISE:
             for (npy_intp i = 0; i < n; i++) {
@@ -47,20 +67,22 @@ npy_fasttake_impl(
                     npy_intp tmp = indices[j];
                     if (check_and_adjust_index(&tmp, max_item, axis,
                                                _save) < 0) {
-                        return -1;
+                        goto fail;
                     }
                     char *tmp_src = src + tmp * chunk;
                     if (needs_refcounting) {
-                        for (npy_intp k = 0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, dtype);
-                            PyArray_Item_XDECREF(dest, dtype);
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
+                        char *data[2] = {tmp_src, dest};
+                        npy_intp strides[2] = {itemsize, itemsize};
+                        if (cast_info.func(
+                                &cast_info.context, data, &nelem, strides,
+                                cast_info.auxdata) < 0) {
+                            NPY_END_THREADS;
+                            goto fail;
                         }
+                        dest += itemsize * nelem;
                     }
                     else {
-                        memmove(dest, tmp_src, chunk);
+                        memcpy(dest, tmp_src, chunk);
                         dest += chunk;
                     }
                 }
@@ -83,16 +105,18 @@ npy_fasttake_impl(
                     }
                     char *tmp_src = src + tmp * chunk;
                     if (needs_refcounting) {
-                        for (npy_intp k = 0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, dtype);
-                            PyArray_Item_XDECREF(dest, dtype);
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
+                        char *data[2] = {tmp_src, dest};
+                        npy_intp strides[2] = {itemsize, itemsize};
+                        if (cast_info.func(
+                                &cast_info.context, data, &nelem, strides,
+                                cast_info.auxdata) < 0) {
+                            NPY_END_THREADS;
+                            goto fail;
                         }
+                        dest += itemsize * nelem;
                     }
                     else {
-                        memmove(dest, tmp_src, chunk);
+                        memcpy(dest, tmp_src, chunk);
                         dest += chunk;
                     }
                 }
@@ -111,16 +135,18 @@ npy_fasttake_impl(
                     }
                     char *tmp_src = src + tmp * chunk;
                     if (needs_refcounting) {
-                        for (npy_intp k = 0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, dtype);
-                            PyArray_Item_XDECREF(dest, dtype);
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
+                        char *data[2] = {tmp_src, dest};
+                        npy_intp strides[2] = {itemsize, itemsize};
+                        if (cast_info.func(
+                                &cast_info.context, data, &nelem, strides,
+                                cast_info.auxdata) < 0) {
+                            NPY_END_THREADS;
+                            goto fail;
                         }
+                        dest += itemsize * nelem;
                     }
                     else {
-                        memmove(dest, tmp_src, chunk);
+                        memcpy(dest, tmp_src, chunk);
                         dest += chunk;
                     }
                 }
@@ -130,7 +156,13 @@ npy_fasttake_impl(
     }
 
     NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
     return 0;
+
+  fail:
+    /* NPY_END_THREADS already ensured. */
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 
