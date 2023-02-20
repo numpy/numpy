@@ -1,6 +1,6 @@
 /*@targets
  ** $maxopt $autovec baseline
- ** sse2 avx2 avx512_skx
+ ** sse2 avx2
  ** neon
  ** vsx2
  ** vx
