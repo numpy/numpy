@@ -57,5 +57,5 @@ class Put(Benchmark):
         self.arr = np.ones(1000, dtype=dtype)
         self.indx = np.arange(1000, dtype=np.intp)
 
-    def time(self, values_is_scalar, dtype):
+    def time_ordered(self, values_is_scalar, dtype):
         np.put(self.arr, self.indx, self.vals)
