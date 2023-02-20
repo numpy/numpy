@@ -464,7 +464,7 @@ A total of 494 pull requests were merged for this release.
 * `#21089 <https://github.com/numpy/numpy/pull/21089>`__: BUILD: if travis build is triggered manually, then upload wheels
 * `#21090 <https://github.com/numpy/numpy/pull/21090>`__: BUILD: change cibuildwheel output directory on travis [ci skip]
 * `#21095 <https://github.com/numpy/numpy/pull/21095>`__: BLD: Make a sdist [wheel build]
-* `#21097 <https://github.com/numpy/numpy/pull/21097>`__: MAINT: update cython, pypy for cython0.29.28 and pypy v7.3.8...
+* `#21097 <https://github.com/numpy/numpy/pull/21097>`__: MAINT: update cython, pypy for cython0.29.28 and pypy v7.3.9...
 * `#21099 <https://github.com/numpy/numpy/pull/21099>`__: MAINT: Translate x86-qsort.dispatch.c.src to C++ using templates.
 * `#21100 <https://github.com/numpy/numpy/pull/21100>`__: BLD: Comment out broken macOS PyPy build [wheel build]
 * `#21102 <https://github.com/numpy/numpy/pull/21102>`__: TYP,MAINT: Explicitly allow sequences of array-likes in ``np.concatenate``
@@ -612,7 +612,7 @@ A total of 494 pull requests were merged for this release.
 * `#21545 <https://github.com/numpy/numpy/pull/21545>`__: Tests/Docs: Update tests to Cython 0.29.30, mention in docs
 * `#21552 <https://github.com/numpy/numpy/pull/21552>`__: BLD: Sort svml objects to keep builds reproducible
 * `#21553 <https://github.com/numpy/numpy/pull/21553>`__: PERF: Faster MyPyFloat_AsDouble
-* `#21558 <https://github.com/numpy/numpy/pull/21558>`__: MAINT: Python <3.8 related cleanups
+* `#21558 <https://github.com/numpy/numpy/pull/21558>`__: MAINT: Python <3.9 related cleanups
 * `#21562 <https://github.com/numpy/numpy/pull/21562>`__: REL: Update main after 1.22.4 release.
 * `#21565 <https://github.com/numpy/numpy/pull/21565>`__: DOC: add explanation to makefile error
 * `#21566 <https://github.com/numpy/numpy/pull/21566>`__: DOC: Fix docstring and examples for rfn.get_names*

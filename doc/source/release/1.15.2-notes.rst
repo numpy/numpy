@@ -5,7 +5,7 @@ NumPy 1.15.2 Release Notes
 This is a bugfix release for bugs and regressions reported following the 1.15.1
 release.
 
-* The matrix PendingDeprecationWarning is now suppressed in pytest 3.8.
+* The matrix PendingDeprecationWarning is now suppressed in pytest 3.9.
 * The new cached allocations machinery has been fixed to be thread safe.
 * The boolean indexing of subclasses now works correctly.
 * A small memory leak in PyArray_AdaptFlexibleDType has been fixed.

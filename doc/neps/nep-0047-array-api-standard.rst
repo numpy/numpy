@@ -522,7 +522,7 @@ The ``numpy.array_api`` module is considered experimental. This means that
 importing it will issue a ``UserWarning``. The alternative to this was naming
 the module ``numpy._array_api``, but the warning was chosen instead so that it
 does not become necessary to rename the module in the future, potentially
-breaking user code. The module also requires Python 3.8 or greater due to
+breaking user code. The module also requires Python 3.9 or greater due to
 extensive use of the positional-only argument syntax.
 
 The experimental nature of the module also means that it is not yet mentioned

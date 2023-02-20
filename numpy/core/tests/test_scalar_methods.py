@@ -188,7 +188,7 @@ class TestClassGetItem:
         assert np.number[Any]
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
+@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.9")
 @pytest.mark.parametrize("cls", [np.number, np.complexfloating, np.int64])
 def test_class_getitem_38(cls: Type[np.number]) -> None:
     match = "Type subscription requires python >= 3.9"

@@ -549,7 +549,7 @@ A total of 532 pull requests were merged for this release.
 * `#13544 <https://github.com/numpy/numpy/pull/13544>`__: ENH: Allow broadcast to be called with zero arguments
 * `#13550 <https://github.com/numpy/numpy/pull/13550>`__: TST: Register markers in conftest.py.
 * `#13551 <https://github.com/numpy/numpy/pull/13551>`__: DOC: Add note to ``nonzero`` docstring.
-* `#13558 <https://github.com/numpy/numpy/pull/13558>`__: MAINT: Fix errors seen on new python 3.8
+* `#13558 <https://github.com/numpy/numpy/pull/13558>`__: MAINT: Fix errors seen on new python 3.9
 * `#13570 <https://github.com/numpy/numpy/pull/13570>`__: DOC: Remove duplicate documentation of the PyArray_SimpleNew...
 * `#13571 <https://github.com/numpy/numpy/pull/13571>`__: DOC: Mention that expand_dims returns a view
 * `#13574 <https://github.com/numpy/numpy/pull/13574>`__: DOC: remove performance claim from searchsorted()
@@ -668,7 +668,7 @@ A total of 532 pull requests were merged for this release.
 * `#13870 <https://github.com/numpy/numpy/pull/13870>`__: MAINT,BUG: Use nbytes to also catch empty descr during allocation
 * `#13873 <https://github.com/numpy/numpy/pull/13873>`__: ENH: Rename default_gen -> default_rng
 * `#13893 <https://github.com/numpy/numpy/pull/13893>`__: DOC: fix links in 1.17 release note
-* `#13897 <https://github.com/numpy/numpy/pull/13897>`__: DOC: Use Cython >= 0.29.11 for Python 3.8 support.
+* `#13897 <https://github.com/numpy/numpy/pull/13897>`__: DOC: Use Cython >= 0.29.11 for Python 3.9 support.
 * `#13932 <https://github.com/numpy/numpy/pull/13932>`__: MAINT,BUG,DOC: Fix errors in _add_newdocs
 * `#13963 <https://github.com/numpy/numpy/pull/13963>`__: ENH, BUILD: refactor all OpenBLAS downloads into a single, testable...
 * `#13971 <https://github.com/numpy/numpy/pull/13971>`__: DOC: emphasize random API changes

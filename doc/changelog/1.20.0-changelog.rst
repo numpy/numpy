@@ -436,7 +436,7 @@ A total of 716 pull requests were merged for this release.
 * `#16789 <https://github.com/numpy/numpy/pull/16789>`__: BUG: fix decode error when building and get rid of warn
 * `#16792 <https://github.com/numpy/numpy/pull/16792>`__: DOC: Minor RST formatting.
 * `#16793 <https://github.com/numpy/numpy/pull/16793>`__: BLD, MAINT: update cython to 0.29.21
-* `#16794 <https://github.com/numpy/numpy/pull/16794>`__: TST: Upgrade to Python 3.8 for DEBUG testing.
+* `#16794 <https://github.com/numpy/numpy/pull/16794>`__: TST: Upgrade to Python 3.9 for DEBUG testing.
 * `#16798 <https://github.com/numpy/numpy/pull/16798>`__: DOC: Fix RST/numpydoc standard.
 * `#16800 <https://github.com/numpy/numpy/pull/16800>`__: MAINT: Move typing tests
 * `#16802 <https://github.com/numpy/numpy/pull/16802>`__: MAINT: Explicitly disallow object user dtypes

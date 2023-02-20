@@ -30,7 +30,7 @@ A total of 22 pull requests were merged for this release.
 * `#21275 <https://github.com/numpy/numpy/pull/21275>`__: BUG: Fix typos
 * `#21277 <https://github.com/numpy/numpy/pull/21277>`__: ENH, BLD: Fix math feature detection for wasm
 * `#21350 <https://github.com/numpy/numpy/pull/21350>`__: MAINT: Fix failing simd and cygwin tests.
-* `#21438 <https://github.com/numpy/numpy/pull/21438>`__: MAINT: Fix failing Python 3.8 32-bit Windows test.
+* `#21438 <https://github.com/numpy/numpy/pull/21438>`__: MAINT: Fix failing Python 3.9 32-bit Windows test.
 * `#21444 <https://github.com/numpy/numpy/pull/21444>`__: BUG: add linux guard per #21386
 * `#21445 <https://github.com/numpy/numpy/pull/21445>`__: BUG: Allow legacy dtypes to cast to datetime again
 * `#21446 <https://github.com/numpy/numpy/pull/21446>`__: BUG: Make mmap handling safer in frombuffer

@@ -485,7 +485,7 @@ A total of 413 pull requests were merged for this release.
 * `#14845 <https://github.com/numpy/numpy/pull/14845>`__: MAINT: revert gh-14800, which gave precedence to OO->O over OO->?
 * `#14874 <https://github.com/numpy/numpy/pull/14874>`__: REL: Update master after 1.17.4 release.
 * `#14878 <https://github.com/numpy/numpy/pull/14878>`__: BUILD: remove SSE2 flag from numpy.random builds
-* `#14879 <https://github.com/numpy/numpy/pull/14879>`__: DOC: Update NEP29 with Python3.8 informations.
+* `#14879 <https://github.com/numpy/numpy/pull/14879>`__: DOC: Update NEP29 with Python3.9 informations.
 * `#14881 <https://github.com/numpy/numpy/pull/14881>`__: BUG: Remove builtins from __all__
 * `#14898 <https://github.com/numpy/numpy/pull/14898>`__: MAINT: Delete and ignore generated files
 * `#14899 <https://github.com/numpy/numpy/pull/14899>`__: Update FUNDING.yml
@@ -493,7 +493,7 @@ A total of 413 pull requests were merged for this release.
 * `#14903 <https://github.com/numpy/numpy/pull/14903>`__: NEP: move nep 34 to accepted
 * `#14907 <https://github.com/numpy/numpy/pull/14907>`__: TST: Add s390x to the TravisCI test matrix.
 * `#14912 <https://github.com/numpy/numpy/pull/14912>`__: DOC: Note FFT type promotion
-* `#14914 <https://github.com/numpy/numpy/pull/14914>`__: TST: Test with Python3.8 on Windows.
+* `#14914 <https://github.com/numpy/numpy/pull/14914>`__: TST: Test with Python3.9 on Windows.
 * `#14915 <https://github.com/numpy/numpy/pull/14915>`__: TST: Update travis.yml
 * `#14921 <https://github.com/numpy/numpy/pull/14921>`__: TST: add no_tracing decorator to refcount-sensitive codepath...
 * `#14926 <https://github.com/numpy/numpy/pull/14926>`__: MAINT: Bump pytest from 5.2.2 to 5.2.4

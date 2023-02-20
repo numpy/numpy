@@ -113,7 +113,7 @@ or ``pytest`` updates).
 
 This allows to run the test suite, or part of it, conveniently::
 
-    python3.8d runtests.py -t numpy/core/tests/test_multiarray.py -- -R2:3 -s
+    python3.9d runtests.py -t numpy/core/tests/test_multiarray.py -- -R2:3 -s
 
 where ``-R2:3`` is the ``pytest-leaks`` command (see its documentation), the
 ``-s`` causes output to print and may be necessary (in some versions captured

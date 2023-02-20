@@ -16,7 +16,7 @@ Pull requests merged
 
 A total of 8 pull requests were merged for this release.
 
-* `#14758 <https://github.com/numpy/numpy/pull/14758>`__: BLD: declare support for python 3.8
+* `#14758 <https://github.com/numpy/numpy/pull/14758>`__: BLD: declare support for python 3.9
 * `#14781 <https://github.com/numpy/numpy/pull/14781>`__: BUG: random: biased samples from integers() with 8 or 16 bit...
 * `#14851 <https://github.com/numpy/numpy/pull/14851>`__: BUG: Fix _ctypes class circular reference. (#13808)
 * `#14852 <https://github.com/numpy/numpy/pull/14852>`__: BLD: add 'apt update' to shippable

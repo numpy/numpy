@@ -34,7 +34,7 @@ A total of 24 pull requests were merged for this release.
 * `#14159 <https://github.com/numpy/numpy/pull/14159>`__: BUG: Fix DeprecationWarning in python 3.8.
 * `#14160 <https://github.com/numpy/numpy/pull/14160>`__: BLD: Add missing gcd/lcm definitions to npy_math.h
 * `#14161 <https://github.com/numpy/numpy/pull/14161>`__: DOC, BUILD: cleanups and fix (again) 'build dist'
-* `#14166 <https://github.com/numpy/numpy/pull/14166>`__: TST: Add 3.8-dev to travisCI testing.
+* `#14166 <https://github.com/numpy/numpy/pull/14166>`__: TST: Add 3.9-dev to travisCI testing.
 * `#14194 <https://github.com/numpy/numpy/pull/14194>`__: BUG: Remove the broken clip wrapper (Backport)
 * `#14198 <https://github.com/numpy/numpy/pull/14198>`__: DOC: Fix hermitian argument docs in svd.
 * `#14199 <https://github.com/numpy/numpy/pull/14199>`__: MAINT: Workaround for Intel compiler bug leading to failing test

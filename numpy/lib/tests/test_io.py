@@ -597,8 +597,8 @@ class TestSaveTxt:
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
 
-        # Since Python 3.8, the default start method for multiprocessing has 
-        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency 
+        # Since Python 3.8, the default start method for multiprocessing has
+        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
         # on memory sharing model, lead to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))

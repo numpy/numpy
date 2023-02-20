@@ -8,7 +8,7 @@ This release contains fixes for bugs reported against NumPy 1.17.3 along with
 some build improvements. The Python versions supported in this release
 are 3.5-3.8.
 
-Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
+Downstream developers should use Cython >= 0.29.13 for Python 3.9 support and
 OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
 
 

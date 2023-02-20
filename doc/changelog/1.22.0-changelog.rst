@@ -585,7 +585,7 @@ A total of 609 pull requests were merged for this release.
 * `#20016 <https://github.com/numpy/numpy/pull/20016>`__: BUG: Add a warning for user dtypes modifying casts after use
 * `#20018 <https://github.com/numpy/numpy/pull/20018>`__: ENH: core: More informative error message for broadcast(*args)
 * `#20019 <https://github.com/numpy/numpy/pull/20019>`__: MAINT:redundant 'else' statement with 'for' loop#19077
-* `#20026 <https://github.com/numpy/numpy/pull/20026>`__: MAINT: Test PyPy3.8
+* `#20026 <https://github.com/numpy/numpy/pull/20026>`__: MAINT: Test PyPy3.9
 * `#20027 <https://github.com/numpy/numpy/pull/20027>`__: ENH: Add missing parameters to the ``nan<x>`` functions
 * `#20029 <https://github.com/numpy/numpy/pull/20029>`__: MAINT: Bump pytz from 2021.1 to 2021.3
 * `#20031 <https://github.com/numpy/numpy/pull/20031>`__: MAINT: Bump hypothesis from 6.23.0 to 6.23.1
