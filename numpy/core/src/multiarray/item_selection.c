@@ -79,12 +79,11 @@ npy_fasttake_impl(
                             NPY_END_THREADS;
                             goto fail;
                         }
-                        dest += itemsize * nelem;
                     }
                     else {
                         memcpy(dest, tmp_src, chunk);
-                        dest += chunk;
                     }
+                    dest += chunk;
                 }
                 src += chunk*max_item;
             }
@@ -113,12 +112,11 @@ npy_fasttake_impl(
                             NPY_END_THREADS;
                             goto fail;
                         }
-                        dest += itemsize * nelem;
                     }
                     else {
                         memcpy(dest, tmp_src, chunk);
-                        dest += chunk;
                     }
+                    dest += chunk;
                 }
                 src += chunk*max_item;
             }
@@ -143,12 +141,11 @@ npy_fasttake_impl(
                             NPY_END_THREADS;
                             goto fail;
                         }
-                        dest += itemsize * nelem;
                     }
                     else {
                         memcpy(dest, tmp_src, chunk);
-                        dest += chunk;
                     }
+                    dest += chunk;
                 }
                 src += chunk*max_item;
             }
