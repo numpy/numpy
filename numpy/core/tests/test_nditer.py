@@ -1460,9 +1460,9 @@ def test_iter_copy_casts_structured():
 def test_iter_copy_casts_structured2():
     # Similar to the above, this is a fairly arcane test to cover internals
     in_dtype = np.dtype([("a", np.dtype("O,O")),
-                         ("b", np.dtype("(5)O,(3)O,(1,)O"))])
+                         ("b", np.dtype("(5)O,(3)O,(1,)O,(1,)i,(1,)O"))])
     out_dtype = np.dtype([("a", np.dtype("O")),
-                          ("b", np.dtype("O,(3)i,(4)O"))])
+                          ("b", np.dtype("O,(3)i,(4)O,(4)O,(4)i"))])
 
     arr = np.ones(1, dtype=in_dtype)
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
@@ -1485,6 +1485,8 @@ def test_iter_copy_casts_structured2():
         assert_array_equal(res["b"]["f1"], np.ones((1, 3), dtype="i"))
         assert res["b"]["f2"].shape == (1, 4)
         assert_array_equal(res["b"]["f2"][0], np.ones(4, dtype=object))
+        assert_array_equal(res["b"]["f3"][0], np.ones(4, dtype=object))
+        assert_array_equal(res["b"]["f3"][0], np.ones(4, dtype="i"))
 
 
 def test_iter_allocate_output_simple():
