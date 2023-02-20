@@ -17,6 +17,7 @@
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
+#include "refcount.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -1945,8 +1946,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * only copy back when this flag is on.
          */
         if ((transferinfo[iop].write.func != NULL) &&
-               (op_itflags[iop]&(NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER))
-                        == (NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER)) {
+               (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             npy_intp op_transfersize;
 
             npy_intp src_stride, *dst_strides, *dst_coords, *dst_shape;
@@ -2059,27 +2059,18 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only decrement refs when this flag is on.
          */
-        else if (transferinfo[iop].write.func != NULL &&
-                       (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
-            NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
-                                "of operand %d\n", (int)iop);
-            /* Decrement refs */
+        else if (transferinfo[iop].clear.func != NULL &&
+                    (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+            NPY_IT_DBG_PRINT1(
+                    "Iterator: clearing refs of operand %d\n", (int)iop);
             npy_intp buf_stride = dtypes[iop]->elsize;
-            if (transferinfo[iop].write.func(
-                    &transferinfo[iop].write.context,
-                    &buffer, &transfersize, &buf_stride,
-                    transferinfo[iop].write.auxdata) < 0) {
+            if (transferinfo[iop].clear.func(
+                    NULL, transferinfo[iop].clear.descr, buffer, transfersize,
+                    buf_stride, transferinfo[iop].clear.auxdata) < 0) {
                 /* Since this should only decrement, it should never error */
                 assert(0);
                 return -1;
             }
-            /*
-             * Zero out the memory for safety.  For instance,
-             * if during iteration some Python code copied an
-             * array pointing into the buffer, it will get None
-             * values for its references after this.
-             */
-            memset(buffer, 0, dtypes[iop]->elsize*transfersize);
         }
     }
 
@@ -2626,54 +2617,36 @@ npyiter_clear_buffers(NpyIter *iter)
         return;
     }
 
-    if (!(NIT_ITFLAGS(iter) & NPY_ITFLAG_NEEDSAPI)) {
-        /* Buffers do not require clearing, but should not be copied back */
-        NBF_SIZE(bufferdata) = 0;
-        return;
-    }
-
     /*
-     * The iterator may be using a dtype with references, which always
-     * requires the API. In that case, further cleanup may be necessary.
-     *
-     * TODO: At this time, we assume that a dtype having references
-     *       implies the need to hold the GIL at all times. In theory
-     *       we could broaden this definition for a new
-     *       `PyArray_Item_XDECREF` API and the assumption may become
-     *       incorrect.
+     * The iterator may be using a dtype with references (as of writing this
+     * means Python objects, but does not need to stay that way).
+     * In that case, further cleanup may be necessary and we clear buffers
+     * explicitly.
      */
     PyObject *type, *value, *traceback;
     PyErr_Fetch(&type,  &value, &traceback);
 
     /* Cleanup any buffers with references */
     char **buffers = NBF_BUFFERS(bufferdata);
+
+    NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
-        /*
-         * We may want to find a better way to do this, on the other hand,
-         * this cleanup seems rare and fairly special.  A dtype using
-         * references (right now only us) must always keep the buffer in
-         * a well defined state (either NULL or owning the reference).
-         * Only we implement cleanup
-         */
-        if (!PyDataType_REFCHK(dtypes[iop]) ||
-                !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+        if (transferinfo[iop].clear.func == NULL ||
+                 !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             continue;
         }
         if (*buffers == 0) {
             continue;
         }
         int itemsize = dtypes[iop]->elsize;
-        for (npy_intp i = 0; i < NBF_SIZE(bufferdata); i++) {
-            /*
-             * See above comment, if this API is expanded the GIL assumption
-             * could become incorrect.
-             */
-            PyArray_Item_XDECREF(*buffers + (itemsize * i), dtypes[iop]);
+        if (transferinfo[iop].clear.func(NULL,
+                dtypes[iop], *buffers, NBF_SIZE(bufferdata), itemsize,
+                transferinfo[iop].clear.auxdata) < 0) {
+            /* This should never fail; if it does write it out */
+            PyErr_WriteUnraisable(NULL);
         }
-        /* Clear out the buffer just to be sure */
-        memset(*buffers, 0, NBF_SIZE(bufferdata) * itemsize);
     }
     /* Signal that the buffers are empty */
     NBF_SIZE(bufferdata) = 0;

@@ -695,6 +695,7 @@ src_multiarray = [
   'src/multiarray/dtypemeta.c',
   'src/multiarray/dragon4.c',
   'src/multiarray/dtype_transfer.c',
+  'src/multiarray/dtype_traversal.c',
   src_file.process('src/multiarray/einsum.c.src'),
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
   'src/multiarray/experimental_public_dtype_api.c',

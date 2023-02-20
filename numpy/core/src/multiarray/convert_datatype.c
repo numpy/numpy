@@ -31,6 +31,7 @@
 #include "array_method.h"
 #include "usertypes.h"
 #include "dtype_transfer.h"
+#include "dtype_traversal.h"
 #include "arrayobject.h"
 
 
@@ -152,7 +153,7 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
     PyObject *res;
     if (from == to) {
-        res = NPY_DT_SLOTS(from)->within_dtype_castingimpl;
+        res = (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl;
     }
     else {
         res = PyDict_GetItemWithError(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to);
@@ -2414,8 +2415,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
             return -1;
         }
         Py_INCREF(meth->method);
-        NPY_DT_SLOTS(meth->dtypes[0])->within_dtype_castingimpl = (
-                (PyObject *)meth->method);
+        NPY_DT_SLOTS(meth->dtypes[0])->within_dtype_castingimpl = meth->method;
 
         return 0;
     }
@@ -3912,6 +3912,21 @@ PyArray_InitializeObjectToObjectCast(void)
 }
 
 
+static int
+PyArray_SetClearFunctions(void)
+{
+    PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    NPY_DT_SLOTS(Object)->get_clear_loop = &npy_get_clear_object_strided_loop;
+    Py_DECREF(Object);  /* use borrowed */
+
+    PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+    NPY_DT_SLOTS(Void)->get_clear_loop = &npy_get_clear_void_and_legacy_user_dtype_loop;
+    Py_DECREF(Void);  /* use borrowed */
+    return 0;
+}
+
+
+
 NPY_NO_EXPORT int
 PyArray_InitializeCasts()
 {
@@ -3929,6 +3944,9 @@ PyArray_InitializeCasts()
     }
     /* Datetime casts are defined in datetime.c */
     if (PyArray_InitializeDatetimeCasts() < 0) {
+        return -1;
+    }
+    if (PyArray_SetClearFunctions() < 0) {
         return -1;
     }
     return 0;

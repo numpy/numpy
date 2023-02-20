@@ -19,6 +19,8 @@
 #include "array_coercion.h"
 #include "templ_common.h"
 #include "array_assign.h"
+#include "dtype_traversal.h"
+
 
 /* Internal helper functions private to this file */
 static int
@@ -630,6 +632,18 @@ NpyIter_Copy(NpyIter *iter)
                     }
                 }
             }
+
+            if (transferinfo[iop].clear.func != NULL) {
+                if (out_of_memory) {
+                    transferinfo[iop].clear.func = NULL;  /* No cleanup */
+                }
+                else {
+                    if (NPY_traverse_info_copy(&transferinfo[iop].clear,
+                                               &transferinfo[iop].clear) < 0) {
+                        out_of_memory = 1;
+                    }
+                }
+            }
         }
 
         /* Initialize the buffers to the current iterindex */
@@ -706,6 +720,7 @@ NpyIter_Deallocate(NpyIter *iter)
         for (iop = 0; iop < nop; ++iop, ++transferinfo) {
             NPY_cast_info_xfree(&transferinfo->read);
             NPY_cast_info_xfree(&transferinfo->write);
+            NPY_traverse_info_xfree(&transferinfo->clear);
         }
     }
 
@@ -1133,7 +1148,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                           PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE));
                 if (*op_dtype == NULL) {
                     return 0;
-                }                
+                }
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_NBO\n");
                 /* Indicate that byte order or alignment needs fixing */
@@ -3186,31 +3201,33 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                     cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
                 }
             }
-            /* If no write back but there are references make a decref fn */
-            else if (PyDataType_REFCHK(op_dtype[iop])) {
+            else {
+                transferinfo[iop].write.func = NULL;
+            }
+
+            /* Get the decref function, used for no-writeback and on error */
+            if (PyDataType_REFCHK(op_dtype[iop])) {
                 /*
                  * By passing NULL to dst_type and setting move_references
                  * to 1, we get back a function that just decrements the
                  * src references.
                  */
-                if (PyArray_GetDTypeTransferFunction(
+                if (PyArray_GetClearFunction(
                         (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
-                        op_dtype[iop]->elsize, 0,
-                        op_dtype[iop], NULL,
-                        1,
-                        &transferinfo[iop].write,
-                        &nc_flags) != NPY_SUCCEED) {
+                        op_dtype[iop]->elsize, op_dtype[iop],
+                        &transferinfo[iop].clear, &nc_flags) < 0) {
                     goto fail;
                 }
                 cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
             }
             else {
-                transferinfo[iop].write.func = NULL;
+                transferinfo[iop].clear.func = NULL;
             }
         }
         else {
             transferinfo[iop].read.func = NULL;
             transferinfo[iop].write.func = NULL;
+            transferinfo[iop].clear.func = NULL;
         }
     }
 

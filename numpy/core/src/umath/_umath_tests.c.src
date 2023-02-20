@@ -24,7 +24,7 @@
 #include "numpy/npy_cpu.h"
 #include "npy_import.h"
 #include "numpy/experimental_dtype_api.h"
-#include "dtypemeta.h"
+
 
 /*
  *****************************************************************************
@@ -732,8 +732,7 @@ add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
     if (negative == NULL) {
         return -1;
     }
-    PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum(NPY_INT32);
-    PyArray_DTypeMeta *dtypes[] = {dtype, dtype};
+    PyArray_DTypeMeta *dtypes[] = {&PyArray_Int32DType, &PyArray_Int32DType};
 
     PyType_Slot slots[] = {
         {NPY_METH_contiguous_indexed_loop, INT32_negative_indexed},

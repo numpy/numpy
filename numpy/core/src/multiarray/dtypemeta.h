@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#include "array_method.h"
+#include "dtype_traversal.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,7 +33,20 @@ typedef struct {
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
-    PyObject *within_dtype_castingimpl;
+    PyArrayMethodObject *within_dtype_castingimpl;
+    /*
+     * Either NULL or fetches a clearing function.  Clearing means deallocating
+     * any referenced data and setting it to a safe state.  For Python objects
+     * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
+     * setting the `PyObject *` to NULL.
+     * After the clear, the data must be fillable via cast/copy and calling
+     * clear a second time must be safe.
+     * If the DType class does not implement `get_clear_loop` setting
+     * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
+     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * Python objects.
+     */
+    get_traverse_loop_function *get_clear_loop;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
