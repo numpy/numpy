@@ -1390,6 +1390,141 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
     }
 }
 
+
+/**
+ * Check the descriptor is a legacy "flexible" DType instance, this is
+ * an instance which is (normally) not attached to an array, such as a string
+ * of length 0 or a datetime with no unit.
+ * These should be largely deprecated, and represent only the DType class
+ * for most `dtype` parameters.
+ *
+ * TODO: This function should eventually receive a deprecation warning and
+ *       be removed.
+ *
+ * @param descr
+ * @return 1 if this is not a concrete dtype instance 0 otherwise
+ */
+static int
+descr_is_legacy_parametric_instance(PyArray_Descr *descr,
+                                    PyArray_DTypeMeta *DType)
+{
+    if (!NPY_DT_is_legacy(DType)) {
+        return 0;
+    }
+
+    if (PyDataType_ISUNSIZED(descr)) {
+        return 1;
+    }
+    /* Flexible descr with generic time unit (which can be adapted) */
+    if (PyDataType_ISDATETIME(descr)) {
+        PyArray_DatetimeMetaData *meta;
+        meta = get_datetime_metadata_from_dtype(descr);
+        if (meta->base == NPY_FR_GENERIC) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+/**
+ * Given a descriptor (dtype instance), handles conversion of legacy flexible
+ * "unsized" descriptors to their DType.  It returns the DType and descriptor
+ * both results can be NULL (if the input is).  But it always sets the DType
+ * when a descriptor is set.
+ *
+ * @param dtype
+ * @param out_descr
+ * @param out_DType
+ * @return 0 on success -1 on failure
+ */
+NPY_NO_EXPORT int
+PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
+        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
+{
+    *out_DType = NULL;
+    *out_descr = NULL;
+
+    if (dtype != NULL) {
+        *out_DType = NPY_DTYPE(dtype);
+        Py_INCREF(*out_DType);
+        if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype,
+                                                    *out_DType)) {
+            *out_descr = (PyArray_Descr *)dtype;
+            Py_INCREF(*out_descr);
+        }
+    }
+    return 0;
+}
+
+
+/**
+ * Converter function filling in an npy_dtype_info struct on success.
+ *
+ * @param obj representing a dtype instance (descriptor) or DType class.
+ * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ *         instance.  The class is always set while the instance may be NULL.
+ *         On error, both will be NULL.
+ * @return 0 on failure and 1 on success (as a converter)
+ */
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
+{
+    /*
+     * Allow dtype classes pass, this could also be generalized to at least
+     * some scalar types (right now most of these give instances or)
+     */
+    dt_info->dtype = NULL;
+    dt_info->descr = NULL;
+
+    if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
+        Py_INCREF(obj);
+        dt_info->dtype = (PyArray_DTypeMeta *)obj;
+        dt_info->descr = NULL;
+        return NPY_SUCCEED;
+    }
+    PyArray_Descr *descr;
+    if (PyArray_DescrConverter(obj, &descr) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+    /*
+     * The above converts e.g. "S" or "S0" to the prototype instance, we make
+     * it behave the same as the DType.  This is not fully correct, "S0" should
+     * be considered an instance with actual 0 length.
+     * TODO: It would be nice to fix that eventually.
+     */
+    int res = PyArray_ExtractDTypeAndDescriptor(
+                descr, &dt_info->descr, &dt_info->dtype);
+    Py_DECREF(descr);
+    if (res < 0) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+
+/**
+ * Converter function filling in an npy_dtype_info struct on success.  It
+ * accepts `None` and does nothing in that case (user must initialize to
+ * NULL anyway).
+ *
+ * @param obj None or obj representing a dtype instance (descr) or DType class.
+ * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ *         instance.  If `obj` is None, is not modified.  Otherwise the class
+ *         is always set while the instance may be NULL.
+ *         On error, both will be NULL.
+ * @return 0 on failure and 1 on success (as a converter)
+ */
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterOptional(PyObject *obj, npy_dtype_info *dt_info)
+{
+    if (obj == Py_None) {
+        /* caller must have initialized for the optional version */
+        return NPY_SUCCEED;
+    }
+    return PyArray_DTypeOrDescrConverterRequired(obj, dt_info);
+}
+
 /**
  * Get a dtype instance from a python type
  */

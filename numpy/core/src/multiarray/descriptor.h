@@ -1,6 +1,29 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 
+
+/*
+ * In some API calls we wish to allow users to pass a DType class or a
+ * dtype instances with different meanings.
+ * This struct is mainly used for the argument parsing in
+ * `PyArray_DTypeOrDescrConverter`.
+ */
+typedef struct {
+    PyArray_DTypeMeta *dtype;
+    PyArray_Descr *descr;
+} npy_dtype_info;
+
+
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterOptional(PyObject *, npy_dtype_info *dt_info);
+
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterRequired(PyObject *, npy_dtype_info *dt_info);
+
+NPY_NO_EXPORT int
+PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
+        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType);
+
 NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(
         PyArray_Descr *, void *);
 NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(

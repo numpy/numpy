@@ -18,6 +18,7 @@
 #include "can_cast_table.h"
 #include "common.h"
 #include "ctors.h"
+#include "descriptor.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "scalartypes.h"
@@ -330,7 +331,7 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
         return NULL;
     }
 
-    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(arr, (PyObject *)dtype));
+    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(arr, NULL, dtype));
     if (dtype == NULL) {
         return NULL;
     }
@@ -1149,7 +1150,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
  */
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_FindConcatenationDescriptor(
-        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype)
+        npy_intp n, PyArrayObject **arrays, PyArray_Descr *requested_dtype)
 {
     if (requested_dtype == NULL) {
         return PyArray_ResultType(n, arrays, 0, NULL);
