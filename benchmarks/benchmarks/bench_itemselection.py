@@ -21,7 +21,7 @@ class Take(Benchmark):
 class PutMask(Benchmark):
     params = [
         [True, False],
-        TYPES1]
+        TYPES1 + ["O", "i,O"]]
     param_names = ["values_is_scalar", "dtype"]
 
     def setup(self, values_is_scalar, dtype):
@@ -41,3 +41,21 @@ class PutMask(Benchmark):
     def time_sparse(self, values_is_scalar, dtype):
         np.putmask(self.arr, self.sparse_mask, self.vals)
 
+
+class Put(Benchmark):
+    params = [
+        [True, False],
+        TYPES1 + ["O", "i,O"]]
+    param_names = ["values_is_scalar", "dtype"]
+
+    def setup(self, values_is_scalar, dtype):
+        if values_is_scalar:
+            self.vals = np.array(1., dtype=dtype)
+        else:
+            self.vals = np.ones(1000, dtype=dtype)
+
+        self.arr = np.ones(1000, dtype=dtype)
+        self.indx = np.arange(1000, dtype=np.intp)
+
+    def time(self, values_is_scalar, dtype):
+        np.put(self.arr, self.indx, self.vals)

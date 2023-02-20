@@ -351,7 +351,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
     PyArrayObject  *indices, *values;
-    npy_intp i, chunk, ni, max_item, nv, tmp;
+    npy_intp i, itemsize, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
     int overlap = 0;
@@ -401,25 +401,56 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     max_item = PyArray_SIZE(self);
     dest = PyArray_DATA(self);
-    chunk = PyArray_DESCR(self)->elsize;
+    itemsize = PyArray_DESCR(self)->elsize;
 
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+    NPY_BEGIN_THREADS_DEF;
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    const npy_intp one = 1;
+    const npy_intp strides[2] = {itemsize, itemsize};
+
+    NPY_cast_info_init(&cast_info);
+
+    int has_references = PyDataType_REFCHK(PyArray_DESCR(self));
+
+    if (!has_references) {
+        /* if has_references is not needed memcpy is safe for a simple copy  */
+        NPY_BEGIN_THREADS_THRESHOLDED(ni);
+    }
+    else {
+        PyArray_Descr *dtype = PyArray_DESCR(self);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS_THRESHOLDED(ni);
+        }
+    }
+
+
+    if (has_references) {
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk*(i % nv);
+                src = PyArray_BYTES(values) + itemsize*(i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (check_and_adjust_index(&tmp, max_item, 0, NULL) < 0) {
                     goto fail;
                 }
-                PyArray_Item_INCREF(src, PyArray_DESCR(self));
-                PyArray_Item_XDECREF(dest+tmp*chunk, PyArray_DESCR(self));
-                memmove(dest + tmp*chunk, src, chunk);
+                char *data[2] = {src, dest + tmp*itemsize};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    goto fail;
+                }
             }
             break;
         case NPY_WRAP:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
+                src = PyArray_BYTES(values) + itemsize * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     while (tmp < 0) {
@@ -431,14 +462,18 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                         tmp -= max_item;
                     }
                 }
-                PyArray_Item_INCREF(src, PyArray_DESCR(self));
-                PyArray_Item_XDECREF(dest+tmp*chunk, PyArray_DESCR(self));
-                memmove(dest + tmp * chunk, src, chunk);
+                char *data[2] = {src, dest + tmp*itemsize};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    goto fail;
+                }
             }
             break;
         case NPY_CLIP:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
+                src = PyArray_BYTES(values) + itemsize * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = 0;
@@ -446,30 +481,32 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                 else if (tmp >= max_item) {
                     tmp = max_item - 1;
                 }
-                PyArray_Item_INCREF(src, PyArray_DESCR(self));
-                PyArray_Item_XDECREF(dest+tmp*chunk, PyArray_DESCR(self));
-                memmove(dest + tmp * chunk, src, chunk);
+                char *data[2] = {src, dest + tmp*itemsize};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    goto fail;
+                }
             }
             break;
         }
     }
     else {
-        NPY_BEGIN_THREADS_DEF;
-        NPY_BEGIN_THREADS_THRESHOLDED(ni);
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
+                src = PyArray_BYTES(values) + itemsize * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
                     goto fail;
                 }
-                memmove(dest + tmp * chunk, src, chunk);
+                memmove(dest + tmp * itemsize, src, itemsize);
             }
             break;
         case NPY_WRAP:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
+                src = PyArray_BYTES(values) + itemsize * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     while (tmp < 0) {
@@ -481,12 +518,12 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                         tmp -= max_item;
                     }
                 }
-                memmove(dest + tmp * chunk, src, chunk);
+                memmove(dest + tmp * itemsize, src, itemsize);
             }
             break;
         case NPY_CLIP:
             for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + chunk * (i % nv);
+                src = PyArray_BYTES(values) + itemsize * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = 0;
@@ -494,14 +531,16 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                 else if (tmp >= max_item) {
                     tmp = max_item - 1;
                 }
-                memmove(dest + tmp * chunk, src, chunk);
+                memmove(dest + tmp * itemsize, src, itemsize);
             }
             break;
         }
-        NPY_END_THREADS;
     }
+    NPY_END_THREADS;
 
  finish:
+    NPY_cast_info_xfree(&cast_info);
+
     Py_XDECREF(values);
     Py_XDECREF(indices);
     if (copied) {
@@ -511,6 +550,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_RETURN_NONE;
 
  fail:
+    NPY_cast_info_xfree(&cast_info);
+
     Py_XDECREF(indices);
     Py_XDECREF(values);
     if (copied) {
