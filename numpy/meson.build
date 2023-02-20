@@ -31,7 +31,7 @@ if is_windows
   endif
 endif
 if is_msvc
-      add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
+  add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
 endif
 
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
@@ -81,6 +81,9 @@ dependency_map = {
 have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
 if have_blas
+  # TODO: this is a shortcut - it needs to be checked rather than used
+  # unconditionally, and then added to the extension modules that need the
+  # macro, rather than as a project argument.
   add_project_arguments('-DHAVE_CBLAS', language: ['c', 'cpp'])
 endif
 

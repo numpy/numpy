@@ -169,7 +169,7 @@ static inline int PyInt_Check(PyObject *op) {
 
 /*
  * Macros to protect CRT calls against instant termination when passed an
- * invalid parameter (issue23524).
+ * invalid parameter (https://bugs.python.org/issue23524).
  */
 #if defined _MSC_VER && _MSC_VER >= 1900
 
