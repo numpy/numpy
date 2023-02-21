@@ -1,10 +1,10 @@
 from collections.abc import Iterable
-from typing import TypeVar, Union, overload, Literal
+from typing import Any, TypeVar, Union, overload, Literal
 
 from numpy import ndarray
 from numpy._typing import DTypeLike, _SupportsArrayFunc
 
-_ArrayType = TypeVar("_ArrayType", bound=ndarray)
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
 _Requirements = Literal[
     "C", "C_CONTIGUOUS", "CONTIGUOUS",
@@ -31,7 +31,7 @@ def require(
     requirements: _E | Iterable[_RequirementsWithE] = ...,
     *,
     like: _SupportsArrayFunc = ...
-) -> ndarray: ...
+) -> ndarray[Any, Any]: ...
 @overload
 def require(
     a: object,
@@ -39,4 +39,4 @@ def require(
     requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
     like: _SupportsArrayFunc = ...
-) -> ndarray: ...
+) -> ndarray[Any, Any]: ...
