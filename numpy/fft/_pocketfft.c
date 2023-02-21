@@ -2232,6 +2232,8 @@ execute_real_forward(PyObject *a1, double fct)
 {
     rfft_plan plan=NULL;
     int fail = 0;
+    npy_intp tdim[NPY_MAXDIMS];
+
     PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
             PyArray_DescrFromType(NPY_DOUBLE), 1, 0,
             NPY_ARRAY_DEFAULT | NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
@@ -2241,15 +2243,11 @@ execute_real_forward(PyObject *a1, double fct)
     int ndim = PyArray_NDIM(data);
     const npy_intp *odim = PyArray_DIMS(data);
     int npts = odim[ndim - 1];
-    npy_intp *tdim=(npy_intp *)malloc(ndim*sizeof(npy_intp));
-    if (!tdim)
-      { Py_XDECREF(data); return NULL; }
     for (int d=0; d<ndim-1; ++d)
       tdim[d] = odim[d];
     tdim[ndim-1] = npts/2 + 1;
     PyArrayObject *ret = (PyArrayObject *)PyArray_Empty(ndim,
             tdim, PyArray_DescrFromType(NPY_CDOUBLE), 0);
-    free(tdim);
     if (!ret) fail=1;
     if (!fail) {
       int rstep = PyArray_DIM(ret, PyArray_NDIM(ret) - 1)*2;
