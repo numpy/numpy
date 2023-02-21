@@ -140,10 +140,6 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 7
 #define NPY_METH_contiguous_indexed_loop 8
 
-/* other slots are in order, so note last one (internal use!) */
-#define _NPY_NUM_DTYPE_SLOTS 8
-#define _NPY_NUM_DTYPE_PYARRAY_ARRFUNC_SLOTS 22 + (1 << 10)
-
 /*
  * The resolve descriptors function, must be able to handle NULL values for
  * all output (but not input) `given_descrs` and fill `loop_descrs`.
@@ -266,7 +262,15 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 #define NPY_DT_PARAMETRIC 1 << 2
 #define NPY_DT_NUMERIC 1 << 3
 
+/*
+ * These correspond to slots in the NPY_DType_Slots struct and must
+ * be in the same order as the members of that struct. If new slots
+ * get added or old slots get removed NPY_NUM_DTYPE_SLOTS must also
+ * be updated
+ */
+
 #define NPY_DT_discover_descr_from_pyobject 1
+// this slot is considered private because its API hasn't beed decided
 #define _NPY_DT_is_known_scalar_type 2
 #define NPY_DT_default_descr 3
 #define NPY_DT_common_dtype 4
@@ -281,38 +285,42 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 // `legacy_setitem_using_DType`, respectively. This functionality is
 // only supported for basic NumPy DTypes.
 
+
+// used to separate dtype slots from arrfuncs slots
+// intended only for internal use but defined here for clarity
+#define _NPY_DT_ARRFUNCS_OFFSET (1 << 10)
+
 // Cast is disabled
-// #define NPY_DT_PyArray_ArrFuncs_cast 0 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET
 
-#define NPY_DT_PyArray_ArrFuncs_getitem 1 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_setitem 2 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_getitem 1 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_setitem 2 + _NPY_DT_ARRFUNCS_OFFSET
 
-#define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_copyswap 4 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_compare 5 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_argmax 6 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_dotfunc 7 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_scanfunc 8 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_fromstr 9 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_nonzero 10 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_fill 11 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_fillwithscalar 12 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_sort 13 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_argsort 14 + (1 << 10)
+#define NPY_DT_PyArray_ArrFuncs_copyswapn 3 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_copyswap 4 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_compare 5 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_argmax 6 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_dotfunc 7 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_scanfunc 8 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_fromstr 9 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_nonzero 10 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_fill 11 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_fillwithscalar 12 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_sort 13 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_argsort 14 + _NPY_DT_ARRFUNCS_OFFSET
 
 // Casting related slots are disabled. See
 // https://github.com/numpy/numpy/pull/23173#discussion_r1101098163
-// #define NPY_DT_PyArray_ArrFuncs_castdict 15 + (1 << 10)
-// #define NPY_DT_PyArray_ArrFuncs_scalarkind 16 + (1 << 10)
-// #define NPY_DT_PyArray_ArrFuncs_cancastscalarkindto 17 + (1 << 10)
-// #define NPY_DT_PyArray_ArrFuncs_cancastto 18 + (1 << 10)
+// #define NPY_DT_PyArray_ArrFuncs_castdict 15 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_scalarkind 16 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_cancastscalarkindto 17 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_cancastto 18 + _NPY_DT_ARRFUNCS_OFFSET
 
 // These are deprecated in NumPy 1.19, so are disabled here.
-// #define NPY_DT_PyArray_ArrFuncs_fastclip 19 + (1 << 10)
-// #define NPY_DT_PyArray_ArrFuncs_fastputmask 20 + (1 << 10)
-// #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + (1 << 10)
-#define NPY_DT_PyArray_ArrFuncs_argmin 22 + (1 << 10)
-
+// #define NPY_DT_PyArray_ArrFuncs_fastclip 19 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_fastputmask 20 + _NPY_DT_ARRFUNCS_OFFSET
+// #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + _NPY_DT_ARRFUNCS_OFFSET
+#define NPY_DT_PyArray_ArrFuncs_argmin 22 + _NPY_DT_ARRFUNCS_OFFSET
 
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct {

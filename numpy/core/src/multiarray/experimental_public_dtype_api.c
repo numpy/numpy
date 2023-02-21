@@ -171,17 +171,21 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if (slot > _NPY_NUM_DTYPE_PYARRAY_ARRFUNC_SLOTS || slot < 0) {
+        if ((slot > NPY_DT_MAX_ARRFUNCS_SLOT) ||
+            (slot < 0) ||
+            ((slot > NPY_NUM_DTYPE_SLOTS) &&
+             (slot < _NPY_DT_ARRFUNCS_OFFSET))) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
         }
         /*
-         * It is up to the user to get this right, and slots are sorted
-         * exactly like they are stored right now:
+         * It is up to the user to get this right, the slots in the public API
+         * are sorted exactly like they are stored in the NPY_DT_Slots struct
+         * right now:
          */
-        if (slot <= _NPY_NUM_DTYPE_SLOTS) {
-            // slot > 8 are PyArray_ArrFuncs
+        if (slot <= NPY_NUM_DTYPE_SLOTS) {
+            // slot > NPY_NUM_DTYPE_SLOTS are PyArray_ArrFuncs
             void **current = (void **)(&(
                     NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
             current += slot - 1;
