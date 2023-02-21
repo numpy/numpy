@@ -173,6 +173,8 @@ static inline int PyInt_Check(PyObject *op) {
  */
 #if defined _MSC_VER && _MSC_VER >= 1900
 
+#include <stdlib.h>
+
 extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
 #define NPY_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
     _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);

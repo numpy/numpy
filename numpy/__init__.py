@@ -112,9 +112,6 @@ from .exceptions import (
     ComplexWarning, ModuleDeprecationWarning, VisibleDeprecationWarning,
     TooHardError, AxisError)
 
-# Allow distributors to run custom init code before importing numpy.core
-from . import _distributor_init
-
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -125,6 +122,9 @@ except NameError:
 if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
+    # Allow distributors to run custom init code before importing numpy.core
+    from . import _distributor_init
+
     try:
         from numpy.__config__ import show as show_config
     except ImportError as e:
