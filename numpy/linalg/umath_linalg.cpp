@@ -3757,13 +3757,12 @@ scalar_trait)
     size_t msize = a_size + b_size + s_size;
     mem_buff = (npy_uint8 *)malloc(msize != 0 ? msize : 1);
 
-    if (!mem_buff)
-        goto error;
-
+    if (!mem_buff) {
+        goto no_memory;
+    }
     a = mem_buff;
     b = a + a_size;
     s = b + b_size;
-
 
     params->M = m;
     params->N = n;
@@ -3784,9 +3783,9 @@ scalar_trait)
         params->RWORK = NULL;
         params->LWORK = -1;
 
-        if (call_gelsd(params) != 0)
+        if (call_gelsd(params) != 0) {
             goto error;
-
+        }
         work_count = (fortran_int)work_size_query;
 
         work_size  = (size_t) work_size_query * sizeof(ftyp);
@@ -3794,9 +3793,9 @@ scalar_trait)
     }
 
     mem_buff2 = (npy_uint8 *)malloc(work_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
-
+    if (!mem_buff2) {
+        goto no_memory;
+    }
     work = mem_buff2;
     iwork = work + work_size;
 
@@ -3806,15 +3805,18 @@ scalar_trait)
     params->LWORK = work_count;
 
     return 1;
- error:
-    free(mem_buff);
-    free(mem_buff2);
-    memset(params, 0, sizeof(*params));
 
+ no_memory:
     NPY_ALLOW_C_API_DEF
     NPY_ALLOW_C_API;
     PyErr_NoMemory();
     NPY_DISABLE_C_API;
+
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
     return 0;
 }
 
@@ -3878,15 +3880,16 @@ using frealtyp = basetype_t<ftyp>;
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = (npy_uint8 *)malloc(a_size + b_size + s_size);
+    size_t msize = a_size + b_size + s_size;
+    mem_buff = (npy_uint8 *)malloc(msize != 0 ? msize : 1);
 
-    if (!mem_buff)
-        goto error;
+    if (!mem_buff) {
+        goto no_memory;
+    }
 
     a = mem_buff;
     b = a + a_size;
     s = b + b_size;
-
 
     params->M = m;
     params->N = n;
@@ -3908,8 +3911,9 @@ using frealtyp = basetype_t<ftyp>;
         params->RWORK = &rwork_size_query;
         params->LWORK = -1;
 
-        if (call_gelsd(params) != 0)
+        if (call_gelsd(params) != 0) {
             goto error;
+        }
 
         work_count = (fortran_int)work_size_query.r;
 
@@ -3919,8 +3923,9 @@ using frealtyp = basetype_t<ftyp>;
     }
 
     mem_buff2 = (npy_uint8 *)malloc(work_size + rwork_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
+    if (!mem_buff2) {
+        goto no_memory;
+    }
 
     work = mem_buff2;
     rwork = work + work_size;
@@ -3932,6 +3937,13 @@ using frealtyp = basetype_t<ftyp>;
     params->LWORK = work_count;
 
     return 1;
+
+ no_memory:
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
