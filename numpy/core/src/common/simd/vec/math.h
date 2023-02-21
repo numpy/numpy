@@ -186,6 +186,7 @@ NPY_IMPL_VEC_REDUCE_MINMAX(max, int32, s32)
     {                                                                   \
         npyv_##SFX r = vec_##INTRIN(a, vec_sld(a, a, 8));               \
         return (npy_##STYPE)vec_extract(r, 0);                          \
+    	(void)r;					 	                                \
     }
 NPY_IMPL_VEC_REDUCE_MINMAX(min, uint64, u64)
 NPY_IMPL_VEC_REDUCE_MINMAX(max, uint64, u64)
@@ -225,6 +226,7 @@ NPY_IMPL_VEC_REDUCE_MINMAX(max, int64, s64)
     {                                                             \
         npyv_f64 r = vec_##INTRIN(a, vec_sld(a, a, 8));           \
         return vec_extract(r, 0);                                 \
+        (void)r;                                                  \
     }                                                             \
     NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)    \
     {                                                             \
