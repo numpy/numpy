@@ -453,6 +453,11 @@ if cc.get_id() == 'msvc'
      staticlib_cflags +=  '-d2VolatileMetadata-'
    endif
 endif
+# TODO: change to "feature" option in meson_options.txt? See
+# https://mesonbuild.com/Build-options.html#build-options
+if get_option('disable-simd-optimizations')
+  staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
+endif
 
 npy_math_internal_h = custom_target(
   output: 'npy_math_internal.h',
@@ -594,7 +599,8 @@ np_core_dep = declare_dependency(
     '.',
     'include',
     'src/common',
-  ]
+  ],
+  compile_args: disable_simd_optimizations
 )
 
 
@@ -689,6 +695,7 @@ src_multiarray = [
   'src/multiarray/dtypemeta.c',
   'src/multiarray/dragon4.c',
   'src/multiarray/dtype_transfer.c',
+  'src/multiarray/dtype_traversal.c',
   src_file.process('src/multiarray/einsum.c.src'),
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
   'src/multiarray/experimental_public_dtype_api.c',
@@ -718,7 +725,8 @@ src_multiarray = [
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
   src_file.process('src/common/npy_sort.h.src'),
-  'src/npysort/x86-qsort.dispatch.cpp',
+  'src/npysort/simd_qsort.dispatch.cpp',
+  'src/npysort/simd_qsort_16bit.dispatch.cpp',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',

@@ -138,24 +138,24 @@ def _commonType(*arrays):
     result_type = single
     is_complex = False
     for a in arrays:
-        if issubclass(a.dtype.type, inexact):
-            if isComplexType(a.dtype.type):
+        type_ = a.dtype.type
+        if issubclass(type_, inexact):
+            if isComplexType(type_):
                 is_complex = True
-            rt = _realType(a.dtype.type, default=None)
-            if rt is None:
+            rt = _realType(type_, default=None)
+            if rt is double:
+                result_type = double
+            elif rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
                         (a.dtype.name,))
         else:
-            rt = double
-        if rt is double:
             result_type = double
     if is_complex:
-        t = cdouble
         result_type = _complex_types_map[result_type]
+        return cdouble, result_type
     else:
-        t = double
-    return t, result_type
+        return double, result_type
 
 
 def _to_native_byte_order(*arrays):

@@ -840,6 +840,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
             join('src', 'multiarray', 'dtype_transfer.h'),
+            join('src', 'multiarray', 'dtype_traversal.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'einsum_debug.h'),
             join('src', 'multiarray', 'einsum_sumprod.h'),
@@ -913,6 +914,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
+            join('src', 'multiarray', 'dtype_traversal.c'),
             join('src', 'multiarray', 'einsum.c.src'),
             join('src', 'multiarray', 'einsum_sumprod.c.src'),
             join('src', 'multiarray', 'experimental_public_dtype_api.c'),
@@ -942,7 +944,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'npy_sort.h.src'),
-            join('src', 'npysort', 'x86-qsort.dispatch.cpp'),
             join('src', 'npysort', 'quicksort.cpp'),
             join('src', 'npysort', 'mergesort.cpp'),
             join('src', 'npysort', 'timsort.cpp'),
@@ -964,6 +965,8 @@ def configuration(parent_package='',top_path=None):
             # links to the arm64 npymath library,
             # see gh-22673
             join('src', 'npymath', 'arm64_exports.c'),
+            join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
+            join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
             ]
 
     #######################################################################

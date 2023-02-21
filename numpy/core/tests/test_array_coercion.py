@@ -163,6 +163,8 @@ class TestStringDiscovery:
         assert np.array(arr, dtype="S").dtype == expected
         # Check that .astype() behaves identical
         assert arr.astype("S").dtype == expected
+        # The DType class is accepted by `.astype()`
+        assert arr.astype(type(np.dtype("S"))).dtype == expected
 
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],

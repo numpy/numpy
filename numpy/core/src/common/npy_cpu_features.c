@@ -81,12 +81,14 @@ static struct {
                 {NPY_CPU_FEATURE_AVX512VBMI, "AVX512VBMI"},
                 {NPY_CPU_FEATURE_AVX512VBMI2, "AVX512VBMI2"},
                 {NPY_CPU_FEATURE_AVX512BITALG, "AVX512BITALG"},
+                {NPY_CPU_FEATURE_AVX512FP16 , "AVX512FP16"},
                 {NPY_CPU_FEATURE_AVX512_KNL, "AVX512_KNL"},
                 {NPY_CPU_FEATURE_AVX512_KNM, "AVX512_KNM"},
                 {NPY_CPU_FEATURE_AVX512_SKX, "AVX512_SKX"},
                 {NPY_CPU_FEATURE_AVX512_CLX, "AVX512_CLX"},
                 {NPY_CPU_FEATURE_AVX512_CNL, "AVX512_CNL"},
                 {NPY_CPU_FEATURE_AVX512_ICL, "AVX512_ICL"},
+                {NPY_CPU_FEATURE_AVX512_SPR, "AVX512_SPR"},
                 {NPY_CPU_FEATURE_VSX, "VSX"},
                 {NPY_CPU_FEATURE_VSX2, "VSX2"},
                 {NPY_CPU_FEATURE_VSX3, "VSX3"},
@@ -506,6 +508,11 @@ npy__cpu_init_features(void)
                                                          npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI2] &&
                                                          npy__cpu_have[NPY_CPU_FEATURE_AVX512BITALG] &&
                                                          npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ];
+        // Sapphire Rapids
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16]     = (reg[3] & (1 << 23))  != 0;
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512_SPR]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL] &&
+                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16];
+
     }
 }
 

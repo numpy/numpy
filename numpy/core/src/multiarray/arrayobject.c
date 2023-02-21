@@ -56,6 +56,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
@@ -452,9 +453,9 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free internal references if an Object array */
-        if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            PyArray_XDECREF(self);
+        /* Free any internal references */
+        if (PyDataType_REFCHK(fa->descr)) {
+            PyArray_ClearArray(self);
         }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
@@ -994,7 +995,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      * TODO: If/once we correctly push structured comparisons into the ufunc
      *       we could consider pushing this path into the ufunc itself as a
      *       fallback loop (which ignores the input arrays).
-     *       This would have the advantage that subclasses implemementing
+     *       This would have the advantage that subclasses implementing
      *       `__array_ufunc__` do not explicitly need `__eq__` and `__ne__`.
      */
     if (result == NULL

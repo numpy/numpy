@@ -1,44 +1,19 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#include "array_method.h"
+#include "dtype_traversal.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "numpy/_dtype_api.h"
 
 /* DType flags, currently private, since we may just expose functions */
 #define NPY_DT_LEGACY 1 << 0
 #define NPY_DT_ABSTRACT 1 << 1
 #define NPY_DT_PARAMETRIC 1 << 2
-
-
-typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-        PyArray_DTypeMeta *cls, PyObject *obj);
-
-/*
- * Before making this public, we should decide whether it should pass
- * the type, or allow looking at the object. A possible use-case:
- * `np.array(np.array([0]), dtype=np.ndarray)`
- * Could consider arrays that are not `dtype=ndarray` "scalars".
- */
-typedef int (is_known_scalar_type_function)(
-        PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-typedef PyArray_DTypeMeta *(common_dtype_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
-typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
-typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
-
-/*
- * TODO: These two functions are currently only used for experimental DType
- *       API support.  Their relation should be "reversed": NumPy should
- *       always use them internally.
- *       There are open points about "casting safety" though, e.g. setting
- *       elements is currently always unsafe.
- */
-typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
-typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
 
 
 typedef struct {
@@ -58,7 +33,20 @@ typedef struct {
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
-    PyObject *within_dtype_castingimpl;
+    PyArrayMethodObject *within_dtype_castingimpl;
+    /*
+     * Either NULL or fetches a clearing function.  Clearing means deallocating
+     * any referenced data and setting it to a safe state.  For Python objects
+     * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
+     * setting the `PyObject *` to NULL.
+     * After the clear, the data must be fillable via cast/copy and calling
+     * clear a second time must be safe.
+     * If the DType class does not implement `get_clear_loop` setting
+     * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
+     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * Python objects.
+     */
+    get_traverse_loop_function *get_clear_loop;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).

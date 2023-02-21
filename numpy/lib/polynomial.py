@@ -104,7 +104,7 @@ def poly(seq_of_zeros):
 
     References
     ----------
-    .. [1] M. Sullivan and M. Sullivan, III, "Algebra and Trignometry,
+    .. [1] M. Sullivan and M. Sullivan, III, "Algebra and Trigonometry,
        Enhanced With Graphing Utilities," Prentice-Hall, pg. 318, 1996.
 
     .. [2] G. Strang, "Linear Algebra and Its Applications, 2nd Edition,"

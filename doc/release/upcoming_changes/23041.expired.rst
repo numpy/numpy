@@ -1,5 +1,5 @@
-Nose suppport has been removed
-------------------------------
+Nose support has been removed
+-----------------------------
 NumPy switched to using pytest in 2018 and nose has been unmaintained for many
 years. We have kept NumPy's nose support to avoid breaking downstream projects
 who might have been using it and not yet switched to pytest or some other

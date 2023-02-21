@@ -264,7 +264,7 @@ fill_arraymethod_from_slots(
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
-            case NPY_METH_get_loop:
+            case _NPY_METH_get_loop:
                 /*
                  * NOTE: get_loop is considered "unstable" in the public API,
                  *       I do not like the signature, and the `move_references`
@@ -344,28 +344,39 @@ fill_arraymethod_from_slots(
     }
 
     /* Check whether the provided loops make sense. */
+    if (meth->flags & NPY_METH_SUPPORTS_UNALIGNED) {
+        if (meth->unaligned_strided_loop == NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must provide unaligned strided inner loop when using "
+                    "NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    else {
+        if (meth->unaligned_strided_loop != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must not provide unaligned strided inner loop when not "
+                    "using NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    /* Fill in the blanks: */
+    if (meth->unaligned_contiguous_loop == NULL) {
+        meth->unaligned_contiguous_loop = meth->unaligned_strided_loop;
+    }
     if (meth->strided_loop == NULL) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide a strided inner loop function. (method: %s)",
-                spec->name);
-        return -1;
+        meth->strided_loop = meth->unaligned_strided_loop;
     }
     if (meth->contiguous_loop == NULL) {
         meth->contiguous_loop = meth->strided_loop;
     }
-    if (meth->unaligned_contiguous_loop != NULL &&
-            meth->unaligned_strided_loop == NULL) {
+
+    if (meth->strided_loop == NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
-        return -1;
-    }
-    if ((meth->unaligned_strided_loop == NULL) !=
-            !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when casting spec "
-                "has the NPY_METH_SUPPORTS_UNALIGNED flag. "
-                "(method: %s)", spec->name);
+                "Must provide a strided inner loop function. (method: %s)",
+                spec->name);
         return -1;
     }
 

@@ -1078,6 +1078,8 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         }
     }
 
+   RICHCMP_GIVE_UP_IF_NEEDED(self, other);
+
     arr = PyArray_FromScalar(self, NULL);
     if (arr == NULL) {
         return NULL;

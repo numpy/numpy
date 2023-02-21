@@ -200,11 +200,11 @@ sequences. In such cases you may explicitly skip CI by including one of these
 fragments in your commit message:
 
 * ``[skip ci]``: skip all CI
-* ``[skip github]``: skip GitHub Actions "build numpy and run tests" jobs
-* ``[skip actions]``: skip all GitHub Actions
+* ``[skip actions]``: skip GitHub Actions jobs
 * ``[skip travis]``: skip TravisCI jobs
 * ``[skip azp]``: skip Azure jobs
 * ``[skip circle]``: skip CircleCI jobs
+* ``[skip cirrus]``: skip Cirrus jobs
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~

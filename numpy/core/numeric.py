@@ -17,7 +17,8 @@ from .multiarray import (
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
+    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state,
+    _using_numpy2_behavior)
 
 from . import overrides
 from . import umath
@@ -54,7 +55,8 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state']
+    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state',
+    '_using_numpy2_behavior']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):

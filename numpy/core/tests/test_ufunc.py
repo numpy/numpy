@@ -1987,7 +1987,7 @@ class TestUfunc:
             # second operand cannot be converted to an array
             np.add.at(a, [2, 5, 3], [[1, 2], 1])
 
-    # ufuncs with indexed loops for perfomance in ufunc.at
+    # ufuncs with indexed loops for performance in ufunc.at
     indexed_ufuncs = [np.add, np.subtract, np.multiply, np.floor_divide,
                       np.maximum, np.minimum, np.fmax, np.fmin]
 
