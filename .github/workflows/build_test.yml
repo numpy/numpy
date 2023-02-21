@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   lint:
-    if: "github.repository == 'numpy/numpy' && github.ref != 'refs/heads/main' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -42,7 +42,7 @@ jobs:
         python tools/linter.py --branch origin/${{ github.base_ref }}
 
   smoke_test:
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     env:
       WITHOUT_SIMD: 1
