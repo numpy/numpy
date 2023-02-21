@@ -68,7 +68,7 @@ jobs:
           $ob_path = "C:/opt/64/bin/"
           cp $ob_path/*.dll $libs_path
           # Write _distributor_init.py to load .libs DLLs.
-          python tools\openblas_support.py --write-init $numpy_path
+          python -c "from tools import openblas_support; openblas_support.make_init(r'${numpy_path}')"
 
       - name: prep-test
         run: |
