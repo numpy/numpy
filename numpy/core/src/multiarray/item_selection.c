@@ -356,6 +356,12 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     int copied = 0;
     int overlap = 0;
 
+    NPY_BEGIN_THREADS_DEF;
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+
+    NPY_cast_info_init(&cast_info);
+
     indices = NULL;
     values = NULL;
     if (!PyArray_Check(self)) {
@@ -403,14 +409,6 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     dest = PyArray_DATA(self);
     itemsize = PyArray_DESCR(self)->elsize;
 
-    NPY_BEGIN_THREADS_DEF;
-    NPY_cast_info cast_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
-    const npy_intp one = 1;
-    const npy_intp strides[2] = {itemsize, itemsize};
-
-    NPY_cast_info_init(&cast_info);
-
     int has_references = PyDataType_REFCHK(PyArray_DESCR(self));
 
     if (!has_references) {
@@ -431,6 +429,9 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 
 
     if (has_references) {
+        const npy_intp one = 1;
+        const npy_intp strides[2] = {itemsize, itemsize};
+
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
@@ -711,7 +712,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         if (PyArray_GetDTypeTransferFunction(
                 PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
                 &cast_info, &flags) < 0) {
-            return NULL;
+            goto fail;
         }
         if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_BEGIN_THREADS;
@@ -727,10 +728,12 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         &cast_info.context, data, &one, strides,
                         cast_info.auxdata) < 0) {
                     NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
                     goto fail;
                 }
             }
         }
+        NPY_cast_info_xfree(&cast_info);
     }
     else {
         NPY_BEGIN_THREADS;
