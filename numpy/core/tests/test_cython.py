@@ -159,7 +159,7 @@ class TestDatetimeStrings:
         result = checks.make_iso_8601_datetime(dt)
         assert result == "2016-05-02 10:45:19"
 
-    def test_get_datetime_iso_8601_strlen(install_temp):
+    def test_get_datetime_iso_8601_strlen(self, install_temp):
         # GH#21199
         import checks
         # uses NPY_FR_ns
