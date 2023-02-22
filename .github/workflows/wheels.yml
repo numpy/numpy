@@ -194,7 +194,7 @@ jobs:
           python -m pip install dist/*.gz
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
-          python -c "import numpy; print(numpy.__version__); numpy.test();"
+          python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
 
       - name: Check README rendering for PyPI
         run: |
