@@ -63,6 +63,8 @@ requires = [
 #'f2py3 = numpy.f2py.f2py2e:main'
 #'f2py3.MINOR_VERSION = numpy.f2py.f2py2e:main'
 #
+# When enabling this stanza, make sure to remove the meson-specific xfail from
+# numpy/tests/test_public_api.py
 #[project.entry-points]
 #'array_api': 'numpy = numpy.array_api'
 #'pyinstaller40': 'hook-dirs = numpy:_pyinstaller_hooks_dir'

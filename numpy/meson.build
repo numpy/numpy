@@ -10,6 +10,7 @@ endif
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
+is_msvc = is_windows and cc.get_id() == 'msvc'
 
 if is_windows
   # For mingw-w64, link statically against the UCRT.
@@ -76,6 +77,12 @@ dependency_map = {
 # TODO: add ILP64 support
 have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
+if have_blas
+  # TODO: this is a shortcut - it needs to be checked rather than used
+  # unconditionally, and then added to the extension modules that need the
+  # macro, rather than as a project argument.
+  add_project_arguments('-DHAVE_CBLAS', language: ['c', 'cpp'])
+endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')

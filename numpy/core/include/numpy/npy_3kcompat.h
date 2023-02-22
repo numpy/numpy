@@ -167,6 +167,26 @@ static inline int PyInt_Check(PyObject *op) {
 
 #endif /* NPY_PY3K */
 
+/*
+ * Macros to protect CRT calls against instant termination when passed an
+ * invalid parameter (https://bugs.python.org/issue23524).
+ */
+#if defined _MSC_VER && _MSC_VER >= 1900
+
+#include <stdlib.h>
+
+extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
+#define NPY_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
+    _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);
+#define NPY_END_SUPPRESS_IPH _set_thread_local_invalid_parameter_handler(_Py_old_handler); }
+
+#else
+
+#define NPY_BEGIN_SUPPRESS_IPH
+#define NPY_END_SUPPRESS_IPH
+
+#endif /* _MSC_VER >= 1900 */
+
 
 static inline void
 PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
@@ -242,13 +262,17 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 
     /* Convert to FILE* handle */
 #ifdef _WIN32
+    NPY_BEGIN_SUPPRESS_IPH
     handle = _fdopen(fd2, mode);
+    NPY_END_SUPPRESS_IPH
 #else
     handle = fdopen(fd2, mode);
 #endif
     if (handle == NULL) {
         PyErr_SetString(PyExc_IOError,
-                        "Getting a FILE* from a Python file object failed");
+                        "Getting a FILE* from a Python file object via "
+                        "_fdopen failed. If you built NumPy, you probably "
+                        "linked with the wrong debug/release runtime");
         return NULL;
     }
 

@@ -109,11 +109,19 @@ cdata.set('NPY_SIZEOF_PY_LONG_LONG',
 if cc.has_header('complex.h')
   cdata.set10('HAVE_COMPLEX_H', true)
   cdata.set10('NPY_USE_C99_COMPLEX', true)
-  complex_types_to_check = [
-    ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
-    ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
-    ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', 'complex long double', 'long double'],
-  ]
+  if cc.get_id() == 'msvc'
+    complex_types_to_check = [
+      ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex', 'float'],
+      ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex', 'double'],
+      ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', '_Lcomplex', 'long double'],
+    ]
+  else
+    complex_types_to_check = [
+      ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
+      ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
+      ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', 'complex long double', 'long double'],
+    ]
+  endif
   foreach symbol_type: complex_types_to_check
     if cc.has_type(symbol_type[2], prefix: '#include <complex.h>')
       cdata.set10(symbol_type[0], true)
@@ -250,7 +258,9 @@ else
   # function is not available in CI. For the latter there is a fallback path,
   # but that is broken because we don't have the exact long double
   # representation checks.
-  cdata.set10('HAVE_STRTOLD_L', false)
+  if cc.get_id() != 'msvc'
+    cdata.set10('HAVE_STRTOLD_L', false)
+  endif
 endif
 
 # Other optional functions
@@ -451,7 +461,7 @@ if cc.get_id() == 'msvc'
   # libnpymath and libnpyrandom)
   if cc.has_argument('-d2VolatileMetadata-')
      staticlib_cflags +=  '-d2VolatileMetadata-'
-   endif
+  endif
 endif
 # TODO: change to "feature" option in meson_options.txt? See
 # https://mesonbuild.com/Build-options.html#build-options
@@ -581,9 +591,13 @@ c_args_common = [
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
   '-D__STDC_VERSION__=0',  # for compatibility with C headers
-  '-fno-exceptions',  # no exception support
-  '-fno-rtti',  # no runtime type information
 ]
+if cc.get_id() != 'msvc'
+  cpp_args_common += [
+    '-fno-exceptions',  # no exception support
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
 
 # Other submodules depend on generated headers and include directories from
 # core, wrap those up into a reusable dependency. Also useful for some test
