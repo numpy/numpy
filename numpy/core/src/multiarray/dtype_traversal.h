@@ -3,30 +3,6 @@
 
 #include "array_method.h"
 
-/*
- * A traverse loop working on a single array. This is similar to the general
- * strided-loop function.
- * Using a `void *traverse_context`, because I we may need to pass in
- * Intepreter state or similar in the future.  But I don't want to pass in
- * a full context (with pointers to dtypes, method, caller which all make
- * no sense for a traverse function).
- *
- * We assume for now that this context can be just passed through in the
- * the future (for structured dtypes).
- */
-typedef int (traverse_loop_function)(
-        void *traverse_context, PyArray_Descr *descr, char *data,
-        npy_intp size, npy_intp stride, NpyAuxData *auxdata);
-
-
-/* Simplified get_loop function specific to dtype traversal */
-typedef int (get_traverse_loop_function)(
-        void *traverse_context, PyArray_Descr *descr,
-        int aligned, npy_intp fixed_stride,
-        traverse_loop_function **out_loop, NpyAuxData **out_auxdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
-
 /* NumPy DType clear (object DECREF + NULLing) implementations */
 
 NPY_NO_EXPORT int

@@ -161,6 +161,7 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->common_instance = NULL;
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
@@ -192,8 +193,7 @@ PyArrayInitDTypeMeta_FromSpec(
             *current = pfunc;
         }
         else {
-            // Remove PyArray_ArrFuncs offset
-            int f_slot = slot - (1 << 10);
+            int f_slot = slot - _NPY_DT_ARRFUNCS_OFFSET;
             if (1 <= f_slot && f_slot <= 22) {
                 switch (f_slot) {
                     case 1:
@@ -294,6 +294,7 @@ PyArrayInitDTypeMeta_FromSpec(
             return -1;
         }
     }
+
     /* invalid type num. Ideally, we get away with it! */
     DType->type_num = -1;
 

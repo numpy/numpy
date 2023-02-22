@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 8
+#define __EXPERIMENTAL_DTYPE_API_VERSION 9
 
 struct PyArrayMethodObject_tag;
 
@@ -253,6 +253,47 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 
 
 /*
+ * A traverse loop working on a single array. This is similar to the general
+ * strided-loop function. This is designed for loops that need to visit every
+ * element of a single array.
+ *
+ * Currently this is only used for array clearing, via the
+ * NPY_DT_get_clear_loop, api hook, particularly for arrays storing embedded
+ * references to python objects or heap-allocated data. If you define a dtype
+ * that uses embedded references, the NPY_ITEM_REFCOUNT flag must be set on the
+ * dtype instance. If the embedded references are to heap-allocated data and not
+ * python objects, the `NPY_ITEM_IS_POINTER` flag must additionally be set.
+ *
+ * The `void *traverse_context` is passed in because we may need to pass in
+ * Intepreter state or similar in the futurem, but we don't want to pass in
+ * a full context (with pointers to dtypes, method, caller which all make
+ * no sense for a traverse function).
+ *
+ * We assume for now that this context can be just passed through in the
+ * the future (for structured dtypes).
+ *
+ */
+typedef int (traverse_loop_function)(
+        void *traverse_context, PyArray_Descr *descr, char *data,
+        npy_intp size, npy_intp stride, NpyAuxData *auxdata);
+
+
+/*
+ * Simplified get_loop function specific to dtype traversal
+ *
+ * Currently this is only used for clearing arrays. It should set the flags
+ * needed for the traversal loop and set out_loop to the loop function, which
+ * must be a valid traverse_loop_function pointer.
+ *
+ */
+typedef int (get_traverse_loop_function)(
+        void *traverse_context, PyArray_Descr *descr,
+        int aligned, npy_intp fixed_stride,
+        traverse_loop_function **out_loop, NpyAuxData **out_auxdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
+
+
+/*
  * ****************************
  *          DTYPE API
  * ****************************
@@ -278,6 +319,7 @@ typedef int translate_loop_descrs_func(int nin, int nout,
 #define NPY_DT_ensure_canonical 6
 #define NPY_DT_setitem 7
 #define NPY_DT_getitem 8
+#define NPY_DT_get_clear_loop 9
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
