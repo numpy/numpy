@@ -248,7 +248,7 @@ static PyArray_DTypeMeta PyArray_SFloatDType = {{{
     }},
     .type_num = -1,
     .scalar_type = NULL,
-    .flags = NPY_DT_PARAMETRIC,
+    .flags = NPY_DT_PARAMETRIC | NPY_DT_NUMERIC,
     .dt_slots = &sfloat_slots,
 };
 

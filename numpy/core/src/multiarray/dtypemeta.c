@@ -899,6 +899,10 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         }
     }
 
+    if (PyTypeNum_ISNUMBER(descr->type_num)) {
+        dtype_class->flags |= NPY_DT_NUMERIC;
+    }
+
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
             PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
         Py_DECREF(dtype_class);
@@ -927,6 +931,11 @@ dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
 }
 
+static PyObject *
+dtypemeta_get_is_numeric(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_numeric(self));
+}
+
 /*
  * Simple exposed information, defined for each DType (class).
  */
@@ -934,6 +943,7 @@ static PyGetSetDef dtypemeta_getset[] = {
         {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
         {"_legacy", (getter)dtypemeta_get_legacy, NULL, NULL, NULL},
         {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
+        {"_is_numeric", (getter)dtypemeta_get_is_numeric, NULL, NULL, NULL},
         {NULL, NULL, NULL, NULL, NULL}
 };
 
