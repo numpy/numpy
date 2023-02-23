@@ -172,10 +172,10 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if ((slot > NPY_DT_MAX_ARRFUNCS_SLOT) ||
-            (slot < 0) ||
+        if ((slot < 0) ||
             ((slot > NPY_NUM_DTYPE_SLOTS) &&
-             (slot < _NPY_DT_ARRFUNCS_OFFSET))) {
+             (slot <= _NPY_DT_ARRFUNCS_OFFSET)) ||
+            (slot > NPY_DT_MAX_ARRFUNCS_SLOT)) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
@@ -194,7 +194,7 @@ PyArrayInitDTypeMeta_FromSpec(
         }
         else {
             int f_slot = slot - _NPY_DT_ARRFUNCS_OFFSET;
-            if (1 <= f_slot && f_slot <= 22) {
+            if (1 <= f_slot && f_slot <= NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS) {
                 switch (f_slot) {
                     case 1:
                         NPY_DT_SLOTS(DType)->f.getitem = pfunc;
