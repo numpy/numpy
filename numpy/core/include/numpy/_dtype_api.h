@@ -261,8 +261,7 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * NPY_DT_get_clear_loop, api hook, particularly for arrays storing embedded
  * references to python objects or heap-allocated data. If you define a dtype
  * that uses embedded references, the NPY_ITEM_REFCOUNT flag must be set on the
- * dtype instance. If the embedded references are to heap-allocated data and not
- * python objects, the `NPY_ITEM_IS_POINTER` flag must additionally be set.
+ * dtype instance.
  *
  * The `void *traverse_context` is passed in because we may need to pass in
  * Intepreter state or similar in the futurem, but we don't want to pass in
