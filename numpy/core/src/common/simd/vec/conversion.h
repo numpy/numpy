@@ -96,6 +96,8 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     #else
         return vec_extract(r, 4);
     #endif
+        // to suppress ambiguous warning: variable `r` but not used [-Wunused-but-set-variable]
+	(void)r;
     }
     NPY_FINLINE npy_uint64 npyv_tobits_b16(npyv_b16 a)
     {
@@ -106,6 +108,8 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     #else
         return vec_extract(r, 8);
     #endif
+	// to suppress ambiguous warning: variable `r` but not used [-Wunused-but-set-variable]
+        (void)r;
     }
     NPY_FINLINE npy_uint64 npyv_tobits_b32(npyv_b32 a)
     {
@@ -120,6 +124,8 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     #else
         return vec_extract(r, 8);
     #endif
+	// to suppress ambiguous warning: variable `r` but not used [-Wunused-but-set-variable]
+        (void)r;
     }
     NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
     {
@@ -134,6 +140,8 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     #else
         return vec_extract(r, 8);
     #endif
+	// to suppress ambiguous warning: variable `r` but not used [-Wunused-but-set-variable]
+        (void)r;
     }
 #else
     NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)

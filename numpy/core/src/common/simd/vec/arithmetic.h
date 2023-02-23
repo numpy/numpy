@@ -366,6 +366,7 @@ NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     npyv_f32 sum = vec_add(a, npyv_combineh_f32(a, a));
     return vec_extract(sum, 0) + vec_extract(sum, 1);
+    (void)sum;
 }
 #endif
 
@@ -386,6 +387,7 @@ NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
     npyv_u32 four = vec_sum4s(a, zero);
     npyv_s32 one  = vec_sums((npyv_s32)four, (npyv_s32)zero);
     return (npy_uint16)vec_extract(one, 3);
+    (void)one;
 #endif
 }
 
@@ -400,6 +402,7 @@ NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
     npyv_u32   four  = vec_add(eight.val[0], eight.val[1]);
     npyv_s32   one   = vec_sums((npyv_s32)four, zero);
     return (npy_uint32)vec_extract(one, 3);
+    (void)one;
 #endif
 }
 

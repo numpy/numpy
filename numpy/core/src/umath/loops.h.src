@@ -68,6 +68,17 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_autovec.dispatch.h"
+#endif
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -123,16 +134,34 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_autovec.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+           BYTE,  SHORT,  INT,  LONG,  LONGLONG#
+ */
+/**begin repeat1
+ * #kind = invert, logical_not, conjugate, reciprocal, square, add,
+ *         subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
+ *         left_shift, right_shift, logical_and, logical_or,
+ *         logical_xor, isnan, isinf, isfinite,
+ *         absolute, sign#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
+/**end repeat**/
+
 /**begin repeat
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
  */
-
 /**begin repeat1
  * both signed and unsigned integer types
  * #s = , u#
  * #S = , U#
  */
-
 #define @S@@TYPE@_floor_divide @S@@TYPE@_divide
 #define @S@@TYPE@_floor_divide_indexed @S@@TYPE@_divide_indexed
 #define @S@@TYPE@_fmax @S@@TYPE@_maximum
@@ -147,49 +176,15 @@ NPY_NO_EXPORT void
 @S@@TYPE@_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**begin repeat2
- * #isa = , _avx2#
- */
-
-NPY_NO_EXPORT void
-@S@@TYPE@_square@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_reciprocal@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_conjugate@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_logical_not@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_invert@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**begin repeat3
  * Arithmetic
  * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
  *          left_shift, right_shift#
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
-NPY_NO_EXPORT void
-@S@@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 NPY_NO_EXPORT int
-@S@@TYPE@_@kind@@isa@_indexed(PyArrayMethod_Context *NPY_UNUSED(context), char *const *args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func));
+@S@@TYPE@_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+                         npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func));
 
-/**end repeat3**/
-
-/**begin repeat3
- * #kind = logical_and, logical_or#
- * #OP = &&, ||#
- */
-NPY_NO_EXPORT void
-@S@@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**end repeat3**/
-
-NPY_NO_EXPORT void
-@S@@TYPE@_logical_xor@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat2**/
 
 /**begin repeat2
@@ -207,26 +202,13 @@ NPY_NO_EXPORT void
 @S@@TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@S@@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @S@@TYPE@_gcd(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_lcm(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**begin repeat2
- * #kind = isnan, isinf, isfinite#
- **/
-NPY_NO_EXPORT void
-@S@@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat2**/
 
 /**end repeat1**/
-
 /**end repeat**/
 
 
@@ -371,18 +353,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void DOUBLE_@func@,
 
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
-
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- *  #TYPE = FLOAT, DOUBLE#
- */
-/**begin repeat1
- * #func = maximum, minimum#
- */
-NPY_NO_EXPORT void
-@TYPE@_@func@_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**end repeat1**/
 /**end repeat**/
@@ -562,6 +532,19 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_autovec.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = HALF#
+ */
+/**begin repeat1
+ * #kind = absolute#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
+/**end repeat**/
 /*
  *****************************************************************************
  **                           COMPLEX LOOPS                                 **
@@ -728,9 +711,6 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_isfinite(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-@TYPE@_isinf(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 #define @TYPE@_isnan @TYPE@_isnat
 
 NPY_NO_EXPORT void
@@ -805,6 +785,21 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
 #define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
+
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_autovec.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = TIMEDELTA, DATETIME#
+ */
+/**begin repeat1
+ * #kind = isinf#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
+/**end repeat**/
 
 /*
  *****************************************************************************

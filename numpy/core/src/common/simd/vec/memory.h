@@ -46,14 +46,8 @@
 #endif
 
 // avoid aliasing rules
-#ifdef __cplusplus
-    template<typename T_PTR>
-    NPY_FINLINE npy_uint64 *npyv__ptr2u64(const T_PTR *ptr)
-    { npy_uint64 *ptr64 = (npy_uint64*)ptr; return ptr64; }
-#else
-    NPY_FINLINE npy_uint64 *npyv__ptr2u64(const void *ptr)
-    { npy_uint64 *ptr64 = (npy_uint64*)ptr; return ptr64; }
-#endif // __cplusplus
+NPY_FINLINE npy_uint64 *npyv__ptr2u64(const void *ptr)
+{ npy_uint64 *ptr64 = (npy_uint64*)ptr; return ptr64; }
 
 // load lower part
 NPY_FINLINE npyv_u64 npyv__loadl(const void *ptr)

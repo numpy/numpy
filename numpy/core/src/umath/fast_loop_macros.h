@@ -12,6 +12,19 @@
 
 #include <assert.h>
 
+#include "simd/simd.h"
+
+/*
+ * largest simd vector size in bytes numpy supports
+ * it is currently a extremely large value as it is only used for memory
+ * overlap checks
+ */
+#if NPY_SIMD > 0
+    // Enough for compiler unroll
+    #define AUTOVEC_OVERLAP_SIZE NPY_SIMD_WIDTH*4
+#else
+    #define AUTOVEC_OVERLAP_SIZE 1024
+#endif
 /*
  * MAX_STEP_SIZE is used to determine if we need to use SIMD version of the ufunc.
  * Very large step size can be as slow as processing it using scalar. The
@@ -219,11 +232,11 @@ abs_ptrdiff(char *a, char *b)
         /* condition allows compiler to optimize the generic macro */ \
         if (IS_BINARY_CONT(tin, tout)) { \
             if (abs_ptrdiff(args[2], args[0]) == 0 && \
-                    abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
+                    abs_ptrdiff(args[2], args[1]) >= AUTOVEC_OVERLAP_SIZE) { \
                 BASE_BINARY_LOOP_INP(tin, tout, op) \
             } \
             else if (abs_ptrdiff(args[2], args[1]) == 0 && \
-                         abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
+                         abs_ptrdiff(args[2], args[0]) >= AUTOVEC_OVERLAP_SIZE) { \
                 BASE_BINARY_LOOP_INP(tin, tout, op) \
             } \
             else { \
