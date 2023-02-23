@@ -444,12 +444,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
             optr += inner_elsize;
         }
     }
-    else if (PyDataType_FLAGCHK(dtype, NPY_ITEM_IS_POINTER))
-    {
-        optr = NULL;
-    }
-    else
-    {
+    else {
         /* This path should not be reachable. */
         assert(0);
     }

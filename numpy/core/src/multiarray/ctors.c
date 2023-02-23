@@ -1076,11 +1076,32 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
     }
 
     /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
-    if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)ret))) {
-        PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
-        if (PyErr_Occurred()) {
-            Py_DECREF(ret);
-            return NULL;
+    PyArray_Descr* descr = PyArray_DESCR((PyArrayObject *)ret);
+    if (PyDataType_REFCHK(descr)) {
+        if (NPY_DT_is_legacy(NPY_DTYPE(dtype))) {
+            PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
+            if (PyErr_Occurred()) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+        else {
+            // Currently we assume all non-legacy dtypes that have with the
+            // NPY_ITEM_REFCOUNT flag either represent heap-allocated dtypes or
+            // represent python objects. In the latter case the dtype is
+            // responsible for managing initialization and reference counts. In
+            // both cases initializing to NULL makes sense.
+            //
+            // In the future we might adjust this and have separate logic for
+            // new dtypes that hold heap-allocated data and new dtypes that hold
+            // python objects, particularly if we want to allow releasing the
+            // GIL in the former case.
+            char *optr = PyArray_DATA((PyArrayObject*)ret);
+            npy_intp n = PyArray_SIZE((PyArrayObject*)ret);
+            for (npy_intp i = 0; i < n; i++) {
+                optr = NULL;
+                optr += descr->elsize;
+            }
         }
     }
 
