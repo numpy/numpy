@@ -38,8 +38,8 @@ def allows_array_ufunc_override(func):
         `True` if `func` is overridable via `__array_ufunc__` and
         `False` otherwise.
 
-    Note
-    ----
+    Notes
+    -----
     This function is equivalent to `isinstance(func, np.ufunc)` and
     will work correctly for ufuncs defined outside of Numpy.
 
