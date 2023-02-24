@@ -5590,3 +5590,17 @@ def test_gh_21022():
     array = np.ma.masked_array(data=-1, mask=True, dtype=np.float64)
     copy.deepcopy(array)
     copy.deepcopy(result)
+
+
+def test_deepcopy_2d_obj():
+    source = np.ma.array([[0, "dog"],
+                          [1, 1],
+                          [[1, 2], "cat"]],
+                        mask=[[0, 1],
+                              [0, 0],
+                              [0, 0]],
+                        dtype=object)
+    deepcopy = copy.deepcopy(source)
+    deepcopy[2, 0].extend(['this should not appear in source', 3])
+    assert len(source[2, 0]) == 2
+    assert len(deepcopy[2, 0]) == 4

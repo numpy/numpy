@@ -6310,9 +6310,8 @@ class MaskedArray(ndarray):
         # deepcopy() directly for arrays of object type that may
         # contain compound types--you cannot depend on normal
         # copy semantics to do the right thing here
-        if self.dtype.type is np.object_:
-            for idx, _ in enumerate(copied):
-                copied[idx] = deepcopy(copied[idx])
+        if self.dtype.hasobject:
+            copied = deepcopy(self._data)
         return copied
 
 
