@@ -8,6 +8,7 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import warnings
+import copy
 import operator
 import itertools
 import textwrap
@@ -5570,3 +5571,22 @@ note
 original note"""
 
     assert_equal(np.ma.core.doc_note(method.__doc__, "note"), expected_doc)
+
+
+def test_gh_22556():
+    source = np.ma.array([0, [0, 1, 2]], dtype=object)
+    deepcopy = copy.deepcopy(source)
+    deepcopy[1].append('this should not appear in source')
+    assert len(source[1]) == 3
+
+
+def test_gh_21022():
+    # testing for absence of reported error
+    source = np.ma.masked_array(data=[-1, -1], mask=True, dtype=np.float64)
+    axis = np.array(0)
+    result = np.prod(source, axis=axis, keepdims=False)
+    result = np.ma.masked_array(result,
+                                mask=np.ones(result.shape, dtype=np.bool_))
+    array = np.ma.masked_array(data=-1, mask=True, dtype=np.float64)
+    copy.deepcopy(array)
+    copy.deepcopy(result)
