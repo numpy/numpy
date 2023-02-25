@@ -29,11 +29,6 @@ typedef struct {
     setitemfunction *setitem;
     getitemfunction *getitem;
     /*
-     * The casting implementation (ArrayMethod) to convert between two
-     * instances of this DType, stored explicitly for fast access:
-     */
-    PyArrayMethodObject *within_dtype_castingimpl;
-    /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
      * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
@@ -46,6 +41,11 @@ typedef struct {
      * Python objects.
      */
     get_traverse_loop_function *get_clear_loop;
+    /*
+     * The casting implementation (ArrayMethod) to convert between two
+     * instances of this DType, stored explicitly for fast access:
+     */
+    PyArrayMethodObject *within_dtype_castingimpl;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
@@ -60,6 +60,13 @@ typedef struct {
      */
     PyArray_ArrFuncs f;
 } NPY_DType_Slots;
+
+// This must be updated if new slots before within_dtype_castingimpl
+// are added
+#define NPY_NUM_DTYPE_SLOTS 9
+#define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
+#define NPY_DT_MAX_ARRFUNCS_SLOT \
+  NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
 
 
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))

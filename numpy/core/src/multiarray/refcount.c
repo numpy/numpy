@@ -16,6 +16,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "iterators.h"
+#include "dtypemeta.h"
 
 #include "npy_config.h"
 
@@ -358,9 +359,17 @@ PyArray_XDECREF(PyArrayObject *mp)
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
+    PyArray_Descr* descr = PyArray_DESCR(arr);
+
+    // non-legacy dtypes are responsible for initializing
+    // their own internal references
+    if (!NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+        return;
+    }
+
     npy_intp i,n;
     n = PyArray_SIZE(arr);
-    if (PyArray_DESCR(arr)->type_num == NPY_OBJECT) {
+    if (descr->type_num == NPY_OBJECT) {
         PyObject **optr;
         optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
@@ -380,8 +389,8 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         char *optr;
         optr = PyArray_DATA(arr);
         for (i = 0; i < n; i++) {
-            _fillobject(optr, obj, PyArray_DESCR(arr));
-            optr += PyArray_DESCR(arr)->elsize;
+            _fillobject(optr, obj, descr);
+            optr += descr->elsize;
         }
     }
 }
