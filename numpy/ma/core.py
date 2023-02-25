@@ -6311,7 +6311,7 @@ class MaskedArray(ndarray):
         # contain compound types--you cannot depend on normal
         # copy semantics to do the right thing here
         if self.dtype.hasobject:
-            copied._data[:] = deepcopy(copied._data)
+            copied._data[...] = deepcopy(copied._data)
         return copied
 
 
