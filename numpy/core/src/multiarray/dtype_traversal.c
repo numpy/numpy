@@ -454,10 +454,21 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         }
         return 0;
     }
+    else if (dtype->type_num == NPY_VOID) {
+        /* 
+         * Void dtypes can have "ghosts" of objects marking the dtype because
+         * holes (or the raw bytes if fields are gone) may include objects.
+         * Paths that need those flags should probably be considered incorrect.
+         * But as long as this can happen (a V8 that indicates references)
+         * we need to make it a no-op here.
+         */
+        *out_func = &clear_no_op;
+        return 0;
+    }
 
     PyErr_Format(PyExc_RuntimeError,
             "Internal error, tried to fetch clear function for the "
-            "user dtype '%s' without fields or subarray (legacy support).",
+            "user dtype '%S' without fields or subarray (legacy support).",
             dtype);
     return -1;
 }
