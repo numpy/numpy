@@ -119,24 +119,33 @@ class Nan(Benchmark):
 class Unique(Benchmark):
     """Benchmark for np.unique with np.nan values."""
 
-    param_names = ["array_size", "percent_nans"]
+    param_names = ["array_size", "percent_nans", "axis"]
     params = [
-        # sizes of the 1D arrays
-        [200, int(2e5)],
+        # Size of array
+        [64, 300, 512],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
+        [None, 0],
     ]
 
-    def setup(self, array_size, percent_nans):
+    def setup(self, array_size, percent_nans, axis):
         np.random.seed(123)
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
         base_array[base_array < percent_nans / 100.] = np.nan
         self.arr = base_array
+        # Create 2D array in a similar way
+        base_mat = np.random.uniform(size=array_size * array_size)
+        base_mat[base_mat < percent_nans / 100.] = np.nan
+        self.mat = base_mat.reshape((array_size, array_size))
+        self.axis = axis
 
-    def time_unique(self, array_size, percent_nans):
-        np.unique(self.arr)
+    def time_unique_1D(self, array_size, percent_nans, axis):
+        np.unique(self.arr, axis=self.axis)
+
+    def time_unique_2D(self, array_size, percent_nans, axis):
+        np.unique(self.mat, axis=self.axis)
 
 
 class Isin(Benchmark):

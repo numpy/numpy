@@ -935,10 +935,39 @@ class TestUnique:
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
 
-    def test_unique_nanequals(self):
-        # issue 20326
-        a = np.array([1, 1, np.nan, np.nan, np.nan])
-        unq = np.unique(a)
-        not_unq = np.unique(a, equal_nan=False)
-        assert_array_equal(unq, np.array([1, np.nan]))
-        assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
+    @pytest.mark.parametrize(
+        ("input_list", "expected_unique", "expected_not_unique", "axis"),
+        [
+            (
+                [1, 1, np.nan, np.nan, np.nan],
+                [1, np.nan],
+                [1, np.nan, np.nan, np.nan],
+                None,
+            ),
+            (
+                [0., np.nan, 2., np.nan, 2., 1.],
+                [0., 1., 2., np.nan],
+                [0., 1., 2., np.nan, np.nan],
+                0,
+            ),
+            (
+                [[0., np.nan, 2., 3., 3.], [0., np.nan, 2., 3., 3.]],
+                [[0., np.nan, 2., 3.,  3.]],
+                [[0., np.nan, 2., 3., 3.], [0., np.nan, 2., 3., 3.]],
+                0,
+            ),
+            (
+                [[0., np.nan, 2., 3., np.nan, 3.], [0., np.nan, 2., 3., np.nan, 3.]],
+                [[0., 2., 3., np.nan], [0., 2., 3., np.nan]],
+                [[0., 2., 3., np.nan, np.nan], [0., 2., 3., np.nan, np.nan]],
+                1,
+            ),
+        ],
+    )
+    def test_unique_nanequals(self, input_list, expected_unique, expected_not_unique, axis):
+        # issue 20326, 23286
+        a = np.array(input_list)
+        unq = np.unique(a, axis=axis)
+        not_unq = np.unique(a, axis=axis, equal_nan=False)
+        assert_array_equal(unq, np.array(expected_unique))
+        assert_array_equal(not_unq, np.array(expected_not_unique))

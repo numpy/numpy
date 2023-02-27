@@ -166,7 +166,7 @@ def unique(ar, return_index=False, return_inverse=False,
         The axis to operate on. If None, `ar` will be flattened. If an integer,
         the subarrays indexed by the given axis will be flattened and treated
         as the elements of a 1-D array with the dimension of the given axis,
-        see the notes for more details.  Object arrays or structured arrays
+        see the notes for more details. Object arrays or structured arrays
         that contain objects are not supported if the `axis` kwarg is used. The
         default is None.
 
@@ -269,11 +269,24 @@ def unique(ar, return_index=False, return_inverse=False,
     array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
     """
-    ar = np.asanyarray(ar)
+    ar = np.asanyarray(ar)  # TODO: is it to optimize?
+
     if axis is None:
+        # Setting of check_last=True for _unique1d() relies on fact that
+        # np.unique(axis=None) is always in a flatten array form.
+        # This combined with sort() call inside _unique1d(), provide easy
+        # way to determine if any np.nan is present in the array.
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan)
+                        equal_nan=equal_nan, check_last=True)
         return _unpack_tuple(ret)
+
+    # euqual_nan does not matter if there is no single np.nan in the array.
+    # Check only if equal_nan is True and ufunc 'isnan' is supported for dtype,
+    # thus save time on is_nan() and any() calls.
+    # If at least one nan found, keep True. Otherwise change to False.
+    # This is later resulting in check_last=False setting of _unique1d()
+    if equal_nan and ar.dtype.kind in "cfmM":
+        equal_nan = (np.isnan(ar)).any()
 
     # axis was specified and not None
     try:
@@ -285,7 +298,7 @@ def unique(ar, return_index=False, return_inverse=False,
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
-    ar = np.ascontiguousarray(ar)
+    ar = np.ascontiguousarray(ar)  # TODO: is it to optimize?
     dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
@@ -315,17 +328,17 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nan=equal_nan)
+                       return_inverse, return_counts, equal_nan=equal_nan, check_last=False)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True):
+              return_counts=False, *, equal_nan=True, check_last=False):
     """
     Find the unique elements of an array, ignoring shape.
     """
-    ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar).flatten()  # TODO: is it to optimize?
 
     optional_indices = return_index or return_inverse
 
@@ -337,8 +350,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
-            np.isnan(aux[-1])):
+
+    # Either use last element or copy value from equal_nan
+    check_last = np.isnan(aux[-1]) if check_last and aux.shape[0] > 0 and ar.dtype.kind in "cfmM" else equal_nan
+
+    if equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmMV" and check_last:
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
