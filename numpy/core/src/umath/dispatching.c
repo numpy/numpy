@@ -764,8 +764,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-                    (PyObject **)op_dtypes, info, 0) < 0) {
+#ifndef Py_NOGIL
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 0) < 0) 
+#else
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 1) < 0) 
+#endif
+            {
                 return NULL;
             }
             return info;
@@ -786,8 +790,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
         else if (info != NULL) {
             /* Add result to the cache using the original types: */
-            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-                    (PyObject **)op_dtypes, info, 0) < 0) {
+#ifndef Py_NOGIL
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 0) < 0) 
+#else
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 1) < 0) 
+#endif
+            {
                 return NULL;
             }
             return info;
@@ -853,8 +861,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-            (PyObject **)op_dtypes, info, 0) < 0) {
+#ifndef Py_NOGIL
+    if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 0) < 0) 
+#else
+    if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache, (PyObject **)op_dtypes, info, 1) < 0) 
+#endif
+    {
         return NULL;
     }
     return info;

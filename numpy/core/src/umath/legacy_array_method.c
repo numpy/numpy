@@ -32,25 +32,32 @@ typedef struct {
 
 
 /* Use a free list, since we should normally only need one at a time */
+#ifndef PY_NOGIL
 #define NPY_LOOP_DATA_CACHE_SIZE 5
 static int loop_data_num_cached = 0;
 static  legacy_array_method_auxdata *loop_data_cache[NPY_LOOP_DATA_CACHE_SIZE];
+#endif
 
 
 static void
 legacy_array_method_auxdata_free(NpyAuxData *data)
 {
+#ifndef PY_NOGIL
     if (loop_data_num_cached < NPY_LOOP_DATA_CACHE_SIZE) {
         loop_data_cache[loop_data_num_cached] = (
                 (legacy_array_method_auxdata *)data);
         loop_data_num_cached++;
     }
-    else {
+    else 
+#endif
+    {
         PyMem_Free(data);
     }
 }
 
+#ifndef PY_NOGIL
 #undef NPY_LOOP_DATA_CACHE_SIZE
+#endif
 
 
 NpyAuxData *
@@ -58,11 +65,14 @@ get_new_loop_data(
         PyUFuncGenericFunction loop, void *user_data, int pyerr_check)
 {
     legacy_array_method_auxdata *data;
+#ifndef PY_NOGIL
     if (NPY_LIKELY(loop_data_num_cached > 0)) {
         loop_data_num_cached--;
         data = loop_data_cache[loop_data_num_cached];
     }
-    else {
+    else 
+#endif
+    {
         data = PyMem_Malloc(sizeof(legacy_array_method_auxdata));
         if (data == NULL) {
             return NULL;

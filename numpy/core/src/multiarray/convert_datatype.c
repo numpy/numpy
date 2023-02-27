@@ -155,12 +155,17 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     PyObject *res;
     if (from == to) {
         res = (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl;
+        Py_XINCREF(res);
     }
     else {
+#ifndef Py_NOGIL
         res = PyDict_GetItemWithError(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to);
+        Py_XINCREF(res);
+#else
+        res = PyDict_GetItemWithError2(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to);
+#endif
     }
     if (res != NULL || PyErr_Occurred()) {
-        Py_XINCREF(res);
         return res;
     }
     /*
