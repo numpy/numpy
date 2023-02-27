@@ -9,6 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     assert_raises_regex,
     )
+from numpy.core.arrayprint import _typelessdata
 import textwrap
 
 class TestArrayRepr:
@@ -795,6 +796,40 @@ class TestPrintOptions:
         assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
+
+    def test_dtype_endianness_repr(self):
+        '''
+        there was an issue where 
+        repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2')) both returned the same thing:
+        array([0], dtype=uint16)
+        even though their dtypes have different endianness.
+        '''
+        dtype_combos = [ # little-endian first, big-endian second
+            ('bool', 'bool'),
+            ('uint8', 'u1'),
+            ('uint16', '>u2'),
+            ('uint32', '>u4'),
+            ('uint64', '>u8'),
+            ('int16', '>i2'),
+            ('int32', '>i4'),
+            ('int64', '>i8'),
+            ('float16', '>e'),
+            ('float32', '>f'),
+            ('float64', '>d'),
+        ]
+        for little_end, big_end in dtype_combos:
+            big_dtype = np.dtype(big_end)
+            little_dtype = np.dtype(little_end)
+            big_end_repr = repr(np.array([1], big_dtype))
+            little_end_repr = repr(np.array([1], little_dtype))
+            # preserve the sensible default of only showing dtype if nonstandard
+            assert_(not ('dtype' in big_end_repr and big_dtype in _typelessdata),
+                    ('if a type has default size and endianness (e.g., int32, bool, float64) '
+                    'should not show dtype, but it does'))
+            # only show difference if > 1 byte
+            assert_(not (big_end_repr == little_end_repr and big_dtype.itemsize > 1),
+                    ('expected little endian repr != big endian repr, '
+                    f'but {little_end_repr = }, {big_end_repr = }'))
 
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
