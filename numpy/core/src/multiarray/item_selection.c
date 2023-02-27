@@ -1037,7 +1037,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
     int needcopy = !IsAligned(op) || swap || astride != elsize;
-    int hasrefs = PyDataType_REFCHK(PyArray_DESCR(op));
+    int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(op), NPY_NEEDS_PYAPI);
 
     PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(op)->f->copyswapn;
     char *buffer = NULL;
@@ -1095,7 +1095,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (part == NULL) {
             ret = sort(bufptr, N, op);
-            if (hasrefs && PyErr_Occurred()) {
+            if (needs_api && PyErr_Occurred()) {
                 ret = -1;
             }
             if (ret < 0) {
@@ -1108,7 +1108,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             npy_intp i;
             for (i = 0; i < nkth; ++i) {
                 ret = part(bufptr, N, kth[i], pivots, &npiv, op);
-                if (hasrefs && PyErr_Occurred()) {
+                if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
                 if (ret < 0) {
@@ -1151,7 +1151,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
     int needcopy = !IsAligned(op) || swap || astride != elsize;
-    int hasrefs = PyDataType_REFCHK(PyArray_DESCR(op));
+    int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(op), NPY_NEEDS_PYAPI);
     int needidxbuffer;
 
     PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(op)->f->copyswapn;
@@ -1242,7 +1242,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         if (argpart == NULL) {
             ret = argsort(valptr, idxptr, N, op);
             /* Object comparisons may raise an exception in Python 3 */
-            if (hasrefs && PyErr_Occurred()) {
+            if (needs_api && PyErr_Occurred()) {
                 ret = -1;
             }
             if (ret < 0) {
@@ -1256,7 +1256,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             for (i = 0; i < nkth; ++i) {
                 ret = argpart(valptr, idxptr, N, kth[i], pivots, &npiv, op);
                 /* Object comparisons may raise an exception in Python 3 */
-                if (hasrefs && PyErr_Occurred()) {
+                if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
                 if (ret < 0) {
