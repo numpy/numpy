@@ -269,7 +269,7 @@ def unique(ar, return_index=False, return_inverse=False,
     array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
     """
-    ar = np.asanyarray(ar)  # TODO: is it to optimize?
+    ar = np.asanyarray(ar)
 
     if axis is None:
         # Setting of check_last=True for _unique1d() relies on fact that
@@ -298,7 +298,7 @@ def unique(ar, return_index=False, return_inverse=False,
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
-    ar = np.ascontiguousarray(ar)  # TODO: is it to optimize?
+    ar = np.ascontiguousarray(ar)
     dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
@@ -338,7 +338,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     """
     Find the unique elements of an array, ignoring shape.
     """
-    ar = np.asanyarray(ar).flatten()  # TODO: is it to optimize?
+    ar = np.asanyarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
 
