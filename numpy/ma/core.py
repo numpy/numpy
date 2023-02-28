@@ -855,7 +855,10 @@ class _DomainSafeDivide:
         # don't call ma ufuncs from __array_wrap__ which would fail for scalars
         a, b = np.asarray(a), np.asarray(b)
         with np.errstate(invalid='ignore'):
-            return umath.absolute(a) * self.tolerance >= umath.absolute(b)
+            m = umath.absolute(a) * self.tolerance >= umath.absolute(b)
+            m |= umath.isnan(a)
+            m |= umath.isnan(b)
+            return m
 
 
 class _DomainGreater:
