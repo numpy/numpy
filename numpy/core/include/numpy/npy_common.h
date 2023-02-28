@@ -105,6 +105,14 @@
     #define NPY_FINLINE static
 #endif
 
+#ifdef _MSC_VER
+    #define NPY_NOINLINE static __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define NPY_NOINLINE static __attribute__((noinline))
+#else
+    #define NPY_NOINLINE static
+#endif
+
 #ifdef HAVE___THREAD
     #define NPY_TLS __thread
 #else
