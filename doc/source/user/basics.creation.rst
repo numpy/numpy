@@ -352,7 +352,7 @@ and :func:`numpy.genfromtxt`. These functions have more involved use cases in
  2, 4
  3, 9
 
-Importing ``simple.csv`` is accomplished using :func:`loadtxt`::
+Importing ``simple.csv`` is accomplished using :func:`numpy.loadtxt`::
 
  >>> np.loadtxt('simple.csv', delimiter = ',', skiprows = 1) # doctest: +SKIP
  array([[0., 0.],

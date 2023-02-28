@@ -551,6 +551,14 @@ class TestRecord:
         assert_equal(np.zeros((1, 2), dtype=[]) == a,
                      np.ones((1, 2), dtype=bool))
 
+    def test_nonstructured_with_object(self):
+        # See gh-23277, the dtype here thinks it contain objects, if the
+        # assert about that fails, the test becomes meaningless (which is OK)
+        arr = np.recarray((0,), dtype="O") 
+        assert arr.dtype.names is None  # no fields
+        assert arr.dtype.hasobject  # but claims to contain objects
+        del arr  # the deletion failed previously.
+
 
 class TestSubarray:
     def test_single_subarray(self):
@@ -1578,6 +1586,18 @@ class TestDTypeClasses:
         assert type(np.dtype).__name__ == "_DTypeMeta"
         assert type(np.dtype).__module__ == "numpy"
         assert np.dtype._abstract
+
+    def test_is_numeric(self):
+        all_codes = set(np.typecodes['All'])
+        numeric_codes = set(np.typecodes['AllInteger'] +
+                            np.typecodes['AllFloat'] + '?')
+        non_numeric_codes = all_codes - numeric_codes
+
+        for code in numeric_codes:
+            assert type(np.dtype(code))._is_numeric
+
+        for code in non_numeric_codes:
+            assert not type(np.dtype(code))._is_numeric
 
 
 class TestFromCTypes:

@@ -128,6 +128,10 @@ int string_heapsort_(type *start, npy_intp n, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     size_t len = PyArray_ITEMSIZE(arr) / sizeof(type);
+    if (len == 0) {
+        return 0;  /* no need for sorting if strings are empty */
+    }
+
     type *tmp = (type *)malloc(PyArray_ITEMSIZE(arr));
     type *a = (type *)start - len;
     npy_intp i, j, l;

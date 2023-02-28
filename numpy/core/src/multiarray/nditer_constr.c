@@ -1121,7 +1121,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                                              NPY_ITEM_IS_POINTER))) != 0)) {
                 PyErr_SetString(PyExc_TypeError,
                         "Iterator operand or requested dtype holds "
-                        "references, but the REFS_OK flag was not enabled");
+                        "references, but the NPY_ITER_REFS_OK flag was not "
+                        "enabled");
                 return 0;
             }
         }

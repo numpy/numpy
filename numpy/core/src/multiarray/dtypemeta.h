@@ -10,10 +10,9 @@ extern "C" {
 
 #include "numpy/_dtype_api.h"
 
-/* DType flags, currently private, since we may just expose functions */
+/* DType flags, currently private, since we may just expose functions 
+   Other publicly visible flags are in _dtype_api.h                   */
 #define NPY_DT_LEGACY 1 << 0
-#define NPY_DT_ABSTRACT 1 << 1
-#define NPY_DT_PARAMETRIC 1 << 2
 
 
 typedef struct {
@@ -30,11 +29,6 @@ typedef struct {
     setitemfunction *setitem;
     getitemfunction *getitem;
     /*
-     * The casting implementation (ArrayMethod) to convert between two
-     * instances of this DType, stored explicitly for fast access:
-     */
-    PyArrayMethodObject *within_dtype_castingimpl;
-    /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
      * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
@@ -47,6 +41,11 @@ typedef struct {
      * Python objects.
      */
     get_traverse_loop_function *get_clear_loop;
+    /*
+     * The casting implementation (ArrayMethod) to convert between two
+     * instances of this DType, stored explicitly for fast access:
+     */
+    PyArrayMethodObject *within_dtype_castingimpl;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
@@ -62,6 +61,13 @@ typedef struct {
     PyArray_ArrFuncs f;
 } NPY_DType_Slots;
 
+// This must be updated if new slots before within_dtype_castingimpl
+// are added
+#define NPY_NUM_DTYPE_SLOTS 9
+#define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
+#define NPY_DT_MAX_ARRFUNCS_SLOT \
+  NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
+
 
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
@@ -69,6 +75,7 @@ typedef struct {
 #define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)
 #define NPY_DT_is_abstract(dtype) (((dtype)->flags & NPY_DT_ABSTRACT) != 0)
 #define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
+#define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
 #define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
 
 /*

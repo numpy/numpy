@@ -106,6 +106,17 @@ class TestPutMask:
         assert_array_equal(arr[mask], vals[:len(mask)][mask])
         assert_array_equal(arr[~mask], zeros[~mask])
 
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
+    @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+    def test_empty(self, dtype, mode):
+        arr = np.zeros(1000, dtype=dtype)
+        arr_copy = arr.copy()
+        mask = np.random.randint(2, size=1000).astype(bool)
+
+        # Allowing empty values like this is weird...
+        np.put(arr, mask, [])
+        assert_array_equal(arr, arr_copy)
+
 
 class TestPut:
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
@@ -142,3 +153,13 @@ class TestPut:
         untouched = np.ones(len(arr), dtype=bool)
         untouched[indx] = False
         assert_array_equal(arr[untouched], zeros[:untouched.sum()])
+
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
+    @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+    def test_empty(self, dtype, mode):
+        arr = np.zeros(1000, dtype=dtype)
+        arr_copy = arr.copy()
+
+        # Allowing empty values like this is weird...
+        np.put(arr, [1, 2, 3], [])
+        assert_array_equal(arr, arr_copy)

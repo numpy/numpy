@@ -161,6 +161,7 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->common_instance = NULL;
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
@@ -171,26 +172,29 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if (slot > _NPY_NUM_DTYPE_PYARRAY_ARRFUNC_SLOTS || slot < 0) {
+        if ((slot < 0) ||
+            ((slot > NPY_NUM_DTYPE_SLOTS) &&
+             (slot <= _NPY_DT_ARRFUNCS_OFFSET)) ||
+            (slot > NPY_DT_MAX_ARRFUNCS_SLOT)) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
         }
         /*
-         * It is up to the user to get this right, and slots are sorted
-         * exactly like they are stored right now:
+         * It is up to the user to get this right, the slots in the public API
+         * are sorted exactly like they are stored in the NPY_DT_Slots struct
+         * right now:
          */
-        if (slot <= _NPY_NUM_DTYPE_SLOTS) {
-            // slot > 8 are PyArray_ArrFuncs
+        if (slot <= NPY_NUM_DTYPE_SLOTS) {
+            // slot > NPY_NUM_DTYPE_SLOTS are PyArray_ArrFuncs
             void **current = (void **)(&(
                     NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
             current += slot - 1;
             *current = pfunc;
         }
         else {
-            // Remove PyArray_ArrFuncs offset
-            int f_slot = slot - (1 << 10);
-            if (1 <= f_slot && f_slot <= 22) {
+            int f_slot = slot - _NPY_DT_ARRFUNCS_OFFSET;
+            if (1 <= f_slot && f_slot <= NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS) {
                 switch (f_slot) {
                     case 1:
                         NPY_DT_SLOTS(DType)->f.getitem = pfunc;
@@ -290,6 +294,7 @@ PyArrayInitDTypeMeta_FromSpec(
             return -1;
         }
     }
+
     /* invalid type num. Ideally, we get away with it! */
     DType->type_num = -1;
 

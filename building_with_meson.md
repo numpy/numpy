@@ -9,8 +9,14 @@ into a problem._
 
 **Install build tools:** Use one of:
 
-- `mamba create -f environment.yml
-- `pip install -r build_requirements.txt  # also make sure you have pkg-config and the usual system dependencies for NumPy`
+- `mamba env create -f environment.yml && mamba activate numpy-dev
+
+- `python -m pip install -r build_requirements.txt
+  # also make sure you have pkg-config and the usual system dependencies for
+  # NumPy`
+
+Then install devpy:
+- `python -m pip install git+https://github.com/scientific-python/devpy`
 
 **Compile and install:** `./dev.py build`
 

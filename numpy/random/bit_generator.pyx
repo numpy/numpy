@@ -212,6 +212,9 @@ class ISpawnableSeedSequence(ISeedSequence):
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -451,6 +454,9 @@ cdef class SeedSequence():
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -458,6 +464,12 @@ cdef class SeedSequence():
         Returns
         -------
         seqs : list of `SeedSequence` s
+
+        See Also
+        --------
+        random.Generator.spawn, random.BitGenerator.spawn :
+            Equivalent method on the generator and bit generator.
+
         """
         cdef uint32_t i
 
@@ -550,6 +562,53 @@ cdef class BitGenerator():
     @state.setter
     def state(self, value):
         raise NotImplementedError('Not implemented in base BitGenerator')
+
+    @property
+    def seed_seq(self):
+        """
+        Get the seed sequence used to initialize the bit generator.
+
+        .. versionadded:: 1.25.0
+
+        Returns
+        -------
+        seed_seq : ISeedSequence
+            The SeedSequence object used to initialize the BitGenerator.
+            This is normally a `np.random.SeedSequence` instance.
+
+        """
+        return self._seed_seq
+
+    def spawn(self, int n_children):
+        """
+        Create new independent child bit generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.  Some bit generators also implement ``jumped``
+        as a different approach for creating independent streams.
+
+        .. versionadded:: 1.25.0
+
+        Returns
+        -------
+        child_bit_generators : list of BitGenerators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.Generator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the generator and seed sequence.
+
+        """
+        if not isinstance(self._seed_seq, ISpawnableSeedSequence):
+            raise TypeError(
+                "The underlying SeedSequence does not implement spawning.")
+
+        return [type(self)(seed=s) for s in self._seed_seq.spawn(n_children)]
 
     def random_raw(self, size=None, output=True):
         """

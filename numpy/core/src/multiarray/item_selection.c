@@ -22,6 +22,7 @@
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "refcount.h"
 
 #include "npy_sort.h"
 #include "npy_partition.h"
@@ -356,6 +357,12 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     int copied = 0;
     int overlap = 0;
 
+    NPY_BEGIN_THREADS_DEF;
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+
+    NPY_cast_info_init(&cast_info);
+
     indices = NULL;
     values = NULL;
     if (!PyArray_Check(self)) {
@@ -403,14 +410,6 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     dest = PyArray_DATA(self);
     itemsize = PyArray_DESCR(self)->elsize;
 
-    NPY_BEGIN_THREADS_DEF;
-    NPY_cast_info cast_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
-    const npy_intp one = 1;
-    const npy_intp strides[2] = {itemsize, itemsize};
-
-    NPY_cast_info_init(&cast_info);
-
     int has_references = PyDataType_REFCHK(PyArray_DESCR(self));
 
     if (!has_references) {
@@ -431,6 +430,9 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 
 
     if (has_references) {
+        const npy_intp one = 1;
+        const npy_intp strides[2] = {itemsize, itemsize};
+
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
@@ -711,7 +713,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         if (PyArray_GetDTypeTransferFunction(
                 PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
                 &cast_info, &flags) < 0) {
-            return NULL;
+            goto fail;
         }
         if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_BEGIN_THREADS;
@@ -727,10 +729,12 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         &cast_info.context, data, &one, strides,
                         cast_info.auxdata) < 0) {
                     NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
                     goto fail;
                 }
             }
         }
+        NPY_cast_info_xfree(&cast_info);
     }
     else {
         NPY_BEGIN_THREADS;
@@ -1067,6 +1071,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             ret = -1;
             goto fail;
         }
+        if (PyDataType_FLAGCHK(PyArray_DESCR(op), NPY_NEEDS_INIT)) {
+            memset(buffer, 0, N * elsize);
+        }
     }
 
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
@@ -1111,16 +1118,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         }
 
         if (needcopy) {
-            if (hasrefs) {
-                if (swap) {
-                    copyswapn(buffer, elsize, NULL, 0, N, swap, op);
-                }
-                _unaligned_strided_byte_copy(it->dataptr, astride,
-                                             buffer, elsize, N, elsize);
-            }
-            else {
-                copyswapn(it->dataptr, astride, buffer, elsize, N, swap, op);
-            }
+            copyswapn(it->dataptr, astride, buffer, elsize, N, swap, op);
         }
 
         PyArray_ITER_NEXT(it);
@@ -1129,7 +1127,10 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     /* cleanup internal buffer */
-    PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
+    if (needcopy) {
+        PyArray_ClearBuffer(PyArray_DESCR(op), buffer, elsize, N, 1);
+        PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
+    }
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
@@ -1202,6 +1203,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
+        }
+        if (PyDataType_FLAGCHK(PyArray_DESCR(op), NPY_NEEDS_INIT)) {
+            memset(valbuffer, 0, N * elsize);
         }
     }
 
@@ -1278,7 +1282,10 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     /* cleanup internal buffers */
-    PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
+    if (needcopy) {
+        PyArray_ClearBuffer(PyArray_DESCR(op), valbuffer, elsize, N, 1);
+        PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
+    }
     PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
         if (!PyErr_Occurred()) {

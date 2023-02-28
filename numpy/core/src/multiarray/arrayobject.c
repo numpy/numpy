@@ -455,7 +455,9 @@ array_dealloc(PyArrayObject *self)
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free any internal references */
         if (PyDataType_REFCHK(fa->descr)) {
-            PyArray_ClearArray(self);
+            if (PyArray_ClearArray(self) < 0) {
+                PyErr_WriteUnraisable(NULL);
+            }
         }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");

@@ -2116,19 +2116,26 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-    def test_sort_structured(self):
+    @pytest.mark.parametrize("dt", [
+            np.dtype([('f', float), ('i', int)]),
+            np.dtype([('f', float), ('i', object)])])
+    @pytest.mark.parametrize("step", [1, 2])
+    def test_sort_structured(self, dt, step):
         # test record array sorts.
-        dt = np.dtype([('f', float), ('i', int)])
-        a = np.array([(i, i) for i in range(101)], dtype=dt)
+        a = np.array([(i, i) for i in range(101*step)], dtype=dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
             msg = "kind=%s" % kind
-            c = a.copy()
+            c = a.copy()[::step]
+            indx = c.argsort(kind=kind)
             c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
+            assert_equal(c, a[::step], msg)
+            assert_equal(a[::step][indx], a[::step], msg)
+            c = b.copy()[::step]
+            indx = c.argsort(kind=kind)
             c.sort(kind=kind)
-            assert_equal(c, a, msg)
+            assert_equal(c, a[step-1::step], msg)
+            assert_equal(b[::step][indx], a[step-1::step], msg)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     def test_sort_time(self, dtype):

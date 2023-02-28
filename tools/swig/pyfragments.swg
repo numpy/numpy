@@ -52,6 +52,7 @@
     }
 %#endif
     if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
+    if (!val) return SWIG_OK;
     PyArray_Descr * longDescr = PyArray_DescrFromType(NPY_LONG);
     PyArray_CastScalarToCtype(obj, (void*)val, longDescr);
     Py_DECREF(longDescr);
@@ -102,6 +103,7 @@
     }
 %#endif
     if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
+    if (!val) return SWIG_OK;
     PyArray_Descr * ulongDescr = PyArray_DescrFromType(NPY_ULONG);
     PyArray_CastScalarToCtype(obj, (void*)val, ulongDescr);
     Py_DECREF(ulongDescr);
