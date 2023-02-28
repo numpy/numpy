@@ -20,11 +20,6 @@ _T_co = TypeVar("_T_co", covariant=True)
 class _NestedSequence(Protocol[_T_co]):
     """A protocol for representing nested sequences.
 
-    Warning
-    -------
-    `_NestedSequence` currently does not work in combination with typevars,
-    *e.g.* ``def func(a: _NestedSequnce[T]) -> T: ...``.
-
     See Also
     --------
     collections.abc.Sequence
