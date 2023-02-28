@@ -686,6 +686,7 @@ create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit)
     return create_datetime_dtype(type_num, &meta);
 }
 
+/*NUMPY_API
 /*
  * This function returns a pointer to the DateTimeMetaData
  * contained within the provided datetime dtype.
@@ -3913,7 +3914,8 @@ datetime_to_timedelta_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
