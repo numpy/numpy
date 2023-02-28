@@ -1429,7 +1429,7 @@ def dtype_is_implied(dtype):
     if dtype.names is not None:
         return False
     
-    if dtype.byteorder != '=' and dtype.itemsize != 1:
+    if not dtype.isnative:
         return False # should care about endianness *unless size is 1* (e.g., int8, bool)
 
     return dtype.type in _typelessdata
@@ -1456,7 +1456,7 @@ def dtype_short_repr(dtype):
         return "'%s'" % str(dtype)
 
     typename = dtype.name
-    if dtype.itemsize != 1 and dtype.byteorder != '=':
+    if not dtype.isnative:
         # deal with cases like dtype('<u2') that are identical to an established dtype
         # (in this case uint16) except that they have a different endianness.
         return repr(dtype.descr[0][1])

@@ -816,6 +816,8 @@ class TestPrintOptions:
             ('float16', '>e'),
             ('float32', '>f'),
             ('float64', '>d'),
+            ('<U', '>U'), # string
+            ('<U1', '>U1'), # 4-byte width string
         ]
         for little_end, big_end in dtype_combos:
             big_dtype = np.dtype(big_end)
