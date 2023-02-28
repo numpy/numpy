@@ -48,7 +48,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000f - 1.22.x
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
-C_API_VERSION = 0x00000010
+# 0x00000011 - 1.25.x
+C_API_VERSION = 0x00000011
 
 class MismatchCAPIError(ValueError):
     pass

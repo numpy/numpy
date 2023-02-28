@@ -686,7 +686,6 @@ create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit)
     return create_datetime_dtype(type_num, &meta);
 }
 
-/*NUMPY_API
 /*
  * This function returns a pointer to the DateTimeMetaData
  * contained within the provided datetime dtype.
