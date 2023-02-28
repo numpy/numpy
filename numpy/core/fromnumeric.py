@@ -3280,8 +3280,6 @@ def around(a, decimals=0, out=None):
     Notes
     -----
     `~numpy.round` is often used as an alias for `~numpy.around`.
-    `~np.round_` is another alias of `~numpy.around`. Its use is
-    not recommended.
     
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
@@ -3759,8 +3757,6 @@ def round_(a, decimals=0, out=None):
     """
     Round an array to the given number of decimals.
 
-    Notes
-    --------
     `~numpy.round_` is a disrecommended backwards-compatibility
     alias of `~numpy.around` and `~numpy.round`.
 
