@@ -254,6 +254,8 @@ from numpy.core.fromnumeric import (
     any as any,
     cumsum as cumsum,
     ptp as ptp,
+    max as max,
+    min as min,
     amax as amax,
     amin as amin,
     prod as prod,
@@ -669,8 +671,6 @@ test: PytestTester
 
 # Some of these are aliases; others are wrappers with an identical signature
 round_ = around
-max = amax
-min = amin
 product = prod
 cumproduct = cumprod
 sometrue = any

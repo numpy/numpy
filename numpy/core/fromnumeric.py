@@ -6,6 +6,7 @@ import types
 import warnings
 
 import numpy as np
+from .._utils import set_module
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
@@ -20,6 +21,7 @@ __all__ = [
     'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+    'max', 'min',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
@@ -2695,13 +2697,14 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
-def _amax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
-                     where=None):
+def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                    where=None):
     return (a, out)
 
 
-@array_function_dispatch(_amax_dispatcher)
-def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+@array_function_dispatch(_max_dispatcher)
+@set_module('numpy')
+def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
@@ -2729,7 +2732,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
-        passed through to the `amax` method of sub-classes of
+        passed through to the ``max`` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
@@ -2748,7 +2751,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Returns
     -------
-    amax : ndarray or scalar
+    max : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
         ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
@@ -2775,9 +2778,9 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     corresponding max value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmax.
 
-    Don't use `amax` for element-wise comparison of 2 arrays; when
+    Don't use `~numpy.max` for element-wise comparison of 2 arrays; when
     ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than
-    ``amax(a, axis=0)``.
+    ``max(a, axis=0)``.
 
     Examples
     --------
@@ -2785,19 +2788,19 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> a
     array([[0, 1],
            [2, 3]])
-    >>> np.amax(a)           # Maximum of the flattened array
+    >>> np.max(a)           # Maximum of the flattened array
     3
-    >>> np.amax(a, axis=0)   # Maxima along the first axis
+    >>> np.max(a, axis=0)   # Maxima along the first axis
     array([2, 3])
-    >>> np.amax(a, axis=1)   # Maxima along the second axis
+    >>> np.max(a, axis=1)   # Maxima along the second axis
     array([1, 3])
-    >>> np.amax(a, where=[False, True], initial=-1, axis=0)
+    >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
-    >>> np.amax(b)
+    >>> np.max(b)
     nan
-    >>> np.amax(b, where=~np.isnan(b), initial=-1)
+    >>> np.max(b, where=~np.isnan(b), initial=-1)
     4.0
     >>> np.nanmax(b)
     4.0
@@ -2805,14 +2808,14 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     You can use an initial value to compute the maximum of an empty slice, or
     to initialize it to a different value:
 
-    >>> np.amax([[-50], [10]], axis=-1, initial=0)
+    >>> np.max([[-50], [10]], axis=-1, initial=0)
     array([ 0, 10])
 
     Notice that the initial value is used as one of the elements for which the
     maximum is determined, unlike for the default argument Python's max
     function, which is only used for empty iterables.
 
-    >>> np.amax([5], initial=6)
+    >>> np.max([5], initial=6)
     6
     >>> max([5], default=6)
     5
@@ -2821,14 +2824,31 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims=keepdims, initial=initial, where=where)
 
 
-def _amin_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
-                     where=None):
+@array_function_dispatch(_max_dispatcher)
+def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+         where=np._NoValue):
+    """
+    Return the maximum of an array or maximum along an axis.
+
+    `amax` is an alias of `~numpy.max`.
+
+    See Also
+    --------
+    max : alias of this function
+    ndarray.max : equivalent method
+    """
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out,
+                          keepdims=keepdims, initial=initial, where=where)
+
+
+def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                    where=None):
     return (a, out)
 
 
-@array_function_dispatch(_amin_dispatcher)
-def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
-         where=np._NoValue):
+@array_function_dispatch(_min_dispatcher)
+def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+        where=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -2855,7 +2875,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
-        passed through to the `amin` method of sub-classes of
+        passed through to the ``min`` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
@@ -2874,7 +2894,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Returns
     -------
-    amin : ndarray or scalar
+    min : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
         ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
@@ -2901,9 +2921,9 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     corresponding min value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmin.
 
-    Don't use `amin` for element-wise comparison of 2 arrays; when
+    Don't use `~numpy.min` for element-wise comparison of 2 arrays; when
     ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than
-    ``amin(a, axis=0)``.
+    ``min(a, axis=0)``.
 
     Examples
     --------
@@ -2911,25 +2931,25 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> a
     array([[0, 1],
            [2, 3]])
-    >>> np.amin(a)           # Minimum of the flattened array
+    >>> np.min(a)           # Minimum of the flattened array
     0
-    >>> np.amin(a, axis=0)   # Minima along the first axis
+    >>> np.min(a, axis=0)   # Minima along the first axis
     array([0, 1])
-    >>> np.amin(a, axis=1)   # Minima along the second axis
+    >>> np.min(a, axis=1)   # Minima along the second axis
     array([0, 2])
-    >>> np.amin(a, where=[False, True], initial=10, axis=0)
+    >>> np.min(a, where=[False, True], initial=10, axis=0)
     array([10,  1])
 
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
-    >>> np.amin(b)
+    >>> np.min(b)
     nan
-    >>> np.amin(b, where=~np.isnan(b), initial=10)
+    >>> np.min(b, where=~np.isnan(b), initial=10)
     0.0
     >>> np.nanmin(b)
     0.0
 
-    >>> np.amin([[-50], [10]], axis=-1, initial=0)
+    >>> np.min([[-50], [10]], axis=-1, initial=0)
     array([-50,   0])
 
     Notice that the initial value is used as one of the elements for which the
@@ -2938,10 +2958,27 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Notice that this isn't the same as Python's ``default`` argument.
 
-    >>> np.amin([6], initial=5)
+    >>> np.min([6], initial=5)
     5
     >>> min([6], default=5)
     6
+    """
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out,
+                          keepdims=keepdims, initial=initial, where=where)
+
+
+@array_function_dispatch(_min_dispatcher)
+def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+         where=np._NoValue):
+    """
+    Return the minimum of an array or minimum along an axis.
+
+    `amin` is an alias of `~numpy.min`.
+
+    See Also
+    --------
+    min : alias of this function
+    ndarray.min : equivalent method
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims=keepdims, initial=initial, where=where)
