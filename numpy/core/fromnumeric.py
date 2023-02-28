@@ -3748,13 +3748,17 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
-# Aliases of other functions. These have their own definitions only so that
-# they can have unique docstrings.
+# Aliases of other functions. Provided unique docstrings 
+# are reference purposes only. Wherever possible,
+# avoid using them.
 
 @array_function_dispatch(_around_dispatcher)
 def round_(a, decimals=0, out=None):
     """
     Round an array to the given number of decimals.
+
+    `~numpy.round_` is a disrecommended backwards-compatibility
+    alias of `~numpy.around` and `~numpy.round`.
 
     See Also
     --------
