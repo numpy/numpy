@@ -72,8 +72,8 @@ _ArrayLike = Union[
 _DualArrayLike = Union[
     _SupportsArray[_DType],
     _NestedSequence[_SupportsArray[_DType]],
-    _T,
-    _NestedSequence[_T],
+    Union[_SupportsArray[_DType], _T],
+    _NestedSequence[Union[_SupportsArray[_DType], _T]]
 ]
 
 # TODO: support buffer protocols once
