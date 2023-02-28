@@ -261,6 +261,7 @@ from numpy.core.fromnumeric import (
     ndim as ndim,
     size as size,
     around as around,
+    round as round,
     mean as mean,
     std as std,
     var as var,
@@ -667,7 +668,6 @@ test: PytestTester
 # Placeholders for classes
 
 # Some of these are aliases; others are wrappers with an identical signature
-round = around
 round_ = around
 max = amax
 min = amin

@@ -39,6 +39,7 @@ Rounding
 .. autosummary::
    :toctree: generated/
 
+   round
    around
    rint
    fix

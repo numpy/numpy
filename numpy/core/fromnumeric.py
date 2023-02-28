@@ -3238,12 +3238,12 @@ def size(a, axis=None):
             return asarray(a).shape[axis]
 
 
-def _around_dispatcher(a, decimals=None, out=None):
+def _round_dispatcher(a, decimals=None, out=None):
     return (a, out)
 
 
-@array_function_dispatch(_around_dispatcher)
-def around(a, decimals=0, out=None):
+@array_function_dispatch(_round_dispatcher)
+def round(a, decimals=0, out=None):
     """
     Evenly round to the given number of decimals.
 
@@ -3274,18 +3274,17 @@ def around(a, decimals=0, out=None):
     See Also
     --------
     ndarray.round : equivalent method
+    around : an alias for this function
     ceil, fix, floor, rint, trunc
 
 
     Notes
     -----
-    `~numpy.round` is often used as an alias for `~numpy.around`.
-    
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
     -0.5 and 0.5 round to 0.0, etc.
 
-    ``np.around`` uses a fast but sometimes inexact algorithm to round
+    ``np.round`` uses a fast but sometimes inexact algorithm to round
     floating-point datatypes. For positive `decimals` it is equivalent to
     ``np.true_divide(np.rint(a * 10**decimals), 10**decimals)``, which has
     error due to the inexact representation of decimal fractions in the IEEE
@@ -3322,22 +3321,36 @@ def around(a, decimals=0, out=None):
 
     Examples
     --------
-    >>> np.around([0.37, 1.64])
+    >>> np.round([0.37, 1.64])
     array([0., 2.])
-    >>> np.around([0.37, 1.64], decimals=1)
+    >>> np.round([0.37, 1.64], decimals=1)
     array([0.4, 1.6])
-    >>> np.around([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
+    >>> np.round([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
     array([0., 2., 2., 4., 4.])
-    >>> np.around([1,2,3,11], decimals=1) # ndarray of ints is returned
+    >>> np.round([1,2,3,11], decimals=1) # ndarray of ints is returned
     array([ 1,  2,  3, 11])
-    >>> np.around([1,2,3,11], decimals=-1)
+    >>> np.round([1,2,3,11], decimals=-1)
     array([ 0,  0,  0, 10])
 
     """
     return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
-round = around
+@array_function_dispatch(_round_dispatcher)
+def around(a, decimals=0, out=None):
+    """
+    Round an array to the given number of decimals.
+
+    `around` is an alias of `~numpy.round`.
+
+    See Also
+    --------
+    ndarray.round : equivalent method
+    round : alias for this function
+    ceil, fix, floor, rint, trunc
+
+    """
+    return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
 def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None, *,
@@ -3755,7 +3768,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 # are reference purposes only. Wherever possible,
 # avoid using them.
 
-@array_function_dispatch(_around_dispatcher)
+@array_function_dispatch(_round_dispatcher)
 def round_(a, decimals=0, out=None):
     """
     Round an array to the given number of decimals.
