@@ -31,6 +31,8 @@ using std::int64_t;
 using std::uintptr_t;
 using std::intptr_t;
 using std::complex;
+using std::uint_fast16_t;
+using std::uint_fast32_t;
 
 /** Guard for long double.
  *
