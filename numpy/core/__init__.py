@@ -92,7 +92,7 @@ from . import einsumfunc
 from .einsumfunc import *
 del nt
 
-from .fromnumeric import amax as max, amin as min, round_ as round
+from .fromnumeric import amax as max, amin as min
 from .numeric import absolute as abs
 
 # do this after everything else, to minimize the chance of this misleadingly

@@ -21,7 +21,7 @@ __all__ = [
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'ravel', 'repeat', 'reshape', 'resize', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -3337,6 +3337,9 @@ def around(a, decimals=0, out=None):
     return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
+round = around
+
+
 def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None, *,
                      where=None):
     return (a, where, out)
@@ -3760,10 +3763,17 @@ def round_(a, decimals=0, out=None):
     `~numpy.round_` is a disrecommended backwards-compatibility
     alias of `~numpy.around` and `~numpy.round`.
 
+    .. deprecated:: 1.25.0
+        ``round_`` is deprecated as of NumPy 1.25.0, and will be
+        removed in NumPy 2.0. Please use `round` instead.
+
     See Also
     --------
     around : equivalent function; see for details.
     """
+    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `round` instead.",
+                  DeprecationWarning, stacklevel=2)
     return around(a, decimals=decimals, out=out)
 
 

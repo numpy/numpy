@@ -901,3 +901,9 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
     # Deprecated in NumPy 1.25, 2023-01-16
     def test_deprecated_none(self):
         self.assert_deprecated(np.finfo, args=(None,))
+
+
+class TestRound_(_DeprecationTestCase):
+    # 2023-02-28, 1.25.0
+    def test_round_(self):
+        self.assert_deprecated(lambda: np.round_(np.array([1.5, 2.5, 3.5])))
