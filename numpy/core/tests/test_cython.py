@@ -139,15 +139,16 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(np.uint64(1))
 
 
+
 def test_convert_datetime_to_datetimestruct(install_temp):
     # GH#21199
     import checks
 
     res = checks.convert_datetime_to_datetimestruct()
 
-    exp = {"year": 2022, "month": 3, "day": 15, "hour": 20, "minute": 2}
+    exp = {"year": 2022, "month": 3, "day": 15, "hour": 20, "min": 1, "sec": 55, "us": 260292, "ps": 0, "as": 0}
 
-    assert res == exp  # FIXME: need to get seconds/microseconds into "exp"
+    assert res == exp
 
 
 class TestDatetimeStrings:
@@ -157,11 +158,11 @@ class TestDatetimeStrings:
         dt = datetime(2016, 6, 2, 10, 45, 19)
         # uses NPY_FR_s
         result = checks.make_iso_8601_datetime(dt)
-        assert result == "2016-05-02 10:45:19"
+        assert result == b"2016-06-02T10:45:19"
 
     def test_get_datetime_iso_8601_strlen(self, install_temp):
         # GH#21199
         import checks
         # uses NPY_FR_ns
         res = checks.get_datetime_iso_8601_strlen()
-        assert len(res) == 9
+        assert res == 48
