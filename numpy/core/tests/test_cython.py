@@ -139,7 +139,6 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(np.uint64(1))
 
 
-
 def test_convert_datetime_to_datetimestruct(install_temp):
     # GH#21199
     import checks
