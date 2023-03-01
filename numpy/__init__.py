@@ -221,7 +221,7 @@ else:
 
     del _msg, _type_info
 
-    from .core import round, abs, max, min
+    from .core import abs
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 

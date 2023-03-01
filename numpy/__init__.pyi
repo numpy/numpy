@@ -254,6 +254,8 @@ from numpy.core.fromnumeric import (
     any as any,
     cumsum as cumsum,
     ptp as ptp,
+    max as max,
+    min as min,
     amax as amax,
     amin as amin,
     prod as prod,
@@ -261,6 +263,7 @@ from numpy.core.fromnumeric import (
     ndim as ndim,
     size as size,
     around as around,
+    round as round,
     mean as mean,
     std as std,
     var as var,
@@ -667,10 +670,7 @@ test: PytestTester
 # Placeholders for classes
 
 # Some of these are aliases; others are wrappers with an identical signature
-round = around
 round_ = around
-max = amax
-min = amin
 product = prod
 cumproduct = cumprod
 sometrue = any

@@ -387,8 +387,8 @@ class TestConcatenator:
         # Tests mr_ on 2D arrays.
         a_1 = np.random.rand(5, 5)
         a_2 = np.random.rand(5, 5)
-        m_1 = np.round_(np.random.rand(5, 5), 0)
-        m_2 = np.round_(np.random.rand(5, 5), 0)
+        m_1 = np.round(np.random.rand(5, 5), 0)
+        m_2 = np.round(np.random.rand(5, 5), 0)
         b_1 = masked_array(a_1, mask=m_1)
         b_2 = masked_array(a_2, mask=m_2)
         # append columns
