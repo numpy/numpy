@@ -1336,16 +1336,16 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.sum(x, axis=0), sum(x, axis=0))
         assert_equal(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0))
         assert_equal(np.sum(x, 0), sum(x, 0))
-        assert_equal(np.product(x, axis=0), product(x, axis=0))
-        assert_equal(np.product(x, 0), product(x, 0))
-        assert_equal(np.product(filled(xm, 1), axis=0), product(xm, axis=0))
+        assert_equal(np.prod(x, axis=0), product(x, axis=0))
+        assert_equal(np.prod(x, 0), product(x, 0))
+        assert_equal(np.prod(filled(xm, 1), axis=0), product(xm, axis=0))
         s = (3, 4)
         x.shape = y.shape = xm.shape = ym.shape = s
         if len(s) > 1:
             assert_equal(np.concatenate((x, y), 1), concatenate((xm, ym), 1))
             assert_equal(np.add.reduce(x, 1), add.reduce(x, 1))
             assert_equal(np.sum(x, 1), sum(x, 1))
-            assert_equal(np.product(x, 1), product(x, 1))
+            assert_equal(np.prod(x, 1), product(x, 1))
 
     def test_binops_d2D(self):
         # Test binary operations on 2D data

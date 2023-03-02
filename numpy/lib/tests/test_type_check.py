@@ -155,7 +155,7 @@ class TestIscomplex:
     def test_fail(self):
         z = np.array([-1, 0, 1])
         res = iscomplex(z)
-        assert_(not np.sometrue(res, axis=0))
+        assert_(not np.any(res, axis=0))
 
     def test_pass(self):
         z = np.array([-1j, 1, 0])
