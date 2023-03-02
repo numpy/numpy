@@ -3832,10 +3832,17 @@ def product(*args, **kwargs):
     """
     Return the product of array elements over a given axis.
 
+    .. deprecated:: 1.25.0
+        ``product`` is deprecated as of NumPy 1.25.0, and will be
+        removed in NumPy 2.0. Please use `prod` instead.
+
     See Also
     --------
     prod : equivalent function; see for details.
     """
+    warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `prod` instead.",
+                  DeprecationWarning, stacklevel=2)
     return prod(*args, **kwargs)
 
 
@@ -3844,10 +3851,17 @@ def cumproduct(*args, **kwargs):
     """
     Return the cumulative product over the given axis.
 
+    .. deprecated:: 1.25.0
+        ``cumproduct`` is deprecated as of NumPy 1.25.0, and will be
+        removed in NumPy 2.0. Please use `cumprod` instead.
+
     See Also
     --------
     cumprod : equivalent function; see for details.
     """
+    warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `cumprod` instead.",
+                  DeprecationWarning, stacklevel=2)
     return cumprod(*args, **kwargs)
 
 
@@ -3858,10 +3872,17 @@ def sometrue(*args, **kwargs):
 
     Refer to `any` for full documentation.
 
+    .. deprecated:: 1.25.0
+        ``sometrue`` is deprecated as of NumPy 1.25.0, and will be
+        removed in NumPy 2.0. Please use `any` instead.
+
     See Also
     --------
     any : equivalent function; see for details.
     """
+    warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `any` instead.",
+                  DeprecationWarning, stacklevel=2)
     return any(*args, **kwargs)
 
 
@@ -3870,8 +3891,15 @@ def alltrue(*args, **kwargs):
     """
     Check if all elements of input array are true.
 
+    .. deprecated:: 1.25.0
+        ``alltrue`` is deprecated as of NumPy 1.25.0, and will be
+        removed in NumPy 2.0. Please use `all` instead.
+
     See Also
     --------
     numpy.all : Equivalent function; see for details.
     """
+    warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `all` instead.",
+                  DeprecationWarning, stacklevel=2)
     return all(*args, **kwargs)
