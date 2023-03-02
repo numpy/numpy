@@ -418,9 +418,12 @@ class TestIx_:
         sample_bool_a = np.array([True, False, True])
         sample_int = 4
 
+        transformed_bool_a = np.flatnonzero(sample_bool_a)
+        transformed_int = np.arange(sample_int)
+
         expected_int_a = sample_int_a[:, np.newaxis, np.newaxis]
-        expected_bool_a = np.flatnonzero(sample_bool_a)[np.newaxis, :, np.newaxis]
-        expected_int = np.arange(sample_int)[np.newaxis, np.newaxis, :]
+        expected_bool_a = transformed_bool_a[np.newaxis, :, np.newaxis]
+        expected_int = transformed_int[np.newaxis, np.newaxis, :]
 
         arrays = np.ix_(sample_int_a, sample_bool_a, sample_int)
         assert_equal(arrays[0], expected_int_a)
