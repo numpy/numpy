@@ -3821,6 +3821,7 @@ def round_(a, decimals=0, out=None):
     --------
     around : equivalent function; see for details.
     """
+    # 2023-02-28, 1.25.0
     warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
                   "removed in NumPy 2.0. Please use `round` instead.",
                   DeprecationWarning, stacklevel=2)
@@ -3840,6 +3841,7 @@ def product(*args, **kwargs):
     --------
     prod : equivalent function; see for details.
     """
+    # 2023-03-02, 1.25.0
     warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
                   "removed in NumPy 2.0. Please use `prod` instead.",
                   DeprecationWarning, stacklevel=2)
@@ -3859,6 +3861,7 @@ def cumproduct(*args, **kwargs):
     --------
     cumprod : equivalent function; see for details.
     """
+    # 2023-03-02, 1.25.0
     warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
                   "removed in NumPy 2.0. Please use `cumprod` instead.",
                   DeprecationWarning, stacklevel=2)
@@ -3880,6 +3883,7 @@ def sometrue(*args, **kwargs):
     --------
     any : equivalent function; see for details.
     """
+    # 2023-03-02, 1.25.0
     warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
                   "removed in NumPy 2.0. Please use `any` instead.",
                   DeprecationWarning, stacklevel=2)
@@ -3899,6 +3903,7 @@ def alltrue(*args, **kwargs):
     --------
     numpy.all : Equivalent function; see for details.
     """
+    # 2023-03-02, 1.25.0
     warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
                   "removed in NumPy 2.0. Please use `all` instead.",
                   DeprecationWarning, stacklevel=2)
