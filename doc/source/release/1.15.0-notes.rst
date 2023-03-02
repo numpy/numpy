@@ -92,7 +92,7 @@ Deprecations
   ``np.sum(np.from_iter(generator))`` or the built-in Python ``sum`` instead.
 
 * Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
-  ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
+  ``PyArray_DiscardWritebackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before deallocating the array. A deprecation warning will be
   emitted if those calls are not used when needed.
 
