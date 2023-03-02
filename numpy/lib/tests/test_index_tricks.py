@@ -394,6 +394,10 @@ class TestIx_:
         idx2d = [[1, 2, 3], [4, 5, 6]]
         assert_raises(ValueError, np.ix_, idx2d)
 
+    def test_float(self):
+        idx_float = 1.5
+        assert_raises(ValueError, np.ix_, idx_float)
+
     def test_repeated_input(self):
         length_of_vector = 5
         x = np.arange(length_of_vector)
@@ -403,6 +407,25 @@ class TestIx_:
         # check that input shape is not modified
         assert_equal(x.shape, (length_of_vector,))
 
+    def test_int(self):
+        int_x = 3
+        expected = np.arange(int_x)
+        out, = np.ix_(int_x)
+        assert_equal(out, expected)
+
+    def test_all_dtypes(self):
+        sample_int_a = np.array([2, 5])
+        sample_bool_a = np.array([True, False, True])
+        sample_int = 4
+
+        expected_int_a = sample_int_a[:, np.newaxis, np.newaxis]
+        expected_bool_a = np.flatnonzero(sample_bool_a)[np.newaxis, :, np.newaxis]
+        expected_int = np.arange(sample_int)[np.newaxis, np.newaxis, :]
+
+        arrays = np.ix_(sample_int_a, sample_bool_a, sample_int)
+        assert_equal(arrays[0], expected_int_a)
+        assert_equal(arrays[1], expected_bool_a)
+        assert_equal(arrays[2], expected_int)
 
 def test_c_():
     a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]

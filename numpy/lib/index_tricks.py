@@ -48,11 +48,13 @@ def ix_(*args):
 
     Parameters
     ----------
-    args : 1-D sequences
-        Each sequence should be of integer or boolean type.
-        Boolean sequences will be interpreted as boolean masks for the
-        corresponding dimension (equivalent to passing in
-        ``np.nonzero(boolean_sequence)``).
+    args : sequence of 1-D sequences or ints
+        If an argument is a sequence, it should be a sequence of
+        integer or boolean type. Boolean sequences will be interpreted
+        as boolean masks for the corresponding dimension (equivalent
+        to passing in ``np.nonzero(boolean_sequence)``).
+        If an argument is an integer, it will be interpreted as
+        ``np.arange(arg)`` for the corresponding dimension.
 
     Returns
     -------
@@ -89,10 +91,25 @@ def ix_(*args):
     array([[2, 4],
            [7, 9]])
 
+    >>> ixgrid = np.ix_(3, 4)
+    >>> ixgrid
+    (array([[0],
+           [1],
+           [2]]), array([[0, 1, 2, 3]]))
+    >>> ixgrid = np.ix_(3, [2, 4])
+    >>> ixgrid
+    (array([[0],
+           [1],
+           [2]]), array([[2, 4]]))
+
     """
     out = []
     nd = len(args)
     for k, new in enumerate(args):
+        if isinstance(new, (float, complex, _nx.inexact)):
+            raise ValueError("Scalar arguments must be integers")
+        if isinstance(new, (int, _nx.integer)):
+            new = arange(new)
         if not isinstance(new, _nx.ndarray):
             new = asarray(new)
             if new.size == 0:
