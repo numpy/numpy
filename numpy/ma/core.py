@@ -7110,7 +7110,7 @@ def diag(v, k=0):
 
     Examples
     --------
-    
+
     Create an array with negative values masked:
 
     >>> import numpy as np
@@ -7521,7 +7521,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     if len(combined) > 1:
         a = np.ma.concatenate(combined, axis)
 
-    # GH 22465 np.diff without prepend/append preserves the mask 
+    # GH 22465 np.diff without prepend/append preserves the mask
     return np.diff(a, n, axis)
 
 
@@ -7752,6 +7752,21 @@ def round_(a, decimals=0, out=None):
 round = round_
 
 
+def _mask_propagate(a, axis):
+    """
+    Mask whole 1-d vectors of an array that contain masked values.
+    """
+    a = array(a, subok=False)
+    m = getmask(a)
+    if m is nomask or not m.any() or axis is None:
+        return a
+    a._mask = a._mask.copy()
+    axes = normalize_axis_tuple(axis, a.ndim)
+    for ax in axes:
+        a._mask |= m.any(axis=ax, keepdims=True)
+    return a
+
+
 # Needed by dot, so move here from extras.py. It will still be exported
 # from extras.py for compatibility.
 def mask_rowcols(a, axis=None):
@@ -7770,7 +7785,7 @@ def mask_rowcols(a, axis=None):
     ----------
     a : array_like, MaskedArray
         The array to mask.  If not a MaskedArray instance (or if no array
-        elements are masked).  The result is a MaskedArray with `mask` set
+        elements are masked), the result is a MaskedArray with `mask` set
         to `nomask` (False). Must be a 2D array.
     axis : int, optional
         Axis along which to perform the operation. If None, applies to a
@@ -7827,20 +7842,16 @@ def mask_rowcols(a, axis=None):
       fill_value=1)
 
     """
-    a = array(a, subok=False)
     if a.ndim != 2:
         raise NotImplementedError("mask_rowcols works for 2D arrays only.")
-    m = getmask(a)
-    # Nothing is masked: return a
-    if m is nomask or not m.any():
-        return a
-    maskedval = m.nonzero()
-    a._mask = a._mask.copy()
-    if not axis:
-        a[np.unique(maskedval[0])] = masked
-    if axis in [None, 1, -1]:
-        a[:, np.unique(maskedval[1])] = masked
-    return a
+
+    if axis is None:
+        return _mask_propagate(a, axis=(0, 1))
+    elif axis == 0:
+        return _mask_propagate(a, axis=1)
+    else:
+        return _mask_propagate(a, axis=0)
+
 
 
 # Include masked dot here to avoid import problems in getting it from
@@ -7855,10 +7866,6 @@ def dot(a, b, strict=False, out=None):
     than in the method version. In order to maintain compatibility with the
     corresponding method, it is recommended that the optional arguments be
     treated as keyword only.  At some point that may be mandatory.
-
-    .. note::
-      Works only with 2-D arrays at the moment.
-
 
     Parameters
     ----------
@@ -7903,18 +7910,22 @@ def dot(a, b, strict=False, out=None):
       fill_value=999999)
 
     """
-    # !!!: Works only with 2D arrays. There should be a way to get it to run
-    # with higher dimension
-    if strict and (a.ndim == 2) and (b.ndim == 2):
-        a = mask_rowcols(a, 0)
-        b = mask_rowcols(b, 1)
+    if strict is True:
+        if np.ndim(a) == 0 or np.ndim(b) == 0:
+            pass
+        elif b.ndim == 1:
+            a = _mask_propagate(a, a.ndim - 1)
+            b = _mask_propagate(b, b.ndim - 1)
+        else:
+            a = _mask_propagate(a, a.ndim - 1)
+            b = _mask_propagate(b, b.ndim - 2)
     am = ~getmaskarray(a)
     bm = ~getmaskarray(b)
 
     if out is None:
         d = np.dot(filled(a, 0), filled(b, 0))
         m = ~np.dot(am, bm)
-        if d.ndim == 0:
+        if np.ndim(d) == 0:
             d = np.asarray(d)
         r = d.view(get_masked_subclass(a, b))
         r.__setmask__(m)
