@@ -363,7 +363,7 @@ def where(condition, x=None, y=None):
         Where True, yield `x`, otherwise yield `y`.
     x, y : array_like
         Values from which to choose. `x`, `y` and `condition` need to be
-        broadcastable to some shape.
+        broadcastable to the same shape.
 
     Returns
     -------
