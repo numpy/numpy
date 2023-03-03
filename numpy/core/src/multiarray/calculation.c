@@ -7,6 +7,7 @@
 
 #include "numpy/arrayobject.h"
 #include "lowlevel_strided_loops.h"
+#include "dtypemeta.h"
 
 #include "npy_config.h"
 
@@ -50,7 +51,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     int axis_copy = axis;
     npy_intp _shape_buf[NPY_MAXDIMS];
     npy_intp *out_shape;
-    // Keep the number of dimensions and shape of 
+    // Keep the number of dimensions and shape of
     // original array. Helps when `keepdims` is True.
     npy_intp* original_op_shape = PyArray_DIMS(op);
     int out_ndim = PyArray_NDIM(op);
@@ -87,9 +88,13 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         op = ap;
     }
 
-    /* Will get native-byte order contiguous copy. */
-    ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
-                                  PyArray_DESCR(op)->type_num, 1, 0);
+    // Will get native-byte order contiguous copy.
+    PyArray_Descr *descr = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(op));
+    if (descr == NULL) {
+        return NULL;
+    }
+    ap = (PyArrayObject *)PyArray_FromArray(op, descr, NPY_ARRAY_DEFAULT);
+
     Py_DECREF(op);
     if (ap == NULL) {
         return NULL;
@@ -106,9 +111,9 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
             for (int i = 0; i < out_ndim; i++) {
                 out_shape[i] = 1;
             }
-        } 
+        }
         else {
-            /* 
+            /*
              * While `ap` may be transposed, we can ignore this for `out` because the
              * transpose only reorders the size 1 `axis` (not changing memory layout).
              */
