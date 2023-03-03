@@ -84,8 +84,8 @@ def test_get_type_hints_str(name: type, tup: TypeTup) -> None:
 
 
 def test_keys() -> None:
-    """Test that ``TYPES.keys()`` and ``numpy.typing.__all__`` are synced."""
-    keys = TYPES.keys()
+    """Test the contents of ``numpy.typing.__all__``."""
+    keys = {*TYPES.keys(), "SupportsDType"}
     ref = set(npt.__all__)
     assert keys == ref
 
