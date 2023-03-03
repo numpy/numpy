@@ -164,7 +164,7 @@ from ._shape import (
 from ._dtype_like import (
     DTypeLike as DTypeLike,
     _DTypeLike as _DTypeLike,
-    _SupportsDType as _SupportsDType,
+    SupportsDType as SupportsDType,
     _VoidDTypeLike as _VoidDTypeLike,
     _DTypeLikeBool as _DTypeLikeBool,
     _DTypeLikeUInt as _DTypeLikeUInt,

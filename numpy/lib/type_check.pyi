@@ -23,7 +23,7 @@ from numpy._typing import (
     NBitBase,
     NDArray,
     _64Bit,
-    _SupportsDType,
+    SupportsDType,
     _ScalarLike_co,
     _ArrayLike,
     _DTypeLikeComplex,
@@ -89,9 +89,9 @@ def isreal(x: _ScalarLike_co) -> bool_: ...  # type: ignore[misc]
 @overload
 def isreal(x: ArrayLike) -> NDArray[bool_]: ...
 
-def iscomplexobj(x: _SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
+def iscomplexobj(x: SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
 
-def isrealobj(x: _SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
+def isrealobj(x: SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
 
 @overload
 def nan_to_num(  # type: ignore[misc]
@@ -192,31 +192,31 @@ def typename(char: L['O']) -> L['object']: ...
 
 @overload
 def common_type(  # type: ignore[misc]
-    *arrays: _SupportsDType[dtype[
+    *arrays: SupportsDType[dtype[
         integer[Any]
     ]]
 ) -> type[floating[_64Bit]]: ...
 @overload
 def common_type(  # type: ignore[misc]
-    *arrays: _SupportsDType[dtype[
+    *arrays: SupportsDType[dtype[
         floating[_NBit1]
     ]]
 ) -> type[floating[_NBit1]]: ...
 @overload
 def common_type(  # type: ignore[misc]
-    *arrays: _SupportsDType[dtype[
+    *arrays: SupportsDType[dtype[
         integer[Any] | floating[_NBit1]
     ]]
 ) -> type[floating[_NBit1 | _64Bit]]: ...
 @overload
 def common_type(  # type: ignore[misc]
-    *arrays: _SupportsDType[dtype[
+    *arrays: SupportsDType[dtype[
         floating[_NBit1] | complexfloating[_NBit2, _NBit2]
     ]]
 ) -> type[complexfloating[_NBit1 | _NBit2, _NBit1 | _NBit2]]: ...
 @overload
 def common_type(
-    *arrays: _SupportsDType[dtype[
+    *arrays: SupportsDType[dtype[
         integer[Any] | floating[_NBit1] | complexfloating[_NBit2, _NBit2]
     ]]
 ) -> type[complexfloating[_64Bit | _NBit1 | _NBit2, _64Bit | _NBit1 | _NBit2]]: ...

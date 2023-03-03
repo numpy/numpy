@@ -160,9 +160,10 @@ from numpy._typing import (
     DTypeLike,
     NBitBase,
     NDArray,
+    SupportsDType
 )
 
-__all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+__all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray", "SupportsDType"]
 
 if __doc__ is not None:
     from numpy._typing._add_docstring import _docstrings

@@ -12,19 +12,19 @@ from typing import (
 )
 
 from numpy import dtype, ndarray, uint32, uint64
-from numpy._typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
+from numpy._typing import _ArrayLikeInt_co, _ShapeLike, SupportsDType, _UInt32Codes, _UInt64Codes
 
 _T = TypeVar("_T")
 
 _DTypeLikeUint32 = Union[
     dtype[uint32],
-    _SupportsDType[dtype[uint32]],
+    SupportsDType[dtype[uint32]],
     type[uint32],
     _UInt32Codes,
 ]
 _DTypeLikeUint64 = Union[
     dtype[uint64],
-    _SupportsDType[dtype[uint64]],
+    SupportsDType[dtype[uint64]],
     type[uint64],
     _UInt64Codes,
 ]

@@ -43,7 +43,7 @@ from numpy._typing import (
     DTypeLike,
     _DTypeLike,
     _DTypeLikeVoid,
-    _SupportsDType,
+    SupportsDType,
     _VoidDTypeLike,
 
     # Shapes
@@ -817,7 +817,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(
         cls,
-        dtype: _SupportsDType[dtype[_DTypeScalar_co]],
+        dtype: SupportsDType[dtype[_DTypeScalar_co]],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[_DTypeScalar_co]: ...
