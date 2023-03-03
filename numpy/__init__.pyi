@@ -3139,10 +3139,6 @@ infty: Final[float]
 nan: Final[float]
 pi: Final[float]
 
-CLIP: L[0]
-WRAP: L[1]
-RAISE: L[2]
-
 ERR_IGNORE: L[0]
 ERR_WARN: L[1]
 ERR_RAISE: L[2]
