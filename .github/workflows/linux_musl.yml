@@ -26,6 +26,11 @@ jobs:
       image: quay.io/pypa/musllinux_1_1_x86_64
 
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@c8454efe5d0bdefd25384362fe217428ca277d57 # v2.2.0
+      with:
+        egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
     - name: setup
       run: |
         apk update --quiet

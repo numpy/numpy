@@ -11,8 +11,13 @@ jobs:
     permissions: 
       pull-requests: write  # to add labels
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@c8454efe5d0bdefd25384362fe217428ca277d57 # v2.2.0
+      with:
+        egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
     - name: Label the PR
-      uses: gerrymanoim/pr-prefix-labeler@v3
+      uses: gerrymanoim/pr-prefix-labeler@c8062327f6de59a9ae1c19f7f07cacd0b976b6fa # v3
       continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,12 +20,17 @@ jobs:
     runs-on: windows-latest
     if: "github.repository == 'numpy/numpy'"
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@c8454efe5d0bdefd25384362fe217428ca277d57 # v2.2.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
         with:
           submodules: recursive
           fetch-depth: 0
       - name: Install Cygwin
-        uses: cygwin/cygwin-install-action@v2
+        uses: cygwin/cygwin-install-action@49f298a7ebb00d4b3ddf58000c3e78eff5fbd6b9 # v2
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
@@ -36,7 +41,7 @@ jobs:
             python39-hypothesis liblapack-devel
             gcc-fortran gcc-g++ git dash
       - name: Set Windows PATH
-        uses: egor-tensin/cleanup-path@v1
+        uses: egor-tensin/cleanup-path@39324b3c13fae7f8237b32d446b474ba9f135531 # v1
         with:
           dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash
@@ -66,7 +71,7 @@ jobs:
         run: |
           /usr/bin/python3.9 runtests.py -n
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         if: failure()
         with:
           name: numpy-cygwin-wheel

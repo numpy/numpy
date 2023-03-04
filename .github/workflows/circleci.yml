@@ -17,8 +17,13 @@ jobs:
     permissions:
       statuses: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@c8454efe5d0bdefd25384362fe217428ca277d57 # v2.2.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: GitHub Action step
-        uses: larsoner/circleci-artifacts-redirector-action@master
+        uses: larsoner/circleci-artifacts-redirector-action@590e7142d7dc855dabe2e9225fa4a5694b76b7cb # master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           artifact-path: 0/doc/build/html/index.html
