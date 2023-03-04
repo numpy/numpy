@@ -797,7 +797,6 @@ class TestPrintOptions:
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
 
-    
     @pytest.mark.parametrize(
         ['little_end', 'big_end'],
         [
@@ -834,7 +833,7 @@ class TestPrintOptions:
                  '(e.g., int32, bool, float64) '
                  'should not show dtype, but it does'))
         # only show difference if > 1 byte
-        assert_(big_end_repr != little_end_repr or big_dtype.itemsize == 1,
+        assert_(big_end_repr != little_end_repr or big_dtype.itemsize <= 1,
                 ('expected little endian repr != big endian repr, '
                 f'but {little_end_repr = }, {big_end_repr = }'))
 
