@@ -18,14 +18,40 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
           'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
           'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
-          'power', 'rad2deg', 'radians', 'real', 'reciprocal', 'remainder',
-          'right_shift', 'rint', 'round', 'sign', 'signbit', 'sin',
+          'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
+          'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
           'true_divide', 'trunc']
+arrayfuncdisp = ['real', 'round']
+
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
         print("Missing ufunc %r" % (name,))
+
+
+class ArrayFunctionDispatcher(Benchmark):
+    params = [arrayfuncdisp]
+    param_names = ['func']
+    timeout = 10
+
+    def setup(self, ufuncname):
+        np.seterr(all='ignore')
+        try:
+            self.afdn = getattr(np, ufuncname)
+        except AttributeError:
+            raise NotImplementedError()
+        self.args = []
+        for _, aarg in get_squares_().items():
+            arg = (aarg,) * 1 # no nin
+            try:
+                self.afdn(*arg)
+            except TypeError:
+                continue
+            self.args.append(arg)
+
+    def time_afdn_types(self, ufuncname):
+        [self.afdn(*arg) for arg in self.args]
 
 
 class Broadcast(Benchmark):
