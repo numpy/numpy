@@ -2,6 +2,7 @@ import numpy as np
 import random
 import os
 from functools import lru_cache
+from pathlib import Path
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!
@@ -32,6 +33,9 @@ DLPACK_TYPES = [
     'int64', 'float64',  'complex64',
     'complex128', 'bool',
 ]
+
+# Path for caching
+CACHE_ROOT = Path(__file__).resolve().parent.parent / 'env' / 'numpy_benchdata'
 
 # values which will be used to construct our sample data matrices
 # replicate 10 times to speed up initial imports of this helper
@@ -109,10 +113,6 @@ def get_indexes_rand_():
     return indexes_rand_
 
 
-CACHE_ROOT = os.path.dirname(__file__)
-CACHE_ROOT = os.path.abspath(
-    os.path.join(CACHE_ROOT, '..', 'env', 'numpy_benchdata')
-)
 
 
 @lru_cache(typed=True)
@@ -147,8 +147,8 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
     if dtype.kind in 'fc':
         cache_name += f'{int(finite)}{int(denormal)}'
     cache_name += '.bin'
-    cache_path = os.path.join(CACHE_ROOT, cache_name)
-    if os.path.exists(cache_path):
+    cache_path = CACHE_ROOT / cache_name
+    if cache_path.exists():
         return np.fromfile(cache_path, dtype)
 
     array = np.ones(size, dtype)
@@ -210,8 +210,8 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
         for start, r in enumerate(rands):
             array[start:len(r)*stride:stride] = r
 
-    if not os.path.exists(CACHE_ROOT):
-        os.mkdir(CACHE_ROOT)
+    if not CACHE_ROOT.exists():
+        CACHE_ROOT.mkdir(parents=True)
     array.tofile(cache_path)
     return array
 
