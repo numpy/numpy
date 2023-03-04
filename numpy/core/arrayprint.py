@@ -1429,8 +1429,9 @@ def dtype_is_implied(dtype):
     if dtype.names is not None:
         return False
     
+    # should care about endianness *unless size is 1* (e.g., int8, bool)
     if not dtype.isnative:
-        return False # should care about endianness *unless size is 1* (e.g., int8, bool)
+        return False
 
     return dtype.type in _typelessdata
 
@@ -1457,8 +1458,9 @@ def dtype_short_repr(dtype):
 
     typename = dtype.name
     if not dtype.isnative:
-        # deal with cases like dtype('<u2') that are identical to an established dtype
-        # (in this case uint16) except that they have a different endianness.
+        # deal with cases like dtype('<u2') that are identical to an
+        # established dtype (in this case uint16)
+        # except that they have a different endianness.
         return repr(dtype.descr[0][1])
     # quote typenames which can't be represented as python variable names
     if typename and not (typename[0].isalpha() and typename.isalnum()):

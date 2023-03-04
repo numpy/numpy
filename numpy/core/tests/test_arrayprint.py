@@ -797,14 +797,10 @@ class TestPrintOptions:
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
 
-    def test_dtype_endianness_repr(self):
-        '''
-        there was an issue where 
-        repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2')) both returned the same thing:
-        array([0], dtype=uint16)
-        even though their dtypes have different endianness.
-        '''
-        dtype_combos = [ # little-endian first, big-endian second
+    
+    @pytest.mark.parametrize(
+        ['little_end', 'big_end'],
+        [
             ('bool', 'bool'),
             ('uint8', 'u1'),
             ('uint16', '>u2'),
@@ -816,22 +812,31 @@ class TestPrintOptions:
             ('float16', '>e'),
             ('float32', '>f'),
             ('float64', '>d'),
-            ('<U', '>U'), # string
-            ('<U1', '>U1'), # 4-byte width string
-        ]
-        for little_end, big_end in dtype_combos:
-            big_dtype = np.dtype(big_end)
-            little_dtype = np.dtype(little_end)
-            big_end_repr = repr(np.array([1], big_dtype))
-            little_end_repr = repr(np.array([1], little_dtype))
-            # preserve the sensible default of only showing dtype if nonstandard
-            assert_(not ('dtype' in big_end_repr and big_dtype in _typelessdata),
-                    ('if a type has default size and endianness (e.g., int32, bool, float64) '
-                    'should not show dtype, but it does'))
-            # only show difference if > 1 byte
-            assert_(not (big_end_repr == little_end_repr and big_dtype.itemsize > 1),
-                    ('expected little endian repr != big endian repr, '
-                    f'but {little_end_repr = }, {big_end_repr = }'))
+            ('<U', '>U'),       # string
+            ('<U1', '>U1'),     # 4-byte width string
+        ],
+    )
+    def test_dtype_endianness_repr(self, little_end, big_end):
+        '''
+        there was an issue where 
+        repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2'))
+        both returned the same thing:
+        array([0], dtype=uint16)
+        even though their dtypes have different endianness.
+        '''
+        big_dtype = np.dtype(big_end)
+        little_dtype = np.dtype(little_end)
+        big_end_repr = repr(np.array([1], big_dtype))
+        little_end_repr = repr(np.array([1], little_dtype))
+        # preserve the sensible default of only showing dtype if nonstandard
+        assert_(not ('dtype' in big_end_repr and big_dtype in _typelessdata),
+                ('if a type has default size and endianness '
+                 '(e.g., int32, bool, float64) '
+                 'should not show dtype, but it does'))
+        # only show difference if > 1 byte
+        assert_(big_end_repr != little_end_repr or big_dtype.itemsize == 1,
+                ('expected little endian repr != big endian repr, '
+                f'but {little_end_repr = }, {big_end_repr = }'))
 
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
