@@ -163,7 +163,7 @@ class NDArrayGetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
 
     def time_methods_getitem(self, margs, msize):
         if msize == 'small':
@@ -232,11 +232,10 @@ class NDArrayAsType(Benchmark):
 class UfuncsCreate(Benchmark):
     """ Benchmark for creation functions
     """
+    # (64, 64), (128, 128), (256, 256)
+    # , (512, 512), (1024, 1024)
     params = [[16, 32, 128, 256, 512,
-               (16, 16), (32, 32),
-               (64, 64), (128, 128),
-               (256, 256), (512, 512),
-               (1024, 1024)],
+               (16, 16), (32, 32)],
               ['C', 'F'],
               TYPES1]
     param_names = ['shape', 'order', 'npdtypes']

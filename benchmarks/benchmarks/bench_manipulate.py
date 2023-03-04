@@ -39,9 +39,8 @@ class BroadcastArraysTo(Benchmark):
 
 
 class ConcatenateStackArrays(Benchmark):
-    params = [[(16, 32), (32, 64),
-               (64, 128), (128, 256),
-               (256, 512)],
+    # (64, 128), (128, 256), (256, 512)
+    params = [[(16, 32), (32, 64)],
               [2, 3, 4, 5],
               TYPES1]
     param_names = ['shape', 'narrays', 'ndtype']

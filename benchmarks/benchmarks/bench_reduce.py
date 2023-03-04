@@ -46,17 +46,18 @@ class AnyAll(Benchmark):
 
 
 class StatsReductions(Benchmark):
-    params = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
-              'int64', 'uint64', 'float32', 'float64', 'intp',
-              'complex64', 'complex128', 'complex256',
-              'bool', 'float', 'int', 'complex']
+    # Not testing, but in array_api (redundant)
+    # 8, 16, 32 bit variants, and 128 complexes
+    params = ['int64', 'uint64', 'float64', 'intp',
+               'complex64', 'bool', 'float', 'int',
+               'complex', 'complex256'],
     param_names = ['dtype']
 
     def setup(self, dtype):
         try:
-            self.data = np.ones(20000, dtype=getattr(np, dtype))
+            self.data = np.ones(200, dtype=getattr(np, dtype))
         except AttributeError:  # builtins throw AttributeError after 1.20
-            self.data = np.ones(20000, dtype=dtype)
+            self.data = np.ones(200, dtype=dtype)
         if dtype.startswith('complex'):
             self.data = self.data * self.data.T*1j
 

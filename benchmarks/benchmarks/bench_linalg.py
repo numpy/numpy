@@ -193,10 +193,11 @@ class Einsum(Benchmark):
 
 
 class LinAlgTransposeVdot(Benchmark):
+    # Smaller for speed
+    # , (128, 128), (256, 256), (512, 512),
+    # (1024, 1024)
     params = [[(16, 16), (32, 32),
-               (64, 64), (128, 128),
-               (256, 256), (512, 512),
-               (1024, 1024)], TYPES1]
+               (64, 64)], TYPES1]
     param_names = ['shape', 'npdtypes']
 
     def setup(self, shape, npdtypes):

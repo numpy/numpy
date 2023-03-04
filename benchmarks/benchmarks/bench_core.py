@@ -217,11 +217,12 @@ class Indices(Benchmark):
 
 
 class StatsMethods(Benchmark):
-    params = [['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
-              'int64', 'uint64', 'float32', 'float64', 'intp',
-              'complex64', 'complex128', 'complex256',
-                'bool', 'float', 'int', 'complex'],
-              [1000**n for n in range(0, 2)]]
+    # Not testing, but in array_api (redundant)
+    # 8, 16, 32 bit variants, and 128 complexes
+    params = [['int64', 'uint64', 'float64', 'intp',
+               'complex64', 'bool', 'float', 'int',
+               'complex', 'complex256'],
+              [100**n for n in range(0, 2)]]
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
