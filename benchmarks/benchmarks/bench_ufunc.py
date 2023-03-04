@@ -43,7 +43,7 @@ class ArrayFunctionDispatcher(Benchmark):
             raise NotImplementedError()
         self.args = []
         for _, aarg in get_squares_().items():
-            arg = (aarg,) * 1 # no nin
+            arg = (aarg,) * 1  # no nin
             try:
                 self.afdn(*arg)
             except TypeError:
@@ -169,7 +169,8 @@ class MethodsV1(Benchmark):
 
     def setup(self, methname, npdtypes):
         if (
-            npdtypes.startswith("complex") and methname in ["__floordiv__", "__mod__"]
+            npdtypes.startswith("complex")
+                and methname in ["__floordiv__", "__mod__"]
         ) or (
             not npdtypes.startswith("int")
             and methname in ["__and__", "__or__", "__xor__"]

@@ -113,8 +113,6 @@ def get_indexes_rand_():
     return indexes_rand_
 
 
-
-
 @lru_cache(typed=True)
 def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
     """
