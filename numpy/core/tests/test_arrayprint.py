@@ -798,7 +798,7 @@ class TestPrintOptions:
                   dtype='{}')""".format(styp)))
 
     @pytest.mark.parametrize(
-        ['little_end', 'big_end'],
+        ['native', 'non_native'],
         [
             ('bool', 'bool'),
             ('uint8', 'u1'),
@@ -811,11 +811,11 @@ class TestPrintOptions:
             ('float16', '>e'),
             ('float32', '>f'),
             ('float64', '>d'),
-            ('<U', '>U'),       # string
+            # ('<U', '>U'),     # these get cast to '<U1' and '>U1'
             ('<U1', '>U1'),     # 4-byte width string
         ],
     )
-    def test_dtype_endianness_repr(self, little_end, big_end):
+    def test_dtype_endianness_repr(self, native, non_native):
         '''
         there was an issue where 
         repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2'))
@@ -823,8 +823,13 @@ class TestPrintOptions:
         array([0], dtype=uint16)
         even though their dtypes have different endianness.
         '''
-        big_dtype = np.dtype(big_end)
-        little_dtype = np.dtype(little_end)
+        import sys
+        if sys.byteorder == 'big':
+            # flip native and non-native for big-endian systems
+            non_native = non_native.replace('>', '<')
+            native = native.replace('<', '>')
+        big_dtype = np.dtype(non_native)
+        little_dtype = np.dtype(native)
         big_end_repr = repr(np.array([1], big_dtype))
         little_end_repr = repr(np.array([1], little_dtype))
         # preserve the sensible default of only showing dtype if nonstandard
