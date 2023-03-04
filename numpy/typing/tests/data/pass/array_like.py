@@ -39,3 +39,9 @@ a.__array__()
 # array.
 object_array_scalar: Any = (i for i in range(10))
 np.array(object_array_scalar)
+
+# Test that a Sequence[Union[type, np.dtype]] counts as ArrayLike per gh-23081
+Number_or_float = np.number | float
+num_or_float_1: Number_or_float = 1
+num_or_float_2: Number_or_float = 2
+tuple_of_num_or_float: np.typing.ArrayLike= (num_or_float_1, num_or_float_1)
