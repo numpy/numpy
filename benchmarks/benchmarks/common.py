@@ -141,7 +141,6 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
     denormal:
         Spreading subnormal numbers along with generated data.
     """
-    np = numpy
     dtype = np.dtype(dtype)
     dname = dtype.name
     cache_name = f'{dname}_{size}_{ip_num}_{int(zeros)}'
