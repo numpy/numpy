@@ -25,7 +25,7 @@
 # This image is based on: Ubuntu 20.04 (focal)
 # https://hub.docker.com/_/ubuntu/?tab=tags&name=focal
 # OS/ARCH: linux/amd64
-FROM gitpod/workspace-base:latest
+FROM gitpod/workspace-base:latest@sha256:770d3022db71512bdd1b7fdc06983f17cfc956342853e315d2d1c0ab39216a36
 
 ARG MAMBAFORGE_VERSION="4.11.0-0"
 ARG CONDA_ENV=numpy-dev
