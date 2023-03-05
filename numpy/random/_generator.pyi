@@ -188,7 +188,12 @@ class Generator:
         out: None | ndarray[Any, dtype[float64]] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def beta(self, a: float, b: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def beta(
+        self,
+        a: _FloatLike_co,
+        b: _FloatLike_co,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def beta(
         self, a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
@@ -371,7 +376,12 @@ class Generator:
         shuffle: bool = ...,
     ) -> ndarray[Any, Any]: ...
     @overload
-    def uniform(self, low: float = ..., high: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def uniform(
+        self,
+        low: _FloatLike_co = ...,
+        high: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def uniform(
         self,
@@ -380,7 +390,12 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def normal(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def normal(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def normal(
         self,
@@ -391,7 +406,7 @@ class Generator:
     @overload
     def standard_gamma(  # type: ignore[misc]
         self,
-        shape: float,
+        shape: _FloatLike_co,
         size: None = ...,
         dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
         out: None = ...,
@@ -426,7 +441,7 @@ class Generator:
         out: None | ndarray[Any, dtype[float64]] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def gamma(self, shape: float, scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def gamma(self, shape: _FloatLike_co, scale: _FloatLike_co = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def gamma(
         self,
@@ -435,13 +450,13 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def f(self, dfnum: float, dfden: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def f(self, dfnum: _FloatLike_co, dfden: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def f(
         self, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def noncentral_f(self, dfnum: float, dfden: float, nonc: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def noncentral_f(self, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def noncentral_f(
         self,
@@ -451,19 +466,19 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def chisquare(self, df: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def chisquare(self, df: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def chisquare(
         self, df: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def noncentral_chisquare(self, df: float, nonc: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def noncentral_chisquare(self, df: _FloatLike_co, nonc: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def noncentral_chisquare(
         self, df: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def standard_t(self, df: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def standard_t(self, df: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def standard_t(
         self, df: _ArrayLikeFloat_co, size: None = ...
@@ -473,25 +488,25 @@ class Generator:
         self, df: _ArrayLikeFloat_co, size: _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def vonmises(self, mu: float, kappa: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def vonmises(self, mu: _FloatLike_co, kappa: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def vonmises(
         self, mu: _ArrayLikeFloat_co, kappa: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def pareto(self, a: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def pareto(self, a: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def pareto(
         self, a: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def weibull(self, a: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def weibull(self, a: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def weibull(
         self, a: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def power(self, a: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def power(self, a: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def power(
         self, a: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
@@ -501,7 +516,12 @@ class Generator:
     @overload
     def standard_cauchy(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def laplace(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def laplace(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def laplace(
         self,
@@ -510,7 +530,12 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def gumbel(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def gumbel(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def gumbel(
         self,
@@ -519,7 +544,12 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def logistic(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def logistic(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def logistic(
         self,
@@ -528,7 +558,12 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def lognormal(self, mean: float = ..., sigma: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def lognormal(
+        self,
+        mean: _FloatLike_co = ...,
+        sigma: _FloatLike_co = ...,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def lognormal(
         self,
@@ -537,19 +572,25 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def rayleigh(self, scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
+    def rayleigh(self, scale: _FloatLike_co = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def rayleigh(
         self, scale: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def wald(self, mean: float, scale: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def wald(self, mean: _FloatLike_co, scale: _FloatLike_co, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def wald(
         self, mean: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def triangular(self, left: float, mode: float, right: float, size: None = ...) -> float: ...  # type: ignore[misc]
+    def triangular(
+        self,
+        left: _FloatLike_co,
+        mode: _FloatLike_co,
+        right: _FloatLike_co,
+        size: None = ...,
+    ) -> float: ...  # type: ignore[misc]
     @overload
     def triangular(
         self,
@@ -559,31 +600,31 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def binomial(self, n: int, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
+    def binomial(self, n: int, p: _FloatLike_co, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def binomial(
         self, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def negative_binomial(self, n: float, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
+    def negative_binomial(self, n: _FloatLike_co, p: _FloatLike_co, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def negative_binomial(
         self, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def poisson(self, lam: float = ..., size: None = ...) -> int: ...  # type: ignore[misc]
+    def poisson(self, lam: _FloatLike_co = ..., size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def poisson(
         self, lam: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def zipf(self, a: float, size: None = ...) -> int: ...  # type: ignore[misc]
+    def zipf(self, a: _FloatLike_co, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def zipf(
         self, a: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def geometric(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
+    def geometric(self, p: _FloatLike_co, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def geometric(
         self, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
@@ -599,7 +640,7 @@ class Generator:
         size: None | _ShapeLike = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def logseries(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
+    def logseries(self, p: _FloatLike_co, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def logseries(
         self, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
