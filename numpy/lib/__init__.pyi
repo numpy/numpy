@@ -64,7 +64,6 @@ from numpy.lib.function_base import (
     digitize as digitize,
     cov as cov,
     corrcoef as corrcoef,
-    msort as msort,
     median as median,
     sinc as sinc,
     hamming as hamming,
