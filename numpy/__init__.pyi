@@ -3213,7 +3213,7 @@ class ufunc:
     # can't type them very precisely.
     reduce: Any
     accumulate: Any
-    reduce: Any
+    reduceat: Any
     outer: Any
     # Similarly at won't be defined for ufuncs that return multiple
     # outputs, so we can't type it very precisely.
