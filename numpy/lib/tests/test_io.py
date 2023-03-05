@@ -7,9 +7,10 @@ import time
 import warnings
 import io
 import re
+import zipfile
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mkstemp
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
@@ -2718,6 +2719,77 @@ def test_npzfile_dict():
         assert_(f in ['x', 'y'])
 
     assert_('x' in z.keys())
+
+
+def test_updatez():
+    x = np.zeros((2, 2))
+    y = np.zeros((3, 3))
+    xnew = np.zeros((4, 4))
+    updatez_list = [np.updatez, np.updatez_compressed]
+
+    # path-like object
+
+    for updatez in updatez_list:
+        tmp = BytesIO()
+        assert_raises(ValueError, updatez, tmp, x=x)
+
+    # filename
+
+    # update array and append array
+    for updatez in updatez_list:
+        with temppath(prefix="np_test_updatez_", suffix=".npz") as tmp:
+            np.savez(tmp, x=x)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            updatez(tmp, x=xnew, y=y)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(xnew, l['x'])
+            assert_equal(y, l['y'])
+
+    # file is not zipfile
+    for updatez in updatez_list:
+        with temppath(prefix="np_test_updatez_", suffix=".npz") as tmp:
+            updatez(tmp, x=x)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            updatez(tmp, x=xnew, y=y)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(xnew, l['x'])
+            assert_equal(y, l['y'])
+
+    # un-named variable and keyword with name arr_0
+    for updatez in updatez_list:
+        with temppath(prefix="np_test_updatez_", suffix=".npz") as tmp:
+            # savez raises error
+            assert_raises(ValueError, updatez, tmp, x, arr_0=x)
+            updatez(tmp, x)
+            l = np.load(tmp)
+            assert_('arr_0' in l.keys())
+            assert_equal(x, l['arr_0'])
+            # updatez raises error
+            assert_raises(ValueError, updatez, tmp, x, arr_0=x)
+
+    # file does not exist yet
+    fd, tmp = mkstemp('.npz')
+    os.close(fd)
+    os.remove(tmp)
+    updatez(tmp, x=x)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_equal(x, l['x'])
+    updatez(tmp, x=xnew, y=y)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_('y' in l.keys())
+    assert_equal(xnew, l['x'])
+    assert_equal(y, l['y'])
+    os.remove(tmp)
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
