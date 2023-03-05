@@ -823,24 +823,27 @@ class TestPrintOptions:
         array([0], dtype=uint16)
         even though their dtypes have different endianness.
         '''
-        import sys
         if sys.byteorder == 'big':
             # flip native and non-native for big-endian systems
             non_native = non_native.replace('>', '<')
             native = native.replace('<', '>')
-        big_dtype = np.dtype(non_native)
-        little_dtype = np.dtype(native)
-        big_end_repr = repr(np.array([1], big_dtype))
-        little_end_repr = repr(np.array([1], little_dtype))
+        non_native_dtype = np.dtype(non_native)
+        native_dtype = np.dtype(native)
+        non_native_repr = repr(np.array([1], non_native_dtype))
+        native_repr = repr(np.array([1], native_dtype))
         # preserve the sensible default of only showing dtype if nonstandard
-        assert_(not ('dtype' in big_end_repr and big_dtype in _typelessdata),
-                ('if a type has default size and endianness '
-                 '(e.g., int32, bool, float64) '
-                 'should not show dtype, but it does'))
-        # only show difference if > 1 byte
-        assert_(big_end_repr != little_end_repr or big_dtype.itemsize <= 1,
-                ('expected little endian repr != big endian repr, '
-                f'but {little_end_repr = }, {big_end_repr = }'))
+        assert ('dtype' in native_repr) ^ (native_dtype in _typelessdata),\
+                ("an array's repr should show dtype if and only if the type "
+                 'of the array is NOT one of the standard types '
+                 '(e.g., int32, bool, float64) ')
+        if non_native_dtype.itemsize > 1:
+            # if the type is >1 byte, the non-native endian version
+            # must show endianness.
+            assert non_native_repr != native_repr,\
+                ('expected native repr != non-native repr, '
+                f'but {native_repr = }, {non_native_repr = }')
+            assert f"dtype='{non_native[0]}" in non_native_repr,\
+                'non-native endian repr did not include > or < for endianness'
 
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
