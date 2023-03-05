@@ -27,21 +27,21 @@ def ifftshift(x: ArrayLike, axes: None | _ShapeLike = ...) -> NDArray[Any]: ...
 @overload
 def fftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeFloat_co,
+    d: _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def fftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeComplex_co,
+    d: _ArrayLikeComplex_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload
 def rfftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeFloat_co,
+    d: _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def rfftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeComplex_co,
+    d: _ArrayLikeComplex_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
