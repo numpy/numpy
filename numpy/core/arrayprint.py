@@ -31,7 +31,6 @@ except ImportError:
     from _dummy_thread import get_ident
 
 import numpy as np
-from ._dtype import _construction_repr
 from . import numerictypes as _nt
 from .umath import absolute, isinf, isfinite, isnat
 from . import multiarray
@@ -1462,7 +1461,7 @@ def dtype_short_repr(dtype):
         # deal with cases like dtype('<u2') that are identical to an
         # established dtype (in this case uint16)
         # except that they have a different endianness.
-        return _construction_repr(dtype)
+        return "'%s'" % str(dtype)
     # quote typenames which can't be represented as python variable names
     if typename and not (typename[0].isalpha() and typename.isalnum()):
         typename = repr(typename)
