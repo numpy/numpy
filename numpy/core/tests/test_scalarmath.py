@@ -14,7 +14,7 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns,
+    assert_warns, _SUPPORTS_SVE,
     )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -146,6 +146,7 @@ def test_int_float_promotion_truediv(fscalar):
 
 
 class TestBaseMath:
+    @pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1

@@ -28,7 +28,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
-    runstring, temppath, suppress_warnings, break_cycles,
+    runstring, temppath, suppress_warnings, break_cycles, _SUPPORTS_SVE,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
@@ -9837,6 +9837,7 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
+@pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
 # Test various array sizes that hit different code paths in quicksort-avx512
 @pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['e', 'f', 'd'])
