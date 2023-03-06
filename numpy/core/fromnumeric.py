@@ -438,7 +438,7 @@ def _repeat_dispatcher(a, repeats, axis=None):
 @array_function_dispatch(_repeat_dispatcher)
 def repeat(a, repeats, axis=None):
     """
-    Repeat elements of an array.
+    Repeat each element of an array after themselves
 
     Parameters
     ----------
