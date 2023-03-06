@@ -2004,7 +2004,7 @@ cdef class Generator:
         -----
         The probability density for the Pareto distribution is
 
-        .. math:: p(x) = \\frac{am^a}{x^{a+1}}
+        .. math:: p(x) = \\frac{am^a}{{x+1}^{a+1}} , x \ge m
 
         where :math:`a` is the shape and :math:`m` the scale.
 
