@@ -587,7 +587,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     aligned:  True
     contiguous:  True
     fortran:  False
-    data pointer: 0x562b6e0d2860
+    data pointer: 0x562b6e0d2860  # may vary
     byteorder:  little
     byteswap:  False
     type: complex64
