@@ -357,7 +357,7 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
             return -1;
         }
 
-        return convert_datetime_to_datetimestruct(&meta, rawtime, out);
+        return NpyDatetime_ConvertDatetime64ToDatetimeStruct(&meta, rawtime, out);
     }
 
     /* Anything else isn't a special value */
@@ -758,7 +758,7 @@ error:
  * objects with the given local and unit settings.
  */
 NPY_NO_EXPORT int
-get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+NpyDatetime_GetDatetimeISO8601StrLen(int local, NPY_DATETIMEUNIT base)
 {
     int len = 0;
 
@@ -886,7 +886,7 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  string was too short).
  */
 NPY_NO_EXPORT int
-make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+NpyDatetime_MakeISO8601Datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
                     int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting)
 {
@@ -1494,7 +1494,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
 
     /* Get a string size long enough for any datetimes we're given */
-    strsize = get_datetime_iso_8601_strlen(local, unit);
+    strsize = NpyDatetime_GetDatetimeISO8601StrLen(local, unit);
     /*
      * For Python3, allocate the output array as a UNICODE array, so
      * that it will behave as strings properly
@@ -1550,7 +1550,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             dt = *(npy_datetime *)dataptr[0];
 
             /* Convert it to a struct */
-            if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+            if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
                 goto fail;
             }
 
@@ -1565,7 +1565,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             /* Zero the destination string completely */
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
-            if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
+            if (NpyDatetime_MakeISO8601Datetime(&dts, (char *)dataptr[1], strsize,
                                 local, utc, unit, tzoffset, casting) < 0) {
                 goto fail;
             }

@@ -71,4 +71,4 @@
 
 # Version 17 (NumPy 1.25)
 # Add datetime conversion functions GH#21199
-0x00000011 = ad404c9986484ac22c9e9cd985f2eb1e
+0x00000011 = f045a6f1e220e1cbb2db184931d5b79c

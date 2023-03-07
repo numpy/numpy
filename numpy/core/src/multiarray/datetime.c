@@ -279,7 +279,7 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out)
 {
@@ -448,7 +448,7 @@ PyArray_TimedeltaStructToTimedelta(
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int
-convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+NpyDatetime_ConvertDatetime64ToDatetimeStruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
@@ -2112,7 +2112,7 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+NpyDatetime_ConvertPydatetimeToDatetimeStruct(PyObject *obj, npy_datetimestruct *out,
                                      NPY_DATETIMEUNIT *out_bestunit,
                                      int apply_tzinfo)
 {
@@ -2346,7 +2346,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the local datetime into a datetimestruct */
-    if (convert_pydatetime_to_datetimestruct(loc_dt, &loc_dts, NULL, 0) < 0) {
+    if (NpyDatetime_ConvertPydatetimeToDatetimeStruct(loc_dt, &loc_dts, NULL, 0) < 0) {
         Py_DECREF(loc_dt);
         return -1;
     }
@@ -2414,7 +2414,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
 
-        if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
+        if (NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out) < 0) {
             Py_DECREF(utf8);
             return -1;
         }
@@ -2506,7 +2506,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = NPY_FR_ERROR;
 
-        code = convert_pydatetime_to_datetimestruct(obj, &dts, &bestunit, 1);
+        code = NpyDatetime_ConvertPydatetimeToDatetimeStruct(obj, &dts, &bestunit, 1);
         if (code == -1) {
             return -1;
         }
@@ -2529,7 +2529,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 }
             }
 
-            return convert_datetimestruct_to_datetime(meta, &dts, out);
+            return NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out);
         }
     }
 
@@ -2863,7 +2863,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     }
 
     /* Convert to a datetimestruct */
-    if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
         return NULL;
     }
 
@@ -3028,11 +3028,11 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* Otherwise convert through a datetimestruct */
-    if (convert_datetime_to_datetimestruct(src_meta, src_dt, &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(src_meta, src_dt, &dts) < 0) {
             *dst_dt = NPY_DATETIME_NAT;
             return -1;
     }
-    if (convert_datetimestruct_to_datetime(dst_meta, &dts, dst_dt) < 0) {
+    if (NpyDatetime_ConvertDatetimeStructToDatetime64(dst_meta, &dts, dst_dt) < 0) {
         *dst_dt = NPY_DATETIME_NAT;
         return -1;
     }
@@ -3964,7 +3964,7 @@ time_to_string_resolve_descriptors(
         if (given_descrs[0]->type_num == NPY_DATETIME) {
             PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
             assert(meta != NULL);
-            size = get_datetime_iso_8601_strlen(0, meta->base);
+            size = NpyDatetime_GetDatetimeISO8601StrLen(0, meta->base);
         }
         else {
             /*

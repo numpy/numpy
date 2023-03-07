@@ -139,11 +139,11 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(np.uint64(1))
 
 
-def test_convert_datetime_to_datetimestruct(install_temp):
+def test_convert_datetime64_to_datetimestruct(install_temp):
     # GH#21199
     import checks
 
-    res = checks.convert_datetime_to_datetimestruct()
+    res = checks.convert_datetime64_to_datetimestruct()
 
     exp = {
         "year": 2022,

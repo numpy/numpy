@@ -36,7 +36,7 @@ def get_datetime_iso_8601_strlen():
     return cnp.get_datetime_iso_8601_strlen(0, cnp.NPY_FR_ns)
 
 
-def convert_datetime_to_datetimestruct():
+def convert_datetime64_to_datetimestruct():
     cdef:
         cnp.npy_datetimestruct dts
         cnp.PyArray_DatetimeMetaData meta
@@ -45,7 +45,7 @@ def convert_datetime_to_datetimestruct():
 
     meta.base = cnp.NPY_FR_us
     meta.num = 1
-    cnp.convert_datetime_to_datetimestruct(&meta, value, &dts)
+    cnp.convert_datetime64_to_datetimestruct(&meta, value, &dts)
     return dts
 
 
