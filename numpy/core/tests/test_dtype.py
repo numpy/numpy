@@ -1565,9 +1565,13 @@ class TestDTypeClasses:
         assert isinstance(dtype, np.dtype)
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
-            dt_name = type(dtype).__name__
+            dt_name = type(dtype).__name__.lower().removesuffix("dtype")
+            if dt_name == "uint" or dt_name == "int":
+                # The scalar names has a `c` attached because "int" is Python
+                # int and that is long...
+                dt_name += "c"
             sc_name = dtype.type.__name__
-            assert dt_name.lower().removesuffix("dtype") == sc_name.strip("_")
+            assert dt_name == sc_name.strip("_")
             assert type(dtype).__module__ == "numpy.types"
 
             assert getattr(numpy.types, type(dtype).__name__) is type(dtype)
