@@ -528,7 +528,7 @@ def _info(obj, output=None):
 @set_module('numpy')
 def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
-    Get help information for a function, class, or module.
+    Get help information for an array, function, class, or module.
 
     Parameters
     ----------
