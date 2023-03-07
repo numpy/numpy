@@ -7,6 +7,7 @@ import types
 from typing import Any
 
 import numpy as np
+import numpy.types
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
@@ -1563,8 +1564,17 @@ class TestDTypeClasses:
         dtype = np.dtype(dtype)
         assert isinstance(dtype, np.dtype)
         assert type(dtype) is not np.dtype
-        assert type(dtype).__name__ == f"dtype[{dtype.type.__name__}]"
-        assert type(dtype).__module__ == "numpy"
+        if dtype.type.__name__ != "rational":
+            dt_name = type(dtype).__name__
+            sc_name = dtype.type.__name__
+            assert dt_name.lower().removesuffix("dtype") == sc_name.strip("_")
+            assert type(dtype).__module__ == "numpy.types"
+
+            assert getattr(numpy.types, type(dtype).__name__) is type(dtype)
+        else:
+            assert type(dtype).__name__ == "dtype[rational]"
+            assert type(dtype).__module__ == "numpy"
+
         assert not type(dtype)._abstract
 
         # the flexible dtypes and datetime/timedelta have additional parameters
@@ -1598,6 +1608,20 @@ class TestDTypeClasses:
 
         for code in non_numeric_codes:
             assert not type(np.dtype(code))._is_numeric
+
+    @pytest.mark.parametrize("int_", ["UInt", "Int"])
+    @pytest.mark.parametrize("size", [8, 16, 32, 64])
+    def test_integer_alias_names(self, int_, size):
+        DType = getattr(numpy.types, f"{int_}{size}DType")
+        sctype = getattr(numpy, f"{int_.lower()}{size}")
+        assert DType.type is sctype
+        assert DType.__name__.lower().removesuffix("dtype") == sctype.__name__
+
+    @pytest.mark.parametrize("name",
+            ["Half", "Float", "Double", "CFloat", "CDouble"])
+    def test_float_alias_names(self, name):
+        with pytest.raises(AttributeError):
+            getattr(numpy.types, name + "DType") is numpy.types.Float16DType
 
 
 class TestFromCTypes:
