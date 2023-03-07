@@ -533,10 +533,11 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     Parameters
     ----------
     object : object or str, optional
-        Input object or name to get information about. If `object` is a
-        numpy object, its docstring is given. If it is a string, available
-        modules are searched for matching objects.  If None, information
-        about `info` itself is returned.
+        Input object or name to get information about. If `object` is
+        an `ndarray` instance, information about the array is printed.
+        If `object` is a numpy object, its docstring is given. If it is
+        a string, available modules are searched for matching objects.
+        If None, information about `info` itself is returned.
     maxwidth : int, optional
         Printing width.
     output : file like object, optional
@@ -574,6 +575,22 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     ...
          *** Repeat reference found in numpy.fft.fftpack ***
          *** Total of 3 references found. ***
+
+    When the argument is an array, information about the array is printed.
+
+    >>> a = np.array([[1 + 2j, 3, -4], [-5j, 6, 0]], dtype=np.complex64)
+    >>> np.info(a)
+    class:  ndarray
+    shape:  (2, 3)
+    strides:  (24, 8)
+    itemsize:  8
+    aligned:  True
+    contiguous:  True
+    fortran:  False
+    data pointer: 0x562b6e0d2860
+    byteorder:  little
+    byteswap:  False
+    type: complex64
 
     """
     global _namedict, _dictlist
