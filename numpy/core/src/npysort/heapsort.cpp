@@ -21,7 +21,7 @@
  *
  * The merge sort is *stable*, meaning that equal components
  * are unmoved from their entry versions, so it can be used to
- * implement lexigraphic sorting on multiple keys.
+ * implement lexicographic sorting on multiple keys.
  *
  * The heap sort is included for completeness.
  */
@@ -55,6 +55,9 @@ npy_heapsort(void *start, npy_intp num, void *varr)
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    if (elsize == 0) {
+        return 0;  /* no need for sorting elements of no size */
+    }
     char *tmp = (char *)malloc(elsize);
     char *a = (char *)start - elsize;
     npy_intp i, j, l;

@@ -114,7 +114,9 @@ class TestNonarrayArgs:
 
     def test_cumproduct(self):
         A = [[1, 2, 3], [4, 5, 6]]
-        assert_(np.all(np.cumproduct(A) == np.array([1, 2, 6, 24, 120, 720])))
+        with assert_warns(DeprecationWarning):
+            expected = np.array([1, 2, 6, 24, 120, 720])
+            assert_(np.all(np.cumproduct(A) == expected))
 
     def test_diagonal(self):
         a = [[0, 1, 2, 3],
@@ -1193,8 +1195,8 @@ class TestFromiter:
         expected = np.array(list(self.makegen()))
         a = np.fromiter(self.makegen(), int)
         a20 = np.fromiter(self.makegen(), int, 20)
-        assert_(np.alltrue(a == expected, axis=0))
-        assert_(np.alltrue(a20 == expected[:20], axis=0))
+        assert_(np.all(a == expected, axis=0))
+        assert_(np.all(a20 == expected[:20], axis=0))
 
     def load_data(self, n, eindex):
         # Utility method for the issue 2592 tests.

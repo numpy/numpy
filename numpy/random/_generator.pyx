@@ -238,6 +238,58 @@ cdef class Generator:
         """
         return self._bit_generator
 
+    def spawn(self, int n_children):
+        """
+        Create new independent child generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
+        .. versionadded:: 1.25.0
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.BitGenerator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the bit generator and seed sequence.
+        bit_generator :
+            The bit generator instance used by the generator.
+
+        Examples
+        --------
+        Starting from a seeded default generator:
+
+        >>> # High quality entropy created with: f"0x{secrets.randbits(128):x}"
+        >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
+        >>> rng = np.random.default_rng(entropy)
+
+        Create two new generators for example for parallel executation:
+
+        >>> child_rng1, child_rng2 = rng.spawn(2)
+
+        Drawn numbers from each are independent but derived from the initial
+        seeding entropy:
+
+        >>> rng.uniform(), child_rng1.uniform(), child_rng2.uniform()
+        (0.19029263503854454, 0.9475673279178444, 0.4702687338396767)
+
+        It is safe to spawn additional children from the original ``rng`` or
+        the children:
+
+        >>> more_child_rngs = rng.spawn(20)
+        >>> nested_spawn = child_rng1.spawn(20)
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
+
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype=np.float64, out=None)
@@ -2576,7 +2628,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -4825,6 +4877,8 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+
+    See :ref:`seeding_and_entropy` for more information about seeding.
     
     Examples
     --------

@@ -4,3 +4,6 @@
 [submodule "numpy/core/src/umath/svml"]
 	path = numpy/core/src/umath/svml
 	url = https://github.com/numpy/SVML.git
+[submodule "numpy/core/src/npysort/x86-simd-sort"]
+	path = numpy/core/src/npysort/x86-simd-sort
+	url = https://github.com/intel/x86-simd-sort

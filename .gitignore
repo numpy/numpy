@@ -209,6 +209,7 @@ tools/swig/test/Array.py
 *.dispatch.h
 # wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
 *.dispatch.*.c
+*.dispatch.*.cpp
 # _simd module
 numpy/core/src/_simd/_simd.dispatch.c
 numpy/core/src/_simd/_simd_data.inc
@@ -227,9 +228,8 @@ numpy/core/src/umath/loops_umath_fp.dispatch.c
 numpy/core/src/umath/loops_hyperbolic.dispatch.c
 numpy/core/src/umath/loops_modulo.dispatch.c
 numpy/core/src/umath/loops_comparison.dispatch.c
-# npysort module
-numpy/core/src/npysort/x86-qsort.dispatch.c
-numpy/core/src/npysort/x86-qsort.dispatch.*.cpp
+numpy/core/src/umath/loops_unary_complex.dispatch.c
+numpy/core/src/umath/loops_autovec.dispatch.c
 # multiarray module
 numpy/core/src/multiarray/argfunc.dispatch.c
 numpy/core/src/multiarray/arraytypes.h

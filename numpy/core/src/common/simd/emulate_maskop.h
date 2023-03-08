@@ -42,5 +42,39 @@ NPYV_IMPL_EMULATE_MASK_ADDSUB(s64, b64)
 #if NPY_SIMD_F64
     NPYV_IMPL_EMULATE_MASK_ADDSUB(f64, b64)
 #endif
+#if NPY_SIMD_F32
+    // conditional division, m ? a / b : c
+    NPY_FINLINE npyv_f32
+    npyv_ifdiv_f32(npyv_b32 m, npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    {
+        const npyv_f32 one = npyv_setall_f32(1.0f);
+        npyv_f32 div = npyv_div_f32(a, npyv_select_f32(m, b, one));
+        return npyv_select_f32(m, div, c);
+    }
+    // conditional division, m ? a / b : 0
+    NPY_FINLINE npyv_f32
+    npyv_ifdivz_f32(npyv_b32 m, npyv_f32 a, npyv_f32 b)
+    {
+        const npyv_f32 zero = npyv_zero_f32();
+        return npyv_ifdiv_f32(m, a, b, zero);
+    }
+#endif
+#if NPY_SIMD_F64
+    // conditional division, m ? a / b : c
+    NPY_FINLINE npyv_f64
+    npyv_ifdiv_f64(npyv_b64 m, npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    {
+        const npyv_f64 one = npyv_setall_f64(1.0);
+        npyv_f64 div = npyv_div_f64(a, npyv_select_f64(m, b, one));
+        return npyv_select_f64(m, div, c);
+    }
+    // conditional division, m ? a / b : 0
+    NPY_FINLINE npyv_f64
+    npyv_ifdivz_f64(npyv_b64 m, npyv_f64 a, npyv_f64 b)
+    {
+        const npyv_f64 zero = npyv_zero_f64();
+        return npyv_ifdiv_f64(m, a, b, zero);
+    }
+#endif
 
 #endif // _NPY_SIMD_EMULATE_MASKOP_H

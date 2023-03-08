@@ -1062,7 +1062,7 @@ class TestMultiIndexingAutomated:
                         if np.any(_indx >= _size) or np.any(_indx < -_size):
                                 raise IndexError
                 if len(indx[1:]) == len(orig_slice):
-                    if np.product(orig_slice) == 0:
+                    if np.prod(orig_slice) == 0:
                         # Work around for a crash or IndexError with 'wrap'
                         # in some 0-sized cases.
                         try:

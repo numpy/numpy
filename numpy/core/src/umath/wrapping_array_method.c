@@ -268,14 +268,15 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         break;
     }
     if (wrapped_meth == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "Did not find the to-be-wrapped loop in the ufunc.");
+        PyErr_Format(PyExc_TypeError,
+                "Did not find the to-be-wrapped loop in the ufunc with given "
+                "DTypes. Received wrapping types: %S", wrapped_dt_tuple);
         goto finish;
     }
 
     PyType_Slot slots[] = {
         {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {NPY_METH_get_loop, &wrapping_method_get_loop},
+        {_NPY_METH_get_loop, &wrapping_method_get_loop},
         {NPY_METH_get_reduction_initial,
             &wrapping_method_get_identity_function},
         {0, NULL}

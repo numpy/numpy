@@ -720,6 +720,8 @@ compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
                             "Arm C Compiler")
+compiler_class['fujitsu'] = ('fujitsuccompiler', 'FujitsuCCompiler',
+                            "Fujitsu C Compiler")
 
 ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intele'),

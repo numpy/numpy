@@ -122,6 +122,9 @@ except NameError:
 if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
+    # Allow distributors to run custom init code before importing numpy.core
+    from . import _distributor_init
+
     try:
         from numpy.__config__ import show as show_config
     except ImportError as e:
@@ -136,9 +139,6 @@ else:
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
-
-    # Allow distributors to run custom init code
-    from . import _distributor_init
 
     from . import core
     from .core import *
@@ -197,7 +197,7 @@ else:
         "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
 
     # Some of these are awkward (since `np.str` may be preferable in the long
-    # term), but overall the names ending in 0 seem undesireable
+    # term), but overall the names ending in 0 seem undesirable
     _type_info = [
         ("bool8", bool_, "np.bool_"),
         ("int0", intp, "np.intp"),
@@ -221,7 +221,7 @@ else:
 
     del _msg, _type_info
 
-    from .core import round, abs, max, min
+    from .core import abs
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
@@ -415,13 +415,17 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+    del use_hugepage
 
     # Give a warning if NumPy is reloaded or imported on a sub-interpreter
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+    # default to "weak" promotion for "NumPy 2".
+    core._set_promotion_state(
+        os.environ.get("NPY_PROMOTION_STATE",
+                       "weak" if _using_numpy2_behavior() else "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

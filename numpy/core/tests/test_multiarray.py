@@ -28,7 +28,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
-    runstring, temppath, suppress_warnings, break_cycles,
+    runstring, temppath, suppress_warnings, break_cycles, _SUPPORTS_SVE,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
@@ -1706,7 +1706,7 @@ class TestBool:
 
     @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
-        self._test_cast_from_flexible(np.unicode_)
+        self._test_cast_from_flexible(np.str_)
 
     @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
@@ -2088,7 +2088,7 @@ class TestMethods:
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
                 assert_equal(c, arr, msg)
 
-    @pytest.mark.parametrize('dtype', [np.bytes_, np.unicode_])
+    @pytest.mark.parametrize('dtype', [np.bytes_, np.str_])
     def test_sort_string(self, dtype):
         # np.array will perform the encoding to bytes for us in the bytes test
         a = np.array(['aaaaaaaa' + chr(i) for i in range(101)], dtype=dtype)
@@ -2116,19 +2116,26 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-    def test_sort_structured(self):
+    @pytest.mark.parametrize("dt", [
+            np.dtype([('f', float), ('i', int)]),
+            np.dtype([('f', float), ('i', object)])])
+    @pytest.mark.parametrize("step", [1, 2])
+    def test_sort_structured(self, dt, step):
         # test record array sorts.
-        dt = np.dtype([('f', float), ('i', int)])
-        a = np.array([(i, i) for i in range(101)], dtype=dt)
+        a = np.array([(i, i) for i in range(101*step)], dtype=dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
             msg = "kind=%s" % kind
-            c = a.copy()
+            c = a.copy()[::step]
+            indx = c.argsort(kind=kind)
             c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
+            assert_equal(c, a[::step], msg)
+            assert_equal(a[::step][indx], a[::step], msg)
+            c = b.copy()[::step]
+            indx = c.argsort(kind=kind)
             c.sort(kind=kind)
-            assert_equal(c, a, msg)
+            assert_equal(c, a[step-1::step], msg)
+            assert_equal(b[::step][indx], a[step-1::step], msg)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     def test_sort_time(self, dtype):
@@ -2362,7 +2369,7 @@ class TestMethods:
 
         # test unicode argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.str_)
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -2445,7 +2452,7 @@ class TestMethods:
         a = np.array(['aaaaaaaaa' for i in range(100)])
         assert_equal(a.argsort(kind='m'), r)
         # unicode
-        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode_)
+        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.str_)
         assert_equal(a.argsort(kind='m'), r)
 
     def test_sort_unicode_kind(self):
@@ -2589,7 +2596,7 @@ class TestMethods:
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'],
-                     dtype=np.unicode_)
+                     dtype=np.str_)
         ind = np.arange(len(a))
         assert_equal([a.searchsorted(v, 'left') for v in a], ind)
         assert_equal([a.searchsorted(v, 'right') for v in a], ind + 1)
@@ -5551,33 +5558,6 @@ class TestIO:
             np.array([1, 2, 3, 4]),
             tmp_filename,
             dtype='<f4')
-
-    @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
-    def test_big_binary(self):
-        """Test workarounds for 32-bit limit for MSVC fwrite, fseek, and ftell
-
-        These normally would hang doing something like this.
-        See : https://github.com/numpy/numpy/issues/2256
-        """
-        if sys.platform != 'win32' or '[GCC ' in sys.version:
-            return
-        try:
-            # before workarounds, only up to 2**32-1 worked
-            fourgbplus = 2**32 + 2**16
-            testbytes = np.arange(8, dtype=np.int8)
-            n = len(testbytes)
-            flike = tempfile.NamedTemporaryFile()
-            f = flike.file
-            np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
-            flike.seek(0)
-            a = np.fromfile(f, dtype=np.int8)
-            flike.close()
-            assert_(len(a) == fourgbplus)
-            # check only start and end for speed:
-            assert_((a[:n] == testbytes).all())
-            assert_((a[-n:] == testbytes).all())
-        except (MemoryError, ValueError):
-            pass
 
     def test_string(self, tmp_filename):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, sep=',')
@@ -8701,7 +8681,7 @@ class TestConversion:
             # gh-9972
             assert_equal(4, int_func(np.array('4')))
             assert_equal(5, int_func(np.bytes_(b'5')))
-            assert_equal(6, int_func(np.unicode_('6')))
+            assert_equal(6, int_func(np.str_('6')))
 
             # The delegation of int() to __trunc__ was deprecated in
             # Python 3.11.
@@ -9073,33 +9053,33 @@ class TestUnicodeEncoding:
     def test_assign_scalar(self):
         # gh-3258
         l = np.array(['aa', 'bb'])
-        l[:] = np.unicode_('cc')
+        l[:] = np.str_('cc')
         assert_equal(l, ['cc', 'cc'])
 
     def test_fill_scalar(self):
         # gh-7227
         l = np.array(['aa', 'bb'])
-        l.fill(np.unicode_('cc'))
+        l.fill(np.str_('cc'))
         assert_equal(l, ['cc', 'cc'])
 
 
 class TestUnicodeArrayNonzero:
 
     def test_empty_ustring_array_is_falsey(self):
-        assert_(not np.array([''], dtype=np.unicode_))
+        assert_(not np.array([''], dtype=np.str_))
 
     def test_whitespace_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = '  \0\0'
         assert_(not a)
 
     def test_all_null_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = '\0\0\0\0'
         assert_(not a)
 
     def test_null_inside_ustring_array_is_truthy(self):
-        a = np.array(['eggs'], dtype=np.unicode_)
+        a = np.array(['eggs'], dtype=np.str_)
         a[0] = ' \0 \0'
         assert_(a)
 
@@ -9534,7 +9514,7 @@ def test_equal_override():
 
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
 @pytest.mark.parametrize(["dt1", "dt2"], [
-        ([("f", "i")], [("f", "i")]),  # structured comparison (successfull)
+        ([("f", "i")], [("f", "i")]),  # structured comparison (successful)
         ("M8", "d"),  # impossible comparison: result is all True or False
         ("d", "d"),  # valid comparison
         ])
@@ -9857,40 +9837,50 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
+@pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
 # Test various array sizes that hit different code paths in quicksort-avx512
-@pytest.mark.parametrize("N", [8, 16, 24, 32, 48, 64, 96, 128, 151, 191,
-                               256, 383, 512, 1023, 2047])
-def test_sort_float(N):
+@pytest.mark.parametrize("N", np.arange(1, 512))
+@pytest.mark.parametrize("dtype", ['e', 'f', 'd'])
+def test_sort_float(N, dtype):
     # Regular data with nan sprinkled
     np.random.seed(42)
-    arr = -0.5 + np.random.sample(N).astype('f')
+    arr = -0.5 + np.random.sample(N).astype(dtype)
     arr[np.random.choice(arr.shape[0], 3)] = np.nan
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
 
     # (2) with +INF
-    infarr = np.inf*np.ones(N, dtype='f')
+    infarr = np.inf*np.ones(N, dtype=dtype)
     infarr[np.random.choice(infarr.shape[0], 5)] = -1.0
     assert_equal(np.sort(infarr, kind='quick'), np.sort(infarr, kind='heap'))
 
     # (3) with -INF
-    neginfarr = -np.inf*np.ones(N, dtype='f')
+    neginfarr = -np.inf*np.ones(N, dtype=dtype)
     neginfarr[np.random.choice(neginfarr.shape[0], 5)] = 1.0
     assert_equal(np.sort(neginfarr, kind='quick'),
                  np.sort(neginfarr, kind='heap'))
 
     # (4) with +/-INF
-    infarr = np.inf*np.ones(N, dtype='f')
+    infarr = np.inf*np.ones(N, dtype=dtype)
     infarr[np.random.choice(infarr.shape[0], (int)(N/2))] = -np.inf
     assert_equal(np.sort(infarr, kind='quick'), np.sort(infarr, kind='heap'))
 
+def test_sort_float16():
+    arr = np.arange(65536, dtype=np.int16)
+    temp = np.frombuffer(arr.tobytes(), dtype=np.float16)
+    data = np.copy(temp)
+    np.random.shuffle(data)
+    data_backup = data
+    assert_equal(np.sort(data, kind='quick'),
+            np.sort(data_backup, kind='heap'))
 
-def test_sort_int():
-    # Random data with NPY_MAX_INT32 and NPY_MIN_INT32 sprinkled
-    rng = np.random.default_rng(42)
-    N = 2047
-    minv = np.iinfo(np.int32).min
-    maxv = np.iinfo(np.int32).max
-    arr = rng.integers(low=minv, high=maxv, size=N).astype('int32')
+
+@pytest.mark.parametrize("N", np.arange(1, 512))
+@pytest.mark.parametrize("dtype", ['h', 'H', 'i', 'I', 'l', 'L'])
+def test_sort_int(N, dtype):
+    # Random data with MAX and MIN sprinkled
+    minv = np.iinfo(dtype).min
+    maxv = np.iinfo(dtype).max
+    arr = np.random.randint(low=minv, high=maxv-1, size=N, dtype=dtype)
     arr[np.random.choice(arr.shape[0], 10)] = minv
     arr[np.random.choice(arr.shape[0], 10)] = maxv
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))

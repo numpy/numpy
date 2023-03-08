@@ -1,10 +1,6 @@
 name: Build_Test
 
 on:
-  push:
-    branches:
-      - main
-      - maintenance/**
   pull_request:
     branches:
       - main
@@ -27,7 +23,7 @@ permissions:
 
 jobs:
   lint:
-    if: "github.repository == 'numpy/numpy' && github.ref != 'refs/heads/main' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -46,7 +42,7 @@ jobs:
         python tools/linter.py --branch origin/${{ github.base_ref }}
 
   smoke_test:
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     env:
       WITHOUT_SIMD: 1
@@ -276,11 +272,17 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  no_array_func:
+  numpy2_flag_and_no_array_func:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
+      # Array func and numpy-2 should be involved, so use this
+      # to have a test for feature flagged behavior.
+      NPY_NUMPY_2_BEHAVIOR: 1
+      # Using the future "weak" state doesn't pass tests
+      # currently unfortunately
+      NPY_PROMOTION_STATE: legacy
     steps:
     - uses: actions/checkout@v3
       with:

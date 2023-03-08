@@ -2857,7 +2857,7 @@ class MaskedArray(ndarray):
                     mask = np.array(
                         [getmaskarray(np.asanyarray(m, dtype=_data.dtype))
                          for m in data], dtype=mdtype)
-                except ValueError:
+                except (ValueError, TypeError):
                     # If data is nested
                     mask = nomask
                 # Force shrinking of the mask if needed (and possible)
@@ -2870,7 +2870,13 @@ class MaskedArray(ndarray):
                     _data._mask = _data._mask.copy()
                     # Reset the shape of the original mask
                     if getmask(data) is not nomask:
-                        data._mask.shape = data.shape
+                        # gh-21022 encounters an issue here
+                        # because data._mask.shape is not writeable, but
+                        # the op was also pointless in that case, because
+                        # the shapes were the same, so we can at least
+                        # avoid that path
+                        if data._mask.shape != data.shape:
+                            data._mask.shape = data.shape
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -6300,6 +6306,12 @@ class MaskedArray(ndarray):
         memo[id(self)] = copied
         for (k, v) in self.__dict__.items():
             copied.__dict__[k] = deepcopy(v, memo)
+        # as clearly documented for np.copy(), you need to use
+        # deepcopy() directly for arrays of object type that may
+        # contain compound types--you cannot depend on normal
+        # copy semantics to do the right thing here
+        if self.dtype.hasobject:
+            copied._data[...] = deepcopy(copied._data)
         return copied
 
 

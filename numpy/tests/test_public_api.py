@@ -194,6 +194,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.umath",
     "core.umath_tests",
     "distutils.armccompiler",
+    "distutils.fujitsuccompiler",
     "distutils.ccompiler",
     'distutils.ccompiler_opt',
     "distutils.command",
@@ -470,6 +471,10 @@ def test_api_importable():
                              "{}".format(module_names))
 
 
+@pytest.mark.xfail(
+    hasattr(np.__config__, "_built_with_meson"),
+    reason = "Meson does not yet support entry points via pyproject.toml",
+)
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG") is not None,
     reason=(

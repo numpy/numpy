@@ -3,11 +3,10 @@ import sys
 import math
 import warnings
 
+import numpy as np
 from .._utils import set_module
 import numpy.core.numeric as _nx
-from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
-)
+from numpy.core.numeric import ScalarType, array
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 import numpy.matrixlib as matrixlib
@@ -94,7 +93,7 @@ def ix_(*args):
     nd = len(args)
     for k, new in enumerate(args):
         if not isinstance(new, _nx.ndarray):
-            new = asarray(new)
+            new = np.asarray(new)
             if new.size == 0:
                 # Explicitly type empty arrays to avoid float default
                 new = new.astype(_nx.intp)
@@ -396,7 +395,7 @@ class AxisConcatenator:
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
-                item_ndim = ndim(item)
+                item_ndim = np.ndim(item)
                 newobj = array(item, copy=False, subok=True, ndmin=ndmin)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
@@ -596,7 +595,7 @@ class ndenumerate:
     """
 
     def __init__(self, arr):
-        self.iter = asarray(arr).flat
+        self.iter = np.asarray(arr).flat
 
     def __next__(self):
         """
@@ -909,9 +908,9 @@ def fill_diagonal(a, val, wrap=False):
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
-        if not alltrue(diff(a.shape) == 0):
+        if not np.all(diff(a.shape) == 0):
             raise ValueError("All dimensions of input must be of equal length")
-        step = 1 + (cumprod(a.shape[:-1])).sum()
+        step = 1 + (np.cumprod(a.shape[:-1])).sum()
 
     # Write the value out into the diagonal.
     a.flat[:end:step] = val
@@ -982,7 +981,7 @@ def diag_indices(n, ndim=2):
             [0, 1]]])
 
     """
-    idx = arange(n)
+    idx = np.arange(n)
     return (idx,) * ndim
 
 
@@ -1041,7 +1040,7 @@ def diag_indices_from(arr):
         raise ValueError("input array must be at least 2-d")
     # For more than d=2, the strided formula is only valid for arrays with
     # all dimensions equal, so we check first.
-    if not alltrue(diff(arr.shape) == 0):
+    if not np.all(diff(arr.shape) == 0):
         raise ValueError("All dimensions of input must be of equal length")
 
     return diag_indices(arr.shape[0], arr.ndim)

@@ -53,7 +53,7 @@ jobs:
             sudo apt-get update
             #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
-              texlive-latex-extra latexmk texlive-xetex doxygen
+              texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
             python3.9 -m venv venv
             . venv/bin/activate
 

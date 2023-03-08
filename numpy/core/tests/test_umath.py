@@ -424,7 +424,7 @@ class TestDivision:
     def test_division_int_boundary(self, dtype, ex_val):
         fo = np.iinfo(dtype)
         neg = -1 if fo.min < 0 else 1
-        # Large enough to test SIMD loops and remaind elements
+        # Large enough to test SIMD loops and remainder elements
         lsize = 512 + 7
         a, b, divisors = eval(ex_val)
         a_lst, b_lst = a.tolist(), b.tolist()
@@ -589,6 +589,8 @@ class TestDivision:
         assert_equal(np.signbit(x//1), 0)
         assert_equal(np.signbit((-x)//1), 1)
 
+    @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
+            reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_errors(self, dtype):
@@ -731,6 +733,8 @@ class TestRemainder:
             # inf / 0 does not set any flags, only the modulo creates a NaN
             np.divmod(finf, fzero)
 
+    @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
+            reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(sys.platform.startswith("darwin"),
            reason="MacOS seems to not give the correct 'invalid' warning for "
@@ -1292,9 +1296,20 @@ class TestLog:
 
         # test log() of max for dtype does not raise
         for dt in ['f', 'd', 'g']:
-            with np.errstate(all='raise'):
-                x = np.finfo(dt).max
-                np.log(x)
+            try:
+                with np.errstate(all='raise'):
+                    x = np.finfo(dt).max
+                    np.log(x)
+            except FloatingPointError as exc:
+                if dt == 'g' and IS_MUSL:
+                    # FloatingPointError is known to occur on longdouble
+                    # for musllinux_x86_64 x is very large
+                    pytest.skip(
+                        "Overflow has occurred for"
+                        " np.log(np.finfo(np.longdouble).max)"
+                    )
+                else:
+                    raise exc
 
     def test_log_strides(self):
         np.random.seed(42)
@@ -4260,7 +4275,7 @@ def _test_spacing(t):
     nan = t(np.nan)
     inf = t(np.inf)
     with np.errstate(invalid='ignore'):
-        assert_(np.spacing(one) == eps)
+        assert_equal(np.spacing(one), eps)
         assert_(np.isnan(np.spacing(nan)))
         assert_(np.isnan(np.spacing(inf)))
         assert_(np.isnan(np.spacing(-inf)))

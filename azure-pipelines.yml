@@ -140,6 +140,9 @@ stages:
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
     # with version of Python selected
@@ -183,6 +186,9 @@ stages:
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
+
+    - script: git submodule update --init
+      displayName: 'Fetch submodules'
 
     # prefer usage of clang over gcc proper
     # to match likely scenario on many user mac machines
@@ -243,29 +249,18 @@ stages:
     pool:
       vmImage: 'windows-2019'
     strategy:
-      maxParallel: 6
+      maxParallel: 5
       matrix:
-          Python39-32bit-fast:
+          Python39-32bit-full:
             PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
-          Python39-64bit-full:
-            PYTHON_VERSION: '3.9'
-            PYTHON_ARCH: 'x64'
             TEST_MODE: full
-            BITS: 64
-          Python310-32bit-fast:
-            PYTHON_VERSION: '3.10'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
             BITS: 32
-          Python310-64bit-full:
+          Python310-64bit-fast:
             PYTHON_VERSION: '3.10'
             PYTHON_ARCH: 'x64'
-            TEST_MODE: full
+            TEST_MODE: fast
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
           Python311-32bit-fast:
             PYTHON_VERSION: '3.11'
             PYTHON_ARCH: 'x86'

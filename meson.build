@@ -9,6 +9,7 @@ project(
   meson_version: '>= 0.64.0',
   default_options: [
     'buildtype=debugoptimized',
+    'b_ndebug=if-release',
     'c_std=c99',
     'cpp_std=c++14',
     'blas=openblas',

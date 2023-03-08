@@ -13,6 +13,7 @@
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 #include "lowlevel_strided_loops.h"
+#include "loops_utils.h"
 
 #include "npy_pycompat.h"
 
@@ -31,26 +32,8 @@
  */
 #define PW_BLOCKSIZE    128
 
-
-/*
- * largest simd vector size in bytes numpy supports
- * it is currently a extremely large value as it is only used for memory
- * overlap checks
- */
-#ifndef NPY_MAX_SIMD_SIZE
-#define NPY_MAX_SIMD_SIZE 1024
-#endif
-
 /** Provides the various *_LOOP macros */
 #include "fast_loop_macros.h"
-
-/*
- * include vectorized functions and dispatchers
- * this file is safe to include also for generic builds
- * platform specific instructions are either masked via the proprocessor or
- * runtime detected
- */
-#include "simd.inc"
 
 /******************************************************************************
  **                          GENERIC FLOAT LOOPS                             **
@@ -424,24 +407,6 @@ BOOL__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, 
     }
 }
 
-
-/**begin repeat
- * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
- * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
- **/
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*
-     * The (void)in; suppresses an unused variable warning raised by gcc and allows
-     * us to re-use this macro even though we do not depend on in
-     */
-    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = @val@);
-}
-
-/**end repeat**/
-
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -460,8 +425,11 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
+#define @TYPE@_floor_divide_indexed @TYPE@_divide_indexed
 #define @TYPE@_fmax @TYPE@_maximum
+#define @TYPE@_fmax_indexed @TYPE@_maximum_indexed
 #define @TYPE@_fmin @TYPE@_minimum
+#define @TYPE@_fmin_indexed @TYPE@_minimum_indexed
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -470,155 +438,30 @@ NPY_NO_EXPORT void
         *((@type@ *)op1) = 1;
     }
 }
-
-NPY_NO_EXPORT void
-@TYPE@_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
-}
-
 /**begin repeat1
- * #isa = , _avx2#
- * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
- * #ATTR = , NPY_GCC_TARGET_AVX2#
- */
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_square@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in * in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_reciprocal@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = 1.0 / in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_conjugate@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_logical_not@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, npy_bool, *out = !in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_invert@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = ~in);
-}
-#endif
-
-/**begin repeat2
  * Arithmetic
  * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor#
  * #OP = +, -, *, &, |, ^#
  */
 
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+NPY_NO_EXPORT NPY_GCC_OPT_3 int
+@TYPE@_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char **args, npy_intp const *dimensions, npy_intp const *steps,
+                      void *NPY_UNUSED(func))
 {
-    if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP_FAST(@type@, io1 @OP@= in2);
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = *indexed @OP@ *(@type@ *)value;
     }
-    else {
-        BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
-    }
+    return 0;
 }
-#endif
-
-/**end repeat2**/
-
-/*
- * Arithmetic bit shift operations.
- *
- * Intel hardware masks bit shift values, so large shifts wrap around
- * and can produce surprising results. The special handling ensures that
- * behavior is independent of compiler or hardware.
- * TODO: We could implement consistent behavior for negative shifts,
- *       which is undefined in C.
- */
-
-#define INT_left_shift_needs_clear_floatstatus
-#define UINT_left_shift_needs_clear_floatstatus
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_left_shift@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                  void *NPY_UNUSED(func))
-{
-    BINARY_LOOP_FAST(@type@, @type@, *out = npy_lshift@c@(in1, in2));
-
-#ifdef @TYPE@_left_shift_needs_clear_floatstatus
-    // For some reason, our macOS CI sets an "invalid" flag here, but only
-    // for some types.
-    npy_clear_floatstatus_barrier((char*)dimensions);
-#endif
-}
-#endif
-
-#undef INT_left_shift_needs_clear_floatstatus
-#undef UINT_left_shift_needs_clear_floatstatus
-
-#if @CHK@
-NPY_NO_EXPORT
-#ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
-NPY_GCC_OPT_3
-#endif
-void
-@TYPE@_right_shift@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                   void *NPY_UNUSED(func))
-{
-    BINARY_LOOP_FAST(@type@, @type@, *out = npy_rshift@c@(in1, in2));
-}
-#endif
-
-/**begin repeat2
- * #kind = logical_and, logical_or#
- * #OP = &&, ||#
- */
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*
-     * gcc vectorization of this is not good (PR60575) but manual integer
-     * vectorization is too tedious to be worthwhile
-     */
-    BINARY_LOOP_FAST(@type@, npy_bool, *out = in1 @OP@ in2);
-}
-#endif
-
-/**end repeat2**/
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_logical_xor@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const int t1 = !!*(@type@ *)ip1;
-        const int t2 = !!*(@type@ *)ip2;
-        *((npy_bool *)op1) = (t1 != t2);
-    }
-}
-#endif
-
 /**end repeat1**/
 
 NPY_NO_EXPORT void
@@ -660,23 +503,6 @@ NPY_NO_EXPORT void
         *((@type@ *) op1) = out;
     }
 }
-
-/**begin repeat1
- * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
- * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*
-     * The (void)in; suppresses an unused variable warning raised by gcc and allows
-     * us to re-use this macro even though we do not depend on in
-     */
-    UNARY_LOOP_FAST(@type@, npy_bool, (void)in; *out = @val@);
-}
-/**end repeat1**/
-
 /**end repeat**/
 
 /**begin repeat
@@ -684,19 +510,6 @@ NPY_NO_EXPORT void
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  * #c    = ,,,l,ll#
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = (in >= 0) ? in : -in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
-}
-
 /**begin repeat1
  * #kind = gcd, lcm#
  **/
@@ -710,7 +523,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
 /**end repeat**/
 
 /**begin repeat
@@ -718,19 +530,6 @@ NPY_NO_EXPORT void
  * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  * #c    = u,u,u,ul,ull#
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : 0);
-}
-
 /**begin repeat1
  * #kind = gcd, lcm#
  **/
@@ -744,7 +543,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
 /**end repeat**/
 
 /*
@@ -823,12 +621,6 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_isinf(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = NPY_FALSE);
-}
-
-NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -887,6 +679,7 @@ NPY_NO_EXPORT void
         }
     }
 }
+
 /**end repeat1**/
 
 /**begin repeat1
@@ -1400,6 +1193,25 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT int
+@TYPE@_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = npy_floor_divide@c@(*indexed, *(@type@ *)value);
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1534,6 +1346,26 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
         }
     }
 }
+
+NPY_NO_EXPORT int
+LONGDOUBLE_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_longdouble *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_longdouble *)(ip1 + is1 * *(npy_intp *)indx);
+        *indexed = *indexed @OP@ *(npy_longdouble *)value;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1639,6 +1471,26 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         }
     }
 }
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(void *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        const float v = npy_half_to_float(*(npy_half *)value);
+        *indexed = npy_float_to_half(npy_half_to_float(*indexed) @OP@ v);
+    }
+    return 0;
+}
 /**end repeat**/
 
 #define _HALF_LOGICAL_AND(a,b) (!npy_half_iszero(a) && !npy_half_iszero(b))
@@ -1740,6 +1592,27 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     }
     /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
 }
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        npy_half v = *(npy_half *)value;
+        *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1755,8 +1628,29 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
-    /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
+    /* no need to clear floatstatus_invalid */
 }
+
+NPY_NO_EXPORT int
+HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for (i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        npy_half v = *(npy_half *)value;
+        *indexed = (@OP@(*indexed, v) || npy_half_isnan(v)) ? *indexed: v;
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 NPY_NO_EXPORT void
@@ -1773,6 +1667,27 @@ HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps
         div = npy_floor_dividef(fh1, fh2);
         *((npy_half *)op1) = npy_float_to_half(div);
     }
+}
+
+NPY_NO_EXPORT int
+HALF_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
+         char **args, npy_intp const *dimensions, npy_intp const *steps,
+         void *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    npy_half *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+        float v = npy_half_to_float(*(npy_half *)value);
+        float div = npy_floor_dividef(npy_half_to_float(*indexed), v);
+        *indexed = npy_float_to_half(div);
+    }
+    return 0;
 }
 
 NPY_NO_EXPORT void
@@ -1832,12 +1747,6 @@ HALF_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, v
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = in1;
     }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-HALF_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(npy_half, npy_half, *out = in&0x7fffu);
 }
 
 NPY_NO_EXPORT void
@@ -1991,6 +1900,26 @@ NPY_NO_EXPORT void
         }
     }
 }
+
+NPY_NO_EXPORT int @TYPE@_@kind@_indexed
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @ftype@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@ftype@ *)(ip1 + is1 * *(npy_intp *)indx);
+        const @ftype@ b_r = ((@ftype@ *)value)[0];
+        const @ftype@ b_i = ((@ftype@ *)value)[1];
+        indexed[0] @OP@= b_r;
+        indexed[1] @OP@= b_i;
+    }
+    return 0;
+}
 /**end repeat1**/
 
 NPY_NO_EXPORT void
@@ -2004,6 +1933,28 @@ NPY_NO_EXPORT void
         ((@ftype@ *)op1)[0] = in1r*in2r - in1i*in2i;
         ((@ftype@ *)op1)[1] = in1r*in2i + in1i*in2r;
     }
+}
+
+NPY_NO_EXPORT int @TYPE@_multiply_indexed
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indx = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @ftype@ *indexed;
+    for(i = 0; i < n; i++, indx += isindex, value += isb) {
+        indexed = (@ftype@ *)(ip1 + is1 * *(npy_intp *)indx);
+        const @ftype@ a_r = indexed[0];
+        const @ftype@ a_i = indexed[1];
+        const @ftype@ b_r = ((@ftype@ *)value)[0];
+        const @ftype@ b_i = ((@ftype@ *)value)[1];
+        indexed[0] = a_r*b_r - a_i*b_i;
+        indexed[1] = a_r*b_i + a_i*b_r;
+    }
+    return 0;
 }
 #endif // !SIMD
 
@@ -2116,6 +2067,8 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+#if !@SIMD@
+// CFLOAT & CDOUBLE defined by 'loops_arithm_fp.dispatch.c.src'
 NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
@@ -2126,6 +2079,7 @@ NPY_NO_EXPORT void
         ((@ftype@ *)op1)[1] = in1r*in1i + in1i*in1r;
     }
 }
+#endif
 
 NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -2156,6 +2110,8 @@ NPY_NO_EXPORT void
     }
 }
 
+#if !@SIMD@
+// CFLOAT & CDOUBLE defined by 'loops_arithm_fp.dispatch.c.src'
 NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) {
     UNARY_LOOP {
@@ -2175,20 +2131,6 @@ NPY_NO_EXPORT void
         *((@ftype@ *)op1) = npy_hypot@c@(in1r, in1i);
     }
 }
-
-#if @SIMD@ && defined(HAVE_ATTRIBUTE_TARGET_AVX512F)
-/**begin repeat1
- * arithmetic
- * #kind = conjugate, square, absolute#
- */
-NPY_NO_EXPORT void
-@TYPE@_@kind@_avx512f(char **args, const npy_intp *dimensions, const npy_intp *steps, void *func)
-{
-    if (!run_unary_avx512f_@kind@_@TYPE@(args, dimensions, steps)) {
-        @TYPE@_@kind@(args, dimensions, steps, func);
-    }
-}
-/**end repeat1**/
 #endif
 
 NPY_NO_EXPORT void

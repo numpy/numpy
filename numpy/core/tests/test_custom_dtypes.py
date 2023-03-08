@@ -218,3 +218,30 @@ class TestSFloat:
         assert res.dtype == a.dtype
         expected = np.hypot.reduce(float_equiv, keepdims=True)
         assert res.view(np.float64) * 2 == expected
+
+    def test_astype_class(self):
+        # Very simple test that we accept `.astype()` also on the class.
+        # ScaledFloat always returns the default descriptor, but it does
+        # check the relevant code paths.
+        arr = np.array([1., 2., 3.], dtype=object)
+
+        res = arr.astype(SF)  # passing the class class
+        expected = arr.astype(SF(1.))  # above will have discovered 1. scaling
+        assert_array_equal(res.view(np.float64), expected.view(np.float64))
+
+
+def test_type_pickle():
+    # can't actually unpickle, but we can pickle (if in namespace)
+    import pickle
+
+    np._ScaledFloatTestDType = SF
+
+    s = pickle.dumps(SF)
+    res = pickle.loads(s)
+    assert res is SF
+
+    del np._ScaledFloatTestDType
+
+
+def test_is_numeric():
+    assert SF._is_numeric

@@ -545,6 +545,17 @@ def build_project(args):
             print("Build failed!")
         sys.exit(1)
 
+    # Rebase
+    if sys.platform == "cygwin":
+        from pathlib import path
+        testenv_root = Path(config_vars["platbase"])
+        dll_list = testenv_root.glob("**/*.dll")
+        rebase_cmd = ["/usr/bin/rebase", "--database", "--oblivious"]
+        rebase_cmd.extend(dll_list)
+        if subprocess.run(rebase_cmd):
+            print("Rebase failed")
+            sys.exit(1)
+
     return site_dir, site_dir_noarch
 
 def asv_compare_config(bench_path, args, h_commits):

@@ -1,4 +1,6 @@
 steps:
+- script: git submodule update --init
+  displayName: 'Fetch submodules'
 - task: UsePythonVersion@0
   inputs:
     versionSpec: $(PYTHON_VERSION)

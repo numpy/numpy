@@ -40,39 +40,6 @@
 #define NPY_GCC_OPT_3
 #endif
 
-/* compile target attributes */
-#if defined HAVE_ATTRIBUTE_TARGET_AVX && defined HAVE_LINK_AVX
-#define NPY_GCC_TARGET_AVX __attribute__((target("avx")))
-#else
-#define NPY_GCC_TARGET_AVX
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
-#define HAVE_ATTRIBUTE_TARGET_FMA
-#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
-#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
-#else
-#define NPY_GCC_TARGET_AVX2
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#else
-#define NPY_GCC_TARGET_AVX512F
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX && defined HAVE_LINK_AVX512_SKX
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#else
-#define NPY_GCC_TARGET_AVX512_SKX
-#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -83,21 +50,6 @@
 #define NPY_GCC_NONNULL(n)
 #endif
 
-#if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
-#define NPY_HAVE_SSE_INTRINSICS
-#endif
-
-#if defined HAVE_EMMINTRIN_H && defined HAVE__MM_LOAD_PD
-#define NPY_HAVE_SSE2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
-#define NPY_HAVE_AVX2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
-#define NPY_HAVE_AVX512F_INTRINSICS
-#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
@@ -120,7 +72,7 @@
 /* unlike _mm_prefetch also works on non-x86 */
 #define NPY_PREFETCH(x, rw, loc) __builtin_prefetch((x), (rw), (loc))
 #else
-#ifdef HAVE__MM_PREFETCH
+#ifdef NPY_HAVE_SSE
 /* _MM_HINT_ET[01] (rw = 1) unsupported, only available in gcc >= 4.9 */
 #define NPY_PREFETCH(x, rw, loc) _mm_prefetch((x), loc == 0 ? _MM_HINT_NTA : \
                                              (loc == 1 ? _MM_HINT_T2 : \

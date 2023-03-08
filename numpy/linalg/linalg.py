@@ -23,7 +23,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
     add, multiply, sqrt, sum, isfinite,
-    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
+    finfo, errstate, geterrobj, moveaxis, amin, amax, prod, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal
@@ -138,24 +138,24 @@ def _commonType(*arrays):
     result_type = single
     is_complex = False
     for a in arrays:
-        if issubclass(a.dtype.type, inexact):
-            if isComplexType(a.dtype.type):
+        type_ = a.dtype.type
+        if issubclass(type_, inexact):
+            if isComplexType(type_):
                 is_complex = True
-            rt = _realType(a.dtype.type, default=None)
-            if rt is None:
+            rt = _realType(type_, default=None)
+            if rt is double:
+                result_type = double
+            elif rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
                         (a.dtype.name,))
         else:
-            rt = double
-        if rt is double:
             result_type = double
     if is_complex:
-        t = cdouble
         result_type = _complex_types_map[result_type]
+        return cdouble, result_type
     else:
-        t = double
-    return t, result_type
+        return double, result_type
 
 
 def _to_native_byte_order(*arrays):
@@ -196,7 +196,7 @@ def _assert_finite(*arrays):
 
 def _is_empty_2d(arr):
     # check size first for efficiency
-    return arr.size == 0 and product(arr.shape[-2:]) == 0
+    return arr.size == 0 and prod(arr.shape[-2:]) == 0
 
 
 def transpose(a):

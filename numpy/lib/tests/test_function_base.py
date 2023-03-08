@@ -229,8 +229,8 @@ class TestAny:
     def test_nd(self):
         y1 = [[0, 0, 0], [0, 1, 0], [1, 1, 0]]
         assert_(np.any(y1))
-        assert_array_equal(np.sometrue(y1, axis=0), [1, 1, 0])
-        assert_array_equal(np.sometrue(y1, axis=1), [0, 1, 1])
+        assert_array_equal(np.any(y1, axis=0), [1, 1, 0])
+        assert_array_equal(np.any(y1, axis=1), [0, 1, 1])
 
 
 class TestAll:
@@ -247,8 +247,8 @@ class TestAll:
     def test_nd(self):
         y1 = [[0, 0, 1], [0, 1, 1], [1, 1, 1]]
         assert_(not np.all(y1))
-        assert_array_equal(np.alltrue(y1, axis=0), [0, 0, 1])
-        assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
+        assert_array_equal(np.all(y1, axis=0), [0, 0, 1])
+        assert_array_equal(np.all(y1, axis=1), [0, 0, 1])
 
 
 class TestCopy:
@@ -1216,6 +1216,13 @@ class TestGradient:
         f = np.array([minint // 2, 0])
         dfdx = gradient(f, x)
         assert_array_equal(dfdx, [0.5, 0.5])
+
+    def test_return_type(self):
+        res = np.gradient(([1, 2], [2, 3]))
+        if np._using_numpy2_behavior():
+            assert type(res) is tuple
+        else:
+            assert type(res) is list
 
 
 class TestAngle:

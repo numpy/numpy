@@ -1311,6 +1311,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
+    elif np._using_numpy2_behavior():
+        return tuple(outvals)
     else:
         return outvals
 
@@ -4935,7 +4937,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return coordinate matrices from coordinate vectors.
+    Return a list of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -4976,7 +4978,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : ndarray
+    X1, X2,..., XN : list of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'

@@ -719,8 +719,8 @@ class TestDateTime:
         assert_equal(uni_a, uni_b)
 
         # Datetime to long string - gh-9712
-        assert_equal(str_a, dt_a.astype((np.string_, 128)))
-        str_b = np.empty(str_a.shape, dtype=(np.string_, 128))
+        assert_equal(str_a, dt_a.astype((np.bytes_, 128)))
+        str_b = np.empty(str_a.shape, dtype=(np.bytes_, 128))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
@@ -2529,3 +2529,23 @@ class TestDateTimeData:
 
         dt = np.datetime64('2000', '5μs')
         assert np.datetime_data(dt.dtype) == ('us', 5)
+
+
+def test_comparisons_return_not_implemented():
+    # GH#17017
+
+    class custom:
+        __array_priority__ = 10000
+
+    obj = custom()
+
+    dt = np.datetime64('2000', 'ns')
+    td = dt - dt
+
+    for item in [dt, td]:
+        assert item.__eq__(obj) is NotImplemented
+        assert item.__ne__(obj) is NotImplemented
+        assert item.__le__(obj) is NotImplemented
+        assert item.__lt__(obj) is NotImplemented
+        assert item.__ge__(obj) is NotImplemented
+        assert item.__gt__(obj) is NotImplemented

@@ -8,7 +8,7 @@ requires = [
     # `wheel` is needed for non-isolated builds, given that `meson-python`
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
     # likely to be removed as a dependency in meson-python 0.12.0.
-    "wheel==0.37.0",
+    "wheel==0.38.1",
     "Cython>=0.29.30,<3.0",
 #    "meson-python>=0.10.0",
 ]
@@ -63,6 +63,8 @@ requires = [
 #'f2py3 = numpy.f2py.f2py2e:main'
 #'f2py3.MINOR_VERSION = numpy.f2py.f2py2e:main'
 #
+# When enabling this stanza, make sure to remove the meson-specific xfail from
+# numpy/tests/test_public_api.py
 #[project.entry-points]
 #'array_api': 'numpy = numpy.array_api'
 #'pyinstaller40': 'hook-dirs = numpy:_pyinstaller_hooks_dir'
@@ -143,7 +145,7 @@ requires = [
 
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
+skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/test_requirements.txt"
@@ -152,6 +154,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
+musllinux-x86_64-image = "musllinux_1_1"
 environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
 
 [tool.cibuildwheel.macos]
