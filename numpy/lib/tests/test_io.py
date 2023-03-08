@@ -321,6 +321,22 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
+    @pytest.mark.parametrize("count,repr_count,repr_f", [
+        (10, 5, "<NpzFile %s containing %s...>"),
+        (10, 20, "<NpzFile %s containing %s>"),
+    ])
+    def test_representation(self, count, repr_count, repr_f):
+        a = np.array([[1, 2], [3, 4]], float)
+        np.lib.npyio.NpzFile.MAX_REPR_ARRAY_COUNT = repr_count
+        array_string = ', '.join(
+            [f"arr_{i}" for i in range(min(count, repr_count))]
+        )
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, *[a]*count)
+            l = np.load(tmp)
+            assert str(l) == repr_f % (tmp, array_string)
+            l.close()
+
 
 class TestSaveTxt:
     def test_array(self):
@@ -597,8 +613,8 @@ class TestSaveTxt:
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
 
-        # Since Python 3.8, the default start method for multiprocessing has 
-        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency 
+        # Since Python 3.8, the default start method for multiprocessing has
+        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
         # on memory sharing model, lead to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
