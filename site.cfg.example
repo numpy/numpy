@@ -253,10 +253,12 @@
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
 
-# SSL2
+# Fujitsu SSL2
 # ----
-#
-# [ssl2]
-# library_dirs = /opt/FJSVstclanga/v1.1.0/lib64
-# include_dirs = /opt/FJSVstclanga/v1.1.0/clang-comp/include
-# extra_link_args = -SSL2BLAMP
+#[ssl2]
+#library_dirs = /opt/FJSVstclanga/v1.1.0/lib64
+#include_dirs = /opt/FJSVstclanga/v1.1.0/clang-comp/include
+# Single-threaded version.
+#libraies = fjlapacksve
+# Multi-threaded version. Python itself must be built by Fujitsu compiler.
+#libraies = fjlapackexsve

@@ -1334,12 +1334,41 @@ class blas_mkl_info(mkl_info):
 class ssl2_info(system_info):
     section = 'ssl2'
     dir_env_var = 'SSL2_DIR'
-    _lib_ssl2 = ['fjlapacksve']
+    # Multi-threaded version. Python itself must be built by Fujitsu compiler.
+    _lib_ssl2 = ['fjlapackexsve']
+    # Single-threaded version
+    #_lib_ssl2 = ['fjlapacksve']
+
+    def get_tcsds_rootdir(self):
+        tcsdsroot = os.environ.get('TCSDS_PATH', None)
+        if tcsdsroot is not None:
+            return tcsdsroot
+        return None
+
+    def __init__(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+        if tcsdsroot is None:
+            system_info.__init__(self)
+        else:
+            system_info.__init__(
+                self,
+                default_lib_dirs=[os.path.join(tcsdsroot, 'lib64')],
+                default_include_dirs=[os.path.join(tcsdsroot,
+                    'clang-comp/include')])
 
     def calc_info(self):
+        tcsdsroot = self.get_tcsds_rootdir()
+
         lib_dirs = self.get_lib_dirs()
+        if lib_dirs is None:
+            lib_dirs = os.path.join(tcsdsroot, 'lib64')
+
         incl_dirs = self.get_include_dirs()
+        if incl_dirs is None:
+            incl_dirs = os.path.join(tcsdsroot, 'clang-comp/include')
+
         ssl2_libs = self.get_libs('ssl2_libs', self._lib_ssl2)
+
         info = self.check_libs2(lib_dirs, ssl2_libs)
         if info is None:
             return
