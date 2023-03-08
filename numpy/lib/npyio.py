@@ -178,6 +178,7 @@ class NpzFile(Mapping):
     # Make __exit__ safe if zipfile_factory raises an exception
     zip = None
     fid = None
+    MAX_REPR_ARRAY_COUNT = 5
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
@@ -258,6 +259,22 @@ class NpzFile(Mapping):
                 return self.zip.read(key)
         else:
             raise KeyError("%s is not a file in the archive" % key)
+
+    def __repr__(self):
+        # Get filename or default to `object`
+        if isinstance(self.fid, str):
+            filename = self.fid
+        else:
+            filename = getattr(self.fid, "name", "object")
+
+        # Get the name of arrays
+        if len(self.files) > self.MAX_REPR_ARRAY_COUNT:
+            array_names = "%s..." % (
+                ', '.join(self.files[:self.MAX_REPR_ARRAY_COUNT])
+            )
+        else:
+            array_names = ', '.join(self.files)
+        return "<NpzFile %s containing %s>" % (filename, array_names)
 
 
 @set_module('numpy')
@@ -1159,10 +1176,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
-        
+
         .. versionchanged:: 1.23.0
-            Lines containing no data, including comment lines (e.g., lines 
-            starting with '#' or as specified via `comments`) are not counted 
+            Lines containing no data, including comment lines (e.g., lines
+            starting with '#' or as specified via `comments`) are not counted
             towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
