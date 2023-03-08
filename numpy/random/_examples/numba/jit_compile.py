@@ -9,6 +9,7 @@ rg = np.random.Generator(bit_gen)
 def numpycall(rg):
     return rg.random(size=n)
 
+
 # JIT compile Python function using Numba
 numbacall = nb.njit(numpycall)
 
