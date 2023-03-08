@@ -5,7 +5,7 @@
 Extending
 =========
 The BitGenerators have been designed to be extendable using standard tools for
-high-performance Python -- numba and Cython.  The `~Generator` object can also
+high-performance Python -- Numba and Cython.  The `~Generator` object can also
 be used with user-provided BitGenerators as long as these export a small set of
 required functions.
 
@@ -26,6 +26,14 @@ Both CTypes and CFFI allow the more complicated distributions to be used
 directly in Numba after compiling the file distributions.c into a ``DLL`` or
 ``so``.  An example showing the use of a more complicated distribution is in
 the `examples` section below.
+
+Numba 0.57 onwards introduces direct support for JIT compilation of
+``Generator`` objects. Following example shows how NumPy ``Generator``s
+can be passed as arguments as well as it's usage within Numba compiled
+functions.
+
+.. literalinclude:: ../../../../numpy/random/_examples/numba/jit_compile.py
+    :language: python
 
 .. _random_cython:
 
