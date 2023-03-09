@@ -120,6 +120,10 @@ class NpzFile(Mapping):
     be obtained with ``obj.files`` and the ZipFile object itself using
     ``obj.zip``.
 
+    When `NpzFile` is printed, 5 keys are displayed by default. To display
+    more or less keys, set the ``MAX_REPR_ARRAY_COUNT`` class variable
+    to the desired value before printing.
+
     Attributes
     ----------
     files : list of str
@@ -145,6 +149,10 @@ class NpzFile(Mapping):
         See :py:meth:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
+    MAX_REPR_ARRAY_COUNT: int, optional
+        Maximum number of keys to represent in the object's string. Default: 5
+
+        .. versionadded:: 1.25.0
 
     Parameters
     ----------
@@ -167,6 +175,8 @@ class NpzFile(Mapping):
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
+    >>> npz
+    <NpzFile object containing x, y>
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
