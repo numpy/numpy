@@ -1,0 +1,2 @@
+- The ``busday_count`` method now correctly handles cases where the ``begindates`` and later in time
+  than the ``enddates``.

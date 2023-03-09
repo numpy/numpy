@@ -2359,6 +2359,17 @@ class TestDateTime:
         # Returns negative value when reversed
         assert_equal(np.busday_count('2011-04', '2011-03', weekmask='Mon'), -4)
 
+        sunday = np.datetime64('2023-03-05')
+        monday = sunday + 1
+        friday = sunday + 5
+        saturday = sunday + 6
+        assert_equal(np.busday_count(sunday, monday), 0)
+        assert_equal(np.busday_count(monday, sunday), -1)
+
+        assert_equal(np.busday_count(friday, saturday), 1)
+        assert_equal(np.busday_count(saturday, friday), 0)
+
+
     def test_datetime_is_busday(self):
         holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
                     '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
