@@ -1,0 +1,8 @@
+Improved DLPack protocol detection
+----------------------------------
+Prior to this release, detecting DLPack protocol support in NumPy was limited
+to checking the existence of the `__dlpack__` method on the object's type.
+However, this method could be defined on the object itself, leading to
+inaccuracies.
+With this enhancement, NumPy now checks for the `__dlpack__` method on the
+object itself, providing more accurate detection of DLPack protocol support.

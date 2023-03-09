@@ -37,6 +37,28 @@ class TestDLPack:
         del y
         assert sys.getrefcount(x) == 2
 
+    def test_from_dlpack_no_dlpack(self):
+        x = type('', (), {})()
+        with pytest.raises(AttributeError):
+            np.from_dlpack(x)
+
+    def test_from_dlpack_not_callable(self):
+        x = type('', (), {})()
+        x.__dlpack__ = 1
+        with pytest.raises(TypeError):
+            np.from_dlpack(x)
+
+    def test_from_dlpack_dynamic_method(self):
+        class TensorWrapper:
+            def __init__(self, tensor):
+                self.tensor = tensor
+                if not hasattr(self, '__dlpack__'):
+                    self.__dlpack__ = tensor.__dlpack__
+        x = np.arange(5)
+        y = TensorWrapper(x)
+        z = np.from_dlpack(y)
+        assert_array_equal(x, z)
+
     @pytest.mark.parametrize("dtype", [
         np.bool_,
         np.int8, np.int16, np.int32, np.int64,
