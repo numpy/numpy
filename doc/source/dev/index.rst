@@ -45,7 +45,7 @@ Here's the short summary, complete TOC links are below:
 
    * Clone the project to your local computer::
 
-      git clone https://github.com/your-username/numpy.git
+      git clone --recurse-submodules https://github.com/your-username/numpy.git
 
    * Change the directory::
 
@@ -180,7 +180,7 @@ Guidelines
   get no response to your pull request within a week.
 
 .. _stylistic-guidelines:
-  
+
 Stylistic Guidelines
 --------------------
 
