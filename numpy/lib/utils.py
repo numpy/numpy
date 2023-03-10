@@ -1140,4 +1140,31 @@ def _opt_info():
             enabled_features += f" {feature}?"
 
     return enabled_features
+
+def drop_metadata(dt):
+    align = dt.isalignedstruct
+    if dt.names:
+        # structured dtype
+        l = list()
+        for n in dt.names:
+            t = dt.fields[n]
+            l.append((
+                n,  # name
+                drop_metadata(t[0]),  # format
+                t[1],  # offset
+                t[2] if len(t) == 3 else None,  # title
+            ))
+        d = {k: [e[i] for e in l] for i, k in enumerate(
+            ['names', 'formats', 'offsets', 'titles']
+        )}
+        d['itemsize'] = dt.itemsize
+    elif dt.subdtype:
+        # subdtype
+        (item_dtype, shape) = dt.subdtype
+        d = (drop_metadata(item_dtype), shape)
+    else:
+        # scalar dtype
+        d = dt.str
+    new_dt = np.dtype(dtype=d, align=dt.isalignedstruct) 
+    return new_dt
 #-----------------------------------------------------------------------------
