@@ -229,7 +229,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
 
 _eye_with_like = array_function_dispatch(
-    _eye_dispatcher
+    _eye_dispatcher, use_like=True
 )(eye)
 
 
@@ -431,7 +431,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
 
 _tri_with_like = array_function_dispatch(
-    _tri_dispatcher
+    _tri_dispatcher, use_like=True
 )(tri)
 
 
