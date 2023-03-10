@@ -334,10 +334,16 @@ array_implement_array_function(
     PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
 {
     PyObject *res, *implementation, *public_api, *relevant_args, *args, *kwargs;
+    /*
+     * Very few functions use **kwargs, only check for like then (note that
+     * this is a backport only change, 1.25.x has been refactored)
+     */
+    PyObject *uses_like;
 
     if (!PyArg_UnpackTuple(
-            positional_args, "implement_array_function", 5, 5,
-            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
+            positional_args, "implement_array_function", 6, 6,
+            &implementation, &public_api, &relevant_args, &args, &kwargs,
+            &uses_like)) {
         return NULL;
     }
 
@@ -346,7 +352,8 @@ array_implement_array_function(
      * in downstream libraries. If `like=` is specified but doesn't
      * implement `__array_function__`, raise a `TypeError`.
      */
-    if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
+    if (uses_like == Py_True
+            && kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
         PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
         if (like_arg != NULL) {
             PyObject *tmp_has_override = get_array_function(like_arg);

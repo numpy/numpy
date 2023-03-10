@@ -232,6 +232,16 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
+    def test_named_arrays_with_like(self):
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
+        c = BytesIO()
+        np.savez(c, file_a=a, like=b)
+        c.seek(0)
+        l = np.load(c)
+        assert_equal(a, l['file_a'])
+        assert_equal(b, l['like'])
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)

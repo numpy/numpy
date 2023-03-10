@@ -208,7 +208,7 @@ def ones(shape, dtype=None, order='C', *, like=None):
 
 
 _ones_with_like = array_function_dispatch(
-    _ones_dispatcher
+    _ones_dispatcher, use_like=True
 )(ones)
 
 
@@ -347,7 +347,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 
 
 _full_with_like = array_function_dispatch(
-    _full_dispatcher
+    _full_dispatcher, use_like=True
 )(full)
 
 
@@ -1867,7 +1867,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
 
 _fromfunction_with_like = array_function_dispatch(
-    _fromfunction_dispatcher
+    _fromfunction_dispatcher, use_like=True
 )(fromfunction)
 
 
@@ -2188,7 +2188,7 @@ def identity(n, dtype=None, *, like=None):
 
 
 _identity_with_like = array_function_dispatch(
-    _identity_dispatcher
+    _identity_dispatcher, use_like=True
 )(identity)
 
 
