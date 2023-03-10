@@ -3805,7 +3805,16 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 # are reference purposes only. Wherever possible,
 # avoid using them.
 
-@array_function_dispatch(_round_dispatcher)
+
+def _round__dispatcher(a, decimals=None, out=None):
+    # 2023-02-28, 1.25.0
+    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `round` instead.",
+                  DeprecationWarning, stacklevel=3)
+    return (a, out)
+
+
+@array_function_dispatch(_round__dispatcher)
 def round_(a, decimals=0, out=None):
     """
     Round an array to the given number of decimals.
@@ -3821,14 +3830,23 @@ def round_(a, decimals=0, out=None):
     --------
     around : equivalent function; see for details.
     """
-    # 2023-02-28, 1.25.0
-    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `round` instead.",
-                  DeprecationWarning, stacklevel=2)
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # call dispatch helper explicitly, as it emits a deprecation warning
+        _round__dispatcher(a, decimals=decimals, out=out)
+
     return around(a, decimals=decimals, out=out)
 
 
-@array_function_dispatch(_prod_dispatcher, verify=False)
+def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
+                        initial=None, where=None):
+    # 2023-03-02, 1.25.0
+    warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `prod` instead.",
+                  DeprecationWarning, stacklevel=3)
+    return (a, out)
+
+
+@array_function_dispatch(_product_dispatcher, verify=False)
 def product(*args, **kwargs):
     """
     Return the product of array elements over a given axis.
@@ -3841,14 +3859,22 @@ def product(*args, **kwargs):
     --------
     prod : equivalent function; see for details.
     """
-    # 2023-03-02, 1.25.0
-    warnings.warn("`product` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `prod` instead.",
-                  DeprecationWarning, stacklevel=2)
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # call dispatch helper explicitly, as it emits a deprecation warning
+        _product_dispatcher(*args, **kwargs)
+
     return prod(*args, **kwargs)
 
 
-@array_function_dispatch(_cumprod_dispatcher, verify=False)
+def _cumproduct_dispatcher(a, axis=None, dtype=None, out=None):
+    # 2023-03-02, 1.25.0
+    warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `cumprod` instead.",
+                  DeprecationWarning, stacklevel=3)
+    return (a, out)
+
+
+@array_function_dispatch(_cumproduct_dispatcher, verify=False)
 def cumproduct(*args, **kwargs):
     """
     Return the cumulative product over the given axis.
@@ -3861,14 +3887,23 @@ def cumproduct(*args, **kwargs):
     --------
     cumprod : equivalent function; see for details.
     """
-    # 2023-03-02, 1.25.0
-    warnings.warn("`cumproduct` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `cumprod` instead.",
-                  DeprecationWarning, stacklevel=2)
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # call dispatch helper explicitly, as it emits a deprecation warning
+        _cumproduct_dispatcher(*args, **kwargs)
+
     return cumprod(*args, **kwargs)
 
 
-@array_function_dispatch(_any_dispatcher, verify=False)
+def _sometrue_dispatcher(a, axis=None, out=None, keepdims=None, *,
+                         where=np._NoValue):
+    # 2023-03-02, 1.25.0
+    warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `any` instead.",
+                  DeprecationWarning, stacklevel=3)
+    return (a, where, out)
+
+
+@array_function_dispatch(_sometrue_dispatcher, verify=False)
 def sometrue(*args, **kwargs):
     """
     Check whether some values are true.
@@ -3883,14 +3918,22 @@ def sometrue(*args, **kwargs):
     --------
     any : equivalent function; see for details.
     """
-    # 2023-03-02, 1.25.0
-    warnings.warn("`sometrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `any` instead.",
-                  DeprecationWarning, stacklevel=2)
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # call dispatch helper explicitly, as it emits a deprecation warning
+        _sometrue_dispatcher(*args, **kwargs)
+
     return any(*args, **kwargs)
 
 
-@array_function_dispatch(_all_dispatcher, verify=False)
+def _alltrue_dispatcher(a, axis=None, out=None, keepdims=None, *, where=None):
+    # 2023-03-02, 1.25.0
+    warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
+                  "removed in NumPy 2.0. Please use `all` instead.",
+                  DeprecationWarning, stacklevel=3)
+    return (a, where, out)
+
+
+@array_function_dispatch(_alltrue_dispatcher, verify=False)
 def alltrue(*args, **kwargs):
     """
     Check if all elements of input array are true.
@@ -3903,8 +3946,8 @@ def alltrue(*args, **kwargs):
     --------
     numpy.all : Equivalent function; see for details.
     """
-    # 2023-03-02, 1.25.0
-    warnings.warn("`alltrue` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `all` instead.",
-                  DeprecationWarning, stacklevel=2)
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # call dispatch helper explicitly, as it emits a deprecation warning
+        _alltrue_dispatcher(*args, **kwargs)
+
     return all(*args, **kwargs)
