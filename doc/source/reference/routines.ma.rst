@@ -72,6 +72,8 @@ Inspecting the array
    ma.isMaskedArray
    ma.isMA
    ma.isarray
+   ma.isin
+   ma.in1d
 
 
    ma.MaskedArray.all
@@ -107,6 +109,7 @@ Changing the shape
    ma.MaskedArray.ravel
    ma.MaskedArray.reshape
    ma.MaskedArray.resize
+   ma.diagflat
 
 
 Modifying axes
@@ -394,6 +397,17 @@ Clipping and rounding
    ma.MaskedArray.clip
    ma.MaskedArray.round
 
+Set operations
+~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+
+   ma.interset1d
+   ma.setdeff1d
+   ma.setxor1d
+   ma.union1d
+
 
 Miscellanea
 ~~~~~~~~~~~
@@ -409,3 +423,4 @@ Miscellanea
    ma.ediff1d
    ma.indices
    ma.where
+   ma.unique
