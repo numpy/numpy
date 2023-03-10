@@ -323,8 +323,19 @@ def test_symbol(poly, tgt):
     assert_equal(f"{p:unicode}", tgt)
 
 
-class TestRepr:
+class TestStr:
     def test_polynomial_str(self):
+        res = str(poly.Polynomial([0, 1]))
+        tgt = '0.0 + 1.0 x'
+        assert_equal(res, tgt)
+
+        res = str(poly.Polynomial([0, 1], domain=[0, 2]))
+        tgt = '0.0 + 1.0 (-1.0 + x)'
+        assert_equal(res, tgt)
+
+
+class TestRepr:
+    def test_polynomial_repr(self):
         res = repr(poly.Polynomial([0, 1]))
         tgt = (
             "Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1], "
@@ -332,7 +343,7 @@ class TestRepr:
         )
         assert_equal(res, tgt)
 
-    def test_chebyshev_str(self):
+    def test_chebyshev_repr(self):
         res = repr(poly.Chebyshev([0, 1]))
         tgt = (
             "Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1], "
