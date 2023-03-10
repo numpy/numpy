@@ -79,11 +79,13 @@ def can_link_svml():
             and "linux" in platform
             and sys.maxsize > 2**31)
 
-def check_svml_submodule(svmlpath):
-    if not os.path.exists(svmlpath + "/README.md"):
-        raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
-                           "update --init` to fix this.")
-    return True
+def check_git_submodules():
+    out = os.popen("git submodule status")
+    modules = out.readlines()
+    for submodule in modules:
+        if (submodule.strip()[0] == "-"):
+            raise RuntimeError("git submodules are not initialized."
+                    "Please run `git submodule update --init` to fix this")
 
 def pythonlib_dir():
     """return path where libpython* is."""
@@ -413,6 +415,8 @@ def configuration(parent_package='',top_path=None):
     # Check whether we have a mismatch between the set C API VERSION and the
     # actual C API VERSION. Will raise a MismatchCAPIError if so.
     check_api_version(C_API_VERSION, codegen_dir)
+
+    check_git_submodules()
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
@@ -1036,7 +1040,7 @@ def configuration(parent_package='',top_path=None):
     # after all maintainable code.
     svml_filter = (
     )
-    if can_link_svml() and check_svml_submodule(svml_path):
+    if can_link_svml():
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
         svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
