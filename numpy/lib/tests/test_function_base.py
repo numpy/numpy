@@ -3603,19 +3603,19 @@ class TestQuantile:
         # Test that the identification equation holds for the empirical
         # CDF:
         #   E[V(x, Y)] = 0  <=>  x is quantile
-        # with Y the random variable for which we have observed
-        # values and V(x, y) the canonical identification function for the
-        # quantile (at level alpha), see
+        # with Y the random variable for which we have observed values and
+        # V(x, y) the canonical identification function for the quantile (at
+        # level alpha), see
         # https://doi.org/10.48550/arXiv.0912.0902        
         rng = np.random.default_rng(4321)
-        # We choose n and alpha such that we have cases for
+        # We choose n and alpha such that we cover 3 cases:
         #  - n * alpha is an integer
         #  - n * alpha is a float that gets rounded down
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
         x = np.quantile(y, alpha, method=method)
-        if method in ("higher", "nearest"):
+        if method in ("higher"):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         elif int(n * alpha) == n * alpha:
@@ -3625,7 +3625,7 @@ class TestQuantile:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".
             assert_allclose(np.mean(self.V(x, y, alpha)), 0,
-                atol=np.amin([alpha, 1 - alpha]) / n)
+                atol=1 / n / np.amin([alpha, 1 - alpha]))
 
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
