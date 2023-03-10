@@ -423,7 +423,7 @@ From other objects
     :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
     this call will generate an error if the data
     type cannot be safely obtained from the object. If you want to use
-    ``NULL`` for the *dtype* and ensure the array is notswapped then
+    ``NULL`` for the *dtype* and ensure the array is not swapped then
     use :c:func:`PyArray_CheckFromAny`. A value of 0 for either of the
     depth parameters causes the parameter to be ignored. Any of the
     following array flags can be added (*e.g.* using \|) to get the

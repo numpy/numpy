@@ -14,6 +14,7 @@
 
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "ctors.h"
 #include "descriptor.h"
 #include "scalartypes.h"

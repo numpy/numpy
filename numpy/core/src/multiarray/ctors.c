@@ -1605,6 +1605,31 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
+    npy_dtype_info dt_info = {NULL, NULL};
+
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        newtype, &dt_info.descr, &dt_info.dtype);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
+    PyObject* ret =  _PyArray_FromAny(op, newtype, dt_info, min_depth,
+                                      max_depth, flags, context);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+    return ret;
+}
+
+// private version updated to accept npy_dtype_info
+
+NPY_NO_EXPORT PyObject *
+_PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, npy_dtype_info dt_info,
+                 int min_depth, int max_depth, int flags, PyObject *context)
+{
     /*
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
@@ -1620,26 +1645,18 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    PyArray_Descr *fixed_descriptor;
-    PyArray_DTypeMeta *fixed_DType;
-    if (PyArray_ExtractDTypeAndDescriptor(newtype,
-            &fixed_descriptor, &fixed_DType) < 0) {
-        Py_XDECREF(newtype);
-        return NULL;
-    }
+    // steal reference
     Py_XDECREF(newtype);
 
     ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype,
+            NPY_MAXDIMS, dims, &cache, dt_info.dtype, dt_info.descr, &dtype,
             flags & NPY_ARRAY_ENSURENOCOPY);
 
-    Py_XDECREF(fixed_descriptor);
-    Py_XDECREF(fixed_DType);
     if (ndim < 0) {
         return NULL;
     }
 
-    if (NPY_UNLIKELY(fixed_descriptor != NULL && PyDataType_HASSUBARRAY(dtype))) {
+    if (NPY_UNLIKELY(dt_info.descr != NULL && PyDataType_HASSUBARRAY(dtype))) {
         /*
          * When a subarray dtype was passed in, its dimensions are appended
          * to the array dimension (causing a dimension mismatch).
@@ -1909,6 +1926,32 @@ NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
+    npy_dtype_info dt_info = {NULL, NULL};
+
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        descr, &dt_info.descr, &dt_info.dtype);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
+    PyObject* ret =  _PyArray_CheckFromAny(op, descr, dt_info, min_depth,
+                                           max_depth, requires, context);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+    return ret;
+}
+
+// private version updated to accept npy_dtype_info
+
+NPY_NO_EXPORT PyObject *
+_PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr,
+                      npy_dtype_info dt_info, int min_depth,
+                      int max_depth, int requires, PyObject *context)
+{
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
@@ -1926,7 +1969,8 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         }
     }
 
-    obj = PyArray_FromAny(op, descr, min_depth, max_depth, requires, context);
+    obj = _PyArray_FromAny(op, descr, dt_info, min_depth, max_depth, requires,
+                           context);
     if (obj == NULL) {
         return NULL;
     }

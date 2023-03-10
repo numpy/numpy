@@ -36,8 +36,17 @@ _array_from_array_like(PyObject *op,
         int never_copy);
 
 NPY_NO_EXPORT PyObject *
+_PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, npy_dtype_info dt_info,
+                 int min_depth, int max_depth, int flags, PyObject *context);
+
+NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context);
+
+NPY_NO_EXPORT PyObject *
+_PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr,
+                      npy_dtype_info dt_info, int min_depth,
+                      int max_depth, int requires, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
