@@ -403,8 +403,8 @@ Set operations
    :toctree: generated/
 
 
-   ma.interset1d
-   ma.setdeff1d
+   ma.intersect1d
+   ma.setdiff1d
    ma.setxor1d
    ma.union1d
 
