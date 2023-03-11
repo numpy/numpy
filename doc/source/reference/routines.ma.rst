@@ -31,6 +31,7 @@ From existing data
    ma.fromfunction
 
    ma.MaskedArray.copy
+   ma.diagflat
 
 
 Ones and zeros
@@ -74,6 +75,7 @@ Inspecting the array
    ma.isarray
    ma.isin
    ma.in1d
+   ma.unique
 
 
    ma.MaskedArray.all
@@ -109,7 +111,6 @@ Changing the shape
    ma.MaskedArray.ravel
    ma.MaskedArray.reshape
    ma.MaskedArray.resize
-   ma.diagflat
 
 
 Modifying axes
@@ -423,4 +424,3 @@ Miscellanea
    ma.ediff1d
    ma.indices
    ma.where
-   ma.unique
