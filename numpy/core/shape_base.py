@@ -283,9 +283,6 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
            [6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # reject non-sequences (and make tuple)
-        tup = _arrays_for_stack_dispatcher(tup)
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
@@ -352,10 +349,6 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
            [3, 6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # reject non-sequences (and make tuple)
-        tup = _arrays_for_stack_dispatcher(tup)
-
     arrs = atleast_1d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
@@ -447,10 +440,6 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
            [3, 6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # reject non-sequences (and make tuple)
-        arrays = _arrays_for_stack_dispatcher(arrays)
-
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')

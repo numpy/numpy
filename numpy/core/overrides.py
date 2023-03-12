@@ -11,9 +11,6 @@ from numpy.core._multiarray_umath import (
 
 ARRAY_FUNCTIONS = set()
 
-ARRAY_FUNCTION_ENABLED = bool(
-    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
-
 array_function_like_doc = (
     """like : array_like, optional
         Reference object to allow the creation of arrays which are not
@@ -140,17 +137,8 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
     Returns
     -------
     Function suitable for decorating the implementation of a NumPy function.
+
     """
-
-    if not ARRAY_FUNCTION_ENABLED:
-        def decorator(implementation):
-            if docs_from_dispatcher:
-                add_docstring(implementation, dispatcher.__doc__)
-            if module is not None:
-                implementation.__module__ = module
-            return implementation
-        return decorator
-
     def decorator(implementation):
         if verify:
             if dispatcher is not None:
