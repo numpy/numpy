@@ -85,7 +85,7 @@ def check_git_submodules():
     for submodule in modules:
         if (submodule.strip()[0] == "-"):
             raise RuntimeError("git submodules are not initialized."
-                    "Please run `git submodule update --init` to fix this")
+                    "Please run `git submodule update --init` to fix this.")
 
 def pythonlib_dir():
     """return path where libpython* is."""

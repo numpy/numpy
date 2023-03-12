@@ -83,6 +83,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/npysort/x86-simd-sort/README.md')
+  error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
 
 # Check sizes of types. Note, some of these landed in config.h before, but were
 # unused. So clean that up and only define the NPY_SIZEOF flavors rather than
