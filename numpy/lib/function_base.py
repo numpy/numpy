@@ -4910,23 +4910,22 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-if overrides.ARRAY_FUNCTION_ENABLED:
-    # If array-function is enabled (normal), we wrap everything into a C
-    # callable, which has no __code__ or other attributes normal Python funcs
-    # have.  SciPy however, tries to "clone" `trapz` into a new Python function
-    # which requires `__code__` and a few other attributes.
-    # So we create a dummy clone and copy over its attributes allowing
-    # SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
-    assert not hasattr(trapz, "__code__")
+# __array_function__ has no __code__ or other attributes normal Python funcs we
+# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
+# into a new Python function which requires `__code__` and a few other
+# attributes. So we create a dummy clone and copy over its attributes allowing
+# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
+assert not hasattr(trapz, "__code__")
 
-    def _fake_trapz(y, x=None, dx=1.0, axis=-1):
-        return trapz(y, x=x, dx=dx, axis=axis)
+def _fake_trapz(y, x=None, dx=1.0, axis=-1):
+    return trapz(y, x=x, dx=dx, axis=axis)
 
-    trapz.__code__ = _fake_trapz.__code__
-    trapz.__globals__ = _fake_trapz.__globals__
-    trapz.__defaults__ = _fake_trapz.__defaults__
-    trapz.__closure__ = _fake_trapz.__closure__
-    trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+
+trapz.__code__ = _fake_trapz.__code__
+trapz.__globals__ = _fake_trapz.__globals__
+trapz.__defaults__ = _fake_trapz.__defaults__
+trapz.__closure__ = _fake_trapz.__closure__
+trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):

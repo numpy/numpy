@@ -272,13 +272,11 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  numpy2_flag_and_no_array_func:
+  numpy2_flag:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
-      NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
-      # Array func and numpy-2 should be involved, so use this
-      # to have a test for feature flagged behavior.
+      # Test for numpy-2.0 feature-flagged behavior.
       NPY_NUMPY_2_BEHAVIOR: 1
       # Using the future "weak" state doesn't pass tests
       # currently unfortunately
