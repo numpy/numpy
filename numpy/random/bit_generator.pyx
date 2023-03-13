@@ -581,6 +581,8 @@ cdef class BitGenerator():
 
     def spawn(self, int n_children):
         """
+        spawn(n_children)
+
         Create new independent child bit generators.
 
         See :ref:`seedsequence-spawn` for additional notes on spawning
@@ -588,6 +590,10 @@ cdef class BitGenerator():
         as a different approach for creating independent streams.
 
         .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
 
         Returns
         -------
