@@ -798,24 +798,24 @@ class TestPrintOptions:
                   dtype='{}')""".format(styp)))
 
     @pytest.mark.parametrize(
-        ['native', 'non_native'],
+        ['native'],
         [
-            ('bool', 'bool'),
-            ('uint8', 'u1'),
-            ('uint16', '>u2'),
-            ('uint32', '>u4'),
-            ('uint64', '>u8'),
-            ('int16', '>i2'),
-            ('int32', '>i4'),
-            ('int64', '>i8'),
-            ('float16', '>e'),
-            ('float32', '>f'),
-            ('float64', '>d'),
-            # ('<U', '>U'),     # these get cast to '<U1' and '>U1'
-            ('<U1', '>U1'),     # 4-byte width string
+            ('bool',),
+            ('uint8',),
+            ('uint16',),
+            ('uint32',),
+            ('uint64',),
+            ('int8',),
+            ('int16',),
+            ('int32',),
+            ('int64',),
+            ('float16',),
+            ('float32',),
+            ('float64',),
+            ('<U1',),     # 4-byte width string
         ],
     )
-    def test_dtype_endianness_repr(self, native, non_native):
+    def test_dtype_endianness_repr(self, native):
         '''
         there was an issue where 
         repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2'))
@@ -823,27 +823,22 @@ class TestPrintOptions:
         array([0], dtype=uint16)
         even though their dtypes have different endianness.
         '''
-        if sys.byteorder == 'big':
-            # flip native and non-native for big-endian systems
-            non_native = non_native.replace('>', '<')
-            native = native.replace('<', '>')
-        non_native_dtype = np.dtype(non_native)
+        if native == '<U1' and sys.byteorder == 'big':
+            native = '>U1'
         native_dtype = np.dtype(native)
+        non_native_dtype = native_dtype.newbyteorder()
         non_native_repr = repr(np.array([1], non_native_dtype))
         native_repr = repr(np.array([1], native_dtype))
         # preserve the sensible default of only showing dtype if nonstandard
         assert ('dtype' in native_repr) ^ (native_dtype in _typelessdata),\
                 ("an array's repr should show dtype if and only if the type "
                  'of the array is NOT one of the standard types '
-                 '(e.g., int32, bool, float64) ')
+                 '(e.g., int32, bool, float64).')
         if non_native_dtype.itemsize > 1:
             # if the type is >1 byte, the non-native endian version
             # must show endianness.
-            assert non_native_repr != native_repr,\
-                ('expected native repr != non-native repr, '
-                f'but {native_repr = }, {non_native_repr = }')
-            assert f"dtype='{non_native[0]}" in non_native_repr,\
-                'non-native endian repr did not include > or < for endianness'
+            assert non_native_repr != native_repr
+            assert f"dtype='{non_native_dtype.byteorder}" in non_native_repr
 
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
