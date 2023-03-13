@@ -113,6 +113,8 @@ np.void(True)
 np.void(np.bool_(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+np.void(object(), [("a", "O"), ("b", "O")])
+np.void(object(), dtype=[("a", "O"), ("b", "O")])
 
 # Protocols
 i8 = np.int64()
@@ -173,18 +175,12 @@ c16.byteswap()
 c16.transpose()
 
 # Aliases
-np.str0()
-np.bool8()
-np.bytes0()
 np.string_()
-np.object0()
-np.void0(0)
 
 np.byte()
 np.short()
 np.intc()
 np.intp()
-np.int0()
 np.int_()
 np.longlong()
 
@@ -192,7 +188,6 @@ np.ubyte()
 np.ushort()
 np.uintc()
 np.uintp()
-np.uint0()
 np.uint()
 np.ulonglong()
 

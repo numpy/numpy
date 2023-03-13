@@ -211,7 +211,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     int flags;
 
     if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     else if (order == NPY_KEEPORDER) {
         PyErr_SetString(PyExc_ValueError,
@@ -787,7 +787,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp const *strides,
                                     &_npy_stride_sort_item_comparator);
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 s_intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;

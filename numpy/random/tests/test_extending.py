@@ -6,6 +6,7 @@ import sys
 import warnings
 import numpy as np
 from numpy.distutils.misc_util import exec_mod_from_location
+from numpy.testing import IS_WASM
 
 try:
     import cffi
@@ -22,7 +23,8 @@ try:
         # numba issue gh-4733
         warnings.filterwarnings('always', '', DeprecationWarning)
         import numba
-except ImportError:
+except (ImportError, SystemError):
+    # Certain numpy/numba versions trigger a SystemError due to a numba bug
     numba = None
 
 try:
@@ -31,7 +33,7 @@ try:
 except ImportError:
     cython = None
 else:
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
     # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
@@ -41,6 +43,8 @@ else:
         # too old or wrong cython, skip the test
         cython = None
 
+
+@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):

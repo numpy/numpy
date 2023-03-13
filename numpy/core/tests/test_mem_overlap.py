@@ -55,7 +55,7 @@ def _indices(ndims):
 def _check_assignment(srcidx, dstidx):
     """Check assignment arr[dstidx] = arr[srcidx] works."""
 
-    arr = np.arange(np.product(shape)).reshape(shape)
+    arr = np.arange(np.prod(shape)).reshape(shape)
 
     cpy = arr.copy()
 
@@ -105,7 +105,7 @@ def test_diophantine_fuzz():
                       for j in range(ndim))
 
             b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = rng.randint(-1, b_ub+2, dtype=np.intp)
+            b = int(rng.randint(-1, b_ub+2, dtype=np.intp))
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0

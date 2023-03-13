@@ -1,4 +1,6 @@
+import importlib
 import codecs
+import unicodedata
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces
@@ -257,13 +259,20 @@ class TestFortranReader(util.F2PyTest):
     def test_input_encoding(self, tmp_path, encoding):
         # gh-635
         f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
-        # explicit BOM is required for UTF8
-        bom = {'utf-8': codecs.BOM_UTF8}.get(encoding, b'')
         with f_path.open('w', encoding=encoding) as ff:
-            ff.write(bom.decode(encoding) +
-                     """
+            ff.write("""
                      subroutine foo()
                      end subroutine foo
                      """)
         mod = crackfortran.crackfortran([str(f_path)])
         assert mod[0]['name'] == 'foo'
+
+class TestUnicodeComment(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
+
+    @pytest.mark.skipif(
+        (importlib.util.find_spec("charset_normalizer") is None),
+        reason="test requires charset_normalizer which is not installed",
+    )
+    def test_encoding_comment(self):
+        self.module.foo(3)

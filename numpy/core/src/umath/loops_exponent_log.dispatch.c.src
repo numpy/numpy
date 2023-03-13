@@ -239,7 +239,7 @@ fma_scalef_ps(__m256 poly, __m256 quadrant)
 
 #ifdef SIMD_AVX512F
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+NPY_FINLINE __mmask16
 avx512_get_full_load_mask_ps(void)
 {
     return 0xFFFF;
@@ -1146,7 +1146,7 @@ AVX512F_log_DOUBLE(npy_double * op,
  * #vtype2_scatter = _mm512_mask_i32scatter_epi32, _mm256_mask_i32scatter_epi32#
  * #setzero = _mm512_setzero_epi32, _mm256_setzero_si256#
  */
-static NPY_INLINE void
+static inline void
 AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
@@ -1215,7 +1215,7 @@ AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const 
     }
 }
 
-static NPY_INLINE void
+static inline void
 AVX512_SKX_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);

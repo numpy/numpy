@@ -83,7 +83,7 @@ LFortran (FOSS)
 Baseline
 ========
 
-For this document we will asume the following basic tools:
+For this document we will assume the following basic tools:
 
 - The IDE being considered is the community supported `Microsoft Visual Studio Code`_
 - The terminal being used is the `Windows Terminal`_

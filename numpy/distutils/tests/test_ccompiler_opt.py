@@ -31,7 +31,7 @@ arch_compilers = dict(
     ppc64 = ("gcc", "clang"),
     ppc64le = ("gcc", "clang"),
     armhf = ("gcc", "clang"),
-    aarch64 = ("gcc", "clang"),
+    aarch64 = ("gcc", "clang", "fcc"),
     s390x = ("gcc", "clang"),
     noarch = ("gcc",)
 )
@@ -78,7 +78,7 @@ class _Test_CCompilerOpt:
     arch = None # x86_64
     cc   = None # gcc
 
-    def setup(self):
+    def setup_class(self):
         FakeCCompilerOpt.conf_nocache = True
         self._opt = None
 
@@ -422,8 +422,8 @@ class _Test_CCompilerOpt:
         # when option "native" is activated through the args
         try:
             self.expect("native",
-                trap_flags=".*(-march=native|-xHost|/QxHost).*",
-                x86=".*", ppc64=".*", armhf=".*", s390x=".*"
+                trap_flags=".*(-march=native|-xHost|/QxHost|-mcpu=a64fx).*",
+                x86=".*", ppc64=".*", armhf=".*", s390x=".*", aarch64=".*",
             )
             if self.march() != "unknown":
                 raise AssertionError(
@@ -780,7 +780,7 @@ def new_test(arch, cc):
         cc   = '{cc}'
         def __init__(self, methodName="runTest"):
             unittest.TestCase.__init__(self, methodName)
-            self.setup()
+            self.setup_class()
     """).format(
         class_name=arch + '_' + cc, arch=arch, cc=cc
     )

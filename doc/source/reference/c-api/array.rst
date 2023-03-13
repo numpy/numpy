@@ -152,7 +152,7 @@ and its sub-types).
 
 .. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
 
-    The function pointed to by the CObject
+    The function pointed to by the :c:type:`PyCapsule`
     :obj:`~numpy.class.__array_finalize__`.
     The first argument is the newly created sub-type. The second argument
     (if not NULL) is the "parent" array (if the array was created using
@@ -1337,7 +1337,7 @@ Special functions for NPY_OBJECT
     by NumPy.  Users **should** also ensure to pass fully initialized buffers
     to NumPy, since NumPy may make this a strong requirement in the future.
 
-    There is currently an intention to ensure that NumPy always initalizes
+    There is currently an intention to ensure that NumPy always initializes
     object arrays before they may be read.  Any failure to do so will be
     regarded as a bug.
     In the future, users may be able to rely on non-NULL values when reading
@@ -2475,9 +2475,9 @@ As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
-N-dimensional array quickly and efficiently. Section `2
-<#sec-array-iterator>`__ provides more description and examples of
-this useful approach to looping over an array.
+N-dimensional array quickly and efficiently, as seen in :ref:`the
+example <iteration-example>` which provides more description
+of this useful approach to looping over an array from C. 
 
 .. c:function:: PyObject* PyArray_IterNew(PyObject* arr)
 
@@ -3047,14 +3047,14 @@ to.
     structure with base, ptr, len, and flags members. The
     :c:type:`PyArray_Chunk` structure is binary compatible with the
     Python's buffer object (through its len member on 32-bit platforms
-    and its ptr member on 64-bit platforms or in Python 2.5). On
-    return, the base member is set to *obj* (or its base if *obj* is
-    already a buffer object pointing to another object). If you need
-    to hold on to the memory be sure to INCREF the base member. The
-    chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
-    with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
-    a writeable buffer interface.
+    and its ptr member on 64-bit platforms). On return, the base member
+    is set to *obj* (or its base if *obj* is already a buffer object
+    pointing to another object). If you need to hold on to the memory
+    be sure to INCREF the base member. The chunk of memory is pointed
+    to by *buf* ->ptr member and has length *buf* ->len. The flags
+    member of *buf* is :c:data:`NPY_ARRAY_ALIGNED` with the
+    :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable
+    buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 

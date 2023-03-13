@@ -16,6 +16,7 @@
     #define NPY_SIMD_FMA3 0  // HW emulated
 #endif
 #define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 1
 
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;

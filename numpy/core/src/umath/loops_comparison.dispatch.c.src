@@ -234,7 +234,7 @@ static void simd_binary_@kind@_b8(char **args, npy_intp len)
         npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src1), vzero);
         npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src2), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst) {
@@ -258,7 +258,7 @@ static void simd_binary_scalar1_@kind@_b8(char **args, npy_intp len)
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src, ++dst) {
@@ -281,7 +281,7 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src, ++dst) {
@@ -308,23 +308,27 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
  * #OP = ==, !=, <, <=#
  */
 #if !((@eq@ || @neq@) && @signed@)
-static NPY_INLINE void
+static inline void
 run_binary_simd_@kind@_@sfx@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @VECTOR@
-    /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
-        return;
-    }
-    /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
-        return;
-    }
-    else if (IS_BLOCKABLE_BINARY_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_@kind@_@sfx@(args, dimensions[0]);
-        return;
+    if (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0]) &&
+        !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])
+    ) {
+        /* argument one scalar */
+        if (IS_BINARY_CONT_S1(@type@, npy_bool)) {
+            simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        /* argument two scalar */
+        else if (IS_BINARY_CONT_S2(@type@, npy_bool)) {
+            simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        else if (IS_BINARY_CONT(@type@, npy_bool)) {
+            simd_binary_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
     }
 #endif
 

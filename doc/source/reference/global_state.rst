@@ -49,19 +49,11 @@ is to use madvise on Kernels 4.6 and newer. These kernels presumably
 experience a large speedup with hugepage support.
 This flag is checked at import time.
 
+SIMD feature selection
+----------------------
 
-Interoperability-Related Options
-================================
-
-The array function protocol which allows array-like objects to
-hook into the NumPy API is currently enabled by default.
-This option exists since NumPy 1.16 and is enabled by default since
-NumPy 1.17. It can be disabled using::
-
-    NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
-
-See also :py:meth:`numpy.class.__array_function__` for more information.
-This flag is checked at import time.
+Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
+See :ref:`runtime-simd-dispatch`.
 
 
 Debugging-Related Options
@@ -90,3 +82,17 @@ memory allocation policy, the default will be to call ``free``. If
 ``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``"1"``, a ``RuntimeWarning`` will
 be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
 and set the ``ndarray.base``.
+
+
+Testing planned future behavior
+===============================
+
+NumPy has some code paths which are planned to be activated in the future
+but are not yet the default behavior.
+You can try testing some of these which may be shipped with a new "major"
+release (NumPy 2.0) by setting an environment before importing NumPy:
+
+    NPY_NUMPY_2_BEHAVIOR=1
+
+By default this will also activate the :ref:`NEP 50 <NEP50>` related setting
+``NPY_PROMOTION_STATE`` (please see the NEP for details on this).

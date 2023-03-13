@@ -903,7 +903,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     Parameters
     ----------
-    sample : (N, D) array, or (D, N) array_like
+    sample : (N, D) array, or (N, D) array_like
         The data to be histogrammed.
 
         Note the unusual interpretation of sample when an array_like:
@@ -970,7 +970,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
 
-    nbin = np.empty(D, int)
+    nbin = np.empty(D, np.intp)
     edges = D*[None]
     dedges = D*[None]
     if weights is not None:

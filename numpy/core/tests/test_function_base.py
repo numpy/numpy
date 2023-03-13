@@ -407,3 +407,12 @@ class TestLinspace:
         y = linspace(-1, 3, num=8, dtype=int)
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
         assert_array_equal(y, t)
+
+    def test_any_step_zero_and_not_mult_inplace(self):
+        # any_step_zero is True, _mult_inplace is False
+        start = array([0.0, 1.0])
+        stop = array([2.0, 1.0])
+        y = linspace(start, stop, 3)
+        assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
+    
+

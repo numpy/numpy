@@ -19,8 +19,8 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
 from ._mt19937 import MT19937 as _MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
-            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1, CONS_GTE_1,
-            CONS_GT_1, LEGACY_CONS_POISSON,
+            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+            CONS_BOUNDED_LT_0_1, CONS_GTE_1, CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -394,8 +394,9 @@ cdef class RandomState:
           (b - a) * random_sample() + a
 
         .. note::
-            New code should use the ``random`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.random`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -464,8 +465,10 @@ cdef class RandomState:
         It is often seen in Bayesian inference and order statistics.
 
         .. note::
-            New code should use the ``beta`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.beta`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
+
 
         Parameters
         ----------
@@ -514,8 +517,9 @@ cdef class RandomState:
         between page requests to Wikipedia [2]_.
 
         .. note::
-            New code should use the ``exponential`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.exponential`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -532,6 +536,22 @@ cdef class RandomState:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
+
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
 
         See Also
         --------
@@ -563,8 +583,10 @@ cdef class RandomState:
         with a scale parameter of 1.
 
         .. note::
-            New code should use the ``standard_exponential`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.standard_exponential`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -664,8 +686,9 @@ cdef class RandomState:
         `high` is None (the default), then results are from [0, `low`).
 
         .. note::
-            New code should use the ``integers`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.randint`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -785,8 +808,9 @@ cdef class RandomState:
         Return random bytes.
 
         .. note::
-            New code should use the ``bytes`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.bytes`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -823,8 +847,9 @@ cdef class RandomState:
         .. versionadded:: 1.7.0
 
         .. note::
-            New code should use the ``choice`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.choice`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1033,8 +1058,9 @@ cdef class RandomState:
         by `uniform`.
 
         .. note::
-            New code should use the ``uniform`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.uniform`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1204,8 +1230,10 @@ cdef class RandomState:
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
         .. note::
-            New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.standard_normal`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         If positive int_like arguments are provided, `randn` generates an array
         of shape ``(d0, d1, ..., dn)``, filled
@@ -1360,8 +1388,10 @@ cdef class RandomState:
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
         .. note::
-            New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.standard_normal`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1437,8 +1467,9 @@ cdef class RandomState:
         unique distribution [2]_.
 
         .. note::
-            New code should use the ``normal`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.normal`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1538,8 +1569,10 @@ cdef class RandomState:
         shape (sometimes designated "k") and scale=1.
 
         .. note::
-            New code should use the ``standard_gamma`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.standard_gamma`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1619,8 +1652,9 @@ cdef class RandomState:
         "theta"), where both parameters are > 0.
 
         .. note::
-            New code should use the ``gamma`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.gamma`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1708,8 +1742,9 @@ cdef class RandomState:
         variates.
 
         .. note::
-            New code should use the ``f`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.f`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1796,8 +1831,10 @@ cdef class RandomState:
         `nonc` is the non-centrality parameter.
 
         .. note::
-            New code should use the ``noncentral_f`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.noncentral_f`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1881,8 +1918,9 @@ cdef class RandomState:
         is often used in hypothesis testing.
 
         .. note::
-            New code should use the ``chisquare`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.chisquare`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1954,8 +1992,10 @@ cdef class RandomState:
         the :math:`\\chi^2` distribution.
 
         .. note::
-            New code should use the ``noncentral_chisquare`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.noncentral_chisquare`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2040,8 +2080,10 @@ cdef class RandomState:
         Also known as the Lorentz distribution.
 
         .. note::
-            New code should use the ``standard_cauchy`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.standard_cauchy`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2116,8 +2158,9 @@ cdef class RandomState:
         distribution (`standard_normal`).
 
         .. note::
-            New code should use the ``standard_t`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.standard_t`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2233,8 +2276,9 @@ cdef class RandomState:
         distribution.
 
         .. note::
-            New code should use the ``vonmises`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.vonmises`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2331,8 +2375,9 @@ cdef class RandomState:
         remaining 80 percent of the range.
 
         .. note::
-            New code should use the ``pareto`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.pareto`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2425,8 +2470,9 @@ cdef class RandomState:
         :math:`\\lambda` is just :math:`X = \\lambda(-ln(U))^{1/a}`.
 
         .. note::
-            New code should use the ``weibull`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.weibull`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2521,8 +2567,9 @@ cdef class RandomState:
         Also known as the power function distribution.
 
         .. note::
-            New code should use the ``power`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.power`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2632,8 +2679,9 @@ cdef class RandomState:
         random variables.
 
         .. note::
-            New code should use the ``laplace`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.laplace`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2723,8 +2771,9 @@ cdef class RandomState:
         Notes and References below.
 
         .. note::
-            New code should use the ``gumbel`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.gumbel`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2845,8 +2894,9 @@ cdef class RandomState:
         parameters, loc (location or mean, also median), and scale (>0).
 
         .. note::
-            New code should use the ``logistic`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.logistic`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2932,8 +2982,9 @@ cdef class RandomState:
         underlying normal distribution it is derived from.
 
         .. note::
-            New code should use the ``lognormal`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.lognormal`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3015,7 +3066,7 @@ cdef class RandomState:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + np.random.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -3045,8 +3096,9 @@ cdef class RandomState:
         Rayleigh.
 
         .. note::
-            New code should use the ``rayleigh`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.rayleigh`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3127,8 +3179,9 @@ cdef class RandomState:
         unit distance and distance covered in unit time.
 
         .. note::
-            New code should use the ``wald`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.wald`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3200,8 +3253,9 @@ cdef class RandomState:
         directly define the shape of the pdf.
 
         .. note::
-            New code should use the ``triangular`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.triangular`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3307,8 +3361,9 @@ cdef class RandomState:
         input as a float, but it is truncated to an integer in use)
 
         .. note::
-            New code should use the ``binomial`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.binomial`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3457,8 +3512,10 @@ cdef class RandomState:
         is > 0 and `p` is in the interval [0, 1].
 
         .. note::
-            New code should use the ``negative_binomial`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.negative_binomial`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3542,8 +3599,9 @@ cdef class RandomState:
         for large N.
 
         .. note::
-            New code should use the ``poisson`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.poisson`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3629,8 +3687,9 @@ cdef class RandomState:
         frequency table.
 
         .. note::
-            New code should use the ``zipf`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.zipf`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3728,8 +3787,9 @@ cdef class RandomState:
         where `p` is the probability of success of an individual trial.
 
         .. note::
-            New code should use the ``geometric`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.geometric`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3782,8 +3842,10 @@ cdef class RandomState:
         than or equal to the sum ``ngood + nbad``).
 
         .. note::
-            New code should use the ``hypergeometric`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.hypergeometric`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3910,16 +3972,17 @@ cdef class RandomState:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         .. note::
-            New code should use the ``logseries`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.logseries`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3984,7 +4047,7 @@ cdef class RandomState:
 
         """
         out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
-                   p, 'p', CONS_BOUNDED_0_1,
+                   p, 'p', CONS_BOUNDED_LT_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
         # Match historical output type
@@ -4006,8 +4069,10 @@ cdef class RandomState:
         squared) of the one-dimensional normal distribution.
 
         .. note::
-            New code should use the ``multivariate_normal`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.multivariate_normal`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4203,8 +4268,9 @@ cdef class RandomState:
         outcome was ``i``.
 
         .. note::
-            New code should use the ``multinomial`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.multinomial`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4337,8 +4403,9 @@ cdef class RandomState:
         inference.
 
         .. note::
-            New code should use the ``dirichlet`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.dirichlet`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4483,8 +4550,9 @@ cdef class RandomState:
         their contents remains the same.
 
         .. note::
-            New code should use the ``shuffle`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the `~numpy.random.Generator.shuffle`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4606,8 +4674,10 @@ cdef class RandomState:
         first index.
 
         .. note::
-            New code should use the ``permutation`` method of a ``default_rng()``
-            instance instead; please see the :ref:`random-quick-start`.
+            New code should use the
+            `~numpy.random.Generator.permutation`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
 
         Parameters
         ----------

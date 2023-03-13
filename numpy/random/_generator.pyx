@@ -25,7 +25,7 @@ from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -238,6 +238,58 @@ cdef class Generator:
         """
         return self._bit_generator
 
+    def spawn(self, int n_children):
+        """
+        Create new independent child generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
+        .. versionadded:: 1.25.0
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.BitGenerator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the bit generator and seed sequence.
+        bit_generator :
+            The bit generator instance used by the generator.
+
+        Examples
+        --------
+        Starting from a seeded default generator:
+
+        >>> # High quality entropy created with: f"0x{secrets.randbits(128):x}"
+        >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
+        >>> rng = np.random.default_rng(entropy)
+
+        Create two new generators for example for parallel executation:
+
+        >>> child_rng1, child_rng2 = rng.spawn(2)
+
+        Drawn numbers from each are independent but derived from the initial
+        seeding entropy:
+
+        >>> rng.uniform(), child_rng1.uniform(), child_rng2.uniform()
+        (0.19029263503854454, 0.9475673279178444, 0.4702687338396767)
+
+        It is safe to spawn additional children from the original ``rng`` or
+        the children:
+
+        >>> more_child_rngs = rng.spawn(20)
+        >>> nested_spawn = child_rng1.spawn(20)
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
+
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype=np.float64, out=None)
@@ -379,6 +431,22 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
+
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
 
         References
         ----------
@@ -2560,7 +2628,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -3014,7 +3082,7 @@ cdef class Generator:
         intermediate distribution exceeding the max acceptable value of the 
         ``Generator.poisson`` method. This happens when :math:`p` is too low 
         (a lot of failures happen for every success) and :math:`n` is too big (
-        a lot of sucesses are allowed).
+        a lot of successes are allowed).
         Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
 
         .. math:: n\\frac{1-p}{p}+10n\\sqrt{n}\\frac{1-p}{p}<2^{63}-1-10\\sqrt{2^{63}-1},
@@ -3447,12 +3515,12 @@ cdef class Generator:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3516,7 +3584,7 @@ cdef class Generator:
 
         """
         return disc(&random_logseries, &self._bitgen, size, self.lock, 1, 0,
-                 p, 'p', CONS_BOUNDED_0_1,
+                 p, 'p', CONS_BOUNDED_LT_0_1,
                  0.0, '', CONS_NONE,
                  0.0, '', CONS_NONE)
 
@@ -3533,8 +3601,8 @@ cdef class Generator:
         generalization of the one-dimensional normal distribution to higher
         dimensions.  Such a distribution is specified by its mean and
         covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
+        (average or "center") and variance (the squared standard deviation,
+        or "width") of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -3610,6 +3678,12 @@ cdef class Generator:
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed.
+
+        This function internally uses linear algebra routines, and thus results
+        may not be identical (even up to precision) across architectures, OSes,
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
 
         References
         ----------
@@ -4433,7 +4507,7 @@ cdef class Generator:
             is shuffled independently of the others.  If `axis` is
             None, the flattened array is shuffled.
         out : ndarray, optional
-            If given, this is the destinaton of the shuffled array.
+            If given, this is the destination of the shuffled array.
             If `out` is None, a shuffled copy of the array is returned.
 
         Returns
@@ -4745,7 +4819,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)
@@ -4803,6 +4877,8 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+
+    See :ref:`seeding_and_entropy` for more information about seeding.
     
     Examples
     --------

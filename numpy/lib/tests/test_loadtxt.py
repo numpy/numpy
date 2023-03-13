@@ -244,6 +244,14 @@ def test_converters_negative_indices_with_usecols():
                      usecols=[0, -1], converters={-1: (lambda x: -1)})
     assert_array_equal(res, [[0, -1], [0, -1]])
 
+
+def test_ragged_error():
+    rows = ["1,2,3", "1,2,3", "4,3,2,1"]
+    with pytest.raises(ValueError,
+            match="the number of columns changed from 3 to 4 at row 3"):
+        np.loadtxt(rows, delimiter=",")
+
+
 def test_ragged_usecols():
     # usecols, and negative ones, work even with varying number of columns.
     txt = StringIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
@@ -534,12 +542,27 @@ def test_quoted_field(q):
     assert_array_equal(res, expected)
 
 
+@pytest.mark.parametrize("q", ('"', "'", "`"))
+def test_quoted_field_with_whitepace_delimiter(q):
+    txt = StringIO(
+        f"{q}alpha, x{q}     2.5\n{q}beta, y{q} 4.5\n{q}gamma, z{q}   5.0\n"
+    )
+    dtype = np.dtype([('f0', 'U8'), ('f1', np.float64)])
+    expected = np.array(
+        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=dtype
+    )
+
+    res = np.loadtxt(txt, dtype=dtype, delimiter=None, quotechar=q)
+    assert_array_equal(res, expected)
+
+
 def test_quote_support_default():
     """Support for quoted fields is disabled by default."""
     txt = StringIO('"lat,long", 45, 30\n')
     dtype = np.dtype([('f0', 'U24'), ('f1', np.float64), ('f2', np.float64)])
 
-    with pytest.raises(ValueError, match="the number of columns changed"):
+    with pytest.raises(ValueError,
+            match="the dtype passed requires 3 columns but 4 were"):
         np.loadtxt(txt, dtype=dtype, delimiter=",")
 
     # Enable quoting support with non-None value for quotechar param
@@ -1011,3 +1034,15 @@ def test_control_characters_as_bytes():
     """Byte control characters (comments, delimiter) are supported."""
     a = np.loadtxt(StringIO("#header\n1,2,3"), comments=b"#", delimiter=b",")
     assert_equal(a, [1, 2, 3])
+
+
+@pytest.mark.filterwarnings('ignore::UserWarning')
+def test_field_growing_cases():
+    # Test empty field appending/growing (each field still takes 1 character)
+    # to see if the final field appending does not create issues.
+    res = np.loadtxt([""], delimiter=",", dtype=bytes)
+    assert len(res) == 0
+
+    for i in range(1, 1024):
+        res = np.loadtxt(["," * i], delimiter=",", dtype=bytes)
+        assert len(res) == i+1

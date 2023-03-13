@@ -35,7 +35,7 @@
  *
  * Users cannot control pointers, so we do not have to worry about DoS attacks?
  */
-static NPY_INLINE Py_hash_t
+static inline Py_hash_t
 identity_list_hash(PyObject *const *v, int len)
 {
     Py_uhash_t acc = _NpyHASH_XXPRIME_5;
@@ -58,7 +58,7 @@ identity_list_hash(PyObject *const *v, int len)
 #undef _NpyHASH_XXROTATE
 
 
-static NPY_INLINE PyObject **
+static inline PyObject **
 find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 {
     Py_hash_t hash = identity_list_hash(key, tb->key_len);

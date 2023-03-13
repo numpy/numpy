@@ -166,6 +166,11 @@ attribute of the dtype object::
  >>> d.names
  ('x', 'y')
 
+The dtype of each individual field can be looked up by name::
+
+ >>> d['x']
+ dtype('int64')
+
 The field names may be modified by assigning to the ``names`` attribute using a
 sequence of strings of the same length.
 

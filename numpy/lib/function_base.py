@@ -4,6 +4,7 @@ import re
 import sys
 import warnings
 
+from .._utils import set_module
 import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import transpose
@@ -19,12 +20,11 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from numpy.core.multiarray import (
-    _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
+    _place, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -161,6 +161,8 @@ def rot90(m, k=1, axes=(0, 1)):
     Rotate an array by 90 degrees in the plane specified by axes.
 
     Rotation direction is from the first towards the second axis.
+    This means for a 2D array with the default `k` and `axes`, the
+    rotation will be counterclockwise.
 
     Parameters
     ----------
@@ -1309,6 +1311,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
+    elif np._using_numpy2_behavior():
+        return tuple(outvals)
     else:
         return outvals
 
@@ -1947,11 +1951,7 @@ def place(arr, mask, vals):
            [44, 55, 44]])
 
     """
-    if not isinstance(arr, np.ndarray):
-        raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(arr).__name__))
-
-    return _insert(arr, mask, vals)
+    return _place(arr, mask, vals)
 
 
 def disp(mesg, device=None, linefeed=True):
@@ -2693,7 +2693,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice",
-                      RuntimeWarning, stacklevel=3)
+                      RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2842,7 +2842,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=3)
+                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -3648,6 +3648,10 @@ def msort(a):
     """
     Return a copy of an array sorted along the first axis.
 
+    .. deprecated:: 1.24
+
+       msort is deprecated, use ``np.sort(a, axis=0)`` instead.
+
     Parameters
     ----------
     a : array_like
@@ -3666,13 +3670,26 @@ def msort(a):
     -----
     ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
 
+    Examples
+    --------
+    >>> a = np.array([[1, 4], [3, 1]])
+    >>> np.msort(a)  # sort along the first axis
+    array([[1, 1],
+           [3, 4]])
+
     """
+    # 2022-10-20 1.24
+    warnings.warn(
+        "msort is deprecated, use np.sort(a, axis=0) instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     b = array(a, subok=True, copy=True)
     b.sort(0)
     return b
 
 
-def _ureduce(a, func, **kwargs):
+def _ureduce(a, func, keepdims=False, **kwargs):
     """
     Internal Function.
     Call `func` with `a` as first argument swapping the axes to use extended
@@ -3700,13 +3717,20 @@ def _ureduce(a, func, **kwargs):
     """
     a = np.asanyarray(a)
     axis = kwargs.get('axis', None)
+    out = kwargs.get('out', None)
+
+    if keepdims is np._NoValue:
+        keepdims = False
+
+    nd = a.ndim
     if axis is not None:
-        keepdim = list(a.shape)
-        nd = a.ndim
         axis = _nx.normalize_axis_tuple(axis, nd)
 
-        for ax in axis:
-            keepdim[ax] = 1
+        if keepdims:
+            if out is not None:
+                index_out = tuple(
+                    0 if i in axis else slice(None) for i in range(nd))
+                kwargs['out'] = out[(Ellipsis, ) + index_out]
 
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
@@ -3719,12 +3743,27 @@ def _ureduce(a, func, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
-        keepdim = tuple(keepdim)
     else:
-        keepdim = (1,) * a.ndim
+        if keepdims:
+            if out is not None:
+                index_out = (0, ) * nd
+                kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
-    return r, keepdim
+
+    if out is not None:
+        return out
+
+    if keepdims:
+        if axis is None:
+            index_r = (np.newaxis, ) * nd
+        else:
+            index_r = tuple(
+                np.newaxis if i in axis else slice(None)
+                for i in range(nd))
+        r = r[(Ellipsis, ) + index_r]
+
+    return r
 
 
 def _median_dispatcher(
@@ -3814,12 +3853,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
-    r, k = _ureduce(a, func=_median, axis=axis, out=out,
+    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
                     overwrite_input=overwrite_input)
-    if keepdims:
-        return r.reshape(k)
-    else:
-        return r
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
@@ -3899,7 +3934,7 @@ def percentile(a,
 
     Parameters
     ----------
-    a : array_like
+    a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
         Percentile or sequence of percentiles to compute, which must be between
@@ -3935,7 +3970,7 @@ def percentile(a,
         8. 'median_unbiased'
         9. 'normal_unbiased'
 
-        The first three methods are discontiuous.  NumPy further defines the
+        The first three methods are discontinuous.  NumPy further defines the
         following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
@@ -4000,7 +4035,7 @@ def percentile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the percentile in the sorted sample:
 
     .. math::
@@ -4150,7 +4185,8 @@ def percentile(a,
             xlabel='Percentile',
             ylabel='Estimated percentile value',
             yticks=a)
-        ax.legend()
+        ax.legend(bbox_to_anchor=(1.03, 1))
+        plt.tight_layout()
         plt.show()
 
     References
@@ -4163,6 +4199,11 @@ def percentile(a,
     if interpolation is not None:
         method = _check_interpolation_as_method(
             method, interpolation, "percentile")
+
+    a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
@@ -4193,7 +4234,7 @@ def quantile(a,
 
     Parameters
     ----------
-    a : array_like
+    a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
         Quantile or sequence of quantiles to compute, which must be between
@@ -4289,7 +4330,7 @@ def quantile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the quantile in the sorted sample:
 
     .. math::
@@ -4420,6 +4461,10 @@ def quantile(a,
         method = _check_interpolation_as_method(
             method, interpolation, "quantile")
 
+    a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -4435,17 +4480,14 @@ def _quantile_unchecked(a,
                         method="linear",
                         keepdims=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
-    r, k = _ureduce(a,
+    return _ureduce(a,
                     func=_quantile_ureduce_func,
                     q=q,
+                    keepdims=keepdims,
                     axis=axis,
                     out=out,
                     overwrite_input=overwrite_input,
                     method=method)
-    if keepdims:
-        return r.reshape(q.shape + k)
-    else:
-        return r
 
 
 def _quantile_is_valid(q):
@@ -4795,25 +4837,41 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
-    >>> np.trapz([1,2,3])
+    Use the trapezoidal rule on evenly spaced points:
+
+    >>> np.trapz([1, 2, 3])
     4.0
-    >>> np.trapz([1,2,3], x=[4,6,8])
+
+    The spacing between sample points can be selected by either the
+    ``x`` or ``dx`` arguments:
+
+    >>> np.trapz([1, 2, 3], x=[4, 6, 8])
     8.0
-    >>> np.trapz([1,2,3], dx=2)
+    >>> np.trapz([1, 2, 3], dx=2)
     8.0
 
-    Using a decreasing `x` corresponds to integrating in reverse:
+    Using a decreasing ``x`` corresponds to integrating in reverse:
 
-    >>> np.trapz([1,2,3], x=[8,6,4])
+    >>> np.trapz([1, 2, 3], x=[8, 6, 4])
     -8.0
 
-    More generally `x` is used to integrate along a parametric curve.
-    This finds the area of a circle, noting we repeat the sample which closes
+    More generally ``x`` is used to integrate along a parametric curve. We can
+    estimate the integral :math:`\int_0^1 x^2 = 1/3` using:
+
+    >>> x = np.linspace(0, 1, num=50)
+    >>> y = x**2
+    >>> np.trapz(y, x)
+    0.33340274885464394
+
+    Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
     >>> np.trapz(np.cos(theta), x=np.sin(theta))
     3.141571941375841
+
+    ``np.trapz`` can be applied along a specified axis to do multiple
+    computations in one call:
 
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
@@ -4852,6 +4910,24 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
+# __array_function__ has no __code__ or other attributes normal Python funcs we
+# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
+# into a new Python function which requires `__code__` and a few other
+# attributes. So we create a dummy clone and copy over its attributes allowing
+# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
+assert not hasattr(trapz, "__code__")
+
+def _fake_trapz(y, x=None, dx=1.0, axis=-1):
+    return trapz(y, x=x, dx=dx, axis=axis)
+
+
+trapz.__code__ = _fake_trapz.__code__
+trapz.__globals__ = _fake_trapz.__globals__
+trapz.__defaults__ = _fake_trapz.__defaults__
+trapz.__closure__ = _fake_trapz.__closure__
+trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+
+
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
     return xi
 
@@ -4860,7 +4936,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return coordinate matrices from coordinate vectors.
+    Return a list of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -4901,7 +4977,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : ndarray
+    X1, X2,..., XN : list of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
@@ -4936,6 +5012,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
     ogrid : Construct an open multi-dimensional "meshgrid" using indexing
             notation.
+    how-to-index
 
     Examples
     --------
@@ -4949,16 +5026,25 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> yv
     array([[0.,  0.,  0.],
            [1.,  1.,  1.]])
-    >>> xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
+
+    The result of `meshgrid` is a coordinate grid:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(xv, yv, marker='o', color='k', linestyle='none')
+    >>> plt.show()
+
+    You can create sparse output arrays to save memory and computation time.
+
+    >>> xv, yv = np.meshgrid(x, y, sparse=True)
     >>> xv
     array([[0. ,  0.5,  1. ]])
     >>> yv
     array([[0.],
            [1.]])
 
-    `meshgrid` is very useful to evaluate functions on a grid.  If the
-    function depends on all coordinates, you can use the parameter
-    ``sparse=True`` to save memory and computation time.
+    `meshgrid` is very useful to evaluate functions on a grid. If the
+    function depends on all coordinates, both dense and sparse outputs can be
+    used.
 
     >>> x = np.linspace(-5, 5, 101)
     >>> y = np.linspace(-5, 5, 101)
@@ -4975,7 +5061,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> np.array_equal(zz, zs)
     True
 
-    >>> import matplotlib.pyplot as plt
     >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
     >>> plt.colorbar()
@@ -5329,7 +5414,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=3)
+                "integer", FutureWarning, stacklevel=2)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:

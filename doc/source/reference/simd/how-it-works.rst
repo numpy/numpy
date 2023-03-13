@@ -1,6 +1,6 @@
-**********************************
+*********************************
 How does the CPU dispatcher work?
-**********************************
+*********************************
 
 NumPy dispatcher is based on multi-source compiling, which means taking
 a certain source and compiling it multiple times with different compiler

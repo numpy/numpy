@@ -10,7 +10,7 @@ from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT,
+    assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
     )
 
 
@@ -563,6 +563,7 @@ class TestIndexing:
         with pytest.raises(IndexError):
             arr[(index,) * num] = 1.
 
+    @pytest.mark.skipif(IS_WASM, reason="no threading")
     def test_structured_advanced_indexing(self):
         # Test that copyswap(n) used by integer array indexing is threadsafe
         # for structured datatypes, see gh-15387. This test can behave randomly.
@@ -826,7 +827,7 @@ class TestMultiIndexingAutomated:
 
     """
 
-    def setup(self):
+    def setup_method(self):
         self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
         self.b = np.empty((3, 0, 5, 6))
         self.complex_indices = ['skip', Ellipsis,
@@ -1061,7 +1062,7 @@ class TestMultiIndexingAutomated:
                         if np.any(_indx >= _size) or np.any(_indx < -_size):
                                 raise IndexError
                 if len(indx[1:]) == len(orig_slice):
-                    if np.product(orig_slice) == 0:
+                    if np.prod(orig_slice) == 0:
                         # Work around for a crash or IndexError with 'wrap'
                         # in some 0-sized cases.
                         try:

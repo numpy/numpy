@@ -177,6 +177,39 @@ wrapping_method_get_loop(
 }
 
 
+/*
+ * Wraps the original identity function, needs to translate the descriptors
+ * back to the original ones and provide an "original" context (identically to
+ * `get_loop`).
+ * We assume again that translating the descriptors is quick.
+ */
+static int
+wrapping_method_get_identity_function(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        char *item)
+{
+    /* Copy the context, and replace descriptors: */
+    PyArrayMethod_Context orig_context = *context;
+    PyArray_Descr *orig_descrs[NPY_MAXARGS];
+    orig_context.descriptors = orig_descrs;
+    orig_context.method = context->method->wrapped_meth;
+
+    int nin = context->method->nin, nout = context->method->nout;
+    PyArray_DTypeMeta **dtypes = context->method->wrapped_dtypes;
+
+    if (context->method->translate_given_descrs(
+            nin, nout, dtypes, context->descriptors, orig_descrs) < 0) {
+        return -1;
+    }
+    int res = context->method->wrapped_meth->get_reduction_initial(
+            &orig_context, reduction_is_empty, item);
+    for (int i = 0; i < nin + nout; i++) {
+        Py_DECREF(orig_descrs);
+    }
+    return res;
+}
+
+
 /**
  * Allows creating of a fairly lightweight wrapper around an existing ufunc
  * loop.  The idea is mainly for units, as this is currently slightly limited
@@ -235,14 +268,17 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         break;
     }
     if (wrapped_meth == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "Did not find the to-be-wrapped loop in the ufunc.");
+        PyErr_Format(PyExc_TypeError,
+                "Did not find the to-be-wrapped loop in the ufunc with given "
+                "DTypes. Received wrapping types: %S", wrapped_dt_tuple);
         goto finish;
     }
 
     PyType_Slot slots[] = {
         {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {NPY_METH_get_loop, &wrapping_method_get_loop},
+        {_NPY_METH_get_loop, &wrapping_method_get_loop},
+        {NPY_METH_get_reduction_initial,
+            &wrapping_method_get_identity_function},
         {0, NULL}
     };
 

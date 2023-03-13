@@ -548,7 +548,7 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
       && (__STDC_VERSION__ >= 201112L) \\
       && !defined(__STDC_NO_THREADS__) \\
       && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12)) \\
-      && !defined(NPY_OS_OPENBSD)
+      && !defined(NPY_OS_OPENBSD) && !defined(NPY_OS_HAIKU)
 /* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
    see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
    so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
@@ -800,16 +800,23 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
         }
     }
     {
+        /* TODO: This error (and most other) error handling needs cleaning. */
         char mess[F2PY_MESSAGE_BUFFER_SIZE];
         strcpy(mess, errmess);
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
             err = PyExc_TypeError;
+            Py_INCREF(err);
+        }
+        else {
+            Py_INCREF(err);
+            PyErr_Clear();
         }
         sprintf(mess + strlen(mess),
                 " -- expected str|bytes|sequence-of-str-or-bytes, got ");
         f2py_describe(obj, mess + strlen(mess));
         PyErr_SetString(err, mess);
+        Py_DECREF(err);
     }
     return 0;
 }
@@ -1227,8 +1234,8 @@ static int try_pyarr_from_character(PyObject* obj, character* v) {
             strcpy(mess, "try_pyarr_from_character failed"
                          " -- expected bytes array-scalar|array, got ");
             f2py_describe(obj, mess + strlen(mess));
+            PyErr_SetString(err, mess);
         }
-        PyErr_SetString(err, mess);
     }
     return 0;
 }
@@ -1324,7 +1331,7 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
             if (xa != NULL)
                 ext = PyTuple_Size((PyObject *)xa);
             if(ext>0) {
-                fprintf(stderr,\"extra arguments tuple cannot be used with CObject call-back\\n\");
+                fprintf(stderr,\"extra arguments tuple cannot be used with PyCapsule call-back\\n\");
                 goto capi_fail;
             }
             tmp_fun = fun;

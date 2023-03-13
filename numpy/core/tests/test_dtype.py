@@ -126,6 +126,15 @@ class TestBuiltin:
         with assert_raises(TypeError):
             np.dtype(dtype)
 
+    def test_remaining_dtypes_with_bad_bytesize(self):
+        # The np.<name> aliases were deprecated, these probably should be too 
+        assert np.dtype("int0") is np.dtype("intp")
+        assert np.dtype("uint0") is np.dtype("uintp")
+        assert np.dtype("bool8") is np.dtype("bool")
+        assert np.dtype("bytes0") is np.dtype("bytes")
+        assert np.dtype("str0") is np.dtype("str")
+        assert np.dtype("object0") is np.dtype("object")
+
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
@@ -185,6 +194,34 @@ class TestBuiltin:
         assert_equal(x == y, False)
         # This is an safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
+
+    @pytest.mark.parametrize(
+        ["type_char", "char_size", "scalar_type"],
+        [["U", 4, np.str_],
+         ["S", 1, np.bytes_]])
+    def test_create_string_dtypes_directly(
+            self, type_char, char_size, scalar_type):
+        dtype_class = type(np.dtype(type_char))
+
+        dtype = dtype_class(8)
+        assert dtype.type is scalar_type
+        assert dtype.itemsize == 8*char_size
+
+    def test_create_invalid_string_errors(self):
+        one_too_big = np.iinfo(np.intc).max + 1
+        with pytest.raises(TypeError):
+            type(np.dtype("U"))(one_too_big // 4)
+
+        with pytest.raises(TypeError):
+            # Code coverage for very large numbers:
+            type(np.dtype("U"))(np.iinfo(np.intp).max // 4 + 1)
+
+        if one_too_big < sys.maxsize:
+            with pytest.raises(TypeError):
+                type(np.dtype("S"))(one_too_big)
+
+        with pytest.raises(ValueError):
+            type(np.dtype("U"))(-1)
 
 
 class TestRecord:
@@ -328,8 +365,8 @@ class TestRecord:
         dt2 = np.dtype({'names':['f2', 'f0', 'f1'],
                         'formats':['<u4', '<u2', '<u2'],
                         'offsets':[4, 0, 2]}, align=True)
-        vals = [(0, 1, 2), (3, -1, 4)]
-        vals2 = [(0, 1, 2), (3, -1, 4)]
+        vals = [(0, 1, 2), (3, 2**15-1, 4)]
+        vals2 = [(0, 1, 2), (3, 2**15-1, 4)]
         a = np.array(vals, dt)
         b = np.array(vals2, dt2)
         assert_equal(a.astype(dt2), b)
@@ -513,6 +550,14 @@ class TestRecord:
 
         assert_equal(np.zeros((1, 2), dtype=[]) == a,
                      np.ones((1, 2), dtype=bool))
+
+    def test_nonstructured_with_object(self):
+        # See gh-23277, the dtype here thinks it contain objects, if the
+        # assert about that fails, the test becomes meaningless (which is OK)
+        arr = np.recarray((0,), dtype="O") 
+        assert arr.dtype.names is None  # no fields
+        assert arr.dtype.hasobject  # but claims to contain objects
+        del arr  # the deletion failed previously.
 
 
 class TestSubarray:
@@ -1451,7 +1496,7 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
-    assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
+    assert_raises(TypeError, np.dtype, 'Fl\xfcgel')
 
 
 def test_keyword_argument():
@@ -1541,6 +1586,18 @@ class TestDTypeClasses:
         assert type(np.dtype).__name__ == "_DTypeMeta"
         assert type(np.dtype).__module__ == "numpy"
         assert np.dtype._abstract
+
+    def test_is_numeric(self):
+        all_codes = set(np.typecodes['All'])
+        numeric_codes = set(np.typecodes['AllInteger'] +
+                            np.typecodes['AllFloat'] + '?')
+        non_numeric_codes = all_codes - numeric_codes
+
+        for code in numeric_codes:
+            assert type(np.dtype(code))._is_numeric
+
+        for code in non_numeric_codes:
+            assert not type(np.dtype(code))._is_numeric
 
 
 class TestFromCTypes:

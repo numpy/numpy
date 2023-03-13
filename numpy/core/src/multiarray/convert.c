@@ -157,7 +157,24 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_BEGIN_ALLOW_THREADS;
 
 #if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Ticket #1660 */
+            /* Workaround Win64 fwrite() bug. Issue gh-2556
+             * If you touch this code, please run this test which is so slow
+             * it was removed from the test suite
+             *
+             * fourgbplus = 2**32 + 2**16
+             * testbytes = np.arange(8, dtype=np.int8)
+             * n = len(testbytes)
+             * flike = tempfile.NamedTemporaryFile()
+             * f = flike.file
+             * np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
+             * flike.seek(0)
+             * a = np.fromfile(f, dtype=np.int8)
+             * flike.close()
+             * assert_(len(a) == fourgbplus)
+             * # check only start and end for speed:
+             * assert_((a[:n] == testbytes).all())
+             * assert_((a[-n:] == testbytes).all())
+             */
             {
                 npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
                 npy_intp chunksize;
@@ -305,7 +322,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
 
     /*        if (PyArray_TYPE(self) == NPY_OBJECT) {
               PyErr_SetString(PyExc_ValueError, "a string for the data" \
@@ -359,6 +376,11 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
+
+    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
+        return -1;
+    }
+
     /*
      * If we knew that the output array has at least one element, we would
      * not actually need a helping buffer, we always null it, just in case.
@@ -393,6 +415,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
             descr, value);
 
+    if (PyDataType_REFCHK(descr)) {
+        PyArray_Item_XDECREF(value, descr);
+    }
     PyMem_FREE(value_buffer_heap);
     return retcode;
 }

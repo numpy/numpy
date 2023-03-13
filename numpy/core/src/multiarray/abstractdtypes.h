@@ -30,7 +30,7 @@ initialize_and_map_pytypes_to_dtypes(void);
  *        replaced with the abstract DType.
  * @return 0 if the `obj` was not a python scalar, and 1 if it was.
  */
-static NPY_INLINE int
+static inline int
 npy_mark_tmp_array_if_pyscalar(
         PyObject *obj, PyArrayObject *arr, PyArray_DTypeMeta **dtype)
 {
@@ -58,7 +58,8 @@ npy_mark_tmp_array_if_pyscalar(
         }
         return 1;
     }
-    else if (PyComplex_Check(obj) && PyArray_TYPE(arr) == NPY_CDOUBLE) {
+    else if (PyComplex_Check(obj) && !PyArray_IsScalar(obj, CDouble)
+             && PyArray_TYPE(arr) == NPY_CDOUBLE) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyComplexAbstractDType);

@@ -26,7 +26,8 @@ NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
 
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype);
+PyArray_AdaptDescriptorToArray(
+        PyArrayObject *arr, PyArray_DTypeMeta *dtype, PyArray_Descr *descr);
 
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
@@ -36,14 +37,9 @@ PyArray_DiscoverDTypeAndShape(
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
         PyArray_Descr **out_descr, int never_copy);
 
-NPY_NO_EXPORT int
-PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
-        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType);
-
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
-                           PyObject *args, PyObject *kwargs);
-
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 /* Would make sense to inline the freeing functions everywhere */
 /* Frees the coercion cache object recursively. */

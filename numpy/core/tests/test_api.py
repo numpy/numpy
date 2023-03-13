@@ -102,6 +102,16 @@ def test_array_array():
     assert_raises(ValueError, np.array, [nested], dtype=np.float64)
 
     # Try with lists...
+    # float32
+    assert_equal(np.array([None] * 10, dtype=np.float32),
+                 np.full((10,), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None]] * 10, dtype=np.float32),
+                 np.full((10, 1), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10], dtype=np.float32),
+                 np.full((1, 10), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10] * 10, dtype=np.float32),
+                 np.full((10, 10), np.nan, dtype=np.float32))
+    # float64
     assert_equal(np.array([None] * 10, dtype=np.float64),
                  np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([[None]] * 10, dtype=np.float64),
@@ -150,24 +160,20 @@ def test_array_impossible_casts(array):
         np.array(rt, dtype="M8")
 
 
-def test_fastCopyAndTranspose():
-    # 0D array
-    a = np.array(2)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
+# TODO: remove when fastCopyAndTranspose deprecation expires
+@pytest.mark.parametrize("a",
+    (
+        np.array(2),  # 0D array
+        np.array([3, 2, 7, 0]),  # 1D array
+        np.arange(6).reshape(2, 3)  # 2D array
+    ),
+)
+def test_fastCopyAndTranspose(a):
+    with pytest.deprecated_call():
+        b = np.fastCopyAndTranspose(a)
+        assert_equal(b, a.T)
+        assert b.flags.owndata
 
-    # 1D array
-    a = np.array([3, 2, 7, 0])
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
-
-    # 2D array
-    a = np.arange(6).reshape(2, 3)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
 
 def test_array_astype():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -238,7 +244,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array([u'a'*100], dtype='O')
+    a = np.array(['a'*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
@@ -248,7 +254,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array([u'a'*10], dtype='O')
+    a = np.array(['a'*10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -256,19 +262,19 @@ def test_array_astype():
     a = np.array(123456789012345678901234567890, dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='O').astype('U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
     a = np.array([123456789012345678901234567890], dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array([123456789012345678901234567890], dtype='O').astype('U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
     a = np.array(123456789012345678901234567890, dtype='S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
-    a = np.array(u'a\u0140', dtype='U')
+    a = np.array('a\u0140', dtype='U')
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
     assert_(b.size == 2)
 
@@ -314,7 +320,7 @@ def test_array_astype_warning(t):
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
-         (np.unicode_, np.bool_),
+         (np.str_, np.bool_),
          (np.dtype("S10,S9"), np.dtype("?,?"))])
 def test_string_to_boolean_cast(dtype, out_dtype):
     """
@@ -328,7 +334,7 @@ def test_string_to_boolean_cast(dtype, out_dtype):
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
-         (np.unicode_, np.bool_),
+         (np.str_, np.bool_),
          (np.dtype("S10,S9"), np.dtype("?,?"))])
 def test_string_to_boolean_cast_errors(dtype, out_dtype):
     """

@@ -169,7 +169,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         - 'longfloat' : 128-bit floats
         - 'complexfloat'
         - 'longcomplexfloat' : composed of two 128-bit floats
-        - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+        - 'numpystr' : types `numpy.bytes_` and `numpy.str_`
         - 'object' : `np.object_` arrays
 
         Other keys that can be used to set a group of types at once are:
@@ -475,7 +475,7 @@ def _get_format_function(data, **options):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
-    elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
+    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
         return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
@@ -616,7 +616,7 @@ def array2string(a, max_line_width=None, precision=None,
         - 'complexfloat'
         - 'longcomplexfloat' : composed of two 128-bit floats
         - 'void' : type `numpy.void`
-        - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+        - 'numpystr' : types `numpy.bytes_` and `numpy.str_`
 
         Other keys that can be used to set a group of types at once are:
 
@@ -724,7 +724,7 @@ def array2string(a, max_line_width=None, precision=None,
         # Deprecation 11-9-2017  v1.14
         warnings.warn("'style' argument is deprecated and no longer functional"
                       " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=3)
+                      DeprecationWarning, stacklevel=2)
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)
@@ -1394,10 +1394,6 @@ def _void_scalar_repr(x):
 
 
 _typelessdata = [int_, float_, complex_, bool_]
-if issubclass(intc, int):
-    _typelessdata.append(intc)
-if issubclass(longlong, int):
-    _typelessdata.append(longlong)
 
 
 def dtype_is_implied(dtype):

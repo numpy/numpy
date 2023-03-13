@@ -130,7 +130,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
     # Strings and unstructured void:
     yield param(np.bytes_(b"1234"), id="bytes")
-    yield param(np.unicode_("2345"), id="unicode")
+    yield param(np.str_("2345"), id="unicode")
     yield param(np.void(b"4321"), id="unstructured_void")
 
 
@@ -163,6 +163,8 @@ class TestStringDiscovery:
         assert np.array(arr, dtype="S").dtype == expected
         # Check that .astype() behaves identical
         assert arr.astype("S").dtype == expected
+        # The DType class is accepted by `.astype()`
+        assert arr.astype(type(np.dtype("S"))).dtype == expected
 
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
@@ -375,7 +377,7 @@ class TestScalarDiscovery:
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
     @pytest.mark.parametrize(["scalar", "error"],
             [(np.float64(np.nan), ValueError),
-             (np.ulonglong(-1), OverflowError)])
+             (np.array(-1).astype(np.ulonglong)[()], OverflowError)])
     def test_scalar_to_int_coerce_does_not_cast(self, dtype, scalar, error):
         """
         Signed integers are currently different in that they do not cast other

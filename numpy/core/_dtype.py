@@ -114,13 +114,13 @@ def _scalar_str(dtype, short):
         # platforms, so it should never include the itemsize here.
         return "'O'"
 
-    elif dtype.type == np.string_:
+    elif dtype.type == np.bytes_:
         if _isunsized(dtype):
             return "'S'"
         else:
             return "'S%d'" % dtype.itemsize
 
-    elif dtype.type == np.unicode_:
+    elif dtype.type == np.str_:
         if _isunsized(dtype):
             return "'%sU'" % byteorder
         else:
@@ -334,6 +334,8 @@ def _name_includes_bit_suffix(dtype):
     elif dtype.type == np.bool_:
         # implied
         return False
+    elif dtype.type is None:
+        return True
     elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
         # unspecified
         return False
@@ -348,7 +350,9 @@ def _name_get(dtype):
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    if issubclass(dtype.type, np.void):
+    if dtype.kind == '\x00':
+        name = type(dtype).__name__
+    elif issubclass(dtype.type, np.void):
         # historically, void subclasses preserve their name, eg `record64`
         name = dtype.type.__name__
     else:

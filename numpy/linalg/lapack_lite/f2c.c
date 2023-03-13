@@ -7,10 +7,14 @@
   it is available, and shipping a static library isn't portable.
 */
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "f2c.h"
 
 

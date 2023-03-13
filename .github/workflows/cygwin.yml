@@ -3,36 +3,37 @@
 # if: github.repository == 'numpy/numpy'
 name: Test on Cygwin
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+      - maintenance/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
-    if: github.repository == 'numpy/numpy'
+    if: "github.repository == 'numpy/numpy'"
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-          fetch-depth: 3000
+          fetch-depth: 0
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@v3
+        uses: cygwin/cygwin-install-action@v2
         with:
-          platform: x64
+          platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
-            python38-devel python38-zipp python38-importlib-metadata
-            python38-cython python38-pip python38-wheel python38-cffi
-            python38-pytz python38-setuptools python38-pytest
-            python38-hypothesis liblapack-devel
+            python39-devel python39-zipp python39-importlib-metadata
+            python39-cython python39-pip python39-wheel python39-cffi
+            python39-pytz python39-setuptools python39-pytest
+            python39-hypothesis liblapack-devel
             gcc-fortran gcc-g++ git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
@@ -42,42 +43,41 @@ jobs:
         run: |
           command bash
           bash -c "uname -svrmo"
-      - name: Update with Cygwin git
-        # fetch-depth=0 above should make this short.
+      - name: Tell Cygwin's git about this repository.
         run: |
           dash -c "which git; /usr/bin/git config --system --add safe.directory /cygdrive/d/a/numpy/numpy"
-          dash -c "which git; /usr/bin/git fetch --all -p"
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |
-          dash -c "which python3.8; /usr/bin/python3.8 --version -V"
+          dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.8 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
-          dash -c "/usr/bin/python3.8 -m pip install -r test_requirements.txt"
-          dash -c "/usr/bin/python3.8 setup.py bdist_wheel"
+          dash -c "/usr/bin/python3.9 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
+          dash -c "/usr/bin/python3.9 -m pip install -r test_requirements.txt"
+          dash -c "/usr/bin/python3.9 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
-          bash -c "/usr/bin/python3.8 -m pip install dist/numpy-*cp38*.whl"
+          bash -c "/usr/bin/python3.9 -m pip install dist/numpy-*cp39*.whl"
       - name: Rebase NumPy compiled extensions
         run: |
-          dash "tools/rebase_installed_dlls_cygwin.sh" 3.8
+          dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
       - name: Run NumPy test suite
-        run: >-
-          dash -c "/usr/bin/python3.8 runtests.py -n -vv"
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
+        run: |
+          /usr/bin/python3.9 runtests.py -n
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: numpy-cygwin-wheel
-          path: dist/numpy-*cp38*.whl
+          path: dist/numpy-*cp39*.whl
       - name: Check the extension modules on failure
         if: failure()
         run: |
-          dash -c "/usr/bin/python3.8 -m pip show numpy"
-          dash -c "/usr/bin/python3.8 -m pip show -f numpy | grep .dll"
+          dash -c "/usr/bin/python3.9 -m pip show numpy"
+          dash -c "/usr/bin/python3.9 -m pip show -f numpy | grep .dll"
           dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
-          dash "list_dlls_unix.sh" 3.8
+          dash "list_dlls_unix.sh" 3.9
       - name: Print installed package versions on failure
         if: failure()
         run: |

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import (
     Any,
-    Iterator,
     overload,
     TypeVar,
     Protocol,
+    runtime_checkable,
 )
 
 __all__ = ["_NestedSequence"]
@@ -15,6 +16,7 @@ __all__ = ["_NestedSequence"]
 _T_co = TypeVar("_T_co", covariant=True)
 
 
+@runtime_checkable
 class _NestedSequence(Protocol[_T_co]):
     """A protocol for representing nested sequences.
 

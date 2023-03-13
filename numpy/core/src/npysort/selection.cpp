@@ -423,8 +423,8 @@ static constexpr std::array<arg_map, sizeof...(Tags)>
 make_partition_map(npy::taglist<Tags...>)
 {
     return std::array<arg_map, sizeof...(Tags)>{
-            arg_map{Tags::type_value, &introselect_noarg<Tags>,
-                    &introselect_arg<Tags>}...};
+            arg_map{Tags::type_value, {&introselect_noarg<Tags>},
+                {&introselect_arg<Tags>}}...};
 }
 
 struct partition_t {

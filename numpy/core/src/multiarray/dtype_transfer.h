@@ -31,7 +31,7 @@ typedef struct {
  * copied.
  * If set up otherwise, func must be NULL'ed to indicate no-cleanup necessary.
  */
-static NPY_INLINE void
+static inline void
 NPY_cast_info_init(NPY_cast_info *cast_info)
 {
     cast_info->func = NULL;  /* mark as uninitialized. */
@@ -52,7 +52,7 @@ NPY_cast_info_init(NPY_cast_info *cast_info)
  * First checks whether `cast_info.func == NULL`, and assume it is
  * uninitialized in that case.
  */
-static NPY_INLINE void
+static inline void
 NPY_cast_info_xfree(NPY_cast_info *cast_info)
 {
     if (cast_info->func == NULL) {
@@ -71,7 +71,7 @@ NPY_cast_info_xfree(NPY_cast_info *cast_info)
  * Move the data from `original` to `cast_info`. Original is cleared
  * (its func set to NULL).
  */
-static NPY_INLINE void
+static inline void
 NPY_cast_info_move(NPY_cast_info *cast_info, NPY_cast_info *original)
 {
     *cast_info = *original;
@@ -87,7 +87,7 @@ NPY_cast_info_move(NPY_cast_info *cast_info, NPY_cast_info *original)
  * NOTE: It is acceptable to call this with the same struct if the struct
  *       has been filled by a valid memcpy from an initialized one.
  */
-static NPY_INLINE int
+static inline int
 NPY_cast_info_copy(NPY_cast_info *cast_info, NPY_cast_info *original)
 {
     cast_info->context.descriptors = cast_info->descriptors;
@@ -145,7 +145,6 @@ object_to_any_get_loop(
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
-
 
 NPY_NO_EXPORT int
 wrap_aligned_transferfunction(

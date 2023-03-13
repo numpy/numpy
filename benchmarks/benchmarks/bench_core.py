@@ -45,6 +45,12 @@ class Core(Benchmark):
     def time_array_l_view(self):
         np.array(self.l_view)
 
+    def time_can_cast(self):
+        np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_can_cast_same_kind(self):
+        np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
+
     def time_vstack_l(self):
         np.vstack(self.l)
 
@@ -65,6 +71,9 @@ class Core(Benchmark):
 
     def time_empty_100(self):
         np.empty(100)
+
+    def time_empty_like(self):
+        np.empty_like(self.l10x10)
 
     def time_eye_100(self):
         np.eye(100)

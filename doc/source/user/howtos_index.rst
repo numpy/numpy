@@ -15,3 +15,4 @@ the package, see the :ref:`API reference <reference>`.
    how-to-io
    how-to-index
    how-to-verify-bug
+   how-to-partition

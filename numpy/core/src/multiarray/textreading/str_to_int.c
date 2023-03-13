@@ -23,7 +23,7 @@ const char *deprecation_msg = (
 
 #define DECLARE_TO_INT(intw, INT_MIN, INT_MAX, byteswap_unaligned)          \
     NPY_NO_EXPORT int                                                       \
-    to_##intw(PyArray_Descr *descr,                                         \
+    npy_to_##intw(PyArray_Descr *descr,                                     \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,          \
             parser_config *pconfig)                                         \
     {                                                                       \
@@ -36,7 +36,7 @@ const char *deprecation_msg = (
             double fval;                                                    \
             PyArray_Descr *d_descr = PyArray_DescrFromType(NPY_DOUBLE);     \
             Py_DECREF(d_descr);  /* borrowed */                             \
-            if (to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
+            if (npy_to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
                 return -1;                                                  \
             }                                                               \
             if (!pconfig->gave_int_via_float_warning) {                     \
@@ -61,7 +61,7 @@ const char *deprecation_msg = (
 
 #define DECLARE_TO_UINT(uintw, UINT_MAX, byteswap_unaligned)                \
     NPY_NO_EXPORT int                                                       \
-    to_##uintw(PyArray_Descr *descr,                                        \
+    npy_to_##uintw(PyArray_Descr *descr,                                    \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,          \
             parser_config *pconfig)                                         \
     {                                                                       \
@@ -74,7 +74,7 @@ const char *deprecation_msg = (
             double fval;                                                    \
             PyArray_Descr *d_descr = PyArray_DescrFromType(NPY_DOUBLE);     \
             Py_DECREF(d_descr);  /* borrowed */                             \
-            if (to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
+            if (npy_to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
                 return -1;                                                  \
             }                                                               \
             if (!pconfig->gave_int_via_float_warning) {                     \

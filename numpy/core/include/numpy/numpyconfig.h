@@ -6,7 +6,13 @@
 /*
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
- * hardcoded
+ * hardcoded.
+ *
+ * Note that distutils/pip will attempt a universal2 build when Python itself
+ * is built as universal2, hence this hardcoding is needed even if we do not
+ * support universal2 wheels anymore (see gh-22796).
+ * This code block can be removed after we have dropped the setup.py based
+ * build completely.
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG
@@ -48,6 +54,7 @@
     #endif
 #endif
 
+
 /**
  * To help with the NPY_NO_DEPRECATED_API macro, we include API version
  * numbers for specific versions of NumPy. To exclude all API that was
@@ -73,5 +80,6 @@
 #define NPY_1_22_API_VERSION 0x0000000f
 #define NPY_1_23_API_VERSION 0x00000010
 #define NPY_1_24_API_VERSION 0x00000010
+#define NPY_1_25_API_VERSION 0x00000010
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_NUMPYCONFIG_H_ */

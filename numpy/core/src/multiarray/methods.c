@@ -21,6 +21,7 @@
 #include "ctors.h"
 #include "calculation.h"
 #include "convert_datatype.h"
+#include "descriptor.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
@@ -851,29 +852,35 @@ static PyObject *
 array_astype(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyArray_Descr *dtype = NULL;
     /*
      * TODO: UNSAFE default for compatibility, I think
      *       switching to SAME_KIND by default would be good.
      */
+    npy_dtype_info dt_info;
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     _PyArray_CopyMode forcecopy = 1;
     int subok = 1;
+
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
-            "dtype", &PyArray_DescrConverter, &dtype,
+            "dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|copy", &PyArray_CopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
-        Py_XDECREF(dtype);
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
         return NULL;
     }
 
     /* If it is not a concrete dtype instance find the best one for the array */
-    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(self, (PyObject *)dtype));
+    PyArray_Descr *dtype;
+
+    dtype = PyArray_AdaptDescriptorToArray(self, dt_info.dtype, dt_info.descr);
+    Py_XDECREF(dt_info.descr);
+    Py_DECREF(dt_info.dtype);
     if (dtype == NULL) {
         return NULL;
     }
@@ -1657,7 +1664,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *copied_array;
     PyObject *visit;
-    NpyIter *iter;
+    NpyIter *iter = NULL;
     NpyIter_IterNextFunc *iternext;
     char *data;
     char **dataptr;
@@ -1673,63 +1680,72 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     if (copied_array == NULL) {
         return NULL;
     }
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        copy = PyImport_ImportModule("copy");
-        if (copy == NULL) {
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        deepcopy = PyObject_GetAttrString(copy, "deepcopy");
-        Py_DECREF(copy);
-        if (deepcopy == NULL) {
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        iter = NpyIter_New(copied_array,
-                           NPY_ITER_READWRITE |
-                           NPY_ITER_EXTERNAL_LOOP |
-                           NPY_ITER_REFS_OK |
-                           NPY_ITER_ZEROSIZE_OK,
-                           NPY_KEEPORDER, NPY_NO_CASTING,
-                           NULL);
-        if (iter == NULL) {
-            Py_DECREF(deepcopy);
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        if (NpyIter_GetIterSize(iter) != 0) {
-            iternext = NpyIter_GetIterNext(iter, NULL);
-            if (iternext == NULL) {
-                NpyIter_Deallocate(iter);
-                Py_DECREF(deepcopy);
-                Py_DECREF(copied_array);
-                return NULL;
-            }
 
-            dataptr = NpyIter_GetDataPtrArray(iter);
-            strideptr = NpyIter_GetInnerStrideArray(iter);
-            innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-            do {
-                data = *dataptr;
-                stride = *strideptr;
-                count = *innersizeptr;
-                while (count--) {
-                    deepcopy_res = _deepcopy_call(data, data, PyArray_DESCR(copied_array),
-                                                  deepcopy, visit);
-                    if (deepcopy_res == -1) {
-                        return NULL;
-                    }
-
-                    data += stride;
-                }
-            } while (iternext(iter));
-        }
-        NpyIter_Deallocate(iter);
-        Py_DECREF(deepcopy);
+    if (!PyDataType_REFCHK(PyArray_DESCR(self))) {
+        return (PyObject *)copied_array;
     }
-    return (PyObject*) copied_array;
+
+    /* If the array contains objects, need to deepcopy them as well */
+    copy = PyImport_ImportModule("copy");
+    if (copy == NULL) {
+        Py_DECREF(copied_array);
+        return NULL;
+    }
+    deepcopy = PyObject_GetAttrString(copy, "deepcopy");
+    Py_DECREF(copy);
+    if (deepcopy == NULL) {
+        goto error;
+    }
+    iter = NpyIter_New(copied_array,
+                        NPY_ITER_READWRITE |
+                        NPY_ITER_EXTERNAL_LOOP |
+                        NPY_ITER_REFS_OK |
+                        NPY_ITER_ZEROSIZE_OK,
+                        NPY_KEEPORDER, NPY_NO_CASTING,
+                        NULL);
+    if (iter == NULL) {
+        goto error;
+    }
+    if (NpyIter_GetIterSize(iter) != 0) {
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto error;
+        }
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
+            while (count--) {
+                deepcopy_res = _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                                                deepcopy, visit);
+                if (deepcopy_res == -1) {
+                    goto error;
+                }
+
+                data += stride;
+            }
+        } while (iternext(iter));
+    }
+
+    Py_DECREF(deepcopy);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(copied_array);
+        return NULL;
+    }
+    return (PyObject *)copied_array;
+
+  error:
+    Py_DECREF(deepcopy);
+    Py_DECREF(copied_array);
+    NpyIter_Deallocate(iter);
+    return NULL;
 }
+
 
 /* Convert Array to flat list (using getitem) */
 static PyObject *
@@ -2823,25 +2839,15 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 static PyObject *
 array_class_getitem(PyObject *cls, PyObject *args)
 {
-    PyObject *generic_alias;
+    const Py_ssize_t args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
 
-#ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
-
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
     if ((args_len > 2) || (args_len == 0)) {
         return PyErr_Format(PyExc_TypeError,
                             "Too %s arguments for %s",
                             args_len > 2 ? "many" : "few",
                             ((PyTypeObject *)cls)->tp_name);
     }
-    generic_alias = Py_GenericAlias(cls, args);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-    generic_alias = NULL;
-#endif
-    return generic_alias;
+    return Py_GenericAlias(cls, args);
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {

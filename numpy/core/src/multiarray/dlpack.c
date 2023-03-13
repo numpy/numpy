@@ -3,21 +3,33 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <dlpack/dlpack.h>
 
+#include "dlpack/dlpack.h"
 #include "numpy/arrayobject.h"
-#include "common/npy_argparse.h"
-
-#include "common/dlpack/dlpack.h"
-#include "common/npy_dlpack.h"
+#include "npy_argparse.h"
+#include "npy_dlpack.h"
 
 static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
+    /*
+     * Leak the pyobj if not initialized.  This can happen if we are running
+     * exit handlers that are destructing c++ objects with residual (owned)
+     * PyObjects stored in them after the Python runtime has already been
+     * terminated.
+     */
+    if (!Py_IsInitialized()) {
+        return;
+    }
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
     // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
+
+    PyGILState_Release(state);
 }
 
 /* This is exactly as mandated by dlpack */
@@ -119,14 +131,15 @@ array_dlpack(PyArrayObject *self,
     }
 
     if (stream != Py_None) {
-        PyErr_SetString(PyExc_RuntimeError, "NumPy only supports "
-                "stream=None.");
+        PyErr_SetString(PyExc_RuntimeError,
+                "NumPy only supports stream=None.");
         return NULL;
     }
 
     if ( !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
-        PyErr_SetString(PyExc_TypeError, "NumPy currently only supports "
-                "dlpack for writeable arrays");
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export readonly array since signalling readonly "
+            "is unsupported by DLPack.");
         return NULL;
     }
 
@@ -138,7 +151,7 @@ array_dlpack(PyArrayObject *self,
     if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
         for (int i = 0; i < ndim; ++i) {
             if (shape[i] != 1 && strides[i] % itemsize != 0) {
-                PyErr_SetString(PyExc_RuntimeError,
+                PyErr_SetString(PyExc_BufferError,
                         "DLPack only supports strides which are a multiple of "
                         "itemsize.");
                 return NULL;
@@ -150,15 +163,18 @@ array_dlpack(PyArrayObject *self,
     PyArray_Descr *dtype = PyArray_DESCR(self);
 
     if (PyDataType_ISBYTESWAPPED(dtype)) {
-        PyErr_SetString(PyExc_TypeError, "DLPack only supports native "
-                    "byte swapping.");
+        PyErr_SetString(PyExc_BufferError,
+                "DLPack only supports native byte order.");
             return NULL;
     }
 
     managed_dtype.bits = 8 * itemsize;
     managed_dtype.lanes = 1;
 
-    if (PyDataType_ISSIGNED(dtype)) {
+    if (PyDataType_ISBOOL(dtype)) {
+        managed_dtype.code = kDLBool;
+    }
+    else if (PyDataType_ISSIGNED(dtype)) {
         managed_dtype.code = kDLInt;
     }
     else if (PyDataType_ISUNSIGNED(dtype)) {
@@ -168,8 +184,9 @@ array_dlpack(PyArrayObject *self,
         // We can't be sure that the dtype is
         // IEEE or padded.
         if (itemsize > 8) {
-            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
-                    "floating point types without padding.");
+            PyErr_SetString(PyExc_BufferError,
+                    "DLPack only supports IEEE floating point types "
+                    "without padding (longdouble typically is not IEEE).");
             return NULL;
         }
         managed_dtype.code = kDLFloat;
@@ -178,16 +195,17 @@ array_dlpack(PyArrayObject *self,
         // We can't be sure that the dtype is
         // IEEE or padded.
         if (itemsize > 16) {
-            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
-                    "complex point types without padding.");
+            PyErr_SetString(PyExc_BufferError,
+                    "DLPack only supports IEEE floating point types "
+                    "without padding (longdouble typically is not IEEE).");
             return NULL;
         }
         managed_dtype.code = kDLComplex;
     }
     else {
-        PyErr_SetString(PyExc_TypeError,
-                        "DLPack only supports signed/unsigned integers, float "
-                        "and complex dtypes.");
+        PyErr_SetString(PyExc_BufferError,
+                "DLPack only supports signed/unsigned integers, float "
+                "and complex dtypes.");
         return NULL;
     }
 
@@ -316,6 +334,11 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     const uint8_t bits = managed->dl_tensor.dtype.bits;
     const npy_intp itemsize = bits / 8;
     switch (managed->dl_tensor.dtype.code) {
+    case kDLBool:
+        if (bits == 8) {
+            typenum = NPY_BOOL;
+        }
+        break;
     case kDLInt:
         switch (bits)
         {

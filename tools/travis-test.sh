@@ -33,7 +33,7 @@ werrors="$werrors -Werror=implicit-function-declaration"
 setup_base()
 {
   # use default python flags but remove sign-compare
-  sysflags="$($PYTHON -c "from distutils import sysconfig; \
+  sysflags="$($PYTHON -c "import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
 
@@ -44,6 +44,8 @@ setup_base()
   # only disable SIMD optimizations
   elif [ -n "$WITHOUT_SIMD" ]; then
       build_args+=("--cpu-baseline=none" "--cpu-dispatch=none")
+  elif [ -n "$CPU_DISPATCH" ]; then
+      build_args+=("--cpu-dispatch=$CPU_DISPATCH")
   else
     # SIMD extensions that need to be tested on both runtime and compile-time via (test_simd.py)
     # any specified features will be ignored if they're not supported by compiler or platform
@@ -141,14 +143,17 @@ EOF
   fi
 
   if [ -n "$CHECK_BLAS" ]; then
+    $PYTHON -m pip install threadpoolctl
     $PYTHON ../tools/openblas_support.py --check_version
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
+    # Travis has a limit on log length that is causeing test failutes.
+    # The fix here is to remove the "-v" from the runtest arguments.
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG -- -rs
+    $PYTHON ../runtests.py -n $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -176,7 +181,7 @@ EOF
     pushd ../benchmarks
     $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
-    $PYTHON `which asv` dev 2>&1| tee asv-output.log
+    $PYTHON `which asv` dev -q 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then
       echo "Some benchmarks have errors!"
       exit 1

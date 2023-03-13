@@ -9,12 +9,13 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
 import functools
 import re
 import warnings
+
+from .._utils import set_module
 import numpy.core.numeric as NX
 
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.core import overrides
-from numpy.core.overrides import set_module
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
@@ -103,7 +104,7 @@ def poly(seq_of_zeros):
 
     References
     ----------
-    .. [1] M. Sullivan and M. Sullivan, III, "Algebra and Trignometry,
+    .. [1] M. Sullivan and M. Sullivan, III, "Algebra and Trigonometry,
        Enhanced With Graphing Utilities," Prentice-Hall, pg. 318, 1996.
 
     .. [2] G. Strang, "Linear Algebra and Its Applications, 2nd Edition,"
@@ -671,7 +672,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         msg = "Polyfit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=4)
+        warnings.warn(msg, RankWarning, stacklevel=2)
 
     if full:
         return c, resids, rank, s, rcond
