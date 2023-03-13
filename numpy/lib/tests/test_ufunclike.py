@@ -80,12 +80,6 @@ class TestUfunclike:
         assert_(isinstance(f0d, MyArray))
         assert_equal(f0d.metadata, 'bar')
 
-    def test_deprecated(self):
-        # NumPy 1.13.0, 2017-04-26
-        assert_warns(DeprecationWarning, ufl.fix, [1, 2], y=nx.empty(2))
-        assert_warns(DeprecationWarning, ufl.isposinf, [1, 2], y=nx.empty(2))
-        assert_warns(DeprecationWarning, ufl.isneginf, [1, 2], y=nx.empty(2))
-
     def test_scalar(self):
         x = np.inf
         actual = np.isposinf(x)

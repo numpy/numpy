@@ -6,7 +6,6 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   wheels_artifacts:
     path: "wheelhouse/*"
 
-
 ######################################################################
 # Build linux_aarch64 natively
 ######################################################################
@@ -24,11 +23,14 @@ linux_aarch64_task:
     # single task takes longer than 60 mins (the default time limit for a
     # cirrus-ci task).
     - env:
+        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp39-*
         EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
     - env:
+        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-*
     - env:
+        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-*
 
   build_script: |

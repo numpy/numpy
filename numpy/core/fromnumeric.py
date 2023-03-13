@@ -3830,10 +3830,6 @@ def round_(a, decimals=0, out=None):
     --------
     around : equivalent function; see for details.
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # call dispatch helper explicitly, as it emits a deprecation warning
-        _round__dispatcher(a, decimals=decimals, out=out)
-
     return around(a, decimals=decimals, out=out)
 
 
@@ -3859,10 +3855,6 @@ def product(*args, **kwargs):
     --------
     prod : equivalent function; see for details.
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # call dispatch helper explicitly, as it emits a deprecation warning
-        _product_dispatcher(*args, **kwargs)
-
     return prod(*args, **kwargs)
 
 
@@ -3887,10 +3879,6 @@ def cumproduct(*args, **kwargs):
     --------
     cumprod : equivalent function; see for details.
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # call dispatch helper explicitly, as it emits a deprecation warning
-        _cumproduct_dispatcher(*args, **kwargs)
-
     return cumprod(*args, **kwargs)
 
 
@@ -3918,10 +3906,6 @@ def sometrue(*args, **kwargs):
     --------
     any : equivalent function; see for details.
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # call dispatch helper explicitly, as it emits a deprecation warning
-        _sometrue_dispatcher(*args, **kwargs)
-
     return any(*args, **kwargs)
 
 
@@ -3946,8 +3930,4 @@ def alltrue(*args, **kwargs):
     --------
     numpy.all : Equivalent function; see for details.
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # call dispatch helper explicitly, as it emits a deprecation warning
-        _alltrue_dispatcher(*args, **kwargs)
-
     return all(*args, **kwargs)

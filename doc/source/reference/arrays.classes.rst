@@ -162,15 +162,6 @@ NumPy provides several hooks that classes can customize:
 
    .. versionadded:: 1.16
 
-   .. note::
-
-       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
-         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
-       - In NumPy 1.16, you need to set the environment variable
-         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
-         NumPy function overrides.
-       - Eventually, expect to ``__array_function__`` to always be enabled.
-
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
    -  ``types`` is a collection :py:class:`collections.abc.Collection`
