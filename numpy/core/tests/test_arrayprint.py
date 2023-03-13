@@ -812,7 +812,7 @@ class TestPrintOptions:
             ('float16',),
             ('float32',),
             ('float64',),
-            ('<U1',),     # 4-byte width string
+            ('U1',),     # 4-byte width string
         ],
     )
     def test_dtype_endianness_repr(self, native):
@@ -823,8 +823,6 @@ class TestPrintOptions:
         array([0], dtype=uint16)
         even though their dtypes have different endianness.
         '''
-        if native == '<U1' and sys.byteorder == 'big':
-            native = '>U1'
         native_dtype = np.dtype(native)
         non_native_dtype = native_dtype.newbyteorder()
         non_native_repr = repr(np.array([1], non_native_dtype))
