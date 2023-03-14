@@ -27,11 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install linter requirements
@@ -47,11 +47,11 @@ jobs:
     env:
       WITHOUT_SIMD: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -65,11 +65,11 @@ jobs:
     env:
       EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
@@ -79,7 +79,7 @@ jobs:
     # provides GCC  7, 8
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
@@ -117,11 +117,11 @@ jobs:
     env:
       WITHOUT_OPTIMIZATIONS: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -132,11 +132,11 @@ jobs:
     env:
       CPU_DISPATCH: "none"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -147,11 +147,11 @@ jobs:
     env:
       CPU_DISPATCH: "max -xop -fma4 -avx512f -avx512cd -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -162,11 +162,11 @@ jobs:
     env:
       CPU_DISPATCH: "SSSE3 SSE41 POPCNT SSE42 AVX F16C"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -177,11 +177,11 @@ jobs:
     env:
       USE_DEBUG: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -192,11 +192,11 @@ jobs:
     env:
       NPY_USE_BLAS_ILP64: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -210,11 +210,11 @@ jobs:
       RUN_COVERAGE: 1
       INSTALL_PICKLE5: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -231,11 +231,11 @@ jobs:
       NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
       USE_ASV: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -248,11 +248,11 @@ jobs:
       NPY_USE_BLAS_ILP64: 1
       NPY_RELAXED_STRIDES_DEBUG: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -263,11 +263,11 @@ jobs:
     env:
       USE_WHEEL: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -282,11 +282,11 @@ jobs:
       # currently unfortunately
       NPY_PROMOTION_STATE: legacy
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -300,11 +300,11 @@ jobs:
       ATLAS: None
       DOWNLOAD_OPENBLAS: ''
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -315,11 +315,11 @@ jobs:
     env:
       USE_SDIST: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -329,7 +329,7 @@ jobs:
     # make sure this matches the base docker image below
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
@@ -384,11 +384,11 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
