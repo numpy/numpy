@@ -240,12 +240,18 @@ cdef class Generator:
 
     def spawn(self, int n_children):
         """
+        spawn(n_children)
+
         Create new independent child generators.
 
         See :ref:`seedsequence-spawn` for additional notes on spawning
         children.
 
         .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
 
         Returns
         -------
