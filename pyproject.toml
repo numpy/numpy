@@ -178,5 +178,5 @@ environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFL
 package = 'numpy'
 
 [tool.devpy.commands]
-"Build" = ["devpy.build", "devpy.test"]
-"Environments" = ["devpy.shell", "devpy.ipython", "devpy.python"]
+"Build" = ["devpy.cmds.meson.build", "devpy.cmds.meson.test"]
+"Environments" = ["devpy.cmds.meson.shell", "devpy.cmds.meson.ipython", "devpy.cmds.meson.python"]
