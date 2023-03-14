@@ -36,7 +36,7 @@ jobs:
             python39-hypothesis liblapack-devel
             gcc-fortran gcc-g++ git dash
       - name: Set Windows PATH
-        uses: egor-tensin/cleanup-path@39324b3c13fae7f8237b32d446b474ba9f135531 # v1
+        uses: egor-tensin/cleanup-path@8469525c8ee3eddabbd3487658621a6235b3c581 # v3
         with:
           dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash
