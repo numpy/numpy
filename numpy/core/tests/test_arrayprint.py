@@ -9,6 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     assert_raises_regex,
     )
+from numpy.core.arrayprint import _typelessdata
 import textwrap
 
 class TestArrayRepr:
@@ -795,6 +796,47 @@ class TestPrintOptions:
         assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
+
+    @pytest.mark.parametrize(
+        ['native'],
+        [
+            ('bool',),
+            ('uint8',),
+            ('uint16',),
+            ('uint32',),
+            ('uint64',),
+            ('int8',),
+            ('int16',),
+            ('int32',),
+            ('int64',),
+            ('float16',),
+            ('float32',),
+            ('float64',),
+            ('U1',),     # 4-byte width string
+        ],
+    )
+    def test_dtype_endianness_repr(self, native):
+        '''
+        there was an issue where 
+        repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2'))
+        both returned the same thing:
+        array([0], dtype=uint16)
+        even though their dtypes have different endianness.
+        '''
+        native_dtype = np.dtype(native)
+        non_native_dtype = native_dtype.newbyteorder()
+        non_native_repr = repr(np.array([1], non_native_dtype))
+        native_repr = repr(np.array([1], native_dtype))
+        # preserve the sensible default of only showing dtype if nonstandard
+        assert ('dtype' in native_repr) ^ (native_dtype in _typelessdata),\
+                ("an array's repr should show dtype if and only if the type "
+                 'of the array is NOT one of the standard types '
+                 '(e.g., int32, bool, float64).')
+        if non_native_dtype.itemsize > 1:
+            # if the type is >1 byte, the non-native endian version
+            # must show endianness.
+            assert non_native_repr != native_repr
+            assert f"dtype='{non_native_dtype.byteorder}" in non_native_repr
 
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
