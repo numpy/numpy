@@ -1833,7 +1833,6 @@ class TestUserDType:
             create_custom_field_dtype(blueprint, mytype, 2)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
 class TestClassGetItem:
     def test_dtype(self) -> None:
         alias = np.dtype[Any]
@@ -1866,10 +1865,3 @@ def test_result_type_integers_and_unitless_timedelta64():
     td = np.timedelta64(4)
     result = np.result_type(0, td)
     assert_dtype_equal(result, td.dtype)
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
-def test_class_getitem_38() -> None:
-    match = "Type subscription requires python >= 3.9"
-    with pytest.raises(TypeError, match=match):
-        np.dtype[Any]
