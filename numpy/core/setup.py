@@ -78,6 +78,13 @@ def can_link_svml():
             and "linux" in platform
             and sys.maxsize > 2**31)
 
+def can_link_svml_fp16():
+    """SVML FP16 requires binutils >= 2.38 for an updated assembler
+    """
+    if can_link_svml():
+        binutils_ver = os.popen("ld -v").readlines()[0].strip()[-4:]
+        return float(binutils_ver) >= 2.38
+
 def check_git_submodules():
     out = os.popen("git submodule status")
     modules = out.readlines()
@@ -1006,6 +1013,8 @@ def configuration(parent_package='',top_path=None):
         # The ordering of names returned by glob is undefined, so we sort
         # to make builds reproducible.
         svml_objs.sort()
+        if not can_link_svml_fp16():
+            svml_objs = [o for o in svml_objs if not o.endswith('_h_la.s')]
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
