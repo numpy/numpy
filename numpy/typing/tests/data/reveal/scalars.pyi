@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 
 b: np.bool_
@@ -151,8 +150,7 @@ reveal_type(round(u8, 3))  # E: {uint64}
 reveal_type(round(f8))  # E: int
 reveal_type(round(f8, 3))  # E: {float64}
 
-if sys.version_info >= (3, 9):
-    reveal_type(f8.__ceil__())  # E: int
-    reveal_type(f8.__floor__())  # E: int
+reveal_type(f8.__ceil__())  # E: int
+reveal_type(f8.__floor__())  # E: int
 
 reveal_type(i8.is_integer())  # E: Literal[True]
