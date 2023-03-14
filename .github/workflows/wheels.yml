@@ -114,7 +114,7 @@ jobs:
         if: ${{ matrix.buildplat[1] == 'win32' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@a808017c3962f4d678fe685239668aad8c150932 # v2.12.0
+        uses: pypa/cibuildwheel@02ad79a31bf7aa0eee07f690509048d2fb9fd445 # v2.12.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
