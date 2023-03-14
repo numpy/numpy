@@ -14,6 +14,6 @@ try:
 except ImportError:
     print("Cannot import devpy; please install it using")
     print()
-    print("  pip install git+https://github.com/scientific-python/devpy")
+    print("  pip install git+https://github.com/scientific-python/devpy@v0.1")
     print()
     sys.exit(1)
