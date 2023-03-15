@@ -1145,6 +1145,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/ufunc_operations.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',

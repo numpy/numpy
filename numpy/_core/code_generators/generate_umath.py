@@ -463,15 +463,6 @@ defdict = {
           ]),
           TD(O, f='Py_reciprocal'),
           ),
-# This is no longer used as numpy.ones_like, however it is
-# still used by some internal calls.
-'_ones_like':
-    Ufunc(1, 1, None,
-          docstrings.get('numpy._core.umath._ones_like'),
-          'PyUFunc_OnesLikeTypeResolver',
-          TD(noobj),
-          TD(O, f='Py_get_one'),
-          ),
 'power':
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.power'),
@@ -1064,12 +1055,6 @@ defdict = {
           docstrings.get('numpy._core.umath.signbit'),
           None,
           TD(flts, out='?', dispatch=[('loops_unary_fp_le', inexactvec)]),
-          ),
-'copysign':
-    Ufunc(2, 1, None,
-          docstrings.get('numpy._core.umath.copysign'),
-          None,
-          TD(flts),
           ),
 'nextafter':
     Ufunc(2, 1, None,
