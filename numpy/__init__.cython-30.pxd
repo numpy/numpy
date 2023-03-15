@@ -866,7 +866,7 @@ cdef extern from "numpy/arrayobject.h":
 
     # NumPy internal definitions in datetime_strings.c:
     int get_datetime_iso_8601_strlen "NpyDatetime_GetDatetimeISO8601StrLen" (
-            int local, NPY_DATETIMEUNIT base) noexcept
+            int local, NPY_DATETIMEUNIT base)
     int make_iso_8601_datetime "NpyDatetime_MakeISO8601Datetime" (
             npy_datetimestruct *dts, char *outstr, npy_intp outlen,
             int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
