@@ -957,17 +957,46 @@ class TestUnique:
                 0,
             ),
             (
+                [[0., np.nan, 2.], [0., np.nan, 2.], [2., 1., 0.]],
+                [[0., np.nan, 2.], [2., 1., 0]],
+                [[0., np.nan, 2.], [0., np.nan, 2.], [2., 1., 0.]],
+                0,
+            ),
+            (
                 [[0., np.nan, 2., 3., np.nan, 3.], [0., np.nan, 2., 3., np.nan, 3.]],
                 [[0., 2., 3., np.nan], [0., 2., 3., np.nan]],
                 [[0., 2., 3., np.nan, np.nan], [0., 2., 3., np.nan, np.nan]],
                 1,
+            ),
+            (
+                [[np.nan, 0], [1, 2]],
+                [[1, 2], [np.nan, 0]],
+                [[1, 2], [np.nan, 0]],
+                0,
+            ),
+            (
+                [[(0, 0), (1, 1), (0, np.nan), (0, 0)],
+                 [(0, 0), (1, 1), (0, np.nan), (0, 0)],
+                 [(1, 1), (0, 0), (0, 0), (0, 0)],
+                 [(0, 0), (1, 1), (0, 0), (0, 0)],
+                 [(1, 1), (0, 0), (0, 0), (0, 0)]],
+                [[(0, 0.), (1, 1.), (0, 0.), (0, 0.)],
+                 [(0, 0.), (1, 1.), (0, np.nan), (0, 0.)],
+                 [(1, 1.), (0, 0.), (0, 0.), (0, 0.)]],
+                [[(0, 0.), (1, 1.), (0, 0.), (0, 0.)],
+                 [(0, 0.), (1, 1.), (0, np.nan), (0, 0.)],
+                 [(0, 0.), (1, 1.), (0, np.nan), (0, 0.)],
+                 [(1, 1.), (0, 0.), (0, 0.), (0, 0.)]],
+                0,
             ),
         ],
     )
     def test_unique_nanequals(self, input_list, expected_unique, expected_not_unique, axis):
         # issue 20326, 23286
         a = np.array(input_list)
+
         unq = np.unique(a, axis=axis)
-        not_unq = np.unique(a, axis=axis, equal_nan=False)
         assert_array_equal(unq, np.array(expected_unique))
+
+        not_unq = np.unique(a, axis=axis, equal_nan=False)
         assert_array_equal(not_unq, np.array(expected_not_unique))

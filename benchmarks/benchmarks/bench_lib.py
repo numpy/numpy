@@ -122,7 +122,7 @@ class Unique(Benchmark):
     param_names = ["array_size", "percent_nans", "axis"]
     params = [
         # Size of array
-        [64, 300, 512],
+        [64, 300, 512, 1024, 2048],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         [None, 0],
