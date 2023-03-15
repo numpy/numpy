@@ -372,7 +372,7 @@ multiarray_funcs_api = {
     # End 1.22 API
     'NpyDatetime_ConvertDatetime64ToDatetimeStruct':   (307,),
     'NpyDatetime_ConvertDatetimeStructToDatetime64':   (308,),
-    'NpyDatetime_ConvertPydatetimeToDatetimeStruct':   (309,),
+    'NpyDatetime_ConvertPyDateTimeToDatetimeStruct':   (309,),
     'NpyDatetime_GetDatetimeISO8601StrLen':            (310,),
     'NpyDatetime_MakeISO8601Datetime':                 (311,),
 }

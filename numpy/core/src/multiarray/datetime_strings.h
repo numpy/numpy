@@ -40,39 +40,6 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
                     NPY_DATETIMEUNIT *out_bestunit,
                     npy_bool *out_special);
 
-/*
- * Provides a string length to use for converting datetime
- * objects with the given local and unit settings.
- */
-NPY_NO_EXPORT int
-NpyDatetime_GetDatetimeISO8601StrLen(int local, NPY_DATETIMEUNIT base);
-
-/*
- * Converts an npy_datetimestruct to an (almost) ISO 8601
- * NULL-terminated string.
- *
- * If 'local' is non-zero, it produces a string in local time with
- * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
- *
- * 'base' restricts the output to that unit. Set 'base' to
- * -1 to auto-detect a base after which all the values are zero.
- *
- *  'tzoffset' is used if 'local' is enabled, and 'tzoffset' is
- *  set to a value other than -1. This is a manual override for
- *  the local time zone to use, as an offset in minutes.
- *
- *  'casting' controls whether data loss is allowed by truncating
- *  the data to a coarser unit. This interacts with 'local', slightly,
- *  in order to form a date unit string as a local time, the casting
- *  must be unsafe.
- *
- *  Returns 0 on success, -1 on failure (for example if the output
- *  string was too short).
- */
-NPY_NO_EXPORT int
-NpyDatetime_MakeISO8601Datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
-                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
-                    NPY_CASTING casting);
 
 /*
  * This is the Python-exposed datetime_as_string function.

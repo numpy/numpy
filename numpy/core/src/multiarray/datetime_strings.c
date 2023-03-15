@@ -886,9 +886,10 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  string was too short).
  */
 NPY_NO_EXPORT int
-NpyDatetime_MakeISO8601Datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
-                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
-                    NPY_CASTING casting)
+NpyDatetime_MakeISO8601Datetime(
+        npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+        int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+        NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;

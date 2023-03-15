@@ -448,9 +448,9 @@ PyArray_TimedeltaStructToTimedelta(
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int
-NpyDatetime_ConvertDatetime64ToDatetimeStruct(PyArray_DatetimeMetaData *meta,
-                                    npy_datetime dt,
-                                    npy_datetimestruct *out)
+NpyDatetime_ConvertDatetime64ToDatetimeStruct(
+        PyArray_DatetimeMetaData *meta, npy_datetime dt,
+        npy_datetimestruct *out)
 {
     npy_int64 days;
 
@@ -2112,9 +2112,9 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
-NpyDatetime_ConvertPydatetimeToDatetimeStruct(PyObject *obj, npy_datetimestruct *out,
-                                     NPY_DATETIMEUNIT *out_bestunit,
-                                     int apply_tzinfo)
+NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
+        PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
+        int apply_tzinfo)
 {
     PyObject *tmp;
     int isleap;
@@ -2346,7 +2346,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the local datetime into a datetimestruct */
-    if (NpyDatetime_ConvertPydatetimeToDatetimeStruct(loc_dt, &loc_dts, NULL, 0) < 0) {
+    if (NpyDatetime_ConvertPyDateTimeToDatetimeStruct(loc_dt, &loc_dts, NULL, 0) < 0) {
         Py_DECREF(loc_dt);
         return -1;
     }
@@ -2506,7 +2506,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = NPY_FR_ERROR;
 
-        code = NpyDatetime_ConvertPydatetimeToDatetimeStruct(obj, &dts, &bestunit, 1);
+        code = NpyDatetime_ConvertPyDateTimeToDatetimeStruct(obj, &dts, &bestunit, 1);
         if (code == -1) {
             return -1;
         }
