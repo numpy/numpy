@@ -1076,6 +1076,12 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
+    >>> import numpy as np
+    >>> x = np.array([0, 1, 2, 3, 4])
+    >>> y = x**2
+    >>> np.gradient(y, x, edge_order=2)
+    array([0., 2., 4., 6., 8.])
+
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
