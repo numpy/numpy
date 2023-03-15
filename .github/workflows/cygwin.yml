@@ -25,7 +25,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Install Cygwin
-        uses: cygwin/cygwin-install-action@49f298a7ebb00d4b3ddf58000c3e78eff5fbd6b9 # v2
+        uses: cygwin/cygwin-install-action@f5e0f048310c425e84bc789f493a828c6dc80a25 # v3
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
