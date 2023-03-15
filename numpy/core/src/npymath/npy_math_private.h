@@ -21,6 +21,7 @@
 #include <Python.h>
 #ifdef __cplusplus
 #include <cmath>
+#include <complex>
 using std::isgreater;
 using std::isless;
 #else
@@ -494,8 +495,9 @@ do {                                                            \
  * Microsoft C defines _MSC_VER
  * Intel compiler does not use MSVC complex types, but defines _MSC_VER by
  * default.
+ * since c++17 msvc is no longer support them.
  */
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef union {
         npy_cdouble npy_z;
         _Dcomplex c99_z;
