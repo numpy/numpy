@@ -221,13 +221,6 @@ def unique(ar, return_index=False, return_inverse=False,
         lexicographical order is chosen - see np.sort for how the lexicographical
         order is defined for complex arrays.
 
-    .. versionchanged Numpy 1.24.3
-        Using masked arrays will preserve behavior of putting nan(s) to the end
-        of the sorted unique values by transparently converting masked values
-        using the array's default filler value.
-        It is not possible to retrive the original value stored under returned
-        masked entry in the unique array.
-
     Examples
     --------
     >>> np.unique([1, 1, 2, 2, 3, 3])
