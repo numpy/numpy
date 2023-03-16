@@ -1,0 +1,2 @@
+* Remove deprecated ``casting=None`` from ``np.clip``. The behaviour was
+  deprecated in NumPy 1.17.
