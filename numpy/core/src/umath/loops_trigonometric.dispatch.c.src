@@ -56,10 +56,9 @@ simd_@op@_scalar_f64(npyv_f64 x, npyv_f64 y, npyv_b64 cmp)
 
     npy_uint64 cmp_bits = npyv_tobits_b64(cmp);
     for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
-        if (((~cmp_bits) >> i) & 1) {
-            continue;
+        if (cmp_bits & (1 << i)) {
+            y_copy[i] = npy_@op@(x_copy[i]);
         }
-        y_copy[i] = npy_@op@(x_copy[i]);
     }
 
     return npyv_loada_f64(y_copy);
