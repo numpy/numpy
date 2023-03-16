@@ -1656,9 +1656,13 @@ _array_fromobject_generic(
         PyArray_Descr* dtype = PyArray_AdaptDescriptorToArray(
             oparr, dt_info.dtype, dt_info.descr);
         if (dtype == NULL) {
+            return NULL;
+        }
+        if ((dt_info.descr == NULL) && (dt_info.dtype == NULL)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
+                Py_DECREF(dtype);
                 goto finish;
             }
             else {
@@ -1668,6 +1672,7 @@ _array_fromobject_generic(
                     return NULL;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
+                Py_DECREF(dtype);
                 goto finish;
             }
         }
