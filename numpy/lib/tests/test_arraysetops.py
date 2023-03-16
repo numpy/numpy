@@ -1000,7 +1000,9 @@ class TestUnique:
             ),
         ],
     )
-    def test_unique_nanequals(self, input_list, expected_unique, expected_not_unique, axis):
+    def test_unique_nanequals(
+        self, input_list, expected_unique, expected_not_unique, axis
+    ):
         # issue 20326, 23286
         a = np.array(input_list)
 

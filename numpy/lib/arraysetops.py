@@ -357,7 +357,8 @@ def unique(ar, return_index=False, return_inverse=False,
 
 def _unique_preprocess(ar, return_index=False, return_inverse=False):
     """
-    Helper function to prepare a mask and sort a consolidated array for _uniqueXd.
+    Helper function to prepare a mask and sort a consolidated array for
+    _uniqueXd.
     """
     ar = np.asanyarray(ar).flatten()
 
@@ -497,7 +498,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
-    return _unique_return(aux, mask, perm, return_index, return_inverse, return_counts)
+    return _unique_return(
+        aux, mask, perm, return_index, return_inverse, return_counts
+    )
 
 
 def _intersect1d_dispatcher(
