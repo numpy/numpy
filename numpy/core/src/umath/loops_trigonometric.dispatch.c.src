@@ -47,15 +47,22 @@ simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@
 NPY_NOINLINE npyv_f64
 simd_@op@_scalar_f64(npyv_f64 x, npyv_f64 y, npyv_b64 cmp)
 {
+    // MSVC doesn't compile with direct vector access, so we copy it here
+    // as we have no npyv_get_lane/npyv_set_lane intrinsics
+    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) x_copy[npyv_nlanes_f64];
+    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) y_copy[npyv_nlanes_f64];
+    npyv_storea_f64(x_copy, x);
+    npyv_storea_f64(y_copy, y);
+
     npy_uint64 cmp_bits = npyv_tobits_b64(cmp);
     for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
         if (((~cmp_bits) >> i) & 1) {
             continue;
         }
-        y[i] = npy_@op@(x[i]);
+        y_copy[i] = npy_@op@(x_copy[i]);
     }
 
-    return y;
+    return npyv_loada_f64(y_copy);
 }
 /**end repeat**/
 
@@ -75,14 +82,14 @@ simd_approx_sine_poly_f64(npyv_f64 r)
     const npyv_f64 poly6 = npyv_setall_f64(0x1.111111110b25ep-7);
     const npyv_f64 poly7 = npyv_setall_f64(-0x1.55555555554c3p-3);
 
-    npyv_f64 r2 = r * r;
+    npyv_f64 r2 = npyv_mul_f64(r, r);
     npyv_f64 y = npyv_muladd_f64(poly1, r2, poly2);
     y = npyv_muladd_f64(y, r2, poly3);
     y = npyv_muladd_f64(y, r2, poly4);
     y = npyv_muladd_f64(y, r2, poly5);
     y = npyv_muladd_f64(y, r2, poly6);
     y = npyv_muladd_f64(y, r2, poly7);
-    y = npyv_muladd_f64(y * r2, r, r);
+    y = npyv_muladd_f64(npyv_mul_f64(y, r2), r, r);
 
     return y;
 }
@@ -90,18 +97,18 @@ simd_approx_sine_poly_f64(npyv_f64 r)
 /* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
 NPY_FINLINE npyv_f64
 simd_range_reduction_pi2(npyv_f64 r, npyv_f64 n) {
-    const npyv_f64 pi1 = npyv_setall_f64(0x1.921fb54442d18p+1);
-    const npyv_f64 pi2 = npyv_setall_f64(0x1.1a62633145c06p-53);
-    const npyv_f64 pi3 = npyv_setall_f64(0x1.c1cd129024e09p-106);
+    const npyv_f64 pi1 = npyv_setall_f64(-0x1.921fb54442d18p+1);
+    const npyv_f64 pi2 = npyv_setall_f64(-0x1.1a62633145c06p-53);
+    const npyv_f64 pi3 = npyv_setall_f64(-0x1.c1cd129024e09p-106);
 
-    return simd_range_reduction_f64(r, n, -pi1, -pi2, -pi3);
+    return simd_range_reduction_f64(r, n, pi1, pi2, pi3);
 }
 
 NPY_FINLINE npyv_b64 simd_cos_range_check_f64(npyv_u64 ir) {
     const npyv_u64 tiny_bound = npyv_setall_u64(0x202); /* top12 (asuint64 (0x1p-509)).  */
     const npyv_u64 simd_thresh = npyv_setall_u64(0x214); /* top12 (asuint64 (RangeVal)) - SIMD_TINY_BOUND.  */
 
-    return npyv_cmpge_u64((ir >> 52) - tiny_bound, simd_thresh);
+    return npyv_cmpge_u64(npyv_sub_u64(npyv_shri_u64(ir, 52), tiny_bound), simd_thresh);
 }
 
 NPY_FINLINE npyv_b64 simd_sin_range_check_f64(npyv_u64 ir) {
@@ -118,10 +125,10 @@ simd_cos_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
     const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
 
     /* n = rint((|x|+pi/2)/pi) - 0.5.  */
-    npyv_f64 n = npyv_muladd_f64(inv_pi, r + half_pi, shift);
-    npyv_u64 odd = npyv_reinterpret_u64_f64(n) << 63;
-    n -= shift;
-    n -= npyv_setall_f64(0.5);
+    npyv_f64 n = npyv_muladd_f64(inv_pi, npyv_add_f64(r, half_pi), shift);
+    npyv_u64 odd = npyv_shli_u64(npyv_reinterpret_u64_f64(n), 63);
+    n = npyv_sub_f64(n, shift);
+    n = npyv_sub_f64(n, npyv_setall_f64(0.5));
 
     /* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
     r = simd_range_reduction_pi2(r, n);
@@ -141,8 +148,8 @@ simd_sin_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
 
     /* n = rint(|x|/pi).  */
     npyv_f64 n = npyv_muladd_f64(inv_pi, r, shift);
-    npyv_u64 odd = npyv_reinterpret_u64_f64(n) << 63;
-    n -= shift;
+    npyv_u64 odd = npyv_shli_u64(npyv_reinterpret_u64_f64(n), 63);
+    n = npyv_sub_f64(n, shift);
 
     /* r = |x| - n*pi  (range reduction into -pi/2 .. pi/2).  */
     r = simd_range_reduction_pi2(r, n);
@@ -173,9 +180,9 @@ simd_@op@_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
             x_in = npyv_loadn_tillz_f64(src, ssrc, len);
         }
 
-        npyv_u64 ir = npyv_reinterpret_u64_f64(x_in) & abs_mask;
+        npyv_u64 ir = npyv_and_u64(npyv_reinterpret_u64_f64(x_in), abs_mask);
         npyv_f64 r = npyv_reinterpret_f64_u64(ir);
-        npyv_u64 sign = npyv_reinterpret_u64_f64(x_in) & ~abs_mask;
+        npyv_u64 sign = npyv_and_u64(npyv_reinterpret_u64_f64(x_in), npyv_not_u64(abs_mask));
 
         npyv_b64 cmp = simd_@op@_range_check_f64(ir);
         if (npyv_any_b64(cmp)) {
