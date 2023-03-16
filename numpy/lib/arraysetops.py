@@ -328,8 +328,9 @@ def unique(ar, return_index=False, return_inverse=False,
     #     i.e. all elements can be safely interpreted as np.float32 or np.int64
     #   - original shape is not equal to 0 (in any dimension)
     # Then this optimization might be used to speed up unique computation along
-    # axes equal to either 1 or 2.
-    if orig_dim == 2 and len(orig_dtype) < 2 and all(i > 0 for i in orig_shape):
+    # axis equal to either 0 or 1.
+    if (orig_dim == 2 and len(orig_dtype) < 2 and
+       all(i > 0 for i in orig_shape)):
         output = _unique2d(consolidated, return_index,
                            return_inverse, return_counts, equal_nan=equal_nan,
                            orig_dtype=orig_dtype, orig_shape=orig_shape)
@@ -338,8 +339,8 @@ def unique(ar, return_index=False, return_inverse=False,
         output = (np.moveaxis(output[0], 0, axis),) + output[1:]
         return _unpack_tuple(output)
 
-    # For every other scenario treat it as flattened 1-D array of structured types.
-    # This path include cases like: 3-D inputs or structured dtypes.
+    # For every other scenario treat it as flattened 1-D array of structured
+    # types. This path include cases like: 3-D inputs or structured dtypes.
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts, equal_nan=equal_nan)
 
@@ -373,10 +374,11 @@ def _unique_preprocess(ar, return_index=False, return_inverse=False):
     return aux, mask, perm
 
 
-def _unique_return(aux, mask, perm=None, return_index=False, return_inverse=False,
-                   return_counts=False):
+def _unique_return(aux, mask, perm=None, return_index=False,
+                   return_inverse=False, return_counts=False):
     """
-    Helper function to apply all necessary masks and transforms to _uniqeXd results.
+    Helper function to apply all necessary masks and transforms to
+    _uniqeXd results.
     """
     ret = (aux[mask],)
 
@@ -395,7 +397,8 @@ def _unique_return(aux, mask, perm=None, return_index=False, return_inverse=Fals
 
 
 def _unique2d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True, orig_dtype=None, orig_shape=None):
+              return_counts=False, *, equal_nan=True,
+              orig_dtype=None, orig_shape=None):
     """
     Find the unique elements of a 2-D array, when dtype is not structured.
     """
@@ -420,11 +423,15 @@ def _unique2d(ar, return_index=False, return_inverse=False,
         # First, let's get all nans - one-time only operation:
         _nans = np.isnan(aux)
         # Next step is to operate on slices and apply np.any to reduce rows:
-        mask[1:] = np.any((aux[1:] != aux[:-1]) & ~(_nans[1:] & _nans[:-1]), axis=1)
+        mask[1:] = np.any(
+            (aux[1:] != aux[:-1]) & ~(_nans[1:] & _nans[:-1]), axis=1
+        )
     else:
         mask[1:] = np.any(aux[1:] != aux[:-1], axis=1)
 
-    return _unique_return(aux, mask, perm, return_index, return_inverse, return_counts)
+    return _unique_return(
+        aux, mask, perm, return_index, return_inverse, return_counts
+    )
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
@@ -437,16 +444,21 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     # _unique1d() relies on the fact that ar is always in a flatten form.
     # This combined with sort() from preprocess, provide an easy way to
     # determine if any np.nan is present in the array.
-    if equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+    if (equal_nan and aux.shape[0] > 0 and
+       aux.dtype.kind in "cfmM" and np.isnan(aux[-1])):
+        # for complex all NaNs are considered equivalent
+        if aux.dtype.kind == "c":
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
         if aux_firstnan > 0:
-            mask[1:aux_firstnan] = aux[1:aux_firstnan] != aux[:aux_firstnan - 1]
+            mask[1:aux_firstnan] = (
+                aux[1:aux_firstnan] != aux[:aux_firstnan - 1]
+            )
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
-    elif equal_nan and aux.shape[0] > 0 and len(aux.dtype) > 0 and aux.dtype.kind == "V":
+    elif (equal_nan and aux.shape[0] > 0 and len(aux.dtype) > 0
+         and aux.dtype.kind == "V"):
         def _unique_check(a, b):
             return a != b and not(np.isnan(a) and np.isnan(b))
 
@@ -456,11 +468,13 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             while i < len(a) - 1:
                 _a = a[i]
                 _b = b[i]
-                # If values are structured, compare elements using additional loop.
+                # If values are structured,
+                # compare elements using additional loop.
                 if inner_len > 0:
                     if _unique_tracker(_a, _b):
                         return True
-                # If values are not structured, compare elements one by one.
+                # If values are not structured,
+                # compare elements one by one.
                 else:
                     if _unique_check(_a, _b):
                         return True
