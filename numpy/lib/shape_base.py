@@ -709,7 +709,7 @@ def dstack(tup):
 
     """
     arrs = atleast_3d(*tup)
-    if not in isinstance(arrs, list):
+    if isinstance(arrs, list):
         arrs = [arrs]
     return _nx.concatenate(arrs, 2)
 
