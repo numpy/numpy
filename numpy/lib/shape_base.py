@@ -19,7 +19,6 @@ __all__ = [
     'put_along_axis'
     ]
 
-
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
@@ -862,7 +861,8 @@ def split(ary, indices_or_sections, axis=0):
             sections = indices_or_sections
             N = ary.shape[axis]
             if N % sections:
-            raise ValueError('array split does not result in an equal division') from None
+                raise ValueError('array split does not result 
+                                 in an equal division') from None
         return array_split(ary, indices_or_sections, axis)
     else:
         raise TypeError("only supports numpy.ndarray type")
