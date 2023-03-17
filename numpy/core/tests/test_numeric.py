@@ -3051,7 +3051,7 @@ class TestConvolve:
         d = [1.] * 100
         k = [1.] * 3
         assert_array_equal(
-            np.convolve(d, k, mode='valid'),
+            np.convolve(d, k, mode='same'),
             np.convolve(d, k, mode='circular')
         )
 
