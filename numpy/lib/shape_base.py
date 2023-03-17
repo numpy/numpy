@@ -865,7 +865,7 @@ def split(ary, indices_or_sections, axis=0):
                 'array split does not result in an equal division') from None
         return array_split(ary, indices_or_sections, axis)
     else:
-        raise TypeError("only supports numpy.ndarray type")
+        raise TypeError("only supports instance of numpy.ndarray type")
 
 
 def _hvdsplit_dispatcher(ary, indices_or_sections):
