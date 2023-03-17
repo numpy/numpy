@@ -1,3 +1,13 @@
+from ._ufunc_config import *
+from . import _ufunc_config
+from ._asarray import *
+from . import _asarray
+from .arrayprint import *
+from . import arrayprint
+from .fromnumeric import *
+from . import fromnumeric
+from .numerictypes import *
+from .umath import *
 import functools
 import itertools
 import operator
@@ -268,7 +278,7 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
 
 
 def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
-    return(like,)
+    return (like,)
 
 
 @set_array_function_like_doc
@@ -321,7 +331,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
     if like is not None:
         return _full_with_like(
-                like, shape, fill_value, dtype=dtype, order=order)
+            like, shape, fill_value, dtype=dtype, order=order)
 
     if dtype is None:
         fill_value = asarray(fill_value)
@@ -604,7 +614,7 @@ def argwhere(a):
     if np.ndim(a) == 0:
         a = shape_base.atleast_1d(a)
         # then remove the added dimension
-        return argwhere(a)[:,:0]
+        return argwhere(a)[:, :0]
     return transpose(nonzero(a))
 
 
@@ -835,7 +845,7 @@ def convolve(a, v, mode='full'):
     if mode != "circular":
         return multiarray.correlate(a, v[::-1], mode)
 
-    tip = multiarray.concatenate([a[-(len(v) - 1) :], a[: len(v) - 1]])
+    tip = multiarray.concatenate([a[-(len(v) - 1):], a[: len(v) - 1]])
     mainconvolved = multiarray.correlate(a, v[::-1], mode="valid")
     tipconvolved = multiarray.correlate(tip, v[::-1], mode="valid")
     return multiarray.concatenate(
@@ -1853,7 +1863,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     if like is not None:
         return _fromfunction_with_like(
-                like, function, shape, dtype=dtype, **kwargs)
+            like, function, shape, dtype=dtype, **kwargs)
 
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
@@ -2526,16 +2536,6 @@ def extend_all(module):
             __all__.append(a)
 
 
-from .umath import *
-from .numerictypes import *
-from . import fromnumeric
-from .fromnumeric import *
-from . import arrayprint
-from .arrayprint import *
-from . import _asarray
-from ._asarray import *
-from . import _ufunc_config
-from ._ufunc_config import *
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)
