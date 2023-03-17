@@ -839,7 +839,11 @@ def convolve(a, v, mode='full'):
     mainconvolved = multiarray.correlate(a, v[::-1], mode="valid")
     tipconvolved = multiarray.correlate(tip, v[::-1], mode="valid")
     return multiarray.concatenate(
-        [tipconvolved[len(v) // 2 :], mainconvolved, tipconvolved[: len(v) // 2]]
+        [
+            tipconvolved[len(v) // 2:],
+            mainconvolved,
+            tipconvolved[: len(v) // 2],
+        ]
     )
 
 
