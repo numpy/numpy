@@ -3036,6 +3036,14 @@ class TestConvolve:
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
 
+    def test_circular(self):
+        d = [1.] * 100
+        k = [1.] * 3
+        assert_array_equal(
+            np.convolve(d, k, mode='valid'), 
+            np.convolve(d, k, mode='circular')
+        ) 
+
 
 class TestArgwhere:
 

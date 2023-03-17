@@ -831,7 +831,16 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    return multiarray.correlate(a, v[::-1], mode)
+
+    if mode != "circular":
+        return multiarray.correlate(a, v[::-1], mode)
+
+    tip = multiarray.concatenate([a[-(len(v) - 1) :], a[: len(v) - 1]])
+    mainconvolved = multiarray.correlate(a, v[::-1], mode="valid")
+    tipconvolved = multiarray.correlate(tip, v[::-1], mode="valid")
+    return multiarray.concatenate(
+        [tipconvolved[len(v) // 2 :], mainconvolved, tipconvolved[: len(v) // 2]]
+    )
 
 
 def _outer_dispatcher(a, b, out=None):
