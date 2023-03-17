@@ -1653,10 +1653,32 @@ _array_fromobject_generic(
     /* fast exit if simple call */
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
-        PyArray_Descr* dtype = PyArray_AdaptDescriptorToArray(
-            oparr, dt_info.dtype, dt_info.descr);
-        if (dtype == NULL) {
-            return NULL;
+        PyArray_Descr* dtype = NULL;
+        /*
+         * Skip AdaptDescriptorToArray if the supplied dtype class does not
+         * match the dtype of the input array or if we have to determine the
+         * descriptor because only the DType was given. This means we avoid
+         * inspecting array values twice for example if someone does:
+         *
+         * >>> arr = np.array(["asdf", "fdsa"], dtype=object)
+         * >>> np.array(arr, dtype="U")
+         */
+        if ((NPY_DTYPE(PyArray_DESCR(oparr)) == dt_info.dtype) ||
+            ((dt_info.descr == NULL) && (dt_info.dtype != NULL))) {
+            dtype = PyArray_AdaptDescriptorToArray(
+                    oparr, dt_info.dtype, dt_info.descr);
+            if (dtype == NULL) {
+                return NULL;
+            }
+        }
+        else {
+            if ((dt_info.descr == NULL) && (dt_info.dtype == NULL)) {
+                dtype = PyArray_DESCR(oparr);
+            }
+            else {
+                dtype = dt_info.descr;
+            }
+            Py_INCREF(dtype);
         }
         if ((dt_info.descr == NULL) && (dt_info.dtype == NULL)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
