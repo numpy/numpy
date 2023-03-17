@@ -7171,7 +7171,7 @@ def right_shift(a, n):
     ---------
     >>> import numpy.ma as ma
     >>> x = [11, 3, 8, 1]
-    >>>  mask = [0, 0, 0, 1]
+    >>> mask = [0, 0, 0, 1]
     >>> masked_x = ma.masked_array(x, mask)
     >>> masked_x
     ma.right_shifmasked_array(data=[11, 3, 8, --],
