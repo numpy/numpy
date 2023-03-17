@@ -1749,9 +1749,8 @@ _array_fromobject_generic(
 
     flags |= NPY_ARRAY_FORCECAST;
 
-    Py_XINCREF(dt_info.descr);
-    ret = (PyArrayObject *)_PyArray_CheckFromAny(op, dt_info.descr, dt_info,
-                                                 0, 0, flags, NULL);
+    ret = (PyArrayObject *)PyArray_CheckFromAny_int(
+            op, dt_info.descr, dt_info.dtype, 0, 0, flags, NULL);
 
 finish:
     if (ret == NULL) {
