@@ -854,7 +854,7 @@ def split(ary, indices_or_sections, axis=0):
      array([], dtype=float64)]
 
     """
-    if(isinstance(ary,numpy.ndarray)):
+    if(isinstance(ary, numpy.ndarray)):
         try:
             len(indices_or_sections)
         except TypeError:
