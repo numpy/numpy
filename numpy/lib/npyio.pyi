@@ -72,7 +72,7 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     files: list[str]
     allow_pickle: bool
     pickle_kwargs: None | Mapping[str, Any]
-    MAX_REPR_ARRAY_COUNT: int
+    _MAX_REPR_ARRAY_COUNT: int
     # Represent `f` as a mutable property so we can access the type of `self`
     @property
     def f(self: _T) -> BagObj[_T]: ...

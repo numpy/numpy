@@ -322,19 +322,19 @@ class TestSavezLoad(RoundtripTest):
             assert_(fp.closed)
 
     @pytest.mark.parametrize("count,repr_count,repr_f", [
-        (10, 5, "<NpzFile %s containing %s...>"),
-        (10, 20, "<NpzFile %s containing %s>"),
+        (10, 5, "NpzFile %s with keys %s..."),
+        (10, 20, "NpzFile %s with keys %s"),
     ])
     def test_representation(self, count, repr_count, repr_f):
         a = np.array([[1, 2], [3, 4]], float)
-        np.lib.npyio.NpzFile.MAX_REPR_ARRAY_COUNT = repr_count
+        np.lib.npyio.NpzFile._MAX_REPR_ARRAY_COUNT = repr_count
         array_string = ', '.join(
             [f"arr_{i}" for i in range(min(count, repr_count))]
         )
         with temppath(suffix='.npz') as tmp:
             np.savez(tmp, *[a]*count)
             l = np.load(tmp)
-            assert str(l) == repr_f % (tmp, array_string)
+            assert str(l) == repr_f % (repr(tmp), array_string)
             l.close()
 
 

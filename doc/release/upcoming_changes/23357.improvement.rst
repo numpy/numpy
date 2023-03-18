@@ -6,4 +6,4 @@ Explicitly show keys of .npz file in repr
 
    >>> npzfile = np.load('arr.npz')
    >>> npzfile
-   <NpzFile arr.npz containing arr_0, arr_1, arr_2, arr_3, arr_4...>
+   NpzFile 'arr.npz' with keys arr_0, arr_1, arr_2, arr_3, arr_4...
