@@ -17,7 +17,7 @@ dependencies:
   - ninja
   - pkg-config
   - meson-python
-  - pip   # so you can use pip to install devpy
+  - pip   # so you can use pip to install spin
   # For testing
   - pytest
   - pytest-cov
