@@ -110,11 +110,7 @@ def empty(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    if dtype:
-        np_empty = np.empty(shape, dtype=dtype)
-    else:
-        np_empty = np.empty(shape)
-    return Array._new(np_empty)
+    return Array._new(np.empty(shape, dtype=dtype))
 
 
 def empty_like(
@@ -152,12 +148,7 @@ def eye(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-
-    if dtype:
-        np_eye = np.eye(n_rows, M=n_cols, k=k, dtype=dtype)
-    else:
-        np_eye = np.eye(n_rows, M=n_cols, k=k)
-    return Array._new(np_eye)
+    return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
 
 def from_dlpack(x: object, /) -> Array:
@@ -341,12 +332,7 @@ def zeros(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-
-    if dtype:
-        np_zeros = np.zeros(shape, dtype=dtype)
-    else:
-        np_zeros = np.zeros(shape)
-    return Array._new(np_zeros)
+    return Array._new(np.zeros(shape, dtype=dtype))
 
 
 def zeros_like(

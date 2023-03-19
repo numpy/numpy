@@ -188,11 +188,7 @@ def ones(shape, dtype=None, order='C', *, like=None):
     if like is not None:
         return _ones_with_like(like, shape, dtype=dtype, order=order)
 
-    if dtype:
-        a = empty(shape, dtype, order)
-    else:
-        a = empty(shape, order=order)
-
+    a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 
@@ -2162,11 +2158,7 @@ def identity(n, dtype=None, *, like=None):
         return _identity_with_like(like, n, dtype=dtype)
 
     from numpy import eye
-
-    if dtype:
-        return eye(n, dtype=dtype, like=like)
-    else:
-        return eye(n, like=like)
+    return eye(n, dtype=dtype, like=like)
 
 
 _identity_with_like = array_function_dispatch()(identity)

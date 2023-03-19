@@ -2016,7 +2016,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
 
     if (npy_parse_arguments("empty", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
-            "|dtype", &PyArray_DescrConverter, &typecode,
+            "|dtype", &PyArray_DescrConverter2, &typecode,
             "|order", &PyArray_OrderConverter, &order,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
@@ -2220,7 +2220,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
 
     if (npy_parse_arguments("zeros", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
-            "|dtype", &PyArray_DescrConverter, &typecode,
+            "|dtype", &PyArray_DescrConverter2, &typecode,
             "|order", &PyArray_OrderConverter, &order,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
