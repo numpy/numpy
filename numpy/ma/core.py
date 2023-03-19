@@ -7033,6 +7033,29 @@ def compressed(x):
     --------
     ma.MaskedArray.compressed : Equivalent method.
 
+    Examples
+    --------
+    
+    Create an array with negative values masked:
+
+    >>> import numpy as np
+    >>> x = np.array([[11.2, -3.973, 18], [0.801, -1.41, 12], [7, 33, -12]])
+    >>> masked_x = np.ma.masked_array(x, mask=x < 0)
+    >>> masked_x
+    masked_array(
+      data=[[11.2, --, 18.0],
+            [0.801, --, 12.0],
+            [7.0, 33.0, --]],
+      mask=[[False,  True, False],
+            [False,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+
+    Compress the masked array into a 1-D array of non-masked values:
+
+    >>> np.ma.compressed(masked_x)
+    array([11.2  , 18.   ,  0.801, 12.   ,  7.   , 33.   ])
+
     """
     return asanyarray(x).compressed()
 
