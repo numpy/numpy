@@ -105,7 +105,7 @@
     #define NPY_FINLINE static
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(NPY_OS_WIN32)
     #define NPY_NOINLINE static __declspec(noinline)
 #elif defined(__GNUC__) || defined(__clang__)
     #define NPY_NOINLINE static __attribute__((noinline))
