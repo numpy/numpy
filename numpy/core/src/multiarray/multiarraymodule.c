@@ -1635,77 +1635,63 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
-/*
- * NOTE: in_descr is passed as a reference to a pointer because there is a
- * code path where the pointer can be changed via Py_XSETREF and we need to
- * make sure the mutated pointer is available for the caller.
- */
 
 static inline PyObject *
 _array_fromobject_generic(
-        PyObject *op, PyArray_Descr **in_descr, PyArray_DTypeMeta *in_DType,
+        PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
         _PyArray_CopyMode copy, NPY_ORDER order, npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
     int nd, flags = 0;
 
+    /* Hold on to `in_descr` as `dtype`, since we may also set it below. */
+    Py_XINCREF(in_descr);
+    PyArray_Descr *dtype = in_descr;
+
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                 "ndmin bigger than allowable number of dimensions "
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
-        return NULL;
+        goto finish;
     }
     /* fast exit if simple call */
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
-        PyArray_Descr* dtype = NULL;
-        /*
-         * Skip AdaptDescriptorToArray if the supplied dtype class does not
-         * match the dtype of the input array or if we have to determine the
-         * descriptor because only the DType was given. This means we avoid
-         * inspecting array values twice if someone does, e.g.:
-         *
-         * >>> arr = np.array(["asdf", "fdsa"], dtype=object)
-         * >>> np.array(arr, dtype="U")
-         */
-        if ((NPY_DTYPE(PyArray_DESCR(oparr)) == in_DType) ||
-            ((*in_descr == NULL) && (in_DType != NULL))) {
-            dtype = PyArray_AdaptDescriptorToArray(
-                    oparr, in_DType, *in_descr);
-            if (dtype == NULL) {
-                return NULL;
-            }
-            Py_INCREF(dtype);
-            Py_XSETREF(*in_descr, dtype);
-        }
-        else {
-            if ((*in_descr == NULL) && (in_DType == NULL)) {
-                dtype = PyArray_DESCR(oparr);
-            }
-            else {
-                dtype = *in_descr;
-            }
-            Py_INCREF(dtype);
-        }
-        if ((*in_descr == NULL) && (in_DType == NULL)) {
+
+        if (dtype == NULL && in_DType == NULL) {
+            /*
+             * User did not ask for a specific dtype instance or class. So
+             * we can return either self or a copy.
+             */
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
-                Py_DECREF(dtype);
                 goto finish;
             }
             else {
                 if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
-                    return NULL;
+                    goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                Py_DECREF(dtype);
                 goto finish;
             }
         }
+        else if (dtype == NULL) {
+            /*
+             * If the user passed a DType class but not a dtype instance,
+             * we must use `PyArray_AdaptDescriptorToArray` to find the
+             * correct dtype instance.
+             * Even if the fast-path doesn't work we will use this.
+             */
+            dtype = PyArray_AdaptDescriptorToArray(oparr, in_DType, NULL);
+            if (dtype == NULL) {
+                goto finish;
+            }
+        }
+
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, dtype)) {
@@ -1731,30 +1717,23 @@ _array_fromobject_generic(
                             op
                             );
                 }
-                Py_DECREF(dtype);
                 goto finish;
             }
             else {
                 if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
-                    Py_DECREF(dtype);
-                    return NULL;
+                    goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 if (oldtype == dtype || ret == NULL) {
-                    Py_DECREF(dtype);
                     goto finish;
                 }
                 Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
-                Py_DECREF(dtype);
                 ((PyArrayObject_fields *)ret)->descr = oldtype;
                 goto finish;
             }
-        }
-        else {
-            Py_DECREF(dtype);
         }
     }
 
@@ -1780,9 +1759,11 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, *in_descr, in_DType, 0, 0, flags, NULL);
+            op, dtype, in_DType, 0, 0, flags, NULL);
 
 finish:
+    Py_XDECREF(dtype);
+
     if (ret == NULL) {
         return NULL;
     }
@@ -1844,7 +1825,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, &dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1886,7 +1867,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, &dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_FALSE, 0);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_FALSE, 0);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1928,7 +1909,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, &dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_TRUE, 0);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1969,7 +1950,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, &dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_CORDER, NPY_FALSE,
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_CORDER, NPY_FALSE,
             1);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -2011,7 +1992,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, &dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_FORTRANORDER,
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_FORTRANORDER,
             NPY_FALSE, 1);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
