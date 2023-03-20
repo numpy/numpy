@@ -44,7 +44,11 @@ simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@
 /**begin repeat
  *  #op = cos, sin#
  */
+#ifdef NPY_OS_WIN32
+NPY_FINLINE npyv_f64
+#else
 NPY_NOINLINE npyv_f64
+#endif
 simd_@op@_scalar_f64(npyv_f64 x, npyv_f64 y, npyv_b64 cmp)
 {
     // MSVC doesn't compile with direct vector access, so we copy it here
