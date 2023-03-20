@@ -360,16 +360,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
-/*
- * In some API calls we wish to allow users to pass a DType class or a
- * dtype instances with different meanings.
- * This struct is mainly used for the argument parsing in
- * `PyArray_DTypeOrDescrConverter`.
- */
-typedef struct {
-    PyArray_DTypeMeta *dtype;
-    PyArray_Descr *descr;
-} npy_dtype_info;
-
-
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

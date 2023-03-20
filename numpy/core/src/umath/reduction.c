@@ -20,7 +20,6 @@
 #include "array_assign.h"
 #include "array_coercion.h"
 #include "array_method.h"
-#include "common.h"
 #include "ctors.h"
 
 #include "numpy/ufuncobject.h"
