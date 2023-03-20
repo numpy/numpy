@@ -1934,13 +1934,13 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     int res = PyArray_ExtractDTypeAndDescriptor(
         descr, &dt_info.descr, &dt_info.dtype);
 
+    Py_XDECREF(descr);
+
     if (res < 0) {
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
     }
-
-    Py_XDECREF(descr);
 
     PyObject* ret =  PyArray_CheckFromAny_int(
         op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requires,
