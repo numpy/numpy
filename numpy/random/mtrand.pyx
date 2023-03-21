@@ -4425,7 +4425,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If any value in ``alpha`` is less than or equal to zero
+            If any value in ``alpha`` is less than zero
 
         See Also
         --------
@@ -4506,8 +4506,8 @@ cdef class RandomState:
         alpha_arr = <np.ndarray>np.PyArray_FROMANY(
             alpha, np.NPY_DOUBLE, 1, 1,
             np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        if np.any(np.less_equal(alpha_arr, 0)):
-            raise ValueError('alpha <= 0')
+        if np.any(np.less(alpha_arr, 0)):
+            raise ValueError('alpha < 0')
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         if size is None:

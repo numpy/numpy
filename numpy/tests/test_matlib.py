@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.matlib
 from numpy.testing import assert_array_equal, assert_
+from numpy.random import dirichlet
 
 def test_empty():
     x = numpy.matlib.empty((2,))
@@ -56,3 +57,6 @@ def test_repmat():
     y = np.array([[0, 1, 2, 3, 0, 1, 2, 3],
                   [0, 1, 2, 3, 0, 1, 2, 3]])
     assert_array_equal(x, y)
+
+def test_dirichlet():
+    dirichlet([5,9,0,8])
