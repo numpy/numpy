@@ -32,8 +32,12 @@ It provides:
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
+- can be easily integrated with other libraries
+- efficient memory usage
+- compatible with other language
 
 Installing:
+
 - NumPy can be installed on your native machine by the use of `pip` command in terminal
 - paste this command into your terminal : `pip install NumPy`
 
