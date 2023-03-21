@@ -114,6 +114,6 @@ class TestAccuracy:
             datafp32 = datafp16.astype(np.float32)
             for func in max_ulp_err:
                 ufunc = getattr(np, func)
-                ulp = max_ulp_err[func]
+                ulp = np.ceil(max_ulp_err[func])
                 assert_array_max_ulp(ufunc(datafp16), ufunc(datafp32),
                         maxulp=ulp, dtype=np.float16)

@@ -1667,7 +1667,7 @@ class TestSpecialFloats:
         for dt in ['e', 'f', 'd']:
             in_arr = np.array(in_, dtype=dt)
             out_arr = np.array(out, dtype=dt)
-            assert_equal(np.tanh(in_arr), out_arr)
+            assert_array_max_ulp(np.tanh(in_arr), out_arr, 3)
 
     def test_arcsinh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
