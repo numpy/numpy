@@ -4071,7 +4071,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
     int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
-            full_args.in, full_args.out, args, len_args, kwnames, &override);
+            full_args.in, full_args.out, wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
         return NULL;
     }
@@ -4843,7 +4843,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
     errval = PyUFunc_CheckOverride(ufunc, method,
-            full_args.in, full_args.out,
+            full_args.in, full_args.out, where_obj,
             args, len_args, kwnames, &override);
     if (errval) {
         goto fail;
@@ -6261,7 +6261,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
     errval = PyUFunc_CheckOverride(ufunc, "at",
-            args, NULL, NULL, 0, NULL, &override);
+            args, NULL, NULL, NULL, 0, NULL, &override);
 
     if (errval) {
         return NULL;
