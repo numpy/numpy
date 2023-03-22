@@ -1744,6 +1744,28 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         d1[k] = unmarkouterparen(d1[k])
                     else:
                         del d1[k]
+
+                if 'len' in d1:
+                    if typespec in ['complex', 'integer', 'logical', 'real']:
+                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
+                            edecl['kindselector'] = {}
+                        edecl['kindselector']['*'] = d1['len']
+                        del d1['len']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
+
+                if 'init' in d1:
+                    if '=' in edecl and (not edecl['='] == d1['init']):
+                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
+                            ename, edecl['='], d1['init']))
+                    else:
+                        edecl['='] = d1['init']
+
                 if 'len' in d1 and 'array' in d1:
                     if d1['len'] == '':
                         d1['len'] = d1['array']
@@ -1753,6 +1775,7 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         del d1['len']
                         errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
                             typespec, e, typespec, ename, d1['array']))
+
                 if 'array' in d1:
                     dm = 'dimension(%s)' % d1['array']
                     if 'attrspec' not in edecl or (not edecl['attrspec']):
@@ -1766,23 +1789,6 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                                         % (ename, dm1, dm))
                                 break
 
-                if 'len' in d1:
-                    if typespec in ['complex', 'integer', 'logical', 'real']:
-                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
-                            edecl['kindselector'] = {}
-                        edecl['kindselector']['*'] = d1['len']
-                    elif typespec == 'character':
-                        if ('charselector' not in edecl) or (not edecl['charselector']):
-                            edecl['charselector'] = {}
-                        if 'len' in edecl['charselector']:
-                            del edecl['charselector']['len']
-                        edecl['charselector']['*'] = d1['len']
-                if 'init' in d1:
-                    if '=' in edecl and (not edecl['='] == d1['init']):
-                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            ename, edecl['='], d1['init']))
-                    else:
-                        edecl['='] = d1['init']
             else:
                 outmess('updatevars: could not crack entity declaration "%s". Ignoring.\n' % (
                     ename + m.group('after')))
