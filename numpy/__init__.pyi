@@ -1,18 +1,14 @@
 import builtins
 import os
-import sys
 import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
 import enum
 from abc import abstractmethod
-from types import TracebackType, MappingProxyType
+from types import TracebackType, MappingProxyType, GenericAlias
 from contextlib import ContextDecorator
 from contextlib import contextmanager
-
-if sys.version_info >= (3, 9):
-    from types import GenericAlias
 
 from numpy._pytesttester import PytestTester
 from numpy.core._internal import _ctypes
@@ -461,7 +457,6 @@ from numpy.lib.function_base import (
     digitize as digitize,
     cov as cov,
     corrcoef as corrcoef,
-    msort as msort,
     median as median,
     sinc as sinc,
     hamming as hamming,
@@ -2979,9 +2974,8 @@ class floating(inexact[_NBit1]):
     @classmethod
     def fromhex(cls: type[float64], string: str, /) -> float64: ...
     def as_integer_ratio(self) -> tuple[int, int]: ...
-    if sys.version_info >= (3, 9):
-        def __ceil__(self: float64) -> int: ...
-        def __floor__(self: float64) -> int: ...
+    def __ceil__(self: float64) -> int: ...
+    def __floor__(self: float64) -> int: ...
     def __trunc__(self: float64) -> int: ...
     def __getnewargs__(self: float64) -> tuple[float]: ...
     def __getformat__(self: float64, typestr: L["double", "float"], /) -> str: ...
@@ -3139,10 +3133,6 @@ infty: Final[float]
 nan: Final[float]
 pi: Final[float]
 
-CLIP: L[0]
-WRAP: L[1]
-RAISE: L[2]
-
 ERR_IGNORE: L[0]
 ERR_WARN: L[1]
 ERR_RAISE: L[2]
@@ -3211,7 +3201,7 @@ class ufunc:
     # can't type them very precisely.
     reduce: Any
     accumulate: Any
-    reduce: Any
+    reduceat: Any
     outer: Any
     # Similarly at won't be defined for ufuncs that return multiple
     # outputs, so we can't type it very precisely.

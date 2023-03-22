@@ -34,6 +34,8 @@ COPY --from=clone --chown=gitpod /tmp/numpy ${WORKSPACE}
 WORKDIR ${WORKSPACE}
 
 # Build numpy to populate the cache used by ccache
+# Note, hadolint suggests consolidating the RUN commands. That info
+# level complaint (DL3059) is currently ignored to avoid errors.
 RUN git config --global --add safe.directory /workspace/numpy
 RUN git submodule update --init --depth=1 -- numpy/core/src/umath/svml numpy/core/src/npysort/x86-simd-sort
 RUN conda activate ${CONDA_ENV} && \ 

@@ -90,7 +90,6 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3.11
@@ -432,7 +431,7 @@ def setup_package():
         test_suite='pytest',
         version=versioneer.get_version(),
         cmdclass=cmdclass,
-        python_requires='>=3.8',
+        python_requires='>=3.9',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds,

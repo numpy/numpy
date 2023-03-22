@@ -398,7 +398,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         dtypes.append(np.asarray(res).dtype)
         outarr = zeros(outshape, object)
         outarr[tuple(ind)] = res
-        Ntot = np.product(outshape)
+        Ntot = np.prod(outshape)
         k = 1
         while k < Ntot:
             # increment the index
@@ -418,7 +418,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         j = i.copy()
         j[axis] = ([slice(None, None)] * res.ndim)
         j.put(indlist, ind)
-        Ntot = np.product(outshape)
+        Ntot = np.prod(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = res.shape

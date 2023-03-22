@@ -2857,7 +2857,7 @@ class MaskedArray(ndarray):
                     mask = np.array(
                         [getmaskarray(np.asanyarray(m, dtype=_data.dtype))
                          for m in data], dtype=mdtype)
-                except ValueError:
+                except (ValueError, TypeError):
                     # If data is nested
                     mask = nomask
                 # Force shrinking of the mask if needed (and possible)

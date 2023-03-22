@@ -62,5 +62,5 @@ jobs:
         pip install pytest hypothesis typing_extensions
 
         # use meson to build and test 
-        ./dev.py build
-        ./dev.py test
+        ./spin build
+        ./spin test

@@ -240,12 +240,18 @@ cdef class Generator:
 
     def spawn(self, int n_children):
         """
+        spawn(n_children)
+
         Create new independent child generators.
 
         See :ref:`seedsequence-spawn` for additional notes on spawning
         children.
 
         .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
 
         Returns
         -------
@@ -2628,7 +2634,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
