@@ -7842,16 +7842,20 @@ def mask_rowcols(a, axis=None):
       fill_value=1)
 
     """
+    a = array(a, subok=False)
     if a.ndim != 2:
         raise NotImplementedError("mask_rowcols works for 2D arrays only.")
-
-    if axis is None:
-        return _mask_propagate(a, axis=(0, 1))
-    elif axis == 0:
-        return _mask_propagate(a, axis=1)
-    else:
-        return _mask_propagate(a, axis=0)
-
+    m = getmask(a)
+    # Nothing is masked: return a
+    if m is nomask or not m.any():
+        return a
+    maskedval = m.nonzero()
+    a._mask = a._mask.copy()
+    if not axis:
+        a[np.unique(maskedval[0])] = masked
+    if axis in [None, 1, -1]:
+        a[:, np.unique(maskedval[1])] = masked
+    return a
 
 
 # Include masked dot here to avoid import problems in getting it from
