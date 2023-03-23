@@ -18,9 +18,26 @@ sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
 
-.. note:: If you are having trouble building NumPy from source or setting up
-   your local development environment, you can try
-   to :ref:`build NumPy with Gitpod <development-gitpod>`.
+.. note::
+
+   If you are having trouble building NumPy from source or setting up your
+   local development environment, you can try to build NumPy with GitHub
+   Codespaces. It allows you to create the correct development environment
+   right in your browser, reducing the need to install local development
+   environments and deal with incompatible dependencies.
+
+   If you have good internet connectivity and want a temporary set-up, it is
+   often faster to work on NumPy in a Codespaces environment. For documentation
+   on how to get started with Codespaces, see
+   `the Codespaces docs <https://docs.github.com/en/codespaces>`__.
+   When creating a codespace for the ``numpy/numpy`` repository, the default
+   2-core machine type works; 4-core will build and work a bit faster (but of
+   course at a cost of halving your number of free usage hours). Once your
+   codespace has started, you can run ``conda activate numpy-dev`` and your
+   development environment is completely set up - you can then follow the
+   relevant parts of the NumPy documentation to build, test, develop, write
+   docs, and contribute to NumPy.
+
 
 .. _testing-builds:
 
