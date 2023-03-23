@@ -49,23 +49,20 @@ NPY_FINLINE npyv_f64
 #else
 NPY_NOINLINE npyv_f64
 #endif
-simd_@op@_scalar_f64(npyv_f64 x, npyv_f64 y, npyv_b64 cmp)
+simd_@op@_scalar_f64(npyv_f64 out, npy_uint64 cmp_bits)
 {
     // MSVC doesn't compile with direct vector access, so we copy it here
     // as we have no npyv_get_lane/npyv_set_lane intrinsics
-    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) x_copy[npyv_nlanes_f64];
-    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) y_copy[npyv_nlanes_f64];
-    npyv_storea_f64(x_copy, x);
-    npyv_storea_f64(y_copy, y);
+    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) out_copy[npyv_nlanes_f64];
+    npyv_storea_f64(out_copy, out);
 
-    npy_uint64 cmp_bits = npyv_tobits_b64(cmp);
     for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
         if (cmp_bits & (1 << i)) {
-            y_copy[i] = npy_@op@(x_copy[i]);
+            out_copy[i] = npy_@op@(out_copy[i]);
         }
     }
 
-    return npyv_loada_f64(y_copy);
+    return npyv_loada_f64(out_copy);
 }
 /**end repeat**/
 
@@ -201,7 +198,8 @@ simd_@op@_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         }
 
         if (npyv_any_b64(cmp)) {
-            out = simd_@op@_scalar_f64(x_in, out, cmp);
+            out = npyv_select_f64(cmp, x_in, out);
+            out = simd_@op@_scalar_f64(out, npyv_tobits_b64(cmp));
         }
 
         if (sdst == 1) {
