@@ -185,12 +185,10 @@ simd_@op@_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         npyv_u64 sign = npyv_and_u64(npyv_reinterpret_u64_f64(x_in), npyv_not_u64(abs_mask));
 
         npyv_b64 cmp = simd_@op@_range_check_f64(ir);
-        if (npyv_any_b64(cmp)) {
-            /* If fenv exceptions are to be triggered correctly, set any special lanes
-            to 1 (which is neutral w.r.t. fenv). These lanes will be fixed by
-            scalar loop later.  */
-            r = npyv_select_f64(cmp, npyv_setall_f64(1.0), r);
-        }
+        /* If fenv exceptions are to be triggered correctly, set any special lanes
+        to 1 (which is neutral w.r.t. fenv). These lanes will be fixed by
+        scalar loop later.  */
+        r = npyv_select_f64(cmp, npyv_setall_f64(1.0), r);
 
         // Some in range, at least one calculation is useful
         if (!npyv_all_b64(cmp)) {
