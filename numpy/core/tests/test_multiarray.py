@@ -1194,6 +1194,17 @@ class TestCreation:
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
 
+    @pytest.mark.parametrize("func", [
+        np.array, np.asarray, np.asanyarray, np.ascontiguousarray,
+        np.asfortranarray])
+    def test_creation_from_dtypemeta(self, func):
+        dtype = np.dtype('i')
+        arr1 = func([1, 2, 3], dtype=dtype)
+        arr2 = func([1, 2, 3], dtype=type(dtype))
+        assert_array_equal(arr1, arr2)
+        assert arr2.dtype == dtype
+
+
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])

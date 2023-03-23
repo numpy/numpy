@@ -161,6 +161,8 @@ class TestStringDiscovery:
         # A nested array is also discovered correctly
         arr = np.array(obj, dtype="O")
         assert np.array(arr, dtype="S").dtype == expected
+        # Also if we use the dtype class
+        assert np.array(arr, dtype=type(expected)).dtype == expected
         # Check that .astype() behaves identical
         assert arr.astype("S").dtype == expected
         # The DType class is accepted by `.astype()`
