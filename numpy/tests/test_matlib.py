@@ -59,4 +59,4 @@ def test_repmat():
     assert_array_equal(x, y)
 
 def test_dirichlet():
-    dirichlet([5,9,0,8])
+    dirichlet([5, 9, 0, 8])
