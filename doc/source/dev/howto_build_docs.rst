@@ -18,7 +18,7 @@ Before proceeding further it should be noted that the documentation is built wit
 which is not natively available on Windows. MacOS or Linux users can jump
 to :ref:`how-todoc.prerequisites`. It is recommended for Windows users to set up their development
 environment on :ref:`Gitpod <development-gitpod>` or `Windows Subsystem
-for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_. WSL is a good option
+for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_. WSL is a good option
 for a persistent local set-up.
 
 Gitpod
