@@ -293,6 +293,10 @@ elements the data type consists of.)
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.character
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.bytes_
    :members: __init__
    :exclude-members: __init__
