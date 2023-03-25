@@ -142,7 +142,7 @@ class NpzFile(Mapping):
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
 
@@ -309,7 +309,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
 
@@ -1159,10 +1159,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
-        
+
         .. versionchanged:: 1.23.0
-            Lines containing no data, including comment lines (e.g., lines 
-            starting with '#' or as specified via `comments`) are not counted 
+            Lines containing no data, including comment lines (e.g., lines
+            starting with '#' or as specified via `comments`) are not counted
             towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
