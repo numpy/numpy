@@ -298,5 +298,6 @@ class TestNameArgsPatternBacktracking:
                 # the problematic pattern.
                 assert total_time < 1.9 * last_time
                 # also try to rule out non-exponential but still bad cases
-                assert total_time < 1
+                # arbitrarily, we should set a hard limit of 10ms as too slow
+                assert total_time < trials_per_count * 0.01
             last_time = total_time
