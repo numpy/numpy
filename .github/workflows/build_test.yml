@@ -202,6 +202,15 @@ jobs:
     - uses: ./.github/actions
 
   full:
+    on:
+      # Job creates coverage comparison, so needs to run on main for merges.
+      push:
+        braches:
+          - main
+      pull_request:
+        branches:
+          - main
+          - maintenance/**
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     env:
