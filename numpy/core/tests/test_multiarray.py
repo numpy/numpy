@@ -6675,6 +6675,22 @@ class TestDot:
         r = np.empty((1024, 32), dtype=int)
         assert_raises(ValueError, dot, f, v, r)
 
+    def test_dot_out_result(self):
+        x = np.ones((), dtype=np.float16)
+        y = np.ones((5,), dtype=np.float16)
+        z = np.zeros((5,), dtype=np.float16)
+        res = x.dot(y, out=z)
+        assert np.array_equal(res, y)
+        assert np.array_equal(z, y)
+
+    def test_dot_out_aliasing(self):
+        x = np.ones((), dtype=np.float16)
+        y = np.ones((5,), dtype=np.float16)
+        z = np.zeros((5,), dtype=np.float16)
+        res = x.dot(y, out=z)
+        z[0] = 2
+        assert np.array_equal(res, z)
+
     def test_dot_array_order(self):
         a = np.array([[1, 2], [3, 4]], order='C')
         b = np.array([[1, 2], [3, 4]], order='F')

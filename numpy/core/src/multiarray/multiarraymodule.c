@@ -1045,6 +1045,16 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         result = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         result = (PyArrayObject *)Py_TYPE(result)->tp_as_number->nb_multiply(
                                         (PyObject *)ap1, (PyObject *)ap2);
+        if (out) {
+            if (PyArray_AssignArray(out, (PyArrayObject *)result,
+                        NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {
+                Py_DECREF(result);
+                return NULL;
+            }
+            Py_DECREF(result);
+            Py_INCREF(out);
+            return (PyObject *)out;
+        }
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return (PyObject *)result;
