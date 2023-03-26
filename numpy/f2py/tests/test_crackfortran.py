@@ -279,7 +279,9 @@ class TestUnicodeComment(util.F2PyTest):
         self.module.foo(3)
 
 class TestNameArgsPatternBacktracking:
-    def test_nameargspattern_backtracking():
+    def test_nameargspattern_backtracking(self):
+        '''address ReDOS vulnerability:
+        https://github.com/numpy/numpy/issues/23338'''
         last_time = 0.
         trials_per_count = 32
         start_reps, end_reps = 10, 16
@@ -291,5 +293,10 @@ class TestNameArgsPatternBacktracking:
                 crackfortran.nameargspattern.search(atbindat)
                 total_time += (time.perf_counter() - t0)
             if ii > start_reps:
-                assert total_time < 1.9 * last_time, f'Going from {ii - 1} to {ii} approximately doubled time'
+                # the hallmark of exponentially catastrophic backtracking
+                # is that runtime doubles for every added instance of
+                # the problematic pattern.
+                assert total_time < 1.9 * last_time
+                # also try to rule out non-exponential but still bad cases
+                assert total_time < 1
             last_time = total_time
