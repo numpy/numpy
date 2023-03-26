@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   lint:
-    if: github.repository == 'numpy/numpy' && github.event != 'push'
+    if: github.repository == 'numpy/numpy' && github.event_name != 'push'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -63,7 +63,7 @@ jobs:
   basic:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.11"]
@@ -83,7 +83,7 @@ jobs:
     needs: [smoke_test]
     # provides GCC  7, 8
     runs-on: ubuntu-20.04
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     steps:
     - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
       with:
@@ -120,7 +120,7 @@ jobs:
   without_optimizations:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       WITHOUT_OPTIMIZATIONS: 1
     steps:
@@ -136,7 +136,7 @@ jobs:
   with_baseline_only:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       CPU_DISPATCH: "none"
     steps:
@@ -152,7 +152,7 @@ jobs:
   without_avx512:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       CPU_DISPATCH: "max -xop -fma4 -avx512f -avx512cd -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
     steps:
@@ -168,7 +168,7 @@ jobs:
   without_avx512_avx2_fma3:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       CPU_DISPATCH: "SSSE3 SSE41 POPCNT SSE42 AVX F16C"
     steps:
@@ -184,7 +184,7 @@ jobs:
   debug:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       USE_DEBUG: 1
     steps:
@@ -200,7 +200,7 @@ jobs:
   blas64:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       NPY_USE_BLAS_ILP64: 1
     steps:
@@ -234,7 +234,7 @@ jobs:
   benchmark:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       PYTHONOPTIMIZE: 2
       BLAS: None
@@ -256,7 +256,7 @@ jobs:
   relaxed_strides_debug:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       CHECK_BLAS: 1
       NPY_USE_BLAS_ILP64: 1
@@ -274,7 +274,7 @@ jobs:
   use_wheel:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       USE_WHEEL: 1
     steps:
@@ -290,7 +290,7 @@ jobs:
   numpy2_flag:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       # Test for numpy-2.0 feature-flagged behavior.
       NPY_NUMPY_2_BEHAVIOR: 1
@@ -310,7 +310,7 @@ jobs:
   no_openblas:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       BLAS: None
       LAPACK: None
@@ -329,7 +329,7 @@ jobs:
   sdist:
     needs: [smoke_test]
     runs-on: ubuntu-latest
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     env:
       USE_SDIST: 1
     steps:
@@ -346,7 +346,7 @@ jobs:
     needs: [smoke_test]
     # make sure this matches the base docker image below
     runs-on: ubuntu-22.04
-    if: github.event != 'push'
+    if: github.event_name != 'push'
     steps:
     - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
       with:
