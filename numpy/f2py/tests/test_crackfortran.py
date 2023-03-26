@@ -1,5 +1,6 @@
 import importlib
 import codecs
+import time
 import unicodedata
 import pytest
 import numpy as np
@@ -276,3 +277,19 @@ class TestUnicodeComment(util.F2PyTest):
     )
     def test_encoding_comment(self):
         self.module.foo(3)
+
+class TestNameArgsPatternBacktracking:
+    def test_nameargspattern_backtracking():
+        last_time = 0.
+        trials_per_count = 32
+        start_reps, end_reps = 10, 16
+        for ii in range(start_reps, end_reps):
+            atbindat = '@)@bind@(@' * ii
+            total_time = 0
+            for _ in range(trials_per_count):
+                t0 = time.perf_counter()
+                crackfortran.nameargspattern.search(atbindat)
+                total_time += (time.perf_counter() - t0)
+            if ii > start_reps:
+                assert total_time < 1.9 * last_time, f'Going from {ii - 1} to {ii} approximately doubled time'
+            last_time = total_time
