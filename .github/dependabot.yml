@@ -4,8 +4,7 @@ updates:
     directory: /
     schedule:
       interval: daily
-
-  - package-ecosystem: docker
-    directory: /tools/gitpod
-    schedule:
-      interval: daily
+    commit-message:
+      prefix: "MAINT"
+    labels:
+      - "03 - Maintenance"
