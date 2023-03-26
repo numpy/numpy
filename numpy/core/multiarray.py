@@ -29,7 +29,7 @@ __all__ = [
     '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
-    'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
+    'compare_chararrays', 'concatenate', 'concat', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
     'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
@@ -249,6 +249,44 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
         arrays = list(arrays)
         arrays.append(out)
     return arrays
+
+
+def concat(arrays, axis=None, out=None, *, dtype=None, casting=None):
+    """
+    concat((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
+
+    Join a sequence of arrays along an existing axis.
+
+    Parameters
+    ----------
+    a1, a2, ... : sequence of array_like
+        The arrays must have the same shape, except in the dimension
+        corresponding to `axis` (the first, by default).
+    axis : int, optional
+        The axis along which the arrays will be joined.  If axis is None,
+        arrays are flattened before use.  Default is 0.
+    out : ndarray, optional
+        If provided, the destination to place the result. The shape must be
+        correct, matching that of what concatenate would have returned if no
+        out argument were specified.
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+        .. versionadded:: 1.20.0
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    res : ndarray
+        The concatenated array.
+    """
+    return concatenate(arrays, axis=None, out=None, dtype=None, casting=None)
+
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
