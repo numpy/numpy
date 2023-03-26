@@ -7225,11 +7225,11 @@ class TestMatmulInplace:
 
     @pytest.mark.parametrize("a_shape,b_shape", SHAPES.values(), ids=SHAPES)
     def test_shapes(self, a_shape: tuple[int, ...], b_shape: tuple[int, ...]):
-        a_size = np.product(a_shape)
+        a_size = np.prod(a_shape)
         a = np.arange(a_size).reshape(a_shape).astype(np.float64)
         a_id = id(a)
 
-        b_size = np.product(b_shape)
+        b_size = np.prod(b_shape)
         b = np.arange(b_size).reshape(b_shape)
 
         ref = a @ b
