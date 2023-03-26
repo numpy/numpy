@@ -730,6 +730,47 @@ class TestCompressFunctions:
         assert_equal(c.mask, [[0, 0, 1], [1, 1, 1], [0, 0, 1]])
         c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[0, 0], [0, 0]], [[0, 0], [0, 1]]])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 1], [1, 1]], [[0, 0], [0, 1]]],
+                      [[[0, 0], [0, 1]], [[0, 0], [0, 1]]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 1]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[0, 0], [0, 0]]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 0], [0, 0]], [[1, 0], [0, 0]]],
+                      [[[1, 0], [0, 0]], [[1, 1], [1, 1]]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[1, 0], [0, 0]]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = 5.
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(2), mask=[0, 1])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[1, 1], [1, 1]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[1, 0], [0, 0]])
 
     def test_dot_returns_maskedarray(self):
         # See gh-6611
