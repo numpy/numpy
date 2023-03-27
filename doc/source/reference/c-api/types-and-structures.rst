@@ -122,7 +122,7 @@ PyArray_Type and PyArrayObject
        ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
        is the largest number of dimensions for any array.
 
-   .. c:member:: npy_intp dimensions
+   .. c:member:: npy_intp *dimensions
 
        An array of integers providing the shape in each dimension as
        long as nd :math:`\geq` 1. The integer is always large enough
