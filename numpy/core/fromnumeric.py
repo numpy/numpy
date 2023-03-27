@@ -1161,9 +1161,9 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     ----------
     a : array_like
         Input array.
-    axis : int, optional
-        By default, the index is into the flattened array, otherwise
-        along the specified axis.
+    axis : None or int or tuple of ints, optional
+        By default (axis=None), the index is into the flattened array, otherwise
+        along the specified axis or axes.
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
