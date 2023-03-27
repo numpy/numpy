@@ -257,36 +257,13 @@ def concat(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     Join a sequence of arrays along an existing axis.
 
-    Parameters
-    ----------
-    a1, a2, ... : sequence of array_like
-        The arrays must have the same shape, except in the dimension
-        corresponding to `axis` (the first, by default).
-    axis : int, optional
-        The axis along which the arrays will be joined.  If axis is None,
-        arrays are flattened before use.  Default is 0.
-    out : ndarray, optional
-        If provided, the destination to place the result. The shape must be
-        correct, matching that of what concatenate would have returned if no
-        out argument were specified.
-    dtype : str or dtype
-        If provided, the destination array will have this dtype. Cannot be
-        provided together with `out`.
+    `concat` is an alias of `~numpy.concatenate`.
 
-        .. versionadded:: 1.20.0
-
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        Controls what kind of data casting may occur. Defaults to 'same_kind'.
-
-        .. versionadded:: 1.20.0
-
-    Returns
-    -------
-    res : ndarray
-        The concatenated array.
+    See Also
+    --------
+    concatenate : alias of this function 
     """
     return concatenate(arrays, axis=None, out=None, dtype=None, casting=None)
-
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)

@@ -305,45 +305,46 @@ class TestConcatenate:
         r = np.concatenate(x, 100)  # axis is >= MAXDIMS
         assert_array_equal(x, r)
 
-    def test_concatenate(self):
+    @pytest.mark.parametrize("func", [np.concatenate, np.concat])
+    def test_concatenate(self,func):
         # Test concatenate function
         # One sequence returns unmodified (but as array)
         r4 = list(range(4))
-        assert_array_equal(concatenate((r4,)), r4)
+        assert_array_equal(func((r4,)), r4)
         # Any sequence
-        assert_array_equal(concatenate((tuple(r4),)), r4)
-        assert_array_equal(concatenate((array(r4),)), r4)
+        assert_array_equal(func((tuple(r4),)), r4)
+        assert_array_equal(func((array(r4),)), r4)
         # 1D default concatenation
         r3 = list(range(3))
-        assert_array_equal(concatenate((r4, r3)), r4 + r3)
+        assert_array_equal(func((r4, r3)), r4 + r3)
         # Mixed sequence types
-        assert_array_equal(concatenate((tuple(r4), r3)), r4 + r3)
-        assert_array_equal(concatenate((array(r4), r3)), r4 + r3)
+        assert_array_equal(func((tuple(r4), r3)), r4 + r3)
+        assert_array_equal(func((array(r4), r3)), r4 + r3)
         # Explicit axis specification
-        assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
+        assert_array_equal(func((r4, r3), 0), r4 + r3)
         # Including negative
-        assert_array_equal(concatenate((r4, r3), -1), r4 + r3)
+        assert_array_equal(func((r4, r3), -1), r4 + r3)
         # 2D
         a23 = array([[10, 11, 12], [13, 14, 15]])
         a13 = array([[0, 1, 2]])
         res = array([[10, 11, 12], [13, 14, 15], [0, 1, 2]])
-        assert_array_equal(concatenate((a23, a13)), res)
-        assert_array_equal(concatenate((a23, a13), 0), res)
-        assert_array_equal(concatenate((a23.T, a13.T), 1), res.T)
-        assert_array_equal(concatenate((a23.T, a13.T), -1), res.T)
+        assert_array_equal(func((a23, a13)), res)
+        assert_array_equal(func((a23, a13), 0), res)
+        assert_array_equal(func((a23.T, a13.T), 1), res.T)
+        assert_array_equal(func((a23.T, a13.T), -1), res.T)
         # Arrays much match shape
-        assert_raises(ValueError, concatenate, (a23.T, a13.T), 0)
+        assert_raises(ValueError, func, (a23.T, a13.T), 0)
         # 3D
         res = arange(2 * 3 * 7).reshape((2, 3, 7))
         a0 = res[..., :4]
         a1 = res[..., 4:6]
         a2 = res[..., 6:]
-        assert_array_equal(concatenate((a0, a1, a2), 2), res)
-        assert_array_equal(concatenate((a0, a1, a2), -1), res)
-        assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
+        assert_array_equal(func((a0, a1, a2), 2), res)
+        assert_array_equal(func((a0, a1, a2), -1), res)
+        assert_array_equal(func((a0.T, a1.T, a2.T), 0), res.T)
 
         out = res.copy()
-        rout = concatenate((a0, a1, a2), 2, out=out)
+        rout = func((a0, a1, a2), 2, out=out)
         assert_(out is rout)
         assert_equal(res, rout)
 
