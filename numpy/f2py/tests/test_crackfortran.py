@@ -4,7 +4,7 @@ import time
 import unicodedata
 import pytest
 import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces
+from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 from . import util
 from numpy.f2py import crackfortran
 import textwrap
@@ -279,19 +279,32 @@ class TestUnicodeComment(util.F2PyTest):
         self.module.foo(3)
 
 class TestNameArgsPatternBacktracking:
-    def test_nameargspattern_backtracking(self):
+    @pytest.mark.parametrize(
+        ['adversary'],
+        [
+            ('@)@bind@(@',),
+            ('@)@bind                         @(@',),
+            ('@)@bind foo bar baz@(@',)
+        ]
+    )
+    def test_nameargspattern_backtracking(self, adversary):
         '''address ReDOS vulnerability:
         https://github.com/numpy/numpy/issues/23338'''
         last_time = 0.
-        trials_per_count = 32
-        start_reps, end_reps = 10, 16
+        trials_per_count = 128
+        start_reps, end_reps = 15, 25
         for ii in range(start_reps, end_reps):
-            atbindat = '@)@bind@(@' * ii
+            repeated_adversary = adversary * ii
             total_time = 0
             for _ in range(trials_per_count):
                 t0 = time.perf_counter()
-                crackfortran.nameargspattern.search(atbindat)
+                mtch = nameargspattern.search(repeated_adversary)
                 total_time += (time.perf_counter() - t0)
+            assert not mtch
+            # if the adversary is capped with @)@, it becomes acceptable.
+            # that should still be true.
+            good_version_of_adversary = repeated_adversary + '@)@'
+            assert nameargspattern.search(good_version_of_adversary)
             if ii > start_reps:
                 # the hallmark of exponentially catastrophic backtracking
                 # is that runtime doubles for every added instance of
