@@ -290,18 +290,23 @@ class TestNameArgsPatternBacktracking:
     def test_nameargspattern_backtracking(self, adversary):
         '''address ReDOS vulnerability:
         https://github.com/numpy/numpy/issues/23338'''
-        last_time = 0.
+        last_median = 0.
         trials_per_count = 128
         start_reps, end_reps = 15, 25
+        times_median_doubled = 0
         for ii in range(start_reps, end_reps):
             repeated_adversary = adversary * ii
-            total_time = 0
+            times = []
             for _ in range(trials_per_count):
                 t0 = time.perf_counter()
                 mtch = nameargspattern.search(repeated_adversary)
-                total_time += (time.perf_counter() - t0)
+                times.append(time.perf_counter() - t0)
+            # We should use a measure of time that's resilient to outliers.
+            # Times jump around a lot due to the CPU's scheduler.
+            median = np.median(times)
             assert not mtch
-            # if the adversary is capped with @)@, it becomes acceptable.
+            # if the adversary is capped with @)@, it becomes acceptable
+            # according to the old version of the regex.
             # that should still be true.
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
@@ -309,8 +314,12 @@ class TestNameArgsPatternBacktracking:
                 # the hallmark of exponentially catastrophic backtracking
                 # is that runtime doubles for every added instance of
                 # the problematic pattern.
-                assert total_time < 1.9 * last_time
+                times_median_doubled += median > 2 * last_median
                 # also try to rule out non-exponential but still bad cases
                 # arbitrarily, we should set a hard limit of 10ms as too slow
-                assert total_time < trials_per_count * 0.01
-            last_time = total_time
+                assert median < trials_per_count * 0.01
+            last_median = median
+        # we accept that maybe the median might double once, due to
+        # the CPU scheduler acting weird or whatever. More than that
+        # seems suspicious.
+        assert times_median_doubled < 2
