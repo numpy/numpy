@@ -162,7 +162,7 @@ indexed.
 If you do want to use Fortran ordering realize that
 there are two approaches to consider: 1) accept that the first index is just not
 the most rapidly changing in memory and have all your I/O routines reorder
-your data when going from memory to disk or visa versa, or use NumPy's
+your data when going from memory to disk or vice versa, or use NumPy's
 mechanism for mapping the first index to the most rapidly varying data. We
 recommend the former if possible. The disadvantage of the latter is that many
 of NumPy's functions will yield arrays without Fortran ordering unless you are
