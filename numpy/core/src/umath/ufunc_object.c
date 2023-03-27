@@ -5935,6 +5935,9 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
 
         res = ufuncimpl->contiguous_indexed_loop(
                 context, args, inner_size, steps, NULL);
+        if (args[2] != NULL) {
+            args[2] += (*inner_size) * steps[2];
+        }
     } while (res == 0 && iter->outer_next(iter->outer));
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {

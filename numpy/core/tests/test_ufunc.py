@@ -2054,6 +2054,17 @@ class TestUfunc:
         # If it is [-1, -1, -1, -100, 0] then the regular strided loop was used
         assert np.all(arr == [-1, -1, -1, -200, -1])
 
+    def test_ufunc_at_large(self):
+        # issue gh-23457
+        indices = np.zeros(8195, dtype=np.int16)
+        b = np.zeros(8195, dtype=float)
+        b[0] = 10
+        b[1] = 5
+        b[8192:] = 100
+        a = np.zeros(1, dtype=float)
+        np.add.at(a, indices, b)
+        assert a[0] == b.sum()
+
     def test_cast_index_fastpath(self):
         arr = np.zeros(10)
         values = np.ones(100000)
