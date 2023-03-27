@@ -150,7 +150,7 @@ A.argpartition([0])
 A.diagonal()
 
 A.dot(1)
-A.dot(1, out=B0)
+A.dot(1, out=B2)
 
 A.nonzero()
 
