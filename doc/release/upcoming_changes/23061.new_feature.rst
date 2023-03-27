@@ -1,6 +1,0 @@
-``vectorize`` can now be used as a decorator
---------------------------------------------
-When using ``vectorize`` as a decorator, the user
-needs to specify the keywords for the arguments.
-``vectorize`` will continue to accept arguments
-positionally when used normally.
