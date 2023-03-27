@@ -1042,7 +1042,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 #endif
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
-        result = PyObject_CallFunctionObjArgs(n_ops.multiply, ap1, ap2, out, NULL);
+        (PyObject *)result = PyObject_CallFunctionObjArgs(n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return (PyObject *)result;
