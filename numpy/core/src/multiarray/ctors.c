@@ -218,6 +218,44 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
     return result;
 }
 
+/*
+ * Assuming that the separator is the next bit in the string (file), skip it.
+ *
+ * If we can't match the separator, return -2.
+ * If we hit the end of the string (file), return -1.
+ * Otherwise, return 0.
+ */
+static int
+fromstr_skip_separator_no_ws(char **s, const char *sep, const char *end)
+{
+    char *string = *s;
+    int result = 0;
+
+    while (1) {
+        char c = *string;
+        if (string_is_fully_read(string, end)) {
+            result = -1;
+            break;
+        }
+        else if (*sep == '\0') {
+            /* matched separator */
+            result = 0;
+            break;
+        }
+        else if (*sep != c) {
+            result = -2;
+            break;
+        }
+        else {
+            sep++;
+        }
+        string++;
+    }
+    *s = string;
+    return result;
+}
+
+
 static int
 fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data))
 {
@@ -3860,10 +3898,14 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
  * text data, with ``sep`` as the separator between elements. Whitespace in
  * the separator matches any length of whitespace in the text, and a match
  * for whitespace around the separator is added.
+ *
+ *If ``whitspace`` is TRUE, then whitespace is ignored and not returned as text
+ *
+ *
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
-                   npy_intp num, char *sep)
+                   npy_intp num, char *sep, npy_bool whitespace)
 {
     int itemsize;
     PyArrayObject *ret;
@@ -3944,15 +3986,28 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         else {
             end = data + slen;
         }
-        ret = array_from_text(dtype, num, sep, &nread,
+
+        if(whitespace) {
+            ret = array_from_text(dtype, num, sep, &nread,
+                                data,
+                                (next_element) fromstr_next_element,
+                                (skip_separator) fromstr_skip_separator_no_ws,
+                                end);
+        }
+        else {
+            ret = array_from_text(dtype, num, sep, &nread,
                               data,
                               (next_element) fromstr_next_element,
                               (skip_separator) fromstr_skip_separator,
                               end);
+        }
+
         Py_DECREF(dtype);
     }
     return (PyObject *)ret;
 }
+
+
 
 /*NUMPY_API
  *
