@@ -306,7 +306,7 @@ class TestConcatenate:
         assert_array_equal(x, r)
 
     @pytest.mark.parametrize("func", [np.concatenate, np.concat])
-    def test_concatenate(self,func):
+    def test_concatenate(self, func):
         # Test concatenate function
         # One sequence returns unmodified (but as array)
         r4 = list(range(4))
