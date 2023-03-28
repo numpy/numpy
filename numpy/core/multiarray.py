@@ -263,7 +263,7 @@ def concat(arrays, axis=None, out=None, *, dtype=None, casting=None):
     --------
     concatenate : alias of this function 
     """
-    return concatenate(arrays, axis=None, out=None, dtype=None, casting=None)
+    return concatenate(arrays, axis=axis, out=out, dtype=dtype, casting=casting)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
