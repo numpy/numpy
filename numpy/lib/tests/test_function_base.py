@@ -3615,7 +3615,7 @@ class TestQuantile:
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
         x = np.quantile(y, alpha, method=method)
-        if method in ("higher"):
+        if method in ("higher",):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         elif int(n * alpha) == n * alpha:
