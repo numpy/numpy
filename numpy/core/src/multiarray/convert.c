@@ -21,6 +21,7 @@
 
 #include "convert.h"
 #include "array_coercion.h"
+#include "refcount.h"
 
 int
 fallocate(int fd, int mode, off_t offset, off_t len);
@@ -416,7 +417,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             descr, value);
 
     if (PyDataType_REFCHK(descr)) {
-        PyArray_Item_XDECREF(value, descr);
+        PyArray_ClearBuffer(descr, value, 0, 1, 1);
     }
     PyMem_FREE(value_buffer_heap);
     return retcode;
