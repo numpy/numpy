@@ -103,7 +103,6 @@ python_sources = [
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
-  'dual.py',
   'exceptions.py',
   'exceptions.pyi',
   'matlib.py',

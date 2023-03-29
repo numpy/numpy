@@ -248,7 +248,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.numpy_distribution",
     "distutils.pathccompiler",
     "distutils.unixccompiler",
-    "dual",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
