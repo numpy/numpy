@@ -205,9 +205,9 @@ NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, n
     assert(nlane > 0);
     npyv_s32 vfill = npyv_setall_s32(fill);
 #ifdef NPY_HAVE_VX
-    const unsigned blane = (unsigned short)nlane;
+    const unsigned blane = (nlane > 4) ? 4 : nlane;
     const npyv_u32 steps = npyv_set_u32(0, 1, 2, 3);
-    const npyv_u32 vlane = npyv_setall_u32((unsigned)blane);
+    const npyv_u32 vlane = npyv_setall_u32(blane);
     const npyv_b32 mask  = vec_cmpgt(vlane, steps);
     npyv_s32 a = vec_load_len(ptr, blane*4-1);
     return vec_sel(vfill, a, mask);
@@ -233,8 +233,8 @@ NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, n
 NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
 {
 #ifdef NPY_HAVE_VX
-    unsigned blane = ((unsigned short)nlane)*4 - 1;
-    return vec_load_len(ptr, blane);
+    unsigned blane = (nlane > 4) ? 4 : nlane;
+    return vec_load_len(ptr, blane*4-1);
 #else
     return npyv_load_till_s32(ptr, nlane, 0);
 #endif
@@ -252,7 +252,7 @@ NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, n
 NPY_FINLINE npyv_s64 npyv_load_tillz_s64(const npy_int64 *ptr, npy_uintp nlane)
 {
 #ifdef NPY_HAVE_VX
-    unsigned blane = (unsigned short)nlane;
+    unsigned blane = (nlane > 2) ? 2 : nlane;
     return vec_load_len((const signed long long*)ptr, blane*8-1);
 #else
     return npyv_load_till_s64(ptr, nlane, 0);
@@ -354,7 +354,7 @@ NPY_FINLINE void npyv_store_till_s32(npy_int32 *ptr, npy_uintp nlane, npyv_s32 a
 {
     assert(nlane > 0);
 #ifdef NPY_HAVE_VX
-    unsigned blane = (unsigned short)nlane;
+    unsigned blane = (nlane > 4) ? 4 : nlane;
     vec_store_len(a, ptr, blane*4-1);
 #else
     switch(nlane) {
@@ -378,7 +378,7 @@ NPY_FINLINE void npyv_store_till_s64(npy_int64 *ptr, npy_uintp nlane, npyv_s64 a
 {
     assert(nlane > 0);
 #ifdef NPY_HAVE_VX
-    unsigned blane = (unsigned short)nlane;
+    unsigned blane = (nlane > 2) ? 2 : nlane;
     vec_store_len(a, (signed long long*)ptr, blane*8-1);
 #else
     if (nlane == 1) {
