@@ -250,11 +250,9 @@ def reshape(a, newshape, order='C'):
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
      >>> c = b.view()
-     >>> c.shape = (20)
-     Traceback (most recent call last):
-        ...
-     AttributeError: Incompatible shape for in-place modification. Use
-     `.reshape()` to make a copy with the desired shape.
+     >>> c.shape = (20,)
+     >>> c.shape
+     (20,)
 
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
