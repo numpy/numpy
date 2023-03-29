@@ -2789,3 +2789,10 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             # cannot call it a second time:
             np.negative._get_strided_loop(call_info)
+
+    def test_long_arrays(self):
+        t = np.zeros((1029, 917), dtype=np.single)
+        t[0][0] = 1
+        t[28][414] = 1
+        tc = np.cos(t)
+        assert_equal(tc[0][0], tc[28][414])
