@@ -926,12 +926,12 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
-def _tensordot_dispatcher(a, b, axes=None):
+def _tensordot_dispatcher(a, b, axes=None, out=None):
     return (a, b)
 
 
 @array_function_dispatch(_tensordot_dispatcher)
-def tensordot(a, b, axes=2):
+def tensordot(a, b, axes=2, out=None):
     """
     Compute tensor dot product along specified axes.
 
@@ -1117,10 +1117,24 @@ def tensordot(a, b, axes=2):
     newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
 
+    if out is not None:
+        correct = True
+        if isinstance(out, np.ndarray):
+            if out.shape != tuple(olda+oldb):
+                correct = False
+            else:
+                out = out.reshape((newshape_a[0], newshape_b[1]))
+        else:
+            correct = False
+        if correct is False:
+            raise ValueError("output array is not acceptable (must have"
+            "the right datatype, number of dimensions, and be a C-Array)")
+
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
-    res = dot(at, bt)
-    return res.reshape(olda + oldb)
+
+    out = dot(at, bt, out)
+    return out.reshape(olda + oldb)
 
 
 def _roll_dispatcher(a, shift, axis=None):
