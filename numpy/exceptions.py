@@ -60,7 +60,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
 
     .. warning::
 
-        This warning should not be used, since nose testing is not relvant
+        This warning should not be used, since nose testing is not relevant
         anymore.
 
     The nose tester turns ordinary Deprecation warnings into test failures.

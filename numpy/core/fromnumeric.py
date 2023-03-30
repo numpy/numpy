@@ -3802,7 +3802,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
 
 # Aliases of other functions. Provided unique docstrings 
-# are reference purposes only. Wherever possible,
+# are for reference purposes only. Wherever possible,
 # avoid using them.
 
 
