@@ -421,7 +421,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             if (NPY_DT_is_legacy(NPY_DTYPE(descr))) {
                 PyErr_Format(PyExc_ValueError,
                              "cannot include dtype '%c' in a buffer",
-                             descr->kind);
+                             descr->type);
             }
             else {
                 PyErr_Format(PyExc_ValueError,
