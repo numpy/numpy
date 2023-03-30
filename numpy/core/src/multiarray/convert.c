@@ -423,7 +423,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 }
 
 /*
- * Fills an array with zeros.
+ * Internal function to fill an array with zeros.
+ * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
+ * and not a str or struct
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
@@ -434,21 +436,26 @@ NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
                    PyArrayObject *wheremask)
 {
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value False */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
+    int retcode = 0;
+    if (PyArray_ISOBJECT(dst)) {
+        PyObject * pZero = PyLong_FromLong(0);
+        retcode = PyArray_AssignRawScalar(dst, PyArray_DESCR(dst),
+                                     (char *)&pZero, wheremask, NPY_SAFE_CASTING);
+        Py_DECREF(pZero);
     }
-    value = 0;
+    else {
+        /* Create a raw bool scalar with the value False */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return -1;
+        }
+        npy_bool value = 0;
 
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
+        retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                          wheremask, NPY_SAFE_CASTING);
 
-    Py_DECREF(bool_dtype);
+        Py_DECREF(bool_dtype);
+    }
     return retcode;
 }
 

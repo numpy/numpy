@@ -1048,19 +1048,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     /* Initialize the output to all zeros or None*/
     ret = NpyIter_GetOperandArray(iter)[nop];
-    if (PyArray_ISOBJECT(ret)) {
-        /*
-         * Return zero
-         */
-        PyObject * pZero = PyLong_FromLong(0);
-        int assign_result = PyArray_AssignRawScalar(ret, PyArray_DESCR(ret),
-                                     (char *)&pZero, NULL, NPY_SAFE_CASTING);
-        Py_DECREF(pZero);
-        if (assign_result < 0) {
-            goto fail;
-        }
-    }
-    else if (PyArray_AssignZero(ret, NULL) < 0) {
+    if (PyArray_AssignZero(ret, NULL) < 0) {
         goto fail;
     }
 
