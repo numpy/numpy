@@ -555,11 +555,15 @@ class TestEinsum:
 
         b = np.einsum("i->", a, dtype=dtype, casting='unsafe')
         assert_equal(b, np.sum(a))
-        assert_equal(b.dtype, np.dtype(dtype))
+        if hasattr(b, "dtype"):
+            # Can be a python object when dtype is object
+            assert_equal(b.dtype, np.dtype(dtype))
 
         b = np.einsum(a, [0], [], dtype=dtype, casting='unsafe')
         assert_equal(b, np.sum(a))
-        assert_equal(b.dtype, np.dtype(dtype))
+        if hasattr(b, "dtype"):
+            # Can be a python object when dtype is object
+            assert_equal(b.dtype, np.dtype(dtype))
 
         # A case which was failing (ticket #1885)
         p = np.arange(2) + 1
