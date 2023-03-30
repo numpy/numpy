@@ -1127,8 +1127,8 @@ def tensordot(a, b, axes=2, out=None):
         else:
             correct = False
         if correct is False:
-            raise ValueError("output array is not acceptable (must have"
-            "the right datatype, number of dimensions, and be a C-Array)")
+            raise TypeError("output array is not acceptable (must have"
+            "the right number of dimensions)")
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
