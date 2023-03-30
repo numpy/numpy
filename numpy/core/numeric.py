@@ -1120,6 +1120,7 @@ def tensordot(a, b, axes=2, out=None):
     if out is not None:
         correct = True
         if isinstance(out, np.ndarray):
+            out = out.view(np.ndarray)
             if out.shape != tuple(olda+oldb):
                 correct = False
             else:
@@ -1132,13 +1133,20 @@ def tensordot(a, b, axes=2, out=None):
             correct = False
         if correct is False:
             raise TypeError("output array is not acceptable (must have"
-            "the right number of dimensions)")
+            "the right number of dimensions and be able to reshape"
+            "without creating copy)")
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
 
     out = dot(at, bt, out)
-    return out.reshape(olda + oldb)
+    nout = out.reshape(olda + oldb)
+    if np.shares_memory(nout, out):
+        out = nout
+    else:
+        raise TypeError("output array is not acceptable (must be able to"
+        "reshape without creating copy)")
+    return out
 
 
 def _roll_dispatcher(a, shift, axis=None):
