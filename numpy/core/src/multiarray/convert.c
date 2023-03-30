@@ -157,11 +157,15 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Issue gh-2556
+#if defined(_MSC_VER) && defined(_WIN64) || \
+    defined(__MINGW32__) || defined(__MINGW64__)
+            /* Workaround Win64 fwrite() bug. Issue gh-2256
              * If you touch this code, please run this test which is so slow
-             * it was removed from the test suite
+             * it was removed from the test suite. Note that the original
+             * failure mode involves an infinite loop during tofile()
              *
+             * import tempfile, numpy as np
+             * from numpy.testing import (assert_)
              * fourgbplus = 2**32 + 2**16
              * testbytes = np.arange(8, dtype=np.int8)
              * n = len(testbytes)
