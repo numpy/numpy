@@ -433,4 +433,5 @@ jobs:
       run: |
         export CC=/usr/bin/gcc-12
         export CXX=/usr/bin/g++-12
-        sde -spr -- python runtests.py -v
+        python setup.py install
+        sde -spr -- python runtests.py -n -v
