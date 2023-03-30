@@ -1084,7 +1084,19 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     /* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
-        memset(PyArray_DATA(out_buf), 0, PyArray_NBYTES(out_buf));
+        if (PyArray_ISOBJECT(out_buf)) {
+            // issue gh-23492: fill with int(0) when there is no iteration
+            PyObject * pZero = PyLong_FromLong(0);
+            int assign_result = PyArray_AssignRawScalar(out_buf, PyArray_DESCR(out_buf),
+                                         (char *)&pZero, NULL, NPY_SAFE_CASTING);
+            Py_DECREF(pZero);
+            if (assign_result < 0) {
+                goto fail;
+            }
+        }
+        else {
+            memset(PyArray_DATA(out_buf), 0, PyArray_NBYTES(out_buf));
+        }
     }
 
     dot = PyArray_DESCR(out_buf)->f->dotfunc;
