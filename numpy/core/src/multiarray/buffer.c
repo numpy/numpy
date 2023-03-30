@@ -418,8 +418,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         default:
-            PyArray_DTypeMeta *DType = NPY_DTYPE(descr);
-            if (NPY_DT_is_legacy(DType)) {
+            if (NPY_DT_is_legacy(NPY_DTYPE(descr))) {
                 PyErr_Format(PyExc_ValueError,
                              "cannot include dtype '%c' in a buffer",
                              descr->kind);
@@ -427,7 +426,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             else {
                 PyErr_Format(PyExc_ValueError,
                              "cannot include dtype '%s' in a buffer",
-                             ((PyTypeObject*)DType)->tp_name);
+                             ((PyTypeObject*)NPY_DTYPE(descr))->tp_name);
             }
             return -1;
         }
