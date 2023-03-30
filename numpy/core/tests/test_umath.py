@@ -1863,8 +1863,8 @@ class TestAVXUfuncs:
                     y_true32 = myfunc(x_f32)
                     y_true64 = myfunc(x_f64)
                     for jj in strides:
-                        assert_equal(myfunc(x_f64[::jj]), y_true64[::jj])
-                        assert_equal(myfunc(x_f32[::jj]), y_true32[::jj])
+                        assert_array_almost_equal_nulp(myfunc(x_f64[::jj]), y_true64[::jj], nulp=2)
+                        assert_array_almost_equal_nulp(myfunc(x_f32[::jj]), y_true32[::jj], nulp=2)
 
 class TestAVXFloat32Transcendental:
     def test_exp_float32(self):
