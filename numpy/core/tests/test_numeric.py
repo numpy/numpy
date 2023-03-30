@@ -3578,14 +3578,16 @@ class TestTensordot:
         # Test resolution to issue #5663
         a = np.ndarray((3,0))
         b = np.ndarray((0,4))
-        td = np.ndarray((3,4))
-        _ = np.tensordot(a, b, (1, 0), out=td)
-        assert_array_equal(td, np.dot(a, b))
-        assert_array_equal(td, np.einsum('ij,jk', a, b))
-        td = np.ndarray((1,1))
-        assert_raises(ValueError, np.tensordot, a, b, (1, 0), **{'out': td})
-        td = np.ndarray((3,4), dtype='float32')
-        assert_raises(ValueError, np.tensordot, a, b, (1, 0), **{'out': td})
+        out = np.ndarray((3,4))
+        td = np.tensordot(a, b, (1, 0), out=out)
+        assert_array_equal(out, np.dot(a, b))
+        assert_array_equal(out, td)
+        assert_array_equal(out, np.einsum('ij,jk', a, b))
+        out = np.ndarray((1,1))
+        assert_raises(TypeError, np.tensordot, a, b, (1, 0), **{'out': out})
+        assert_raises(TypeError, np.tensordot, a, b, (1, 0), **{'out': []})
+        out = np.ndarray((3,4), dtype='float32')
+        assert_raises(ValueError, np.tensordot, a, b, (1, 0), **{'out': out})
 
     def test_zero_dimensional(self):
         # gh-12130
