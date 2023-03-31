@@ -2303,7 +2303,7 @@ class vectorize:
         self._ufunc = {}    # Caching to improve default performance
         self._doc = None
         self.__doc__ = doc
-        if doc is None:
+        if doc is None and hasattr(pyfunc, '__doc__'):
             self.__doc__ = pyfunc.__doc__
         else:
             self._doc = doc
