@@ -436,4 +436,5 @@ jobs:
         python setup.py install
     # Run only a few tests, running everything in an SDE takes a long time
     - name: Run linalg/ufunc/umath tests
-        sde -spr -- python runtests.py -t numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+      run: |
+        sde -spr -- python runtests.py -n -t numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
