@@ -238,7 +238,8 @@ def reshape(a, newshape, order='C'):
 
     Notes
     -----
-    It is not always possible to change the shape of an array without copying the data.
+    It is not always possible to change the shape of an array without copying
+    the data.
     
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
