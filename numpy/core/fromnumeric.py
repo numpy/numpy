@@ -238,24 +238,9 @@ def reshape(a, newshape, order='C'):
 
     Notes
     -----
-    It is not always possible to change the shape of an array without
-    copying the data. If you want an error to be raised when the data is copied,
-    you should assign the new shape to the shape attribute of the array::
-
-     >>> a = np.zeros((10, 2))
-
-     # A transpose makes the array non-contiguous
-     >>> b = a.T
-
-     # Taking a view makes it possible to modify the shape without modifying
-     # the initial object.
-     >>> c = b.view()
-     >>> c.shape = (20)
-     Traceback (most recent call last):
-        ...
-     AttributeError: Incompatible shape for in-place modification. Use
-     `.reshape()` to make a copy with the desired shape.
-
+    It is not always possible to change the shape of an array without copying
+    the data.
+    
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
     For example, let's say you have an array:
