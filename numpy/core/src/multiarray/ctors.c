@@ -1919,7 +1919,6 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
  * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
  *
- * context is passed through to PyArray_GetArrayParamsFromObject
  */
 
 /*NUMPY_API
