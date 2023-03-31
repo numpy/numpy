@@ -548,22 +548,6 @@ From other objects
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
 
-.. c:function:: int PyArray_GetArrayParamsFromObject( \
-        PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
-        PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, \
-        PyArrayObject** out_arr, PyObject* context)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    .. versionchanged:: NumPy 1.19
-
-        `context` is never used. Its use results in an error.
-
-    .. versionadded:: 1.6
-
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
         int requirements, PyObject* context)
