@@ -20,7 +20,7 @@ from setup_common import *  # noqa: F403
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 if not NPY_RELAXED_STRIDES_CHECKING:
     raise SystemError(
-        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been remove as of "
+        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been removed as of "
         "NumPy 1.23.  This error will eventually be removed entirely.")
 
 # Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
