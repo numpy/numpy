@@ -1186,17 +1186,6 @@ Converting data types
     return value is the enumerated typenumber that represents the
     data-type that *op* should have.
 
-.. c:function:: void PyArray_ArrayType( \
-        PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
-
-    This function is superseded by :c:func:`PyArray_ResultType`.
-
-    This function works similarly to :c:func:`PyArray_ObjectType` (...)
-    except it handles flexible arrays. The *mintype* argument can have
-    an itemsize member and the *outtype* argument will have an
-    itemsize member at least as big but perhaps bigger depending on
-    the object *op*.
-
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
 
