@@ -3619,18 +3619,6 @@ Miscellaneous Macros
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.
 
-.. c:function:: void PyArray_XDECREF_ERR(PyObject* obj)
-
-    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
-    followed by ``Py_XDECREF``
-
-    DECREF's an array object which may have the
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-    flag set without causing the contents to be copied back into the
-    original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
-    object. This is useful for recovering from an error condition when
-    writeback semantics are used, but will lead to wrong results.
-
 
 Enumerated Types
 ~~~~~~~~~~~~~~~~
