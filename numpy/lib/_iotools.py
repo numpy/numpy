@@ -790,8 +790,16 @@ class StringConverter:
         `update` takes the same parameters as the constructor of
         `StringConverter`, except that `func` does not accept a `dtype`
         whereas `dtype_or_func` in the constructor does.
+        
 
+    Be aware that user-defined converters may receive extraneous inputs
+    during the type determination process. In particular, a '1' value will
+    be passed to the converter when determining the output dtype. This
+    behavior should be considered when writing custom converter functions,
+    and users should ensure that their converters can handle such input
+    without raising unexpected exceptions.
         """
+        
         self.func = func
         self._locked = locked
 
