@@ -548,22 +548,6 @@ From other objects
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
 
-.. c:function:: int PyArray_GetArrayParamsFromObject( \
-        PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
-        PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, \
-        PyArrayObject** out_arr, PyObject* context)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    .. versionchanged:: NumPy 1.19
-
-        `context` is never used. Its use results in an error.
-
-    .. versionadded:: 1.6
-
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
         int requirements, PyObject* context)
@@ -1201,17 +1185,6 @@ Converting data types
     represents the object that will be converted to an array. The
     return value is the enumerated typenumber that represents the
     data-type that *op* should have.
-
-.. c:function:: void PyArray_ArrayType( \
-        PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
-
-    This function is superseded by :c:func:`PyArray_ResultType`.
-
-    This function works similarly to :c:func:`PyArray_ObjectType` (...)
-    except it handles flexible arrays. The *mintype* argument can have
-    an itemsize member and the *outtype* argument will have an
-    itemsize member at least as big but perhaps bigger depending on
-    the object *op*.
 
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
@@ -3618,18 +3591,6 @@ Miscellaneous Macros
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.
-
-.. c:function:: void PyArray_XDECREF_ERR(PyObject* obj)
-
-    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
-    followed by ``Py_XDECREF``
-
-    DECREF's an array object which may have the
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-    flag set without causing the contents to be copied back into the
-    original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
-    object. This is useful for recovering from an error condition when
-    writeback semantics are used, but will lead to wrong results.
 
 
 Enumerated Types
