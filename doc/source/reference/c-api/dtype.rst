@@ -25,161 +25,161 @@ select the precision desired.
 Enumerated Types
 ----------------
 
-.. c:enumerator:: NPY_TYPES
+.. c:enum:: NPY_TYPES
 
-There is a list of enumerated types defined providing the basic 24
-data types plus some useful generic names. Whenever the code requires
-a type number, one of these enumerated types is requested. The types
-are all called ``NPY_{NAME}``:
+    There is a list of enumerated types defined providing the basic 24
+    data types plus some useful generic names. Whenever the code requires
+    a type number, one of these enumerated types is requested. The types
+    are all called ``NPY_{NAME}``:
 
-.. c:enumerator:: NPY_BOOL
+    .. c:enumerator:: NPY_BOOL
 
-    The enumeration value for the boolean type, stored as one byte.
-    It may only be set to the values 0 and 1.
+        The enumeration value for the boolean type, stored as one byte.
+        It may only be set to the values 0 and 1.
 
-.. c:enumerator:: NPY_BYTE
-.. c:enumerator:: NPY_INT8
+    .. c:enumerator:: NPY_BYTE
+    .. c:enumerator:: NPY_INT8
 
-    The enumeration value for an 8-bit/1-byte signed integer.
+        The enumeration value for an 8-bit/1-byte signed integer.
 
-.. c:enumerator:: NPY_SHORT
-.. c:enumerator:: NPY_INT16
+    .. c:enumerator:: NPY_SHORT
+    .. c:enumerator:: NPY_INT16
 
-    The enumeration value for a 16-bit/2-byte signed integer.
+        The enumeration value for a 16-bit/2-byte signed integer.
 
-.. c:enumerator:: NPY_INT
-.. c:enumerator:: NPY_INT32
+    .. c:enumerator:: NPY_INT
+    .. c:enumerator:: NPY_INT32
 
-    The enumeration value for a 32-bit/4-byte signed integer.
+        The enumeration value for a 32-bit/4-byte signed integer.
 
-.. c:enumerator:: NPY_LONG
+    .. c:enumerator:: NPY_LONG
 
-    Equivalent to either NPY_INT or NPY_LONGLONG, depending on the
-    platform.
+        Equivalent to either NPY_INT or NPY_LONGLONG, depending on the
+        platform.
 
-.. c:enumerator:: NPY_LONGLONG
-.. c:enumerator:: NPY_INT64
+    .. c:enumerator:: NPY_LONGLONG
+    .. c:enumerator:: NPY_INT64
 
-    The enumeration value for a 64-bit/8-byte signed integer.
+        The enumeration value for a 64-bit/8-byte signed integer.
 
-.. c:enumerator:: NPY_UBYTE
-.. c:enumerator:: NPY_UINT8
+    .. c:enumerator:: NPY_UBYTE
+    .. c:enumerator:: NPY_UINT8
 
-    The enumeration value for an 8-bit/1-byte unsigned integer.
+        The enumeration value for an 8-bit/1-byte unsigned integer.
 
-.. c:enumerator:: NPY_USHORT
-.. c:enumerator:: NPY_UINT16
+    .. c:enumerator:: NPY_USHORT
+    .. c:enumerator:: NPY_UINT16
 
-    The enumeration value for a 16-bit/2-byte unsigned integer.
+        The enumeration value for a 16-bit/2-byte unsigned integer.
 
-.. c:enumerator:: NPY_UINT
-.. c:enumerator:: NPY_UINT32
+    .. c:enumerator:: NPY_UINT
+    .. c:enumerator:: NPY_UINT32
 
-    The enumeration value for a 32-bit/4-byte unsigned integer.
+        The enumeration value for a 32-bit/4-byte unsigned integer.
 
-.. c:enumerator:: NPY_ULONG
+    .. c:enumerator:: NPY_ULONG
 
-    Equivalent to either NPY_UINT or NPY_ULONGLONG, depending on the
-    platform.
+        Equivalent to either NPY_UINT or NPY_ULONGLONG, depending on the
+        platform.
 
-.. c:enumerator:: NPY_ULONGLONG
-.. c:enumerator:: NPY_UINT64
+    .. c:enumerator:: NPY_ULONGLONG
+    .. c:enumerator:: NPY_UINT64
 
-    The enumeration value for a 64-bit/8-byte unsigned integer.
+        The enumeration value for a 64-bit/8-byte unsigned integer.
 
-.. c:enumerator:: NPY_HALF
-.. c:enumerator:: NPY_FLOAT16
+    .. c:enumerator:: NPY_HALF
+    .. c:enumerator:: NPY_FLOAT16
 
-    The enumeration value for a 16-bit/2-byte IEEE 754-2008 compatible floating
-    point type.
+        The enumeration value for a 16-bit/2-byte IEEE 754-2008 compatible floating
+        point type.
 
-.. c:enumerator:: NPY_FLOAT
-.. c:enumerator:: NPY_FLOAT32
+    .. c:enumerator:: NPY_FLOAT
+    .. c:enumerator:: NPY_FLOAT32
 
-    The enumeration value for a 32-bit/4-byte IEEE 754 compatible floating
-    point type.
+        The enumeration value for a 32-bit/4-byte IEEE 754 compatible floating
+        point type.
 
-.. c:enumerator:: NPY_DOUBLE
-.. c:enumerator:: NPY_FLOAT64
+    .. c:enumerator:: NPY_DOUBLE
+    .. c:enumerator:: NPY_FLOAT64
 
-    The enumeration value for a 64-bit/8-byte IEEE 754 compatible floating
-    point type.
+        The enumeration value for a 64-bit/8-byte IEEE 754 compatible floating
+        point type.
 
-.. c:enumerator:: NPY_LONGDOUBLE
+    .. c:enumerator:: NPY_LONGDOUBLE
 
-    The enumeration value for a platform-specific floating point type which is
-    at least as large as NPY_DOUBLE, but larger on many platforms.
+        The enumeration value for a platform-specific floating point type which is
+        at least as large as NPY_DOUBLE, but larger on many platforms.
 
-.. c:enumerator:: NPY_CFLOAT
-.. c:enumerator:: NPY_COMPLEX64
+    .. c:enumerator:: NPY_CFLOAT
+    .. c:enumerator:: NPY_COMPLEX64
 
-    The enumeration value for a 64-bit/8-byte complex type made up of
-    two NPY_FLOAT values.
+        The enumeration value for a 64-bit/8-byte complex type made up of
+        two NPY_FLOAT values.
 
-.. c:enumerator:: NPY_CDOUBLE
-.. c:enumerator:: NPY_COMPLEX128
+    .. c:enumerator:: NPY_CDOUBLE
+    .. c:enumerator:: NPY_COMPLEX128
 
-    The enumeration value for a 128-bit/16-byte complex type made up of
-    two NPY_DOUBLE values.
+        The enumeration value for a 128-bit/16-byte complex type made up of
+        two NPY_DOUBLE values.
 
-.. c:enumerator:: NPY_CLONGDOUBLE
+    .. c:enumerator:: NPY_CLONGDOUBLE
 
-    The enumeration value for a platform-specific complex floating point
-    type which is made up of two NPY_LONGDOUBLE values.
+        The enumeration value for a platform-specific complex floating point
+        type which is made up of two NPY_LONGDOUBLE values.
 
-.. c:enumerator:: NPY_DATETIME
+    .. c:enumerator:: NPY_DATETIME
 
-    The enumeration value for a data type which holds dates or datetimes with
-    a precision based on selectable date or time units.
+        The enumeration value for a data type which holds dates or datetimes with
+        a precision based on selectable date or time units.
 
-.. c:enumerator:: NPY_TIMEDELTA
+    .. c:enumerator:: NPY_TIMEDELTA
 
-    The enumeration value for a data type which holds lengths of times in
-    integers of selectable date or time units.
+        The enumeration value for a data type which holds lengths of times in
+        integers of selectable date or time units.
 
-.. c:enumerator:: NPY_STRING
+    .. c:enumerator:: NPY_STRING
 
-    The enumeration value for ASCII strings of a selectable size. The
-    strings have a fixed maximum size within a given array.
+        The enumeration value for ASCII strings of a selectable size. The
+        strings have a fixed maximum size within a given array.
 
-.. c:enumerator:: NPY_UNICODE
+    .. c:enumerator:: NPY_UNICODE
 
-    The enumeration value for UCS4 strings of a selectable size. The
-    strings have a fixed maximum size within a given array.
+        The enumeration value for UCS4 strings of a selectable size. The
+        strings have a fixed maximum size within a given array.
 
-.. c:enumerator:: NPY_OBJECT
+    .. c:enumerator:: NPY_OBJECT
 
-    The enumeration value for references to arbitrary Python objects.
+        The enumeration value for references to arbitrary Python objects.
 
-.. c:enumerator:: NPY_VOID
+    .. c:enumerator:: NPY_VOID
 
-    Primarily used to hold struct dtypes, but can contain arbitrary
-    binary data.
+        Primarily used to hold struct dtypes, but can contain arbitrary
+        binary data.
 
-Some useful aliases of the above types are
+    Some useful aliases of the above types are
 
-.. c:enumerator:: NPY_INTP
+    .. c:enumerator:: NPY_INTP
 
-    The enumeration value for a signed integer type which is the same
-    size as a (void \*) pointer. This is the type used by all
-    arrays of indices.
+        The enumeration value for a signed integer type which is the same
+        size as a (void \*) pointer. This is the type used by all
+        arrays of indices.
 
-.. c:enumerator:: NPY_UINTP
+    .. c:enumerator:: NPY_UINTP
 
-    The enumeration value for an unsigned integer type which is the
-    same size as a (void \*) pointer.
+        The enumeration value for an unsigned integer type which is the
+        same size as a (void \*) pointer.
 
-.. c:enumerator:: NPY_MASK
+    .. c:enumerator:: NPY_MASK
 
-    The enumeration value of the type used for masks, such as with
-    the :c:data:`NPY_ITER_ARRAYMASK` iterator flag. This is equivalent
-    to :c:data:`NPY_UINT8`.
+        The enumeration value of the type used for masks, such as with
+        the :c:data:`NPY_ITER_ARRAYMASK` iterator flag. This is equivalent
+        to :c:data:`NPY_UINT8`.
 
-.. c:enumerator:: NPY_DEFAULT_TYPE
+    .. c:enumerator:: NPY_DEFAULT_TYPE
 
-    The default type to use when no dtype is explicitly specified, for
-    example when calling np.zero(shape). This is equivalent to
-    :c:data:`NPY_DOUBLE`.
+        The default type to use when no dtype is explicitly specified, for
+        example when calling np.zero(shape). This is equivalent to
+        :c:data:`NPY_DOUBLE`.
 
 Other useful related constants are
 
