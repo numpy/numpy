@@ -878,7 +878,8 @@ find_descriptor_from_array(
  * means that legacy behavior is used: The dtype instances "S0", "U0", and
  * "V0" are converted to mean the DType classes instead.
  * When dtype != NULL, this path is ignored, and the function does nothing
- * unless descr == NULL.
+ * unless descr == NULL. If both descr and dtype are null, it returns the
+ * descriptor for the array.
  *
  * This function is identical to normal casting using only the dtype, however,
  * it supports inspecting the elements when the array has object dtype
@@ -927,7 +928,7 @@ PyArray_AdaptDescriptorToArray(
         /* This is an object array but contained no elements, use default */
         new_descr = NPY_DT_CALL_default_descr(dtype);
     }
-    Py_DECREF(dtype);
+    Py_XDECREF(dtype);
     return new_descr;
 }
 
@@ -1280,7 +1281,9 @@ PyArray_DiscoverDTypeAndShape(
     }
 
     if (requested_descr != NULL) {
-        assert(fixed_DType == NPY_DTYPE(requested_descr));
+        if (fixed_DType != NULL) {
+            assert(fixed_DType == NPY_DTYPE(requested_descr));
+        }
         /* The output descriptor must be the input. */
         Py_INCREF(requested_descr);
         *out_descr = requested_descr;

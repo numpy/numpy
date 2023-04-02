@@ -26,7 +26,7 @@ def dirty_lock(lock_name, lock_on_count=1):
     lock_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "env", lock_name)
     )
-    # ASV load the 'benchmark_dir' to discovering the available benchmarks
+    # ASV loads the 'benchmark_dir' to discover the available benchmarks
     # the issue here is ASV doesn't capture any strings from stdout or stderr
     # during this stage so we escape it and lock on the second increment
     try:

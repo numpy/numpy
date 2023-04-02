@@ -18,14 +18,14 @@ into a problem._
 Then install spin:
 - `python -m pip install spin`
 
-**Compile and install:** `./spin build`
+**Compile and install:** `spin build`
 
 This builds in the `build/` directory, and installs into the `build-install` directory.
 
 Then run the test suite or a shell via `spin`:
 ```
-./spin test
-./spin ipython
+spin test
+spin ipython
 ```
 
 Alternatively, to use the package, add it to your `PYTHONPATH`:
@@ -67,5 +67,5 @@ Libs: -L${libdir} -lopenblas
 Then build with:
 
 ```
-./spin build -- -Dpkg_config_path=${HOME}/lib/pkgconfig
+spin build -- -Dpkg_config_path=${HOME}/lib/pkgconfig
 ```

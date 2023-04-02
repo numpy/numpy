@@ -31,7 +31,7 @@ the command line and execute::
     python runtests.py --bench
 
 where ``--bench`` activates the benchmark suite instead of the
-test suite. This builds NumPy and runs  all available benchmarks
+test suite. This builds NumPy and runs all available benchmarks
 defined in ``benchmarks/``. (Note: this could take a while. Each
 benchmark is run multiple times to measure the distribution in
 execution times.)

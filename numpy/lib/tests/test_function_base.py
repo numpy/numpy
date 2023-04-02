@@ -8,7 +8,7 @@ import pytest
 import hypothesis
 from hypothesis.extra.numpy import arrays
 import hypothesis.strategies as st
-
+from functools import partial
 
 import numpy as np
 from numpy import ma
@@ -1786,6 +1786,70 @@ class TestVectorize:
         r = mult(m, v)
         assert_equal(type(r), subclass)
         assert_equal(r, m * v)
+
+    def test_name(self):
+        #See gh-23021
+        @np.vectorize
+        def f2(a, b):
+            return a + b
+
+        assert f2.__name__ == 'f2'
+
+    def test_decorator(self):
+        @vectorize
+        def addsubtract(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        r = addsubtract([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
+    def test_docstring(self):
+        @vectorize
+        def f(x):
+            """Docstring"""
+            return x
+
+        if sys.flags.optimize < 2:
+            assert f.__doc__ == "Docstring"
+
+    def test_partial(self):
+        def foo(x, y):
+            return x + y
+
+        bar = partial(foo, 3)
+        vbar = np.vectorize(bar)
+        assert vbar(1) == 4
+
+    def test_signature_otypes_decorator(self):
+        @vectorize(signature='(n)->(n)', otypes=['float64'])
+        def f(x):
+            return x
+
+        r = f([1, 2, 3])
+        assert_equal(r.dtype, np.dtype('float64'))
+        assert_array_equal(r, [1, 2, 3])
+        assert f.__name__ == 'f'
+
+    def test_bad_input(self):
+        with assert_raises(TypeError):
+            A = np.vectorize(pyfunc = 3)
+
+    def test_no_keywords(self):
+        with assert_raises(TypeError):
+            @np.vectorize("string")
+            def foo():
+                return "bar"
+
+    def test_positional_regression_9477(self):
+        # This supplies the first keyword argument as a positional,
+        # to ensure that they are still properly forwarded after the
+        # enhancement for #9477
+        f = vectorize((lambda x: x), ['float64'])
+        r = f([2])
+        assert_equal(r.dtype, np.dtype('float64'))
 
 
 class TestLeaks:

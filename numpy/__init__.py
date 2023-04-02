@@ -74,10 +74,6 @@ test
     Run numpy unittests
 show_config
     Show numpy build configuration
-dual
-    Overwrite certain functions with high-performance SciPy tools.
-    Note: `numpy.dual` is deprecated.  Use the functions from NumPy or Scipy
-    directly instead of importing them from `numpy.dual`.
 matlib
     Make everything matrices.
 __version__

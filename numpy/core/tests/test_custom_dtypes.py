@@ -229,6 +229,12 @@ class TestSFloat:
         expected = arr.astype(SF(1.))  # above will have discovered 1. scaling
         assert_array_equal(res.view(np.float64), expected.view(np.float64))
 
+    def test_creation_class(self):
+        arr1 = np.array([1., 2., 3.], dtype=SF)
+        assert arr1.dtype == SF(1.)
+        arr2 = np.array([1., 2., 3.], dtype=SF(1.))
+        assert_array_equal(arr1.view(np.float64), arr2.view(np.float64))
+
 
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)
