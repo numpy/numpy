@@ -7039,13 +7039,13 @@ def compressed(x):
     Create an array with negative values masked:
 
     >>> import numpy as np
-    >>> x = np.array([[11.2, -3.973, 18], [0.801, -1.41, 12], [7, 33, -12]])
+    >>> x = np.array([[1, -1, 0], [2, -1, 3], [7, 4, -1]])
     >>> masked_x = np.ma.masked_array(x, mask=x < 0)
     >>> masked_x
     masked_array(
-      data=[[11.2, --, 18.0],
-            [0.801, --, 12.0],
-            [7.0, 33.0, --]],
+      data=[[1, --, 0],
+            [2, --, 3],
+            [7, 4, --]],
       mask=[[False,  True, False],
             [False,  True, False],
             [False, False,  True]],
@@ -7054,7 +7054,7 @@ def compressed(x):
     Compress the masked array into a 1-D array of non-masked values:
 
     >>> np.ma.compressed(masked_x)
-    array([11.2  , 18.   ,  0.801, 12.   ,  7.   , 33.   ])
+    array([1, 0, 2, 3, 7, 4])
 
     """
     return asanyarray(x).compressed()
