@@ -1150,13 +1150,11 @@ def drop_metadata(dt):
         l = list()
         for n in dt.names:
             t = dt.fields[n]
-            l.append((
-                n,  # name
-                drop_metadata(t[0]),  # format
-                t[1],  # offset
-                t[2] if len(t) == 3 else None,  # title
-            ))
-        d = {k: [e[i] for e in l] for i, k in enumerate(
+            if len(t) == 3:
+                l.append((n, drop_metadata(t[0]), t[1], t[2]))
+            else:
+                l.append((n, drop_metadata(t[0]), t[1], None))
+            d = {k: [e[i] for e in l] for i, k in enumerate(
             ['names', 'formats', 'offsets', 'titles']
         )}
         d['itemsize'] = dt.itemsize
