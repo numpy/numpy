@@ -1805,7 +1805,8 @@ class TestVectorize:
             """Docstring"""
             return x
 
-        assert f.__doc__ == "Docstring"
+        if sys.flags.optimize < 2:
+            assert f.__doc__ == "Docstring"
 
     def test_partial(self):
         def foo(x, y):
