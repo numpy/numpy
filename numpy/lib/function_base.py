@@ -2117,10 +2117,10 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
 @set_module('numpy')
 class vectorize:
     """
-    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
-              signature=None)
+    vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
+    cache=False, signature=None)
 
-    Generalized function class.
+    Returns an object that acts like pyfunc, but takes arrays as input.
 
     Define a vectorized function which takes a nested sequence of objects or
     numpy arrays as inputs and returns a single numpy array or a tuple of numpy
@@ -2134,8 +2134,9 @@ class vectorize:
 
     Parameters
     ----------
-    pyfunc : callable
+    pyfunc : callable, optional
         A python function or method.
+        Can be omitted to produce a decorator with keyword arguments.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -2167,8 +2168,9 @@ class vectorize:
 
     Returns
     -------
-    vectorized : callable
-        Vectorized function.
+    out : callable
+        A vectorized function if ``pyfunc`` was provided,
+        a decorator otherwise.
 
     See Also
     --------
@@ -2265,18 +2267,44 @@ class vectorize:
            [0., 0., 1., 2., 1., 0.],
            [0., 0., 0., 1., 2., 1.]])
 
+    Decorator syntax is supported.  The decorator can be called as
+    a function to provide keyword arguments.
+    >>>@np.vectorize
+    ...def identity(x):
+    ...    return x
+    ...
+    >>>identity([0, 1, 2])
+    array([0, 1, 2])
+    >>>@np.vectorize(otypes=[float])
+    ...def as_float(x):
+    ...    return x
+    ...
+    >>>as_float([0, 1, 2])
+    array([0., 1., 2.])
     """
-    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
-                 cache=False, signature=None):
+    def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
+                 excluded=None, cache=False, signature=None):
+
+        if (pyfunc != np._NoValue) and (not callable(pyfunc)):
+            #Splitting the error message to keep
+            #the length below 79 characters.
+            part1 = "When used as a decorator, "
+            part2 = "only accepts keyword arguments."
+            raise TypeError(part1 + part2)
+
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
-        self._ufunc = {}    # Caching to improve default performance
+        if pyfunc != np._NoValue and hasattr(pyfunc, '__name__'):
+            self.__name__ = pyfunc.__name__
 
-        if doc is None:
+        self._ufunc = {}    # Caching to improve default performance
+        self._doc = None
+        self.__doc__ = doc
+        if doc is None and hasattr(pyfunc, '__doc__'):
             self.__doc__ = pyfunc.__doc__
         else:
-            self.__doc__ = doc
+            self._doc = doc
 
         if isinstance(otypes, str):
             for char in otypes:
@@ -2298,7 +2326,15 @@ class vectorize:
         else:
             self._in_and_out_core_dims = None
 
-    def __call__(self, *args, **kwargs):
+    def _init_stage_2(self, pyfunc, *args, **kwargs):
+        self.__name__ = pyfunc.__name__
+        self.pyfunc = pyfunc
+        if self._doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = self._doc
+
+    def _call_as_normal(self, *args, **kwargs):
         """
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
@@ -2327,6 +2363,13 @@ class vectorize:
             vargs.extend([kwargs[_n] for _n in names])
 
         return self._vectorize_call(func=func, args=vargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.pyfunc is np._NoValue:
+            self._init_stage_2(*args, **kwargs)
+            return self
+
+        return self._call_as_normal(*args, **kwargs)
 
     def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
