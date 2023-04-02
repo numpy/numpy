@@ -1253,7 +1253,7 @@ ScalarArrayTypes
 ----------------
 
 There is a Python type for each of the different built-in data types
-that can be present in the array Most of these are simple wrappers
+that can be present in the array. Most of these are simple wrappers
 around the corresponding data type in C. The C-names for these types
 are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
 
