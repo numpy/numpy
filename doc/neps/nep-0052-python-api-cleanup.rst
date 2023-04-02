@@ -52,7 +52,7 @@ incur significant costs:
   functions.**
 
   Looking for functions with
-  tab completion in IPython, notebook, or IDE is a challenge (e.g., type
+  tab completion in IPython, a notebook, or an IDE is a challenge. E.g., type
   ``np.<TAB>`` and look at the first six items offered: two ufuncs
   (``abs``, ``add``), one alias (``absolute``), and three functions that are
   not intended for end-users (``add_docstring``, ``add_newdoc``, ``add_newdoc_ufunc``).
@@ -61,30 +61,29 @@ incur significant costs:
 - **Libraries that mimic the NumPy API face significant implementation barriers.**
 
   For maintainers of NumPy API-compatible array libraries (Dask, CuPy, JAX, PyTorch,
-  TensorFlow, cuNumeric, etc.) and transpilers (Numba, Pythran, Cython, etc.) there is an implementation
-  cost to each object in the namespace. In practice, no other library
-  has full support for the entire NumPy, partly because it is so hard
-  to know what to include faced with a slew of aliases and legacy
-  objects.
+  TensorFlow, cuNumeric, etc.) and compilers/transpilers (Numba, Pythran,
+  Cython, etc.) there is an implementation cost to each object in the
+  namespace. In practice, no other library has full support for the entire
+  NumPy API, partly because it is so hard to know what to include when faced
+  with a slew of aliases and legacy objects.
 
 - **Teaching NumPy is more complicated than it needs to be.**
 
   Similarly, a larger API is confusing to learners, who not only have
-  to *find* functions but have to choose *which* to use.
+  to *find* functions but have to choose *which* functions to use.
 
 - **Developers are hesitant to grow the API surface.**
 
   This happens even when the changes are warranted, because they are
   aware of the above concerns.
 
-Link discussion about restructuring namespaces! (e.g., find the thread with the
-GUI explorer person)
+.. R: Link discussion about restructuring namespaces! (e.g., find the thread
+   with the GUI explorer person)
 
 .. S: I first thought you were talking about Manim,
    but looks like it's something different.
 
 .. S: Aaron's post re: array API and NumPy 2.0:
-
    https://mail.python.org/archives/list/numpy-discussion@python.org/thread/TTZEUKXUICDHGTCX5EMR6DQTYOSDGRV7/#YKBWQ2AP76WYWAP6GFRYMPHZCKTC43KM
 
 The scope of this NEP includes:
@@ -111,20 +110,19 @@ NumPy major version number.
 Backward compatibility
 ----------------------
 
-As mentioned above, while the new API should be backward compatible,
-there is no guarantee of forward compatibility.
-Code will have to be updated to account for deprecated, moved, or
+As mentioned above, while the new (or cleaned up, NumPy 2.0) API should be
+backward compatible, there is no guarantee of forward compatibility from 1.25.X
+to 2.0. Code will have to be updated to account for deprecated, moved, or
 removed functions/classes, as well as for more strictly enforced private APIs.
 
-In order to make it easier to adopt to the changes in this NEP, we will:
+In order to make it easier to adapt to the changes in this NEP, we will:
 
 1. Provide a transition guide that lists each API change and its replacement.
 2. Provide a script to automate the migration wherever possible. This will be
    similar to ``tools/replace_old_macros.sed`` (which adapts code for a
-   previous C API naming scheme change).
+   previous C API naming scheme change). This will be ``sed`` (or equivalent)
+   based rather than attempting AST analysis, so it won't cover everything.
 
-.. S: Q: is (2) too ambitious? I don't know how easy it is to do this
-   under all circumstances.
 
 Detailed description
 --------------------
@@ -147,45 +145,39 @@ Here is a representative set of examples:
   and other issues for ``maximum_sctype`` and related functions).
 - Business day functionality can likely be removed (unclear if it needs
   splitting out like was done for ``np.financial``).
-
-S: I think `np.financial` maintainer was interested in adopting?
-
 - The ``np.compat`` namespace, used during the Python 2 to 3 transition, will be removed.
 - Functions that are narrow in scope, with very few public use-cases,
   will be removed.  See, e.g.
   ``real_if_close`` (`gh-11375 <https://github.com/numpy/numpy/issues/11375>`__).
   These will have to be identified manually and by issue triage.
 
-New namespaces are introduced for warnings/exceptions (``np.exceptions``) and for dtype-related
-functionality (``np.types``). NumPy 2.0 is a good opportunity to
-popular these submodules from the main namespace.
+New namespaces are introduced for warnings/exceptions (``np.exceptions``) and
+for dtype-related functionality (``np.types``). NumPy 2.0 is a good opportunity
+to populate these submodules from the main namespace.
 
 .. S: Has the ``np.types`` name been fixed? Wonder if we're going to
    create confusion with that name.
 
-Functionality that is widely used but has a preferred alternative
-may be hidden by not including it in ``__dir__``, rather than deprecating it. A
-``.. legacy::`` directory may be used to mark such functionality in the
+Functionality that is widely used but has a preferred alternative may either be
+deprecated (with the deprecation message pointing out what to use instead) or
+be hidden by not including it in ``__dir__``. In case of hiding, a ``..
+legacy::`` directory may be used to mark such functionality in the
 documentation.
 
-.. S: Perhaps we should give ourselves more freedom here: delete
-   unused functions, deprecate common functions for which an
-   alternative is recommended. We can raise a very helpful exception
-   in these cases, telling the developer exactly what to change.
+A test will be added to ensure limited future growth of all namespaces; i.e.,
+every new entry will need to be explicitly added to an allow-list.
 
-A test will be added to ensure limited future growth of all
-namespaces; i.e., every new entry will need to be explicitly added to
-an allow-list.
 
 Cleaning up the submodule structure
 ```````````````````````````````````
 
-.. S: This conversation is relevant:
-   `MAINT: Hide internals of np.lib to only show submodules <https://github.com/numpy/numpy/pull/18447>`__.
-   It looked at the time that we were all roughly on board, just that
-   we could not justify such a big change.
+We will clean up the NumPy submodule structure, so it is easier to navigate.
+When this was discussed before (see
+`MAINT: Hide internals of np.lib to only show submodules <https://github.com/numpy/numpy/pull/18447>`__)
+there was already rough consensus on that - however it was hard to pull off in
+a minor release.
 
-Let's reorganize the API reference guide along main and submodule namespaces,
+We will reorganize the API reference guide along main and submodule namespaces,
 and only within the main namespace use the current subdivision along
 functionality groupings. Also by "mainstream" and special-purpose namespaces.
 Details TBD, something like:
@@ -194,6 +186,7 @@ Details TBD, something like:
    should be improved
 
 ::
+
     # `numpy.util`: Regular/recommended user-facing namespaces for general use
     numpy
     numpy.exceptions
@@ -239,10 +232,11 @@ Details TBD, something like:
 
 .. S: Will we preserve `np.lib` as per the above discussion?
 
-.. S: I suggest we make all submodules available upon demand
-   so that users don't have to type `import numpy.ffi` but can use
-   `import numpy as np; np.ffi.*`. This has been very helpful for
-   teaching scikit-image and SciPy.
+We will make all submodules available lazily, so that users don't have to type
+``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
+same time not negatively impacting the overhead of ``import numpy``. This has
+been very helpful for teaching scikit-image and SciPy.
+
 
 Reducing the number of ways to select dtypes
 ````````````````````````````````````````````
@@ -275,6 +269,7 @@ To discuss:
 
 
 .. S: consider `np.dtypes`.
+
 
 Related Work
 ------------
