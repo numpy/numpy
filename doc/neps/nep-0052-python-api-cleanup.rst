@@ -177,10 +177,59 @@ When this was discussed before (see
 there was already rough consensus on that - however it was hard to pull off in
 a minor release.
 
+A basic principle we will adhere to is "one function, one location". Functions
+that are exposes in more than one namespace (e.g., many functions are present
+in ``numpy`` and ``numpy.lib``) need to get a single home.
+
 We will reorganize the API reference guide along main and submodule namespaces,
 and only within the main namespace use the current subdivision along
 functionality groupings. Also by "mainstream" and special-purpose namespaces.
 Details TBD, something like:
+
+.. Ralf's original grouping, with a few more comments:
+
+::
+
+    # Regular/recommended user-facing namespaces for general use. Present these
+    # as the primary set of namespaces to the users.
+    numpy
+    numpy.exceptions
+    numpy.fft
+    numpy.linalg
+    numpy.ma
+    numpy.polynomial
+    numpy.random
+    numpy.testing
+    numpy.typing
+
+    # Special-purpose namespaces. Keep these, but document them in a separate
+    # grouping in the reference guide and explain their purpose.
+    numpy.array_api
+    numpy.ctypeslib
+    numpy.emath
+    numpy.f2py  # only a couple of public functions, like `compile` and `get_include`
+    numpy.math
+    numpy.lib.stride_tricks
+    numpy.rec
+    numpy.types
+
+    # Legacy (prefer not to use). Third grouping in the reference guide.
+    numpy.char
+    numpy.distutils
+    numpy.matrixlib  # or deprecate?
+
+    # To remove
+    numpy.compat
+    numpy.core?
+    numpy.doc
+    numpy.matlib
+    numpy.version
+    
+    # To clean out or somehow deal with: everything in `numpy.lib`
+
+Or like this:
+
+.. Stefan's changed version:
 
 .. S: not sure what to call these submodules; made something up, but
    should be improved
@@ -227,10 +276,14 @@ Details TBD, something like:
     # To clean out or somehow deal with: everything in `numpy.lib`
 
 .. S: Are you thinking that even math.* will disappear out of the name
-   mainspace? That's quite a big change.  I like the principle you
-   proposed on Sebastian's PR above: one function, one home.
+   mainspace? That's quite a big change.
 
-.. S: Will we preserve `np.lib` as per the above discussion?
+.. note::
+
+    TBD: will we preserve ``np.lib`` or not? It only has a couple of unique
+    functions/objects, like ``Arrayterator`` (a candidate for removal) and the
+    ``stride_tricks`` subsubmodule. ``numpy.lib`` itself is not a coherent
+    namespace, and does not even have a reference guide page.
 
 We will make all submodules available lazily, so that users don't have to type
 ``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
