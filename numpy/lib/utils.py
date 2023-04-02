@@ -1142,7 +1142,9 @@ def _opt_info():
     return enabled_features
 
 def drop_metadata(dt):
-    align = dt.isalignedstruct
+    """
+    Returns the copy of a dtype where all metadata has been removed
+    """
     if dt.names:
         # structured dtype
         l = list()
