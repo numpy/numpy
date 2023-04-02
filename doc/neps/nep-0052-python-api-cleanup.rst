@@ -17,7 +17,7 @@ Abstract
 
 We propose to clean up NumPy's Python API for the NumPy 2.0 release.
 This includes a more clearly defined split between what is public and what is
-private, reducing the size of the main namespace by removing aliases
+private, and reducing the size of the main namespace by removing aliases
 and functions that have better alternatives.
 
 
@@ -178,15 +178,13 @@ there was already rough consensus on that - however it was hard to pull off in
 a minor release.
 
 A basic principle we will adhere to is "one function, one location". Functions
-that are exposes in more than one namespace (e.g., many functions are present
-in ``numpy`` and ``numpy.lib``) need to get a single home.
+that are exposed in more than one namespace (e.g., many functions are present
+in ``numpy`` and ``numpy.lib``) need to find a single home.
 
 We will reorganize the API reference guide along main and submodule namespaces,
 and only within the main namespace use the current subdivision along
 functionality groupings. Also by "mainstream" and special-purpose namespaces.
 Details TBD, something like:
-
-.. Ralf's original grouping, with a few more comments:
 
 ::
 
@@ -224,59 +222,8 @@ Details TBD, something like:
     numpy.doc
     numpy.matlib
     numpy.version
-    
-    # To clean out or somehow deal with: everything in `numpy.lib`
-
-Or like this:
-
-.. Stefan's changed version:
-
-.. S: not sure what to call these submodules; made something up, but
-   should be improved
-
-::
-
-    # `numpy.util`: Regular/recommended user-facing namespaces for general use
-    numpy
-    numpy.exceptions
-    numpy.testing
-    numpy.typing
-    numpy.lib.stride_tricks
-    numpy.types
-
-    # `numpy.algorithms`: special purpose computation algorithms
-    numpy.emath
-    numpy.math
-    numpy.fft
-    numpy.linalg
-    numpy.polynomial
-    numpy.random
-
-    # `numpy.ffi`: Special-purpose
-    numpy.array_api
-    numpy.ctypeslib
-    numpy.f2py
-
-    # `numpy.containers`:
-    numpy.ma
-    numpy.rec
-
-    # Legacy (prefer not to use)
-    numpy.char
-    numpy.distutils
-    numpy.matrixlib
-
-    # To remove
-    numpy.compat
-    numpy.core?
-    numpy.doc
-    numpy.matlib
-    numpy.version
 
     # To clean out or somehow deal with: everything in `numpy.lib`
-
-.. S: Are you thinking that even math.* will disappear out of the name
-   mainspace? That's quite a big change.
 
 .. note::
 
