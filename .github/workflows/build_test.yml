@@ -433,8 +433,9 @@ jobs:
       run: |
         export CC=/usr/bin/gcc-12
         export CXX=/usr/bin/g++-12
-        python setup.py install
+        python -m pip install -e .
     # Run only a few tests, running everything in an SDE takes a long time
+    # Using pytest directly, unable to use python runtests.py -n -t ...
     - name: Run linalg/ufunc/umath tests
       run: |
-        sde -spr -- python runtests.py -n -t numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        sde -spr -- pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
