@@ -1,6 +1,6 @@
 /*@targets
  ** $maxopt baseline
- ** (avx2 fma3) avx512f
+ ** (avx2 fma3) avx512_skx
  ** vsx2 vsx3 vsx4
  ** neon_vfpv4
  ** vxe vxe2
@@ -65,6 +65,98 @@ simd_@op@_scalar_f64(npyv_f64 out, npy_uint64 cmp_bits)
     return npyv_loada_f64(out_copy);
 }
 /**end repeat**/
+
+#if NPY_SIMD_CVT_F64
+#if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
+NPY_FINLINE npyv_f64
+#else
+NPY_NOINLINE npyv_f64
+#endif
+simd_tan_scalar_f64(npyv_f64 out)
+{
+    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) out_copy[npyv_nlanes_f64];
+    npyv_storea_f64(out_copy, out);
+
+    for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
+        out_copy[i] = npy_tan(out_copy[i]);
+    }
+
+    return npyv_loada_f64(out_copy);
+}
+
+/* Vector approximation for double-precision tan.
+   Maximum measured error is 3.48 ULP:
+   __v_tan(0x1.4457047ef78d8p+20) got -0x1.f6ccd8ecf7dedp+37
+				 want -0x1.f6ccd8ecf7deap+37.   */
+NPY_FINLINE
+npyv_f64 simd_inner_tan(npyv_f64 x) {
+    const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
+    const npyv_u64 abs_mask = npyv_setall_u64(0x7fffffffffffffff);
+    const npyv_u64 range_val = npyv_setall_u64(0x4160000000000000);
+    const npyv_u64 tiny_bound = npyv_setall_u64(0x3e50000000000000);
+    const npyv_f64 two_over_pi = npyv_setall_f64(0x1.45f306dc9c883p-1);
+    const npyv_f64 half_pi_high = npyv_setall_f64(-0x1.921fb54442d18p0);
+    const npyv_f64 half_pi_low = npyv_setall_f64(-0x1.1a62633145c07p-54);
+    const double poly[9] = {
+        0x1.5555555555556p-2, 0x1.1111111110a63p-3, 0x1.ba1ba1bb46414p-5,
+        0x1.664f47e5b5445p-6, 0x1.226e5e5ecdfa3p-7, 0x1.d6c7ddbf87047p-9,
+        0x1.7ea75d05b583ep-10, 0x1.289f22964a03cp-11, 0x1.4e4fd14147622p-12
+    };
+
+    npyv_u64 iax = npyv_and_u64(npyv_reinterpret_u64_f64(x), abs_mask);
+
+    /* Our argument reduction cannot calculate q with sufficient accuracy for very
+        large inputs. Fall back to scalar routine for all lanes if any are too
+        large, or Inf/NaN. If fenv exceptions are expected, also fall back for tiny
+        input to avoid underflow. Note pl does not supply a scalar double-precision
+        tan, so the fallback will be statically linked from the system libm.  */
+    npyv_b64 check = npyv_cmpgt_u64(npyv_sub_u64(iax, tiny_bound), npyv_sub_u64(range_val, tiny_bound));
+    if (npyv_any_b64(check)) {
+        return simd_tan_scalar_f64(x);
+    }
+
+    /* q = nearest integer to 2 * x / pi.  */
+    npyv_f64 q = npyv_sub_f64(npyv_muladd_f64(x, two_over_pi, shift), shift);
+    npyv_s64 qi = npyv_cvt_s64_f64(q);
+
+    /* Use q to reduce x to r in [-pi/4, pi/4], by:
+        r = x - q * pi/2, in extended precision.  */
+    npyv_f64 r = x;
+    r = npyv_muladd_f64(q, half_pi_high, r);
+    r = npyv_muladd_f64(q, half_pi_low, r);
+    /* Further reduce r to [-pi/8, pi/8], to be reconstructed using double angle
+        formula.  */
+    r = npyv_mul_f64(r, npyv_setall_f64(0.5));
+
+    /* Approximate tan(r) using order 8 polynomial.
+        tan(x) is odd, so polynomial has the form:
+        tan(x) ~= x + C0 * x^3 + C1 * x^5 + C3 * x^7 + ...
+        Hence we first approximate P(r) = C1 + C2 * r^2 + C3 * r^4 + ...
+        Then compute the approximation by:
+        tan(r) ~= r + r^3 * (C0 + r^2 * P(r)).  */
+    npyv_f64 r2 = npyv_mul_f64(r, r);
+    npyv_f64 r4 = npyv_mul_f64(r2, r2);
+    npyv_f64 r8 = npyv_mul_f64(r4, r4);
+    /* Use offset version of Estrin wrapper to evaluate from C1 onwards.  */
+    npyv_f64 p = npyv_estrin_7_f64(r2, r4, r8, poly, 1);
+    p = npyv_muladd_f64(p, r2, npyv_setall_f64(poly[0]));
+    p = npyv_muladd_f64(r2, npyv_mul_f64(p, r), r);
+
+    /* Recombination uses double-angle formula:
+        tan(2x) = 2 * tan(x) / (1 - (tan(x))^2)
+        and reciprocity around pi/2:
+        tan(x) = 1 / (tan(pi/2 - x))
+        to assemble result using change-of-sign and conditional selection of
+        numerator/denominator, dependent on odd/even-ness of q (hence quadrant). */
+    npyv_f64 n = npyv_muladd_f64(p, p, npyv_setall_f64(-1));
+    npyv_f64 d = npyv_mul_f64(p, npyv_setall_f64(2));
+
+    npyv_b64 use_recip = npyv_cmpeq_u64(npyv_and_u64(npyv_reinterpret_u64_s64(qi), npyv_setall_u64(1)), npyv_setall_u64(0));
+
+    return npyv_div_f64(npyv_select_f64(use_recip, -d, n), npyv_select_f64 (use_recip, n, d));
+}
+#endif
+
 
 /*
  * Approximate sine algorithm for x \in [-pi/2, pi/2]
@@ -160,6 +252,34 @@ simd_sin_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
     /* sign.  */
     return npyv_reinterpret_f64_u64(npyv_xor_u64(npyv_xor_u64(npyv_reinterpret_u64_f64(y), sign), odd));
 }
+
+#if NPY_SIMD_CVT_F64
+NPY_FINLINE void
+simd_tan_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
+{
+    const int vstep = npyv_nlanes_f64;
+
+    npyv_f64 out = npyv_zero_f64();
+    npyv_f64 x_in;
+
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        if (ssrc == 1) {
+            x_in = npyv_load_tillz_f64(src, len);
+        } else {
+            x_in = npyv_loadn_tillz_f64(src, ssrc, len);
+        }
+
+        out = simd_inner_tan(x_in);
+
+        if (sdst == 1) {
+            npyv_store_till_f64(dst, len, out);
+        } else {
+            npyv_storen_till_f64(dst, sdst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+#endif
 
 /**begin repeat
  *  #op = cos, sin#
@@ -383,12 +503,13 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
 #endif // NYP_SIMD_FMA3
 
 /**begin repeat
- *  #func = cos, sin#
+ *  #func = cos, sin, tan#
+ *  #check = 1, 1, NPY_SIMD_CVT_F64#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F64 && NPY_SIMD_FMA3
+#if NPY_SIMD_F64 && NPY_SIMD_FMA3 && @check@
     const double *src = (double*)args[0];
           double *dst = (double*)args[1];
     const int lsize = sizeof(src[0]);

@@ -97,6 +97,11 @@ typedef double     npyv_lanetype_f64;
     #include "intdiv.h"
 #endif
 
+// include Estrin helper macros
+#if NPY_SIMD_F64
+    #include "estrin.h"
+#endif
+
 /**
  * Some SIMD extensions currently(AVX2, AVX512F) require (de facto)
  * a maximum number of strides sizes when dealing with non-contiguous memory access.

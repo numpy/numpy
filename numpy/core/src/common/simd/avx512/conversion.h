@@ -28,6 +28,10 @@
 #define npyv_cvt_f32_b32(BL) _mm512_castsi512_ps(npyv_cvt_u32_b32(BL))
 #define npyv_cvt_f64_b64(BL) _mm512_castsi512_pd(npyv_cvt_u64_b64(BL))
 
+#ifdef NPY_SIMD_CVT_F64
+#define npyv_cvt_s64_f64 _mm512_cvtpd_epi64
+#endif
+
 // convert integer vectors to mask
 #ifdef NPY_HAVE_AVX512BW
     #define npyv_cvt_b8_u8 _mm512_movepi8_mask

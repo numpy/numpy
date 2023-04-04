@@ -36,6 +36,7 @@
     #define NPY_SIMD_F32 0
 #endif
 #define NPY_SIMD_FMA3 1 // native support
+#define NPY_SIMD_CVT_F64 0
 
 #ifdef NPY_HAVE_VX
     #define NPY_SIMD_BIGENDIAN 1

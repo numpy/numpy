@@ -14,6 +14,7 @@
 #define NPY_SIMD_CMPSIGNAL 0
 // Enough limit to allow us to use _mm256_i32gather_*
 #define NPY_SIMD_MAXLOAD_STRIDE32 (0x7fffffff / 8)
+#define NPY_SIMD_CVT_F64 0
 
 typedef __m256i npyv_u8;
 typedef __m256i npyv_s8;
