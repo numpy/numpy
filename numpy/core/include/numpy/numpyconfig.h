@@ -129,7 +129,7 @@
 /* Sanity check the (requested) feature version */
 #if NPY_FEATURE_VERSION > NPY_API_VERSION
     #error "NPY_TARGET_VERSION higher than NumPy headers!"
-#elif NPY_FEATURE_VERSION < NUMPY_1_15_API_VERSION
+#elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION
     /* Older than NumPy 1.15 requires Python 3.6... */
     #error "NPY_TARGET_VERSION cannot ask for a version before 1.15."
 #endif
