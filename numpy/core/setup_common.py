@@ -50,6 +50,11 @@ C_ABI_VERSION = 0x01000009
 # 0x00000010 - 1.24.x
 C_API_VERSION = 0x00000010
 
+# When compiling against NumPy (downstream libraries), NumPy will by default
+# pick an older feature version.  For example, for 1.25.x we default to the
+# 1.17 API and support going back all the way to 1.15.x (if so desired).
+# This is set up in `numpyconfig.h`.
+
 class MismatchCAPIError(ValueError):
     pass
 

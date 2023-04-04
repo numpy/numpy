@@ -44,23 +44,6 @@
 #define NPY_FAIL 0
 #define NPY_SUCCEED 1
 
-/*
- * Binary compatibility version number.  This number is increased
- * whenever the C-API is changed such that binary compatibility is
- * broken, i.e. whenever a recompile of extension modules is needed.
- */
-#define NPY_VERSION NPY_ABI_VERSION
-
-/*
- * Minor API version.  This number is increased whenever a change is
- * made to the C-API -- whether it breaks binary compatibility or not.
- * Some changes, such as adding a function pointer to the end of the
- * function table, can be made without breaking binary compatibility.
- * In this case, only the NPY_FEATURE_VERSION (*not* NPY_VERSION)
- * would be increased.  Whenever binary compatibility is broken, both
- * NPY_VERSION and NPY_FEATURE_VERSION should be increased.
- */
-#define NPY_FEATURE_VERSION NPY_API_VERSION
 
 enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_BYTE, NPY_UBYTE,
