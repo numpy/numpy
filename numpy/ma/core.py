@@ -7049,7 +7049,7 @@ def compressed(x):
       mask=[[False,  True, False],
             [False,  True, False],
             [False, False,  True]],
-      fill_value=1e+20)
+      fill_value=999999)
 
     Compress the masked array into a 1-D array of non-masked values:
 
