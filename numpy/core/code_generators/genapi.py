@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import importlib.util
+import textwrap
 
 from os.path import join
 
@@ -96,6 +97,33 @@ def remove_whitespace(s):
 
 def _repl(str):
     return str.replace('Bool', 'npy_bool')
+
+
+class MinVersion:
+    def __init__(self, version):
+        """ Version should be the normal NumPy version, e.g. "1.25" """
+        major, minor = version.split(".")
+        self.version = f"NPY_{major}_{minor}_API_VERSION"
+
+    def __str__(self):
+        # Used by version hashing:
+        return self.version
+
+    def add_guard(self, name, normal_define):
+        """Wrap a definition behind a version guard"""
+        numpy_target_help_pointer = (
+            "(Old_NumPy_target see also: "
+            "https://numpy.org/devdocs/dev/depending_on_numpy.html)")
+
+        wrap = textwrap.dedent(f"""
+            #if NPY_FEATURE_VERSION < {self.version}
+                #define {name} {numpy_target_help_pointer}
+            #else
+            {{define}}
+            #endif""")
+
+        # we only insert `define` later to avoid confusing dedent:
+        return wrap.format(define=normal_define)
 
 
 class StealRef:
@@ -391,7 +419,20 @@ class FunctionApi:
     def __init__(self, name, index, annotations, return_type, args, api_name):
         self.name = name
         self.index = index
-        self.annotations = annotations
+
+        self.min_version = None
+        self.annotations = []
+        for annotation in annotations:
+            # String checks, because manual import breaks isinstance
+            if type(annotation).__name__ == "StealRef":
+                self.annotations.append(annotation)
+            elif type(annotation).__name__ == "MinVersion":
+                if self.min_version is not None:
+                    raise ValueError("Two minimum versions specified!")
+                self.min_version = annotation
+            else:
+                raise ValueError(f"unknown annotation {annotation}")
+
         self.return_type = return_type
         self.args = args
         self.api_name = api_name
@@ -403,13 +444,14 @@ class FunctionApi:
         return argstr
 
     def define_from_array_api_string(self):
-        define = """\
-#define %s \\\n        (*(%s (*)(%s)) \\
-         %s[%d])""" % (self.name,
-                                self.return_type,
-                                self._argtypes_string(),
-                                self.api_name,
-                                self.index)
+        arguments = self._argtypes_string()
+        define = textwrap.dedent(f"""\
+            #define {self.name} \\
+                    (*({self.return_type} (*)({arguments})) \\
+                {self.api_name}[{self.index}])""")
+
+        if self.min_version is not None:
+            define = self.min_version.add_guard(self.name, define)
         return define
 
     def array_api_define(self):

@@ -712,11 +712,15 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+#if NPY_FEATURE_VERSION >= NPY_1_20_API_VERSION
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
+#endif
     /*
      * For malloc/calloc/realloc/free per object
      */
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
     PyObject *mem_handler;
+#endif
 } PyArrayObject_fields;
 
 /*
@@ -1654,11 +1658,13 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
 
-static inline NPY_RETURNS_BORROWED_REF PyObject *
-PyArray_HANDLER(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->mem_handler;
-}
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+    static inline NPY_RETURNS_BORROWED_REF PyObject *
+    PyArray_HANDLER(PyArrayObject *arr)
+    {
+        return ((PyArrayObject_fields *)arr)->mem_handler;
+    }
+#endif
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 
