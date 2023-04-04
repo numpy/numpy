@@ -407,6 +407,7 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # Needed to compile kiva.agg._agg extension.
                 extra_args.append('/Zm1000')
+                extra_cflags += extra_cxxflags
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources

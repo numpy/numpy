@@ -16,15 +16,6 @@ import re
 import subprocess
 import textwrap
 
-# These flags are used to compile any C++ source within Numpy.
-# They are chosen to have very few runtime dependencies.
-NPY_CXX_FLAGS = [
-    '-std=c++11',  # Minimal standard version
-    '-D__STDC_VERSION__=0',  # for compatibility with C headers
-    '-fno-exceptions',  # no exception support
-    '-fno-rtti']  # no runtime type information
-
-
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
     these class attributes can be used to change the default behavior
@@ -1000,7 +991,7 @@ class _CCompiler:
         )
         detect_args = (
            ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*", ""),
-           ("cc_has_native", 
+           ("cc_has_native",
                 ".*(-march=native|-xHost|/QxHost|-mcpu=a64fx).*", ""),
            # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
            ("cc_noopt", ".*DISABLE_OPT.*", ""),
