@@ -399,7 +399,7 @@ Clipping and rounding
    ma.MaskedArray.round
 
 Set operations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
 
