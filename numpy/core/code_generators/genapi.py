@@ -112,7 +112,7 @@ class MinVersion:
     def add_guard(self, name, normal_define):
         """Wrap a definition behind a version guard"""
         numpy_target_help_pointer = (
-            "(Old_NumPy_target see also: "
+            "(Old_NumPy_target_see_depending_on_numpy__"
             "https://numpy.org/devdocs/dev/depending_on_numpy.html)")
 
         wrap = textwrap.dedent(f"""
