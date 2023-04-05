@@ -270,13 +270,10 @@ class NpzFile(Mapping):
             filename = getattr(self.fid, "name", "object")
 
         # Get the name of arrays
+        array_names = ', '.join(self.files[:self._MAX_REPR_ARRAY_COUNT])
         if len(self.files) > self._MAX_REPR_ARRAY_COUNT:
-            array_names = "%s..." % (
-                ', '.join(self.files[:self._MAX_REPR_ARRAY_COUNT])
-            )
-        else:
-            array_names = ', '.join(self.files)
-        return f"NpzFile {filename!r} with keys {array_names}"
+            array_names += "..."
+        return f"NpzFile {filename!r} with keys: {array_names}"
 
 
 @set_module('numpy')

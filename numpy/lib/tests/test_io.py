@@ -322,8 +322,8 @@ class TestSavezLoad(RoundtripTest):
             assert_(fp.closed)
 
     @pytest.mark.parametrize("count,repr_count,repr_f", [
-        (10, 5, "NpzFile %s with keys %s..."),
-        (10, 20, "NpzFile %s with keys %s"),
+        (10, 5, "NpzFile %s with keys: %s..."),
+        (10, 20, "NpzFile %s with keys: %s"),
     ])
     def test_representation(self, count, repr_count, repr_f):
         a = np.array([[1, 2], [3, 4]], float)
