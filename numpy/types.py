@@ -7,8 +7,8 @@ that are not widely used directly.
 
 .. versionadded:: NumPy 1.25
 
-    The types module is new in NumPy 1.25.  Older exceptions remain
-    available through the main NumPy namespace for compatibility.
+    The types module is new in NumPy 1.25.  Previously DType classes were
+    only accessible indirectly.
 
 
 DType classes
