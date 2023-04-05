@@ -321,20 +321,19 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
-    @pytest.mark.parametrize("count,repr_count,repr_f", [
-        (10, 5, "NpzFile %s with keys: %s..."),
-        (10, 20, "NpzFile %s with keys: %s"),
+    @pytest.mark.parametrize("count, expected_repr", [
+        (1, "NpzFile {fname!r} with keys: arr_0"),
+        (5, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4"),
+        # _MAX_REPR_ARRAY_COUNT is 5, so files with more than 5 keys are
+        # expected to end in '...'
+        (6, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4..."),
     ])
-    def test_representation(self, count, repr_count, repr_f):
+    def test_repr_lists_keys(self, count, expected_repr):
         a = np.array([[1, 2], [3, 4]], float)
-        np.lib.npyio.NpzFile._MAX_REPR_ARRAY_COUNT = repr_count
-        array_string = ', '.join(
-            [f"arr_{i}" for i in range(min(count, repr_count))]
-        )
         with temppath(suffix='.npz') as tmp:
             np.savez(tmp, *[a]*count)
             l = np.load(tmp)
-            assert str(l) == repr_f % (repr(tmp), array_string)
+            assert repr(l) == expected_repr.format(fname=tmp)
             l.close()
 
 
