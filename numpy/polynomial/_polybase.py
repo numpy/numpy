@@ -682,6 +682,19 @@ class ABCPolyBase(abc.ABC):
         degree : int
             Degree of the series, one less than the number of coefficients.
 
+        Examples
+        --------
+
+        Create a polynomial object for ``1 + 7*x + 4*x**2``:
+        >>> import numpy as np
+        >>> poly = np.polynomial.Polynomial([1, 7, 4])
+        >>> poly
+        Polynomial([1., 7., 4.], domain=[-1,  1], window=[-1,  1])
+
+        Calculate the degree:
+        >>> poly.degree()
+        2
+
         """
         return len(self) - 1
 
