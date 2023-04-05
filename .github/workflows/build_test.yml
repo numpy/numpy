@@ -422,7 +422,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/751535/sde-external-9.14.0-2022-10-25-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
     - name: Install dependencies
@@ -438,4 +438,4 @@ jobs:
     # Using pytest directly, unable to use python runtests.py -n -t ...
     - name: Run linalg/ufunc/umath tests
       run: |
-        sde -spr -- pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
