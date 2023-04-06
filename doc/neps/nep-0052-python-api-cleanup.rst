@@ -236,7 +236,8 @@ Details TBD, something like:
 
 .. note::
 
-   TBD: is `numpy.math` actually used at all? If not, should we hide/remove it?
+   TBD: is ``numpy.math`` actually used at all? If not, should we hide/remove
+   it?
 
 We will make all submodules available lazily, so that users don't have to type
 ``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
