@@ -813,7 +813,7 @@ class TestRandomDist:
         assert_raises(ValueError, random.dirichlet, alpha)
 
     def test_dirichlet_zero_alpha(self):
-        y = random.dirichlet([5, 9, 0, 8])
+        y = random.default_rng().dirichlet([5, 9, 0, 8])
         assert_equal(y[2], 0)
 
     def test_dirichlet_alpha_non_contiguous(self):
