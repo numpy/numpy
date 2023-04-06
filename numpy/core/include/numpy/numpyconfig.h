@@ -115,23 +115,23 @@
  * 1.17 as default was the choice of oldest-support-numpy at the time and
  * has in practice no limit (comapared to 1.19).  Even earlier becomes legacy.
  */
-#ifdef NPY_TARGET_VERSION
-  #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
-#else
-  #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /* NumPy internal build, always use current version. */
     #define NPY_FEATURE_VERSION NPY_API_VERSION
-  #else
-    /* NOTE: This default should be increased over time: */
+#elif defined(NPY_TARGET_VERSION) && NPY_TARGET_VERSION
+    /* user provided a target version, use it */
+    #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
+#else
+    /* Use the default (should be increased over time) */
     #define NPY_FEATURE_VERSION NPY_1_17_API_VERSION
-  #endif
 #endif
 
 /* Sanity check the (requested) feature version */
 #if NPY_FEATURE_VERSION > NPY_API_VERSION
     #error "NPY_TARGET_VERSION higher than NumPy headers!"
 #elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION
-    /* Older than NumPy 1.15 requires Python 3.6... */
-    #error "NPY_TARGET_VERSION cannot ask for a version before 1.15."
+    /* No support for irrelevant old targets, no need for error, but warn. */
+    #warning "Requested NumPy target lower than supported NumPy 1.15."
 #endif
 
 
