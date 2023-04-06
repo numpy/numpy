@@ -77,11 +77,8 @@ incur significant costs:
   This happens even when the changes are warranted, because they are
   aware of the above concerns.
 
-.. R: Link discussion about restructuring namespaces! (e.g., find the thread
-   with the GUI explorer person)
-
-.. S: I first thought you were talking about Manim,
-   but looks like it's something different.
+.. R: TODO: find and link discussion about restructuring namespaces! (e.g.,
+   find the thread with the GUI explorer person)
 
 .. S: Aaron's post re: array API and NumPy 2.0:
    https://mail.python.org/archives/list/numpy-discussion@python.org/thread/TTZEUKXUICDHGTCX5EMR6DQTYOSDGRV7/#YKBWQ2AP76WYWAP6GFRYMPHZCKTC43KM
@@ -115,7 +112,7 @@ backward compatible, there is no guarantee of forward compatibility from 1.25.X
 to 2.0. Code will have to be updated to account for deprecated, moved, or
 removed functions/classes, as well as for more strictly enforced private APIs.
 
-In order to make it easier to adapt to the changes in this NEP, we will:
+In order to make it easier to adopt the changes in this NEP, we will:
 
 1. Provide a transition guide that lists each API change and its replacement.
 2. Provide a script to automate the migration wherever possible. This will be
@@ -154,9 +151,6 @@ Here is a representative set of examples:
 New namespaces are introduced for warnings/exceptions (``np.exceptions``) and
 for dtype-related functionality (``np.types``). NumPy 2.0 is a good opportunity
 to populate these submodules from the main namespace.
-
-.. S: Has the ``np.types`` name been fixed? Wonder if we're going to
-   create confusion with that name.
 
 Functionality that is widely used but has a preferred alternative may either be
 deprecated (with the deprecation message pointing out what to use instead) or
@@ -218,7 +212,7 @@ Details TBD, something like:
 
     # To remove
     numpy.compat
-    numpy.core?
+    numpy.core  # rename to _core
     numpy.doc
     numpy.matlib
     numpy.version
@@ -231,6 +225,10 @@ Details TBD, something like:
     functions/objects, like ``Arrayterator`` (a candidate for removal) and the
     ``stride_tricks`` subsubmodule. ``numpy.lib`` itself is not a coherent
     namespace, and does not even have a reference guide page.
+
+.. note::
+
+   TBD: is `numpy.math` actually used at all? If not, should we hide/remove it?
 
 We will make all submodules available lazily, so that users don't have to type
 ``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
