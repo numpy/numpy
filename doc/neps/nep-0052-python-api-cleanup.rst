@@ -85,13 +85,21 @@ incur significant costs:
 
 The scope of this NEP includes:
 
-- xxx
+- Deprecating or removing functionality that is too niche for NumPy, not
+  well-designed, superceded by better alternatives, or otherwise a candidate
+  for removal.
+- Clearly separating public from private NumPy API by use of underscores.
+- Restructuring the NumPy namespaces to be easier to understand and navigate.
 
 Out of scope for this NEP are:
 
-- xxx
+- Introducing new functionality or performance enhancements.
 
+TBD whether in or out of scope for this NEP:
 
+- Whether or not to clean up some of the more niche ``ndarray`` methods (this
+  was suggested in the NumPy 2.0 developer meeting, with mildly positive
+  feedback from the crowd).
 
 
 Usage and Impact
