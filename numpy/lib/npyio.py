@@ -167,6 +167,8 @@ class NpzFile(Mapping):
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
+    >>> npz
+    NpzFile 'object' with keys x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -178,6 +180,7 @@ class NpzFile(Mapping):
     # Make __exit__ safe if zipfile_factory raises an exception
     zip = None
     fid = None
+    _MAX_REPR_ARRAY_COUNT = 5
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
@@ -258,6 +261,19 @@ class NpzFile(Mapping):
                 return self.zip.read(key)
         else:
             raise KeyError("%s is not a file in the archive" % key)
+
+    def __repr__(self):
+        # Get filename or default to `object`
+        if isinstance(self.fid, str):
+            filename = self.fid
+        else:
+            filename = getattr(self.fid, "name", "object")
+
+        # Get the name of arrays
+        array_names = ', '.join(self.files[:self._MAX_REPR_ARRAY_COUNT])
+        if len(self.files) > self._MAX_REPR_ARRAY_COUNT:
+            array_names += "..."
+        return f"NpzFile {filename!r} with keys: {array_names}"
 
 
 @set_module('numpy')
