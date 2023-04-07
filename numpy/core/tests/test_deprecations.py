@@ -922,3 +922,12 @@ class TestFromnumeric(_DeprecationTestCase):
     # 2023-03-02, 1.25.0
     def test_alltrue(self):
         self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
+
+
+class TestMathAlias(_DeprecationTestCase):
+    # Deprecated in Numpy 1.25, 2023-04-06
+    def test_deprecated_np_math(self):
+        self.assert_deprecated(lambda: np.math)
+
+    def test_deprecated_np_lib_math(self):
+        self.assert_deprecated(lambda: np.lib.math)
