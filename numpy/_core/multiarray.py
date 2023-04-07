@@ -971,7 +971,7 @@ def bincount(x, weights=None, minlength=None):
     >>> np.bincount(x).size == np.amax(x)+1
     True
 
-    The input array needs to be of integer dtype, otherwise a
+    The input array needs to be of the native integer index type, otherwise a
     TypeError is raised:
 
     >>> np.bincount(np.arange(5, dtype=float))
@@ -979,6 +979,20 @@ def bincount(x, weights=None, minlength=None):
       ...
     TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
     according to the rule 'safe'
+
+    This also means that the following code will not work on a 32-bit system:
+
+    >>> import sys
+    >>> if sys.maxsize <= 2**32:
+    ...     np.bincount(np.arange(5, dtype=np.int64))
+    ...     # TypeError: Cannot cast array data from dtype('int64') to
+    ...     # dtype('int32') according to the rule 'safe'
+
+    The easiest way to solve this is by always using the Python int type
+    (or np.int_):
+
+    >>> np.bincount(np.arange(5, dtype=int))
+    array([1, 1, 1, 1, 1])
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.
