@@ -974,7 +974,7 @@ def tensordot(a, b, axes=2):
     When `axes` is integer_like, the sequence for evaluation will be: first
     the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
     (N-1)th axis in `b` last. When N-1 is smaller than 0, or when -N is larger
-    than -1, the element of 'a' or 'b' is defined as the 'axes'.
+    than -1, the element of 'a' and 'b' are defined as the 'axes'.
 
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
@@ -987,6 +987,20 @@ def tensordot(a, b, axes=2):
     Examples
     --------
     "traditional" examples:
+    >>> a_0 = np.array([[1,2],[3,4]])
+    >>> b_0 = np.array([[5,6],[7,8]])
+    >>> c_0 = np.tensordot(a_0,b_0,0)
+    >>> c_0.shape
+    (2, 2, 2, 2)
+    >>> c_0
+    array([[[[ 5,  6],
+             [ 7,  8]],
+            [[10, 12],
+             [14, 16]]],
+           [[[15, 18],
+             [21, 24]],
+            [[20, 24],
+             [28, 32]]]])
 
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
@@ -999,20 +1013,6 @@ def tensordot(a, b, axes=2):
            [4664., 5018.],
            [4796., 5162.],
            [4928., 5306.]])
-    >>> a = np.array([[1,2],[3,4]])
-    >>> b = np.array([[5,6],[7,8]])
-    >>> c = np.tensordot(a,b,0)
-    >>> c.shape
-    (2, 2, 2, 2)
-    >>> c
-    array([[[[ 5,  6],
-             [ 7,  8]],
-            [[10, 12],
-             [14, 16]]],
-           [[[15, 18],
-             [21, 24]],
-            [[20, 24],
-             [28, 32]]]])
 
     >>> # A slower but equivalent way of computing the same...
     >>> d = np.zeros((5,2))
