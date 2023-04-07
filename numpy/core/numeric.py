@@ -987,6 +987,7 @@ def tensordot(a, b, axes=2):
     Examples
     --------
     "traditional" examples:
+    >>> # An example on integer_like
     >>> a_0 = np.array([[1,2],[3,4]])
     >>> b_0 = np.array([[5,6],[7,8]])
     >>> c_0 = np.tensordot(a_0,b_0,0)
@@ -1001,13 +1002,12 @@ def tensordot(a, b, axes=2):
              [21, 24]],
             [[20, 24],
              [28, 32]]]])
-
+    >>> # An example on array_like
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
     >>> c.shape
     (5, 2)
-    >>> c
     array([[4400., 4730.],
            [4532., 4874.],
            [4664., 5018.],
