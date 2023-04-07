@@ -1008,6 +1008,7 @@ def tensordot(a, b, axes=2):
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
     >>> c.shape
     (5, 2)
+    >>> c
     array([[4400., 4730.],
            [4532., 4874.],
            [4664., 5018.],
