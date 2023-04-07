@@ -112,7 +112,7 @@ cdata.set('NPY_SIZEOF_PY_LONG_LONG',
 if cc.has_header('complex.h')
   cdata.set10('HAVE_COMPLEX_H', true)
   cdata.set10('NPY_USE_C99_COMPLEX', true)
-  if cc.get_id() == 'msvc'
+  if cc.get_argument_syntax() == 'msvc'
     complex_types_to_check = [
       ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex', 'float'],
       ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex', 'double'],
@@ -261,7 +261,7 @@ else
   # function is not available in CI. For the latter there is a fallback path,
   # but that is broken because we don't have the exact long double
   # representation checks.
-  if cc.get_id() != 'msvc'
+  if cc.get_argument_syntax() != 'msvc'
     cdata.set10('HAVE_STRTOLD_L', false)
   endif
 endif
@@ -568,7 +568,7 @@ c_args_common = [
 cpp_args_common = c_args_common + [
   '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
-if cc.get_id() != 'msvc'
+if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
     '-fno-exceptions',  # no exception support
     '-fno-rtti',  # no runtime type information
