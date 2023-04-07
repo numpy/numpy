@@ -3586,7 +3586,7 @@ Miscellaneous Macros
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
-    contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
+    contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
     to copy the data from `obj->base` This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
