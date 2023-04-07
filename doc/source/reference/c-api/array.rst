@@ -3581,7 +3581,7 @@ Miscellaneous Macros
 
     Returns the reference count of any Python object.
 
-.. c:function:: void PyArray_DiscardWritebackIfCopy(PyObject* obj)
+.. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
