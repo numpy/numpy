@@ -215,7 +215,14 @@ else:
     __deprecated_attrs__.update({
         n: (alias, _msg.format(n=n, an=an)) for n, alias, an in _type_info})
 
-    del _msg, _type_info
+    import math
+
+    __deprecated_attrs__['math'] = (math,
+        "`np.math` is a deprecated alias for the standard library `math` "
+        "module (Deprecated Numpy 1.25). Replace usages of `np.math` with "
+        "`math`")
+
+    del math, _msg, _type_info
 
     from .core import abs
     # now that numpy modules are imported, can initialize limits
@@ -272,6 +279,7 @@ else:
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
         import warnings
+        import math
         try:
             msg = __expired_functions__[attr]
         except KeyError:
