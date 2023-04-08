@@ -15,14 +15,16 @@ fi
 # Install Openblas
 if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
     basedir=$(python tools/openblas_support.py)
-    cp -r $basedir/lib/* /usr/local/lib
-    cp $basedir/include/* /usr/local/include
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
+        # /usr/local/lib doesn't exist on cirrus-ci runners
+        sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/lib/cmake/openblas
         sudo mkdir -p /opt/arm64-builds/lib /opt/arm64-builds/include
         sudo chown -R $USER /opt/arm64-builds
         cp -r $basedir/lib/* /opt/arm64-builds/lib
         cp $basedir/include/* /opt/arm64-builds/include
     fi
+    sudo cp -r $basedir/lib/* /usr/local/lib
+    sudo cp $basedir/include/* /usr/local/include
 elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
@@ -42,5 +44,7 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     fi
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
+
+    ls -al /usr/local/lib
     pip install "delocate==0.10.4"
 fi
