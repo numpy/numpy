@@ -10,7 +10,6 @@ endif
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
-is_msvc = is_windows and cc.get_id() == 'msvc'
 
 if is_windows
   # For mingw-w64, link statically against the UCRT.
