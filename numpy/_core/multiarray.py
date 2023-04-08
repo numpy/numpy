@@ -971,8 +971,8 @@ def bincount(x, weights=None, minlength=None):
     >>> np.bincount(x).size == np.amax(x)+1
     True
 
-    The input array needs to be of the native integer index type, otherwise a
-    TypeError is raised:
+    The input array needs have an integer dtype smaller or equal to the
+    native Python array index type, otherwise a TypeError is raised:
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
