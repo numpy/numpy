@@ -1605,6 +1605,12 @@ _convert_from_any(PyObject *obj, int align)
 {
     /* default */
     if (obj == Py_None) {
+        /* Deprecated 2023-01-27, NumPy 1.25 */
+        if (DEPRECATE(
+            "in the future the `numpy.dtype()` will not accept None "
+            "as an argument. (Deprecated NumPy 1.25)") < 0) {
+                return NULL;
+        }
         return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     else if (PyArray_DescrCheck(obj)) {

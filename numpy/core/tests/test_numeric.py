@@ -853,7 +853,7 @@ class TestTypes:
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
-        assert_(np.result_type(None) == np.dtype(None))
+        assert_(np.result_type(np.float64) == np.dtype(np.float64))
 
     def test_promote_types_endian(self):
         # promote_types should always return native-endian types

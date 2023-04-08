@@ -1167,7 +1167,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&:ndarray",
                                      kwlist, PyArray_IntpConverter,
                                      &dims,
-                                     PyArray_DescrConverter,
+                                     PyArray_DescrConverter2,
                                      &descr,
                                      PyArray_BufferConverter,
                                      &buffer,
