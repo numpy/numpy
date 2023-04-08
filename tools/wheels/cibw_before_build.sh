@@ -22,9 +22,12 @@ if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
         sudo chown -R $USER /opt/arm64-builds
         cp -r $basedir/lib/* /opt/arm64-builds/lib
         cp $basedir/include/* /opt/arm64-builds/include
+        sudo cp -r $basedir/lib/* /usr/local/lib
+        sudo cp $basedir/include/* /usr/local/include
+    else
+        cp -r $basedir/lib/* /usr/local/lib
+        cp $basedir/include/* /usr/local/include
     fi
-    sudo cp -r $basedir/lib/* /usr/local/lib
-    sudo cp $basedir/include/* /usr/local/include
 elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
@@ -44,7 +47,5 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     fi
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
-
-    ls -al /usr/local/lib
     pip install "delocate==0.10.4"
 fi
