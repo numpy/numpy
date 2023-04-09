@@ -953,7 +953,8 @@ def bincount(x, weights=None, minlength=None):
         If the input is not 1-dimensional, or contains elements with negative
         values, or if `minlength` is negative.
     TypeError
-        If the type of the input is float or complex.
+        If the type of the input is float or complex, or larger than the
+        native integer type.
 
     See Also
     --------
@@ -972,7 +973,7 @@ def bincount(x, weights=None, minlength=None):
     True
 
     The input array needs have an integer dtype smaller or equal to the
-    native Python array index type, otherwise a TypeError is raised:
+    native array index type, otherwise a TypeError is raised:
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
@@ -987,12 +988,6 @@ def bincount(x, weights=None, minlength=None):
     ...     np.bincount(np.arange(5, dtype=np.int64))
     ...     # TypeError: Cannot cast array data from dtype('int64') to
     ...     # dtype('int32') according to the rule 'safe'
-
-    The easiest way to solve this is by always using the Python int type
-    (or np.int_):
-
-    >>> np.bincount(np.arange(5, dtype=int))
-    array([1, 1, 1, 1, 1])
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.
