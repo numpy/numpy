@@ -17,6 +17,9 @@ jobs:
     permissions:
       statuses: write
     steps:
+      - name: Delay execution
+        run: sleep 60s
+        shell: bash
       - name: GitHub Action step
         uses: larsoner/circleci-artifacts-redirector-action@1e28a97d7b1e273a8f78ed4692bfd10f84706a45 # master
         with:
