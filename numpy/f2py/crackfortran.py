@@ -2393,7 +2393,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc', 'arm64')):
         if p <= 20:
             return 16
     else:
