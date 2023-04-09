@@ -997,10 +997,14 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: npy_uint32 *core_dim_flags
 
-       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+       For each distinct core dimension, a set of flags (
+       :c:macro:`UFUNC_CORE_DIM_CAN_IGNORE` and
+       :c:macro:`UFUNC_CORE_DIM_SIZE_INFERRED`)
 
-..
-  dedented to allow internal linking, pending a refactoring
+   .. c:member:: PyObject *identity_value
+
+       Identity for reduction, when :c:member:`PyUFuncObject.identity`
+       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
@@ -1010,11 +1014,6 @@ PyUFunc_Type and PyUFuncObject
 
     if the dim size will be determined from the operands
     and not from a :ref:`frozen <frozen>` signature
-
-   .. c:member:: PyObject *identity_value
-
-       Identity for reduction, when :c:member:`PyUFuncObject.identity`
-       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 PyArrayIter_Type and PyArrayIterObject
 --------------------------------------
