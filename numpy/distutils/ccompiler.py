@@ -401,7 +401,7 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
         not (platform.machine() == 'arm64' and sys.platform == 'darwin')
     ):
         # clang defaults to a non-strict floating error point model.
-        # However, '-ftrapping-math' is not currently supported (2022-04-08)
+        # However, '-ftrapping-math' is not currently supported (2023-04-08)
         # for macosx_arm64.
         # Since NumPy and most Python libs give warnings for these, override:
         self.compiler.append('-ftrapping-math')
