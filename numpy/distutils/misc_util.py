@@ -747,8 +747,8 @@ def get_frame(level=0):
     """
     try:
         return sys._getframe(level+1)
-    except AttributeError as e:
-        frame = e.__traceback__.tb_frame
+    except AttributeError:
+        frame = sys.exc_info()[2].tb_frame
         for _ in range(level+1):
             frame = frame.f_back
         return frame

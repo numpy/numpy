@@ -30,15 +30,15 @@ def run():
     try:
         import numpy
         has_newnumpy = 1
-    except ImportError as e:
-        print('Failed to import new numpy:', e)
+    except ImportError:
+        print('Failed to import new numpy:', sys.exc_info()[1])
         has_newnumpy = 0
 
     try:
         from numpy.f2py import f2py2e
         has_f2py2e = 1
-    except ImportError as e:
-        print('Failed to import f2py2e:', e)
+    except ImportError:
+        print('Failed to import f2py2e:', sys.exc_info()[1])
         has_f2py2e = 0
 
     try:
@@ -48,8 +48,8 @@ def run():
         try:
             import numpy_distutils
             has_numpy_distutils = 1
-        except ImportError as e:
-            print('Failed to import numpy_distutils:', e)
+        except ImportError:
+            print('Failed to import numpy_distutils:', sys.exc_info()[1])
             has_numpy_distutils = 0
 
     if has_newnumpy:
