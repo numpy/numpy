@@ -887,7 +887,7 @@ class ABCPolyBase(abc.ABC):
         """Return the roots of the series polynomial.
 
         Compute the roots for the series. Note that the accuracy of the
-        roots decrease the further outside the domain they lie.
+        roots decreases the further outside the `domain` they lie.
 
         Returns
         -------
