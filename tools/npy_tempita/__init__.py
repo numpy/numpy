@@ -311,26 +311,24 @@ class Template:
                 raise SyntaxError(
                     'invalid syntax in expression: %s' % code)
             return value
-        except:
-            e_type, e_value, e_traceback = sys.exc_info()
-            if getattr(e_value, 'args', None):
-                arg0 = e_value.args[0]
+        except BaseException as e:
+            if getattr(e, 'args', None):
+                arg0 = e.args[0]
             else:
-                arg0 = coerce_text(e_value)
-            e_value.args = (self._add_line_info(arg0, pos),)
-            raise e_value
+                arg0 = coerce_text(e)
+            e.args = (self._add_line_info(arg0, pos),)
+            raise e
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
         try:
             exec(code, self.default_namespace, ns)
-        except:
-            e_type, e_value, e_traceback = sys.exc_info()
-            if e_value.args:
-                e_value.args = (self._add_line_info(e_value.args[0], pos),)
+        except BaseException as e:
+            if e.args:
+                e.args = (self._add_line_info(e.args[0], pos),)
             else:
-                e_value.args = (self._add_line_info(None, pos),)
-            raise e_value
+                e.args = (self._add_line_info(None, pos),)
+            raise e
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -346,10 +344,9 @@ class Template:
                     value = coerce_text(value)
                 if (is_unicode(value) and self.default_encoding):
                     value = value.encode(self.default_encoding)
-        except:
-            e_type, e_value, e_traceback = sys.exc_info()
-            e_value.args = (self._add_line_info(e_value.args[0], pos),)
-            raise e_value
+        except BaseException as e:
+            e.args = (self._add_line_info(e.args[0], pos),)
+            raise e
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:

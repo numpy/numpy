@@ -92,8 +92,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
                                        stderr=(subprocess.PIPE if hide_stderr
                                                else None), **popen_kwargs)
             break
-        except OSError:
-            e = sys.exc_info()[1]
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 continue
             if verbose:
