@@ -7202,6 +7202,21 @@ def right_shift(a, n):
     --------
     numpy.right_shift
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [11, 3, 8, 1]
+    >>> mask = [0, 0, 0, 1]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(data=[11, 3, 8, --],
+                 mask=[False, False, False,  True],
+           fill_value=999999)
+    >>> ma.right_shift(masked_x,1)
+    masked_array(data=[5, 1, 4, --],
+                 mask=[False, False, False,  True],
+           fill_value=999999)
+
     """
     m = getmask(a)
     if m is nomask:
