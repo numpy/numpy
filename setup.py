@@ -293,7 +293,7 @@ def get_build_overrides():
         ).get(compiler.compiler_type, ['-std=c99'])
 
         if not flags_is_required(compiler, False, flags, textwrap.dedent('''
-            inline int test_inline() { return 0; }
+            inline static int test_inline() { return 0; }
             int main(void)
             { return test_inline(); }
         ''')):
