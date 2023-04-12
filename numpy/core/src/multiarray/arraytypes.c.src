@@ -4658,9 +4658,9 @@ set_typeinfo(PyObject *dict)
      */
     if (dtypemeta_wrap_legacy_descriptor(
             _builtin_descrs[NPY_@NAME@],
-            "numpy.types." NPY_@NAME@_Name "DType",
+            "numpy.dtypes." NPY_@NAME@_Name "DType",
 #ifdef NPY_@NAME@_alias
-            "numpy.types." NPY_@NAME@_Alias "DType"
+            "numpy.dtypes." NPY_@NAME@_Alias "DType"
 #else
             NULL
 #endif

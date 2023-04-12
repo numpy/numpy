@@ -7,7 +7,7 @@ import types
 from typing import Any
 
 import numpy as np
-import numpy.types
+import numpy.dtypes
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
@@ -1572,9 +1572,9 @@ class TestDTypeClasses:
                 dt_name += "c"
             sc_name = dtype.type.__name__
             assert dt_name == sc_name.strip("_")
-            assert type(dtype).__module__ == "numpy.types"
+            assert type(dtype).__module__ == "numpy.dtypes"
 
-            assert getattr(numpy.types, type(dtype).__name__) is type(dtype)
+            assert getattr(numpy.dtypes, type(dtype).__name__) is type(dtype)
         else:
             assert type(dtype).__name__ == "dtype[rational]"
             assert type(dtype).__module__ == "numpy"
@@ -1616,7 +1616,7 @@ class TestDTypeClasses:
     @pytest.mark.parametrize("int_", ["UInt", "Int"])
     @pytest.mark.parametrize("size", [8, 16, 32, 64])
     def test_integer_alias_names(self, int_, size):
-        DType = getattr(numpy.types, f"{int_}{size}DType")
+        DType = getattr(numpy.dtypes, f"{int_}{size}DType")
         sctype = getattr(numpy, f"{int_.lower()}{size}")
         assert DType.type is sctype
         assert DType.__name__.lower().removesuffix("dtype") == sctype.__name__
@@ -1625,7 +1625,7 @@ class TestDTypeClasses:
             ["Half", "Float", "Double", "CFloat", "CDouble"])
     def test_float_alias_names(self, name):
         with pytest.raises(AttributeError):
-            getattr(numpy.types, name + "DType") is numpy.types.Float16DType
+            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
 
 
 class TestFromCTypes:

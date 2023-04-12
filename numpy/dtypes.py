@@ -1,6 +1,10 @@
 """
-Names of builtin NumPy Types (:mod:`numpy.types`)
-==================================================
+DType classes and utility (:mod:`numpy.dtypes`)
+===============================================
+
+This module is home to specific dtypes related functionality and their classes.
+For more general information about dtypes, also see `numpy.dtype` and
+:ref:`arrays.dtypes`.
 
 Similar to the builtin ``types`` module, this submodule defines types (classes)
 that are not widely used directly.
@@ -15,10 +19,10 @@ DType classes
 -------------
 
 The following are the classes of the corresponding NumPy dtype instances and
-NumPy scalar types.  The classe can be used for ``isisntance`` checks but are
-otherwise not typically useful as of now.
-
-For general information see `numpy.dtype` and :ref:`arrays.dtypes`.
+NumPy scalar types.  The classe can be used for ``isinstance`` checks and can
+also be instantiated or used directly.  Direct use of these classes is not
+typical, since their scalar counterparts (e.g. ``np.float64``) or strings
+like ``"float64"` can be used.
 
 .. list-table::
     :header-rows: 1
@@ -62,12 +66,12 @@ __all__ = []
 def _add_dtype_helper(DType, alias):
     # Function to add DTypes a bit more conveniently without channeling them
     # through `numpy.core._multiarray_umath` namespace or similar.
-    from numpy import types
+    from numpy import dtypes
 
-    setattr(types, DType.__name__, DType)
+    setattr(dtypes, DType.__name__, DType)
     __all__.append(DType.__name__)
 
     if alias:
-        alias = alias.removeprefix("numpy.types.")
-        setattr(types, alias, DType)
+        alias = alias.removeprefix("numpy.dtypes.")
+        setattr(dtypes, alias, DType)
         __all__.append(alias)

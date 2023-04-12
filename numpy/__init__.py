@@ -140,7 +140,7 @@ else:
     from .core import *
     from . import compat
     from . import exceptions
-    from . import types
+    from . import dtypes
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.

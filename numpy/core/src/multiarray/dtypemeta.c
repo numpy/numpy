@@ -791,7 +791,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,
-            .tp_doc = ( 
+            .tp_doc = (
                 "DType class corresponding to the scalar type and dtype of "
                 "the same name.\n\n"
                 "Please see `numpy.dtype` for the typical way to create\n"
@@ -895,7 +895,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
         static PyObject *add_dtype_helper = NULL;
-        npy_cache_import("numpy.types", "_add_dtype_helper", &add_dtype_helper);
+        npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
         if (add_dtype_helper == NULL) {
             return -1;
         }
