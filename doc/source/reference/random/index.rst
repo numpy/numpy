@@ -7,6 +7,73 @@
 Random sampling (:mod:`numpy.random`)
 =====================================
 
+NumPy facilitates various tools for generating pseudo-random numbers. This
+also includes providing means to create repeatable sequences for reproducible
+pseudo-random processes. As NumPy random module has undergone substantial changes
+first the quick reference for the major differences are laid out to demonstrate
+what the usage style used to be pre NumPy v1.17 and what currently is for
+the impatient reader.
+
+.. _random-quick-start:
+
+Quick Reference
+---------------
+
+If you want to draw samples from various distributions, below is probably what you
+see in the old docs and elsewhere, roughly speaking, import ``random`` module and then
+use functions from the :ref:`legacy` section, such as
+
+.. code-block:: python
+
+  # pre-NumPy 1.17, nostalgic style,
+  import numpy as np
+  my_array = np.random.rand(5, 3)
+  my_bivar = np.random.multivariate_normal((1,2), [[1, 0], [0, 1]], (3, 3))
+  my_uniform = np.random.uniform(-0.5, 0.5, 100)
+  # and many other legacy functions
+  # see above Legacy link for the complete list
+
+Instead, you can create a random number `Generator` instance (not to be confused
+with a Python generator of ``(n for n in range(5))`` variety) and use the methods
+of this generator. For a regular user, a generator with the default settings should
+be quite sufficient. And for that, NumPy has a shorthand to create it.
+
+.. code-block:: python
+  
+  # the current, recommended style
+  import numpy as np
+  rng = np.random.default_rng()  # (r)andom (n)umber (g)enerator
+  my_array = rng.random([5, 3])
+  my_bivar = rng.multivariate_normal(mean=(1, 2), cov=[[1, 0], [0, 1]], size=(3, 3))
+  my_uniform = rng.uniform(-0.5, 0.5, 100)
+  # and so on
+  
+  # Create another rng with a seed which only initializes this particular
+  # generator and the rest remains unaltered
+  rng0 = np.default_rng(19400707)
+  sgt_p = rng0.uniform(-60, 4, 50)
+
+.. note:: **Seed and State Management**
+
+   Historically, it was possible to influence the random state through
+   initializing/resetting the random number generator via setting an integer,
+   known as a "seed", such that the randomized procedures in the existing
+   scope can be reproduced. While this worked in many scenarios, the seed
+   setting caused some nontrivial challenges such as leaking to other processes
+   that suppoesed to use their own random processes or affecting other packages
+   that relied on NumPy and many other interesting bugs.
+
+   This situation changed when NumPy started offering a rather finer control
+   to initialize and contain these processes. As you can see from the last
+   example, you don't need to limit the scope of the seeding or implement more
+   hacks to contain the effects of the (deprecated) `seed`.
+   
+   Moreover, the current infrastructure takes a different approach to producing
+   random numbers from the legacy `RandomState` object.
+
+Introduction
+------------
+
 Numpy's random number routines produce pseudo random numbers using
 combinations of a `BitGenerator` to create sequences and a `Generator`
 to use those sequences to sample from different statistical distributions:
@@ -18,41 +85,36 @@ to use those sequences to sample from different statistical distributions:
   distribution (such as uniform, Normal or Binomial) within a specified
   interval.
 
-Since Numpy version 1.17.0 the Generator can be initialized with a
-number of different BitGenerators. It exposes many different probability
-distributions. See `NEP 19 <https://www.numpy.org/neps/
-nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
-routines. The legacy `RandomState` random number routines are still
-available, but limited to a single BitGenerator. See :ref:`new-or-different` 
+In short, BitGenerators are the parts responsible for the randomization
+and the state, whereas Generators are responsible for utilizing these
+randomized inputs.
+
+The Generators can be initialized with a number of different BitGenerators.
+They expose many different probability distributions. For the context
+and the design decisions, we refer to `NEP 19 <https://www.numpy.org/neps/
+nep-0019-rng-policy.html>`_ . The legacy `RandomState` random number routines
+are still available, but limited to a single BitGenerator. See :ref:`new-or-different` 
 for a complete list of improvements and differences from the legacy
 ``RandomState``.
 
 For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
-:ref:`legacy` for the complete list.
+:ref:`legacy` for the complete list. At this point, we have established
+the `Generator` based way-of-working still the legacy API is available.
+While this might seem like, we offer two options, it is quite the
+contrary. We sincerely hope that we minimized the annoyance during
+these changes, however we also hope that users will eventually stop
+using the legacy API which would allow us deprecate and remove the
+legacy API. 
 
-.. _random-quick-start:
 
-Quick Start
------------
+Supporting legacy API
+---------------------
 
-Call `default_rng` to get a new instance of a `Generator`, then call its
-methods to obtain samples from different distributions.  By default,
-`Generator` uses bits provided by `PCG64` which has better statistical
-properties than the legacy `MT19937` used in `RandomState`.
-
-.. code-block:: python
-
-  # Do this (new version)
-  from numpy.random import default_rng
-  rng = default_rng()
-  vals = rng.standard_normal(10)
-  more_vals = rng.standard_normal(10)
-
-  # instead of this (legacy version)
-  from numpy import random
-  vals = random.standard_normal(10)
-  more_vals = random.standard_normal(10)
+The most important part to use the Generator-based API is to use a better
+BitGenerator by default; `Generator` uses bits provided by `PCG64` which
+has better statistical properties than the legacy `MT19937` used in 
+`RandomState`.
 
 `Generator` can be used as a replacement for `RandomState`. Both class
 instances hold an internal `BitGenerator` instance to provide the bit
@@ -124,11 +186,6 @@ array([6, 2, 7])
 >>> type(rints[0])
 <class 'numpy.int64'> 
 
-Introduction
-------------
-The new infrastructure takes a different approach to producing random numbers
-from the `RandomState` object.  Random number generation is separated into
-two components, a bit generator and a random generator.
 
 The `BitGenerator` has a limited set of responsibilities. It manages state
 and provides functions to produce random doubles and random unsigned 32- and
