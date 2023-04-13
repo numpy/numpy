@@ -684,11 +684,25 @@ class ABCPolyBase(abc.ABC):
 
         Examples
         --------
+
+        Create a polynomial object for ``1 + 7*x + 4*x**2``:
+
         >>> poly = np.polynomial.Polynomial([1, 7, 4])
         >>> print(poly)
         1.0 + 7.0·x + 4.0·x²
         >>> poly.degree()
         2
+
+        Note that this method check for a zero coefficient on the highest degree term.
+        Trimming the polynomial will remove this coefficient:
+
+        >>> poly = np.polynomial.Polynomial([1, 7, 0])
+        >>> print(poly)
+        1.0 + 7.0·x + 0.0·x²
+        >>> poly.degree()
+        2
+        >>> poly.trim().degree()
+        1
 
         """
         return len(self) - 1
