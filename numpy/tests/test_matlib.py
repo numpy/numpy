@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.matlib
 from numpy.testing import assert_array_equal, assert_
+import pytest
 
 def test_empty():
     x = numpy.matlib.empty((2,))
@@ -8,18 +9,62 @@ def test_empty():
     assert_(x.shape, (1, 2))
 
 def test_ones():
+    # valid calls
     assert_array_equal(numpy.matlib.ones((2, 3)),
                        np.matrix([[ 1.,  1.,  1.],
                                  [ 1.,  1.,  1.]]))
 
     assert_array_equal(numpy.matlib.ones(2), np.matrix([[ 1.,  1.]]))
 
+    # special cases: 0
+    assert_array_equal(numpy.matlib.ones((2, 0)),
+                       np.matrix([[],
+                                 []]))
+
+    assert_array_equal(numpy.matlib.ones(0), np.matrix([]))
+
+    # invalid calls: negative values
+    with pytest.raises(ValueError) as exc_info:
+        numpy.matlib.ones((2, -1))
+
+    with pytest.raises(ValueError) as exc_info:
+        numpy.matlib.ones(-1)
+
+    # invalid calls: wrong types
+    with pytest.raises(TypeError) as exc_info:
+        numpy.matlib.ones((2, 3.5))
+
+    with pytest.raises(TypeError) as exc_info:
+        numpy.matlib.ones(2.5)
+
 def test_zeros():
+    # valid calls
     assert_array_equal(numpy.matlib.zeros((2, 3)),
                        np.matrix([[ 0.,  0.,  0.],
                                  [ 0.,  0.,  0.]]))
 
     assert_array_equal(numpy.matlib.zeros(2), np.matrix([[ 0.,  0.]]))
+
+    # special cases: 0
+    assert_array_equal(numpy.matlib.zeros((2, 0)),
+                       np.matrix([[],
+                                 []]))
+
+    assert_array_equal(numpy.matlib.zeros(0), np.matrix([]))
+
+    # invalid calls: negative values
+    with pytest.raises(ValueError) as exc_info:
+        numpy.matlib.zeros((2, -1))
+
+    with pytest.raises(ValueError) as exc_info:
+        numpy.matlib.zeros(-1)
+
+    # invalid calls: wrong types
+    with pytest.raises(TypeError) as exc_info:
+        numpy.matlib.zeros((2, 3.5))
+
+    with pytest.raises(TypeError) as exc_info:
+        numpy.matlib.zeros(2.5)
 
 def test_identity():
     x = numpy.matlib.identity(2, dtype=int)
