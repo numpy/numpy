@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[circle skip]') && !contains(github.event.head_commit.message, '[skip circle]')  && github.event.context == 'ci/circleci: build'"
     name: Run CircleCI artifacts redirector
-    # if: github.repository == 'numpy/numpy'
     permissions:
       statuses: write
     steps:
@@ -21,5 +20,6 @@ jobs:
         uses: larsoner/circleci-artifacts-redirector-action@0a7552bf8cf99cbd40a8928fa48e858e205b98c8 # master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          api-token: ${{ secrets.CIRCLE_TOKEN }}
           artifact-path: 0/doc/build/html/index.html
           circleci-jobs: build
