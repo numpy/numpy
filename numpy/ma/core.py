@@ -6999,18 +6999,18 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
 
     Examples
     --------
-    import numpy.ma as ma
+    >>> import numpy.ma as ma
     >>> x = [11.2, -3.973, 0.801, -1.41]
-    >>>  mask = [0, 0, 0, 1]
+    >>> mask = [0, 0, 0, 1]
     >>> masked_x = ma.masked_array(x, mask)
     >>> masked_x
     masked_array(data=[11.2, -3.973, 0.801, --],
-                mask=[False, False, False,  True],
-        fill_value=1e+20)
+                 mask=[False, False, False,  True],
+           fill_value=1e+20)
     >>> ma.sort(masked_x)
     masked_array(data=[-3.973, 0.801, 11.2, --],
-                mask=[False, False, False,  True],
-        fill_value=1e+20)
+                 mask=[False, False, False,  True],
+           fill_value=1e+20)
     """
     a = np.array(a, copy=True, subok=True)
     if axis is None:
