@@ -1,3 +1,5 @@
+.. _c_api_deprecations:
+
 C API Deprecations
 ==================
 
