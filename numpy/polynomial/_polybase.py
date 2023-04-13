@@ -693,8 +693,8 @@ class ABCPolyBase(abc.ABC):
         >>> poly.degree()
         2
 
-        Note that this method check for a zero coefficient on the highest degree term.
-        Trimming the polynomial will remove this coefficient:
+        Note that this method check for a zero coefficient on the highest
+        degree term. Trimming the polynomial will remove this coefficient:
 
         >>> poly = np.polynomial.Polynomial([1, 7, 0])
         >>> print(poly)
