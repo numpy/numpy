@@ -18,7 +18,7 @@ def main(ctx):
 
     # only run the wheels entry on a cron job
     if env.get("CIRRUS_CRON", "") == "nightly":
-        return fs.read("tool/ci/cirrus_wheels.yml")
+        return fs.read("tools/ci/cirrus_wheels.yml")
 
     # Obtain commit message for the event. Unfortunately CIRRUS_CHANGE_MESSAGE
     # only contains the actual commit message on a non-PR trigger event.
