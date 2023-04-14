@@ -698,6 +698,28 @@ object_common_dtype(
     return cls;
 }
 
+int
+object_fill_zero_value(PyArrayObject *arr)
+{
+    PyObject *zero = PyLong_FromLong(0);
+    PyArray_FillObjectArray(arr, zero);
+    Py_DECREF(zero);
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
+}
+
+int
+void_fill_zero_value(PyArrayObject *arr)
+{
+    if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+        if (object_fill_zero_value(arr) < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
 
 /**
  * This function takes a PyArray_Descr and replaces its base class with
@@ -855,6 +877,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
     dt_slots->ensure_canonical = ensure_native_byteorder;
+    dt_slots->fill_zero_value = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
@@ -866,6 +889,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (descr->type_num == NPY_OBJECT) {
         dt_slots->common_dtype = object_common_dtype;
+        dt_slots->fill_zero_value = object_fill_zero_value;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
@@ -887,6 +911,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
+            dt_slots->fill_zero_value = void_fill_zero_value;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;

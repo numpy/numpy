@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 9
+#define __EXPERIMENTAL_DTYPE_API_VERSION 10
 
 struct PyArrayMethodObject_tag;
 
@@ -199,6 +199,14 @@ typedef int (get_reduction_initial_function)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         char *initial);
 
+/**
+ * A function to fill an array with an initial value.
+ *
+ * @param arr The array to be filled.
+ *
+ * @returns -1 or 0 indicating error and arr being successfully filled.
+ */
+typedef int (fill_initial_function)(PyArrayObject *arr);
 
 /*
  * The following functions are only used be the wrapping array method defined
@@ -319,6 +327,7 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_setitem 7
 #define NPY_DT_getitem 8
 #define NPY_DT_get_clear_loop 9
+#define NPY_DT_fill_zero_value 10
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;

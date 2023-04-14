@@ -783,6 +783,10 @@ PyArray_NewFromDescr_int(
     }
 
 
+    /* dtype-specific function to fill array with zero values, may be NULL */
+    fill_initial_function *fill_zero_value =
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->fill_zero_value;
+
     if (data == NULL) {
         /* Store the handler in case the default is modified */
         fa->mem_handler = PyDataMem_GetHandler();
@@ -801,14 +805,29 @@ PyArray_NewFromDescr_int(
                 fa->strides[i] = 0;
             }
         }
-        /*
-         * It is bad to have uninitialized OBJECT pointers
-         * which could also be sub-fields of a VOID array
-         */
-        if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+
+        if (
+            /*
+             * If NPY_NEEDS_INIT is set, always zero out the buffer, even if
+             * zeroed isn't set.
+             */
+            (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) ||
+            /*
+             * If fill_zero_value isn't set, the dtype definitely has no
+             * special zero value, so get a zero-filled buffer using
+             * calloc.  Otherwise, get the buffer with malloc and allow
+             * fill_zero_value to zero out the array with the appropriate
+             * special zero value for the dtype. VOID arrays have
+             * fill_zero_value set but may or may not contain objects, so
+             * always allocate with calloc if zeroed is set.
+             */
+            (zeroed &&
+             ((fill_zero_value == NULL) || (descr->type_num == NPY_VOID)))) {
+            /* allocate array buffer with calloc */
             data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
         }
         else {
+            /* allocate array buffer with malloc */
             data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
         }
         if (data == NULL) {
@@ -841,6 +860,15 @@ PyArray_NewFromDescr_int(
     if (base != NULL) {
         Py_INCREF(base);
         if (PyArray_SetBaseObject((PyArrayObject *)fa, base) < 0) {
+            goto fail;
+        }
+    }
+
+    /*
+     * If the array needs special dtype-specific zero-filling logic, do that
+     */
+    if (zeroed && (fill_zero_value != NULL)) {
+        if (fill_zero_value((PyArrayObject *)fa) < 0) {
             goto fail;
         }
     }
@@ -3017,17 +3045,7 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
         return NULL;
     }
 
-    /* handle objects */
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        if (_zerofill(ret) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-
-
     return (PyObject *)ret;
-
 }
 
 /*NUMPY_API

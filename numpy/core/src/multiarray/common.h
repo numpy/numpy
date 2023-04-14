@@ -55,9 +55,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims,
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
 
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret);
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 

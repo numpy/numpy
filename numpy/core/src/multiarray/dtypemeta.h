@@ -42,6 +42,16 @@ typedef struct {
      */
     get_traverse_loop_function *get_clear_loop;
     /*
+       Either NULL or a function that fills an array with zero values
+       appropriate for the dtype. If this function pointer is NULL, the initial
+       value is assumed to be zero. If this function is defined, the array
+       buffer is allocated with malloc and then this function is called to fill
+       the buffer. As a performance optimization, the array buffer is allocated
+       using calloc if this function is NULL, so it is best to avoid using this
+       function if zero-filling the array buffer makes sense for the dtype.
+    */
+    fill_initial_function *fill_zero_value;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
@@ -63,7 +73,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 9
+#define NPY_NUM_DTYPE_SLOTS 10
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
