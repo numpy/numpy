@@ -235,6 +235,15 @@ matrix decomposition algorithm from the LAPACK that it links to, causing
 valid!) results. We strive to prefer algorithms that are more resistant to
 these effects, but this is always imperfect.
 
+.. note::
+
+   Most of the `Generator` methods allow you to draw multiple values from
+   a distribution as arrays. The requested size of this array is a parameter,
+   for the purposes of the above policy. Calling ``rng.random()`` 5 times is
+   not *guaranteed* to give the same numbers as ``rng.random(5)``. We reserve
+   the ability to decide to use different algorithms for different-sized
+   blocks. In practice, this happens rarely.
+
 Like the rest of Numpy, we generally maintain API source
 compatibility from version to version. If we *must* make an API-breaking
 change, then we will only do so with an appropriate deprecation period and
