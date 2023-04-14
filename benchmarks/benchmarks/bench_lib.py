@@ -132,11 +132,26 @@ class Unique(Benchmark):
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
-        base_array[base_array < percent_nans / 100.] = np.nan
+        n_nan = int(percent_nans * array_size)
+        nan_indices = np.random.choice(np.arange(array_size), size=n_nan)
+        base_array[nan_indices] = np.nan
         self.arr = base_array
 
-    def time_unique(self, array_size, percent_nans):
-        np.unique(self.arr)
+    def time_unique_values(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=False)
+
+    def time_unique_counts(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=True)
+
+    def time_unique_inverse(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=True, return_counts=False)
+
+    def time_unique_all(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=True,
+                  return_inverse=True, return_counts=True)
 
 
 class Isin(Benchmark):
