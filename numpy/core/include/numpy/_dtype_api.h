@@ -12,7 +12,7 @@ struct PyArrayMethodObject_tag;
 /*
  * Largely opaque struct for DType classes (i.e. metaclass instances).
  * The internal definition is currently in `ndarraytypes.h` (export is a bit
- * more complex because `PyArray_Descr` is a DTypeMeta internall but not
+ * more complex because `PyArray_Descr` is a DTypeMeta internally but not
  * externally).
  */
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
@@ -258,13 +258,13 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * element of a single array.
  *
  * Currently this is only used for array clearing, via the
- * NPY_DT_get_clear_loop, api hook, particularly for arrays storing embedded
+ * NPY_DT_get_clear_loop api hook, particularly for arrays storing embedded
  * references to python objects or heap-allocated data. If you define a dtype
  * that uses embedded references, the NPY_ITEM_REFCOUNT flag must be set on the
  * dtype instance.
  *
  * The `void *traverse_context` is passed in because we may need to pass in
- * Intepreter state or similar in the futurem, but we don't want to pass in
+ * Intepreter state or similar in the future, but we don't want to pass in
  * a full context (with pointers to dtypes, method, caller which all make
  * no sense for a traverse function).
  *
