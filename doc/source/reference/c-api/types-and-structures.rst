@@ -1456,22 +1456,6 @@ memory management. These types are not accessible directly from
 Python, and are not exposed to the C-API. They are included here only
 for completeness and assistance in understanding the code.
 
-
-.. c:type:: PyUFuncLoopObject
-
-   A loose wrapper for a C-structure that contains the information
-   needed for looping. This is useful if you are trying to understand
-   the ufunc looping code. The :c:type:`PyUFuncLoopObject` is the associated
-   C-structure. It is defined in the ``ufuncobject.h`` header.
-
-.. c:type:: PyUFuncReduceObject
-
-   A loose wrapper for the C-structure that contains the information
-   needed for reduce-like methods of ufuncs. This is useful if you are
-   trying to understand the reduce, accumulate, and reduce-at
-   code. The :c:type:`PyUFuncReduceObject` is the associated C-structure. It
-   is defined in the ``ufuncobject.h`` header.
-
 .. c:type:: PyUFunc_Loop1d
 
    A simple linked-list of C-structures containing the information needed
