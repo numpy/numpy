@@ -109,7 +109,7 @@ implementation details of each `BitGenerator` algorithm, each of which can
 require different amounts of bits for its state. Importantly, it lets you use
 arbitrary-sized integers and arbitrary sequences of such integers to mix
 together into the PRNG state. This is a useful primitive for constructing
-a `flexible pattern for parallel PRNG streams <seedsequence-spawn>`.
+a `flexible pattern for parallel PRNG streams <seedsequence-spawn>`_.
 
 For backward compatibility, we still maintain the legacy `RandomState` class.
 It continues to use the `~MT19937` algorithm by default, and old seeds continue
@@ -206,7 +206,7 @@ different.
 See :ref:`new-or-different` for a complete list of improvements and
 differences from the traditional ``Randomstate``.
 
-.. _random-compatibility::
+.. _random-compatibility:
 
 Compatibility Policy
 --------------------
@@ -280,7 +280,7 @@ the docstrings of each `BitGenerator` class for their individual compatibility
 guarantees.
 
 The legacy `RandomState` and the `associated convenience functions
-<random-functions-in-numpy-random>` have a stricter version-to-version
+<random-functions-in-numpy-random>`_ have a stricter version-to-version
 compatibility guarantee. For reasons outlined in :ref:`NEP 19 <NEP19>`, we had made
 stronger promises about their version-to-version stability early in Numpy's
 development. There are still some limited use cases for this kind of
