@@ -1,5 +1,7 @@
 .. currentmodule:: numpy.random
 
+.. _random-bit-generators
+
 Bit Generators
 ==============
 
