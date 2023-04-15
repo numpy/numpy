@@ -190,6 +190,9 @@ class TestDimSpec(util.F2PyTest):
         ! the value of n is computed in f2py wrapper
         !f2py intent(out) n
         integer, dimension({dimspec}), intent(in) :: a
+        if (a({first}).gt.0) then
+          ! print*, "a=", a
+        endif
       end subroutine
     """)
 
