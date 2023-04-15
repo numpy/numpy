@@ -29,5 +29,5 @@ class TestData(util.F2PyTest):
         assert mod[0]['vars']['my_real_array']['='] == '(/1.0d0, 2.0d0, 3.0d0/)'
         assert mod[0]['vars']['ref_index_one']['='] == '(13.0d0, 21.0d0)'
         assert mod[0]['vars']['ref_index_two']['='] == '(-30.0d0, 43.0d0)'
-        # assert mod[0]['vars']['my_array']['='] == '(1.0d0, 2.0d0), (-3.0d0, 4.0d0)'
-        # assert mod[0]['vars']['z']['='] == '(/ 3.5, 7.0 /)'
+        assert mod[0]['vars']['my_array']['='] == '(/(1.0d0, 2.0d0), (-3.0d0, 4.0d0)/)'
+        assert mod[0]['vars']['z']['='] == '(/3.5,  7.0/)'
