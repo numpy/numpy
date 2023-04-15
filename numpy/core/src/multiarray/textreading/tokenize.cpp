@@ -449,6 +449,8 @@ npy_tokenizer_init(tokenizer_state *ts, parser_config *config)
 
     ts->fields = (field_info *)PyMem_Malloc(4 * sizeof(*ts->fields));
     if (ts->fields == nullptr) {
+        PyMem_Free(ts->field_buffer);
+        ts->field_buffer = nullptr;
         PyErr_NoMemory();
         return -1;
     }
