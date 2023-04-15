@@ -1450,6 +1450,7 @@ def analyzeline(m, case, line):
                     continue
                 fc = 0
                 vtype = vars[v].get('typespec')
+                vdim = getdimension(vars[v])
 
                 if (vtype == 'complex'):
                     cmplxpat = r"\(.*?\)"
@@ -1462,7 +1463,12 @@ def analyzeline(m, case, line):
                 if '=' in vars[v] and not vars[v]['='] == matches[idx]:
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
                         v, vars[v]['='], matches[idx]))
-                vars[v]['='] = matches[idx]
+
+                if vdim is not None:
+                    # Need to assign multiple values to one variable
+                    vars[v]['='] = "(/{}/)".format(", ".join(matches))
+                else:
+                    vars[v]['='] = matches[idx]
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
         if last_name is not None:
