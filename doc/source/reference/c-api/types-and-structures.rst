@@ -285,83 +285,16 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
-   .. c:member:: int alignment
-
-       Non-NULL if this type is an array (C-contiguous) of some other type
-
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ITEM_REFCOUNT
-
-    Indicates that items of this data-type must be reference
-    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
-
-       .. c:macro:: NPY_ITEM_HASOBJECT
-
-           Same as :c:data:`NPY_ITEM_REFCOUNT`.
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_LIST_PICKLE
-
-    Indicates arrays of this data-type must be converted to a list
-    before pickling.
-
-.. c:macro:: NPY_ITEM_IS_POINTER
-
-    Indicates the item is a pointer to some other data-type
-
-.. c:macro:: NPY_NEEDS_INIT
-
-    Indicates memory for this data-type must be initialized (set
-    to 0) on creation.
-
-.. c:macro:: NPY_NEEDS_PYAPI
-
-    Indicates this data-type requires the Python C-API during
-    access (so don't give up the GIL if array access is going to
-    be needed).
-
-.. c:macro:: NPY_USE_GETITEM
-
-    On array access use the ``f->getitem`` function pointer
-    instead of the standard conversion to an array scalar. Must
-    use if you don't define an array scalar to go along with
-    the data-type.
-
-.. c:macro:: NPY_USE_SETITEM
-
-    When creating a 0-d array from an array scalar use
-    ``f->setitem`` instead of the standard copy from an array
-    scalar. Must use if you don't define an array scalar to go
-    along with the data-type.
-
-       .. c:macro:: NPY_FROM_FIELDS
-
-           The bits that are inherited for the parent data-type if these
-           bits are set in any field of the data-type. Currently (
-           :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
-
-       .. c:macro:: NPY_OBJECT_DTYPE_FLAGS
-
-           Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
-           \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
-           :c:data:`NPY_NEEDS_PYAPI`).
-
-       .. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
-
-           Return true if all the given flags are set for the data-type
-           object.
-
-       .. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
-
-           Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
-           :c:data:`NPY_ITEM_REFCOUNT`).
+       * :c:macro:`NPY_ITEM_REFCOUNT`
+       * :c:macro:`NPY_ITEM_HASOBJECT`
+       * :c:macro:`NPY_LIST_PICKLE`
+       * :c:macro:`NPY_ITEM_IS_POINTER`
+       * :c:macro:`NPY_NEEDS_INIT`
+       * :c:macro:`NPY_NEEDS_PYAPI`
+       * :c:macro:`NPY_USE_GETITEM`
+       * :c:macro:`NPY_USE_SETITEM`
+       * :c:macro:`NPY_FROM_FIELDS`
+       * :c:macro:`NPY_OBJECT_DTYPE_FLAGS`
 
    .. c:member:: int type_num
 
@@ -451,6 +384,73 @@ PyArrayDescr_Type and PyArray_Descr
 
        Currently unused. Reserved for future use in caching
        hash values.
+
+.. c:macro:: NPY_ITEM_REFCOUNT
+
+    Indicates that items of this data-type must be reference
+    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
+
+.. c:macro:: NPY_ITEM_HASOBJECT
+
+   Same as :c:data:`NPY_ITEM_REFCOUNT`.
+
+.. c:macro:: NPY_LIST_PICKLE
+
+    Indicates arrays of this data-type must be converted to a list
+    before pickling.
+
+.. c:macro:: NPY_ITEM_IS_POINTER
+
+    Indicates the item is a pointer to some other data-type
+
+.. c:macro:: NPY_NEEDS_INIT
+
+    Indicates memory for this data-type must be initialized (set
+    to 0) on creation.
+
+.. c:macro:: NPY_NEEDS_PYAPI
+
+    Indicates this data-type requires the Python C-API during
+    access (so don't give up the GIL if array access is going to
+    be needed).
+
+.. c:macro:: NPY_USE_GETITEM
+
+    On array access use the ``f->getitem`` function pointer
+    instead of the standard conversion to an array scalar. Must
+    use if you don't define an array scalar to go along with
+    the data-type.
+
+.. c:macro:: NPY_USE_SETITEM
+
+    When creating a 0-d array from an array scalar use
+    ``f->setitem`` instead of the standard copy from an array
+    scalar. Must use if you don't define an array scalar to go
+    along with the data-type.
+
+.. c:macro:: NPY_FROM_FIELDS
+
+   The bits that are inherited for the parent data-type if these
+   bits are set in any field of the data-type. Currently (
+   :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
+
+.. c:macro:: NPY_OBJECT_DTYPE_FLAGS
+
+   Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
+   \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
+   :c:data:`NPY_NEEDS_PYAPI`).
+
+.. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
+
+   Return true if all the given flags are set for the data-type
+   object.
+
+.. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
+
+   Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
+   :c:data:`NPY_ITEM_REFCOUNT`).
 
 .. c:type:: PyArray_ArrFuncs
 
