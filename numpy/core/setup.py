@@ -1010,9 +1010,6 @@ def configuration(parent_package='',top_path=None):
         svml_objs.sort()
 
     config.add_extension('_multiarray_umath',
-                         # Forcing C language even though we have C++ sources.
-                         # It forces the C linker and don't link C++ runtime.
-                         language = 'c',
                          sources=multiarray_src + umath_src +
                                  common_src +
                                  [generate_config_h,
