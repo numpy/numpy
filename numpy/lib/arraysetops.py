@@ -374,6 +374,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 ret += (np.array([], dtype=np.intp),)
             return ret
 
+        orig_dtype = ar.dtype
+        if ar.dtype == bool:
+            ar = ar.astype(np.uint8)
+
         # Can use lookup table-like approach.
         ar_min = np.min(ar)
         ar_max = np.max(ar)
@@ -402,11 +406,17 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                                      - ar_min.astype(np.intp),
                                      minlength=ar_range)
                 exists = counts > 0
-                return (value[exists], counts[exists])
+                out_values, out_counts = (value[exists], counts[exists])
+                if orig_dtype != out_values.dtype:
+                    out_values = out_values.astype(orig_dtype)
+                return (out_values, out_counts)
             else:
                 exists = np.zeros(ar_range + 1, dtype=bool)
                 exists[ar - ar_min] = 1
-                return (value[exists],)
+                out_values = value[exists]
+                if orig_dtype != out_values.dtype:
+                    out_values = out_values.astype(orig_dtype)
+                return (out_values,)
 
         elif kind == 'table':  # not range_safe_from_overflow
             raise RuntimeError(
