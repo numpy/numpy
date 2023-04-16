@@ -42,7 +42,6 @@ from contextlib import contextmanager, redirect_stderr
 from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
-from pkg_resources import parse_version
 
 import sphinx
 import numpy as np
@@ -52,20 +51,10 @@ from numpydoc.docscrape_sphinx import get_doc_object
 
 SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
-if parse_version(sphinx.__version__) >= parse_version('1.5'):
-    # Enable specific Sphinx directives
-    from sphinx.directives.other import SeeAlso, Only
-    directives.register_directive('seealso', SeeAlso)
-    directives.register_directive('only', Only)
-else:
-    # Remove sphinx directives that don't run without Sphinx environment.
-    # Sphinx < 1.5 installs all directives on import...
-    directives._directives.pop('versionadded', None)
-    directives._directives.pop('versionchanged', None)
-    directives._directives.pop('moduleauthor', None)
-    directives._directives.pop('sectionauthor', None)
-    directives._directives.pop('codeauthor', None)
-    directives._directives.pop('toctree', None)
+# Enable specific Sphinx directives
+from sphinx.directives.other import SeeAlso, Only
+directives.register_directive('seealso', SeeAlso)
+directives.register_directive('only', Only)
 
 
 BASE_MODULE = "numpy"
@@ -110,12 +99,6 @@ DOCTEST_SKIPDICT = {
     'numpy.lib.DataSource': None,
     'numpy.lib.Repository': None,
 }
-if sys.version_info < (3, 9):
-    DOCTEST_SKIPDICT.update({
-        "numpy.core.ndarray": {"__class_getitem__"},
-        "numpy.core.dtype": {"__class_getitem__"},
-        "numpy.core.number": {"__class_getitem__"},
-    })
 
 # Skip non-numpy RST files, historical release notes
 # Any single-directory exact match will skip the directory and all subdirs.
@@ -135,6 +118,7 @@ RST_SKIPLIST = [
     'f2py.getting-started.rst',
     'f2py-examples.rst',
     'arrays.nditer.cython.rst',
+    'how-to-verify-bug.rst',
     # See PR 17222, these should be fixed
     'basics.dispatch.rst',
     'basics.subclassing.rst',
@@ -1174,7 +1158,7 @@ def main(argv):
             module_name = prefix + submodule_name
         else:
             module_name = submodule_name
-            
+
         __import__(module_name)
         module = sys.modules[module_name]
 

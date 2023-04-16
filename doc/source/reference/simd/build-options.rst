@@ -333,7 +333,7 @@ and here is how it looks on x86_64/gcc:
 .. literalinclude:: log_example.txt
    :language: bash
 
-As you see, there is a separate report for each of ``build_ext`` and ``build_clib``
+There is a separate report for each of ``build_ext`` and ``build_clib``
 that includes several sections, and each section has several values, representing the following:
 
 **Platform**:
@@ -371,6 +371,17 @@ that includes several sections, and each section has several values, representin
   - The lines that come after the above property and end with a ':' on a separate line,
     represent the paths of c/c++ sources that define the generated optimizations.
 
-Runtime Trace
--------------
-To be completed.
+.. _runtime-simd-dispatch:
+
+Runtime dispatch
+----------------
+Importing NumPy triggers a scan of the available CPU features from the set
+of dispatchable features. This can be further restricted by setting the
+environment variable ``NPY_DISABLE_CPU_FEATURES`` to a comma-, tab-, or
+space-separated list of features to disable. This will raise an error if
+parsing fails or if the feature was not enabled. For instance, on ``x86_64``
+this will disable ``AVX2`` and ``FMA3``::
+
+    NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
+
+If the feature is not available, a warning will be emitted.

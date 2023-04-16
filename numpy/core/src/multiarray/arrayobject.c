@@ -56,6 +56,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
@@ -394,7 +395,7 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
    to stderr and clear the error
 */
 
-static NPY_INLINE void
+static inline void
 WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
         PyObject * s;
@@ -452,9 +453,11 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free internal references if an Object array */
-        if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            PyArray_XDECREF(self);
+        /* Free any internal references */
+        if (PyDataType_REFCHK(fa->descr)) {
+            if (PyArray_ClearArray(self) < 0) {
+                PyErr_WriteUnraisable(NULL);
+            }
         }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
@@ -875,108 +878,6 @@ DEPRECATE_silence_error(const char *msg) {
     return 0;
 }
 
-/*
- * Comparisons can fail, but we do not always want to pass on the exception
- * (see comment in array_richcompare below), but rather return NotImplemented.
- * Here, an exception should be set on entrance.
- * Returns either NotImplemented with the exception cleared, or NULL
- * with the exception set.
- * Raises deprecation warnings for cases where behaviour is meant to change
- * (2015-05-14, 1.10)
- */
-
-NPY_NO_EXPORT PyObject *
-_failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
-{
-    PyObject *exc, *val, *tb;
-    PyArrayObject *array_other;
-    int other_is_flexible, ndim_other;
-    int self_is_flexible = PyTypeNum_ISFLEXIBLE(PyArray_DESCR(self)->type_num);
-
-    PyErr_Fetch(&exc, &val, &tb);
-    /*
-     * Determine whether other has a flexible dtype; here, inconvertible
-     * is counted as inflexible.  (This repeats work done in the ufunc,
-     * but OK to waste some time in an unlikely path.)
-     */
-    array_other = (PyArrayObject *)PyArray_FROM_O(other);
-    if (array_other) {
-        other_is_flexible = PyTypeNum_ISFLEXIBLE(
-            PyArray_DESCR(array_other)->type_num);
-        ndim_other = PyArray_NDIM(array_other);
-        Py_DECREF(array_other);
-    }
-    else {
-        PyErr_Clear(); /* we restore the original error if needed */
-        other_is_flexible = 0;
-        ndim_other = 0;
-    }
-    if (cmp_op == Py_EQ || cmp_op == Py_NE) {
-        /*
-         * note: for == and !=, a structured dtype self cannot get here,
-         * but a string can. Other can be string or structured.
-         */
-        if (other_is_flexible || self_is_flexible) {
-            /*
-             * For scalars, returning NotImplemented is correct.
-             * For arrays, we emit a future deprecation warning.
-             * When this warning is removed, a correctly shaped
-             * array of bool should be returned.
-             */
-            if (ndim_other != 0 || PyArray_NDIM(self) != 0) {
-                /* 2015-05-14, 1.10 */
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise comparison failed; returning scalar "
-                        "instead, but in the future will perform "
-                        "elementwise comparison") < 0) {
-                    goto fail;
-                }
-            }
-        }
-        else {
-            /*
-             * If neither self nor other had a flexible dtype, the error cannot
-             * have been caused by a lack of implementation in the ufunc.
-             *
-             * 2015-05-14, 1.10
-             */
-            if (DEPRECATE(
-                    "elementwise comparison failed; "
-                    "this will raise an error in the future.") < 0) {
-                goto fail;
-            }
-        }
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-    else if (other_is_flexible || self_is_flexible) {
-        /*
-         * For LE, LT, GT, GE and a flexible self or other, we return
-         * NotImplemented, which is the correct answer since the ufuncs do
-         * not in fact implement loops for those.  This will get us the
-         * desired TypeError.
-         */
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-    else {
-        /* LE, LT, GT, or GE with non-flexible other; just pass on error */
-        goto fail;
-    }
-
-fail:
-    /*
-     * Reraise the original exception, possibly chaining with a new one.
-     */
-    npy_PyErr_ChainExceptionsCause(exc, val, tb);
-    return NULL;
-}
 
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
@@ -1074,33 +975,99 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    if (result == NULL) {
+
+    /*
+     * At this point `self` can take control of the operation by converting
+     * `other` to an array (it would have a chance to take control).
+     * If we are not in `==` and `!=`, this is an error and we hope that
+     * the existing error makes sense and derives from `TypeError` (which
+     * python would raise for `NotImplemented`) when it should.
+     *
+     * However, if the issue is no matching loop for the given dtypes and
+     * we are inside == and !=, then returning an array of True or False
+     * makes sense (following Python behavior for `==` and `!=`).
+     * Effectively: Both *dtypes* told us that they cannot be compared.
+     *
+     * In theory, the error could be raised from within an object loop, the
+     * solution to that could be pushing this into the ufunc (where we can
+     * distinguish the two easily).  In practice, it seems like it should not
+     * but a huge problem:  The ufunc loop will itself call `==` which should
+     * probably never raise a UFuncNoLoopError.
+     *
+     * TODO: If/once we correctly push structured comparisons into the ufunc
+     *       we could consider pushing this path into the ufunc itself as a
+     *       fallback loop (which ignores the input arrays).
+     *       This would have the advantage that subclasses implementing
+     *       `__array_ufunc__` do not explicitly need `__eq__` and `__ne__`.
+     */
+    if (result == NULL
+            && (cmp_op == Py_EQ || cmp_op == Py_NE)
+            && PyErr_ExceptionMatches(npy_UFuncNoLoopError)) {
+        PyErr_Clear();
+
+        PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (PyArray_TYPE(array_other) == NPY_VOID) {
+            /*
+            * Void arrays are currently not handled by ufuncs, so if the other
+            * is a void array, we defer to it (will raise a TypeError).
+            */
+            Py_DECREF(array_other);
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        if (PyArray_NDIM(self) == 0 && PyArray_NDIM(array_other) == 0) {
+            /*
+             * (seberg) not sure that this is best, but we preserve Python
+             * bool result for "scalar" inputs for now by returning
+             * `NotImplemented`.
+             */
+            Py_DECREF(array_other);
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        /* Hack warning: using NpyIter to allocate broadcasted result. */
+        PyArrayObject *ops[3] = {self, array_other, NULL};
+        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK;
+        npy_uint32 op_flags[3] = {
+            NPY_ITER_READONLY, NPY_ITER_READONLY,
+            NPY_ITER_ALLOCATE | NPY_ITER_WRITEONLY};
+
+        PyArray_Descr *bool_descr = PyArray_DescrFromType(NPY_BOOL);
+        PyArray_Descr *op_descrs[3] = {
+            PyArray_DESCR(self), PyArray_DESCR(array_other), bool_descr};
+
+        NpyIter *iter = NpyIter_MultiNew(
+                    3, ops, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+                    op_flags, op_descrs);
+
+        Py_CLEAR(bool_descr);
+        Py_CLEAR(array_other);
+        if (iter == NULL) {
+            return NULL;
+        }
+        PyArrayObject *res = NpyIter_GetOperandArray(iter)[2];
+        Py_INCREF(res);
+        if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+            Py_DECREF(res);
+            return NULL;
+        }
+
         /*
-         * 2015-05-14, 1.10; updated 2018-06-18, 1.16.
-         *
-         * Comparisons can raise errors when element-wise comparison is not
-         * possible. Some of these, though, should not be passed on.
-         * In particular, the ufuncs do not have loops for flexible dtype,
-         * so those should be treated separately.  Furthermore, for EQ and NE,
-         * we should never fail.
-         *
-         * Our ideal behaviour would be:
-         *
-         * 1. For EQ and NE:
-         *   - If self and other are scalars, return NotImplemented,
-         *     so that python can assign True of False as appropriate.
-         *   - If either is an array, return an array of False or True.
-         *
-         * 2. For LT, LE, GE, GT:
-         *   - If self or other was flexible, return NotImplemented
-         *     (as is in fact the case), so python can raise a TypeError.
-         *   - If other is not convertible to an array, pass on the error
-         *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
-         *
-         * However, for backwards compatibility, we cannot yet return arrays,
-         * so we raise warnings instead.
+         * The array is guaranteed to be newly allocated and thus contiguous,
+         * so simply fill it with 0 or 1.
          */
-        result = _failed_comparison_workaround(self, other, cmp_op);
+        memset(PyArray_BYTES(res), cmp_op == Py_EQ ? 0 : 1, PyArray_NBYTES(res));
+
+        /* Ensure basic subclass support by wrapping: */
+        if (!PyArray_CheckExact(self)) {
+            /*
+             * If other is also a subclass (with higher priority) we would
+             * already have deferred.  So use `self` for wrapping.  If users
+             * need more, they need to override `==` and `!=`.
+             */
+            Py_SETREF(res, PyArray_SubclassWrap(self, res));
+        }
+        return (PyObject *)res;
     }
     return result;
 }

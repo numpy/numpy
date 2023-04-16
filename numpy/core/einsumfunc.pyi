@@ -45,7 +45,7 @@ __all__: list[str]
 # Something like `is_scalar = bool(__subscripts.partition("->")[-1])`
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeBool_co,
     out: None = ...,
@@ -56,7 +56,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeUInt_co,
     out: None = ...,
@@ -67,7 +67,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeInt_co,
     out: None = ...,
@@ -78,7 +78,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeFloat_co,
     out: None = ...,
@@ -89,7 +89,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeComplex_co,
     out: None = ...,
@@ -100,7 +100,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: Any,
     casting: _CastingUnsafe,
@@ -111,7 +111,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeComplex_co,
     out: _ArrayType,
@@ -122,7 +122,7 @@ def einsum(
 ) -> _ArrayType: ...
 @overload
 def einsum(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: Any,
     out: _ArrayType,
@@ -137,7 +137,7 @@ def einsum(
 # NOTE: In practice the list consists of a `str` (first element)
 # and a variable number of integer tuples.
 def einsum_path(
-    subscripts: str,
+    subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeComplex_co,
     optimize: _OptimizeKind = ...,

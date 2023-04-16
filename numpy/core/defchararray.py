@@ -6,7 +6,7 @@ operations and methods.
    The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
 
 Some methods will only be available if the corresponding string method is
@@ -16,12 +16,13 @@ The preferred alias for `defchararray` is `numpy.char`.
 
 """
 import functools
+
+from .._utils import set_module
 from .numerictypes import (
-    string_, unicode_, integer, int_, object_, bool_, character)
+    bytes_, str_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.compat import asbytes
 import numpy
@@ -45,26 +46,29 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
 
 
-def _use_unicode(*args):
-    """
-    Helper function for determining the output type of some string
-    operations.
+def _is_unicode(arr):
+    """Returns True if arr is a string or a string array with a dtype that
+    represents a unicode string, otherwise returns False.
 
-    For an operation on two ndarrays, if at least one is unicode, the
-    result should be unicode.
     """
-    for x in args:
-        if (isinstance(x, str) or
-                issubclass(numpy.asarray(x).dtype.type, unicode_)):
-            return unicode_
-    return string_
+    if (isinstance(arr, str) or
+            issubclass(numpy.asarray(arr).dtype.type, str)):
+        return True
+    return False
 
-def _to_string_or_unicode_array(result):
+
+def _to_bytes_or_str_array(result, output_dtype_like=None):
     """
-    Helper function to cast a result back into a string or unicode array
-    if an object array must be used as an intermediary.
+    Helper function to cast a result back into an array
+    with the appropriate dtype if an object array must be used
+    as an intermediary.
     """
-    return numpy.asarray(result.tolist())
+    ret = numpy.asarray(result.tolist())
+    dtype = getattr(output_dtype_like, 'dtype', None)
+    if dtype is not None:
+        return ret.astype(type(dtype)(_get_num_chars(ret)), copy=False)
+    return ret
+
 
 def _clean_args(*args):
     """
@@ -88,7 +92,7 @@ def _get_num_chars(a):
     a string or unicode array.  This is to abstract out the fact that
     for a unicode array this is itemsize / 4.
     """
-    if issubclass(a.dtype.type, unicode_):
+    if issubclass(a.dtype.type, str_):
         return a.itemsize // 4
     return a.itemsize
 
@@ -274,7 +278,19 @@ def str_len(a):
 
     See Also
     --------
-    builtins.len
+    len
+
+    Examples
+    --------
+    >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
+    >>> np.char.str_len(a)
+    array([23, 15])
+    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> np.char.str_len(a)
+    array([1, 1])
+    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> np.char.str_len(a)
+    array([[5, 5], [1, 1]])
     """
     # Note: __len__, etc. currently return ints, which are not C-integers.
     # Generally intp would be expected for lengths, although int is sufficient
@@ -299,16 +315,26 @@ def add(x1, x2):
     Returns
     -------
     add : ndarray
-        Output array of `string_` or `unicode_`, depending on input types
+        Output array of `bytes_` or `str_`, depending on input types
         of the same shape as `x1` and `x2`.
 
     """
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
     out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
-    dtype = _use_unicode(arr1, arr2)
-    return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
 
+    if type(arr1.dtype) != type(arr2.dtype):
+        # Enforce this for now.  The solution to it will be implement add
+        # as a ufunc.  It never worked right on Python 3: bytes + unicode gave
+        # nonsense unicode + bytes errored, and unicode + object used the
+        # object dtype itemsize as num chars (worked on short strings).
+        # bytes + void worked but promoting void->bytes is dubious also.
+        raise TypeError(
+            "np.char.add() requires both arrays of the same dtype kind, but "
+            f"got dtypes: '{arr1.dtype}' and '{arr2.dtype}' (the few cases "
+            "where this used to work often lead to incorrect results).")
+
+    return _vec_string(arr1, type(arr1.dtype)(out_size), '__add__', (arr2,))
 
 def _multiply_dispatcher(a, i):
     return (a,)
@@ -333,7 +359,24 @@ def multiply(a, i):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-
+    
+    Examples
+    --------
+    >>> a = np.array(["a", "b", "c"])
+    >>> np.char.multiply(x, 3)
+    array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> i = np.array([1, 2, 3])
+    >>> np.char.multiply(a, i)
+    array(['a', 'bb', 'ccc'], dtype='<U3')
+    >>> np.char.multiply(np.array(['a']), i)
+    array(['a', 'aa', 'aaa'], dtype='<U3')
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2, 3))
+    >>> np.char.multiply(a, 3)
+    array([['aaa', 'bbb', 'ccc'],
+           ['ddd', 'eee', 'fff']], dtype='<U3')
+    >>> np.char.multiply(a, i)
+    array([['a', 'bb', 'ccc'],
+           ['d', 'ee', 'fff']], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
@@ -341,7 +384,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
     out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
+        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
 
 
 def _mod_dispatcher(a, values):
@@ -372,8 +415,8 @@ def mod(a, values):
     str.__mod__
 
     """
-    return _to_string_or_unicode_array(
-        _vec_string(a, object_, '__mod__', (values,)))
+    return _to_bytes_or_str_array(
+        _vec_string(a, object_, '__mod__', (values,)), a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -445,15 +488,31 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
+    
+    Notes
+    -----
+    This function is intended to work with arrays of strings.  The
+    fill character is not applied to numeric types.
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
+    >>> np.char.center(c, width=9)
+    array(['   a1b2  ', '   1b2a  ', '   b2a1  ', '   2a1b  '], dtype='<U9')
+    >>> np.char.center(c, width=9, fillchar='*')
+    array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
+    >>> np.char.center(c, width=1)
+    array(['a', '1', 'b', '2'], dtype='<U1')
 
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
-    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+    if numpy.issubdtype(a_arr.dtype, numpy.bytes_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'center', (width_arr, fillchar))
 
 
 def _count_dispatcher(a, sub, start=None, end=None):
@@ -512,8 +571,8 @@ def _code_dispatcher(a, encoding=None, errors=None):
 
 @array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
-    """
-    Calls `str.decode` element-wise.
+    r"""
+    Calls ``bytes.decode`` element-wise.
 
     The set of available codecs comes from the Python standard library,
     and may be extended at runtime.  For more information, see the
@@ -535,7 +594,7 @@ def decode(a, encoding=None, errors=None):
 
     See Also
     --------
-    str.decode
+    :py:meth:`bytes.decode`
 
     Notes
     -----
@@ -543,16 +602,16 @@ def decode(a, encoding=None, errors=None):
 
     Examples
     --------
-    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...    b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+    >>> np.char.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    >>> np.char.encode(c, encoding='cp037')
-    array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
-        '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
-        dtype='|S7')
 
     """
-    return _to_string_or_unicode_array(
+    return _to_bytes_or_str_array(
         _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
 
 
@@ -588,7 +647,7 @@ def encode(a, encoding=None, errors=None):
     The type of the result will depend on the encoding specified.
 
     """
-    return _to_string_or_unicode_array(
+    return _to_bytes_or_str_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
 
 
@@ -676,8 +735,8 @@ def expandtabs(a, tabsize=8):
     str.expandtabs
 
     """
-    return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'expandtabs', (tabsize,)))
+    return _to_bytes_or_str_array(
+        _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -711,6 +770,12 @@ def find(a, sub, start=0, end=None):
     --------
     str.find
 
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", start=0, end=None)
+    array([11])
+
     """
     return _vec_string(
         a, int_, 'find', [sub, start] + _clean_args(end))
@@ -739,6 +804,12 @@ def index(a, sub, start=0, end=None):
     See Also
     --------
     find, str.find
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.char.index(a, "Science", start=0, end=None)
+    array([9])
 
     """
     return _vec_string(
@@ -819,6 +890,15 @@ def isdigit(a):
     See Also
     --------
     str.isdigit
+
+    Examples
+    --------
+    >>> a = np.array(['a', 'b', '0'])
+    >>> np.char.isdigit(a)
+    array([False, False,  True])
+    >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
+    >>> np.char.isdigit(a)
+    array([[False, False,  True], [False,  True,  True]])
     """
     return _vec_string(a, bool_, 'isdigit')
 
@@ -906,7 +986,7 @@ def istitle(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def isupper(a):
     """
-    Returns true for each element if all cased characters in the
+    Return true for each element if all cased characters in the
     string are uppercase and there is at least one character, false
     otherwise.
 
@@ -926,6 +1006,16 @@ def isupper(a):
     See Also
     --------
     str.isupper
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.isupper(str)
+    array(True)     
+    >>> a = np.array(["hello", "HELLO", "Hello"])
+    >>> np.char.isupper(a)
+    array([False,  True, False]) 
+
     """
     return _vec_string(a, bool_, 'isupper')
 
@@ -955,9 +1045,18 @@ def join(sep, seq):
     See Also
     --------
     str.join
+
+    Examples
+    --------
+    >>> np.char.join('-', 'osd')
+    array('o-s-d', dtype='<U5')
+
+    >>> np.char.join(['-', '.'], ['ghc', 'osd'])
+    array(['g-h-c', 'o.s.d'], dtype='<U5')
+
     """
-    return _to_string_or_unicode_array(
-        _vec_string(sep, object_, 'join', (seq,)))
+    return _to_bytes_or_str_array(
+        _vec_string(sep, object_, 'join', (seq,)), seq)
 
 
 
@@ -995,10 +1094,10 @@ def ljust(a, width, fillchar=' '):
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
-    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+    if numpy.issubdtype(a_arr.dtype, numpy.bytes_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1131,8 +1230,8 @@ def partition(a, sep):
     str.partition
 
     """
-    return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'partition', (sep,)))
+    return _to_bytes_or_str_array(
+        _vec_string(a, object_, 'partition', (sep,)), a)
 
 
 def _replace_dispatcher(a, old, new, count=None):
@@ -1165,11 +1264,19 @@ def replace(a, old, new, count=None):
     See Also
     --------
     str.replace
+    
+    Examples
+    --------
+    >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
+    >>> np.char.replace(a, 'mango', 'banana')
+    array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
 
+    >>> a = np.array(["The dish is fresh", "This is it"])
+    >>> np.char.replace(a, 'is', 'was')
+    array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
-    return _to_string_or_unicode_array(
-        _vec_string(
-            a, object_, 'replace', [old, new] + _clean_args(count)))
+    return _to_bytes_or_str_array(
+        _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1265,10 +1372,10 @@ def rjust(a, width, fillchar=' '):
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
-    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+    if numpy.issubdtype(a_arr.dtype, numpy.bytes_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_partition_dispatcher)
@@ -1303,8 +1410,8 @@ def rpartition(a, sep):
     str.rpartition
 
     """
-    return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'rpartition', (sep,)))
+    return _to_bytes_or_str_array(
+        _vec_string(a, object_, 'rpartition', (sep,)), a)
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
@@ -1659,7 +1766,7 @@ def translate(a, table, deletechars=None):
 
     """
     a_arr = numpy.asarray(a)
-    if issubclass(a_arr.dtype.type, unicode_):
+    if issubclass(a_arr.dtype.type, str_):
         return _vec_string(
             a_arr, a_arr.dtype, 'translate', (table,))
     else:
@@ -1734,7 +1841,7 @@ def zfill(a, width):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
+        a_arr, type(a_arr.dtype)(size), 'zfill', (width_arr,))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1743,7 +1850,7 @@ def isnumeric(a):
     For each element, return True if there are only numeric
     characters in the element.
 
-    Calls `unicode.isnumeric` element-wise.
+    Calls `str.isnumeric` element-wise.
 
     Numeric characters include digit characters, and all characters
     that have the Unicode numeric value property, e.g. ``U+2155,
@@ -1761,10 +1868,15 @@ def isnumeric(a):
 
     See Also
     --------
-    unicode.isnumeric
+    str.isnumeric
+
+    Examples
+    --------
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    array([ True, False, False, False, False])
 
     """
-    if _use_unicode(a) != unicode_:
+    if not _is_unicode(a):
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
 
@@ -1775,7 +1887,7 @@ def isdecimal(a):
     For each element, return True if there are only decimal
     characters in the element.
 
-    Calls `unicode.isdecimal` element-wise.
+    Calls `str.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
     that can be used to form decimal-radix numbers,
@@ -1793,11 +1905,17 @@ def isdecimal(a):
 
     See Also
     --------
-    unicode.isdecimal
+    str.isdecimal
 
-    """
-    if _use_unicode(a) != unicode_:
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+    Examples
+    --------
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    array([ True, False, False, False])
+
+    """ 
+    if not _is_unicode(a):
+        raise TypeError(
+            "isdecimal is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 
@@ -1813,7 +1931,7 @@ class chararray(ndarray):
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
        1.4, if one needs arrays of strings, it is recommended to use arrays of
-       `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+       `dtype` `object_`, `bytes_` or `str_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
     Versus a regular NumPy array of type `str` or `unicode`, this
@@ -1947,9 +2065,9 @@ class chararray(ndarray):
         global _globalvar
 
         if unicode:
-            dtype = unicode_
+            dtype = str_
         else:
-            dtype = string_
+            dtype = bytes_
 
         # force itemsize to be a Python int, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
@@ -2073,7 +2191,7 @@ class chararray(ndarray):
     def __radd__(self, other):
         """
         Return (other + self), that is string concatenation,
-        element-wise for a pair of array_likes of `string_` or `unicode_`.
+        element-wise for a pair of array_likes of `bytes_` or `str_`.
 
         See Also
         --------
@@ -2106,8 +2224,8 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (interpolation), element-wise for a pair of array_likes of `string_`
-        or `unicode_`.
+        (interpolation), element-wise for a pair of array_likes of `bytes_`
+        or `str_`.
 
         See Also
         --------
@@ -2176,7 +2294,7 @@ class chararray(ndarray):
 
     def decode(self, encoding=None, errors=None):
         """
-        Calls `str.decode` element-wise.
+        Calls ``bytes.decode`` element-wise.
 
         See Also
         --------
@@ -2617,7 +2735,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type `string_` or `unicode_` and use the free functions
+       arrays of type `bytes_` or `str_` and use the free functions
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
@@ -2700,26 +2818,26 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             # itemsize is in 8-bit chars, so for Unicode, we need
             # to divide by the size of a single Unicode character,
             # which for NumPy is always 4
-            if issubclass(obj.dtype.type, unicode_):
+            if issubclass(obj.dtype.type, str_):
                 itemsize //= 4
 
         if unicode is None:
-            if issubclass(obj.dtype.type, unicode_):
+            if issubclass(obj.dtype.type, str_):
                 unicode = True
             else:
                 unicode = False
 
         if unicode:
-            dtype = unicode_
+            dtype = str_
         else:
-            dtype = string_
+            dtype = bytes_
 
         if order is not None:
             obj = numpy.asarray(obj, order=order)
         if (copy or
                 (itemsize != obj.itemsize) or
-                (not unicode and isinstance(obj, unicode_)) or
-                (unicode and isinstance(obj, string_))):
+                (not unicode and isinstance(obj, str_)) or
+                (unicode and isinstance(obj, bytes_))):
             obj = obj.astype((dtype, int(itemsize)))
         return obj
 
@@ -2732,9 +2850,9 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             # Fall through to the default case
 
     if unicode:
-        dtype = unicode_
+        dtype = str_
     else:
-        dtype = string_
+        dtype = bytes_
 
     if itemsize is None:
         val = narray(obj, dtype=dtype, order=order, subok=True)

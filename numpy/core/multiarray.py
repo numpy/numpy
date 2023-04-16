@@ -14,17 +14,18 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
+    fastCopyAndTranspose, _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
+    _get_promotion_state, _set_promotion_state, _using_numpy2_behavior
     )
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
-    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
-    '_flagdict', 'from_dlpack', '_insert', '_reconstruct', '_vec_string',
+    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
+    '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
     '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
@@ -40,7 +41,8 @@ __all__ = [
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
     'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    '_get_promotion_state', '_set_promotion_state', '_using_numpy2_behavior']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -68,6 +70,9 @@ promote_types.__module__ = 'numpy'
 set_numeric_ops.__module__ = 'numpy'
 seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
+_get_promotion_state.__module__ = 'numpy'
+_set_promotion_state.__module__ = 'numpy'
+_using_numpy2_behavior.__module__ = 'numpy'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -710,7 +715,7 @@ def result_type(*arrays_and_dtypes):
     the data types are combined with :func:`promote_types`
     to produce the return value.
 
-    Otherwise, `min_scalar_type` is called on each array, and
+    Otherwise, `min_scalar_type` is called on each scalar, and
     the resulting data types are all combined with :func:`promote_types`
     to produce the return value.
 
@@ -746,16 +751,20 @@ def dot(a, b, out=None):
     - If both `a` and `b` are 2-D arrays, it is matrix multiplication,
       but using :func:`matmul` or ``a @ b`` is preferred.
 
-    - If either `a` or `b` is 0-D (scalar), it is equivalent to :func:`multiply`
-      and using ``numpy.multiply(a, b)`` or ``a * b`` is preferred.
+    - If either `a` or `b` is 0-D (scalar), it is equivalent to
+      :func:`multiply` and using ``numpy.multiply(a, b)`` or ``a * b`` is
+      preferred.
 
     - If `a` is an N-D array and `b` is a 1-D array, it is a sum product over
       the last axis of `a` and `b`.
 
     - If `a` is an N-D array and `b` is an M-D array (where ``M>=2``), it is a
-      sum product over the last axis of `a` and the second-to-last axis of `b`::
+      sum product over the last axis of `a` and the second-to-last axis of
+      `b`::
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
     ----------
@@ -1099,12 +1108,28 @@ def copyto(dst, src, casting=None, where=None):
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
+
+    Examples
+    --------
+    >>> A = np.array([4, 5, 6])
+    >>> B = [1, 2, 3]
+    >>> np.copyto(A, B)
+    >>> A
+    array([1, 2, 3])
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> B = [[4, 5, 6], [7, 8, 9]]
+    >>> np.copyto(A, B)
+    >>> A
+    array([[4, 5, 6],
+           [7, 8, 9]])
+
     """
     return (dst, src, where)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
-def putmask(a, mask, values):
+def putmask(a, /, mask, values):
     """
     putmask(a, mask, values)
 
@@ -1321,7 +1346,7 @@ def shares_memory(a, b, max_work=None):
 
     Raises
     ------
-    numpy.TooHardError
+    numpy.exceptions.TooHardError
         Exceeded max_work.
 
     Returns
@@ -1355,7 +1380,7 @@ def shares_memory(a, b, max_work=None):
     >>> np.shares_memory(x1, x2, max_work=1000)
     Traceback (most recent call last):
     ...
-    numpy.TooHardError: Exceeded max_work
+    numpy.exceptions.TooHardError: Exceeded max_work
 
     Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
     around 1 minute for this case. It is possible to find problems

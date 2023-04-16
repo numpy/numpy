@@ -232,11 +232,29 @@ class TestSetOps:
         assert_isin_equal(5, 6)
 
         # empty array-like:
-        if kind in {None, "sort"}:
+        if kind != "table":
+            # An empty list will become float64,
+            # which is invalid for kind="table"
             x = []
             assert_isin_equal(x, b)
             assert_isin_equal(a, x)
             assert_isin_equal(x, x)
+
+        # empty array with various types:
+        for dtype in [bool, np.int64, np.float64]:
+            if kind == "table" and dtype == np.float64:
+                continue
+
+            if dtype in {np.int64, np.float64}:
+                ar = np.array([10, 20, 30], dtype=dtype)
+            elif dtype in {bool}:
+                ar = np.array([True, False, False])
+
+            empty_array = np.array([], dtype=dtype)
+
+            assert_isin_equal(empty_array, ar)
+            assert_isin_equal(ar, empty_array)
+            assert_isin_equal(empty_array, empty_array)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_in1d(self, kind):
@@ -377,6 +395,72 @@ class TestSetOps:
                            in1d(a, b, kind=kind))
         assert_array_equal(np.invert(expected),
                            in1d(a, b, invert=True, kind=kind))
+
+    @pytest.mark.parametrize("kind", [None, "sort"])
+    def test_in1d_timedelta(self, kind):
+        """Test that in1d works for timedelta input"""
+        rstate = np.random.RandomState(0)
+        a = rstate.randint(0, 100, size=10)
+        b = rstate.randint(0, 100, size=10)
+        truth = in1d(a, b)
+        a_timedelta = a.astype("timedelta64[s]")
+        b_timedelta = b.astype("timedelta64[s]")
+        assert_array_equal(truth, in1d(a_timedelta, b_timedelta, kind=kind))
+
+    def test_in1d_table_timedelta_fails(self):
+        a = np.array([0, 1, 2], dtype="timedelta64[s]")
+        b = a
+        # Make sure it raises a value error:
+        with pytest.raises(ValueError):
+            in1d(a, b, kind="table")
+
+    @pytest.mark.parametrize(
+        "dtype1,dtype2",
+        [
+            (np.int8, np.int16),
+            (np.int16, np.int8),
+            (np.uint8, np.uint16),
+            (np.uint16, np.uint8),
+            (np.uint8, np.int16),
+            (np.int16, np.uint8),
+        ]
+    )
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_mixed_dtype(self, dtype1, dtype2, kind):
+        """Test that in1d works as expected for mixed dtype input."""
+        is_dtype2_signed = np.issubdtype(dtype2, np.signedinteger)
+        ar1 = np.array([0, 0, 1, 1], dtype=dtype1)
+
+        if is_dtype2_signed:
+            ar2 = np.array([-128, 0, 127], dtype=dtype2)
+        else:
+            ar2 = np.array([127, 0, 255], dtype=dtype2)
+
+        expected = np.array([True, True, False, False])
+
+        expect_failure = kind == "table" and any((
+            dtype1 == np.int8 and dtype2 == np.int16,
+            dtype1 == np.int16 and dtype2 == np.int8
+        ))
+
+        if expect_failure:
+            with pytest.raises(RuntimeError, match="exceed the maximum"):
+                in1d(ar1, ar2, kind=kind)
+        else:
+            assert_array_equal(in1d(ar1, ar2, kind=kind), expected)
+
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_mixed_boolean(self, kind):
+        """Test that in1d works as expected for bool/int input."""
+        for dtype in np.typecodes["AllInteger"]:
+            a = np.array([True, False, False], dtype=bool)
+            b = np.array([0, 0, 0, 0], dtype=dtype)
+            expected = np.array([False, True, True], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
+
+            a, b = b, a
+            expected = np.array([True, True, True, True], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]

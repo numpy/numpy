@@ -8,13 +8,12 @@ import weakref
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_array_less, build_err_msg, raises,
+    assert_array_almost_equal, assert_array_less, build_err_msg,
     assert_raises, assert_warns, assert_no_warnings, assert_allclose,
     assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
-from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
 class _GenericTest:
@@ -65,7 +64,7 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_equal
 
     def test_generic_rank1(self):
@@ -191,8 +190,6 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
 
-    @pytest.mark.skipif(
-        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
@@ -213,6 +210,43 @@ class TestArrayEqual(_GenericTest):
                 np.testing.assert_array_equal(
                     np.array([1, 2, 3], np.float32),
                     np.array([1, 1e-40, 3], np.float32))
+
+    def test_array_vs_scalar_is_equal(self):
+        """Test comparing an array with a scalar when all values are equal."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        self._test_equal(a, b)
+
+    def test_array_vs_scalar_not_equal(self):
+        """Test comparing an array with a scalar when not all values equal."""
+        a = np.array([1., 2., 3.])
+        b = 1.
+
+        self._test_not_equal(a, b)
+
+    def test_array_vs_scalar_strict(self):
+        """Test comparing an array with a scalar with strict option."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b, strict=True)
+
+    def test_array_vs_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1., 1., 1.])
+        b = np.array([1., 1., 1.])
+
+        assert_array_equal(a, b, strict=True)
+
+    def test_array_vs_float_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1, 1, 1])
+        b = np.array([1., 1., 1.])
+
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
@@ -262,7 +296,7 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_equal
 
     def test_nan_items(self):
@@ -357,7 +391,7 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_almost_equal
 
     def test_closeness(self):
@@ -455,7 +489,7 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_almost_equal
 
     def test_closeness(self):
@@ -606,7 +640,7 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_approx_equal
 
     def test_simple_0d_arrays(self):
@@ -649,7 +683,7 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_less
 
     def test_simple_arrays(self):
@@ -754,41 +788,6 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(-x, -ainf))
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
-
-
-@pytest.mark.skip(reason="The raises decorator depends on Nose")
-class TestRaises:
-
-    def setup(self):
-        class MyException(Exception):
-            pass
-
-        self.e = MyException
-
-    def raises_exception(self, e):
-        raise e
-
-    def does_not_raise_exception(self):
-        pass
-
-    def test_correct_catch(self):
-        raises(self.e)(self.raises_exception)(self.e)  # raises?
-
-    def test_wrong_exception(self):
-        try:
-            raises(self.e)(self.raises_exception)(RuntimeError)  # raises?
-        except RuntimeError:
-            return
-        else:
-            raise AssertionError("should have caught RuntimeError")
-
-    def test_catch_no_raise(self):
-        try:
-            raises(self.e)(self.does_not_raise_exception)()  # raises?
-        except AssertionError:
-            return
-        else:
-            raise AssertionError("should have raised an AssertionError")
 
 
 class TestWarns:
@@ -915,6 +914,20 @@ class TestAssertAllclose:
         # see gh-18286
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
         assert_allclose(a, a)
+
+    def test_error_message_unsigned(self):
+        """Check the the message is formatted correctly when overflow can occur
+           (gh21768)"""
+        # Ensure to test for potential overflow in the case of:
+        #        x - y
+        # and
+        #        y - x
+        x = np.asarray([0, 1, 8], dtype='uint8')
+        y = np.asarray([4, 4, 4], dtype='uint8')
+        with pytest.raises(AssertionError) as exc_info:
+            assert_allclose(x, y, atol=3)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[4], 'Max absolute difference: 4')
 
 
 class TestArrayAlmostEqualNulp:

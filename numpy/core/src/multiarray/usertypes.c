@@ -41,6 +41,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "scalartypes.h"
 #include "array_method.h"
 #include "convert_datatype.h"
+#include "dtype_traversal.h"
 #include "legacy_dtype_implementation.h"
 
 
@@ -223,6 +224,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
     }
+
+    int use_void_clearimpl = 0;
     if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
         /*
          * User dtype can't actually do reference counting, however, there
@@ -231,6 +234,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
          * so we have to support this. But such a structure must be constant
          * (i.e. fixed at registration time, this is the case for `xpress`).
          */
+        use_void_clearimpl = 1;
+
         if (descr->names == NULL || descr->fields == NULL ||
             !PyDict_CheckExact(descr->fields)) {
             PyErr_Format(PyExc_ValueError,
@@ -263,6 +268,13 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         return -1;
+    }
+    if (use_void_clearimpl) {
+        /* See comment where use_void_clearimpl is set... */
+        PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+                &npy_get_clear_void_and_legacy_user_dtype_loop);
+        Py_DECREF(Void);
     }
 
     return typenum;
@@ -597,7 +609,7 @@ PyArray_AddLegacyWrapping_CastingImpl(
     if (from == to) {
         spec.flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {_NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &legacy_same_dtype_resolve_descriptors},
             {0, NULL}};
         spec.slots = slots;
@@ -606,7 +618,7 @@ PyArray_AddLegacyWrapping_CastingImpl(
     else {
         spec.flags = NPY_METH_REQUIRES_PYAPI;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {_NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &simple_cast_resolve_descriptors},
             {0, NULL}};
         spec.slots = slots;

@@ -1,9 +1,10 @@
-This file contains a walkthrough of branching NumPy 1.21.x on Linux.  The
+This guide contains a walkthrough of branching NumPy 1.21.x on Linux.  The
 commands can be copied into the command line, but be sure to replace 1.21 and
 1.22 by the correct versions. It is good practice to make ``.mailmap`` as
 current as possible before making the branch, that may take several weeks.
 
-This should be read together with the general directions in `releasing`.
+This should be read together with the
+:ref:`general release guide <prepare_release>`.
 
 Branching
 =========

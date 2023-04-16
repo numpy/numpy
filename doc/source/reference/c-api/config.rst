@@ -118,14 +118,3 @@ Compiler directives
 .. c:macro:: NPY_LIKELY
 .. c:macro:: NPY_UNLIKELY
 .. c:macro:: NPY_UNUSED
-
-
-Interrupt Handling
-------------------
-
-.. c:macro:: NPY_INTERRUPT_H
-.. c:macro:: NPY_SIGSETJMP
-.. c:macro:: NPY_SIGLONGJMP
-.. c:macro:: NPY_SIGJMP_BUF
-.. c:macro:: NPY_SIGINT_ON
-.. c:macro:: NPY_SIGINT_OFF

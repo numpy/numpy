@@ -14,6 +14,9 @@
 #include <Python.h>
 
 #include "npy_config.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"

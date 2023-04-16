@@ -4,6 +4,10 @@
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
+
 #include "npy_import.h"
 #include <limits.h>
 
@@ -99,7 +103,7 @@ _may_have_objects(PyArray_Descr *dtype);
  * If _save is not NULL it is assumed the GIL is not taken and it
  * is acquired in the case of an error
  */
-static NPY_INLINE int
+static inline int
 check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
                        PyThreadState * _save)
 {
@@ -133,7 +137,7 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
  *
  * msg_prefix: borrowed reference, a string to prepend to the message
  */
-static NPY_INLINE int
+static inline int
 check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
 {
     /* Check that index is valid, taking into account negative indices */
@@ -145,7 +149,7 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
-        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
+        npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
         if (AxisError_cls == NULL) {
             return -1;
         }
@@ -167,14 +171,26 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     }
     return 0;
 }
-static NPY_INLINE int
+static inline int
 check_and_adjust_axis(int *axis, int ndim)
 {
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
 }
 
 /* used for some alignment checks */
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/* 
+ * GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
+ * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
+ * clang versions < 8.0.0 have the same bug.
+ */
+#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
+  && !defined __clang__) \
+     || (defined __clang__ && __clang_major__ < 8))
+# define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#else
+# define _ALIGN(type) _Alignof(type)
+#endif
 #define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
@@ -187,7 +203,7 @@ check_and_adjust_axis(int *axis, int ndim)
 /*
  * return true if pointer is aligned to 'alignment'
  */
-static NPY_INLINE int
+static inline int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
     /*
@@ -201,7 +217,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE npy_uintp
+static inline npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -248,7 +264,7 @@ npy_uint_alignment(int itemsize)
      */
     __attribute__((no_sanitize("alignment")))
 #endif
-static NPY_INLINE char *
+static inline char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
 {
@@ -298,7 +314,7 @@ npy_memchr(char * haystack, char needle,
  * flag means that NULL entries are replaced with None, which is occasionally
  * useful.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
 {
     PyObject *tuple = PyTuple_New(n);

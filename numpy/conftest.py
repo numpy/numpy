@@ -40,6 +40,8 @@ hypothesis.settings.load_profile(
     "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
 )
 
+# The experimentalAPI is used in _umath_tests
+os.environ["NUMPY_EXPERIMENTAL_DTYPE_API"] = "1"
 
 def pytest_configure(config):
     config.addinivalue_line("markers",
@@ -117,3 +119,20 @@ def add_np(doctest_namespace):
 @pytest.fixture(autouse=True)
 def env_setup(monkeypatch):
     monkeypatch.setenv('PYTHONHASHSEED', '0')
+
+
+@pytest.fixture(params=[True, False])
+def weak_promotion(request):
+    """
+    Fixture to ensure "legacy" promotion state or change it to use the new
+    weak promotion (plus warning).  `old_promotion` should be used as a
+    parameter in the function.
+    """
+    state = numpy._get_promotion_state()
+    if request.param:
+        numpy._set_promotion_state("weak_and_warn")
+    else:
+        numpy._set_promotion_state("legacy")
+
+    yield request.param
+    numpy._set_promotion_state(state)

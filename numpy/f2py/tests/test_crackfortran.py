@@ -1,7 +1,10 @@
+import importlib
 import codecs
+import time
+import unicodedata
 import pytest
 import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces
+from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 from . import util
 from numpy.f2py import crackfortran
 import textwrap
@@ -257,13 +260,66 @@ class TestFortranReader(util.F2PyTest):
     def test_input_encoding(self, tmp_path, encoding):
         # gh-635
         f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
-        # explicit BOM is required for UTF8
-        bom = {'utf-8': codecs.BOM_UTF8}.get(encoding, b'')
         with f_path.open('w', encoding=encoding) as ff:
-            ff.write(bom.decode(encoding) +
-                     """
+            ff.write("""
                      subroutine foo()
                      end subroutine foo
                      """)
         mod = crackfortran.crackfortran([str(f_path)])
         assert mod[0]['name'] == 'foo'
+
+class TestUnicodeComment(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
+
+    @pytest.mark.skipif(
+        (importlib.util.find_spec("charset_normalizer") is None),
+        reason="test requires charset_normalizer which is not installed",
+    )
+    def test_encoding_comment(self):
+        self.module.foo(3)
+
+class TestNameArgsPatternBacktracking:
+    @pytest.mark.parametrize(
+        ['adversary'],
+        [
+            ('@)@bind@(@',),
+            ('@)@bind                         @(@',),
+            ('@)@bind foo bar baz@(@',)
+        ]
+    )
+    def test_nameargspattern_backtracking(self, adversary):
+        '''address ReDOS vulnerability:
+        https://github.com/numpy/numpy/issues/23338'''
+        last_median = 0.
+        trials_per_count = 128
+        start_reps, end_reps = 15, 25
+        times_median_doubled = 0
+        for ii in range(start_reps, end_reps):
+            repeated_adversary = adversary * ii
+            times = []
+            for _ in range(trials_per_count):
+                t0 = time.perf_counter()
+                mtch = nameargspattern.search(repeated_adversary)
+                times.append(time.perf_counter() - t0)
+            # We should use a measure of time that's resilient to outliers.
+            # Times jump around a lot due to the CPU's scheduler.
+            median = np.median(times)
+            assert not mtch
+            # if the adversary is capped with @)@, it becomes acceptable
+            # according to the old version of the regex.
+            # that should still be true.
+            good_version_of_adversary = repeated_adversary + '@)@'
+            assert nameargspattern.search(good_version_of_adversary)
+            if ii > start_reps:
+                # the hallmark of exponentially catastrophic backtracking
+                # is that runtime doubles for every added instance of
+                # the problematic pattern.
+                times_median_doubled += median > 2 * last_median
+                # also try to rule out non-exponential but still bad cases
+                # arbitrarily, we should set a hard limit of 10ms as too slow
+                assert median < trials_per_count * 0.01
+            last_median = median
+        # we accept that maybe the median might double once, due to
+        # the CPU scheduler acting weird or whatever. More than that
+        # seems suspicious.
+        assert times_median_doubled < 2

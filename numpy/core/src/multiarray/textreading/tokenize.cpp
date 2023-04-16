@@ -45,7 +45,8 @@ copy_to_field_buffer(tokenizer_state *ts,
         const UCS *chunk_start, const UCS *chunk_end)
 {
     npy_intp chunk_length = chunk_end - chunk_start;
-    npy_intp size = chunk_length + ts->field_buffer_pos + 2;
+    /* Space for length +1 termination, +2 additional padding for add_field */
+    npy_intp size = chunk_length + ts->field_buffer_pos + 3;
 
     if (NPY_UNLIKELY(ts->field_buffer_length < size)) {
         npy_intp alloc_size = grow_size_and_multiply(&size, 32, sizeof(Py_UCS4));
@@ -104,6 +105,7 @@ add_field(tokenizer_state *ts)
     ts->num_fields += 1;
     /* Ensure this (currently empty) word is NUL terminated. */
     ts->field_buffer[ts->field_buffer_pos] = '\0';
+    assert(ts->field_buffer_length > ts->field_buffer_pos);
     return 0;
 }
 
@@ -221,7 +223,8 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
             }
             else {
                 /* continue parsing as if unquoted */
-                ts->state = TOKENIZE_UNQUOTED;
+                /* Set to TOKENIZE_UNQUOTED or TOKENIZE_UNQUOTED_WHITESPACE */
+                ts->state = ts->unquoted_state;
             }
             break;
 
@@ -284,10 +287,10 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
  * unicode flavors UCS1, UCS2, and UCS4 as a worthwhile optimization.
  */
 NPY_NO_EXPORT int
-tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
+npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 {
     assert(ts->fields_size >= 2);
-    assert(ts->field_buffer_length >= 2*sizeof(Py_UCS4));
+    assert(ts->field_buffer_length >= 2*(Py_ssize_t)sizeof(Py_UCS4));
 
     int finished_reading_file = 0;
 
@@ -402,7 +405,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 
 
 NPY_NO_EXPORT void
-tokenizer_clear(tokenizer_state *ts)
+npy_tokenizer_clear(tokenizer_state *ts)
 {
     PyMem_FREE(ts->field_buffer);
     ts->field_buffer = nullptr;
@@ -420,7 +423,7 @@ tokenizer_clear(tokenizer_state *ts)
  * tokenizing.
  */
 NPY_NO_EXPORT int
-tokenizer_init(tokenizer_state *ts, parser_config *config)
+npy_tokenizer_init(tokenizer_state *ts, parser_config *config)
 {
     /* State and buf_state could be moved into tokenize if we go by row */
     ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
@@ -446,6 +449,8 @@ tokenizer_init(tokenizer_state *ts, parser_config *config)
 
     ts->fields = (field_info *)PyMem_Malloc(4 * sizeof(*ts->fields));
     if (ts->fields == nullptr) {
+        PyMem_Free(ts->field_buffer);
+        ts->field_buffer = nullptr;
         PyErr_NoMemory();
         return -1;
     }

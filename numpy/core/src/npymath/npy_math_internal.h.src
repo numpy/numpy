@@ -83,49 +83,50 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
 
 /*
  *****************************************************************************
- **                     BASIC MATH FUNCTIONS                                **
+ **                    BLOCKLIST-ABLE BASIC MATH FUNCTIONS                  **
  *****************************************************************************
  */
 
+/* The following functions can be blocked, even for doubles */
+
 /* Original code by Konrad Hinsen.  */
-#ifndef HAVE_EXPM1
-NPY_INPLACE double npy_expm1(double x)
+/* Taken from FreeBSD mlib, adapted for numpy
+ *
+ * XXX: we could be a bit faster by reusing high/low words for inf/nan
+ * classification instead of calling npy_isinf/npy_isnan: we should have some
+ * macros for this, though, instead of doing it manually
+ */
+NPY_INPLACE double npy_log2(double x)
 {
-    if (npy_isinf(x) && x > 0) {
-        return x;
+#ifndef NPY_BLOCK_LOG2
+    return log2(x);
+#else
+    if (!npy_isfinite(x) || x <= 0.) {
+        /* special value result */
+        return npy_log(x);
     }
     else {
-        const double u = npy_exp(x);
-
-        if (u == 1.0) {
-            return x;
-        } else if (u - 1.0 == -1.0) {
-            return -1;
-        } else {
-            return (u - 1.0) * x/npy_log(u);
+        /*
+         * fallback implementation copied from python3.4 math.log2
+         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
+         *
+         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
+         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
+         * and we get significant cancellation error from the addition of
+         * log(m) / log(2) to e.  The slight rewrite of the expression below
+         * avoids this problem.
+         */
+        int e;
+        double m = frexp(x, &e);
+        if (x >= 1.0) {
+            return log(2.0 * m) / log(2.0) + (e - 1);
+        }
+        else {
+            return log(m) / log(2.0) + e;
         }
     }
-}
 #endif
-
-#ifndef HAVE_LOG1P
-NPY_INPLACE double npy_log1p(double x)
-{
-    if (npy_isinf(x) && x > 0) {
-        return x;
-    }
-    else {
-        const double u = 1. + x;
-        const double d = u - 1.;
-
-        if (d == 0) {
-            return x;
-        } else {
-            return npy_log(u) * x / d;
-        }
-    }
 }
-#endif
 
 /* Taken from FreeBSD mlib, adapted for numpy
  *
@@ -133,11 +134,13 @@ NPY_INPLACE double npy_log1p(double x)
  * classification instead of calling npy_isinf/npy_isnan: we should have some
  * macros for this, though, instead of doing it manually
  */
-#ifndef HAVE_ATAN2
 /* XXX: we should have this in npy_math.h */
 #define NPY_DBL_EPSILON 1.2246467991473531772E-16
 NPY_INPLACE double npy_atan2(double y, double x)
 {
+#ifndef NPY_BLOCK_ATAN2
+    return atan2(y, x);
+#else
     npy_int32 k, m, iy, ix, hx, hy;
     npy_uint32 lx,ly;
     double z;
@@ -210,13 +213,18 @@ NPY_INPLACE double npy_atan2(double y, double x)
         default: /* case 3 */
             return  (z - NPY_DBL_EPSILON) - NPY_PI;/* atan(-,-) */
     }
+#endif
 }
 
-#endif
 
-#ifndef HAVE_HYPOT
+
+
+
 NPY_INPLACE double npy_hypot(double x, double y)
 {
+#ifndef NPY_BLOCK_HYPOT
+    return hypot(x, y);
+#else
     double yx;
 
     if (npy_isinf(x) || npy_isinf(y)) {
@@ -241,144 +249,10 @@ NPY_INPLACE double npy_hypot(double x, double y)
         yx = y/x;
         return x*npy_sqrt(1.+yx*yx);
     }
-}
-#endif
-
-#ifndef HAVE_ACOSH
-NPY_INPLACE double npy_acosh(double x)
-{
-    if (x < 1.0) {
-        return NPY_NAN;
-    }
-
-    if (npy_isfinite(x)) {
-        if (x > 1e8) {
-             return npy_log(x) + NPY_LOGE2;
-        }
-        else {
-            double u = x - 1.0;
-            return npy_log1p(u + npy_sqrt(2*u + u*u));
-        }
-    }
-    return x;
-}
-#endif
-
-#ifndef HAVE_ASINH
-NPY_INPLACE double npy_asinh(double xx)
-{
-    double x, d;
-    int sign;
-    if (xx < 0.0) {
-        sign = -1;
-        x = -xx;
-    }
-    else {
-        sign = 1;
-        x = xx;
-    }
-    if (x > 1e8) {
-        d = x;
-    } else {
-        d = npy_sqrt(x*x + 1);
-    }
-    return sign*npy_log1p(x*(1.0 + x/(d+1)));
-}
-#endif
-
-#ifndef HAVE_ATANH
-NPY_INPLACE double npy_atanh(double x)
-{
-    if (x > 0) {
-        return -0.5*npy_log1p(-2.0*x/(1.0 + x));
-    }
-    else {
-        return 0.5*npy_log1p(2.0*x/(1.0 - x));
-    }
-}
-#endif
-
-#ifndef HAVE_RINT
-#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
-#pragma optimize("", off)
-#endif
-NPY_INPLACE double npy_rint(double x)
-{
-    double y, r;
-
-    y = npy_floor(x);
-    r = x - y;
-
-    if (r > 0.5) {
-        y += 1.0;
-    }
-
-    /* Round to nearest even */
-    if (r == 0.5) {
-        r = y - 2.0*npy_floor(0.5*y);
-        if (r == 1.0) {
-            y += 1.0;
-        }
-    }
-    return y;
-}
-#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
-#pragma optimize("", on)
-#endif
-#endif
-
-#ifndef HAVE_TRUNC
-NPY_INPLACE double npy_trunc(double x)
-{
-    return x < 0 ? npy_ceil(x) : npy_floor(x);
-}
-#endif
-
-#ifndef HAVE_EXP2
-NPY_INPLACE double npy_exp2(double x)
-{
-    return npy_exp(NPY_LOGE2*x);
-}
-#endif
-
-#ifndef HAVE_LOG2
-NPY_INPLACE double npy_log2(double x)
-{
-#ifdef HAVE_FREXP
-    if (!npy_isfinite(x) || x <= 0.) {
-        /* special value result */
-        return npy_log(x);
-    }
-    else {
-        /*
-         * fallback implementation copied from python3.4 math.log2
-         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
-         *
-         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
-         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
-         * and we get significant cancellation error from the addition of
-         * log(m) / log(2) to e.  The slight rewrite of the expression below
-         * avoids this problem.
-         */
-        int e;
-        double m = frexp(x, &e);
-        if (x >= 1.0) {
-            return log(2.0 * m) / log(2.0) + (e - 1);
-        }
-        else {
-            return log(m) / log(2.0) + e;
-        }
-    }
-#else
-    /* does not provide int(log(2**i)) == i */
-    return NPY_LOG2E * npy_log(x);
 #endif
 }
-#endif
 
 /*
- * if C99 extensions not available then define dummy functions that use the
- * double versions for
  *
  * sin, cos, tan
  * sinh, cosh, tanh,
@@ -388,7 +262,7 @@ NPY_INPLACE double npy_log2(double x)
  * asinh, acosh, atanh
  *
  * hypot, atan2, pow, fmod, modf
- * ldexp, frexp
+ * ldexp, frexp, cbrt
  *
  * We assume the above are always available in their double versions.
  *
@@ -396,82 +270,6 @@ NPY_INPLACE double npy_log2(double x)
  * For simplicity, we define our own functions and undef the macros. We could
  * instead test for the macro, but I am lazy to do that for now.
  */
-
-/**begin repeat
- * #type = npy_longdouble, npy_float#
- * #TYPE = NPY_LONGDOUBLE, FLOAT#
- * #c = l,f#
- * #C = L,F#
- */
-
-/**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
- * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
- *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
- */
-
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-#ifndef HAVE_@KIND@@C@
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
-{
-    return (@type@) npy_@kind@((double)x);
-}
-#endif
-
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
- */
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-#ifndef HAVE_@KIND@@C@
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
-{
-    return (@type@) npy_@kind@((double)x, (double) y);
-}
-#endif
-/**end repeat1**/
-
-#ifdef modf@c@
-#undef modf@c@
-#endif
-#ifndef HAVE_MODF@C@
-NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
-{
-    double niptr;
-    double y = npy_modf((double)x, &niptr);
-    *iptr = (@type@) niptr;
-    return (@type@) y;
-}
-#endif
-
-#ifdef ldexp@c@
-#undef ldexp@c@
-#endif
-#ifndef HAVE_LDEXP@C@
-NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
-{
-    return (@type@) npy_ldexp((double)x, exp);
-}
-#endif
-
-#ifdef frexp@c@
-#undef frexp@c@
-#endif
-#ifndef HAVE_FREXP@C@
-NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
-{
-    return (@type@) npy_frexp(x, exp);
-}
-#endif
-
-/**end repeat**/
 
 
 /*
@@ -501,13 +299,9 @@ NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 #endif
 
 /**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
- * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
- *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
- * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*22#
+ * #kind = sin,cos,tan#
+ * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3#
  */
-#ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
 #if @TRIG_WORKAROUND@
@@ -517,17 +311,68 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #endif
     return NPY__FP_SFX(@kind@)(x);
 }
-#endif
 
 /**end repeat1**/
 
 #undef WORKAROUND_APPLE_TRIG_BUG
 
-/**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+/**end repeat**/
+
+/* Blocklist-able C99 functions */
+
+/**begin repeat
+ * #type = npy_float,npy_longdouble#
+ * #TYPE = FLOAT,LONGDOUBLE#
+ * #c = f,l#
+ * #C = F,L#
  */
-#ifdef HAVE_@KIND@@C@
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
+
+/**begin repeat1
+ * #kind = exp,log2,sqrt#
+ * #KIND = EXP,LOG2,SQRT#
+ */
+
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifdef NPY_BLOCK_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return (@type@) npy_@kind@((double)x);
+}
+#endif
+
+#ifndef NPY_BLOCK_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return NPY__FP_SFX(@kind@)(x);
+}
+#endif
+
+/**end repeat1**/
+
+
+/**begin repeat1
+ * #kind = atan2,hypot,pow#
+ * #KIND = ATAN2,HYPOT,POW#
+ */
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifdef NPY_BLOCK_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return (@type@) npy_@kind@((double)x, (double) y);
+}
+#endif
+
+#ifndef NPY_BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return NPY__FP_SFX(@kind@)(x, y);
@@ -535,51 +380,31 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 #endif
 /**end repeat1**/
 
-#ifdef HAVE_MODF@C@
+#ifdef modf@c@
+#undef modf@c@
+#endif
+#ifdef NPY_BLOCK_MODF@C@
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    double niptr;
+    double y = npy_modf((double)x, &niptr);
+    *iptr = (@type@) niptr;
+    return (@type@) y;
+}
+#endif
+
+#ifndef NPY_BLOCK_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return NPY__FP_SFX(modf)(x, iptr);
 }
 #endif
 
-#ifdef HAVE_LDEXP@C@
-NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
-{
-    return NPY__FP_SFX(ldexp)(x, exp);
-}
-#endif
 
-#ifdef HAVE_FREXP@C@
-NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
-{
-    return NPY__FP_SFX(frexp)(x, exp);
-}
-#endif
-
-/* C99 but not mandatory */
-
-#ifndef HAVE_CBRT@C@
-NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
-{
-    /* don't set invalid flag */
-    if (npy_isnan(x)) {
-        return NPY_NAN;
-    }
-    else if (x < 0) {
-        return -npy_pow@c@(-x, 1. / 3.);
-    }
-    else {
-        return npy_pow@c@(x, 1. / 3.);
-    }
-}
-#else
-NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
-{
-    return NPY__FP_SFX(cbrt)(x);
-}
-#endif
-#undef NPY__FP_SFX
 /**end repeat**/
+
+
+#undef NPY__FP_SFX
 
 
 /*
@@ -742,7 +567,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* adjust fmod result to conform to Python convention of remainder */
     if (mod) {
-        if (isless(b, 0) != isless(mod, 0)) {
+        if (isless(b, (@type@)0) != isless(mod, (@type@)0)) {
             mod += b;
             div -= 1.0@c@;
         }
@@ -915,3 +740,4 @@ npy_popcount@c@(npy_@type@ a)
     return npy_popcountu@c@(a < 0 ? -a : a);
 }
 /**end repeat**/
+

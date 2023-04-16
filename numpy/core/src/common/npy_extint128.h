@@ -9,7 +9,7 @@ typedef struct {
 
 
 /* Integer addition with overflow checking */
-static NPY_INLINE npy_int64
+static inline npy_int64
 safe_add(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
     if (a > 0 && b > NPY_MAX_INT64 - a) {
@@ -23,7 +23,7 @@ safe_add(npy_int64 a, npy_int64 b, char *overflow_flag)
 
 
 /* Integer subtraction with overflow checking */
-static NPY_INLINE npy_int64
+static inline npy_int64
 safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
     if (a >= 0 && b < a - NPY_MAX_INT64) {
@@ -37,7 +37,7 @@ safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
 
 
 /* Integer multiplication with overflow checking */
-static NPY_INLINE npy_int64
+static inline npy_int64
 safe_mul(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
     if (a > 0) {
@@ -58,7 +58,7 @@ safe_mul(npy_int64 a, npy_int64 b, char *overflow_flag)
 
 
 /* Long integer init */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 to_128(npy_int64 x)
 {
     npy_extint128_t result;
@@ -74,7 +74,7 @@ to_128(npy_int64 x)
 }
 
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 to_64(npy_extint128_t x, char *overflow)
 {
     if (x.hi != 0 ||
@@ -87,7 +87,7 @@ to_64(npy_extint128_t x, char *overflow)
 
 
 /* Long integer multiply */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 mul_64_64(npy_int64 a, npy_int64 b)
 {
     npy_extint128_t x, y, z;
@@ -127,7 +127,7 @@ mul_64_64(npy_int64 a, npy_int64 b)
 
 
 /* Long integer add */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 add_128(npy_extint128_t x, npy_extint128_t y, char *overflow)
 {
     npy_extint128_t z;
@@ -170,7 +170,7 @@ add_128(npy_extint128_t x, npy_extint128_t y, char *overflow)
 
 
 /* Long integer negation */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 neg_128(npy_extint128_t x)
 {
     npy_extint128_t z = x;
@@ -179,14 +179,14 @@ neg_128(npy_extint128_t x)
 }
 
 
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 sub_128(npy_extint128_t x, npy_extint128_t y, char *overflow)
 {
     return add_128(x, neg_128(y), overflow);
 }
 
 
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 shl_128(npy_extint128_t v)
 {
     npy_extint128_t z;
@@ -198,7 +198,7 @@ shl_128(npy_extint128_t v)
 }
 
 
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 shr_128(npy_extint128_t v)
 {
     npy_extint128_t z;
@@ -209,7 +209,7 @@ shr_128(npy_extint128_t v)
     return z;
 }
 
-static NPY_INLINE int
+static inline int
 gt_128(npy_extint128_t a, npy_extint128_t b)
 {
     if (a.sign > 0 && b.sign > 0) {
@@ -228,7 +228,7 @@ gt_128(npy_extint128_t a, npy_extint128_t b)
 
 
 /* Long integer divide */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 divmod_128_64(npy_extint128_t x, npy_int64 b, npy_int64 *mod)
 {
     npy_extint128_t remainder, pointer, result, divisor;
@@ -284,7 +284,7 @@ divmod_128_64(npy_extint128_t x, npy_int64 b, npy_int64 *mod)
 
 
 /* Divide and round down (positive divisor; no overflows) */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 floordiv_128_64(npy_extint128_t a, npy_int64 b)
 {
     npy_extint128_t result;
@@ -300,7 +300,7 @@ floordiv_128_64(npy_extint128_t a, npy_int64 b)
 
 
 /* Divide and round up (positive divisor; no overflows) */
-static NPY_INLINE npy_extint128_t
+static inline npy_extint128_t
 ceildiv_128_64(npy_extint128_t a, npy_int64 b)
 {
     npy_extint128_t result;

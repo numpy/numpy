@@ -1,0 +1,2 @@
+* ``np.core.MachAr`` is deprecated.  It is private API.  In names
+  defined in ``np.core`` should generally be considered private.

@@ -35,7 +35,7 @@
  *
  * Users cannot control pointers, so we do not have to worry about DoS attacks?
  */
-static NPY_INLINE Py_hash_t
+static inline Py_hash_t
 identity_list_hash(PyObject *const *v, int len)
 {
     Py_uhash_t acc = _NpyHASH_XXPRIME_5;
@@ -58,7 +58,7 @@ identity_list_hash(PyObject *const *v, int len)
 #undef _NpyHASH_XXROTATE
 
 
-static NPY_INLINE PyObject **
+static inline PyObject **
 find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 {
     Py_hash_t hash = identity_list_hash(key, tb->key_len);
@@ -146,7 +146,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     }
 
     npy_intp alloc_size;
-    if (npy_mul_with_overflow_intp(&alloc_size, new_size, tb->key_len + 1)) {
+    if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
     tb->buckets = PyMem_Calloc(alloc_size, sizeof(PyObject *));

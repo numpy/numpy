@@ -84,7 +84,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
  * to `PyArray_PyIntAsIntp`.  Exists mainly to retain old behaviour of
  * `PyArray_IntpConverter` and `PyArray_IntpFromSequence`
  */
-static NPY_INLINE npy_intp
+static inline npy_intp
 dimension_from_scalar(PyObject *ob)
 {
     npy_intp value = PyArray_PyIntAsIntp(ob);

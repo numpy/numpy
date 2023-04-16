@@ -152,7 +152,7 @@ and its sub-types).
 
 .. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
 
-    The function pointed to by the CObject
+    The function pointed to by the :c:type:`PyCapsule`
     :obj:`~numpy.class.__array_finalize__`.
     The first argument is the newly created sub-type. The second argument
     (if not NULL) is the "parent" array (if the array was created using
@@ -423,7 +423,7 @@ From other objects
     :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
     this call will generate an error if the data
     type cannot be safely obtained from the object. If you want to use
-    ``NULL`` for the *dtype* and ensure the array is notswapped then
+    ``NULL`` for the *dtype* and ensure the array is not swapped then
     use :c:func:`PyArray_CheckFromAny`. A value of 0 for either of the
     depth parameters causes the parameter to be ignored. Any of the
     following array flags can be added (*e.g.* using \|) to get the
@@ -547,22 +547,6 @@ From other objects
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-
-.. c:function:: int PyArray_GetArrayParamsFromObject( \
-        PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
-        PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, \
-        PyArrayObject** out_arr, PyObject* context)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    .. versionchanged:: NumPy 1.19
-
-        `context` is never used. Its use results in an error.
-
-    .. versionadded:: 1.6
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -1202,17 +1186,6 @@ Converting data types
     return value is the enumerated typenumber that represents the
     data-type that *op* should have.
 
-.. c:function:: void PyArray_ArrayType( \
-        PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
-
-    This function is superseded by :c:func:`PyArray_ResultType`.
-
-    This function works similarly to :c:func:`PyArray_ObjectType` (...)
-    except it handles flexible arrays. The *mintype* argument can have
-    an itemsize member and the *outtype* argument will have an
-    itemsize member at least as big but perhaps bigger depending on
-    the object *op*.
-
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
 
@@ -1322,6 +1295,29 @@ User-defined data types
 
 Special functions for NPY_OBJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+    When working with arrays or buffers filled with objects NumPy tries to
+    ensure such buffers are filled with ``None`` before any data may be read.
+    However, code paths may existed where an array is only initialized to
+    ``NULL``.
+    NumPy itself accepts ``NULL`` as an alias for ``None``, but may ``assert``
+    non-``NULL`` when compiled in debug mode.
+
+    Because NumPy is not yet consistent about initialization with None,
+    users **must** expect a value of ``NULL`` when working with buffers created
+    by NumPy.  Users **should** also ensure to pass fully initialized buffers
+    to NumPy, since NumPy may make this a strong requirement in the future.
+
+    There is currently an intention to ensure that NumPy always initializes
+    object arrays before they may be read.  Any failure to do so will be
+    regarded as a bug.
+    In the future, users may be able to rely on non-NULL values when reading
+    from any array, although exceptions for writing to freshly created arrays
+    may remain (e.g. for output arrays in ufunc code).  As of NumPy 1.23
+    known code paths exists where proper filling is not done.
+
 
 .. c:function:: int PyArray_INCREF(PyArrayObject* op)
 
@@ -1467,7 +1463,7 @@ of the constant names is deprecated in 1.7.
     :c:func:`PyArray_FromAny` and a copy had to be made of some other
     array (and the user asked for this flag to be set in such a
     situation). The base attribute then points to the "misbehaved"
-    array (which is set read_only). :c:func`PyArray_ResolveWritebackIfCopy`
+    array (which is set read_only). :c:func:`PyArray_ResolveWritebackIfCopy`
     will copy its contents back to the "misbehaved"
     array (casting if necessary) and will reset the "misbehaved" array
     to :c:data:`NPY_ARRAY_WRITEABLE`. If the "misbehaved" array was not
@@ -2452,9 +2448,9 @@ As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
-N-dimensional array quickly and efficiently. Section `2
-<#sec-array-iterator>`__ provides more description and examples of
-this useful approach to looping over an array.
+N-dimensional array quickly and efficiently, as seen in :ref:`the
+example <iteration-example>` which provides more description
+of this useful approach to looping over an array from C. 
 
 .. c:function:: PyObject* PyArray_IterNew(PyObject* arr)
 
@@ -3024,14 +3020,14 @@ to.
     structure with base, ptr, len, and flags members. The
     :c:type:`PyArray_Chunk` structure is binary compatible with the
     Python's buffer object (through its len member on 32-bit platforms
-    and its ptr member on 64-bit platforms or in Python 2.5). On
-    return, the base member is set to *obj* (or its base if *obj* is
-    already a buffer object pointing to another object). If you need
-    to hold on to the memory be sure to INCREF the base member. The
-    chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
-    with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
-    a writeable buffer interface.
+    and its ptr member on 64-bit platforms). On return, the base member
+    is set to *obj* (or its base if *obj* is already a buffer object
+    pointing to another object). If you need to hold on to the memory
+    be sure to INCREF the base member. The chunk of memory is pointed
+    to by *buf* ->ptr member and has length *buf* ->len. The flags
+    member of *buf* is :c:data:`NPY_ARRAY_ALIGNED` with the
+    :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable
+    buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
@@ -3355,7 +3351,7 @@ Memory management
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
     copies ``obj->data`` to `obj->base->data`, and returns the error state of
@@ -3585,28 +3581,16 @@ Miscellaneous Macros
 
     Returns the reference count of any Python object.
 
-.. c:function:: void PyArray_DiscardWritebackIfCopy(PyObject* obj)
+.. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
-    contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
-    to copy the data from `obj->base` This undoes
+    contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
+    to copy the data from `obj->base`. This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.
-
-.. c:function:: void PyArray_XDECREF_ERR(PyObject* obj)
-
-    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
-    followed by ``Py_XDECREF``
-
-    DECREF's an array object which may have the
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-    flag set without causing the contents to be copied back into the
-    original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
-    object. This is useful for recovering from an error condition when
-    writeback semantics are used, but will lead to wrong results.
 
 
 Enumerated Types

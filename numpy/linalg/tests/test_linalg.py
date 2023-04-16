@@ -19,7 +19,7 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex, HAS_LAPACK64,
+    assert_raises_regex, HAS_LAPACK64, IS_WASM
     )
 
 
@@ -1063,6 +1063,7 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
@@ -1803,9 +1804,9 @@ class TestCholesky:
         c = np.linalg.cholesky(a)
 
         b = np.matmul(c, c.transpose(t).conj())
-        assert_allclose(b, a,
-                        err_msg=f'{shape} {dtype}\n{a}\n{c}',
-                        atol=500 * a.shape[0] * np.finfo(dtype).eps)
+        with np._no_nep50_warning():
+            atol = 500 * a.shape[0] * np.finfo(dtype).eps
+        assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -1845,6 +1846,7 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
@@ -1908,6 +1910,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not

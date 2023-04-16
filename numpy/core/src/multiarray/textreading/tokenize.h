@@ -46,8 +46,9 @@ typedef struct {
     char *pos;
     char *end;
     /*
-     * Space to copy words into.  The buffer must always be at least two NUL
-     * entries longer (8 bytes) than the actual word (including initially).
+     * Space to copy words into.  Due to `add_field` not growing the buffer
+     * but writing a \0 termination, the buffer must always be two larger
+     * (add_field can be called twice if a row ends in a delimiter: "123,").
      * The first byte beyond the current word is always NUL'ed on write, the
      * second byte is there to allow easy appending of an additional empty
      * word at the end (this word is also NUL terminated).
@@ -70,14 +71,14 @@ typedef struct {
 
 
 NPY_NO_EXPORT void
-tokenizer_clear(tokenizer_state *ts);
+npy_tokenizer_clear(tokenizer_state *ts);
 
 
 NPY_NO_EXPORT int
-tokenizer_init(tokenizer_state *ts, parser_config *config);
+npy_tokenizer_init(tokenizer_state *ts, parser_config *config);
 
 NPY_NO_EXPORT int
-tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
+npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
 
 #ifdef __cplusplus
 }

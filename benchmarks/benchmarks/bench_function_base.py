@@ -2,6 +2,15 @@ from .common import Benchmark
 
 import numpy as np
 
+class Linspace(Benchmark):
+    def setup(self):
+        self.d = np.array([1, 2, 3])
+
+    def time_linspace_scalar(self):
+        np.linspace(0, 10, 2)
+
+    def time_linspace_array(self):
+        np.linspace(self.d, 10, 10)
 
 class Histogram1D(Benchmark):
     def setup(self):
@@ -239,7 +248,7 @@ class Sort(Benchmark):
         # In NumPy 1.17 and newer, 'merge' can be one of several
         # stable sorts, it isn't necessarily merge sort.
         ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16'],
+        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16', 'float16'],
         [
             ('random',),
             ('ordered',),

@@ -85,7 +85,7 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
         item = PyTuple_GetItem(t, i);
         if (item == NULL) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) Error while computing builting hash");
+                    "(Hash) Error while computing builtin hash");
             goto clean_t;
         }
         PyList_Append(l, item);

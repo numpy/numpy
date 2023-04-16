@@ -27,6 +27,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool force_legacy_promotion,
         npy_bool allow_legacy_promotion,
+        npy_bool promote_pyscalars,
         npy_bool ensure_reduce_compatible);
 
 NPY_NO_EXPORT PyObject *

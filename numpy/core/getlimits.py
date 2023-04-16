@@ -5,8 +5,8 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
+from .._utils import set_module
 from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
@@ -147,8 +147,12 @@ _MACHAR_PARAMS = {
 
 # Key to identify the floating point type.  Key is result of
 # ftype('-0.1').newbyteorder('<').tobytes()
+#
+# 20230201 - use (ftype(-1.0) / ftype(10.0)).newbyteorder('<').tobytes()
+#            instead because stold may have deficiencies on some platforms.
 # See:
 # https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
+
 _KNOWN_TYPES = {}
 def _register_type(machar, bytepat):
     _KNOWN_TYPES[bytepat] = machar
@@ -240,8 +244,6 @@ def _register_known_types():
     # IEEE 754 128-bit binary float
     _register_type(float128_ma,
         b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
-    _register_type(float128_ma,
-        b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
     _float_ma[128] = float128_ma
 
     # Known parameters for float80 (Intel 80-bit extended precision)
@@ -329,7 +331,9 @@ def _get_machar(ftype):
     if params is None:
         raise ValueError(repr(ftype))
     # Detect known / suspected types
-    key = ftype('-0.1').newbyteorder('<').tobytes()
+    # ftype(-1.0) / ftype(10.0) is better than ftype('-0.1') because stold
+    # may be deficient
+    key = (ftype(-1.0) / ftype(10.)).newbyteorder('<').tobytes()
     ma_like = None
     if ftype == ntypes.longdouble:
         # Could be 80 bit == 10 byte extended precision, where last bytes can
@@ -338,19 +342,30 @@ def _get_machar(ftype):
         # random garbage.
         ma_like = _KNOWN_TYPES.get(key[:10])
     if ma_like is None:
+        # see if the full key is known.
         ma_like = _KNOWN_TYPES.get(key)
+    if ma_like is None and len(key) == 16:
+        # machine limits could be f80 masquerading as np.float128,
+        # find all keys with length 16 and make new dict, but make the keys
+        # only 10 bytes long, the last bytes can be random garbage
+        _kt = {k[:10]: v for k, v in _KNOWN_TYPES.items() if len(k) == 16}
+        ma_like = _kt.get(key[:10])
     if ma_like is not None:
         return ma_like
     # Fall back to parameter discovery
     warnings.warn(
-        'Signature {} for {} does not match any known type: '
-        'falling back to type probe function'.format(key, ftype),
+        f'Signature {key} for {ftype} does not match any known type: '
+        'falling back to type probe function.\n'
+        'This warnings indicates broken support for the dtype!',
         UserWarning, stacklevel=2)
     return _discovered_machar(ftype)
 
 
 def _discovered_machar(ftype):
     """ Create MachAr instance with found information on float types
+
+    TODO: MachAr should be retired completely ideally.  We currently only
+          ever use it system with broken longdouble (valgrind, WSL).
     """
     params = _MACHAR_PARAMS[ftype]
     return MachAr(lambda v: array([v], ftype),
@@ -371,6 +386,10 @@ class finfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `finfo` returns information. For complex
+        input, the returned dtype is the associated ``float*`` dtype for its
+        real and complex components.
     eps : float
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
@@ -382,11 +401,6 @@ class finfo:
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
-    machar : MachAr
-        The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
     machep : int
         The exponent that yields `eps`.
     max : floating point number of the appropriate type
@@ -422,11 +436,11 @@ class finfo:
     Parameters
     ----------
     dtype : float, dtype, or instance
-        Kind of floating point data-type about which to get information.
+        Kind of floating point or complex floating point
+        data-type about which to get information.
 
     See Also
     --------
-    MachAr : The implementation of the tests that produce this information.
     iinfo : The equivalent for integer data types.
     spacing : The distance between a value and the nearest adjacent number
     nextafter : The next floating point value after x1 towards x2
@@ -444,24 +458,50 @@ class finfo:
     fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
     may have significantly reduced precision [2]_.
 
+    This function can also be used for complex data types as well. If used,
+    the output will be the same as the corresponding real float type
+    (e.g. numpy.finfo(numpy.csingle) is the same as numpy.finfo(numpy.single)).
+    However, the output is true for the real and imaginary components.
+
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
            pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
+
+    Examples
+    --------
+    >>> np.finfo(np.float64).dtype
+    dtype('float64')
+    >>> np.finfo(np.complex64).dtype
+    dtype('float32')
+
     """
 
     _finfo_cache = {}
 
     def __new__(cls, dtype):
+        obj = cls._finfo_cache.get(dtype)  # most common path
+        if obj is not None:
+            return obj
+
+        if dtype is None:
+            # Deprecated in NumPy 1.25, 2023-01-16
+            warnings.warn(
+                "finfo() dtype cannot be None. This behavior will "
+                "raise an error in the future. (Deprecated in NumPy 1.25)",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
         try:
             dtype = numeric.dtype(dtype)
         except TypeError:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype, None)
+        obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
         dtypes = [dtype]
@@ -471,17 +511,24 @@ class finfo:
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
             raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype, None)
+        obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
         if not issubclass(dtype, numeric.floating):
             newdtype = _convert_to_float[dtype]
             if newdtype is not dtype:
+                # dtype changed, for example from complex128 to float64
                 dtypes.append(newdtype)
                 dtype = newdtype
-        obj = cls._finfo_cache.get(dtype, None)
-        if obj is not None:
-            return obj
+
+                obj = cls._finfo_cache.get(dtype, None)
+                if obj is not None:
+                    # the original dtype was not in the cache, but the new
+                    # dtype is in the cache. we add the original dtypes to
+                    # the cache and return the result
+                    for dt in dtypes:
+                        cls._finfo_cache[dt] = obj
+                    return obj
         obj = object.__new__(cls)._init(dtype)
         for dt in dtypes:
             cls._finfo_cache[dt] = obj
@@ -576,20 +623,6 @@ class finfo:
         """
         return self.smallest_normal
 
-    @property
-    def machar(self):
-        """The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
-        """
-        # Deprecated 2021-10-27, NumPy 1.22
-        warnings.warn(
-            "`finfo.machar` is deprecated (NumPy 1.22)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self._machar
-
 
 @set_module('numpy')
 class iinfo:
@@ -602,6 +635,8 @@ class iinfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `iinfo` returns information.
     min : int
         The smallest integer expressible by the type.
     max : int

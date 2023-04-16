@@ -47,7 +47,7 @@ __all__ = [
     'isunsigned_chararray', 'isunsigned_long_long',
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error',
+    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value'
 ]
 
 
@@ -297,6 +297,9 @@ def issubroutine_wrap(rout):
     if isintent_c(rout):
         return 0
     return issubroutine(rout) and hasassumedshape(rout)
+
+def isattr_value(var):
+    return 'value' in var.get('attrspec', [])
 
 
 def hasassumedshape(rout):
@@ -692,7 +695,8 @@ def getcallprotoargument(rout, cb_map={}):
             elif isstring(var):
                 pass
             else:
-                ctype = ctype + '*'
+                if not isattr_value(var):
+                    ctype = ctype + '*'
             if ((isstring(var)
                  or isarrayofstrings(var)  # obsolete?
                  or isstringarray(var))):

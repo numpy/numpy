@@ -125,9 +125,15 @@ This approach to the interface consists of the object having an
        **Default**: ``[('', typestr)]``
 
    **data** (optional)
-       A 2-tuple whose first argument is an integer (a long integer
-       if necessary) that points to the data-area storing the array
-       contents.  This pointer must point to the first element of
+       A 2-tuple whose first argument is a :doc:`Python integer <python:c-api/long>`
+       that points to the data-area storing the array contents.
+
+       .. note::
+          When converting from C/C++ via ``PyLong_From*`` or high-level
+          bindings such as Cython or pybind11, make sure to use an integer
+          of sufficiently large bitness.
+
+       This pointer must point to the first element of
        data (in other words any offset is always ignored in this
        case). The second entry in the tuple is a read-only flag (true
        means the data area is read-only).
@@ -247,7 +253,7 @@ flag is present.
 .. note::
 
     :obj:`__array_struct__` is considered legacy and should not be used for new
-    code. Use the :py:doc:`buffer protocol <c-api/buffer>` or the DLPack protocol
+    code. Use the :doc:`buffer protocol <python:c-api/buffer>` or the DLPack protocol
     `numpy.from_dlpack` instead.
 
 

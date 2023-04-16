@@ -169,6 +169,9 @@ class TestCasting:
 
         for i, value in enumerate(values):
             # Use item assignment to ensure this is not using casting:
+            if value < 0 and dtype1.kind == "u":
+                # Manually rollover unsigned integers (-1 -> int.max)
+                value = value + np.iinfo(dtype1).max + 1
             arr1[i] = value
 
         if dtype2 is None:
@@ -185,6 +188,9 @@ class TestCasting:
 
         for i, value in enumerate(values):
             # Use item assignment to ensure this is not using casting:
+            if value < 0 and dtype2.kind == "u":
+                # Manually rollover unsigned integers (-1 -> int.max)
+                value = value + np.iinfo(dtype2).max + 1
             arr2[i] = value
 
         return arr1, arr2, values

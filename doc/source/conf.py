@@ -4,7 +4,7 @@ import sys
 import importlib
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '3.2.0'
+needs_sphinx = '4.3'
 
 
 # This is a nasty hack to use platform-agnostic names for types in the
@@ -62,6 +62,13 @@ def replace_scalar_type_names():
 
 replace_scalar_type_names()
 
+
+# As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
+# For some reasons, the doc build accesses these, so ignore them.
+import warnings
+warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
+
+
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
@@ -84,7 +91,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
-    'sphinx_panels',
+    'sphinx_design',
 ]
 
 skippable_extensions = [
@@ -102,9 +109,6 @@ templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
-
-# Will change to `root_doc` in Sphinx 4
-master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
@@ -159,15 +163,12 @@ def setup(app):
 # If we deemed it desirable, we could in future make these real modules, which
 # would make `from numpy.char import split` work.
 sys.modules['numpy.char'] = numpy.char
-sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output
 # -----------------------------------------------------------------------------
 
 html_theme = 'pydata_sphinx_theme'
-
-html_logo = '_static/numpylogo.svg'
 
 html_favicon = '_static/favicon/favicon.ico'
 
@@ -179,10 +180,13 @@ if os.environ.get('CIRCLE_JOB', False) and \
 elif ".dev" in version:
     switcher_version = "devdocs"
 else:
-    switcher_version = f"doc/{version}"
+    switcher_version = f"{version}"
 
 html_theme_options = {
-  "logo_link": "index",
+  "logo": {
+      "image_light": "numpylogo.svg",
+      "image_dark": "numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
@@ -190,7 +194,7 @@ html_theme_options = {
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
   # Add light/dark mode and documentation version switcher:
-  "navbar_end": ["version-switcher", "navbar-icon-links"],
+  "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
   "switcher": {
       "version_match": switcher_version,
       "json_url": "https://numpy.org/doc/_static/versions.json",
@@ -201,11 +205,7 @@ html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
-
-# Prevent sphinx-panels from loading bootstrap css, the pydata-sphinx-theme
-# already loads it
-panels_add_bootstrap_css = False
-
+html_context = {"default_mode": "light"}
 html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False
@@ -254,25 +254,39 @@ latex_documents = [
 #latex_use_parts = False
 
 latex_elements = {
-    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
 }
 
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = r'''
+\newfontfamily\FontForChinese{FandolSong-Regular}[Extension=.otf]
+\catcode`琴\active\protected\def琴{{\FontForChinese\string琴}}
+\catcode`春\active\protected\def春{{\FontForChinese\string春}}
+\catcode`鈴\active\protected\def鈴{{\FontForChinese\string鈴}}
+\catcode`猫\active\protected\def猫{{\FontForChinese\string猫}}
+\catcode`傅\active\protected\def傅{{\FontForChinese\string傅}}
+\catcode`立\active\protected\def立{{\FontForChinese\string立}}
+\catcode`业\active\protected\def业{{\FontForChinese\string业}}
+\catcode`（\active\protected\def（{{\FontForChinese\string（}}
+\catcode`）\active\protected\def）{{\FontForChinese\string）}}
+
 % In the parameters section, place a newline after the Parameters
-% header
-\usepackage{xcolor}
+% header.  This is default with Sphinx 5.0.0+, so no need for
+% the old hack then.
+% Unfortunately sphinx.sty 5.0.0 did not bump its version date
+% so we check rather sphinxpackagefootnote.sty (which exists
+% since Sphinx 4.0.0).
+\makeatletter
+\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}
+    {}% Sphinx >= 5.0.0, nothing to do
+    {%
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
 % but expdlist old LaTeX package requires fixes:
 % 1) remove extra space
 \usepackage{etoolbox}
-\makeatletter
 \patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
-\makeatother
 % 2) fix bug in expdlist's way of breaking the line after long item label
-\makeatletter
 \def\breaklabel{%
     \def\@breaklabel{%
         \leavevmode\par
@@ -280,6 +294,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
+    }% Sphinx < 5.0.0 (and assumed >= 4.0.0)
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact

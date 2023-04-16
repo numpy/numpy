@@ -16,6 +16,7 @@
 #include "common_dtype.h"
 #include "dtypemeta.h"
 
+#include "npy_argparse.h"
 #include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "ctors.h"
@@ -209,7 +210,7 @@ _PyArray_MapPyTypeToDType(
  * @param pytype Python Type to look up
  * @return DType, None if it is a known non-scalar, or NULL if an unknown object.
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
@@ -262,7 +263,7 @@ PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
  *        it can/wants to handle the (possible) scalar value.
  * @return New reference to either a DType class, Py_None, or NULL on error.
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 discover_dtype_from_pyobject(
         PyObject *obj, enum _dtype_discovery_flags *flags,
         PyArray_DTypeMeta *fixed_DType)
@@ -346,7 +347,7 @@ discover_dtype_from_pyobject(
  * @param obj The Python scalar object. At the time of calling this function
  *        it must be known that `obj` should represent a scalar.
  */
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 find_scalar_descriptor(
         PyArray_DTypeMeta *fixed_DType, PyArray_DTypeMeta *DType,
         PyObject *obj)
@@ -552,8 +553,8 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 
 static int
 update_shape(int curr_ndim, int *max_ndim,
-             npy_intp out_shape[NPY_MAXDIMS], int new_ndim,
-             const npy_intp new_shape[NPY_MAXDIMS], npy_bool sequence,
+             npy_intp out_shape[], int new_ndim,
+             const npy_intp new_shape[], npy_bool sequence,
              enum _dtype_discovery_flags *flags)
 {
     int success = 0;  /* unsuccessful if array is ragged */
@@ -611,7 +612,7 @@ static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 /*
  * Steals a reference to the object.
  */
-static NPY_INLINE int
+static inline int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)
@@ -681,7 +682,7 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
  * @param flags dtype discover flags to signal failed promotion.
  * @return -1 on error, 0 on success.
  */
-static NPY_INLINE int
+static inline int
 handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags)
 {
@@ -726,7 +727,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  *
  * @return 0 on success -1 on error
  */
-static NPY_INLINE int
+static inline int
 handle_scalar(
         PyObject *obj, int curr_dims, int *max_dims,
         PyArray_Descr **out_descr, npy_intp *out_shape,
@@ -873,42 +874,62 @@ find_descriptor_from_array(
 
 /**
  * Given a dtype or DType object, find the correct descriptor to cast the
- * array to.
+ * array to.  In some places, this function is used with dtype=NULL which
+ * means that legacy behavior is used: The dtype instances "S0", "U0", and
+ * "V0" are converted to mean the DType classes instead.
+ * When dtype != NULL, this path is ignored, and the function does nothing
+ * unless descr == NULL. If both descr and dtype are null, it returns the
+ * descriptor for the array.
  *
  * This function is identical to normal casting using only the dtype, however,
  * it supports inspecting the elements when the array has object dtype
  * (and the given datatype describes a parametric DType class).
  *
  * @param arr
- * @param dtype A dtype instance or class.
+ * @param dtype NULL or a dtype class
+ * @param descr A dtype instance, if the dtype is NULL the dtype class is
+ *              found and e.g. "S0" is converted to denote only String.
  * @return A concrete dtype instance or NULL
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
+PyArray_AdaptDescriptorToArray(
+        PyArrayObject *arr, PyArray_DTypeMeta *dtype, PyArray_Descr *descr)
 {
     /* If the requested dtype is flexible, adapt it */
-    PyArray_Descr *new_dtype;
-    PyArray_DTypeMeta *new_DType;
+    PyArray_Descr *new_descr;
     int res;
 
-    res = PyArray_ExtractDTypeAndDescriptor((PyObject *)dtype,
-            &new_dtype, &new_DType);
-    if (res < 0) {
-        return NULL;
+    if (dtype != NULL && descr != NULL) {
+        /* descr was given and no special logic, return (call not necessary) */
+        Py_INCREF(descr);
+        return descr;
     }
-    if (new_dtype == NULL) {
-        res = find_descriptor_from_array(arr, new_DType, &new_dtype);
+    if (dtype == NULL) {
+        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (res < 0) {
-            Py_DECREF(new_DType);
             return NULL;
         }
-        if (new_dtype == NULL) {
-            /* This is an object array but contained no elements, use default */
-            new_dtype = NPY_DT_CALL_default_descr(new_DType);
+        if (new_descr != NULL) {
+            Py_DECREF(dtype);
+            return new_descr;
         }
     }
-    Py_DECREF(new_DType);
-    return new_dtype;
+    else {
+        assert(descr == NULL);  /* gueranteed above */
+        Py_INCREF(dtype);
+    }
+
+    res = find_descriptor_from_array(arr, dtype, &new_descr);
+    if (res < 0) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    if (new_descr == NULL) {
+        /* This is an object array but contained no elements, use default */
+        new_descr = NPY_DT_CALL_default_descr(dtype);
+    }
+    Py_XDECREF(dtype);
+    return new_descr;
 }
 
 
@@ -1260,7 +1281,9 @@ PyArray_DiscoverDTypeAndShape(
     }
 
     if (requested_descr != NULL) {
-        assert(fixed_DType == NPY_DTYPE(requested_descr));
+        if (fixed_DType != NULL) {
+            assert(fixed_DType == NPY_DTYPE(requested_descr));
+        }
         /* The output descriptor must be the input. */
         Py_INCREF(requested_descr);
         *out_descr = requested_descr;
@@ -1307,95 +1330,10 @@ PyArray_DiscoverDTypeAndShape(
         /* Handle reaching the maximum depth differently: */
         int too_deep = ndim == max_dims;
 
-        if (fixed_DType == NULL) {
-            /* This is discovered as object, but deprecated */
-            static PyObject *visibleDeprecationWarning = NULL;
-            npy_cache_import(
-                    "numpy", "VisibleDeprecationWarning",
-                    &visibleDeprecationWarning);
-            if (visibleDeprecationWarning == NULL) {
-                goto fail;
-            }
-            if (!too_deep) {
-                /* NumPy 1.19, 2019-11-01 */
-                if (PyErr_WarnEx(visibleDeprecationWarning,
-                        "Creating an ndarray from ragged nested sequences (which "
-                        "is a list-or-tuple of lists-or-tuples-or ndarrays with "
-                        "different lengths or shapes) is deprecated. If you "
-                        "meant to do this, you must specify 'dtype=object' "
-                        "when creating the ndarray.", 1) < 0) {
-                    goto fail;
-                }
-            }
-            else {
-                /* NumPy 1.20, 2020-05-08 */
-                /* Note, max_dims should normally always be NPY_MAXDIMS here */
-                if (PyErr_WarnFormat(visibleDeprecationWarning, 1,
-                        "Creating an ndarray from nested sequences exceeding "
-                        "the maximum number of dimensions of %d is deprecated. "
-                        "If you mean to do this, you must specify "
-                        "'dtype=object' when creating the ndarray.",
-                        max_dims) < 0) {
-                    goto fail;
-                }
-            }
-            /* Ensure that ragged arrays always return object dtype */
-            Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
-        }
-        else if (fixed_DType->type_num != NPY_OBJECT) {
+        if (fixed_DType == NULL || fixed_DType->type_num != NPY_OBJECT) {
             /* Only object DType supports ragged cases unify error */
 
-            /*
-             * We used to let certain ragged arrays pass if they also
-             * support e.g. conversion using `float(arr)`, which currently
-             * works for arrays with only one element.
-             * Thus we catch at least most of such cases here and give a
-             * DeprecationWarning instead of an error.
-             * Note that some of these will actually error later on when
-             * attempting to do the actual assign.
-             */
-            int deprecate_single_element_ragged = 0;
-            coercion_cache_obj *current = *coercion_cache_head;
-            while (current != NULL) {
-                if (current->sequence) {
-                    if (current->depth == ndim) {
-                        /*
-                         * Assume that only array-likes will allow the deprecated
-                         * behaviour
-                         */
-                        deprecate_single_element_ragged = 0;
-                        break;
-                    }
-                    /* check next converted sequence/array-like */
-                    current = current->next;
-                    continue;
-                }
-                PyArrayObject *arr = (PyArrayObject *)(current->arr_or_sequence);
-                assert(PyArray_NDIM(arr) + current->depth >= ndim);
-                if (PyArray_NDIM(arr) != ndim - current->depth) {
-                    /* This array is not compatible with the final shape */
-                    if (PyArray_SIZE(arr) != 1) {
-                        deprecate_single_element_ragged = 0;
-                        break;
-                    }
-                    deprecate_single_element_ragged = 1;
-                }
-                current = current->next;
-            }
-
-            if (deprecate_single_element_ragged) {
-                /* Deprecated 2020-07-24, NumPy 1.20 */
-                if (DEPRECATE(
-                        "setting an array element with a sequence. "
-                        "This was supported in some cases where the elements "
-                        "are arrays with a single element. For example "
-                        "`np.array([1, np.array([2])], dtype=int)`. "
-                        "In the future this will raise the same ValueError as "
-                        "`np.array([1, [2]], dtype=int)`.") < 0) {
-                    goto fail;
-                }
-            }
-            else if (!too_deep) {
+            if (!too_deep) {
                 PyObject *shape = PyArray_IntTupleFromIntp(ndim, out_shape);
                 PyErr_Format(PyExc_ValueError,
                         "setting an array element with a sequence. The "
@@ -1404,7 +1342,6 @@ PyArray_DiscoverDTypeAndShape(
                         "%R + inhomogeneous part.",
                         ndim, shape);
                 Py_DECREF(shape);
-                goto fail;
             }
             else {
                 PyErr_Format(PyExc_ValueError,
@@ -1412,8 +1349,8 @@ PyArray_DiscoverDTypeAndShape(
                         "requested array would exceed the maximum number of "
                         "dimension of %d.",
                         max_dims);
-                goto fail;
             }
+            goto fail;
         }
 
         /*
@@ -1466,105 +1403,25 @@ PyArray_DiscoverDTypeAndShape(
 }
 
 
-
-/**
- * Check the descriptor is a legacy "flexible" DType instance, this is
- * an instance which is (normally) not attached to an array, such as a string
- * of length 0 or a datetime with no unit.
- * These should be largely deprecated, and represent only the DType class
- * for most `dtype` parameters.
- *
- * TODO: This function should eventually receive a deprecation warning and
- *       be removed.
- *
- * @param descr
- * @return 1 if this is not a concrete dtype instance 0 otherwise
- */
-static int
-descr_is_legacy_parametric_instance(PyArray_Descr *descr)
-{
-    if (PyDataType_ISUNSIZED(descr)) {
-        return 1;
-    }
-    /* Flexible descr with generic time unit (which can be adapted) */
-    if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
-        if (meta->base == NPY_FR_GENERIC) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-/**
- * Given either a DType instance or class, (or legacy flexible instance),
- * ands sets output dtype instance and DType class. Both results may be
- * NULL, but if `out_descr` is set `out_DType` will always be the
- * corresponding class.
- *
- * @param dtype
- * @param out_descr
- * @param out_DType
- * @return 0 on success -1 on failure
- */
-NPY_NO_EXPORT int
-PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
-        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
-{
-    *out_DType = NULL;
-    *out_descr = NULL;
-
-    if (dtype != NULL) {
-        if (PyObject_TypeCheck(dtype, (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
-            assert(dtype != (PyObject * )&PyArrayDescr_Type);  /* not np.dtype */
-            *out_DType = (PyArray_DTypeMeta *)dtype;
-            Py_INCREF(*out_DType);
-        }
-        else if (PyObject_TypeCheck((PyObject *)Py_TYPE(dtype),
-                    (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
-            *out_DType = NPY_DTYPE(dtype);
-            Py_INCREF(*out_DType);
-            if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype)) {
-                *out_descr = (PyArray_Descr *)dtype;
-                Py_INCREF(*out_descr);
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "dtype parameter must be a DType instance or class.");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-
 /*
  * Python API function to expose the dtype+shape discovery functionality
  * directly.
  */
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
-                           PyObject *args, PyObject *kwargs)
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *kwlist[] = {"obj", "dtype", NULL};
-
     PyObject *obj;
-    PyObject *dtype = NULL;
-    PyArray_Descr *fixed_descriptor = NULL;
-    PyArray_DTypeMeta *fixed_DType = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     npy_intp shape[NPY_MAXDIMS];
 
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "O|O:_discover_array_parameters", kwlist,
-            &obj, &dtype)) {
-        return NULL;
-    }
-
-    if (PyArray_ExtractDTypeAndDescriptor(dtype,
-            &fixed_descriptor, &fixed_DType) < 0) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments(
+            "_discover_array_parameters", args, len_args, kwnames,
+            "", NULL, &obj,
+            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
+            NULL, NULL, NULL) < 0) {
+        /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }
 
@@ -1573,9 +1430,9 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype, 0);
-    Py_XDECREF(fixed_DType);
-    Py_XDECREF(fixed_descriptor);
+            dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0);
+    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF(dt_info.descr);
     if (ndim < 0) {
         return NULL;
     }

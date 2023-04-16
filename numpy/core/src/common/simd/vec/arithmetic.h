@@ -322,6 +322,20 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     NPY_FINLINE npyv_f64 npyv_nmulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
     { return vec_neg(vec_madd(a, b, c)); }
 #endif
+// multiply, add for odd elements and subtract even elements.
+// (a * b) -+ c
+#if NPY_SIMD_F32
+NPY_FINLINE npyv_f32 npyv_muladdsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+{
+    const npyv_f32 msign = npyv_set_f32(-0.0f, 0.0f, -0.0f, 0.0f);
+    return npyv_muladd_f32(a, b, npyv_xor_f32(msign, c));
+}
+#endif
+NPY_FINLINE npyv_f64 npyv_muladdsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+{
+    const npyv_f64 msign = npyv_set_f64(-0.0, 0.0);
+    return npyv_muladd_f64(a, b, npyv_xor_f64(msign, c));
+}
 /***************************
  * Summation
  ***************************/
@@ -352,6 +366,7 @@ NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     npyv_f32 sum = vec_add(a, npyv_combineh_f32(a, a));
     return vec_extract(sum, 0) + vec_extract(sum, 1);
+    (void)sum;
 }
 #endif
 
@@ -372,6 +387,7 @@ NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
     npyv_u32 four = vec_sum4s(a, zero);
     npyv_s32 one  = vec_sums((npyv_s32)four, (npyv_s32)zero);
     return (npy_uint16)vec_extract(one, 3);
+    (void)one;
 #endif
 }
 
@@ -386,6 +402,7 @@ NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
     npyv_u32   four  = vec_add(eight.val[0], eight.val[1]);
     npyv_s32   one   = vec_sums((npyv_s32)four, zero);
     return (npy_uint32)vec_extract(one, 3);
+    (void)one;
 #endif
 }
 

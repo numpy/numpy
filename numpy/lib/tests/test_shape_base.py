@@ -492,7 +492,7 @@ class TestColumnStack:
         assert_equal(actual, expected)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             column_stack((np.arange(3) for _ in range(2)))
 
 
@@ -529,7 +529,7 @@ class TestDstack:
         assert_array_equal(res, desired)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
+        with pytest.raises(TypeError, match="arrays to stack must be"):
             dstack((np.arange(3) for _ in range(2)))
 
 
@@ -644,6 +644,35 @@ class TestSqueeze:
 
 
 class TestKron:
+    def test_basic(self):
+        # Using 0-dimensional ndarray
+        a = np.array(1)
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[1, 2], [3, 4]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array(1)
+        assert_array_equal(np.kron(a, b), k)
+
+        # Using 1-dimensional ndarray
+        a = np.array([3])
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[3, 6], [9, 12]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([3])
+        assert_array_equal(np.kron(a, b), k)
+
+        # Using 3-dimensional ndarray
+        a = np.array([[[1]], [[2]]])
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[[1, 2], [3, 4]], [[2, 4], [6, 8]]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([[[1]], [[2]]])
+        k = np.array([[[1, 2], [3, 4]], [[2, 4], [6, 8]]])
+        assert_array_equal(np.kron(a, b), k)
+
     def test_return_type(self):
         class myarray(np.ndarray):
             __array_priority__ = 1.0

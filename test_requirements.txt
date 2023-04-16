@@ -1,5 +1,5 @@
 cython>=0.29.30,<3.0
-wheel==0.37.0
+wheel==0.38.1
 setuptools==59.2.0
 hypothesis==6.24.1
 pytest==6.2.5
@@ -10,5 +10,7 @@ cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
-mypy==0.950; platform_python_implementation != "PyPy"
+mypy==0.981; platform_python_implementation != "PyPy"
 typing_extensions>=4.2.0
+# for optional f2py encoding detection
+charset-normalizer

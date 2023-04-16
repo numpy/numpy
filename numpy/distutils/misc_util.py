@@ -416,7 +416,7 @@ def cyg2win32(path: str) -> str:
     if sys.platform != "cygwin":
         return path
     return subprocess.check_output(
-        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+        ["/usr/bin/cygpath", "--windows", path], text=True
     )
 
 

@@ -7,10 +7,14 @@
   it is available, and shipping a static library isn't portable.
 */
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "f2c.h"
 
 
@@ -377,10 +381,11 @@ p->i = p1.i;
 
 #endif /* NO_OVERWRITE */
 
- int
 #ifdef KR_headers
+int
 s_cat(lp, rpp, rnp, np, ll) char *lp, *rpp[]; ftnlen rnp[], *np, ll;
 #else
+int
 s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 #endif
 {
@@ -429,7 +434,8 @@ s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 		free(lp1);
 		}
 #endif
-	}
+	return 0;
+}
 
 
 /* compare two strings */

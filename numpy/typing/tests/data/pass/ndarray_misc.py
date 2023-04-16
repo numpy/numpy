@@ -21,7 +21,7 @@ B0 = np.empty((), dtype=np.int32).view(SubClass)
 B1 = np.empty((1,), dtype=np.int32).view(SubClass)
 B2 = np.empty((1, 1), dtype=np.int32).view(SubClass)
 C: np.ndarray[Any, np.dtype[np.int32]] = np.array([0, 1, 2], dtype=np.int32)
-D = np.empty(3).view(SubClass)
+D = np.ones(3).view(SubClass)
 
 i4.all()
 A.all()
@@ -150,7 +150,7 @@ A.argpartition([0])
 A.diagonal()
 
 A.dot(1)
-A.dot(1, out=B0)
+A.dot(1, out=B2)
 
 A.nonzero()
 

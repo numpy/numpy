@@ -3,6 +3,7 @@ import pytest
 import inspect
 
 import numpy as np
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
@@ -403,14 +404,20 @@ class TestNanFunctions_NumberTypes:
     )
     def test_nanfunc_q(self, mat, dtype, nanfunc, func):
         mat = mat.astype(dtype)
-        tgt = func(mat, q=1)
-        out = nanfunc(mat, q=1)
+        if mat.dtype.kind == "c":
+            assert_raises(TypeError, func, mat, q=1)
+            assert_raises(TypeError, nanfunc, mat, q=1)
 
-        assert_almost_equal(out, tgt)
-        if dtype == "O":
-            assert type(out) is type(tgt)
         else:
-            assert out.dtype == tgt.dtype
+            tgt = func(mat, q=1)
+            out = nanfunc(mat, q=1)
+
+            assert_almost_equal(out, tgt)
+
+            if dtype == "O":
+                assert type(out) is type(tgt)
+            else:
+                assert out.dtype == tgt.dtype
 
     @pytest.mark.parametrize(
         "nanfunc,func",
@@ -807,6 +814,34 @@ class TestNanFunctions_Median:
             res = np.nanmedian(d, axis=(0, 1, 3), keepdims=True)
             assert_equal(res.shape, (1, 1, 7, 1))
 
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1, ),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    @pytest.mark.filterwarnings("ignore:All-NaN slice:RuntimeWarning")
+    def test_keepdims_out(self, axis):
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        out = np.empty(shape_out)
+        result = np.nanmedian(d, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
+
     def test_out(self):
         mat = np.random.rand(3, 3)
         nan_mat = np.insert(mat, [0, 2], np.nan, axis=1)
@@ -982,6 +1017,37 @@ class TestNanFunctions_Percentile:
             res = np.nanpercentile(d, 90, axis=(0, 1, 3), keepdims=True)
             assert_equal(res.shape, (1, 1, 7, 1))
 
+    @pytest.mark.parametrize('q', [7, [1, 7]])
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1,),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    @pytest.mark.filterwarnings("ignore:All-NaN slice:RuntimeWarning")
+    def test_keepdims_out(self, q, axis):
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        shape_out = np.shape(q) + shape_out
+
+        out = np.empty(shape_out)
+        result = np.nanpercentile(d, q, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
+
     def test_out(self):
         mat = np.random.rand(3, 3)
         nan_mat = np.insert(mat, [0, 2], np.nan, axis=1)
@@ -1000,6 +1066,14 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
 
+    def test_complex(self):
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+
     def test_result_values(self):
         tgt = [np.percentile(d, 28) for d in _rdat]
         res = np.nanpercentile(_ndat, 28, axis=1)
@@ -1010,7 +1084,7 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, tgt)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
-    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     @pytest.mark.parametrize("array", [
         np.array(np.nan),
         np.full((3, 3), np.nan),
@@ -1104,6 +1178,14 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
+    def test_complex(self):
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
@@ -1117,7 +1199,7 @@ class TestNanFunctions_Quantile:
         assert_array_equal(p, p0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
-    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     @pytest.mark.parametrize("array", [
         np.array(np.nan),
         np.full((3, 3), np.nan),

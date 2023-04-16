@@ -723,29 +723,52 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
         ar2 = ar2.reshape(-1, 1)
-    # Convert booleans to uint8 so we can use the fast integer algorithm
-    if ar1.dtype == bool:
-        ar1 = ar1 + np.uint8(0)
-    if ar2.dtype == bool:
-        ar2 = ar2 + np.uint8(0)
-
-    # Check if we can use a fast integer algorithm:
-    integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
-                      np.issubdtype(ar2.dtype, np.integer))
 
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    if integer_arrays and kind in {None, 'table'}:
+    # Can use the table method if all arrays are integers or boolean:
+    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
+    use_table_method = is_int_arrays and kind in {None, 'table'}
+
+    if use_table_method:
+        if ar2.size == 0:
+            if invert:
+                return np.ones_like(ar1, dtype=bool)
+            else:
+                return np.zeros_like(ar1, dtype=bool)
+
+        # Convert booleans to uint8 so we can use the fast integer algorithm
+        if ar1.dtype == bool:
+            ar1 = ar1.astype(np.uint8)
+        if ar2.dtype == bool:
+            ar2 = ar2.astype(np.uint8)
+
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
 
         ar2_range = int(ar2_max) - int(ar2_min)
 
         # Constraints on whether we can actually use the table method:
-        range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
+        #  1. Assert memory usage is not too large
         below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
+        #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype
+        range_safe_from_overflow = ar2_range <= np.iinfo(ar2.dtype).max
+        #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype
+        if ar1.size > 0:
+            ar1_min = np.min(ar1)
+            ar1_max = np.max(ar1)
+
+            # After masking, the range of ar1 is guaranteed to be
+            # within the range of ar2:
+            ar1_upper = min(int(ar1_max), int(ar2_max))
+            ar1_lower = max(int(ar1_min), int(ar2_min))
+
+            range_safe_from_overflow &= all((
+                ar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,
+                ar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min
+            ))
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
@@ -782,7 +805,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         elif kind == 'table':  # not range_safe_from_overflow
             raise RuntimeError(
                 "You have specified kind='table', "
-                "but the range of values in `ar2` exceeds the "
+                "but the range of values in `ar2` or `ar1` exceed the "
                 "maximum integer of the datatype. "
                 "Please set `kind` to None or 'sort'."
             )

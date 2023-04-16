@@ -1,0 +1,44 @@
+
+Contributors
+============
+
+A total of 14 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Khem Raj +
+* Mark Harfouche
+* Matti Picus
+* Panagiotis Zestanakis +
+* Peter Hawkins
+* Pradipta Ghosh
+* Ross Barnowski
+* Sayed Adel
+* Sebastian Berg
+* Syam Gadde +
+* dmbelov +
+* pkubaj +
+
+Pull requests merged
+====================
+
+A total of 17 pull requests were merged for this release.
+
+* `#22965 <https://github.com/numpy/numpy/pull/22965>`__: MAINT: Update python 3.11-dev to 3.11.
+* `#22966 <https://github.com/numpy/numpy/pull/22966>`__: DOC: Remove dangling deprecation warning
+* `#22967 <https://github.com/numpy/numpy/pull/22967>`__: ENH: Detect CPU features on FreeBSD/powerpc64*
+* `#22968 <https://github.com/numpy/numpy/pull/22968>`__: BUG: np.loadtxt cannot load text file with quoted fields separated...
+* `#22969 <https://github.com/numpy/numpy/pull/22969>`__: TST: Add fixture to avoid issue with randomizing test order.
+* `#22970 <https://github.com/numpy/numpy/pull/22970>`__: BUG: Fix fill violating read-only flag. (#22959)
+* `#22971 <https://github.com/numpy/numpy/pull/22971>`__: MAINT: Add additional information to missing scalar AttributeError
+* `#22972 <https://github.com/numpy/numpy/pull/22972>`__: MAINT: Move export for scipy arm64 helper into main module
+* `#22976 <https://github.com/numpy/numpy/pull/22976>`__: BUG, SIMD: Fix spurious invalid exception for sin/cos on arm64/clang
+* `#22989 <https://github.com/numpy/numpy/pull/22989>`__: BUG: Ensure correct loop order in sin, cos, and arctan2
+* `#23030 <https://github.com/numpy/numpy/pull/23030>`__: DOC: Add version added information for the strict parameter in...
+* `#23031 <https://github.com/numpy/numpy/pull/23031>`__: BUG: use ``_Alignof`` rather than ``offsetof()`` on most compilers
+* `#23147 <https://github.com/numpy/numpy/pull/23147>`__: BUG: Fix for npyv__trunc_s32_f32 (VXE)
+* `#23148 <https://github.com/numpy/numpy/pull/23148>`__: BUG: Fix integer / float scalar promotion
+* `#23149 <https://github.com/numpy/numpy/pull/23149>`__: BUG: Add missing <type_traits> header.
+* `#23150 <https://github.com/numpy/numpy/pull/23150>`__: TYP, MAINT: Add a missing explicit ``Any`` parameter to the ``npt.ArrayLike``...
+* `#23161 <https://github.com/numpy/numpy/pull/23161>`__: BLD: remove redundant definition of npy_nextafter [wheel build]

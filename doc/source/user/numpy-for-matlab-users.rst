@@ -9,7 +9,7 @@ Introduction
 
 MATLAB® and NumPy have a lot in common, but NumPy was created to work with
 Python, not to be a MATLAB clone.  This guide will help MATLAB users get started
-with NumPy. 
+with NumPy.
 
 .. raw:: html
 
@@ -28,7 +28,7 @@ Some key differences
        2D arrays of double precision floating point numbers, unless you
        specify the number of dimensions and type.  Operations on the 2D
        instances of these arrays are modeled on matrix operations in
-       linear algebra. 
+       linear algebra.
 
      - In NumPy, the basic type is a multidimensional ``array``.  Array
        assignments in NumPy are usually stored as :ref:`n-dimensional arrays<arrays>` with the
@@ -47,7 +47,7 @@ Some key differences
 
    * - MATLAB's scripting language was created for linear algebra so the
        syntax for some array manipulations is more compact than
-       NumPy's. On the other hand, the API for adding GUIs and creating 
+       NumPy's. On the other hand, the API for adding GUIs and creating
        full-fledged applications is more or less an afterthought.
      - NumPy is  based on Python, a
        general-purpose language.  The advantage to NumPy
@@ -56,14 +56,14 @@ Some key differences
        `Pandas <https://pandas.pydata.org/>`_, `OpenCV <https://opencv.org/>`_,
        and more. In addition, Python is often `embedded as a scripting language
        <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
-       in other software, allowing NumPy to be used there too. 
+       in other software, allowing NumPy to be used there too.
 
    * - MATLAB array slicing uses pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent creating copies until they are
        needed. Slicing operations copy parts of the array.
      - NumPy array slicing uses pass-by-reference, that does not copy
        the arguments. Slicing operations are views into an array.
-   
+
 
 Rough equivalents
 =======================================
@@ -79,7 +79,7 @@ commands in Python:
 
     import numpy as np
     from scipy import io, integrate, linalg, signal
-    from scipy.sparse.linalg import eigs
+    from scipy.sparse.linalg import cg, eigs
 
 Also assume below that if the Notes talk about "matrix" that the
 arguments are two-dimensional entities.
@@ -134,7 +134,7 @@ General purpose equivalents
        scalar arguments only
 
    * - .. code:: matlab
-        
+
         >> 4 == 4
         ans = 1
         >> 4 == 5
@@ -149,7 +149,7 @@ General purpose equivalents
 
      - The :ref:`boolean objects <python:bltin-boolean-values>`
        in Python are ``True`` and ``False``, as opposed to MATLAB
-       logical types of ``1`` and ``0``. 
+       logical types of ``1`` and ``0``.
 
    * - .. code:: matlab
 
@@ -165,7 +165,7 @@ General purpose equivalents
          a = 4
          if a == 4:
              print('a = 4')
-         elif a == 5: 
+         elif a == 5:
              print('a = 5')
 
      - create an if-else statement to check if ``a`` is 4 or 5 and print result
@@ -176,8 +176,8 @@ General purpose equivalents
 
    * - ``eps``
      - ``np.finfo(float).eps`` or ``np.spacing(1)``
-     - Upper bound to relative error due to rounding in 64-bit floating point
-       arithmetic.
+     - distance from 1 to the next larger representable real number in double
+       precision
 
    * - ``load data.mat``
      - ``io.loadmat('data.mat')``
@@ -223,7 +223,7 @@ Linear algebra equivalents
        See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
-     - ``np.array([[1. ,2. ,3.], [4. ,5. ,6.]])``
+     - ``np.array([[1., 2., 3.], [4., 5., 6.]])``
      - define a 2x3 2D array
 
    * - ``[ a b; c d ]``
@@ -253,7 +253,7 @@ Linear algebra equivalents
 
    * - ``a(1:3,5:9)``
      - ``a[0:3, 4:9]``
-     - The first through third rows and fifth through ninth columns of a 2D array, ``a``. 
+     - The first through third rows and fifth through ninth columns of a 2D array, ``a``.
 
    * - ``a([2,4,5],[1,3])``
      - ``a[np.ix_([1, 3, 4], [0, 2])]``
@@ -266,7 +266,7 @@ Linear algebra equivalents
        twenty-first
 
    * - ``a(1:2:end,:)``
-     - ``a[ ::2,:]``
+     - ``a[::2, :]``
      - every other row of ``a``, starting with the first
 
    * - ``a(end:-1:1,:)``  or ``flipud(a)``
@@ -384,7 +384,7 @@ Linear algebra equivalents
        vector, ``v``
 
    * - .. code:: matlab
-         
+
          rng(42,'twister')
          rand(3,4)
 
@@ -392,7 +392,7 @@ Linear algebra equivalents
 
          from numpy.random import default_rng
          rng = default_rng(42)
-         rng.random(3, 4) 
+         rng.random(3, 4)
 
        or older version: ``random.rand((3, 4))``
 
@@ -404,7 +404,7 @@ Linear algebra equivalents
      - 4 equally spaced samples between 1 and 3, inclusive
 
    * - ``[x,y]=meshgrid(0:8,0:5)``
-     - ``np.mgrid[0:9.,0:6.]`` or ``np.meshgrid(r_[0:9.],r_[0:6.]``
+     - ``np.mgrid[0:9.,0:6.]`` or ``np.meshgrid(r_[0:9.],r_[0:6.])``
      - two 2D arrays: one of x values, the other of y values
 
    * -
@@ -416,7 +416,7 @@ Linear algebra equivalents
      -
 
    * -
-     - ``ix_([1,2,4],[2,4,5])``
+     - ``np.ix_([1,2,4],[2,4,5])``
      - the best way to eval functions on a grid
 
    * - ``repmat(a, m, n)``
@@ -481,7 +481,7 @@ Linear algebra equivalents
      - pseudo-inverse of 2D array ``a``
 
    * - ``rank(a)``
-     - ``linalg.matrix_rank(a)``
+     - ``np.linalg.matrix_rank(a)``
      - matrix rank of a 2D array ``a``
 
    * - ``a\b``
@@ -494,48 +494,47 @@ Linear algebra equivalents
      - solution of x a = b for x
 
    * - ``[U,S,V]=svd(a)``
-     - ``U, S, Vh = linalg.svd(a), V = Vh.T``
+     - ``U, S, Vh = linalg.svd(a); V = Vh.T``
      - singular value decomposition of ``a``
 
-   * - ``c=chol(a)`` where ``a==c'*c``
-     - ``c = linalg.cholesky(a)`` where ``a == c@c.T``
-     - Cholesky factorization of a 2D array (``chol(a)`` in MATLAB returns an
-       upper triangular 2D array, but :func:`~scipy.linalg.cholesky` returns a lower
-       triangular 2D array)
+   * - ``chol(a)``
+     - ``linalg.cholesky(a)``
+     - Cholesky factorization of a 2D array
 
    * - ``[V,D]=eig(a)``
      - ``D,V = linalg.eig(a)``
-     - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of ``a``,
-       where :math:`\lambda\bar{v}=\mathbf{a}\bar{v}`
+     - eigenvalues :math:`\lambda` and eigenvectors :math:`v` of ``a``,
+       where :math:`\mathbf{a} v = \lambda v`
 
    * - ``[V,D]=eig(a,b)``
      - ``D,V = linalg.eig(a, b)``
-     - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of
+     - eigenvalues :math:`\lambda` and eigenvectors :math:`v` of
        ``a``, ``b``
-       where :math:`\lambda\mathbf{b}\bar{v}=\mathbf{a}\bar{v}`
+       where :math:`\mathbf{a} v = \lambda \mathbf{b} v`
 
    * - ``[V,D]=eigs(a,3)``
-     - ``D,V = eigs(a, k = 3)``
+     - ``D,V = eigs(a, k=3)``
      - find the ``k=3`` largest eigenvalues and eigenvectors of 2D array, ``a``
 
-   * - ``[Q,R,P]=qr(a,0)``
+   * - ``[Q,R]=qr(a,0)``
      - ``Q,R = linalg.qr(a)``
      - QR decomposition
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
      - ``P,L,U = linalg.lu(a)`` where ``a == P@L@U``
-     - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)))
+     - LU decomposition with partial pivoting
+       (note: P(MATLAB) == transpose(P(NumPy)))
 
    * - ``conjgrad``
      - ``cg``
-     - Conjugate gradients solver
+     - conjugate gradients solver
 
    * - ``fft(a)``
-     - ``np.fft(a)``
+     - ``np.fft.fft(a)``
      - Fourier transform of ``a``
 
    * - ``ifft(a)``
-     - ``np.ifft(a)``
+     - ``np.fft.ifft(a)``
      - inverse Fourier transform of ``a``
 
    * - ``sort(a)``
@@ -543,7 +542,7 @@ Linear algebra equivalents
      - sort each column of a 2D array, ``a``
 
    * - ``sort(a, 2)``
-     - ``np.sort(a, axis = 1)`` or ``a.sort(axis = 1)``
+     - ``np.sort(a, axis=1)`` or ``a.sort(axis=1)``
      - sort the each row of 2D array, ``a``
 
    * - ``[b,I]=sortrows(a,1)``
@@ -786,7 +785,7 @@ this is just an example, not a statement of "best practices"):
 
     # Make all numpy available via shorter 'np' prefix
     import numpy as np
-    # 
+    #
     # Make the SciPy linear algebra functions available as linalg.func()
     # e.g. linalg.lu, linalg.eig (for general l*B@u==A@u solution)
     from scipy import linalg
@@ -801,7 +800,7 @@ this is just an example, not a statement of "best practices"):
 To use the deprecated `matrix` and other `matlib` functions:
 
 ::
-    
+
     # Make all matlib functions accessible at the top level via M.func()
     import numpy.matlib as M
     # Make some matlib functions accessible directly at the top level via, e.g. rand(3,3)

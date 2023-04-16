@@ -12,7 +12,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, assert_array_max_ulp, HAS_REFCOUNT
+    assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
 from numpy.core._rational_tests import rational
 
@@ -114,7 +114,9 @@ class TestNonarrayArgs:
 
     def test_cumproduct(self):
         A = [[1, 2, 3], [4, 5, 6]]
-        assert_(np.all(np.cumproduct(A) == np.array([1, 2, 6, 24, 120, 720])))
+        with assert_warns(DeprecationWarning):
+            expected = np.array([1, 2, 6, 24, 120, 720])
+            assert_(np.all(np.cumproduct(A) == expected))
 
     def test_diagonal(self):
         a = [[0, 1, 2, 3],
@@ -347,7 +349,7 @@ class TestBoolScalar:
 
 
 class TestBoolArray:
-    def setup(self):
+    def setup_method(self):
         # offset for simd tests
         self.t = np.array([True] * 41, dtype=bool)[1::]
         self.f = np.array([False] * 41, dtype=bool)[1::]
@@ -434,7 +436,7 @@ class TestBoolArray:
 
 
 class TestBoolCmp:
-    def setup(self):
+    def setup_method(self):
         self.f = np.ones(256, dtype=np.float32)
         self.ef = np.ones(self.f.size, dtype=bool)
         self.d = np.ones(128, dtype=np.float64)
@@ -556,6 +558,7 @@ class TestSeterr:
             np.seterr(**old)
             assert_(np.geterr() == old)
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
@@ -565,6 +568,7 @@ class TestSeterr:
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_errobj(self):
         olderrobj = np.geterrobj()
         self.called = 0
@@ -638,6 +642,7 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
     # Test for all real and complex float types
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
     def test_floating_exceptions(self, typecode):
         # Test basic arithmetic function errors
@@ -697,6 +702,7 @@ class TestFloatExceptions:
             self.assert_raises_fpe(invalid,
                                    lambda a, b: a*b, ftype(0), ftype(np.inf))
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_warnings(self):
         # test warning code path
         with warnings.catch_warnings(record=True) as w:
@@ -1189,8 +1195,8 @@ class TestFromiter:
         expected = np.array(list(self.makegen()))
         a = np.fromiter(self.makegen(), int)
         a20 = np.fromiter(self.makegen(), int, 20)
-        assert_(np.alltrue(a == expected, axis=0))
-        assert_(np.alltrue(a20 == expected[:20], axis=0))
+        assert_(np.all(a == expected, axis=0))
+        assert_(np.all(a20 == expected[:20], axis=0))
 
     def load_data(self, n, eindex):
         # Utility method for the issue 2592 tests.
@@ -1584,6 +1590,7 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]]*10)
         assert_raises(ValueError, np.nonzero, a)
 
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have threads")
     def test_structured_threadsafety(self):
         # Nonzero (and some other functions) should be threadsafe for
         # structured datatypes, see gh-15387. This test can behave randomly.
@@ -1813,24 +1820,15 @@ def assert_array_strict_equal(x, y):
 
 
 class TestClip:
-    def setup(self):
+    def setup_method(self):
         self.nr = 5
         self.nc = 3
 
-    def fastclip(self, a, m, M, out=None, casting=None):
-        if out is None:
-            if casting is None:
-                return a.clip(m, M)
-            else:
-                return a.clip(m, M, casting=casting)
-        else:
-            if casting is None:
-                return a.clip(m, M, out)
-            else:
-                return a.clip(m, M, out, casting=casting)
+    def fastclip(self, a, m, M, out=None, **kwargs):
+        return a.clip(m, M, out=out, **kwargs)
 
     def clip(self, a, m, M, out=None):
-        # use slow-clip
+        # use a.choose to verify fastclip result
         selector = np.less(a, m) + 2*np.greater(a, M)
         return selector.choose((a, m, M), out=out)
 
@@ -1986,14 +1984,13 @@ class TestClip:
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
         if casting is None:
-            with assert_warns(DeprecationWarning):
-                # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            with pytest.raises(TypeError):
                 self.fastclip(a, m, M, ac, casting=casting)
         else:
             # explicitly passing "unsafe" will silence warning
             self.fastclip(a, m, M, ac, casting=casting)
-        self.clip(a, m, M, act)
-        assert_array_strict_equal(ac, act)
+            self.clip(a, m, M, act)
+            assert_array_strict_equal(ac, act)
 
     def test_simple_int64_out(self):
         # Test native int32 input with int32 scalar min/max and int64 out.
@@ -2013,9 +2010,7 @@ class TestClip:
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        self.fastclip(a, m, M, out=ac, casting="unsafe")
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -2026,9 +2021,7 @@ class TestClip:
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        self.fastclip(a, m, M, out=ac, casting="unsafe")
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -2204,9 +2197,7 @@ class TestClip:
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        self.fastclip(a, m, M, out=ac, casting="unsafe")
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -2228,9 +2219,7 @@ class TestClip:
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        self.fastclip(a, m, M, out=ac, casting="unsafe")
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -2241,9 +2230,7 @@ class TestClip:
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        self.fastclip(a, m, M, out=ac, casting="unsafe")
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -2296,16 +2283,11 @@ class TestClip:
 
     def test_clip_nan(self):
         d = np.arange(7.)
-        with assert_warns(DeprecationWarning):
-            assert_equal(d.clip(min=np.nan), d)
-        with assert_warns(DeprecationWarning):
-            assert_equal(d.clip(max=np.nan), d)
-        with assert_warns(DeprecationWarning):
-            assert_equal(d.clip(min=np.nan, max=np.nan), d)
-        with assert_warns(DeprecationWarning):
-            assert_equal(d.clip(min=-2, max=np.nan), d)
-        with assert_warns(DeprecationWarning):
-            assert_equal(d.clip(min=np.nan, max=10), d)
+        assert_equal(d.clip(min=np.nan), np.nan)
+        assert_equal(d.clip(max=np.nan), np.nan)
+        assert_equal(d.clip(min=np.nan, max=np.nan), np.nan)
+        assert_equal(d.clip(min=-2, max=np.nan), np.nan)
+        assert_equal(d.clip(min=np.nan, max=10), np.nan)
 
     def test_object_clip(self):
         a = np.arange(10, dtype=object)
@@ -2357,16 +2339,12 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, exp)
 
-    @pytest.mark.xfail(reason="no scalar nan propagation yet",
-                       raises=AssertionError,
-                       strict=True)
     @pytest.mark.parametrize("arr, amin, amax", [
         # problematic scalar nan case from hypothesis
         (np.zeros(10, dtype=np.int64),
          np.array(np.nan),
          np.zeros(10, dtype=np.int32)),
     ])
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_clip_scalar_nan_propagation(self, arr, amin, amax):
         # enforcement of scalar nan propagation for comparisons
         # called through clip()
@@ -2442,10 +2420,10 @@ class TestAllclose:
     rtol = 1e-5
     atol = 1e-8
 
-    def setup(self):
+    def setup_method(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def teardown(self):
+    def teardown_method(self):
         np.seterr(**self.olderr)
 
     def tst_allclose(self, x, y):
@@ -2527,7 +2505,7 @@ class TestIsclose:
     rtol = 1e-5
     atol = 1e-8
 
-    def setup(self):
+    def _setup(self):
         atol = self.atol
         rtol = self.rtol
         arr = np.array([100, 1000])
@@ -2573,7 +2551,7 @@ class TestIsclose:
                 ]
 
     def test_ip_isclose(self):
-        self.setup()
+        self._setup()
         tests = self.some_close_tests
         results = self.some_close_results
         for (x, y), result in zip(tests, results):
@@ -2595,17 +2573,17 @@ class TestIsclose:
             assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
 
     def test_ip_all_isclose(self):
-        self.setup()
+        self._setup()
         for (x, y) in self.all_close_tests:
             self.tst_all_isclose(x, y)
 
     def test_ip_none_isclose(self):
-        self.setup()
+        self._setup()
         for (x, y) in self.none_close_tests:
             self.tst_none_isclose(x, y)
 
     def test_ip_isclose_allclose(self):
-        self.setup()
+        self._setup()
         tests = (self.all_close_tests + self.none_close_tests +
                  self.some_close_tests)
         for (x, y) in tests:
@@ -2671,7 +2649,7 @@ class TestIsclose:
 
 
 class TestStdVar:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([1, -1, 1, -1])
         self.real_var = 1
 
@@ -2724,7 +2702,7 @@ class TestStdVarComplex:
 class TestCreationFuncs:
     # Test ones, zeros, empty and full.
 
-    def setup(self):
+    def setup_method(self):
         dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
         # void, bytes, str
         variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
@@ -2795,7 +2773,7 @@ class TestCreationFuncs:
 class TestLikeFuncs:
     '''Test ones_like, zeros_like, empty_like and full_like'''
 
-    def setup(self):
+    def setup_method(self):
         self.data = [
                 # Array scalars
                 (np.array(3.), None),
@@ -2824,12 +2802,11 @@ class TestLikeFuncs:
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
             if fill_value:
-                try:
-                    z = dz.dtype.type(value)
-                except OverflowError:
-                    pass
-                else:
-                    assert_(np.all(dz == z))
+                # Conversion is close to what np.full_like uses
+                # but we  may want to convert directly in the future
+                # which may result in errors (where this does not).
+                z = np.array(value).astype(dz.dtype)
+                assert_(np.all(dz == z))
             else:
                 assert_(np.all(dz == value))
 
@@ -3382,6 +3359,14 @@ class TestCross:
         u = np.ones((3, 4, 2))
         for axisc in range(-2, 2):
             assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
+
+    def test_uint8_int32_mixed_dtypes(self):
+        # regression test for gh-19138
+        u = np.array([[195, 8, 9]], np.uint8)
+        v = np.array([250, 166, 68], np.int32)
+        z = np.array([[950, 11010, -30370]], dtype=np.int32)
+        assert_equal(np.cross(v, u), z)
+        assert_equal(np.cross(u, v), -z)
 
 
 def test_outer_out_param():

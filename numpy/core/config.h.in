@@ -1,0 +1,116 @@
+#mesondefine SIZEOF_PY_INTPTR_T
+#mesondefine SIZEOF_OFF_T
+#mesondefine SIZEOF_PY_LONG_LONG
+
+#mesondefine HAVE_BACKTRACE
+#mesondefine HAVE_MADVISE
+#mesondefine HAVE_FTELLO
+#mesondefine HAVE_FSEEKO
+#mesondefine HAVE_FALLOCATE
+#mesondefine HAVE_STRTOLD_L
+#mesondefine HAVE__THREAD
+#mesondefine HAVE___DECLSPEC_THREAD_
+
+/* Optional headers */
+#mesondefine HAVE_XLOCALE_H
+#mesondefine HAVE_DLFCN_H
+#mesondefine HAVE_EXECINFO_H
+#mesondefine HAVE_LIBUNWIND_H
+#mesondefine HAVE_SYS_MMAN_H
+#mesondefine HAVE_XMMINTRIN_H
+#mesondefine HAVE_EMMINTRIN_H
+#mesondefine HAVE_IMMINTRIN_H
+
+/* Optional intrinsics */
+#mesondefine HAVE___BUILTIN_ISNAN
+#mesondefine HAVE___BUILTIN_ISINF
+#mesondefine HAVE___BUILTIN_ISFINITE
+#mesondefine HAVE___BUILTIN_BSWAP32
+#mesondefine HAVE___BUILTIN_BSWAP64
+#mesondefine HAVE___BUILTIN_EXPECT
+#mesondefine HAVE___BUILTIN_MUL_OVERFLOW
+#mesondefine HAVE___BUILTIN_PREFETCH
+
+#mesondefine HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS
+#mesondefine HAVE_ATTRIBUTE_OPTIMIZE_OPT_3
+#mesondefine HAVE_ATTRIBUTE_OPTIMIZE_OPT_2
+#mesondefine HAVE_ATTRIBUTE_NONNULL
+
+/* C99 complex support and complex.h are not universal */
+#mesondefine HAVE_COMPLEX_H
+#mesondefine HAVE_CABS
+#mesondefine HAVE_CACOS
+#mesondefine HAVE_CACOSH
+#mesondefine HAVE_CARG
+#mesondefine HAVE_CASIN
+#mesondefine HAVE_CASINH
+#mesondefine HAVE_CATAN
+#mesondefine HAVE_CATANH
+#mesondefine HAVE_CEXP
+#mesondefine HAVE_CLOG
+#mesondefine HAVE_CPOW
+#mesondefine HAVE_CSQRT
+#mesondefine HAVE_CABSF
+#mesondefine HAVE_CACOSF
+#mesondefine HAVE_CACOSHF
+#mesondefine HAVE_CARGF
+#mesondefine HAVE_CASINF
+#mesondefine HAVE_CASINHF
+#mesondefine HAVE_CATANF
+#mesondefine HAVE_CATANHF
+#mesondefine HAVE_CEXPF
+#mesondefine HAVE_CLOGF
+#mesondefine HAVE_CPOWF
+#mesondefine HAVE_CSQRTF
+#mesondefine HAVE_CABSL
+#mesondefine HAVE_CACOSL
+#mesondefine HAVE_CACOSHL
+#mesondefine HAVE_CARGL
+#mesondefine HAVE_CASINL
+#mesondefine HAVE_CASINHL
+#mesondefine HAVE_CATANL
+#mesondefine HAVE_CATANHL
+#mesondefine HAVE_CEXPL
+#mesondefine HAVE_CLOGL
+#mesondefine HAVE_CPOWL
+#mesondefine HAVE_CSQRTL
+/* FreeBSD */
+#mesondefine HAVE_CSINF
+#mesondefine HAVE_CSINHF
+#mesondefine HAVE_CCOSF
+#mesondefine HAVE_CCOSHF
+#mesondefine HAVE_CTANF
+#mesondefine HAVE_CTANHF
+#mesondefine HAVE_CSIN
+#mesondefine HAVE_CSINH
+#mesondefine HAVE_CCOS
+#mesondefine HAVE_CCOSH
+#mesondefine HAVE_CTAN
+#mesondefine HAVE_CTANH
+#mesondefine HAVE_CSINL
+#mesondefine HAVE_CSINHL
+#mesondefine HAVE_CCOSL
+#mesondefine HAVE_CCOSHL
+#mesondefine HAVE_CTANL
+#mesondefine HAVE_CTANHL
+
+#mesondefine NPY_CAN_LINK_SVML
+#mesondefine NPY_RELAXED_STRIDES_DEBUG
+
+#mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
+#mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE
+#mesondefine HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE
+#mesondefine HAVE_LDOUBLE_IEEE_DOUBLE_LE
+#mesondefine HAVE_LDOUBLE_IEEE_DOUBLE_BE
+#mesondefine HAVE_LDOUBLE_IEEE_QUAD_LE
+#mesondefine HAVE_LDOUBLE_IEEE_QUAD_BE
+#mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE
+#mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE
+
+#ifndef __cplusplus
+/* #undef inline */
+#endif
+
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
+#error config.h should never be included directly, include npy_config.h instead
+#endif

@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="/branding/logo/primary/numpylogo.svg" width="300">
+<img src="https://raw.githubusercontent.com/numpy/numpy/main/branding/logo/primary/numpylogo.svg" width="300">
 </h1><br>
 
 
@@ -13,6 +13,8 @@ https://anaconda.org/conda-forge/numpy)
 https://stackoverflow.com/questions/tagged/numpy)
 [![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 https://doi.org/10.1038/s41586-020-2649-2)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://api.securityscorecards.dev/projects/github.com/numpy/numpy)
+
 
 NumPy is the fundamental package for scientific computing with Python.
 
@@ -35,7 +37,7 @@ Testing:
 
 NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
 
-    python -c 'import numpy; numpy.test()'
+    python -c "import numpy, sys; sys.exit(numpy.test() is False)"
 
 Code of Conduct
 ----------------------

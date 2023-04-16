@@ -1,42 +1,25 @@
 #!/usr/bin/env python3
-""" NumPy is the fundamental package for array computing with Python.
-
-It provides:
-
-- a powerful N-dimensional array object
-- sophisticated (broadcasting) functions
-- tools for integrating C/C++ and Fortran code
-- useful linear algebra, Fourier transform, and random number capabilities
-- and much more
-
-Besides its obvious scientific uses, NumPy can also be used as an efficient
-multi-dimensional container of generic data. Arbitrary data-types can be
-defined. This allows NumPy to seamlessly and speedily integrate with a wide
-variety of databases.
-
-All NumPy wheels distributed on PyPI are BSD licensed.
-
-NumPy requires ``pytest`` and ``hypothesis``.  Tests can then be run after
-installation with::
-
-    python -c 'import numpy; numpy.test()'
-
 """
-DOCLINES = (__doc__ or '').split("\n")
+Numpy build options can be modified with a site.cfg file.
+See site.cfg.example for a template and more information.
+"""
 
 import os
+from pathlib import Path
 import sys
 import subprocess
 import textwrap
 import warnings
 import builtins
 import re
+import tempfile
 
+from distutils.errors import CompileError
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
-if sys.version_info[:2] < (3, 8):
-    raise RuntimeError("Python version >= 3.8 required.")
+if sys.version_info[:2] < (3, 9):
+    raise RuntimeError("Python version >= 3.9 required.")
 
 
 import versioneer
@@ -65,8 +48,8 @@ if _V_MATCH is None:
 MAJOR, MINOR, MICRO = _V_MATCH.groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
-# The first version not in the `Programming Language :: Python :: ...` classifiers above
-if sys.version_info >= (3, 11):
+# The first version not in the `Programming Language :: Python :: ...` classifiers below
+if sys.version_info >= (3, 12):
     fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
         fmt.format(VERSION, *sys.version_info[:2]),
@@ -109,9 +92,9 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
+Programming Language :: Python :: 3.11
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
@@ -203,48 +186,138 @@ class sdist_checked(cmdclass['sdist']):
 
 def get_build_overrides():
     """
-    Custom build commands to add `-std=c99` to compilation
+    Custom build commands to add std flags if required to compilation
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
 
-    def _needs_gcc_c99_flag(obj):
-        if obj.compiler.compiler_type != 'unix':
-            return False
+    def try_compile(compiler, file, flags = [], verbose=False):
+        # To bypass trapping warnings by Travis CI
+        if getattr(compiler, 'compiler_type', '') == 'unix':
+            flags = ['-Werror'] + flags
+        bk_ver = getattr(compiler, 'verbose', False)
+        compiler.verbose = verbose
+        try:
+            compiler.compile([file], extra_postargs=flags)
+            return True, ''
+        except CompileError as e:
+            return False, str(e)
+        finally:
+            compiler.verbose = bk_ver
 
-        cc = obj.compiler.compiler[0]
-        if "gcc" not in cc:
-            return False
+    def flags_is_required(compiler, is_cpp, flags, code):
+        if is_cpp:
+            compiler = compiler.cxx_compiler()
+            suf = '.cpp'
+        else:
+            suf = '.c'
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tmp_file = os.path.join(temp_dir, "test" + suf)
+            with open(tmp_file, "w+") as f:
+                f.write(code)
+            # without specify any flags in case of the required
+            # standard already supported by default, then there's
+            # no need for passing the flags
+            comp = try_compile(compiler, tmp_file)
+            if not comp[0]:
+                comp = try_compile(compiler, tmp_file, flags)
+                if not comp[0]:
+                    # rerun to verbose the error
+                    try_compile(compiler, tmp_file, flags, True)
+                    if is_cpp:
+                        raise RuntimeError(
+                            "Broken toolchain during testing C++ compiler. \n"
+                            "A compiler with support for C++17 language "
+                            "features is required.\n"
+                            f"Triggered the following error: {comp[1]}."
+                        )
+                    else:
+                        raise RuntimeError(
+                            "Broken toolchain during testing C compiler. \n"
+                            "A compiler with support for C99 language "
+                            "features is required.\n"
+                            f"Triggered the following error: {comp[1]}."
+                        )
+                return True
+        return False
 
-        # will print something like '4.2.1\n'
-        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, universal_newlines=True)
-        # -std=c99 is default from this version on
-        if _pep440.parse(out.stdout) >= _pep440.Version('5.0'):
-            return False
-        return True
+    def std_cxx_flags(cmd):
+        compiler = cmd.compiler
+        flags = getattr(compiler, '__np_cache_cpp_flags', None)
+        if flags is not None:
+            return flags
+        flags = dict(
+            msvc = ['/std:c++17']
+        ).get(compiler.compiler_type, ['-std=c++17'])
+        # These flags are used to compile any C++ source within Numpy.
+        # They are chosen to have very few runtime dependencies.
+        extra_flags = dict(
+            # to update #def __cplusplus with enabled C++ version
+            msvc = ['/Zc:__cplusplus']
+        ).get(compiler.compiler_type, [
+            # The following flag is used to avoid emit any extra code
+            # from STL since extensions are build by C linker and
+            # without C++ runtime dependencies.
+            '-fno-threadsafe-statics',
+            '-D__STDC_VERSION__=0',  # for compatibility with C headers
+            '-fno-exceptions',  # no exception support
+            '-fno-rtti'  # no runtime type information
+        ])
+        if not flags_is_required(compiler, True, flags, textwrap.dedent('''
+            #include <type_traits>
+            template<typename ...T>
+            constexpr bool test_fold = (... && std::is_const_v<T>);
+            int main()
+            {
+                if constexpr (test_fold<int, const int>) {
+                    return 0;
+                }
+                else {
+                    return -1;
+                }
+            }
+        ''')):
+            flags.clear()
+        flags += extra_flags
+        setattr(compiler, '__np_cache_cpp_flags', flags)
+        return flags
+
+    def std_c_flags(cmd):
+        compiler = cmd.compiler
+        flags = getattr(compiler, '__np_cache_c_flags', None)
+        if flags is not None:
+            return flags
+        flags = dict(
+            msvc = []
+        ).get(compiler.compiler_type, ['-std=c99'])
+
+        if not flags_is_required(compiler, False, flags, textwrap.dedent('''
+            inline static int test_inline() { return 0; }
+            int main(void)
+            { return test_inline(); }
+        ''')):
+            flags.clear()
+
+        setattr(compiler, '__np_cache_c_flags', flags)
+        return flags
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
-            from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
-            if _needs_gcc_c99_flag(self):
-                build_info['extra_cflags'] = ['-std=c99']
-            build_info['extra_cxxflags'] = NPY_CXX_FLAGS
+            build_info['extra_cflags'] = std_c_flags(self)
+            build_info['extra_cxxflags'] = std_cxx_flags(self)
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
-            if _needs_gcc_c99_flag(self):
-                if '-std=c99' not in ext.extra_compile_args:
-                    ext.extra_compile_args.append('-std=c99')
+            ext.extra_c_compile_args += std_c_flags(self)
+            ext.extra_cxx_compile_args += std_cxx_flags(self)
             build_ext.build_extension(self, ext)
     return new_build_clib, new_build_ext
 
-
 def generate_cython():
     # Check Cython version
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
     try:
         # try the cython in the installed python first (somewhat related to
         # scipy/scipy#2397)
@@ -433,8 +506,9 @@ def setup_package():
         name='numpy',
         maintainer="NumPy Developers",
         maintainer_email="numpy-discussion@python.org",
-        description=DOCLINES[0],
-        long_description="\n".join(DOCLINES[2:]),
+        description="Fundamental package for array computing in Python",
+        long_description=Path("README.md").read_text(encoding="utf-8"),
+        long_description_content_type="text/markdown",
         url="https://www.numpy.org",
         author="Travis E. Oliphant et al.",
         download_url="https://pypi.python.org/pypi/numpy",
@@ -443,13 +517,13 @@ def setup_package():
             "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
-        license='BSD',
+        license='BSD-3-Clause',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
         version=versioneer.get_version(),
         cmdclass=cmdclass,
-        python_requires='>=3.8',
+        python_requires='>=3.9',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds,
@@ -480,6 +554,9 @@ def setup_package():
     else:
         #from numpy.distutils.core import setup
         from setuptools import setup
+        # workaround for broken --no-build-isolation with newer setuptools,
+        # see gh-21288
+        metadata["packages"] = []
 
     try:
         setup(**metadata)

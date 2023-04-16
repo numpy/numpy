@@ -39,7 +39,7 @@ grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize) {
     }
     *size = (npy_intp)new_size;
     npy_intp alloc_size;
-    if (npy_mul_with_overflow_intp(&alloc_size, (npy_intp)new_size, itemsize)) {
+    if (npy_mul_sizes_with_overflow(&alloc_size, (npy_intp)new_size, itemsize)) {
         return -1;
     }
     return alloc_size;

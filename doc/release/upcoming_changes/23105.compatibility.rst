@@ -1,0 +1,5 @@
+* When loading data from a file handle using ``np.load``,
+  if the handle is at the end of file, as can happen when reading
+  multiple arrays by calling ``np.load`` repeatedly, numpy previously
+  raised ``ValueError`` if ``allow_pickle=False``, and ``OSError`` if
+  ``allow_pickle=True``. Now it raises ``EOFError`` instead, in both cases.

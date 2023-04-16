@@ -26,28 +26,28 @@
 #define NPYV_IMPL_VEC_SPLTW(T_VEC, V) ((T_VEC){V, V, V, V})
 #define NPYV_IMPL_VEC_SPLTD(T_VEC, V) ((T_VEC){V, V})
 
-#define npyv_setall_u8(VAL)  NPYV_IMPL_VEC_SPLTB(npyv_u8,  (unsigned char)VAL)
-#define npyv_setall_s8(VAL)  NPYV_IMPL_VEC_SPLTB(npyv_s8,  (signed char)VAL)
-#define npyv_setall_u16(VAL) NPYV_IMPL_VEC_SPLTH(npyv_u16, (unsigned short)VAL)
-#define npyv_setall_s16(VAL) NPYV_IMPL_VEC_SPLTH(npyv_s16, (short)VAL)
-#define npyv_setall_u32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_u32, (unsigned int)VAL)
-#define npyv_setall_s32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_s32, (int)VAL)
+#define npyv_setall_u8(VAL)  NPYV_IMPL_VEC_SPLTB(npyv_u8,  (unsigned char)(VAL))
+#define npyv_setall_s8(VAL)  NPYV_IMPL_VEC_SPLTB(npyv_s8,  (signed char)(VAL))
+#define npyv_setall_u16(VAL) NPYV_IMPL_VEC_SPLTH(npyv_u16, (unsigned short)(VAL))
+#define npyv_setall_s16(VAL) NPYV_IMPL_VEC_SPLTH(npyv_s16, (short)(VAL))
+#define npyv_setall_u32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_u32, (unsigned int)(VAL))
+#define npyv_setall_s32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_s32, (int)(VAL))
 #if NPY_SIMD_F32
-    #define npyv_setall_f32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_f32, VAL)
+    #define npyv_setall_f32(VAL) NPYV_IMPL_VEC_SPLTW(npyv_f32, (VAL))
 #endif
-#define npyv_setall_u64(VAL) NPYV_IMPL_VEC_SPLTD(npyv_u64, (npy_uint64)VAL)
-#define npyv_setall_s64(VAL) NPYV_IMPL_VEC_SPLTD(npyv_s64, (npy_int64)VAL)
+#define npyv_setall_u64(VAL) NPYV_IMPL_VEC_SPLTD(npyv_u64, (npy_uint64)(VAL))
+#define npyv_setall_s64(VAL) NPYV_IMPL_VEC_SPLTD(npyv_s64, (npy_int64)(VAL))
 #define npyv_setall_f64(VAL) NPYV_IMPL_VEC_SPLTD(npyv_f64, VAL)
 
 // vector with specific values set to each lane and
 // set a specific value to all remained lanes
-#define npyv_setf_u8(FILL, ...)  ((npyv_u8){NPYV__SET_FILL_16(char, FILL, __VA_ARGS__)})
-#define npyv_setf_s8(FILL, ...)  ((npyv_s8){NPYV__SET_FILL_16(char, FILL, __VA_ARGS__)})
-#define npyv_setf_u16(FILL, ...) ((npyv_u16){NPYV__SET_FILL_8(short, FILL, __VA_ARGS__)})
+#define npyv_setf_u8(FILL, ...)  ((npyv_u8){NPYV__SET_FILL_16(unsigned char, FILL, __VA_ARGS__)})
+#define npyv_setf_s8(FILL, ...)  ((npyv_s8){NPYV__SET_FILL_16(signed char, FILL, __VA_ARGS__)})
+#define npyv_setf_u16(FILL, ...) ((npyv_u16){NPYV__SET_FILL_8(unsigned short, FILL, __VA_ARGS__)})
 #define npyv_setf_s16(FILL, ...) ((npyv_s16){NPYV__SET_FILL_8(short, FILL, __VA_ARGS__)})
-#define npyv_setf_u32(FILL, ...) ((npyv_u32){NPYV__SET_FILL_4(int, FILL, __VA_ARGS__)})
+#define npyv_setf_u32(FILL, ...) ((npyv_u32){NPYV__SET_FILL_4(unsigned int, FILL, __VA_ARGS__)})
 #define npyv_setf_s32(FILL, ...) ((npyv_s32){NPYV__SET_FILL_4(int, FILL, __VA_ARGS__)})
-#define npyv_setf_u64(FILL, ...) ((npyv_u64){NPYV__SET_FILL_2(npy_int64, FILL, __VA_ARGS__)})
+#define npyv_setf_u64(FILL, ...) ((npyv_u64){NPYV__SET_FILL_2(npy_uint64, FILL, __VA_ARGS__)})
 #define npyv_setf_s64(FILL, ...) ((npyv_s64){NPYV__SET_FILL_2(npy_int64, FILL, __VA_ARGS__)})
 #if NPY_SIMD_F32
     #define npyv_setf_f32(FILL, ...) ((npyv_f32){NPYV__SET_FILL_4(float, FILL, __VA_ARGS__)})
@@ -82,6 +82,20 @@
     #define npyv_select_f32 npyv_select_u8
 #endif
 #define npyv_select_f64 npyv_select_u8
+
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)vec_extract(A, 0))
+#define npyv_extract0_s8(A) ((npy_int8)vec_extract(A, 0))
+#define npyv_extract0_u16(A) ((npy_uint16)vec_extract(A, 0))
+#define npyv_extract0_s16(A) ((npy_int16)vec_extract(A, 0))
+#define npyv_extract0_u32(A) ((npy_uint32)vec_extract(A, 0))
+#define npyv_extract0_s32(A) ((npy_int32)vec_extract(A, 0))
+#define npyv_extract0_u64(A) ((npy_uint64)vec_extract(A, 0))
+#define npyv_extract0_s64(A) ((npy_int64)vec_extract(A, 0))
+#if NPY_SIMD_F32
+    #define npyv_extract0_f32(A) vec_extract(A, 0)
+#endif
+#define npyv_extract0_f64(A) vec_extract(A, 0)
 
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X) X

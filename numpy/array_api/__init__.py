@@ -121,7 +121,9 @@ warnings.warn(
     "The numpy.array_api submodule is still experimental. See NEP 47.", stacklevel=2
 )
 
-__all__ = []
+__array_api_version__ = "2021.12"
+
+__all__ = ["__array_api_version__"]
 
 from ._constants import e, inf, nan, pi
 
@@ -330,6 +332,10 @@ __all__ += [
     "tanh",
     "trunc",
 ]
+
+from ._indexing_functions import take
+
+__all__ += ["take"]
 
 # linalg is an extension in the array API spec, which is a sub-namespace. Only
 # a subset of functions in it are imported into the top-level namespace.
