@@ -2850,6 +2850,8 @@ def analyzevars(block):
                         kindselect, charselect, typename = cracktypespec(
                             typespec, selector)
                         vars[n]['typespec'] = typespec
+                        if block['result']:
+                            vars[block['result']]['typespec'] = typespec
                         if kindselect:
                             if 'kind' in kindselect:
                                 try:
