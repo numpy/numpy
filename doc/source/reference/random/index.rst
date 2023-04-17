@@ -72,7 +72,7 @@ arbitrary 128-bit integer.
 See the documentation on `default_rng` and `SeedSequence` for more advanced
 options for controlling the seed in specialized scenarios.
 
-`Generator` and its associated infrastructure was introduced in Numpy version
+`Generator` and its associated infrastructure was introduced in NumPy version
 1.17.0. There is still a lot of code that uses the older `RandomState` and the
 functions in `numpy.random`. While there are no plans to remove them at this
 time, we do recommend transitioning to `Generator` as you can. The algorithms
