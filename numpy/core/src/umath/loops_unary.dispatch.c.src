@@ -23,51 +23,6 @@
  ******************************************************************************/
 #define scalar_negative(X) (-X)
 
-/*******************************************************************************
- ** extra SIMD intrinsics
- ******************************************************************************/
-
-#if NPY_SIMD
-
-/**begin repeat
- * #sfx  = s8, u8, s16, u16, s32, u32, s64, u64#
- * #ssfx =  8,  8,  16,  16,  32,  32,  64,  64#
- */
-static NPY_INLINE npyv_@sfx@
-npyv_negative_@sfx@(npyv_@sfx@ v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || @ssfx@ < 64)
-    return npyv_reinterpret_@sfx@_s@ssfx@(vnegq_s@ssfx@(npyv_reinterpret_s@ssfx@_@sfx@(v)));
-#else
-    // (x ^ -1) + 1
-    const npyv_@sfx@ m1 = npyv_setall_@sfx@((npyv_lanetype_@sfx@)-1);
-    return npyv_sub_@sfx@(npyv_xor_@sfx@(v, m1), m1);
-#endif
-}
-/**end repeat**/
-
-/**begin repeat
- * #sfx  = f32, f64#
- * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
- * #fd = f, #
- */
-#if @VCHK@
-static NPY_INLINE npyv_@sfx@
-npyv_negative_@sfx@(npyv_@sfx@ v)
-{
-#if defined(NPY_HAVE_NEON)
-    return vnegq_@sfx@(v);
-#else
-    // (v ^ signmask)
-    const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
-    return npyv_xor_@sfx@(v, signmask);
-#endif
-}
-#endif // @VCHK@
-/**end repeat**/
-
-#endif // NPY_SIMD
-
 /********************************************************************************
  ** Defining the SIMD kernels
  ********************************************************************************/

@@ -92,6 +92,11 @@ typedef double     npyv_lanetype_f64;
     #include "emulate_maskop.h"
 #endif
 
+// enable emulated mask operations for all SIMD extension except for AVX512
+#if !defined(NPY_HAVE_NEON) && NPY_SIMD
+    #include "negative.h"
+#endif
+
 // enable integer divisor generator for all SIMD extensions
 #if NPY_SIMD
     #include "intdiv.h"

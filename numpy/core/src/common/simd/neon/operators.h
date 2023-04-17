@@ -396,4 +396,39 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
     { return vgetq_lane_u64(a, 0) && vgetq_lane_u64(a, 1); }
 #endif // NPY_SIMD_F64
 
+#define npyv_negative_s8 vnegq_s8
+#define npyv_negative_u8(V) vreinterpretq_u8_s8(vnegq_s8(vreinterpretq_s8_u8(V)))
+#define npyv_negative_s16 vnegq_s16
+#define npyv_negative_u16(v) vreinterpretq_u16_s16(vnegq_s16(vreinterpretq_s16_u16(v)))
+#define npyv_negative_s32 vnegq_s32
+#define npyv_negative_u32(v) vreinterpretq_u32_s32(vnegq_s32(vreinterpretq_s32_u32(v)))
+
+#if defined(__aarch64__)
+#define npyv_negative_s64 vnegq_s64
+#define npyv_negative_u64(v) vreinterpretq_u64_s64(vnegq_s64(vreinterpretq_s64_u64(v)))
+#else
+/**
+ * Implements negative for int using XOR
+ *   (x ^ -1) + 1
+ */
+#define NPYV_IMPL_NEGATIVE_INT(SFX)                                         \
+    NPY_FINLINE npyv_##SFX npyv_negative_##SFX                              \
+    (npyv_##SFX v)                                                          \
+    {                                                                       \
+        const npyv_##SFX m1 = npyv_setall_##SFX((npyv_lanetype_##SFX)-1);   \
+        return vsubq_##SFX(npyv_xor_##SFX(v, m1), m1);                   \
+    }
+
+NPYV_IMPL_NEGATIVE_INT(s64)
+NPYV_IMPL_NEGATIVE_INT(u64)
+#undef NPYV_IMPL_NEGATIVE_INT
+#endif
+
+#if NPY_SIMD_F32
+#define npyv_negative_f32 vnegq_f32
+#endif
+#if NPY_SIMD_F64
+#define npyv_negative_f64 vnegq_f64
+#endif
+
 #endif // _NPY_SIMD_NEON_OPERATORS_H

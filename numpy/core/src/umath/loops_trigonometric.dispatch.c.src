@@ -153,7 +153,7 @@ npyv_f64 simd_inner_tan(npyv_f64 x) {
 
     npyv_b64 use_recip = npyv_cmpeq_u64(npyv_and_u64(npyv_reinterpret_u64_s64(qi), npyv_setall_u64(1)), npyv_setall_u64(0));
 
-    return npyv_div_f64(npyv_select_f64(use_recip, -d, n), npyv_select_f64 (use_recip, n, d));
+    return npyv_div_f64(npyv_select_f64(use_recip, npyv_negative_f64(d), n), npyv_select_f64(use_recip, n, d));
 }
 #endif
 
