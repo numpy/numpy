@@ -259,7 +259,7 @@ class build_ext (old_build_ext):
                     log.warn('resetting extension %r language from %r to %r.' %
                              (ext.name, l, ext_language))
 
-                ext.language = ext_language
+            ext.language = ext_language
 
             # global language
             all_languages.update(ext_languages)
