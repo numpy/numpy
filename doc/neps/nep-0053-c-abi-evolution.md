@@ -96,15 +96,19 @@ Briefly, we will allow users to use a definition like::
 
     #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
 
-to select the version they which to compile for (lowest version to be
+to select the version they wish to compile for (lowest version to be
 compatible with).
 This will default to an old version that should cover most or all use-cases.
+The version will be chosen to always be compatible with :ref:`NEP 29 <NEP29>`.
 Thus, users of *new* API may be required to add the define,
-but users of who want to be compatible with older versions should not
-need to do anything.
+but users of who want to be compatible with older versions need not do
+anything unless they wish to have exceptionally long compatibility.
 
 The API additions in the past years were so limited that such a change
 should be necessary at most for a hand-full of users worldwide.
+
+This mechanism is much the same as the `Python limited API`_ since NumPy's
+C-API has a similar need for ABI stability.
 
 Breaking the C-API and changing the ABI
 ---------------------------------------
@@ -256,6 +260,15 @@ The NEP proposes to allow larger changes to our API table by introducing a
 compatibility package ``numpy2_compat``.
 We could do many changes without introducing such a package.
 
+The default API version could be chosen to be older or as the current one.
+An older version would be aimed at libraries who want a larger compatibility
+than NEP 29 suggests.
+Choosing the current would default to removing unnecessary compatibility shims
+for users who do not distribute wheels.
+The suggested default chooses to favors libraries that distribute wheels and
+wish a compatibility range similar to NEP 29.  This is because compatibility
+shims should be light-weight and we expect few libraries require a longer
+compatibility.
 
 Backward compatibility
 ======================
@@ -274,7 +287,8 @@ Discussion
 * https://github.com/numpy/numpy/issues/5888 brought up previously that it
   would be helpful to allow exporting of an older API version in our headers.
   This was never implemented, instead we relied on `oldest-support-numpy`_.
-* This proposal was presented at the NumPy 2.0 planning meeting 2023-04-03.
+* A first draft of this proposal was presented at the NumPy 2.0 planning
+  meeting 2023-04-03.
 
 
 
@@ -287,6 +301,8 @@ References and Footnotes
 .. _Open Publication License: https://www.opencontent.org/openpub/
 
 .. _oldest-support-numpy: https://github.com/scipy/oldest-supported-numpy
+
+.. _Python limited API: https://docs.python.org/3/c-api/stable.html
 
 .. _PR 23528: https://github.com/numpy/numpy/pull/23528
 
