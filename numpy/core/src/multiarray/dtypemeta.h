@@ -42,15 +42,17 @@ typedef struct {
      */
     get_traverse_loop_function *get_clear_loop;
     /*
-       Either NULL or a function that fills an array with zero values
-       appropriate for the dtype. If this function pointer is NULL, the initial
-       value is assumed to be zero. If this function is defined, the array
-       buffer is allocated with malloc and then this function is called to fill
-       the buffer. As a performance optimization, the array buffer is allocated
-       using calloc if this function is NULL, so it is best to avoid using this
-       function if zero-filling the array buffer makes sense for the dtype.
+       Either NULL or a function that sets a function pointer to a traversal
+       loop that fills an array with zero values appropriate for the dtype. If
+       get_fill_zero_loop is undefined or the function pointer set by it is
+       NULL, the array buffer is allocated with calloc. If this function is
+       defined and it sets a non-NULL function pointer, the array buffer is
+       allocated with malloc and the zero-filling loop function pointer is
+       called to fill the buffer. For the best performance, avoid using this
+       function if a zero-filled array buffer allocated with calloc makes sense
+       for the dtype.
     */
-    fill_initial_function *fill_zero_value;
+    get_traverse_loop_function *get_fill_zero_loop;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:

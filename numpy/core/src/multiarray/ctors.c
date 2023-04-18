@@ -783,11 +783,34 @@ PyArray_NewFromDescr_int(
     }
 
 
-    /* dtype-specific function to fill array with zero values, may be NULL */
-    fill_initial_function *fill_zero_value =
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->fill_zero_value;
-
     if (data == NULL) {
+        NPY_traverse_info fill_zero_info;
+        /* float errors do not matter and we do not release GIL */
+        NPY_ARRAYMETHOD_FLAGS zero_flags = PyArrayMethod_MINIMAL_FLAGS;
+        NPY_traverse_info_init(&fill_zero_info);
+        get_traverse_loop_function *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+        if (get_fill_zero_loop != NULL) {
+            if (get_fill_zero_loop(
+                    NULL, descr, 1, descr->elsize, &(fill_zero_info.func),
+                    &(fill_zero_info.auxdata), &zero_flags) < 0) {
+                goto fail;
+            }
+        }
+
+        /*
+         * We always want a zero-filled array allocated with calloc if
+         * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
+         * zero-filled array if zeroed is set and the zero-filling loop isn't
+         * defined, for better performance.
+         *
+         * If the zero-filling loop is defined and zeroed is set, allocate
+         * with malloc and let the zero-filling loop fill the array buffer
+         * with valid zero values for the dtype.
+         */
+        int use_calloc = (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
+                          (zeroed && (fill_zero_info.func == NULL)));
+
         /* Store the handler in case the default is modified */
         fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
@@ -806,33 +829,32 @@ PyArray_NewFromDescr_int(
             }
         }
 
-        if (
-            /*
-             * If NPY_NEEDS_INIT is set, always zero out the buffer, even if
-             * zeroed isn't set.
-             */
-            (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) ||
-            /*
-             * If fill_zero_value isn't set, the dtype definitely has no
-             * special zero value, so get a zero-filled buffer using
-             * calloc.  Otherwise, get the buffer with malloc and allow
-             * fill_zero_value to zero out the array with the appropriate
-             * special zero value for the dtype. VOID arrays have
-             * fill_zero_value set but may or may not contain objects, so
-             * always allocate with calloc if zeroed is set.
-             */
-            (zeroed &&
-             ((fill_zero_value == NULL) || (descr->type_num == NPY_VOID)))) {
-            /* allocate array buffer with calloc */
+        if (use_calloc) {
             data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
         }
         else {
-            /* allocate array buffer with malloc */
             data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
         }
         if (data == NULL) {
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
+        }
+
+        /*
+         * If the array needs special dtype-specific zero-filling logic, do that
+         */
+        if (zeroed && (fill_zero_info.func != NULL)) {
+            npy_intp size = 1;
+            for (int i = 0; i < nd; i++) {
+                if (npy_mul_sizes_with_overflow(&size, size, dims[i])) {
+                    goto fail;
+                }
+            }
+            if (fill_zero_info.func(
+                    NULL, descr, data, size, descr->elsize,
+                    fill_zero_info.auxdata) < 0) {
+                goto fail;
+            }
         }
 
         fa->flags |= NPY_ARRAY_OWNDATA;
@@ -860,15 +882,6 @@ PyArray_NewFromDescr_int(
     if (base != NULL) {
         Py_INCREF(base);
         if (PyArray_SetBaseObject((PyArrayObject *)fa, base) < 0) {
-            goto fail;
-        }
-    }
-
-    /*
-     * If the array needs special dtype-specific zero-filling logic, do that
-     */
-    if (zeroed && (fill_zero_value != NULL)) {
-        if (fill_zero_value((PyArrayObject *)fa) < 0) {
             goto fail;
         }
     }

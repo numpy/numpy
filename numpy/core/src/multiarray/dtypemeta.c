@@ -20,6 +20,7 @@
 #include "usertypes.h"
 #include "conversion_utils.h"
 #include "templ_common.h"
+#include "refcount.h"
 
 #include <assert.h>
 
@@ -524,6 +525,42 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return NULL;
 }
 
+static int
+fill_zero_void_with_objects_strided_loop(
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *descr,
+        char *data, npy_intp size, npy_intp stride,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyObject *zero = PyLong_FromLong(0);
+    while (size--) {
+        _fillobject(data, zero, descr);
+        data += stride;
+    }
+    Py_DECREF(zero);
+    return 0;
+}
+
+
+static int
+void_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
+                        PyArray_Descr *descr,
+                        int NPY_UNUSED(aligned),
+                        npy_intp NPY_UNUSED(fixed_stride),
+                        traverse_loop_function **out_loop,
+                        NpyAuxData **NPY_UNUSED(out_auxdata),
+                        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    if (PyDataType_REFCHK(descr)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+        *out_loop = &fill_zero_void_with_objects_strided_loop;
+    }
+    else {
+        *out_loop = NULL;
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
@@ -698,11 +735,18 @@ object_common_dtype(
     return cls;
 }
 
-int
-object_fill_zero_value(PyArrayObject *arr)
+static int
+fill_zero_object_strided_loop(
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        char *data, npy_intp size, npy_intp stride,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyObject *zero = PyLong_FromLong(0);
-    PyArray_FillObjectArray(arr, zero);
+    PyObject **optr = (PyObject **)data;
+    while (size--) {
+        Py_INCREF(zero);
+        *optr++ = zero;
+    }
     Py_DECREF(zero);
     if (PyErr_Occurred()) {
         return -1;
@@ -710,14 +754,18 @@ object_fill_zero_value(PyArrayObject *arr)
     return 0;
 }
 
-int
-void_fill_zero_value(PyArrayObject *arr)
+
+static int
+object_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
+                          PyArray_Descr *NPY_UNUSED(descr),
+                          int NPY_UNUSED(aligned),
+                          npy_intp NPY_UNUSED(fixed_stride),
+                          traverse_loop_function **out_loop,
+                          NpyAuxData **NPY_UNUSED(out_auxdata),
+                          NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
-        if (object_fill_zero_value(arr) < 0) {
-            return -1;
-        }
-    }
+    *flags = NPY_METH_REQUIRES_PYAPI|NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    *out_loop = &fill_zero_object_strided_loop;
     return 0;
 }
 
@@ -877,7 +925,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
     dt_slots->ensure_canonical = ensure_native_byteorder;
-    dt_slots->fill_zero_value = NULL;
+    dt_slots->get_fill_zero_loop = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
@@ -889,7 +937,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (descr->type_num == NPY_OBJECT) {
         dt_slots->common_dtype = object_common_dtype;
-        dt_slots->fill_zero_value = object_fill_zero_value;
+        dt_slots->get_fill_zero_loop = object_get_fill_zero_loop;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
@@ -911,7 +959,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->fill_zero_value = void_fill_zero_value;
+            dt_slots->get_fill_zero_loop = void_get_fill_zero_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
