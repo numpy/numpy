@@ -51,6 +51,11 @@ typedef struct {
        called to fill the buffer. For the best performance, avoid using this
        function if a zero-filled array buffer allocated with calloc makes sense
        for the dtype.
+
+       Note that this is currently used only for zero-filling a newly allocated
+       array. While it can be used to zero-fill an already-filled buffer, that
+       will not work correctly for arrays holding references. If you need to do
+       that, clear the array first.
     */
     get_traverse_loop_function *get_fill_zero_loop;
     /*

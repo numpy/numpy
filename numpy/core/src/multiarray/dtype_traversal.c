@@ -135,6 +135,7 @@ fill_zero_object_strided_loop(
     PyObject *zero = PyLong_FromLong(0);
     while (size--) {
         Py_INCREF(zero);
+        // assumes `data` doesn't have a pre-existing object inside it
         memcpy(data, &zero, sizeof(zero));
         data += stride;
     }
