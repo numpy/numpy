@@ -24,7 +24,7 @@
 #include "alloc.h"
 #include "array_method.h"
 #include "dtypemeta.h"
-
+#include "refcount.h"
 #include "dtype_traversal.h"
 
 
@@ -123,6 +123,38 @@ npy_get_clear_object_strided_loop(
     return 0;
 }
 
+
+/**************** Python Object zero fill *********************/
+
+static int
+fill_zero_object_strided_loop(
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        char *data, npy_intp size, npy_intp stride,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyObject *zero = PyLong_FromLong(0);
+    while (size--) {
+        Py_INCREF(zero);
+        memcpy(data, &zero, sizeof(zero));
+        data += stride;
+    }
+    Py_DECREF(zero);
+    return 0;
+}
+
+NPY_NO_EXPORT int
+npy_object_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
+                              PyArray_Descr *NPY_UNUSED(descr),
+                              int NPY_UNUSED(aligned),
+                              npy_intp NPY_UNUSED(fixed_stride),
+                              traverse_loop_function **out_loop,
+                              NpyAuxData **NPY_UNUSED(out_auxdata),
+                              NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    *out_loop = &fill_zero_object_strided_loop;
+    return 0;
+}
 
 /**************** Structured DType clear funcationality ***************/
 
@@ -408,7 +440,6 @@ clear_no_op(
     return 0;
 }
 
-
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
@@ -471,4 +502,42 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
             "user dtype '%S' without fields or subarray (legacy support).",
             dtype);
     return -1;
+}
+
+/**************** Structured DType zero fill ***************/
+
+static int
+fill_zero_void_with_objects_strided_loop(
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *descr,
+        char *data, npy_intp size, npy_intp stride,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyObject *zero = PyLong_FromLong(0);
+    while (size--) {
+        _fillobject(data, zero, descr);
+        data += stride;
+    }
+    Py_DECREF(zero);
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+npy_void_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
+                            PyArray_Descr *descr,
+                            int NPY_UNUSED(aligned),
+                            npy_intp NPY_UNUSED(fixed_stride),
+                            traverse_loop_function **out_loop,
+                            NpyAuxData **NPY_UNUSED(out_auxdata),
+                            NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    if (PyDataType_REFCHK(descr)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+        *out_loop = &fill_zero_void_with_objects_strided_loop;
+    }
+    else {
+        *out_loop = NULL;
+    }
+    return 0;
 }

@@ -21,6 +21,7 @@
 #include "conversion_utils.h"
 #include "templ_common.h"
 #include "refcount.h"
+#include "dtype_traversal.h"
 
 #include <assert.h>
 
@@ -525,41 +526,6 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return NULL;
 }
 
-static int
-fill_zero_void_with_objects_strided_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *descr,
-        char *data, npy_intp size, npy_intp stride,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyObject *zero = PyLong_FromLong(0);
-    while (size--) {
-        _fillobject(data, zero, descr);
-        data += stride;
-    }
-    Py_DECREF(zero);
-    return 0;
-}
-
-
-static int
-void_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
-                        PyArray_Descr *descr,
-                        int NPY_UNUSED(aligned),
-                        npy_intp NPY_UNUSED(fixed_stride),
-                        traverse_loop_function **out_loop,
-                        NpyAuxData **NPY_UNUSED(out_auxdata),
-                        NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-    if (PyDataType_REFCHK(descr)) {
-        *flags |= NPY_METH_REQUIRES_PYAPI;
-        *out_loop = &fill_zero_void_with_objects_strided_loop;
-    }
-    else {
-        *out_loop = NULL;
-    }
-    return 0;
-}
 
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
@@ -735,35 +701,6 @@ object_common_dtype(
     return cls;
 }
 
-static int
-fill_zero_object_strided_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
-        char *data, npy_intp size, npy_intp stride,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyObject *zero = PyLong_FromLong(0);
-    while (size--) {
-        Py_INCREF(zero);
-        memcpy(data, &zero, sizeof(zero));
-    }
-    Py_DECREF(zero);
-    return 0;
-}
-
-
-static int
-object_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
-                          PyArray_Descr *NPY_UNUSED(descr),
-                          int NPY_UNUSED(aligned),
-                          npy_intp NPY_UNUSED(fixed_stride),
-                          traverse_loop_function **out_loop,
-                          NpyAuxData **NPY_UNUSED(out_auxdata),
-                          NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    *flags = NPY_METH_REQUIRES_PYAPI|NPY_METH_NO_FLOATINGPOINT_ERRORS;
-    *out_loop = &fill_zero_object_strided_loop;
-    return 0;
-}
 
 /**
  * This function takes a PyArray_Descr and replaces its base class with
@@ -933,7 +870,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (descr->type_num == NPY_OBJECT) {
         dt_slots->common_dtype = object_common_dtype;
-        dt_slots->get_fill_zero_loop = object_get_fill_zero_loop;
+        dt_slots->get_fill_zero_loop = npy_object_get_fill_zero_loop;
+        dt_slots->get_clear_loop = npy_get_clear_object_strided_loop;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
@@ -955,7 +893,9 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->get_fill_zero_loop = void_get_fill_zero_loop;
+            dt_slots->get_fill_zero_loop = npy_void_get_fill_zero_loop;
+            dt_slots->get_clear_loop =
+                    npy_get_clear_void_and_legacy_user_dtype_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;

@@ -949,11 +949,11 @@ PyArray_NewFromDescr_int(
             }
         }
     }
-    NPY_traverse_info_xfree(fill_zero_info);
+    NPY_traverse_info_xfree(&fill_zero_info);
     return (PyObject *)fa;
 
  fail:
-    NPY_traverse_info_xfree(fill_zero_info);
+    NPY_traverse_info_xfree(&fill_zero_info);
     Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
