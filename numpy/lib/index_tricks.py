@@ -210,7 +210,8 @@ class nd_grid:
 
 class MGridClass(nd_grid):
     """
-    `~numpy.lib.index_tricks.nd_grid` instance which returns a dense multi-dimensional "meshgrid".
+    `~numpy.lib.index_tricks.nd_grid` instance which returns a dense
+    multi-dimensional "meshgrid".
 
     An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
     (or fleshed out) mesh-grid when indexed, so that each returned argument
@@ -262,7 +263,8 @@ mgrid = MGridClass()
 
 class OGridClass(nd_grid):
     """
-    `~numpy.lib.index_tricks.nd_grid` instance which returns an open multi-dimensional "meshgrid".
+    `~numpy.lib.index_tricks.nd_grid` instance which returns an open
+    multi-dimensional "meshgrid".
 
     An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
     (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
