@@ -48,6 +48,8 @@ job, either all warnings or otherwise at least ``DeprecationWarning`` and
 adapt your code.
 
 
+.. _depending_on_numpy:
+
 Adding a dependency on NumPy
 ----------------------------
 
@@ -61,7 +63,8 @@ Build-time dependency
     have to compile with the oldest version you wish to support.
     This can be done by using
     `oldest-supported-numpy <https://github.com/scipy/oldest-supported-numpy/>`__.
-    Please see the NumPy 1.24 documentation for further details.
+    Please see the NumPy 1.24 documentation at
+    `https://numpy.org/doc/1.24/dev/depending_on_numpy.html`__.
 
 
 If a package either uses the NumPy C API directly or it uses some other tool
@@ -72,9 +75,9 @@ By default, NumPy will expose an API that is compatible with at least the
 oldest NumPy version that supports the currently oldest compatible Python
 version:  NumPy 1.25.0 supports Python 3.9 and higher and NumPy 1.19 is the
 first version to support Python 3.9.  Thus, we will guarantee that version
-(the exact version is set in the headers).
+(the exact version is set within NumPy-internal header files).
 
-NumPy is also forward compatible for all minor release, but a major release
+NumPy is also forward compatible for all minor releases, but a major release
 will require recompilation.
 
 The default behavior can be customized for example by adding::
@@ -93,6 +96,8 @@ version by default you can add::
     #endif
 
 Which allows a user to override the default via ``-DNPY_TARGET_VERSION``.
+This define must be consistent for each extension module (use of
+``import_array()``) and also applies to the umath module.
 
 When you compile against NumPy, you should add the proper version restrictions
 to your ``pyproject.toml`` (see PEP 517).  Since your extension will not be

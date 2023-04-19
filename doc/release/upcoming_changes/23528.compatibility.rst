@@ -1,5 +1,5 @@
-Default build against NumPy is now backwards compatible
--------------------------------------------------------
+Binaries build against the NumPy C API now with older NumPy versions
+--------------------------------------------------------------------
 Starting with NumPy 1.25 when including NumPy headers, NumPy now
 defaults to exposing a backwards compatible API.
 This means that by default binaries such as wheels build against

@@ -105,7 +105,7 @@ For maintainers
 API Changes
 -----------
 As mentioned most public API changes should be discussed ahead of time and
-often with a wider audience (mailinglist or even through a NEP).
+often with a wider audience (on the mailing list, or even through a NEP).
 
 For changes in the public C-API be aware that the NumPy C-API is backwards
 compatible so that any addition must be ABI compatible with previous versions.
