@@ -2334,13 +2334,14 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     Py_ssize_t nin = -1;
     char *sep = NULL;
     Py_ssize_t s;
-    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
+    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", "ignore_whitespace", NULL};
     PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
+    int ignore_whitespace = 0; // default behavior is to not ignore whitespace
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
-                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like)) {
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$O$p:fromstring", kwlist,
+                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like, &ignore_whitespace)) {
         Py_XDECREF(descr);
         return NULL;
     }
@@ -2363,6 +2364,16 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
             return NULL;
         }
     }
+    
+    // Modified logic to ignore whitespace if specified
+    if (ignore_whitespace) {
+        for (int i = 0; i < s; i++) {
+            if (isspace(data[i])) {
+                data[i] = '\0'; // replace whitespace with null character
+            }
+        }
+    }
+
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
 

@@ -5293,6 +5293,11 @@ class TestIO:
         d = np.fromstring("1,2", sep=",", dtype=np.int64, count=0)
         assert d.shape == (0,)
 
+    def test_fromstring_no_whitespace(self):
+        d = np.fromstring("0, ", sep=',', ignore_whitespace=True)
+        e = [0.]
+        assert_array_equal(d,e)
+
     def test_empty_files_text(self, tmp_filename):
         with open(tmp_filename, 'w') as f:
             pass
