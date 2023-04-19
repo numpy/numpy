@@ -742,15 +742,11 @@ fill_zero_object_strided_loop(
         NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyObject *zero = PyLong_FromLong(0);
-    PyObject **optr = (PyObject **)data;
     while (size--) {
         Py_INCREF(zero);
-        *optr++ = zero;
+        memcpy(data, &zero, sizeof(zero));
     }
     Py_DECREF(zero);
-    if (PyErr_Occurred()) {
-        return -1;
-    }
     return 0;
 }
 

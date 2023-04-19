@@ -715,6 +715,11 @@ PyArray_NewFromDescr_int(
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
 
+    /* needed for zero-filling logic below, defined and initialized up here
+       so cleanup logic can go in the fail block */
+    NPY_traverse_info fill_zero_info;
+    NPY_traverse_info_init(&fill_zero_info);
+
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
@@ -784,10 +789,8 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
-        NPY_traverse_info fill_zero_info;
         /* float errors do not matter and we do not release GIL */
-        NPY_ARRAYMETHOD_FLAGS zero_flags = PyArrayMethod_MINIMAL_FLAGS;
-        NPY_traverse_info_init(&fill_zero_info);
+        NPY_ARRAYMETHOD_FLAGS zero_flags;
         get_traverse_loop_function *get_fill_zero_loop =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
         if (get_fill_zero_loop != NULL) {
@@ -843,13 +846,8 @@ PyArray_NewFromDescr_int(
         /*
          * If the array needs special dtype-specific zero-filling logic, do that
          */
-        if (zeroed && (fill_zero_info.func != NULL)) {
-            npy_intp size = 1;
-            for (int i = 0; i < nd; i++) {
-                if (npy_mul_sizes_with_overflow(&size, size, dims[i])) {
-                    goto fail;
-                }
-            }
+        if (NPY_UNLIKELY(zeroed && (fill_zero_info.func != NULL))) {
+            npy_intp size = PyArray_MultiplyList(fa->dimensions, fa->nd);
             if (fill_zero_info.func(
                     NULL, descr, data, size, descr->elsize,
                     fill_zero_info.auxdata) < 0) {
@@ -951,9 +949,11 @@ PyArray_NewFromDescr_int(
             }
         }
     }
+    NPY_traverse_info_xfree(fill_zero_info);
     return (PyObject *)fa;
 
  fail:
+    NPY_traverse_info_xfree(fill_zero_info);
     Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
