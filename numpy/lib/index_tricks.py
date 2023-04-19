@@ -132,7 +132,7 @@ class nd_grid:
     Notes
     -----
     Two instances of `nd_grid` are made available in the NumPy namespace,
-    `mgrid` and `ogrid`, approximately defined as::
+    `~numpy.mgrid` and `~numpy.ogrid`, approximately defined as::
 
         mgrid = nd_grid(sparse=False)
         ogrid = nd_grid(sparse=True)
@@ -210,7 +210,7 @@ class nd_grid:
 
 class MGridClass(nd_grid):
     """
-    `nd_grid` instance which returns a dense multi-dimensional "meshgrid".
+    `~numpy.lib.index_tricks.nd_grid` instance which returns a dense multi-dimensional "meshgrid".
 
     An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
     (or fleshed out) mesh-grid when indexed, so that each returned argument
@@ -230,7 +230,7 @@ class MGridClass(nd_grid):
     See Also
     --------
     lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
-    ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    ogrid : like `mgrid` but returns open (not fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
     :ref:`how-to-partition`
@@ -262,7 +262,7 @@ mgrid = MGridClass()
 
 class OGridClass(nd_grid):
     """
-    `nd_grid` instance which returns an open multi-dimensional "meshgrid".
+    `~numpy.lib.index_tricks.nd_grid` instance which returns an open multi-dimensional "meshgrid".
 
     An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
     (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
@@ -282,7 +282,7 @@ class OGridClass(nd_grid):
 
     See Also
     --------
-    np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator

@@ -85,6 +85,7 @@ Numerical ranges
    meshgrid
    mgrid
    ogrid
+   lib.index_tricks.nd_grid
 
 Building matrices
 -----------------
