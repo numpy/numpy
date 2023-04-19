@@ -398,7 +398,7 @@ def log2(x):
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
        The value(s) whose log base 2 is (are) required.
 
     Returns
@@ -448,9 +448,9 @@ def power(x, p):
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
         The input value(s).
-    p : array_like of ints
+    p : array_like of ints or scalar
         The power(s) to which `x` is raised. If `x` contains multiple values,
         `p` has to either be a scalar, or contain the same number of values
         as `x`. In the latter case, the result is
@@ -472,11 +472,18 @@ def power(x, p):
 
     >>> np.emath.power([2, 4], 2)
     array([ 4, 16])
+
     >>> np.emath.power([2, 4], -2)
     array([0.25  ,  0.0625])
+
     >>> np.emath.power([-2, 4], 2)
     array([ 4.-0.j, 16.+0.j])
 
+    >>> np.emath.power([2,4], [2,4])
+    array([ 4, 256])
+
+    >>> np.emath.power(2, 2)
+    4
     """
     x = _fix_real_lt_zero(x)
     p = _fix_int_lt_zero(p)
@@ -587,7 +594,7 @@ def arctanh(x):
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
        The value(s) whose arctanh is (are) required.
 
     Returns
@@ -619,6 +626,9 @@ def arctanh(x):
            [ 0., inf]])
     >>> np.emath.arctanh([1j])
     array([0.+0.7854j])
+
+    >>> np.emath.arctanh(0)
+    0.0
 
     """
     x = _fix_real_abs_gt_1(x)
