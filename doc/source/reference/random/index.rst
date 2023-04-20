@@ -96,7 +96,7 @@ into more useful distributions, e.g., simulated normal random values. This
 structure allows alternative bit generators to be used with little code
 duplication.
 
-Numpy implements several different `BitGenerator` classes implementing
+NumPy implements several different `BitGenerator` classes implementing
 different PRNG algorithms. `default_rng` currently uses `~PCG64` as the
 default `BitGenerator`. It has better statistical properties and performance
 over the `~MT19937` algorithm used in the legacy `RandomState`. See
