@@ -893,7 +893,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
-            dt_slots->get_fill_zero_loop = npy_void_get_fill_zero_loop;
+            dt_slots->get_fill_zero_loop = 
+                    npy_get_zerofill_void_and_legacy_user_dtype_loop;
             dt_slots->get_clear_loop =
                     npy_get_clear_void_and_legacy_user_dtype_loop;
         }
