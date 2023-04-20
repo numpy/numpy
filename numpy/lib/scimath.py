@@ -398,12 +398,12 @@ def log2(x):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
        The value(s) whose log base 2 is (are) required.
 
     Returns
     -------
-    out : ndarray or scalar
+    out : array_like
        The log base 2 of the `x` value(s). If `x` was a scalar, so is `out`,
        otherwise an array is returned.
 
@@ -448,9 +448,9 @@ def power(x, p):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
         The input value(s).
-    p : array_like of ints or scalar
+    p : array_like of ints
         The power(s) to which `x` is raised. If `x` contains multiple values,
         `p` has to either be a scalar, or contain the same number of values
         as `x`. In the latter case, the result is
@@ -594,12 +594,12 @@ def arctanh(x):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
        The value(s) whose arctanh is (are) required.
 
     Returns
     -------
-    out : ndarray or scalar
+    out : array_like
        The inverse hyperbolic tangent(s) of the `x` value(s). If `x` was
        a scalar so is `out`, otherwise an array is returned.
 
