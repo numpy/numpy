@@ -33,11 +33,12 @@ different distributions.
   >>> rng.integers(low=0, high=10, size=5)  #doctest: +SKIP
   array([8, 7, 6, 2, 0])  # may vary
 
-Our RNGs are deterministic sequences and can be reproduced by specifying a seed to
-control its initial state. By default, with no seed, `default_rng` will create
-the RNG using nondeterministic data from the operating system and therefore
-generate different numbers each time. The pseudorandom sequences will be
-practically independent.
+Our RNGs are deterministic sequences and can be reproduced by specifying a seed integer to
+derive its initial state. By default, with no seed provided, `default_rng` will create
+seed the RNG from nondeterministic data from the operating system and therefore
+generate different numbers each time. The pseudo-random sequences will be
+independent for all practical purposes, at least those purposes for which our
+pseudo-randomness was good for in the first place.
 
 ::
 
@@ -48,7 +49,14 @@ practically independent.
     >>> rng2.random()  #doctest: +SKIP
     0.11885628817151628  # may vary
 
-Seeds are usually large positive integers. `default_rng` can take positive
+.. warning::
+
+  The pseudo-random number generators implemented in this module are designed
+  for statistical modeling and simulation. They are not suitable for security
+  or cryptographic purposes. See the :py:module:`secrets` module from the
+  standard library such use cases.
+
+Seeds should be large positive integers. `default_rng` can take positive
 integers of any size. We recommend using very large, unique numbers to ensure
 that your seed is different from anyone else's. This is good practice to ensure
 that your results are statistically independent from theirs unless if you are
