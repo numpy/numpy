@@ -472,11 +472,18 @@ def power(x, p):
 
     >>> np.emath.power([2, 4], 2)
     array([ 4, 16])
+
     >>> np.emath.power([2, 4], -2)
     array([0.25  ,  0.0625])
+
     >>> np.emath.power([-2, 4], 2)
     array([ 4.-0.j, 16.+0.j])
 
+    >>> np.emath.power([2,4], [2,4])
+    array([ 4, 256])
+
+    >>> np.emath.power(2, 2)
+    4
     """
     x = _fix_real_lt_zero(x)
     p = _fix_int_lt_zero(p)
