@@ -123,7 +123,8 @@ For backward compatibility, we still maintain the legacy `RandomState` class.
 It continues to use the `~MT19937` algorithm by default, and old seeds continue
 to reproduce the same results. The convenience :ref:`functions-in-numpy-random`
 are still aliases to the methods on a single global `RandomState` instance. See
-:ref:`legacy` for the complete details.
+:ref:`legacy` for the complete details. See :ref:`new-or-different` for
+a detailed comparison between `Generator` and `RandomState`.
 
 Parallel Generation
 ~~~~~~~~~~~~~~~~~~~
@@ -138,82 +139,6 @@ a number of ways:
 
 Users with a very large amount of parallelism will want to consult
 :ref:`upgrading-pcg64`.
-
-What's New or Different
-~~~~~~~~~~~~~~~~~~~~~~~
-.. warning::
-
-  The Box-Muller method used to produce NumPy's normals is no longer available
-  in `Generator`.  It is not possible to reproduce the exact random
-  values using Generator for the normal distribution or any other
-  distribution that relies on the normal such as the `RandomState.gamma` or
-  `RandomState.standard_t`. If you require bitwise backward compatible
-  streams, use `RandomState`.
-
-`Generator` can be used as a replacement for `RandomState`. Both class
-instances hold an internal `BitGenerator` instance to provide the bit
-stream, it is accessible as ``gen.bit_generator``. Some long-overdue API
-cleanup means that legacy and compatibility methods have been removed from
-`Generator`.
-
-=================== ============== ============
-`RandomState`       `Generator`    Notes
-------------------- -------------- ------------
-``random_sample``,  ``random``     Compatible with `random.random`
-``rand``
-------------------- -------------- ------------
-``randint``,        ``integers``   Add an ``endpoint`` kwarg
-``random_integers``
-------------------- -------------- ------------
-``tomaxint``        removed        Use ``integers(0, np.iinfo(np.int_).max,``
-                                   ``endpoint=False)``
-------------------- -------------- ------------
-``seed``            removed        Use `SeedSequence.spawn`
-=================== ============== ============
-
-Something like the following code can be used to support both ``RandomState``
-and ``Generator``, with the understanding that the interfaces are slightly
-different.
-
-.. code-block:: python
-
-    try:
-        rng_integers = rng.integers
-    except AttributeError:
-        rng_integers = rng.randint
-    a = rng_integers(1000)
-
-* The Generator's normal, exponential and gamma functions use 256-step Ziggurat
-  methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
-  implementations.
-* Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
-  to produce either single or double precision uniform random variables for
-  select distributions
-* Optional ``out`` argument that allows existing arrays to be filled for
-  select distributions
-* All BitGenerators can produce doubles, uint64s and uint32s via CTypes
-  (`PCG64.ctypes`) and CFFI (`PCG64.cffi`). This allows the bit generators
-  to be used in numba.
-* The bit generators can be used in downstream projects via
-  :ref:`Cython <random_cython>`.
-* `Generator.integers` is now the canonical way to generate integer
-  random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only available through the legacy `RandomState`.
-  The ``endpoint`` keyword can be used to specify open or closed intervals.
-  This replaces both ``randint`` and the deprecated ``random_integers``.
-* `Generator.random` is now the canonical way to generate floating-point
-  random numbers, which replaces `RandomState.random_sample`,
-  `RandomState.sample`, and `RandomState.ranf`. This is consistent with
-  Python's `random.random`.
-* All BitGenerators in numpy use `SeedSequence` to convert seeds into
-  initialized states.
-* The addition of an ``axis`` keyword argument to methods such as 
-  `Generator.choice`, `Generator.permutation`,  and `Generator.shuffle` 
-  improves support for sampling from and shuffling multi-dimensional arrays.
-
-See :ref:`new-or-different` for a complete list of improvements and
-differences from the traditional ``Randomstate``.
-
 
 Concepts
 --------
