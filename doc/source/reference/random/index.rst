@@ -13,9 +13,9 @@ Quick Start
 -----------
 
 The :mod:`numpy.random` module implements pseudo-random number generators
-(PRNGs) with the ability to draw samples from a variety of probability
-distributions. In general, users will create a `Generator` instance with
-`default_rng` and call the various methods on it to obtain samples from
+(PRNGs or RNGs, for short) with the ability to draw samples from a variety of
+probability distributions. In general, users will create a `Generator` instance
+with `default_rng` and call the various methods on it to obtain samples from
 different distributions.
 
 ::
@@ -33,9 +33,9 @@ different distributions.
   >>> rng.integers(low=0, high=10, size=5)  #doctest: +SKIP
   array([8, 7, 6, 2, 0])  # may vary
 
-PRNGs are deterministic sequences and can be reproduced by specifying a seed to
+Our RNGs are deterministic sequences and can be reproduced by specifying a seed to
 control its initial state. By default, with no seed, `default_rng` will create
-the PRNG using nondeterministic data from the operating system and therefore
+the RNG using nondeterministic data from the operating system and therefore
 generate different numbers each time. The pseudorandom sequences will be
 practically independent.
 
@@ -86,7 +86,7 @@ Design
 ------
 
 Users primarily interact with `Generator` instances. Each `Generator` instance
-owns a `BitGenerator` instance that implements the core PRNG algorithm. The
+owns a `BitGenerator` instance that implements the core RNG algorithm. The
 `BitGenerator` has a limited set of responsibilities. It manages state and
 provides functions to produce random doubles and random unsigned 32- and 64-bit
 values.
@@ -97,19 +97,19 @@ structure allows alternative bit generators to be used with little code
 duplication.
 
 NumPy implements several different `BitGenerator` classes implementing
-different PRNG algorithms. `default_rng` currently uses `~PCG64` as the
+different RNG algorithms. `default_rng` currently uses `~PCG64` as the
 default `BitGenerator`. It has better statistical properties and performance
 over the `~MT19937` algorithm used in the legacy `RandomState`. See
 :ref:`random-bit-generators` for more details on the supported BitGenerators.
 
-`default_rng` and BitGenerators delegate the conversion of seeds into PRNG
+`default_rng` and BitGenerators delegate the conversion of seeds into RNG
 states to `SeedSequence` internally. `SeedSequence` implements a sophisticated
 algorithm that intermediates between the user's input and the internal
 implementation details of each `BitGenerator` algorithm, each of which can
 require different amounts of bits for its state. Importantly, it lets you use
 arbitrary-sized integers and arbitrary sequences of such integers to mix
-together into the PRNG state. This is a useful primitive for constructing
-a `flexible pattern for parallel PRNG streams <seedsequence-spawn>`_.
+together into the RNG state. This is a useful primitive for constructing
+a `flexible pattern for parallel RNG streams <seedsequence-spawn>`_.
 
 For backward compatibility, we still maintain the legacy `RandomState` class.
 It continues to use the `~MT19937` algorithm by default, and old seeds continue
