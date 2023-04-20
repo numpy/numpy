@@ -715,6 +715,11 @@ PyArray_NewFromDescr_int(
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
 
+    /* needed for zero-filling logic below, defined and initialized up here
+       so cleanup logic can go in the fail block */
+    NPY_traverse_info fill_zero_info;
+    NPY_traverse_info_init(&fill_zero_info);
+
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
@@ -784,6 +789,31 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
+        /* float errors do not matter and we do not release GIL */
+        NPY_ARRAYMETHOD_FLAGS zero_flags;
+        get_traverse_loop_function *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+        if (get_fill_zero_loop != NULL) {
+            if (get_fill_zero_loop(
+                    NULL, descr, 1, descr->elsize, &(fill_zero_info.func),
+                    &(fill_zero_info.auxdata), &zero_flags) < 0) {
+                goto fail;
+            }
+        }
+
+        /*
+         * We always want a zero-filled array allocated with calloc if
+         * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
+         * zero-filled array if zeroed is set and the zero-filling loop isn't
+         * defined, for better performance.
+         *
+         * If the zero-filling loop is defined and zeroed is set, allocate
+         * with malloc and let the zero-filling loop fill the array buffer
+         * with valid zero values for the dtype.
+         */
+        int use_calloc = (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
+                          (zeroed && (fill_zero_info.func == NULL)));
+
         /* Store the handler in case the default is modified */
         fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
@@ -801,11 +831,8 @@ PyArray_NewFromDescr_int(
                 fa->strides[i] = 0;
             }
         }
-        /*
-         * It is bad to have uninitialized OBJECT pointers
-         * which could also be sub-fields of a VOID array
-         */
-        if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+
+        if (use_calloc) {
             data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
         }
         else {
@@ -814,6 +841,18 @@ PyArray_NewFromDescr_int(
         if (data == NULL) {
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
+        }
+
+        /*
+         * If the array needs special dtype-specific zero-filling logic, do that
+         */
+        if (NPY_UNLIKELY(zeroed && (fill_zero_info.func != NULL))) {
+            npy_intp size = PyArray_MultiplyList(fa->dimensions, fa->nd);
+            if (fill_zero_info.func(
+                    NULL, descr, data, size, descr->elsize,
+                    fill_zero_info.auxdata) < 0) {
+                goto fail;
+            }
         }
 
         fa->flags |= NPY_ARRAY_OWNDATA;
@@ -910,9 +949,11 @@ PyArray_NewFromDescr_int(
             }
         }
     }
+    NPY_traverse_info_xfree(&fill_zero_info);
     return (PyObject *)fa;
 
  fail:
+    NPY_traverse_info_xfree(&fill_zero_info);
     Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
@@ -3017,17 +3058,7 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
         return NULL;
     }
 
-    /* handle objects */
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        if (_zerofill(ret) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-
-
     return (PyObject *)ret;
-
 }
 
 /*NUMPY_API
