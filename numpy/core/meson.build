@@ -83,6 +83,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/npysort/x86-simd-sort/README.md')
+  error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
 
 # Check sizes of types. Note, some of these landed in config.h before, but were
 # unused. So clean that up and only define the NPY_SIZEOF flavors rather than
@@ -109,11 +112,19 @@ cdata.set('NPY_SIZEOF_PY_LONG_LONG',
 if cc.has_header('complex.h')
   cdata.set10('HAVE_COMPLEX_H', true)
   cdata.set10('NPY_USE_C99_COMPLEX', true)
-  complex_types_to_check = [
-    ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
-    ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
-    ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', 'complex long double', 'long double'],
-  ]
+  if cc.get_argument_syntax() == 'msvc'
+    complex_types_to_check = [
+      ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex', 'float'],
+      ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex', 'double'],
+      ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', '_Lcomplex', 'long double'],
+    ]
+  else
+    complex_types_to_check = [
+      ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
+      ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
+      ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', 'complex long double', 'long double'],
+    ]
+  endif
   foreach symbol_type: complex_types_to_check
     if cc.has_type(symbol_type[2], prefix: '#include <complex.h>')
       cdata.set10(symbol_type[0], true)
@@ -250,7 +261,9 @@ else
   # function is not available in CI. For the latter there is a fallback path,
   # but that is broken because we don't have the exact long double
   # representation checks.
-  cdata.set10('HAVE_STRTOLD_L', false)
+  if cc.get_argument_syntax() != 'msvc'
+    cdata.set10('HAVE_STRTOLD_L', false)
+  endif
 endif
 
 # Other optional functions
@@ -293,16 +306,7 @@ optional_function_attributes = [
   ['optimize("O3")', 'OPTIMIZE_OPT_3'],
   ['optimize("O2")', 'OPTIMIZE_OPT_2'],
   ['optimize("nonnull (1)")', 'NONNULL'],
-  ]
-if host_machine.cpu_family() in ['x86', 'x86_64']
-  optional_function_attributes += [
-    ['target("avx")', 'TARGET_AVX'],
-    ['target("avx2")', 'TARGET_AVX2'],
-    ['target("avx512f")', 'TARGET_AVX512F'],
-    ['target("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")', 'TARGET_AVX512_SKX'],
-  ]
-  # TODO: add the _WITH_INTRINSICS_AVX list
-endif
+]
 #foreach attr: optional_function_attributes
 #  if cc.has_function_attribute(attr[0])
 #    cdata.set10('HAVE_ATTRIBUTE_' + attr[1], true)
@@ -321,26 +325,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
-if host_machine.cpu_family() in ['x86', 'x86_64']
- optional_intrinsics += [
-    # MMX only needed for icc, but some clang's don't have it
-    ['_m_from_int64', '0', ['emmintrin.h'], []],
-    ['_mm_load_ps', '(float*)0', ['xmmintrin.h'], []],  # SSE
-    ['_mm_prefetch', '(float*)0, _MM_HINT_NTA', ['xmmintrin.h'], []],  # SSE
-    ['_mm_load_pd', '(double*)0', ['emmintrin.h'], []],  # SSE2
-    ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
-    # Check that the linker can handle AVX
-    ['__asm__ volatile', '"vpand %xmm1, %xmm2, %xmm3"', ['stdio.h'], ['HAVE_LINK_AVX']],
-    ['__asm__ volatile', '"vpand %ymm1, %ymm2, %ymm3"', ['stdio.h'], ['HAVE_LINK_AVX2']],
-    ['__asm__ volatile', '"vpaddd %zmm1, %zmm2, %zmm3"', ['stdio.h'], ['HAVE_LINK_AVX512F']],
-    ['__asm__ volatile',
-     '"vfpclasspd $0x40, %zmm15, %k6\\n vmovdqu8 %xmm0, %xmm1\\n vpbroadcastmb2q %k0, %xmm0"',
-     ['stdio.h'], ['HAVE_LINK_AVX512_SKX']
-    ],
-    ['__asm__ volatile', '"xgetbv"', ['stdio.h'], ['HAVE_XGETBV']],
-  ]
-endif
 foreach intrin: optional_intrinsics
   func = intrin[0]
   func_args = intrin[1]
@@ -451,7 +437,12 @@ if cc.get_id() == 'msvc'
   # libnpymath and libnpyrandom)
   if cc.has_argument('-d2VolatileMetadata-')
      staticlib_cflags +=  '-d2VolatileMetadata-'
-   endif
+  endif
+endif
+# TODO: change to "feature" option in meson_options.txt? See
+# https://mesonbuild.com/Build-options.html#build-options
+if get_option('disable-simd-optimizations')
+  staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
 endif
 
 npy_math_internal_h = custom_target(
@@ -466,9 +457,6 @@ npymath_sources = [
   npy_math_internal_h,
   'src/npymath/halffloat.c',
   'src/npymath/npy_math.c',
-  # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
-  # links to the arm64 npymath library, see gh-22673
-  'src/npymath/arm64_exports.c',
 ]
 npymath_lib = static_library('npymath',
   npymath_sources,
@@ -579,9 +567,13 @@ c_args_common = [
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
   '-D__STDC_VERSION__=0',  # for compatibility with C headers
-  '-fno-exceptions',  # no exception support
-  '-fno-rtti',  # no runtime type information
 ]
+if cc.get_argument_syntax() != 'msvc'
+  cpp_args_common += [
+    '-fno-exceptions',  # no exception support
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
 
 # Other submodules depend on generated headers and include directories from
 # core, wrap those up into a reusable dependency. Also useful for some test
@@ -597,7 +589,8 @@ np_core_dep = declare_dependency(
     '.',
     'include',
     'src/common',
-  ]
+  ],
+  compile_args: disable_simd_optimizations
 )
 
 
@@ -692,6 +685,7 @@ src_multiarray = [
   'src/multiarray/dtypemeta.c',
   'src/multiarray/dragon4.c',
   'src/multiarray/dtype_transfer.c',
+  'src/multiarray/dtype_traversal.c',
   src_file.process('src/multiarray/einsum.c.src'),
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
   'src/multiarray/experimental_public_dtype_api.c',
@@ -721,7 +715,8 @@ src_multiarray = [
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
   src_file.process('src/common/npy_sort.h.src'),
-  'src/npysort/x86-qsort.dispatch.cpp',
+  'src/npysort/simd_qsort.dispatch.cpp',
+  'src/npysort/simd_qsort_16bit.dispatch.cpp',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',
@@ -739,6 +734,9 @@ src_multiarray = [
   'src/multiarray/textreading/stream_pyobject.c',
   'src/multiarray/textreading/str_to_int.c',
   'src/multiarray/textreading/tokenize.cpp',
+  # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
+  # links to the arm64 npymath library, see gh-22673
+  'src/npymath/arm64_exports.c',
 ]
 
 src_umath = [
@@ -758,9 +756,11 @@ src_umath = [
   src_file.process('src/umath/loops_umath_fp.dispatch.c.src'),
   src_file.process('src/umath/loops_unary.dispatch.c.src'),
   src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+  src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
+  src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
+  src_file.process('src/umath/loops_autovec.dispatch.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
-  src_file.process('src/umath/simd.inc.src'),
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',

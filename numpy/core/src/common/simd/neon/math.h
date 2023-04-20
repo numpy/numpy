@@ -352,7 +352,7 @@ NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
         npyv_u32 nfinite_mask = vshlq_n_u32(vreinterpretq_u32_f32(a), 1);
                  nfinite_mask = vandq_u32(nfinite_mask, exp_mask);
                  nfinite_mask = vceqq_u32(nfinite_mask, exp_mask);
-        // elminate nans/inf to avoid invalid fp errors
+        // eliminate nans/inf to avoid invalid fp errors
         npyv_f32 x = vreinterpretq_f32_u32(
             veorq_u32(nfinite_mask, vreinterpretq_u32_f32(a)));
         /**

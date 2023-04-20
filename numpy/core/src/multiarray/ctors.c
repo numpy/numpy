@@ -20,6 +20,7 @@
 #include "common.h"
 #include "ctors.h"
 #include "convert_datatype.h"
+#include "descriptor.h"
 #include "dtypemeta.h"
 #include "shape.h"
 #include "npy_buffer.h"
@@ -714,6 +715,11 @@ PyArray_NewFromDescr_int(
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
 
+    /* needed for zero-filling logic below, defined and initialized up here
+       so cleanup logic can go in the fail block */
+    NPY_traverse_info fill_zero_info;
+    NPY_traverse_info_init(&fill_zero_info);
+
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
@@ -783,6 +789,31 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
+        /* float errors do not matter and we do not release GIL */
+        NPY_ARRAYMETHOD_FLAGS zero_flags;
+        get_traverse_loop_function *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+        if (get_fill_zero_loop != NULL) {
+            if (get_fill_zero_loop(
+                    NULL, descr, 1, descr->elsize, &(fill_zero_info.func),
+                    &(fill_zero_info.auxdata), &zero_flags) < 0) {
+                goto fail;
+            }
+        }
+
+        /*
+         * We always want a zero-filled array allocated with calloc if
+         * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
+         * zero-filled array if zeroed is set and the zero-filling loop isn't
+         * defined, for better performance.
+         *
+         * If the zero-filling loop is defined and zeroed is set, allocate
+         * with malloc and let the zero-filling loop fill the array buffer
+         * with valid zero values for the dtype.
+         */
+        int use_calloc = (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
+                          (zeroed && (fill_zero_info.func == NULL)));
+
         /* Store the handler in case the default is modified */
         fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
@@ -800,11 +831,8 @@ PyArray_NewFromDescr_int(
                 fa->strides[i] = 0;
             }
         }
-        /*
-         * It is bad to have uninitialized OBJECT pointers
-         * which could also be sub-fields of a VOID array
-         */
-        if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+
+        if (use_calloc) {
             data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
         }
         else {
@@ -813,6 +841,18 @@ PyArray_NewFromDescr_int(
         if (data == NULL) {
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
+        }
+
+        /*
+         * If the array needs special dtype-specific zero-filling logic, do that
+         */
+        if (NPY_UNLIKELY(zeroed && (fill_zero_info.func != NULL))) {
+            npy_intp size = PyArray_MultiplyList(fa->dimensions, fa->nd);
+            if (fill_zero_info.func(
+                    NULL, descr, data, size, descr->elsize,
+                    fill_zero_info.auxdata) < 0) {
+                goto fail;
+            }
         }
 
         fa->flags |= NPY_ARRAY_OWNDATA;
@@ -909,9 +949,11 @@ PyArray_NewFromDescr_int(
             }
         }
     }
+    NPY_traverse_info_xfree(&fill_zero_info);
     return (PyObject *)fa;
 
  fail:
+    NPY_traverse_info_xfree(&fill_zero_info);
     Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
@@ -1604,6 +1646,37 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
+    npy_dtype_info dt_info = {NULL, NULL};
+
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        newtype, &dt_info.descr, &dt_info.dtype);
+
+    Py_XDECREF(newtype);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
+    PyObject* ret =  PyArray_FromAny_int(op, dt_info.descr, dt_info.dtype,
+                                         min_depth, max_depth, flags, context);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+    return ret;
+}
+
+/*
+ * Internal version of PyArray_FromAny that accepts a dtypemeta. Borrows
+ * references to the descriptor and dtype.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
+                    PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
+                    int flags, PyObject *context)
+{
     /*
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
@@ -1619,26 +1692,15 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    PyArray_Descr *fixed_descriptor;
-    PyArray_DTypeMeta *fixed_DType;
-    if (PyArray_ExtractDTypeAndDescriptor((PyObject *)newtype,
-            &fixed_descriptor, &fixed_DType) < 0) {
-        Py_XDECREF(newtype);
-        return NULL;
-    }
-    Py_XDECREF(newtype);
-
     ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype,
+            NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
             flags & NPY_ARRAY_ENSURENOCOPY);
 
-    Py_XDECREF(fixed_descriptor);
-    Py_XDECREF(fixed_DType);
     if (ndim < 0) {
         return NULL;
     }
 
-    if (NPY_UNLIKELY(fixed_descriptor != NULL && PyDataType_HASSUBARRAY(dtype))) {
+    if (NPY_UNLIKELY(in_descr != NULL && PyDataType_HASSUBARRAY(dtype))) {
         /*
          * When a subarray dtype was passed in, its dimensions are appended
          * to the array dimension (causing a dimension mismatch).
@@ -1736,7 +1798,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
             !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
-            newtype == NULL) {
+             ((in_descr == NULL) && (in_DType == NULL))) {
         /*
          * Special case, we return a *view* into void scalars, mainly to
          * allow things similar to the "reversed" assignment:
@@ -1767,7 +1829,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    if (cache == NULL && newtype != NULL &&
+    if (cache == NULL && in_descr != NULL &&
             PyDataType_ISSIGNED(dtype) &&
             PyArray_IsScalar(op, Generic)) {
         assert(ndim == 0);
@@ -1898,7 +1960,6 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
  *
- * context is passed through to PyArray_GetArrayParamsFromObject
  */
 
 /*NUMPY_API
@@ -1908,24 +1969,57 @@ NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
+    npy_dtype_info dt_info = {NULL, NULL};
+
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        descr, &dt_info.descr, &dt_info.dtype);
+
+    Py_XDECREF(descr);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
+    PyObject* ret =  PyArray_CheckFromAny_int(
+        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requires,
+        context);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+    return ret;
+}
+
+/*
+ * Internal version of PyArray_CheckFromAny that accepts a dtypemeta. Borrows
+ * references to the descriptor and dtype.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
+                         PyArray_DTypeMeta *in_DType, int min_depth,
+                         int max_depth, int requires, PyObject *context)
+{
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
-        if (!descr && PyArray_Check(op) &&
+        if (!in_descr && PyArray_Check(op) &&
                 PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
-            descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
-            if (descr == NULL) {
+            in_descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
+            if (in_descr == NULL) {
                 return NULL;
             }
         }
-        else if (descr && !PyArray_ISNBO(descr->byteorder)) {
-            PyArray_DESCR_REPLACE(descr);
+        else if (in_descr && !PyArray_ISNBO(in_descr->byteorder)) {
+            PyArray_DESCR_REPLACE(in_descr);
         }
-        if (descr && descr->byteorder != NPY_IGNORE) {
-            descr->byteorder = NPY_NATIVE;
+        if (in_descr && in_descr->byteorder != NPY_IGNORE) {
+            in_descr->byteorder = NPY_NATIVE;
         }
     }
 
-    obj = PyArray_FromAny(op, descr, min_depth, max_depth, requires, context);
+    obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
+                              max_depth, requires, context);
     if (obj == NULL) {
         return NULL;
     }
@@ -2964,17 +3058,7 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
         return NULL;
     }
 
-    /* handle objects */
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        if (_zerofill(ret) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-
-
     return (PyObject *)ret;
-
 }
 
 /*NUMPY_API

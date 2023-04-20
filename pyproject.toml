@@ -8,7 +8,7 @@ requires = [
     # `wheel` is needed for non-isolated builds, given that `meson-python`
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
     # likely to be removed as a dependency in meson-python 0.12.0.
-    "wheel==0.37.0",
+    "wheel==0.38.1",
     "Cython>=0.29.30,<3.0",
 #    "meson-python>=0.10.0",
 ]
@@ -30,7 +30,7 @@ requires = [
 #maintainers = [
 #    {name = "NumPy Developers", email="numpy-discussion@python.org"},
 #]
-#requires-python = ">=3.8"
+#requires-python = ">=3.9"
 #readme = "README.md"
 #classifiers = [
 #    'Development Status :: 5 - Production/Stable',
@@ -40,7 +40,6 @@ requires = [
 #    'Programming Language :: C',
 #    'Programming Language :: Python',
 #    'Programming Language :: Python :: 3',
-#    'Programming Language :: Python :: 3.8',
 #    'Programming Language :: Python :: 3.9',
 #    'Programming Language :: Python :: 3.10',
 #    'Programming Language :: Python :: 3.11',
@@ -63,6 +62,8 @@ requires = [
 #'f2py3 = numpy.f2py.f2py2e:main'
 #'f2py3.MINOR_VERSION = numpy.f2py.f2py2e:main'
 #
+# When enabling this stanza, make sure to remove the meson-specific xfail from
+# numpy/tests/test_public_api.py
 #[project.entry-points]
 #'array_api': 'numpy = numpy.array_api'
 #'pyinstaller40': 'hook-dirs = numpy:_pyinstaller_hooks_dir'
@@ -143,7 +144,7 @@ requires = [
 
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
+skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/test_requirements.txt"
@@ -152,6 +153,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
+musllinux-x86_64-image = "musllinux_1_1"
 environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
 
 [tool.cibuildwheel.macos]
@@ -161,9 +163,9 @@ environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-deb
 # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
 # for more info
 archs = "x86_64 arm64"
-test-skip = "*_arm64 *_universal2:arm64"
+test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
 
 [tool.cibuildwheel.windows]
 environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="", LDFLAGS="" }
@@ -172,9 +174,9 @@ environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFL
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
 
-[tool.devpy]
+[tool.spin]
 package = 'numpy'
 
-[tool.devpy.commands]
-"Build" = ["devpy.build", "devpy.test"]
-"Environments" = ["devpy.shell", "devpy.ipython", "devpy.python"]
+[tool.spin.commands]
+"Build" = ["spin.cmds.meson.build", "spin.cmds.meson.test"]
+"Environments" = ["spin.cmds.meson.shell", "spin.cmds.meson.ipython", "spin.cmds.meson.python"]

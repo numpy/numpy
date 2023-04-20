@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -424,7 +424,7 @@ class TestDivision:
     def test_division_int_boundary(self, dtype, ex_val):
         fo = np.iinfo(dtype)
         neg = -1 if fo.min < 0 else 1
-        # Large enough to test SIMD loops and remaind elements
+        # Large enough to test SIMD loops and remainder elements
         lsize = 512 + 7
         a, b, divisors = eval(ex_val)
         a_lst, b_lst = a.tolist(), b.tolist()
@@ -589,6 +589,8 @@ class TestDivision:
         assert_equal(np.signbit(x//1), 0)
         assert_equal(np.signbit((-x)//1), 1)
 
+    @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
+            reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_errors(self, dtype):
@@ -731,6 +733,8 @@ class TestRemainder:
             # inf / 0 does not set any flags, only the modulo creates a NaN
             np.divmod(finf, fzero)
 
+    @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
+            reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(sys.platform.startswith("darwin"),
            reason="MacOS seems to not give the correct 'invalid' warning for "
@@ -1292,9 +1296,20 @@ class TestLog:
 
         # test log() of max for dtype does not raise
         for dt in ['f', 'd', 'g']:
-            with np.errstate(all='raise'):
-                x = np.finfo(dt).max
-                np.log(x)
+            try:
+                with np.errstate(all='raise'):
+                    x = np.finfo(dt).max
+                    np.log(x)
+            except FloatingPointError as exc:
+                if dt == 'g' and IS_MUSL:
+                    # FloatingPointError is known to occur on longdouble
+                    # for musllinux_x86_64 x is very large
+                    pytest.skip(
+                        "Overflow has occurred for"
+                        " np.log(np.finfo(np.longdouble).max)"
+                    )
+                else:
+                    raise exc
 
     def test_log_strides(self):
         np.random.seed(42)
@@ -1717,7 +1732,8 @@ class TestSpecialFloats:
             ufunc(array)
 
 class TestFPClass:
-    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("stride", [-5, -4, -3, -2, -1, 1,
+                                2, 4, 5, 6, 7, 8, 9, 10])
     def test_fpclass(self, stride):
         arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
         arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
@@ -1734,6 +1750,52 @@ class TestFPClass:
         assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
         assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
 
+    @pytest.mark.parametrize("dtype", ['d', 'f'])
+    def test_fp_noncontiguous(self, dtype):
+        data = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0,
+                            1.0, -0.0, 0.0, 2.2251e-308,
+                            -2.2251e-308], dtype=dtype)
+        nan = np.array([True, True, False, False, False, False,
+                            False, False, False, False])
+        inf = np.array([False, False, True, True, False, False,
+                            False, False, False, False])
+        sign = np.array([False, True, False, True, True, False,
+                            True, False, False, True])
+        finite = np.array([False, False, False, False, True, True,
+                            True, True, True, True])
+        out = np.ndarray(data.shape, dtype='bool')
+        ncontig_in = data[1::3]
+        ncontig_out = out[1::3]
+        contig_in = np.array(ncontig_in)
+        assert_equal(ncontig_in.flags.c_contiguous, False)
+        assert_equal(ncontig_out.flags.c_contiguous, False)
+        assert_equal(contig_in.flags.c_contiguous, True)
+        # ncontig in, ncontig out
+        assert_equal(np.isnan(ncontig_in, out=ncontig_out), nan[1::3])
+        assert_equal(np.isinf(ncontig_in, out=ncontig_out), inf[1::3])
+        assert_equal(np.signbit(ncontig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.isfinite(ncontig_in, out=ncontig_out), finite[1::3])
+        # contig in, ncontig out
+        assert_equal(np.isnan(contig_in, out=ncontig_out), nan[1::3])
+        assert_equal(np.isinf(contig_in, out=ncontig_out), inf[1::3])
+        assert_equal(np.signbit(contig_in, out=ncontig_out), sign[1::3])
+        assert_equal(np.isfinite(contig_in, out=ncontig_out), finite[1::3])
+        # ncontig in, contig out
+        assert_equal(np.isnan(ncontig_in), nan[1::3])
+        assert_equal(np.isinf(ncontig_in), inf[1::3])
+        assert_equal(np.signbit(ncontig_in), sign[1::3])
+        assert_equal(np.isfinite(ncontig_in), finite[1::3])
+        # contig in, contig out, nd stride
+        data_split = np.array(np.array_split(data, 2))
+        nan_split = np.array(np.array_split(nan, 2))
+        inf_split = np.array(np.array_split(inf, 2))
+        sign_split = np.array(np.array_split(sign, 2))
+        finite_split = np.array(np.array_split(finite, 2))
+        assert_equal(np.isnan(data_split), nan_split)
+        assert_equal(np.isinf(data_split), inf_split)
+        assert_equal(np.signbit(data_split), sign_split)
+        assert_equal(np.isfinite(data_split), finite_split)
+
 class TestLDExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
@@ -1747,6 +1809,7 @@ class TestLDExp:
 class TestFRExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
+    @pytest.mark.xfail(IS_MUSL, reason="gh23048")
     @pytest.mark.skipif(not sys.platform.startswith('linux'),
                         reason="np.frexp gives different answers for NAN/INF on windows and linux")
     def test_frexp(self, dtype, stride):
@@ -3434,6 +3497,79 @@ class TestSpecialMethods:
         assert_raises(ValueError, np.modf, a, out=('one', 'two', 'three'))
         assert_raises(ValueError, np.modf, a, out=('one',))
 
+    def test_ufunc_override_where(self):
+
+        class OverriddenArrayOld(np.ndarray):
+
+            def _unwrap(self, objs):
+                cls = type(self)
+                result = []
+                for obj in objs:
+                    if isinstance(obj, cls):
+                        obj = np.array(obj)
+                    elif type(obj) != np.ndarray:
+                        return NotImplemented
+                    result.append(obj)
+                return result
+
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+
+                inputs = self._unwrap(inputs)
+                if inputs is NotImplemented:
+                    return NotImplemented
+
+                kwargs = kwargs.copy()
+                if "out" in kwargs:
+                    kwargs["out"] = self._unwrap(kwargs["out"])
+                    if kwargs["out"] is NotImplemented:
+                        return NotImplemented
+
+                r = super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+                if r is not NotImplemented:
+                    r = r.view(type(self))
+
+                return r
+
+        class OverriddenArrayNew(OverriddenArrayOld):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+
+                kwargs = kwargs.copy()
+                if "where" in kwargs:
+                    kwargs["where"] = self._unwrap((kwargs["where"], ))
+                    if kwargs["where"] is NotImplemented:
+                        return NotImplemented
+                    else:
+                        kwargs["where"] = kwargs["where"][0]
+
+                r = super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+                if r is not NotImplemented:
+                    r = r.view(type(self))
+
+                return r
+
+        ufunc = np.negative
+
+        array = np.array([1, 2, 3])
+        where = np.array([True, False, True])
+        expected = ufunc(array, where=where)
+
+        with pytest.raises(TypeError):
+            ufunc(array, where=where.view(OverriddenArrayOld))
+
+        result_1 = ufunc(
+            array,
+            where=where.view(OverriddenArrayNew)
+        )
+        assert isinstance(result_1, OverriddenArrayNew)
+        assert np.all(np.array(result_1) == expected, where=where)
+
+        result_2 = ufunc(
+            array.view(OverriddenArrayNew),
+            where=where.view(OverriddenArrayNew)
+        )
+        assert isinstance(result_2, OverriddenArrayNew)
+        assert np.all(np.array(result_2) == expected, where=where)
+
     def test_ufunc_override_exception(self):
 
         class A:
@@ -3855,6 +3991,7 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg='real part %s' % f)
             assert_almost_equal(fz.imag, 0., err_msg='imag part %s' % f)
 
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
@@ -3865,6 +4002,7 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
             assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
@@ -3891,6 +4029,7 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
@@ -3936,6 +4075,7 @@ class TestComplexFunctions:
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
+    @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
     def test_loss_of_precision(self, dtype):
@@ -4026,6 +4166,14 @@ class TestComplexFunctions:
             check(func, pts, 1)
             check(func, pts, 1j)
             check(func, pts, 1+1j)
+
+    @np.errstate(all="ignore")
+    def test_promotion_corner_cases(self):
+        for func in self.funcs:
+            assert func(np.float16(1)).dtype == np.float16
+            # Integer to low precision float promotion is a dubious choice:
+            assert func(np.uint8(1)).dtype == np.float16
+            assert func(np.int16(1)).dtype == np.float32
 
 
 class TestAttributes:
@@ -4200,7 +4348,7 @@ def _test_spacing(t):
     nan = t(np.nan)
     inf = t(np.inf)
     with np.errstate(invalid='ignore'):
-        assert_(np.spacing(one) == eps)
+        assert_equal(np.spacing(one), eps)
         assert_(np.isnan(np.spacing(nan)))
         assert_(np.isnan(np.spacing(inf)))
         assert_(np.isnan(np.spacing(-inf)))

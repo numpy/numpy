@@ -128,24 +128,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
 }
 
 
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret)
-{
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyObject *zero = PyLong_FromLong(0);
-        PyArray_FillObjectArray(ret, zero);
-        Py_DECREF(zero);
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-    }
-    else {
-        npy_intp n = PyArray_NBYTES(ret);
-        memset(PyArray_DATA(ret), 0, n);
-    }
-    return 0;
-}
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {

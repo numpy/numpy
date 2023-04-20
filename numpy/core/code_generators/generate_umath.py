@@ -1,3 +1,8 @@
+"""
+Generate the code to build all the internal ufuncs. At the base is the defdict:
+a dictionary ofUfunc classes. This is fed to make_code to generate
+__umath_generated.c
+"""
 import os
 import re
 import struct
@@ -5,6 +10,7 @@ import sys
 import textwrap
 import argparse
 
+# identity objects
 Zero = "PyLong_FromLong(0)"
 One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
@@ -55,9 +61,6 @@ class TypeDescription:
     cfunc_alias : str or none, optional
         Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}. See make_arrays.
         NOTE: it doesn't support 'astype'
-    simd : list
-        Available SIMD ufunc loops, dispatched at runtime in specified order
-        Currently only supported for simples types (see make_arrays)
     dispatch : str or None, optional
         Dispatch-able source name without its extension '.dispatch.c' that
         contains the definition of ufunc, dispatched at runtime depending on the
@@ -65,7 +68,7 @@ class TypeDescription:
         NOTE: it doesn't support 'astype'
     """
     def __init__(self, type, f=None, in_=None, out=None, astype=None, cfunc_alias=None,
-                 simd=None, dispatch=None):
+                 dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -78,7 +81,6 @@ class TypeDescription:
             out = out.replace('P', type)
         self.out = out
         self.cfunc_alias = cfunc_alias
-        self.simd = simd
         self.dispatch = dispatch
 
     def finish_signature(self, nin, nout):
@@ -90,7 +92,42 @@ class TypeDescription:
         assert len(self.out) == nout
         self.astype = self.astype_dict.get(self.type, None)
 
-_fdata_map = dict(
+
+def _check_order(types1, types2):
+    dtype_order = allP + "O"
+    for t1, t2 in zip(types1, types2):
+        # We have no opinion on object or time ordering for now:
+        if t1 in "OP" or t2 in "OP":
+            return True
+        if t1 in "mM" or t2 in "mM":
+            return True
+
+        t1i = dtype_order.index(t1)
+        t2i = dtype_order.index(t2)
+        if t1i < t2i:
+            return
+        if t2i > t1i:
+            break
+
+    raise TypeError(
+            f"Input dtypes are unsorted or duplicate: {types1} and {types2}")
+
+
+def check_td_order(tds):
+    # A quick check for whether the signatures make sense, it happened too
+    # often that SIMD additions added loops that do not even make some sense.
+    # TODO: This should likely be a test and it would be nice if it rejected
+    #       duplicate entries as well (but we have many as of writing this).
+    signatures = [t.in_+t.out for t in tds]
+
+    for prev_i, sign in enumerate(signatures[1:]):
+        if sign in signatures[:prev_i+1]:
+            continue  # allow duplicates...
+
+        _check_order(signatures[prev_i], sign)
+
+
+_floatformat_map = dict(
     e='npy_%sf',
     f='npy_%sf',
     d='npy_%s',
@@ -101,11 +138,14 @@ _fdata_map = dict(
 )
 
 def build_func_data(types, f):
-    func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
+    func_data = [_floatformat_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
 def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
-       simd=None, dispatch=None):
+       dispatch=None):
+    """
+    Generate a TypeDescription instance for each item in types
+    """
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -129,12 +169,6 @@ def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
         raise ValueError("Number of types and outputs do not match")
     tds = []
     for t, fd, i, o in zip(types, func_data, in_, out):
-        # [(simd-name, list of types)]
-        if simd is not None:
-            simdt = [k for k, v in simd if t in v]
-        else:
-            simdt = []
-
         # [(dispatch file name without extension '.dispatch.c*', list of types)]
         if dispatch:
             dispt = ([k for k, v in dispatch if t in v]+[None])[0]
@@ -142,7 +176,7 @@ def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
             dispt = None
         tds.append(TypeDescription(
             t, f=fd, in_=i, out=o, astype=astype, cfunc_alias=cfunc_alias,
-            simd=simdt, dispatch=dispt
+            dispatch=dispt
         ))
     return tds
 
@@ -153,12 +187,15 @@ class Ufunc:
     ----------
     nin : number of input arguments
     nout : number of output arguments
-    identity : identity element for a two-argument function
+    identity : identity element for a two-argument function (like Zero)
     docstring : docstring for the ufunc
-    type_descriptions : list of TypeDescription objects
+    typereso: type resolver function of type PyUFunc_TypeResolutionFunc
+    type_descriptions : TypeDescription objects
+    signature: a generalized ufunc signature (like for matmul)
+    indexed: add indexed loops (ufunc.at) for these type characters
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions, signature=None):
+                 *type_descriptions, signature=None, indexed=''):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -168,10 +205,14 @@ class Ufunc:
         self.typereso = typereso
         self.type_descriptions = []
         self.signature = signature
+        self.indexed = indexed
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
+
+        check_td_order(self.type_descriptions)
+
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -302,25 +343,31 @@ defdict = {
           docstrings.get('numpy.core.umath.add'),
           'PyUFunc_AdditionTypeResolver',
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
-          TD(no_bool_times_obj, simd=[('avx2', ints)],
-                                dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD(no_bool_times_obj, dispatch=[
+              ('loops_arithm_fp', 'fdFD'),
+              ('loops_autovec', ints),
+          ]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'mM', 'M'),
           ],
           TD(O, f='PyNumber_Add'),
+          indexed=intfltcmplx
           ),
 'subtract':
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
-          TD(no_bool_times_obj, simd=[('avx2', ints)],
-                                dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD(no_bool_times_obj, dispatch=[
+              ('loops_arithm_fp', 'fdFD'),
+              ('loops_autovec', ints),
+          ]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
           ],
           TD(O, f='PyNumber_Subtract'),
+          indexed=intfltcmplx
           ),
 'multiply':
     Ufunc(2, 1, One,
@@ -328,14 +375,17 @@ defdict = {
           'PyUFunc_MultiplicationTypeResolver',
           TD('?', cfunc_alias='logical_and',
                   dispatch=[('loops_logical', '?')]),
-          TD(no_bool_times_obj, simd=[('avx2', ints)],
-                                dispatch=[('loops_arithm_fp', 'fdFD')]),
+          TD(no_bool_times_obj, dispatch=[
+              ('loops_arithm_fp', 'fdFD'),
+              ('loops_autovec', ints),
+          ]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'qm', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
            TypeDescription('m', FullTypeDescr, 'dm', 'm'),
           ],
           TD(O, f='PyNumber_Multiply'),
+          indexed=intfltcmplx
           ),
 #'true_divide' : aliased to divide in umathmodule.c:initumath
 'floor_divide':
@@ -350,6 +400,7 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'mm', 'q'),
           ],
           TD(O, f='PyNumber_FloorDivide'),
+          indexed=flts + ints
           ),
 'divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
@@ -361,12 +412,16 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'mm', 'd', cfunc_alias='divide'),
           ],
           TD(O, f='PyNumber_TrueDivide'),
+          indexed=flts
           ),
 'conjugate':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.conjugate'),
           None,
-          TD(ints+flts+cmplx, simd=[('avx2', ints), ('avx512f', cmplxvec)]),
+          TD(ints+flts+cmplx, dispatch=[
+              ('loops_arithm_fp', 'FD'),
+              ('loops_autovec', ints),
+          ]),
           TD(P, f='conjugate'),
           ),
 'fmod':
@@ -381,14 +436,21 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.square'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints), ('avx512f', 'FD')], dispatch=[('loops_unary_fp', 'fd')]),
+          TD(ints+inexact, dispatch=[
+              ('loops_unary_fp', 'fd'),
+              ('loops_arithm_fp', 'FD'),
+              ('loops_autovec', ints),
+          ]),
           TD(O, f='Py_square'),
           ),
 'reciprocal':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.reciprocal'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints)], dispatch=[('loops_unary_fp', 'fd')]),
+          TD(ints+inexact, dispatch=[
+              ('loops_unary_fp', 'fd'),
+              ('loops_autovec', ints),
+          ]),
           TD(O, f='Py_reciprocal'),
           ),
 # This is no longer used as numpy.ones_like, however it is
@@ -420,9 +482,13 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
           'PyUFunc_AbsoluteTypeResolver',
-          TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd'),
-                                                 ('loops_logical', '?')]),
-          TD(cmplx, simd=[('avx512f', cmplxvec)], out=('f', 'd', 'g')),
+          TD(bints+flts+timedeltaonly, dispatch=[
+              ('loops_unary_fp', 'fd'),
+              ('loops_logical', '?'),
+              ('loops_autovec', ints + 'e'),
+          ]),
+          TD(cmplx, dispatch=[('loops_unary_complex', 'FD')],
+             out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
 '_arg':
@@ -451,7 +517,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(nobool_or_datetime),
+          TD(nobool_or_datetime, dispatch=[('loops_autovec', ints)]),
           ),
 'greater':
     Ufunc(2, 1, None,
@@ -505,24 +571,30 @@ defdict = {
     Ufunc(2, 1, True_,
           docstrings.get('numpy.core.umath.logical_and'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
-                                dispatch=[('loops_logical', '?')]),
+          TD(nodatetime_or_obj, out='?', dispatch=[
+              ('loops_logical', '?'),
+              ('loops_autovec', ints),
+          ]),
           TD(O, f='npy_ObjectLogicalAnd'),
           ),
 'logical_not':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.logical_not'),
           None,
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
-                                dispatch=[('loops_logical', '?')]),
+          TD(nodatetime_or_obj, out='?', dispatch=[
+              ('loops_logical', '?'),
+              ('loops_autovec', ints),
+          ]),
           TD(O, f='npy_ObjectLogicalNot'),
           ),
 'logical_or':
     Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_or'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)],
-                                dispatch=[('loops_logical', '?')]),
+          TD(nodatetime_or_obj, out='?', dispatch=[
+              ('loops_logical', '?'),
+              ('loops_autovec', ints),
+          ]),
           TD(O, f='npy_ObjectLogicalOr'),
           ),
 'logical_xor':
@@ -531,7 +603,9 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD('?', out='?', cfunc_alias='not_equal',
                            dispatch=[('loops_comparison', '?')]),
-          TD(no_bool_times_obj, out='?'),
+          TD(no_bool_times_obj, out='?', dispatch=[
+              ('loops_autovec', ints),
+          ]),
           # TODO: using obj.logical_xor() seems pretty much useless:
           TD(P, f='logical_xor'),
           ),
@@ -541,7 +615,8 @@ defdict = {
           'PyUFunc_SimpleUniformOperationTypeResolver',
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
           TD(no_obj_bool, dispatch=[('loops_minmax', ints+'fdg')]),
-          TD(O, f='npy_ObjectMax')
+          TD(O, f='npy_ObjectMax'),
+          indexed=flts + ints,
           ),
 'minimum':
     Ufunc(2, 1, ReorderableNone,
@@ -550,7 +625,8 @@ defdict = {
           TD('?', cfunc_alias='logical_and',
                   dispatch=[('loops_logical', '?')]),
           TD(no_obj_bool, dispatch=[('loops_minmax', ints+'fdg')]),
-          TD(O, f='npy_ObjectMin')
+          TD(O, f='npy_ObjectMin'),
+          indexed=flts + ints,
           ),
 'clip':
     Ufunc(3, 1, ReorderableNone,
@@ -565,7 +641,8 @@ defdict = {
           'PyUFunc_SimpleUniformOperationTypeResolver',
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
           TD(no_obj_bool, dispatch=[('loops_minmax', 'fdg')]),
-          TD(O, f='npy_ObjectMax')
+          TD(O, f='npy_ObjectMax'),
+          indexed=flts + ints,
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
@@ -574,7 +651,8 @@ defdict = {
           TD('?', cfunc_alias='logical_and',
                   dispatch=[('loops_logical', '?')]),
           TD(no_obj_bool, dispatch=[('loops_minmax', 'fdg')]),
-          TD(O, f='npy_ObjectMin')
+          TD(O, f='npy_ObjectMin'),
+          indexed=flts + ints,
           ),
 'logaddexp':
     Ufunc(2, 1, MinusInfinity,
@@ -594,7 +672,7 @@ defdict = {
           None,
           TD('?', cfunc_alias='logical_and',
                   dispatch=[('loops_logical', '?')]),
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_And'),
           ),
 'bitwise_or':
@@ -602,7 +680,7 @@ defdict = {
           docstrings.get('numpy.core.umath.bitwise_or'),
           None,
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Or'),
           ),
 'bitwise_xor':
@@ -611,7 +689,7 @@ defdict = {
           None,
           TD('?', cfunc_alias='not_equal',
                   dispatch=[('loops_comparison', '?')]),
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Xor'),
           ),
 'invert':
@@ -620,21 +698,21 @@ defdict = {
           None,
           TD('?', cfunc_alias='logical_not',
                   dispatch=[('loops_logical', '?')]),
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Invert'),
           ),
 'left_shift':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.left_shift'),
           None,
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Lshift'),
           ),
 'right_shift':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.right_shift'),
           None,
-          TD(ints, simd=[('avx2', ints)]),
+          TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Rshift'),
           ),
 'heaviside':
@@ -719,18 +797,20 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.cos'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='cos'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='cos'),
           TD(P, f='cos'),
           ),
 'sin':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sin'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='sin'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='sin'),
           TD(P, f='sin'),
           ),
 'tan':
@@ -888,8 +968,9 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.arctan2'),
           None,
+          TD('e', f='atan2', astype={'e': 'f'}),
           TD('fd', dispatch=[('loops_umath_fp', 'fd')]),
-          TD(flts, f='atan2', astype={'e': 'f'}),
+          TD('g', f='atan2', astype={'e': 'f'}),
           TD(P, f='arctan2'),
           ),
 'remainder':
@@ -921,7 +1002,10 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints),
+          ]),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -933,19 +1017,25 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints + 'mM'),
+          ]),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[
+              ('loops_unary_fp_le', inexactvec),
+              ('loops_autovec', bints),
+          ]),
           ),
 'signbit':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.signbit'),
           None,
-          TD(flts, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(flts, out='?', dispatch=[('loops_unary_fp_le', inexactvec)]),
           ),
 'copysign':
     Ufunc(2, 1, None,
@@ -1091,18 +1181,6 @@ def make_arrays(funcdict):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
                 cfunc_fname = f"{tname}_{cfunc_alias}"
-                if t.simd is not None:
-                    for vt in t.simd:
-                        code2list.append(textwrap.dedent("""\
-                        #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (NPY_CPU_HAVE({ISA})) {{
-                            {fname}_functions[{idx}] = {cname}_{isa};
-                        }}
-                        #endif
-                        """).format(
-                            ISA=vt.upper(), isa=vt,
-                            fname=name, cname=cfunc_fname, idx=k
-                        ))
             else:
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
@@ -1214,6 +1292,40 @@ def make_ufuncs(funcdict):
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
+        for c in uf.indexed:
+            # Handle indexed loops by getting the underlying ArrayMethodObject
+            # from the list in f._loops and setting its field appropriately
+            fmt = textwrap.dedent("""
+            {{
+                PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
+                PyObject *info = get_info_no_cast((PyUFuncObject *)f,
+                                                   dtype, {count});
+                if (info == NULL) {{
+                    return -1;
+                }}
+                if (info == Py_None) {{
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "cannot add indexed loop to ufunc "
+                        "{name} with {typenum}");
+                    return -1;
+                }}
+                if (!PyObject_TypeCheck(info, &PyArrayMethod_Type)) {{
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "Not a PyArrayMethodObject in ufunc "
+                        "{name} with {typenum}");
+                }}
+                ((PyArrayMethodObject*)info)->contiguous_indexed_loop =
+                                                                 {funcname};
+                /* info is borrowed, no need to decref*/
+            }}
+            """)
+            mlist.append(fmt.format(
+                typenum=f"NPY_{english_upper(chartoname[c])}",
+                count=uf.nin+uf.nout,
+                name=name,
+                funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
+            ))
+
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))
@@ -1236,8 +1348,14 @@ def make_code(funcdict, filename):
     #include "loops.h"
     #include "matmul.h"
     #include "clip.h"
+    #include "dtypemeta.h"
     #include "_umath_doc_generated.h"
+
     %s
+    /* Returns a borrowed ref of the second value in the matching info tuple */
+    PyObject *
+    get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                     int ndtypes);
 
     static int
     InitOperators(PyObject *dictionary) {

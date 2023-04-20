@@ -18,6 +18,10 @@
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "usertypes.h"
+#include "conversion_utils.h"
+#include "templ_common.h"
+#include "refcount.h"
+#include "dtype_traversal.h"
 
 #include <assert.h>
 
@@ -122,6 +126,50 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     return (PyObject *)self->singleton;
 }
 
+static PyObject *
+string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
+{
+    npy_intp size;
+
+    static char *kwlist[] = {"", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&", kwlist,
+                                     PyArray_IntpFromPyIntConverter, &size)) {
+        return NULL;
+    }
+
+    if (size < 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Strings cannot have a negative size but a size of "
+                     "%"NPY_INTP_FMT" was given", size);
+        return NULL;
+    }
+
+    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
+
+    if (res == NULL) {
+        return NULL;
+    }
+
+    if (self->type_num == NPY_UNICODE) {
+        // unicode strings are 4 bytes per character
+        if (npy_mul_sizes_with_overflow(&size, size, 4)) {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "Strings too large to store inside array.");
+            return NULL;
+        }
+    }
+
+    if (size > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Strings too large to store inside array.");
+        return NULL;
+    }
+
+    res->elsize = (int)size;
+    return (PyObject *)res;
+}
 
 static PyArray_Descr *
 nonparametric_discover_descr_from_pyobject(
@@ -151,7 +199,7 @@ string_discover_descr_from_pyobject(
         }
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
-                    "string to large to store inside array.");
+                    "string too large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
         if (res == NULL) {
@@ -478,6 +526,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return NULL;
 }
 
+
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
@@ -618,7 +667,7 @@ static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     /*
-     * Timedelta/datetime shouldn't actuall promote at all.  That they
+     * Timedelta/datetime shouldn't actually promote at all.  That they
      * currently do means that we need additional hacks in the comparison
      * type resolver.  For comparisons we have to make sure we reject it
      * nicely in order to return an array of True/False values.
@@ -809,6 +858,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
     dt_slots->ensure_canonical = ensure_native_byteorder;
+    dt_slots->get_fill_zero_loop = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
@@ -820,6 +870,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (descr->type_num == NPY_OBJECT) {
         dt_slots->common_dtype = object_common_dtype;
+        dt_slots->get_fill_zero_loop = npy_object_get_fill_zero_loop;
+        dt_slots->get_clear_loop = npy_get_clear_object_strided_loop;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
@@ -841,6 +893,9 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
+            dt_slots->get_fill_zero_loop = npy_void_get_fill_zero_loop;
+            dt_slots->get_clear_loop =
+                    npy_get_clear_void_and_legacy_user_dtype_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
@@ -849,7 +904,12 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     string_discover_descr_from_pyobject);
             dt_slots->common_dtype = string_unicode_common_dtype;
             dt_slots->common_instance = string_unicode_common_instance;
+            ((PyTypeObject*)dtype_class)->tp_new = (newfunc)string_unicode_new;
         }
+    }
+
+    if (PyTypeNum_ISNUMBER(descr->type_num)) {
+        dtype_class->flags |= NPY_DT_NUMERIC;
     }
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
@@ -871,8 +931,18 @@ dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
 }
 
 static PyObject *
+dtypemeta_get_legacy(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_legacy(self));
+}
+
+static PyObject *
 dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
+}
+
+static PyObject *
+dtypemeta_get_is_numeric(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_numeric(self));
 }
 
 /*
@@ -880,7 +950,9 @@ dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
  */
 static PyGetSetDef dtypemeta_getset[] = {
         {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
+        {"_legacy", (getter)dtypemeta_get_legacy, NULL, NULL, NULL},
         {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
+        {"_is_numeric", (getter)dtypemeta_get_is_numeric, NULL, NULL, NULL},
         {NULL, NULL, NULL, NULL, NULL}
 };
 

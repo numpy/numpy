@@ -30,7 +30,7 @@ hypothesis.settings.register_profile(
 hypothesis.settings.register_profile(
     name="np.test() profile",
     deadline=None, print_blob=True, database=None, derandomize=True,
-    suppress_health_check=hypothesis.HealthCheck.all(),
+    suppress_health_check=list(hypothesis.HealthCheck),
 )
 # Note that the default profile is chosen based on the presence 
 # of pytest.ini, but can be overridden by passing the 
@@ -40,6 +40,8 @@ hypothesis.settings.load_profile(
     "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
 )
 
+# The experimentalAPI is used in _umath_tests
+os.environ["NUMPY_EXPERIMENTAL_DTYPE_API"] = "1"
 
 def pytest_configure(config):
     config.addinivalue_line("markers",

@@ -259,7 +259,7 @@ class build_ext (old_build_ext):
                     log.warn('resetting extension %r language from %r to %r.' %
                              (ext.name, l, ext_language))
 
-                ext.language = ext_language
+            ext.language = ext_language
 
             # global language
             all_languages.update(ext_languages)
@@ -407,6 +407,7 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # Needed to compile kiva.agg._agg extension.
                 extra_args.append('/Zm1000')
+                extra_cflags += extra_cxxflags
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources

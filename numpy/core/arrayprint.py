@@ -169,7 +169,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         - 'longfloat' : 128-bit floats
         - 'complexfloat'
         - 'longcomplexfloat' : composed of two 128-bit floats
-        - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+        - 'numpystr' : types `numpy.bytes_` and `numpy.str_`
         - 'object' : `np.object_` arrays
 
         Other keys that can be used to set a group of types at once are:
@@ -475,7 +475,7 @@ def _get_format_function(data, **options):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
-    elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
+    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
         return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
@@ -616,7 +616,7 @@ def array2string(a, max_line_width=None, precision=None,
         - 'complexfloat'
         - 'longcomplexfloat' : composed of two 128-bit floats
         - 'void' : type `numpy.void`
-        - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+        - 'numpystr' : types `numpy.bytes_` and `numpy.str_`
 
         Other keys that can be used to set a group of types at once are:
 
@@ -724,7 +724,7 @@ def array2string(a, max_line_width=None, precision=None,
         # Deprecation 11-9-2017  v1.14
         warnings.warn("'style' argument is deprecated and no longer functional"
                       " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=3)
+                      DeprecationWarning, stacklevel=2)
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)
@@ -1096,7 +1096,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         identify the value may be printed and rounded unbiased.
 
         -- versionadded:: 1.21.0
-        
+
     Returns
     -------
     rep : string
@@ -1181,7 +1181,7 @@ def format_float_positional(x, precision=None, unique=True,
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
-        
+
         -- versionadded:: 1.21.0
 
     Returns
@@ -1339,13 +1339,29 @@ class TimedeltaFormat(_TimelikeFormat):
 
 
 class SubArrayFormat:
-    def __init__(self, format_function):
+    def __init__(self, format_function, **options):
         self.format_function = format_function
+        self.threshold = options['threshold']
+        self.edge_items = options['edgeitems']
 
-    def __call__(self, arr):
-        if arr.ndim <= 1:
-            return "[" + ", ".join(self.format_function(a) for a in arr) + "]"
-        return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
+    def __call__(self, a):
+        self.summary_insert = "..." if a.size > self.threshold else ""
+        return self.format_array(a)
+
+    def format_array(self, a):
+        if np.ndim(a) == 0:
+            return self.format_function(a)
+
+        if self.summary_insert and a.shape[0] > 2*self.edge_items:
+            formatted = (
+                [self.format_array(a_) for a_ in a[:self.edge_items]]
+                + [self.summary_insert]
+                + [self.format_array(a_) for a_ in a[-self.edge_items:]]
+            )
+        else:
+            formatted = [self.format_array(a_) for a_ in a]
+
+        return "[" + ", ".join(formatted) + "]"
 
 
 class StructuredVoidFormat:
@@ -1369,7 +1385,7 @@ class StructuredVoidFormat:
         for field_name in data.dtype.names:
             format_function = _get_format_function(data[field_name], **options)
             if data.dtype[field_name].shape != ():
-                format_function = SubArrayFormat(format_function)
+                format_function = SubArrayFormat(format_function, **options)
             format_functions.append(format_function)
         return cls(format_functions)
 
@@ -1429,6 +1445,10 @@ def dtype_is_implied(dtype):
     if dtype.names is not None:
         return False
 
+    # should care about endianness *unless size is 1* (e.g., int8, bool)
+    if not dtype.isnative:
+        return False
+
     return dtype.type in _typelessdata
 
 
@@ -1453,10 +1473,14 @@ def dtype_short_repr(dtype):
         return "'%s'" % str(dtype)
 
     typename = dtype.name
+    if not dtype.isnative:
+        # deal with cases like dtype('<u2') that are identical to an
+        # established dtype (in this case uint16)
+        # except that they have a different endianness.
+        return "'%s'" % str(dtype)
     # quote typenames which can't be represented as python variable names
     if typename and not (typename[0].isalpha() and typename.isalnum()):
         typename = repr(typename)
-
     return typename
 
 

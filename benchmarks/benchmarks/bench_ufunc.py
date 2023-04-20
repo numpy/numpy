@@ -1,6 +1,9 @@
-from .common import Benchmark, get_squares_
+from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
 
 import numpy as np
+import itertools
+from packaging import version
+import operator
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
@@ -13,16 +16,42 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
-          'negative', 'nextafter', 'not_equal', 'positive', 'power',
-          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
-          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
-          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
+          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
+          'right_shift', 'rint', 'sign', 'signbit', 'sin',
+          'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+          'true_divide', 'trunc']
+arrayfuncdisp = ['real', 'round']
 
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
         print("Missing ufunc %r" % (name,))
+
+
+class ArrayFunctionDispatcher(Benchmark):
+    params = [arrayfuncdisp]
+    param_names = ['func']
+    timeout = 10
+
+    def setup(self, ufuncname):
+        np.seterr(all='ignore')
+        try:
+            self.afdn = getattr(np, ufuncname)
+        except AttributeError:
+            raise NotImplementedError()
+        self.args = []
+        for _, aarg in get_squares_().items():
+            arg = (aarg,) * 1  # no nin
+            try:
+                self.afdn(*arg)
+            except TypeError:
+                continue
+            self.args.append(arg)
+
+    def time_afdn_types(self, ufuncname):
+        [self.afdn(*arg) for arg in self.args]
 
 
 class Broadcast(Benchmark):
@@ -34,6 +63,20 @@ class Broadcast(Benchmark):
         self.d - self.e
 
 
+class At(Benchmark):
+    def setup(self):
+        rng = np.random.default_rng(1)
+        self.vals = rng.random(10_000_000, dtype=np.float64)
+        self.idx = rng.integers(1000, size=10_000_000).astype(np.intp)
+        self.res = np.zeros(1000, dtype=self.vals.dtype)
+
+    def time_sum_at(self):
+        np.add.at(self.res, self.idx, self.vals)
+
+    def time_maximum_at(self):
+        np.maximum.at(self.res, self.idx, self.vals)
+
+
 class UFunc(Benchmark):
     params = [ufuncs]
     param_names = ['ufunc']
@@ -42,23 +85,179 @@ class UFunc(Benchmark):
     def setup(self, ufuncname):
         np.seterr(all='ignore')
         try:
-            self.f = getattr(np, ufuncname)
+            self.ufn = getattr(np, ufuncname)
         except AttributeError:
             raise NotImplementedError()
         self.args = []
-        for t, a in get_squares_().items():
-            arg = (a,) * self.f.nin
+        for _, aarg in get_squares_().items():
+            arg = (aarg,) * self.ufn.nin
             try:
-                self.f(*arg)
+                self.ufn(*arg)
             except TypeError:
                 continue
             self.args.append(arg)
 
     def time_ufunc_types(self, ufuncname):
-        [self.f(*arg) for arg in self.args]
+        [self.ufn(*arg) for arg in self.args]
+
+
+class MethodsV0(Benchmark):
+    """ Benchmark for the methods which do not take any arguments
+    """
+    params = [['__abs__', '__neg__', '__pos__'], TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_()
+        self.xarg = values.get(npdtypes)[0]
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        getattr(operator, methname)(self.xarg)
+
+
+class NDArrayLRShifts(Benchmark):
+    """ Benchmark for the shift methods
+    """
+    params = [['__lshift__', '__rshift__'],
+              ['intp', 'int8', 'int16',
+                'int32', 'int64', 'uint8',
+                'uint16', 'uint32', 'uint64']]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.vals = np.ones(1000,
+                            dtype=getattr(np, npdtypes)) * \
+                            np.random.randint(9)
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        getattr(operator, methname)(*[self.vals, 2])
+
+
+class Methods0D(Benchmark):
+    """Zero dimension array methods
+    """
+    params = [['__bool__', '__complex__', '__invert__',
+               '__float__', '__int__'], TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+        if (npdtypes.startswith('complex') and
+           methname in ['__float__', '__int__']) or \
+           (npdtypes.startswith('int') and methname == '__invert__'):
+            # Skip
+            raise NotImplementedError
+
+    def time_ndarray__0d__(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
+
+class MethodsV1(Benchmark):
+    """ Benchmark for the methods which take an argument
+    """
+    params = [['__and__', '__add__', '__eq__', '__floordiv__', '__ge__',
+               '__gt__', '__le__', '__lt__', '__matmul__',
+               '__mod__', '__mul__', '__ne__', '__or__',
+               '__pow__', '__sub__', '__truediv__', '__xor__'],
+              TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        if (
+            npdtypes.startswith("complex")
+                and methname in ["__floordiv__", "__mod__"]
+        ) or (
+            not npdtypes.startswith("int")
+            and methname in ["__and__", "__or__", "__xor__"]
+        ):
+            raise NotImplementedError  # skip
+        values = get_squares_().get(npdtypes)
+        self.xargs = [values[0], values[1]]
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        getattr(operator, methname)(*self.xargs)
+
+
+class NDArrayGetItem(Benchmark):
+    param_names = ['margs', 'msize']
+    params = [[0, (0, 0), (-1, 0), [0, -1]],
+              ['small', 'big']]
+
+    def setup(self, margs, msize):
+        self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
+
+    def time_methods_getitem(self, margs, msize):
+        if msize == 'small':
+            mdat = self.xs
+        elif msize == 'big':
+            mdat = self.xl
+        getattr(mdat, '__getitem__')(margs)
+
+
+class NDArraySetItem(Benchmark):
+    param_names = ['margs', 'msize']
+    params = [[0, (0, 0), (-1, 0), [0, -1]],
+              ['small', 'big']]
+
+    def setup(self, margs, msize):
+        self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+
+    def time_methods_setitem(self, margs, msize):
+        if msize == 'small':
+            mdat = self.xs
+        elif msize == 'big':
+            mdat = self.xl
+            mdat[margs] = 17
+
+
+class DLPMethods(Benchmark):
+    """ Benchmark for DLPACK helpers
+    """
+    params = [['__dlpack__', '__dlpack_device__'], DLPACK_TYPES]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_()
+        if npdtypes == 'bool':
+            if version.parse(np.__version__) > version.parse("1.25"):
+                self.xarg = values.get('int16')[0].astype('bool')
+            else:
+                raise NotImplementedError("Not supported before v1.25")
+        else:
+            self.xarg = values.get('int16')[0]
+
+    def time_ndarray_dlp(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
+
+class NDArrayAsType(Benchmark):
+    """ Benchmark for type conversion
+    """
+    params = [list(itertools.combinations(TYPES1, 2))]
+    param_names = ['typeconv']
+    timeout = 10
+
+    def setup(self, typeconv):
+        if typeconv[0] == typeconv[1]:
+            raise NotImplementedError(
+                    "Skipping test for converting to the same dtype")
+        self.xarg = get_squares_().get(typeconv[0])
+
+    def time_astype(self, typeconv):
+        self.xarg.astype(typeconv[1])
+
 
 class UFuncSmall(Benchmark):
-    """  Benchmark for a selection of ufuncs on a small arrays and scalars 
+    """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
     Since the arrays and scalars are small, we are benchmarking the overhead 
     of the numpy ufunc functionality

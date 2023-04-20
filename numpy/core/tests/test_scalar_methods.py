@@ -1,7 +1,6 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-import sys
 import fractions
 import platform
 import types
@@ -10,7 +9,7 @@ from typing import Any, Type
 import pytest
 import numpy as np
 
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_equal, assert_raises, IS_MUSL
 
 
 class TestAsIntegerRatio:
@@ -99,6 +98,8 @@ class TestAsIntegerRatio:
             try:
                 nf = np.longdouble(n)
                 df = np.longdouble(d)
+                if not np.isfinite(df):
+                    raise OverflowError
             except (OverflowError, RuntimeWarning):
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
@@ -132,7 +133,6 @@ class TestIsInteger:
             assert not value.is_integer()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [
         np.number,
@@ -184,14 +184,6 @@ class TestClassGetItem:
 
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
-@pytest.mark.parametrize("cls", [np.number, np.complexfloating, np.int64])
-def test_class_getitem_38(cls: Type[np.number]) -> None:
-    match = "Type subscription requires python >= 3.9"
-    with pytest.raises(TypeError, match=match):
-        cls[Any]
 
 
 class TestBitCount:

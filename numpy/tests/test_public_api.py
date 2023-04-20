@@ -34,7 +34,6 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        'Tester': 'numpy.testing._private.nosetester.NoseTester',
         '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
         'add_newdoc': 'numpy.core.function_base.add_newdoc',
@@ -64,7 +63,7 @@ def test_numpy_namespace():
 
 
 @pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
-@pytest.mark.parametrize('name', ['testing', 'Tester'])
+@pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
 
@@ -195,6 +194,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.umath",
     "core.umath_tests",
     "distutils.armccompiler",
+    "distutils.fujitsuccompiler",
     "distutils.ccompiler",
     'distutils.ccompiler_opt',
     "distutils.command",
@@ -248,7 +248,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.numpy_distribution",
     "distutils.pathccompiler",
     "distutils.unixccompiler",
-    "dual",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -289,7 +288,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.mtrand",
     "random.bit_generator",
     "testing.print_coercion_tables",
-    "testing.utils",
 ]]
 
 
@@ -472,6 +470,10 @@ def test_api_importable():
                              "{}".format(module_names))
 
 
+@pytest.mark.xfail(
+    hasattr(np.__config__, "_built_with_meson"),
+    reason = "Meson does not yet support entry points via pyproject.toml",
+)
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG") is not None,
     reason=(

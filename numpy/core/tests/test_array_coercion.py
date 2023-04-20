@@ -1,6 +1,6 @@
 """
 Tests for array coercion, mainly through testing `np.array` results directly.
-Note that other such tests exist e.g. in `test_api.py` and many corner-cases
+Note that other such tests exist, e.g., in `test_api.py` and many corner-cases
 are tested (sometimes indirectly) elsewhere.
 """
 
@@ -20,8 +20,8 @@ from numpy.testing import (
 def arraylikes():
     """
     Generator for functions converting an array into various array-likes.
-    If full is True (default) includes array-likes not capable of handling
-    all dtypes
+    If full is True (default) it includes array-likes not capable of handling
+    all dtypes.
     """
     # base array:
     def ndarray(a):
@@ -40,8 +40,8 @@ def arraylikes():
 
     class _SequenceLike():
         # We are giving a warning that array-like's were also expected to be
-        # sequence-like in `np.array([array_like])`, this can be removed
-        # when the deprecation exired (started NumPy 1.20)
+        # sequence-like in `np.array([array_like])`. This can be removed
+        # when the deprecation expired (started NumPy 1.20).
         def __len__(self):
             raise TypeError
 
@@ -130,7 +130,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
     # Strings and unstructured void:
     yield param(np.bytes_(b"1234"), id="bytes")
-    yield param(np.unicode_("2345"), id="unicode")
+    yield param(np.str_("2345"), id="unicode")
     yield param(np.void(b"4321"), id="unstructured_void")
 
 
@@ -161,8 +161,12 @@ class TestStringDiscovery:
         # A nested array is also discovered correctly
         arr = np.array(obj, dtype="O")
         assert np.array(arr, dtype="S").dtype == expected
+        # Also if we use the dtype class
+        assert np.array(arr, dtype=type(expected)).dtype == expected
         # Check that .astype() behaves identical
         assert arr.astype("S").dtype == expected
+        # The DType class is accepted by `.astype()`
+        assert arr.astype(type(np.dtype("S"))).dtype == expected
 
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
@@ -257,7 +261,7 @@ class TestScalarDiscovery:
     @pytest.mark.parametrize("scalar", scalar_instances())
     def test_scalar_coercion(self, scalar):
         # This tests various scalar coercion paths, mainly for the numerical
-        # types.  It includes some paths not directly related to `np.array`
+        # types. It includes some paths not directly related to `np.array`.
         if isinstance(scalar, np.inexact):
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
@@ -292,7 +296,7 @@ class TestScalarDiscovery:
            * `np.array(scalar, dtype=dtype)`
            * `np.empty((), dtype=dtype)[()] = scalar`
            * `np.array(scalar).astype(dtype)`
-        should behave the same.  The only exceptions are paramteric dtypes
+        should behave the same.  The only exceptions are parametric dtypes
         (mainly datetime/timedelta without unit) and void without fields.
         """
         dtype = cast_to.dtype  # use to parametrize only the target dtype
@@ -384,7 +388,7 @@ class TestScalarDiscovery:
         """
         dtype = np.dtype(dtype)
 
-        # This is a special case using casting logic.  It warns for the NaN
+        # This is a special case using casting logic. It warns for the NaN
         # but allows the cast (giving undefined behaviour).
         with np.errstate(invalid="ignore"):
             coerced = np.array(scalar, dtype=dtype)

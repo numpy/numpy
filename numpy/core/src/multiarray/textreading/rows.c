@@ -318,10 +318,19 @@ read_rows(stream *s,
         }
 
         if (!usecols && (actual_num_fields != current_num_fields)) {
-            PyErr_Format(PyExc_ValueError,
+            if (homogeneous) {
+                PyErr_Format(PyExc_ValueError,
                     "the number of columns changed from %zd to %zd at row %zd; "
                     "use `usecols` to select a subset and avoid this error",
                     actual_num_fields, current_num_fields, row_count+1);
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                    "the dtype passed requires %zd columns but %zd were found "
+                    "at row %zd; "
+                    "use `usecols` to select a subset and avoid this error",
+                    actual_num_fields, current_num_fields, row_count+1);
+            }
             goto error;
         }
 

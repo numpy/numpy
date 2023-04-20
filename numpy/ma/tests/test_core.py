@@ -8,6 +8,7 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import warnings
+import copy
 import operator
 import itertools
 import textwrap
@@ -1335,16 +1336,16 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.sum(x, axis=0), sum(x, axis=0))
         assert_equal(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0))
         assert_equal(np.sum(x, 0), sum(x, 0))
-        assert_equal(np.product(x, axis=0), product(x, axis=0))
-        assert_equal(np.product(x, 0), product(x, 0))
-        assert_equal(np.product(filled(xm, 1), axis=0), product(xm, axis=0))
+        assert_equal(np.prod(x, axis=0), product(x, axis=0))
+        assert_equal(np.prod(x, 0), product(x, 0))
+        assert_equal(np.prod(filled(xm, 1), axis=0), product(xm, axis=0))
         s = (3, 4)
         x.shape = y.shape = xm.shape = ym.shape = s
         if len(s) > 1:
             assert_equal(np.concatenate((x, y), 1), concatenate((xm, ym), 1))
             assert_equal(np.add.reduce(x, 1), add.reduce(x, 1))
             assert_equal(np.sum(x, 1), sum(x, 1))
-            assert_equal(np.product(x, 1), product(x, 1))
+            assert_equal(np.prod(x, 1), product(x, 1))
 
     def test_binops_d2D(self):
         # Test binary operations on 2D data
@@ -4093,6 +4094,46 @@ class TestMaskedArrayMathMethods:
                          mask=np.zeros((10000, 10000)))
         assert_equal(a.mean(), 65535.0)
 
+    def test_diff_with_prepend(self):
+        # GH 22465
+        x = np.array([1, 2, 2, 3, 4, 2, 1, 1])
+
+        a = np.ma.masked_equal(x[3:], value=2)
+        a_prep = np.ma.masked_equal(x[:3], value=2)
+        diff1 = np.ma.diff(a, prepend=a_prep, axis=0)
+
+        b = np.ma.masked_equal(x, value=2)
+        diff2 = np.ma.diff(b, axis=0)
+
+        assert_(np.ma.allequal(diff1, diff2))
+
+    def test_diff_with_append(self):
+        # GH 22465
+        x = np.array([1, 2, 2, 3, 4, 2, 1, 1])
+
+        a = np.ma.masked_equal(x[:3], value=2)
+        a_app = np.ma.masked_equal(x[3:], value=2)
+        diff1 = np.ma.diff(a, append=a_app, axis=0)
+
+        b = np.ma.masked_equal(x, value=2)
+        diff2 = np.ma.diff(b, axis=0)
+
+        assert_(np.ma.allequal(diff1, diff2))
+
+    def test_diff_with_dim_0(self):
+        with pytest.raises(
+            ValueError,
+            match="diff requires input that is at least one dimensional"
+            ):
+            np.ma.diff(np.array(1))
+
+    def test_diff_with_n_0(self):
+        a = np.ma.masked_equal([1, 2, 2, 3, 4, 2, 1, 1], value=2)
+        diff = np.ma.diff(a, n=0, axis=0)
+
+        assert_(np.ma.allequal(a, diff))
+
+
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
     def setup_method(self):
@@ -5530,3 +5571,47 @@ note
 original note"""
 
     assert_equal(np.ma.core.doc_note(method.__doc__, "note"), expected_doc)
+
+
+def test_gh_22556():
+    source = np.ma.array([0, [0, 1, 2]], dtype=object)
+    deepcopy = copy.deepcopy(source)
+    deepcopy[1].append('this should not appear in source')
+    assert len(source[1]) == 3
+
+
+def test_gh_21022():
+    # testing for absence of reported error
+    source = np.ma.masked_array(data=[-1, -1], mask=True, dtype=np.float64)
+    axis = np.array(0)
+    result = np.prod(source, axis=axis, keepdims=False)
+    result = np.ma.masked_array(result,
+                                mask=np.ones(result.shape, dtype=np.bool_))
+    array = np.ma.masked_array(data=-1, mask=True, dtype=np.float64)
+    copy.deepcopy(array)
+    copy.deepcopy(result)
+
+
+def test_deepcopy_2d_obj():
+    source = np.ma.array([[0, "dog"],
+                          [1, 1],
+                          [[1, 2], "cat"]],
+                        mask=[[0, 1],
+                              [0, 0],
+                              [0, 0]],
+                        dtype=object)
+    deepcopy = copy.deepcopy(source)
+    deepcopy[2, 0].extend(['this should not appear in source', 3])
+    assert len(source[2, 0]) == 2
+    assert len(deepcopy[2, 0]) == 4
+    assert_equal(deepcopy._mask, source._mask)
+    deepcopy._mask[0, 0] = 1
+    assert source._mask[0, 0] == 0
+
+
+def test_deepcopy_0d_obj():
+    source = np.ma.array(0, mask=[0], dtype=object)
+    deepcopy = copy.deepcopy(source)
+    deepcopy[...] = 17
+    assert_equal(source, 0)
+    assert_equal(deepcopy, 17)

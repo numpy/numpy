@@ -74,10 +74,6 @@ test
     Run numpy unittests
 show_config
     Show numpy build configuration
-dual
-    Overwrite certain functions with high-performance SciPy tools.
-    Note: `numpy.dual` is deprecated.  Use the functions from NumPy or Scipy
-    directly instead of importing them from `numpy.dual`.
 matlib
     Make everything matrices.
 __version__
@@ -122,6 +118,9 @@ except NameError:
 if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
+    # Allow distributors to run custom init code before importing numpy.core
+    from . import _distributor_init
+
     try:
         from numpy.__config__ import show as show_config
     except ImportError as e:
@@ -136,9 +135,6 @@ else:
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
-
-    # Allow distributors to run custom init code
-    from . import _distributor_init
 
     from . import core
     from .core import *
@@ -158,12 +154,46 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
 
+    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
+    import builtins as _builtins
+
+    _msg = (
+        "module 'numpy' has no attribute '{n}'.\n"
+        "`np.{n}` was a deprecated alias for the builtin `{n}`. "
+        "To avoid this error in existing code, use `{n}` by itself. "
+        "Doing this will not modify any behavior and is safe. {extended_msg}\n"
+        "The aliases was originally deprecated in NumPy 1.20; for more "
+        "details and guidance see the original release note at:\n"
+        "    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    _specific_msg = (
+        "If you specifically wanted the numpy scalar type, use `np.{}` here.")
+
+    _int_extended_msg = (
+        "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
+        "or `np.int32` to specify the precision. If you wish to review "
+        "your current use, check the release note link for "
+        "additional information.")
+
+    _type_info = [
+        ("object", ""),  # The NumPy scalar only exists by name.
+        ("bool", _specific_msg.format("bool_")),
+        ("float", _specific_msg.format("float64")),
+        ("complex", _specific_msg.format("complex128")),
+        ("str", _specific_msg.format("str_")),
+        ("int", _int_extended_msg.format("int"))]
+
+    __former_attrs__ = {
+         n: _msg.format(n=n, extended_msg=extended_msg)
+         for n, extended_msg in _type_info
+     }
+
     # Future warning introduced in NumPy 1.24.0, 2022-11-17
     _msg = (
         "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
 
     # Some of these are awkward (since `np.str` may be preferable in the long
-    # term), but overall the names ending in 0 seem undesireable
+    # term), but overall the names ending in 0 seem undesirable
     _type_info = [
         ("bool8", bool_, "np.bool_"),
         ("int0", intp, "np.intp"),
@@ -185,9 +215,16 @@ else:
     __deprecated_attrs__.update({
         n: (alias, _msg.format(n=n, an=an)) for n, alias, an in _type_info})
 
-    del _msg, _type_info
+    import math
 
-    from .core import round, abs, max, min
+    __deprecated_attrs__['math'] = (math,
+        "`np.math` is a deprecated alias for the standard library `math` "
+        "module (Deprecated Numpy 1.25). Replace usages of `np.math` with "
+        "`math`")
+
+    del math, _msg, _type_info
+
+    from .core import abs
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
@@ -242,6 +279,7 @@ else:
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
         import warnings
+        import math
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -268,27 +306,23 @@ else:
             # the AttributeError
             warnings.warn(
                 f"In the future `np.{attr}` will be defined as the "
-                "corresponding NumPy scalar.  (This may have returned Python "
-                "scalars in past versions.", FutureWarning, stacklevel=2)
+                "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
-        # Importing Tester requires importing all of UnitTest which is not a
-        # cheap import Since it is mainly used in test suits, we lazy import it
-        # here to save on the order of 10 ms of import time for most users
-        #
-        # The previous way Tester was imported also had a side effect of adding
-        # the full `numpy.testing` namespace
+        if attr in __former_attrs__:
+            raise AttributeError(__former_attrs__[attr])
+
         if attr == 'testing':
             import numpy.testing as testing
             return testing
         elif attr == 'Tester':
-            from .testing import Tester
-            return Tester
+            "Removed in NumPy 1.25.0"
+            raise RuntimeError("Tester was removed in NumPy 1.25.")
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols = globals().keys() | {'testing'}
         public_symbols -= {
             "core", "matrixlib",
             # These were moved in 1.25 and may be deprecated eventually:
@@ -385,13 +419,17 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+    del use_hugepage
 
     # Give a warning if NumPy is reloaded or imported on a sub-interpreter
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+    # default to "weak" promotion for "NumPy 2".
+    core._set_promotion_state(
+        os.environ.get("NPY_PROMOTION_STATE",
+                       "weak" if _using_numpy2_behavior() else "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

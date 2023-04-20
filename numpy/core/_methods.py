@@ -87,79 +87,16 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
                         keepdims)
     return items
 
-# Numpy 1.17.0, 2019-02-24
-# Various clip behavior deprecations, marked with _clip_dep as a prefix.
-
-def _clip_dep_is_scalar_nan(a):
-    # guarded to protect circular imports
-    from numpy.core.fromnumeric import ndim
-    if ndim(a) != 0:
-        return False
-    try:
-        return um.isnan(a)
-    except TypeError:
-        return False
-
-def _clip_dep_is_byte_swapped(a):
-    if isinstance(a, mu.ndarray):
-        return not a.dtype.isnative
-    return False
-
-def _clip_dep_invoke_with_casting(ufunc, *args, out=None, casting=None, **kwargs):
-    # normal path
-    if casting is not None:
-        return ufunc(*args, out=out, casting=casting, **kwargs)
-
-    # try to deal with broken casting rules
-    try:
-        return ufunc(*args, out=out, **kwargs)
-    except _exceptions._UFuncOutputCastingError as e:
-        # Numpy 1.17.0, 2019-02-24
-        warnings.warn(
-            "Converting the output of clip from {!r} to {!r} is deprecated. "
-            "Pass `casting=\"unsafe\"` explicitly to silence this warning, or "
-            "correct the type of the variables.".format(e.from_, e.to),
-            DeprecationWarning,
-            stacklevel=2
-        )
-        return ufunc(*args, out=out, casting="unsafe", **kwargs)
-
-def _clip(a, min=None, max=None, out=None, *, casting=None, **kwargs):
+def _clip(a, min=None, max=None, out=None, **kwargs):
     if min is None and max is None:
         raise ValueError("One of max or min must be given")
 
-    # Numpy 1.17.0, 2019-02-24
-    # This deprecation probably incurs a substantial slowdown for small arrays,
-    # it will be good to get rid of it.
-    if not _clip_dep_is_byte_swapped(a) and not _clip_dep_is_byte_swapped(out):
-        using_deprecated_nan = False
-        if _clip_dep_is_scalar_nan(min):
-            min = -float('inf')
-            using_deprecated_nan = True
-        if _clip_dep_is_scalar_nan(max):
-            max = float('inf')
-            using_deprecated_nan = True
-        if using_deprecated_nan:
-            warnings.warn(
-                "Passing `np.nan` to mean no clipping in np.clip has always "
-                "been unreliable, and is now deprecated. "
-                "In future, this will always return nan, like it already does "
-                "when min or max are arrays that contain nan. "
-                "To skip a bound, pass either None or an np.inf of an "
-                "appropriate sign.",
-                DeprecationWarning,
-                stacklevel=2
-            )
-
     if min is None:
-        return _clip_dep_invoke_with_casting(
-            um.minimum, a, max, out=out, casting=casting, **kwargs)
+        return um.minimum(a, max, out=out, **kwargs)
     elif max is None:
-        return _clip_dep_invoke_with_casting(
-            um.maximum, a, min, out=out, casting=casting, **kwargs)
+        return um.maximum(a, min, out=out, **kwargs)
     else:
-        return _clip_dep_invoke_with_casting(
-            um.clip, a, min, max, out=out, casting=casting, **kwargs)
+        return um.clip(a, min, max, out=out, **kwargs)
 
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     arr = asanyarray(a)

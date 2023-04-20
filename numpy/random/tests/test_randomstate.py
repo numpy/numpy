@@ -812,6 +812,10 @@ class TestRandomDist:
         alpha = np.array([5.4e-01, -1.0e-16])
         assert_raises(ValueError, random.dirichlet, alpha)
 
+    def test_dirichlet_zero_alpha(self):
+        y = random.default_rng().dirichlet([5, 9, 0, 8])
+        assert_equal(y[2], 0)
+
     def test_dirichlet_alpha_non_contiguous(self):
         a = np.array([51.72840233779265162, -1.0, 39.74494232180943953])
         alpha = a[::2]

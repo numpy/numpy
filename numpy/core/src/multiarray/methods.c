@@ -21,12 +21,14 @@
 #include "ctors.h"
 #include "calculation.h"
 #include "convert_datatype.h"
+#include "descriptor.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
 #include "npy_dlpack.h"
+#include "multiarraymodule.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -851,29 +853,35 @@ static PyObject *
 array_astype(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyArray_Descr *dtype = NULL;
     /*
      * TODO: UNSAFE default for compatibility, I think
      *       switching to SAME_KIND by default would be good.
      */
+    npy_dtype_info dt_info;
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     _PyArray_CopyMode forcecopy = 1;
     int subok = 1;
+
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
-            "dtype", &PyArray_DescrConverter, &dtype,
+            "dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|copy", &PyArray_CopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
-        Py_XDECREF(dtype);
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
         return NULL;
     }
 
     /* If it is not a concrete dtype instance find the best one for the array */
-    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(self, (PyObject *)dtype));
+    PyArray_Descr *dtype;
+
+    dtype = PyArray_AdaptDescriptorToArray(self, dt_info.dtype, dt_info.descr);
+    Py_XDECREF(dt_info.descr);
+    Py_DECREF(dt_info.dtype);
     if (dtype == NULL) {
         return NULL;
     }
@@ -1095,7 +1103,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int nin, nout;
     PyObject *out_kwd_obj;
     PyObject *fast;
-    PyObject **in_objs, **out_objs;
+    PyObject **in_objs, **out_objs, *where_obj;
 
     /* check inputs */
     nin = PyTuple_Size(args);
@@ -1126,6 +1134,17 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         }
     }
     Py_DECREF(out_kwd_obj);
+    /* check where if it exists */
+    where_obj = PyDict_GetItemWithError(kwds, npy_ma_str_where);
+    if (where_obj == NULL) {
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+    } else {
+        if (PyUFunc_HasOverride(where_obj)){
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -2830,25 +2849,15 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 static PyObject *
 array_class_getitem(PyObject *cls, PyObject *args)
 {
-    PyObject *generic_alias;
+    const Py_ssize_t args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
 
-#ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
-
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
     if ((args_len > 2) || (args_len == 0)) {
         return PyErr_Format(PyExc_TypeError,
                             "Too %s arguments for %s",
                             args_len > 2 ? "many" : "few",
                             ((PyTypeObject *)cls)->tp_name);
     }
-    generic_alias = Py_GenericAlias(cls, args);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-    generic_alias = NULL;
-#endif
-    return generic_alias;
+    return Py_GenericAlias(cls, args);
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {

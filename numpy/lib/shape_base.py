@@ -643,10 +643,6 @@ def column_stack(tup):
            [3, 4]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
-
     arrays = []
     for v in tup:
         arr = asanyarray(v)
@@ -713,10 +709,6 @@ def dstack(tup):
            [[3, 4]]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
-
     arrs = atleast_3d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]

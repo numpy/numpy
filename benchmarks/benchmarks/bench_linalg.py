@@ -190,3 +190,27 @@ class Einsum(Benchmark):
     # sum_of_products_contig_outstride0_one：non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
+
+
+class LinAlgTransposeVdot(Benchmark):
+    # Smaller for speed
+    # , (128, 128), (256, 256), (512, 512),
+    # (1024, 1024)
+    params = [[(16, 16), (32, 32),
+               (64, 64)], TYPES1]
+    param_names = ['shape', 'npdtypes']
+
+    def setup(self, shape, npdtypes):
+        self.xarg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.xarg = self.xarg.astype(npdtypes)
+        self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.x2arg = self.x2arg.astype(npdtypes)
+        if npdtypes.startswith('complex'):
+            self.xarg += self.xarg.T*1j
+            self.x2arg += self.x2arg.T*1j
+
+    def time_transpose(self, shape, npdtypes):
+        np.transpose(self.xarg)
+
+    def time_vdot(self, shape, npdtypes):
+        np.vdot(self.xarg, self.x2arg)

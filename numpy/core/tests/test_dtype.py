@@ -195,6 +195,34 @@ class TestBuiltin:
         # This is an safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
 
+    @pytest.mark.parametrize(
+        ["type_char", "char_size", "scalar_type"],
+        [["U", 4, np.str_],
+         ["S", 1, np.bytes_]])
+    def test_create_string_dtypes_directly(
+            self, type_char, char_size, scalar_type):
+        dtype_class = type(np.dtype(type_char))
+
+        dtype = dtype_class(8)
+        assert dtype.type is scalar_type
+        assert dtype.itemsize == 8*char_size
+
+    def test_create_invalid_string_errors(self):
+        one_too_big = np.iinfo(np.intc).max + 1
+        with pytest.raises(TypeError):
+            type(np.dtype("U"))(one_too_big // 4)
+
+        with pytest.raises(TypeError):
+            # Code coverage for very large numbers:
+            type(np.dtype("U"))(np.iinfo(np.intp).max // 4 + 1)
+
+        if one_too_big < sys.maxsize:
+            with pytest.raises(TypeError):
+                type(np.dtype("S"))(one_too_big)
+
+        with pytest.raises(ValueError):
+            type(np.dtype("U"))(-1)
+
 
 class TestRecord:
     def test_equivalent_record(self):
@@ -522,6 +550,14 @@ class TestRecord:
 
         assert_equal(np.zeros((1, 2), dtype=[]) == a,
                      np.ones((1, 2), dtype=bool))
+
+    def test_nonstructured_with_object(self):
+        # See gh-23277, the dtype here thinks it contain objects, if the
+        # assert about that fails, the test becomes meaningless (which is OK)
+        arr = np.recarray((0,), dtype="O") 
+        assert arr.dtype.names is None  # no fields
+        assert arr.dtype.hasobject  # but claims to contain objects
+        del arr  # the deletion failed previously.
 
 
 class TestSubarray:
@@ -1551,6 +1587,18 @@ class TestDTypeClasses:
         assert type(np.dtype).__module__ == "numpy"
         assert np.dtype._abstract
 
+    def test_is_numeric(self):
+        all_codes = set(np.typecodes['All'])
+        numeric_codes = set(np.typecodes['AllInteger'] +
+                            np.typecodes['AllFloat'] + '?')
+        non_numeric_codes = all_codes - numeric_codes
+
+        for code in numeric_codes:
+            assert type(np.dtype(code))._is_numeric
+
+        for code in non_numeric_codes:
+            assert not type(np.dtype(code))._is_numeric
+
 
 class TestFromCTypes:
 
@@ -1785,7 +1833,6 @@ class TestUserDType:
             create_custom_field_dtype(blueprint, mytype, 2)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
 class TestClassGetItem:
     def test_dtype(self) -> None:
         alias = np.dtype[Any]
@@ -1818,10 +1865,3 @@ def test_result_type_integers_and_unitless_timedelta64():
     td = np.timedelta64(4)
     result = np.result_type(0, td)
     assert_dtype_equal(result, td.dtype)
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
-def test_class_getitem_38() -> None:
-    match = "Type subscription requires python >= 3.9"
-    with pytest.raises(TypeError, match=match):
-        np.dtype[Any]

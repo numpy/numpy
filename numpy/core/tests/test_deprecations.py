@@ -310,12 +310,6 @@ class TestGeneratorSum(_DeprecationTestCase):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
 
 
-class TestPositiveOnNonNumerical(_DeprecationTestCase):
-    # 2018-06-28, 1.16.0
-    def test_positive_on_non_number(self):
-        self.assert_deprecated(operator.pos, args=(np.array('foo'),))
-
-
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
@@ -685,218 +679,6 @@ class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
         ctor = np.core.multiarray.scalar
         self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))
 
-try:
-    with warnings.catch_warnings():
-        warnings.simplefilter("always")
-        import nose  # noqa: F401
-except ImportError:
-    HAVE_NOSE = False
-else:
-    HAVE_NOSE = True
-
-
-@pytest.mark.skipif(not HAVE_NOSE, reason="Needs nose")
-class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
-    class DidntSkipException(Exception):
-        pass
-
-    def test_slow(self):
-        def _test_slow():
-            @np.testing.dec.slow
-            def slow_func(x, y, z):
-                pass
-
-            assert_(slow_func.slow)
-        self.assert_deprecated(_test_slow)
-
-    def test_setastest(self):
-        def _test_setastest():
-            @np.testing.dec.setastest()
-            def f_default(a):
-                pass
-
-            @np.testing.dec.setastest(True)
-            def f_istest(a):
-                pass
-
-            @np.testing.dec.setastest(False)
-            def f_isnottest(a):
-                pass
-
-            assert_(f_default.__test__)
-            assert_(f_istest.__test__)
-            assert_(not f_isnottest.__test__)
-        self.assert_deprecated(_test_setastest, num=3)
-
-    def test_skip_functions_hardcoded(self):
-        def _test_skip_functions_hardcoded():
-            @np.testing.dec.skipif(True)
-            def f1(x):
-                raise self.DidntSkipException
-
-            try:
-                f1('a')
-            except self.DidntSkipException:
-                raise Exception('Failed to skip')
-            except SkipTest().__class__:
-                pass
-
-            @np.testing.dec.skipif(False)
-            def f2(x):
-                raise self.DidntSkipException
-
-            try:
-                f2('a')
-            except self.DidntSkipException:
-                pass
-            except SkipTest().__class__:
-                raise Exception('Skipped when not expected to')
-        self.assert_deprecated(_test_skip_functions_hardcoded, num=2)
-
-    def test_skip_functions_callable(self):
-        def _test_skip_functions_callable():
-            def skip_tester():
-                return skip_flag == 'skip me!'
-
-            @np.testing.dec.skipif(skip_tester)
-            def f1(x):
-                raise self.DidntSkipException
-
-            try:
-                skip_flag = 'skip me!'
-                f1('a')
-            except self.DidntSkipException:
-                raise Exception('Failed to skip')
-            except SkipTest().__class__:
-                pass
-
-            @np.testing.dec.skipif(skip_tester)
-            def f2(x):
-                raise self.DidntSkipException
-
-            try:
-                skip_flag = 'five is right out!'
-                f2('a')
-            except self.DidntSkipException:
-                pass
-            except SkipTest().__class__:
-                raise Exception('Skipped when not expected to')
-        self.assert_deprecated(_test_skip_functions_callable, num=2)
-
-    def test_skip_generators_hardcoded(self):
-        def _test_skip_generators_hardcoded():
-            @np.testing.dec.knownfailureif(True, "This test is known to fail")
-            def g1(x):
-                yield from range(x)
-
-            try:
-                for j in g1(10):
-                    pass
-            except KnownFailureException().__class__:
-                pass
-            else:
-                raise Exception('Failed to mark as known failure')
-
-            @np.testing.dec.knownfailureif(False, "This test is NOT known to fail")
-            def g2(x):
-                yield from range(x)
-                raise self.DidntSkipException('FAIL')
-
-            try:
-                for j in g2(10):
-                    pass
-            except KnownFailureException().__class__:
-                raise Exception('Marked incorrectly as known failure')
-            except self.DidntSkipException:
-                pass
-        self.assert_deprecated(_test_skip_generators_hardcoded, num=2)
-
-    def test_skip_generators_callable(self):
-        def _test_skip_generators_callable():
-            def skip_tester():
-                return skip_flag == 'skip me!'
-
-            @np.testing.dec.knownfailureif(skip_tester, "This test is known to fail")
-            def g1(x):
-                yield from range(x)
-
-            try:
-                skip_flag = 'skip me!'
-                for j in g1(10):
-                    pass
-            except KnownFailureException().__class__:
-                pass
-            else:
-                raise Exception('Failed to mark as known failure')
-
-            @np.testing.dec.knownfailureif(skip_tester, "This test is NOT known to fail")
-            def g2(x):
-                yield from range(x)
-                raise self.DidntSkipException('FAIL')
-
-            try:
-                skip_flag = 'do not skip'
-                for j in g2(10):
-                    pass
-            except KnownFailureException().__class__:
-                raise Exception('Marked incorrectly as known failure')
-            except self.DidntSkipException:
-                pass
-        self.assert_deprecated(_test_skip_generators_callable, num=2)
-
-    def test_deprecated(self):
-        def _test_deprecated():
-            @np.testing.dec.deprecated(True)
-            def non_deprecated_func():
-                pass
-
-            @np.testing.dec.deprecated()
-            def deprecated_func():
-                import warnings
-                warnings.warn("TEST: deprecated func", DeprecationWarning, stacklevel=1)
-
-            @np.testing.dec.deprecated()
-            def deprecated_func2():
-                import warnings
-                warnings.warn("AHHHH", stacklevel=1)
-                raise ValueError
-
-            @np.testing.dec.deprecated()
-            def deprecated_func3():
-                import warnings
-                warnings.warn("AHHHH", stacklevel=1)
-
-            # marked as deprecated, but does not raise DeprecationWarning
-            assert_raises(AssertionError, non_deprecated_func)
-            # should be silent
-            deprecated_func()
-            with warnings.catch_warnings(record=True):
-                warnings.simplefilter("always")  # do not propagate unrelated warnings
-                # fails if deprecated decorator just disables test. See #1453.
-                assert_raises(ValueError, deprecated_func2)
-                # warning is not a DeprecationWarning
-                assert_raises(AssertionError, deprecated_func3)
-        self.assert_deprecated(_test_deprecated, num=4)
-
-    def test_parametrize(self):
-        def _test_parametrize():
-            # dec.parametrize assumes that it is being run by nose. Because
-            # we are running under pytest, we need to explicitly check the
-            # results.
-            @np.testing.dec.parametrize('base, power, expected',
-                    [(1, 1, 1),
-                    (2, 1, 2),
-                    (2, 2, 4)])
-            def check_parametrize(base, power, expected):
-                assert_(base**power == expected)
-
-            count = 0
-            for test in check_parametrize():
-                test[0](*test[1:])
-                count += 1
-            assert_(count == 3)
-        self.assert_deprecated(_test_parametrize)
-
 
 class TestSingleElementSignature(_DeprecationTestCase):
     # Deprecated 2021-04-01, NumPy 1.21
@@ -1111,3 +893,53 @@ def test_future_scalar_attributes(name):
     np.dtype(name)
     name in np.sctypeDict
 
+
+# Ignore the above future attribute warning for this test.
+@pytest.mark.filterwarnings("ignore:In the future:FutureWarning")
+class TestRemovedGlobals:
+    # Removed 2023-01-12, NumPy 1.24.0
+    # Not a deprecation, but the large error was added to aid those who missed
+    # the previous deprecation, and should be removed similarly to one
+    # (or faster).
+    @pytest.mark.parametrize("name",
+            ["object", "bool", "float", "complex", "str", "int"])
+    def test_attributeerror_includes_info(self, name):
+        msg = f".*\n`np.{name}` was a deprecated alias for the builtin"
+        with pytest.raises(AttributeError, match=msg):
+            getattr(np, name)
+
+
+class TestDeprecatedFinfo(_DeprecationTestCase):
+    # Deprecated in NumPy 1.25, 2023-01-16
+    def test_deprecated_none(self):
+        self.assert_deprecated(np.finfo, args=(None,))
+
+class TestFromnumeric(_DeprecationTestCase):
+    # 2023-02-28, 1.25.0
+    def test_round_(self):
+        self.assert_deprecated(lambda: np.round_(np.array([1.5, 2.5, 3.5])))
+
+    # 2023-03-02, 1.25.0
+    def test_cumproduct(self):
+        self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
+
+    # 2023-03-02, 1.25.0
+    def test_product(self):
+        self.assert_deprecated(lambda: np.product(np.array([1, 2, 3])))
+
+    # 2023-03-02, 1.25.0
+    def test_sometrue(self):
+        self.assert_deprecated(lambda: np.sometrue(np.array([True, False])))
+
+    # 2023-03-02, 1.25.0
+    def test_alltrue(self):
+        self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
+
+
+class TestMathAlias(_DeprecationTestCase):
+    # Deprecated in Numpy 1.25, 2023-04-06
+    def test_deprecated_np_math(self):
+        self.assert_deprecated(lambda: np.math)
+
+    def test_deprecated_np_lib_math(self):
+        self.assert_deprecated(lambda: np.lib.math)

@@ -24,7 +24,7 @@ from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from numpy.core.multiarray import (
-    _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
+    _place, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -1311,6 +1311,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
+    elif np._using_numpy2_behavior():
+        return tuple(outvals)
     else:
         return outvals
 
@@ -1949,11 +1951,7 @@ def place(arr, mask, vals):
            [44, 55, 44]])
 
     """
-    if not isinstance(arr, np.ndarray):
-        raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(arr).__name__))
-
-    return _insert(arr, mask, vals)
+    return _place(arr, mask, vals)
 
 
 def disp(mesg, device=None, linefeed=True):
@@ -2119,10 +2117,10 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
 @set_module('numpy')
 class vectorize:
     """
-    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
-              signature=None)
+    vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
+    cache=False, signature=None)
 
-    Generalized function class.
+    Returns an object that acts like pyfunc, but takes arrays as input.
 
     Define a vectorized function which takes a nested sequence of objects or
     numpy arrays as inputs and returns a single numpy array or a tuple of numpy
@@ -2136,8 +2134,9 @@ class vectorize:
 
     Parameters
     ----------
-    pyfunc : callable
+    pyfunc : callable, optional
         A python function or method.
+        Can be omitted to produce a decorator with keyword arguments.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -2169,8 +2168,9 @@ class vectorize:
 
     Returns
     -------
-    vectorized : callable
-        Vectorized function.
+    out : callable
+        A vectorized function if ``pyfunc`` was provided,
+        a decorator otherwise.
 
     See Also
     --------
@@ -2267,18 +2267,44 @@ class vectorize:
            [0., 0., 1., 2., 1., 0.],
            [0., 0., 0., 1., 2., 1.]])
 
+    Decorator syntax is supported.  The decorator can be called as
+    a function to provide keyword arguments.
+    >>>@np.vectorize
+    ...def identity(x):
+    ...    return x
+    ...
+    >>>identity([0, 1, 2])
+    array([0, 1, 2])
+    >>>@np.vectorize(otypes=[float])
+    ...def as_float(x):
+    ...    return x
+    ...
+    >>>as_float([0, 1, 2])
+    array([0., 1., 2.])
     """
-    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
-                 cache=False, signature=None):
+    def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
+                 excluded=None, cache=False, signature=None):
+
+        if (pyfunc != np._NoValue) and (not callable(pyfunc)):
+            #Splitting the error message to keep
+            #the length below 79 characters.
+            part1 = "When used as a decorator, "
+            part2 = "only accepts keyword arguments."
+            raise TypeError(part1 + part2)
+
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
-        self._ufunc = {}    # Caching to improve default performance
+        if pyfunc != np._NoValue and hasattr(pyfunc, '__name__'):
+            self.__name__ = pyfunc.__name__
 
-        if doc is None:
+        self._ufunc = {}    # Caching to improve default performance
+        self._doc = None
+        self.__doc__ = doc
+        if doc is None and hasattr(pyfunc, '__doc__'):
             self.__doc__ = pyfunc.__doc__
         else:
-            self.__doc__ = doc
+            self._doc = doc
 
         if isinstance(otypes, str):
             for char in otypes:
@@ -2300,7 +2326,15 @@ class vectorize:
         else:
             self._in_and_out_core_dims = None
 
-    def __call__(self, *args, **kwargs):
+    def _init_stage_2(self, pyfunc, *args, **kwargs):
+        self.__name__ = pyfunc.__name__
+        self.pyfunc = pyfunc
+        if self._doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = self._doc
+
+    def _call_as_normal(self, *args, **kwargs):
         """
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
@@ -2329,6 +2363,13 @@ class vectorize:
             vargs.extend([kwargs[_n] for _n in names])
 
         return self._vectorize_call(func=func, args=vargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.pyfunc is np._NoValue:
+            self._init_stage_2(*args, **kwargs)
+            return self
+
+        return self._call_as_normal(*args, **kwargs)
 
     def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
@@ -2695,7 +2736,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice",
-                      RuntimeWarning, stacklevel=3)
+                      RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2844,7 +2885,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=3)
+                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -3684,7 +3725,7 @@ def msort(a):
     warnings.warn(
         "msort is deprecated, use np.sort(a, axis=0) instead",
         DeprecationWarning,
-        stacklevel=3,
+        stacklevel=2,
     )
     b = array(a, subok=True, copy=True)
     b.sort(0)
@@ -4912,6 +4953,24 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
+# __array_function__ has no __code__ or other attributes normal Python funcs we
+# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
+# into a new Python function which requires `__code__` and a few other
+# attributes. So we create a dummy clone and copy over its attributes allowing
+# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
+assert not hasattr(trapz, "__code__")
+
+def _fake_trapz(y, x=None, dx=1.0, axis=-1):
+    return trapz(y, x=x, dx=dx, axis=axis)
+
+
+trapz.__code__ = _fake_trapz.__code__
+trapz.__globals__ = _fake_trapz.__globals__
+trapz.__defaults__ = _fake_trapz.__defaults__
+trapz.__closure__ = _fake_trapz.__closure__
+trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+
+
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
     return xi
 
@@ -4920,7 +4979,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return coordinate matrices from coordinate vectors.
+    Return a list of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -4961,7 +5020,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : ndarray
+    X1, X2,..., XN : list of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
@@ -5398,7 +5457,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=3)
+                "integer", FutureWarning, stacklevel=2)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:

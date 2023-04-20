@@ -205,7 +205,7 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 #define npyv_cmple_u64(A, B) npyv_cmpge_u64(B, A)
 #define npyv_cmple_s64(A, B) npyv_cmpge_s64(B, A)
 
-// precision comparison (orderd)
+// precision comparison (ordered)
 #define npyv_cmpeq_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_EQ_OQ))
 #define npyv_cmpeq_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_EQ_OQ))
 #define npyv_cmpneq_f32(A, B) _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_NEQ_UQ))

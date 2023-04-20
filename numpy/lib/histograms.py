@@ -981,7 +981,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         if M != D:
             raise ValueError(
                 'The dimension of bins must be equal to the dimension of the '
-                ' sample x.')
+                'sample x.')
     except TypeError:
         # bins is an integer
         bins = D*[bins]

@@ -6,6 +6,7 @@ Utility functions for
 - determining paths to tests
 
 """
+import glob
 import os
 import sys
 import subprocess
@@ -29,6 +30,10 @@ from importlib import import_module
 
 _module_dir = None
 _module_num = 5403
+
+if sys.platform == "cygwin":
+    NUMPY_INSTALL_ROOT = Path(__file__).parent.parent.parent
+    _module_list = list(NUMPY_INSTALL_ROOT.glob("**/*.dll"))
 
 
 def _cleanup():
@@ -146,6 +151,21 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # Partial cleanup
         for fn in dst_sources:
             os.unlink(fn)
+
+    # Rebase (Cygwin-only)
+    if sys.platform == "cygwin":
+        # If someone starts deleting modules after import, this will
+        # need to change to record how big each module is, rather than
+        # relying on rebase being able to find that from the files.
+        _module_list.extend(
+            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+        )
+        subprocess.check_call(
+            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
+            + _module_list
+        )
+
+
 
     # Import
     return import_module(module_name)

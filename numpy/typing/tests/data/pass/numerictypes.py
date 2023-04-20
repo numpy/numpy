@@ -8,7 +8,7 @@ np.issctype("S8")
 
 np.obj2sctype(list)
 np.obj2sctype(list, default=None)
-np.obj2sctype(list, default=np.string_)
+np.obj2sctype(list, default=np.bytes_)
 
 np.issubclass_(np.int32, int)
 np.issubclass_(np.float64, float)
@@ -17,7 +17,7 @@ np.issubclass_(np.float64, (int, float))
 np.issubsctype("int64", int)
 np.issubsctype(np.array([1]), np.array([1]))
 
-np.issubdtype("S1", np.string_)
+np.issubdtype("S1", np.bytes_)
 np.issubdtype(np.float64, np.float32)
 
 np.sctype2char("S1")

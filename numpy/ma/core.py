@@ -2857,7 +2857,7 @@ class MaskedArray(ndarray):
                     mask = np.array(
                         [getmaskarray(np.asanyarray(m, dtype=_data.dtype))
                          for m in data], dtype=mdtype)
-                except ValueError:
+                except (ValueError, TypeError):
                     # If data is nested
                     mask = nomask
                 # Force shrinking of the mask if needed (and possible)
@@ -2870,7 +2870,13 @@ class MaskedArray(ndarray):
                     _data._mask = _data._mask.copy()
                     # Reset the shape of the original mask
                     if getmask(data) is not nomask:
-                        data._mask.shape = data.shape
+                        # gh-21022 encounters an issue here
+                        # because data._mask.shape is not writeable, but
+                        # the op was also pointless in that case, because
+                        # the shapes were the same, so we can at least
+                        # avoid that path
+                        if data._mask.shape != data.shape:
+                            data._mask.shape = data.shape
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -6300,6 +6306,12 @@ class MaskedArray(ndarray):
         memo[id(self)] = copied
         for (k, v) in self.__dict__.items():
             copied.__dict__[k] = deepcopy(v, memo)
+        # as clearly documented for np.copy(), you need to use
+        # deepcopy() directly for arrays of object type that may
+        # contain compound types--you cannot depend on normal
+        # copy semantics to do the right thing here
+        if self.dtype.hasobject:
+            copied._data[...] = deepcopy(copied._data)
         return copied
 
 
@@ -6996,6 +7008,21 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
     See Also
     --------
     MaskedArray.sort : equivalent method
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [11.2, -3.973, 0.801, -1.41]
+    >>> mask = [0, 0, 0, 1]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(data=[11.2, -3.973, 0.801, --],
+                 mask=[False, False, False,  True],
+           fill_value=1e+20)
+    >>> ma.sort(masked_x)
+    masked_array(data=[-3.973, 0.801, 11.2, --],
+                 mask=[False, False, False,  True],
+           fill_value=1e+20)
     """
     a = np.array(a, copy=True, subok=True)
     if axis is None:
@@ -7020,6 +7047,29 @@ def compressed(x):
     See Also
     --------
     ma.MaskedArray.compressed : Equivalent method.
+
+    Examples
+    --------
+    
+    Create an array with negative values masked:
+
+    >>> import numpy as np
+    >>> x = np.array([[1, -1, 0], [2, -1, 3], [7, 4, -1]])
+    >>> masked_x = np.ma.masked_array(x, mask=x < 0)
+    >>> masked_x
+    masked_array(
+      data=[[1, --, 0],
+            [2, --, 3],
+            [7, 4, --]],
+      mask=[[False,  True, False],
+            [False,  True, False],
+            [False, False,  True]],
+      fill_value=999999)
+
+    Compress the masked array into a 1-D array of non-masked values:
+
+    >>> np.ma.compressed(masked_x)
+    array([1, 0, 2, 3, 7, 4])
 
     """
     return asanyarray(x).compressed()
@@ -7096,6 +7146,38 @@ def diag(v, k=0):
     --------
     numpy.diag : Equivalent function for ndarrays.
 
+    Examples
+    --------
+
+    Create an array with negative values masked:
+
+    >>> import numpy as np
+    >>> x = np.array([[11.2, -3.973, 18], [0.801, -1.41, 12], [7, 33, -12]])
+    >>> masked_x = np.ma.masked_array(x, mask=x < 0)
+    >>> masked_x
+    masked_array(
+      data=[[11.2, --, 18.0],
+            [0.801, --, 12.0],
+            [7.0, 33.0, --]],
+      mask=[[False,  True, False],
+            [False,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+
+    Isolate the main diagonal from the masked array:
+
+    >>> np.ma.diag(masked_x)
+    masked_array(data=[11.2, --, --],
+                 mask=[False,  True,  True],
+           fill_value=1e+20)
+
+    Isolate the first diagonal below the main diagonal:
+
+    >>> np.ma.diag(masked_x, -1)
+    masked_array(data=[0.801, 33.0],
+                 mask=[False, False],
+           fill_value=1e+20)
+
     """
     output = np.diag(v, k).view(MaskedArray)
     if getmask(v) is not nomask:
@@ -7134,6 +7216,21 @@ def right_shift(a, n):
     See Also
     --------
     numpy.right_shift
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [11, 3, 8, 1]
+    >>> mask = [0, 0, 0, 1]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(data=[11, 3, 8, --],
+                 mask=[False, False, False,  True],
+           fill_value=999999)
+    >>> ma.right_shift(masked_x,1)
+    masked_array(data=[5, 1, 4, --],
+                 mask=[False, False, False,  True],
+           fill_value=999999)
 
     """
     m = getmask(a)
@@ -7344,6 +7441,141 @@ def size(obj, axis=None):
     "maskedarray version of the numpy function."
     return np.size(getdata(obj), axis)
 size.__doc__ = np.size.__doc__
+
+
+def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
+    """
+    Calculate the n-th discrete difference along the given axis.
+    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
+    the given axis, higher differences are calculated by using `diff`
+    recursively.
+    Preserves the input mask.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array
+    n : int, optional
+        The number of times values are differenced. If zero, the input
+        is returned as-is.
+    axis : int, optional
+        The axis along which the difference is taken, default is the
+        last axis.
+    prepend, append : array_like, optional
+        Values to prepend or append to `a` along axis prior to
+        performing the difference.  Scalar values are expanded to
+        arrays with length 1 in the direction of axis and the shape
+        of the input array in along all other axes.  Otherwise the
+        dimension and shape must match `a` except along axis.
+
+    Returns
+    -------
+    diff : MaskedArray
+        The n-th differences. The shape of the output is the same as `a`
+        except along `axis` where the dimension is smaller by `n`. The
+        type of the output is the same as the type of the difference
+        between any two elements of `a`. This is the same as the type of
+        `a` in most cases. A notable exception is `datetime64`, which
+        results in a `timedelta64` output array.
+
+    See Also
+    --------
+    numpy.diff : Equivalent function in the top-level NumPy module.
+
+    Notes
+    -----
+    Type is preserved for boolean arrays, so the result will contain
+    `False` when consecutive elements are the same and `True` when they
+    differ.
+
+    For unsigned integer arrays, the results will also be unsigned. This
+    should not be surprising, as the result is consistent with
+    calculating the difference directly:
+
+    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
+    >>> np.ma.diff(u8_arr)
+    masked_array(data=[255],
+                 mask=False,
+           fill_value=999999,
+                dtype=uint8)
+    >>> u8_arr[1,...] - u8_arr[0,...]
+    255
+
+    If this is not desirable, then the array should be cast to a larger
+    integer type first:
+
+    >>> i16_arr = u8_arr.astype(np.int16)
+    >>> np.ma.diff(i16_arr)
+    masked_array(data=[-1],
+                 mask=False,
+           fill_value=999999,
+                dtype=int16)
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3, 4, 7, 0, 2, 3])
+    >>> x = np.ma.masked_where(a < 2, a)
+    >>> np.ma.diff(x)
+    masked_array(data=[--, 1, 1, 3, --, --, 1],
+            mask=[ True, False, False, False,  True,  True, False],
+        fill_value=999999)
+
+    >>> np.ma.diff(x, n=2)
+    masked_array(data=[--, 0, 2, --, --, --],
+                mask=[ True, False, False,  True,  True,  True],
+        fill_value=999999)
+
+    >>> a = np.array([[1, 3, 1, 5, 10], [0, 1, 5, 6, 8]])
+    >>> x = np.ma.masked_equal(a, value=1)
+    >>> np.ma.diff(x)
+    masked_array(
+        data=[[--, --, --, 5],
+                [--, --, 1, 2]],
+        mask=[[ True,  True,  True, False],
+                [ True,  True, False, False]],
+        fill_value=1)
+
+    >>> np.ma.diff(x, axis=0)
+    masked_array(data=[[--, --, --, 1, -2]],
+            mask=[[ True,  True,  True, False, False]],
+        fill_value=1)
+
+    """
+    if n == 0:
+        return a
+    if n < 0:
+        raise ValueError("order must be non-negative but got " + repr(n))
+
+    a = np.ma.asanyarray(a)
+    if a.ndim == 0:
+        raise ValueError(
+            "diff requires input that is at least one dimensional"
+            )
+
+    combined = []
+    if prepend is not np._NoValue:
+        prepend = np.ma.asanyarray(prepend)
+        if prepend.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            prepend = np.broadcast_to(prepend, tuple(shape))
+        combined.append(prepend)
+
+    combined.append(a)
+
+    if append is not np._NoValue:
+        append = np.ma.asanyarray(append)
+        if append.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            append = np.broadcast_to(append, tuple(shape))
+        combined.append(append)
+
+    if len(combined) > 1:
+        a = np.ma.concatenate(combined, axis)
+
+    # GH 22465 np.diff without prepend/append preserves the mask
+    return np.diff(a, n, axis)
 
 
 ##############################################################################
@@ -7573,94 +7805,18 @@ def round_(a, decimals=0, out=None):
 round = round_
 
 
-# Needed by dot, so move here from extras.py. It will still be exported
-# from extras.py for compatibility.
-def mask_rowcols(a, axis=None):
+def _mask_propagate(a, axis):
     """
-    Mask rows and/or columns of a 2D array that contain masked values.
-
-    Mask whole rows and/or columns of a 2D array that contain
-    masked values.  The masking behavior is selected using the
-    `axis` parameter.
-
-      - If `axis` is None, rows *and* columns are masked.
-      - If `axis` is 0, only rows are masked.
-      - If `axis` is 1 or -1, only columns are masked.
-
-    Parameters
-    ----------
-    a : array_like, MaskedArray
-        The array to mask.  If not a MaskedArray instance (or if no array
-        elements are masked).  The result is a MaskedArray with `mask` set
-        to `nomask` (False). Must be a 2D array.
-    axis : int, optional
-        Axis along which to perform the operation. If None, applies to a
-        flattened version of the array.
-
-    Returns
-    -------
-    a : MaskedArray
-        A modified version of the input array, masked depending on the value
-        of the `axis` parameter.
-
-    Raises
-    ------
-    NotImplementedError
-        If input array `a` is not 2D.
-
-    See Also
-    --------
-    mask_rows : Mask rows of a 2D array that contain masked values.
-    mask_cols : Mask cols of a 2D array that contain masked values.
-    masked_where : Mask where a condition is met.
-
-    Notes
-    -----
-    The input array's mask is modified by this function.
-
-    Examples
-    --------
-    >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=int)
-    >>> a[1, 1] = 1
-    >>> a
-    array([[0, 0, 0],
-           [0, 1, 0],
-           [0, 0, 0]])
-    >>> a = ma.masked_equal(a, 1)
-    >>> a
-    masked_array(
-      data=[[0, 0, 0],
-            [0, --, 0],
-            [0, 0, 0]],
-      mask=[[False, False, False],
-            [False,  True, False],
-            [False, False, False]],
-      fill_value=1)
-    >>> ma.mask_rowcols(a)
-    masked_array(
-      data=[[0, --, 0],
-            [--, --, --],
-            [0, --, 0]],
-      mask=[[False,  True, False],
-            [ True,  True,  True],
-            [False,  True, False]],
-      fill_value=1)
-
+    Mask whole 1-d vectors of an array that contain masked values.
     """
     a = array(a, subok=False)
-    if a.ndim != 2:
-        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
     m = getmask(a)
-    # Nothing is masked: return a
-    if m is nomask or not m.any():
+    if m is nomask or not m.any() or axis is None:
         return a
-    maskedval = m.nonzero()
     a._mask = a._mask.copy()
-    if not axis:
-        a[np.unique(maskedval[0])] = masked
-    if axis in [None, 1, -1]:
-        a[:, np.unique(maskedval[1])] = masked
+    axes = normalize_axis_tuple(axis, a.ndim)
+    for ax in axes:
+        a._mask |= m.any(axis=ax, keepdims=True)
     return a
 
 
@@ -7676,10 +7832,6 @@ def dot(a, b, strict=False, out=None):
     than in the method version. In order to maintain compatibility with the
     corresponding method, it is recommended that the optional arguments be
     treated as keyword only.  At some point that may be mandatory.
-
-    .. note::
-      Works only with 2-D arrays at the moment.
-
 
     Parameters
     ----------
@@ -7724,18 +7876,22 @@ def dot(a, b, strict=False, out=None):
       fill_value=999999)
 
     """
-    # !!!: Works only with 2D arrays. There should be a way to get it to run
-    # with higher dimension
-    if strict and (a.ndim == 2) and (b.ndim == 2):
-        a = mask_rowcols(a, 0)
-        b = mask_rowcols(b, 1)
+    if strict is True:
+        if np.ndim(a) == 0 or np.ndim(b) == 0:
+            pass
+        elif b.ndim == 1:
+            a = _mask_propagate(a, a.ndim - 1)
+            b = _mask_propagate(b, b.ndim - 1)
+        else:
+            a = _mask_propagate(a, a.ndim - 1)
+            b = _mask_propagate(b, b.ndim - 2)
     am = ~getmaskarray(a)
     bm = ~getmaskarray(b)
 
     if out is None:
         d = np.dot(filled(a, 0), filled(b, 0))
         m = ~np.dot(am, bm)
-        if d.ndim == 0:
+        if np.ndim(d) == 0:
             d = np.asarray(d)
         r = d.view(get_masked_subclass(a, b))
         r.__setmask__(m)
@@ -8285,12 +8441,6 @@ clip = _convert2ma(
     params=dict(fill_value=None, hardmask=False),
     np_ret='clipped_array : ndarray',
     np_ma_ret='clipped_array : MaskedArray',
-)
-diff = _convert2ma(
-    'diff',
-    params=dict(fill_value=None, hardmask=False),
-    np_ret='diff : ndarray',
-    np_ma_ret='diff : MaskedArray',
 )
 empty = _convert2ma(
     'empty',

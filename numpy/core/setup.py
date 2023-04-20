@@ -20,7 +20,7 @@ from setup_common import *  # noqa: F403
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 if not NPY_RELAXED_STRIDES_CHECKING:
     raise SystemError(
-        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been remove as of "
+        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been removed as of "
         "NumPy 1.23.  This error will eventually be removed entirely.")
 
 # Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
@@ -79,11 +79,13 @@ def can_link_svml():
             and "linux" in platform
             and sys.maxsize > 2**31)
 
-def check_svml_submodule(svmlpath):
-    if not os.path.exists(svmlpath + "/README.md"):
-        raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
-                           "update --init` to fix this.")
-    return True
+def check_git_submodules():
+    out = os.popen("git submodule status")
+    modules = out.readlines()
+    for submodule in modules:
+        if (submodule.strip()[0] == "-"):
+            raise RuntimeError("git submodules are not initialized."
+                    "Please run `git submodule update --init` to fix this.")
 
 def pythonlib_dir():
     """return path where libpython* is."""
@@ -171,18 +173,6 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
         else:
             return 1
 
-    # NOTE: not needed in Meson build, we set the minimum
-    #       compiler version to 8.4 to avoid this bug
-    # GH-14787: Work around GCC<8.4 bug when compiling with AVX512
-    # support on Windows-based platforms
-    def check_gh14787(fn):
-        if fn == 'attribute_target_avx512f':
-            if (sys.platform in ('win32', 'cygwin') and
-                    config.check_compiler_gcc() and
-                    not config.check_gcc_version_at_least(8, 4)):
-                ext.extra_compile_args.extend(
-                        ['-ffixed-xmm%s' % n for n in range(16, 32)])
-
     #use_msvc = config.check_decl("_MSC_VER")
     if not check_funcs_once(MANDATORY_FUNCS, add_to_moredefs=False):
         raise SystemError("One of the required function to build numpy is not"
@@ -233,20 +223,8 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
-            check_gh14787(fn)
 
     platform = sysconfig.get_platform()
-    if ("x86_64" in platform):
-        for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES_AVX:
-            if config.check_gcc_function_attribute(dec, fn):
-                moredefs.append((fname2def(fn), 1))
-                check_gh14787(fn)
-        for dec, fn, code, header in (
-        OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS_AVX):
-            if config.check_gcc_function_attribute_with_intrinsics(
-                    dec, fn, code, header):
-                moredefs.append((fname2def(fn), 1))
-
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
         if config.check_gcc_variable_attribute(fn):
             m = fn.replace("(", "_").replace(")", "_")
@@ -427,7 +405,6 @@ def configuration(parent_package='',top_path=None):
                                            exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
-    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
     from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)
@@ -437,6 +414,8 @@ def configuration(parent_package='',top_path=None):
     # Check whether we have a mismatch between the set C API VERSION and the
     # actual C API VERSION. Will raise a MismatchCAPIError if so.
     check_api_version(C_API_VERSION, codegen_dir)
+
+    check_git_submodules()
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
@@ -678,44 +657,6 @@ def configuration(parent_package='',top_path=None):
         # but we cannot use add_installed_pkg_config here either, so we only
         # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
-        # Check that the toolchain works, to fail early if it doesn't
-        # (avoid late errors with MATHLIB which are confusing if the
-        # compiler does not work).
-        for lang, test_code, note in (
-            ('c', 'int main(void) { return 0;}', ''),
-            ('c++', (
-                    'int main(void)'
-                    '{ auto x = 0.0; return static_cast<int>(x); }'
-                ), (
-                    'note: A compiler with support for C++11 language '
-                    'features is required.'
-                )
-             ),
-        ):
-            is_cpp = lang == 'c++'
-            if is_cpp:
-                # this a workaround to get rid of invalid c++ flags
-                # without doing big changes to config.
-                # c tested first, compiler should be here
-                bk_c = config_cmd.compiler
-                config_cmd.compiler = bk_c.cxx_compiler()
-
-                # Check that Linux compiler actually support the default flags
-                if hasattr(config_cmd.compiler, 'compiler'):
-                    config_cmd.compiler.compiler.extend(NPY_CXX_FLAGS)
-                    config_cmd.compiler.compiler_so.extend(NPY_CXX_FLAGS)
-
-            st = config_cmd.try_link(test_code, lang=lang)
-            if not st:
-                # rerun the failing command in verbose mode
-                config_cmd.compiler.verbose = True
-                config_cmd.try_link(test_code, lang=lang)
-                raise RuntimeError(
-                    f"Broken toolchain: cannot link a simple {lang.upper()} "
-                    f"program. {note}"
-                )
-            if is_cpp:
-                config_cmd.compiler = bk_c
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
@@ -729,10 +670,6 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c'),
-                       # Remove this once scipy macos arm64 build correctly
-                       # links to the arm64 npymath library,
-                       # see gh-22673
-                       join('src', 'npymath', 'arm64_exports.c'),
                        ]
 
     config.add_installed_library('npymath',
@@ -844,6 +781,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
             join('src', 'multiarray', 'dtype_transfer.h'),
+            join('src', 'multiarray', 'dtype_traversal.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'einsum_debug.h'),
             join('src', 'multiarray', 'einsum_sumprod.h'),
@@ -917,6 +855,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
+            join('src', 'multiarray', 'dtype_traversal.c'),
             join('src', 'multiarray', 'einsum.c.src'),
             join('src', 'multiarray', 'einsum_sumprod.c.src'),
             join('src', 'multiarray', 'experimental_public_dtype_api.c'),
@@ -946,7 +885,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'npy_sort.h.src'),
-            join('src', 'npysort', 'x86-qsort.dispatch.cpp'),
             join('src', 'npysort', 'quicksort.cpp'),
             join('src', 'npysort', 'mergesort.cpp'),
             join('src', 'npysort', 'timsort.cpp'),
@@ -964,6 +902,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'textreading', 'stream_pyobject.c'),
             join('src', 'multiarray', 'textreading', 'str_to_int.c'),
             join('src', 'multiarray', 'textreading', 'tokenize.cpp'),
+            # Remove this once scipy macos arm64 build correctly
+            # links to the arm64 npymath library,
+            # see gh-22673
+            join('src', 'npymath', 'arm64_exports.c'),
+            join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
+            join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
             ]
 
     #######################################################################
@@ -1001,12 +945,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
-            join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops_utils.h.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'loops_unary.dispatch.c.src'),
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_unary_fp_le.dispatch.c.src'),
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
             join('src', 'umath', 'loops_logical.dispatch.c.src'),
@@ -1017,6 +961,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
             join('src', 'umath', 'loops_modulo.dispatch.c.src'),
             join('src', 'umath', 'loops_comparison.dispatch.c.src'),
+            join('src', 'umath', 'loops_unary_complex.dispatch.c.src'),
+            join('src', 'umath', 'loops_autovec.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
@@ -1041,7 +987,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'number.h'),
             join('src', 'common', 'templ_common.h.src'),
-            join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join(codegen_dir, 'ufunc_docstrings.py'),
@@ -1056,7 +1001,7 @@ def configuration(parent_package='',top_path=None):
     # after all maintainable code.
     svml_filter = (
     )
-    if can_link_svml() and check_svml_submodule(svml_path):
+    if can_link_svml():
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
         svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
@@ -1065,9 +1010,6 @@ def configuration(parent_package='',top_path=None):
         svml_objs.sort()
 
     config.add_extension('_multiarray_umath',
-                         # Forcing C language even though we have C++ sources.
-                         # It forces the C linker and don't link C++ runtime.
-                         language = 'c',
                          sources=multiarray_src + umath_src +
                                  common_src +
                                  [generate_config_h,
@@ -1083,8 +1025,7 @@ def configuration(parent_package='',top_path=None):
                                 common_deps,
                          libraries=['npymath'],
                          extra_objects=svml_objs,
-                         extra_info=extra_info,
-                         extra_cxx_compile_args=NPY_CXX_FLAGS)
+                         extra_info=extra_info)
 
     #######################################################################
     #                        umath_tests module                           #

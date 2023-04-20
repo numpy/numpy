@@ -92,7 +92,6 @@ from . import einsumfunc
 from .einsumfunc import *
 del nt
 
-from .fromnumeric import amax as max, amin as min, round_ as round
 from .numeric import absolute as abs
 
 # do this after everything else, to minimize the chance of this misleadingly
@@ -145,8 +144,10 @@ def _DType_reconstruct(scalar_type):
 def _DType_reduce(DType):
     # To pickle a DType without having to add top-level names, pickle the
     # scalar type for now (and assume that reconstruction will be possible).
-    if DType is dtype:
-        return "dtype"  # must pickle `np.dtype` as a singleton.
+    if not DType._legacy:
+        # If we don't have a legacy DType, we should have a valid top level
+        # name available, so use it (i.e. `np.dtype` itself!)
+        return DType.__name__
     scalar_type = DType.type  # pickle the scalar type for reconstruction
     return _DType_reconstruct, (scalar_type,)
 

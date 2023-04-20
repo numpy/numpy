@@ -194,7 +194,7 @@ simd_@func@_@sfx@(npyv_lanetype_@sfx@ *ip, npy_intp len)
         npyv_@bsfx@ nnan_ab = npyv_and_@bsfx@(nnan_a, nnan_b);
         npyv_@bsfx@ nnan_cd = npyv_and_@bsfx@(nnan_c, nnan_d);
         npy_uint64 nnan = npyv_tobits_@bsfx@(npyv_and_@bsfx@(nnan_ab, nnan_cd));
-        if (nnan != ((1LL << vstep) - 1)) {
+        if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
             npy_uint64 nnan_4[4];
             nnan_4[0] = npyv_tobits_@bsfx@(nnan_a);
             nnan_4[1] = npyv_tobits_@bsfx@(nnan_b);
@@ -219,7 +219,7 @@ simd_@func@_@sfx@(npyv_lanetype_@sfx@ *ip, npy_intp len)
     #if @is_fp@
         npyv_@bsfx@ nnan_a = npyv_notnan_@sfx@(a);
         npy_uint64 nnan = npyv_tobits_@bsfx@(nnan_a);
-        if (nnan != ((1LL << vstep) - 1)) {
+        if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
             for (int vi = 0; vi < vstep; ++vi) {
                 if (!((nnan >> vi) & 1)) {
                     return i + vi;

@@ -6,72 +6,16 @@ storing results in an output array.
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
-from numpy.core.overrides import (
-    array_function_dispatch, ARRAY_FUNCTION_ENABLED,
-)
+from numpy.core.overrides import array_function_dispatch
 import warnings
 import functools
 
 
-def _deprecate_out_named_y(f):
-    """
-    Allow the out argument to be passed as the name `y` (deprecated)
-
-    In future, this decorator should be removed.
-    """
-    @functools.wraps(f)
-    def func(x, out=None, **kwargs):
-        if 'y' in kwargs:
-            if 'out' in kwargs:
-                raise TypeError(
-                    "{} got multiple values for argument 'out'/'y'"
-                    .format(f.__name__)
-                )
-            out = kwargs.pop('y')
-            # NumPy 1.13.0, 2017-04-26
-            warnings.warn(
-                "The name of the out argument to {} has changed from `y` to "
-                "`out`, to match other ufuncs.".format(f.__name__),
-                DeprecationWarning, stacklevel=3)
-        return f(x, out=out, **kwargs)
-
-    return func
-
-
-def _fix_out_named_y(f):
-    """
-    Allow the out argument to be passed as the name `y` (deprecated)
-
-    This decorator should only be used if _deprecate_out_named_y is used on
-    a corresponding dispatcher function.
-    """
-    @functools.wraps(f)
-    def func(x, out=None, **kwargs):
-        if 'y' in kwargs:
-            # we already did error checking in _deprecate_out_named_y
-            out = kwargs.pop('y')
-        return f(x, out=out, **kwargs)
-
-    return func
-
-
-def _fix_and_maybe_deprecate_out_named_y(f):
-    """
-    Use the appropriate decorator, depending upon if dispatching is being used.
-    """
-    if ARRAY_FUNCTION_ENABLED:
-        return _fix_out_named_y(f)
-    else:
-        return _deprecate_out_named_y(f)
-
-
-@_deprecate_out_named_y
 def _dispatcher(x, out=None):
     return (x, out)
 
 
 @array_function_dispatch(_dispatcher, verify=False, module='numpy')
-@_fix_and_maybe_deprecate_out_named_y
 def fix(x, out=None):
     """
     Round to nearest integer towards zero.
@@ -125,7 +69,6 @@ def fix(x, out=None):
 
 
 @array_function_dispatch(_dispatcher, verify=False, module='numpy')
-@_fix_and_maybe_deprecate_out_named_y
 def isposinf(x, out=None):
     """
     Test element-wise for positive infinity, return result as bool array.
@@ -197,7 +140,6 @@ def isposinf(x, out=None):
 
 
 @array_function_dispatch(_dispatcher, verify=False, module='numpy')
-@_fix_and_maybe_deprecate_out_named_y
 def isneginf(x, out=None):
     """
     Test element-wise for negative infinity, return result as bool array.

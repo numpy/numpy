@@ -914,8 +914,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     int nin = ufunc->nin, nargs = ufunc->nargs;
 
     /*
-     * Get the actual DTypes we operate with by mixing the operand array
-     * ones with the passed signature.
+     * Get the actual DTypes we operate with by setting op_dtypes[i] from
+     * signature[i].
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL) {
@@ -1239,4 +1239,41 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     }
 
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+/*
+ * Return the PyArrayMethodObject or PyCapsule that matches a registered
+ * tuple of identical dtypes. Return a borrowed ref of the first match.
+ */
+NPY_NO_EXPORT PyObject *
+get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                 int ndtypes)
+{
+    PyObject *t_dtypes = PyTuple_New(ndtypes);
+    if (t_dtypes == NULL) {
+        return NULL;
+    }
+    for (int i=0; i < ndtypes; i++) {
+        PyTuple_SetItem(t_dtypes, i, (PyObject *)op_dtype);
+    }
+    PyObject *loops = ufunc->_loops;
+    Py_ssize_t length = PyList_Size(loops);
+    for (Py_ssize_t i = 0; i < length; i++) {
+        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        int cmp = PyObject_RichCompareBool(cur_DType_tuple,
+                                           t_dtypes, Py_EQ);
+        if (cmp < 0) {
+            Py_DECREF(t_dtypes);
+            return NULL;
+        }
+        if (cmp == 0) {
+            continue;
+        }
+        /* Got the match */
+        Py_DECREF(t_dtypes);
+        return PyTuple_GetItem(item, 1);
+    }
+    Py_DECREF(t_dtypes);
+    Py_RETURN_NONE;
 }

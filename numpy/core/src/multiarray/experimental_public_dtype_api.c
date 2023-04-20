@@ -16,19 +16,6 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 5
-
-
-typedef struct{
-    PyTypeObject *typeobj;    /* type of python scalar or NULL */
-    int flags;                /* flags, including parametric and abstract */
-    /* NULL terminated cast definitions. Use NULL for the newly created DType */
-    PyArrayMethod_Spec **casts;
-    PyType_Slot *slots;
-} PyArrayDTypeMeta_Spec;
-
-
-
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
         PyArray_DTypeMeta *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(other))
@@ -116,10 +103,6 @@ PyArray_ArrFuncs default_funcs = {
 };
 
 
-/* other slots are in order, so keep only last around: */
-#define NUM_DTYPE_SLOTS 8
-
-
 int
 PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
@@ -155,10 +138,12 @@ PyArrayInitDTypeMeta_FromSpec(
     }
 
     /* Check and handle flags: */
-    if (spec->flags & ~(NPY_DT_PARAMETRIC|NPY_DT_ABSTRACT)) {
+    int allowed_flags = NPY_DT_PARAMETRIC | NPY_DT_ABSTRACT | NPY_DT_NUMERIC;
+    if (spec->flags & ~(allowed_flags)) {
         PyErr_SetString(PyExc_RuntimeError,
-                "invalid DType flags specified, only parametric and abstract "
-                "are valid flags for user DTypes.");
+                "invalid DType flags specified, only NPY_DT_PARAMETRIC, "
+                "NPY_DT_ABSTRACT, and NPY_DT_NUMERIC are valid flags for "
+                "user DTypes.");
         return -1;
     }
 
@@ -178,6 +163,8 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->common_instance = NULL;
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
+    NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
     while (1) {
@@ -187,20 +174,100 @@ PyArrayInitDTypeMeta_FromSpec(
         if (slot == 0) {
             break;
         }
-        if (slot > NUM_DTYPE_SLOTS || slot < 0) {
+        if ((slot < 0) ||
+            ((slot > NPY_NUM_DTYPE_SLOTS) &&
+             (slot <= _NPY_DT_ARRFUNCS_OFFSET)) ||
+            (slot > NPY_DT_MAX_ARRFUNCS_SLOT)) {
             PyErr_Format(PyExc_RuntimeError,
                     "Invalid slot with value %d passed in.", slot);
             return -1;
         }
         /*
-         * It is up to the user to get this right, and slots are sorted
-         * exactly like they are stored right now:
+         * It is up to the user to get this right, the slots in the public API
+         * are sorted exactly like they are stored in the NPY_DT_Slots struct
+         * right now:
          */
-        void **current = (void **)(&(
-                NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
-        current += slot - 1;
-        *current = pfunc;
+        if (slot <= NPY_NUM_DTYPE_SLOTS) {
+            // slot > NPY_NUM_DTYPE_SLOTS are PyArray_ArrFuncs
+            void **current = (void **)(&(
+                    NPY_DT_SLOTS(DType)->discover_descr_from_pyobject));
+            current += slot - 1;
+            *current = pfunc;
+        }
+        else {
+            int f_slot = slot - _NPY_DT_ARRFUNCS_OFFSET;
+            if (1 <= f_slot && f_slot <= NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS) {
+                switch (f_slot) {
+                    case 1:
+                        NPY_DT_SLOTS(DType)->f.getitem = pfunc;
+                        break;
+                    case 2:
+                        NPY_DT_SLOTS(DType)->f.setitem = pfunc;
+                        break;
+                    case 3:
+                        NPY_DT_SLOTS(DType)->f.copyswapn = pfunc;
+                        break;
+                    case 4:
+                        NPY_DT_SLOTS(DType)->f.copyswap = pfunc;
+                        break;
+                    case 5:
+                        NPY_DT_SLOTS(DType)->f.compare = pfunc;
+                        break;
+                    case 6:
+                        NPY_DT_SLOTS(DType)->f.argmax = pfunc;
+                        break;
+                    case 7:
+                        NPY_DT_SLOTS(DType)->f.dotfunc = pfunc;
+                        break;
+                    case 8:
+                        NPY_DT_SLOTS(DType)->f.scanfunc = pfunc;
+                        break;
+                    case 9:
+                        NPY_DT_SLOTS(DType)->f.fromstr = pfunc;
+                        break;
+                    case 10:
+                        NPY_DT_SLOTS(DType)->f.nonzero = pfunc;
+                        break;
+                    case 11:
+                        NPY_DT_SLOTS(DType)->f.fill = pfunc;
+                        break;
+                    case 12:
+                        NPY_DT_SLOTS(DType)->f.fillwithscalar = pfunc;
+                        break;
+                    case 13:
+                        *NPY_DT_SLOTS(DType)->f.sort = pfunc;
+                        break;
+                    case 14:
+                        *NPY_DT_SLOTS(DType)->f.argsort = pfunc;
+                        break;
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+                    case 19:
+                    case 20:
+                    case 21:
+                        PyErr_Format(
+                            PyExc_RuntimeError,
+                            "PyArray_ArrFunc casting slot with value %d is disabled.",
+                            f_slot
+                        );
+                        return -1;
+                    case 22:
+                        NPY_DT_SLOTS(DType)->f.argmin = pfunc;
+                        break;
+                }
+            } else {
+                    PyErr_Format(
+                        PyExc_RuntimeError,
+                        "Invalid PyArray_ArrFunc slot with value %d passed in.",
+                        f_slot
+                    );
+                    return -1;
+            }
+        }
     }
+
     if (NPY_DT_SLOTS(DType)->setitem == NULL
             || NPY_DT_SLOTS(DType)->getitem == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -229,7 +296,7 @@ PyArrayInitDTypeMeta_FromSpec(
             return -1;
         }
     }
-    NPY_DT_SLOTS(DType)->f = default_funcs;
+
     /* invalid type num. Ideally, we get away with it! */
     DType->type_num = -1;
 
@@ -443,12 +510,12 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
     if (error_converting(version)) {
         return NULL;
     }
-    if (version != EXPERIMENTAL_DTYPE_API_VERSION) {
+    if (version != __EXPERIMENTAL_DTYPE_API_VERSION) {
         PyErr_Format(PyExc_RuntimeError,
                 "Experimental DType API version %d requested, but NumPy "
                 "is exporting version %d.  Recompile your DType and/or upgrade "
                 "NumPy to match.",
-                version, EXPERIMENTAL_DTYPE_API_VERSION);
+                version, __EXPERIMENTAL_DTYPE_API_VERSION);
         return NULL;
     }
 

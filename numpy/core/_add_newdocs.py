@@ -12,6 +12,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
 
+
 ###############################################################################
 #
 # flatiter
@@ -2703,6 +2704,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
     Does not include memory consumed by non-element attributes of the
     array object.
 
+    See Also
+    --------
+    sys.getsizeof
+        Memory consumed by the object itself without parents in case view.
+        This does include memory consumed by non-element attributes.
+
     Examples
     --------
     >>> x = np.zeros((3,5,2), dtype=np.complex128)
@@ -2928,7 +2935,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
-    """ a.__array__([dtype], /) -> reference if type unchanged, copy otherwise.
+    """ a.__array__([dtype], /)
 
     Returns either a new reference to self if dtype is not given or a new array
     of provided data type if dtype is different from the current dtype of the
@@ -2991,10 +2998,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> np.ndarray[Any, np.dtype[Any]]
     numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
 
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
-
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
@@ -3005,7 +3008,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__(memo, /) -> Deep copy of array.
+    """a.__deepcopy__(memo, /)
 
     Used if :func:`copy.deepcopy` is called on an array.
 
@@ -6493,10 +6496,6 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
     >>> np.dtype[np.int64]
     numpy.dtype[numpy.int64]
 
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
-
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
@@ -7005,10 +7004,6 @@ add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
 
     >>> np.signedinteger[Any]
     numpy.signedinteger[typing.Any]
-
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
 
     See Also
     --------

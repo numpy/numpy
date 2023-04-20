@@ -66,7 +66,7 @@ random_pyx_sources = [
       fs.copyfile('mtrand.pyx'),
       'src/distributions/distributions.c',
       'src/legacy/legacy-distributions.c'
-    ], ['-DNPY_RANDOM_LEGACY=1'], npymath_lib,
+    ], ['-DNP_RANDOM_LEGACY=1'], npymath_lib,
   ],
 ]
 foreach gen: random_pyx_sources

@@ -146,7 +146,6 @@ object_to_any_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
-
 NPY_NO_EXPORT int
 wrap_aligned_transferfunction(
         int aligned, int must_wrap,

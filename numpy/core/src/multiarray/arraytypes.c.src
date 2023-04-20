@@ -224,8 +224,6 @@ MyPyLong_AsUnsigned@Type@(PyObject *obj)
  **                         GETITEM AND SETITEM                             **
  *****************************************************************************
  */
-
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
@@ -293,7 +291,7 @@ static int
                     "Python integers to integer arrays.  The conversion "
                     "of %.100R to %S will fail in the future.\n"
                     "For the old behavior, usually:\n"
-                    "    np.array(value).astype(dtype)`\n"
+                    "    np.array(value).astype(dtype)\n"
                     "will give the desired result (the cast overflows).",
                     obj, descr) < 0) {
                 Py_DECREF(descr);

@@ -154,6 +154,7 @@ class WrappedArray(NDArrayOperatorsMixin):
     ufunc deferrals are commutative.
     See: https://github.com/numpy/numpy/issues/15200)
     """
+    __slots__ = ('_array', 'attrs')
     __array_priority__ = 20
 
     def __init__(self, array, **attrs):
@@ -448,3 +449,12 @@ class TestClassWrapping:
         assert_(isinstance(np.divide(wm, m2), WrappedArray))
         assert_(isinstance(np.divide(m2, wm), WrappedArray))
         assert_equal(np.divide(m2, wm), np.divide(wm, m2))
+
+    def test_mixins_have_slots(self):
+        mixin = NDArrayOperatorsMixin()
+        # Should raise an error
+        assert_raises(AttributeError, mixin.__setattr__, "not_a_real_attr", 1)
+
+        m = np.ma.masked_array([1, 3, 5], mask=[False, True, False])
+        wm = WrappedArray(m)
+        assert_raises(AttributeError, wm.__setattr__, "not_an_attr", 2)

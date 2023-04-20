@@ -23,7 +23,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
     add, multiply, sqrt, sum, isfinite,
-    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
+    finfo, errstate, geterrobj, moveaxis, amin, amax, prod, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal
@@ -42,11 +42,11 @@ fortran_int = intc
 
 
 @set_module('numpy.linalg')
-class LinAlgError(Exception):
+class LinAlgError(ValueError):
     """
     Generic Python-exception-derived object raised by linalg functions.
 
-    General purpose exception class, derived from Python's exception.Exception
+    General purpose exception class, derived from Python's ValueError
     class, programmatically raised in linalg functions when a Linear
     Algebra-related condition would prevent further correct execution of the
     function.
@@ -138,24 +138,24 @@ def _commonType(*arrays):
     result_type = single
     is_complex = False
     for a in arrays:
-        if issubclass(a.dtype.type, inexact):
-            if isComplexType(a.dtype.type):
+        type_ = a.dtype.type
+        if issubclass(type_, inexact):
+            if isComplexType(type_):
                 is_complex = True
-            rt = _realType(a.dtype.type, default=None)
-            if rt is None:
+            rt = _realType(type_, default=None)
+            if rt is double:
+                result_type = double
+            elif rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
                         (a.dtype.name,))
         else:
-            rt = double
-        if rt is double:
             result_type = double
     if is_complex:
-        t = cdouble
         result_type = _complex_types_map[result_type]
+        return cdouble, result_type
     else:
-        t = double
-    return t, result_type
+        return double, result_type
 
 
 def _to_native_byte_order(*arrays):
@@ -196,7 +196,7 @@ def _assert_finite(*arrays):
 
 def _is_empty_2d(arr):
     # check size first for efficiency
-    return arr.size == 0 and product(arr.shape[-2:]) == 0
+    return arr.size == 0 and prod(arr.shape[-2:]) == 0
 
 
 def transpose(a):
@@ -899,12 +899,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'economic'
         else:
             raise ValueError(f"Unrecognized mode '{mode}'")
@@ -2267,7 +2267,7 @@ def lstsq(a, b, rcond="warn"):
                       "To use the future default and silence this warning "
                       "we advise to pass `rcond=None`, to keep using the old, "
                       "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=3)
+                      FutureWarning, stacklevel=2)
         rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)

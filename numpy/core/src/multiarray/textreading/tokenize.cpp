@@ -290,7 +290,7 @@ NPY_NO_EXPORT int
 npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 {
     assert(ts->fields_size >= 2);
-    assert(ts->field_buffer_length >= 2*(ssize_t)sizeof(Py_UCS4));
+    assert(ts->field_buffer_length >= 2*(Py_ssize_t)sizeof(Py_UCS4));
 
     int finished_reading_file = 0;
 
@@ -449,6 +449,8 @@ npy_tokenizer_init(tokenizer_state *ts, parser_config *config)
 
     ts->fields = (field_info *)PyMem_Malloc(4 * sizeof(*ts->fields));
     if (ts->fields == nullptr) {
+        PyMem_Free(ts->field_buffer);
+        ts->field_buffer = nullptr;
         PyErr_NoMemory();
         return -1;
     }
