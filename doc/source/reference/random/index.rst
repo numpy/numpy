@@ -53,7 +53,7 @@ pseudo-randomness was good for in the first place.
 
   The pseudo-random number generators implemented in this module are designed
   for statistical modeling and simulation. They are not suitable for security
-  or cryptographic purposes. See the :py:module:`secrets` module from the
+  or cryptographic purposes. See the :py:mod:`secrets` module from the
   standard library such use cases.
 
 Seeds should be large positive integers. `default_rng` can take positive
@@ -149,7 +149,7 @@ Concepts
    Legacy Generator (RandomState) <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
    Upgrading PCG64 with PCG64DXSM <upgrading-pcg64>
-   random-compatibility
+   compatibility
 
 Features
 --------

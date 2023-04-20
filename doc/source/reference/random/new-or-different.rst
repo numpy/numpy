@@ -64,11 +64,11 @@ Feature            Older Equivalent     Notes
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. This replaces both
   ``randint`` and the deprecated ``random_integers``.
-*  The ``rand`` and ``randn`` methods are only available through the legacy
+* The ``rand`` and ``randn`` methods are only available through the legacy
   `~.RandomState`.
 * `Generator.random` is now the canonical way to generate floating-point
   random numbers, which replaces `RandomState.random_sample`,
-  `RandomState.sample`, and `RandomState.ranf`. This is consistent with
+  `sample`, and `ranf`, all of which were aliases. This is consistent with
   Python's `random.random`.
 * All bit generators can produce doubles, uint64s and
   uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
@@ -76,7 +76,7 @@ Feature            Older Equivalent     Notes
 * The bit generators can be used in downstream projects via
   Cython.
 * All bit generators use `SeedSequence` to :ref:`convert seed integers to
-  initialized states <seeding-and-entropy>`.
+  initialized states <seeding_and_entropy>`.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double precision uniform random variables for
   select distributions. `~.Generator.integers` accepts a ``dtype`` argument
