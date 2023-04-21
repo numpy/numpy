@@ -3833,7 +3833,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
     --------
     emath.sqrt
         A version which returns complex numbers when given negative reals.
-        Note: 0.0 and -0.0 are handled differently for complex inputs.
+        Note that 0.0 and -0.0 are handled differently for complex inputs.
 
     Notes
     -----
