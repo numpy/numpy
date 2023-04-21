@@ -2524,6 +2524,37 @@ class TestDateTime:
         # week reprs are not distinguishable.
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
+    
+    def test_isnat_non_datetime_timedelta(self):
+        # Test datetime64 NaT
+        datetime_nat = np.datetime64('NaT')
+        assert(np.isnat(datetime_nat))
+
+        # Test timedelta64 NaT
+        timedelta_nat = np.timedelta64('NaT')
+        assert(np.isnat(timedelta_nat))
+
+        # Test integer input
+        integer_input = 42
+        assert(np.isnat(integer_input))
+
+        # Test float input
+        float_input = 42.0
+        assert(np.isnat(float_input))
+
+        # Test string input
+        string_input = "not a datetime"
+        assert(np.isnat(string_input))
+
+        # Test numpy array with datetime64 NaT
+        datetime_array = np.array(['2021-01-01', 'NaT'], dtype='datetime64')
+        expected_result = np.array([False, True])
+        np.testing.assert_array_equal(np.isnat(datetime_array), expected_result)
+
+        # Test numpy array with integer input
+        integer_array = np.array([1, 2, 3, 4])
+        expected_result = np.array([False, False, False, False])
+        np.testing.assert_array_equal(np.isnat(integer_array), expected_result)
 
 
 class TestDateTimeData:
