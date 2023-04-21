@@ -3328,6 +3328,10 @@ class MaskedArray(ndarray):
                 # Note: Don't try to check for m.any(), that'll take too long
         return dout
 
+    # setitem may put NaNs into integer arrays or occasionally overflow a
+    # float.  But this may happen in masked values, so avoid otherwise
+    # correct warnings (as is typical also in masked calculations).
+    @np.errstate(over='ignore', invalid='ignore')
     def __setitem__(self, indx, value):
         """
         x.__setitem__(i, y) <==> x[i]=y
@@ -4619,6 +4623,7 @@ class MaskedArray(ndarray):
             otherwise.  'K' means to read the elements in the order they occur
             in memory, except for reversing the data when strides are negative.
             By default, 'C' index order is used.
+            (Masked arrays currently use 'A' on the data when 'K' is passed.)
 
         Returns
         -------
@@ -4645,6 +4650,13 @@ class MaskedArray(ndarray):
                fill_value=999999)
 
         """
+        # The order of _data and _mask could be different (it shouldn't be
+        # normally).  Passing order `K` or `A` would be incorrect.
+        # So we ignore the mask memory order.
+        # TODO: We don't actually support K, so use A instead.  We could
+        #       try to guess this correct by sorting strides or deprecate.
+        if order in "kKaA":
+            order = "C" if self._data.flags.fnc else "F"
         r = ndarray.ravel(self._data, order=order).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
