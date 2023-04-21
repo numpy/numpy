@@ -1850,6 +1850,28 @@ class TestVectorize:
         f = vectorize((lambda x: x), ['float64'])
         r = f([2])
         assert_equal(r.dtype, np.dtype('float64'))
+    
+    def test_scalar_input_expected_output_representation(self):
+        # Test that the output representation is as expected for scalar inputs
+        vf = np.vectorize(lambda _: np.arange(3), otypes=[object])
+
+        result = vf(0)
+
+        expected1 = np.array([0, 1, 2])
+        expected2 = np.empty(1, dtype=object)
+        expected2[0] = np.array([0, 1, 2])
+
+        # Assert that the result is an ndarray with dtype=object
+        assert isinstance(result, np.ndarray) and result.dtype == object, \
+            "Output should be an ndarray with dtype=object for scalar input"
+
+        # Check if the result is equal to either of the expected results
+        if np.array_equal(result, expected1):
+            assert result.dtype == np.int_, \
+                "Output representation for scalar input should be array([0, 1, 2]) with dtype=int"
+        else:
+            assert_array_equal(result, expected2), \
+                "Output representation for scalar input should be array(array([0, 1, 2]), dtype=object)"
 
 
 class TestLeaks:
