@@ -20,11 +20,13 @@
 #elif defined(__CYGWIN__)
     #define NPY_OS_CYGWIN
 #elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-    #define NPY_OS_WIN32
-#elif defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
-    #define NPY_OS_WIN64
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-    #define NPY_OS_MINGW
+/* _WIN32 is defined on 64-bit as well as 32-bit */
+    #define NPY_OS_WINDOWS
+    #if defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
+        #define NPY_OS_WIN_64BIT
+    #else
+        #define NPY_OS_WIN_32BIT
+    #endif
 #elif defined(__APPLE__)
     #define NPY_OS_DARWIN
 #elif defined(__HAIKU__)

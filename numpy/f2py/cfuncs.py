@@ -64,7 +64,7 @@ typedefs['unsigned_short'] = 'typedef unsigned short unsigned_short;'
 typedefs['unsigned_long'] = 'typedef unsigned long unsigned_long;'
 typedefs['signed_char'] = 'typedef signed char signed_char;'
 typedefs['long_long'] = """\
-#if defined(NPY_OS_WIN32)
+#if defined(NPY_OS_WINDOWS)
 typedef __int64 long_long;
 #else
 typedef long long long_long;
@@ -72,7 +72,7 @@ typedef unsigned long long unsigned_long_long;
 #endif
 """
 typedefs['unsigned_long_long'] = """\
-#if defined(NPY_OS_WIN32)
+#if defined(NPY_OS_WINDOWS)
 typedef __uint64 long_long;
 #else
 typedef unsigned long long unsigned_long_long;
@@ -542,7 +542,7 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #ifndef F2PY_THREAD_LOCAL_DECL
 #if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
-#elif defined(NPY_OS_MINGW)
+#elif defined(__MINGW32__)
 #define F2PY_THREAD_LOCAL_DECL __thread
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\

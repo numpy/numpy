@@ -44,7 +44,7 @@ simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@
 /**begin repeat
  *  #op = cos, sin#
  */
-#if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
+#if defined(NPY_OS_WINDOWS) || defined(NPY_OS_CYGWIN)
 NPY_FINLINE npyv_f64
 #else
 NPY_NOINLINE npyv_f64

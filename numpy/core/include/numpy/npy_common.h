@@ -138,8 +138,8 @@
 #endif
 
 /* 64 bit file position support, also on win-amd64. Issue gh-2256 */
-#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
-    defined(__MINGW32__) || defined(__MINGW64__)
+#if (defined(_MSC_VER) && (_MSC_VER > 1400) && defined(NPY_OS_WIN_64BIT)) || \
+    defined(__MINGW32__)
     #include <io.h>
 
     #define npy_fseek _fseeki64

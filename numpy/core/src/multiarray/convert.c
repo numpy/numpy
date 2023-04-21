@@ -157,7 +157,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined(NPY_OS_WIN64)
+#if defined(NPY_OS_WIN_64BIT)
             /*
              * Workaround Win64 fwrite() bug. Issue gh-2256
              * The native 64 windows runtime has this issue, the above will
