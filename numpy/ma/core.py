@@ -4631,6 +4631,7 @@ class MaskedArray(ndarray):
             otherwise.  'K' means to read the elements in the order they occur
             in memory, except for reversing the data when strides are negative.
             By default, 'C' index order is used.
+            (Masked arrays currently use 'A' on the data when 'K' is passed.)
 
         Returns
         -------
@@ -4657,6 +4658,13 @@ class MaskedArray(ndarray):
                fill_value=999999)
 
         """
+        # The order of _data and _mask could be different (it shouldn't be
+        # normally).  Passing order `K` or `A` would be incorrect.
+        # So we ignore the mask memory order.
+        # TODO: We don't actually support K, so use A instead.  We could
+        #       try to guess this correct by sorting strides or deprecate.
+        if order in "kKaA":
+            order = "C" if self._data.flags.fnc else "F"
         r = ndarray.ravel(self._data, order=order).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
