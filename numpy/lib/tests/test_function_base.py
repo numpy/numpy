@@ -1857,21 +1857,21 @@ class TestVectorize:
 
         result = vf(0)
 
-        expected1 = np.array([0, 1, 2])
-        expected2 = np.empty(1, dtype=object)
-        expected2[0] = np.array([0, 1, 2])
+        expected_1 = np.array([0, 1, 2])
+        expected_2 = np.empty(1, dtype=object)
+        expected_2[0] = np.array([0, 1, 2])
 
         # Assert that the result is an ndarray with dtype=object
         assert isinstance(result, np.ndarray) and result.dtype == object, \
             "Output should be an ndarray with dtype=object for scalar input"
 
         # Check if the result is equal to either of the expected results
-        if np.array_equal(result, expected1):
+        if np.array_equal(result, expected_1):
             assert result.dtype == np.int_, \
-                "Output representation for scalar input should be array([0, 1, 2]) with dtype=int"
+                "Output for scalar input should be array([0, 1, 2]) with dtype=int"
         else:
-            assert_array_equal(result, expected2), \
-                "Output representation for scalar input should be array(array([0, 1, 2]), dtype=object)"
+            assert_array_equal(result, expected_2), \
+                "Output for scalar input should be array(array([0, 1, 2]), dtype=object)"
 
 
 class TestLeaks:
