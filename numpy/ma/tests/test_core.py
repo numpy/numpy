@@ -3408,6 +3408,22 @@ class TestMaskedArrayMethods:
         assert_equal(a.ravel(order='C'), [1, 2, 3, 4])
         assert_equal(a.ravel(order='F'), [1, 3, 2, 4])
 
+    @pytest.mark.parametrize("order", "AKCF")
+    @pytest.mark.parametrize("data_order", "CF")
+    def test_ravel_order(self, order, data_order):
+        # Ravelling must ravel mask and data in the same order always to avoid
+        # misaligning the two in the ravel result.
+        arr = np.ones((5, 10), order=data_order)
+        arr[0, :] = 0
+        mask = np.ones((10, 5), dtype=bool, order=data_order).T
+        mask[0, :] = False
+        x = array(arr, mask=mask)
+        assert x._data.flags.fnc != x._mask.flags.fnc
+        assert (x.filled(0) == 0).all()
+        raveled = x.ravel(order)
+        assert (raveled.filled(0) == 0).all()
+
+
     def test_reshape(self):
         # Tests reshape
         x = arange(4)
