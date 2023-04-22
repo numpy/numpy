@@ -195,8 +195,8 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         Py_DECREF(lst);
     }
     else {
-        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                weight, NPY_DOUBLE, 1, 1);
+        wts = (PyArrayObject *)PyArray_FromAny(
+            weight, NULL, 1, 1, NPY_ARRAY_DEFAULT, NULL);
         if (wts == NULL) {
             goto fail;
         }
@@ -206,16 +206,36 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
                     "The weights and list don't have the same length.");
             goto fail;
         }
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
-        if (ans == NULL) {
+        if (PyArray_ISFLOAT(wts)) {
+            ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
+            if (ans == NULL) {
+                goto fail;
+            }
+            dans = (double *)PyArray_DATA(ans);
+            NPY_BEGIN_ALLOW_THREADS;
+            for (i = 0; i < len; i++) {
+                dans[numbers[i]] += weights[i];
+            }
+            NPY_END_ALLOW_THREADS;
+        } else if (PyArray_ISCOMPLEX(wts)) {
+            ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_CDOUBLE, 0);
+            if (ans == NULL) {
+                goto fail;
+            }
+            dans = (double *)PyArray_DATA(ans);
+            NPY_BEGIN_ALLOW_THREADS;
+            for (i = 0; i < len; i++) {
+                /* Add real parts */
+                dans[2 * numbers[i]] += weights[2 * i];
+                /* Add complex parts */
+                dans[2 * numbers[i] + 1] += weights[2 * i + 1];
+            }
+            NPY_END_ALLOW_THREADS;
+        } else {
+            PyErr_SetString(PyExc_TypeError,
+                    "The weights array must only contain floats or complex numbers.");
             goto fail;
         }
-        dans = (double *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++) {
-            dans[numbers[i]] += weights[i];
-        }
-        NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
         Py_DECREF(wts);
     }
