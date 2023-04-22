@@ -2,7 +2,6 @@
 <img src="https://raw.githubusercontent.com/numpy/numpy/main/branding/logo/primary/numpylogo.svg" width="300">
 </h1><br>
 
-
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](
 https://numfocus.org)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/numpy.svg?label=PyPI%20downloads)](
@@ -15,8 +14,12 @@ https://stackoverflow.com/questions/tagged/numpy)
 https://doi.org/10.1038/s41586-020-2649-2)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://api.securityscorecards.dev/projects/github.com/numpy/numpy)
 
-
+NumPy
+----------------------
 NumPy is the fundamental package for scientific computing with Python.
+
+Links
+----------------------
 
 - **Website:** https://www.numpy.org
 - **Documentation:** https://numpy.org/doc
@@ -24,17 +27,43 @@ NumPy is the fundamental package for scientific computing with Python.
 - **Source code:** https://github.com/numpy/numpy
 - **Contributing:** https://www.numpy.org/devdocs/dev/index.html
 - **Bug reports:** https://github.com/numpy/numpy/issues
+- **Wiki: Build issues:** https://github.com/numpy/numpy/wiki
+- **Roadmap & NumPy Enhancement Proposals** https://numpy.org/neps/
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 
-It provides:
-
+Features
+----------------------
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
-Testing:
+Sample Usage
+----------------------
+```python
+# The standard way to import NumPy:
+import numpy as np
 
+# Create a 2-D array, set every second element in
+# some rows and find max per row:
+x = np.arange(15, dtype=np.int64).reshape(3, 5)
+x[1:, ::2] = -99
+x
+# array([[  0,   1,   2,   3,   4],
+#        [-99,   6, -99,   8, -99],
+#        [-99,  11, -99,  13, -99]])
+
+x.max(axis=1)
+# array([ 4,  8, 13])
+
+# Generate normally distributed random numbers:
+rng = np.random.default_rng()
+samples = rng.normal(size=2500)
+samples
+```
+
+Testing
+----------------------
 NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
 
     python -c "import numpy, sys; sys.exit(numpy.test() is False)"
@@ -68,9 +97,21 @@ Writing code isn’t the only way to contribute to NumPy. You can also:
 - write grant proposals and help with other fundraising efforts
 
 For more information about the ways you can contribute to NumPy, visit [our website](https://numpy.org/contribute/). 
-If you’re unsure where to start or how your skills fit in, reach out! You can
-ask on the mailing list or here, on GitHub, by opening a new issue or leaving a
-comment on a relevant issue that is already open.
+
+If you’re unsure where to start, consider the following:
+- Code fixes:
+    - [build NumPy locally or with Gitpod](https://numpy.org/doc/stable/dev/development_environment.html) 
+    - [find an issue](https://github.com/numpy/numpy/issues)
+    - change an existing test or add a test that fails for the issue
+    - fix the issue
+    - verify the test passes
+    - submit a pull request with a link to the issue (gh-XXXX)
+        - document the fix, what is working, and what is not working 
+- Documentation fixes:  
+    - verify the documentation still build correctly
+    - spell check changes
+
+If you have questions about a bug or issue, you can ask on the mailing list or here, on GitHub, by opening a new issue or leaving a comment on a relevant issue that is already open.
 
 Our preferred channels of communication are all public, but if you’d like to
 speak to us in private first, contact our community coordinators at
