@@ -54,14 +54,14 @@ pseudo-randomness was good for in the first place.
   The pseudo-random number generators implemented in this module are designed
   for statistical modeling and simulation. They are not suitable for security
   or cryptographic purposes. See the :py:mod:`secrets` module from the
-  standard library such use cases.
+  standard library for such use cases.
 
 Seeds should be large positive integers. `default_rng` can take positive
 integers of any size. We recommend using very large, unique numbers to ensure
 that your seed is different from anyone else's. This is good practice to ensure
-that your results are statistically independent from theirs unless if you are
+that your results are statistically independent from theirs unless you are
 intentionally *trying* to reproduce their result. A convenient way to get
-such seed number is to use :py:func:`secrets.randbits` to get an
+such a seed number is to use :py:func:`secrets.randbits` to get an
 arbitrary 128-bit integer.
 
 ::
@@ -107,7 +107,7 @@ duplication.
 NumPy implements several different `BitGenerator` classes implementing
 different RNG algorithms. `default_rng` currently uses `~PCG64` as the
 default `BitGenerator`. It has better statistical properties and performance
-over the `~MT19937` algorithm used in the legacy `RandomState`. See
+than the `~MT19937` algorithm used in the legacy `RandomState`. See
 :ref:`random-bit-generators` for more details on the supported BitGenerators.
 
 `default_rng` and BitGenerators delegate the conversion of seeds into RNG
@@ -117,7 +117,7 @@ implementation details of each `BitGenerator` algorithm, each of which can
 require different amounts of bits for its state. Importantly, it lets you use
 arbitrary-sized integers and arbitrary sequences of such integers to mix
 together into the RNG state. This is a useful primitive for constructing
-a `flexible pattern for parallel RNG streams <seedsequence-spawn>`_.
+a :ref:`flexible pattern for parallel RNG streams <seedsequence-spawn>`.
 
 For backward compatibility, we still maintain the legacy `RandomState` class.
 It continues to use the `~MT19937` algorithm by default, and old seeds continue

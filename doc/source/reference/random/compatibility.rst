@@ -69,12 +69,12 @@ bit for a small performance improvement.
 In general, `BitGenerator` classes have stronger guarantees of
 version-to-version stream compatibility. This allows them to be a firmer
 building block for downstream users that need it. Their limited API surface
-makes them easier to maintain this compatibility from version to version. See
+makes it easier for them to maintain this compatibility from version to version. See
 the docstrings of each `BitGenerator` class for their individual compatibility
 guarantees.
 
-The legacy `RandomState` and the `associated convenience functions
-<random-functions-in-numpy-random>`_ have a stricter version-to-version
+The legacy `RandomState` and the :ref:`associated convenience functions
+<functions-in-numpy-random>` have a stricter version-to-version
 compatibility guarantee. For reasons outlined in :ref:`NEP 19 <NEP19>`, we had made
 stronger promises about their version-to-version stability early in NumPy's
 development. There are still some limited use cases for this kind of
