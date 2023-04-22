@@ -7,210 +7,124 @@
 Random sampling (:mod:`numpy.random`)
 =====================================
 
-Numpy's random number routines produce pseudo random numbers using
-combinations of a `BitGenerator` to create sequences and a `Generator`
-to use those sequences to sample from different statistical distributions:
-
-* BitGenerators: Objects that generate random numbers. These are typically
-  unsigned integer words filled with sequences of either 32 or 64 random bits.
-* Generators: Objects that transform sequences of random bits from a
-  BitGenerator into sequences of numbers that follow a specific probability
-  distribution (such as uniform, Normal or Binomial) within a specified
-  interval.
-
-Since Numpy version 1.17.0 the Generator can be initialized with a
-number of different BitGenerators. It exposes many different probability
-distributions. See `NEP 19 <https://www.numpy.org/neps/
-nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
-routines. The legacy `RandomState` random number routines are still
-available, but limited to a single BitGenerator. See :ref:`new-or-different` 
-for a complete list of improvements and differences from the legacy
-``RandomState``.
-
-For convenience and backward compatibility, a single `RandomState`
-instance's methods are imported into the numpy.random namespace, see
-:ref:`legacy` for the complete list.
-
 .. _random-quick-start:
 
 Quick Start
 -----------
 
-Call `default_rng` to get a new instance of a `Generator`, then call its
-methods to obtain samples from different distributions.  By default,
-`Generator` uses bits provided by `PCG64` which has better statistical
-properties than the legacy `MT19937` used in `RandomState`.
+The :mod:`numpy.random` module implements pseudo-random number generators
+(PRNGs or RNGs, for short) with the ability to draw samples from a variety of
+probability distributions. In general, users will create a `Generator` instance
+with `default_rng` and call the various methods on it to obtain samples from
+different distributions.
 
-.. code-block:: python
+::
 
-  # Do this (new version)
-  from numpy.random import default_rng
-  rng = default_rng()
-  vals = rng.standard_normal(10)
-  more_vals = rng.standard_normal(10)
+  >>> import numpy as np
+  >>> rng = np.random.default_rng()
+  # Generate one random float uniformly distributed over the range [0, 1)
+  >>> rng.random()  #doctest: +SKIP
+  0.06369197489564249  # may vary
+  # Generate an array of 10 numbers according to a unit Gaussian distribution.
+  >>> rng.standard_normal(10)  #doctest: +SKIP
+  array([-0.31018314, -1.8922078 , -0.3628523 , -0.63526532,  0.43181166,  # may vary
+          0.51640373,  1.25693945,  0.07779185,  0.84090247, -2.13406828])
+  # Generate an array of 5 integers uniformly over the range [0, 10).
+  >>> rng.integers(low=0, high=10, size=5)  #doctest: +SKIP
+  array([8, 7, 6, 2, 0])  # may vary
 
-  # instead of this (legacy version)
-  from numpy import random
-  vals = random.standard_normal(10)
-  more_vals = random.standard_normal(10)
+Our RNGs are deterministic sequences and can be reproduced by specifying a seed integer to
+derive its initial state. By default, with no seed provided, `default_rng` will create
+seed the RNG from nondeterministic data from the operating system and therefore
+generate different numbers each time. The pseudo-random sequences will be
+independent for all practical purposes, at least those purposes for which our
+pseudo-randomness was good for in the first place.
 
-`Generator` can be used as a replacement for `RandomState`. Both class
-instances hold an internal `BitGenerator` instance to provide the bit
-stream, it is accessible as ``gen.bit_generator``. Some long-overdue API
-cleanup means that legacy and compatibility methods have been removed from
-`Generator`
+::
 
-=================== ============== ============
-`RandomState`       `Generator`    Notes
-------------------- -------------- ------------
-``random_sample``,  ``random``     Compatible with `random.random`
-``rand``
-------------------- -------------- ------------
-``randint``,        ``integers``   Add an ``endpoint`` kwarg
-``random_integers``
-------------------- -------------- ------------
-``tomaxint``        removed        Use ``integers(0, np.iinfo(np.int_).max,``
-                                   ``endpoint=False)``
-------------------- -------------- ------------
-``seed``            removed        Use `SeedSequence.spawn`
-=================== ============== ============
+    >>> rng1 = np.random.default_rng()
+    >>> rng1.random()  #doctest: +SKIP
+    0.6596288841243357  # may vary
+    >>> rng2 = np.random.default_rng()
+    >>> rng2.random()  #doctest: +SKIP
+    0.11885628817151628  # may vary
 
-See :ref:`new-or-different` for more information.
-
-Something like the following code can be used to support both ``RandomState``
-and ``Generator``, with the understanding that the interfaces are slightly
-different
-
-.. code-block:: python
-
-    try:
-        rng_integers = rng.integers
-    except AttributeError:
-        rng_integers = rng.randint
-    a = rng_integers(1000)
-
-Seeds can be passed to any of the BitGenerators. The provided value is mixed
-via `SeedSequence` to spread a possible sequence of seeds across a wider
-range of initialization states for the BitGenerator. Here `PCG64` is used and
-is wrapped with a `Generator`.
-
-.. code-block:: python
-
-  from numpy.random import Generator, PCG64
-  rng = Generator(PCG64(12345))
-  rng.standard_normal()
-  
-Here we use `default_rng` to create an instance of `Generator` to generate a 
-random float:
- 
->>> import numpy as np
->>> rng = np.random.default_rng(12345)
->>> print(rng)
-Generator(PCG64)
->>> rfloat = rng.random()
->>> rfloat
-0.22733602246716966
->>> type(rfloat)
-<class 'float'>
- 
-Here we use `default_rng` to create an instance of `Generator` to generate 3 
-random integers between 0 (inclusive) and 10 (exclusive):
-    
->>> import numpy as np
->>> rng = np.random.default_rng(12345)
->>> rints = rng.integers(low=0, high=10, size=3)
->>> rints
-array([6, 2, 7])
->>> type(rints[0])
-<class 'numpy.int64'> 
-
-Introduction
-------------
-The new infrastructure takes a different approach to producing random numbers
-from the `RandomState` object.  Random number generation is separated into
-two components, a bit generator and a random generator.
-
-The `BitGenerator` has a limited set of responsibilities. It manages state
-and provides functions to produce random doubles and random unsigned 32- and
-64-bit values.
-
-The `random generator <Generator>` takes the
-bit generator-provided stream and transforms them into more useful
-distributions, e.g., simulated normal random values. This structure allows
-alternative bit generators to be used with little code duplication.
-
-The `Generator` is the user-facing object that is nearly identical to the
-legacy `RandomState`. It accepts a bit generator instance as an argument.
-The default is currently `PCG64` but this may change in future versions. 
-As a convenience NumPy  provides the `default_rng` function to hide these 
-details:
-  
->>> from numpy.random import default_rng
->>> rng = default_rng(12345)
->>> print(rng)
-Generator(PCG64)
->>> print(rng.random())
-0.22733602246716966
-  
-One can also instantiate `Generator` directly with a `BitGenerator` instance.
-
-To use the default `PCG64` bit generator, one can instantiate it directly and 
-pass it to `Generator`:
-
->>> from numpy.random import Generator, PCG64
->>> rng = Generator(PCG64(12345))
->>> print(rng)
-Generator(PCG64)
-
-Similarly to use the older `MT19937` bit generator (not recommended), one can
-instantiate it directly and pass it to `Generator`:
-
->>> from numpy.random import Generator, MT19937
->>> rng = Generator(MT19937(12345))
->>> print(rng)
-Generator(MT19937)
-
-What's New or Different
-~~~~~~~~~~~~~~~~~~~~~~~
 .. warning::
 
-  The Box-Muller method used to produce NumPy's normals is no longer available
-  in `Generator`.  It is not possible to reproduce the exact random
-  values using Generator for the normal distribution or any other
-  distribution that relies on the normal such as the `RandomState.gamma` or
-  `RandomState.standard_t`. If you require bitwise backward compatible
-  streams, use `RandomState`.
+  The pseudo-random number generators implemented in this module are designed
+  for statistical modeling and simulation. They are not suitable for security
+  or cryptographic purposes. See the :py:mod:`secrets` module from the
+  standard library for such use cases.
 
-* The Generator's normal, exponential and gamma functions use 256-step Ziggurat
-  methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
-  implementations.
-* Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
-  to produce either single or double precision uniform random variables for
-  select distributions
-* Optional ``out`` argument that allows existing arrays to be filled for
-  select distributions
-* All BitGenerators can produce doubles, uint64s and uint32s via CTypes
-  (`PCG64.ctypes`) and CFFI (`PCG64.cffi`). This allows the bit generators
-  to be used in numba.
-* The bit generators can be used in downstream projects via
-  :ref:`Cython <random_cython>`.
-* `Generator.integers` is now the canonical way to generate integer
-  random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only available through the legacy `RandomState`.
-  The ``endpoint`` keyword can be used to specify open or closed intervals.
-  This replaces both ``randint`` and the deprecated ``random_integers``.
-* `Generator.random` is now the canonical way to generate floating-point
-  random numbers, which replaces `RandomState.random_sample`,
-  `RandomState.sample`, and `RandomState.ranf`. This is consistent with
-  Python's `random.random`.
-* All BitGenerators in numpy use `SeedSequence` to convert seeds into
-  initialized states.
-* The addition of an ``axis`` keyword argument to methods such as 
-  `Generator.choice`, `Generator.permutation`,  and `Generator.shuffle` 
-  improves support for sampling from and shuffling multi-dimensional arrays.
+Seeds should be large positive integers. `default_rng` can take positive
+integers of any size. We recommend using very large, unique numbers to ensure
+that your seed is different from anyone else's. This is good practice to ensure
+that your results are statistically independent from theirs unless you are
+intentionally *trying* to reproduce their result. A convenient way to get
+such a seed number is to use :py:func:`secrets.randbits` to get an
+arbitrary 128-bit integer.
 
-See :ref:`new-or-different` for a complete list of improvements and
-differences from the traditional ``Randomstate``.
+::
+
+    >>> import secrets
+    >>> import numpy as np
+    >>> secrets.randbits(128)  #doctest: +SKIP
+    122807528840384100672342137672332424406  # may vary
+    >>> rng1 = np.random.default_rng(122807528840384100672342137672332424406)
+    >>> rng1.random()
+    0.5363922081269535
+    >>> rng2 = np.random.default_rng(122807528840384100672342137672332424406)
+    >>> rng2.random()
+    0.5363922081269535
+
+See the documentation on `default_rng` and `SeedSequence` for more advanced
+options for controlling the seed in specialized scenarios.
+
+`Generator` and its associated infrastructure was introduced in NumPy version
+1.17.0. There is still a lot of code that uses the older `RandomState` and the
+functions in `numpy.random`. While there are no plans to remove them at this
+time, we do recommend transitioning to `Generator` as you can. The algorithms
+are faster, more flexible, and will receive more improvements in the future.
+For the most part, `Generator` can be used as a replacement for `RandomState`.
+See :ref:`legacy` for information on the legacy infrastructure,
+:ref:`new-or-different` for information on transitioning, and :ref:`NEP 19
+<NEP19>` for some of the reasoning for the transition.
+
+Design
+------
+
+Users primarily interact with `Generator` instances. Each `Generator` instance
+owns a `BitGenerator` instance that implements the core RNG algorithm. The
+`BitGenerator` has a limited set of responsibilities. It manages state and
+provides functions to produce random doubles and random unsigned 32- and 64-bit
+values.
+
+The `Generator` takes the bit generator-provided stream and transforms them
+into more useful distributions, e.g., simulated normal random values. This
+structure allows alternative bit generators to be used with little code
+duplication.
+
+NumPy implements several different `BitGenerator` classes implementing
+different RNG algorithms. `default_rng` currently uses `~PCG64` as the
+default `BitGenerator`. It has better statistical properties and performance
+than the `~MT19937` algorithm used in the legacy `RandomState`. See
+:ref:`random-bit-generators` for more details on the supported BitGenerators.
+
+`default_rng` and BitGenerators delegate the conversion of seeds into RNG
+states to `SeedSequence` internally. `SeedSequence` implements a sophisticated
+algorithm that intermediates between the user's input and the internal
+implementation details of each `BitGenerator` algorithm, each of which can
+require different amounts of bits for its state. Importantly, it lets you use
+arbitrary-sized integers and arbitrary sequences of such integers to mix
+together into the RNG state. This is a useful primitive for constructing
+a :ref:`flexible pattern for parallel RNG streams <seedsequence-spawn>`.
+
+For backward compatibility, we still maintain the legacy `RandomState` class.
+It continues to use the `~MT19937` algorithm by default, and old seeds continue
+to reproduce the same results. The convenience :ref:`functions-in-numpy-random`
+are still aliases to the methods on a single global `RandomState` instance. See
+:ref:`legacy` for the complete details. See :ref:`new-or-different` for
+a detailed comparison between `Generator` and `RandomState`.
 
 Parallel Generation
 ~~~~~~~~~~~~~~~~~~~
@@ -235,6 +149,7 @@ Concepts
    Legacy Generator (RandomState) <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
    Upgrading PCG64 with PCG64DXSM <upgrading-pcg64>
+   compatibility
 
 Features
 --------
