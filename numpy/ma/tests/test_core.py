@@ -374,6 +374,24 @@ class TestMaskedArray:
         assert_equal(s1, s2)
         assert_(x1[1:1].shape == (0,))
 
+    def test_setitem_no_warning(self):
+        # Setitem shouldn't warn, because the assignment might be masked
+        # and warning for a masked assignment is weird (see gh-23000)
+        # (When the value is masked, otherwise a warning would be acceptable
+        # but is not given currently.)
+        x = np.ma.arange(60).reshape((6, 10))
+        index = (slice(1, 5, 2), [7, 5])
+        value = np.ma.masked_all((2, 2))
+        value._data[...] = np.inf  # not a valid integer...
+        x[index] = value
+        # The masked scalar is special cased, but test anyway (it's NaN):
+        x[...] = np.ma.masked
+        # Finally, a large value that cannot be cast to the float32 `x`
+        x = np.ma.arange(3., dtype=np.float32)
+        value = np.ma.array([2e234, 1, 1], mask=[True, False, False])
+        x[...] = value
+        x[[0, 1, 2]] = value
+
     @suppress_copy_mask_on_assignment
     def test_copy(self):
         # Tests of some subtle points of copying and sizing.
