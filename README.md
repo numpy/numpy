@@ -108,7 +108,7 @@ If you’re unsure where to start, consider the following:
     - submit a pull request with a link to the issue (gh-XXXX)
         - document the fix, what is working, and what is not working 
 - Documentation fixes:  
-    - verify the documentation still build correctly
+    - verify the documentation still builds correctly
     - spell check changes
 
 If you have questions about a bug or issue, you can ask on the mailing list or here, on GitHub, by opening a new issue or leaving a comment on a relevant issue that is already open.
