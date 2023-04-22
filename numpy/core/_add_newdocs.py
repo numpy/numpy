@@ -1347,7 +1347,11 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     sep : str, optional
         The string separating numbers in the data; extra whitespace between
         elements is also ignored.
-
+    no_whitespace : Boolean, optional
+        Indicates whether whitespace should be interpreted as -1 or as nothing.
+        If this is False (the default value), whitespace will be returned as -1.
+        Else it wont have a value at all.
+        
         .. deprecated:: 1.14
             Passing ``sep=''``, the default, is deprecated since it will
             trigger the deprecated binary mode of this function. This mode
