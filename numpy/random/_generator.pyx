@@ -398,11 +398,17 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.beta(0.5, 0.5, 3) // Scalar values for \\alpha and \\beta, size = 3, results in list with 3 samples from beta distribution
-        array([0.07092512, 0.59868941, 0.21869789])
+        Scalar values for \\alpha and \\beta, size = 3, results
+        in list with 3 samples from beta distribution
 
-        Note the row sublists and column sublists for \\alpha and \\beta respectively below
-        >>> np.random.beta([[0.5], [0.25], [0.75]], [[0.5, 0.25]]) // Vector values for \\alpha and \\beta, results in 3 * 2 ndarray with singular samples for each pairwise combination of \\alpha and \\beta
+        >>> np.random.beta(0.5, 0.5, 3)
+        array([0.07092512, 0.59868941, 0.21869789])
+        Note the row sublists and column sublists for \\alpha
+        and \\beta respectively below
+        Vector values for \\alpha and \\beta, results in 3 * 2 ndarray
+        with singular samples for each pairwise combination
+        of \\alpha and \\beta
+        >>> np.random.beta([[0.5], [0.25], [0.75]], [[0.5, 0.25]])
         array([[6.26304645e-01, 3.57283854e-02],
                 [1.40768012e-02, 1.72984613e-05],
                 [4.63162592e-01, 3.38723747e-01]])
