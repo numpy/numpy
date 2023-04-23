@@ -204,7 +204,11 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
     r"""
     A unicode string.
 
-    When used in arrays, this type strips trailing null codepoints.
+    This type strips trailing null codepoints.
+
+    >>> s = np.str_("abc\x00")
+    >>> s
+    'abc'
 
     Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
     contents as UCS4:
