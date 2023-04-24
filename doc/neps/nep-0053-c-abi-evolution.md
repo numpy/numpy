@@ -98,8 +98,11 @@ Briefly, we will allow users to use a definition like::
 
 to select the version they wish to compile for (lowest version to be
 compatible with).
-This will default to an old version that should cover most or all use-cases.
-The version will be chosen to always be compatible with :ref:`NEP 29 <NEP29>`.
+By default the backwards compatibility will be such that the resulting binary
+is compatible with the oldest NumPy version which supports the same
+version of Python: NumPy 1.19.x was the first to support Python 3.9 and
+NumPy 1.25 supports Python 3.9 or greater, so NumPy 1.25 defaults to 1.19
+compatibility.
 Thus, users of *new* API may be required to add the define,
 but users of who want to be compatible with older versions need not do
 anything unless they wish to have exceptionally long compatibility.
