@@ -193,9 +193,6 @@ def get_build_overrides():
     from numpy._utils import _pep440
 
     def try_compile(compiler, file, flags = [], verbose=False):
-        # To bypass trapping warnings by Travis CI
-        if getattr(compiler, 'compiler_type', '') == 'unix':
-            flags = ['-Werror'] + flags
         bk_ver = getattr(compiler, 'verbose', False)
         compiler.verbose = verbose
         try:
@@ -270,7 +267,7 @@ def get_build_overrides():
             constexpr bool test_fold = (... && std::is_const_v<T>);
             int main()
             {
-                if constexpr (test_fold<int, const int>) {
+                if (test_fold<int, const int>) {
                     return 0;
                 }
                 else {
