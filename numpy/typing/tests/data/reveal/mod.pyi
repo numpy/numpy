@@ -70,45 +70,41 @@ reveal_type(divmod(AR_b, b_))  # E: ndarray[Any, dtype[{int8}]], ndarray[Any, dt
 # int
 
 reveal_type(i8 % b)  # E: {int64}
-reveal_type(i8 % i)  # E: {int64}
 reveal_type(i8 % f)  # E: {float64}
 reveal_type(i8 % i8)  # E: {int64}
 reveal_type(i8 % f8)  # E: {float64}
-reveal_type(i4 % i8)  # E: {int64}
-reveal_type(i4 % f8)  # E: {float64}
+reveal_type(i4 % i8)  # E: signedinteger[Union[_32Bit, _64Bit]]
+reveal_type(i4 % f8)  # E: floating[Union[_64Bit, _32Bit]]
 reveal_type(i4 % i4)  # E: {int32}
 reveal_type(i4 % f4)  # E: {float32}
 reveal_type(i8 % AR_b)  # E: ndarray[Any, dtype[signedinteger[Any]]]
 
 reveal_type(divmod(i8, b))  # E: Tuple[{int64}, {int64}]
-reveal_type(divmod(i8, i))  # E: Tuple[{int64}, {int64}]
 reveal_type(divmod(i8, f))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(i8, i8))  # E: Tuple[{int64}, {int64}]
 reveal_type(divmod(i8, f8))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(i8, i4))  # E: Tuple[{int64}, {int64}]
-reveal_type(divmod(i8, f4))  # E: Tuple[{float64}, {float64}]
+reveal_type(divmod(i8, i4))  # E: Tuple[signedinteger[Union[_64Bit, _32Bit]], signedinteger[Union[_64Bit, _32Bit]]]
+reveal_type(divmod(i8, f4))  # E: Tuple[floating[Union[_32Bit, _64Bit]], floating[Union[_32Bit, _64Bit]]]
 reveal_type(divmod(i4, i4))  # E: Tuple[{int32}, {int32}]
 reveal_type(divmod(i4, f4))  # E: Tuple[{float32}, {float32}]
 reveal_type(divmod(i8, AR_b))  # E: Tuple[ndarray[Any, dtype[signedinteger[Any]]], ndarray[Any, dtype[signedinteger[Any]]]]
 
 reveal_type(b % i8)  # E: {int64}
-reveal_type(i % i8)  # E: {int64}
 reveal_type(f % i8)  # E: {float64}
 reveal_type(i8 % i8)  # E: {int64}
 reveal_type(f8 % i8)  # E: {float64}
-reveal_type(i8 % i4)  # E: {int64}
-reveal_type(f8 % i4)  # E: {float64}
+reveal_type(i8 % i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
+reveal_type(f8 % i4)  # E: floating[Union[_64Bit, _32Bit]]
 reveal_type(i4 % i4)  # E: {int32}
 reveal_type(f4 % i4)  # E: {float32}
 reveal_type(AR_b % i8)  # E: ndarray[Any, dtype[signedinteger[Any]]]
 
 reveal_type(divmod(b, i8))  # E: Tuple[{int64}, {int64}]
-reveal_type(divmod(i, i8))  # E: Tuple[{int64}, {int64}]
 reveal_type(divmod(f, i8))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(i8, i8))  # E: Tuple[{int64}, {int64}]
 reveal_type(divmod(f8, i8))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(i4, i8))  # E: Tuple[{int64}, {int64}]
-reveal_type(divmod(f4, i8))  # E: Tuple[{float64}, {float64}]
+reveal_type(divmod(i4, i8))  # E: Tuple[signedinteger[Union[_32Bit, _64Bit]], signedinteger[Union[_32Bit, _64Bit]]]
+reveal_type(divmod(f4, i8))  # E: Tuple[floating[Union[_32Bit, _64Bit]], floating[Union[_32Bit, _64Bit]]]
 reveal_type(divmod(i4, i4))  # E: Tuple[{int32}, {int32}]
 reveal_type(divmod(f4, i4))  # E: Tuple[{float32}, {float32}]
 reveal_type(divmod(AR_b, i8))  # E: Tuple[ndarray[Any, dtype[signedinteger[Any]]], ndarray[Any, dtype[signedinteger[Any]]]]
@@ -116,22 +112,19 @@ reveal_type(divmod(AR_b, i8))  # E: Tuple[ndarray[Any, dtype[signedinteger[Any]]
 # float
 
 reveal_type(f8 % b)  # E: {float64}
-reveal_type(f8 % i)  # E: {float64}
 reveal_type(f8 % f)  # E: {float64}
-reveal_type(i8 % f4)  # E: {float64}
+reveal_type(i8 % f4)  # E: floating[Union[_32Bit, _64Bit]]
 reveal_type(f4 % f4)  # E: {float32}
 reveal_type(f8 % AR_b)  # E: ndarray[Any, dtype[floating[Any]]]
 
 reveal_type(divmod(f8, b))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(f8, i))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(f8, f))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(f8, f8))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(f8, f4))  # E: Tuple[{float64}, {float64}]
+reveal_type(divmod(f8, f4))  # E: Tuple[floating[Union[_64Bit, _32Bit]], floating[Union[_64Bit, _32Bit]]]
 reveal_type(divmod(f4, f4))  # E: Tuple[{float32}, {float32}]
 reveal_type(divmod(f8, AR_b))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
 
 reveal_type(b % f8)  # E: {float64}
-reveal_type(i % f8)  # E: {float64}
 reveal_type(f % f8)  # E: {float64}
 reveal_type(f8 % f8)  # E: {float64}
 reveal_type(f8 % f8)  # E: {float64}
@@ -139,9 +132,8 @@ reveal_type(f4 % f4)  # E: {float32}
 reveal_type(AR_b % f8)  # E: ndarray[Any, dtype[floating[Any]]]
 
 reveal_type(divmod(b, f8))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(i, f8))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(f, f8))  # E: Tuple[{float64}, {float64}]
 reveal_type(divmod(f8, f8))  # E: Tuple[{float64}, {float64}]
-reveal_type(divmod(f4, f8))  # E: Tuple[{float64}, {float64}]
+reveal_type(divmod(f4, f8))  # E: Tuple[floating[Union[_32Bit, _64Bit]], floating[Union[_32Bit, _64Bit]]]
 reveal_type(divmod(f4, f4))  # E: Tuple[{float32}, {float32}]
 reveal_type(divmod(AR_b, f8))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
