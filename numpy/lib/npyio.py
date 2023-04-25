@@ -262,6 +262,9 @@ class NpzFile(Mapping):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
+    def __contains__(self, key):
+        return (key in self._files or key in self.files)
+
     def __repr__(self):
         # Get filename or default to `object`
         if isinstance(self.fid, str):
