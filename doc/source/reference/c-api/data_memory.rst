@@ -160,8 +160,8 @@ A better technique would be to use a ``PyCapsule`` as a base object:
     }
     ...
 
-Memory Allocation
------------------
+Example of memory tracing with ``np.lib.tracemalloc_domain``
+------------------------------------------------------------
 
 Note that since Python 3.6 (or newer), the builtin ``tracemalloc`` module can be used to
 track allocations inside NumPy. NumPy places its CPU memory allocations into the 
