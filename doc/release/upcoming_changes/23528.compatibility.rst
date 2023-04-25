@@ -3,7 +3,8 @@ Binaries build against the NumPy C API now with older NumPy versions
 Starting with NumPy 1.25 when including NumPy headers, NumPy now
 defaults to exposing a backwards compatible API.
 This means that by default binaries such as wheels build against
-NumPy 1.25 will also work with NumPy 1.17.
+NumPy 1.25 will also work with NumPy 1.16 because it has the same API version
+as NumPy 1.19 which is the oldest NumPy version compatible with Python 3.9.
 
 You can customize this behavior using::
 
