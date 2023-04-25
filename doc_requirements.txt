@@ -7,7 +7,7 @@ ipython!=8.1.0
 scipy
 matplotlib
 pandas
-breathe
+breathe>4.33.0
 
 # needed to build release notes
 towncrier
