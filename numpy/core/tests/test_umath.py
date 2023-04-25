@@ -1450,7 +1450,7 @@ class TestSpecialFloats:
     @pytest.mark.parametrize('stride', [-1, 1, 2, 4, 5])
     def test_sincos_overlaps(self, callable, dtype, stride):
         N = 100
-        M = np.int_(N / abs(stride))
+        M = N // abs(stride)
         rng = np.random.default_rng(42)
         x = rng.standard_normal(N, dtype)
         y = callable(x[::stride])
