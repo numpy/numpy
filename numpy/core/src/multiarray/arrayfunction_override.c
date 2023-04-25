@@ -474,13 +474,13 @@ fix_name_if_typeerror(PyArray_ArrayFunctionDispatcherObject *self)
     }
 
     Py_ssize_t cmp = PyUnicode_Tailmatch(
-        message, self->dispatcher_name, 0, -1, 0);
+            message, self->dispatcher_name, 0, -1, -1);
     if (cmp <= 0) {
         Py_DECREF(message);
         goto restore_error;
     }
     Py_SETREF(message, PyUnicode_Replace(
-        message, self->dispatcher_name, self->public_name, 1));
+            message, self->dispatcher_name, self->public_name, 1));
     if (message == NULL) {
         goto restore_error;
     }
