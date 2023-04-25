@@ -359,6 +359,17 @@ class TestArrayFunctionImplementation:
                 TypeError, "no implementation found for 'my.func'"):
             func(MyArray())
 
+    @pytest.mark.parametrize("name", ["concatenate", "mean", "asarray"])
+    def test_signature_error_message_simple(self, name):
+        func = getattr(np, name)
+        try:
+            # all of these functions need an argument:
+            func()
+        except TypeError as e:
+            exc = e
+
+        assert exc.args[0].startswith(f"{name}()")
+
     def test_signature_error_message(self):
         # The lambda function will be named "<lambda>", but the TypeError
         # should show the name as "func"
@@ -370,7 +381,7 @@ class TestArrayFunctionImplementation:
             pass
 
         try:
-            func(bad_arg=3)
+            func._implementation(bad_arg=3)
         except TypeError as e:
             expected_exception = e
 
