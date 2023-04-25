@@ -42,32 +42,37 @@ simd_range_reduction_@sfx@(npyv_@sfx@ x, npyv_@sfx@ y, npyv_@sfx@ c1, npyv_@sfx@
 #endif
 /**end repeat**/
 
-#if NPY_SIMD_F64
 /**begin repeat
- *  #op = cos, sin#
+ *  #op = cos, sin, tanf#
+ *  #scalar = double, double, float#
+ *  #sfx = f64, f64, f32#
+ *  #CHK = F64, F64, RINT_CVT#
  */
+#if NPY_SIMD_@CHK@
 #if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
-NPY_FINLINE npyv_f64
+NPY_FINLINE npyv_@sfx@
 #else
-NPY_NOINLINE npyv_f64
+NPY_NOINLINE npyv_@sfx@
 #endif
-simd_@op@_scalar_f64(npyv_f64 out, npy_uint64 cmp_bits)
+simd_@op@_scalar_@sfx@(npyv_@sfx@ out, npy_uint64 cmp_bits)
 {
     // MSVC doesn't compile with direct vector access, so we copy it here
     // as we have no npyv_get_lane/npyv_set_lane intrinsics
-    npy_double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) out_copy[npyv_nlanes_f64];
-    npyv_storea_f64(out_copy, out);
+    npy_@scalar@ NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) out_copy[npyv_nlanes_@sfx@];
+    npyv_storea_@sfx@(out_copy, out);
 
-    for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
+    for (unsigned i = 0; i < npyv_nlanes_@sfx@; ++i) {
         if (cmp_bits & (1 << i)) {
             out_copy[i] = npy_@op@(out_copy[i]);
         }
     }
 
-    return npyv_loada_f64(out_copy);
+    return npyv_loada_@sfx@(out_copy);
 }
+#endif
 /**end repeat**/
 
+#if NPY_SIMD_F64
 #if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
 NPY_FINLINE npyv_f64
 #else
@@ -90,7 +95,7 @@ simd_tan_scalar_f64(npyv_f64 out)
    __v_tan(0x1.4457047ef78d8p+20) got -0x1.f6ccd8ecf7dedp+37
 				 want -0x1.f6ccd8ecf7deap+37.   */
 NPY_FINLINE
-npyv_f64 simd_inner_tan(npyv_f64 x) {
+npyv_f64 simd_inner_tan_f64(npyv_f64 x) {
     const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
     const npyv_u64 range_val = npyv_setall_u64(0x4160000000000000);
     const npyv_u64 tiny_bound = npyv_setall_u64(0x3e50000000000000);
@@ -268,7 +273,7 @@ simd_tan_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_i
             x_in = npyv_loadn_tillz_f64(src, ssrc, len);
         }
 
-        out = simd_inner_tan(x_in);
+        out = simd_inner_tan_f64(x_in);
 
         if (sdst == 1) {
             npyv_store_till_f64(dst, len, out);
@@ -330,6 +335,135 @@ simd_@op@_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 #endif // NPY_SIMD_F64
 
 #if NPY_SIMD_F32
+#if NPY_SIMD_RINT_CVT
+/* Use a full Estrin scheme to evaluate polynomial.  */
+NPY_FINLINE npyv_f32
+simd_tan_eval_poly_f32(npyv_f32 z)
+{
+    const npyv_u32 tiny_bound = npyv_setall_u32(0x30000000);
+    const float poly[6] = {
+        /* Coefficients generated using:
+        poly = fpminimax((tan(sqrt(x))-sqrt(x))/x^(3/2), deg, [|single ...|], [a*a;b*b]);
+        optimize relative error
+        final prec : 23 bits
+        deg : 5
+        a : 0x1p-126 ^ 2
+        b : ((pi) / 0x1p2) ^ 2
+        dirty rel error: 0x1.f7c2e4p-25
+        dirty abs error: 0x1.f7c2ecp-25.  */
+        0x1.55555p-2,
+        0x1.11166p-3,
+        0x1.b88a78p-5,
+        0x1.7b5756p-6,
+        0x1.4ef4cep-8,
+        0x1.0e1e74p-7
+    };
+
+    npyv_f32 z2 = npyv_mul_f32(z, z);
+    /* Tiny z (<= 0x1p-31) will underflow when calculating z^4. If fp exceptions
+        are to be triggered correctly, sidestep this by fixing such lanes to 0.  */
+    npyv_b32 will_uflow = npyv_cmple_u32(npyv_reinterpret_u32_f32(npyv_abs_f32(z)), tiny_bound);
+    z2 = npyv_select_f32(will_uflow, npyv_setall_f32(0), z2);
+    npyv_f32 z4 = npyv_mul_f32(z2, z2);
+    return simd_estrin_5_f32(z, z2, z4, poly, 0);
+}
+
+
+/* Fast implementation of tanf.
+   Maximum error is 3.45 ULP */
+NPY_FINLINE
+npyv_f32 simd_inner_tan_f32(npyv_f32 x)
+{
+    const npyv_u32 range_val = npyv_setall_u32(0x47000000); /* asuint32(0x1p15f).  */
+    const npyv_u32 tiny_bound = npyv_setall_u32(0x30000000); /* asuint32 (0x1p-31).  */
+
+    const npyv_f32 neg_pi2_1 = npyv_setall_f32(-0x1.921fb6p+0f);
+    const npyv_f32 neg_pi2_2 = npyv_setall_f32(0x1.777a5cp-25f);
+    const npyv_f32 neg_pi2_3 = npyv_setall_f32(0x1.ee59dap-50f);
+    const npyv_f32 inv_pi2 = npyv_setall_f32(0x1.45f306p-1f);
+
+    const npyv_f32 shift = npyv_setall_f32(0x1.8p+23f);
+
+    npyv_f32 x_in = x;
+    npyv_u32 iax = npyv_reinterpret_u32_f32(npyv_abs_f32(x));
+
+    /* iax >= RangeVal means x, if not inf or NaN, is too large to perform fast
+        regression. If fp exceptions are to be triggered correctly, also special-case tiny
+        input, as this will load to overflow later. Fix any special lanes to 1 to
+        prevent any exceptions being triggered.  */
+    npyv_b32 special = npyv_cmpgt_u32(npyv_sub_u32(iax, tiny_bound), npyv_sub_u32(range_val, tiny_bound));
+    x = npyv_select_f32(special, npyv_setall_f32(1.0f), x);
+
+    /* n = rint(x/(pi/2)).  */
+    npyv_f32 q = npyv_muladd_f32(inv_pi2, x, shift);
+    npyv_f32 n = npyv_sub_f32(q, shift);
+
+    /* n is representable as a signed integer, simply convert it.  */
+    npyv_s32 in = npyv_rint_s32_f32(n);
+    /* Determine if x lives in an interval, where |tan(x)| grows to infinity.  */
+    npyv_s32 alt = npyv_and_s32(in, npyv_setall_s32(1));
+    npyv_b32 pred_alt = npyv_cmpneq_s32(alt, npyv_setall_s32(0));
+
+    /* r = x - n * (pi/2)  (range reduction into -pi./4 .. pi/4).  */
+    npyv_f32 r = simd_range_reduction_f32(x, n, neg_pi2_1, neg_pi2_2, neg_pi2_3);
+
+    /* If x lives in an interval, where |tan(x)|
+        - is finite, then use a polynomial approximation of the form
+        tan(r) ~ r + r^3 * P(r^2) = r + r * r^2 * P(r^2).
+        - grows to infinity then use symmetries of tangent and the identity
+        tan(r) = cotan(pi/2 - r) to express tan(x) as 1/tan(-r). Finally, use
+        the same polynomial approximation of tan as above.  */
+
+    /* Perform additional reduction if required.  */
+    npyv_f32 z = npyv_select_f32(pred_alt, npyv_negative_f32(r), r);
+
+    /* Evaluate polynomial approximation of tangent on [-pi/4, pi/4].  */
+    npyv_f32 z2 = npyv_mul_f32(r, r);
+    npyv_f32 p = simd_tan_eval_poly_f32(z2);
+    npyv_f32 y = npyv_muladd_f32(npyv_mul_f32(z, z2), p, z);
+
+    /* Compute reciprocal and apply if required.  */
+    npyv_f32 inv_y = npyv_div_f32(npyv_setall_f32(1.0f), y);
+    y = npyv_select_f32(pred_alt, inv_y, y);
+
+    /* Fast reduction does not handle the x = -0.0 case well,
+        therefore it is fixed here.  */
+    y = npyv_select_f32(npyv_cmpeq_f32(x, npyv_setall_f32(-0.0)), x, y);
+
+    if (npyv_any_b32(special)) {
+        y = npyv_select_f32(special, x_in, y);
+        return simd_tanf_scalar_f32(y, npyv_tobits_b32(special));
+    }
+    return y;
+}
+
+NPY_FINLINE void
+simd_tan_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
+{
+    const int vstep = npyv_nlanes_f32;
+
+    npyv_f32 out = npyv_zero_f32();
+    npyv_f32 x_in;
+
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        if (ssrc == 1) {
+            x_in = npyv_load_tillz_f32(src, len);
+        } else {
+            x_in = npyv_loadn_tillz_f32(src, ssrc, len);
+        }
+
+        out = simd_inner_tan_f32(x_in);
+
+        if (sdst == 1) {
+            npyv_store_till_f32(dst, len, out);
+        } else {
+            npyv_storen_till_f32(dst, sdst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+#endif
+
 /*
  * Approximate cosine algorithm for x \in [-PI/4, PI/4]
  * Maximum ULP across all 32-bit floats = 0.875
@@ -501,14 +635,19 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
 #endif // NYP_SIMD_FMA3
 
 /**begin repeat
- *  #func = cos, sin, tan#
+ *  #func = cos, sin, tan, tan#
+ *  #pfx = DOUBLE, DOUBLE, DOUBLE, FLOAT#
+ *  #sfx  = f64, f64, f64, f32#
+ *  #check = F64, F64, F64, F32#
+ *  #scalar = double, double, double, float#
+ *  #feature_check = 1, 1, 1, NPY_SIMD_RINT_CVT#
  */
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@pfx@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F64 && NPY_SIMD_FMA3
-    const double *src = (double*)args[0];
-          double *dst = (double*)args[1];
+#if NPY_SIMD_FMA3 && NPY_SIMD_@check@ && @feature_check@
+    const @scalar@ *src = (@scalar@*)args[0];
+          @scalar@ *dst = (@scalar@*)args[1];
     const int lsize = sizeof(src[0]);
     const npy_intp ssrc = steps[0] / lsize;
     const npy_intp sdst = steps[1] / lsize;
@@ -516,18 +655,18 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
     assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
 
     if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
-        !npyv_loadable_stride_f64(ssrc) || !npyv_storable_stride_f64(sdst)
+        !npyv_loadable_stride_@sfx@(ssrc) || !npyv_storable_stride_@sfx@(sdst)
     ) {
         for (; len > 0; --len, src += ssrc, dst += sdst) {
-            simd_@func@_f64(src, 1, dst, 1, 1);
+            simd_@func@_@sfx@(src, 1, dst, 1, 1);
         }
     } else {
-        simd_@func@_f64(src, ssrc, dst, sdst, len);
+        simd_@func@_@sfx@(src, ssrc, dst, sdst, len);
     }
 #else
     UNARY_LOOP {
-        const npy_double in1 = *(npy_double *)ip1;
-        *(npy_double *)op1 = npy_@func@(in1);
+        const npy_@scalar@ in1 = *(npy_@scalar@ *)ip1;
+        *(npy_@scalar@ *)op1 = npy_@func@(in1);
     }
 #endif
 }

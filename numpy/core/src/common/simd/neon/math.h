@@ -303,6 +303,9 @@ NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
     #define npyv_rint_f64 vrndnq_f64
 #endif // NPY_SIMD_F64
 
+#define npyv_rint_s32_f32 vcvtaq_s32_f32
+#define npyv_rint_s64_f64 vcvtaq_s64_f64
+
 // ceil
 #ifdef NPY_HAVE_ASIMD
     #define npyv_ceil_f32 vrndpq_f32

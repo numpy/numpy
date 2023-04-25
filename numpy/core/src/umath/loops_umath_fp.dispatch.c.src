@@ -60,49 +60,6 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
 /**end repeat**/
 
 /**begin repeat
- * #sfx = f32#
- * #func_suffix = f16#
- * #len = 32#
- */
-/**begin repeat1
- * #func = tan#
- * #default_val = 0#
- */
-// Temporary duplicate of the above for f32 tan until it's implemented in NumPy intrinsics
-static void
-simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
-                        npyv_lanetype_@sfx@ *dst, npy_intp sdst, npy_intp len)
-{
-    const int vstep = npyv_nlanes_@sfx@;
-    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
-        npyv_@sfx@ x;
-        #if @default_val@
-            if (ssrc == 1) {
-                x = npyv_load_till_@sfx@(src, len, @default_val@);
-            } else {
-                x = npyv_loadn_till_@sfx@(src, ssrc, len, @default_val@);
-            }
-        #else
-            if (ssrc == 1) {
-                x = npyv_load_tillz_@sfx@(src, len);
-            } else {
-                x = npyv_loadn_tillz_@sfx@(src, ssrc, len);
-            }
-        #endif
-
-        npyv_@sfx@ out = __svml_@func@@func_suffix@(x);
-        if (sdst == 1) {
-            npyv_store_till_@sfx@(dst, len, out);
-        } else {
-            npyv_storen_till_@sfx@(dst, sdst, len, out);
-        }
-    }
-    npyv_cleanup();
-}
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
  * #sfx = f32, f64#
  * #func_suffix = f16, 8#
  */
@@ -218,43 +175,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
         *((npy_half *)op1) = npy_float_to_half(npy_@intrin@f(in1));
     }
 }
-/**end repeat**/
-
-/**begin repeat
- *  #TYPE = FLOAT#
- *  #type = npy_float#
- *  #vsub = f#
- *  #sfx  = f32#
- */
-/**begin repeat1
- *  #func = tan#
- *  #intrin = tan#
- */
-// Temporary duplicate of the above for f32 tan until it's implemented in NumPy intrinsics
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
-(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
-    const @type@ *src = (@type@*)args[0];
-          @type@ *dst = (@type@*)args[1];
-    const int lsize = sizeof(src[0]);
-    const npy_intp ssrc = steps[0] / lsize;
-    const npy_intp sdst = steps[1] / lsize;
-    const npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
-    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
-        npyv_loadable_stride_@sfx@(ssrc) &&
-        npyv_storable_stride_@sfx@(sdst)) {
-        simd_@intrin@_@sfx@(src, ssrc, dst, sdst, len);
-        return;
-    }
-#endif
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = npy_@intrin@@vsub@(in1);
-    }
-}
-/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat

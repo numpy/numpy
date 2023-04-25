@@ -13,6 +13,7 @@
 #endif
 #define NPY_SIMD_BIGENDIAN 0
 #define NPY_SIMD_CMPSIGNAL 1
+#define NPY_SIMD_RINT_CVT 0
 
 typedef __m128i npyv_u8;
 typedef __m128i npyv_s8;

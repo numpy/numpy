@@ -12,6 +12,12 @@
 #define NPY_SIMD_MAXLOAD_STRIDE32  (0x7fffffff / 16)
 #define NPY_SIMD_MAXSTORE_STRIDE32 (0x7fffffff / 16)
 
+#ifdef NPY_HAVE_AVX512DQ
+#define NPY_SIMD_RINT_CVT 1
+#else
+#define NPY_SIMD_RINT_CVT 0
+#endif
+
 typedef __m512i npyv_u8;
 typedef __m512i npyv_s8;
 typedef __m512i npyv_u16;

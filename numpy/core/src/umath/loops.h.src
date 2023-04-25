@@ -338,19 +338,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat**/
 
 /**begin repeat
- *  #TYPE = FLOAT#
- */
-/**begin repeat1
- * #func = tan#
- */
-
-NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
-    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
-
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
  * #func = sin, cos, tan, exp, exp2, log, log2, log10, expm1, log1p, cbrt, arcsin, arccos, arctan, sinh, cosh, tanh, arcsinh, arccosh, arctanh#
  */
 
@@ -380,19 +367,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
  *  #TYPE = FLOAT, DOUBLE#
  */
 /**begin repeat1
- *  #func = sin, cos#
- */
-NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@, (
-    char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
-))
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- *  #TYPE = DOUBLE#
- */
-/**begin repeat1
- *  #func = tan#
+ *  #func = tan, sin, cos#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@, (
     char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)

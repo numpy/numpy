@@ -45,6 +45,8 @@
     #define NPY_SIMD_CMPSIGNAL 1
 #endif
 
+#define NPY_SIMD_RINT_CVT 0
+
 typedef __vector unsigned char      npyv_u8;
 typedef __vector signed char        npyv_s8;
 typedef __vector unsigned short     npyv_u16;

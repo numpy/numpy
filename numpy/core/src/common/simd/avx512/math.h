@@ -292,7 +292,9 @@ NPY_IMPL_AVX512_REDUCE_MINMAX(npy_int,  max_s, max_epi)
 
 // round to nearest integer even
 #define npyv_rint_f32(A) _mm512_roundscale_ps(A, _MM_FROUND_TO_NEAREST_INT)
+#define npyv_rint_s32_f32(A) _mm512_cvt_roundps_epi32(A, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
 #define npyv_rint_f64(A) _mm512_roundscale_pd(A, _MM_FROUND_TO_NEAREST_INT)
+#define npyv_rint_s64_f64(A) _mm512_cvt_roundpd_epi64(A, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
 
 // ceil
 #define npyv_ceil_f32(A) _mm512_roundscale_ps(A, _MM_FROUND_TO_POS_INF)

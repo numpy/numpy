@@ -18,6 +18,12 @@
 #define NPY_SIMD_BIGENDIAN 0
 #define NPY_SIMD_CMPSIGNAL 1
 
+#if __ARM_ARCH >= 8
+#define NPY_SIMD_RINT_CVT 1
+#else
+#define NPY_SIMD_RINT_CVT 0
+#endif
+
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;
 typedef uint16x8_t  npyv_u16;
