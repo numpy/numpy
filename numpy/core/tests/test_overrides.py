@@ -389,6 +389,12 @@ class TestArrayFunctionImplementation:
             func(bad_arg=3)
             raise AssertionError("must fail")
         except TypeError as exc:
+            if exc.args[0].startswith("_dispatcher"):
+                # We replace the qualname currently, but it used `__name__`
+                # (relevant functions have the same name and qualname anyway)
+                pytest.skip("Python version is not using __qualname__ for "
+                            "TypeError formatting.")
+
             assert exc.args == expected_exception.args
 
     @pytest.mark.parametrize("value", [234, "this func is not replaced"])
