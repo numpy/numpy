@@ -485,6 +485,9 @@ fix_name_if_typeerror(PyArray_ArrayFunctionDispatcherObject *self)
         goto restore_error;
     }
     PyErr_SetObject(PyExc_TypeError, message);
+    Py_DECREF(exc);
+    Py_XDECREF(val);
+    Py_XDECREF(tb);
     Py_DECREF(message);
     return;
 
