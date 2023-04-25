@@ -236,7 +236,7 @@ fragments in your commit message:
 
 * ``[skip cirrus]``: skip Cirrus jobs
 
-  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and wheels
+  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
   uploads.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
 
