@@ -1,0 +1,2 @@
+* NumPy now always ignores sequence behavior for an array-like (defining
+  one of the array protocols).  (Deprecation started NumPy 1.20)
