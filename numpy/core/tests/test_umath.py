@@ -1426,23 +1426,36 @@ class TestSpecialFloats:
             np.log(a)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    def test_sincos_values(self):
+    @pytest.mark.parametrize('dtype', ['e', 'f', 'd', 'g'])
+    def test_sincos_values(self, dtype):
         with np.errstate(all='ignore'):
             x = [np.nan, np.nan, np.nan, np.nan]
             y = [np.nan, -np.nan, np.inf, -np.inf]
-            for dt in ['e', 'f', 'd', 'g']:
-                xf = np.array(x, dtype=dt)
-                yf = np.array(y, dtype=dt)
-                assert_equal(np.sin(yf), xf)
-                assert_equal(np.cos(yf), xf)
+            xf = np.array(x, dtype=dtype)
+            yf = np.array(y, dtype=dtype)
+            assert_equal(np.sin(yf), xf)
+            assert_equal(np.cos(yf), xf)
 
-
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize('callable', [np.sin, np.cos])
+    @pytest.mark.parametrize('dtype', ['e', 'f', 'd'])
+    @pytest.mark.parametrize('value', [np.inf, -np.inf])
+    def test_sincos_errors(self, callable, dtype, value):
         with np.errstate(invalid='raise'):
-            for callable in [np.sin, np.cos]:
-                for value in [np.inf, -np.inf]:
-                    for dt in ['e', 'f', 'd']:
-                        assert_raises(FloatingPointError, callable,
-                                np.array([value], dtype=dt))
+            assert_raises(FloatingPointError, callable,
+                np.array([value], dtype=dtype))
+
+    @pytest.mark.parametrize('callable', [np.sin, np.cos])
+    @pytest.mark.parametrize('dtype', ['f', 'd'])
+    @pytest.mark.parametrize('stride', [-1, 1, 2, 4, 5])
+    def test_sincos_overlaps(self, callable, dtype, stride):
+        N = 100
+        M = N // abs(stride)
+        rng = np.random.default_rng(42)
+        x = rng.standard_normal(N, dtype)
+        y = callable(x[::stride])
+        callable(x[::stride], out=x[:M])
+        assert_equal(x[:M], y)
 
     @pytest.mark.parametrize('dt', ['e', 'f', 'd', 'g'])
     def test_sqrt_values(self, dt):

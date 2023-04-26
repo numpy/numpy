@@ -17,14 +17,11 @@
 #include "numpy/arrayscalars.h"
 #include "iterators.h"
 #include "dtypemeta.h"
+#include "refcount.h"
 
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
-
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
-
 
 /*
  * Helper function to clear a strided memory (normally or always contiguous)
@@ -395,7 +392,7 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
     }
 }
 
-static void
+NPY_NO_EXPORT void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {

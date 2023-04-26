@@ -35,7 +35,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install linter requirements
@@ -55,7 +55,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -74,7 +74,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
@@ -128,7 +128,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -144,7 +144,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -160,7 +160,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -176,7 +176,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -192,7 +192,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -208,7 +208,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -226,7 +226,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -248,7 +248,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -266,7 +266,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -282,7 +282,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -302,7 +302,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -321,7 +321,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -337,7 +337,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -409,7 +409,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
@@ -431,7 +431,6 @@ jobs:
       run: sde -icl -- python runtests.py -n -v -- -k test_simd
 
   intel_spr_sde_test:
-    if: ${{ false }}  # disable for now
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
@@ -439,7 +438,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
@@ -456,6 +455,9 @@ jobs:
         export CC=/usr/bin/gcc-12
         export CXX=/usr/bin/g++-12
         python -m pip install -e .
+    - name: Show config
+      run: |
+        python -c "import numpy as np; np.show_config()"
     # Run only a few tests, running everything in an SDE takes a long time
     # Using pytest directly, unable to use python runtests.py -n -t ...
     - name: Run linalg/ufunc/umath tests

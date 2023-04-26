@@ -60,12 +60,16 @@ Here's the short summary, complete TOC links are below:
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork
 
-2. Develop your contribution:
-
-   * Pull the latest changes from upstream::
+   * Pull the latest changes from upstream, including tags::
 
       git checkout main
-      git pull upstream main
+      git pull upstream main --tags
+
+   * Initialize numpy's submodules::
+
+      git submodule update --init
+
+2. Develop your contribution:
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name

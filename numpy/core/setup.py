@@ -669,7 +669,7 @@ def configuration(parent_package='',top_path=None):
                        # join('src', 'npymath', 'ieee754.cpp'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
-                       join('src', 'npymath', 'halffloat.c'),
+                       join('src', 'npymath', 'halffloat.cpp'),
                        ]
 
     config.add_installed_library('npymath',
@@ -727,7 +727,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.h'),
             join('src', 'common', 'npy_cpu_dispatch.h'),
             join('src', 'common', 'simd', 'simd.h'),
-            ]
+            join('src', 'common', 'common.hpp'),
+        ]
 
     common_src = [
             join('src', 'common', 'array_assign.c'),
@@ -1010,9 +1011,6 @@ def configuration(parent_package='',top_path=None):
         svml_objs.sort()
 
     config.add_extension('_multiarray_umath',
-                         # Forcing C language even though we have C++ sources.
-                         # It forces the C linker and don't link C++ runtime.
-                         language = 'c',
                          sources=multiarray_src + umath_src +
                                  common_src +
                                  [generate_config_h,

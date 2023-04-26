@@ -2804,9 +2804,7 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArray_Descr *dtype;
     PyObject *c;
 
-    if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                "only length-1 arrays can be converted to Python scalars");
+    if (check_is_convertible_to_scalar(self) < 0) {
         return NULL;
     }
 
