@@ -60,32 +60,6 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
 /**end repeat**/
 
 /**begin repeat
- * #func = sin, cos#
- */
-static void
-simd_@func@_f64(const double *src, npy_intp ssrc,
-                      double *dst, npy_intp sdst, npy_intp len)
-{
-    const int vstep = npyv_nlanes_f64;
-    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
-        npyv_f64 x;
-        if (ssrc == 1) {
-            x = npyv_load_tillz_f64(src, len);
-        } else {
-            x = npyv_loadn_tillz_f64(src, ssrc, len);
-        }
-        npyv_f64 out = __svml_@func@8(x);
-        if (sdst == 1) {
-            npyv_store_till_f64(dst, len, out);
-        } else {
-            npyv_storen_till_f64(dst, sdst, len, out);
-        }
-    }
-    npyv_cleanup();
-}
-/**end repeat**/
-
-/**begin repeat
  * #sfx = f32, f64#
  * #func_suffix = f16, 8#
  */
@@ -276,32 +250,4 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
     }
 }
 /**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- *  #func = sin, cos#
- */
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
-(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
-    const double *src = (double*)args[0];
-          double *dst = (double*)args[1];
-    const int lsize = sizeof(src[0]);
-    const npy_intp ssrc = steps[0] / lsize;
-    const npy_intp sdst = steps[1] / lsize;
-    const npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
-    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
-        npyv_loadable_stride_f64(ssrc) &&
-        npyv_storable_stride_f64(sdst)) {
-        simd_@func@_f64(src, ssrc, dst, sdst, len);
-        return;
-    }
-#endif
-    UNARY_LOOP {
-        const npy_double in1 = *(npy_double *)ip1;
-        *(npy_double *)op1 = npy_@func@(in1);
-    }
-}
 /**end repeat**/
