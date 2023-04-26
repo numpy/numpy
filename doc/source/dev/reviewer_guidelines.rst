@@ -1,7 +1,7 @@
 .. _reviewer-guidelines:
 
 ===================
-Reviewer Guidelines
+Reviewer guidelines
 ===================
 
 Reviewing open pull requests (PRs) helps move the project forward. We encourage
