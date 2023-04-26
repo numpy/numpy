@@ -437,7 +437,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
             PyArray_BYTES(self) + offset,
             PyArray_FLAGS(self) & ~NPY_ARRAY_F_CONTIGUOUS,
             (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ALLOW_EMPTY_STRING);
     return ret;
 }
 

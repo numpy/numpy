@@ -628,8 +628,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(
         PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base, int zeroed,
-        int allow_emptystring)
+        int flags, PyObject *obj, PyObject *base, _NPY_CREATION_FLAGS cflags)
 {
     PyArrayObject_fields *fa;
     npy_intp nbytes;
@@ -644,45 +643,54 @@ PyArray_NewFromDescr_int(
         return NULL;
     }
 
-    if (descr->subarray) {
-        PyObject *ret;
-        npy_intp newdims[2*NPY_MAXDIMS];
-        npy_intp *newstrides = NULL;
-        memcpy(newdims, dims, nd*sizeof(npy_intp));
-        if (strides) {
-            newstrides = newdims + NPY_MAXDIMS;
-            memcpy(newstrides, strides, nd*sizeof(npy_intp));
-        }
-        nd =_update_descr_and_dimensions(&descr, newdims,
-                                         newstrides, nd);
-        ret = PyArray_NewFromDescr_int(
-                subtype, descr,
-                nd, newdims, newstrides, data,
-                flags, obj, base,
-                zeroed, allow_emptystring);
-        return ret;
-    }
-
-    /* Check datatype element size */
     nbytes = descr->elsize;
-    if (PyDataType_ISUNSIZED(descr)) {
-        if (!PyDataType_ISFLEXIBLE(descr) &&
-            NPY_DT_is_legacy(NPY_DTYPE(descr))) {
-            PyErr_SetString(PyExc_TypeError, "Empty data-type");
-            Py_DECREF(descr);
-            return NULL;
+    /*
+     * Unless explicitly asked not to, we do replace dtypes in some cases.
+     * This mainly means that we never create arrays with a subarray dtype
+     * (unless for internal use when requested).  And neither do we create
+     * S0/U0 arrays in most cases (unless data == NULL so this is probably
+     * a view where growing the dtype would be presumable wrong).
+     */
+    if (!(cflags & _NPY_ARRAY_ENSURE_DTYPE_IDENTITY)) {
+        if (descr->subarray) {
+            PyObject *ret;
+            npy_intp newdims[2*NPY_MAXDIMS];
+            npy_intp *newstrides = NULL;
+            memcpy(newdims, dims, nd*sizeof(npy_intp));
+            if (strides) {
+                newstrides = newdims + NPY_MAXDIMS;
+                memcpy(newstrides, strides, nd*sizeof(npy_intp));
+            }
+            nd =_update_descr_and_dimensions(&descr, newdims,
+                                            newstrides, nd);
+            ret = PyArray_NewFromDescr_int(
+                    subtype, descr,
+                    nd, newdims, newstrides, data,
+                    flags, obj, base, cflags);
+            return ret;
         }
-        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
-                 data == NULL) {
-            PyArray_DESCR_REPLACE(descr);
-            if (descr == NULL) {
+
+        /* Check datatype element size */
+        if (PyDataType_ISUNSIZED(descr)) {
+            if (!PyDataType_ISFLEXIBLE(descr) &&
+                NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+                PyErr_SetString(PyExc_TypeError, "Empty data-type");
+                Py_DECREF(descr);
                 return NULL;
             }
-            if (descr->type_num == NPY_STRING) {
-                nbytes = descr->elsize = 1;
-            }
-            else {
-                nbytes = descr->elsize = sizeof(npy_ucs4);
+            else if (PyDataType_ISSTRING(descr)
+                        && !(cflags & _NPY_ARRAY_ALLOW_EMPTY_STRING)
+                        && data == NULL) {
+                PyArray_DESCR_REPLACE(descr);
+                if (descr == NULL) {
+                    return NULL;
+                }
+                if (descr->type_num == NPY_STRING) {
+                    nbytes = descr->elsize = 1;
+                }
+                else {
+                    nbytes = descr->elsize = sizeof(npy_ucs4);
+                }
             }
         }
     }
@@ -811,8 +819,9 @@ PyArray_NewFromDescr_int(
          * with malloc and let the zero-filling loop fill the array buffer
          * with valid zero values for the dtype.
          */
-        int use_calloc = (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
-                          (zeroed && (fill_zero_info.func == NULL)));
+        int use_calloc = (
+                PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
+                ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
 
         /* Store the handler in case the default is modified */
         fa->mem_handler = PyDataMem_GetHandler();
@@ -846,7 +855,8 @@ PyArray_NewFromDescr_int(
         /*
          * If the array needs special dtype-specific zero-filling logic, do that
          */
-        if (NPY_UNLIKELY(zeroed && (fill_zero_info.func != NULL))) {
+        if (NPY_UNLIKELY((cflags & _NPY_ARRAY_ZEROED)
+                         && (fill_zero_info.func != NULL))) {
             npy_intp size = PyArray_MultiplyList(fa->dimensions, fa->nd);
             if (fill_zero_info.func(
                     NULL, descr, data, size, descr->elsize,
@@ -1001,7 +1011,7 @@ PyArray_NewFromDescrAndBase(
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
                                     dims, strides, data,
-                                    flags, obj, base, 0, 0);
+                                    flags, obj, base, 0);
 }
 
 /*
@@ -3052,7 +3062,7 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
             &PyArray_Type, type,
             nd, dims, NULL, NULL,
             is_f_order, NULL, NULL,
-            1, 0);
+            _NPY_ARRAY_ZEROED);
 
     if (ret == NULL) {
         return NULL;
@@ -3706,7 +3716,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
                 &PyArray_Type, dtype,
                 1, &num, NULL, NULL,
                 0, NULL, NULL,
-                0, 1);
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
     }
     if ((sep == NULL) || (strlen(sep) == 0)) {
         ret = array_fromfile_binary(fp, dtype, num, &nread);
