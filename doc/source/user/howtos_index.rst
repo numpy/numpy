@@ -1,7 +1,7 @@
 .. _howtos:
 
 ################
-NumPy how-to's
+NumPy how-tos
 ################
 
 These documents are intended as recipes to common tasks using NumPy. For
