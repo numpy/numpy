@@ -3937,8 +3937,8 @@ def percentile(a,
     a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
-        Percentile or sequence of percentiles to compute, which must be between
-        0 and 100 inclusive.
+        Percentage or sequence of percentages for the percentiles to compute.
+        Values must be between 0 and 100 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the percentiles are computed. The
         default is to compute the percentile(s) along a flattened
