@@ -231,7 +231,7 @@ fragments in your commit message:
   store the generated artifact for preview in each PR. This check will also run
   all the docstrings examples and verify their results. If you don't make
   documentation changes, but you make changes to a function's API, for example,
-  you may need to run these tests to very that the doctests are still valid.
+  you may need to run these tests to verify that the doctests are still valid.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
 
 * ``[skip cirrus]``: skip Cirrus jobs
