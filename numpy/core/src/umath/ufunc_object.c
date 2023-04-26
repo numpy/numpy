@@ -6611,12 +6611,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             if (dummy_arrays[i] == NULL) {
                 goto finish;
             }
-            if (PyArray_DESCR(dummy_arrays[i]) != descr) {
-                PyErr_SetString(PyExc_NotImplementedError,
-                    "dtype was replaced during array creation, the dtype is "
-                    "unsupported currently (a subarray dtype?).");
-                goto finish;
-            }
             DTypes[i] = NPY_DTYPE(descr);
             Py_INCREF(DTypes[i]);
             if (!NPY_DT_is_legacy(DTypes[i])) {
