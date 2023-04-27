@@ -4646,11 +4646,29 @@ set_typeinfo(PyObject *dict)
      * should be defined on the class and inherited to the scalar.
      * (NPY_HALF is the largest builtin one.)
      */
-    for (i = 0; i <= NPY_HALF; i++) {
-        if (dtypemeta_wrap_legacy_descriptor(_builtin_descrs[i]) < 0) {
-            return -1;
-        }
+    /**begin repeat
+     *
+     * #NAME = BOOL,
+     *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+     *         LONG, ULONG, LONGLONG, ULONGLONG,
+     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+     *         OBJECT, STRING, UNICODE, VOID,
+     *         DATETIME, TIMEDELTA#
+     */
+    if (dtypemeta_wrap_legacy_descriptor(
+            _builtin_descrs[NPY_@NAME@],
+            "numpy.dtypes." NPY_@NAME@_Name "DType",
+#ifdef NPY_@NAME@_alias
+            "numpy.dtypes." NPY_@NAME@_Alias "DType"
+#else
+            NULL
+#endif
+            ) < 0) {
+        return -1;
     }
+
+    /**end repeat**/
 
     /*
      * Add cast functions for the new types

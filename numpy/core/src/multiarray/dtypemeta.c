@@ -9,7 +9,9 @@
 #include <numpy/ndarraytypes.h>
 #include <numpy/arrayscalars.h>
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
+#include "arraytypes.h"
 #include "common.h"
 #include "dtypemeta.h"
 #include "descriptor.h"
@@ -726,12 +728,17 @@ object_common_dtype(
  * be a HeapType and its instances should be exact PyArray_Descr structs.
  *
  * @param descr The descriptor that should be wrapped.
- * @param name The name for the DType, if NULL the type character is used.
+ * @param name The name for the DType.
+ * @param alias A second name which is also set to the new class for builtins
+ *              (i.e. `np.types.LongDType` for `np.types.Int64DType`).
+ *              Some may have more aliases, as `intp` is not its own thing,
+ *              as of writing this, these are not added here.
  *
  * @returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
+dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
+        const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -758,47 +765,14 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         return -1;
     }
 
-    /*
-     * Note: we have no intention of freeing the memory again since this
-     * behaves identically to static type definition (see comment above).
-     * This is seems cleaner for the legacy API, in the new API both static
-     * and heap types are possible (some difficulty arises from the fact that
-     * these are instances of DTypeMeta and not type).
-     * In particular our own DTypes can be true static declarations.
-     * However, this function remains necessary for legacy user dtypes.
-     */
-
-    const char *scalar_name = descr->typeobj->tp_name;
-    /*
-     * We have to take only the name, and ignore the module to get
-     * a reasonable __name__, since static types are limited in this regard
-     * (this is not ideal, but not a big issue in practice).
-     * This is what Python does to print __name__ for static types.
-     */
-    const char *dot = strrchr(scalar_name, '.');
-    if (dot) {
-        scalar_name = dot + 1;
-    }
-    Py_ssize_t name_length = strlen(scalar_name) + 14;
-
-    char *tp_name = PyMem_Malloc(name_length);
-    if (tp_name == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    snprintf(tp_name, name_length, "numpy.dtype[%s]", scalar_name);
-
     NPY_DType_Slots *dt_slots = PyMem_Malloc(sizeof(NPY_DType_Slots));
     if (dt_slots == NULL) {
-        PyMem_Free(tp_name);
         return -1;
     }
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
 
     PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
-        PyMem_Free(tp_name);
         PyMem_Free(dt_slots);
         return -1;
     }
@@ -820,13 +794,19 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,
+            .tp_doc = (
+                "DType class corresponding to the scalar type and dtype of "
+                "the same name.\n\n"
+                "Please see `numpy.dtype` for the typical way to create\n"
+                "dtype instances and :ref:`arrays.dtypes` for additional\n"
+                "information."),
         },},
         .flags = NPY_DT_LEGACY,
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
     /* Fix name of the Type*/
-    ((PyTypeObject *)dtype_class)->tp_name = tp_name;
+    ((PyTypeObject *)dtype_class)->tp_name = name;
     dtype_class->dt_slots = dt_slots;
 
     /* Let python finish the initialization (probably unnecessary) */
@@ -921,6 +901,21 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     /* Finally, replace the current class of the descr */
     Py_SET_TYPE(descr, (PyTypeObject *)dtype_class);
 
+    /* And it to the types submodule if it is a builtin dtype */
+    if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
+        static PyObject *add_dtype_helper = NULL;
+        npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
+        if (add_dtype_helper == NULL) {
+            return -1;
+        }
+
+        if (PyObject_CallFunction(
+                add_dtype_helper,
+                "Os", (PyObject *)dtype_class, alias) == NULL) {
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -958,7 +953,8 @@ static PyGetSetDef dtypemeta_getset[] = {
 
 static PyMemberDef dtypemeta_members[] = {
     {"type",
-        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
+        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
+        "scalar type corresponding to the DType."},
     {NULL, 0, 0, 0, NULL},
 };
 
