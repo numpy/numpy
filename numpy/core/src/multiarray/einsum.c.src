@@ -534,11 +534,13 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
      * loop provided by the iterator is in Fortran-order.
      */
     int needs_api = NpyIter_IterationNeedsAPI(iter);
-    NPY_BEGIN_THREADS_THRESHOLDED(shape[1] * shape[0]);
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(shape[1] * shape[0]);
+    }
     for (coord = shape[1]; coord > 0; --coord) {
         sop(1, ptrs[0], strides[0], shape[0]);
 
-        if(needs_api && PyErr_Occurred()){
+        if (needs_api && PyErr_Occurred()){
             return -1;
         }
 
@@ -593,12 +595,14 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
      * loop provided by the iterator is in Fortran-order.
      */
     int needs_api = NpyIter_IterationNeedsAPI(iter);
-    NPY_BEGIN_THREADS_THRESHOLDED(shape[2] * shape[1] * shape[0]);
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(shape[2] * shape[1] * shape[0]);
+    }
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(1, ptrs[0], strides[0], shape[0]);
 
-            if(needs_api && PyErr_Occurred()){
+            if (needs_api && PyErr_Occurred()){
                 return -1;
             }
 
@@ -655,7 +659,9 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
      * loop provided by the iterator is in Fortran-order.
      */
     int needs_api = NpyIter_IterationNeedsAPI(iter);
-    NPY_BEGIN_THREADS_THRESHOLDED(shape[1] * shape[0]);
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(shape[1] * shape[0]);
+    }
     for (coord = shape[1]; coord > 0; --coord) {
         sop(2, ptrs[0], strides[0], shape[0]);
 
@@ -716,7 +722,9 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
      * loop provided by the iterator is in Fortran-order.
      */
     int needs_api = NpyIter_IterationNeedsAPI(iter);
-    NPY_BEGIN_THREADS_THRESHOLDED(shape[2] * shape[1] * shape[0]);
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(shape[2] * shape[1] * shape[0]);
+    }
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(2, ptrs[0], strides[0], shape[0]);

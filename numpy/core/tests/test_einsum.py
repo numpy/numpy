@@ -699,6 +699,21 @@ class TestEinsum:
         # see issue gh-15776 and issue gh-15256
         assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
 
+    def test_object_loop(self):
+
+        class Mult:
+            def __mul__(self, other):
+                return 42
+
+        objMult = np.array([Mult()])
+        objNULL = np.ndarray(buffer = b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
+
+        with pytest.raises(TypeError):
+            np.einsum("i,j", [1], objNULL)
+        with pytest.raises(TypeError):
+            np.einsum("i,j", objNULL, [1])
+        assert np.einsum("i,j", objMult, objMult) == 42
+
     def test_subscript_range(self):
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
         # when creating a subscript from arrays

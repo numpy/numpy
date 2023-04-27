@@ -1032,20 +1032,14 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
  *  object_sum_of_products_one,
  *  object_sum_of_products_two,
  *  object_sum_of_products_three,
- *  object_sum_of_products_contig_one,
- *  object_sum_of_products_contig_two, 
- *  object_sum_of_products_stride0_contig_outcontig_two,
- *  object_sum_of_products_contig_stride0_outcontig_two,
- *  object_sum_of_products_stride0_contig_outstride0_two,
- *  object_sum_of_products_contig_stride0_outstride0_two,
- *  object_sum_of_products_contig_contig_outstride0_two,
- *  object_sum_of_products_contig_three,
  *  object_sum_of_products_contig_any,
- *  object_sum_of_products_contig_outstride0_one,
+ *  object_sum_of_products_contig_one,
+ *  object_sum_of_products_contig_two,
+ *  object_sum_of_products_contig_three,
+ *  object_sum_of_products_outstride0_any,
  *  object_sum_of_products_outstride0_one,
  *  object_sum_of_products_outstride0_two,
- *  object_sum_of_products_outstride0_three,
- *  object_sum_of_products_outstride0_any#
+ *  object_sum_of_products_outstride0_three#
  */
 static void
 @fn_name@(int nop, char **dataptr,
@@ -1062,15 +1056,10 @@ static void
             if (!curr) {
                 curr = Py_None;  // convention is to treat nulls as None
             }
-            Py_SETREF(prod, PyNumber_Multiply(curr, prod));
+            Py_SETREF(prod, PyNumber_Multiply(prod, curr));
             if (!prod) {
                 return;
             }
-        }
-
-        if (*(PyObject **)dataptr[nop] == NULL) {
-            Py_DECREF(prod);
-            return;
         }
 
         PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
@@ -1110,7 +1099,7 @@ _contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
  *        1, 1,
  *        1, 1, 1,
  *        1, 1, 1,
- *        1, 0, 0, 0,
+ *        0, 0, 0, 0,
  *        0, 0, 1#
  */
 #if @use@
@@ -1141,7 +1130,7 @@ static sum_of_products_fn _binary_specialization_table[NPY_NTYPES][5] = {
  *        1, 1,
  *        1, 1, 1,
  *        0, 0, 0,
- *        1, 0, 0, 0,
+ *        0, 0, 0, 0,
  *        0, 0, 1#
  */
 #if @use@
