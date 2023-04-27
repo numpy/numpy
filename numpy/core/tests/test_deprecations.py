@@ -538,48 +538,6 @@ class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
                            casting="same_kind")
 
 
-class TestDeprecateSubarrayDTypeDuringArrayCoercion(_DeprecationTestCase):
-    warning_cls = FutureWarning
-    message = "(creating|casting) an array (with|to) a subarray dtype"
-
-    def test_deprecated_array(self):
-        # Arrays are more complex, since they "broadcast" on success:
-        arr = np.array([1, 2])
-
-        self.assert_deprecated(lambda: arr.astype("(2)i,"))
-        with pytest.warns(FutureWarning):
-            res = arr.astype("(2)i,")
-
-        assert_array_equal(res, [[1, 2], [1, 2]])
-
-        self.assert_deprecated(lambda: np.array(arr, dtype="(2)i,"))
-        with pytest.warns(FutureWarning):
-            res = np.array(arr, dtype="(2)i,")
-
-        assert_array_equal(res, [[1, 2], [1, 2]])
-
-        with pytest.warns(FutureWarning):
-            res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
-
-        assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 2], [1, 2]]])
-
-    def test_deprecated_and_error(self):
-        # These error paths do not give a warning, but will succeed in the
-        # future.
-        arr = np.arange(5 * 2).reshape(5, 2)
-        def check():
-            with pytest.raises(ValueError):
-                arr.astype("(2,2)f")
-
-        self.assert_deprecated(check)
-
-        def check():
-            with pytest.raises(ValueError):
-                np.array(arr, dtype="(2,2)f")
-
-        self.assert_deprecated(check)
-
-
 class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
     # Deprecated 2020-11-24, NumPy 1.20
     """

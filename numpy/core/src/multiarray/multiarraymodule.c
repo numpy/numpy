@@ -494,7 +494,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr, ndim, shape, strides, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }
@@ -599,7 +599,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr,  1, &shape, &stride, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }

@@ -2865,10 +2865,10 @@ class TestLowlevelAPIAccess:
         r = np.equal.resolve_dtypes((S0, S0, None))
         assert r == (S0, S0, np.dtype(bool))
 
-        # Subarray dtypes are weird and only really exist nested, they need
-        # the shift to full NEP 50 to be implemented nicely:
+        # Subarray dtypes are weird and may not work fully, we preserve them
+        # leading to a TypeError (currently no equal loop for void/structured)
         dts = np.dtype("10i")
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(TypeError):
             np.equal.resolve_dtypes((dts, dts, None))
 
     def test_resolve_dtypes_reduction(self):
