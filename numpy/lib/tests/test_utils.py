@@ -212,5 +212,3 @@ def test__drop_metadata():
     dt_m = utils.drop_metadata(dt)
     assert _compare_dtypes(dt, dt_m) is True
     assert dt_m.metadata is None
-
-    
