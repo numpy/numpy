@@ -285,7 +285,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             Py_TYPE(self), PyArray_DESCR(self),
             ndim, dimensions, strides, PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     Py_DECREF(self);
     return (PyObject *)ret;
 }

@@ -804,7 +804,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
                 PyArray_DIMS(self),
                 NULL, NULL,
                 PyArray_ISFORTRAN(self),
-                (PyObject *)self, NULL, 1, 0);
+                (PyObject *)self, NULL, _NPY_ARRAY_ZEROED);
         if (ret == NULL) {
             return NULL;
         }
