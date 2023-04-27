@@ -46,8 +46,25 @@ def asarray(
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
 
-    See its docstring for more information.
+    Args:
+        obj: A NumPy array or any object that can be converted to an array.
+        dtype: The data type of the array. If not specified, NumPy will try to guess
+            the data type.
+        device: The device where the array will be allocated. Currently, only CPU
+            devices are supported.
+        copy: If True, the array will be copied. If False, the function will try to
+            avoid copying the array. If None (the default), the behavior is the same
+            as in NumPy.
+
+    Returns:
+        An array object.
+
+    Raises:
+        ValueError: If `dtype` is not a supported data type.
+        NotImplementedError: If `copy` is False.
+        OverflowError: If `obj` is an integer out of bounds for the specified `dtype`.
     """
+    
     # _array_object imports in this file are inside the functions to avoid
     # circular imports
     from ._array_object import Array
