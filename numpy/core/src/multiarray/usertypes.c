@@ -263,7 +263,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 
     /*
      * Legacy user DTypes classes cannot have a name, since the user never
-     * defined on.  So we create a name for them here, these DTypes are
+     * defined one.  So we create a name for them here. These DTypes are
      * effectively static types.
      *
      * Note: we have no intention of freeing the memory again since this
@@ -297,7 +297,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
-        PyMem_Free(name);  /* free the name on failure, but only then */
+        PyMem_Free(name);  /* free the name only on failure */
         return -1;
     }
     if (use_void_clearimpl) {
