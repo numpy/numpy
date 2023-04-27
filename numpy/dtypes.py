@@ -22,7 +22,7 @@ The following are the classes of the corresponding NumPy dtype instances and
 NumPy scalar types.  The classes can be used in ``isinstance`` checks and can
 also be instantiated or used directly.  Direct use of these classes is not
 typical, since their scalar counterparts (e.g. ``np.float64``) or strings
-like ``"float64"` can be used.
+like ``"float64"`` can be used.
 
 .. list-table::
     :header-rows: 1
