@@ -148,3 +148,10 @@ class TestRegression:
         actual = mt19937.standard_gamma([0.0], dtype='float')
         expected = np.array([0.], dtype=np.float32)
         assert_array_equal(actual, expected)
+
+    def test_geometric_tiny_prob(self):
+        # Regression test for gh-17007.
+        # When p = 1e-30, the probability that a sample will exceed 2**63-1
+        # is 0.9999999999907766, so we expect the result to be all 2**63-1.
+        assert_array_equal(mt19937.geometric(p=1e-30, size=3),
+                           np.iinfo(np.int64).max)
