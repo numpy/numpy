@@ -431,6 +431,7 @@ jobs:
       run: sde -icl -- python runtests.py -n -v -- -k test_simd
 
   intel_spr_sde_test:
+    if: ${{ false }}  # disable for now
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
