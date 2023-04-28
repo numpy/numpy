@@ -3441,6 +3441,8 @@ class TestMaskedArrayMethods:
         raveled = x.ravel(order)
         assert (raveled.filled(0) == 0).all()
 
+        # NOTE: Can be wrong if arr order is neither C nor F and `order="K"` 
+        assert_array_equal(arr.ravel(order), x.ravel(order)._data)
 
     def test_reshape(self):
         # Tests reshape

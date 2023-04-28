@@ -4656,7 +4656,7 @@ class MaskedArray(ndarray):
         # TODO: We don't actually support K, so use A instead.  We could
         #       try to guess this correct by sorting strides or deprecate.
         if order in "kKaA":
-            order = "C" if self._data.flags.fnc else "F"
+            order = "F" if self._data.flags.fnc else "C"
         r = ndarray.ravel(self._data, order=order).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
