@@ -1018,14 +1018,16 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'itemsize': arr.dtype.itemsize})
     arr = arr.view(flattened_fields)
 
-    if (not copy) and all(dt.base == out_dtype for dt in dts):
+
+    # we only allow a few types to be unstructured by manipulating the
+    # strides, because we know it won't work with, for example, np.matrix nor
+    # np.ma.MaskedArray.
+    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
+    if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
         # all elements have the right dtype already; if they have a common
         # stride, we can just return a view
         common_stride = _common_stride(offsets, counts, out_dtype.itemsize)
         if common_stride is not None:
-            # ensure that we have a real ndarray; other types (e.g. matrix)
-            # have strange slicing behavior
-            arr = arr.view(type=np.ndarray)
             new_shape = arr.shape + (sum(counts), out_dtype.itemsize)
             new_strides = arr.strides + (abs(common_stride), 1)
 
@@ -1033,7 +1035,8 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
             arr = arr[..., min(offsets):]  # remove the leading unused data
             arr = np.lib.stride_tricks.as_strided(arr,
                                                   new_shape,
-                                                  new_strides)
+                                                  new_strides,
+                                                  subok=True)
 
             # cast and drop the last dimension again
             arr = arr.view(out_dtype)[..., 0]
