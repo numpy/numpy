@@ -184,11 +184,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
     }
     if (weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
+        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_UINTP, 0);
         if (ans == NULL) {
             goto fail;
         }
-        ians = (npy_intp *)PyArray_DATA(ans);
+        ians = (npy_uintp *)PyArray_DATA(ans);
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++)
             ians[numbers[i]] += 1;
