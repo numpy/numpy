@@ -1415,8 +1415,8 @@ def nanquantile(
         Input array or object that can be converted to an array, containing
         nan values to be ignored
     q : array_like of float
-        Quantile or sequence of quantiles to compute, which must be between
-        0 and 1 inclusive.
+        Probability or sequence of probabilities for the quantiles to compute.
+        Values must be between 0 and 1 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the quantiles are computed. The
         default is to compute the quantile(s) along a flattened
@@ -1476,8 +1476,8 @@ def nanquantile(
     Returns
     -------
     quantile : scalar or ndarray
-        If `q` is a single percentile and `axis=None`, then the result
-        is a scalar. If multiple quantiles are given, first axis of
+        If `q` is a single probability and `axis=None`, then the result
+        is a scalar. If multiple probability levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
