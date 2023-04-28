@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     if: "github.repository == 'numpy/numpy'"
     env:
-      PYODIDE_VERSION: 0.23.0
+      PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
