@@ -1528,9 +1528,12 @@ class TestRegression:
             for y in dtypes:
                 c = a.astype(y)
                 try:
-                    np.dot(b, c)
+                    d = np.dot(b, c)
                 except TypeError:
                     failures.append((x, y))
+                else:
+                    if d != 0:
+                        failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
