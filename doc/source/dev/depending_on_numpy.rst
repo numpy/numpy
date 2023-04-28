@@ -71,10 +71,11 @@ If a package either uses the NumPy C API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
 of the package. 
 
-By default, NumPy will expose an API that is compatible with at least the
+By default, NumPy will expose an API that is backwards compatible with the
 oldest NumPy version that supports the currently oldest compatible Python
-version:  NumPy 1.25.0 supports Python 3.9 and higher and NumPy 1.19 is the
-first version to support Python 3.9.  Thus, we will guarantee that version
+version.  NumPy 1.25.0 supports Python 3.9 and higher and NumPy 1.19 is the
+first version to support Python 3.9.  Thus, we guarantee that, when using
+defaults, NumPy 1.25 will expose a C-API compatible with NumPy 1.19.
 (the exact version is set within NumPy-internal header files).
 
 NumPy is also forward compatible for all minor releases, but a major release
@@ -84,7 +85,8 @@ The default behavior can be customized for example by adding::
 
     #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
 
-before including any NumPy headers (or the equivalent ``-D`` compiler flag).
+before including any NumPy headers (or the equivalent ``-D`` compiler flag) in
+every extension module that requires the NumPy C-API.
 This is mainly useful if you need to use newly added API at the cost of not
 being compatible with older versions.
 
@@ -117,9 +119,9 @@ as of now, it is usually as easy as including::
 .. note::
 
     At the time of NumPy 1.25, NumPy 2.0 is expected to be the next release
-    of NumPy.  The NumPy 2.0 release is expected to require modifying this
-    since it will be required to compile against NumPy 2+ in order to be
-    compatible with both NumPy 1.x and 2.x.
+    of NumPy.  The NumPy 2.0 release is expected to require a different pin,
+    since NumPy 2+ will be needed in order to be compatible with both NumPy
+    1.x and 2.x.
 
 
 Runtime dependency & version ranges

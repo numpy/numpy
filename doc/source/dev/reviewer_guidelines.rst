@@ -126,7 +126,7 @@ For example::
 
     'PyDataMem_SetHandler':                 (304, MinVersion("1.22")),
 
-Header only functionality (such as a new macro) typically do not need to be
+Header only functionality (such as a new macro) typically does not need to be
 guarded.
 
 GitHub Workflow
