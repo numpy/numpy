@@ -8,7 +8,7 @@ def assert_features_equal(actual, desired, fname):
         return
     detected = str(__cpu_features__).replace("'", "")
     try:
-        with open("/proc/cpuinfo", "r") as fd:
+        with open("/proc/cpuinfo") as fd:
             cpuinfo = fd.read(2048)
     except Exception as err:
         cpuinfo = str(err)

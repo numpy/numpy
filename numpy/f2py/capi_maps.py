@@ -196,7 +196,7 @@ def load_f2cmap_file(f2cmap_file):
     # they use PARAMETERS in type specifications.
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
-        with open(f2cmap_file, 'r') as f:
+        with open(f2cmap_file) as f:
             d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
             for k1 in d1.keys():

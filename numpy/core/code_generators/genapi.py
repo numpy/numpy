@@ -500,7 +500,7 @@ def get_versions_hash():
     d = []
 
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
-    with open(file, 'r') as fid:
+    with open(file) as fid:
         for line in fid:
             m = VERRE.match(line)
             if m:

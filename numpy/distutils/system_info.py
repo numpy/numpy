@@ -1266,7 +1266,7 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            with open(ld_so_conf, 'r') as f:
+            with open(ld_so_conf) as f:
                 for d in f:
                     d = d.strip()
                     if d:
@@ -2267,7 +2267,7 @@ class blas_info(system_info):
             }""")
         src = os.path.join(tmpdir, 'source.c')
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
 
             try:
@@ -2422,7 +2422,7 @@ class openblas_info(blas_info):
         except Exception:
             extra_args = []
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:
@@ -2533,7 +2533,7 @@ class flame_info(system_info):
         # Add the additional "extra" arguments
         extra_args = info.get('extra_link_args', [])
         try:
-            with open(src, 'wt') as f:
+            with open(src, 'w') as f:
                 f.write(s)
             obj = c.compile([src], output_dir=tmpdir)
             try:

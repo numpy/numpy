@@ -190,7 +190,7 @@ elif sys.platform[:5] == 'linux':
 
         """
         try:
-            with open(_proc_pid_stat, 'r') as f:
+            with open(_proc_pid_stat) as f:
                 l = f.readline().split(' ')
             return int(l[22])
         except Exception:
@@ -217,7 +217,7 @@ if sys.platform[:5] == 'linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            with open(_proc_pid_stat, 'r') as f:
+            with open(_proc_pid_stat) as f:
                 l = f.readline().split(' ')
             return int(l[13])
         except Exception:
@@ -2520,7 +2520,7 @@ def _get_mem_available():
 
     if sys.platform.startswith('linux'):
         info = {}
-        with open('/proc/meminfo', 'r') as f:
+        with open('/proc/meminfo') as f:
             for line in f:
                 p = line.split()
                 info[p[0].strip(':').lower()] = int(p[1]) * 1024
