@@ -313,3 +313,11 @@ class TestNameArgsPatternBacktracking:
             # that should still be true.
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
+
+
+class TestFunctionReturn(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
+
+    def test_function_rettype(self):
+        # gh-23598
+        assert self.module.intproduct(3, 4) == 12
