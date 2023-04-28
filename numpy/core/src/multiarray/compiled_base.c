@@ -115,7 +115,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size;
+    npy_intp *numbers, *ians, *iweights, len, mx, mn, ans_size;
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
@@ -200,13 +200,25 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         if (wts == NULL) {
             goto fail;
         }
-        weights = (double *)PyArray_DATA(wts);
         if (PyArray_SIZE(wts) != len) {
             PyErr_SetString(PyExc_ValueError,
                     "The weights and list don't have the same length.");
             goto fail;
         }
-        if (PyArray_ISFLOAT(wts)) {
+        if (PyArray_ISINTEGER(wts)) {
+            iweights = (npy_intp *)PyArray_DATA(wts);
+            ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
+            if (ans == NULL) {
+                goto fail;
+            }
+            ians = (npy_intp *)PyArray_DATA(ans);
+            NPY_BEGIN_ALLOW_THREADS;
+            for (i = 0; i < len; i++) {
+                ians[numbers[i]] += iweights[i];
+            }
+            NPY_END_ALLOW_THREADS;
+        } else if (PyArray_ISFLOAT(wts)) {
+            weights = (double *)PyArray_DATA(wts);
             ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
             if (ans == NULL) {
                 goto fail;
