@@ -119,7 +119,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     npy_intp minlength = 0;
     npy_intp i;
     npy_uintp *ians, *iweights;
-    double *weights , *dans;
+    double *weights = NULL, *dans;
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
@@ -231,6 +231,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             }
             NPY_END_ALLOW_THREADS;
         } else if (PyArray_ISCOMPLEX(wts)) {
+            weights = (double *)PyArray_DATA(wts);
             ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_CDOUBLE, 0);
             if (ans == NULL) {
                 goto fail;
