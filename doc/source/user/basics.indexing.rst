@@ -481,9 +481,7 @@ tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
 arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
-It is important to note that a boolean index array must match a
-subset of the indexed array's shape in the corresponding location
-where it is being indexed. If ``obj.ndim == x.ndim``, ``x[obj]``
+If ``obj.ndim == x.ndim``, ``x[obj]``
 returns a 1-dimensional array filled with the elements of *x*
 corresponding to the :py:data:`True` values of *obj*. The search order
 will be :term:`row-major`, C-style. An index error will be raised if
