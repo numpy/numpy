@@ -1031,7 +1031,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
             new_shape = arr.shape + (sum(counts), out_dtype.itemsize)
             new_strides = arr.strides + (abs(common_stride), 1)
 
-            arr = arr[..., None].view(np.uint8)  # view as bytes
+            arr = arr[..., np.newaxis].view(np.uint8)  # view as bytes
             arr = arr[..., min(offsets):]  # remove the leading unused data
             arr = np.lib.stride_tricks.as_strided(arr,
                                                   new_shape,
