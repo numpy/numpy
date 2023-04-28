@@ -21,13 +21,13 @@ jobs:
     runs-on: ubuntu-22.04
     if: "github.repository == 'numpy/numpy'"
     env:
-      PYODIDE_VERSION: 0.22.1
+      PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.10.7
-      EMSCRIPTEN_VERSION: 3.1.27
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
       NODE_VERSION: 18
     steps:
       - name: Checkout numpy
