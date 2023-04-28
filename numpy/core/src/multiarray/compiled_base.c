@@ -115,9 +115,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, *iweights, len, mx, mn, ans_size;
+    npy_intp *numbers, len, mx, mn, ans_size;
     npy_intp minlength = 0;
     npy_intp i;
+    npy_uintp *ians, *iweights;
     double *weights , *dans;
 
     NPY_PREPARE_ARGPARSER;
@@ -206,12 +207,12 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             goto fail;
         }
         if (PyArray_ISINTEGER(wts)) {
-            iweights = (npy_intp *)PyArray_DATA(wts);
-            ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
+            iweights = (npy_uintp *)PyArray_DATA(wts);
+            ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_UINTP, 0);
             if (ans == NULL) {
                 goto fail;
             }
-            ians = (npy_intp *)PyArray_DATA(ans);
+            ians = (npy_uintp *)PyArray_DATA(ans);
             NPY_BEGIN_ALLOW_THREADS;
             for (i = 0; i < len; i++) {
                 ians[numbers[i]] += iweights[i];
