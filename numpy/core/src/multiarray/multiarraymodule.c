@@ -2340,7 +2340,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     int ignore_whitespace = 0; // default behavior is to not ignore whitespace
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s$O$p:fromstring", kwlist,
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
                 &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like, &ignore_whitespace)) {
         Py_XDECREF(descr);
         return NULL;
