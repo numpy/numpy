@@ -366,8 +366,8 @@ def where(
 @overload
 def where(
     condition: ArrayLike,
-    x: ArrayLike,
-    y: ArrayLike,
+    x: None | ArrayLike,
+    y: None | ArrayLike,
     /,
 ) -> NDArray[Any]: ...
 
