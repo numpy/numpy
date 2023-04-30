@@ -2091,7 +2091,7 @@ half_fromhex(PyObject *cls, PyObject *arg) {
     }
     string_end = string + length;
 
-    if (npy_float_fromhex(string, string_end, &value) == NPY_FALSE) {
+    if (npy_float_fromhex(string, string_end, &value) != 0) {
         return NULL;
     }
 
@@ -2149,7 +2149,7 @@ static PyObject *
     }
     string_end = string + length;
 
-    if (npy_@name@_fromhex(string, string_end, &value) == NPY_FALSE) {
+    if (npy_@name@_fromhex(string, string_end, &value) != 0) {
         return NULL;
     }
 

@@ -882,11 +882,11 @@ npy_@name@_hex(npy_@name@ x, char *buff) {
 }
 
 /* Heavily copied from the builtin float.fromhex
- * This function returns True if conversion is possible,
- * else returns false and value of the argument `result`
+ * This function returns 0 if conversion is possible,
+ * else returns -1 and value of the argument `result`
  * should be used as resultant floating point value.
  */
-NPY_INPLACE npy_bool
+NPY_INPLACE npy_int8
 npy_@name@_fromhex(const char *s, const char *s_end, npy_@name@ *result)
 {
     npy_@name@ x;
@@ -1100,22 +1100,22 @@ npy_@name@_fromhex(const char *s, const char *s_end, npy_@name@ *result)
         goto parse_error;
     *result = negate ? -x : x;
 
-    return NPY_TRUE;
+    return 0;
 
   overflow_error:
     PyErr_SetString(PyExc_OverflowError,
-                    "hexadecimal value too large to represent as @name@");
-    return NPY_FALSE;
+                    "hexadecimal value too large to represent");
+    return -1;
 
   parse_error:
     PyErr_SetString(PyExc_ValueError,
                     "invalid hexadecimal floating-point string");
-    return NPY_FALSE;
+    return -1;
 
   insane_length_error:
     PyErr_SetString(PyExc_ValueError,
                     "hexadecimal string too long to convert");
-    return NPY_FALSE;
+    return -1;
 }
 
 #undef TOHEX_NBITS
