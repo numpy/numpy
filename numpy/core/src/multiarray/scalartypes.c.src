@@ -2100,9 +2100,8 @@ half_fromhex(PyObject *cls, PyObject *arg) {
         return NULL;
     }
 
-    npy_clear_floatstatus_barrier((char *)&value);
     half_value = npy_float_to_half(value);
-    if (npy_get_floatstatus_barrier((char *)&value) & NPY_FPE_OVERFLOW) {
+    if (!npy_half_isfinite(half_value) && npy_isfinite(value)) {
         PyErr_SetString(PyExc_OverflowError,
             "hexadecimal value too large to represent as half");
         return NULL;
