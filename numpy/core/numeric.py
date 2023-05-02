@@ -844,12 +844,12 @@ def outer(a, b, out=None):
     Compute the outer product of two vectors.
 
     Given two vectors `a` and `b` of length ``M`` and ``N``, repsectively,
-    the outer product is::
+    the outer product [1]_ is::
 
-      [[a_0*b_0  a_0*b_1 ... a_0*b_N-1 ]
+      [[a_0*b_0  a_0*b_1 ... a_0*b_{N-1} ]
        [a_1*b_0    .
        [ ...          .
-       [a_M-1*b_0            a_M-1*b_N-1 ]]
+       [a_{M-1}*b_0            a_{M-1}*b_{N-1} ]]
 
     Parameters
     ----------
