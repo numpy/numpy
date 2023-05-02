@@ -768,7 +768,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 {
     npy_intp *counts;
-    npy_intp n, n_outer, i, j, k, chunk;
+    npy_intp n, n_outer, i, j, k, chunk, elsize, nel;
     npy_intp total = 0;
     npy_bool broadcast = NPY_FALSE;
     PyArrayObject *repeats = NULL;
@@ -839,10 +839,12 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     new_data = PyArray_DATA(ret);
     old_data = PyArray_DATA(aop);
 
-    chunk = PyArray_DESCR(aop)->elsize;
+    nel = 1;
+    elsize = PyArray_DESCR(aop)->elsize;
     for(i = axis + 1; i < PyArray_NDIM(aop); i++) {
-        chunk *= PyArray_DIMS(aop)[i];
+        nel *= PyArray_DIMS(aop)[i];
     }
+    chunk = nel*elsize;
 
     n_outer = 1;
     for (i = 0; i < axis; i++) {
@@ -851,7 +853,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 
     if (needs_refcounting) {
         if (PyArray_GetDTypeTransferFunction(
-                1, chunk, chunk, PyArray_DESCR(aop), PyArray_DESCR(aop), 0,
+                1, elsize, elsize, PyArray_DESCR(aop), PyArray_DESCR(aop), 0,
                 &cast_info, &flags) < 0) {
             goto fail;
         }
@@ -866,10 +868,9 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
                 }
                 else {
                     char *data[2] = {old_data, new_data};
-                    npy_intp strides[2] = {chunk, chunk};
-                    npy_intp one = 1;
-                    if (cast_info.func(&cast_info.context, data, &one, strides,
-                                       cast_info.auxdata) < 0) {
+                    npy_intp strides[2] = {elsize, elsize};
+                    if (cast_info.func(&cast_info.context, data, &nel,
+                                       strides, cast_info.auxdata) < 0) {
                         goto fail;
                     }
                 }
