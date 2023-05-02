@@ -1437,6 +1437,16 @@ class TestSpecialFloats:
             assert_equal(np.cos(yf), xf)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_sincos_underflow(self):
+        with np.errstate(under='raise'):
+            underflow_trigger = np.array(
+                float.fromhex("0x1.f37f47a03f82ap-511"),
+                dtype=np.float64
+            )
+            np.sin(underflow_trigger)
+            np.cos(underflow_trigger)
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('callable', [np.sin, np.cos])
     @pytest.mark.parametrize('dtype', ['e', 'f', 'd'])
     @pytest.mark.parametrize('value', [np.inf, -np.inf])
