@@ -798,6 +798,10 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 
     aop = (PyArrayObject *)ap;
     n = PyArray_DIM(aop, axis);
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_cast_info_init(&cast_info);
+    int needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(aop));
 
     if (!broadcast && PyArray_SIZE(repeats) != n) {
         PyErr_Format(PyExc_ValueError,
@@ -844,11 +848,31 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     for (i = 0; i < axis; i++) {
         n_outer *= PyArray_DIMS(aop)[i];
     }
+
+    if (needs_refcounting) {
+        if (PyArray_GetDTypeTransferFunction(
+                1, chunk, chunk, PyArray_DESCR(aop), PyArray_DESCR(aop), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
+        }
+    }
+
     for (i = 0; i < n_outer; i++) {
         for (j = 0; j < n; j++) {
             npy_intp tmp = broadcast ? counts[0] : counts[j];
             for (k = 0; k < tmp; k++) {
-                memcpy(new_data, old_data, chunk);
+                if (!needs_refcounting) {
+                    memcpy(new_data, old_data, chunk);
+                }
+                else {
+                    char *data[2] = {old_data, new_data};
+                    npy_intp strides[2] = {chunk, chunk};
+                    npy_intp one = 1;
+                    if (cast_info.func(&cast_info.context, data, &one, strides,
+                                       cast_info.auxdata) < 0) {
+                        goto fail;
+                    }
+                }
                 new_data += chunk;
             }
             old_data += chunk;
@@ -856,14 +880,15 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     }
 
     Py_DECREF(repeats);
-    PyArray_INCREF(ret);
     Py_XDECREF(aop);
+    NPY_cast_info_xfree(&cast_info);
     return (PyObject *)ret;
 
  fail:
     Py_DECREF(repeats);
     Py_XDECREF(aop);
     Py_XDECREF(ret);
+    NPY_cast_info_xfree(&cast_info);
     return NULL;
 }
 
