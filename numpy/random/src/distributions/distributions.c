@@ -960,7 +960,15 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  double z = ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  /*
+   * The constant 9.223372036854776e+18 is the smallest double that is
+   * larger than INT64_MAX.
+   */
+  if (z >= 9.223372036854776e+18) {
+    return INT64_MAX;
+  }
+  return (int64_t) z;
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {
