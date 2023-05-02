@@ -881,9 +881,9 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
-             ed., Baltimore, MD, Johns Hopkins University Press, 1996,
-             pg. 8.
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
+           ed., Baltimore, MD, Johns Hopkins University Press, 1996,
+           pg. 8.
 
     Examples
     --------
