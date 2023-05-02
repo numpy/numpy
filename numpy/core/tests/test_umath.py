@@ -1437,6 +1437,10 @@ class TestSpecialFloats:
             assert_equal(np.cos(yf), xf)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.xfail(
+        sys.platform.startswith("darwin"),
+        reason="underflow is triggered for scalar 'sin'"
+    )
     def test_sincos_underflow(self):
         with np.errstate(under='raise'):
             underflow_trigger = np.array(
