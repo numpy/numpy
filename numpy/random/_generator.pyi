@@ -396,7 +396,24 @@ class Generator:
         loc: _FloatLike_co = ...,
         scale: _FloatLike_co = ...,
         size: None = ...,
+        dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
     ) -> float: ...  # type: ignore[misc]
+    @overload
+    def normal(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+        dtype: _DTypeLikeFloat32 = ...,
+    ) -> ndarray[Any, dtype[float32]]: ...  # type: ignore[misc]
+    @overload
+    def normal(
+        self,
+        loc: _FloatLike_co = ...,
+        scale: _FloatLike_co = ...,
+        size: None = ...,
+        dtype: _DTypeLikeFloat64 = ...,
+    ) -> ndarray[Any, dtype[float64]]: ...  # type: ignore[misc]
     @overload
     def normal(
         self,
