@@ -889,10 +889,9 @@ def _common_stride(offsets, counts, itemsize):
     """
     Returns the stride between the fields, or None if the stride is not
     constant. The values in "counts" designate the lengths of
-    sub-arrays. Sub-arrays are treated as many contiguous fields, with
+    subarrays. Subarrays are treated as many contiguous fields, with
     always positive stride.
     """
-
     if len(offsets) <= 1:
         return itemsize
 
@@ -906,9 +905,9 @@ def _common_stride(offsets, counts, itemsize):
     prev_offset = None
     stride = None
     for offset, count in it:
-        if count != 1:  # sub array: always c-contiguous
+        if count != 1:  # subarray: always c-contiguous
             if negative:
-                return None  # sub-arrays can never have a negative stride
+                return None  # subarrays can never have a negative stride
             if stride is None:
                 stride = itemsize
             if stride != itemsize:
@@ -926,10 +925,9 @@ def _common_stride(offsets, counts, itemsize):
 
         prev_offset = end_offset
 
-    if stride is not None:
-        if negative:
-            return -stride
-        return stride
+    if negative:
+        return -stride
+    return stride
 
 
 def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
