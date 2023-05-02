@@ -228,7 +228,7 @@ class TestRecFunctions:
         dt = np.dtype((np.record, dt))
         assert_(repack_fields(dt).type is np.record)
 
-    def test_structured_to_unstructured(self):
+    def test_structured_to_unstructured(self, tmp_path):
         a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
         out = structured_to_unstructured(a)
         assert_equal(out, np.zeros((4,5), dtype='f8'))
@@ -344,6 +344,36 @@ class TestRecFunctions:
                                            np.zeros(3, dt), dtype=np.int32)
         assert_raises(NotImplementedError, unstructured_to_structured,
                                            np.zeros((3,0), dtype=np.int32))
+
+
+        # test supported ndarray subclasses
+        d_plain = np.array([(1, 2), (3, 4)], dtype=[('a', 'i4'), ('b', 'i4')])
+        dd_expected = structured_to_unstructured(d_plain, copy=True)
+
+        # recarray
+        d = d_plain.view(np.recarray)
+
+        dd = structured_to_unstructured(d, copy=False)
+        ddd = structured_to_unstructured(d, copy=True)
+        assert_(np.shares_memory(d, dd))
+        assert_(type(dd) is np.recarray)
+        assert_(type(ddd) is np.recarray)
+        assert_equal(dd, dd_expected)
+        assert_equal(ddd, dd_expected)
+
+        # memmap
+        d = np.memmap(tmp_path / 'memmap',
+                      mode='w+',
+                      dtype=d_plain.dtype,
+                      shape=d_plain.shape)
+        d[:] = d_plain
+        dd = structured_to_unstructured(d, copy=False)
+        ddd = structured_to_unstructured(d, copy=True)
+        assert_(np.shares_memory(d, dd))
+        assert_(type(dd) is np.memmap)
+        assert_(type(ddd) is np.memmap)
+        assert_equal(dd, dd_expected)
+        assert_equal(ddd, dd_expected)
 
     def test_unstructured_to_structured(self):
         # test if dtype is the args of np.dtype

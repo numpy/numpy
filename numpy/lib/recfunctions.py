@@ -1026,6 +1026,8 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         # stride, we can just return a view
         common_stride = _common_stride(offsets, counts, out_dtype.itemsize)
         if common_stride is not None:
+            wrap = arr.__array_wrap__
+
             new_shape = arr.shape + (sum(counts), out_dtype.itemsize)
             new_strides = arr.strides + (abs(common_stride), 1)
 
@@ -1041,6 +1043,8 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
             if common_stride < 0:
                 arr = arr[..., ::-1]  # reverse, if the stride was negative
+            if type(arr) is not type(wrap.__self__):
+                arr = wrap(arr)
             return arr
 
     # next cast to a packed format with all fields converted to new dtype
