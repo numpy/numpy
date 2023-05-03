@@ -2999,10 +2999,15 @@ def blackman(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -3107,10 +3112,15 @@ def bartlett(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3211,10 +3221,15 @@ def hanning(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3311,10 +3326,15 @@ def hamming(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3590,11 +3610,19 @@ def kaiser(M, beta):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.  (Simplified result_type with 0.0
+    # strongly typed.  result-type is not/less order sensitive, but that mainly
+    # matters for integers anyway.)
+    values = np.array([0.0, M, beta])
+    M = values[1]
+    beta = values[2]
+
     if M == 1:
-        return np.ones(1, dtype=np.result_type(M, 0.0))
+        return np.ones(1, dtype=values.dtype)
     n = arange(0, M)
     alpha = (M-1)/2.0
-    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
+    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
 
 
 def _sinc_dispatcher(x):
