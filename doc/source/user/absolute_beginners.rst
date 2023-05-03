@@ -1575,6 +1575,8 @@ easiest way to do this is to use
 
 .. image:: images/np_pandas.png
 
+The read_csv function from the Pandas library is used to read a CSV file. The header=0 argument is passed to the function to indicate that the first row of the CSV file should be used as column names for the resulting DataFrame. The .values method is then called on the DataFrame to convert it to a NumPy array.
+
 It's simple to use Pandas in order to export your array as well. If you are new
 to NumPy, you may want to  create a Pandas dataframe from the values in your
 array and then write the data frame to a CSV file with Pandas.
