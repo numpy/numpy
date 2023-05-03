@@ -10,6 +10,7 @@
 #if defined(NPY_HAVE_AVX512_SKX) && !defined(_MSC_VER)
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
     #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
+    #include "x86-simd-sort/src/avx512-64bit-argsort.hpp"
 #endif
 
 namespace np { namespace qsort_simd {
@@ -38,6 +39,30 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(float *arr, intptr_t size)
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
     avx512_qsort(arr, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int32_t *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint32_t *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int64_t *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint64_t *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(float *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
+}
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(double *arr, intptr_t *arg, intptr_t size)
+{
+    avx512_argsort(arr, arg, size);
 }
 #endif  // NPY_HAVE_AVX512_SKX
 

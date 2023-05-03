@@ -9,6 +9,7 @@ namespace np { namespace qsort_simd {
     #include "simd_qsort.dispatch.h"
 #endif
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, intptr_t size))
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void ArgQSort, (T *arr, intptr_t* arg, intptr_t size))
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "simd_qsort_16bit.dispatch.h"

@@ -77,6 +77,11 @@ inline bool quicksort_dispatch(T*, npy_intp)
 {
     return false;
 }
+template<typename T>
+inline bool aquicksort_dispatch(T*, npy_intp*. npy_intp)
+{
+    return false;
+}
 #else
 template<typename T>
 inline bool quicksort_dispatch(T *start, npy_intp num)
@@ -97,6 +102,22 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     }
     if (dispfunc) {
         (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
+        return true;
+    }
+    return false;
+}
+
+template<typename T>
+inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
+{
+    using TF = typename np::meta::FixedWidth<T>::Type;
+    void (*dispfunc)(TF*, intptr_t*, intptr_t) = nullptr;
+    #ifndef NPY_DISABLE_OPTIMIZATION
+        #include "simd_qsort.dispatch.h"
+    #endif
+    NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
+    if (dispfunc) {
+        (*dispfunc)(reinterpret_cast<TF*>(start), reinterpret_cast<intptr_t*>(arg), static_cast<intptr_t>(num));
         return true;
     }
     return false;
@@ -852,34 +873,52 @@ aquicksort_ushort(void *vv, npy_intp *tosort, npy_intp n,
 NPY_NO_EXPORT int
 aquicksort_int(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_int *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::int_tag>((npy_int *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_uint(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_uint *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::uint_tag>((npy_uint *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_long(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_long *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::long_tag>((npy_long *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_ulong(void *vv, npy_intp *tosort, npy_intp n,
                  void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_ulong *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::ulong_tag>((npy_ulong *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_longlong(void *vv, npy_intp *tosort, npy_intp n,
                     void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_longlong *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::longlong_tag>((npy_longlong *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_ulonglong(void *vv, npy_intp *tosort, npy_intp n,
                      void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_ulonglong *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::ulonglong_tag>((npy_ulonglong *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
@@ -891,12 +930,18 @@ NPY_NO_EXPORT int
 aquicksort_float(void *vv, npy_intp *tosort, npy_intp n,
                  void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_float *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::float_tag>((npy_float *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
 aquicksort_double(void *vv, npy_intp *tosort, npy_intp n,
                   void *NPY_UNUSED(varr))
 {
+    if (aquicksort_dispatch((npy_double *)vv, tosort, n)) {
+        return 0;
+    }
     return aquicksort_<npy::double_tag>((npy_double *)vv, tosort, n);
 }
 NPY_NO_EXPORT int
