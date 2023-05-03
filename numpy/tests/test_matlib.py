@@ -24,17 +24,17 @@ def test_ones():
     assert_array_equal(numpy.matlib.ones(0), np.matrix([]))
 
     # invalid calls: negative values
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError):
         numpy.matlib.ones((2, -1))
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError):
         numpy.matlib.ones(-1)
 
     # invalid calls: wrong types
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(TypeError):
         numpy.matlib.ones((2, 3.5))
 
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(TypeError):
         numpy.matlib.ones(2.5)
 
 def test_zeros():
@@ -53,17 +53,17 @@ def test_zeros():
     assert_array_equal(numpy.matlib.zeros(0), np.matrix([]))
 
     # invalid calls: negative values
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError):
         numpy.matlib.zeros((2, -1))
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError):
         numpy.matlib.zeros(-1)
 
     # invalid calls: wrong types
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(TypeError):
         numpy.matlib.zeros((2, 3.5))
 
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(TypeError):
         numpy.matlib.zeros(2.5)
 
 def test_identity():
