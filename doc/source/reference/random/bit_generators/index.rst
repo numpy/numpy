@@ -96,7 +96,11 @@ user, which is up to you.
 
 .. end_block
 
-The recommended approach for seeding stochastic programs is to use entropy from the operating system as the default. This approach uses a 128-bit integer, which is sufficient to initialize all generators in NumPy. Seeds below 32 bits are not recommended for general use, as using a small set of seeds to initialize larger state spaces can create biases if many users use the same values.
+The recommended approach for seeding stochastic programs is to use entropy from
+the operating system as the default. This approach uses a 128-bit integer, 
+which is sufficient to initialize all generators in NumPy. Seeds below 32 bits
+are not recommended for general use, as using a small set of seeds to initialize 
+larger state spaces can create biases if many users use the same values.
 
 
 There will not be anything *wrong* with the results, per se; even a seed of
