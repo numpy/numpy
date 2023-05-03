@@ -38,8 +38,7 @@ def _parse_docstrings() -> str:
         new_lines = []
         indent = ""
         for line in lines:
-            m = re.match(r'^(\s+)[-=]+\s*$', line)
-            if m and new_lines:
+            if new_lines and (m := re.match(r'^(\s+)[-=]+\s*$', line)):
                 prev = textwrap.dedent(new_lines.pop())
                 if prev == "Examples":
                     indent = ""

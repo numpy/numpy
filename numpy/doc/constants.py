@@ -392,8 +392,7 @@ if __doc__:
         lines = s.split("\n")
         new_lines = []
         for line in lines:
-            m = re.match(r'^(\s+)[-=]+\s*$', line)
-            if m and new_lines:
+            if new_lines and (m := re.match(r'^(\s+)[-=]+\s*$', line)):
                 prev = textwrap.dedent(new_lines.pop())
                 new_lines.append('%s.. rubric:: %s' % (m.group(1), prev))
                 new_lines.append('')

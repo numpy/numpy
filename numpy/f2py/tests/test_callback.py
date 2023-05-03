@@ -155,8 +155,7 @@ class TestF77Callback(util.F2PyTest):
         for t in threads:
             t.join()
 
-        errors = "\n\n".join(errors)
-        if errors:
+        if errors := "\n\n".join(errors):
             raise AssertionError(errors)
 
     def test_hidden_callback(self):

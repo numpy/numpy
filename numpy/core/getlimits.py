@@ -501,8 +501,7 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype)
-        if obj is not None:
+        if (obj := cls._finfo_cache.get(dtype)) is not None:
             return obj
         dtypes = [dtype]
         newdtype = numeric.obj2sctype(dtype)
@@ -511,8 +510,7 @@ class finfo:
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
             raise ValueError("data type %r not inexact" % (dtype))
-        obj = cls._finfo_cache.get(dtype)
-        if obj is not None:
+        if (obj := cls._finfo_cache.get(dtype)) is not None:
             return obj
         if not issubclass(dtype, numeric.floating):
             newdtype = _convert_to_float[dtype]
@@ -520,9 +518,7 @@ class finfo:
                 # dtype changed, for example from complex128 to float64
                 dtypes.append(newdtype)
                 dtype = newdtype
-
-                obj = cls._finfo_cache.get(dtype, None)
-                if obj is not None:
+                if (obj := cls._finfo_cache.get(dtype, None)) is not None:
                     # the original dtype was not in the cache, but the new
                     # dtype is in the cache. we add the original dtypes to
                     # the cache and return the result

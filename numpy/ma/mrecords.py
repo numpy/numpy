@@ -310,8 +310,7 @@ class MaskedRecords(MaskedArray):
             obj = _data[indx].view(MaskedArray)
             obj._mask = _mask[indx]
             obj._sharedmask = True
-            fval = _localdict['_fill_value']
-            if fval is not None:
+            if (fval := _localdict['_fill_value']) is not None:
                 obj._fill_value = fval[indx]
             # Force to masked if the mask is True
             if not obj.ndim and obj._mask:
@@ -597,8 +596,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
     # Now, let's deal w/ the mask
     if mask is not nomask:
         mask = np.array(mask, copy=False)
-        maskrecordlength = len(mask.dtype)
-        if maskrecordlength:
+        if len(mask.dtype):
             mrec._mask.flat = mask
         elif mask.ndim == 2:
             mrec._mask.flat = [tuple(m) for m in mask]

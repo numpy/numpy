@@ -235,14 +235,12 @@ def check_complex(config, mathlibs):
     pub = []
 
     # Check for complex support
-    st = config.check_header('complex.h')
-    if st:
+    if config.check_header('complex.h'):
         priv.append(('HAVE_COMPLEX_H', 1))
         pub.append(('NPY_USE_C99_COMPLEX', 1))
 
         for t in C99_COMPLEX_TYPES:
-            st = config.check_type(t, headers=["complex.h"])
-            if st:
+            if config.check_type(t, headers=["complex.h"]):
                 pub.append(('NPY_HAVE_%s' % type2def(t), 1))
 
         def check_prec(prec):
@@ -284,12 +282,10 @@ def check_types(config_cmd, ext, build_dir):
         raise SystemError(
                 "Cannot compile 'Python.h'. Perhaps you need to "
                 "install {0}-dev|{0}-devel.".format(python))
-    res = config_cmd.check_header("endian.h")
-    if res:
+    if config_cmd.check_header("endian.h"):
         private_defines.append(('HAVE_ENDIAN_H', 1))
         public_defines.append(('NPY_HAVE_ENDIAN_H', 1))
-    res = config_cmd.check_header("sys/endian.h")
-    if res:
+    if config_cmd.check_header("sys/endian.h"):
         private_defines.append(('HAVE_SYS_ENDIAN_H', 1))
         public_defines.append(('NPY_HAVE_SYS_ENDIAN_H', 1))
 
@@ -370,8 +366,7 @@ def check_mathlib(config_cmd):
     # Testing the C math library
     mathlibs = []
     mathlibs_choices = [[], ["m"], ["cpml"]]
-    mathlib = os.environ.get("MATHLIB")
-    if mathlib:
+    if mathlib := os.environ.get("MATHLIB"):
         mathlibs_choices.insert(0, mathlib.split(","))
     for libs in mathlibs_choices:
         if config_cmd.check_func(
@@ -515,12 +510,11 @@ def configuration(parent_package='',top_path=None):
             log.info('EOF')
         else:
             mathlibs = []
+            s = '#define MATHLIB'
             with open(target) as target_f:
                 for line in target_f:
-                    s = '#define MATHLIB'
                     if line.startswith(s):
-                        value = line[len(s):].strip()
-                        if value:
+                        if value := line[len(s):].strip():
                             mathlibs.extend(value.split(','))
 
         # Ugly: this can be called within a library and not an extension,

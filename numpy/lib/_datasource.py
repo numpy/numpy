@@ -522,8 +522,7 @@ class DataSource:
             raise ValueError("URLs are not writeable")
 
         # NOTE: _findfile will fail on a new file opened for writing.
-        found = self._findfile(path)
-        if found:
+        if found := self._findfile(path):
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")

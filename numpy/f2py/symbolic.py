@@ -132,8 +132,7 @@ def _pairs_add(d, k, v):
     if c is None:
         d[k] = v
     else:
-        c = c + v
-        if c:
+        if c := c + v:
             d[k] = c
         else:
             del d[k]
@@ -584,8 +583,8 @@ class Expr:
             value = symbols_map.get(self)
             if value is None:
                 return self
-            m = re.match(r'\A(@__f2py_PARENTHESIS_(\w+)_\d+@)\Z', self.data)
-            if m:
+            pat = r'\A(@__f2py_PARENTHESIS_(\w+)_\d+@)\Z'
+            if m := re.match(pat, self.data):
                 # complement to fromstring method
                 items, paren = m.groups()
                 if paren in ['ROUNDDIV', 'SQUARE']:
@@ -660,8 +659,7 @@ class Expr:
         None, otherwise return a new normalized expression with
         traverse-visit sub-expressions.
         """
-        result = visit(self, *args, **kwargs)
-        if result is not None:
+        if (result := visit(self, *args, **kwargs)) is not None:
             return result
 
         if self.op in (Op.INTEGER, Op.REAL, Op.STRING, Op.SYMBOL):
@@ -1345,8 +1343,7 @@ class _FromStringWorker:
                 f'parsing comma-separated list (context={context}): {r}')
 
         # ternary operation
-        m = re.match(r'\A([^?]+)[?]([^:]+)[:](.+)\Z', r)
-        if m:
+        if m := re.match(r'\A([^?]+)[?]([^:]+)[:](.+)\Z', r):
             assert context == 'expr', context
             oper, expr1, expr2 = restore(m.groups())
             oper = self.process(oper)
@@ -1370,8 +1367,7 @@ class _FromStringWorker:
             return Expr(Op.RELATIONAL, (rop, left, right))
 
         # keyword argument
-        m = re.match(r'\A(\w[\w\d_]*)\s*[=](.*)\Z', r)
-        if m:
+        if m := re.match(r'\A(\w[\w\d_]*)\s*[=](.*)\Z', r):
             keyname, value = m.groups()
             value = restore(value)
             return _Pair(keyname, self.process(value))
@@ -1433,22 +1429,22 @@ class _FromStringWorker:
             return result
 
         # int-literal-constant
-        m = re.match(r'\A({digit_string})({kind}|)\Z'.format(
+        pat = r'\A({digit_string})({kind}|)\Z'.format(
             digit_string=r'\d+',
-            kind=r'_(\d+|\w[\w\d_]*)'), r)
-        if m:
+            kind=r'_(\d+|\w[\w\d_]*)')
+        if m := re.match(pat, r):
             value, _, kind = m.groups()
             if kind and kind.isdigit():
                 kind = int(kind)
             return as_integer(int(value), kind or 4)
 
         # real-literal-constant
-        m = re.match(r'\A({significant}({exponent}|)|\d+{exponent})({kind}|)\Z'
-                     .format(
-                         significant=r'[.]\d+|\d+[.]\d*',
-                         exponent=r'[edED][+-]?\d+',
-                         kind=r'_(\d+|\w[\w\d_]*)'), r)
-        if m:
+        pat = r'\A({significant}({exponent}|)|\d+{exponent})({kind}|)\Z'\
+            .format(
+                significant=r'[.]\d+|\d+[.]\d*',
+                exponent=r'[edED][+-]?\d+',
+                kind=r'_(\d+|\w[\w\d_]*)')
+        if m := re.match(pat, r):
             value, _, _, kind = m.groups()
             if kind and kind.isdigit():
                 kind = int(kind)
@@ -1478,9 +1474,8 @@ class _FromStringWorker:
                 return as_array(items)
 
         # function call/indexing
-        m = re.match(r'\A(.+)\s*(@__f2py_PARENTHESIS_(ROUND|SQUARE)_\d+@)\Z',
-                     r)
-        if m:
+        pat = r'\A(.+)\s*(@__f2py_PARENTHESIS_(ROUND|SQUARE)_\d+@)\Z'
+        if m := re.match(pat, r):
             target, args, paren = m.groups()
             target = self.process(restore(target))
             args = self.process(restore(args)[1:-1], 'args')
@@ -1499,8 +1494,7 @@ class _FromStringWorker:
                 return target[args]
 
         # Fortran standard conforming identifier
-        m = re.match(r'\A\w[\w\d_]*\Z', r)
-        if m:
+        if re.match(r'\A\w[\w\d_]*\Z', r):
             return as_symbol(r)
 
         # fall-back to symbol

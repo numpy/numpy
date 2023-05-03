@@ -175,8 +175,7 @@ def _get_indent(lines):
     """
     indent = sys.maxsize
     for line in lines:
-        content = len(line.lstrip())
-        if content:
+        if content := len(line.lstrip()):
             indent = min(indent, len(line) - content)
     if indent == sys.maxsize:
         indent = 0

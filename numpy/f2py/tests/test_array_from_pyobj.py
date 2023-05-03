@@ -189,8 +189,7 @@ class Type:
                 if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
-        obj = cls._type_cache.get(name.upper(), None)
-        if obj is not None:
+        if (obj := cls._type_cache.get(name.upper(), None)) is not None:
             return obj
         obj = object.__new__(cls)
         obj._init(name)

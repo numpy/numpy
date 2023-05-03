@@ -671,8 +671,7 @@ def getcallstatement(rout):
 
 
 def getcallprotoargument(rout, cb_map={}):
-    r = getmultilineblock(rout, 'callprotoargument', comment=0)
-    if r:
+    if r := getmultilineblock(rout, 'callprotoargument', comment=0):
         return r
     if hascallstatement(rout):
         outmess(

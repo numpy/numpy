@@ -2395,8 +2395,7 @@ def requires_memory(free_bytes):
     def decorator(func):
         @wraps(func)
         def wrapper(*a, **kw):
-            msg = check_free_memory(free_bytes)
-            if msg is not None:
+            if (msg := check_free_memory(free_bytes)) is not None:
                 pytest.skip(msg)
 
             try:

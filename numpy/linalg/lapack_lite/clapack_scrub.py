@@ -204,8 +204,7 @@ def removeHeader(source):
     lines = LineQueue()
 
     def LookingForHeader(line):
-        m = re.match(r'/\*[^\n]*-- translated', line)
-        if m:
+        if re.match(r'/\*[^\n]*-- translated', line):
             return InHeader
         else:
             lines.add(line)

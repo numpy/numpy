@@ -247,8 +247,7 @@ class record(nt.void):
         except AttributeError:
             pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
-        res = fielddict.get(attr, None)
-        if res:
+        if res := fielddict.get(attr, None):
             obj = self.getfield(*res[:2])
             # if it has fields return a record,
             # otherwise return the object
@@ -268,8 +267,7 @@ class record(nt.void):
         if attr in ('setfield', 'getfield', 'dtype'):
             raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
-        res = fielddict.get(attr, None)
-        if res:
+        if res := fielddict.get(attr, None):
             return self.setfield(val, *res[:2])
         else:
             if getattr(self, attr, None):

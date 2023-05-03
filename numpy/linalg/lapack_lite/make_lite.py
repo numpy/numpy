@@ -298,16 +298,14 @@ def create_name_header(output_dir):
 
         with open(fn) as f:
             for line in f:
-                m = routine_re.match(line)
-                if m:
+                if m := routine_re.match(line):
                     symbols.add(m.group(2).lower())
 
     # f2c symbols
     f2c_symbols = set()
     with open('f2c.h') as f:
         for line in f:
-            m = extern_re.match(line)
-            if m:
+            if m := extern_re.match(line):
                 f2c_symbols.add(m.group(1))
 
     with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w') as f:

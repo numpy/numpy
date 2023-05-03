@@ -174,6 +174,7 @@ def find_process_files(root_dir):
                                  name.endswith('.pxd.in')),
                reverse=True)
 
+    cpp_pat = br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$"
     for filename in files:
         in_file = os.path.join(root_dir, filename + ".in")
         for fromext, value in rules.items():
@@ -183,9 +184,7 @@ def find_process_files(root_dir):
                 function, toext = value
                 if toext == '.c':
                     with open(os.path.join(root_dir, filename), 'rb') as f:
-                        data = f.read()
-                        m = re.search(br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$", data, re.I|re.M)
-                        if m:
+                        if re.search(cpp_pat, f.read(), re.I | re.M):
                             toext = ".cxx"
                 fromfile = filename
                 tofile = filename[:-len(fromext)] + toext

@@ -135,8 +135,7 @@ def collect_stats(files, fd, pattern):
             current_function = line.split('=', 2)[1].strip()
         elif current_file is not None:
             for regex in line_regexs:
-                match = regex.match(line)
-                if match:
+                if match := regex.match(line):
                     lineno = int(match.group('lineno'))
                     current_file.mark_line(lineno, current_function)
 

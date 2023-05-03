@@ -93,8 +93,7 @@ def _array_descr(descriptor):
             if descriptor.metadata is None:
                 return descriptor.str
             else:
-                new = descriptor.metadata.copy()
-                if new:
+                if new := descriptor.metadata.copy():
                     return (descriptor.str, new)
                 else:
                     return descriptor.str
@@ -215,8 +214,7 @@ class dummy_ctype:
         return self._cls != other._cls
 
 def _getintp_ctype():
-    val = _getintp_ctype.cache
-    if val is not None:
+    if (val := _getintp_ctype.cache) is not None:
         return val
     if ctypes is None:
         import numpy as np

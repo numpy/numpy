@@ -530,8 +530,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 "Flag sourcecodeform must be either 'fix' or 'free': %s" % repr(sourcecodeform))
         filepositiontext = 'Line #%d in %s:"%s"\n\t' % (
             fin.filelineno() - 1, currentfilename, l1)
-        m = includeline.match(origfinalline)
-        if m:
+        if m := includeline.match(origfinalline):
             fn = m.group('name')
             if os.path.isfile(fn):
                 readfortrancode(fn, dowithline=dowithline, istop=0)
@@ -558,8 +557,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     origfinalline = ll
     filepositiontext = 'Line #%d in %s:"%s"\n\t' % (
         fin.filelineno() - 1, currentfilename, l1)
-    m = includeline.match(origfinalline)
-    if m:
+    if m := includeline.match(origfinalline):
         fn = m.group('name')
         if os.path.isfile(fn):
             readfortrancode(fn, dowithline=dowithline, istop=0)
@@ -680,8 +678,7 @@ def split_by_unquoted(line, characters):
             char="[{}]".format(re.escape(characters)),
             single_quoted=r"('([^'\\]|(\\.))*')",
             double_quoted=r'("([^"\\]|(\\.))*")'))
-    m = r.match(line)
-    if m:
+    if m := r.match(line):
         d = m.groupdict()
         return (d["before"], d["after"])
     return (line, "")
@@ -788,12 +785,10 @@ def crackline(line, reset=0):
                     name = invbadnames[name]
                 if 'interfaced' in groupcache[groupcounter] and name in groupcache[groupcounter]['interfaced']:
                     continue
-                m1 = re.match(
-                    r'(?P<before>[^"]*)\b%s\b\s*@\(@(?P<args>[^@]*)@\)@.*\Z' % name, markouterparen(line), re.I)
-                if m1:
-                    m2 = re_1.match(m1.group('before'))
+                p1 = fr'(?P<before>[^"]*)\b{name}\b\s*@\(@(?P<args>[^@]*)@\)@.*\Z'
+                if m1 := re.match(p1, markouterparen(line), re.I):
                     a = _simplifyargs(m1.group('args'))
-                    if m2:
+                    if m2 := re_1.match(m1.group('before')):
                         line = 'callfun %s(%s) result (%s)' % (
                             name, a, m2.group('result'))
                     else:
@@ -969,15 +964,12 @@ def _resolvetypedefpattern(line):
 
 def _resolvenameargspattern(line):
     line = markouterparen(line)
-    m1 = nameargspattern.match(line)
-    if m1:
+    if m1 := nameargspattern.match(line):
         return m1.group('name'), m1.group('args'), m1.group('result'), m1.group('bind')
-    m1 = operatorpattern.match(line)
-    if m1:
+    if m1 := operatorpattern.match(line):
         name = m1.group('scheme') + '(' + m1.group('name') + ')'
         return name, [], None, None
-    m1 = callnameargspattern.match(line)
-    if m1:
+    if m1 := callnameargspattern.match(line):
         return m1.group('name'), m1.group('args'), None, None
     return None, [], None, None
 
@@ -1155,8 +1147,7 @@ def analyzeline(m, case, line):
             except Exception:
                 pass
         if block == 'function':
-            t = typespattern[0].match(m.group('before') + ' ' + name)
-            if t:
+            if t := typespattern[0].match(m.group('before') + ' ' + name):
                 typespec, selector, attr, edecl = cracktypespec0(
                     t.group('this'), t.group('after'))
                 updatevars(typespec, selector, attr, edecl)
@@ -1291,8 +1282,7 @@ def analyzeline(m, case, line):
             if '=' in edecl[k] and (not edecl[k]['='] == initexpr):
                 outmess('analyzeline: Overwriting the value of parameter "%s" ("%s") with "%s".\n' % (
                     k, edecl[k]['='], initexpr))
-            t = determineexprtype(initexpr, params)
-            if t:
+            if t := determineexprtype(initexpr, params):
                 if t.get('typespec') == 'real':
                     tt = list(initexpr)
                     for m in real16pattern.finditer(initexpr):
@@ -1485,9 +1475,10 @@ def analyzeline(m, case, line):
         groupcache[groupcounter]['common'] = commonkey
         previous_context = ('common', bn, groupcounter)
     elif case == 'use':
-        m1 = re.match(
-            r'\A\s*(?P<name>\b\w+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*(?P<list>.*))|)\s*\Z', m.group('after'), re.I)
-        if m1:
+        p1 = r'\A\s*(?P<name>\b\w+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*'\
+            r'(?P<list>.*))|)\s*\Z'
+        p2 = r'\A\s*(?P<local>\b\w+\b)\s*=\s*>\s*(?P<use>\b\w+\b)\s*\Z'
+        if m1 := re.match(p1, m.group('after'), re.I):
             mm = m1.groupdict()
             if 'use' not in groupcache[groupcounter]:
                 groupcache[groupcounter]['use'] = {}
@@ -1502,9 +1493,7 @@ def analyzeline(m, case, line):
                 rl = {}
                 for l in ll:
                     if '=' in l:
-                        m2 = re.match(
-                            r'\A\s*(?P<local>\b\w+\b)\s*=\s*>\s*(?P<use>\b\w+\b)\s*\Z', l, re.I)
-                        if m2:
+                        if m2 := re.match(p2, l, re.I):
                             rl[m2.group('local').strip()] = m2.group(
                                 'use').strip()
                         else:
@@ -1656,8 +1645,7 @@ def updatevars(typespec, selector, attrspec, entitydecl):
         for a in attrspec:
             if not a:
                 continue
-            m = c.match(a)
-            if m:
+            if m := c.match(a):
                 s = m.group('start').lower()
                 a = s + a[len(s):]
             l.append(a)
@@ -1728,8 +1716,7 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                 groupcache[groupcounter]['externals'] = []
             groupcache[groupcounter]['externals'].append(e)
         if m.group('after'):
-            m1 = lenarraypattern.match(markouterparen(m.group('after')))
-            if m1:
+            if m1 := lenarraypattern.match(markouterparen(m.group('after'))):
                 d1 = m1.groupdict()
                 for lk in ['len', 'array', 'init']:
                     if d1[lk + '2'] is not None:
@@ -1845,9 +1832,8 @@ def cracktypespec(typespec, selector):
             for k, i in list(charselect.items()):
                 charselect[k] = rmbadname1(i)
         elif typespec == 'type':
-            typename = re.match(r'\s*\(\s*(?P<name>\w+)\s*\)', selector, re.I)
-            if typename:
-                typename = typename.group('name')
+            if m1 := re.match(r'\s*\(\s*(?P<name>\w+)\s*\)', selector, re.I):
+                typename = m1.group('name')
             else:
                 outmess('cracktypespec: no typename found in %s\n' %
                         (repr(typespec + selector)))
@@ -2136,12 +2122,11 @@ def analyzecommon(block):
     if not hascommon(block):
         return block
     commonvars = []
+    pat = r'\A\s*\b(?P<name>.*?)\b\s*(\((?P<dims>.*?)\)|)\s*\Z'
     for k in list(block['common'].keys()):
         comvars = []
         for e in block['common'][k]:
-            m = re.match(
-                r'\A\s*\b(?P<name>.*?)\b\s*(\((?P<dims>.*?)\)|)\s*\Z', e, re.I)
-            if m:
+            if m := re.match(pat, e, re.I):
                 dims = []
                 if m.group('dims'):
                     dims = [x.strip()
@@ -2275,8 +2260,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
             # skip function calls having x as an argument, e.g max(1, x)
             continue
         re_1 = re.compile(r'(?P<before>.*?)\b' + x + r'\b(?P<after>.*)', re.I)
-        m = re_1.match(e)
-        if m:
+        if re_1.match(e):
             try:
                 m1 = re_1.match(e)
                 while m1:
@@ -2561,8 +2545,7 @@ def analyzevars(block):
     dep_matches = {}
     name_match = re.compile(r'[A-Za-z][\w$]*').match
     for v in list(vars.keys()):
-        m = name_match(v)
-        if m:
+        if m := name_match(v):
             n = v[m.start():m.end()]
             try:
                 dep_matches[n]
@@ -2849,8 +2832,7 @@ def analyzevars(block):
                     ispure = (not pr == pr1)
                     pr = pr1.replace('recursive', '')
                     isrec = (not pr == pr1)
-                    m = typespattern[0].match(pr)
-                    if m:
+                    if m := typespattern[0].match(pr):
                         typespec, selector, attr, edecl = cracktypespec0(
                             m.group('this'), m.group('after'))
                         kindselect, charselect, typename = cracktypespec(
@@ -3002,14 +2984,12 @@ def determineexprtype(expr, vars, rules={}):
     expr = expr.strip()
     if determineexprtype_re_1.match(expr):
         return {'typespec': 'complex'}
-    m = determineexprtype_re_2.match(expr)
-    if m:
+    if m := determineexprtype_re_2.match(expr):
         if 'name' in m.groupdict() and m.group('name'):
             outmess(
                 'determineexprtype: selected kind types not supported (%s)\n' % repr(expr))
         return {'typespec': 'integer'}
-    m = determineexprtype_re_3.match(expr)
-    if m:
+    if m := determineexprtype_re_3.match(expr):
         if 'name' in m.groupdict() and m.group('name'):
             outmess(
                 'determineexprtype: selected kind types not supported (%s)\n' % repr(expr))
@@ -3022,8 +3002,7 @@ def determineexprtype(expr, vars, rules={}):
     if determineexprtype_re_4.match(expr):  # in parenthesis
         t = determineexprtype(expr[1:-1], vars, rules)
     else:
-        m = determineexprtype_re_5.match(expr)
-        if m:
+        if m := determineexprtype_re_5.match(expr):
             rn = m.group('name')
             t = determineexprtype(m.group('name'), vars, rules)
             if t and 'attrspec' in t:

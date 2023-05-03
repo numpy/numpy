@@ -190,8 +190,7 @@ def split_arguments(argstr):
     def finish_arg():
         if current_argument:
             argstr = ''.join(current_argument).strip()
-            m = re.match(r'(.*(\s+|\*))(\w+)$', argstr)
-            if m:
+            if m := re.match(r'(.*(\s+|\*))(\w+)$', argstr):
                 typename = m.group(1).strip()
                 name = m.group(3)
             else:
@@ -265,20 +264,18 @@ def find_functions(filename, tag='API'):
                     doclist.append(line)
             elif state == STATE_RETTYPE:
                 # first line of declaration with return type
-                m = re.match(r'NPY_NO_EXPORT\s+(.*)$', line)
-                if m:
+                if m := re.match(r'NPY_NO_EXPORT\s+(.*)$', line):
                     line = m.group(1)
                 return_type = line
                 state = STATE_NAME
             elif state == STATE_NAME:
                 # second line, with function name
-                m = re.match(r'(\w+)\s*\(', line)
-                if m:
+                if m := re.match(r'(\w+)\s*\(', line):
                     function_name = m.group(1)
+                    function_args.append(line[m.end():])
                 else:
                     raise ParseError(filename, lineno+1,
                                      'could not find function name')
-                function_args.append(line[m.end():])
                 state = STATE_ARGS
             elif state == STATE_ARGS:
                 if line.startswith('{'):
@@ -538,8 +535,7 @@ def get_versions_hash():
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
     with open(file) as fid:
         for line in fid:
-            m = VERRE.match(line)
-            if m:
+            if m := VERRE.match(line):
                 d.append((int(m.group(1), 16), m.group(2)))
 
     return dict(d)

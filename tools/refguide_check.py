@@ -216,16 +216,15 @@ def find_names(module, names_dict):
 
     patterns = [re.compile(pattern) for pattern in patterns]
     module_name = module.__name__
+    module_pat = r"^\s*\.\. (?:currentmodule|module):: ([a-z0-9A-Z_.]+)\s*$"
 
     for line in module.__doc__.splitlines():
-        res = re.search(r"^\s*\.\. (?:currentmodule|module):: ([a-z0-9A-Z_.]+)\s*$", line)
-        if res:
+        if res := re.search(module_pat, line):
             module_name = res.group(1)
             continue
 
         for pattern in patterns:
-            res = re.match(pattern, line)
-            if res is not None:
+            if res := re.match(pattern, line):
                 name = res.group(1)
                 entry = '.'.join([module_name, name])
                 names_dict.setdefault(module_name, set()).add(name)
@@ -485,18 +484,18 @@ def validate_rst_syntax(text, name, dots=True):
     success = True
     output = ""
 
+    pat1 = r'.*Unknown (?:interpreted text role|directive type) "(.*)".*$'
+    pat2 = r'.*Error in "math" directive:.*unknown option: "label"'
     for error in errors:
         lines = error.splitlines()
         if not lines:
             continue
 
-        m = re.match(r'.*Unknown (?:interpreted text role|directive type) "(.*)".*$', lines[0])
-        if m:
+        if m := re.match(pat1, lines[0]):
             if m.group(1) in ok_unknown_items:
                 continue
 
-        m = re.match(r'.*Error in "math" directive:.*unknown option: "label"', " ".join(lines), re.S)
-        if m:
+        if re.match(pat2, " ".join(lines), re.S):
             continue
 
         output += name + lines[0] + "::\n    " + "\n    ".join(lines[1:]).rstrip() + "\n"
@@ -570,8 +569,7 @@ def check_rest(module, names, dots=True):
                                 traceback.format_exc()))
                 continue
 
-        m = re.search("([\x00-\x09\x0b-\x1f])", text)
-        if m:
+        if m := re.search("([\x00-\x09\x0b-\x1f])", text):
             msg = ("Docstring contains a non-printable character %r! "
                    "Maybe forgot r\"\"\"?" % (m.group(1),))
             results.append((full_name, False, msg))

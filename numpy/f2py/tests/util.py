@@ -252,8 +252,7 @@ def _get_compiler_status():
     finally:
         shutil.rmtree(tmpdir)
 
-    m = re.search(br"COMPILERS:(\d+),(\d+),(\d+)", out)
-    if m:
+    if m := re.search(br"COMPILERS:(\d+),(\d+),(\d+)", out):
         _compiler_status = (
             bool(int(m.group(1))),
             bool(int(m.group(2))),

@@ -124,8 +124,7 @@ run_test()
 from numpy.core._multiarray_umath import (__cpu_baseline__, __cpu_dispatch__)
 features = __cpu_baseline__ + __cpu_dispatch__
 expected = '$EXPECT_CPU_FEATURES'.upper().split()
-diff = set(expected).difference(set(features))
-if diff:
+if diff := set(expected).difference(set(features)):
     print("Unexpected compile-time CPU features detection!\n"
           f"The current build is missing the support of CPU features '{diff}':\n"
           "This error is triggered because of one of the following reasons:\n\n"

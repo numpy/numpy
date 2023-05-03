@@ -2427,8 +2427,7 @@ def _recursive_printoption(result, mask, printopt):
     Private function allowing for recursion
 
     """
-    names = result.dtype.names
-    if names is not None:
+    if (names := result.dtype.names) is not None:
         for name in names:
             curdata = result[name]
             curmask = mask[name]
@@ -6129,8 +6128,7 @@ class MaskedArray(ndarray):
         if fill_value is not None:
             return self.filled(fill_value).tolist()
         # Structured array.
-        names = self.dtype.names
-        if names:
+        if names := self.dtype.names:
             result = self._data.astype([(_, object) for _ in names])
             for n in names:
                 result[n][_mask[n]] = None
