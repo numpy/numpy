@@ -210,7 +210,9 @@ You can visualize your array this way:
 
 .. image:: images/np_array.png
 
-*Be aware that these visualizations are meant to simplify ideas and give you a basic understanding of NumPy concepts and mechanics. Arrays and array operations are much more complicated than are captured here!*
+*Be aware that these visualizations are meant to simplify ideas and give you a 
+basic understanding of NumPy concepts and mechanics. Arrays and array operations
+are much more complicated than are captured here!*
 
 Besides creating an array from a sequence of elements, you can easily create an
 array filled with ``0``'s::
@@ -1575,7 +1577,10 @@ easiest way to do this is to use
 
 .. image:: images/np_pandas.png
 
-The read_csv function from the Pandas library is used to read a CSV file. The header=0 argument is passed to the function to indicate that the first row of the CSV file should be used as column names for the resulting DataFrame. The .values method is then called on the DataFrame to convert it to a NumPy array.
+The read_csv function from the Pandas library is used to read a CSV file. The
+header=0 argument is passed to the function to indicate that the first row of 
+the CSV file should be used as column names for the resulting DataFrame. 
+The .values method is then called on the DataFrame to convert it to a NumPy array.
 
 It's simple to use Pandas in order to export your array as well. If you are new
 to NumPy, you may want to  create a Pandas dataframe from the values in your
