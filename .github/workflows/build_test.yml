@@ -431,7 +431,6 @@ jobs:
       run: sde -icl -- python runtests.py -n -v -- -k test_simd
 
   intel_spr_sde_test:
-    if: ${{ false }}  # disable for now
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
@@ -461,6 +460,8 @@ jobs:
         python -c "import numpy as np; np.show_config()"
     # Run only a few tests, running everything in an SDE takes a long time
     # Using pytest directly, unable to use python runtests.py -n -t ...
+    # Disabled running in the SDE because of an SDE bug
     - name: Run linalg/ufunc/umath tests
       run: |
-        sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        #sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
