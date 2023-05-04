@@ -106,9 +106,11 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: setup rtools for 32-bit
-        # We need rtools 4.0 to have 32 bit support
+      # We need rtools 4.0 to have 32 bit support on windows
+      - if: runner.os == 'windows'
         uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
+
+      - name: setup rtools for 32-bit
         run: |
           echo "PLAT=i686" >> $env:GITHUB_ENV
           echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
