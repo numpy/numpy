@@ -18,17 +18,17 @@ cdef extern from "src/pcg64/pcg64.h":
 
     ctypedef s_pcg64_state pcg64_state
 
-    uint64_t pcg64_next64(pcg64_state *state)  noexcept nogil
-    uint32_t pcg64_next32(pcg64_state *state)  noexcept nogil
-    void pcg64_jump(pcg64_state *state)  noexcept
-    void pcg64_advance(pcg64_state *state, uint64_t *step)  noexcept
-    void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)  noexcept
-    void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32, uint32_t *uinteger)  noexcept
-    void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)  noexcept
+    uint64_t pcg64_next64(pcg64_state *state)  nogil
+    uint32_t pcg64_next32(pcg64_state *state)  nogil
+    void pcg64_jump(pcg64_state *state)
+    void pcg64_advance(pcg64_state *state, uint64_t *step)
+    void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)
+    void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32, uint32_t *uinteger)
+    void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
 
-    uint64_t pcg64_cm_next64(pcg64_state *state)  noexcept nogil
-    uint32_t pcg64_cm_next32(pcg64_state *state)  noexcept nogil
-    void pcg64_cm_advance(pcg64_state *state, uint64_t *step)  noexcept
+    uint64_t pcg64_cm_next64(pcg64_state *state)  nogil
+    uint32_t pcg64_cm_next32(pcg64_state *state)  nogil
+    void pcg64_cm_advance(pcg64_state *state, uint64_t *step)
 
 cdef uint64_t pcg64_uint64(void* st) noexcept nogil:
     return pcg64_next64(<pcg64_state *>st)
