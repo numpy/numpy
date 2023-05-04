@@ -1451,8 +1451,9 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  * can be trivially iterated (single stride, aligned, no casting necessary).
  */
 NPY_NO_EXPORT int
-mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
-                       PyArrayObject *result)
+mapiter_trivial_@name@(
+        PyArrayObject *self, PyArrayObject *ind, PyArrayObject *result,
+        int is_aligned, NPY_cast_info *cast_info)
 {
     char *base_ptr, *ind_ptr, *result_ptr;
     npy_intp self_stride, ind_stride, result_stride;
@@ -1460,10 +1461,12 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
     npy_intp itersize;
 
-    int is_aligned = IsUintAligned(self) && IsUintAligned(result);
+    /* copying between the same dtype, we can assume this is correct: */
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
+    npy_intp itemsize = PyArray_ITEMSIZE(self);
+    npy_intp strides[2] = {itemsize, itemsize};
+    npy_intp one = 1;
 
-    PyArray_CopySwapFunc *copyswap = PyArray_DESCR(self)->f->copyswap;
     NPY_BEGIN_THREADS_DEF;
 
     base_ptr = PyArray_BYTES(self);
@@ -1495,7 +1498,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 #endif
 
     /* Optimization for aligned types that do not need the api */
-    switch ((is_aligned && !needs_api) ? PyArray_ITEMSIZE(self) : 0) {
+    switch ((is_aligned && !needs_api) ? itemsize : 0) {
 
 /**begin repeat1
  * #elsize = 1, 2, 4, 8, 0#
@@ -1528,7 +1531,13 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
             assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
             *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
 #else
-            copyswap(result_ptr, self_ptr, 0, self);
+            char *args[2] = {self_ptr, result_ptr};
+            if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
+                    args, &one, strides,
+                    cast_info->auxdata) < 0)) {
+                NPY_END_THREADS;
+                return -1;
+            }
 #endif
 
 #else /* !@isget@ */
@@ -1537,7 +1546,13 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
             assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
             *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
 #else
-            copyswap(self_ptr, result_ptr, 0, self);
+            char *args[2] = {result_ptr, self_ptr};
+            if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
+                    args, &one, strides,
+                    cast_info->auxdata) < 0)) {
+                NPY_END_THREADS;
+                return -1;
+            }
 #endif
 #endif
 

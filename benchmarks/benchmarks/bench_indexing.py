@@ -16,7 +16,7 @@ class Indexing(Benchmark):
     def setup(self, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': get_squares_(),
+        ns = {'squares_': get_squares_(("object", "O,i")),
               'np': np,
               'indexes_': get_indexes_(),
               'indexes_rand_': get_indexes_rand_()}

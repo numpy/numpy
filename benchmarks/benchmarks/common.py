@@ -49,10 +49,12 @@ def get_values():
 
 
 @lru_cache(typed=True)
-def get_squares():
+def get_squares(additional=None):
     values = get_values()
-    squares = {t: np.array(values,
-                              dtype=getattr(np, t)).reshape((nx, ny))
+    types = TYPES1
+    if additional is not None:
+        types += additional
+    squares = {t: np.array(values, dtype=t).reshape((nx, ny))
                for t in TYPES1}
 
     # adjust complex ones to have non-degenerated imagery part -- use
@@ -64,9 +66,9 @@ def get_squares():
 
 
 @lru_cache(typed=True)
-def get_squares_():
+def get_squares_(additional=None):
     # smaller squares
-    squares_ = {t: s[:nxs, :nys] for t, s in get_squares().items()}
+    squares_ = {t: s[:nxs, :nys] for t, s in get_squares(additional).items()}
     return squares_
 
 
