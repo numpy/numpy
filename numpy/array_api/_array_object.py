@@ -448,16 +448,11 @@ class Array:
         return array_api
 
     def __bool__(self: Array, /) -> bool:
-        """
-        Performs the operation __bool__.
-        """
-        # Note: This is an error here.
-        if self._array.ndim != 0:
-            raise TypeError("bool is only allowed on arrays with 0 dimensions")
-        if self.dtype not in _boolean_dtypes:
-            raise ValueError("bool is only allowed on boolean arrays")
-        res = self._array.__bool__()
-        return res
+        #from definition on docs
+        #https://numpy.org/doc/stable/reference/generated/numpy.ndarray.__bool__.html
+        if self:
+            return True
+        return False
 
     def __dlpack__(self: Array, /, *, stream: None = None) -> PyCapsule:
         """
