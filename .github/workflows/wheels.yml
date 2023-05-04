@@ -107,9 +107,11 @@ jobs:
           python-version: "3.x"
 
       - name: setup rtools for 32-bit
+        # We need rtools 4.0 to have 32 bit support
+        uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
         run: |
           echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
+          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
           gfortran --version
         if: ${{ matrix.buildplat[1] == 'win32' }}
 
