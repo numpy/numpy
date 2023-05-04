@@ -4,7 +4,15 @@
 
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
+#define NPY_SIMD_F32 1
 #define NPY_SIMD_F64 1
+#if defined(NPY_HAVE_FMA3) || defined(NPY_HAVE_FMA4)
+    #define NPY_SIMD_FMA3 1  // native support
+#else
+    #define NPY_SIMD_FMA3 0  // fast emulated
+#endif
+#define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 1
 
 typedef __m128i npyv_u8;
 typedef __m128i npyv_s8;
@@ -58,9 +66,11 @@ typedef struct { __m128d val[3]; } npyv_f64x3;
 #define npyv_nlanes_f32 4
 #define npyv_nlanes_f64 2
 
+#include "utils.h"
 #include "memory.h"
 #include "misc.h"
 #include "reorder.h"
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"

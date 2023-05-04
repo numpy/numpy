@@ -1,0 +1,30 @@
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Pauli Virtanen
+* Philippe Ombredanne +
+* Sebastian Berg
+* Stefan Behnel +
+* Stephan Loyd +
+* Zac Hatfield-Dodds
+
+Pull requests merged
+====================
+
+A total of 9 pull requests were merged for this release.
+
+* `#16959 <https://github.com/numpy/numpy/pull/16959>`__: TST: Change aarch64 to arm64 in travis.yml.
+* `#16998 <https://github.com/numpy/numpy/pull/16998>`__: MAINT: Configure hypothesis in ``np.test()`` for determinism,...
+* `#17000 <https://github.com/numpy/numpy/pull/17000>`__: BLD: pin setuptools < 49.2.0
+* `#17015 <https://github.com/numpy/numpy/pull/17015>`__: ENH: Add NumPy declarations to be used by Cython 3.0+
+* `#17125 <https://github.com/numpy/numpy/pull/17125>`__: BUG: Remove non-threadsafe sigint handling from fft calculation
+* `#17243 <https://github.com/numpy/numpy/pull/17243>`__: BUG: core: fix ilp64 blas dot/vdot/... for strides > int32 max
+* `#17244 <https://github.com/numpy/numpy/pull/17244>`__: DOC: Use SPDX license expressions with correct license
+* `#17245 <https://github.com/numpy/numpy/pull/17245>`__: DOC: Fix the link to the quick-start in the old API functions
+* `#17272 <https://github.com/numpy/numpy/pull/17272>`__: BUG: fix pickling of arrays larger than 2GiB

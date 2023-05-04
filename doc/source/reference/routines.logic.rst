@@ -1,5 +1,5 @@
 Logic functions
-***************
+===============
 
 .. currentmodule:: numpy
 

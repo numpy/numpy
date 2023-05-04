@@ -1,13 +1,14 @@
 Permuted Congruential Generator (64-bit, PCG64)
------------------------------------------------
+===============================================
 
 .. currentmodule:: numpy.random
 
 .. autoclass:: PCG64
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 State
-=====
+-----
 
 .. autosummary::
    :toctree: generated/
@@ -15,7 +16,7 @@ State
    ~PCG64.state
 
 Parallel generation
-===================
+-------------------
 .. autosummary::
    :toctree: generated/
 
@@ -23,7 +24,7 @@ Parallel generation
    ~PCG64.jumped
 
 Extending
-=========
+---------
 .. autosummary::
    :toctree: generated/
 

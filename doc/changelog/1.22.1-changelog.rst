@@ -1,0 +1,47 @@
+
+Contributors
+============
+
+A total of 14 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Arryan Singh
+* Bas van Beek
+* Charles Harris
+* Denis Laxalde
+* Isuru Fernando
+* Kevin Sheppard
+* Matthew Barber
+* Matti Picus
+* Melissa Weber Mendonça
+* Mukulika Pahari
+* Omid Rajaei +
+* Pearu Peterson
+* Ralf Gommers
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 20 pull requests were merged for this release.
+
+* `#20702 <https://github.com/numpy/numpy/pull/20702>`__: MAINT, DOC: Post 1.22.0 release fixes.
+* `#20703 <https://github.com/numpy/numpy/pull/20703>`__: DOC, BUG: Use pngs instead of svgs.
+* `#20704 <https://github.com/numpy/numpy/pull/20704>`__: DOC:Fixed the link on user-guide landing page
+* `#20714 <https://github.com/numpy/numpy/pull/20714>`__: BUG: Restore vc141 support
+* `#20724 <https://github.com/numpy/numpy/pull/20724>`__: BUG: Fix array dimensions solver for multidimensional arguments...
+* `#20725 <https://github.com/numpy/numpy/pull/20725>`__: TYP: change type annotation for `__array_namespace__` to ModuleType
+* `#20726 <https://github.com/numpy/numpy/pull/20726>`__: TYP, MAINT: Allow `ndindex` to accept integer tuples
+* `#20757 <https://github.com/numpy/numpy/pull/20757>`__: BUG: Relax dtype identity check in reductions
+* `#20763 <https://github.com/numpy/numpy/pull/20763>`__: TYP: Allow time manipulation functions to accept `date` and `timedelta`...
+* `#20768 <https://github.com/numpy/numpy/pull/20768>`__: TYP: Relax the type of `ndarray.__array_finalize__`
+* `#20795 <https://github.com/numpy/numpy/pull/20795>`__: MAINT: Raise RuntimeError if setuptools version is too recent.
+* `#20796 <https://github.com/numpy/numpy/pull/20796>`__: BUG, DOC: Fixes SciPy docs build warnings
+* `#20797 <https://github.com/numpy/numpy/pull/20797>`__: DOC: fix OpenBLAS version in release note
+* `#20798 <https://github.com/numpy/numpy/pull/20798>`__: PERF: Optimize array check for bounded 0,1 values
+* `#20805 <https://github.com/numpy/numpy/pull/20805>`__: BUG: Fix that reduce-likes honor out always (and live in the...
+* `#20806 <https://github.com/numpy/numpy/pull/20806>`__: BUG: ``array_api.argsort(descending=True)`` respects relative...
+* `#20807 <https://github.com/numpy/numpy/pull/20807>`__: BUG: Allow integer inputs for pow-related functions in `array_api`
+* `#20814 <https://github.com/numpy/numpy/pull/20814>`__: DOC: Refer to NumPy, not pandas, in main page
+* `#20815 <https://github.com/numpy/numpy/pull/20815>`__: DOC: Update Copyright to 2022 [License]
+* `#20819 <https://github.com/numpy/numpy/pull/20819>`__: BUG: Return correctly shaped inverse indices in array_api set...

@@ -15,9 +15,11 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-__ALL__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
-    ]
+import enum
+
+from ._utils import set_module as _set_module
+
+__all__ = ['_NoValue', '_CopyMode']
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -27,53 +29,67 @@ if '_is_loaded' in globals():
 _is_loaded = True
 
 
-class ModuleDeprecationWarning(DeprecationWarning):
-    """Module deprecation warning.
-
-    The nose tester turns ordinary Deprecation warnings into test failures.
-    That makes it hard to deprecate whole modules, because they get
-    imported by default. So this is a special Deprecation warning that the
-    nose tester will let pass without making tests fail.
-
-    """
-
-
-ModuleDeprecationWarning.__module__ = 'numpy'
-
-
-class VisibleDeprecationWarning(UserWarning):
-    """Visible deprecation warning.
-
-    By default, python will not show deprecation warnings, so this class
-    can be used when a very visible warning is helpful, for example because
-    the usage is most likely a user bug.
-
-    """
-
-
-VisibleDeprecationWarning.__module__ = 'numpy'
-
-
 class _NoValueType:
     """Special keyword value.
 
     The instance of this class may be used as the default value assigned to a
-    deprecated keyword in order to check if it has been given a user defined
-    value.
+    keyword if no other obvious default (e.g., `None`) is suitable,
+
+    Common reasons for using this keyword are:
+
+    - A new keyword is added to a function, and that function forwards its
+      inputs to another function or method which can be defined outside of
+      NumPy. For example, ``np.std(x)`` calls ``x.std``, so when a ``keepdims``
+      keyword was added that could only be forwarded if the user explicitly
+      specified ``keepdims``; downstream array libraries may not have added
+      the same keyword, so adding ``x.std(..., keepdims=keepdims)``
+      unconditionally could have broken previously working code.
+    - A keyword is being deprecated, and a deprecation warning must only be
+      emitted when the keyword is used.
+
     """
     __instance = None
     def __new__(cls):
         # ensure that only one instance exists
         if not cls.__instance:
-            cls.__instance = super(_NoValueType, cls).__new__(cls)
+            cls.__instance = super().__new__(cls)
         return cls.__instance
-
-    # needed for python 2 to preserve identity through a pickle
-    def __reduce__(self):
-        return (self.__class__, ())
 
     def __repr__(self):
         return "<no value>"
 
 
 _NoValue = _NoValueType()
+
+
+@_set_module("numpy")
+class _CopyMode(enum.Enum):
+    """
+    An enumeration for the copy modes supported
+    by numpy.copy() and numpy.array(). The following three modes are supported,
+
+    - ALWAYS: This means that a deep copy of the input
+              array will always be taken.
+    - IF_NEEDED: This means that a deep copy of the input
+                 array will be taken only if necessary.
+    - NEVER: This means that the deep copy will never be taken.
+             If a copy cannot be avoided then a `ValueError` will be
+             raised.
+
+    Note that the buffer-protocol could in theory do copies.  NumPy currently
+    assumes an object exporting the buffer protocol will never do this.
+    """
+
+    ALWAYS = True
+    IF_NEEDED = False
+    NEVER = 2
+
+    def __bool__(self):
+        # For backwards compatibility
+        if self == _CopyMode.ALWAYS:
+            return True
+
+        if self == _CopyMode.IF_NEEDED:
+            return False
+
+        raise ValueError(f"{self} is neither True nor False.")

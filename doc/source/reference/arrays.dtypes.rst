@@ -152,14 +152,6 @@ Array-scalar types
        >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
-    .. deprecated NumPy 1.19::
-
-        The use of generic types is deprecated. This is because it can be
-        unexpected in a context such as ``arr.astype(dtype=np.floating)``.
-        ``arr.astype(dtype=np.floating)`` which casts an array of ``float32``
-        to an array of ``float64``, even though ``float32`` is a subdtype of
-        ``np.floating``.
-
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
@@ -171,6 +163,15 @@ Generic types
     :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
     =====================================================  ===============
+
+    .. deprecated:: 1.19
+
+        This conversion of generic scalar types is deprecated.
+        This is because it can be unexpected in a context such as
+        ``arr.astype(dtype=np.floating)``, which casts an array of ``float32``
+        to an array of ``float64``, even though ``float32`` is a subdtype of
+        ``np.floating``.
+
 
 Built-in Python types
     Several python types are equivalent to a corresponding
@@ -187,10 +188,10 @@ Built-in Python types
     (all others)      :class:`object_`
     ================  ===============
 
-    Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targeting both Python 2 and 3
-    ``np.unicode_`` should be used as a dtype for strings.
-    See :ref:`Note on string types<string-dtype-note>`.
+    Note that ``str`` corresponds to UCS4 encoded unicode strings, while
+    ``string`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
+    available as an alias to ``np.str_``, see :ref:`Note on string
+    types<string-dtype-note>`.
 
     .. admonition:: Example
 
@@ -262,12 +263,11 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Note on string types
 
-    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and ``np.string_`` continues to map to
-    ``np.bytes_``.
-    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
-    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
-    used.
+    For backward compatibility with existing code originally written to support
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes and
+    `numpy.string_` continues to alias `numpy.bytes_`. For unicode strings,
+    use ``U``, `numpy.str_`, or `numpy.unicode_`.  For signed bytes that do not
+    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is
@@ -344,7 +344,7 @@ Type strings
 ``[(field_name, field_dtype, field_shape), ...]``
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
-   :obj:`__array_interface__` attribute.)
+   :obj:`~object.__array_interface__` attribute.)
 
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
@@ -391,9 +391,9 @@ Type strings
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
     (limited to `ctypes.c_int`) for each field, while the *titles* value is a
-    list of titles for each field (None can be used if no title is
-    desired for that field). The *titles* can be any :class:`string`
-    or :class:`unicode` object and will add another entry to the
+    list of titles for each field (``None`` can be used if no title is
+    desired for that field). The *titles* can be any object, but when a
+    :class:`str` object will add another entry to the
     fields dictionary keyed by the title and referencing the same
     field tuple which will contain the title as an additional tuple
     member.
@@ -537,6 +537,13 @@ Attributes providing additional information:
    dtype.alignment
    dtype.base
 
+Metadata attached by the user:
+
+.. autosummary::
+   :toctree: generated/
+
+    dtype.metadata
+
 
 Methods
 -------
@@ -555,3 +562,20 @@ The following methods implement the pickle protocol:
 
    dtype.__reduce__
    dtype.__setstate__
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__class_getitem__
+
+Comparison operations:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__ge__
+   dtype.__gt__
+   dtype.__le__
+   dtype.__lt__

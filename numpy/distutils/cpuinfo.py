@@ -27,7 +27,7 @@ from subprocess import getstatusoutput
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
         status, output = getstatusoutput(cmd)
-    except EnvironmentError as e:
+    except OSError as e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, ""
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
@@ -109,7 +109,7 @@ class LinuxCPUInfo(CPUInfoBase):
             info[0]['uname_m'] = output.strip()
         try:
             fo = open('/proc/cpuinfo')
-        except EnvironmentError as e:
+        except OSError as e:
             warnings.warn(str(e), UserWarning, stacklevel=2)
         else:
             for line in fo:

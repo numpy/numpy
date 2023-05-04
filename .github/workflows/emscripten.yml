@@ -1,0 +1,75 @@
+# To enable this workflow on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
+name: Test Emscripten/Pyodide build
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build-wasm-emscripten:
+    runs-on: ubuntu-22.04
+    if: "github.repository == 'numpy/numpy'"
+    env:
+      PYODIDE_VERSION: 0.23.1
+      # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
+      # The appropriate versions can be found in the Pyodide repodata.json
+      # "info" field, or in Makefile.envs:
+      # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
+      NODE_VERSION: 18
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+
+      - name: set up python
+        id: setup-python
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      - name: Install pyodide-build
+        run: pip install pyodide-build==$PYODIDE_VERSION
+
+      - name: Build
+        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+
+      - name: set up node
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up Pyodide virtual environment
+        run: |
+          pyodide venv .venv-pyodide
+          source .venv-pyodide/bin/activate
+          pip install dist/*.whl
+          pip install -r test_requirements.txt
+      - name: Test
+        run: |
+          source .venv-pyodide/bin/activate
+          cd ..
+          python numpy/runtests.py -n -vv

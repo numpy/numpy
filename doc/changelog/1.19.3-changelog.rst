@@ -1,0 +1,31 @@
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Chris Brown +
+* Daniel Vanzo +
+* E. Madison Bray +
+* Hugo van Kemenade +
+* Ralf Gommers
+* Sebastian Berg
+* @danbeibei +
+
+Pull requests merged
+====================
+
+A total of 10 pull requests were merged for this release.
+
+* `#17298 <https://github.com/numpy/numpy/pull/17298>`__: BLD: set upper versions for build dependencies
+* `#17336 <https://github.com/numpy/numpy/pull/17336>`__: BUG: Set deprecated fields to null in PyArray_InitArrFuncs
+* `#17446 <https://github.com/numpy/numpy/pull/17446>`__: ENH: Warn on unsupported Python 3.10+
+* `#17450 <https://github.com/numpy/numpy/pull/17450>`__: MAINT: Update test_requirements.txt.
+* `#17522 <https://github.com/numpy/numpy/pull/17522>`__: ENH: Support for the NVIDIA HPC SDK nvfortran compiler
+* `#17568 <https://github.com/numpy/numpy/pull/17568>`__: BUG: Cygwin Workaround for #14787 on affected platforms
+* `#17647 <https://github.com/numpy/numpy/pull/17647>`__: BUG: Fix memory leak of buffer-info cache due to relaxed strides
+* `#17652 <https://github.com/numpy/numpy/pull/17652>`__: MAINT: Backport openblas_support from master.
+* `#17653 <https://github.com/numpy/numpy/pull/17653>`__: TST: Add Python 3.9 to the CI testing on Windows, Mac.
+* `#17660 <https://github.com/numpy/numpy/pull/17660>`__: TST: Simplify source path names in test_extending.

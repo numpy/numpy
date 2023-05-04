@@ -18,9 +18,6 @@ Asserts
 .. autosummary::
    :toctree: generated/
 
-   assert_almost_equal
-   assert_approx_equal
-   assert_array_almost_equal
    assert_allclose
    assert_array_almost_equal_nulp
    assert_array_max_ulp
@@ -30,18 +27,30 @@ Asserts
    assert_raises
    assert_raises_regex
    assert_warns
+   assert_no_warnings
+   assert_no_gc_cycles
    assert_string_equal
+
+Asserts (not recommended)
+-------------------------
+It is recommended to use one of `assert_allclose`,
+`assert_array_almost_equal_nulp` or `assert_array_max_ulp` instead of these
+functions for more consistent floating point comparisons.
+
+.. autosummary::
+   :toctree: generated/
+
+   assert_
+   assert_almost_equal
+   assert_approx_equal
+   assert_array_almost_equal
+   print_assert_equal
 
 Decorators
 ----------
 .. autosummary::
    :toctree: generated/
 
-   dec.deprecated
-   dec.knownfailureif
-   dec.setastest
-   dec.skipif
-   dec.slow
    decorate_methods
 
 Test Running
@@ -49,8 +58,8 @@ Test Running
 .. autosummary::
    :toctree: generated/
 
-   Tester
-   run_module_suite
+   clear_and_catch_warnings
+   measure
    rundocs
    suppress_warnings
 

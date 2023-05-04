@@ -53,6 +53,7 @@ class Pad(Benchmark):
     def time_pad(self, shape, pad_width, mode):
         np.pad(self.array, pad_width, mode)
 
+
 class Nan(Benchmark):
     """Benchmarks for nan functions"""
 
@@ -113,3 +114,60 @@ class Nan(Benchmark):
 
     def time_nanpercentile(self, array_size, percent_nans):
         np.nanpercentile(self.arr, q=50)
+
+
+class Unique(Benchmark):
+    """Benchmark for np.unique with np.nan values."""
+
+    param_names = ["array_size", "percent_nans"]
+    params = [
+        # sizes of the 1D arrays
+        [200, int(2e5)],
+        # percent of np.nan in arrays
+        [0, 0.1, 2., 50., 90.],
+    ]
+
+    def setup(self, array_size, percent_nans):
+        np.random.seed(123)
+        # produce a randomly shuffled array with the
+        # approximate desired percentage np.nan content
+        base_array = np.random.uniform(size=array_size)
+        n_nan = int(percent_nans * array_size)
+        nan_indices = np.random.choice(np.arange(array_size), size=n_nan)
+        base_array[nan_indices] = np.nan
+        self.arr = base_array
+
+    def time_unique_values(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=False)
+
+    def time_unique_counts(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=True)
+
+    def time_unique_inverse(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=False,
+                  return_inverse=True, return_counts=False)
+
+    def time_unique_all(self, array_size, percent_nans):
+        np.unique(self.arr, return_index=True,
+                  return_inverse=True, return_counts=True)
+
+
+class Isin(Benchmark):
+    """Benchmarks for `numpy.isin`."""
+
+    param_names = ["size", "highest_element"]
+    params = [
+        [10, 100000, 3000000],
+        [10, 10000, int(1e8)]
+    ]
+
+    def setup(self, size, highest_element):
+        self.array = np.random.randint(
+                low=0, high=highest_element, size=size)
+        self.in_array = np.random.randint(
+                low=0, high=highest_element, size=size)
+
+    def time_isin(self, size, highest_element):
+        np.isin(self.array, self.in_array)

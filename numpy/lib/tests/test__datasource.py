@@ -87,11 +87,11 @@ def invalid_httpfile():
 
 
 class TestDataSourceOpen:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -102,10 +102,10 @@ class TestDataSourceOpen:
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
-        assert_raises(IOError, self.ds.open, url)
+        assert_raises(OSError, self.ds.open, url)
         try:
             self.ds.open(url)
-        except IOError as e:
+        except OSError as e:
             # Regression test for bug fixed in r4342.
             assert_(e.errno is None)
 
@@ -120,7 +120,7 @@ class TestDataSourceOpen:
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
-        assert_raises(IOError, self.ds.open, invalid_file)
+        assert_raises(OSError, self.ds.open, invalid_file)
 
     def test_ValidGzipFile(self):
         try:
@@ -156,11 +156,11 @@ class TestDataSourceOpen:
 
 
 class TestDataSourceExists:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -186,11 +186,11 @@ class TestDataSourceExists:
 
 
 class TestDataSourceAbspath:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -251,11 +251,11 @@ class TestDataSourceAbspath:
 
 
 class TestRepositoryAbspath:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -284,11 +284,11 @@ class TestRepositoryAbspath:
 
 
 class TestRepositoryExists:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -317,10 +317,10 @@ class TestRepositoryExists:
 
 
 class TestOpenFunc:
-    def setup(self):
+    def setup_method(self):
         self.tmpdir = mkdtemp()
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
 
     def test_DataSourceOpen(self):

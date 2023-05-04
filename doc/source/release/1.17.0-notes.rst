@@ -171,15 +171,15 @@ The functions `load`, and ``lib.format.read_array`` take an
 `CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
 
-.. currentmodule:: numpy.random.mtrand
+.. currentmodule:: numpy.random
 
 Potential changes to the random stream in old random module
 -----------------------------------------------------------
 Due to bugs in the application of ``log`` to random floating point numbers,
 the stream may change when sampling from `~RandomState.beta`, `~RandomState.binomial`,
 `~RandomState.laplace`, `~RandomState.logistic`, `~RandomState.logseries` or
-`~RandomState.multinomial` if a ``0`` is generated in the underlying `MT19937
-<~numpy.random.mt11937.MT19937>` random stream.  There is a ``1`` in
+`~RandomState.multinomial` if a ``0`` is generated in the underlying `MT19937`
+random stream.  There is a ``1`` in
 :math:`10^{53}` chance of this occurring, so the probability that the stream
 changes for any given seed is extremely small. If a ``0`` is encountered in the
 underlying generator, then the incorrect value produced (either `numpy.inf` or
@@ -559,4 +559,3 @@ Structured arrays indexed with non-existent fields raise ``KeyError`` not ``Valu
 ----------------------------------------------------------------------------------------
 ``arr['bad_field']`` on a structured type raises ``KeyError``, for consistency
 with ``dict['bad_field']``.
-

@@ -5,7 +5,7 @@ Those who want really good performance out of their low level operations
 should strongly consider directly using the iteration API provided
 in C, but for those who are not comfortable with C or C++, Cython
 is a good middle ground with reasonable performance tradeoffs. For
-the :class:`nditer` object, this means letting the iterator take care
+the :class:`~numpy.nditer` object, this means letting the iterator take care
 of broadcasting, dtype conversion, and buffering, while giving the inner
 loop to Cython.
 
@@ -49,7 +49,7 @@ Here's how this looks.
     ...
     >>> a = np.arange(6).reshape(2,3)
     >>> sum_squares_py(a)
-    array(55.0)
+    array(55.)
     >>> sum_squares_py(a, axis=-1)
     array([  5.,  50.])
 
@@ -117,11 +117,11 @@ as our native Python/NumPy code did.
 
 .. admonition:: Example
 
-    >>> from sum_squares import sum_squares_cy
+    >>> from sum_squares import sum_squares_cy #doctest: +SKIP
     >>> a = np.arange(6).reshape(2,3)
-    >>> sum_squares_cy(a)
+    >>> sum_squares_cy(a) #doctest: +SKIP
     array(55.0)
-    >>> sum_squares_cy(a, axis=-1)
+    >>> sum_squares_cy(a, axis=-1) #doctest: +SKIP
     array([  5.,  50.])
 
 Doing a little timing in IPython shows that the reduced overhead and

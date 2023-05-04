@@ -1,4 +1,0 @@
-Remove the Accelerate library as a candidate LAPACK library
------------------------------------------------------------
-Apple no longer supports Accelerate. Remove it.
-

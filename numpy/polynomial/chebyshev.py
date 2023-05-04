@@ -88,13 +88,13 @@ Notes
 The implementations of multiplication, division, integration, and
 differentiation use the algebraic identities [1]_:
 
-.. math ::
+.. math::
     T_n(x) = \\frac{z^n + z^{-n}}{2} \\\\
     z\\frac{dx}{dz} = \\frac{z - z^{-1}}{2}.
 
 where
 
-.. math :: x = \\frac{z + z^{-1}}{2}.
+.. math:: x = \\frac{z + z^{-1}}{2}.
 
 These identities allow a Chebyshev series to be expressed as a finite,
 symmetric Laurent series.  In this module, this sort of Laurent series
@@ -131,9 +131,9 @@ chebtrim = pu.trimcoef
 #
 
 def _cseries_to_zseries(c):
-    """Covert Chebyshev series to z-series.
+    """Convert Chebyshev series to z-series.
 
-    Covert a Chebyshev series to the equivalent z-series. The result is
+    Convert a Chebyshev series to the equivalent z-series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.
@@ -156,9 +156,9 @@ def _cseries_to_zseries(c):
 
 
 def _zseries_to_cseries(zs):
-    """Covert z-series to a Chebyshev series.
+    """Convert z-series to a Chebyshev series.
 
-    Covert a z series to the equivalent Chebyshev series. The result is
+    Convert a z series to the equivalent Chebyshev series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.
@@ -477,8 +477,6 @@ def chebline(off, scl):
     """
     Chebyshev series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -492,7 +490,11 @@ def chebline(off, scl):
 
     See Also
     --------
-    polyline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -545,7 +547,11 @@ def chebfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Examples
     --------
@@ -764,7 +770,7 @@ def chebdiv(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chemulx, chebmul, chebpow
+    chebadd, chebsub, chebmulx, chebmul, chebpow
 
     Notes
     -----
@@ -1113,7 +1119,7 @@ def chebval(x, c, tensor=True):
         If `x` is a list or tuple, it is converted to an ndarray, otherwise
         it is left unchanged and treated as a scalar. In either case, `x`
         or its elements must support addition and multiplication with
-        with themselves and with the elements of `c`.
+        themselves and with the elements of `c`.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
         degree n are contained in c[n]. If `c` is multidimensional the
@@ -1142,9 +1148,6 @@ def chebval(x, c, tensor=True):
     Notes
     -----
     The evaluation uses Clenshaw recursion, aka synthetic division.
-
-    Examples
-    --------
 
     """
     c = np.array(c, ndmin=1, copy=True)
@@ -1579,10 +1582,11 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance.  The default value is None.
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
         .. versionadded:: 1.5.0
 
@@ -1594,20 +1598,20 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         `k`.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
+        These values are only returned if ``full == True``
 
-        resid -- sum of squared residuals of the least squares fit
-        rank -- the numerical rank of the scaled Vandermonde matrix
-        sv -- singular values of the scaled Vandermonde matrix
-        rcond -- value of `rcond`.
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the numerical rank of the scaled Vandermonde matrix
+        - singular_values -- singular values of the scaled Vandermonde matrix
+        - rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.  The
+        deficient. The warning is only raised if ``full == False``.  The
         warnings can be turned off by
 
         >>> import warnings
@@ -1615,11 +1619,15 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    polyfit, legfit, lagfit, hermfit, hermefit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.hermite_e.hermefit
     chebval : Evaluates a Chebyshev series.
     chebvander : Vandermonde matrix of Chebyshev series.
     chebweight : Chebyshev weight function.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1729,7 +1737,11 @@ def chebroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, hermeroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1938,8 +1950,8 @@ def chebpts1(npts):
     if _npts < 1:
         raise ValueError("npts must be >= 1")
 
-    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
-    return np.cos(x)
+    x = 0.5 * np.pi / _npts * np.arange(-_npts+1, _npts+1, 2)
+    return np.sin(x)
 
 
 def chebpts2(npts):
@@ -1947,7 +1959,8 @@ def chebpts2(npts):
     Chebyshev points of the second kind.
 
     The Chebyshev points of the second kind are the points ``cos(x)``,
-    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
+    where ``x = [pi*k/(npts - 1) for k in range(npts)]`` sorted in ascending
+    order.
 
     Parameters
     ----------

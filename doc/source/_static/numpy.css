@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+.navbar-brand img {
+   height: 75px;
+}
+.navbar-brand {
+   height: 75px;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+
+pre, code {
+  font-size: 100%;
+  line-height: 155%;
+}
+
+h1 {
+  font-family: "Lato", sans-serif;
+  color: #013243; /* warm black */
+}
+
+h2 {
+  color: #4d77cf; /* han blue */
+  letter-spacing: -.03em;
+}
+
+h3 {
+  color: #013243; /* warm black */
+  letter-spacing: -.03em;
+}
+
+/* Style the active version button.
+
+- dev: orange
+- stable: green
+- old, PR: red
+
+Colors from:
+
+Wong, B. Points of view: Color blindness.
+Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
+*/
+
+/* If the active version has the name "dev", style it orange */
+#version_switcher_button[data-active-version-name*="dev"] {
+  background-color: #E69F00;
+  border-color: #E69F00;
+  color:#000000;
+}
+
+/* green for `stable` */
+#version_switcher_button[data-active-version-name*="stable"] {
+  background-color: #009E73;
+  border-color: #009E73;
+}
+
+/* red for `old` */
+#version_switcher_button:not([data-active-version-name*="stable"], [data-active-version-name*="dev"], [data-active-version-name=""]) {
+  background-color: #980F0F;
+  border-color: #980F0F;
+}
+
+/* Main page overview cards */
+
+.sd-card {
+  background: #fff;
+  border-radius: 0;
+  padding: 30px 10px 20px 10px;
+  margin: 10px 0px;
+}
+
+.sd-card .sd-card-header {
+  text-align: center;
+}
+
+.sd-card .sd-card-header .sd-card-text {
+  margin: 0px;
+}
+
+.sd-card .sd-card-img-top {
+  height: 52px;
+  width: 52px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sd-card .sd-card-header {
+  border: none;
+  background-color: white;
+  color: #150458 !important;
+  font-size: var(--pst-font-size-h5);
+  font-weight: bold;
+  padding: 2.5rem 0rem 0.5rem 0rem;
+}
+
+.sd-card .sd-card-footer {
+  border: none;
+  background-color: white;
+}
+
+.sd-card .sd-card-footer .sd-card-text {
+  max-width: 220px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Dark theme tweaking */
+html[data-theme=dark] .sd-card img[src*='.svg'] {
+    filter: invert(0.82) brightness(0.8) contrast(1.2);
+}
+
+/* Main index page overview cards */
+html[data-theme=dark] .sd-card {
+  background-color:var(--pst-color-background);
+}
+
+html[data-theme=dark] .sd-shadow-sm {
+    box-shadow: 0 .1rem 1rem rgba(250, 250, 250, .6) !important
+}
+
+html[data-theme=dark] .sd-card .sd-card-header {
+  background-color:var(--pst-color-background);
+  color: #150458 !important;
+}
+
+html[data-theme=dark] .sd-card .sd-card-footer {
+  background-color:var(--pst-color-background);
+}
+
+html[data-theme=dark] h1 {
+  color: var(--pst-color-primary);
+}
+
+html[data-theme=dark] h3 {
+  color: #0a6774;
+}

@@ -25,8 +25,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef __NPY_CPUINFO_PARSER_H__
-#define __NPY_CPUINFO_PARSER_H__
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -123,7 +123,7 @@ read_file(const char*  pathname, char*  buffer, size_t  buffsize)
 }
 
 /* 
- * Extract the content of a the first occurence of a given field in
+ * Extract the content of a the first occurrence of a given field in
  * the content of /proc/cpuinfo and return it as a heap-allocated
  * string that must be freed by the caller.
  *
@@ -138,7 +138,7 @@ extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
     int len;
     const char *p, *q;
 
-    /* Look for first field occurence, and ensures it starts the line. */
+    /* Look for first field occurrence, and ensures it starts the line. */
     p = buffer;
     for (;;) {
         p = memmem(p, bufend-p, field, fieldlen);
@@ -259,4 +259,4 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     *hwcap2 |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP2_CRC32 : 0;
     return 1;
 }
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */

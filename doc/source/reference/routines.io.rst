@@ -1,7 +1,7 @@
 .. _routines.io:
 
 Input and output
-****************
+================
 
 .. currentmodule:: numpy
 
@@ -83,9 +83,9 @@ Data sources
 
    DataSource
 
-Binary Format Description
+Binary format description
 -------------------------
 .. autosummary::
    :toctree: generated/
 
-    lib.format
+   lib.format

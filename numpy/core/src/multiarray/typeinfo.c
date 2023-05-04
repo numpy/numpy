@@ -3,16 +3,11 @@
  * Unfortunately, we need two different types to cover the cases where min/max
  * do and do not appear in the tuple.
  */
-#include "typeinfo.h"
-
-#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM <= 0x07030000))
-/* PyPy issue 3160 */
-#include <structseq.h>
-#endif
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include "npy_pycompat.h"
+#include "typeinfo.h"
 
 
 static PyTypeObject PyArray_typeinfoType;
@@ -98,17 +93,6 @@ PyArray_typeinforanged(
     return entry;
 }
 
-/* Python version needed for older PyPy */
-#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM < 0x07020000))
-    static int
-    PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc) {
-        PyStructSequence_InitType(type, desc);
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-#endif
 
 NPY_NO_EXPORT int
 typeinfo_init_structsequences(PyObject *multiarray_dict)

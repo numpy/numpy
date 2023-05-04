@@ -10,8 +10,8 @@ import re
 from distutils.extension import Extension as old_Extension
 
 
-cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
-fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
+cxx_ext_re = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
+fortran_pyf_ext_re = re.compile(r'.*\.(f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 
 
 class Extension(old_Extension):
@@ -47,6 +47,8 @@ class Extension(old_Extension):
             language=None,
             f2py_options=None,
             module_dirs=None,
+            extra_c_compile_args=None,
+            extra_cxx_compile_args=None,
             extra_f77_compile_args=None,
             extra_f90_compile_args=None,):
 
@@ -83,6 +85,8 @@ class Extension(old_Extension):
         # numpy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
+        self.extra_c_compile_args = extra_c_compile_args or []
+        self.extra_cxx_compile_args = extra_cxx_compile_args or []
         self.extra_f77_compile_args = extra_f77_compile_args or []
         self.extra_f90_compile_args = extra_f90_compile_args or []
 

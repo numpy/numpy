@@ -12,15 +12,18 @@ automatically from a directory of LAPACK source files.
 You'll need `plex 2.0.0dev`_, available from PyPI, installed to do the
 appropriate scrubbing. As of writing, **this is only available for python 2.7**,
 and is unlikely to ever be ported to python 3.
+As a result, all the Python scripts in this directory must remain compatible
+with Python 2.7, even though NumPy itself no longer supports this version,
+until these scripts are rewritten to use something other than ``plex``.
 
 .. _plex 2.0.0dev: https://pypi.python.org/pypi/plex/
 
 The routines that ``lapack_litemodule.c`` wraps are listed in
 ``wrapped_routines``, along with a few exceptions that aren't picked up
 properly. Assuming that you have an unpacked LAPACK source tree in
-``~/LAPACK``, you generate the new routines in this directory with::
+``/tmp/lapack-3.x.x``, you generate the new routines in this directory with::
 
-$ python ./make_lite.py wrapped_routines ~/LAPACK
+$ ./make_lite.py wrapped_routines /tmp/lapack-3.x.x
 
 This will grab the right routines, with dependencies, put them into the
 appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing

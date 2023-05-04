@@ -3,8 +3,8 @@
  * because not all providers of cblas provide cblas.h. For instance, MKL provides
  * mkl_cblas.h and also typedefs the CBLAS_XXX enums.
  */
-#ifndef _NPY_CBLAS_H_
-#define _NPY_CBLAS_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_
 
 #include <stddef.h>
 
@@ -47,8 +47,10 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 
 #ifdef HAVE_BLAS_ILP64
 #define CBLAS_INT npy_int64
+#define CBLAS_INT_MAX NPY_MAX_INT64
 #else
 #define CBLAS_INT int
+#define CBLAS_INT_MAX INT_MAX
 #endif
 
 #define BLASNAME(name) CBLAS_FUNC(name)
@@ -59,8 +61,41 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 #undef BLASINT
 #undef BLASNAME
 
+
+/*
+ * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
+ * (BLAS won't handle negative or zero strides the way we want).
+ */
+static inline CBLAS_INT
+blas_stride(npy_intp stride, unsigned itemsize)
+{
+    /*
+     * Should probably check pointer alignment also, but this may cause
+     * problems if we require complex to be 16 byte aligned.
+     */
+    if (stride > 0 && (stride % itemsize) == 0) {
+        stride /= itemsize;
+        if (stride <= CBLAS_INT_MAX) {
+            return stride;
+        }
+    }
+    return 0;
+}
+
+/*
+ * Define a chunksize for CBLAS.
+ *
+ * The chunksize is the greatest power of two less than CBLAS_INT_MAX.
+ */
+#if NPY_MAX_INTP > CBLAS_INT_MAX
+# define NPY_CBLAS_CHUNK  (CBLAS_INT_MAX / 2 + 1)
+#else
+# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_ */

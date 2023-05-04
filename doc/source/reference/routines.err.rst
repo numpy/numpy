@@ -1,5 +1,5 @@
 Floating point error handling
-*****************************
+=============================
 
 .. currentmodule:: numpy
 

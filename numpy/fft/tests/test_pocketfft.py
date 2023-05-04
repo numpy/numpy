@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.random import random
 from numpy.testing import (
-        assert_array_equal, assert_raises, assert_allclose
+        assert_array_equal, assert_raises, assert_allclose, IS_WASM
         )
 import threading
 import queue
@@ -10,7 +10,7 @@ import queue
 
 def fft1(x):
     L = len(x)
-    phase = -2j*np.pi*(np.arange(L)/float(L))
+    phase = -2j * np.pi * (np.arange(L) / L)
     phase = np.arange(L).reshape(-1, 1) * phase
     return np.sum(x*np.exp(phase), axis=1)
 
@@ -268,6 +268,7 @@ def test_fft_with_order(dtype, order, fft):
         raise ValueError()
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start thread")
 class TestFFTThreadSafe:
     threads = 16
     input_shape = (800, 200)

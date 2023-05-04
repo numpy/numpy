@@ -18,10 +18,6 @@ Simple script to invoke Cython (and Tempita) on all .pyx (.pyx.in)
 files; while waiting for a proper build system. Uses file hashes to
 figure out if rebuild is needed.
 
-For now, this script should be run by developers when changing Cython files
-only, and the resulting C files checked in, so that end-users (and Python-only
-developers) do not get the Cython/Tempita dependencies.
-
 Originally written by Dag Sverre Seljebotn, and copied here from:
 
 https://raw.github.com/dagss/private-scipy-refactor/cythonize/cythonize.py
@@ -40,12 +36,6 @@ HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'
 VENDOR = 'NumPy'
 
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
 #
 # Rules
 #
@@ -54,35 +44,15 @@ def process_pyx(fromfile, tofile):
     if tofile.endswith('.cxx'):
         flags.append('--cplus')
 
-    try:
-        # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
-        from Cython.Compiler.Version import version as cython_version
-    except ImportError:
-        # The `cython` command need not point to the version installed in the
-        # Python running this script, so raise an error to avoid the chance of
-        # using the wrong version of Cython.
-        raise OSError('Cython needs to be installed in Python as a module')
-    else:
-        # check the version, and invoke through python
-        from distutils.version import LooseVersion
-
-        # Cython 0.29.21 is required for Python 3.9 and there are
-        # other fixes in the 0.29 series that are needed even for earlier
-        # Python versions.
-        # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.21')
-
-        if LooseVersion(cython_version) < required_version:
-            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}')
-        subprocess.check_call(
-            [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
+    subprocess.check_call(
+        [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
 
 def process_tempita_pyx(fromfile, tofile):
     import npy_tempita as tempita
 
     assert fromfile.endswith('.pyx.in')
-    with open(fromfile, "r") as f:
+    with open(fromfile) as f:
         tmpl = f.read()
     pyxcontent = tempita.sub(tmpl)
     pyxfile = fromfile[:-len('.pyx.in')] + '.pyx'
@@ -96,7 +66,7 @@ def process_tempita_pyd(fromfile, tofile):
 
     assert fromfile.endswith('.pxd.in')
     assert tofile.endswith('.pxd')
-    with open(fromfile, "r") as f:
+    with open(fromfile) as f:
         tmpl = f.read()
     pyxcontent = tempita.sub(tmpl)
     with open(tofile, "w") as f:
@@ -107,7 +77,7 @@ def process_tempita_pxi(fromfile, tofile):
 
     assert fromfile.endswith('.pxi.in')
     assert tofile.endswith('.pxi')
-    with open(fromfile, "r") as f:
+    with open(fromfile) as f:
         tmpl = f.read()
     pyxcontent = tempita.sub(tmpl)
     with open(tofile, "w") as f:
@@ -118,7 +88,7 @@ def process_tempita_pxd(fromfile, tofile):
 
     assert fromfile.endswith('.pxd.in')
     assert tofile.endswith('.pxd')
-    with open(fromfile, "r") as f:
+    with open(fromfile) as f:
         tmpl = f.read()
     pyxcontent = tempita.sub(tmpl)
     with open(tofile, "w") as f:
@@ -136,10 +106,10 @@ rules = {
 # Hash db
 #
 def load_hashes(filename):
-    # Return { filename : (sha1 of input, sha1 of output) }
+    # Return { filename : (sha256 of input, sha256 of output) }
     if os.path.isfile(filename):
         hashes = {}
-        with open(filename, 'r') as f:
+        with open(filename) as f:
             for line in f:
                 filename, inhash, outhash = line.split()
                 hashes[filename] = (inhash, outhash)
@@ -152,8 +122,8 @@ def save_hashes(hash_db, filename):
         for key, value in sorted(hash_db.items()):
             f.write("%s %s %s\n" % (key, value[0], value[1]))
 
-def sha1_of_file(filename):
-    h = hashlib.sha1()
+def sha256_of_file(filename):
+    h = hashlib.sha256()
     with open(filename, "rb") as f:
         h.update(f.read())
     return h.hexdigest()
@@ -169,8 +139,8 @@ def normpath(path):
     return path
 
 def get_hash(frompath, topath):
-    from_hash = sha1_of_file(frompath)
-    to_hash = sha1_of_file(topath) if os.path.exists(topath) else None
+    from_hash = sha256_of_file(frompath)
+    to_hash = sha256_of_file(topath) if os.path.exists(topath) else None
     return (from_hash, to_hash)
 
 def process(path, fromfile, tofile, processor_function, hash_db):

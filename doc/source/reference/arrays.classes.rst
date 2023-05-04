@@ -7,7 +7,6 @@ Standard array subclasses
 .. currentmodule:: numpy
 
 .. for doctests
-   >>> import numpy as np
    >>> np.random.seed(1)
 
 .. note::
@@ -42,6 +41,7 @@ however, of why your subroutine may not be able to handle an arbitrary
 subclass of an array is that matrices redefine the "*" operator to be
 matrix-multiplication, rather than element-by-element multiplication.
 
+.. _special-attributes-and-methods:
 
 Special attributes and methods
 ==============================
@@ -71,10 +71,11 @@ NumPy provides several hooks that classes can customize:
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the input or output arguments has a :func:`__array_ufunc__`
+   If one of the input, output, or ``where`` arguments has a :func:`__array_ufunc__`
    method, it is executed *instead* of the ufunc.  If more than one of the
    arguments implements :func:`__array_ufunc__`, they are tried in the
-   order: subclasses before superclasses, inputs before outputs, otherwise
+   order: subclasses before superclasses, inputs before outputs,
+   outputs before ``where``, otherwise
    left to right. The first routine returning something other than
    :obj:`NotImplemented` determines the result. If all of the
    :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
@@ -161,15 +162,6 @@ NumPy provides several hooks that classes can customize:
 .. py:method:: class.__array_function__(func, types, args, kwargs)
 
    .. versionadded:: 1.16
-
-   .. note::
-
-       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
-         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
-       - In NumPy 1.16, you need to set the environment variable
-         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
-         NumPy function overrides.
-       - Eventually, expect to ``__array_function__`` to always be enabled.
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
@@ -330,6 +322,8 @@ NumPy provides several hooks that classes can customize:
    returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
+.. _matrix-objects:
+
 Matrix objects
 ==============
 
@@ -480,16 +474,16 @@ Character arrays (:mod:`numpy.char`)
    The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
 
-These are enhanced arrays of either :class:`string_` type or
-:class:`unicode_` type.  These arrays inherit from the
+These are enhanced arrays of either :class:`str_` type or
+:class:`bytes_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
 and ``%`` on a (broadcasting) element-by-element basis.  These
 operations are not available on the standard :class:`ndarray` of
 character type. In addition, the :class:`chararray` has all of the
-standard :class:`string <str>` (and :class:`unicode`) methods,
+standard :class:`str` (and :class:`bytes`) methods,
 executing them on an element-by-element basis. Perhaps the easiest
 way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode

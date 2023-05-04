@@ -1,0 +1,412 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.23.0 Release Notes
+==========================
+
+The NumPy 1.23.0 release continues the ongoing work to improve the handling and
+promotion of dtypes, increase the execution speed, clarify the documentation,
+and expire old deprecations. The highlights are:
+
+* Implementation of ``loadtxt`` in C, greatly improving its performance.
+* Exposing DLPack at the Python level for easy data exchange.
+* Changes to the promotion and comparisons of structured dtypes.
+* Improvements to f2py.
+
+See below for the details,
+
+
+New functions
+=============
+
+* A masked array specialization of ``ndenumerate`` is now available as
+  ``numpy.ma.ndenumerate``. It provides an alternative to ``numpy.ndenumerate``
+  and skips masked values by default.
+
+  (`gh-20020 <https://github.com/numpy/numpy/pull/20020>`__)
+
+* ``numpy.from_dlpack`` has been added to allow easy exchange of data using the
+  DLPack protocol.  It accepts Python objects that implement the ``__dlpack__``
+  and ``__dlpack_device__`` methods and returns a ndarray object which is
+  generally the view of the data of the input object.
+
+  (`gh-21145 <https://github.com/numpy/numpy/pull/21145>`__)
+
+
+Deprecations
+============
+
+* Setting ``__array_finalize__`` to ``None`` is deprecated.  It must now be
+  a method and may wish to call ``super().__array_finalize__(obj)`` after
+  checking for ``None`` or if the NumPy version is sufficiently new.
+
+  (`gh-20766 <https://github.com/numpy/numpy/pull/20766>`__)
+
+* Using ``axis=32`` (``axis=np.MAXDIMS``) in many cases had the
+  same meaning as ``axis=None``.  This is deprecated and ``axis=None``
+  must be used instead.
+
+  (`gh-20920 <https://github.com/numpy/numpy/pull/20920>`__)
+
+* The hook function ``PyDataMem_SetEventHook`` has been deprecated and the
+  demonstration of its use in tool/allocation_tracking has been removed.  The
+  ability to track allocations is now built-in to python via ``tracemalloc``.
+
+  (`gh-20394 <https://github.com/numpy/numpy/pull/20394>`__)
+
+* ``numpy.distutils`` has been deprecated, as a result of ``distutils`` itself
+  being deprecated. It will not be present in NumPy for Python >= 3.12, and
+  will be removed completely 2 years after the release of Python 3.12 For more
+  details, see :ref:`distutils-status-migration`.
+
+  (`gh-20875 <https://github.com/numpy/numpy/pull/20875>`__)
+
+* ``numpy.loadtxt`` will now give a ``DeprecationWarning`` when an integer
+  ``dtype`` is requested but the value is formatted as a floating point number.
+
+  (`gh-21663 <https://github.com/numpy/numpy/pull/21663>`__)
+
+
+Expired deprecations
+====================
+
+* The ``NpzFile.iteritems()`` and ``NpzFile.iterkeys()`` methods have been
+  removed as part of the continued removal of Python 2 compatibility. This
+  concludes the deprecation from 1.15.
+
+  (`gh-16830 <https://github.com/numpy/numpy/pull/16830>`__)
+
+* The ``alen`` and ``asscalar`` functions have been removed.
+
+  (`gh-20414 <https://github.com/numpy/numpy/pull/20414>`__)
+
+* The ``UPDATEIFCOPY`` array flag has been removed together with the enum
+  ``NPY_ARRAY_UPDATEIFCOPY``. The associated (and deprecated)
+  ``PyArray_XDECREF_ERR`` was also removed. These were all deprecated in 1.14. They
+  are replaced by ``NPY_ARRAY_WRITEBACKIFCOPY``, that requires calling
+  ``PyArray_ResolveWritebackIfCopy`` before the array is deallocated.
+
+  (`gh-20589 <https://github.com/numpy/numpy/pull/20589>`__)
+
+* Exceptions will be raised during array-like creation.  When an object raised
+  an exception during access of the special attributes ``__array__`` or
+  ``__array_interface__``, this exception was usually ignored.  This behaviour
+  was deprecated in 1.21, and the exception will now be raised.
+
+  (`gh-20835 <https://github.com/numpy/numpy/pull/20835>`__)
+
+* Multidimensional indexing with non-tuple values is not allowed.  Previously,
+  code such as ``arr[ind]`` where ``ind = [[0, 1], [0, 1]]`` produced a
+  ``FutureWarning`` and was interpreted as a multidimensional index (i.e.,
+  ``arr[tuple(ind)]``). Now this example is treated like an array index over a
+  single dimension (``arr[array(ind)]``).  Multidimensional indexing with
+  anything but a tuple was deprecated in NumPy 1.15.
+
+  (`gh-21029 <https://github.com/numpy/numpy/pull/21029>`__)
+
+* Changing to a dtype of different size in F-contiguous arrays is no longer
+  permitted. Deprecated since Numpy 1.11.0. See below for an extended
+  explanation of the effects of this change.
+
+  (`gh-20722 <https://github.com/numpy/numpy/pull/20722>`__)
+
+
+New Features
+============
+
+crackfortran has support for operator and assignment overloading
+----------------------------------------------------------------
+``crackfortran`` parser now understands operator and assignment
+definitions in a module. They are added in the ``body`` list of the
+module which contains a new key ``implementedby`` listing the names
+of the subroutines or functions implementing the operator or
+assignment.
+
+(`gh-15006 <https://github.com/numpy/numpy/pull/15006>`__)
+
+f2py supports reading access type attributes from derived type statements
+-------------------------------------------------------------------------
+As a result, one does not need to use ``public`` or ``private`` statements to
+specify derived type access properties.
+
+(`gh-15844 <https://github.com/numpy/numpy/pull/15844>`__)
+
+New parameter ``ndmin`` added to ``genfromtxt``
+-------------------------------------------------------------------------
+This parameter behaves the same as ``ndmin`` from ``numpy.loadtxt``.
+
+(`gh-20500 <https://github.com/numpy/numpy/pull/20500>`__)
+
+``np.loadtxt`` now supports quote character and single converter function
+-------------------------------------------------------------------------
+``numpy.loadtxt`` now supports an additional ``quotechar`` keyword argument
+which is not set by default.  Using ``quotechar='"'`` will read quoted fields
+as used by the Excel CSV dialect.
+
+Further, it is now possible to pass a single callable rather than a dictionary
+for the ``converters`` argument.
+
+(`gh-20580 <https://github.com/numpy/numpy/pull/20580>`__)
+
+Changing to dtype of a different size now requires contiguity of only the last axis
+-----------------------------------------------------------------------------------
+Previously, viewing an array with a dtype of a different item size required that
+the entire array be C-contiguous. This limitation would unnecessarily force the
+user to make contiguous copies of non-contiguous arrays before being able to
+change the dtype.
+
+This change affects not only ``ndarray.view``, but other construction
+mechanisms, including the discouraged direct assignment to ``ndarray.dtype``.
+
+This change expires the deprecation regarding the viewing of F-contiguous
+arrays, described elsewhere in the release notes.
+
+(`gh-20722 <https://github.com/numpy/numpy/pull/20722>`__)
+
+Deterministic output files for F2PY
+-----------------------------------
+For F77 inputs, ``f2py`` will generate ``modname-f2pywrappers.f``
+unconditionally, though these may be empty.  For free-form inputs,
+``modname-f2pywrappers.f``, ``modname-f2pywrappers2.f90`` will both be generated
+unconditionally, and may be empty. This allows writing generic output rules in
+``cmake`` or ``meson`` and other build systems. Older behavior can be restored
+by passing ``--skip-empty-wrappers`` to ``f2py``. :ref:`f2py-meson` details usage.
+
+(`gh-21187 <https://github.com/numpy/numpy/pull/21187>`__)
+
+``keepdims`` parameter for ``average``
+--------------------------------------
+The parameter ``keepdims`` was added to the functions ``numpy.average``
+and ``numpy.ma.average``.  The parameter has the same meaning as it
+does in reduction functions such as ``numpy.sum`` or ``numpy.mean``.
+
+(`gh-21485 <https://github.com/numpy/numpy/pull/21485>`__)
+
+New parameter ``equal_nan`` added to ``np.unique``
+--------------------------------------------------
+``np.unique`` was changed in 1.21 to treat all ``NaN`` values as equal and return
+a single ``NaN``. Setting ``equal_nan=False`` will restore pre-1.21 behavior
+to treat ``NaNs`` as unique. Defaults to ``True``.
+
+(`gh-21623 <https://github.com/numpy/numpy/pull/21623>`__)
+
+
+Compatibility notes
+===================
+
+1D ``np.linalg.norm`` preserves float input types, even for scalar results
+--------------------------------------------------------------------------
+Previously, this would promote to ``float64`` when the ``ord`` argument was
+not one of the explicitly listed values, e.g. ``ord=3``::
+
+    >>> f32 = np.float32([1, 2])
+    >>> np.linalg.norm(f32, 2).dtype
+    dtype('float32')
+    >>> np.linalg.norm(f32, 3)
+    dtype('float64')  # numpy 1.22
+    dtype('float32')  # numpy 1.23
+
+This change affects only ``float32`` and ``float16`` vectors with ``ord``
+other than ``-Inf``, ``0``, ``1``, ``2``, and ``Inf``.
+
+(`gh-17709 <https://github.com/numpy/numpy/pull/17709>`__)
+
+Changes to structured (void) dtype promotion and comparisons
+------------------------------------------------------------
+In general, NumPy now defines correct, but slightly limited, promotion for
+structured dtypes by promoting the subtypes of each field instead of raising
+an exception::
+
+    >>> np.result_type(np.dtype("i,i"), np.dtype("i,d"))
+    dtype([('f0', '<i4'), ('f1', '<f8')])
+
+For promotion matching field names, order, and titles are enforced, however
+padding is ignored.
+Promotion involving structured dtypes now always ensures native byte-order for
+all fields (which may change the result of ``np.concatenate``)
+and ensures that the result will be "packed", i.e. all fields are ordered
+contiguously and padding is removed.
+See :ref:`structured_dtype_comparison_and_promotion` for further details.
+
+The ``repr`` of aligned structures will now never print the long form including
+``offsets`` and ``itemsize`` unless the structure includes padding not
+guaranteed by ``align=True``.
+
+In alignment with the above changes to the promotion logic, the
+casting safety has been updated:
+
+* ``"equiv"`` enforces matching names and titles. The itemsize
+  is allowed to differ due to padding.
+* ``"safe"`` allows mismatching field names and titles
+* The cast safety is limited by the cast safety of each included
+  field.
+* The order of fields is used to decide cast safety of each
+  individual field.  Previously, the field names were used and
+  only unsafe casts were possible when names mismatched.
+
+The main important change here is that name mismatches are now
+considered "safe" casts.
+
+(`gh-19226 <https://github.com/numpy/numpy/pull/19226>`__)
+
+``NPY_RELAXED_STRIDES_CHECKING`` has been removed
+-------------------------------------------------
+NumPy cannot be compiled with ``NPY_RELAXED_STRIDES_CHECKING=0``
+anymore.  Relaxed strides have been the default for many years and
+the option was initially introduced to allow a smoother transition.
+
+(`gh-20220 <https://github.com/numpy/numpy/pull/20220>`__)
+
+``np.loadtxt`` has recieved several changes
+-------------------------------------------
+
+The row counting of ``numpy.loadtxt`` was fixed.  ``loadtxt`` ignores fully
+empty lines in the file, but counted them towards ``max_rows``.
+When ``max_rows`` is used and the file contains empty lines, these will now
+not be counted.  Previously, it was possible that the result contained fewer
+than ``max_rows`` rows even though more data was available to be read.
+If the old behaviour is required, ``itertools.islice`` may be used::
+
+    import itertools
+    lines = itertools.islice(open("file"), 0, max_rows)
+    result = np.loadtxt(lines, ...)
+
+While generally much faster and improved, ``numpy.loadtxt`` may now fail to
+converter certain strings to numbers that were previously successfully read.
+The most important cases for this are:
+
+* Parsing floating point values such as ``1.0`` into integers is now deprecated.
+* Parsing hexadecimal floats such as ``0x3p3`` will fail
+* An ``_`` was previously accepted as a thousands delimiter ``100_000``.
+  This will now result in an error.
+
+If you experience these limitations, they can all be worked around by passing
+appropriate ``converters=``.  NumPy now supports passing a single converter
+to be used for all columns to make this more convenient.
+For example, ``converters=float.fromhex`` can read hexadecimal float numbers
+and ``converters=int`` will be able to read ``100_000``.
+
+Further, the error messages have been generally improved.  However, this means
+that error types may differ.  In particularly, a ``ValueError`` is now always
+raised when parsing of a single entry fails.
+
+(`gh-20580 <https://github.com/numpy/numpy/pull/20580>`__)
+
+
+Improvements
+============
+
+``ndarray.__array_finalize__`` is now callable
+----------------------------------------------
+This means subclasses can now use ``super().__array_finalize__(obj)``
+without worrying whether ``ndarray`` is their superclass or not.
+The actual call remains a no-op.
+
+(`gh-20766 <https://github.com/numpy/numpy/pull/20766>`__)
+
+Add support for VSX4/Power10
+----------------------------------------------
+With VSX4/Power10 enablement, the new instructions available in
+Power ISA 3.1 can be used to accelerate some NumPy operations,
+e.g., floor_divide, modulo, etc.
+
+(`gh-20821 <https://github.com/numpy/numpy/pull/20821>`__)
+
+``np.fromiter`` now accepts objects and subarrays
+-------------------------------------------------
+The ``numpy.fromiter`` function now supports object and
+subarray dtypes. Please see he function documentation for
+examples.
+
+(`gh-20993 <https://github.com/numpy/numpy/pull/20993>`__)
+
+Math C library feature detection now uses correct signatures
+------------------------------------------------------------
+Compiling is preceded by a detection phase to determine whether the
+underlying libc supports certain math operations. Previously this code
+did not respect the proper signatures. Fixing this enables compilation
+for the ``wasm-ld`` backend (compilation for web assembly) and reduces
+the number of warnings.
+
+(`gh-21154 <https://github.com/numpy/numpy/pull/21154>`__)
+
+``np.kron`` now maintains subclass information
+----------------------------------------------
+``np.kron`` maintains subclass information now such as masked arrays
+while computing the Kronecker product of the inputs
+
+.. code-block:: python
+
+    >>> x = ma.array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
+    >>> np.kron(x,x)
+    masked_array(
+      data=[[1, --, --, --],
+            [--, 4, --, --],
+            [--, --, 4, --],
+            [--, --, --, 16]],
+      mask=[[False,  True,  True,  True],
+            [ True, False,  True,  True],
+            [ True,  True, False,  True],
+            [ True,  True,  True, False]],
+      fill_value=999999)
+
+.. warning::
+    ``np.kron`` output now follows ``ufunc`` ordering (``multiply``)
+    to determine the output class type
+
+    .. code-block:: python
+
+        >>> class myarr(np.ndarray):
+        >>>    __array_priority__ = -1
+        >>> a = np.ones([2, 2])
+        >>> ma = myarray(a.shape, a.dtype, a.data)
+        >>> type(np.kron(a, ma)) == np.ndarray
+        False # Before it was True
+        >>> type(np.kron(a, ma)) == myarr
+        True
+
+(`gh-21262 <https://github.com/numpy/numpy/pull/21262>`__)
+
+
+Performance improvements and changes
+====================================
+
+Faster ``np.loadtxt``
+---------------------
+``numpy.loadtxt`` is now generally much faster than previously as most of it
+is now implemented in C.
+
+(`gh-20580 <https://github.com/numpy/numpy/pull/20580>`__)
+
+Faster reduction operators
+--------------------------
+Reduction operations like ``numpy.sum``, ``numpy.prod``, ``numpy.add.reduce``,
+``numpy.logical_and.reduce`` on contiguous integer-based arrays are now
+much faster.
+
+(`gh-21001 <https://github.com/numpy/numpy/pull/21001>`__)
+
+Faster ``np.where``
+-------------------
+``numpy.where`` is now much faster than previously on unpredictable/random
+input data.
+
+(`gh-21130 <https://github.com/numpy/numpy/pull/21130>`__)
+
+Faster operations on NumPy scalars
+----------------------------------
+Many operations on NumPy scalars are now significantly faster, although
+rare operations (e.g. with 0-D arrays rather than scalars) may be slower
+in some cases.
+However, even with these improvements users who want the best performance
+for their scalars, may want to convert a known NumPy scalar into a Python
+one using ``scalar.item()``.
+
+(`gh-21188 <https://github.com/numpy/numpy/pull/21188>`__)
+
+Faster ``np.kron``
+------------------
+``numpy.kron`` is about 80% faster as the product is now computed
+using broadcasting.
+
+(`gh-21354 <https://github.com/numpy/numpy/pull/21354>`__)

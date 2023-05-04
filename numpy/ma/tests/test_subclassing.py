@@ -7,6 +7,7 @@
 
 """
 import numpy as np
+from numpy.lib.mixins import NDArrayOperatorsMixin
 from numpy.testing import assert_, assert_raises
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
@@ -28,19 +29,17 @@ class SubArray(np.ndarray):
         return x
 
     def __array_finalize__(self, obj):
-        if callable(getattr(super(SubArray, self),
-                            '__array_finalize__', None)):
-            super(SubArray, self).__array_finalize__(obj)
+        super().__array_finalize__(obj)
         self.info = getattr(obj, 'info', {}).copy()
         return
 
     def __add__(self, other):
-        result = super(SubArray, self).__add__(other)
+        result = super().__add__(other)
         result.info['added'] = result.info.get('added', 0) + 1
         return result
 
     def __iadd__(self, other):
-        result = super(SubArray, self).__iadd__(other)
+        result = super().__iadd__(other)
         result.info['iadded'] = result.info.get('iadded', 0) + 1
         return result
 
@@ -51,7 +50,7 @@ subarray = SubArray
 class SubMaskedArray(MaskedArray):
     """Pure subclass of MaskedArray, keeping some info on subclass."""
     def __new__(cls, info=None, **kwargs):
-        obj = super(SubMaskedArray, cls).__new__(cls, **kwargs)
+        obj = super().__new__(cls, **kwargs)
         obj._optinfo['info'] = info
         return obj
 
@@ -109,11 +108,11 @@ class CSAIterator:
 class ComplicatedSubArray(SubArray):
 
     def __str__(self):
-        return 'myprefix {0} mypostfix'.format(self.view(SubArray))
+        return f'myprefix {self.view(SubArray)} mypostfix'
 
     def __repr__(self):
         # Return a repr that does not start with 'name('
-        return '<{0} {1}>'.format(self.__class__.__name__, self)
+        return f'<{self.__class__.__name__} {self}>'
 
     def _validate_input(self, value):
         if not isinstance(value, ComplicatedSubArray):
@@ -123,12 +122,11 @@ class ComplicatedSubArray(SubArray):
     def __setitem__(self, item, value):
         # validation ensures direct assignment with ndarray or
         # masked_print_option will fail
-        super(ComplicatedSubArray, self).__setitem__(
-            item, self._validate_input(value))
+        super().__setitem__(item, self._validate_input(value))
 
     def __getitem__(self, item):
         # ensure getter returns our own class also for scalars
-        value = super(ComplicatedSubArray, self).__getitem__(item)
+        value = super().__getitem__(item)
         if not isinstance(value, np.ndarray):  # scalar
             value = value.__array__().view(ComplicatedSubArray)
         return value
@@ -143,17 +141,45 @@ class ComplicatedSubArray(SubArray):
         y[:] = value
 
     def __array_wrap__(self, obj, context=None):
-        obj = super(ComplicatedSubArray, self).__array_wrap__(obj, context)
+        obj = super().__array_wrap__(obj, context)
         if context is not None and context[0] is np.multiply:
             obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
 
         return obj
 
 
+class WrappedArray(NDArrayOperatorsMixin):
+    """
+    Wrapping a MaskedArray rather than subclassing to test that
+    ufunc deferrals are commutative.
+    See: https://github.com/numpy/numpy/issues/15200)
+    """
+    __slots__ = ('_array', 'attrs')
+    __array_priority__ = 20
+
+    def __init__(self, array, **attrs):
+        self._array = array
+        self.attrs = attrs
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(\n{self._array}\n{self.attrs}\n)"
+
+    def __array__(self):
+        return np.asarray(self._array)
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        if method == '__call__':
+            inputs = [arg._array if isinstance(arg, self.__class__) else arg
+                      for arg in inputs]
+            return self.__class__(ufunc(*inputs, **kwargs), **self.attrs)
+        else:
+            return NotImplemented
+
+
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup(self):
+    def setup_method(self):
         x = np.arange(5, dtype='float')
         mx = msubarray(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
@@ -318,7 +344,7 @@ class TestSubclassing:
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
         assert_startswith(repr(mxsub),
-            'masked_{0}(data=[--, 1, --, 3, 4]'.format(SubArray.__name__))
+            f'masked_{SubArray.__name__}(data=[--, 1, --, 3, 4]')
 
     def test_subclass_str(self):
         """test str with subclass that has overridden str, setitem"""
@@ -345,3 +371,90 @@ class TestSubclassing:
         diff2 = arr1 - arr2
         assert_('info' in diff2._optinfo)
         assert_(diff2._optinfo['info'] == 'test')
+
+
+class ArrayNoInheritance:
+    """Quantity-like class that does not inherit from ndarray"""
+    def __init__(self, data, units):
+        self.magnitude = data
+        self.units = units
+
+    def __getattr__(self, attr):
+        return getattr(self.magnitude, attr)
+
+
+def test_array_no_inheritance():
+    data_masked = np.ma.array([1, 2, 3], mask=[True, False, True])
+    data_masked_units = ArrayNoInheritance(data_masked, 'meters')
+
+    # Get the masked representation of the Quantity-like class
+    new_array = np.ma.array(data_masked_units)
+    assert_equal(data_masked.data, new_array.data)
+    assert_equal(data_masked.mask, new_array.mask)
+    # Test sharing the mask
+    data_masked.mask = [True, False, False]
+    assert_equal(data_masked.mask, new_array.mask)
+    assert_(new_array.sharedmask)
+
+    # Get the masked representation of the Quantity-like class
+    new_array = np.ma.array(data_masked_units, copy=True)
+    assert_equal(data_masked.data, new_array.data)
+    assert_equal(data_masked.mask, new_array.mask)
+    # Test that the mask is not shared when copy=True
+    data_masked.mask = [True, False, True]
+    assert_equal([True, False, False], new_array.mask)
+    assert_(not new_array.sharedmask)
+
+    # Get the masked representation of the Quantity-like class
+    new_array = np.ma.array(data_masked_units, keep_mask=False)
+    assert_equal(data_masked.data, new_array.data)
+    # The change did not affect the original mask
+    assert_equal(data_masked.mask, [True, False, True])
+    # Test that the mask is False and not shared when keep_mask=False
+    assert_(not new_array.mask)
+    assert_(not new_array.sharedmask)
+
+
+class TestClassWrapping:
+    # Test suite for classes that wrap MaskedArrays
+
+    def setup_method(self):
+        m = np.ma.masked_array([1, 3, 5], mask=[False, True, False])
+        wm = WrappedArray(m)
+        self.data = (m, wm)
+
+    def test_masked_unary_operations(self):
+        # Tests masked_unary_operation
+        (m, wm) = self.data
+        with np.errstate(divide='ignore'):
+            assert_(isinstance(np.log(wm), WrappedArray))
+
+    def test_masked_binary_operations(self):
+        # Tests masked_binary_operation
+        (m, wm) = self.data
+        # Result should be a WrappedArray
+        assert_(isinstance(np.add(wm, wm), WrappedArray))
+        assert_(isinstance(np.add(m, wm), WrappedArray))
+        assert_(isinstance(np.add(wm, m), WrappedArray))
+        # add and '+' should call the same ufunc
+        assert_equal(np.add(m, wm), m + wm)
+        assert_(isinstance(np.hypot(m, wm), WrappedArray))
+        assert_(isinstance(np.hypot(wm, m), WrappedArray))
+        # Test domained binary operations
+        assert_(isinstance(np.divide(wm, m), WrappedArray))
+        assert_(isinstance(np.divide(m, wm), WrappedArray))
+        assert_equal(np.divide(wm, m) * m, np.divide(m, m) * wm)
+        # Test broadcasting
+        m2 = np.stack([m, m])
+        assert_(isinstance(np.divide(wm, m2), WrappedArray))
+        assert_(isinstance(np.divide(m2, wm), WrappedArray))
+        assert_equal(np.divide(m2, wm), np.divide(wm, m2))
+
+    def test_mixins_have_slots(self):
+        mixin = NDArrayOperatorsMixin()
+        # Should raise an error
+        assert_raises(AttributeError, mixin.__setattr__, "not_a_real_attr", 1)
+
+        m = np.ma.masked_array([1, 3, 5], mask=[False, True, False])
+        wm = WrappedArray(m)
+        assert_raises(AttributeError, wm.__setattr__, "not_an_attr", 2)

@@ -1,9 +1,7 @@
 import functools
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, array, asanyarray
-    )
+from numpy.core.numeric import asarray, zeros, array, asanyarray
 from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
@@ -69,13 +67,13 @@ def take_along_axis(arr, indices, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Source array
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to take along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions Ni and Nj only need to broadcast
         against `arr`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
@@ -124,19 +122,21 @@ def take_along_axis(arr, indices, axis):
     >>> np.sort(a, axis=1)
     array([[10, 20, 30],
            [40, 50, 60]])
-    >>> ai = np.argsort(a, axis=1); ai
+    >>> ai = np.argsort(a, axis=1)
+    >>> ai
     array([[0, 2, 1],
            [1, 2, 0]])
     >>> np.take_along_axis(a, ai, axis=1)
     array([[10, 20, 30],
            [40, 50, 60]])
 
-    The same works for max and min, if you expand the dimensions:
+    The same works for max and min, if you maintain the trivial dimension
+    with ``keepdims``:
 
-    >>> np.expand_dims(np.max(a, axis=1), axis=1)
+    >>> np.max(a, axis=1, keepdims=True)
     array([[30],
            [60]])
-    >>> ai = np.expand_dims(np.argmax(a, axis=1), axis=1)
+    >>> ai = np.argmax(a, axis=1, keepdims=True)
     >>> ai
     array([[1],
            [0]])
@@ -147,8 +147,8 @@ def take_along_axis(arr, indices, axis):
     If we want to get the max and min at the same time, we can stack the
     indices first
 
-    >>> ai_min = np.expand_dims(np.argmin(a, axis=1), axis=1)
-    >>> ai_max = np.expand_dims(np.argmax(a, axis=1), axis=1)
+    >>> ai_min = np.argmin(a, axis=1, keepdims=True)
+    >>> ai_max = np.argmax(a, axis=1, keepdims=True)
     >>> ai = np.concatenate([ai_min, ai_max], axis=1)
     >>> ai
     array([[0, 1],
@@ -190,16 +190,16 @@ def put_along_axis(arr, indices, values, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Destination array.
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to change along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions in Ni and Nj may be 1 to broadcast
         against `arr`.
-    values: array_like (Ni..., J, Nk...)
+    values : array_like (Ni..., J, Nk...)
         values to insert at those indices. Its shape and dimension are
         broadcast to match that of `indices`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the destination
         array is treated as if a flattened 1d view had been created of it.
 
@@ -237,7 +237,7 @@ def put_along_axis(arr, indices, values, axis):
 
     We can replace the maximum values with:
 
-    >>> ai = np.expand_dims(np.argmax(a, axis=1), axis=1)
+    >>> ai = np.argmax(a, axis=1, keepdims=True)
     >>> ai
     array([[1],
            [0]])
@@ -372,7 +372,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # invoke the function on the first item
     try:
         ind0 = next(inds)
-    except StopIteration as e:
+    except StopIteration:
         raise ValueError(
             'Cannot apply_along_axis when any iteration dimensions are 0'
         ) from None
@@ -643,13 +643,9 @@ def column_stack(tup):
            [3, 4]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
-
     arrays = []
     for v in tup:
-        arr = array(v, copy=False, subok=True)
+        arr = asanyarray(v)
         if arr.ndim < 2:
             arr = array(arr, copy=False, subok=True, ndmin=2).T
         arrays.append(arr)
@@ -713,10 +709,6 @@ def dstack(tup):
            [[3, 4]]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
-
     arrs = atleast_3d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
@@ -756,11 +748,11 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
-    >>> x = np.arange(7.0)
-    >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
     try:
@@ -775,7 +767,7 @@ def array_split(ary, indices_or_sections, axis=0):
         # indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
-            raise ValueError('number sections must be larger than 0.')
+            raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
                          extras * [Neach_section+1] +
@@ -870,7 +862,7 @@ def split(ary, indices_or_sections, axis=0):
         N = ary.shape[axis]
         if N % sections:
             raise ValueError(
-                'array split does not result in an equal division')
+                'array split does not result in an equal division') from None
     return array_split(ary, indices_or_sections, axis)
 
 
@@ -885,7 +877,7 @@ def hsplit(ary, indices_or_sections):
 
     Please refer to the `split` documentation.  `hsplit` is equivalent
     to `split` with ``axis=1``, the array is always split along the second
-    axis regardless of the array dimension.
+    axis except for 1-D arrays, where it is split at ``axis=0``.
 
     See Also
     --------
@@ -932,6 +924,12 @@ def hsplit(ary, indices_or_sections):
            [[4.,  5.]]]),
      array([[[2.,  3.]],
            [[6.,  7.]]])]
+
+    With a 1-D array, the split is along axis 0.
+
+    >>> x = np.array([0, 1, 2, 3, 4, 5])
+    >>> np.hsplit(x, 2)
+    [array([0, 1, 2]), array([3, 4, 5])]
 
     """
     if _nx.ndim(ary) == 0:
@@ -1035,6 +1033,7 @@ def dsplit(ary, indices_or_sections):
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
 
+
 def get_array_prepare(*args):
     """Find the wrapper for the array with the highest priority.
 
@@ -1046,6 +1045,7 @@ def get_array_prepare(*args):
     if wrappers:
         return wrappers[-1][-1]
     return None
+
 
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
@@ -1088,8 +1088,8 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If `a.shape = (r0,r1,..,rN)` and `b.shape = (s0,s1,...,sN)`,
-    the Kronecker product has shape `(r0*s0, r1*s1, ..., rN*SN)`.
+    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::
 
@@ -1133,35 +1133,49 @@ def kron(a, b):
     True
 
     """
+    # Working:
+    # 1. Equalise the shapes by prepending smaller array with 1s
+    # 2. Expand shapes of both the arrays by adding new axes at
+    #    odd positions for 1st array and even positions for 2nd
+    # 3. Compute the product of the modified array
+    # 4. The inner most array elements now contain the rows of
+    #    the Kronecker product
+    # 5. Reshape the result to kron's shape, which is same as
+    #    product of shapes of the two arrays.
     b = asanyarray(b)
     a = array(a, copy=False, subok=True, ndmin=b.ndim)
+    is_any_mat = isinstance(a, matrix) or isinstance(b, matrix)
     ndb, nda = b.ndim, a.ndim
+    nd = max(ndb, nda)
+
     if (nda == 0 or ndb == 0):
         return _nx.multiply(a, b)
+
     as_ = a.shape
     bs = b.shape
     if not a.flags.contiguous:
         a = reshape(a, as_)
     if not b.flags.contiguous:
         b = reshape(b, bs)
-    nd = ndb
-    if (ndb != nda):
-        if (ndb > nda):
-            as_ = (1,)*(ndb-nda) + as_
-        else:
-            bs = (1,)*(nda-ndb) + bs
-            nd = nda
-    result = outer(a, b).reshape(as_+bs)
-    axis = nd-1
-    for _ in range(nd):
-        result = concatenate(result, axis=axis)
-    wrapper = get_array_prepare(a, b)
-    if wrapper is not None:
-        result = wrapper(result)
-    wrapper = get_array_wrap(a, b)
-    if wrapper is not None:
-        result = wrapper(result)
-    return result
+
+    # Equalise the shapes by prepending smaller one with 1s
+    as_ = (1,)*max(0, ndb-nda) + as_
+    bs = (1,)*max(0, nda-ndb) + bs
+
+    # Insert empty dimensions
+    a_arr = expand_dims(a, axis=tuple(range(ndb-nda)))
+    b_arr = expand_dims(b, axis=tuple(range(nda-ndb)))
+
+    # Compute the product
+    a_arr = expand_dims(a_arr, axis=tuple(range(1, nd*2, 2)))
+    b_arr = expand_dims(b_arr, axis=tuple(range(0, nd*2, 2)))
+    # In case of `mat`, convert result to `array`
+    result = _nx.multiply(a_arr, b_arr, subok=(not is_any_mat))
+
+    # Reshape back
+    result = result.reshape(_nx.multiply(as_, bs))
+
+    return result if not is_any_mat else matrix(result, copy=False)
 
 
 def _tile_dispatcher(A, reps):

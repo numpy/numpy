@@ -21,10 +21,16 @@ Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
   backwards compatible. (Not to be used for removal of deprecated features.)
 * ``c_api``: Changes in the Numpy C-API exported functions
 * ``new_feature``: New user facing features like ``kwargs``.
-* ``improvement``: Performance and edge-case changes
+* ``improvement``: General improvements and edge-case changes which are
+  not new features or compatibility related.
+* ``performance``: Performance changes that should not affect other behaviour.
 * ``change``: Other changes
 * ``highlight``: Adds a highlight bullet point to use as a possibly highlight
   of the release.
+
+It is possible to add two files with different categories (and text) if both
+are relevant. For example a change may improve performance but have some
+compatibility concerns.
 
 Most categories should be formatted as paragraphs with a heading.
 So for example: ``123.new_feature.rst`` would have the content::
@@ -44,7 +50,7 @@ and double-backticks for code.
 If you are unsure what pull request type to use, don't hesitate to ask in your
 PR.
 
-You can install ``towncrier`` and run ``towncrier --draft --version 1.18``
+You can install ``towncrier`` and run ``towncrier build --draft --version 1.18``
 if you want to get a preview of how your change will look in the final release
 notes.
 

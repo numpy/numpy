@@ -14582,7 +14582,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the the smallest magnatiude
+                ==== Use up to NS of the smallest magnatiude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -16718,7 +16718,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the the smallest magnatiude
+                ==== Use up to NS of the smallest magnatiude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -17439,7 +17439,7 @@ L80:
 
 /*
                       ==== Accumulate U. (If necessary, update Z later
-                      .    with with an efficient matrix-matrix
+                      .    with an efficient matrix-matrix
                       .    multiply.) ====
 */
 
@@ -25358,7 +25358,7 @@ L160:
     ===============
 
     The algorithm used in this program is basically backward (forward)
-    substitution, with scaling to make the the code robust against
+    substitution, with scaling to make the code robust against
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest

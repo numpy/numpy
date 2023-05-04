@@ -19,12 +19,25 @@ LAPACK, and for setting include paths and similar build options, please see
 
 """
 
+import warnings
+
 # Must import local ccompiler ASAP in order to get
 # customized CCompiler.spawn effective.
 from . import ccompiler
 from . import unixccompiler
 
 from .npy_pkg_config import *
+
+warnings.warn("\n\n"
+    "  `numpy.distutils` is deprecated since NumPy 1.23.0, as a result\n"
+    "  of the deprecation of `distutils` itself. It will be removed for\n"
+    "  Python >= 3.12. For older Python versions it will remain present.\n"
+    "  It is recommended to use `setuptools < 60.0` for those Python versions.\n"
+    "  For more details, see:\n"
+    "    https://numpy.org/devdocs/reference/distutils_status_migration.html \n\n",
+    DeprecationWarning, stacklevel=2
+)
+del warnings
 
 # If numpy is installed, add distutils.test()
 try:

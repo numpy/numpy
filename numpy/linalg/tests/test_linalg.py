@@ -11,6 +11,7 @@ import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
+from numpy.core import swapaxes
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -18,9 +19,8 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex, HAS_LAPACK64,
+    assert_raises_regex, HAS_LAPACK64, IS_WASM
     )
-from numpy.testing._private.utils import requires_memory
 
 
 def consistent_subclass(out, in_):
@@ -85,7 +85,7 @@ class LinalgCase:
         do(self.a, self.b, tags=self.tags)
 
     def __repr__(self):
-        return "<LinalgCase: %s>" % (self.name,)
+        return f'<LinalgCase: {self.name}>'
 
 
 def apply_tag(tag, cases):
@@ -348,10 +348,10 @@ class LinalgTestCase:
 
             try:
                 case.check(self.do)
-            except Exception:
-                msg = "In test case: %r\n\n" % case
+            except Exception as e:
+                msg = f'In test case: {case!r}\n\n'
                 msg += traceback.format_exc()
-                raise AssertionError(msg)
+                raise AssertionError(msg) from e
 
 
 class LinalgSquareTestCase(LinalgTestCase):
@@ -684,7 +684,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
-        
+
         assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
         assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
         assert_equal(np.sort(s)[..., ::-1], s)
@@ -766,6 +766,9 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
+    @pytest.mark.xfail(True, run=False,
+                       reason="Platform/LAPACK-dependent failure, "
+                              "see gh-18914")
     def test_nan(self):
         # nans should be passed through, not converted to infs
         ps = [None, 1, -1, 2, -2, 'fro']
@@ -981,7 +984,7 @@ class TestLstsq(LstsqCases):
             linalg.lstsq(A, y, rcond=None)
 
 
-@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
+@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO'])
 class TestMatrixPower:
 
     rshft_0 = np.eye(4)
@@ -1010,7 +1013,7 @@ class TestMatrixPower:
             mz = matrix_power(M, 0)
             assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
-        
+
         for mat in self.rshft_all:
             tz(mat.astype(dt))
             if dt != object:
@@ -1060,12 +1063,12 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
         mat = self.noninv.astype(dt)
         assert_raises(LinAlgError, matrix_power, mat, -1)
-
 
 
 class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
@@ -1221,6 +1224,14 @@ class _TestNormBase:
     dt = None
     dec = None
 
+    @staticmethod
+    def check_dtype(x, res):
+        if issubclass(x.dtype.type, np.inexact):
+            assert_equal(res.dtype, x.real.dtype)
+        else:
+            # For integer input, don't have to test float precision of output.
+            assert_(issubclass(res.dtype.type, np.floating))
+
 
 class _TestNormGeneral(_TestNormBase):
 
@@ -1237,37 +1248,37 @@ class _TestNormGeneral(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 0.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 0.0)
 
             an = norm(at, 0)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
 
             an = norm(at, 4)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
     def test_vector(self):
@@ -1400,41 +1411,41 @@ class _TestNorm2D(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 1.0)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 3.0**(1.0/2.0))
 
             an = norm(at, -2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'fro')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'nuc')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             # Lower bar needed to support low precision floats.
             # They end up being off by 1 in the 7th place.
             np.testing.assert_almost_equal(an, 2.7320508075688772, decimal=6)
@@ -1707,33 +1718,95 @@ class TestQR:
             self.check_qr(m2)
             self.check_qr(m2.T)
 
+    def check_qr_stacked(self, a):
+        # This test expects the argument `a` to be an ndarray or
+        # a subclass of an ndarray of inexact type.
+        a_type = type(a)
+        a_dtype = a.dtype
+        m, n = a.shape[-2:]
+        k = min(m, n)
+
+        # mode == 'complete'
+        q, r = linalg.qr(a, mode='complete')
+        assert_(q.dtype == a_dtype)
+        assert_(r.dtype == a_dtype)
+        assert_(isinstance(q, a_type))
+        assert_(isinstance(r, a_type))
+        assert_(q.shape[-2:] == (m, m))
+        assert_(r.shape[-2:] == (m, n))
+        assert_almost_equal(matmul(q, r), a)
+        I_mat = np.identity(q.shape[-1])
+        stack_I_mat = np.broadcast_to(I_mat, 
+                        q.shape[:-2] + (q.shape[-1],)*2)
+        assert_almost_equal(matmul(swapaxes(q, -1, -2).conj(), q), stack_I_mat)
+        assert_almost_equal(np.triu(r[..., :, :]), r)
+
+        # mode == 'reduced'
+        q1, r1 = linalg.qr(a, mode='reduced')
+        assert_(q1.dtype == a_dtype)
+        assert_(r1.dtype == a_dtype)
+        assert_(isinstance(q1, a_type))
+        assert_(isinstance(r1, a_type))
+        assert_(q1.shape[-2:] == (m, k))
+        assert_(r1.shape[-2:] == (k, n))
+        assert_almost_equal(matmul(q1, r1), a)
+        I_mat = np.identity(q1.shape[-1])
+        stack_I_mat = np.broadcast_to(I_mat, 
+                        q1.shape[:-2] + (q1.shape[-1],)*2)
+        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), 
+                            stack_I_mat)
+        assert_almost_equal(np.triu(r1[..., :, :]), r1)
+
+        # mode == 'r'
+        r2 = linalg.qr(a, mode='r')
+        assert_(r2.dtype == a_dtype)
+        assert_(isinstance(r2, a_type))
+        assert_almost_equal(r2, r1)
+
+    @pytest.mark.parametrize("size", [
+        (3, 4), (4, 3), (4, 4), 
+        (3, 0), (0, 3)])
+    @pytest.mark.parametrize("outer_size", [
+        (2, 2), (2,), (2, 3, 4)])
+    @pytest.mark.parametrize("dt", [
+        np.single, np.double, 
+        np.csingle, np.cdouble])
+    def test_stacked_inputs(self, outer_size, size, dt):
+
+        A = np.random.normal(size=outer_size + size).astype(dt)
+        B = np.random.normal(size=outer_size + size).astype(dt)
+        self.check_qr_stacked(A)
+        self.check_qr_stacked(A + 1.j*B)
+
 
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
-    def test_basic_property(self):
+    @pytest.mark.parametrize(
+        'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+    )
+    @pytest.mark.parametrize(
+        'dtype', (np.float32, np.float64, np.complex64, np.complex128)
+    )
+    def test_basic_property(self, shape, dtype):
         # Check A = L L^H
-        shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
-        dtypes = (np.float32, np.float64, np.complex64, np.complex128)
+        np.random.seed(1)
+        a = np.random.randn(*shape)
+        if np.issubdtype(dtype, np.complexfloating):
+            a = a + 1j*np.random.randn(*shape)
 
-        for shape, dtype in itertools.product(shapes, dtypes):
-            np.random.seed(1)
-            a = np.random.randn(*shape)
-            if np.issubdtype(dtype, np.complexfloating):
-                a = a + 1j*np.random.randn(*shape)
+        t = list(range(len(shape)))
+        t[-2:] = -1, -2
 
-            t = list(range(len(shape)))
-            t[-2:] = -1, -2
+        a = np.matmul(a.transpose(t).conj(), a)
+        a = np.asarray(a, dtype=dtype)
 
-            a = np.matmul(a.transpose(t).conj(), a)
-            a = np.asarray(a, dtype=dtype)
+        c = np.linalg.cholesky(a)
 
-            c = np.linalg.cholesky(a)
-
-            b = np.matmul(c, c.transpose(t).conj())
-            assert_allclose(b, a,
-                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
-                            atol=500 * a.shape[0] * np.finfo(dtype).eps)
+        b = np.matmul(c, c.transpose(t).conj())
+        with np._no_nep50_warning():
+            atol = 500 * a.shape[0] * np.finfo(dtype).eps
+        assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -1773,6 +1846,7 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
@@ -1836,6 +1910,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
@@ -1891,8 +1966,8 @@ class TestMultiDot:
         assert_almost_equal(multi_dot([A, B]), A.dot(B))
         assert_almost_equal(multi_dot([A, B]), np.dot(A, B))
 
-    def test_basic_function_with_dynamic_programing_optimization(self):
-        # multi_dot with four or more arguments uses the dynamic programing
+    def test_basic_function_with_dynamic_programming_optimization(self):
+        # multi_dot with four or more arguments uses the dynamic programming
         # optimization and therefore deserve a separate
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
@@ -1953,8 +2028,8 @@ class TestMultiDot:
         assert_almost_equal(out, A.dot(B))
         assert_almost_equal(out, np.dot(A, B))
 
-    def test_dynamic_programing_optimization_and_out(self):
-        # multi_dot with four or more arguments uses the dynamic programing
+    def test_dynamic_programming_optimization_and_out(self):
+        # multi_dot with four or more arguments uses the dynamic programming
         # optimization and therefore deserve a separate test
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
@@ -2041,6 +2116,27 @@ class TestTensorinv:
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
 
 
+class TestTensorsolve:
+
+    @pytest.mark.parametrize("a, axes", [
+        (np.ones((4, 6, 8, 2)), None),
+        (np.ones((3, 3, 2)), (0, 2)),
+        ])
+    def test_non_square_handling(self, a, axes):
+        with assert_raises(LinAlgError):
+            b = np.ones(a.shape[:2])
+            linalg.tensorsolve(a, b, axes=axes)
+
+    @pytest.mark.parametrize("shape",
+        [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
+    )
+    def test_tensorsolve_result(self, shape):
+        a = np.random.randn(*shape)
+        b = np.ones(a.shape[:2])
+        x = np.linalg.tensorsolve(a, b)
+        assert_allclose(np.tensordot(a, x, axes=len(x.shape)), b)
+
+
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
     arr = np.array([[1, -2], [2, 5]], dtype='float16')
@@ -2048,10 +2144,11 @@ def test_unsupported_commontype():
         linalg.cholesky(arr)
 
 
-@pytest.mark.slow
-@pytest.mark.xfail(not HAS_LAPACK64, run=False,
-                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
-@requires_memory(free_bytes=16e9)
+#@pytest.mark.slow
+#@pytest.mark.xfail(not HAS_LAPACK64, run=False,
+#                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
+#@requires_memory(free_bytes=16e9)
+@pytest.mark.skip(reason="Bad memory reports lead to OOM in ci testing")
 def test_blas64_dot():
     n = 2**32
     a = np.zeros([1, n], dtype=np.float32)

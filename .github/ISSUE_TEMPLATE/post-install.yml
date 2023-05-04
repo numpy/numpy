@@ -1,0 +1,31 @@
+name: Post-install/importing issue
+description: Report an issue if you have trouble importing or using NumPy after installation.
+title: "<Please write a comprehensive title here>"
+labels: [32 - Installation]
+
+body:
+- type: textarea
+  attributes:
+    label: "Steps to reproduce:"
+    description: >
+      Please describe the installation method (e.g. building from source,
+      Anaconda, pip), your OS and NumPy/Python version information.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Error message:"
+    description: >
+      Please include full error message, if any.
+      If you are reporting a segfault please include a GDB traceback,
+      which you can generate by following
+      [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
+    placeholder: |
+      << Full traceback starting from `Traceback: ...` >>
+    render: shell
+
+- type: textarea
+  attributes:
+    label: "Additional information:"
+    description: Please add any additional information that could help us diagnose the problem better.

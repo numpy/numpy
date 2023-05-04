@@ -317,9 +317,9 @@ New Features
 
 ``numpy.frompyfunc`` now accepts an identity argument
 -----------------------------------------------------
-This allows the :attr:``numpy.ufunc.identity`` attribute to be set on the
+This allows the :attr:`numpy.ufunc.identity` attribute to be set on the
 resulting ufunc, meaning it can be used for empty and multi-dimensional
-calls to :meth:``numpy.ufunc.reduce``.
+calls to :meth:`numpy.ufunc.reduce`.
 
 (`gh-8255 <https://github.com/numpy/numpy/pull/8255>`__)
 
@@ -402,7 +402,7 @@ Ability to disable madvise hugepages
 ------------------------------------
 On Linux NumPy has previously added support for madavise hugepages which can
 improve performance for very large arrays.  Unfortunately, on older Kernel
-versions this led to peformance regressions, thus by default the support has
+versions this led to performance regressions, thus by default the support has
 been disabled on kernels before version 4.6. To override the default, you can
 use the environment variable::
 

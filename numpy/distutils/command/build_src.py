@@ -715,17 +715,17 @@ class build_src(build_ext.build_ext):
 
         return new_sources + py_files
 
-_f_pyf_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
-_header_ext_match = re.compile(r'.*[.](inc|h|hpp)\Z', re.I).match
+_f_pyf_ext_match = re.compile(r'.*\.(f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
+_header_ext_match = re.compile(r'.*\.(inc|h|hpp)\Z', re.I).match
 
 #### SWIG related auxiliary functions ####
 _swig_module_name_match = re.compile(r'\s*%module\s*(.*\(\s*package\s*=\s*"(?P<package>[\w_]+)".*\)|)\s*(?P<name>[\w_]+)',
                                      re.I).match
-_has_c_header = re.compile(r'-[*]-\s*c\s*-[*]-', re.I).search
-_has_cpp_header = re.compile(r'-[*]-\s*c[+][+]\s*-[*]-', re.I).search
+_has_c_header = re.compile(r'-\*-\s*c\s*-\*-', re.I).search
+_has_cpp_header = re.compile(r'-\*-\s*c\+\+\s*-\*-', re.I).search
 
 def get_swig_target(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         result = None
         line = f.readline()
         if _has_cpp_header(line):
@@ -735,7 +735,7 @@ def get_swig_target(source):
     return result
 
 def get_swig_modulename(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         name = None
         for line in f:
             m = _swig_module_name_match(line)

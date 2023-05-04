@@ -5,6 +5,8 @@ from functools import reduce
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
+import pickle
+from copy import deepcopy
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     assert_warns, assert_array_equal, assert_raises_regex)
@@ -41,6 +43,15 @@ class TestConstants:
     def test_polyx(self):
         assert_equal(poly.polyx, [0, 1])
 
+    def test_copy(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = deepcopy(x)
+        assert_equal(x, y)
+
+    def test_pickle(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = pickle.loads(pickle.dumps(x))
+        assert_equal(x, y)
 
 class TestArithmetic:
 
@@ -473,6 +484,10 @@ class TestVander:
         van = poly.polyvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
 
+    def test_polyvandernegdeg(self):
+        x = np.arange(3)
+        assert_raises(ValueError, poly.polyvander, x, -1)
+
 
 class TestCompanion:
 
@@ -591,3 +606,6 @@ class TestMisc:
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
+
+    def test_polyline_zero(self):
+        assert_equal(poly.polyline(3, 0), [3])

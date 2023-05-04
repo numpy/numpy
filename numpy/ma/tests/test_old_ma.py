@@ -1,5 +1,7 @@
 from functools import reduce
 
+import pytest
+
 import numpy as np
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
@@ -27,13 +29,13 @@ pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print("Not eq:%s\n%s\n----%s" % (msg, str(v), str(w)))
+        print(f'Not eq:{msg}\n{v}\n----{w}')
     return result
 
 
 class TestMa:
 
-    def setup(self):
+    def setup_method(self):
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
@@ -62,27 +64,25 @@ class TestMa:
         assert_(eq(filled(xm, 1.e20), xf))
         assert_(eq(x, xm))
 
-    def test_testBasic2d(self):
+    @pytest.mark.parametrize("s", [(4, 3), (6, 2)])
+    def test_testBasic2d(self, s):
         # Test of basic array creation and properties in 2 dimensions.
-        for s in [(4, 3), (6, 2)]:
-            (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-            x.shape = s
-            y.shape = s
-            xm.shape = s
-            ym.shape = s
-            xf.shape = s
+        (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
+        x.shape = s
+        y.shape = s
+        xm.shape = s
+        ym.shape = s
+        xf.shape = s
 
-            assert_(not isMaskedArray(x))
-            assert_(isMaskedArray(xm))
-            assert_equal(shape(xm), s)
-            assert_equal(xm.shape, s)
-            assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-            assert_equal(count(xm),
-                             len(m1) - reduce(lambda x, y:x + y, m1))
-            assert_(eq(xm, xf))
-            assert_(eq(filled(xm, 1.e20), xf))
-            assert_(eq(x, xm))
-            self.setup()
+        assert_(not isMaskedArray(x))
+        assert_(isMaskedArray(xm))
+        assert_equal(shape(xm), s)
+        assert_equal(xm.shape, s)
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
+        assert_(eq(xm, xf))
+        assert_(eq(filled(xm, 1.e20), xf))
+        assert_(eq(x, xm))
 
     def test_testArithmetic(self):
         # Test of basic arithmetic.
@@ -194,16 +194,16 @@ class TestMa:
         assert_(eq(np.sum(x, axis=0), sum(x, axis=0)))
         assert_(eq(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0)))
         assert_(eq(np.sum(x, 0), sum(x, 0)))
-        assert_(eq(np.product(x, axis=0), product(x, axis=0)))
-        assert_(eq(np.product(x, 0), product(x, 0)))
-        assert_(eq(np.product(filled(xm, 1), axis=0),
+        assert_(eq(np.prod(x, axis=0), product(x, axis=0)))
+        assert_(eq(np.prod(x, 0), product(x, 0)))
+        assert_(eq(np.prod(filled(xm, 1), axis=0),
                            product(xm, axis=0)))
         if len(s) > 1:
             assert_(eq(np.concatenate((x, y), 1),
                                concatenate((xm, ym), 1)))
             assert_(eq(np.add.reduce(x, 1), add.reduce(x, 1)))
             assert_(eq(np.sum(x, 1), sum(x, 1)))
-            assert_(eq(np.product(x, 1), product(x, 1)))
+            assert_(eq(np.prod(x, 1), product(x, 1)))
 
     def test_testCI(self):
         # Test of conversions and indexing
@@ -697,9 +697,25 @@ class TestMa:
         assert_equal(b[0].shape, ())
         assert_equal(b[1].shape, ())
 
+    def test_assignment_by_condition(self):
+        # Test for gh-18951
+        a = array([1, 2, 3, 4], mask=[1, 0, 1, 0])
+        c = a >= 3
+        a[c] = 5
+        assert_(a[2] is masked)
+
+    def test_assignment_by_condition_2(self):
+        # gh-19721
+        a = masked_array([0, 1], mask=[False, False])
+        b = masked_array([0, 1], mask=[True, True])
+        mask = a < 1
+        b[mask] = a[mask]
+        expected_mask = [False, True]
+        assert_equal(b.mask, expected_mask)
+
 
 class TestUfuncs:
-    def setup(self):
+    def setup_method(self):
         self.d = (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
 
@@ -765,7 +781,7 @@ class TestUfuncs:
 
 class TestArrayMethods:
 
-    def setup(self):
+    def setup_method(self):
         x = np.array([8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
                       8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                       3.012, 6.022, 5.095, 3.116, 5.238, 3.957,

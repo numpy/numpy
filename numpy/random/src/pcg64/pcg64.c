@@ -61,6 +61,10 @@ pcg_setseq_128_xsl_rr_64_boundedrand_r(pcg_state_setseq_128 *rng,
                                        uint64_t bound);
 extern inline void pcg_setseq_128_advance_r(pcg_state_setseq_128 *rng,
                                             pcg128_t delta);
+extern inline uint64_t pcg_cm_random_r(pcg_state_setseq_128 *rng);
+extern inline void pcg_cm_step_r(pcg_state_setseq_128 *rng);
+extern inline uint64_t pcg_output_cm_128_64(pcg128_t state);
+extern inline void pcg_cm_srandom_r(pcg_state_setseq_128 *rng, pcg128_t initstate, pcg128_t initseq);
 
 /* Multi-step advance functions (jump-ahead, jump-back)
  *
@@ -105,8 +109,7 @@ pcg128_t pcg_advance_lcg_128(pcg128_t state, pcg128_t delta, pcg128_t cur_mult,
     cur_plus = pcg128_mult(pcg128_add(cur_mult, PCG_128BIT_CONSTANT(0u, 1u)),
                             cur_plus);
     cur_mult = pcg128_mult(cur_mult, cur_mult);
-    delta.low >>= 1;
-    delta.low += delta.high & 1;
+    delta.low = (delta.low >> 1) | (delta.high << 63);
     delta.high >>= 1;
   }
   return pcg128_add(pcg128_mult(acc_mult, state), acc_plus);
@@ -117,6 +120,9 @@ pcg128_t pcg_advance_lcg_128(pcg128_t state, pcg128_t delta, pcg128_t cur_mult,
 extern inline uint64_t pcg64_next64(pcg64_state *state);
 extern inline uint32_t pcg64_next32(pcg64_state *state);
 
+extern inline uint64_t pcg64_cm_next64(pcg64_state *state);
+extern inline uint32_t pcg64_cm_next32(pcg64_state *state);
+
 extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
   pcg128_t delta;
 #ifndef PCG_EMULATED_128BIT_MATH
@@ -126,6 +132,17 @@ extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
   delta.low = step[1];
 #endif
   pcg64_advance_r(state->pcg_state, delta);
+}
+
+extern void pcg64_cm_advance(pcg64_state *state, uint64_t *step) {
+  pcg128_t delta;
+#ifndef PCG_EMULATED_128BIT_MATH
+  delta = (((pcg128_t)step[0]) << 64) | step[1];
+#else
+  delta.high = step[0];
+  delta.low = step[1];
+#endif
+  pcg_cm_advance_r(state->pcg_state, delta);
 }
 
 extern void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc) {

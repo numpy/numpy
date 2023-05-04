@@ -24,11 +24,30 @@
 #define npyv_setall_s16(VAL) _mm512_set1_epi16((short)VAL)
 #define npyv_setall_u32(VAL) _mm512_set1_epi32((int)VAL)
 #define npyv_setall_s32(VAL) _mm512_set1_epi32(VAL)
-#define npyv_setall_u64(VAL) _mm512_set1_epi64(VAL)
-#define npyv_setall_s64(VAL) _mm512_set1_epi64(VAL)
 #define npyv_setall_f32(VAL) _mm512_set1_ps(VAL)
 #define npyv_setall_f64(VAL) _mm512_set1_pd(VAL)
 
+NPY_FINLINE __m512i npyv__setr_epi64(
+    npy_int64, npy_int64, npy_int64, npy_int64,
+    npy_int64, npy_int64, npy_int64, npy_int64
+);
+NPY_FINLINE npyv_u64 npyv_setall_u64(npy_uint64 a)
+{
+    npy_int64 ai = (npy_int64)a;
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64(ai, ai, ai, ai, ai, ai, ai, ai);
+#else
+    return _mm512_set1_epi64(ai);
+#endif
+}
+NPY_FINLINE npyv_s64 npyv_setall_s64(npy_int64 a)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64(a, a, a, a, a, a, a, a);
+#else
+    return _mm512_set1_epi64(a);
+#endif
+}
 /**
  * vector with specific values set to each lane and
  * set a specific value to all remained lanes
@@ -76,7 +95,16 @@ NPY_FINLINE __m512i npyv__setr_epi32(
 NPY_FINLINE __m512i npyv__setr_epi64(npy_int64 i0, npy_int64 i1, npy_int64 i2, npy_int64 i3,
                                      npy_int64 i4, npy_int64 i5, npy_int64 i6, npy_int64 i7)
 {
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return _mm512_setr_epi32(
+        (int)i0, (int)(i0 >> 32), (int)i1, (int)(i1 >> 32),
+        (int)i2, (int)(i2 >> 32), (int)i3, (int)(i3 >> 32),
+        (int)i4, (int)(i4 >> 32), (int)i5, (int)(i5 >> 32),
+        (int)i6, (int)(i6 >> 32), (int)i7, (int)(i7 >> 32)
+    );
+#else
     return _mm512_setr_epi64(i0, i1, i2, i3, i4, i5, i6, i7);
+#endif
 }
 
 NPY_FINLINE __m512 npyv__setr_ps(
@@ -131,6 +159,18 @@ NPY_FINLINE __m512d npyv__setr_pd(double i0, double i1, double i2, double i3,
 #define npyv_select_s64 npyv_select_u64
 #define npyv_select_f32(MASK, A, B) _mm512_mask_blend_ps(MASK, B, A)
 #define npyv_select_f64(MASK, A, B) _mm512_mask_blend_pd(MASK, B, A)
+
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s8(A) ((npy_int8)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u16(A) ((npy_uint16)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s16(A) ((npy_int16)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u32(A) ((npy_uint32)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s32(A) ((npy_int32)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u64(A) ((npy_uint64)npyv128_cvtsi128_si64(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s64(A) ((npy_int64)npyv128_cvtsi128_si64(_mm512_castsi512_si128(A)))
+#define npyv_extract0_f32(A) _mm_cvtss_f32(_mm512_castps512_ps128(A))
+#define npyv_extract0_f64(A) _mm_cvtsd_f64(_mm512_castpd512_pd128(A))
 
 // reinterpret
 #define npyv_reinterpret_u8_u8(X)  X

@@ -48,7 +48,8 @@ using the state of the `RandomState`:
 
 
 .. autoclass:: RandomState
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 Seeding and State
 =================
@@ -82,7 +83,7 @@ Permutations
    ~RandomState.permutation
 
 Distributions
-=============
+==============
 .. autosummary::
    :toctree: generated/
 
@@ -122,6 +123,8 @@ Distributions
    ~RandomState.weibull
    ~RandomState.zipf
 
+.. _functions-in-numpy-random:
+
 Functions in `numpy.random`
 ===========================
 Many of the RandomState methods above are exported as functions in
@@ -132,8 +135,7 @@ Many of the RandomState methods above are exported as functions in
 
 - It uses a `RandomState` rather than the more modern `Generator`.
 
-For backward compatible legacy reasons, we cannot change this. See
-`random-quick-start`.
+For backward compatible legacy reasons, we will not change this.
 
 .. autosummary::
    :toctree: generated/

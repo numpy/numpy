@@ -8,7 +8,7 @@ also include a brief, self-contained code example that demonstrates the problem.
 
 If you are reporting a segfault please include a GDB traceback, which you can
 generate by following
-[these instructions.](https://github.com/numpy/numpy/blob/master/doc/source/dev/development_environment.rst#debugging)
+[these instructions.](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging)
 
 ## Contributing code
 

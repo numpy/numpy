@@ -1,0 +1,228 @@
+#ifndef _NPY_UMATH_LOOPS_UTILS_H_
+#define _NPY_UMATH_LOOPS_UTILS_H_
+
+#include "numpy/npy_common.h" // NPY_FINLINE
+#include "numpy/halffloat.h" // npy_half_to_float
+
+/**
+ * Old versions of MSVC causes ambiguous link errors when we deal with large SIMD kernels
+ * which lead to break the build, probably related to the following bug:
+ * https://developercommunity.visualstudio.com/content/problem/415095/internal-compiler-error-with-perfectly-forwarded-r.html
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1916
+    #define SIMD_MSVC_NOINLINE __declspec(noinline)
+#else
+    #define SIMD_MSVC_NOINLINE
+#endif
+/*
+ * nomemoverlap - returns false if two strided arrays have an overlapping
+ * region in memory. ip_size/op_size = size of the arrays which can be negative
+ * indicating negative steps.
+ */
+NPY_FINLINE npy_bool
+nomemoverlap(char *ip, npy_intp ip_size, char *op, npy_intp op_size)
+{
+    char *ip_start, *ip_end, *op_start, *op_end;
+    if (ip_size < 0) {
+        ip_start = ip + ip_size;
+        ip_end = ip;
+    }
+    else {
+        ip_start = ip;
+        ip_end = ip + ip_size;
+    }
+    if (op_size < 0) {
+        op_start = op + op_size;
+        op_end = op;
+    }
+    else {
+        op_start = op;
+        op_end = op + op_size;
+    }
+    return (ip_start == op_start && op_end == ip_end) ||
+           (ip_start > op_end) || (op_start > ip_end);
+}
+
+// returns true if two strided arrays have an overlapping region in memory
+// same as `nomemoverlap()` but requires array length and step sizes
+NPY_FINLINE npy_bool
+is_mem_overlap(const void *src, npy_intp src_step, const void *dst, npy_intp dst_step, npy_intp len)
+{
+    return !(nomemoverlap((char*)src, src_step*len, (char*)dst, dst_step*len));
+}
+
+/*
+ * cutoff blocksize for pairwise summation
+ * decreasing it decreases errors slightly as more pairs are summed but
+ * also lowers performance, as the inner loop is unrolled eight times it is
+ * effectively 16
+ */
+#define PW_BLOCKSIZE    128
+
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double, npy_longdouble, npy_float#
+ *  #dtype = npy_float, npy_double, npy_longdouble, npy_half#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF#
+ *  #c = f, , l, #
+ *  #C = F, , L, #
+ *  #trf = , , , npy_half_to_float#
+ */
+
+/*
+ * Pairwise summation, rounding error O(lg n) instead of O(n).
+ * The recursion depth is O(lg n) as well.
+ * when updating also update similar complex floats summation
+ */
+static inline @type@
+@TYPE@_pairwise_sum(char *a, npy_intp n, npy_intp stride)
+{
+    if (n < 8) {
+        npy_intp i;
+        /*
+         * Start with -0 to preserve -0 values.  The reason is that summing
+         * only -0 should return -0, but `0 + -0 == 0` while `-0 + -0 == -0`.
+         */
+        @type@ res = -0.0;
+
+        for (i = 0; i < n; i++) {
+            res += @trf@(*((@dtype@*)(a + i * stride)));
+        }
+        return res;
+    }
+    else if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
+        @type@ r[8], res;
+
+        /*
+         * sum a block with 8 accumulators
+         * 8 times unroll reduces blocksize to 16 and allows vectorization with
+         * avx without changing summation ordering
+         */
+        r[0] = @trf@(*((@dtype@ *)(a + 0 * stride)));
+        r[1] = @trf@(*((@dtype@ *)(a + 1 * stride)));
+        r[2] = @trf@(*((@dtype@ *)(a + 2 * stride)));
+        r[3] = @trf@(*((@dtype@ *)(a + 3 * stride)));
+        r[4] = @trf@(*((@dtype@ *)(a + 4 * stride)));
+        r[5] = @trf@(*((@dtype@ *)(a + 5 * stride)));
+        r[6] = @trf@(*((@dtype@ *)(a + 6 * stride)));
+        r[7] = @trf@(*((@dtype@ *)(a + 7 * stride)));
+
+        for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(a + (i + 512/(npy_intp)sizeof(@dtype@))*stride, 0, 3);
+            r[0] += @trf@(*((@dtype@ *)(a + (i + 0) * stride)));
+            r[1] += @trf@(*((@dtype@ *)(a + (i + 1) * stride)));
+            r[2] += @trf@(*((@dtype@ *)(a + (i + 2) * stride)));
+            r[3] += @trf@(*((@dtype@ *)(a + (i + 3) * stride)));
+            r[4] += @trf@(*((@dtype@ *)(a + (i + 4) * stride)));
+            r[5] += @trf@(*((@dtype@ *)(a + (i + 5) * stride)));
+            r[6] += @trf@(*((@dtype@ *)(a + (i + 6) * stride)));
+            r[7] += @trf@(*((@dtype@ *)(a + (i + 7) * stride)));
+        }
+
+        /* accumulate now to avoid stack spills for single peel loop */
+        res = ((r[0] + r[1]) + (r[2] + r[3])) +
+              ((r[4] + r[5]) + (r[6] + r[7]));
+
+        /* do non multiple of 8 rest */
+        for (; i < n; i++) {
+            res += @trf@(*((@dtype@ *)(a + i * stride)));
+        }
+        return res;
+    }
+    else {
+        /* divide by two but avoid non-multiples of unroll factor */
+        npy_intp n2 = n / 2;
+
+        n2 -= n2 % 8;
+        return @TYPE@_pairwise_sum(a, n2, stride) +
+               @TYPE@_pairwise_sum(a + n2 * stride, n - n2, stride);
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * complex types
+ * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #ftype = npy_float, npy_double, npy_longdouble#
+ * #c = f, , l#
+ * #C = F, , L#
+ * #SIMD = 1, 1, 0#
+ */
+/* similar to pairwise sum of real floats */
+static inline void
+@TYPE@_pairwise_sum(@ftype@ *rr, @ftype@ * ri, char * a, npy_intp n,
+                    npy_intp stride)
+{
+    assert(n % 2 == 0);
+    if (n < 8) {
+        npy_intp i;
+
+        *rr = -0.0;
+        *ri = -0.0;
+        for (i = 0; i < n; i += 2) {
+            *rr += *((@ftype@ *)(a + i * stride + 0));
+            *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));
+        }
+        return;
+    }
+    else if (n <= PW_BLOCKSIZE) {
+        npy_intp i;
+        @ftype@ r[8];
+
+        /*
+         * sum a block with 8 accumulators
+         * 8 times unroll reduces blocksize to 16 and allows vectorization with
+         * avx without changing summation ordering
+         */
+        r[0] = *((@ftype@ *)(a + 0 * stride));
+        r[1] = *((@ftype@ *)(a + 0 * stride + sizeof(@ftype@)));
+        r[2] = *((@ftype@ *)(a + 2 * stride));
+        r[3] = *((@ftype@ *)(a + 2 * stride + sizeof(@ftype@)));
+        r[4] = *((@ftype@ *)(a + 4 * stride));
+        r[5] = *((@ftype@ *)(a + 4 * stride + sizeof(@ftype@)));
+        r[6] = *((@ftype@ *)(a + 6 * stride));
+        r[7] = *((@ftype@ *)(a + 6 * stride + sizeof(@ftype@)));
+
+        for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(a + (i + 512/(npy_intp)sizeof(@ftype@))*stride, 0, 3);
+            r[0] += *((@ftype@ *)(a + (i + 0) * stride));
+            r[1] += *((@ftype@ *)(a + (i + 0) * stride + sizeof(@ftype@)));
+            r[2] += *((@ftype@ *)(a + (i + 2) * stride));
+            r[3] += *((@ftype@ *)(a + (i + 2) * stride + sizeof(@ftype@)));
+            r[4] += *((@ftype@ *)(a + (i + 4) * stride));
+            r[5] += *((@ftype@ *)(a + (i + 4) * stride + sizeof(@ftype@)));
+            r[6] += *((@ftype@ *)(a + (i + 6) * stride));
+            r[7] += *((@ftype@ *)(a + (i + 6) * stride + sizeof(@ftype@)));
+        }
+
+        /* accumulate now to avoid stack spills for single peel loop */
+        *rr = ((r[0] + r[2]) + (r[4] + r[6]));
+        *ri = ((r[1] + r[3]) + (r[5] + r[7]));
+
+        /* do non multiple of 8 rest */
+        for (; i < n; i+=2) {
+            *rr += *((@ftype@ *)(a + i * stride + 0));
+            *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));
+        }
+        return;
+    }
+    else {
+        /* divide by two but avoid non-multiples of unroll factor */
+        @ftype@ rr1, ri1, rr2, ri2;
+        npy_intp n2 = n / 2;
+
+        n2 -= n2 % 8;
+        @TYPE@_pairwise_sum(&rr1, &ri1, a, n2, stride);
+        @TYPE@_pairwise_sum(&rr2, &ri2, a + n2 * stride, n - n2, stride);
+        *rr = rr1 + rr2;
+        *ri = ri1 + ri2;
+        return;
+    }
+}
+/**end repeat**/
+
+#endif // _NPY_UMATH_LOOPS_UTILS_H_

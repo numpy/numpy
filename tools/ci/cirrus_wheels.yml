@@ -1,0 +1,157 @@
+build_and_store_wheels: &BUILD_AND_STORE_WHEELS
+  install_cibuildwheel_script:
+    - python -m pip install cibuildwheel==2.12.1
+  cibuildwheel_script:
+    - cibuildwheel
+  wheels_artifacts:
+    path: "wheelhouse/*"
+
+######################################################################
+# Build linux_aarch64 natively
+######################################################################
+
+linux_aarch64_task:
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 2
+    memory: 8G
+  matrix:
+    # build in a matrix because building and testing all four wheels in a
+    # single task takes longer than 60 mins (the default time limit for a
+    # cirrus-ci task).
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp39-*
+        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp310-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp311-*
+
+  build_script: |
+    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
+    git fetch origin
+    ./tools/travis-before-install.sh
+    which python
+    echo $CIRRUS_CHANGE_MESSAGE
+  <<: *BUILD_AND_STORE_WHEELS
+
+
+######################################################################
+# Build macosx_arm64 natively
+######################################################################
+
+macosx_arm64_task:
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
+  matrix:
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp39-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_BUILD: cp310-* cp311-*
+  env:
+    PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
+    CIBW_ARCHS: arm64
+    # Specifying CIBW_ENVIRONMENT_MACOS overrides pyproject.toml, so include
+    # all the settings from there, otherwise they're lost.
+    # SDKROOT needs to be set for repackaged conda-forge gfortran compilers
+    # supplied by isuruf.
+    # Find out SDKROOT via `xcrun --sdk macosx --show-sdk-path`
+    CIBW_ENVIRONMENT_MACOS: >
+      RUNNER_OS=macOS
+      SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
+      LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+      CFLAGS="-std=c99 -fno-strict-aliasing"
+      OPENBLAS64_="/usr/local"
+      NPY_USE_BLAS_ILP64="1"
+
+  build_script:
+    - brew install python@3.10
+    - ln -s python3 /opt/homebrew/opt/python@3.10/bin/python
+    - which python
+    # needed for submodules
+    - git submodule update --init
+    # need to obtain all the tags so setup.py can determine FULLVERSION
+    - git fetch origin
+    - uname -m
+    - python -c "import platform;print(platform.python_version());print(platform.system());print(platform.machine())"
+    - clang --version
+  <<: *BUILD_AND_STORE_WHEELS
+
+
+######################################################################
+# Upload all wheels
+######################################################################
+
+wheels_upload_task:
+  # Artifacts don't seem to be persistent from task to task.
+  # Rather than upload wheels at the end of each cibuildwheel run we do a
+  # final upload here. This is because a run may be on different OS for
+  # which bash, etc, may not be present.
+  depends_on:
+    - linux_aarch64
+    - macosx_arm64
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder
+    platform: linux
+    cpu: 1
+
+  env:
+    NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[!5a69522ae0c2af9edb2bc1cdfeaca6292fb3666d9ecd82dca0615921834a6ce3b702352835d8bde4ea2a9ed5ef8424ac!]
+    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[!196422e6c3419a3b1d79815e1026094a215cb0f346fe34ed0f9d3ca1c19339df7398d04556491b1e0420fc1fe3713289!]
+
+  upload_script: |
+    apt-get update
+    apt-get install -y curl wget
+    export IS_SCHEDULE_DISPATCH="false"
+    export IS_PUSH="false"
+
+    # cron job
+    if [[ "$CIRRUS_CRON" == "weekly" ]]; then
+      export IS_SCHEDULE_DISPATCH="true"
+    fi
+
+    # a manual build was started
+    if [[ "$CIRRUS_BUILD_SOURCE" == "api" && "$CIRRUS_COMMIT_MESSAGE" == "API build for null" ]]; then
+      export IS_SCHEDULE_DISPATCH="true"
+    fi
+
+    # only upload wheels to staging if it's a tag beginning with 'v' and you're
+    # on a maintenance branch
+    if [[ "$CIRRUS_TAG" == v* ]] && [[ $CIRRUS_TAG != *"dev0"* ]]; then
+      export IS_PUSH="true"    
+    fi
+
+    if [[ $IS_PUSH == "true" ]] || [[ $IS_SCHEDULE_DISPATCH == "true" ]]; then
+        # install miniconda in the home directory. For some reason HOME isn't set by Cirrus
+        export HOME=$PWD
+    
+        # install miniconda for uploading to anaconda
+        wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+        bash miniconda.sh -b -p $HOME/miniconda3
+        $HOME/miniconda3/bin/conda init bash
+        source $HOME/miniconda3/bin/activate
+        conda install -y anaconda-client
+    
+        # The name of the zip file is derived from the `wheels_artifact` line.
+        # If you change the artifact line to `myfile_artifact` then it would be
+        # called myfile.zip
+        
+        curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
+        unzip wheels.zip
+        
+        source ./tools/wheels/upload_wheels.sh
+        # IS_PUSH takes precedence over IS_SCHEDULE_DISPATCH
+        set_upload_vars
+        
+        # Will be skipped if not a push/tag/scheduled build
+        upload_wheels
+    fi

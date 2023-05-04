@@ -1,12 +1,5 @@
-#ifndef _NPY_ARRAY_SHAPE_H_
-#define _NPY_ARRAY_SHAPE_H_
-
-/*
- * Builds a string representation of the shape given in 'vals'.
- * A negative value in 'vals' gets interpreted as newaxis.
- */
-NPY_NO_EXPORT PyObject *
-build_shape_string(npy_intp n, npy_intp const *vals);
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
 
 /*
  * Creates a sorted stride perm matching the KEEPORDER behavior
@@ -28,4 +21,4 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */

@@ -1,10 +1,12 @@
 import os
 import re
 import sys
+import platform
 import shlex
 import time
 import subprocess
 from copy import copy
+from pathlib import Path
 from distutils import ccompiler
 from distutils.ccompiler import (
     compiler_class, gen_lib_options, get_default_compiler, new_compiler,
@@ -23,13 +25,12 @@ from numpy.distutils.exec_command import (
 )
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
-                                      _commandline_dep_string
+                                      _commandline_dep_string, \
+                                      sanitize_cxx_flags
 
 # globals for parallel build management
-try:
-    import threading
-except ImportError:
-    import dummy_threading as threading
+import threading
+
 _job_semaphore = None
 _global_lock = threading.Lock()
 _processing_files = set()
@@ -58,7 +59,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments
-    with open(dep_file, "r") as f:
+    with open(dep_file) as f:
         lines = f.readlines()
 
     cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
@@ -110,7 +111,7 @@ replace_method(CCompiler, 'find_executables', CCompiler_find_executables)
 
 
 # Using customized CCompiler.spawn.
-def CCompiler_spawn(self, cmd, display=None):
+def CCompiler_spawn(self, cmd, display=None, env=None):
     """
     Execute a command in a sub-process.
 
@@ -121,6 +122,7 @@ def CCompiler_spawn(self, cmd, display=None):
     display : str or sequence of str, optional
         The text to add to the log file kept by `numpy.distutils`.
         If not given, `display` is equal to `cmd`.
+    env : a dictionary for environment variables, optional
 
     Returns
     -------
@@ -132,6 +134,7 @@ def CCompiler_spawn(self, cmd, display=None):
         If the command failed, i.e. the exit status was not 0.
 
     """
+    env = env if env is not None else dict(os.environ)
     if display is None:
         display = cmd
         if is_sequence(display):
@@ -139,18 +142,24 @@ def CCompiler_spawn(self, cmd, display=None):
     log.info(display)
     try:
         if self.verbose:
-            subprocess.check_output(cmd)
+            subprocess.check_output(cmd, env=env)
         else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
     except subprocess.CalledProcessError as exc:
         o = exc.output
         s = exc.returncode
-    except OSError:
+    except OSError as e:
         # OSError doesn't have the same hooks for the exception
         # output, but exec_command() historically would use an
         # empty string for EnvironmentError (base class for
         # OSError)
-        o = b''
+        # o = b''
+        # still that would make the end-user lost in translation!
+        o = f"\n\n{e}\n\n\n"
+        try:
+            o = o.encode(sys.stdout.encoding)
+        except AttributeError:
+            o = o.encode('utf8')
         # status previously used by exec_command() for parent
         # of OSError
         s = 127
@@ -260,9 +269,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         If compilation fails.
 
     """
-    # This method is effective only with Python >=2.3 distutils.
-    # Any changes here should be applied also to fcompiler.compile
-    # method to support pre Python 2.3 distutils.
     global _job_semaphore
 
     jobs = get_num_build_jobs()
@@ -275,7 +281,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+    from numpy.distutils.fcompiler import (FCompiler,
+                                           FORTRAN_COMMON_FIXED_EXTENSIONS,
                                            has_f90_header)
     if isinstance(self, FCompiler):
         display = []
@@ -334,7 +341,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
                 if self.compiler_type=='absoft':
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
-                if is_f_file(src) and not has_f90_header(src):
+                if Path(src).suffix.lower() in FORTRAN_COMMON_FIXED_EXTENSIONS \
+                   and not has_f90_header(src):
                     f77_objects.append((obj, (src, ext)))
                 else:
                     other_objects.append((obj, (src, ext)))
@@ -351,10 +359,10 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if len(build) > 1 and jobs > 1:
         # build parallel
-        import multiprocessing.pool
-        pool = multiprocessing.pool.ThreadPool(jobs)
-        pool.map(single_compile, build_items)
-        pool.close()
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(jobs) as pool:
+            res = pool.map(single_compile, build_items)
+        list(res)  # access result to raise errors
     else:
         # build serial
         for o in build_items:
@@ -386,6 +394,19 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     """
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
+
+    if (
+        hasattr(self, 'compiler') and
+        'clang' in self.compiler[0] and
+        not (platform.machine() == 'arm64' and sys.platform == 'darwin')
+    ):
+        # clang defaults to a non-strict floating error point model.
+        # However, '-ftrapping-math' is not currently supported (2023-04-08)
+        # for macosx_arm64.
+        # Since NumPy and most Python libs give warnings for these, override:
+        self.compiler.append('-ftrapping-math')
+        self.compiler_so.append('-ftrapping-math')
+
     def allow(attr):
         return getattr(cmd, attr, None) is not None and attr not in ignore
 
@@ -672,11 +693,20 @@ def CCompiler_cxx_compiler(self):
         return self
 
     cxx = copy(self)
-    cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
-    if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
+    cxx.compiler_cxx = cxx.compiler_cxx
+    cxx.compiler_so = [cxx.compiler_cxx[0]] + \
+                      sanitize_cxx_flags(cxx.compiler_so[1:])
+    if (sys.platform.startswith(('aix', 'os400')) and
+            'ld_so_aix' in cxx.linker_so[0]):
         # AIX needs the ld_so_aix script included with Python
         cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \
                         + cxx.linker_so[2:]
+    if sys.platform.startswith('os400'):
+        #This is required by i 7.4 and prievous for PRId64 in printf() call.
+        cxx.compiler_so.append('-D__STDC_FORMAT_MACROS')
+        #This a bug of gcc10.3, which failed to handle the TLS init.
+        cxx.compiler_so.append('-fno-extern-tls-init')
+        cxx.linker_so.append('-fno-extern-tls-init')
     else:
         cxx.linker_so = [cxx.compiler_cxx[0]] + cxx.linker_so[1:]
     return cxx
@@ -695,6 +725,11 @@ compiler_class['intelemw'] = ('intelccompiler', 'IntelEM64TCCompilerW',
                               "Intel C Compiler for 64-bit applications on Windows")
 compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
+compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
+                            "Arm C Compiler")
+compiler_class['fujitsu'] = ('fujitsuccompiler', 'FujitsuCCompiler',
+                            "Fujitsu C Compiler")
+
 ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intele'),
                                  ('linux.*', 'intelem'),

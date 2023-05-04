@@ -1,5 +1,6 @@
 import collections.abc
 import textwrap
+from io import BytesIO
 from os import path
 from pathlib import Path
 import pytest
@@ -79,8 +80,14 @@ class TestFromrecords:
         r1 = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.seek(2880 * 2)
         r2 = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        fd.seek(2880 * 2)
+        bytes_array = BytesIO()
+        bytes_array.write(fd.read())
+        bytes_array.seek(0)
+        r3 = np.rec.fromfile(bytes_array, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.close()
         assert_equal(r1, r2)
+        assert_equal(r2, r3)
 
     def test_recarray_from_obj(self):
         count = 10
@@ -330,7 +337,7 @@ class TestPathUsage:
 
 
 class TestRecord:
-    def setup(self):
+    def setup_method(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),
@@ -417,7 +424,16 @@ class TestRecord:
         # make sure we did not pickle the address
         assert not isinstance(obj, bytes)
 
-        assert_raises(TypeError, ctor, dtype, 13)
+        assert_raises(RuntimeError, ctor, dtype, 13)
+
+        # Test roundtrip:
+        dump = pickle.dumps(a[0])
+        unpickled = pickle.loads(dump)
+        assert a[0] == unpickled
+
+        # Also check the similar (impossible) "object scalar" path:
+        with pytest.warns(DeprecationWarning):
+            assert ctor(np.dtype("O"), data) is data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599

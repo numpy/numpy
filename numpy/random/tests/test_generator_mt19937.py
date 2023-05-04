@@ -8,9 +8,9 @@ from numpy.linalg import LinAlgError
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_allclose,
     assert_warns, assert_no_warnings, assert_array_equal,
-    assert_array_almost_equal, suppress_warnings)
+    assert_array_almost_equal, suppress_warnings, IS_WASM)
 
-from numpy.random import Generator, MT19937, SeedSequence
+from numpy.random import Generator, MT19937, SeedSequence, RandomState
 
 random = Generator(MT19937())
 
@@ -18,20 +18,20 @@ JUMP_TEST_DATA = [
     {
         "seed": 0,
         "steps": 10,
-        "initial": {"key_md5": "64eaf265d2203179fb5ffb73380cd589", "pos": 9},
-        "jumped": {"key_md5": "8cb7b061136efceef5217a9ce2cc9a5a", "pos": 598},
+        "initial": {"key_sha256": "bb1636883c2707b51c5b7fc26c6927af4430f2e0785a8c7bc886337f919f9edf", "pos": 9},
+        "jumped": {"key_sha256": "ff682ac12bb140f2d72fba8d3506cf4e46817a0db27aae1683867629031d8d55", "pos": 598},
     },
     {
         "seed":384908324,
         "steps":312,
-        "initial": {"key_md5": "e99708a47b82ff51a2c7b0625b81afb5", "pos": 311},
-        "jumped": {"key_md5": "2ecdbfc47a895b253e6e19ccb2e74b90", "pos": 276},
+        "initial": {"key_sha256": "16b791a1e04886ccbbb4d448d6ff791267dc458ae599475d08d5cced29d11614", "pos": 311},
+        "jumped": {"key_sha256": "a0110a2cf23b56be0feaed8f787a7fc84bef0cb5623003d75b26bdfa1c18002c", "pos": 276},
     },
     {
         "seed": [839438204, 980239840, 859048019, 821],
         "steps": 511,
-        "initial": {"key_md5": "9fcd6280df9199785e17e93162ce283c", "pos": 510},
-        "jumped": {"key_md5": "433b85229f2ed853cde06cd872818305", "pos": 475},
+        "initial": {"key_sha256": "d306cf01314d51bd37892d874308200951a35265ede54d200f1e065004c3e9ea", "pos": 510},
+        "jumped": {"key_sha256": "0e00ab449f01a5195a83b4aee0dfbc2ce8d46466a640b92e33977d2e42f777f8", "pos": 475},
     },
 ]
 
@@ -136,16 +136,18 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
-    def test_multidimensional_pvals(self):
-        assert_raises(ValueError, random.multinomial, 10, [[0, 1]])
-        assert_raises(ValueError, random.multinomial, 10, [[0], [1]])
-        assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
-        assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
-
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        random = Generator(MT19937(1432985819))
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
 
 class TestMultivariateHypergeometric:
 
-    def setup(self):
+    def setup_method(self):
         self.seed = 8675309
 
     def test_argument_validation(self):
@@ -278,7 +280,7 @@ class TestMultivariateHypergeometric:
 
 
 class TestSetState:
-    def setup(self):
+    def setup_method(self):
         self.seed = 1234567890
         self.rg = Generator(MT19937(self.seed))
         self.bit_generator = self.rg.bit_generator
@@ -342,6 +344,8 @@ class TestIntegers:
             assert_raises(ValueError, self.rfunc, [ubnd], [lbnd],
                           endpoint=endpoint, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, [0],
+                          endpoint=endpoint, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [ubnd+1], [ubnd],
                           endpoint=endpoint, dtype=dt)
 
     def test_bounds_checking_array(self, endpoint):
@@ -483,18 +487,18 @@ class TestIntegers:
             assert_array_equal(scalar, array)
 
     def test_repeatability(self, endpoint):
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool':   'b3300e66d2bb59e493d255d47c3a6cbe',
-               'int16':  '39624ead49ad67e37545744024d2648b',
-               'int32':  '5c4810373f979336c6c0c999996e47a1',
-               'int64':  'ab126c15edff26f55c50d2b7e37391ac',
-               'int8':   'ba71ccaffeeeb9eeb1860f8075020b9c',
-               'uint16': '39624ead49ad67e37545744024d2648b',
-               'uint32': '5c4810373f979336c6c0c999996e47a1',
-               'uint64': 'ab126c15edff26f55c50d2b7e37391ac',
-               'uint8':  'ba71ccaffeeeb9eeb1860f8075020b9c'}
+        tgt = {'bool':   '053594a9b82d656f967c54869bc6970aa0358cf94ad469c81478459c6a90eee3',
+               'int16':  '54de9072b6ee9ff7f20b58329556a46a447a8a29d67db51201bf88baa6e4e5d4',
+               'int32':  'd3a0d5efb04542b25ac712e50d21f39ac30f312a5052e9bbb1ad3baa791ac84b',
+               'int64':  '14e224389ac4580bfbdccb5697d6190b496f91227cf67df60989de3d546389b1',
+               'int8':   '0e203226ff3fbbd1580f15da4621e5f7164d0d8d6b51696dd42d004ece2cbec1',
+               'uint16': '54de9072b6ee9ff7f20b58329556a46a447a8a29d67db51201bf88baa6e4e5d4',
+               'uint32': 'd3a0d5efb04542b25ac712e50d21f39ac30f312a5052e9bbb1ad3baa791ac84b',
+               'uint64': '14e224389ac4580bfbdccb5697d6190b496f91227cf67df60989de3d546389b1',
+               'uint8':  '0e203226ff3fbbd1580f15da4621e5f7164d0d8d6b51696dd42d004ece2cbec1'}
 
         for dt in self.itype[1:]:
             random = Generator(MT19937(1234))
@@ -507,14 +511,14 @@ class TestIntegers:
                 val = random.integers(0, 6 - endpoint, size=1000, endpoint=endpoint,
                                  dtype=dt).byteswap()
 
-            res = hashlib.md5(val).hexdigest()
+            res = hashlib.sha256(val).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         random = Generator(MT19937(1234))
         val = random.integers(0, 2 - endpoint, size=1000, endpoint=endpoint,
                          dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_repeatability_broadcasting(self, endpoint):
@@ -705,7 +709,7 @@ class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    def setup(self):
+    def setup_method(self):
         self.seed = 1234567890
 
     def test_integers(self):
@@ -765,6 +769,18 @@ class TestRandomDist:
         actual = random.random(dtype=np.float32)
         desired = 0.0969992
         assert_array_almost_equal(actual, desired, decimal=7)
+
+    @pytest.mark.parametrize('dtype, uint_view_type',
+                             [(np.float32, np.uint32),
+                              (np.float64, np.uint64)])
+    def test_random_distribution_of_lsb(self, dtype, uint_view_type):
+        random = Generator(MT19937(self.seed))
+        sample = random.random(100000, dtype=dtype)
+        num_ones_in_lsb = np.count_nonzero(sample.view(uint_view_type) & 1)
+        # The probability of a 1 in the least significant bit is 0.25.
+        # With a sample size of 100000, the probability that num_ones_in_lsb
+        # is outside the following range is less than 5e-11.
+        assert 24100 < num_ones_in_lsb < 25900
 
     def test_random_unsupported_type(self):
         assert_raises(TypeError, random.random, dtype='int32')
@@ -905,12 +921,12 @@ class TestRandomDist:
         assert actual.dtype == np.int64
 
     def test_choice_large_sample(self):
-        choice_hash = 'd44962a0b1e92f4a3373c23222244e21'
+        choice_hash = '4266599d12bfcfb815213303432341c06b4349f5455890446578877bb322e222'
         random = Generator(MT19937(self.seed))
         actual = random.choice(10000, 5000, replace=False)
         if sys.byteorder != 'little':
             actual = actual.byteswap()
-        res = hashlib.md5(actual.view(np.int8)).hexdigest()
+        res = hashlib.sha256(actual.view(np.int8)).hexdigest()
         assert_(choice_hash == res)
 
     def test_bytes(self):
@@ -960,6 +976,14 @@ class TestRandomDist:
         random.shuffle(actual, axis=-1)
         assert_array_equal(actual, desired)
 
+    def test_shuffle_custom_axis_empty(self):
+        random = Generator(MT19937(self.seed))
+        desired = np.array([]).reshape((0, 6))
+        for axis in (0, 1):
+            actual = np.array([]).reshape((0, 6))
+            random.shuffle(actual, axis=axis)
+            assert_array_equal(actual, desired)
+
     def test_shuffle_axis_nonsquare(self):
         y1 = np.arange(20).reshape(2, 10)
         y2 = y1.copy()
@@ -993,6 +1017,18 @@ class TestRandomDist:
         arr = [[1, 2, 3], [4, 5, 6]]
         assert_raises(NotImplementedError, random.shuffle, arr, 1)
 
+        arr = np.array(3)
+        assert_raises(TypeError, random.shuffle, arr)
+        arr = np.ones((3, 2))
+        assert_raises(np.AxisError, random.shuffle, arr, 2)
+
+    def test_shuffle_not_writeable(self):
+        random = Generator(MT19937(self.seed))
+        a = np.zeros(5)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.shuffle(a)
+
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
         alist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -1004,7 +1040,7 @@ class TestRandomDist:
         arr_2d = np.atleast_2d([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).T
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
-        
+
         bad_x_str = "abcd"
         assert_raises(np.AxisError, random.permutation, bad_x_str)
 
@@ -1038,6 +1074,62 @@ class TestRandomDist:
         arr = np.arange(9).reshape((3, 3))
         assert_raises(np.AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
+
+    @pytest.mark.parametrize("dtype", [int, object])
+    @pytest.mark.parametrize("axis, expected",
+                             [(None, np.array([[3, 7, 0, 9, 10, 11],
+                                               [8, 4, 2, 5,  1,  6]])),
+                              (0, np.array([[6, 1, 2, 9, 10, 11],
+                                            [0, 7, 8, 3,  4,  5]])),
+                              (1, np.array([[ 5, 3,  4, 0, 2, 1],
+                                            [11, 9, 10, 6, 8, 7]]))])
+    def test_permuted(self, dtype, axis, expected):
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        random.permuted(x, axis=axis, out=x)
+        assert_array_equal(x, expected)
+
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        y = random.permuted(x, axis=axis)
+        assert y.dtype == dtype
+        assert_array_equal(y, expected)
+
+    def test_permuted_with_strides(self):
+        random = Generator(MT19937(self.seed))
+        x0 = np.arange(22).reshape(2, 11)
+        x1 = x0.copy()
+        x = x0[:, ::3]
+        y = random.permuted(x, axis=1, out=x)
+        expected = np.array([[0, 9, 3, 6],
+                             [14, 20, 11, 17]])
+        assert_array_equal(y, expected)
+        x1[:, ::3] = expected
+        # Verify that the original x0 was modified in-place as expected.
+        assert_array_equal(x1, x0)
+
+    def test_permuted_empty(self):
+        y = random.permuted([])
+        assert_array_equal(y, [])
+
+    @pytest.mark.parametrize('outshape', [(2, 3), 5])
+    def test_permuted_out_with_wrong_shape(self, outshape):
+        a = np.array([1, 2, 3])
+        out = np.zeros(outshape, dtype=a.dtype)
+        with pytest.raises(ValueError, match='same shape'):
+            random.permuted(a, out=out)
+
+    def test_permuted_out_with_wrong_type(self):
+        out = np.zeros((3, 5), dtype=np.int32)
+        x = np.ones((3, 5))
+        with pytest.raises(TypeError, match='Cannot cast'):
+            random.permuted(x, axis=1, out=out)
+
+    def test_permuted_not_writeable(self):
+        x = np.zeros((2, 5))
+        x.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.permuted(x, axis=1, out=x)
 
     def test_beta(self):
         random = Generator(MT19937(self.seed))
@@ -1181,9 +1273,9 @@ class TestRandomDist:
     def test_geometric(self):
         random = Generator(MT19937(self.seed))
         actual = random.geometric(.123456789, size=(3, 2))
-        desired = np.array([[ 1, 10],
-                            [ 1, 12],
-                            [ 9, 10]])
+        desired = np.array([[1, 11],
+                            [1, 12],
+                            [11, 17]])
         assert_array_equal(actual, desired)
 
     def test_geometric_exceptions(self):
@@ -1273,10 +1365,22 @@ class TestRandomDist:
                             [5, 1]])
         assert_array_equal(actual, desired)
 
-    def test_logseries_exceptions(self):
-        with np.errstate(invalid='ignore'):
-            assert_raises(ValueError, random.logseries, np.nan)
-            assert_raises(ValueError, random.logseries, [np.nan] * 10)
+    def test_logseries_zero(self):
+        random = Generator(MT19937(self.seed))
+        assert random.logseries(0) == 1
+
+    @pytest.mark.parametrize("value", [np.nextafter(0., -1), 1., np.nan, 5.])
+    def test_logseries_exceptions(self, value):
+        random = Generator(MT19937(self.seed))
+        with np.errstate(invalid="ignore"):
+            with pytest.raises(ValueError):
+                random.logseries(value)
+            with pytest.raises(ValueError):
+                # contiguous path:
+                random.logseries(np.array([value] * 10))
+            with pytest.raises(ValueError):
+                # non-contiguous path:
+                random.logseries(np.array([value] * 10)[::2])
 
     def test_multinomial(self):
         random = Generator(MT19937(self.seed))
@@ -1289,6 +1393,7 @@ class TestRandomDist:
                              [5, 5, 3, 1, 2, 4]]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
     def test_multivariate_normal(self, method):
         random = Generator(MT19937(self.seed))
@@ -1362,6 +1467,12 @@ class TestRandomDist:
                       mu, np.empty((3, 2)))
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
+        
+    @pytest.mark.parametrize('mean, cov', [([0], [[1+1j]]), ([0j], [[1]])])
+    def test_multivariate_normal_disallow_complex(self, mean, cov):
+        random = Generator(MT19937(self.seed))
+        with pytest.raises(TypeError, match="must not be complex"):
+            random.multivariate_normal(mean, cov)
 
     @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
     def test_multivariate_normal_basic_stats(self, method):
@@ -1394,6 +1505,13 @@ class TestRandomDist:
         # Verify that p=0 raises an exception.
         with assert_raises(ValueError):
             x = random.negative_binomial(1, 0)
+
+    def test_negative_binomial_invalid_p_n_combination(self):
+        # Verify that values of p and n that would result in an overflow
+        # or infinite loop raise an exception.
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, random.negative_binomial, 2**62, 0.1)
+            assert_raises(ValueError, random.negative_binomial, [2**62], [0.1])
 
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
@@ -1486,9 +1604,9 @@ class TestRandomDist:
     def test_rayleigh(self):
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale=10, size=(3, 2))
-        desired = np.array([[ 4.51734079831581, 15.6802442485758 ],
-                            [ 4.19850651287094, 17.08718809823704],
-                            [14.7907457708776 , 15.85545333419775]])
+        desired = np.array([[4.19494429102666, 16.66920198906598],
+                            [3.67184544902662, 17.74695521962917],
+                            [16.27935397855501, 21.08355560691792]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_rayleigh_0(self):
@@ -1616,6 +1734,21 @@ class TestRandomDist:
         # DBL_MAX by increasing fmin a bit
         random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
+    def test_uniform_zero_range(self):
+        func = random.uniform
+        result = func(1.5, 1.5)
+        assert_allclose(result, 1.5)
+        result = func([0.0, np.pi], [0.0, np.pi])
+        assert_allclose(result, [0.0, np.pi])
+        result = func([[2145.12], [2145.12]], [2145.12, 2145.12])
+        assert_allclose(result, 2145.12 + np.zeros((2, 2)))
+
+    def test_uniform_neg_range(self):
+        func = random.uniform
+        assert_raises(ValueError, func, 2, 1)
+        assert_raises(ValueError, func,  [1, 2], [1, 1])
+        assert_raises(ValueError, func,  [[0, 1],[2, 3]], 2)
+
     def test_scalar_exception_propagation(self):
         # Tests that exceptions are correctly propagated in distributions
         # when called with objects that throw exceptions when converted to
@@ -1657,6 +1790,27 @@ class TestRandomDist:
         r = random.vonmises(mu=0., kappa=np.nan)
         assert_(np.isnan(r))
 
+    @pytest.mark.parametrize("kappa", [1e4, 1e15])
+    def test_vonmises_large_kappa(self, kappa):
+        random = Generator(MT19937(self.seed))
+        rs = RandomState(random.bit_generator)
+        state = random.bit_generator.state
+
+        random_state_vals = rs.vonmises(0, kappa, size=10)
+        random.bit_generator.state = state
+        gen_vals = random.vonmises(0, kappa, size=10)
+        if kappa < 1e6:
+            assert_allclose(random_state_vals, gen_vals)
+        else:
+            assert np.all(random_state_vals != gen_vals)
+
+    @pytest.mark.parametrize("mu", [-7., -np.pi, -3.1, np.pi, 3.2])
+    @pytest.mark.parametrize("kappa", [1e-9, 1e-6, 1, 1e3, 1e15])
+    def test_vonmises_large_kappa_range(self, mu, kappa):
+        random = Generator(MT19937(self.seed))
+        r = random.vonmises(mu, kappa, 50)
+        assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
+
     def test_wald(self):
         random = Generator(MT19937(self.seed))
         actual = random.wald(mean=1.23, scale=1.54, size=(3, 2))
@@ -1690,7 +1844,7 @@ class TestRandomDist:
 class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setup(self):
+    def setup_method(self):
         self.seed = 123456789
 
 
@@ -2008,7 +2162,11 @@ class TestBroadcast:
     def test_rayleigh(self):
         scale = [1]
         bad_scale = [-1]
-        desired = np.array([0.60439534475066, 0.66120048396359, 1.67873398389499])
+        desired = np.array(
+            [1.1597068009872629,
+             0.6539188836253857,
+             1.1981526554349398]
+        )
 
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale * 3)
@@ -2238,10 +2396,69 @@ class TestBroadcast:
                             [2, 3, 6, 4, 2, 3]], dtype=np.int64)
         assert_array_equal(actual, desired)
 
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([5, 20], [[1 / 6.] * 6] * 2)
+        desired = np.array([[0, 0, 2, 1, 2, 0],
+                            [2, 3, 6, 4, 2, 3]], dtype=np.int64)
+        assert_array_equal(actual, desired)
 
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([[5], [20]], [[1 / 6.] * 6] * 2)
+        desired = np.array([[[0, 0, 2, 1, 2, 0],
+                             [0, 0, 2, 1, 1, 1]],
+                            [[4, 2, 3, 3, 5, 3],
+                             [7, 2, 2, 1, 4, 4]]], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
+    @pytest.mark.parametrize("n", [10,
+                                   np.array([10, 10]),
+                                   np.array([[[10]], [[10]]])
+                                   ]
+                             )
+    def test_multinomial_pval_broadcast(self, n):
+        random = Generator(MT19937(self.seed))
+        pvals = np.array([1 / 4] * 4)
+        actual = random.multinomial(n, pvals)
+        n_shape = tuple() if isinstance(n, int) else n.shape
+        expected_shape = n_shape + (4,)
+        assert actual.shape == expected_shape
+        pvals = np.vstack([pvals, pvals])
+        actual = random.multinomial(n, pvals)
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1]) + (4,)
+        assert actual.shape == expected_shape
+
+        pvals = np.vstack([[pvals], [pvals]])
+        actual = random.multinomial(n, pvals)
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1])
+        assert actual.shape == expected_shape + (4,)
+        actual = random.multinomial(n, pvals, size=(3, 2) + expected_shape)
+        assert actual.shape == (3, 2) + expected_shape + (4,)
+
+        with pytest.raises(ValueError):
+            # Ensure that size is not broadcast
+            actual = random.multinomial(n, pvals, size=(1,) * 6)
+
+    def test_invalid_pvals_broadcast(self):
+        random = Generator(MT19937(self.seed))
+        pvals = [[1 / 6] * 6, [1 / 4] * 6]
+        assert_raises(ValueError, random.multinomial, 1, pvals)
+        assert_raises(ValueError, random.multinomial, 6, 0.5)
+
+    def test_empty_outputs(self):
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial(np.empty((10, 0, 6), "i8"), [1 / 6] * 6)
+        assert actual.shape == (10, 0, 6, 6)
+        actual = random.multinomial(12, np.empty((10, 0, 10)))
+        assert actual.shape == (10, 0, 10)
+        actual = random.multinomial(np.empty((3, 0, 7), "i8"),
+                                    np.empty((3, 0, 7, 4)))
+        assert actual.shape == (3, 0, 7, 4)
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
-    def setup(self):
+    def setup_method(self):
         self.seeds = range(4)
 
     def check_function(self, function, sz):
@@ -2287,7 +2504,7 @@ class TestThread:
 
 # See Issue #4263
 class TestSingleEltArrayInput:
-    def setup(self):
+    def setup_method(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
         self.argThree = np.array([4])
@@ -2374,8 +2591,8 @@ class TestSingleEltArrayInput:
 @pytest.mark.parametrize("config", JUMP_TEST_DATA)
 def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
-    # the md5 hashes of the initial and the final states' keys and
-    # the position of of the initial and the final state.
+    # the sha256 hashes of the initial and the final states' keys and
+    # the position of the initial and the final state.
     # These were produced using the original C implementation.
     seed = config["seed"]
     steps = config["steps"]
@@ -2386,17 +2603,17 @@ def test_jumped(config):
     key = mt19937.state["state"]["key"]
     if sys.byteorder == 'big':
         key = key.byteswap()
-    md5 = hashlib.md5(key)
+    sha256 = hashlib.sha256(key)
     assert mt19937.state["state"]["pos"] == config["initial"]["pos"]
-    assert md5.hexdigest() == config["initial"]["key_md5"]
+    assert sha256.hexdigest() == config["initial"]["key_sha256"]
 
     jumped = mt19937.jumped()
     key = jumped.state["state"]["key"]
     if sys.byteorder == 'big':
         key = key.byteswap()
-    md5 = hashlib.md5(key)
+    sha256 = hashlib.sha256(key)
     assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
-    assert md5.hexdigest() == config["jumped"]["key_md5"]
+    assert sha256.hexdigest() == config["jumped"]["key_sha256"]
 
 
 def test_broadcast_size_error():
@@ -2448,3 +2665,62 @@ def test_broadcast_size_scalar():
     random.normal(mu, sigma, size=3)
     with pytest.raises(ValueError):
         random.normal(mu, sigma, size=2)
+
+
+def test_ragged_shuffle():
+    # GH 18142
+    seq = [[], [], 1]
+    gen = Generator(MT19937(0))
+    assert_no_warnings(gen.shuffle, seq)
+    assert seq == [1, [], []]
+
+
+@pytest.mark.parametrize("high", [-2, [-2]])
+@pytest.mark.parametrize("endpoint", [True, False])
+def test_single_arg_integer_exception(high, endpoint):
+    # GH 14333
+    gen = Generator(MT19937(0))
+    msg = 'high < 0' if endpoint else 'high <= 0'
+    with pytest.raises(ValueError, match=msg):
+        gen.integers(high, endpoint=endpoint)
+    msg = 'low > high' if endpoint else 'low >= high'
+    with pytest.raises(ValueError, match=msg):
+        gen.integers(-1, high, endpoint=endpoint)
+    with pytest.raises(ValueError, match=msg):
+        gen.integers([-1], high, endpoint=endpoint)
+
+
+@pytest.mark.parametrize("dtype", ["f4", "f8"])
+def test_c_contig_req_out(dtype):
+    # GH 18704
+    out = np.empty((2, 3), order="F", dtype=dtype)
+    shape = [1, 2, 3]
+    with pytest.raises(ValueError, match="Supplied output array"):
+        random.standard_gamma(shape, out=out, dtype=dtype)
+    with pytest.raises(ValueError, match="Supplied output array"):
+        random.standard_gamma(shape, out=out, size=out.shape, dtype=dtype)
+
+
+@pytest.mark.parametrize("dtype", ["f4", "f8"])
+@pytest.mark.parametrize("order", ["F", "C"])
+@pytest.mark.parametrize("dist", [random.standard_normal, random.random])
+def test_contig_req_out(dist, order, dtype):
+    # GH 18704
+    out = np.empty((2, 3), dtype=dtype, order=order)
+    variates = dist(out=out, dtype=dtype)
+    assert variates is out
+    variates = dist(out=out, dtype=dtype, size=out.shape)
+    assert variates is out
+
+
+def test_generator_ctor_old_style_pickle():
+    rg = np.random.Generator(np.random.PCG64DXSM(0))
+    rg.standard_normal(1)
+    # Directly call reduce which is used in pickling
+    ctor, args, state_a = rg.__reduce__()
+    # Simulate unpickling an old pickle that only has the name
+    assert args[:1] == ("PCG64DXSM",)
+    b = ctor(*args[:1])
+    b.bit_generator.state = state_a
+    state_b = b.bit_generator.state
+    assert state_a == state_b

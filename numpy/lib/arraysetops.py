@@ -1,28 +1,17 @@
 """
 Set operations for arrays based on sorting.
 
-:Contains:
-  unique,
-  isin,
-  ediff1d,
-  intersect1d,
-  setxor1d,
-  in1d,
-  union1d,
-  setdiff1d
-
-:Notes:
+Notes
+-----
 
 For floating point arrays, inaccurate results may appear due to usual round-off
 and floating point comparison issues.
 
 Speed could be gained in some operations by an implementation of
-sort(), that can provide directly the permutation vectors, avoiding
-thus calls to argsort().
+`numpy.sort`, that can provide directly the permutation vectors, thus avoiding
+calls to `numpy.argsort`.
 
-To do: Optionally return indices analogously to unique for all functions.
-
-:Author: Robert Cimrman
+Original author: Robert Cimrman
 
 """
 import functools
@@ -104,7 +93,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     else:
         to_begin = np.asanyarray(to_begin)
         if not np.can_cast(to_begin, dtype_req, casting="same_kind"):
-            raise TypeError("dtype of `to_end` must be compatible "
+            raise TypeError("dtype of `to_begin` must be compatible "
                             "with input `ary` under the `same_kind` rule.")
 
         to_begin = to_begin.ravel()
@@ -142,13 +131,13 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None):
+                       return_counts=None, axis=None, *, equal_nan=None):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None):
+           return_counts=False, axis=None, *, equal_nan=True):
     """
     Find the unique elements of an array.
 
@@ -173,9 +162,6 @@ def unique(ar, return_index=False, return_inverse=False,
     return_counts : bool, optional
         If True, also return the number of times each unique item appears
         in `ar`.
-
-        .. versionadded:: 1.9.0
-
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened. If an integer,
         the subarrays indexed by the given axis will be flattened and treated
@@ -185,6 +171,11 @@ def unique(ar, return_index=False, return_inverse=False,
         default is None.
 
         .. versionadded:: 1.13.0
+
+    equal_nan : bool, optional
+        If True, collapses multiple NaN values in the return array into one.
+
+        .. versionadded:: 1.24
 
     Returns
     -------
@@ -219,6 +210,16 @@ def unique(ar, return_index=False, return_inverse=False,
     treated in the same way as any other 1-D array. The result is that the
     flattened subarrays are sorted in lexicographic order starting with the
     first element.
+
+    .. versionchanged: NumPy 1.21
+        If nan values are in the input array, a single nan is put
+        to the end of the sorted unique values.
+
+        Also for complex arrays all NaN values are considered equivalent
+        (no matter whether the NaN is in the real or imaginary part).
+        As the representant for the returned array the smallest one in the
+        lexicographical order is chosen - see np.sort for how the lexicographical
+        order is defined for complex arrays.
 
     Examples
     --------
@@ -270,7 +271,8 @@ def unique(ar, return_index=False, return_inverse=False,
     """
     ar = np.asanyarray(ar)
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts)
+        ret = _unique1d(ar, return_index, return_inverse, return_counts, 
+                        equal_nan=equal_nan)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -278,7 +280,7 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
+        raise np.AxisError(axis, ar.ndim) from None
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
@@ -300,10 +302,10 @@ def unique(ar, return_index=False, return_inverse=False,
             # array with shape `(len(ar),)`.  Because `dtype` in this case has
             # itemsize 0, the total size of the result is still 0 bytes.
             consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError:
+    except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+        raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
         n = len(uniq)
@@ -313,13 +315,13 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
+                       return_inverse, return_counts, equal_nan=equal_nan)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False):
+              return_counts=False, *, equal_nan=True):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -335,7 +337,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-    mask[1:] = aux[1:] != aux[:-1]
+    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+            np.isnan(aux[-1])):
+        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+        else:
+            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+        if aux_firstnan > 0:
+            mask[1:aux_firstnan] = (
+                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+        mask[aux_firstnan] = True
+        mask[aux_firstnan + 1:] = False
+    else:
+        mask[1:] = aux[1:] != aux[:-1]
 
     ret = (aux[mask],)
     if return_index:
@@ -369,7 +383,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         Input arrays. Will be flattened if not already 1D.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
+        can speed up the calculation.  If True but ``ar1`` or ``ar2`` are not
+        unique, incorrect results and out-of-bounds indices could result.
+        Default is False.
     return_indices : bool
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are
@@ -500,12 +516,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None):
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *,
+                     kind=None):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -528,6 +545,26 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
+    kind : {None, 'sort', 'table'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
+
+        * If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
+        * If None, will automatically choose 'table' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
 
         .. versionadded:: 1.8.0
 
@@ -553,6 +590,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ``asarray(ar2)`` is an object array rather than the expected array of
     contained values.
 
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
+
     .. versionadded:: 1.4.0
 
     Examples
@@ -573,6 +617,103 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
+
+    # Ensure that iteration through object arrays yields size-1 arrays
+    if ar2.dtype == object:
+        ar2 = ar2.reshape(-1, 1)
+
+    if kind not in {None, 'sort', 'table'}:
+        raise ValueError(
+            f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
+
+    # Can use the table method if all arrays are integers or boolean:
+    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
+    use_table_method = is_int_arrays and kind in {None, 'table'}
+
+    if use_table_method:
+        if ar2.size == 0:
+            if invert:
+                return np.ones_like(ar1, dtype=bool)
+            else:
+                return np.zeros_like(ar1, dtype=bool)
+
+        # Convert booleans to uint8 so we can use the fast integer algorithm
+        if ar1.dtype == bool:
+            ar1 = ar1.astype(np.uint8)
+        if ar2.dtype == bool:
+            ar2 = ar2.astype(np.uint8)
+
+        ar2_min = np.min(ar2)
+        ar2_max = np.max(ar2)
+
+        ar2_range = int(ar2_max) - int(ar2_min)
+
+        # Constraints on whether we can actually use the table method:
+        #  1. Assert memory usage is not too large
+        below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
+        #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype
+        range_safe_from_overflow = ar2_range <= np.iinfo(ar2.dtype).max
+        #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype
+        if ar1.size > 0:
+            ar1_min = np.min(ar1)
+            ar1_max = np.max(ar1)
+
+            # After masking, the range of ar1 is guaranteed to be
+            # within the range of ar2:
+            ar1_upper = min(int(ar1_max), int(ar2_max))
+            ar1_lower = max(int(ar1_min), int(ar2_min))
+
+            range_safe_from_overflow &= all((
+                ar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,
+                ar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min
+            ))
+
+        # Optimal performance is for approximately
+        # log10(size) > (log10(range) - 2.27) / 0.927.
+        # However, here we set the requirement that by default
+        # the intermediate array can only be 6x
+        # the combined memory allocation of the original
+        # arrays. See discussion on 
+        # https://github.com/numpy/numpy/pull/12065.
+
+        if (
+            range_safe_from_overflow and 
+            (below_memory_constraint or kind == 'table')
+        ):
+
+            if invert:
+                outgoing_array = np.ones_like(ar1, dtype=bool)
+            else:
+                outgoing_array = np.zeros_like(ar1, dtype=bool)
+
+            # Make elements 1 where the integer exists in ar2
+            if invert:
+                isin_helper_ar = np.ones(ar2_range + 1, dtype=bool)
+                isin_helper_ar[ar2 - ar2_min] = 0
+            else:
+                isin_helper_ar = np.zeros(ar2_range + 1, dtype=bool)
+                isin_helper_ar[ar2 - ar2_min] = 1
+
+            # Mask out elements we know won't work
+            basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)
+            outgoing_array[basic_mask] = isin_helper_ar[ar1[basic_mask] -
+                                                        ar2_min]
+
+            return outgoing_array
+        elif kind == 'table':  # not range_safe_from_overflow
+            raise RuntimeError(
+                "You have specified kind='table', "
+                "but the range of values in `ar2` or `ar1` exceed the "
+                "maximum integer of the datatype. "
+                "Please set `kind` to None or 'sort'."
+            )
+    elif kind == 'table':
+        raise ValueError(
+            "The 'table' method is only "
+            "supported for boolean or integer arrays. "
+            "Please select 'sort' or None for kind."
+        )
+
 
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
@@ -617,14 +758,16 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
+                     *, kind=None):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
-def isin(element, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False, *,
+         kind=None):
     """
-    Calculates `element in test_elements`, broadcasting over `element` only.
+    Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
     where an element of `element` is in `test_elements` and False otherwise.
 
@@ -644,6 +787,27 @@ def isin(element, test_elements, assume_unique=False, invert=False):
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
+    kind : {None, 'sort', 'table'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
+
+        * If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
+        * If None, will automatically choose 'table' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
+
 
     Returns
     -------
@@ -670,6 +834,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     array of the values contained in `test_elements`. This is a consequence
     of the `array` constructor's way of handling non-sequence collections.
     Converting the set to a list usually gives the desired behavior.
+
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
 
     .. versionadded:: 1.13.0
 
@@ -717,7 +888,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(element.shape)
+                invert=invert, kind=kind).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):

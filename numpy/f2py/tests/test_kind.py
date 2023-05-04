@@ -1,32 +1,47 @@
 import os
 import pytest
+import platform
 
-from numpy.testing import assert_
 from numpy.f2py.crackfortran import (
     _selected_int_kind_func as selected_int_kind,
-    _selected_real_kind_func as selected_real_kind
-    )
+    _selected_real_kind_func as selected_real_kind,
+)
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestKind(util.F2PyTest):
-    sources = [_path('src', 'kind', 'foo.f90')]
+    sources = [util.getpath("tests", "src", "kind", "foo.f90")]
 
-    @pytest.mark.slow
-    def test_all(self):
-        selectedrealkind = self.module.selectedrealkind
+    def test_int(self):
+        """Test `int` kind_func for integers up to 10**40."""
         selectedintkind = self.module.selectedintkind
 
         for i in range(40):
-            assert_(selectedintkind(i) in [selected_int_kind(i), -1],
-                    'selectedintkind(%s): expected %r but got %r' %
-                    (i, selected_int_kind(i), selectedintkind(i)))
+            assert selectedintkind(i) == selected_int_kind(
+                i
+            ), f"selectedintkind({i}): expected {selected_int_kind(i)!r} but got {selectedintkind(i)!r}"
 
-        for i in range(20):
-            assert_(selectedrealkind(i) in [selected_real_kind(i), -1],
-                    'selectedrealkind(%s): expected %r but got %r' %
-                    (i, selected_real_kind(i), selectedrealkind(i)))
+    def test_real(self):
+        """
+        Test (processor-dependent) `real` kind_func for real numbers
+        of up to 31 digits precision (extended/quadruple).
+        """
+        selectedrealkind = self.module.selectedrealkind
+
+        for i in range(32):
+            assert selectedrealkind(i) == selected_real_kind(
+                i
+            ), f"selectedrealkind({i}): expected {selected_real_kind(i)!r} but got {selectedrealkind(i)!r}"
+
+    @pytest.mark.xfail(platform.machine().lower().startswith("ppc"),
+                       reason="Some PowerPC may not support full IEEE 754 precision")
+    def test_quad_precision(self):
+        """
+        Test kind_func for quadruple precision [`real(16)`] of 32+ digits .
+        """
+        selectedrealkind = self.module.selectedrealkind
+
+        for i in range(32, 40):
+            assert selectedrealkind(i) == selected_real_kind(
+                i
+            ), f"selectedrealkind({i}): expected {selected_real_kind(i)!r} but got {selectedrealkind(i)!r}"

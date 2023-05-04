@@ -33,7 +33,10 @@ class EnvironmentConfig:
         try:
             conf_desc = self._conf_keys[name]
         except KeyError:
-            raise AttributeError(name)
+            raise AttributeError(
+                f"'EnvironmentConfig' object has no attribute '{name}'"
+            ) from None
+
         return self._get_var(name, conf_desc)
 
     def get(self, name, default=None):

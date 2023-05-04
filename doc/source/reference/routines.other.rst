@@ -1,5 +1,5 @@
 Miscellaneous routines
-**********************
+======================
 
 .. toctree::
 
@@ -45,8 +45,10 @@ Utility
 
    get_include
    show_config
+   show_runtime
    deprecate
    deprecate_with_doc
+   broadcast_shapes
 
 Matlab-like Functions
 ---------------------
@@ -55,3 +57,7 @@ Matlab-like Functions
 
    who
    disp
+
+.. automodule:: numpy.exceptions
+
+.. automodule:: numpy.dtypes

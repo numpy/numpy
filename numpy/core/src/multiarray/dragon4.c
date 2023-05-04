@@ -1130,8 +1130,9 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
  *   * exponent - value exponent in base 2
  *   * mantissaBit - index of the highest set mantissa bit
  *   * hasUnequalMargins - is the high margin twice as large as the low margin
- *   * cutoffMode - how to interpret cutoffNumber: fractional or total digits?
- *   * cutoffNumber - cut off printing after this many digits. -1 for no cutoff
+ *   * cutoffMode - how to interpret cutoff_*: fractional or total digits?
+ *   * cutoff_max - cut off printing after this many digits. -1 for no cutoff
+ *   * cutoff_min - print at least this many digits. -1 for no cutoff
  *   * pOutBuffer - buffer to output into
  *   * bufferSize - maximum characters that can be printed to pOutBuffer
  *   * pOutExponent - the base 10 exponent of the first digit
@@ -1142,7 +1143,7 @@ static npy_uint32
 Dragon4(BigInt *bigints, const npy_int32 exponent,
         const npy_uint32 mantissaBit, const npy_bool hasUnequalMargins,
         const DigitMode digitMode, const CutoffMode cutoffMode,
-        npy_int32 cutoffNumber, char *pOutBuffer,
+        npy_int32 cutoff_max, npy_int32 cutoff_min, char *pOutBuffer,
         npy_uint32 bufferSize, npy_int32 *pOutExponent)
 {
     char *curDigit = pOutBuffer;
@@ -1169,7 +1170,8 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
     BigInt *temp2 = &bigints[6];
 
     const npy_float64 log10_2 = 0.30102999566398119521373889472449;
-    npy_int32 digitExponent, cutoffExponent, hiBlock;
+    npy_int32 digitExponent, hiBlock;
+    npy_int32 cutoff_max_Exponent, cutoff_min_Exponent;
     npy_uint32 outputDigit;    /* current digit being output */
     npy_uint32 outputLen;
     npy_bool isEven = BigInt_IsEven(mantissa);
@@ -1294,9 +1296,9 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
      * increases the number. This will either correct digitExponent to an
      * accurate value or it will clamp it above the accurate value.
      */
-    if (cutoffNumber >= 0 && cutoffMode == CutoffMode_FractionLength &&
-            digitExponent <= -cutoffNumber) {
-        digitExponent = -cutoffNumber + 1;
+    if (cutoff_max >= 0 && cutoffMode == CutoffMode_FractionLength &&
+            digitExponent <= -cutoff_max) {
+        digitExponent = -cutoff_max + 1;
     }
 
 
@@ -1347,26 +1349,44 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
     }
 
     /*
-     * Compute the cutoff exponent (the exponent of the final digit to print).
-     * Default to the maximum size of the output buffer.
+     * Compute the cutoff_max exponent (the exponent of the final digit to
+     * print).  Default to the maximum size of the output buffer.
      */
-    cutoffExponent = digitExponent - bufferSize;
-    if (cutoffNumber >= 0) {
+    cutoff_max_Exponent = digitExponent - bufferSize;
+    if (cutoff_max >= 0) {
         npy_int32 desiredCutoffExponent;
 
         if (cutoffMode == CutoffMode_TotalLength) {
-            desiredCutoffExponent = digitExponent - cutoffNumber;
-            if (desiredCutoffExponent > cutoffExponent) {
-                cutoffExponent = desiredCutoffExponent;
+            desiredCutoffExponent = digitExponent - cutoff_max;
+            if (desiredCutoffExponent > cutoff_max_Exponent) {
+                cutoff_max_Exponent = desiredCutoffExponent;
             }
         }
-        /* Otherwise it's CutoffMode_FractionLength. Print cutoffNumber digits
+        /* Otherwise it's CutoffMode_FractionLength. Print cutoff_max digits
          * past the decimal point or until we reach the buffer size
          */
         else {
-            desiredCutoffExponent = -cutoffNumber;
-            if (desiredCutoffExponent > cutoffExponent) {
-                cutoffExponent = desiredCutoffExponent;
+            desiredCutoffExponent = -cutoff_max;
+            if (desiredCutoffExponent > cutoff_max_Exponent) {
+                cutoff_max_Exponent = desiredCutoffExponent;
+            }
+        }
+    }
+    /* Also compute the cutoff_min exponent. */
+    cutoff_min_Exponent = digitExponent;
+    if (cutoff_min >= 0) {
+        npy_int32 desiredCutoffExponent;
+
+        if (cutoffMode == CutoffMode_TotalLength) {
+            desiredCutoffExponent = digitExponent - cutoff_min;
+            if (desiredCutoffExponent < cutoff_min_Exponent) {
+                cutoff_min_Exponent = desiredCutoffExponent;
+            }
+        }
+        else {
+            desiredCutoffExponent = -cutoff_min;
+            if (desiredCutoffExponent < cutoff_min_Exponent) {
+                cutoff_min_Exponent = desiredCutoffExponent;
             }
         }
     }
@@ -1432,14 +1452,17 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
 
             /*
              * stop looping if we are far enough away from our neighboring
-             * values or if we have reached the cutoff digit
+             * values (and we have printed at least the requested minimum
+             * digits) or if we have reached the cutoff digit
              */
             cmp = BigInt_Compare(scaledValue, scaledMarginLow);
             low = isEven ? (cmp <= 0) : (cmp < 0);
             cmp = BigInt_Compare(scaledValueHigh, scale);
             high = isEven ? (cmp >= 0) : (cmp > 0);
-            if (low | high | (digitExponent == cutoffExponent))
+            if (((low | high) & (digitExponent <= cutoff_min_Exponent)) |
+                    (digitExponent == cutoff_max_Exponent)) {
                 break;
+            }
 
             /* store the output digit */
             *curDigit = (char)('0' + outputDigit);
@@ -1471,7 +1494,7 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
             DEBUG_ASSERT(outputDigit < 10);
 
             if ((scaledValue->length == 0) |
-                    (digitExponent == cutoffExponent)) {
+                    (digitExponent == cutoff_max_Exponent)) {
                 break;
             }
 
@@ -1589,6 +1612,7 @@ typedef struct Dragon4_Options {
     DigitMode digit_mode;
     CutoffMode cutoff_mode;
     npy_int32 precision;
+    npy_int32 min_digits;
     npy_bool sign;
     TrimMode trim_mode;
     npy_int32 digits_left;
@@ -1617,11 +1641,12 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                  npy_bool hasUnequalMargins, DigitMode digit_mode,
                  CutoffMode cutoff_mode, npy_int32 precision,
-                 TrimMode trim_mode, npy_int32 digits_left,
-                 npy_int32 digits_right)
+                 npy_int32 min_digits, TrimMode trim_mode,
+                 npy_int32 digits_left, npy_int32 digits_right)
 {
     npy_int32 printExponent;
     npy_int32 numDigits, numWholeDigits=0, has_sign=0;
+    npy_int32 add_digits;
 
     npy_int32 maxPrintLen = (npy_int32)bufferSize - 1, pos = 0;
 
@@ -1644,8 +1669,9 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     }
 
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
-                        digit_mode, cutoff_mode, precision, buffer + has_sign,
-                        maxPrintLen - has_sign, &printExponent);
+                        digit_mode, cutoff_mode, precision, min_digits,
+                        buffer + has_sign, maxPrintLen - has_sign,
+                        &printExponent);
 
     DEBUG_ASSERT(numDigits > 0);
     DEBUG_ASSERT(numDigits <= bufferSize);
@@ -1744,9 +1770,10 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         buffer[pos++] = '.';
     }
 
-    desiredFractionalDigits = precision;
-    if (cutoff_mode == CutoffMode_TotalLength && precision >= 0) {
-        desiredFractionalDigits = precision - numWholeDigits;
+    add_digits = digit_mode == DigitMode_Unique ? min_digits : precision;
+    desiredFractionalDigits = add_digits < 0 ? 0 : add_digits;
+    if (cutoff_mode == CutoffMode_TotalLength) {
+        desiredFractionalDigits = add_digits - numWholeDigits;
     }
 
     if (trim_mode == TrimMode_LeaveOneZero) {
@@ -1757,10 +1784,9 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         }
     }
     else if (trim_mode == TrimMode_None &&
-             digit_mode != DigitMode_Unique &&
              desiredFractionalDigits > numFractionDigits &&
              pos < maxPrintLen) {
-        /* add trailing zeros up to precision length */
+        /* add trailing zeros up to add_digits length */
         /* compute the number of trailing zeros needed */
         npy_int32 count = desiredFractionalDigits - numFractionDigits;
         if (pos + count > maxPrintLen) {
@@ -1778,14 +1804,21 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
      * when rounding, we may still end up with trailing zeros. Remove them
      * depending on trim settings.
      */
-    if (precision >= 0 && trim_mode != TrimMode_None && numFractionDigits > 0) {
+    if (trim_mode != TrimMode_None && numFractionDigits > 0) {
         while (buffer[pos-1] == '0') {
             pos--;
             numFractionDigits--;
         }
-        if (trim_mode == TrimMode_LeaveOneZero && buffer[pos-1] == '.') {
-            buffer[pos++] = '0';
-            numFractionDigits++;
+        if (buffer[pos-1] == '.') {
+            /* in TrimMode_LeaveOneZero, add trailing 0 back */
+            if (trim_mode == TrimMode_LeaveOneZero){
+                buffer[pos++] = '0';
+                numFractionDigits++;
+            }
+            /* in TrimMode_DptZeros, remove trailing decimal point */
+            else if (trim_mode == TrimMode_DptZeros) {
+                    pos--;
+            }
         }
     }
 
@@ -1852,7 +1885,7 @@ static npy_uint32
 FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                   npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                   npy_bool hasUnequalMargins, DigitMode digit_mode,
-                  npy_int32 precision, TrimMode trim_mode,
+                  npy_int32 precision, npy_int32 min_digits, TrimMode trim_mode,
                   npy_int32 digits_left, npy_int32 exp_digits)
 {
     npy_int32 printExponent;
@@ -1860,11 +1893,11 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     char *pCurOut;
     npy_int32 numFractionDigits;
     npy_int32 leftchars;
+    npy_int32 add_digits;
 
     if (digit_mode != DigitMode_Unique) {
         DEBUG_ASSERT(precision >= 0);
     }
-
 
     DEBUG_ASSERT(bufferSize > 0);
 
@@ -1893,7 +1926,9 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     }
 
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
-                        digit_mode, CutoffMode_TotalLength, precision + 1,
+                        digit_mode, CutoffMode_TotalLength,
+                        precision < 0 ? -1 : precision + 1,
+                        min_digits < 0 ? -1 : min_digits + 1,
                         pCurOut, bufferSize, &printExponent);
 
     DEBUG_ASSERT(numDigits > 0);
@@ -1928,6 +1963,8 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         --bufferSize;
     }
 
+    add_digits = digit_mode == DigitMode_Unique ? min_digits : precision;
+    add_digits = add_digits < 0 ? 0 : add_digits;
     if (trim_mode == TrimMode_LeaveOneZero) {
         /* if we didn't print any fractional digits, add the 0 */
         if (numFractionDigits == 0 && bufferSize > 1) {
@@ -1937,13 +1974,12 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             ++numFractionDigits;
         }
     }
-    else if (trim_mode == TrimMode_None &&
-            digit_mode != DigitMode_Unique) {
-        /* add trailing zeros up to precision length */
-        if (precision > (npy_int32)numFractionDigits) {
+    else if (trim_mode == TrimMode_None) {
+        /* add trailing zeros up to add_digits length */
+        if (add_digits > (npy_int32)numFractionDigits) {
             char *pEnd;
             /* compute the number of trailing zeros needed */
-            npy_int32 numZeros = (precision - numFractionDigits);
+            npy_int32 numZeros = (add_digits - numFractionDigits);
 
             if (numZeros > (npy_int32)bufferSize - 1) {
                 numZeros = (npy_int32)bufferSize - 1;
@@ -1961,7 +1997,7 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
      * when rounding, we may still end up with trailing zeros. Remove them
      * depending on trim settings.
      */
-    if (precision >= 0 && trim_mode != TrimMode_None && numFractionDigits > 0) {
+    if (trim_mode != TrimMode_None && numFractionDigits > 0) {
         --pCurOut;
         while (*pCurOut == '0') {
             --pCurOut;
@@ -2153,14 +2189,14 @@ Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         return FormatScientific(buffer, bufferSize, mantissa, exponent,
                                 signbit, mantissaBit, hasUnequalMargins,
                                 opt->digit_mode, opt->precision,
-                                opt->trim_mode, opt->digits_left,
-                                opt->exp_digits);
+                                opt->min_digits, opt->trim_mode,
+                                opt->digits_left, opt->exp_digits);
     }
     else {
         return FormatPositional(buffer, bufferSize, mantissa, exponent,
                                 signbit, mantissaBit, hasUnequalMargins,
                                 opt->digit_mode, opt->cutoff_mode,
-                                opt->precision, opt->trim_mode,
+                                opt->precision, opt->min_digits, opt->trim_mode,
                                 opt->digits_left, opt->digits_right);
     }
 }
@@ -2177,7 +2213,7 @@ Dragon4_PrintFloat_IEEE_binary16(
         Dragon4_Scratch *scratch, npy_half *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint16 val = *value;
@@ -2188,15 +2224,6 @@ Dragon4_PrintFloat_IEEE_binary16(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatMantissa = val & bitmask_u32(10);
@@ -2274,7 +2301,7 @@ Dragon4_PrintFloat_IEEE_binary32(
         Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     union
@@ -2289,15 +2316,6 @@ Dragon4_PrintFloat_IEEE_binary32(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatUnion.floatingPoint = *value;
@@ -2375,7 +2393,7 @@ Dragon4_PrintFloat_IEEE_binary64(
         Dragon4_Scratch *scratch, npy_float64 *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     union
@@ -2392,14 +2410,6 @@ Dragon4_PrintFloat_IEEE_binary64(
     npy_bool hasUnequalMargins;
     char signbit = '\0';
 
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatUnion.floatingPoint = *value;
@@ -2498,7 +2508,7 @@ Dragon4_PrintFloat_Intel_extended(
     Dragon4_Scratch *scratch, FloatVal128 value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint32 floatExponent, floatSign;
@@ -2509,15 +2519,6 @@ Dragon4_PrintFloat_Intel_extended(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value (we ignore the intbit) */
     floatMantissa = value.lo & bitmask_u64(63);
@@ -2719,7 +2720,7 @@ Dragon4_PrintFloat_IEEE_binary128(
     Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint32 floatExponent, floatSign;
@@ -2729,15 +2730,6 @@ Dragon4_PrintFloat_IEEE_binary128(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     mantissa_hi = val128.hi & bitmask_u64(48);
     mantissa_lo = val128.lo;
@@ -2888,7 +2880,7 @@ Dragon4_PrintFloat_IBM_double_double(
     Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     FloatVal128 val128;
@@ -2904,15 +2896,6 @@ Dragon4_PrintFloat_IBM_double_double(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* The high part always comes before the low part, regardless of the
      * endianness of the system. */
@@ -3093,14 +3076,14 @@ Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
 \
 PyObject *\
 Dragon4_Positional_##Type(npy_type *val, DigitMode digit_mode,\
-                   CutoffMode cutoff_mode, int precision,\
+                   CutoffMode cutoff_mode, int precision, int min_digits, \
                    int sign, TrimMode trim, int pad_left, int pad_right)\
 {\
     Dragon4_Options opt;\
@@ -3109,6 +3092,7 @@ Dragon4_Positional_##Type(npy_type *val, DigitMode digit_mode,\
     opt.digit_mode = digit_mode;\
     opt.cutoff_mode = cutoff_mode;\
     opt.precision = precision;\
+    opt.min_digits = min_digits;\
     opt.sign = sign;\
     opt.trim_mode = trim;\
     opt.digits_left = pad_left;\
@@ -3130,13 +3114,14 @@ Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
 PyObject *\
 Dragon4_Scientific_##Type(npy_type *val, DigitMode digit_mode, int precision,\
-                   int sign, TrimMode trim, int pad_left, int exp_digits)\
+                   int min_digits, int sign, TrimMode trim, int pad_left, \
+                   int exp_digits)\
 {\
     Dragon4_Options opt;\
 \
@@ -3144,6 +3129,7 @@ Dragon4_Scientific_##Type(npy_type *val, DigitMode digit_mode, int precision,\
     opt.digit_mode = digit_mode;\
     opt.cutoff_mode = CutoffMode_TotalLength;\
     opt.precision = precision;\
+    opt.min_digits = min_digits;\
     opt.sign = sign;\
     opt.trim_mode = trim;\
     opt.digits_left = pad_left;\
@@ -3166,8 +3152,8 @@ make_dragon4_typefuncs(LongDouble, npy_longdouble, NPY_LONGDOUBLE_BINFMT_NAME)
 
 PyObject *
 Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
-                   int precision, int sign, TrimMode trim, int pad_left,
-                   int pad_right)
+                   int precision, int min_digits, int sign, TrimMode trim,
+                   int pad_left, int pad_right)
 {
     npy_double val;
     Dragon4_Options opt;
@@ -3176,6 +3162,7 @@ Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
     opt.digit_mode = digit_mode;
     opt.cutoff_mode = cutoff_mode;
     opt.precision = precision;
+    opt.min_digits = min_digits;
     opt.sign = sign;
     opt.trim_mode = trim;
     opt.digits_left = pad_left;
@@ -3208,7 +3195,8 @@ Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
 
 PyObject *
 Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
-                   int sign, TrimMode trim, int pad_left, int exp_digits)
+                   int min_digits, int sign, TrimMode trim, int pad_left,
+                   int exp_digits)
 {
     npy_double val;
     Dragon4_Options opt;
@@ -3217,6 +3205,7 @@ Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
     opt.digit_mode = digit_mode;
     opt.cutoff_mode = CutoffMode_TotalLength;
     opt.precision = precision;
+    opt.min_digits = min_digits;
     opt.sign = sign;
     opt.trim_mode = trim;
     opt.digits_left = pad_left;

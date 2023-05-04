@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_METHODS_H_
-#define _NPY_ARRAY_METHODS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_
 
 #include "npy_import.h"
 
@@ -31,4 +31,4 @@ NpyPath_PathlikeToFspath(PyObject *file)
     return PyObject_CallFunctionObjArgs(os_fspath, file, NULL);
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_ */

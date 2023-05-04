@@ -19,7 +19,7 @@ avoid namespace pollution.
 Data type sizes
 ---------------
 
-The :c:data:`NPY_SIZEOF_{CTYPE}` constants are defined so that sizeof
+The ``NPY_SIZEOF_{CTYPE}`` constants are defined so that sizeof
 information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_SHORT
@@ -52,12 +52,15 @@ information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_LONG_DOUBLE
 
-    sizeof(longdouble) (A macro defines **NPY_SIZEOF_LONGDOUBLE** as well.)
+.. c:macro:: NPY_SIZEOF_LONGDOUBLE
+
+    sizeof(longdouble)
 
 .. c:macro:: NPY_SIZEOF_PY_INTPTR_T
 
-    Size of a pointer on this platform (sizeof(void \*)) (A macro defines
-    NPY_SIZEOF_INTP as well.)
+.. c:macro:: NPY_SIZEOF_INTP
+
+    Size of a pointer on this platform (sizeof(void \*))
 
 
 Platform information
@@ -94,13 +97,19 @@ Platform information
 
     Defined in ``numpy/npy_endian.h``.
 
-.. c:function:: PyArray_GetEndianness()
+.. c:function:: int PyArray_GetEndianness()
 
     .. versionadded:: 1.3.0
 
     Returns the endianness of the current platform.
     One of :c:data:`NPY_CPU_BIG`, :c:data:`NPY_CPU_LITTLE`,
     or :c:data:`NPY_CPU_UNKNOWN_ENDIAN`.
+
+    .. c:macro:: NPY_CPU_BIG
+
+    .. c:macro:: NPY_CPU_LITTLE
+
+    .. c:macro:: NPY_CPU_UNKNOWN_ENDIAN
 
 
 Compiler directives
@@ -109,14 +118,3 @@ Compiler directives
 .. c:macro:: NPY_LIKELY
 .. c:macro:: NPY_UNLIKELY
 .. c:macro:: NPY_UNUSED
-
-
-Interrupt Handling
-------------------
-
-.. c:macro:: NPY_INTERRUPT_H
-.. c:macro:: NPY_SIGSETJMP
-.. c:macro:: NPY_SIGLONGJMP
-.. c:macro:: NPY_SIGJMP_BUF
-.. c:macro:: NPY_SIGINT_ON
-.. c:macro:: NPY_SIGINT_OFF

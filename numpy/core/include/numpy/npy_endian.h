@@ -1,5 +1,5 @@
-#ifndef _NPY_ENDIAN_H_
-#define _NPY_ENDIAN_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_ENDIAN_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_ENDIAN_H_
 
 /*
  * NPY_BYTE_ORDER is set to the same value as BYTE_ORDER set by glibc in
@@ -49,8 +49,10 @@
             || defined(NPY_CPU_PPC64LE)       \
             || defined(NPY_CPU_ARCEL)         \
             || defined(NPY_CPU_RISCV64)       \
+            || defined(NPY_CPU_LOONGARCH)     \
             || defined(NPY_CPU_WASM)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
+
     #elif defined(NPY_CPU_PPC)                \
             || defined(NPY_CPU_SPARC)         \
             || defined(NPY_CPU_S390)          \
@@ -65,9 +67,11 @@
             || defined(NPY_CPU_M68K)          \
             || defined(NPY_CPU_ARCEB)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
+
     #else
         #error Unknown CPU: can not set endianness
     #endif
-#endif
 
 #endif
+
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_ENDIAN_H_ */

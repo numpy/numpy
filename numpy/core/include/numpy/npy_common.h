@@ -1,5 +1,8 @@
-#ifndef _NPY_COMMON_H_
-#define _NPY_COMMON_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
+
+/* need Python.h for npy_intp, npy_uintp */
+#include <Python.h>
 
 /* numpconfig.h is auto-generated */
 #include "numpyconfig.h"
@@ -7,16 +10,15 @@
 #include <npy_config.h>
 #endif
 
-/* need Python.h for npy_intp, npy_uintp */
-#include <Python.h>
-
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
  */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
 #ifndef NPY_INLINE_MATH
-#define NPY_INLINE_MATH 1
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    #define NPY_INLINE_MATH 1
+#else
+    #define NPY_INLINE_MATH 0
 #endif
 #endif
 
@@ -38,39 +40,6 @@
 #define NPY_GCC_OPT_3
 #endif
 
-/* compile target attributes */
-#if defined HAVE_ATTRIBUTE_TARGET_AVX && defined HAVE_LINK_AVX
-#define NPY_GCC_TARGET_AVX __attribute__((target("avx")))
-#else
-#define NPY_GCC_TARGET_AVX
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
-#define HAVE_ATTRIBUTE_TARGET_FMA
-#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
-#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
-#else
-#define NPY_GCC_TARGET_AVX2
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#else
-#define NPY_GCC_TARGET_AVX512F
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX && defined HAVE_LINK_AVX512_SKX
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#else
-#define NPY_GCC_TARGET_AVX512_SKX
-#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -81,21 +50,6 @@
 #define NPY_GCC_NONNULL(n)
 #endif
 
-#if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
-#define NPY_HAVE_SSE_INTRINSICS
-#endif
-
-#if defined HAVE_EMMINTRIN_H && defined HAVE__MM_LOAD_PD
-#define NPY_HAVE_SSE2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
-#define NPY_HAVE_AVX2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
-#define NPY_HAVE_AVX512F_INTRINSICS
-#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
@@ -118,7 +72,7 @@
 /* unlike _mm_prefetch also works on non-x86 */
 #define NPY_PREFETCH(x, rw, loc) __builtin_prefetch((x), (rw), (loc))
 #else
-#ifdef HAVE__MM_PREFETCH
+#ifdef NPY_HAVE_SSE
 /* _MM_HINT_ET[01] (rw = 1) unsupported, only available in gcc >= 4.9 */
 #define NPY_PREFETCH(x, rw, loc) _mm_prefetch((x), loc == 0 ? _MM_HINT_NTA : \
                                              (loc == 1 ? _MM_HINT_T2 : \
@@ -129,9 +83,11 @@
 #endif
 #endif
 
-#if defined(_MSC_VER)
-        #define NPY_INLINE __inline
-#elif defined(__GNUC__)
+/* `NPY_INLINE` kept for backwards compatibility; use `inline` instead */
+#if defined(_MSC_VER) && !defined(__clang__)
+    #define NPY_INLINE __inline
+/* clang included here to handle clang-cl on Windows */
+#elif defined(__GNUC__) || defined(__clang__)
     #if defined(__STRICT_ANSI__)
          #define NPY_INLINE __inline__
     #else
@@ -144,9 +100,17 @@
 #ifdef _MSC_VER
     #define NPY_FINLINE static __forceinline
 #elif defined(__GNUC__)
-    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+    #define NPY_FINLINE static inline __attribute__((always_inline))
 #else
     #define NPY_FINLINE static
+#endif
+
+#if defined(_MSC_VER)
+    #define NPY_NOINLINE static __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define NPY_NOINLINE static __attribute__((noinline))
+#else
+    #define NPY_NOINLINE static
 #endif
 
 #ifdef HAVE___THREAD
@@ -177,12 +141,6 @@
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
     defined(__MINGW32__) || defined(__MINGW64__)
     #include <io.h>
-
-/* mingw based on 3.4.5 has lseek but not ftell/fseek */
-#if defined(__MINGW32__) || defined(__MINGW64__)
-extern int __cdecl _fseeki64(FILE *, long long, int);
-extern long long __cdecl _ftelli64(FILE *);
-#endif
 
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64
@@ -262,11 +220,10 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 
 /* NPY_INTP_FMT Note:
- *      Unlike the other NPY_*_FMT macros which are used with
- *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
- *      PyString_Format. These functions use different formatting
- *      codes which are portably specified according to the Python
- *      documentation. See ticket #1795.
+ *      Unlike the other NPY_*_FMT macros, which are used with PyOS_snprintf,
+ *      NPY_INTP_FMT is used with PyErr_Format and PyUnicode_FromFormat. Those
+ *      functions use different formatting codes that are portably specified
+ *      according to the Python documentation. See issue gh-2388.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
@@ -355,14 +312,31 @@ typedef unsigned long npy_ulonglong;
 typedef unsigned char npy_bool;
 #define NPY_FALSE 0
 #define NPY_TRUE 1
-
-
+/*
+ * `NPY_SIZEOF_LONGDOUBLE` isn't usually equal to sizeof(long double).
+ * In some certain cases, it may forced to be equal to sizeof(double)
+ * even against the compiler implementation and the same goes for
+ * `complex long double`.
+ *
+ * Therefore, avoid `long double`, use `npy_longdouble` instead,
+ * and when it comes to standard math functions make sure of using
+ * the double version when `NPY_SIZEOF_LONGDOUBLE` == `NPY_SIZEOF_DOUBLE`.
+ * For example:
+ *   npy_longdouble *ptr, x;
+ *   #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+ *       npy_longdouble r = modf(x, ptr);
+ *   #else
+ *       npy_longdouble r = modfl(x, ptr);
+ *   #endif
+ *
+ * See https://github.com/numpy/numpy/issues/20348
+ */
 #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
-        typedef double npy_longdouble;
-        #define NPY_LONGDOUBLE_FMT "g"
+    #define NPY_LONGDOUBLE_FMT "g"
+    typedef double npy_longdouble;
 #else
-        typedef long double npy_longdouble;
-        #define NPY_LONGDOUBLE_FMT "Lg"
+    #define NPY_LONGDOUBLE_FMT "Lg"
+    typedef long double npy_longdouble;
 #endif
 
 #ifndef Py_USING_UNICODE
@@ -1106,4 +1080,4 @@ typedef npy_int64 npy_datetime;
 
 /* End of typedefs for numarray style bit-width names */
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_ */

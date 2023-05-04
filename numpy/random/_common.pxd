@@ -17,8 +17,8 @@ cdef enum ConstraintType:
     CONS_POSITIVE
     CONS_POSITIVE_NOT_NAN
     CONS_BOUNDED_0_1
-    CONS_BOUNDED_0_1_NOTNAN
     CONS_BOUNDED_GT_0_1
+    CONS_BOUNDED_LT_0_1
     CONS_GT_1
     CONS_GTE_1
     CONS_POISSON
@@ -39,13 +39,13 @@ cdef extern from "include/aligned_malloc.h":
     cdef void *PyArray_calloc_aligned(size_t n, size_t s)
     cdef void PyArray_free_aligned(void *p)
 
-ctypedef double (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out)  noexcept nogil
+ctypedef void (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out)  noexcept nogil
 ctypedef double (*random_double_0)(void *state)  noexcept nogil
 ctypedef double (*random_double_1)(void *state, double a)  noexcept nogil
 ctypedef double (*random_double_2)(void *state, double a, double b)  noexcept nogil
 ctypedef double (*random_double_3)(void *state, double a, double b, double c)  noexcept nogil
 
-ctypedef double (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out)  noexcept nogil
+ctypedef void (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out)  noexcept nogil
 ctypedef float (*random_float_0)(bitgen_t *state)  noexcept nogil
 ctypedef float (*random_float_1)(bitgen_t *state, float a)  noexcept nogil
 

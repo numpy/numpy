@@ -1,16 +1,28 @@
 ===================
-Releasing a Version
+Releasing a version
 ===================
 
+The following guides include detailed information on how to prepare a NumPy
+release. 
+
+.. _prepare_release:
+
 ------------------------
-How to Prepare a Release
+How to prepare a release
 ------------------------
 
-.. include:: ../../HOWTO_RELEASE.rst.txt
+.. include:: ../../HOWTO_RELEASE.rst
 
 -----------------------
-Step-by-Step Directions
+Step-by-step directions
 -----------------------
 
-.. include:: ../../RELEASE_WALKTHROUGH.rst.txt
+.. include:: ../../RELEASE_WALKTHROUGH.rst
 
+.. _branching:
+
+------------------
+Branch walkthrough
+------------------
+
+.. include:: ../../BRANCH_WALKTHROUGH.rst

@@ -1,10 +1,5 @@
 from cpython.pycapsule cimport PyCapsule_New
 
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
-
 import numpy as np
 cimport numpy as np
 
@@ -271,8 +266,8 @@ cdef class Philox(BitGenerator):
 
         Returns a new bit generator with the state jumped
 
-        The state of the returned big generator is jumped as-if
-        2**(128 * jumps) random numbers have been generated.
+        The state of the returned bit generator is jumped as-if
+        (2**128) * jumps random numbers have been generated.
 
         Parameters
         ----------

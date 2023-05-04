@@ -9,11 +9,7 @@ Order statistics
 
 .. autosummary::
    :toctree: generated/
-
-   amin
-   amax
-   nanmin
-   nanmax
+   
    ptp
    percentile
    nanpercentile

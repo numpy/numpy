@@ -1,7 +1,7 @@
 .. _NEP24:
 
 =============================================================
-NEP 24 — Missing Data Functionality - Alternative 1 to NEP 12
+NEP 24 — Missing data functionality - Alternative 1 to NEP 12
 =============================================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>, Matthew Brett <matthew.brett@gmail.com>
@@ -14,7 +14,7 @@ Abstract
 --------
 
 *Context: this NEP was written as an alternative to NEP 12, which at the time of writing
-had an implementation that was merged into the NumPy master branch.*
+had an implementation that was merged into the NumPy main branch.*
 
 The principle of this NEP is to separate the APIs for masking and for missing values, according to
 
@@ -193,7 +193,7 @@ is obvious in the NA case::
    >>> na_arr
    array([1., 2., NA], dtype='NA[<f8]')
 
-Direct assignnent in the masked case is magic and confusing, and so happens only
+Direct assignment in the masked case is magic and confusing, and so happens only
 via the mask::
 
    >>> masked_array = np.array([1.0, 2.0, 7.0], masked=True)

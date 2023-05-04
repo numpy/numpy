@@ -134,3 +134,21 @@ class Block3D(Benchmark):
 
     # Retain old benchmark name for backward compat
     time_3d.benchmark_name = "bench_shape_base.Block.time_3d"
+
+
+class Kron(Benchmark):
+    """Benchmarks for Kronecker product of two arrays"""
+
+    def setup(self):
+        self.large_arr = np.random.random((10,) * 4)
+        self.large_mat = np.mat(np.random.random((100, 100)))
+        self.scalar = 7
+
+    def time_arr_kron(self):
+        np.kron(self.large_arr, self.large_arr)
+
+    def time_scalar_kron(self):
+        np.kron(self.large_arr, self.scalar)
+
+    def time_mat_kron(self):
+        np.kron(self.large_mat, self.large_mat)

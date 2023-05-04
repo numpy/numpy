@@ -4,6 +4,19 @@ Packaging (:mod:`numpy.distutils`)
 
 .. module:: numpy.distutils
 
+.. warning::
+
+   ``numpy.distutils`` is deprecated, and will be removed for
+   Python >= 3.12. For more details, see :ref:`distutils-status-migration`
+
+.. warning::
+
+   Note that ``setuptools`` does major releases often and those may contain
+   changes that break ``numpy.distutils``, which will *not* be updated anymore
+   for new ``setuptools`` versions. It is therefore recommended to set an
+   upper version bound in your build configuration for the last known version
+   of ``setuptools`` that works with your build.
+
 NumPy provides enhanced distutils functionality to make it easier to
 build and install sub-packages, auto-generate code, and extension
 modules that use Fortran-compiled libraries. To use features of NumPy
@@ -188,6 +201,8 @@ Info are easily retrieved from the `get_info` function in
 
   >>> info = np.distutils.misc_util.get_info('npymath')
   >>> config.add_extension('foo', sources=['foo.c'], extra_info=info)
+  <numpy.distutils.extension.Extension('foo') at 0x...>
+
 
 An additional list of paths to look for .ini files can be given to `get_info`.
 

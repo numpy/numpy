@@ -3,7 +3,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, _OLD_PROMOTION, IS_WASM
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -17,7 +17,7 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
                 "Did not raise floating point %s error" % strmatch)
 
 class TestHalf:
-    def setup(self):
+    def setup_method(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
@@ -67,9 +67,25 @@ class TestHalf:
         j = np.array(i_f16, dtype=int)
         assert_equal(i_int, j)
 
+    @pytest.mark.parametrize("string_dt", ["S", "U"])
+    def test_half_conversion_to_string(self, string_dt):
+        # Currently uses S/U32 (which is sufficient for float32)
+        expected_dt = np.dtype(f"{string_dt}32")
+        assert np.promote_types(np.float16, string_dt) == expected_dt
+        assert np.promote_types(string_dt, np.float16) == expected_dt
+
+        arr = np.ones(3, dtype=np.float16).astype(string_dt)
+        assert arr.dtype == expected_dt
+
+    @pytest.mark.parametrize("string_dt", ["S", "U"])
+    def test_half_conversion_from_string(self, string_dt):
+        string = np.array("3.1416", dtype=string_dt)
+        assert string.astype(np.float16) == np.array(3.1416, dtype=np.float16)
+
     @pytest.mark.parametrize("offset", [None, "up", "down"])
     @pytest.mark.parametrize("shift", [None, "up", "down"])
     @pytest.mark.parametrize("float_t", [np.float32, np.float64])
+    @np._no_nep50_warning()
     def test_half_conversion_rounding(self, float_t, shift, offset):
         # Assumes that round to even is used during casting.
         max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
@@ -89,9 +105,9 @@ class TestHalf:
 
         # Increase the float by a minimal value:
         if offset == "up":
-            f16s_float = np.nextafter(f16s_float, float_t(1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(np.inf))
         elif offset == "down":
-            f16s_float = np.nextafter(f16s_float, float_t(-1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(-np.inf))
 
         # Convert back to float16 and its bit pattern:
         res_patterns = f16s_float.astype(np.float16).view(np.uint16)
@@ -218,12 +234,14 @@ class TestHalf:
                    np.inf]
 
         # Check float64->float16 rounding
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
         # Check float32->float16 rounding
         a = np.array(a, dtype=float32)
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
     def test_half_correctness(self):
@@ -433,34 +451,40 @@ class TestHalf:
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
         assert_equal(np.ldexp(b, [0, 1, 2, 4, 2]), [-2, 10, 4, 64, 12])
 
-    def test_half_coercion(self):
+    @np._no_nep50_warning()
+    def test_half_coercion(self, weak_promotion):
         """Test that half gets coerced properly with the other types"""
         a16 = np.array((1,), dtype=float16)
         a32 = np.array((1,), dtype=float32)
         b16 = float16(1)
         b32 = float32(1)
 
-        assert_equal(np.power(a16, 2).dtype, float16)
-        assert_equal(np.power(a16, 2.0).dtype, float16)
-        assert_equal(np.power(a16, b16).dtype, float16)
-        assert_equal(np.power(a16, b32).dtype, float16)
-        assert_equal(np.power(a16, a16).dtype, float16)
-        assert_equal(np.power(a16, a32).dtype, float32)
+        assert np.power(a16, 2).dtype == float16
+        assert np.power(a16, 2.0).dtype == float16
+        assert np.power(a16, b16).dtype == float16
+        expected_dt = float32 if weak_promotion else float16
+        assert np.power(a16, b32).dtype == expected_dt
+        assert np.power(a16, a16).dtype == float16
+        assert np.power(a16, a32).dtype == float32
 
-        assert_equal(np.power(b16, 2).dtype, float64)
-        assert_equal(np.power(b16, 2.0).dtype, float64)
-        assert_equal(np.power(b16, b16).dtype, float16)
-        assert_equal(np.power(b16, b32).dtype, float32)
-        assert_equal(np.power(b16, a16).dtype, float16)
-        assert_equal(np.power(b16, a32).dtype, float32)
+        expected_dt = float16 if weak_promotion else float64
+        assert np.power(b16, 2).dtype == expected_dt
+        assert np.power(b16, 2.0).dtype == expected_dt
+        assert np.power(b16, b16).dtype, float16
+        assert np.power(b16, b32).dtype, float32
+        assert np.power(b16, a16).dtype, float16
+        assert np.power(b16, a32).dtype, float32
 
-        assert_equal(np.power(a32, a16).dtype, float32)
-        assert_equal(np.power(a32, b16).dtype, float32)
-        assert_equal(np.power(b32, a16).dtype, float16)
-        assert_equal(np.power(b32, b16).dtype, float32)
+        assert np.power(a32, a16).dtype == float32
+        assert np.power(a32, b16).dtype == float32
+        expected_dt = float32 if weak_promotion else float16
+        assert np.power(b32, a16).dtype == expected_dt
+        assert np.power(b32, b16).dtype == float32
 
     @pytest.mark.skipif(platform.machine() == "armv5tel",
                         reason="See gh-413.")
+    @pytest.mark.skipif(IS_WASM,
+                        reason="fp exceptions don't work in wasm.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
             sx16 = np.array((1e-4,), dtype=float16)

@@ -8,8 +8,7 @@ import warnings
 
 from . import numeric as _nx
 from . import overrides
-from ._asarray import array, asanyarray
-from .multiarray import normalize_axis_index
+from .multiarray import array, asanyarray, normalize_axis_index
 from . import fromnumeric as _from_nx
 
 
@@ -205,23 +204,20 @@ def atleast_3d(*arys):
         return res
 
 
-def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
-    if not hasattr(arrays, '__getitem__') and hasattr(arrays, '__iter__'):
-        warnings.warn('arrays to stack must be passed as a "sequence" type '
-                      'such as list or tuple. Support for non-sequence '
-                      'iterables such as generators is deprecated as of '
-                      'NumPy 1.16 and will raise an error in the future.',
-                      FutureWarning, stacklevel=stacklevel)
-        return ()
-    return arrays
+def _arrays_for_stack_dispatcher(arrays):
+    if not hasattr(arrays, "__getitem__"):
+        raise TypeError('arrays to stack must be passed as a "sequence" type '
+                        'such as list or tuple.')
+
+    return tuple(arrays)
 
 
-def _vhstack_dispatcher(tup):
+def _vhstack_dispatcher(tup, *, dtype=None, casting=None):
     return _arrays_for_stack_dispatcher(tup)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
-def vstack(tup):
+def vstack(tup, *, dtype=None, casting="same_kind"):
     """
     Stack arrays in sequence vertically (row wise).
 
@@ -234,11 +230,24 @@ def vstack(tup):
     and r/g/b channels (third axis). The functions `concatenate`, `stack` and
     `block` provide more general stacking and concatenation operations.
 
+    ``np.row_stack`` is an alias for `vstack`. They are the same function.
+
     Parameters
     ----------
     tup : sequence of ndarrays
         The arrays must have the same shape along all but the first axis.
         1-D arrays must have the same length.
+
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+    .. versionadded:: 1.24
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+    .. versionadded:: 1.24
 
     Returns
     -------
@@ -258,33 +267,30 @@ def vstack(tup):
     Examples
     --------
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.vstack((a,b))
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> a = np.array([[1], [2], [3]])
-    >>> b = np.array([[2], [3], [4]])
+    >>> b = np.array([[4], [5], [6]])
     >>> np.vstack((a,b))
     array([[1],
            [2],
            [3],
-           [2],
-           [3],
-           [4]])
+           [4],
+           [5],
+           [6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
-    return _nx.concatenate(arrs, 0)
+    return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
-def hstack(tup):
+def hstack(tup, *, dtype=None, casting="same_kind"):
     """
     Stack arrays in sequence horizontally (column wise).
 
@@ -302,6 +308,17 @@ def hstack(tup):
     tup : sequence of ndarrays
         The arrays must have the same shape along all but the second axis,
         except 1-D arrays which can be any length.
+
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+    .. versionadded:: 1.24
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+    .. versionadded:: 1.24
 
     Returns
     -------
@@ -321,33 +338,30 @@ def hstack(tup):
     Examples
     --------
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.hstack((a,b))
-    array([1, 2, 3, 2, 3, 4])
+    array([1, 2, 3, 4, 5, 6])
     >>> a = np.array([[1],[2],[3]])
-    >>> b = np.array([[2],[3],[4]])
+    >>> b = np.array([[4],[5],[6]])
     >>> np.hstack((a,b))
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(tup, stacklevel=2)
-
     arrs = atleast_1d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
-        return _nx.concatenate(arrs, 0)
+        return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
     else:
-        return _nx.concatenate(arrs, 1)
+        return _nx.concatenate(arrs, 1, dtype=dtype, casting=casting)
 
 
-def _stack_dispatcher(arrays, axis=None, out=None):
-    arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
+def _stack_dispatcher(arrays, axis=None, out=None, *,
+                      dtype=None, casting=None):
+    arrays = _arrays_for_stack_dispatcher(arrays)
     if out is not None:
         # optimize for the typical case where only arrays is provided
         arrays = list(arrays)
@@ -356,7 +370,7 @@ def _stack_dispatcher(arrays, axis=None, out=None):
 
 
 @array_function_dispatch(_stack_dispatcher)
-def stack(arrays, axis=0, out=None):
+def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     """
     Join a sequence of arrays along a new axis.
 
@@ -378,6 +392,18 @@ def stack(arrays, axis=0, out=None):
         If provided, the destination to place the result. The shape must be
         correct, matching that of what stack would have returned if no
         out argument were specified.
+
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+        .. versionadded:: 1.24
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+        .. versionadded:: 1.24
+
 
     Returns
     -------
@@ -403,21 +429,17 @@ def stack(arrays, axis=0, out=None):
     (3, 4, 10)
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.stack((a, b))
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> np.stack((a, b), axis=-1)
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
-    if not overrides.ARRAY_FUNCTION_ENABLED:
-        # raise warning if necessary
-        _arrays_for_stack_dispatcher(arrays, stacklevel=2)
-
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')
@@ -431,7 +453,8 @@ def stack(arrays, axis=0, out=None):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
+    return _nx.concatenate(expanded_arrays, axis=axis, out=out,
+                           dtype=dtype, casting=casting)
 
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
@@ -439,7 +462,8 @@ def stack(arrays, axis=0, out=None):
 # Use getattr to protect against __array_function__ being disabled.
 _size = getattr(_from_nx.size, '__wrapped__', _from_nx.size)
 _ndim = getattr(_from_nx.ndim, '__wrapped__', _from_nx.ndim)
-_concatenate = getattr(_from_nx.concatenate, '__wrapped__', _from_nx.concatenate)
+_concatenate = getattr(_from_nx.concatenate,
+                       '__wrapped__', _from_nx.concatenate)
 
 
 def _block_format_index(index):
@@ -539,29 +563,28 @@ def _accumulate(values):
 def _concatenate_shapes(shapes, axis):
     """Given array shapes, return the resulting shape and slices prefixes.
 
-    These help in nested concatation.
+    These help in nested concatenation.
+
     Returns
     -------
     shape: tuple of int
-        This tuple satisfies:
-        ```
-        shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
-        shape == concatenate(arrs, axis).shape
-        ```
+        This tuple satisfies::
+
+            shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
+            shape == concatenate(arrs, axis).shape
 
     slice_prefixes: tuple of (slice(start, end), )
         For a list of arrays being concatenated, this returns the slice
         in the larger array at axis that needs to be sliced into.
 
-        For example, the following holds:
-        ```
-        ret = concatenate([a, b, c], axis)
-        _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+        For example, the following holds::
 
-        ret[(slice(None),) * axis + sl_a] == a
-        ret[(slice(None),) * axis + sl_b] == b
-        ret[(slice(None),) * axis + sl_c] == c
-        ```
+            ret = concatenate([a, b, c], axis)
+            _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+
+            ret[(slice(None),) * axis + sl_a] == a
+            ret[(slice(None),) * axis + sl_b] == b
+            ret[(slice(None),) * axis + sl_c] == c
 
         These are called slice prefixes since they are used in the recursive
         blocking algorithm to compute the left-most slices during the
@@ -606,7 +629,7 @@ def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
         The arrays to check
     max_depth : list of int
         The number of nested lists
-    result_ndim: int
+    result_ndim : int
         The number of dimensions in thefinal array.
 
     Returns
@@ -785,9 +808,9 @@ def block(arrays):
     array([1, 2, 3])
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.block([a, b, 10])             # hstack([a, b, 10])
-    array([ 1,  2,  3,  2,  3,  4, 10])
+    array([ 1,  2,  3,  4,  5,  6, 10])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A
@@ -798,10 +821,10 @@ def block(arrays):
     With a list of depth 2, `block` can be used in place of `vstack`:
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.block([[a], [b]])             # vstack([a, b])
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A

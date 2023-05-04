@@ -6,15 +6,14 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <time.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -23,6 +22,8 @@
 #include "convert_datatype.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+
+#include <time.h>
 
 /*
  * Platform-specific time_t typedef. Some platforms use 32 bit, some use 64 bit
@@ -1385,21 +1386,23 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     /* Parse the input unit if provided */
     if (unit_in != NULL && unit_in != Py_None) {
         PyObject *strobj;
-        char *str = NULL;
-        Py_ssize_t len = 0;
 
-        if (PyUnicode_Check(unit_in)) {
-            strobj = PyUnicode_AsASCIIString(unit_in);
-            if (strobj == NULL) {
-                goto fail;
+        if (PyBytes_Check(unit_in)) {
+            /* accept bytes input */
+            PyObject *obj_str = PyUnicode_FromEncodedObject(unit_in, NULL, NULL);
+            if (obj_str == NULL) {
+                return 0;
             }
+            strobj = obj_str;
         }
         else {
+            Py_INCREF(unit_in);
             strobj = unit_in;
-            Py_INCREF(strobj);
         }
 
-        if (PyBytes_AsStringAndSize(strobj, &str, &len) < 0) {
+        Py_ssize_t len;
+        char const *str = PyUnicode_AsUTF8AndSize(strobj, &len);
+        if (str == NULL) {
             Py_DECREF(strobj);
             goto fail;
         }
@@ -1434,24 +1437,27 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
     /* Get the input time zone */
     if (timezone_obj != NULL) {
-        /* Convert to ASCII if it's unicode */
-        if (PyUnicode_Check(timezone_obj)) {
-            /* accept unicode input */
-            PyObject *obj_str;
-            obj_str = PyUnicode_AsASCIIString(timezone_obj);
+        PyObject *strobj;
+        if (PyBytes_Check(timezone_obj)) {
+            /* accept bytes input */
+            PyObject *obj_str = PyUnicode_FromEncodedObject(timezone_obj, NULL, NULL);
             if (obj_str == NULL) {
                 goto fail;
             }
-            Py_DECREF(timezone_obj);
-            timezone_obj = obj_str;
+            strobj = obj_str;
+        }
+        else {
+            Py_INCREF(timezone_obj);
+            strobj = timezone_obj;
         }
 
-        /* Check for the supported string inputs */
-        if (PyBytes_Check(timezone_obj)) {
-            char *str;
-            Py_ssize_t len;
+        Py_SETREF(timezone_obj, strobj);
 
-            if (PyBytes_AsStringAndSize(timezone_obj, &str, &len) < 0) {
+        /* Check for the supported string inputs */
+        if (PyUnicode_Check(timezone_obj)) {
+            Py_ssize_t len;
+            char const *str = PyUnicode_AsUTF8AndSize(timezone_obj, &len);
+            if (str == NULL) {
                 goto fail;
             }
 

@@ -14,8 +14,8 @@
  * https://github.com/python/cpython/pull/20599).
  */
 
-#ifndef NPY_INTERRUPT_H
-#define NPY_INTERRUPT_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_INTERRUPT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_INTERRUPT_H_
 
 #ifndef NPY_NO_SIGNAL
 
@@ -46,11 +46,11 @@
         PyOS_setsig(SIGINT, _npy_sig_save);                       \
         }
 
-#else /* NPY_NO_SIGNAL  */
+#else  /* NPY_NO_SIGNAL  */
 
 #define NPY_SIGINT_ON
 #define NPY_SIGINT_OFF
 
-#endif /* HAVE_SIGSETJMP */
+#endif  /* HAVE_SIGSETJMP */
 
-#endif /* NPY_INTERRUPT_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_INTERRUPT_H_ */

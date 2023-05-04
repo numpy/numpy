@@ -5,6 +5,7 @@ import sys
 import pytest
 
 import numpy as np
+from numpy.testing import IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -13,14 +14,14 @@ try:
 except ImportError:
     cython = None
 else:
-    from distutils.version import LooseVersion
+    from numpy._utils import _pep440
 
-    # Cython 0.29.21 is required for Python 3.9 and there are
+    # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion("0.29.21")
-    if LooseVersion(cython_version) < required_version:
+    required_version = "0.29.30"
+    if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
 
@@ -30,25 +31,25 @@ pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.fixture
 def install_temp(request, tmp_path):
     # Based in part on test_cython from random.tests.test_extending
+    if IS_WASM:
+        pytest.skip("No subprocess")
 
     here = os.path.dirname(__file__)
-    ext_dir = os.path.join(here, "examples")
+    ext_dir = os.path.join(here, "examples", "cython")
 
-    tmp_path = tmp_path._str
-    cytest = os.path.join(tmp_path, "cytest")
+    cytest = str(tmp_path / "cytest")
 
     shutil.copytree(ext_dir, cytest)
     # build the examples and "install" them into a temporary directory
 
-    install_log = os.path.join(tmp_path, "tmp_install_log.txt")
-    subprocess.check_call(
+    install_log = str(tmp_path / "tmp_install_log.txt")
+    subprocess.check_output(
         [
             sys.executable,
             "setup.py",
             "build",
             "install",
-            "--prefix",
-            os.path.join(tmp_path, "installdir"),
+            "--prefix", str(tmp_path / "installdir"),
             "--single-version-externally-managed",
             "--record",
             install_log,
@@ -126,3 +127,11 @@ def test_get_datetime64_unit(install_temp):
     result = checks.get_dt64_unit(td64)
     expected = 5
     assert result == expected
+
+
+def test_abstract_scalars(install_temp):
+    import checks
+
+    assert checks.is_integer(1)
+    assert checks.is_integer(np.int8(1))
+    assert checks.is_integer(np.uint64(1))

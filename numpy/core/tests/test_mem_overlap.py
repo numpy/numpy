@@ -55,7 +55,7 @@ def _indices(ndims):
 def _check_assignment(srcidx, dstidx):
     """Check assignment arr[dstidx] = arr[srcidx] works."""
 
-    arr = np.arange(np.product(shape)).reshape(shape)
+    arr = np.arange(np.prod(shape)).reshape(shape)
 
     cpy = arr.copy()
 
@@ -105,7 +105,7 @@ def test_diophantine_fuzz():
                       for j in range(ndim))
 
             b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = rng.randint(-1, b_ub+2, dtype=np.intp)
+            b = int(rng.randint(-1, b_ub+2, dtype=np.intp))
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0
@@ -666,6 +666,11 @@ class TestUFunc:
     def test_unary_ufunc_call_fuzz(self):
         self.check_unary_fuzz(np.invert, None, np.int16)
 
+    @pytest.mark.slow
+    def test_unary_ufunc_call_complex_fuzz(self):
+        # Complex typically has a smaller alignment than itemsize
+        self.check_unary_fuzz(np.negative, None, np.complex128, count=500)
+
     def test_binary_ufunc_accumulate_fuzz(self):
         def get_out_axis_size(a, b, axis):
             if axis is None:
@@ -792,7 +797,7 @@ class TestUFunc:
         check(np.add, a, ind, a[25:75])
 
     def test_unary_ufunc_1d_manual(self):
-        # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
+        # Exercise ufunc fast-paths (that avoid creation of an `np.nditer`)
 
         def check(a, b):
             a_orig = a.copy()

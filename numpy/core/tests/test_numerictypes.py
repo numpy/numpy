@@ -60,8 +60,10 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True), b'cc', (u'NN', 6j), [[6., 4.], [6., 4.]], 8),
-    ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False), b'dd', (u'OO', 7j), [[7., 5.], [7., 5.]], 9),
+    ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True),
+     b'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False),
+     b'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 
@@ -357,7 +359,7 @@ class TestCommonType:
         assert_(res == 'f8')
 
 class TestMultipleFields:
-    def setup(self):
+    def setup_method(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
 
     def _bad_call(self):
@@ -436,6 +438,14 @@ class TestSctypeDict:
         assert_(np.sctypeDict['f8'] is not np.longdouble)
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
 
+    def test_ulong(self):
+        # Test that 'ulong' behaves like 'long'. np.sctypeDict['long'] is an
+        # alias for np.int_, but np.long is not supported for historical
+        # reasons (gh-21063)
+        assert_(np.sctypeDict['ulong'] is np.uint)
+        with pytest.warns(FutureWarning):
+            # We will probably allow this in the future:
+            assert not hasattr(np, 'ulong')
 
 class TestBitName:
     def test_abstract(self):
@@ -463,7 +473,8 @@ class TestMaximumSctype:
     def test_complex(self, t):
         assert_equal(np.maximum_sctype(t), np.sctypes['complex'][-1])
 
-    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.unicode_, np.bytes_, np.void])
+    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
+                                   np.void])
     def test_other(self, t):
         assert_equal(np.maximum_sctype(t), t)
 
@@ -475,7 +486,7 @@ class Test_sctype2char:
     def test_scalar_type(self):
         assert_equal(np.sctype2char(np.double), 'd')
         assert_equal(np.sctype2char(np.int_), 'l')
-        assert_equal(np.sctype2char(np.unicode_), 'U')
+        assert_equal(np.sctype2char(np.str_), 'U')
         assert_equal(np.sctype2char(np.bytes_), 'S')
 
     def test_other_type(self):

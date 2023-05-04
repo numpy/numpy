@@ -4,12 +4,19 @@
 
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
-
+#define NPY_SIMD_F32 1
 #ifdef __aarch64__
     #define NPY_SIMD_F64 1
 #else
     #define NPY_SIMD_F64 0
 #endif
+#ifdef NPY_HAVE_NEON_VFPV4
+    #define NPY_SIMD_FMA3 1  // native support
+#else
+    #define NPY_SIMD_FMA3 0  // HW emulated
+#endif
+#define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 1
 
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;
@@ -72,3 +79,4 @@ typedef float64x2x3_t npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"

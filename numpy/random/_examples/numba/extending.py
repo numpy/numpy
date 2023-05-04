@@ -44,9 +44,9 @@ assert r1.shape == (n,)
 assert r1.shape == r2.shape
 
 t1 = timeit(numbacall, number=1000)
-print('{:.2f} secs for {} PCG64 (Numba/PCG64) gaussian randoms'.format(t1, n))
+print(f'{t1:.2f} secs for {n} PCG64 (Numba/PCG64) gaussian randoms')
 t2 = timeit(numpycall, number=1000)
-print('{:.2f} secs for {} PCG64 (NumPy/PCG64) gaussian randoms'.format(t2, n))
+print(f'{t2:.2f} secs for {n} PCG64 (NumPy/PCG64) gaussian randoms')
 
 # example 2
 

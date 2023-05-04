@@ -97,7 +97,7 @@ partial duck arrays. We've been guilty of this ourself.
 
 At this point though, we think the best general strategy is to focus
 our efforts primarily on supporting full duck arrays, and only worry
-about partial duck arrays as much as we need to to make sure we don't
+about partial duck arrays as much as we need to make sure we don't
 accidentally rule them out for no reason.
 
 Why focus on full duck arrays? Several reasons:

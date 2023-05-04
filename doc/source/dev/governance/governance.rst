@@ -203,7 +203,7 @@ Council membership
 ~~~~~~~~~~~~~~~~~~
 
 A list of current Steering Council Members is maintained at the
-page :ref:`governance-people`.
+page `About Us <https://numpy.org/about/>`_.
 
 To become eligible to join the Steering Council, an individual must be
 a Project Contributor who has produced contributions that are
@@ -307,7 +307,7 @@ its interactions with NumFOCUS.
    resting on one person.
 
 The current membership of the NumFOCUS Subcommittee is listed at the
-page :ref:`governance-people`.
+page `About Us <https://numpy.org/about/>`_.
 
 
 Institutional Partners and Funding
@@ -375,13 +375,13 @@ Institutional Partner benefits are:
 -  Council Members invited to NumPy Developer Meetings.
 
 A list of current Institutional Partners is maintained at the page
-:ref:`governance-people`.
+`About Us <https://numpy.org/about/>`_.
 
 
 Document history
 ================
 
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
+https://github.com/numpy/numpy/commits/main/doc/source/dev/governance/governance.rst
 
 Acknowledgements
 ================

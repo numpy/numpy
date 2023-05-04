@@ -1,7 +1,7 @@
 .. _NEP44:
 
 ===================================================
-NEP 44 — Restructuring the NumPy Documentation
+NEP 44 — Restructuring the NumPy documentation
 ===================================================
 
 :Author: Ralf Gommers
@@ -233,7 +233,7 @@ Discussion around this NEP can be found on the NumPy mailing list:
 References and Footnotes
 ========================
 
-.. [1] `What nobody tells you about documentation <https://www.divio.com/blog/documentation/>`_
+.. [1] `Diátaxis - A systematic framework for technical documentation authoring <https://diataxis.fr/>`_
 
 .. [2] `Preparing to Teach <https://carpentries.github.io/instructor-training/15-lesson-study/index.html>`_ (from the `Software Carpentry <https://software-carpentry.org/>`_ Instructor Training materials)
 

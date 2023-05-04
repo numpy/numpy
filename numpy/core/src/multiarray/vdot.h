@@ -1,5 +1,5 @@
-#ifndef _NPY_VDOT_H_
-#define _NPY_VDOT_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_VDOT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_VDOT_H_
 
 #include "common.h"
 
@@ -15,4 +15,4 @@ CLONGDOUBLE_vdot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
 NPY_NO_EXPORT void
 OBJECT_vdot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_VDOT_H_ */

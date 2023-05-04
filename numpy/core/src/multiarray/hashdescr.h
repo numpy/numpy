@@ -1,7 +1,7 @@
-#ifndef _NPY_HASHDESCR_H_
-#define _NPY_HASHDESCR_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_
 
 NPY_NO_EXPORT npy_hash_t
 PyArray_DescrHash(PyObject* odescr);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_ */

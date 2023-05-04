@@ -4,7 +4,7 @@ import re
 import numpy as np
 import os
 
-names = re.compile(r'r\d+\s[|]\s(.*)\s[|]\s200')
+names = re.compile(r'r\d+\s\|\s(.*)\s\|\s200')
 
 def get_count(filename, repo):
     mystr = open(filename).read()

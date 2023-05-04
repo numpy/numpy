@@ -7,7 +7,7 @@ were accepted before. For instance, '\(' was previously accepted but must now
 be written as '\\(' or r'\('.
 
 """
-import sys
+
 
 def main(root):
     """Find deprecated escape sequences.
@@ -55,9 +55,6 @@ def main(root):
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
-
-    if sys.version_info[:2] < (3, 6):
-        raise RuntimeError("Python version must be >= 3.6")
 
     parser = ArgumentParser(description="Find deprecated escaped characters")
     parser.add_argument('root', help='directory or file to be checked')

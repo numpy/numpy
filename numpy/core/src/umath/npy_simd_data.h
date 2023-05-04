@@ -1,6 +1,6 @@
 #ifndef __NPY_SIMD_DATA_H_
 #define __NPY_SIMD_DATA_H_
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_AVX512F
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 /*
  * Constants used in vector implementation of float64 exp(x)
@@ -15,6 +15,7 @@
 #define NPY_TANG_A4 0x1.11115b7aa905ep-7
 #define NPY_TANG_A5 0x1.6c1728d739765p-10
 
+#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 /* Lookup table for 2^(j/32) */
 static npy_uint64 EXP_Table_top[32] = {
     0x3FF0000000000000,
@@ -85,6 +86,7 @@ static npy_uint64 EXP_Table_tail[32] = {
     0x3CF9858F73A18F5E,
     0x3C99D3E12DD8A18B,
 };
+#endif //#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 #endif
 #endif
 
@@ -119,31 +121,16 @@ static npy_uint64 EXP_Table_tail[32] = {
 #define NPY_COEFF_Q3_LOGf 9.864942958519418960339e-01f
 #define NPY_COEFF_Q4_LOGf 1.546476374983906719538e-01f
 #define NPY_COEFF_Q5_LOGf 5.875095403124574342950e-03f
-/*
- * Constants used in vector implementation of sinf/cosf(x)
- */
-#define NPY_TWO_O_PIf 0x1.45f306p-1f
-#define NPY_CODY_WAITE_PI_O_2_HIGHf -0x1.921fb0p+00f
-#define NPY_CODY_WAITE_PI_O_2_MEDf -0x1.5110b4p-22f
-#define NPY_CODY_WAITE_PI_O_2_LOWf -0x1.846988p-48f
-#define NPY_COEFF_INVF0_COSINEf 0x1.000000p+00f
-#define NPY_COEFF_INVF2_COSINEf -0x1.000000p-01f
-#define NPY_COEFF_INVF4_COSINEf 0x1.55553cp-05f
-#define NPY_COEFF_INVF6_COSINEf -0x1.6c06dcp-10f
-#define NPY_COEFF_INVF8_COSINEf 0x1.98e616p-16f
-#define NPY_COEFF_INVF3_SINEf -0x1.555556p-03f
-#define NPY_COEFF_INVF5_SINEf 0x1.11119ap-07f
-#define NPY_COEFF_INVF7_SINEf -0x1.a06bbap-13f
-#define NPY_COEFF_INVF9_SINEf 0x1.7d3bbcp-19f
 
 /*
  * Lookup table of log(c_k)
- * Reference form: Tang, Ping-Tak Peter. "Table-driven implementation of the 
- *     logarithm function in IEEE floating-point arithmetic." ACM Transactions 
+ * Reference form: Tang, Ping-Tak Peter. "Table-driven implementation of the
+ *     logarithm function in IEEE floating-point arithmetic." ACM Transactions
  *     on Mathematical Software (TOMS) 16.4 (1990): 378-400.
  */
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_AVX512F
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
+#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 static npy_uint64 LOG_TABLE_TOP[64] = {
     0x0000000000000000,
     0x3F8FC0A8B1000000,
@@ -277,6 +264,7 @@ static npy_uint64 LOG_TABLE_TAIL[64] = {
     0x3D6F2CFB29AAA5F0,
     0x3D66757006095FD2,
 };
+#endif //#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 
 #define NPY_TANG_LOG_A1 0x1.55555555554e6p-4
 #define NPY_TANG_LOG_A2 0x1.9999999bac6d4p-7

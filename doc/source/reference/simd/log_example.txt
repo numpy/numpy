@@ -1,0 +1,79 @@
+########### EXT COMPILER OPTIMIZATION ###########
+Platform      :
+  Architecture: x64
+  Compiler    : gcc
+
+CPU baseline  :
+  Requested   : 'min'
+  Enabled     : SSE SSE2 SSE3
+  Flags       : -msse -msse2 -msse3
+  Extra checks: none
+
+CPU dispatch  :
+  Requested   : 'max -xop -fma4'
+  Enabled     : SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+  Generated   :
+              :
+  SSE41       : SSE SSE2 SSE3 SSSE3
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1
+  Extra checks: none
+  Detect      : SSE SSE2 SSE3 SSSE3 SSE41
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithmetic.dispatch.c
+              : numpy/core/src/umath/_umath_tests.dispatch.c
+              :
+  SSE42       : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2
+  Extra checks: none
+  Detect      : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42
+              : build/src.linux-x86_64-3.9/numpy/core/src/_simd/_simd.dispatch.c
+              :
+  AVX2        : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mavx2
+  Extra checks: none
+  Detect      : AVX F16C AVX2
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithm_fp.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithmetic.dispatch.c
+              : numpy/core/src/umath/_umath_tests.dispatch.c
+              :
+  (FMA3 AVX2) : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2
+  Extra checks: none
+  Detect      : AVX F16C FMA3 AVX2
+              : build/src.linux-x86_64-3.9/numpy/core/src/_simd/_simd.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_exponent_log.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_trigonometric.dispatch.c
+              :
+  AVX512F     : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2 -mavx512f
+  Extra checks: AVX512F_REDUCE
+  Detect      : AVX512F
+              : build/src.linux-x86_64-3.9/numpy/core/src/_simd/_simd.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithm_fp.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithmetic.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_exponent_log.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_trigonometric.dispatch.c
+              :
+  AVX512_SKX  : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD
+  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2 -mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq
+  Extra checks: AVX512BW_MASK AVX512DQ_MASK
+  Detect      : AVX512_SKX
+              : build/src.linux-x86_64-3.9/numpy/core/src/_simd/_simd.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_arithmetic.dispatch.c
+              : build/src.linux-x86_64-3.9/numpy/core/src/umath/loops_exponent_log.dispatch.c
+CCompilerOpt.cache_flush[804] : write cache to path -> /home/seiko/work/repos/numpy/build/temp.linux-x86_64-3.9/ccompiler_opt_cache_ext.py
+
+########### CLIB COMPILER OPTIMIZATION ###########
+Platform      :
+  Architecture: x64
+  Compiler    : gcc
+
+CPU baseline  :
+  Requested   : 'min'
+  Enabled     : SSE SSE2 SSE3
+  Flags       : -msse -msse2 -msse3
+  Extra checks: none
+
+CPU dispatch  :
+  Requested   : 'max -xop -fma4'
+  Enabled     : SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+  Generated   : none

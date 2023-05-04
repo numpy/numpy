@@ -20,9 +20,10 @@ from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
+                                              check_gcc_version_at_least,
                                               check_inline,
                                               check_restrict,
-                                              check_compiler_gcc4)
+                                              check_compiler_gcc)
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -45,7 +46,7 @@ class config(old_config):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
             # initialize call query_vcvarsall, which throws an IOError, and
             # causes an error along the way without much information. We try to
-            # catch it here, hoping it is early enough, and print an helpful
+            # catch it here, hoping it is early enough, and print a helpful
             # message instead of Error: None.
             if not self.compiler.initialized:
                 try:
@@ -55,15 +56,14 @@ class config(old_config):
                         Could not initialize compiler instance: do you have Visual Studio
                         installed?  If you are trying to build with MinGW, please use "python setup.py
                         build -c mingw32" instead.  If you have Visual Studio installed, check it is
-                        correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
-                        VS 2010 for >= 3.3).
+                        correctly installed, and the right version (VS 2015 as of this writing).
 
                         Original exception was: %s, and the Compiler class was %s
                         ============================================================================""") \
                         % (e, self.compiler.__class__.__name__)
                     print(textwrap.dedent("""\
                         ============================================================================"""))
-                    raise distutils.errors.DistutilsPlatformError(msg)
+                    raise distutils.errors.DistutilsPlatformError(msg) from e
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
             # flags.  See issues gh-4245 and gh-4101 for details.  Also
@@ -91,12 +91,13 @@ class config(old_config):
         save_compiler = self.compiler
         if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
+        if self.compiler is None:
+            raise CompileError('%s compiler is not set' % (lang,))
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError) as e:
-            str(e)
             self.compiler = save_compiler
-            raise CompileError
+            raise CompileError from e
         self.compiler = save_compiler
         return ret
 
@@ -416,9 +417,9 @@ class config(old_config):
         otherwise."""
         return check_restrict(self)
 
-    def check_compiler_gcc4(self):
-        """Return True if the C compiler is gcc >= 4."""
-        return check_compiler_gcc4(self)
+    def check_compiler_gcc(self):
+        """Return True if the C compiler is gcc"""
+        return check_compiler_gcc(self)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
@@ -430,6 +431,11 @@ class config(old_config):
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
+
+    def check_gcc_version_at_least(self, major, minor=0, patchlevel=0):
+        """Return True if the GCC version is greater than or equal to the
+        specified version."""
+        return check_gcc_version_at_least(self, major, minor, patchlevel)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,

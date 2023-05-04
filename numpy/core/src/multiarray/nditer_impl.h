@@ -4,23 +4,27 @@
  * should use the exposed iterator API.
  */
 #ifndef NPY_ITERATOR_IMPLEMENTATION_CODE
-#error "This header is intended for use ONLY by iterator implementation code."
+#error This header is intended for use ONLY by iterator implementation code.
 #endif
 
-#ifndef _NPY_PRIVATE__NDITER_IMPL_H_
-#define _NPY_PRIVATE__NDITER_IMPL_H_
-
-#define PY_SSIZE_T_CLEAN
-#include "Python.h"
-#include "structmember.h"
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
-#include <npy_pycompat.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
+#include "numpy/arrayobject.h"
+#include "npy_pycompat.h"
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
+#include "dtype_transfer.h"
+#include "dtype_traversal.h"
+
 
 /********** ITERATOR CONSTRUCTION TIMING **************/
 #define NPY_IT_CONSTRUCTION_TIMING 0
@@ -74,33 +78,38 @@
 /* Internal iterator flags */
 
 /* The perm is the identity */
-#define NPY_ITFLAG_IDENTPERM    0x0001
+#define NPY_ITFLAG_IDENTPERM    (1 << 0)
 /* The perm has negative entries (indicating flipped axes) */
-#define NPY_ITFLAG_NEGPERM      0x0002
+#define NPY_ITFLAG_NEGPERM      (1 << 1)
 /* The iterator is tracking an index */
-#define NPY_ITFLAG_HASINDEX     0x0004
+#define NPY_ITFLAG_HASINDEX     (1 << 2)
 /* The iterator is tracking a multi-index */
-#define NPY_ITFLAG_HASMULTIINDEX    0x0008
+#define NPY_ITFLAG_HASMULTIINDEX    (1 << 3)
 /* The iteration order was forced on construction */
-#define NPY_ITFLAG_FORCEDORDER  0x0010
+#define NPY_ITFLAG_FORCEDORDER  (1 << 4)
 /* The inner loop is handled outside the iterator */
-#define NPY_ITFLAG_EXLOOP      0x0020
+#define NPY_ITFLAG_EXLOOP      (1 << 5)
 /* The iterator is ranged */
-#define NPY_ITFLAG_RANGE        0x0040
+#define NPY_ITFLAG_RANGE        (1 << 6)
 /* The iterator is buffered */
-#define NPY_ITFLAG_BUFFER       0x0080
+#define NPY_ITFLAG_BUFFER       (1 << 7)
 /* The iterator should grow the buffered inner loop when possible */
-#define NPY_ITFLAG_GROWINNER    0x0100
+#define NPY_ITFLAG_GROWINNER    (1 << 8)
 /* There is just one iteration, can specialize iternext for that */
-#define NPY_ITFLAG_ONEITERATION 0x0200
+#define NPY_ITFLAG_ONEITERATION (1 << 9)
 /* Delay buffer allocation until first Reset* call */
-#define NPY_ITFLAG_DELAYBUF     0x0400
+#define NPY_ITFLAG_DELAYBUF     (1 << 10)
 /* Iteration needs API access during iternext */
-#define NPY_ITFLAG_NEEDSAPI     0x0800
+#define NPY_ITFLAG_NEEDSAPI     (1 << 11)
 /* Iteration includes one or more operands being reduced */
-#define NPY_ITFLAG_REDUCE       0x1000
+#define NPY_ITFLAG_REDUCE       (1 << 12)
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
-#define NPY_ITFLAG_REUSE_REDUCE_LOOPS 0x2000
+#define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 13)
+/*
+ * Offset of (combined) ArrayMethod flags for all transfer functions.
+ * For now, we use the top 8 bits.
+ */
+#define NPY_ITFLAG_TRANSFERFLAGS_SHIFT 24
 
 /* Internal iterator per-operand iterator flags */
 
@@ -145,11 +154,12 @@ struct NpyIter_InternalOnly {
     /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
     /* The rest is variable */
-    char iter_flexdata;
+    char iter_flexdata[];
 };
 
-typedef struct NpyIter_AD NpyIter_AxisData;
-typedef struct NpyIter_BD NpyIter_BufferData;
+typedef struct NpyIter_AxisData_tag NpyIter_AxisData;
+typedef struct NpyIter_TransferInfo_tag NpyIter_TransferInfo;
+typedef struct NpyIter_BufferData_tag NpyIter_BufferData;
 
 typedef npy_int16 npyiter_opitflags;
 
@@ -167,7 +177,8 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
         (NPY_INTP_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
-        ((itflags&NPY_ITFLAG_BUFFER) ? ((NPY_SIZEOF_INTP)*(6 + 9*nop)) : 0)
+        ((itflags&NPY_ITFLAG_BUFFER) ? ( \
+            (NPY_SIZEOF_INTP)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -212,28 +223,38 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_ITERINDEX(iter) \
         (iter->iterindex)
 #define NIT_PERM(iter)  ((npy_int8 *)( \
-        &(iter)->iter_flexdata + NIT_PERM_OFFSET()))
+        iter->iter_flexdata + NIT_PERM_OFFSET()))
 #define NIT_DTYPES(iter) ((PyArray_Descr **)( \
-        &(iter)->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
 #define NIT_RESETDATAPTR(iter) ((char **)( \
-        &(iter)->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, nop)))
 #define NIT_BASEOFFSETS(iter) ((npy_intp *)( \
-        &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPERANDS(iter) ((PyArrayObject **)( \
-        &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPITFLAGS(iter) ((npyiter_opitflags *)( \
-        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
-        &(iter)->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
-        &(iter)->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
 /* Internal-only BUFFERDATA MEMBER ACCESS */
-struct NpyIter_BD {
+
+struct NpyIter_TransferInfo_tag {
+    NPY_cast_info read;
+    NPY_cast_info write;
+    NPY_traverse_info clear;
+    /* Probably unnecessary, but make sure what follows is intp aligned: */
+    npy_intp _unused_ensure_alignment[];
+};
+
+struct NpyIter_BufferData_tag {
     npy_intp buffersize, size, bufiterend,
              reduce_pos, reduce_outersize, reduce_outerdim;
     npy_intp bd_flexdata;
 };
+
 #define NBF_BUFFERSIZE(bufferdata) ((bufferdata)->buffersize)
 #define NBF_SIZE(bufferdata) ((bufferdata)->size)
 #define NBF_BUFITEREND(bufferdata) ((bufferdata)->bufiterend)
@@ -248,19 +269,13 @@ struct NpyIter_BD {
         (&(bufferdata)->bd_flexdata + 2*(nop)))
 #define NBF_REDUCE_OUTERPTRS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 3*(nop)))
-#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
-        (&(bufferdata)->bd_flexdata + 4*(nop)))
-#define NBF_READTRANSFERDATA(bufferdata) ((NpyAuxData **) \
-        (&(bufferdata)->bd_flexdata + 5*(nop)))
-#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
-        (&(bufferdata)->bd_flexdata + 6*(nop)))
-#define NBF_WRITETRANSFERDATA(bufferdata) ((NpyAuxData **) \
-        (&(bufferdata)->bd_flexdata + 7*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 8*(nop)))
+        (&(bufferdata)->bd_flexdata + 4*(nop)))
+#define NBF_TRANSFERINFO(bufferdata) ((NpyIter_TransferInfo *) \
+        (&(bufferdata)->bd_flexdata + 5*(nop)))
 
 /* Internal-only AXISDATA MEMBER ACCESS. */
-struct NpyIter_AD {
+struct NpyIter_AxisData_tag {
     npy_intp shape, index;
     npy_intp ad_flexdata;
 };
@@ -269,7 +284,7 @@ struct NpyIter_AD {
 #define NAD_STRIDES(axisdata) ( \
         &(axisdata)->ad_flexdata + 0)
 #define NAD_PTRS(axisdata) ((char **) \
-        &(axisdata)->ad_flexdata + 1*(nop+1))
+        (&(axisdata)->ad_flexdata + 1*(nop+1)))
 
 #define NAD_NSTRIDES() \
         ((nop) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))
@@ -282,7 +297,7 @@ struct NpyIter_AD {
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
         2*((nop)+1) \
-        )*NPY_SIZEOF_INTP )
+        )*(size_t)NPY_SIZEOF_INTP)
 
 /*
  * Macro to advance an AXISDATA pointer by a specified count.
@@ -317,7 +332,7 @@ struct NpyIter_AD {
  * @return The unpermuted axis. Without `op_axes` this is correct, with
  *         `op_axes` this indexes into `op_axes` (unpermuted iterator axis)
  */
-static NPY_INLINE int
+static inline int
 npyiter_undo_iter_axis_perm(
         int axis, int ndim, const npy_int8 *perm, npy_bool *axis_flipped)
 {
@@ -342,10 +357,19 @@ NPY_NO_EXPORT int
 npyiter_allocate_buffers(NpyIter *iter, char **errmsg);
 NPY_NO_EXPORT void
 npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_from_buffers(NpyIter *iter);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
+NPY_NO_EXPORT void
+npyiter_clear_buffers(NpyIter *iter);
 
+/*
+ * Function to get the ArrayMethod flags of the transfer functions.
+ * TODO: This function should be public and removed from `nditer_impl.h`, but
+ *       this requires making the ArrayMethod flags public API first.
+ */
+NPY_NO_EXPORT int
+NpyIter_GetTransferFlags(NpyIter *iter);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */

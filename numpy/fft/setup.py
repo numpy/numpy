@@ -14,6 +14,7 @@ def configuration(parent_package='',top_path=None):
                          define_macros=defs,
                          )
 
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

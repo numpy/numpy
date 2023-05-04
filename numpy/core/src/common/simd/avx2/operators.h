@@ -61,6 +61,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_and_s64 _mm256_and_si256
 #define npyv_and_f32 _mm256_and_ps
 #define npyv_and_f64 _mm256_and_pd
+#define npyv_and_b8  _mm256_and_si256
+#define npyv_and_b16 _mm256_and_si256
+#define npyv_and_b32 _mm256_and_si256
+#define npyv_and_b64 _mm256_and_si256
 
 // OR
 #define npyv_or_u8  _mm256_or_si256
@@ -73,6 +77,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_or_s64 _mm256_or_si256
 #define npyv_or_f32 _mm256_or_ps
 #define npyv_or_f64 _mm256_or_pd
+#define npyv_or_b8  _mm256_or_si256
+#define npyv_or_b16 _mm256_or_si256
+#define npyv_or_b32 _mm256_or_si256
+#define npyv_or_b64 _mm256_or_si256
 
 // XOR
 #define npyv_xor_u8  _mm256_xor_si256
@@ -85,6 +93,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_xor_s64 _mm256_xor_si256
 #define npyv_xor_f32 _mm256_xor_ps
 #define npyv_xor_f64 _mm256_xor_pd
+#define npyv_xor_b8  _mm256_xor_si256
+#define npyv_xor_b16 _mm256_xor_si256
+#define npyv_xor_b32 _mm256_xor_si256
+#define npyv_xor_b64 _mm256_xor_si256
 
 // NOT
 #define npyv_not_u8(A) _mm256_xor_si256(A, _mm256_set1_epi32(-1))
@@ -97,6 +109,16 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_not_s64 npyv_not_u8
 #define npyv_not_f32(A) _mm256_xor_ps(A, _mm256_castsi256_ps(_mm256_set1_epi32(-1)))
 #define npyv_not_f64(A) _mm256_xor_pd(A, _mm256_castsi256_pd(_mm256_set1_epi32(-1)))
+#define npyv_not_b8  npyv_not_u8
+#define npyv_not_b16 npyv_not_u8
+#define npyv_not_b32 npyv_not_u8
+#define npyv_not_b64 npyv_not_u8
+
+// ANDC, ORC and XNOR
+#define npyv_andc_u8(A, B) _mm256_andnot_si256(B, A)
+#define npyv_andc_b8(A, B) _mm256_andnot_si256(B, A)
+#define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
+#define npyv_xnor_b8 _mm256_cmpeq_epi8
 
 /***************************
  * Comparison
@@ -183,11 +205,11 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 #define npyv_cmple_u64(A, B) npyv_cmpge_u64(B, A)
 #define npyv_cmple_s64(A, B) npyv_cmpge_s64(B, A)
 
-// precision comparison
+// precision comparison (ordered)
 #define npyv_cmpeq_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_EQ_OQ))
 #define npyv_cmpeq_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_EQ_OQ))
-#define npyv_cmpneq_f32(A, B) _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_NEQ_OQ))
-#define npyv_cmpneq_f64(A, B) _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_NEQ_OQ))
+#define npyv_cmpneq_f32(A, B) _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_NEQ_UQ))
+#define npyv_cmpneq_f64(A, B) _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_NEQ_UQ))
 #define npyv_cmplt_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_LT_OQ))
 #define npyv_cmplt_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_LT_OQ))
 #define npyv_cmple_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_LE_OQ))
@@ -196,5 +218,65 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 #define npyv_cmpgt_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_GT_OQ))
 #define npyv_cmpge_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_GE_OQ))
 #define npyv_cmpge_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_GE_OQ))
+
+// check special cases
+NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+{ return _mm256_castps_si256(_mm256_cmp_ps(a, a, _CMP_ORD_Q)); }
+NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
+{ return _mm256_castpd_si256(_mm256_cmp_pd(a, a, _CMP_ORD_Q)); }
+
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#define NPYV_IMPL_AVX2_ANYALL(SFX)                \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+    { return _mm256_movemask_epi8(a) != 0; }      \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+    { return _mm256_movemask_epi8(a) == -1; }
+NPYV_IMPL_AVX2_ANYALL(b8)
+NPYV_IMPL_AVX2_ANYALL(b16)
+NPYV_IMPL_AVX2_ANYALL(b32)
+NPYV_IMPL_AVX2_ANYALL(b64)
+#undef NPYV_IMPL_AVX2_ANYALL
+
+#define NPYV_IMPL_AVX2_ANYALL(SFX)                     \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)      \
+    {                                                  \
+        return _mm256_movemask_epi8(                   \
+            npyv_cmpeq_##SFX(a, npyv_zero_##SFX())     \
+        ) != -1;                                       \
+    }                                                  \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)      \
+    {                                                  \
+        return _mm256_movemask_epi8(                   \
+            npyv_cmpeq_##SFX(a, npyv_zero_##SFX())     \
+        ) == 0;                                        \
+    }
+NPYV_IMPL_AVX2_ANYALL(u8)
+NPYV_IMPL_AVX2_ANYALL(s8)
+NPYV_IMPL_AVX2_ANYALL(u16)
+NPYV_IMPL_AVX2_ANYALL(s16)
+NPYV_IMPL_AVX2_ANYALL(u32)
+NPYV_IMPL_AVX2_ANYALL(s32)
+NPYV_IMPL_AVX2_ANYALL(u64)
+NPYV_IMPL_AVX2_ANYALL(s64)
+#undef NPYV_IMPL_AVX2_ANYALL
+
+#define NPYV_IMPL_AVX2_ANYALL(SFX, XSFX, MASK)                   \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)                \
+    {                                                            \
+        return _mm256_movemask_##XSFX(                           \
+            _mm256_cmp_##XSFX(a, npyv_zero_##SFX(), _CMP_EQ_OQ)  \
+        ) != MASK;                                               \
+    }                                                            \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)                \
+    {                                                            \
+        return _mm256_movemask_##XSFX(                           \
+            _mm256_cmp_##XSFX(a, npyv_zero_##SFX(), _CMP_EQ_OQ)  \
+        ) == 0;                                                  \
+    }
+NPYV_IMPL_AVX2_ANYALL(f32, ps, 0xff)
+NPYV_IMPL_AVX2_ANYALL(f64, pd, 0xf)
+#undef NPYV_IMPL_AVX2_ANYALL
 
 #endif // _NPY_SIMD_AVX2_OPERATORS_H

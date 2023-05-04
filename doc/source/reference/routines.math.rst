@@ -1,5 +1,5 @@
 Mathematical functions
-**********************
+======================
 
 .. currentmodule:: numpy
 
@@ -39,8 +39,8 @@ Rounding
 .. autosummary::
    :toctree: generated/
 
+   round
    around
-   round_
    rint
    fix
    floor
@@ -143,6 +143,23 @@ Handling complex numbers
    conj
    conjugate
 
+Extrema Finding
+---------------
+.. autosummary::
+   :toctree: generated/
+
+   maximum
+   max
+   amax
+   fmax
+   nanmax
+   
+   minimum
+   min
+   amin
+   fmin
+   nanmin
+   
 
 Miscellaneous
 -------------
@@ -160,11 +177,7 @@ Miscellaneous
    fabs
    sign
    heaviside
-   maximum
-   minimum
-   fmax
-   fmin
-
+   
    nan_to_num
    real_if_close
 

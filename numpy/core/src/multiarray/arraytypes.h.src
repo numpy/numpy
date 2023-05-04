@@ -1,0 +1,167 @@
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_
+
+#include "common.h"
+
+NPY_NO_EXPORT int
+set_typeinfo(PyObject *dict);
+
+/* needed for blasfuncs */
+NPY_NO_EXPORT void
+FLOAT_dot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
+
+NPY_NO_EXPORT void
+CFLOAT_dot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
+
+NPY_NO_EXPORT void
+DOUBLE_dot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
+
+NPY_NO_EXPORT void
+CDOUBLE_dot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
+
+
+/* for _pyarray_correlate */
+NPY_NO_EXPORT int
+small_correlate(const char * d_, npy_intp dstride,
+                npy_intp nd, enum NPY_TYPES dtype,
+                const char * k_, npy_intp kstride,
+                npy_intp nk, enum NPY_TYPES ktype,
+                char * out_, npy_intp ostride);
+
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ */
+/*
+ * The setitem functions are currently directly used in certain branches
+ * of the scalar-math code. (Yes, this would be nice to refactor...)
+ */
+
+NPY_NO_EXPORT int
+@TYPE@_setitem(PyObject *obj, void *data_ptr, void *arr);
+
+/**end repeat**/
+
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "argfunc.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         float, double, longdouble#
+ */
+/**begin repeat1
+ * #func = argmax, argmin#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int @TYPE@_@func@,
+    (npy_@type@ *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *aip))
+/**end repeat1**/
+/**end repeat**/
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int BOOL_argmax,
+    (npy_bool *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *aip))
+
+
+/*
+ * Define DType and scalar type names and aliases as used in Python.
+ */
+
+/**begin repeat
+ * #NAME = BOOL,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         STRING, UNICODE, VOID, OBJECT,
+ *         DATETIME, TIMEDELTA#
+ * #name = bool_,
+ *         float16, float32, float64, longdouble,
+ *         complex64, complex128, clongdouble,
+ *         bytes_, str_, void, object_,
+ *         datetime64, timedelta64#
+ * #Name = Bool,
+ *         Float16, Float32, Float64, LongDouble,
+ *         Complex64, Complex128, CLongDouble,
+ *         Bytes, Str, Void, Object,
+ *         DateTime64, TimeDelta64#
+ */
+#define NPY_@NAME@_name "@name@"
+#define NPY_@NAME@_Name "@Name@"
+
+/**end repeat**/
+
+
+/*
+ * Give integers different names when they are the same size (gh-9799).
+ * `intX` always refers to the first int of that size in the sequence
+ * `['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']`.
+ * Unfortunately, since the bitsize names are not strictly fixed, we add
+ * the C name for all integer types (as aliases).
+ *
+ * Right now, we do not define the C aliases for floats (which are always
+ * the same).
+ */
+
+#if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
+    #define BYTE_not_size_named
+#endif
+#if NPY_SIZEOF_SHORT == NPY_SIZEOF_INT
+    #define SHORT_not_size_named
+#endif
+#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
+    #define INT_not_size_named
+#endif
+#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
+    #define LONGLONG_not_size_named
+#endif
+
+
+/**begin repeat
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #CNAME = (BYTE, SHORT, INT, LONG, LONGLONG)*2#
+ * #cname = byte, short, intc, int_, longlong,
+ *          ubyte, ushort, uintc, uint, ulonglong#
+ * #CName = Byte, Short, Int, Long, LongLong,
+ *          UByte, UShort, UInt, ULong, ULongLong#
+ * #bitname = int*5, uint*5#
+ * #BitName = Int*5, UInt*5#
+ */
+
+#ifdef @CNAME@_not_size_named
+    #define NPY_@NAME@_name "@cname@"
+    #define NPY_@NAME@_Name "@CName@"
+#else
+    /* The C-name is considered just an alias for these: */
+    #define NPY_@NAME@_alias "@cname@"
+    #define NPY_@NAME@_Alias "@CName@"
+
+    /* The bitsof macro includes math, so cannot be stringified */
+    #if NPY_BITSOF_@CNAME@ == 8
+        #define NPY_@NAME@_name "@bitname@8"
+        #define NPY_@NAME@_Name "@BitName@8"
+    #elif NPY_BITSOF_@CNAME@ == 16
+        #define NPY_@NAME@_name "@bitname@16"
+        #define NPY_@NAME@_Name "@BitName@16"
+    #elif NPY_BITSOF_@CNAME@ == 32
+        #define NPY_@NAME@_name "@bitname@32"
+        #define NPY_@NAME@_Name "@BitName@32"
+    #elif NPY_BITSOF_@CNAME@ == 64
+        #define NPY_@NAME@_name "@bitname@64"
+        #define NPY_@NAME@_Name "@BitName@64"
+    #else
+        #error "need to fix integer bit-length name code"
+    #endif
+#endif
+
+/**end repeat**/
+
+#undef BYTE_not_size_named
+#undef SHORT_not_size_named
+#undef INT_not_size_named
+#undef LONGLONG_not_size_named
+
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_ */

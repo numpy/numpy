@@ -91,13 +91,25 @@ class Linalg(Benchmark):
         # check that dtype is supported at all
         try:
             self.func(self.a[:2, :2])
-        except TypeError:
-            raise NotImplementedError()
+        except TypeError as e:
+            raise NotImplementedError() from e
 
     def time_op(self, op, typename):
         self.func(self.a)
 
 
+class LinalgSmallArrays(Benchmark):
+    """ Test overhead of linalg methods for small arrays """
+    def setup(self):
+        self.array_5 = np.arange(5.)
+        self.array_5_5 = np.arange(5.)
+
+    def time_norm_small_array(self):
+        np.linalg.norm(self.array_5)
+
+    def time_det_small_array(self):
+        np.linalg.det(self.array_5_5)
+        
 class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']
@@ -108,26 +120,97 @@ class Lstsq(Benchmark):
 
 class Einsum(Benchmark):
     param_names = ['dtype']
-    params = [[np.float64]]
+    params = [[np.float32, np.float64]]
     def setup(self, dtype):
-        self.a = np.arange(2900, dtype=dtype)
-        self.b = np.arange(3000, dtype=dtype)
-        self.c = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
-        self.c1 = np.arange(1200, dtype=dtype).reshape(30, 40)
-        self.d = np.arange(10000, dtype=dtype).reshape(10,100,10)
+        self.one_dim_small = np.arange(600, dtype=dtype)
+        self.one_dim = np.arange(3000, dtype=dtype)
+        self.one_dim_big = np.arange(480000, dtype=dtype)
+        self.two_dim_small = np.arange(1200, dtype=dtype).reshape(30, 40)
+        self.two_dim = np.arange(240000, dtype=dtype).reshape(400, 600)
+        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10,100,10)
+        self.three_dim = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
+        # non_contiguous arrays
+        self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
+        self.non_contiguous_dim1 = np.arange(1, 4000, 2, dtype=dtype)
+        self.non_contiguous_dim2 = np.arange(1, 2400, 2, dtype=dtype).reshape(30, 40)
+        self.non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype).reshape(20, 30, 40)
 
-    #outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
+    # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
-        np.einsum("i,j", self.a, self.b, optimize=True)
+        np.einsum("i,j", self.one_dim, self.one_dim, optimize=True)
 
     # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
-        np.einsum("..., ...", self.c1, self.c , optimize=True)
-    
+        np.einsum("..., ...", self.two_dim_small, self.three_dim , optimize=True)
+
     # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
     def time_einsum_sum_mul(self, dtype):
-        np.einsum(",i...->", 300, self.d, optimize=True)
+        np.einsum(",i...->", 300, self.three_dim_small, optimize=True)
 
     # sum and multiply:trigger sum_of_products_stride0_contig_outstride0_two
     def time_einsum_sum_mul2(self, dtype):
-        np.einsum("i...,->", self.d, 300, optimize=True)
+        np.einsum("i...,->", self.three_dim_small, 300, optimize=True)
+
+    # scalar mul: trigger sum_of_products_stride0_contig_outcontig_two
+    def time_einsum_mul(self, dtype):
+        np.einsum("i,->i", self.one_dim_big, 300, optimize=True)
+
+    # trigger contig_contig_outstride0_two
+    def time_einsum_contig_contig(self, dtype):
+        np.einsum("ji,i->", self.two_dim, self.one_dim_small, optimize=True)
+
+    # trigger sum_of_products_contig_outstride0_one
+    def time_einsum_contig_outstride0(self, dtype):
+        np.einsum("i->", self.one_dim_big, optimize=True)
+
+    # outer(a,b): non_contiguous arrays
+    def time_einsum_noncon_outer(self, dtype):
+        np.einsum("i,j", self.non_contiguous_dim1, self.non_contiguous_dim1, optimize=True)
+
+    # multiply(a, b):non_contiguous arrays
+    def time_einsum_noncon_multiply(self, dtype):
+        np.einsum("..., ...", self.non_contiguous_dim2, self.non_contiguous_dim3, optimize=True)
+
+    # sum and multiply:non_contiguous arrays
+    def time_einsum_noncon_sum_mul(self, dtype):
+        np.einsum(",i...->", 300, self.non_contiguous_dim3, optimize=True)
+
+    # sum and multiply:non_contiguous arrays
+    def time_einsum_noncon_sum_mul2(self, dtype):
+        np.einsum("i...,->", self.non_contiguous_dim3, 300, optimize=True)
+
+    # scalar mul: non_contiguous arrays
+    def time_einsum_noncon_mul(self, dtype):
+        np.einsum("i,->i", self.non_contiguous_dim1, 300, optimize=True)
+
+    # contig_contig_outstride0_two: non_contiguous arrays
+    def time_einsum_noncon_contig_contig(self, dtype):
+        np.einsum("ji,i->", self.non_contiguous_dim2, self.non_contiguous_dim1_small, optimize=True)
+
+    # sum_of_products_contig_outstride0_one：non_contiguous arrays
+    def time_einsum_noncon_contig_outstride0(self, dtype):
+        np.einsum("i->", self.non_contiguous_dim1, optimize=True)
+
+
+class LinAlgTransposeVdot(Benchmark):
+    # Smaller for speed
+    # , (128, 128), (256, 256), (512, 512),
+    # (1024, 1024)
+    params = [[(16, 16), (32, 32),
+               (64, 64)], TYPES1]
+    param_names = ['shape', 'npdtypes']
+
+    def setup(self, shape, npdtypes):
+        self.xarg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.xarg = self.xarg.astype(npdtypes)
+        self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.x2arg = self.x2arg.astype(npdtypes)
+        if npdtypes.startswith('complex'):
+            self.xarg += self.xarg.T*1j
+            self.x2arg += self.x2arg.T*1j
+
+    def time_transpose(self, shape, npdtypes):
+        np.transpose(self.xarg)
+
+    def time_vdot(self, shape, npdtypes):
+        np.vdot(self.xarg, self.x2arg)

@@ -5,7 +5,7 @@ This module is designed so "from numerictypes import \\*" is safe.
 Exported symbols include:
 
   Dictionary with all registered number types (including aliases):
-    typeDict
+    sctypeDict
 
   Type objects (not all will be available, depends on platform):
       see variable sctypes for which ones you have
@@ -47,14 +47,14 @@ Exported symbols include:
      |   |   |     byte
      |   |   |     short
      |   |   |     intc
-     |   |   |     intp            int0
+     |   |   |     intp
      |   |   |     int_
      |   |   |     longlong
      |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
      |   |         ubyte
      |   |         ushort
      |   |         uintc
-     |   |         uintp           uint0
+     |   |         uintp
      |   |         uint_
      |   |         ulonglong
      |   +-> inexact
@@ -79,19 +79,16 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-import types as _types
 import numbers
-import warnings
 
-from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
+from .multiarray import (
+        ndarray, array, dtype, datetime_data, datetime_as_string,
+        busday_offset, busday_count, is_busday, busdaycalendar
         )
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'typeDict', 'sctypes',
+__all__ = ['sctypeDict', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
@@ -358,13 +355,15 @@ def issubsctype(arg1, arg2):
 
 @set_module('numpy')
 def issubdtype(arg1, arg2):
-    """
+    r"""
     Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    This is like the builtin :func:`issubclass`, but for `dtype`\ s.
 
     Parameters
     ----------
     arg1, arg2 : dtype_like
-        dtype or string representing a typecode.
+        `dtype` or object coercible to one
 
     Returns
     -------
@@ -372,15 +371,45 @@ def issubdtype(arg1, arg2):
 
     See Also
     --------
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
     issubsctype, issubclass_
-    numpy.core.numerictypes : Overview of numpy type hierarchy.
 
     Examples
     --------
-    >>> np.issubdtype('S1', np.string_)
+    `issubdtype` can be used to check the type of arrays:
+
+    >>> ints = np.array([1, 2, 3], dtype=np.int32)
+    >>> np.issubdtype(ints.dtype, np.integer)
     True
+    >>> np.issubdtype(ints.dtype, np.floating)
+    False
+
+    >>> floats = np.array([1, 2, 3], dtype=np.float32)
+    >>> np.issubdtype(floats.dtype, np.integer)
+    False
+    >>> np.issubdtype(floats.dtype, np.floating)
+    True
+
+    Similar types of different sizes are not subdtypes of each other:
+
     >>> np.issubdtype(np.float64, np.float32)
     False
+    >>> np.issubdtype(np.float32, np.float64)
+    False
+
+    but both are subtypes of `floating`:
+
+    >>> np.issubdtype(np.float64, np.floating)
+    True
+    >>> np.issubdtype(np.float32, np.floating)
+    True
+
+    For convenience, dtype-like objects are allowed too:
+
+    >>> np.issubdtype('S1', np.string_)
+    True
+    >>> np.issubdtype('i4', np.signedinteger)
+    True
 
     """
     if not issubclass_(arg1, generic):
@@ -480,15 +509,15 @@ cast = _typedict()
 for key in _concrete_types:
     cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
-try:
-    ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
-                  _types.LongType, _types.BooleanType,
-                   _types.StringType, _types.UnicodeType, _types.BufferType]
-except AttributeError:
-    # Py3K
-    ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
-ScalarType.extend(_concrete_types)
+def _scalar_type_key(typ):
+    """A ``key`` function for `sorted`."""
+    dt = dtype(typ)
+    return (dt.kind.lower(), dt.itemsize)
+
+
+ScalarType = [int, float, complex, bool, bytes, str, memoryview]
+ScalarType += sorted(_concrete_types, key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 
@@ -510,6 +539,7 @@ typecodes = {'Character':'c',
              'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
+# Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
 typeDict = sctypeDict
 
 # b -> boolean

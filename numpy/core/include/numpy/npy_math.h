@@ -1,27 +1,22 @@
-#ifndef __NPY_MATH_C99_H_
-#define __NPY_MATH_C99_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <numpy/npy_common.h>
 
 #include <math.h>
-#ifdef __SUNPRO_CC
-#include <sunmath.h>
-#endif
-#ifdef HAVE_NPY_CONFIG_H
-#include <npy_config.h>
-#endif
-#include <numpy/npy_common.h>
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
 #if NPY_INLINE_MATH
-#define NPY_INPLACE NPY_INLINE static
+#define NPY_INPLACE static inline
 #else
 #define NPY_INPLACE
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
@@ -29,25 +24,25 @@ extern "C" {
  *
  * XXX: I should test whether INFINITY and NAN are available on the platform
  */
-NPY_INLINE static float __npy_inff(void)
+static inline float __npy_inff(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_nanf(void)
+static inline float __npy_nanf(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_pzerof(void)
+static inline float __npy_pzerof(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_nzerof(void)
+static inline float __npy_nzerof(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
     return __bint.__f;
@@ -152,208 +147,177 @@ NPY_INPLACE npy_long npy_lshiftl(npy_long a, npy_long b);
 NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
 
-/*
- * avx function has a common API for both sin & cos. This enum is used to
- * distinguish between the two
- */
-typedef enum {
-    npy_compute_sin,
-    npy_compute_cos
-} NPY_TRIG_OP;
+NPY_INPLACE uint8_t npy_popcountuhh(npy_ubyte a);
+NPY_INPLACE uint8_t npy_popcountuh(npy_ushort a);
+NPY_INPLACE uint8_t npy_popcountu(npy_uint a);
+NPY_INPLACE uint8_t npy_popcountul(npy_ulong a);
+NPY_INPLACE uint8_t npy_popcountull(npy_ulonglong a);
+NPY_INPLACE uint8_t npy_popcounthh(npy_byte a);
+NPY_INPLACE uint8_t npy_popcounth(npy_short a);
+NPY_INPLACE uint8_t npy_popcount(npy_int a);
+NPY_INPLACE uint8_t npy_popcountl(npy_long a);
+NPY_INPLACE uint8_t npy_popcountll(npy_longlong a);
 
 /*
- * C99 double math funcs
+ * C99 double math funcs that need fixups or are blocklist-able
  */
 NPY_INPLACE double npy_sin(double x);
 NPY_INPLACE double npy_cos(double x);
 NPY_INPLACE double npy_tan(double x);
-NPY_INPLACE double npy_sinh(double x);
-NPY_INPLACE double npy_cosh(double x);
-NPY_INPLACE double npy_tanh(double x);
-
-NPY_INPLACE double npy_asin(double x);
-NPY_INPLACE double npy_acos(double x);
-NPY_INPLACE double npy_atan(double x);
-
-NPY_INPLACE double npy_log(double x);
-NPY_INPLACE double npy_log10(double x);
-NPY_INPLACE double npy_exp(double x);
-NPY_INPLACE double npy_sqrt(double x);
-NPY_INPLACE double npy_cbrt(double x);
-
-NPY_INPLACE double npy_fabs(double x);
-NPY_INPLACE double npy_ceil(double x);
-NPY_INPLACE double npy_fmod(double x, double y);
-NPY_INPLACE double npy_floor(double x);
-
-NPY_INPLACE double npy_expm1(double x);
-NPY_INPLACE double npy_log1p(double x);
 NPY_INPLACE double npy_hypot(double x, double y);
-NPY_INPLACE double npy_acosh(double x);
-NPY_INPLACE double npy_asinh(double xx);
-NPY_INPLACE double npy_atanh(double x);
-NPY_INPLACE double npy_rint(double x);
-NPY_INPLACE double npy_trunc(double x);
-NPY_INPLACE double npy_exp2(double x);
 NPY_INPLACE double npy_log2(double x);
-
 NPY_INPLACE double npy_atan2(double x, double y);
-NPY_INPLACE double npy_pow(double x, double y);
-NPY_INPLACE double npy_modf(double x, double* y);
-NPY_INPLACE double npy_frexp(double x, int* y);
-NPY_INPLACE double npy_ldexp(double n, int y);
 
-NPY_INPLACE double npy_copysign(double x, double y);
-double npy_nextafter(double x, double y);
+/* Mandatory C99 double math funcs, no blocklisting or fixups */
+/* defined for legacy reasons, should be deprecated at some point */
+#define npy_sinh sinh
+#define npy_cosh cosh
+#define npy_tanh tanh
+#define npy_asin asin
+#define npy_acos acos
+#define npy_atan atan
+#define npy_log log
+#define npy_log10 log10
+#define npy_cbrt cbrt
+#define npy_fabs fabs
+#define npy_ceil ceil
+#define npy_fmod fmod
+#define npy_floor floor
+#define npy_expm1 expm1
+#define npy_log1p log1p
+#define npy_acosh acosh
+#define npy_asinh asinh
+#define npy_atanh atanh
+#define npy_rint rint
+#define npy_trunc trunc
+#define npy_exp2 exp2
+#define npy_frexp frexp
+#define npy_ldexp ldexp
+#define npy_copysign copysign
+#define npy_exp exp
+#define npy_sqrt sqrt
+#define npy_pow pow
+#define npy_modf modf
+#define npy_nextafter nextafter
+
 double npy_spacing(double x);
 
 /*
- * IEEE 754 fpu handling. Those are guaranteed to be macros
+ * IEEE 754 fpu handling
  */
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISNAN
+#ifdef HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISNAN
-        #define npy_isnan(x) ((x) != (x))
-    #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isnan(x) _isnan((x))
-        #else
-            #define npy_isnan(x) isnan(x)
-        #endif
-    #endif
+    #define npy_isnan(x) isnan(x)
 #endif
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISFINITE
+#ifdef HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISFINITE
-        #ifdef _MSC_VER
-            #define npy_isfinite(x) _finite((x))
-        #else
-            #define npy_isfinite(x) !npy_isnan((x) + (-x))
-        #endif
-    #else
-        #define npy_isfinite(x) isfinite((x))
-    #endif
+    #define npy_isfinite(x) isfinite((x))
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISINF
+#ifdef HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISINF
-        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
-    #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
-        #else
-            #define npy_isinf(x) isinf((x))
-        #endif
-    #endif
+    #define npy_isinf(x) isinf((x))
 #endif
 
-#ifndef NPY_HAVE_DECL_SIGNBIT
-    int _npy_signbit_f(float x);
-    int _npy_signbit_d(double x);
-    int _npy_signbit_ld(long double x);
-    #define npy_signbit(x) \
-        (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
-         : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
-         : _npy_signbit_f (x))
-#else
-    #define npy_signbit(x) signbit((x))
-#endif
+#define npy_signbit(x) signbit((x))
 
 /*
- * float C99 math functions
+ * float C99 math funcs that need fixups or are blocklist-able
  */
 NPY_INPLACE float npy_sinf(float x);
 NPY_INPLACE float npy_cosf(float x);
 NPY_INPLACE float npy_tanf(float x);
-NPY_INPLACE float npy_sinhf(float x);
-NPY_INPLACE float npy_coshf(float x);
-NPY_INPLACE float npy_tanhf(float x);
-NPY_INPLACE float npy_fabsf(float x);
-NPY_INPLACE float npy_floorf(float x);
-NPY_INPLACE float npy_ceilf(float x);
-NPY_INPLACE float npy_rintf(float x);
-NPY_INPLACE float npy_truncf(float x);
-NPY_INPLACE float npy_sqrtf(float x);
-NPY_INPLACE float npy_cbrtf(float x);
-NPY_INPLACE float npy_log10f(float x);
-NPY_INPLACE float npy_logf(float x);
 NPY_INPLACE float npy_expf(float x);
-NPY_INPLACE float npy_expm1f(float x);
-NPY_INPLACE float npy_asinf(float x);
-NPY_INPLACE float npy_acosf(float x);
-NPY_INPLACE float npy_atanf(float x);
-NPY_INPLACE float npy_asinhf(float x);
-NPY_INPLACE float npy_acoshf(float x);
-NPY_INPLACE float npy_atanhf(float x);
-NPY_INPLACE float npy_log1pf(float x);
-NPY_INPLACE float npy_exp2f(float x);
-NPY_INPLACE float npy_log2f(float x);
-
-NPY_INPLACE float npy_atan2f(float x, float y);
+NPY_INPLACE float npy_sqrtf(float x);
 NPY_INPLACE float npy_hypotf(float x, float y);
+NPY_INPLACE float npy_log2f(float x);
+NPY_INPLACE float npy_atan2f(float x, float y);
 NPY_INPLACE float npy_powf(float x, float y);
-NPY_INPLACE float npy_fmodf(float x, float y);
-
 NPY_INPLACE float npy_modff(float x, float* y);
-NPY_INPLACE float npy_frexpf(float x, int* y);
-NPY_INPLACE float npy_ldexpf(float x, int y);
 
-NPY_INPLACE float npy_copysignf(float x, float y);
-float npy_nextafterf(float x, float y);
+/* Mandatory C99 float math funcs, no blocklisting or fixups */
+/* defined for legacy reasons, should be deprecated at some point */
+
+#define npy_sinhf sinhf
+#define npy_coshf coshf
+#define npy_tanhf tanhf
+#define npy_asinf asinf
+#define npy_acosf acosf
+#define npy_atanf atanf
+#define npy_logf logf
+#define npy_log10f log10f
+#define npy_cbrtf cbrtf
+#define npy_fabsf fabsf
+#define npy_ceilf ceilf
+#define npy_fmodf fmodf
+#define npy_floorf floorf
+#define npy_expm1f expm1f
+#define npy_log1pf log1pf
+#define npy_asinhf asinhf
+#define npy_acoshf acoshf
+#define npy_atanhf atanhf
+#define npy_rintf rintf
+#define npy_truncf truncf
+#define npy_exp2f exp2f
+#define npy_frexpf frexpf
+#define npy_ldexpf ldexpf
+#define npy_copysignf copysignf
+#define npy_nextafterf nextafterf
+
 float npy_spacingf(float x);
 
 /*
- * long double C99 math functions
+ * long double C99 double math funcs that need fixups or are blocklist-able
  */
 NPY_INPLACE npy_longdouble npy_sinl(npy_longdouble x);
 NPY_INPLACE npy_longdouble npy_cosl(npy_longdouble x);
 NPY_INPLACE npy_longdouble npy_tanl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_sinhl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_coshl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_tanhl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_fabsl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_floorl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_ceill(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_rintl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_truncl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_sqrtl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_cbrtl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_log10l(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_logl(npy_longdouble x);
 NPY_INPLACE npy_longdouble npy_expl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_expm1l(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_asinl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_acosl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_atanl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_asinhl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_acoshl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_atanhl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_log1pl(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_exp2l(npy_longdouble x);
-NPY_INPLACE npy_longdouble npy_log2l(npy_longdouble x);
-
-NPY_INPLACE npy_longdouble npy_atan2l(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_sqrtl(npy_longdouble x);
 NPY_INPLACE npy_longdouble npy_hypotl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_log2l(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_atan2l(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
-NPY_INPLACE npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
-
 NPY_INPLACE npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
-NPY_INPLACE npy_longdouble npy_frexpl(npy_longdouble x, int* y);
-NPY_INPLACE npy_longdouble npy_ldexpl(npy_longdouble x, int y);
 
-NPY_INPLACE npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
+/* Mandatory C99 double math funcs, no blocklisting or fixups */
+/* defined for legacy reasons, should be deprecated at some point */
+#define npy_sinhl sinhl
+#define npy_coshl coshl
+#define npy_tanhl tanhl
+#define npy_fabsl fabsl
+#define npy_floorl floorl
+#define npy_ceill ceill
+#define npy_rintl rintl
+#define npy_truncl truncl
+#define npy_cbrtl cbrtl
+#define npy_log10l log10l
+#define npy_logl logl
+#define npy_expm1l expm1l
+#define npy_asinl asinl
+#define npy_acosl acosl
+#define npy_atanl atanl
+#define npy_asinhl asinhl
+#define npy_acoshl acoshl
+#define npy_atanhl atanhl
+#define npy_log1pl log1pl
+#define npy_exp2l exp2l
+#define npy_fmodl fmodl
+#define npy_frexpl frexpl
+#define npy_ldexpl ldexpl
+#define npy_copysignl copysignl
+#define npy_nextafterl nextafterl
+
 npy_longdouble npy_spacingl(npy_longdouble x);
 
 /*
@@ -402,24 +366,24 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
     union {                                  \
         ctype z;                             \
         type a[2];                           \
-    } z1;;                                   \
+    } z1;                                    \
                                              \
     z1.a[0] = (x);                           \
     z1.a[1] = (y);                           \
                                              \
     return z1.z;
 
-static NPY_INLINE npy_cdouble npy_cpack(double x, double y)
+static inline npy_cdouble npy_cpack(double x, double y)
 {
     __NPY_CPACK_IMP(x, y, double, npy_cdouble);
 }
 
-static NPY_INLINE npy_cfloat npy_cpackf(float x, float y)
+static inline npy_cfloat npy_cpackf(float x, float y)
 {
     __NPY_CPACK_IMP(x, y, float, npy_cfloat);
 }
 
-static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
+static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
     __NPY_CPACK_IMP(x, y, npy_longdouble, npy_clongdouble);
 }
@@ -441,32 +405,32 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
                                                     \
     return __z_repr.a[index];
 
-static NPY_INLINE double npy_creal(npy_cdouble z)
+static inline double npy_creal(npy_cdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
 }
 
-static NPY_INLINE double npy_cimag(npy_cdouble z)
+static inline double npy_cimag(npy_cdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
 }
 
-static NPY_INLINE float npy_crealf(npy_cfloat z)
+static inline float npy_crealf(npy_cfloat z)
 {
     __NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
 }
 
-static NPY_INLINE float npy_cimagf(npy_cfloat z)
+static inline float npy_cimagf(npy_cfloat z)
 {
     __NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
 }
 
-static NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
+static inline npy_longdouble npy_creall(npy_clongdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
 }
 
-static NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
+static inline npy_longdouble npy_cimagl(npy_clongdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
 }
@@ -596,4 +560,4 @@ void npy_set_floatstatus_invalid(void);
 #include "npy_math_internal.h"
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_ */

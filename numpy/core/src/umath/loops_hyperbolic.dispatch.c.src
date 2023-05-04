@@ -1,0 +1,641 @@
+/*@targets
+ ** $maxopt baseline
+ ** (avx2 fma3) AVX512_SKX
+ ** vsx2 vsx4
+ ** neon_vfpv4
+ ** vx vxe
+ **/
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+
+#if NPY_SIMD_FMA3 // native support
+/*
+ * NOTE: The following implementation of tanh(f32, f64) have been converted from
+ * Intel SVML to universal intrinsics, and the original code can be found in:
+ *
+ * - https://github.com/numpy/SVML/blob/main/linux/avx512/svml_z0_tanh_d_la.s
+ * - https://github.com/numpy/SVML/blob/main/linux/avx512/svml_z0_tanh_s_la.s
+ *
+ * ALGORITHM DESCRIPTION:
+ *
+ *   NOTE: Since the hyperbolic tangent function is odd
+ *         (tanh(x) = -tanh(-x)), below algorithm deals with the absolute
+ *         value of the argument |x|: tanh(x) = sign(x) * tanh(|x|)
+ *
+ *   We use a table lookup method to compute tanh(|x|).
+ *   The basic idea is to split the input range into a number of subintervals
+ *   and to approximate tanh(.) with a polynomial on each of them.
+ *
+ *   IEEE SPECIAL CONDITIONS:
+ *   x = [+,-]0, r = [+,-]0
+ *   x = +Inf,   r = +1
+ *   x = -Inf,   r = -1
+ *   x = QNaN,   r = QNaN
+ *   x = SNaN,   r = QNaN
+ *
+ *
+ *  ALGORITHM DETAILS
+ *
+ *  SVML handle |x| > HUGE_THRESHOLD, INF and NaNs by scalar callout as following:
+ *  1. check special cases
+ *  2. return `+-1` for `|x| > HUGE_THRESHOLD`  otherwise return `x`
+ *
+ *  It wasn't clear to us the reason behind using callout instead of using
+ *  AVX512 directly for single-precision.
+ *  However, we saw it's better to use SIMD instead of following SVML.
+ *
+ *  Main path computations are organized as follows:
+ *  Actually we split the interval [0, SATURATION_THRESHOLD)
+ *  into a number of subintervals.  On each subinterval we approximate tanh(.)
+ *   with a minimax polynomial of pre-defined degree. Polynomial coefficients
+ *  are computed beforehand and stored in table. We also use
+ *
+ *       y := |x| + B,
+ *
+ *  here B depends on subinterval and is used to make argument
+ *   closer to zero.
+ *   We also add large fake interval [SATURATION_THRESHOLD, HUGE_THRESHOLD],
+ *   where 1.0 + 0.0*y + 0.0*y^2 ... coefficients are stored - just to
+ *   preserve main path computation logic but return 1.0 for all arguments.
+ *
+ *   Hence reconstruction looks as follows:
+ *   we extract proper polynomial and range reduction coefficients
+ *        (Pj and B), corresponding to subinterval, to which |x| belongs,
+ *        and return
+ *
+ *       r := sign(x) * (P0 + P1 * y + ... + Pn * y^n)
+ *
+ *   NOTE: we use multiprecision technique to multiply and sum the first
+ *         K terms of the polynomial. So Pj, j = 0..K are stored in
+ *         table each as a pair of target precision numbers (Pj and PLj) to
+ *         achieve wider than target precision.
+ *
+ */
+#if NPY_SIMD_F64
+
+    // For architectures without efficient gather / scatter instructions, it is
+    // better to use a transposed LUT where we can load all coefficients for an
+    // index linearly.  In order to keep the same vertical calculation, we
+    // transpose the coef. into lanes.  2 lane transpose is all that's
+    // implemented so we require `npyv_nlanes_f64` == 2.
+    #if npyv_nlanes_f64 == 2
+    #define TANH_TRANSPOSED_LUT
+    #endif // npyv_nlanes_f64 == 2
+
+static void
+simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
+{
+#if defined(TANH_TRANSPOSED_LUT)
+    static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut18x16[] = {
+        // 0
+        0x0ull,                0x0ull,                0x3ff0000000000000ull, 0xbbf0b3ea3fdfaa19ull, // b,   c0,  c1,  c2
+        0xbfd5555555555555ull, 0xbce6863ee44ed636ull, 0x3fc1111111112ab5ull, 0xbda1ea19ddddb3b4ull, // c3,  c4,  c5,  c6
+        0xbfaba1ba1990520bull, 0xbe351ca7f096011full, 0x3f9664f94e6ac14eull, 0xbea8c4c1fd7852feull, // c7,  c8,  c9,  c10
+        0xbf822404577aa9ddull, 0xbefdd99a221ed573ull, 0x3f6e3be689423841ull, 0xbf2a1306713a4f3aull, // c11, c12, c13, c14
+        0xbf55d7e76dc56871ull, 0x3f35e67ab76a26e7ull,                                               // c15, c16
+        // 1
+        0x3fcc000000000000ull, 0x3fcb8fd0416a7c92ull, 0x3fee842ca3f08532ull, 0xbfca48aaeb53bc21ull,
+        0xbfd183afc292ba11ull, 0x3fc04dcd0476c75eull, 0x3fb5c19efdfc08adull, 0xbfb0b8df995ce4dfull,
+        0xbf96e37bba52f6fcull, 0x3f9eaaf3320c3851ull, 0xbf94d3343bae39ddull, 0xbfccce16b1046f13ull,
+        0x403d8b07f7a82aa3ull, 0x4070593a3735bab4ull, 0xc0d263511f5baac1ull, 0xc1045e509116b066ull,
+        0x41528c38809c90c7ull, 0x41848ee0627d8206ull,
+        // 2
+        0x3fd4000000000000ull, 0x3fd35f98a0ea650eull, 0x3fed11574af58f1bull, 0xbfd19921f4329916ull,
+        0xbfcc1a4b039c9bfaull, 0x3fc43d3449a80f08ull, 0x3fa74c98dc34fbacull, 0xbfb2955cf41e8164ull,
+        0x3ecff7df18455399ull, 0x3f9cf823fe761fc1ull, 0xbf7bc748e60df843ull, 0xbf81a16f224bb7b6ull,
+        0xbf9f44ab92fbab0aull, 0xbfccab654e44835eull, 0x40169f73b15ebe5cull, 0x4041fab9250984ceull,
+        0xc076d57fb5190b02ull, 0xc0a216d618b489ecull,
+        // 3
+        0x3fdc000000000000ull, 0x3fda5729ee488037ull, 0x3fea945b9c24e4f9ull, 0xbfd5e0f09bef8011ull,
+        0xbfc16e1e6d8d0be6ull, 0x3fc5c26f3699b7e7ull, 0xbf790d6a8eff0a77ull, 0xbfaf9d05c309f7c6ull,
+        0x3f97362834d33a4eull, 0x3f9022271754ff1full, 0xbf8c89372b43ba85ull, 0xbf62cbf00406bc09ull,
+        0x3fb2eac604473d6aull, 0x3fd13ed80037dbacull, 0xc025c1dd41cd6cb5ull, 0xc0458d090ec3de95ull,
+        0x4085f09f888f8adaull, 0x40a5b89107c8af4full,
+        // 4
+        0x3fe4000000000000ull, 0x3fe1bf47eabb8f95ull, 0x3fe6284c3374f815ull, 0xbfd893b59c35c882ull, // b,   c0,  c1,  c2
+        0xbf92426c751e48a2ull, 0x3fc1a686f6ab2533ull, 0xbfac3c021789a786ull, 0xbf987d27ccff4291ull, // c3,  c4,  c5,  c6
+        0x3f9e7f8380184b45ull, 0xbf731fe77c9c60afull, 0xbf8129a092de747aull, 0x3f75b29bb02cf69bull, // c7,  c8,  c9,  c10
+        0x3f45f87d903aaac8ull, 0xbf6045b9076cc487ull, 0xbf58fd89fe05e0d1ull, 0xbf74949d60113d63ull, // c11, c12, c13, c14
+        0x3fa246332a2fcba5ull, 0x3fb69d8374520edaull,                                               // c15, c16
+        // 5
+        0x3fec000000000000ull, 0x3fe686650b8c2015ull, 0x3fe02500a09f8d6eull, 0xbfd6ba7cb7576538ull,
+        0x3fb4f152b2bad124ull, 0x3faf203c316ce730ull, 0xbfae2196b7326859ull, 0x3f8b2ca62572b098ull,
+        0x3f869543e7c420d4ull, 0xbf84a6046865ec7dull, 0x3f60c85b4d538746ull, 0x3f607df0f9f90c17ull,
+        0xbf5e104671036300ull, 0x3f2085ee7e8ac170ull, 0x3f73f7af01d5af7aull, 0x3f7c9fd6200d0adeull,
+        0xbfb29d851a896fcdull, 0xbfbded519f981716ull,
+        // 6
+        0x3ff4000000000000ull, 0x3feb2523bb6b2deeull, 0x3fd1f25131e3a8c0ull, 0xbfce7291743d7555ull,
+        0x3fbbba40cbef72beull, 0xbf89c7a02788557cull, 0xbf93a7a011ff8c2aull, 0x3f8f1cf6c7f5b00aull,
+        0xbf7326bd4914222aull, 0xbf4ca3f1f2b9192bull, 0x3f5be9392199ec18ull, 0xbf4b852a6e0758d5ull,
+        0x3f19bc98ddf0f340ull, 0x3f23524622610430ull, 0xbf1e40bdead17e6bull, 0x3f02cd40e0ad0a9full,
+        0x3ed9065ae369b212ull, 0xbef02d288b5b3371ull,
+        // 7
+        0x3ffc000000000000ull, 0x3fee1fbf97e33527ull, 0x3fbd22ca1c24a139ull, 0xbfbb6d85a01efb80ull,
+        0x3fb01ba038be6a3dull, 0xbf98157e26e0d541ull, 0x3f6e4709c7e8430eull, 0x3f60379811e43dd5ull,
+        0xbf5fc15b0a9d98faull, 0x3f4c77dee0afd227ull, 0xbf2a0c68a4489f10ull, 0xbf0078c63d1b8445ull,
+        0x3f0d4304bc9246e8ull, 0xbeff12a6626911b4ull, 0x3ee224cd6c4513e5ull, 0xbe858ab8e019f311ull,
+        0xbeb8e1ba4c98a030ull, 0x3eb290981209c1a6ull,
+        // 8
+        0x4004000000000000ull, 0x3fef9258260a71c2ull, 0x3f9b3afe1fba5c76ull, 0xbf9addae58c7141aull, // b,   c0,  c1,  c2
+        0x3f916df44871efc8ull, 0xbf807b55c1c7d278ull, 0x3f67682afa611151ull, 0xbf4793826f78537eull, // c3,  c4,  c5,  c6
+        0x3f14cffcfa69fbb6ull, 0x3f04055bce68597aull, 0xbf00462601dc2faaull, 0x3eec12eadd55be7aull, // c7,  c8,  c9,  c10
+        0xbed13c415f7b9d41ull, 0x3eab9008bca408afull, 0xbe24b645e68eeaa3ull, 0xbe792fa6323b7cf8ull, // c11, c12, c13, c14
+        0x3e6ffd0766ad4016ull, 0xbe567e924bf5ff6eull,                                               // c15, c16
+        // 9
+        0x400c000000000000ull, 0x3feff112c63a9077ull, 0x3f6dd37d19b22b21ull, 0xbf6dc59376c7aa19ull,
+        0x3f63c6869dfc8870ull, 0xbf53a18d5843190full, 0x3f3ef2ee77717cbfull, 0xbf2405695e36240full,
+        0x3f057e48e5b79d10ull, 0xbee2bf0cb4a71647ull, 0x3eb7b6a219dea9f4ull, 0xbe6fa600f593181bull,
+        0xbe722b8d9720cdb0ull, 0x3e634df71865f620ull, 0xbe4abfebfb72bc83ull, 0x3e2df04d67876402ull,
+        0xbe0c63c29f505f5bull, 0x3de3f7f7de6b0eb6ull,
+        // 10
+        0x4014000000000000ull, 0x3fefff419668df11ull, 0x3f27ccec13a9ef96ull, 0xbf27cc5e74677410ull,
+        0x3f1fb9aef915d828ull, 0xbf0fb6bbc89b1a5bull, 0x3ef95a4482f180b7ull, 0xbee0e08de39ce756ull,
+        0x3ec33b66d7d77264ull, 0xbea31eaafe73efd5ull, 0x3e80cbcc8d4c5c8aull, 0xbe5a3c935dce3f7dull,
+        0x3e322666d739bec0ull, 0xbe05bb1bcf83ca73ull, 0x3dd51c38f8695ed3ull, 0xbd95c72be95e4d2cull,
+        0xbd7fab216b9e0e49ull, 0x3d69ed18bae3ebbcull,
+        // 11
+        0x401c000000000000ull, 0x3feffffc832750f2ull, 0x3ecbe6c3f33250aeull, 0xbecbe6c0e8b4cc87ull,
+        0x3ec299d1e27c6e11ull, 0xbeb299c9c684a963ull, 0x3e9dc2c27da3b603ull, 0xbe83d709ba5f714eull,
+        0x3e66ac4e578b9b10ull, 0xbe46abb02c4368edull, 0x3e2425bb231a5e29ull, 0xbe001c6d95e3ae96ull,
+        0x3dd76a553d7e7918ull, 0xbdaf2ac143fb6762ull, 0x3d8313ac38c6832bull, 0xbd55a89c30203106ull,
+        0x3d2826b62056aa27ull, 0xbcf7534c4f3dfa71ull,
+        // 12
+        0x4024000000000000ull, 0x3feffffffdc96f35ull, 0x3e41b4865394f75full, 0xbe41b486526b0565ull, // b,   c0,  c1,  c2
+        0x3e379b5ddcca334cull, 0xbe279b5dd4fb3d01ull, 0x3e12e2afd9f7433eull, 0xbdf92e3fc5ee63e0ull, // c3,  c4,  c5,  c6
+        0x3ddcc74b8d3d5c42ull, 0xbdbcc749ca8079ddull, 0x3d9992a4beac8662ull, 0xbd74755a00ea1fd3ull, // c7,  c8,  c9,  c10
+        0x3d4de0fa59416a39ull, 0xbd23eae52a3dbf57ull, 0x3cf7787935626685ull, 0xbccad6b3bb9eff65ull, // c11, c12, c13, c14
+        0x3ca313e31762f523ull, 0xbc730b73f1eaff20ull,                                               // c15, c16
+        // 13
+        0x402c000000000000ull, 0x3fefffffffffcf58ull, 0x3d8853f01bda5f28ull, 0xbd8853f01bef63a4ull, 
+        0x3d8037f57bc62c9aull, 0xbd7037f57ae72aa6ull, 0x3d59f320348679baull, 0xbd414cc030f2110eull,
+        0x3d23c589137f92b4ull, 0xbd03c5883836b9d2ull, 0x3ce191ba5ed3fb67ull, 0xbcbc1c6c063bb7acull,
+        0x3c948716cf3681b4ull, 0xbc6b5e3e9ca0955eull, 0x3c401ffc49c6bc29ull, 0xbc12705ccd3dd884ull,
+        0x3bea37aa21895319ull, 0xbbba2cff8135d462ull,
+        // 14
+        0x4034000000000000ull, 0x3ff0000000000000ull, 0x3c73953c0197ef58ull, 0xbc73955be519be31ull,
+        0x3c6a2d4b50a2cff7ull, 0xbc5a2ca2bba78e86ull, 0x3c44b61d9bbcc940ull, 0xbc2ba022e8d82a87ull,
+        0x3c107f8e2c8707a1ull, 0xbbf07a5416264aecull, 0x3bc892450bad44c4ull, 0xbba3be9a4460fe00ull,
+        0x3b873f9f2d2fda99ull, 0xbb5eca68e2c1ba2eull, 0xbabf0b21acfa52abull, 0xba8e0a4c47ae75f5ull,
+        0x3ae5c7f1fd871496ull, 0xbab5a71b5f7d9035ull,
+        // 15
+        0x0ull,                0x3ff0000000000000ull, 0x0ull,                0x0ull,                
+        0x0ull,                0x0ull,                0x0ull,                0x0ull,               
+        0x0ull,                0x0ull,                0x0ull,                0x0ull,
+        0x0ull,                0x0ull,                0x0ull,                0x0ull,
+        0x0ull,                0x0ull,               
+    };
+#else
+    static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut16x18[] = {
+        // 0
+        0x0ull,                0x3fcc000000000000ull, 0x3fd4000000000000ull, 0x3fdc000000000000ull,
+        0x3fe4000000000000ull, 0x3fec000000000000ull, 0x3ff4000000000000ull, 0x3ffc000000000000ull,
+        0x4004000000000000ull, 0x400c000000000000ull, 0x4014000000000000ull, 0x401c000000000000ull,
+        0x4024000000000000ull, 0x402c000000000000ull, 0x4034000000000000ull, 0x0ull,
+        // 1
+        0x0ull,                0x3fcb8fd0416a7c92ull, 0x3fd35f98a0ea650eull, 0x3fda5729ee488037ull,
+        0x3fe1bf47eabb8f95ull, 0x3fe686650b8c2015ull, 0x3feb2523bb6b2deeull, 0x3fee1fbf97e33527ull,
+        0x3fef9258260a71c2ull, 0x3feff112c63a9077ull, 0x3fefff419668df11ull, 0x3feffffc832750f2ull,
+        0x3feffffffdc96f35ull, 0x3fefffffffffcf58ull, 0x3ff0000000000000ull, 0x3ff0000000000000ull,
+        // 2
+        0x3ff0000000000000ull, 0x3fee842ca3f08532ull, 0x3fed11574af58f1bull, 0x3fea945b9c24e4f9ull,
+        0x3fe6284c3374f815ull, 0x3fe02500a09f8d6eull, 0x3fd1f25131e3a8c0ull, 0x3fbd22ca1c24a139ull,
+        0x3f9b3afe1fba5c76ull, 0x3f6dd37d19b22b21ull, 0x3f27ccec13a9ef96ull, 0x3ecbe6c3f33250aeull,
+        0x3e41b4865394f75full, 0x3d8853f01bda5f28ull, 0x3c73953c0197ef58ull, 0x0ull,
+        // 3
+        0xbbf0b3ea3fdfaa19ull, 0xbfca48aaeb53bc21ull, 0xbfd19921f4329916ull, 0xbfd5e0f09bef8011ull,
+        0xbfd893b59c35c882ull, 0xbfd6ba7cb7576538ull, 0xbfce7291743d7555ull, 0xbfbb6d85a01efb80ull,
+        0xbf9addae58c7141aull, 0xbf6dc59376c7aa19ull, 0xbf27cc5e74677410ull, 0xbecbe6c0e8b4cc87ull,
+        0xbe41b486526b0565ull, 0xbd8853f01bef63a4ull, 0xbc73955be519be31ull, 0x0ull,
+        // 4
+        0xbfd5555555555555ull, 0xbfd183afc292ba11ull, 0xbfcc1a4b039c9bfaull, 0xbfc16e1e6d8d0be6ull,
+        0xbf92426c751e48a2ull, 0x3fb4f152b2bad124ull, 0x3fbbba40cbef72beull, 0x3fb01ba038be6a3dull,
+        0x3f916df44871efc8ull, 0x3f63c6869dfc8870ull, 0x3f1fb9aef915d828ull, 0x3ec299d1e27c6e11ull,
+        0x3e379b5ddcca334cull, 0x3d8037f57bc62c9aull, 0x3c6a2d4b50a2cff7ull, 0x0ull,
+        // 5
+        0xbce6863ee44ed636ull, 0x3fc04dcd0476c75eull, 0x3fc43d3449a80f08ull, 0x3fc5c26f3699b7e7ull,
+        0x3fc1a686f6ab2533ull, 0x3faf203c316ce730ull, 0xbf89c7a02788557cull, 0xbf98157e26e0d541ull,
+        0xbf807b55c1c7d278ull, 0xbf53a18d5843190full, 0xbf0fb6bbc89b1a5bull, 0xbeb299c9c684a963ull,
+        0xbe279b5dd4fb3d01ull, 0xbd7037f57ae72aa6ull, 0xbc5a2ca2bba78e86ull, 0x0ull,
+        // 6
+        0x3fc1111111112ab5ull, 0x3fb5c19efdfc08adull, 0x3fa74c98dc34fbacull, 0xbf790d6a8eff0a77ull,
+        0xbfac3c021789a786ull, 0xbfae2196b7326859ull, 0xbf93a7a011ff8c2aull, 0x3f6e4709c7e8430eull,
+        0x3f67682afa611151ull, 0x3f3ef2ee77717cbfull, 0x3ef95a4482f180b7ull, 0x3e9dc2c27da3b603ull,
+        0x3e12e2afd9f7433eull, 0x3d59f320348679baull, 0x3c44b61d9bbcc940ull, 0x0ull,
+        // 7
+        0xbda1ea19ddddb3b4ull, 0xbfb0b8df995ce4dfull, 0xbfb2955cf41e8164ull, 0xbfaf9d05c309f7c6ull,
+        0xbf987d27ccff4291ull, 0x3f8b2ca62572b098ull, 0x3f8f1cf6c7f5b00aull, 0x3f60379811e43dd5ull,
+        0xbf4793826f78537eull, 0xbf2405695e36240full, 0xbee0e08de39ce756ull, 0xbe83d709ba5f714eull,
+        0xbdf92e3fc5ee63e0ull, 0xbd414cc030f2110eull, 0xbc2ba022e8d82a87ull, 0x0ull,
+        // 8
+        0xbfaba1ba1990520bull, 0xbf96e37bba52f6fcull, 0x3ecff7df18455399ull, 0x3f97362834d33a4eull,
+        0x3f9e7f8380184b45ull, 0x3f869543e7c420d4ull, 0xbf7326bd4914222aull, 0xbf5fc15b0a9d98faull,
+        0x3f14cffcfa69fbb6ull, 0x3f057e48e5b79d10ull, 0x3ec33b66d7d77264ull, 0x3e66ac4e578b9b10ull,
+        0x3ddcc74b8d3d5c42ull, 0x3d23c589137f92b4ull, 0x3c107f8e2c8707a1ull, 0x0ull,
+        // 9
+        0xbe351ca7f096011full, 0x3f9eaaf3320c3851ull, 0x3f9cf823fe761fc1ull, 0x3f9022271754ff1full,
+        0xbf731fe77c9c60afull, 0xbf84a6046865ec7dull, 0xbf4ca3f1f2b9192bull, 0x3f4c77dee0afd227ull,
+        0x3f04055bce68597aull, 0xbee2bf0cb4a71647ull, 0xbea31eaafe73efd5ull, 0xbe46abb02c4368edull,
+        0xbdbcc749ca8079ddull, 0xbd03c5883836b9d2ull, 0xbbf07a5416264aecull, 0x0ull,
+        // 10
+        0x3f9664f94e6ac14eull, 0xbf94d3343bae39ddull, 0xbf7bc748e60df843ull, 0xbf8c89372b43ba85ull,
+        0xbf8129a092de747aull, 0x3f60c85b4d538746ull, 0x3f5be9392199ec18ull, 0xbf2a0c68a4489f10ull,
+        0xbf00462601dc2faaull, 0x3eb7b6a219dea9f4ull, 0x3e80cbcc8d4c5c8aull, 0x3e2425bb231a5e29ull,
+        0x3d9992a4beac8662ull, 0x3ce191ba5ed3fb67ull, 0x3bc892450bad44c4ull, 0x0ull,
+        // 11
+        0xbea8c4c1fd7852feull, 0xbfccce16b1046f13ull, 0xbf81a16f224bb7b6ull, 0xbf62cbf00406bc09ull,
+        0x3f75b29bb02cf69bull, 0x3f607df0f9f90c17ull, 0xbf4b852a6e0758d5ull, 0xbf0078c63d1b8445ull,
+        0x3eec12eadd55be7aull, 0xbe6fa600f593181bull, 0xbe5a3c935dce3f7dull, 0xbe001c6d95e3ae96ull,
+        0xbd74755a00ea1fd3ull, 0xbcbc1c6c063bb7acull, 0xbba3be9a4460fe00ull, 0x0ull,
+        // 12
+        0xbf822404577aa9ddull, 0x403d8b07f7a82aa3ull, 0xbf9f44ab92fbab0aull, 0x3fb2eac604473d6aull,
+        0x3f45f87d903aaac8ull, 0xbf5e104671036300ull, 0x3f19bc98ddf0f340ull, 0x3f0d4304bc9246e8ull,
+        0xbed13c415f7b9d41ull, 0xbe722b8d9720cdb0ull, 0x3e322666d739bec0ull, 0x3dd76a553d7e7918ull,
+        0x3d4de0fa59416a39ull, 0x3c948716cf3681b4ull, 0x3b873f9f2d2fda99ull, 0x0ull,
+        // 13
+        0xbefdd99a221ed573ull, 0x4070593a3735bab4ull, 0xbfccab654e44835eull, 0x3fd13ed80037dbacull,
+        0xbf6045b9076cc487ull, 0x3f2085ee7e8ac170ull, 0x3f23524622610430ull, 0xbeff12a6626911b4ull,
+        0x3eab9008bca408afull, 0x3e634df71865f620ull, 0xbe05bb1bcf83ca73ull, 0xbdaf2ac143fb6762ull,
+        0xbd23eae52a3dbf57ull, 0xbc6b5e3e9ca0955eull, 0xbb5eca68e2c1ba2eull, 0x0ull,
+        // 14
+        0x3f6e3be689423841ull, 0xc0d263511f5baac1ull, 0x40169f73b15ebe5cull, 0xc025c1dd41cd6cb5ull,
+        0xbf58fd89fe05e0d1ull, 0x3f73f7af01d5af7aull, 0xbf1e40bdead17e6bull, 0x3ee224cd6c4513e5ull,
+        0xbe24b645e68eeaa3ull, 0xbe4abfebfb72bc83ull, 0x3dd51c38f8695ed3ull, 0x3d8313ac38c6832bull,
+        0x3cf7787935626685ull, 0x3c401ffc49c6bc29ull, 0xbabf0b21acfa52abull, 0x0ull,
+        // 15
+        0xbf2a1306713a4f3aull, 0xc1045e509116b066ull, 0x4041fab9250984ceull, 0xc0458d090ec3de95ull,
+        0xbf74949d60113d63ull, 0x3f7c9fd6200d0adeull, 0x3f02cd40e0ad0a9full, 0xbe858ab8e019f311ull,
+        0xbe792fa6323b7cf8ull, 0x3e2df04d67876402ull, 0xbd95c72be95e4d2cull, 0xbd55a89c30203106ull,
+        0xbccad6b3bb9eff65ull, 0xbc12705ccd3dd884ull, 0xba8e0a4c47ae75f5ull, 0x0ull,
+        // 16
+        0xbf55d7e76dc56871ull, 0x41528c38809c90c7ull, 0xc076d57fb5190b02ull, 0x4085f09f888f8adaull,
+        0x3fa246332a2fcba5ull, 0xbfb29d851a896fcdull, 0x3ed9065ae369b212ull, 0xbeb8e1ba4c98a030ull,
+        0x3e6ffd0766ad4016ull, 0xbe0c63c29f505f5bull, 0xbd7fab216b9e0e49ull, 0x3d2826b62056aa27ull,
+        0x3ca313e31762f523ull, 0x3bea37aa21895319ull, 0x3ae5c7f1fd871496ull, 0x0ull,
+        // 17
+        0x3f35e67ab76a26e7ull, 0x41848ee0627d8206ull, 0xc0a216d618b489ecull, 0x40a5b89107c8af4full,
+        0x3fb69d8374520edaull, 0xbfbded519f981716ull, 0xbef02d288b5b3371ull, 0x3eb290981209c1a6ull,
+        0xbe567e924bf5ff6eull, 0x3de3f7f7de6b0eb6ull, 0x3d69ed18bae3ebbcull, 0xbcf7534c4f3dfa71ull,
+        0xbc730b73f1eaff20ull, 0xbbba2cff8135d462ull, 0xbab5a71b5f7d9035ull, 0x0ull
+    };
+#endif // defined(TANH_TRANSPOSED_LUT)
+
+    const int nlanes = npyv_nlanes_f64;
+    const npyv_f64 qnan = npyv_setall_f64(NPY_NAN);
+    for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
+        npyv_f64 x;
+        if (ssrc == 1) {
+            x = npyv_load_tillz_f64(src, len);
+        } else {
+            x = npyv_loadn_tillz_f64(src, ssrc, len);
+        }
+        npyv_s64 ndnan = npyv_and_s64(npyv_reinterpret_s64_f64(x), npyv_setall_s64(0x7ff8000000000000ll));
+        // |x| > HUGE_THRESHOLD, INF and NaNs.
+        npyv_b64 special_m = npyv_cmple_s64(ndnan, npyv_setall_s64(0x7fe0000000000000ll));
+        npyv_b64 nnan_m = npyv_notnan_f64(x);
+        npyv_s64 idxs = npyv_sub_s64(ndnan, npyv_setall_s64(0x3fc0000000000000ll));
+        // no native 64-bit for max/min and its fine to use 32-bit max/min
+        // since we're not crossing 32-bit edge
+        npyv_s32 idxl = npyv_max_s32(npyv_reinterpret_s32_s64(idxs), npyv_zero_s32());
+                 idxl = npyv_min_s32(idxl, npyv_setall_s32(0x780000));
+        npyv_u64 idx  = npyv_shri_u64(npyv_reinterpret_u64_s32(idxl), 51);
+
+#if defined(TANH_TRANSPOSED_LUT)
+        npyv_f64 e0e1[npyv_nlanes_f64];
+        npyv_lanetype_u64 index[npyv_nlanes_f64];
+        npyv_store_u64(index, idx);
+
+        /**begin repeat
+         * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
+         * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
+         * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
+         */
+        /**begin repeat1
+         * #lane = 0, 1#
+         */
+        e0e1[@lane@] = npyv_reinterpret_f64_u64(npyv_load_u64(lut18x16 + index[@lane@] * 18 + @off@));
+        /**end repeat1**/
+        npyv_f64 @e0@ = npyv_combinel_f64(e0e1[0], e0e1[1]);
+        npyv_f64 @e1@ = npyv_combineh_f64(e0e1[0], e0e1[1]);
+        /**end repeat**/
+#else
+        npyv_f64 b = npyv_lut16_f64((const double*)lut16x18 + 16*0, idx);
+        npyv_f64 c0 = npyv_lut16_f64((const double*)lut16x18 + 1*16, idx);
+        npyv_f64 c1 = npyv_lut16_f64((const double*)lut16x18 + 2*16, idx);
+        npyv_f64 c2 = npyv_lut16_f64((const double*)lut16x18 + 3*16, idx);
+        npyv_f64 c3 = npyv_lut16_f64((const double*)lut16x18 + 4*16, idx);
+        npyv_f64 c4 = npyv_lut16_f64((const double*)lut16x18 + 5*16, idx);
+        npyv_f64 c5 = npyv_lut16_f64((const double*)lut16x18 + 6*16, idx);
+        npyv_f64 c6 = npyv_lut16_f64((const double*)lut16x18 + 7*16, idx);
+        npyv_f64 c7 = npyv_lut16_f64((const double*)lut16x18 + 8*16, idx);
+        npyv_f64 c8 = npyv_lut16_f64((const double*)lut16x18 + 9*16, idx);
+        npyv_f64 c9 = npyv_lut16_f64((const double*)lut16x18 + 10*16, idx);
+        npyv_f64 c10 = npyv_lut16_f64((const double*)lut16x18 + 11*16, idx);
+        npyv_f64 c11 = npyv_lut16_f64((const double*)lut16x18 + 12*16, idx);
+        npyv_f64 c12 = npyv_lut16_f64((const double*)lut16x18 + 13*16, idx);
+        npyv_f64 c13 = npyv_lut16_f64((const double*)lut16x18 + 14*16, idx);
+        npyv_f64 c14 = npyv_lut16_f64((const double*)lut16x18 + 15*16, idx);
+        npyv_f64 c15 = npyv_lut16_f64((const double*)lut16x18 + 16*16, idx);
+        npyv_f64 c16 = npyv_lut16_f64((const double*)lut16x18 + 17*16, idx);
+#endif // defined(TANH_TRANSPOSED_LUT)
+
+        // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
+        // since we're clearing the FP status anyway.
+        npyv_f64 sign = npyv_and_f64(x, npyv_reinterpret_f64_s64(npyv_setall_s64(0x8000000000000000ull)));
+        npyv_f64 y = npyv_sub_f64(npyv_abs_f64(x), b);
+        npyv_f64 r = npyv_muladd_f64(c16, y, c15);
+        r = npyv_muladd_f64(r, y, c14);
+        r = npyv_muladd_f64(r, y, c13);
+        r = npyv_muladd_f64(r, y, c12);
+        r = npyv_muladd_f64(r, y, c11);
+        r = npyv_muladd_f64(r, y, c10);
+        r = npyv_muladd_f64(r, y, c9);
+        r = npyv_muladd_f64(r, y, c8);
+        r = npyv_muladd_f64(r, y, c7);
+        r = npyv_muladd_f64(r, y, c6);
+        r = npyv_muladd_f64(r, y, c5);
+        r = npyv_muladd_f64(r, y, c4);
+        r = npyv_muladd_f64(r, y, c3);
+        r = npyv_muladd_f64(r, y, c2);
+        r = npyv_muladd_f64(r, y, c1);
+        r = npyv_muladd_f64(r, y, c0);
+        // 1.0 if |x| > HUGE_THRESHOLD || INF
+        r = npyv_select_f64(special_m, r, npyv_setall_f64(1.0));
+        r = npyv_or_f64(r, sign);
+        // qnan if nan
+        r = npyv_select_f64(nnan_m, r, qnan);
+        if (sdst == 1) {
+            npyv_store_till_f64(dst, len, r);
+        } else {
+            npyv_storen_till_f64(dst, sdst, len, r);
+        }
+    }
+}
+
+#undef TANH_TRANSPOSED_LUT
+
+#endif // NPY_SIMD_F64
+
+#if NPY_SIMD_F32
+
+
+    // For architectures without efficient gather / scatter instructions, it is
+    // better to use a transposed LUT where we can load all coefficients for an
+    // index linearly.  In order to keep the same vertical calculation, we
+    // transpose the coef. into lanes.  A 4x4 transpose is all that's
+    // supported so we require `npyv_nlanes_f32` == 4.
+    #if npyv_nlanes_f32 == 4
+    #define TANHF_TRANSPOSED_LUT
+    // Define missing universal intrinsics used below
+    #if !defined(npyv_get_lane_u32)
+        #if defined(NPY_HAVE_ASIMD)
+            #define UNDEF_npyv_get_lane_u32
+            #define npyv_get_lane_u32 vgetq_lane_u32
+        #elif defined(NPY_HAVE_SSE41)
+            #define UNDEF_npyv_get_lane_u32
+            #define npyv_get_lane_u32 _mm_extract_epi32
+        #else
+            #undef TANHF_TRANSPOSED_LUT
+        #endif
+    #endif // !defined(npyv_get_lane_u32)
+    #endif // npyv_nlanes_f32 == 4
+
+static void
+simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
+{
+#if defined(TANHF_TRANSPOSED_LUT)
+    static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut8x32[] = {
+        // c6       c5          c4          c3          c2          c1          c0          b
+        0xbc0e2f66, 0x3e0910e9, 0xb76dd6b9, 0xbeaaaaa5, 0xb0343c7b, 0x3f800000, 0x0,        0x0,       
+        0x460bda12, 0x43761143, 0xbe1c276d, 0xbeab0612, 0xbd6ee69d, 0x3f7f1f84, 0x3d6fb9c9, 0x3d700000,
+        0x43d638ef, 0x4165ecdc, 0x3c1dcf2f, 0xbea7f01f, 0xbd8f0da7, 0x3f7ebd11, 0x3d8fc35f, 0x3d900000,
+        0xc3e11c3e, 0xc190f756, 0x3dc1a78d, 0xbea4e120, 0xbdae477d, 0x3f7e1e5f, 0x3daf9169, 0x3db00000,
+        // 4
+        0xc2baa4e9, 0xc08c097d, 0x3d96f985, 0xbea387b7, 0xbdcd2a1f, 0x3f7d609f, 0x3dcf49ab, 0x3dd00000,
+        0xc249da2d, 0xc02ba813, 0x3da2b61b, 0xbea15962, 0xbdeba80d, 0x3f7c842d, 0x3deee849, 0x3df00000,
+        0xc1859b82, 0xbf7f6bda, 0x3dc13397, 0xbe9d57f7, 0xbe0c443b, 0x3f7b00e5, 0x3e0f0ee8, 0x3e100000,
+        0x40dd5b57, 0x3f2b1dc0, 0x3dd2f670, 0xbe976b5a, 0xbe293cf3, 0x3f789580, 0x3e2e4984, 0x3e300000,
+        // 8
+        0x40494640, 0x3ece105d, 0x3df48a0a, 0xbe90230d, 0xbe44f282, 0x3f75b8ad, 0x3e4d2f8e, 0x3e500000,
+        0x40c730a8, 0x3f426a94, 0x3e06c5a8, 0xbe880dff, 0xbe5f3651, 0x3f726fd9, 0x3e6bb32e, 0x3e700000,
+        0xbf0f160e, 0xbadb0dc4, 0x3e1a3aba, 0xbe7479b3, 0xbe81c7c0, 0x3f6cc59b, 0x3e8c51cd, 0x3e900000,
+        0x3e30e76f, 0x3da43b17, 0x3e27c405, 0xbe4c3d88, 0xbe96d7ca, 0x3f63fb92, 0x3ea96163, 0x3eb00000,
+        // 12
+        0xbea81387, 0xbd51ab88, 0x3e2e78d0, 0xbe212482, 0xbea7fb8e, 0x3f59ff97, 0x3ec543f1, 0x3ed00000,
+        0xbdb26a1c, 0xbcaea23d, 0x3e2c3e44, 0xbdeb8cba, 0xbeb50e9e, 0x3f4f11d7, 0x3edfd735, 0x3ef00000,
+        0xbd351e57, 0xbd3b6d8d, 0x3e1d3097, 0xbd5e78ad, 0xbec12efe, 0x3f3d7573, 0x3f028438, 0x3f100000,
+        0xbb4c01a0, 0xbd6caaad, 0x3df4a8f4, 0x3c6b5e6e, 0xbec4be92, 0x3f24f360, 0x3f18abf0, 0x3f300000,
+        // 16
+        0x3c1d7bfb, 0xbd795bed, 0x3da38508, 0x3d839143, 0xbebce070, 0x3f0cbfe7, 0x3f2bc480, 0x3f500000,
+        0x3c722cd1, 0xbd5fddda, 0x3d31416a, 0x3dc21ee1, 0xbead510e, 0x3eec1a69, 0x3f3bec1c, 0x3f700000,
+        0x3c973f1c, 0xbd038f3b, 0x3b562657, 0x3de347af, 0xbe8ef7d6, 0x3eb0a801, 0x3f4f2e5b, 0x3f900000,
+        0x3c33a31b, 0xbc1cad63, 0xbcaeeac9, 0x3dcbec96, 0xbe4b8704, 0x3e6753a2, 0x3f613c53, 0x3fb00000,
+        // 20
+        0x3b862ef4, 0x3abb4766, 0xbcce9419, 0x3d99ef2d, 0xbe083237, 0x3e132f1a, 0x3f6ce37d, 0x3fd00000,
+        0x3a27b3d0, 0x3b95f10b, 0xbcaaeac4, 0x3d542ea1, 0xbdaf7449, 0x3db7e7d3, 0x3f743c4f, 0x3ff00000,
+        0xba3b5907, 0x3b825873, 0xbc49e7d0, 0x3cdde701, 0xbd2e1ec4, 0x3d320845, 0x3f7a5feb, 0x40100000,
+        0xba0efc22, 0x3afaea66, 0xbba71ddd, 0x3c2cca67, 0xbc83bf06, 0x3c84d3d4, 0x3f7dea85, 0x40300000,
+        // 24
+        0xb97f9f0f, 0x3a49f878, 0xbb003b0e, 0x3b81cb27, 0xbbc3e0b5, 0x3bc477b7, 0x3f7f3b3d, 0x40500000,
+        0xb8c8af50, 0x39996bf3, 0xba3f9a05, 0x3ac073a1, 0xbb10aadc, 0x3b10d3da, 0x3f7fb78c, 0x40700000,
+        0xb7bdddfb, 0x388f3e6c, 0xb92c08a7, 0x39ac3032, 0xba0157db, 0x3a01601e, 0x3f7fefd4, 0x40900000,
+        0xb64f2950, 0x371bb0e3, 0xb7ba9232, 0x383a94d9, 0xb88c18f2, 0x388c1a3b, 0x3f7ffdd0, 0x40b00000,
+        // 28
+        0xb4e085b1, 0x35a8a5e6, 0xb64a0b0f, 0x36ca081d, 0xb717b096, 0x3717b0da, 0x3f7fffb4, 0x40d00000,
+        0xb3731dfa, 0x34369b17, 0xb4dac169, 0x355abd4c, 0xb5a43bae, 0x35a43bce, 0x3f7ffff6, 0x40f00000,
+        0xb15a1f04, 0x322487b0, 0xb2ab78ac, 0x332b3cb6, 0xb383012c, 0x338306c6, 0x3f7fffff, 0x41100000,
+        0x0,        0x0,        0x0,        0x0,        0x0,        0x0,        0x3f800000, 0x0,       
+    };
+#else
+    static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut32x8[] = {
+        // 0
+        0x0,        0x3d700000, 0x3d900000, 0x3db00000, 0x3dd00000, 0x3df00000, 0x3e100000, 0x3e300000,
+        0x3e500000, 0x3e700000, 0x3e900000, 0x3eb00000, 0x3ed00000, 0x3ef00000, 0x3f100000, 0x3f300000,
+        0x3f500000, 0x3f700000, 0x3f900000, 0x3fb00000, 0x3fd00000, 0x3ff00000, 0x40100000, 0x40300000,
+        0x40500000, 0x40700000, 0x40900000, 0x40b00000, 0x40d00000, 0x40f00000, 0x41100000, 0x0,
+        // 1
+        0x0,        0x3d6fb9c9, 0x3d8fc35f, 0x3daf9169, 0x3dcf49ab, 0x3deee849, 0x3e0f0ee8, 0x3e2e4984,
+        0x3e4d2f8e, 0x3e6bb32e, 0x3e8c51cd, 0x3ea96163, 0x3ec543f1, 0x3edfd735, 0x3f028438, 0x3f18abf0,
+        0x3f2bc480, 0x3f3bec1c, 0x3f4f2e5b, 0x3f613c53, 0x3f6ce37d, 0x3f743c4f, 0x3f7a5feb, 0x3f7dea85,
+        0x3f7f3b3d, 0x3f7fb78c, 0x3f7fefd4, 0x3f7ffdd0, 0x3f7fffb4, 0x3f7ffff6, 0x3f7fffff, 0x3f800000,
+        // 2
+        0x3f800000, 0x3f7f1f84, 0x3f7ebd11, 0x3f7e1e5f, 0x3f7d609f, 0x3f7c842d, 0x3f7b00e5, 0x3f789580,
+        0x3f75b8ad, 0x3f726fd9, 0x3f6cc59b, 0x3f63fb92, 0x3f59ff97, 0x3f4f11d7, 0x3f3d7573, 0x3f24f360,
+        0x3f0cbfe7, 0x3eec1a69, 0x3eb0a801, 0x3e6753a2, 0x3e132f1a, 0x3db7e7d3, 0x3d320845, 0x3c84d3d4,
+        0x3bc477b7, 0x3b10d3da, 0x3a01601e, 0x388c1a3b, 0x3717b0da, 0x35a43bce, 0x338306c6, 0x0,
+        // 3
+        0xb0343c7b, 0xbd6ee69d, 0xbd8f0da7, 0xbdae477d, 0xbdcd2a1f, 0xbdeba80d, 0xbe0c443b, 0xbe293cf3,
+        0xbe44f282, 0xbe5f3651, 0xbe81c7c0, 0xbe96d7ca, 0xbea7fb8e, 0xbeb50e9e, 0xbec12efe, 0xbec4be92,
+        0xbebce070, 0xbead510e, 0xbe8ef7d6, 0xbe4b8704, 0xbe083237, 0xbdaf7449, 0xbd2e1ec4, 0xbc83bf06,
+        0xbbc3e0b5, 0xbb10aadc, 0xba0157db, 0xb88c18f2, 0xb717b096, 0xb5a43bae, 0xb383012c, 0x0,
+        // 4
+        0xbeaaaaa5, 0xbeab0612, 0xbea7f01f, 0xbea4e120, 0xbea387b7, 0xbea15962, 0xbe9d57f7, 0xbe976b5a,
+        0xbe90230d, 0xbe880dff, 0xbe7479b3, 0xbe4c3d88, 0xbe212482, 0xbdeb8cba, 0xbd5e78ad, 0x3c6b5e6e,
+        0x3d839143, 0x3dc21ee1, 0x3de347af, 0x3dcbec96, 0x3d99ef2d, 0x3d542ea1, 0x3cdde701, 0x3c2cca67,
+        0x3b81cb27, 0x3ac073a1, 0x39ac3032, 0x383a94d9, 0x36ca081d, 0x355abd4c, 0x332b3cb6, 0x0,
+        // 5
+        0xb76dd6b9, 0xbe1c276d, 0x3c1dcf2f, 0x3dc1a78d, 0x3d96f985, 0x3da2b61b, 0x3dc13397, 0x3dd2f670,
+        0x3df48a0a, 0x3e06c5a8, 0x3e1a3aba, 0x3e27c405, 0x3e2e78d0, 0x3e2c3e44, 0x3e1d3097, 0x3df4a8f4,
+        0x3da38508, 0x3d31416a, 0x3b562657, 0xbcaeeac9, 0xbcce9419, 0xbcaaeac4, 0xbc49e7d0, 0xbba71ddd,
+        0xbb003b0e, 0xba3f9a05, 0xb92c08a7, 0xb7ba9232, 0xb64a0b0f, 0xb4dac169, 0xb2ab78ac, 0x0,
+        // 6
+        0x3e0910e9, 0x43761143, 0x4165ecdc, 0xc190f756, 0xc08c097d, 0xc02ba813, 0xbf7f6bda, 0x3f2b1dc0,
+        0x3ece105d, 0x3f426a94, 0xbadb0dc4, 0x3da43b17, 0xbd51ab88, 0xbcaea23d, 0xbd3b6d8d, 0xbd6caaad,
+        0xbd795bed, 0xbd5fddda, 0xbd038f3b, 0xbc1cad63, 0x3abb4766, 0x3b95f10b, 0x3b825873, 0x3afaea66,
+        0x3a49f878, 0x39996bf3, 0x388f3e6c, 0x371bb0e3, 0x35a8a5e6, 0x34369b17, 0x322487b0, 0x0,
+        // 7
+        0xbc0e2f66, 0x460bda12, 0x43d638ef, 0xc3e11c3e, 0xc2baa4e9, 0xc249da2d, 0xc1859b82, 0x40dd5b57,
+        0x40494640, 0x40c730a8, 0xbf0f160e, 0x3e30e76f, 0xbea81387, 0xbdb26a1c, 0xbd351e57, 0xbb4c01a0,
+        0x3c1d7bfb, 0x3c722cd1, 0x3c973f1c, 0x3c33a31b, 0x3b862ef4, 0x3a27b3d0, 0xba3b5907, 0xba0efc22,
+        0xb97f9f0f, 0xb8c8af50, 0xb7bdddfb, 0xb64f2950, 0xb4e085b1, 0xb3731dfa, 0xb15a1f04, 0x0
+    };
+#endif // defined(TANHF_TRANSPOSED_LUT)
+
+    const int nlanes = npyv_nlanes_f32;
+    const npyv_f32 qnan = npyv_setall_f32(NPY_NANF);
+    for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
+        npyv_f32 x;
+        if (ssrc == 1) {
+            x = npyv_load_tillz_f32(src, len);
+        } else {
+            x = npyv_loadn_tillz_f32(src, ssrc, len);
+        }
+        npyv_s32 ndnan = npyv_and_s32(npyv_reinterpret_s32_f32(x), npyv_setall_s32(0x7fe00000));
+        // check |x| > HUGE_THRESHOLD, INF and NaNs.
+        npyv_b32 special_m = npyv_cmple_s32(ndnan, npyv_setall_s32(0x7f000000));
+        npyv_b32 nnan_m = npyv_notnan_f32(x);
+        npyv_s32 idxs = npyv_sub_s32(ndnan, npyv_setall_s32(0x3d400000));
+                 idxs = npyv_max_s32(idxs, npyv_zero_s32());
+                 idxs = npyv_min_s32(idxs, npyv_setall_s32(0x3e00000));
+        npyv_u32 idx  = npyv_shri_u32(npyv_reinterpret_u32_s32(idxs), 21);
+
+#if defined(TANHF_TRANSPOSED_LUT)
+        npyv_f32 c6543[npyv_nlanes_f32];
+        npyv_f32 c210b[npyv_nlanes_f32];
+        npyv_lanetype_u32 index[npyv_nlanes_f32];
+
+        /**begin repeat
+         * #lane = 0, 1, 2, 3#
+         */
+        index[@lane@] = npyv_get_lane_u32(idx, @lane@);
+        c6543[@lane@] = npyv_reinterpret_f32_u32(npyv_load_u32(lut8x32 + index[@lane@] * 8));
+        c210b[@lane@] = npyv_reinterpret_f32_u32(npyv_load_u32(lut8x32 + index[@lane@] * 8 + 4));
+        /**end repeat**/
+
+        // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
+        // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
+        // lane2: {c6, c5, c4, c3},  {c2, c1, c0, b}
+        // lane3: {c6, c5, c4, c3},  {c2, c1, c0, b}
+        //
+        // transposed:
+        // c6: {lane0, lane1, lane2, lane3}
+        // c5: {lane0, lane1, lane2, lane3}
+        // c4: {lane0, lane1, lane2, lane3}
+        // c3: {lane0, lane1, lane2, lane3}
+        // c2: {lane0, lane1, lane2, lane3}
+        // c1: {lane0, lane1, lane2, lane3}
+        // c0: {lane0, lane1, lane2, lane3}
+        // b : {lane0, lane1, lane2, lane3}
+
+        npyv_f32x2 c6543_l01 = npyv_zip_f32(c6543[0], c6543[1]);
+        npyv_f32x2 c6543_l23 = npyv_zip_f32(c6543[2], c6543[3]);
+        npyv_f32 c6 = npyv_combinel_f32(c6543_l01.val[0], c6543_l23.val[0]);
+        npyv_f32 c5 = npyv_combineh_f32(c6543_l01.val[0], c6543_l23.val[0]);
+        npyv_f32 c4 = npyv_combinel_f32(c6543_l01.val[1], c6543_l23.val[1]);
+        npyv_f32 c3 = npyv_combineh_f32(c6543_l01.val[1], c6543_l23.val[1]);
+
+        npyv_f32x2 c210b_l01 = npyv_zip_f32(c210b[0], c210b[1]);
+        npyv_f32x2 c210b_l23 = npyv_zip_f32(c210b[2], c210b[3]);
+        npyv_f32 c2 = npyv_combinel_f32(c210b_l01.val[0], c210b_l23.val[0]);
+        npyv_f32 c1 = npyv_combineh_f32(c210b_l01.val[0], c210b_l23.val[0]);
+        npyv_f32 c0 = npyv_combinel_f32(c210b_l01.val[1], c210b_l23.val[1]);
+        npyv_f32 b  = npyv_combineh_f32(c210b_l01.val[1], c210b_l23.val[1]);
+#else
+        npyv_f32 b  = npyv_lut32_f32((const float*)lut32x8 + 32*0, idx);
+        npyv_f32 c0 = npyv_lut32_f32((const float*)lut32x8 + 32*1, idx);
+        npyv_f32 c1 = npyv_lut32_f32((const float*)lut32x8 + 32*2, idx);
+        npyv_f32 c2 = npyv_lut32_f32((const float*)lut32x8 + 32*3, idx);
+        npyv_f32 c3 = npyv_lut32_f32((const float*)lut32x8 + 32*4, idx);
+        npyv_f32 c4 = npyv_lut32_f32((const float*)lut32x8 + 32*5, idx);
+        npyv_f32 c5 = npyv_lut32_f32((const float*)lut32x8 + 32*6, idx);
+        npyv_f32 c6 = npyv_lut32_f32((const float*)lut32x8 + 32*7, idx);
+#endif // defined(TANHF_TRANSPOSED_LUT)
+
+        // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
+        // since we're clearing the FP status anyway.
+        npyv_f32 sign = npyv_and_f32(x, npyv_reinterpret_f32_u32(npyv_setall_u32(0x80000000)));
+        npyv_f32 y = npyv_sub_f32(npyv_abs_f32(x), b);
+        npyv_f32 r = npyv_muladd_f32(c6, y, c5);
+        r = npyv_muladd_f32(r, y, c4);
+        r = npyv_muladd_f32(r, y, c3);
+        r = npyv_muladd_f32(r, y, c2);
+        r = npyv_muladd_f32(r, y, c1);
+        r = npyv_muladd_f32(r, y, c0);
+        // 1.0 if |x| > HUGE_THRESHOLD || INF
+        r = npyv_select_f32(special_m, r, npyv_setall_f32(1.0f));
+        r = npyv_or_f32(r, sign);
+        // qnan if nan
+        r = npyv_select_f32(nnan_m, r, qnan);
+        if (sdst == 1) {
+            npyv_store_till_f32(dst, len, r);
+        } else {
+            npyv_storen_till_f32(dst, sdst, len, r);
+        }
+    }
+}
+
+#undef TANHF_TRANSPOSED_LUT
+#if defined(UNDEF_npyv_get_lane_u32)
+#undef UNDEF_npyv_get_lane_u32
+#undef npyv_get_lane_u32
+#endif
+
+#endif // NPY_SIMD_F32
+#endif // NPY_SIMD_FMA3
+
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE#
+ * #type = float, double#
+ * #sfx  = f32,   f64#
+ * #ssfx = f,     #
+ * #simd = NPY_SIMD_FMA3 && NPY_SIMD_F32, NPY_SIMD_FMA3 && NPY_SIMD_F64#
+ */
+/**begin repeat1
+ *  #func = tanh#
+ *  #simd_req_clear = 1#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    const @type@ *src = (@type@*)args[0];
+          @type@ *dst = (@type@*)args[1];
+
+    const int lsize = sizeof(src[0]);
+    const npy_intp ssrc = steps[0] / lsize;
+    const npy_intp sdst = steps[1] / lsize;
+    npy_intp len = dimensions[0];
+    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
+#if @simd@
+    if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
+        !npyv_loadable_stride_@sfx@(ssrc) || !npyv_storable_stride_@sfx@(sdst)
+    ) {
+        for (; len > 0; --len, src += ssrc, dst += sdst) {
+            simd_@func@_@sfx@(src, 1, dst, 1, 1);
+        }
+    } else {
+        simd_@func@_@sfx@(src, ssrc, dst, sdst, len);
+    }
+    npyv_cleanup();
+    #if @simd_req_clear@
+        npy_clear_floatstatus_barrier((char*)dimensions);
+    #endif
+#else
+    for (; len > 0; --len, src += ssrc, dst += sdst) {
+        const @type@ src0 = *src;
+        *dst = npy_@func@@ssfx@(src0);
+    }
+#endif
+}
+/**end repeat1**/
+/**end repeat**/

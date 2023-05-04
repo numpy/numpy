@@ -7,19 +7,19 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
 #include "common.h"
-#include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
@@ -30,33 +30,31 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
 {
     PyObject *obj = weekmask_in;
 
-    /* Make obj into an ASCII string if it is UNICODE */
-    Py_INCREF(obj);
-    if (PyUnicode_Check(obj)) {
-        /* accept unicode input */
-        PyObject *obj_str;
-        obj_str = PyUnicode_AsASCIIString(obj);
+    /* Make obj into an UTF8 string */
+    if (PyBytes_Check(obj)) {
+        /* accept bytes input */
+        PyObject *obj_str = PyUnicode_FromEncodedObject(obj, NULL, NULL);
         if (obj_str == NULL) {
-            Py_DECREF(obj);
             return 0;
         }
-        Py_DECREF(obj);
         obj = obj_str;
     }
+    else {
+        Py_INCREF(obj);
+    }
 
-    if (PyBytes_Check(obj)) {
-        char *str;
+
+    if (PyUnicode_Check(obj)) {
         Py_ssize_t len;
-        int i;
-
-        if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+        char const *str = PyUnicode_AsUTF8AndSize(obj, &len);
+        if (str == NULL) {
             Py_DECREF(obj);
             return 0;
         }
 
         /* Length 7 is a string like "1111100" */
         if (len == 7) {
-            for (i = 0; i < 7; ++i) {
+            for (int i = 0; i < 7; ++i) {
                 switch(str[i]) {
                     case '0':
                         weekmask[i] = 0;
@@ -75,7 +73,7 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
 general_weekmask_string:
         /* a string like "SatSun" or "Mon Tue Wed" */
         memset(weekmask, 0, 7);
-        for (i = 0; i < len; i += 3) {
+        for (Py_ssize_t i = 0; i < len; i += 3) {
             while (isspace(str[i]))
                 ++i;
 
@@ -168,7 +166,7 @@ invalid_weekmask_string:
                     return 0;
                 }
 
-                val = PyInt_AsLong(f);
+                val = PyLong_AsLong(f);
                 if (error_converting(val)) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
@@ -436,7 +434,7 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
 }
 
 static PyObject *
-busdaycalendar_weekmask_get(NpyBusDayCalendar *self)
+busdaycalendar_weekmask_get(NpyBusDayCalendar *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *ret;
     npy_intp size = 7;
@@ -454,7 +452,7 @@ busdaycalendar_weekmask_get(NpyBusDayCalendar *self)
 }
 
 static PyObject *
-busdaycalendar_holidays_get(NpyBusDayCalendar *self)
+busdaycalendar_holidays_get(NpyBusDayCalendar *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *ret;
     PyArray_Descr *date_dtype;

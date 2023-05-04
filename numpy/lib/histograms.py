@@ -506,8 +506,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
             with non-normal datasets.
 
         'scott'
-            Less robust estimator that that takes into account data
-            variability and data size.
+            Less robust estimator that takes into account data variability
+            and data size.
 
         'stone'
             Estimator based on leave-one-out cross-validation estimate of
@@ -562,7 +562,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))``.
+    ``np.round(np.ceil(range / h))``. The final bin width is often less
+    than what is returned by the estimators below.
 
     'auto' (maximum of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
@@ -580,7 +581,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         datasets. The IQR is very robust to outliers.
 
     'scott'
-        .. math:: h = \sigma \sqrt[3]{\frac{24 * \sqrt{\pi}}{n}}
+        .. math:: h = \sigma \sqrt[3]{\frac{24 \sqrt{\pi}}{n}}
 
         The binwidth is proportional to the standard deviation of the
         data and inversely proportional to cube root of ``x.size``. Can
@@ -597,7 +598,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         does not take into account data variability.
 
     'sturges'
-        .. math:: n_h = \log _{2}n+1
+        .. math:: n_h = \log _{2}(n) + 1
 
         The number of bins is the base 2 log of ``a.size``.  This
         estimator assumes normality of data and is too conservative for
@@ -606,9 +607,9 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     'doane'
         .. math:: n_h = 1 + \log_{2}(n) +
-                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1}})
+                        \log_{2}\left(1 + \frac{|g_1|}{\sigma_{g_1}}\right)
 
-            g_1 = mean[(\frac{x - \mu}{\sigma})^3]
+            g_1 = mean\left[\left(\frac{x - \mu}{\sigma}\right)^3\right]
 
             \sigma_{g_1} = \sqrt{\frac{6(n - 2)}{(n + 1)(n + 3)}}
 
@@ -670,15 +671,14 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
 
 def _histogram_dispatcher(
-        a, bins=None, range=None, normed=None, weights=None, density=None):
+        a, bins=None, range=None, density=None, weights=None):
     return (a, bins, weights)
 
 
 @array_function_dispatch(_histogram_dispatcher)
-def histogram(a, bins=10, range=None, normed=None, weights=None,
-              density=None):
+def histogram(a, bins=10, range=None, density=None, weights=None):
     r"""
-    Compute the histogram of a set of data.
+    Compute the histogram of a dataset.
 
     Parameters
     ----------
@@ -703,16 +703,6 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         computation as well. While bin width is computed to be optimal
         based on the actual data within `range`, the bin count will fill
         the entire range including portions containing no data.
-    normed : bool, optional
-
-        .. deprecated:: 1.6.0
-
-        This is equivalent to the `density` argument, but produces incorrect
-        results for unequal bin widths. It should not be used.
-
-        .. versionchanged:: 1.15.0
-            DeprecationWarnings are actually emitted.
-
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
         `a` only contributes its associated weight towards the bin count
@@ -726,8 +716,6 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
         width are chosen; it is not a probability *mass* function.
-
-        Overrides the ``normed`` keyword if given.
 
     Returns
     -------
@@ -890,46 +878,15 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
 
         n = np.diff(cum_n)
 
-    # density overrides the normed keyword
-    if density is not None:
-        if normed is not None:
-            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
-            warnings.warn(
-                    "The normed argument is ignored when density is provided. "
-                    "In future passing both will result in an error.",
-                    DeprecationWarning, stacklevel=3)
-        normed = None
-
     if density:
         db = np.array(np.diff(bin_edges), float)
         return n/db/n.sum(), bin_edges
-    elif normed:
-        # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
-        warnings.warn(
-                "Passing `normed=True` on non-uniform bins has always been "
-                "broken, and computes neither the probability density "
-                "function nor the probability mass function. "
-                "The result is only correct if the bins are uniform, when "
-                "density=True will produce the same result anyway. "
-                "The argument will be removed in a future version of "
-                "numpy.",
-                np.VisibleDeprecationWarning, stacklevel=3)
 
-        # this normalization is incorrect, but
-        db = np.array(np.diff(bin_edges), float)
-        return n/(n*db).sum(), bin_edges
-    else:
-        if normed is not None:
-            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
-            warnings.warn(
-                    "Passing normed=False is deprecated, and has no effect. "
-                    "Consider passing the density argument instead.",
-                    DeprecationWarning, stacklevel=3)
-        return n, bin_edges
+    return n, bin_edges
 
 
-def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
-                            weights=None, density=None):
+def _histogramdd_dispatcher(sample, bins=None, range=None, density=None,
+                            weights=None):
     if hasattr(sample, 'shape'):  # same condition as used in histogramdd
         yield sample
     else:
@@ -940,14 +897,13 @@ def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
 
 
 @array_function_dispatch(_histogramdd_dispatcher)
-def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
-                density=None):
+def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     """
     Compute the multidimensional histogram of some data.
 
     Parameters
     ----------
-    sample : (N, D) array, or (D, N) array_like
+    sample : (N, D) array, or (N, D) array_like
         The data to be histogrammed.
 
         Note the unusual interpretation of sample when an array_like:
@@ -978,20 +934,16 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         If False, the default, returns the number of samples in each bin.
         If True, returns the probability *density* function at the bin,
         ``bin_count / sample_count / bin_volume``.
-    normed : bool, optional
-        An alias for the density argument that behaves identically. To avoid
-        confusion with the broken normed argument to `histogram`, `density`
-        should be preferred.
     weights : (N,) array_like, optional
         An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
-        Weights are normalized to 1 if normed is True. If normed is False,
+        Weights are normalized to 1 if density is True. If density is False,
         the values of the returned histogram are equal to the sum of the
         weights belonging to the samples falling into each bin.
 
     Returns
     -------
     H : ndarray
-        The multidimensional histogram of sample x. See normed and weights
+        The multidimensional histogram of sample x. See density and weights
         for the different possible semantics.
     edges : list
         A list of D arrays describing the bin edges for each dimension.
@@ -1018,7 +970,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
 
-    nbin = np.empty(D, int)
+    nbin = np.empty(D, np.intp)
     edges = D*[None]
     dedges = D*[None]
     if weights is not None:
@@ -1029,7 +981,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         if M != D:
             raise ValueError(
                 'The dimension of bins must be equal to the dimension of the '
-                ' sample x.')
+                'sample x.')
     except TypeError:
         # bins is an integer
         bins = D*[bins]
@@ -1049,13 +1001,13 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
             smin, smax = _get_outer_edges(sample[:,i], range[i])
             try:
                 n = operator.index(bins[i])
-            
+
             except TypeError as e:
                 raise TypeError(
                 	"`bins[{}]` must be an integer, when a scalar".format(i)
                 ) from e
-                
-            edges[i] = np.linspace(smin, smax, n + 1)    
+
+            edges[i] = np.linspace(smin, smax, n + 1)
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
@@ -1102,16 +1054,6 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     # Remove outliers (indices 0 and -1 for each dimension).
     core = D*(slice(1, -1),)
     hist = hist[core]
-
-    # handle the aliasing normed argument
-    if normed is None:
-        if density is None:
-            density = False
-    elif density is None:
-        # an explicit normed argument was passed, alias it to the new name
-        density = normed
-    else:
-        raise TypeError("Cannot specify both 'normed' and 'density'")
 
     if density:
         # calculate the probability density function

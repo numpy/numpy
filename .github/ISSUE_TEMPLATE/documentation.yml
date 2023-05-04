@@ -1,0 +1,23 @@
+name: Documentation
+description: Report an issue related to the NumPy documentation.
+title: "DOC: <Please write a comprehensive title after the 'DOC: ' prefix>"
+labels: [04 - Documentation]
+
+body:
+- type: textarea
+  attributes: 
+    label: "Issue with current documentation:"
+    description: >
+      Please make sure to leave a reference to the document/code you're
+      referring to. You can also check the development version of the
+      documentation and see if this issue has already been addressed at
+      https://numpy.org/devdocs.
+
+- type: textarea
+  attributes:
+    label: "Idea or request for content:"
+    description: >
+      Please describe as clearly as possible what topics you think are missing
+      from the current documentation. Make sure to check
+      https://github.com/numpy/numpy-tutorials and see if this issue might be
+      more appropriate there.

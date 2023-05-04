@@ -1,8 +1,0 @@
-`mgrid`, `r_`, etc. fixed to consistently return correct outputs for non-default precision inputs
--------------------------------------------------------------------------------------------------
-Previously, ``np.mgrid[np.float32(0.1):np.float32(0.35):np.float32(0.1),]``
-and ``np.r_[0:10:np.complex64(3j)]`` failed to return meaningful output.
-This bug potentially affects `mgrid`, `ogrid`, `r_`, and `c_` when an
-input with dtype other than the default `float64` and `complex128`
-and equivalent Python types were used.
-The methods have been fixed to handle varying precision correctly.

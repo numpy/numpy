@@ -1,14 +1,13 @@
-from collections import OrderedDict
 from timeit import repeat
 
 import pandas as pd
 
 import numpy as np
-from numpy.random import MT19937, PCG64, Philox, SFC64
+from numpy.random import MT19937, PCG64, PCG64DXSM, Philox, SFC64
 
-PRNGS = [MT19937, PCG64, Philox, SFC64]
+PRNGS = [MT19937, PCG64, PCG64DXSM, Philox, SFC64]
 
-funcs = OrderedDict()
+funcs = {}
 integers = 'integers(0, 2**{bits},size=1000000, dtype="uint{bits}")'
 funcs['32-bit Unsigned Ints'] = integers.format(bits=32)
 funcs['64-bit Unsigned Ints'] = integers.format(bits=64)
@@ -26,10 +25,10 @@ rg = Generator({prng}())
 """
 
 test = "rg.{func}"
-table = OrderedDict()
+table = {}
 for prng in PRNGS:
     print(prng)
-    col = OrderedDict()
+    col = {}
     for key in funcs:
         t = repeat(test.format(func=funcs[key]),
                    setup.format(prng=prng().__class__.__name__),
@@ -38,7 +37,7 @@ for prng in PRNGS:
     col = pd.Series(col)
     table[prng().__class__.__name__] = col
 
-npfuncs = OrderedDict()
+npfuncs = {}
 npfuncs.update(funcs)
 npfuncs['32-bit Unsigned Ints'] = 'randint(2**32,dtype="uint32",size=1000000)'
 npfuncs['64-bit Unsigned Ints'] = 'randint(2**64,dtype="uint64",size=1000000)'
@@ -54,7 +53,7 @@ for key in npfuncs:
     col[key] = 1000 * min(t)
 table['RandomState'] = pd.Series(col)
 
-columns = ['MT19937','PCG64','Philox','SFC64', 'RandomState']
+columns = ['MT19937', 'PCG64', 'PCG64DXSM', 'Philox', 'SFC64', 'RandomState']
 table = pd.DataFrame(table)
 order = np.log(table).mean().sort_values().index
 table = table.T

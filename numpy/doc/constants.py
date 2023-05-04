@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========
 Constants
@@ -134,10 +133,6 @@ add_newdoc('numpy', 'nan',
 add_newdoc('numpy', 'newaxis',
     """
     A convenient alias for None, useful for indexing arrays.
-
-    See Also
-    --------
-    `numpy.doc.indexing`
 
     Examples
     --------

@@ -1,5 +1,5 @@
-#ifndef MEM_OVERLAP_H_
-#define MEM_OVERLAP_H_
+#ifndef NUMPY_CORE_SRC_COMMON_MEM_OVERLAP_H_
+#define NUMPY_CORE_SRC_COMMON_MEM_OVERLAP_H_
 
 #include "npy_config.h"
 #include "numpy/ndarraytypes.h"
@@ -46,5 +46,4 @@ offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
 
-#endif
-
+#endif  /* NUMPY_CORE_SRC_COMMON_MEM_OVERLAP_H_ */

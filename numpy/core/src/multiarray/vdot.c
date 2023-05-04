@@ -1,7 +1,9 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
 #include "common.h"
 #include "vdot.h"
 #include "npy_cblas.h"

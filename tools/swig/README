@@ -15,7 +15,7 @@ system used here, can be found in the NumPy reference guide.
 Testing
 -------
 The tests are a good example of what we are trying to do with numpy.i.
-The files related to testing are are in the test subdirectory::
+The files related to testing are in the test subdirectory::
 
     Vector.h
     Vector.cxx
