@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.21'
-OPENBLAS_LONG = 'v0.3.21'
+OPENBLAS_V = '0.3.23'
+OPENBLAS_LONG = 'v0.3.23'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -101,6 +101,9 @@ def download_openblas(target, plat, ilp64):
     suffix = None
     if osname == "linux":
         suffix = get_linux(arch)
+        typ = 'tar.gz'
+    elif osname == "musllinux":
+        suffix = get_musllinux(arch)
         typ = 'tar.gz'
     elif plat == 'macosx-x86_64':
         suffix = 'macosx_10_9_x86_64-gf_c469a42.tar.gz'
@@ -296,15 +299,11 @@ def test_setup(plats):
             if not target:
                 raise RuntimeError(f'Could not setup {plat}')
             print('success with', plat, ilp64)
-            if osname == 'win':
-                if not target.endswith('.a'):
-                    raise RuntimeError("Not .a extracted!")
-            else:
-                files = glob.glob(os.path.join(target, "lib", "*.a"))
-                if not files:
-                    raise RuntimeError("No lib/*.a unpacked!")
+            files = glob.glob(os.path.join(target, "lib", "*.a"))
+            if not files:
+                raise RuntimeError("No lib/*.a unpacked!")
         finally:
-            if target is not None:
+            if target:
                 if os.path.isfile(target):
                     os.unlink(target)
                 else:
