@@ -1440,6 +1440,8 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
 /****************** MapIter (Advanced indexing) Get/Set ********************/
 /***************************************************************************/
 
+typedef struct {npy_uint64 a; npy_uint64 b;} copytype128;
+
 /**begin repeat
  * #name = set, get#
  * #isget = 0, 1#
@@ -1501,8 +1503,8 @@ mapiter_trivial_@name@(
     switch ((is_aligned && !needs_api) ? itemsize : 0) {
 
 /**begin repeat1
- * #elsize = 1, 2, 4, 8, 0#
- * #copytype = npy_uint8, npy_uint16, npy_uint32, npy_uint64, 0#
+ * #elsize = 1, 2, 4, 8, 16, 0#
+ * #copytype = npy_uint8, npy_uint16, npy_uint32, npy_uint64, copytype128, 0#
  */
 
 #if @elsize@
@@ -1642,8 +1644,8 @@ mapiter_@name@(
             switch ((is_aligned && !needs_api) ? PyArray_ITEMSIZE(array) : 0) {
 
 /**begin repeat2
- * #elsize = 1, 2, 4, 8, 0#
- * #copytype = npy_uint8, npy_uint16, npy_uint32, npy_uint64, 0#
+ * #elsize = 1, 2, 4, 8, 16, 0#
+ * #copytype = npy_uint8, npy_uint16, npy_uint32, npy_uint64, copytype128, 0#
  */
 
 #if @elsize@
