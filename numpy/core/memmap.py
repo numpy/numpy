@@ -244,7 +244,7 @@ class memmap(ndarray):
             else:
                 if not hasattr(shape, '__iter__'):
                     shape = (shape,)
-                elif not instance(shape, tuple):
+                elif not isinstance(shape, tuple):
                     shape = tuple(shape)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
