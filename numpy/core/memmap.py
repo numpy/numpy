@@ -75,7 +75,7 @@ class memmap(ndarray):
         additional data. By default, ``memmap`` will start at the beginning of
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
-    shape : tuple, optional
+    shape : int or sequence of ints, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
@@ -242,7 +242,7 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if not isinstance(shape, tuple):
+                if not hasattr(shape, '__iter__'):
                     shape = (shape,)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
