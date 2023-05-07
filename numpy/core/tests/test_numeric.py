@@ -2742,14 +2742,32 @@ class TestCreationFuncs:
                     val = fill_value
                 assert_equal(arr, dtype.type(val))
 
+    def check_invalid_shapes(self, func):
+        # invalid calls: negative values for shape
+        with pytest.raises(ValueError):
+            func((2, -1))
+
+        with pytest.raises(ValueError):
+            func(-1)
+
+        # invalid calls: wrong types for shape
+        with pytest.raises(TypeError):
+            func((2, 3.5))
+
+        with pytest.raises(TypeError):
+            func(2.5)
+
     def test_zeros(self):
         self.check_function(np.zeros)
+        self.check_invalid_shapes(np.zeros)
 
     def test_ones(self):
         self.check_function(np.ones)
+        self.check_invalid_shapes(np.ones)
 
     def test_empty(self):
         self.check_function(np.empty)
+        self.check_invalid_shapes(np.empty)
 
     def test_full(self):
         self.check_function(np.full, 0)
