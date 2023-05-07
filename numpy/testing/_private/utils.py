@@ -1067,7 +1067,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Raises
     ------
     AssertionError
-      If actual and desired objects are not equal.
+      If x is not strictly smaller than y, element-wise.
 
     See Also
     --------
