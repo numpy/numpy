@@ -9,7 +9,7 @@ requires = [
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
     # likely to be removed as a dependency in meson-python 0.12.0.
     "wheel==0.38.1",
-    "Cython>=0.29.30,<3.0",
+    "Cython>=0.29.34,<3.0",
 #    "meson-python>=0.10.0",
 ]
 
