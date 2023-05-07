@@ -3,7 +3,7 @@
 .. _alignment:
 
 ****************
-Memory Alignment
+Memory alignment
 ****************
 
 NumPy alignment goals

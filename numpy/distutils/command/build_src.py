@@ -725,7 +725,7 @@ _has_c_header = re.compile(r'-\*-\s*c\s*-\*-', re.I).search
 _has_cpp_header = re.compile(r'-\*-\s*c\+\+\s*-\*-', re.I).search
 
 def get_swig_target(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         result = None
         line = f.readline()
         if _has_cpp_header(line):
@@ -735,7 +735,7 @@ def get_swig_target(source):
     return result
 
 def get_swig_modulename(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         name = None
         for line in f:
             m = _swig_module_name_match(line)

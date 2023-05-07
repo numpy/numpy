@@ -3913,21 +3913,6 @@ PyArray_InitializeObjectToObjectCast(void)
 }
 
 
-static int
-PyArray_SetClearFunctions(void)
-{
-    PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
-    NPY_DT_SLOTS(Object)->get_clear_loop = &npy_get_clear_object_strided_loop;
-    Py_DECREF(Object);  /* use borrowed */
-
-    PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
-    NPY_DT_SLOTS(Void)->get_clear_loop = &npy_get_clear_void_and_legacy_user_dtype_loop;
-    Py_DECREF(Void);  /* use borrowed */
-    return 0;
-}
-
-
-
 NPY_NO_EXPORT int
 PyArray_InitializeCasts()
 {
@@ -3945,9 +3930,6 @@ PyArray_InitializeCasts()
     }
     /* Datetime casts are defined in datetime.c */
     if (PyArray_InitializeDatetimeCasts() < 0) {
-        return -1;
-    }
-    if (PyArray_SetClearFunctions() < 0) {
         return -1;
     }
     return 0;

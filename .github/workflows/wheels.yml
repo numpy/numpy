@@ -43,7 +43,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -92,7 +92,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -102,19 +102,23 @@ jobs:
           fetch-depth: 0
 
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
         with:
           python-version: "3.x"
+
+      # We need rtools 4.0 to have 32 bit support on windows
+      - if: runner.os == 'windows'
+        uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
 
       - name: setup rtools for 32-bit
         run: |
           echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
+          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
           gfortran --version
         if: ${{ matrix.buildplat[1] == 'win32' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@02ad79a31bf7aa0eee07f690509048d2fb9fd445 # v2.12.1
+        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f # v2.12.3
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
@@ -171,7 +175,7 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -180,7 +184,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"

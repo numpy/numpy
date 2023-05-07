@@ -21,13 +21,13 @@ cdef extern from "src/sfc64/sfc64.h":
     void sfc64_set_state(sfc64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
 
 
-cdef uint64_t sfc64_uint64(void* st) nogil:
+cdef uint64_t sfc64_uint64(void* st) noexcept nogil:
     return sfc64_next64(<sfc64_state *>st)
 
-cdef uint32_t sfc64_uint32(void *st) nogil:
+cdef uint32_t sfc64_uint32(void *st) noexcept nogil:
     return sfc64_next32(<sfc64_state *> st)
 
-cdef double sfc64_double(void* st) nogil:
+cdef double sfc64_double(void* st) noexcept nogil:
     return uint64_to_double(sfc64_next64(<sfc64_state *>st))
 
 

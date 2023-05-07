@@ -66,6 +66,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "compiled_base.h"
 #include "mem_overlap.h"
 #include "typeinfo.h"
+#include "convert.h" /* for PyArray_AssignZero */
 
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
@@ -494,7 +495,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr, ndim, shape, strides, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }
@@ -599,7 +600,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr,  1, &shape, &stride, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }
@@ -1084,7 +1085,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     /* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
-        memset(PyArray_DATA(out_buf), 0, PyArray_NBYTES(out_buf));
+        if (PyArray_AssignZero(out_buf, NULL) < 0) {
+            goto fail;
+        }
     }
 
     dot = PyArray_DESCR(out_buf)->f->dotfunc;

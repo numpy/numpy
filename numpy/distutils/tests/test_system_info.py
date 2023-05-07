@@ -271,7 +271,7 @@ class TestSystemInfoReading:
 
             # But if we copy the values to a '[mkl]' section the value
             # is correct
-            with open(cfg, 'r') as fid:
+            with open(cfg) as fid:
                 mkl = fid.read().replace('[ALL]', '[mkl]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(mkl)
@@ -279,7 +279,7 @@ class TestSystemInfoReading:
             assert info.get_lib_dirs() == lib_dirs
 
             # Also, the values will be taken from a section named '[DEFAULT]'
-            with open(cfg, 'r') as fid:
+            with open(cfg) as fid:
                 dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)

@@ -159,11 +159,11 @@ class concat_license_files():
 
     def __enter__(self):
         """Concatenate files and remove LICENSES_bundled.txt"""
-        with open(self.f1, 'r') as f1:
+        with open(self.f1) as f1:
             self.bsd_text = f1.read()
 
         with open(self.f1, 'a') as f1:
-            with open(self.f2, 'r') as f2:
+            with open(self.f2) as f2:
                 self.bundled_text = f2.read()
                 f1.write('\n\n')
                 f1.write(self.bundled_text)
@@ -193,9 +193,6 @@ def get_build_overrides():
     from numpy._utils import _pep440
 
     def try_compile(compiler, file, flags = [], verbose=False):
-        # To bypass trapping warnings by Travis CI
-        if getattr(compiler, 'compiler_type', '') == 'unix':
-            flags = ['-Werror'] + flags
         bk_ver = getattr(compiler, 'verbose', False)
         compiler.verbose = verbose
         try:
@@ -270,7 +267,7 @@ def get_build_overrides():
             constexpr bool test_fold = (... && std::is_const_v<T>);
             int main()
             {
-                if constexpr (test_fold<int, const int>) {
+                if (test_fold<int, const int>) {
                     return 0;
                 }
                 else {

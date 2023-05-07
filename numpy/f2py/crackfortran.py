@@ -1740,6 +1740,28 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         d1[k] = unmarkouterparen(d1[k])
                     else:
                         del d1[k]
+
+                if 'len' in d1:
+                    if typespec in ['complex', 'integer', 'logical', 'real']:
+                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
+                            edecl['kindselector'] = {}
+                        edecl['kindselector']['*'] = d1['len']
+                        del d1['len']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
+
+                if 'init' in d1:
+                    if '=' in edecl and (not edecl['='] == d1['init']):
+                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
+                            ename, edecl['='], d1['init']))
+                    else:
+                        edecl['='] = d1['init']
+
                 if 'len' in d1 and 'array' in d1:
                     if d1['len'] == '':
                         d1['len'] = d1['array']
@@ -1749,6 +1771,7 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         del d1['len']
                         errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
                             typespec, e, typespec, ename, d1['array']))
+
                 if 'array' in d1:
                     dm = 'dimension(%s)' % d1['array']
                     if 'attrspec' not in edecl or (not edecl['attrspec']):
@@ -1762,23 +1785,6 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                                         % (ename, dm1, dm))
                                 break
 
-                if 'len' in d1:
-                    if typespec in ['complex', 'integer', 'logical', 'real']:
-                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
-                            edecl['kindselector'] = {}
-                        edecl['kindselector']['*'] = d1['len']
-                    elif typespec == 'character':
-                        if ('charselector' not in edecl) or (not edecl['charselector']):
-                            edecl['charselector'] = {}
-                        if 'len' in edecl['charselector']:
-                            del edecl['charselector']['len']
-                        edecl['charselector']['*'] = d1['len']
-                if 'init' in d1:
-                    if '=' in edecl and (not edecl['='] == d1['init']):
-                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            ename, edecl['='], d1['init']))
-                    else:
-                        edecl['='] = d1['init']
             else:
                 outmess('updatevars: could not crack entity declaration "%s". Ignoring.\n' % (
                     ename + m.group('after')))
@@ -2387,19 +2393,19 @@ def _selected_int_kind_func(r):
 
 def _selected_real_kind_func(p, r=0, radix=0):
     # XXX: This should be processor dependent
-    # This is only good for 0 <= p <= 20
+    # This is only verified for 0 <= p <= 20, possibly good for p <= 33 and above
     if p < 7:
         return 4
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc', 'arm64')):
-        if p <= 20:
+    if machine.startswith(('aarch64', 'arm64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+        if p <= 33:
             return 16
     else:
         if p < 19:
             return 10
-        elif p <= 20:
+        elif p <= 33:
             return 16
     return -1
 
@@ -2850,6 +2856,11 @@ def analyzevars(block):
                         kindselect, charselect, typename = cracktypespec(
                             typespec, selector)
                         vars[n]['typespec'] = typespec
+                        try:
+                            if block['result']:
+                                vars[block['result']]['typespec'] = typespec
+                        except Exception:
+                            pass
                         if kindselect:
                             if 'kind' in kindselect:
                                 try:
