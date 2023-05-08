@@ -17,7 +17,6 @@ NumPy documentation
 **Version**: |version|
 
 **Download documentation**:
-`PDF Version <https://numpy.org/doc/stable/numpy-user.pdf>`_ |
 `Historical versions of documentation <https://numpy.org/doc/>`_
    
 **Useful links**:
