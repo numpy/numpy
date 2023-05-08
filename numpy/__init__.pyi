@@ -674,12 +674,6 @@ test: PytestTester
 #
 # Placeholders for classes
 
-# Some of these are aliases; others are wrappers with an identical signature
-product = prod
-cumproduct = cumprod
-sometrue = any
-alltrue = all
-
 def show_config() -> None: ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray[Any, Any])
