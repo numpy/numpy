@@ -210,6 +210,7 @@ from numpy import (
     testing as testing,
     version as version,
     exceptions as exceptions,
+    dtypes as dtypes,
 )
 
 from numpy.core import defchararray, records
