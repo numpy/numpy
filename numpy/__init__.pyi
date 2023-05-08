@@ -675,7 +675,6 @@ test: PytestTester
 # Placeholders for classes
 
 # Some of these are aliases; others are wrappers with an identical signature
-round_ = around
 product = prod
 cumproduct = cumprod
 sometrue = any
