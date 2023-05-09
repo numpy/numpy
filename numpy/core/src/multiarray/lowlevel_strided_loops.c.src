@@ -1614,11 +1614,13 @@ mapiter_@name@(
     if (mit->subspace_iter == NULL) {
         /*
          * Item by item copy situation, the operand is buffered
-         * so use copyswap.  The iterator may not do any transfers, so may
+         * so use a cast to copy.  The iterator may not do any transfers, so may
          * not have set `needs_api` yet, set it if necessary:
          */
         needs_api |= PyDataType_REFCHK(PyArray_DESCR(array));
-        PyArray_CopySwapFunc *copyswap = PyArray_DESCR(array)->f->copyswap;
+        npy_intp itemsize = PyArray_ITEMSIZE(array);
+        npy_intp strides[2] = {itemsize, itemsize};
+        npy_intp one = 1;
 
         /* We have only one iterator handling everything */
         counter = NpyIter_GetInnerLoopSizePtr(mit->outer);
@@ -1641,7 +1643,7 @@ mapiter_@name@(
             }
 
             /* Optimization for aligned types that do not need the api */
-            switch ((is_aligned && !needs_api) ? PyArray_ITEMSIZE(array) : 0) {
+            switch ((is_aligned && !needs_api) ? itemsize : 0) {
 
 /**begin repeat2
  * #elsize = 1, 2, 4, 8, 16, 0#
@@ -1696,7 +1698,13 @@ mapiter_@name@(
                                               _UINT_ALIGN(@copytype@)));
                         *(@copytype@ *)(outer_ptrs[i]) = *(@copytype@ *)self_ptr;
 #else
-                        copyswap(outer_ptrs[i], self_ptr, 0, array);
+                        char *args[2] = {self_ptr, outer_ptrs[i]};
+                        if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
+                                               args, &one, strides,
+                                               cast_info->auxdata) < 0)) {
+                                           NPY_END_THREADS;
+                                           return -1;
+                                       }
 #endif
 #else /* !@isget@ */
 #if @elsize@
@@ -1706,7 +1714,13 @@ mapiter_@name@(
                                _UINT_ALIGN(@copytype@)));
                         *(@copytype@ *)self_ptr = *(@copytype@ *)(outer_ptrs[i]);
 #else
-                        copyswap(self_ptr, outer_ptrs[i], 0, array);
+                        char *args[2] = {outer_ptrs[i], self_ptr};
+                        if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
+                                               args, &one, strides,
+                                               cast_info->auxdata) < 0)) {
+                                           NPY_END_THREADS;
+                                           return -1;
+                                       }
 #endif
 #endif
                         /* advance extra operand */
