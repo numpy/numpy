@@ -1,5 +1,5 @@
 from contextlib import nullcontext
-
+import operator
 import numpy as np
 from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
@@ -22,7 +22,7 @@ mode_equivalents = {
 @set_module('numpy')
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
-
+    
     Memory-mapped files are used for accessing small segments of large files
     on disk, without reading the entire file into memory.  NumPy's
     memmap's are array-like objects.  This differs from Python's ``mmap``
@@ -81,6 +81,11 @@ class memmap(ndarray):
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
         and data-type.
+
+        .. versionchanged:: 1.25
+         The shape parameter can now be any integer sequence type, previously
+         types were limited to tuple and int.
+    
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -242,10 +247,12 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if not hasattr(shape, '__iter__'):
-                    shape = (shape,)
-                elif not isinstance(shape, tuple):
-                    shape = tuple(shape)
+                if type(shape) not in (tuple, list):
+                    try:
+                        shape = [operator.index(shape)]
+                    except TypeError:
+                        pass
+                shape = tuple(shape)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
                     size *= k
