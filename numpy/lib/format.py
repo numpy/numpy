@@ -165,8 +165,9 @@ import numpy
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    isfileobj, os_fspath, pickle
+    os_fspath, pickle
     )
+from numpy.compat.py3k import _isfileobj
 
 
 __all__ = []
@@ -710,7 +711,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
             pickle_kwargs = {}
         pickle.dump(array, fp, protocol=3, **pickle_kwargs)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
-        if isfileobj(fp):
+        if _isfileobj(fp):
             array.T.tofile(fp)
         else:
             for chunk in numpy.nditer(
@@ -718,7 +719,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                     buffersize=buffersize, order='F'):
                 fp.write(chunk.tobytes('C'))
     else:
-        if isfileobj(fp):
+        if _isfileobj(fp):
             array.tofile(fp)
         else:
             for chunk in numpy.nditer(
@@ -796,7 +797,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                                "You may need to pass the encoding= option "
                                "to numpy.load" % (err,)) from err
     else:
-        if isfileobj(fp):
+        if _isfileobj(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
@@ -888,7 +889,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     numpy.memmap
 
     """
-    if isfileobj(filename):
+    if _isfileobj(filename):
         raise ValueError("Filename must be a string or a path-like object."
                          "  Memmap cannot use existing file handles.")
 
