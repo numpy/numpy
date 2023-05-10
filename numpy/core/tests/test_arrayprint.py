@@ -258,7 +258,6 @@ class TestArray2String:
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
-
     def test_structure_format_mixed(self):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)

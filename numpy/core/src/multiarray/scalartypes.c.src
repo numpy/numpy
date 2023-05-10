@@ -298,7 +298,7 @@ genint_type_str(PyObject *self)
             item = PyLong_FromLong(*(int32_t *)val);
             break;
         case NPY_UINT:
-            item = PyLong_FromUnsignedLong(*(int32_t *)val);
+            item = PyLong_FromUnsignedLong(*(uint32_t *)val);
             break;
         case NPY_LONG:
             item = PyLong_FromLong(*(int64_t *)val);
