@@ -31,7 +31,7 @@
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
 
-typedef int traverse_func_get(
+typedef int get_traverse_func_function(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
         npy_intp stride, NPY_traverse_info *clear_info,
         NPY_ARRAYMETHOD_FLAGS *flags);
@@ -318,7 +318,7 @@ get_fields_traverse_function(
         void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
         npy_intp stride, traverse_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
-        traverse_func_get *traverse_func_get)
+        get_traverse_func_function *get_traverse_func)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *fld_dtype;
@@ -351,13 +351,13 @@ get_fields_traverse_function(
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return -1;
         }
-        if (traverse_func_get == &get_clear_function
+        if (get_traverse_func == &get_clear_function
                 && !PyDataType_REFCHK(fld_dtype)) {
             /* No need to do clearing (could change to use NULL return) */
             continue;
         }
         NPY_ARRAYMETHOD_FLAGS clear_flags;
-        if (traverse_func_get(
+        if (get_traverse_func(
                 traverse_context, fld_dtype, 0,
                 stride, &field->info, &clear_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
@@ -459,7 +459,7 @@ get_subarray_traverse_func(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
         npy_intp size, npy_intp stride, traverse_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
-        traverse_func_get *traverse_func_get)
+        get_traverse_func_function *get_traverse_func)
 {
     subarray_traverse_data *auxdata = PyMem_Malloc(sizeof(subarray_traverse_data));
     if (auxdata == NULL) {
@@ -471,7 +471,7 @@ get_subarray_traverse_func(
     auxdata->base.free = &subarray_traverse_data_free;
     auxdata->base.clone = subarray_traverse_data_clone;
 
-    if (traverse_func_get(
+    if (get_traverse_func(
             traverse_context, dtype, aligned,
             dtype->elsize, &auxdata->info, flags) < 0) {
         PyMem_Free(auxdata);
