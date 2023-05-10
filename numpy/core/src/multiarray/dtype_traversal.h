@@ -29,11 +29,10 @@ npy_object_get_fill_zero_loop(
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
-npy_void_get_fill_zero_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *descr,
-        int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
-        traverse_loop_function **out_loop, NpyAuxData **NPY_UNUSED(out_auxdata),
-        NPY_ARRAYMETHOD_FLAGS *flags);
+npy_get_zerofill_void_and_legacy_user_dtype_loop(
+        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        npy_intp stride, traverse_loop_function **out_func,
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 /* Helper to deal with calling or nesting simple strided loops */
