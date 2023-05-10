@@ -243,7 +243,7 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = positive, negative, absolute, invert, int, float#
+ * #name = positive, negative, absolute, invert#
  */
 static PyObject *
 gentype_@name@(PyObject *m1)
@@ -259,6 +259,21 @@ gentype_@name@(PyObject *m1)
     return ret;
 }
 /**end repeat**/
+
+
+/**begin repeat
+ *
+ * #name = int, float#
+ */
+static PyObject *
+gentype_@name@(PyObject *self)
+{
+    PyErr_Format(PyExc_TypeError,
+        "cannot convert '%s' to @name@.", Py_TYPE(self)->tp_name);
+    return NULL;
+}
+/**end repeat**/
+
 
 static int
 gentype_nonzero_number(PyObject *m1)
