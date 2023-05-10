@@ -279,7 +279,43 @@ static PyObject *
 genint_type_str(PyObject *self)
 {
     PyObject  *item, *item_str;
-    item = gentype_generic_method(self, NULL, NULL, "item");
+    PyArray_Descr *descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
+    void *val = scalar_value(self, descr);
+    switch (descr->type_num) {
+        case NPY_BYTE:
+            item = PyLong_FromLong(*(int8_t *)val);
+            break;
+        case NPY_UBYTE:
+            item = PyLong_FromUnsignedLong(*(uint8_t *)val);
+            break;
+        case NPY_SHORT:
+            item = PyLong_FromLong(*(int16_t *)val);
+            break;
+        case NPY_USHORT:
+            item = PyLong_FromUnsignedLong(*(uint16_t *)val);
+            break;
+        case NPY_INT:
+            item = PyLong_FromLong(*(int32_t *)val);
+            break;
+        case NPY_UINT:
+            item = PyLong_FromUnsignedLong(*(int32_t *)val);
+            break;
+        case NPY_LONG:
+            item = PyLong_FromLong(*(int64_t *)val);
+            break;
+        case NPY_ULONG:
+            item = PyLong_FromUnsignedLong(*(uint64_t *)val);
+            break;
+        case NPY_LONGLONG:
+            item = PyLong_FromLongLong(*(long long *)val);
+            break;
+        case NPY_ULONGLONG:
+            item = PyLong_FromUnsignedLongLong(*(unsigned long long *)val);
+            break;
+        default:
+            item = gentype_generic_method(self, NULL, NULL, "item");
+            break;
+    }
     if (item == NULL) {
         return NULL;
     }
