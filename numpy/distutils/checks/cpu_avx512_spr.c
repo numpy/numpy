@@ -15,6 +15,7 @@
 
 int main(int argc, char **argv)
 {
+#error
     __m512h a = _mm512_loadu_ph((void*)argv[argc-1]);
     __m512h temp = _mm512_fmadd_ph(a, a, a);
     _mm512_storeu_ph((void*)(argv[argc-1]), temp);
