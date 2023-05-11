@@ -72,7 +72,7 @@ class Half final {
     {
     #if defined(NPY_HAVE_AVX512FP16)
         __m128d md = _mm_load_sd(&f);
-        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_castph_si128(_mm_cvtpd_ph(md))));
+        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_castph_si128(_mm_cvtpd_ph(mf))));
     #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
         __vector double vf64 = vec_splats(f);
         __vector unsigned short vf16;
