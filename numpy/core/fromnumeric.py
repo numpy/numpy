@@ -1801,9 +1801,10 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        y is an array of the same subtype as `a`, with shape ``(a.size,)``.
-        Note that matrices are special cased for backward compatibility, if `a`
-        is a matrix, then y is a 1-D ndarray.
+        y is a contiguous 1-D array of the same subtype as `a`,
+        with shape ``(a.size,)``.
+        Note that matrices are special cased for backward compatibility,
+        if `a` is a matrix, then y is a 1-D ndarray.
 
     See Also
     --------
@@ -1822,7 +1823,8 @@ def ravel(a, order='C'):
     column-major, Fortran-style index ordering.
 
     When a view is desired in as many cases as possible, ``arr.reshape(-1)``
-    may be preferable.
+    may be preferable. However, ``ravel`` supports ``K`` in the optional
+    ``order`` argument while ``reshape`` does not.
 
     Examples
     --------
