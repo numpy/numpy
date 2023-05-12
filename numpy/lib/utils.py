@@ -1145,7 +1145,7 @@ def _opt_info():
 def drop_metadata(dtype, /):
     """
     Returns the dtype unchanged if it contained no metadata or a copy of the
-    dtype it (or any of its structure dtypes) contained metadata.
+    dtype if it (or any of its structure dtypes) contained metadata.
 
     This utility is used by `np.save` and `np.savez` to drop metadata before
     saving.
