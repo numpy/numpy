@@ -93,7 +93,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', ['bool8'],
+add_newdoc_for_scalar_type('bool_', [],
     """
     Boolean type (True or False), stored as a byte.
 
