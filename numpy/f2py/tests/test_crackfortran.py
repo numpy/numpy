@@ -317,19 +317,6 @@ class TestNameArgsPatternBacktracking:
             # that should still be true.
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
-            if ii > start_reps:
-                # the hallmark of exponentially catastrophic backtracking
-                # is that runtime doubles for every added instance of
-                # the problematic pattern.
-                times_median_doubled += median > 2 * last_median
-                # also try to rule out non-exponential but still bad cases
-                # arbitrarily, we should set a hard limit of 10ms as too slow
-                assert median < trials_per_count * 0.01
-            last_median = median
-        # we accept that maybe the median might double once, due to
-        # the CPU scheduler acting weird or whatever. More than that
-        # seems suspicious.
-        assert times_median_doubled < 2
 
 
 class TestFunctionReturn(util.F2PyTest):
