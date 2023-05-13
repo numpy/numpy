@@ -2,6 +2,10 @@
  * This module corresponds to the `Special functions for NPY_OBJECT`
  * section in the numpy reference for C-API.
  */
+#include "array_method.h"
+#include "dtype_traversal.h"
+#include "lowlevel_strided_loops.h"
+#include "pyerrors.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -12,13 +16,101 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "iterators.h"
+#include "dtypemeta.h"
+#include "refcount.h"
 
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
 
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+/*
+ * Helper function to clear a strided memory (normally or always contiguous)
+ * from all Python (or other) references.  The function does nothing if the
+ * array dtype does not indicate holding references.
+ *
+ * It is safe to call this function more than once, failing here is usually
+ * critical (during cleanup) and should be set up to minimize the risk or
+ * avoid it fully.
+ */
+NPY_NO_EXPORT int
+PyArray_ClearBuffer(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned)
+{
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+
+    NPY_traverse_info clear_info;
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
+    if (PyArray_GetClearFunction(
+            aligned, stride, descr, &clear_info, &flags_unused) < 0) {
+        return -1;
+    }
+
+    int res = clear_info.func(
+            NULL, clear_info.descr, data, size, stride, clear_info.auxdata);
+    NPY_traverse_info_xfree(&clear_info);
+    return res;
+}
+
+
+/*
+ * Helper function to clear whole array.  It seems plausible that we should
+ * be able to get away with assuming the the array is contiguous.
+ *
+ * Must only be called on arrays which own their data (and asserts this).
+ */
+ NPY_NO_EXPORT int
+ PyArray_ClearArray(PyArrayObject *arr)
+ {
+    assert(PyArray_FLAGS(arr) & NPY_ARRAY_OWNDATA);
+
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    /*
+     * The contiguous path should cover practically all important cases since
+     * it is difficult to create a non-contiguous array which owns its memory
+     * and only arrays which own their memory should clear it.
+     */
+    int aligned = PyArray_ISALIGNED(arr);
+    if (PyArray_ISCONTIGUOUS(arr)) {
+        return PyArray_ClearBuffer(
+                descr, PyArray_BYTES(arr), descr->elsize,
+                PyArray_SIZE(arr), aligned);
+    }
+    int idim, ndim;
+    npy_intp shape_it[NPY_MAXDIMS], strides_it[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    char *data_it;
+    if (PyArray_PrepareOneRawArrayIter(
+                    PyArray_NDIM(arr), PyArray_DIMS(arr),
+                    PyArray_BYTES(arr), PyArray_STRIDES(arr),
+                    &ndim, shape_it, &data_it, strides_it) < 0) {
+        return -1;
+    }
+    npy_intp inner_stride = strides_it[0];
+    npy_intp inner_shape = shape_it[0];
+    NPY_traverse_info clear_info;
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
+    if (PyArray_GetClearFunction(
+            aligned, inner_stride, descr, &clear_info, &flags_unused) < 0) {
+        return -1;
+    }
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+        /* Process the innermost dimension */
+        if (clear_info.func(NULL, clear_info.descr,
+                data_it, inner_shape, inner_stride, clear_info.auxdata) < 0) {
+            return -1;
+        }
+    } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
+                            shape_it, data_it, strides_it);
+    return 0;
+}
 
 
 /*NUMPY_API
@@ -204,6 +296,10 @@ PyArray_INCREF(PyArrayObject *mp)
 /*NUMPY_API
   Decrement all internal references for object arrays.
   (or arrays with object fields)
+
+  The use of this function is strongly discouraged, within NumPy
+  use PyArray_Clear, which DECREF's and sets everything to NULL and can
+  work with any dtype.
 */
 NPY_NO_EXPORT int
 PyArray_XDECREF(PyArrayObject *mp)
@@ -254,15 +350,28 @@ PyArray_XDECREF(PyArrayObject *mp)
     return 0;
 }
 
+
+static void
+_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+
+
 /*NUMPY_API
  * Assumes contiguous
  */
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
+    PyArray_Descr* descr = PyArray_DESCR(arr);
+
+    // non-legacy dtypes are responsible for initializing
+    // their own internal references
+    if (!NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+        return;
+    }
+
     npy_intp i,n;
     n = PyArray_SIZE(arr);
-    if (PyArray_DESCR(arr)->type_num == NPY_OBJECT) {
+    if (descr->type_num == NPY_OBJECT) {
         PyObject **optr;
         optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
@@ -282,8 +391,8 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         char *optr;
         optr = PyArray_DATA(arr);
         for (i = 0; i < n; i++) {
-            _fillobject(optr, obj, PyArray_DESCR(arr));
-            optr += PyArray_DESCR(arr)->elsize;
+            _fillobject(optr, obj, descr);
+            optr += descr->elsize;
         }
     }
 }

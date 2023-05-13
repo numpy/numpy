@@ -43,6 +43,7 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512VNNI        = 42,
     NPY_CPU_FEATURE_AVX512VBMI2       = 43,
     NPY_CPU_FEATURE_AVX512BITALG      = 44,
+    NPY_CPU_FEATURE_AVX512FP16        = 45,
 
     // X86 CPU Groups
     // Knights Landing (F,CD,ER,PF)
@@ -57,6 +58,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512_CNL        = 105,
     // Ice Lake        (F,CD,BW,DQ,VL,IFMA,VBMI,VNNI,VBMI2,BITALG,VPOPCNTDQ)
     NPY_CPU_FEATURE_AVX512_ICL        = 106,
+    // Sapphire Rapids (Ice Lake, AVX512FP16)
+    NPY_CPU_FEATURE_AVX512_SPR        = 107,
 
     // IBM/POWER VSX
     // POWER7
@@ -103,13 +106,25 @@ enum npy_cpu_features
  *  - detects runtime CPU features
  *  - check that baseline CPU features are present
  *  - uses 'NPY_DISABLE_CPU_FEATURES' to disable dispatchable features
+ *  - uses 'NPY_ENABLE_CPU_FEATURES' to enable dispatchable features
  *
  * It will set a RuntimeError when 
  *  - CPU baseline features from the build are not supported at runtime
  *  - 'NPY_DISABLE_CPU_FEATURES' tries to disable a baseline feature
- * and will warn if 'NPY_DISABLE_CPU_FEATURES' tries to disable a feature that
- * is not disabled (the machine or build does not support it, or the project was
- * not built with any feature optimization support)
+ *  - 'NPY_DISABLE_CPU_FEATURES' and 'NPY_ENABLE_CPU_FEATURES' are
+ *    simultaneously set
+ *  - 'NPY_ENABLE_CPU_FEATURES' tries to enable a feature that is not supported
+ *    by the machine or build
+ *  - 'NPY_ENABLE_CPU_FEATURES' tries to enable a feature when the project was
+ *    not built with any feature optimization support
+ *  
+ * It will set an ImportWarning when:
+ *  - 'NPY_DISABLE_CPU_FEATURES' tries to disable a feature that is not supported
+ *    by the machine or build
+ *  - 'NPY_DISABLE_CPU_FEATURES' or 'NPY_ENABLE_CPU_FEATURES' tries to
+ *    disable/enable a feature when the project was not built with any feature
+ *    optimization support
+ * 
  * return 0 on success otherwise return -1
  */
 NPY_VISIBILITY_HIDDEN int

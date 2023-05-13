@@ -19,7 +19,7 @@
  * Coercion to boolean is done via integer right now.
  */
 NPY_NO_EXPORT int
-to_bool(PyArray_Descr *NPY_UNUSED(descr),
+npy_to_bool(PyArray_Descr *NPY_UNUSED(descr),
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
 {
@@ -47,7 +47,7 @@ to_bool(PyArray_Descr *NPY_UNUSED(descr),
  *        (used by the complex parser).
  * @param result Output stored as double value.
  */
-static NPY_INLINE int
+static inline int
 double_from_ucs4(
         const Py_UCS4 *str, const Py_UCS4 *end,
         bool strip_whitespace, double *result, const Py_UCS4 **p_end)
@@ -110,7 +110,7 @@ double_from_ucs4(
 
 
 NPY_NO_EXPORT int
-to_float(PyArray_Descr *descr,
+npy_to_float(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
 {
@@ -133,7 +133,7 @@ to_float(PyArray_Descr *descr,
 
 
 NPY_NO_EXPORT int
-to_double(PyArray_Descr *descr,
+npy_to_double(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
 {
@@ -228,7 +228,7 @@ to_complex_int(
 
 
 NPY_NO_EXPORT int
-to_cfloat(PyArray_Descr *descr,
+npy_to_cfloat(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig)
 {
@@ -253,7 +253,7 @@ to_cfloat(PyArray_Descr *descr,
 
 
 NPY_NO_EXPORT int
-to_cdouble(PyArray_Descr *descr,
+npy_to_cdouble(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig)
 {
@@ -280,7 +280,7 @@ to_cdouble(PyArray_Descr *descr,
  * String and unicode conversion functions.
  */
 NPY_NO_EXPORT int
-to_string(PyArray_Descr *descr,
+npy_to_string(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
 {
@@ -309,7 +309,7 @@ to_string(PyArray_Descr *descr,
 
 
 NPY_NO_EXPORT int
-to_unicode(PyArray_Descr *descr,
+npy_to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
 {
@@ -362,7 +362,7 @@ call_converter_function(
 
 
 NPY_NO_EXPORT int
-to_generic_with_converter(PyArray_Descr *descr,
+npy_to_generic_with_converter(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *config, PyObject *func)
 {
@@ -387,9 +387,9 @@ to_generic_with_converter(PyArray_Descr *descr,
 
 
 NPY_NO_EXPORT int
-to_generic(PyArray_Descr *descr,
+npy_to_generic(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *config)
 {
-    return to_generic_with_converter(descr, str, end, dataptr, config, NULL);
+    return npy_to_generic_with_converter(descr, str, end, dataptr, config, NULL);
 }

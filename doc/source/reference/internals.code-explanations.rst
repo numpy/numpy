@@ -1,7 +1,7 @@
 :orphan:
 
 *************************
-NumPy C Code Explanations
+NumPy C code explanations
 *************************
 
 .. This document has been moved to ../dev/internals.code-explanations.rst.

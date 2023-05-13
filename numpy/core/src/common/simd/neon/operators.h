@@ -240,10 +240,35 @@
 
 // check special cases
 NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
-{ return vceqq_f32(a, a); }
+{
+#if defined(__clang__)
+/**
+ * To avoid signaling qNaN, workaround for clang symmetric inputs bug
+ * check https://github.com/numpy/numpy/issues/22933,
+ * for more clarification.
+ */
+    npyv_b32 ret;
+    #if NPY_SIMD_F64
+        __asm("fcmeq %0.4s, %1.4s, %1.4s" : "=w" (ret) : "w" (a));
+    #else
+        __asm("vceq.f32 %q0, %q1, %q1" : "=w" (ret) : "w" (a));
+    #endif
+    return ret;
+#else
+    return vceqq_f32(a, a);
+#endif
+}
 #if NPY_SIMD_F64
     NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
-    { return vceqq_f64(a, a); }
+    {
+    #if defined(__clang__)
+        npyv_b64 ret;
+        __asm("fcmeq %0.2d, %1.2d, %1.2d" : "=w" (ret) : "w" (a));
+        return ret;
+    #else
+        return vceqq_f64(a, a);
+    #endif
+    }
 #endif
 
 // Test cross all vector lanes

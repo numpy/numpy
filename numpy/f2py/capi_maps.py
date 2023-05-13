@@ -196,7 +196,7 @@ def load_f2cmap_file(f2cmap_file):
     # they use PARAMETERS in type specifications.
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
-        with open(f2cmap_file, 'r') as f:
+        with open(f2cmap_file) as f:
             d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
             for k1 in d1.keys():
@@ -342,9 +342,9 @@ def getstrlength(var):
 def getarrdims(a, var, verbose=0):
     ret = {}
     if isstring(var) and not isarray(var):
-        ret['dims'] = getstrlength(var)
-        ret['size'] = ret['dims']
-        ret['rank'] = '1'
+        ret['size'] = getstrlength(var)
+        ret['rank'] = '0'
+        ret['dims'] = ''
     elif isscalar(var):
         ret['size'] = '1'
         ret['rank'] = '0'

@@ -61,8 +61,11 @@ GTAGS
 
 # Python files #
 ################
-# setup.py working directory
+# meson build/installation directories
 build
+build-install
+# meson python output
+.mesonpy-native-file.ini
 # sphinx build directory
 _build
 # setup.py dist directory
@@ -129,12 +132,7 @@ numpy/core/include/numpy/__ufunc_api.c
 numpy/core/include/numpy/__umath_generated.c
 numpy/core/include/numpy/_umath_doc_generated.h
 numpy/core/include/numpy/config.h
-numpy/core/include/numpy/multiarray_api.txt
-numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
-numpy/core/src/common/npy_binsearch.h
-numpy/core/src/common/npy_cpu_features.c
-numpy/core/src/common/npy_partition.h
 numpy/core/src/common/npy_sort.h
 numpy/core/src/common/templ_common.h
 numpy/core/src/multiarray/_multiarray_tests.c
@@ -160,8 +158,6 @@ numpy/core/src/npysort/sort.c
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
 numpy/core/src/private/templ_common.h
-numpy/core/src/umath/_rational_tests.c
-numpy/core/src/umath/_struct_ufunc_tests.c
 numpy/core/src/umath/_umath_tests.c
 numpy/core/src/umath/scalarmath.c
 numpy/core/src/umath/funcs.inc
@@ -183,6 +179,7 @@ benchmarks/html
 benchmarks/env
 benchmarks/numpy
 benchmarks/_asv_compare.conf.json
+test.obj
 # cythonized files
 cythonize.dat
 numpy/random/_mtrand/_mtrand.c
@@ -213,14 +210,18 @@ tools/swig/test/Array.py
 *.dispatch.h
 # wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
 *.dispatch.*.c
+*.dispatch.*.cpp
 # _simd module
 numpy/core/src/_simd/_simd.dispatch.c
 numpy/core/src/_simd/_simd_data.inc
 numpy/core/src/_simd/_simd_inc.h
 # umath module
+numpy/core/src/umath/loops_unary.dispatch.c
 numpy/core/src/umath/loops_unary_fp.dispatch.c
+numpy/core/src/umath/loops_unary_fp_le.dispatch.c
 numpy/core/src/umath/loops_arithm_fp.dispatch.c
 numpy/core/src/umath/loops_arithmetic.dispatch.c
+numpy/core/src/umath/loops_logical.dispatch.c
 numpy/core/src/umath/loops_minmax.dispatch.c
 numpy/core/src/umath/loops_trigonometric.dispatch.c
 numpy/core/src/umath/loops_exponent_log.dispatch.c
@@ -228,9 +229,8 @@ numpy/core/src/umath/loops_umath_fp.dispatch.c
 numpy/core/src/umath/loops_hyperbolic.dispatch.c
 numpy/core/src/umath/loops_modulo.dispatch.c
 numpy/core/src/umath/loops_comparison.dispatch.c
-# npysort module
-numpy/core/src/npysort/x86-qsort.dispatch.c
-numpy/core/src/npysort/x86-qsort.dispatch.*.cpp
+numpy/core/src/umath/loops_unary_complex.dispatch.c
+numpy/core/src/umath/loops_autovec.dispatch.c
 # multiarray module
 numpy/core/src/multiarray/argfunc.dispatch.c
 numpy/core/src/multiarray/arraytypes.h

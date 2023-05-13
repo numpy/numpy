@@ -13,7 +13,23 @@ When adding a function, make sure to use the next integer not used as an index
 exception, so it should hopefully not get unnoticed).
 
 """
-from code_generators.genapi import StealRef
+
+import os
+import importlib.util
+
+
+def get_annotations():
+    # Convoluted because we can't import from numpy.distutils
+    # (numpy is not yet built)
+    genapi_py = os.path.join(os.path.dirname(__file__), 'genapi.py')
+    spec = importlib.util.spec_from_file_location('conv_template', genapi_py)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.StealRef, mod.MinVersion
+
+
+StealRef, MinVersion = get_annotations()
+#from code_generators.genapi import StealRef
 
 # index, type
 multiarray_global_vars = {
@@ -351,8 +367,8 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
-    'PyDataMem_SetHandler':                 (304,),
-    'PyDataMem_GetHandler':                 (305,),
+    'PyDataMem_SetHandler':                 (304, MinVersion("1.22")),
+    'PyDataMem_GetHandler':                 (305, MinVersion("1.22")),
     # End 1.22 API
 }
 
@@ -406,7 +422,7 @@ ufunc_funcs_api = {
     # End 1.7 API
     'PyUFunc_RegisterLoopForDescr':             (41,),
     # End 1.8 API
-    'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42,),
+    'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42, MinVersion("1.16")),
     # End 1.16 API
 }
 

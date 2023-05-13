@@ -177,8 +177,14 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
         return NULL;
     }
 
-    typenum = PyArray_ObjectType(x, 0);
+    typenum = PyArray_ObjectType(x, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(fill, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     ax = (PyArrayObject*)PyArray_FromObject(x, typenum, 1, 10);
     if (ax == NULL) {
@@ -343,7 +349,10 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
         return NULL;
     }
 
-    typenum = PyArray_ObjectType(x, 0);
+    typenum = PyArray_ObjectType(x, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     ax = (PyArrayObject*)PyArray_FromObject(x, typenum, 1, 10);
     if (ax == NULL) {

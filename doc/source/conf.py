@@ -62,6 +62,13 @@ def replace_scalar_type_names():
 
 replace_scalar_type_names()
 
+
+# As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
+# For some reasons, the doc build accesses these, so ignore them.
+import warnings
+warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
+
+
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
@@ -156,7 +163,6 @@ def setup(app):
 # If we deemed it desirable, we could in future make these real modules, which
 # would make `from numpy.char import split` work.
 sys.modules['numpy.char'] = numpy.char
-sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -248,25 +254,39 @@ latex_documents = [
 #latex_use_parts = False
 
 latex_elements = {
-    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
 }
 
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = r'''
+\newfontfamily\FontForChinese{FandolSong-Regular}[Extension=.otf]
+\catcode`琴\active\protected\def琴{{\FontForChinese\string琴}}
+\catcode`春\active\protected\def春{{\FontForChinese\string春}}
+\catcode`鈴\active\protected\def鈴{{\FontForChinese\string鈴}}
+\catcode`猫\active\protected\def猫{{\FontForChinese\string猫}}
+\catcode`傅\active\protected\def傅{{\FontForChinese\string傅}}
+\catcode`立\active\protected\def立{{\FontForChinese\string立}}
+\catcode`业\active\protected\def业{{\FontForChinese\string业}}
+\catcode`（\active\protected\def（{{\FontForChinese\string（}}
+\catcode`）\active\protected\def）{{\FontForChinese\string）}}
+
 % In the parameters section, place a newline after the Parameters
-% header
-\usepackage{xcolor}
+% header.  This is default with Sphinx 5.0.0+, so no need for
+% the old hack then.
+% Unfortunately sphinx.sty 5.0.0 did not bump its version date
+% so we check rather sphinxpackagefootnote.sty (which exists
+% since Sphinx 4.0.0).
+\makeatletter
+\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}
+    {}% Sphinx >= 5.0.0, nothing to do
+    {%
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
 % but expdlist old LaTeX package requires fixes:
 % 1) remove extra space
 \usepackage{etoolbox}
-\makeatletter
 \patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
-\makeatother
 % 2) fix bug in expdlist's way of breaking the line after long item label
-\makeatletter
 \def\breaklabel{%
     \def\@breaklabel{%
         \leavevmode\par
@@ -274,6 +294,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
+    }% Sphinx < 5.0.0 (and assumed >= 4.0.0)
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact

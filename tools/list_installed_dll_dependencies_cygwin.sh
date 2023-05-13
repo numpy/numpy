@@ -14,11 +14,11 @@
 py_ver=${1}
 dll_list=`/bin/dash tools/list_numpy_dlls.sh ${py_ver}`
 echo "Checks for existence, permissions and file type"
-ls -l ${dll_list}
-file ${dll_list}
+/usr/bin/timeout 10m /usr/bin/ls -l ${dll_list}
+/usr/bin/timeout 10m /usr/bin/file ${dll_list}
 echo "Dependency checks"
-ldd ${dll_list} | grep -F -e " => not found" && exit 1
-cygcheck ${dll_list} >cygcheck_dll_list 2>cygcheck_missing_deps
+/usr/bin/timeout 10m /usr/bin/ldd ${dll_list} | grep -F -e " => not found" && exit 1
+/usr/bin/timeout 10m /usr/bin/cygcheck ${dll_list} >cygcheck_dll_list 2>cygcheck_missing_deps
 grep -F -e "cygcheck: track_down: could not find " cygcheck_missing_deps && exit 1
 echo "Import tests"
 mkdir -p dist/
@@ -31,5 +31,5 @@ do
 			 -e "s/^\/+(home|usr).*?site-packages\/+//" \
 			 -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll$//" \
 			 -e "s/\//./g"`
-    python${py_ver} -c "import ${ext_module}"
+    /usr/bin/timeout 2m /usr/bin/python${py_ver} -c "import ${ext_module}"
 done

@@ -9,6 +9,7 @@ import operator
 import numpy as np
 
 import pytest
+from numpy.testing import IS_WASM
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -19,6 +20,7 @@ def _weak_promotion_enabled():
     np._set_promotion_state(state)
 
 
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
 def test_nep50_examples():
     with pytest.warns(UserWarning, match="result dtype changed"):
         res = np.uint8(1) + 2
@@ -129,7 +131,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
 
 @pytest.mark.parametrize("op", [operator.add, operator.pow, operator.eq])
 def test_weak_promotion_scalar_path(op):
-    # Some additional paths excercising the weak scalars.
+    # Some additional paths exercising the weak scalars.
     np._set_promotion_state("weak")
 
     # Integer path:

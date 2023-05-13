@@ -8,7 +8,7 @@ import pytest
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
+        suppress_warnings, IS_WASM
         )
 
 from numpy.random import MT19937, PCG64
@@ -811,6 +811,10 @@ class TestRandomDist:
         # gh-2089
         alpha = np.array([5.4e-01, -1.0e-16])
         assert_raises(ValueError, random.dirichlet, alpha)
+
+    def test_dirichlet_zero_alpha(self):
+        y = random.default_rng().dirichlet([5, 9, 0, 8])
+        assert_equal(y[2], 0)
 
     def test_dirichlet_alpha_non_contiguous(self):
         a = np.array([51.72840233779265162, -1.0, 39.74494232180943953])
@@ -1894,6 +1898,7 @@ class TestBroadcast:
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup_method(self):

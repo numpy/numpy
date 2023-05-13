@@ -537,6 +537,22 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
 
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
+
         See Also
         --------
         random.Generator.exponential: which should be used for new code.
@@ -3050,7 +3066,7 @@ cdef class RandomState:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + np.random.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')

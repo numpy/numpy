@@ -48,7 +48,13 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000f - 1.22.x
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
-C_API_VERSION = 0x00000010
+# 0x00000011 - 1.25.x
+C_API_VERSION = 0x00000011
+
+# By default, when compiling downstream libraries against NumPy,```
+# pick an older feature version.  For example, for 1.25.x we default to the
+# 1.19 API and support going back all the way to 1.15.x (if so desired).
+# This is set up in `numpyconfig.h`.
 
 class MismatchCAPIError(ValueError):
     pass
@@ -91,6 +97,10 @@ def check_api_version(apiversion, codegen_dir):
                f"checksum in core/codegen_dir/cversions.txt is {api_hash}. If "
                "functions were added in the C API, you have to update "
                f"C_API_VERSION in {__file__}."
+               "\n"
+               "Please make sure that new additions are guarded with "
+               "MinVersion() to make them unavailable when wishing support "
+               "for older NumPy versions."
                )
         raise MismatchCAPIError(msg)
 
@@ -129,10 +139,9 @@ MANDATORY_FUNCS = [
     "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
     "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
     "expm1", "log1p", "acosh", "asinh", "atanh",
-    "rint", "trunc", "exp2", 
+    "rint", "trunc", "exp2",
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
-    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     "creal", "cimag", "conj"
 ]
 
@@ -154,6 +163,9 @@ C99_COMPLEX_TYPES = [
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
     "catanh", "cexp", "clog", "cpow", "csqrt",
+    # The long double variants (like csinl)  should be mandatory on C11,
+    # but are missing in FreeBSD. Issue gh-22850
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     ]
 
 OPTIONAL_HEADERS = [
@@ -178,26 +190,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
-                       ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # MMX only needed for icc, but some clangs don't have it
-                       ("_m_from_int64", '0', "emmintrin.h"),
-                       ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
-                       ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
-                        "xmmintrin.h"),  # SSE
-                       ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
+                       # Test `long long` for arm+clang 13 (gh-22811,
+                       # but we use all versions of __builtin_mul_overflow):
+                       ("__builtin_mul_overflow", '(long long)5, 5, (int*)5'),
                        ("__builtin_prefetch", "(float*)0, 0, 3"),
-                       # check that the linker can handle avx
-                       ("__asm__ volatile", '"vpand %xmm1, %xmm2, %xmm3"',
-                        "stdio.h", "LINK_AVX"),
-                       ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
-                        "stdio.h", "LINK_AVX2"),
-                       ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
-                        "stdio.h", "LINK_AVX512F"),
-                       ("__asm__ volatile", '"vfpclasspd $0x40, %zmm15, %k6\\n"\
-                                             "vmovdqu8 %xmm0, %xmm1\\n"\
-                                             "vpbroadcastmb2q %k0, %xmm0\\n"',
-                        "stdio.h", "LINK_AVX512_SKX"),
-                       ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
 # function attributes
@@ -212,44 +208,6 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
                                 ]
-
-OPTIONAL_FUNCTION_ATTRIBUTES_AVX = [('__attribute__((target ("avx")))',
-    'attribute_target_avx'),
-    ('__attribute__((target ("avx2")))',
-    'attribute_target_avx2'),
-    ('__attribute__((target ("avx512f")))',
-    'attribute_target_avx512f'),
-    ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
-    'attribute_target_avx512_skx'),
-    ]
-
-# function attributes with intrinsics
-# To ensure your compiler can compile avx intrinsics with just the attributes
-# gcc 4.8.4 support attributes but not with intrisics
-# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
-# function name will be converted to HAVE_<upper-case-name> preprocessor macro
-# The _mm512_castps_si512 instruction is specific check for AVX-512F support
-# in gcc-4.9 which is missing a subset of intrinsics. See
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
-OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS_AVX = [
-    ('__attribute__((target("avx2,fma")))',
-    'attribute_target_avx2_with_intrinsics',
-    '__m256 temp = _mm256_set1_ps(1.0); temp = \
-    _mm256_fmadd_ps(temp, temp, temp)',
-    'immintrin.h'),
-    ('__attribute__((target("avx512f")))',
-    'attribute_target_avx512f_with_intrinsics',
-    '__m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0))',
-    'immintrin.h'),
-    ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
-    'attribute_target_avx512_skx_with_intrinsics',
-    '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
-    __m512i unused_temp = \
-        _mm512_castps_si512(_mm512_set1_ps(1.0));\
-    _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
-    'immintrin.h'),
-    ]
-
 def fname2def(name):
     return "HAVE_%s" % name.upper()
 

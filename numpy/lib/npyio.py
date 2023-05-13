@@ -142,7 +142,7 @@ class NpzFile(Mapping):
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
 
@@ -167,6 +167,8 @@ class NpzFile(Mapping):
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
+    >>> npz
+    NpzFile 'object' with keys x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -178,6 +180,7 @@ class NpzFile(Mapping):
     # Make __exit__ safe if zipfile_factory raises an exception
     zip = None
     fid = None
+    _MAX_REPR_ARRAY_COUNT = 5
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
@@ -257,7 +260,23 @@ class NpzFile(Mapping):
             else:
                 return self.zip.read(key)
         else:
-            raise KeyError("%s is not a file in the archive" % key)
+            raise KeyError(f"{key} is not a file in the archive")
+
+    def __contains__(self, key):
+        return (key in self._files or key in self.files)
+
+    def __repr__(self):
+        # Get filename or default to `object`
+        if isinstance(self.fid, str):
+            filename = self.fid
+        else:
+            filename = getattr(self.fid, "name", "object")
+
+        # Get the name of arrays
+        array_names = ', '.join(self.files[:self._MAX_REPR_ARRAY_COUNT])
+        if len(self.files) > self._MAX_REPR_ARRAY_COUNT:
+            array_names += "..."
+        return f"NpzFile {filename!r} with keys: {array_names}"
 
 
 @set_module('numpy')
@@ -309,7 +328,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
 
@@ -327,6 +346,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
         The file contains an object array, but ``allow_pickle=False`` given.
+    EOFError
+        When calling ``np.load`` multiple times on the same file handle,
+        if all data has already been read
 
     See Also
     --------
@@ -410,6 +432,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
+        if not magic:
+            raise EOFError("No data left in file")
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
@@ -758,13 +782,6 @@ def _ensure_ndmin_ndarray(a, *, ndmin: int):
 
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
-
-
-def _loadtxt_dispatcher(
-        fname, dtype=None, comments=None, delimiter=None,
-        converters=None, skiprows=None, usecols=None, unpack=None,
-        ndmin=None, encoding=None, max_rows=None, *, like=None):
-    return (like,)
 
 
 def _check_nonneg_int(value, name="argument"):
@@ -1161,10 +1178,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
-        
+
         .. versionchanged:: 1.23.0
-            Lines containing no data, including comment lines (e.g., lines 
-            starting with '#' or as specified via `comments`) are not counted 
+            Lines containing no data, including comment lines (e.g., lines
+            starting with '#' or as specified via `comments`) are not counted
             towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
@@ -1303,6 +1320,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([('alpha, #42', 10.), ('beta, #64',  2.)],
           dtype=[('label', '<U12'), ('value', '<f8')])
 
+    Quoted fields can be separated by multiple whitespace characters:
+
+    >>> s = StringIO('"alpha, #42"       10.0\n"beta, #64" 2.0\n')
+    >>> dtype = np.dtype([("label", "U12"), ("value", float)])
+    >>> np.loadtxt(s, dtype=dtype, delimiter=None, quotechar='"')
+    array([('alpha, #42', 10.), ('beta, #64',  2.)],
+          dtype=[('label', '<U12'), ('value', '<f8')])
+
     Two consecutive quote characters within a quoted field are treated as a
     single escaped character:
 
@@ -1323,10 +1348,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _loadtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
             converters=converters, skiprows=skiprows, usecols=usecols,
             unpack=unpack, ndmin=ndmin, encoding=encoding,
-            max_rows=max_rows, like=like
+            max_rows=max_rows
         )
 
     if isinstance(delimiter, bytes):
@@ -1353,9 +1378,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     return arr
 
 
-_loadtxt_with_like = array_function_dispatch(
-    _loadtxt_dispatcher
-)(loadtxt)
+_loadtxt_with_like = array_function_dispatch()(loadtxt)
 
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
@@ -1716,17 +1739,6 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
-def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
-                           skip_header=None, skip_footer=None, converters=None,
-                           missing_values=None, filling_values=None, usecols=None,
-                           names=None, excludelist=None, deletechars=None,
-                           replace_space=None, autostrip=None, case_sensitive=None,
-                           defaultfmt=None, unpack=None, usemask=None, loose=None,
-                           invalid_raise=None, max_rows=None, encoding=None,
-                           *, ndmin=None, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -1924,7 +1936,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _genfromtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
             skip_header=skip_header, skip_footer=skip_footer,
             converters=converters, missing_values=missing_values,
             filling_values=filling_values, usecols=usecols, names=names,
@@ -1934,7 +1946,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             unpack=unpack, usemask=usemask, loose=loose,
             invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
             ndmin=ndmin,
-            like=like
         )
 
     _ensure_ndmin_ndarray_check_param(ndmin)
@@ -2327,7 +2338,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column_types = [conv.type for conv in converters]
         # Find the columns with strings...
         strcolidx = [i for (i, v) in enumerate(column_types)
-                     if v == np.unicode_]
+                     if v == np.str_]
 
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
@@ -2463,9 +2474,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     return output
 
 
-_genfromtxt_with_like = array_function_dispatch(
-    _genfromtxt_dispatcher
-)(genfromtxt)
+_genfromtxt_with_like = array_function_dispatch()(genfromtxt)
 
 
 def recfromtxt(fname, **kwargs):

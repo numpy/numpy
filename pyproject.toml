@@ -1,11 +1,79 @@
 [build-system]
-# Minimum requirements for the build system to execute.
+# Uncomment this line, the `meson-python` requires line, and the [project] and
+# [project.urls] tables below in order to build with Meson by default
+#build-backend = "mesonpy"
 requires = [
+    # setuptools, wheel and Cython are needed for the setup.py based build
     "setuptools==59.2.0",
-    "wheel==0.37.0",
-    "Cython>=0.29.30,<3.0",
+    # `wheel` is needed for non-isolated builds, given that `meson-python`
+    # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
+    # likely to be removed as a dependency in meson-python 0.12.0.
+    "wheel==0.38.1",
+    "Cython>=0.29.34,<3.0",
+#    "meson-python>=0.10.0",
 ]
 
+#[project]
+#name = "numpy"
+#
+## Using https://peps.python.org/pep-0639/
+## which is still in draft
+#license = {text = "BSD-3-Clause"}
+## Note: needed for Meson, but setuptools errors on it. Uncomment once Meson is default.
+##license-files.paths = [
+##    "LICENSE.txt",
+##    "LICENSES_bundles.txt"
+##]
+#
+#description = "Fundamental package for array computing in Python"
+#authors = [{name = "Travis E. Oliphant et al."}]
+#maintainers = [
+#    {name = "NumPy Developers", email="numpy-discussion@python.org"},
+#]
+#requires-python = ">=3.9"
+#readme = "README.md"
+#classifiers = [
+#    'Development Status :: 5 - Production/Stable',
+#    'Intended Audience :: Science/Research',
+#    'Intended Audience :: Developers',
+#    'License :: OSI Approved :: BSD License',
+#    'Programming Language :: C',
+#    'Programming Language :: Python',
+#    'Programming Language :: Python :: 3',
+#    'Programming Language :: Python :: 3.9',
+#    'Programming Language :: Python :: 3.10',
+#    'Programming Language :: Python :: 3.11',
+#    'Programming Language :: Python :: 3 :: Only',
+#    'Programming Language :: Python :: Implementation :: CPython',
+#    'Topic :: Software Development',
+#    'Topic :: Scientific/Engineering',
+#    'Typing :: Typed',
+#    'Operating System :: Microsoft :: Windows',
+#    'Operating System :: POSIX',
+#    'Operating System :: Unix',
+#    'Operating System :: MacOS',
+#]
+#dynamic = ["version", "scripts"]
+#
+#[project.scripts]
+## Note: this is currently dynamic, see setup.py. Can we get rid of that?
+##       see commit f22a33b71 for rationale for dynamic behavior
+#'f2py = numpy.f2py.f2py2e:main'
+#'f2py3 = numpy.f2py.f2py2e:main'
+#'f2py3.MINOR_VERSION = numpy.f2py.f2py2e:main'
+#
+# When enabling this stanza, make sure to remove the meson-specific xfail from
+# numpy/tests/test_public_api.py
+#[project.entry-points]
+#'array_api': 'numpy = numpy.array_api'
+#'pyinstaller40': 'hook-dirs = numpy:_pyinstaller_hooks_dir'
+#
+#[project.urls]
+#homepage = "https://numpy.org"
+#documentation = "https://numpy.org/doc/"
+#source = "https://github.com/numpy/numpy"
+#download = "https://pypi.org/project/numpy/#files"
+#tracker = "https://github.com/numpy/numpy/issues"
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
@@ -76,7 +144,7 @@ requires = [
 
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
+skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/test_requirements.txt"
@@ -85,6 +153,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
+musllinux-x86_64-image = "musllinux_1_1"
 environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
 
 [tool.cibuildwheel.macos]
@@ -94,9 +163,9 @@ environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-deb
 # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
 # for more info
 archs = "x86_64 arm64"
-test-skip = "*_arm64 *_universal2:arm64"
+test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
 
 [tool.cibuildwheel.windows]
 environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="", LDFLAGS="" }
@@ -104,3 +173,10 @@ environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFL
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
+
+[tool.spin]
+package = 'numpy'
+
+[tool.spin.commands]
+"Build" = ["spin.cmds.meson.build", "spin.cmds.meson.test"]
+"Environments" = ["spin.cmds.meson.shell", "spin.cmds.meson.ipython", "spin.cmds.meson.python"]

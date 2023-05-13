@@ -220,7 +220,7 @@ def main(argv):
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
             sys.argv = extra_argv
-            with open(extra_argv[0], 'r') as f:
+            with open(extra_argv[0]) as f:
                 script = f.read()
             sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
@@ -540,10 +540,21 @@ def build_project(args):
         print("Build OK")
     else:
         if not args.show_build_log:
-            with open(log_filename, 'r') as f:
+            with open(log_filename) as f:
                 print(f.read())
             print("Build failed!")
         sys.exit(1)
+
+    # Rebase
+    if sys.platform == "cygwin":
+        from pathlib import path
+        testenv_root = Path(config_vars["platbase"])
+        dll_list = testenv_root.glob("**/*.dll")
+        rebase_cmd = ["/usr/bin/rebase", "--database", "--oblivious"]
+        rebase_cmd.extend(dll_list)
+        if subprocess.run(rebase_cmd):
+            print("Rebase failed")
+            sys.exit(1)
 
     return site_dir, site_dir_noarch
 
@@ -624,7 +635,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
 
     vars_hash = sdbm_hash(custom_vars, os.path.getmtime(in_config))
     try:
-        with open(out_config, "r") as wfd:
+        with open(out_config) as wfd:
             hash_line = wfd.readline().split('hash:')
             if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
                 return True

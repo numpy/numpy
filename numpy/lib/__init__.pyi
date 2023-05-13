@@ -64,7 +64,6 @@ from numpy.lib.function_base import (
     digitize as digitize,
     cov as cov,
     corrcoef as corrcoef,
-    msort as msort,
     median as median,
     sinc as sinc,
     hamming as hamming,
@@ -231,6 +230,7 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+    show_runtime as show_runtime,
 )
 
 from numpy.core.multiarray import (

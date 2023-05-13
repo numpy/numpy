@@ -1,156 +1,181 @@
-from .common import Benchmark
+from .common import Benchmark, get_data
 
 import numpy as np
 
-UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
-        isinstance(obj, np.ufunc)]
-UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
+UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
+          isinstance(obj, np.ufunc)]
+UFUNCS_UNARY = [uf for uf in UFUNCS if "O->O" in uf.types]
 
-stride = [1, 2, 4]
-stride_out = [1, 2, 4]
-dtype = ['e', 'f', 'd']
+class _AbstractBinary(Benchmark):
+    params = []
+    param_names = ['ufunc', 'stride_in0', 'stride_in1' 'stride_out', 'dtype']
+    timeout = 10
+    arrlen = 10000
+    data_finite = True
+    data_denormal = False
+    data_zeros = False
 
-class Unary(Benchmark):
-    params = [UNARY_OBJECT_UFUNCS, stride, stride_out, dtype]
+    def setup(self, ufunc, stride_in0, stride_in1, stride_out, dtype):
+        ufunc_insig = f'{dtype}{dtype}->'
+        if ufunc_insig+dtype not in ufunc.types:
+            for st_sig in (ufunc_insig, dtype):
+                test = [sig for sig in ufunc.types if sig.startswith(st_sig)]
+                if test:
+                    break
+            if not test:
+                raise NotImplementedError(
+                    f"Ufunc {ufunc} doesn't support "
+                    f"binary input of dtype {dtype}"
+                ) from None
+            tin, tout = test[0].split('->')
+        else:
+            tin = dtype + dtype
+            tout = dtype
+
+        self.ufunc_args = []
+        for i, (dt, stride) in enumerate(zip(tin, (stride_in0, stride_in1))):
+            self.ufunc_args += [get_data(
+                self.arrlen*stride, dt, i,
+                zeros=self.data_zeros,
+                finite=self.data_finite,
+                denormal=self.data_denormal,
+            )[::stride]]
+        for dt in tout:
+            self.ufunc_args += [
+                np.empty(stride_out*self.arrlen, dt)[::stride_out]
+            ]
+
+        np.seterr(all='ignore')
+
+    def time_binary(self, ufunc, stride_in0, stride_in1, stride_out,
+             dtype):
+        ufunc(*self.ufunc_args)
+
+    def time_binary_scalar_in0(self, ufunc, stride_in0, stride_in1,
+                        stride_out, dtype):
+        ufunc(self.ufunc_args[0][0], *self.ufunc_args[1:])
+
+    def time_binary_scalar_in1(self, ufunc, stride_in0, stride_in1,
+                        stride_out, dtype):
+        ufunc(self.ufunc_args[0], self.ufunc_args[1][0], *self.ufunc_args[2:])
+
+class _AbstractUnary(Benchmark):
+    params = []
     param_names = ['ufunc', 'stride_in', 'stride_out', 'dtype']
     timeout = 10
+    arrlen = 10000
+    data_finite = True
+    data_denormal = False
+    data_zeros = False
 
-    def setup(self, ufuncname, stride, stride_out, dtype):
+    def setup(self, ufunc, stride_in, stride_out, dtype):
+        arr_in = get_data(
+            stride_in*self.arrlen, dtype,
+            zeros=self.data_zeros,
+            finite=self.data_finite,
+            denormal=self.data_denormal,
+        )
+        self.ufunc_args = [arr_in[::stride_in]]
+
+        ufunc_insig = f'{dtype}->'
+        if ufunc_insig+dtype not in ufunc.types:
+            test = [sig for sig in ufunc.types if sig.startswith(ufunc_insig)]
+            if not test:
+                raise NotImplementedError(
+                    f"Ufunc {ufunc} doesn't support "
+                    f"unary input of dtype {dtype}"
+                ) from None
+            tout = test[0].split('->')[1]
+        else:
+            tout = dtype
+
+        for dt in tout:
+            self.ufunc_args += [
+                np.empty(stride_out*self.arrlen, dt)[::stride_out]
+            ]
+
         np.seterr(all='ignore')
-        try:
-            self.f = ufuncname
-        except AttributeError:
-            raise NotImplementedError(f"No ufunc {ufuncname} found") from None
-        N = 100000
-        self.arr_out = np.empty(stride_out*N, dtype)
-        self.arr = np.random.rand(stride*N).astype(dtype)
-        if (ufuncname.__name__ == 'arccosh'):
-            self.arr = 1.0 + self.arr
 
-    def time_ufunc(self, ufuncname, stride, stride_out, dtype):
-        self.f(self.arr[::stride], self.arr_out[::stride_out])
+    def time_unary(self, ufunc, stride_in, stride_out, dtype):
+        ufunc(*self.ufunc_args)
 
-class AVX_UFunc_log(Benchmark):
-    params = [stride, dtype]
-    param_names = ['stride', 'dtype']
-    timeout = 10
+class UnaryFP(_AbstractUnary):
+    params = [UFUNCS_UNARY, [1, 2, 4], [1, 2, 4], ['e', 'f', 'd']]
 
-    def setup(self, stride, dtype):
-        np.seterr(all='ignore')
-        N = 10000
-        self.arr = np.array(np.random.random_sample(stride*N), dtype=dtype)
+    def setup(self, ufunc, stride_in, stride_out, dtype):
+        _AbstractUnary.setup(self, ufunc, stride_in, stride_out, dtype)
+        if (ufunc.__name__ == 'arccosh'):
+            self.ufunc_args[0] += 1.0
 
-    def time_log(self, stride, dtype):
-        np.log(self.arr[::stride])
+class UnaryFPSpecial(UnaryFP):
+    data_finite = False
+    data_denormal = True
+    data_zeros = True
 
+class BinaryFP(_AbstractBinary):
+    params = [
+        [np.maximum, np.minimum, np.fmax, np.fmin, np.ldexp],
+        [1, 2, 4], [1, 2, 4], [1, 2, 4], ['f', 'd']
+    ]
 
-binary_ufuncs = [
-    'maximum', 'minimum', 'fmax', 'fmin'
-]
-binary_dtype = ['f', 'd']
+class BinaryFPSpecial(BinaryFP):
+    data_finite = False
+    data_denormal = True
+    data_zeros = True
 
-class Binary(Benchmark):
-    param_names = ['ufunc', 'stride_in0', 'stride_in1', 'stride_out', 'dtype']
-    params = [binary_ufuncs, stride, stride, stride_out, binary_dtype]
-    timeout = 10
+class BinaryComplex(_AbstractBinary):
+    params = [
+        [np.add, np.subtract, np.multiply, np.divide],
+        [1, 2, 4], [1, 2, 4], [1, 2, 4],
+        ['F', 'D']
+    ]
 
-    def setup(self, ufuncname, stride_in0, stride_in1, stride_out, dtype):
-        np.seterr(all='ignore')
-        try:
-            self.f = getattr(np, ufuncname)
-        except AttributeError:
-            raise NotImplementedError(f"No ufunc {ufuncname} found") from None
-        N = 100000
-        self.arr1 = np.array(np.random.rand(stride_in0*N), dtype=dtype)
-        self.arr2 = np.array(np.random.rand(stride_in1*N), dtype=dtype)
-        self.arr_out = np.empty(stride_out*N, dtype)
+class UnaryComplex(_AbstractUnary):
+    params = [
+        [np.reciprocal, np.absolute, np.square, np.conjugate],
+        [1, 2, 4], [1, 2, 4], ['F', 'D']
+    ]
 
-    def time_ufunc(self, ufuncname, stride_in0, stride_in1, stride_out, dtype):
-        self.f(self.arr1[::stride_in0], self.arr2[::stride_in1],
-               self.arr_out[::stride_out])
+class BinaryInt(_AbstractBinary):
+    arrlen = 100000
+    params = [
+        [np.maximum, np.minimum],
+        [1, 2], [1, 2], [1, 2],
+        ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']
+    ]
 
+class BinaryIntContig(_AbstractBinary):
+    params = [
+        [getattr(np, uf) for uf in (
+            'add', 'subtract', 'multiply', 'bitwise_and', 'bitwise_or',
+            'bitwise_xor', 'logical_and', 'logical_or', 'logical_xor',
+            'right_shift', 'left_shift',
+        )],
+        [1], [1], [1],
+        ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']
+    ]
 
-binary_int_ufuncs = ['maximum', 'minimum']
-binary_int_dtype = ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']
-
-class BinaryInt(Binary):
-
-    param_names = ['ufunc', 'stride_in0', 'stride_in1', 'stride_out', 'dtype']
-    params = [binary_int_ufuncs, stride, stride, stride_out, binary_int_dtype]
-
-class AVX_ldexp(Benchmark):
-
-    params = [dtype, stride]
-    param_names = ['dtype', 'stride']
-    timeout = 10
-
-    def setup(self, dtype, stride):
-        np.seterr(all='ignore')
-        self.f = getattr(np, 'ldexp')
-        N = 10000
-        self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
-        self.arr2 = np.array(np.random.rand(stride*N), dtype='i')
-
-    def time_ufunc(self, dtype, stride):
-        self.f(self.arr1[::stride], self.arr2[::stride])
-
-cmplx_bfuncs = ['add',
-                'subtract',
-                'multiply',
-                'divide']
-cmplxstride = [1, 2, 4]
-cmplxdtype  = ['F', 'D']
-
-class AVX_cmplx_arithmetic(Benchmark):
-    params = [cmplx_bfuncs, cmplxstride, cmplxdtype]
-    param_names = ['bfunc', 'stride', 'dtype']
-    timeout = 10
-
-    def setup(self, bfuncname, stride, dtype):
-        np.seterr(all='ignore')
-        try:
-            self.f = getattr(np, bfuncname)
-        except AttributeError:
-            raise NotImplementedError(f"No bfunc {bfuncname} found") from None
-        N = 10000
-        self.arr1 = np.ones(stride*N, dtype)
-        self.arr2 = np.ones(stride*N, dtype)
-
-    def time_ufunc(self, bfuncname, stride, dtype):
-        self.f(self.arr1[::stride], self.arr2[::stride])
-
-cmplx_ufuncs = ['reciprocal',
-                'absolute',
-                'square',
-                'conjugate']
-
-class AVX_cmplx_funcs(Benchmark):
-    params = [cmplx_ufuncs, cmplxstride, cmplxdtype]
-    param_names = ['bfunc', 'stride', 'dtype']
-    timeout = 10
-
-    def setup(self, bfuncname, stride, dtype):
-        np.seterr(all='ignore')
-        try:
-            self.f = getattr(np, bfuncname)
-        except AttributeError:
-            raise NotImplementedError(f"No bfunc {bfuncname} found") from None
-        N = 10000
-        self.arr1 = np.ones(stride*N, dtype)
-
-    def time_ufunc(self, bfuncname, stride, dtype):
-        self.f(self.arr1[::stride])
+class UnaryIntContig(_AbstractUnary):
+    arrlen = 100000
+    params = [
+        [getattr(np, uf) for uf in (
+            'positive', 'square', 'reciprocal', 'conjugate', 'logical_not',
+            'invert', 'isnan', 'isinf', 'isfinite',
+            'absolute', 'sign'
+        )],
+        [1], [1],
+        ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']
+    ]
 
 class Mandelbrot(Benchmark):
     def f(self,z):
         return np.abs(z) < 4.0
 
     def g(self,z,c):
-        return np.sum(np.multiply(z,z) + c)
+        return np.sum(np.multiply(z, z) + c)
 
     def mandelbrot_numpy(self, c, maxiter):
-        output = np.zeros(c.shape, np.int)
+        output = np.zeros(c.shape, np.int32)
         z = np.empty(c.shape, np.complex64)
         for it in range(maxiter):
             notdone = self.f(z)

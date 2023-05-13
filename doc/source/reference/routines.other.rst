@@ -58,9 +58,6 @@ Matlab-like Functions
    who
    disp
 
-Exceptions
-----------
-.. autosummary::
-   :toctree: generated/
+.. automodule:: numpy.exceptions
 
-   AxisError
+.. automodule:: numpy.dtypes

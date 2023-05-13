@@ -100,6 +100,69 @@ class TestEinsum:
             assert_raises(ValueError, np.einsum, "i->i", np.arange(6).reshape(-1, 1),
                           optimize=do_opt, order='d')
 
+    def test_einsum_object_errors(self):
+        # Exceptions created by object arithmetic should
+        # successfully propogate
+
+        class CustomException(Exception):
+            pass
+
+        class DestructoBox:
+
+            def __init__(self, value, destruct):
+                self._val = value
+                self._destruct = destruct
+
+            def __add__(self, other):
+                tmp = self._val + other._val
+                if tmp >= self._destruct:
+                    raise CustomException
+                else:
+                    self._val = tmp
+                    return self
+
+            def __radd__(self, other):
+                if other == 0:
+                    return self
+                else:
+                    return self.__add__(other)
+
+            def __mul__(self, other):
+                tmp = self._val * other._val
+                if tmp >= self._destruct:
+                    raise CustomException
+                else:
+                    self._val = tmp
+                    return self
+
+            def __rmul__(self, other):
+                if other == 0:
+                    return self
+                else:
+                    return self.__mul__(other)
+
+        a = np.array([DestructoBox(i, 5) for i in range(1, 10)],
+                     dtype='object').reshape(3, 3)
+
+        # raised from unbuffered_loop_nop1_ndim2
+        assert_raises(CustomException, np.einsum, "ij->i", a)
+
+        # raised from unbuffered_loop_nop1_ndim3
+        b = np.array([DestructoBox(i, 100) for i in range(0, 27)],
+                     dtype='object').reshape(3, 3, 3)
+        assert_raises(CustomException, np.einsum, "i...k->...", b)
+
+        # raised from unbuffered_loop_nop2_ndim2
+        b = np.array([DestructoBox(i, 55) for i in range(1, 4)],
+                     dtype='object')
+        assert_raises(CustomException, np.einsum, "ij, j", a, b)
+
+        # raised from unbuffered_loop_nop2_ndim3
+        assert_raises(CustomException, np.einsum, "ij, jh", a, a)
+
+        # raised from PyArray_EinsteinSum
+        assert_raises(CustomException, np.einsum, "ij->", a)
+
     def test_einsum_views(self):
         # pass-through
         for do_opt in [True, False]:
@@ -247,47 +310,50 @@ class TestEinsum:
         # sum(a, axis=-1)
         for n in range(1, 17):
             a = np.arange(n, dtype=dtype)
-            assert_equal(np.einsum("i->", a, optimize=do_opt),
-                         np.sum(a, axis=-1).astype(dtype))
-            assert_equal(np.einsum(a, [0], [], optimize=do_opt),
-                         np.sum(a, axis=-1).astype(dtype))
+            b = np.sum(a, axis=-1)
+            if hasattr(b, 'astype'):
+                b = b.astype(dtype)
+            assert_equal(np.einsum("i->", a, optimize=do_opt), b)
+            assert_equal(np.einsum(a, [0], [], optimize=do_opt), b)
 
         for n in range(1, 17):
             a = np.arange(2*3*n, dtype=dtype).reshape(2, 3, n)
-            assert_equal(np.einsum("...i->...", a, optimize=do_opt),
-                         np.sum(a, axis=-1).astype(dtype))
-            assert_equal(np.einsum(a, [Ellipsis, 0], [Ellipsis], optimize=do_opt),
-                         np.sum(a, axis=-1).astype(dtype))
+            b = np.sum(a, axis=-1)
+            if hasattr(b, 'astype'):
+                b = b.astype(dtype)
+            assert_equal(np.einsum("...i->...", a, optimize=do_opt), b)
+            assert_equal(np.einsum(a, [Ellipsis, 0], [Ellipsis], optimize=do_opt), b)
 
         # sum(a, axis=0)
         for n in range(1, 17):
             a = np.arange(2*n, dtype=dtype).reshape(2, n)
-            assert_equal(np.einsum("i...->...", a, optimize=do_opt),
-                         np.sum(a, axis=0).astype(dtype))
-            assert_equal(np.einsum(a, [0, Ellipsis], [Ellipsis], optimize=do_opt),
-                         np.sum(a, axis=0).astype(dtype))
+            b = np.sum(a, axis=0)
+            if hasattr(b, 'astype'):
+                b = b.astype(dtype)
+            assert_equal(np.einsum("i...->...", a, optimize=do_opt), b)
+            assert_equal(np.einsum(a, [0, Ellipsis], [Ellipsis], optimize=do_opt), b)
 
         for n in range(1, 17):
             a = np.arange(2*3*n, dtype=dtype).reshape(2, 3, n)
-            assert_equal(np.einsum("i...->...", a, optimize=do_opt),
-                         np.sum(a, axis=0).astype(dtype))
-            assert_equal(np.einsum(a, [0, Ellipsis], [Ellipsis], optimize=do_opt),
-                         np.sum(a, axis=0).astype(dtype))
+            b = np.sum(a, axis=0)
+            if hasattr(b, 'astype'):
+                b = b.astype(dtype)
+            assert_equal(np.einsum("i...->...", a, optimize=do_opt), b)
+            assert_equal(np.einsum(a, [0, Ellipsis], [Ellipsis], optimize=do_opt), b)
 
         # trace(a)
         for n in range(1, 17):
             a = np.arange(n*n, dtype=dtype).reshape(n, n)
-            assert_equal(np.einsum("ii", a, optimize=do_opt),
-                         np.trace(a).astype(dtype))
-            assert_equal(np.einsum(a, [0, 0], optimize=do_opt),
-                         np.trace(a).astype(dtype))
+            b = np.trace(a)
+            if hasattr(b, 'astype'):
+                b = b.astype(dtype)
+            assert_equal(np.einsum("ii", a, optimize=do_opt), b)
+            assert_equal(np.einsum(a, [0, 0], optimize=do_opt), b)
 
             # gh-15961: should accept numpy int64 type in subscript list
             np_array = np.asarray([0, 0])
-            assert_equal(np.einsum(a, np_array, optimize=do_opt),
-                         np.trace(a).astype(dtype))
-            assert_equal(np.einsum(a, list(np_array), optimize=do_opt),
-                         np.trace(a).astype(dtype))
+            assert_equal(np.einsum(a, np_array, optimize=do_opt), b)
+            assert_equal(np.einsum(a, list(np_array), optimize=do_opt), b)
 
         # multiply(a, b)
         assert_equal(np.einsum("..., ...", 3, 4), 12)  # scalar case
@@ -489,11 +555,15 @@ class TestEinsum:
 
         b = np.einsum("i->", a, dtype=dtype, casting='unsafe')
         assert_equal(b, np.sum(a))
-        assert_equal(b.dtype, np.dtype(dtype))
+        if hasattr(b, "dtype"):
+            # Can be a python object when dtype is object
+            assert_equal(b.dtype, np.dtype(dtype))
 
         b = np.einsum(a, [0], [], dtype=dtype, casting='unsafe')
         assert_equal(b, np.sum(a))
-        assert_equal(b.dtype, np.dtype(dtype))
+        if hasattr(b, "dtype"):
+            # Can be a python object when dtype is object
+            assert_equal(b.dtype, np.dtype(dtype))
 
         # A case which was failing (ticket #1885)
         p = np.arange(2) + 1
@@ -587,6 +657,10 @@ class TestEinsum:
     def test_einsum_sums_clongdouble(self):
         self.check_einsum_sums(np.clongdouble)
 
+    def test_einsum_sums_object(self):
+        self.check_einsum_sums('object')
+        self.check_einsum_sums('object', True)
+
     def test_einsum_misc(self):
         # This call used to crash because of a bug in
         # PyArray_AssignZero
@@ -624,6 +698,21 @@ class TestEinsum:
         # Ensure explicitly setting out=None does not cause an error
         # see issue gh-15776 and issue gh-15256
         assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
+
+    def test_object_loop(self):
+
+        class Mult:
+            def __mul__(self, other):
+                return 42
+
+        objMult = np.array([Mult()])
+        objNULL = np.ndarray(buffer = b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
+
+        with pytest.raises(TypeError):
+            np.einsum("i,j", [1], objNULL)
+        with pytest.raises(TypeError):
+            np.einsum("i,j", objNULL, [1])
+        assert np.einsum("i,j", objMult, objMult) == 42
 
     def test_subscript_range(self):
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
@@ -755,7 +844,7 @@ class TestEinsum:
         # Test originally added to cover broken float16 path: gh-20305
         # Likely most are covered elsewhere, at least partially.
         dtype = np.dtype(dtype)
-        # Simple test, designed to excersize most specialized code paths,
+        # Simple test, designed to exercise most specialized code paths,
         # note the +0.5 for floats.  This makes sure we use a float value
         # where the results must be exact.
         arr = (np.arange(7) + 0.5).astype(dtype)

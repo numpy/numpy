@@ -1,10 +1,12 @@
 import os
 import re
 import sys
+import platform
 import shlex
 import time
 import subprocess
 from copy import copy
+from pathlib import Path
 from distutils import ccompiler
 from distutils.ccompiler import (
     compiler_class, gen_lib_options, get_default_compiler, new_compiler,
@@ -57,7 +59,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments
-    with open(dep_file, "r") as f:
+    with open(dep_file) as f:
         lines = f.readlines()
 
     cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
@@ -279,7 +281,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+    from numpy.distutils.fcompiler import (FCompiler,
+                                           FORTRAN_COMMON_FIXED_EXTENSIONS,
                                            has_f90_header)
     if isinstance(self, FCompiler):
         display = []
@@ -338,7 +341,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
                 if self.compiler_type=='absoft':
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
-                if is_f_file(src) and not has_f90_header(src):
+                if Path(src).suffix.lower() in FORTRAN_COMMON_FIXED_EXTENSIONS \
+                   and not has_f90_header(src):
                     f77_objects.append((obj, (src, ext)))
                 else:
                     other_objects.append((obj, (src, ext)))
@@ -391,8 +395,14 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
 
-    if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
+    if (
+        hasattr(self, 'compiler') and
+        'clang' in self.compiler[0] and
+        not (platform.machine() == 'arm64' and sys.platform == 'darwin')
+    ):
         # clang defaults to a non-strict floating error point model.
+        # However, '-ftrapping-math' is not currently supported (2023-04-08)
+        # for macosx_arm64.
         # Since NumPy and most Python libs give warnings for these, override:
         self.compiler.append('-ftrapping-math')
         self.compiler_so.append('-ftrapping-math')
@@ -717,6 +727,8 @@ compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
                             "Arm C Compiler")
+compiler_class['fujitsu'] = ('fujitsuccompiler', 'FujitsuCCompiler',
+                            "Fujitsu C Compiler")
 
 ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intele'),

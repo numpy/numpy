@@ -1,10 +1,11 @@
 import warnings
+import platform
 import pytest
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
-    temppath,
+    temppath, IS_MUSL
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -30,6 +31,10 @@ def test_scalar_extraction():
 # 0.1 not exactly representable in base 2 floating point.
 repr_precision = len(repr(np.longdouble(0.1)))
 # +2 from macro block starting around line 842 in scalartypes.c.src.
+
+
+@pytest.mark.skipif(IS_MUSL,
+                    reason="test flaky on musllinux")
 @pytest.mark.skipif(LD_INFO.precision + 2 >= repr_precision,
                     reason="repr precision not enough to show eps")
 def test_repr_roundtrip():
@@ -142,7 +147,7 @@ class TestFileBased:
 
     def test_fromfile_bogus(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write("1. 2. 3. flop 4.\n")
 
             with assert_warns(DeprecationWarning):
@@ -153,7 +158,7 @@ class TestFileBased:
         for ctype in ["complex", "cdouble", "cfloat"]:
             # Check spacing between separator and only real component specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1, 2 ,  3  ,4\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -161,7 +166,7 @@ class TestFileBased:
 
             # Real component not specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1j, -2j,  3j, 4e1j\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -169,7 +174,7 @@ class TestFileBased:
 
             # Both components specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+1j,2-2j, -3+3j,  -4e1+4j\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -177,7 +182,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+2 j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -186,7 +191,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+ 2j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -195,7 +200,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1 +2j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -204,7 +209,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+j\n")
 
                 with assert_warns(DeprecationWarning):
@@ -213,7 +218,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+\n")
 
                 with assert_warns(DeprecationWarning):
@@ -222,7 +227,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1j+1\n")
 
                 with assert_warns(DeprecationWarning):
@@ -235,7 +240,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_fromfile(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.fromfile(path, dtype=np.longdouble, sep="\n")
         assert_equal(res, self.tgt)
@@ -244,7 +249,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_genfromtxt(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.genfromtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)
@@ -253,7 +258,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_loadtxt(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.loadtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)
@@ -368,3 +373,23 @@ def test_longdouble_from_int(int_val):
     True, False])
 def test_longdouble_from_bool(bool_val):
     assert np.longdouble(bool_val) == np.longdouble(int(bool_val))
+
+
+@pytest.mark.skipif(
+    not (IS_MUSL and platform.machine() == "x86_64"),
+    reason="only need to run on musllinux_x86_64"
+)
+def test_musllinux_x86_64_signature():
+    # this test may fail if you're emulating musllinux_x86_64 on a different
+    # architecture, but should pass natively.
+    known_sigs = [b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf']
+    sig = (np.longdouble(-1.0) / np.longdouble(10.0)
+           ).newbyteorder('<').tobytes()[:10]
+    assert sig in known_sigs
+
+
+def test_eps_positive():
+    # np.finfo('g').eps should be positive on all platforms. If this isn't true
+    # then something may have gone wrong with the MachArLike, e.g. if
+    # np.core.getlimits._discovered_machar didn't work properly
+    assert np.finfo(np.longdouble).eps > 0.

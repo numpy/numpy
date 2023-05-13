@@ -14,6 +14,8 @@ extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 #define NPY_USE_WEAK_PROMOTION_AND_WARN 2
 extern NPY_NO_EXPORT int npy_promotion_state;
 extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
+extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
+extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
 
 NPY_NO_EXPORT int
 npy_give_promotion_warnings(void);
@@ -80,7 +82,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_FindConcatenationDescriptor(
-        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
+        npy_intp n, PyArrayObject **arrays, PyArray_Descr *requested_dtype);
 
 NPY_NO_EXPORT int
 PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth);

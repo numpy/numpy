@@ -12,6 +12,7 @@ import itertools
 import pytest
 
 import numpy as np
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.testing import (
     assert_warns, suppress_warnings
     )
@@ -386,8 +387,8 @@ class TestConcatenator:
         # Tests mr_ on 2D arrays.
         a_1 = np.random.rand(5, 5)
         a_2 = np.random.rand(5, 5)
-        m_1 = np.round_(np.random.rand(5, 5), 0)
-        m_2 = np.round_(np.random.rand(5, 5), 0)
+        m_1 = np.round(np.random.rand(5, 5), 0)
+        m_2 = np.round(np.random.rand(5, 5), 0)
         b_1 = masked_array(a_1, mask=m_1)
         b_2 = masked_array(a_2, mask=m_2)
         # append columns
@@ -729,6 +730,47 @@ class TestCompressFunctions:
         assert_equal(c.mask, [[0, 0, 1], [1, 1, 1], [0, 0, 1]])
         c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[0, 0], [0, 0]], [[0, 0], [0, 1]]])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 1], [1, 1]], [[0, 0], [0, 1]]],
+                      [[[0, 0], [0, 1]], [[0, 0], [0, 1]]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 1]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[0, 0], [0, 0]]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask,
+                     [[[[1, 0], [0, 0]], [[1, 0], [0, 0]]],
+                      [[[1, 0], [0, 0]], [[1, 1], [1, 1]]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask,
+                     [[[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
+                      [[[0, 0], [0, 0]], [[1, 0], [0, 0]]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = 5.
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=True)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        c = dot(b, a, strict=False)
+        assert_equal(c.mask, [[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        #
+        a = masked_array(np.arange(8).reshape(2, 2, 2),
+                         mask=[[[1, 0], [0, 0]], [[0, 0], [0, 0]]])
+        b = masked_array(np.arange(2), mask=[0, 1])
+        c = dot(a, b, strict=True)
+        assert_equal(c.mask, [[1, 1], [1, 1]])
+        c = dot(a, b, strict=False)
+        assert_equal(c.mask, [[1, 0], [0, 0]])
 
     def test_dot_returns_maskedarray(self):
         # See gh-6611
@@ -988,6 +1030,34 @@ class TestMedian:
             assert_equal(r, e)
             assert_(r is out)
             assert_(type(r) is MaskedArray)
+
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1, ),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    def test_keepdims_out(self, axis):
+        mask = np.zeros((3, 5, 7, 11), dtype=bool)
+        # Randomly set some elements to True:
+        w = np.random.random((4, 200)) * np.array(mask.shape)[:, None]
+        w = w.astype(np.intp)
+        mask[tuple(w)] = np.nan
+        d = masked_array(np.ones(mask.shape), mask=mask)
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        out = masked_array(np.empty(shape_out))
+        result = median(d, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
 
     def test_single_non_masked_value_on_axis(self):
         data = [[1., 0.],

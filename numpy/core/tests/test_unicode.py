@@ -36,10 +36,10 @@ def test_string_cast():
     uni_arr1 = str_arr.astype('>U')
     uni_arr2 = str_arr.astype('<U')
 
-    with pytest.warns(FutureWarning):
-        assert str_arr != uni_arr1
-    with pytest.warns(FutureWarning):
-        assert str_arr != uni_arr2
+    assert_array_equal(str_arr != uni_arr1, np.ones(2, dtype=bool))
+    assert_array_equal(uni_arr1 != str_arr, np.ones(2, dtype=bool))
+    assert_array_equal(str_arr == uni_arr1, np.zeros(2, dtype=bool))
+    assert_array_equal(uni_arr1 == str_arr, np.zeros(2, dtype=bool))
 
     assert_array_equal(uni_arr1, uni_arr2)
 

@@ -1,9 +1,9 @@
 from contextlib import nullcontext
 
 import numpy as np
+from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import os_fspath, is_pathlib_path
-from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
@@ -59,6 +59,7 @@ class memmap(ndarray):
         | 'r+' | Open existing file for reading and writing.                 |
         +------+-------------------------------------------------------------+
         | 'w+' | Create or overwrite existing file for reading and writing.  |
+        |      | If ``mode == 'w+'`` then `shape` must also be specified.    |
         +------+-------------------------------------------------------------+
         | 'c'  | Copy-on-write: assignments affect data in memory, but       |
         |      | changes are not saved to disk.  The file on disk is         |
@@ -220,7 +221,7 @@ class memmap(ndarray):
                 ) from None
 
         if mode == 'w+' and shape is None:
-            raise ValueError("shape must be given")
+            raise ValueError("shape must be given if mode == 'w+'")
 
         if hasattr(filename, 'read'):
             f_ctx = nullcontext(filename)

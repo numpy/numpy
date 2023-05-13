@@ -13,6 +13,11 @@ dependencies:
   - openblas
   - nomkl
   - setuptools=59.2.0
+  - meson >= 0.64.0
+  - ninja
+  - pkg-config
+  - meson-python
+  - pip   # so you can use pip to install spin
   # For testing
   - pytest
   - pytest-cov
@@ -29,7 +34,7 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.9.0
+  - pydata-sphinx-theme=0.13.3
   - doxygen
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0

@@ -9,14 +9,14 @@
 #include <assert.h>
 
 /* Inline generators for internal use */
-static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
+static inline uint32_t next_uint32(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint32(bitgen_state->state);
 }
-static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
+static inline uint64_t next_uint64(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint64(bitgen_state->state);
 }
 
-static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
+static inline float next_float(bitgen_t *bitgen_state) {
   return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
 
@@ -960,7 +960,15 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  double z = ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  /*
+   * The constant 9.223372036854776e+18 is the smallest double that is
+   * larger than INT64_MAX.
+   */
+  if (z >= 9.223372036854776e+18) {
+    return INT64_MAX;
+  }
+  return (int64_t) z;
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {
@@ -1047,7 +1055,7 @@ uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) {
 }
 
 /* Bounded generators */
-static NPY_INLINE uint64_t gen_mask(uint64_t max) {
+static inline uint64_t gen_mask(uint64_t max) {
   uint64_t mask = max;
   mask |= mask >> 1;
   mask |= mask >> 2;
@@ -1059,8 +1067,8 @@ static NPY_INLINE uint64_t gen_mask(uint64_t max) {
 }
 
 /* Generate 16 bit random numbers using a 32 bit buffer. */
-static NPY_INLINE uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
-                                           uint32_t *buf) {
+static inline uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
+                                       uint32_t *buf) {
   if (!(bcnt[0])) {
     buf[0] = next_uint32(bitgen_state);
     bcnt[0] = 1;
@@ -1073,8 +1081,8 @@ static NPY_INLINE uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
 }
 
 /* Generate 8 bit random numbers using a 32 bit buffer. */
-static NPY_INLINE uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
-                                         uint32_t *buf) {
+static inline uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
+                                     uint32_t *buf) {
   if (!(bcnt[0])) {
     buf[0] = next_uint32(bitgen_state);
     bcnt[0] = 3;
@@ -1087,8 +1095,8 @@ static NPY_INLINE uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
 }
 
 /* Static `masked rejection` function called by random_bounded_uint64(...) */
-static NPY_INLINE uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
-                                                 uint64_t rng, uint64_t mask) {
+static inline uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
+                                             uint64_t rng, uint64_t mask) {
   uint64_t val;
 
   while ((val = (next_uint64(bitgen_state) & mask)) > rng)
@@ -1099,7 +1107,7 @@ static NPY_INLINE uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint32(...) */
-static NPY_INLINE uint32_t
+static inline uint32_t
 buffered_bounded_masked_uint32(bitgen_t *bitgen_state, uint32_t rng,
                                uint32_t mask, int *bcnt, uint32_t *buf) {
   /*
@@ -1118,7 +1126,7 @@ buffered_bounded_masked_uint32(bitgen_t *bitgen_state, uint32_t rng,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint16(...) */
-static NPY_INLINE uint16_t
+static inline uint16_t
 buffered_bounded_masked_uint16(bitgen_t *bitgen_state, uint16_t rng,
                                uint16_t mask, int *bcnt, uint32_t *buf) {
   uint16_t val;
@@ -1131,10 +1139,11 @@ buffered_bounded_masked_uint16(bitgen_t *bitgen_state, uint16_t rng,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint8(...) */
-static NPY_INLINE uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
-                                                        uint8_t rng,
-                                                        uint8_t mask, int *bcnt,
-                                                        uint32_t *buf) {
+static inline uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
+                                                    uint8_t rng,
+                                                    uint8_t mask,
+                                                    int *bcnt,
+                                                    uint32_t *buf) {
   uint8_t val;
 
   while ((val = (buffered_uint8(bitgen_state, bcnt, buf) & mask)) > rng)
@@ -1143,10 +1152,10 @@ static NPY_INLINE uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
   return val;
 }
 
-static NPY_INLINE npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
-                                                 npy_bool off, npy_bool rng,
-                                                 npy_bool mask, int *bcnt,
-                                                 uint32_t *buf) {
+static inline npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
+                                             npy_bool off, npy_bool rng,
+                                             npy_bool mask, int *bcnt,
+                                             uint32_t *buf) {
   if (rng == 0)
     return off;
   if (!(bcnt[0])) {
@@ -1160,8 +1169,8 @@ static NPY_INLINE npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
 }
 
 /* Static `Lemire rejection` function called by random_bounded_uint64(...) */
-static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
-                                                 uint64_t rng) {
+static inline uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
+                                             uint64_t rng) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
    *
@@ -1245,7 +1254,7 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint32(...) */
-static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
+static inline uint32_t buffered_bounded_lemire_uint32(
     bitgen_t *bitgen_state, uint32_t rng, int *bcnt, uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
@@ -1285,7 +1294,7 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint16(...) */
-static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
+static inline uint16_t buffered_bounded_lemire_uint16(
     bitgen_t *bitgen_state, uint16_t rng, int *bcnt, uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
@@ -1321,9 +1330,9 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint8(...) */
-static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
-                                                        uint8_t rng, int *bcnt,
-                                                        uint32_t *buf) {
+static inline uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
+                                                    uint8_t rng, int *bcnt,
+                                                    uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
    *

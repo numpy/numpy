@@ -122,7 +122,7 @@ PyArray_Type and PyArrayObject
        ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
        is the largest number of dimensions for any array.
 
-   .. c:member:: npy_intp dimensions
+   .. c:member:: npy_intp *dimensions
 
        An array of integers providing the shape in each dimension as
        long as nd :math:`\geq` 1. The integer is always large enough
@@ -225,7 +225,7 @@ PyArrayDescr_Type and PyArray_Descr
 
    - Never declare a non-pointer instance of the struct
    - Never perform pointer arithmetic
-   - Never use ``sizof(PyArray_Descr)``
+   - Never use ``sizeof(PyArray_Descr)``
 
    It has the following structure:
 
@@ -285,83 +285,16 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
-   .. c:member:: int alignment
-
-       Non-NULL if this type is an array (C-contiguous) of some other type
-
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ITEM_REFCOUNT
-
-    Indicates that items of this data-type must be reference
-    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
-
-       .. c:macro:: NPY_ITEM_HASOBJECT
-
-           Same as :c:data:`NPY_ITEM_REFCOUNT`.
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_LIST_PICKLE
-
-    Indicates arrays of this data-type must be converted to a list
-    before pickling.
-
-.. c:macro:: NPY_ITEM_IS_POINTER
-
-    Indicates the item is a pointer to some other data-type
-
-.. c:macro:: NPY_NEEDS_INIT
-
-    Indicates memory for this data-type must be initialized (set
-    to 0) on creation.
-
-.. c:macro:: NPY_NEEDS_PYAPI
-
-    Indicates this data-type requires the Python C-API during
-    access (so don't give up the GIL if array access is going to
-    be needed).
-
-.. c:macro:: NPY_USE_GETITEM
-
-    On array access use the ``f->getitem`` function pointer
-    instead of the standard conversion to an array scalar. Must
-    use if you don't define an array scalar to go along with
-    the data-type.
-
-.. c:macro:: NPY_USE_SETITEM
-
-    When creating a 0-d array from an array scalar use
-    ``f->setitem`` instead of the standard copy from an array
-    scalar. Must use if you don't define an array scalar to go
-    along with the data-type.
-
-       .. c:macro:: NPY_FROM_FIELDS
-
-           The bits that are inherited for the parent data-type if these
-           bits are set in any field of the data-type. Currently (
-           :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
-
-       .. c:macro:: NPY_OBJECT_DTYPE_FLAGS
-
-           Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
-           \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
-           :c:data:`NPY_NEEDS_PYAPI`).
-
-       .. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
-
-           Return true if all the given flags are set for the data-type
-           object.
-
-       .. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
-
-           Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
-           :c:data:`NPY_ITEM_REFCOUNT`).
+       * :c:macro:`NPY_ITEM_REFCOUNT`
+       * :c:macro:`NPY_ITEM_HASOBJECT`
+       * :c:macro:`NPY_LIST_PICKLE`
+       * :c:macro:`NPY_ITEM_IS_POINTER`
+       * :c:macro:`NPY_NEEDS_INIT`
+       * :c:macro:`NPY_NEEDS_PYAPI`
+       * :c:macro:`NPY_USE_GETITEM`
+       * :c:macro:`NPY_USE_SETITEM`
+       * :c:macro:`NPY_FROM_FIELDS`
+       * :c:macro:`NPY_OBJECT_DTYPE_FLAGS`
 
    .. c:member:: int type_num
 
@@ -451,6 +384,73 @@ PyArrayDescr_Type and PyArray_Descr
 
        Currently unused. Reserved for future use in caching
        hash values.
+
+.. c:macro:: NPY_ITEM_REFCOUNT
+
+    Indicates that items of this data-type must be reference
+    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
+
+.. c:macro:: NPY_ITEM_HASOBJECT
+
+   Same as :c:data:`NPY_ITEM_REFCOUNT`.
+
+.. c:macro:: NPY_LIST_PICKLE
+
+    Indicates arrays of this data-type must be converted to a list
+    before pickling.
+
+.. c:macro:: NPY_ITEM_IS_POINTER
+
+    Indicates the item is a pointer to some other data-type
+
+.. c:macro:: NPY_NEEDS_INIT
+
+    Indicates memory for this data-type must be initialized (set
+    to 0) on creation.
+
+.. c:macro:: NPY_NEEDS_PYAPI
+
+    Indicates this data-type requires the Python C-API during
+    access (so don't give up the GIL if array access is going to
+    be needed).
+
+.. c:macro:: NPY_USE_GETITEM
+
+    On array access use the ``f->getitem`` function pointer
+    instead of the standard conversion to an array scalar. Must
+    use if you don't define an array scalar to go along with
+    the data-type.
+
+.. c:macro:: NPY_USE_SETITEM
+
+    When creating a 0-d array from an array scalar use
+    ``f->setitem`` instead of the standard copy from an array
+    scalar. Must use if you don't define an array scalar to go
+    along with the data-type.
+
+.. c:macro:: NPY_FROM_FIELDS
+
+   The bits that are inherited for the parent data-type if these
+   bits are set in any field of the data-type. Currently (
+   :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
+
+.. c:macro:: NPY_OBJECT_DTYPE_FLAGS
+
+   Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
+   \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
+   :c:data:`NPY_NEEDS_PYAPI`).
+
+.. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
+
+   Return true if all the given flags are set for the data-type
+   object.
+
+.. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
+
+   Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
+   :c:data:`NPY_ITEM_REFCOUNT`).
 
 .. c:type:: PyArray_ArrFuncs
 
@@ -973,7 +973,7 @@ PyUFunc_Type and PyUFuncObject
             Some fallback support for this slot exists, but will be removed
             eventually.  A universal function that relied on this will
             have to be ported eventually.
-            See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
+            See :ref:`NEP 41 <NEP41>` and :ref:`NEP 43 <NEP43>`
 
    .. c:member:: void *reserved2
 
@@ -997,10 +997,14 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: npy_uint32 *core_dim_flags
 
-       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+       For each distinct core dimension, a set of flags (
+       :c:macro:`UFUNC_CORE_DIM_CAN_IGNORE` and
+       :c:macro:`UFUNC_CORE_DIM_SIZE_INFERRED`)
 
-..
-  dedented to allow internal linking, pending a refactoring
+   .. c:member:: PyObject *identity_value
+
+       Identity for reduction, when :c:member:`PyUFuncObject.identity`
+       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
@@ -1010,11 +1014,6 @@ PyUFunc_Type and PyUFuncObject
 
     if the dim size will be determined from the operands
     and not from a :ref:`frozen <frozen>` signature
-
-   .. c:member:: PyObject *identity_value
-
-       Identity for reduction, when :c:member:`PyUFuncObject.identity`
-       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 PyArrayIter_Type and PyArrayIterObject
 --------------------------------------
@@ -1253,7 +1252,7 @@ ScalarArrayTypes
 ----------------
 
 There is a Python type for each of the different built-in data types
-that can be present in the array Most of these are simple wrappers
+that can be present in the array. Most of these are simple wrappers
 around the corresponding data type in C. The C-names for these types
 are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
 
@@ -1457,22 +1456,6 @@ memory management. These types are not accessible directly from
 Python, and are not exposed to the C-API. They are included here only
 for completeness and assistance in understanding the code.
 
-
-.. c:type:: PyUFuncLoopObject
-
-   A loose wrapper for a C-structure that contains the information
-   needed for looping. This is useful if you are trying to understand
-   the ufunc looping code. The :c:type:`PyUFuncLoopObject` is the associated
-   C-structure. It is defined in the ``ufuncobject.h`` header.
-
-.. c:type:: PyUFuncReduceObject
-
-   A loose wrapper for the C-structure that contains the information
-   needed for reduce-like methods of ufuncs. This is useful if you are
-   trying to understand the reduce, accumulate, and reduce-at
-   code. The :c:type:`PyUFuncReduceObject` is the associated C-structure. It
-   is defined in the ``ufuncobject.h`` header.
-
 .. c:type:: PyUFunc_Loop1d
 
    A simple linked-list of C-structures containing the information needed
@@ -1483,8 +1466,12 @@ for completeness and assistance in understanding the code.
 
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables
-   needed for advanced array indexing. The associated C-structure,
-   ``PyArrayMapIterObject``, is useful if you are trying to
+   needed for advanced array indexing.
+
+.. c:type:: PyArrayMapIterObject
+
+   The C-structure associated with :c:var:`PyArrayMapIter_Type`.
+   This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes

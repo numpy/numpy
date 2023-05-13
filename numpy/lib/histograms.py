@@ -970,7 +970,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
 
-    nbin = np.empty(D, int)
+    nbin = np.empty(D, np.intp)
     edges = D*[None]
     dedges = D*[None]
     if weights is not None:
@@ -981,7 +981,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         if M != D:
             raise ValueError(
                 'The dimension of bins must be equal to the dimension of the '
-                ' sample x.')
+                'sample x.')
     except TypeError:
         # bins is an integer
         bins = D*[bins]

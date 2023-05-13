@@ -259,7 +259,7 @@ class build_ext (old_build_ext):
                     log.warn('resetting extension %r language from %r to %r.' %
                              (ext.name, l, ext_language))
 
-                ext.language = ext_language
+            ext.language = ext_language
 
             # global language
             all_languages.update(ext_languages)
@@ -407,6 +407,7 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # Needed to compile kiva.agg._agg extension.
                 extra_args.append('/Zm1000')
+                extra_cflags += extra_cxxflags
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
@@ -586,6 +587,13 @@ class build_ext (old_build_ext):
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(
                 fcompiler, libraries, library_dirs)
+            if ext.runtime_library_dirs:
+                # gcc adds RPATH to the link. On windows, copy the dll into
+                # self.extra_dll_dir instead.
+                for d in ext.runtime_library_dirs:
+                    for f in glob(d + '/*.dll'):
+                        copy_file(f, self.extra_dll_dir)
+                ext.runtime_library_dirs = []
 
         elif ext.language in ['f77', 'f90'] and fcompiler is not None:
             linker = fcompiler.link_shared_object
@@ -634,12 +642,12 @@ class build_ext (old_build_ext):
                 if os.path.isfile(fake_lib):
                     # Replace fake static library
                     libraries.remove(lib)
-                    with open(fake_lib, 'r') as f:
+                    with open(fake_lib) as f:
                         unlinkable_fobjects.extend(f.read().splitlines())
 
                     # Expand C objects
                     c_lib = os.path.join(libdir, lib + '.cobjects')
-                    with open(c_lib, 'r') as f:
+                    with open(c_lib) as f:
                         objects.extend(f.read().splitlines())
 
         # Wrap unlinkable objects to a linkable one

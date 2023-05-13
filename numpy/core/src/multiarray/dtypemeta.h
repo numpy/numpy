@@ -1,44 +1,18 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#include "array_method.h"
+#include "dtype_traversal.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* DType flags, currently private, since we may just expose functions */
+#include "numpy/_dtype_api.h"
+
+/* DType flags, currently private, since we may just expose functions 
+   Other publicly visible flags are in _dtype_api.h                   */
 #define NPY_DT_LEGACY 1 << 0
-#define NPY_DT_ABSTRACT 1 << 1
-#define NPY_DT_PARAMETRIC 1 << 2
-
-
-typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-        PyArray_DTypeMeta *cls, PyObject *obj);
-
-/*
- * Before making this public, we should decide whether it should pass
- * the type, or allow looking at the object. A possible use-case:
- * `np.array(np.array([0]), dtype=np.ndarray)`
- * Could consider arrays that are not `dtype=ndarray` "scalars".
- */
-typedef int (is_known_scalar_type_function)(
-        PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-typedef PyArray_DTypeMeta *(common_dtype_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
-typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
-typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
-
-/*
- * TODO: These two functions are currently only used for experimental DType
- *       API support.  Their relation should be "reversed": NumPy should
- *       always use them internally.
- *       There are open points about "casting safety" though, e.g. setting
- *       elements is currently always unsafe.
- */
-typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
-typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
 
 
 typedef struct {
@@ -55,10 +29,40 @@ typedef struct {
     setitemfunction *setitem;
     getitemfunction *getitem;
     /*
+     * Either NULL or fetches a clearing function.  Clearing means deallocating
+     * any referenced data and setting it to a safe state.  For Python objects
+     * this means using `Py_CLEAR` which is equivalent to `Py_DECREF` and
+     * setting the `PyObject *` to NULL.
+     * After the clear, the data must be fillable via cast/copy and calling
+     * clear a second time must be safe.
+     * If the DType class does not implement `get_clear_loop` setting
+     * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
+     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * Python objects.
+     */
+    get_traverse_loop_function *get_clear_loop;
+    /*
+       Either NULL or a function that sets a function pointer to a traversal
+       loop that fills an array with zero values appropriate for the dtype. If
+       get_fill_zero_loop is undefined or the function pointer set by it is
+       NULL, the array buffer is allocated with calloc. If this function is
+       defined and it sets a non-NULL function pointer, the array buffer is
+       allocated with malloc and the zero-filling loop function pointer is
+       called to fill the buffer. For the best performance, avoid using this
+       function if a zero-filled array buffer allocated with calloc makes sense
+       for the dtype.
+
+       Note that this is currently used only for zero-filling a newly allocated
+       array. While it can be used to zero-fill an already-filled buffer, that
+       will not work correctly for arrays holding references. If you need to do
+       that, clear the array first.
+    */
+    get_traverse_loop_function *get_fill_zero_loop;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
-    PyObject *within_dtype_castingimpl;
+    PyArrayMethodObject *within_dtype_castingimpl;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
@@ -74,6 +78,13 @@ typedef struct {
     PyArray_ArrFuncs f;
 } NPY_DType_Slots;
 
+// This must be updated if new slots before within_dtype_castingimpl
+// are added
+#define NPY_NUM_DTYPE_SLOTS 10
+#define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
+#define NPY_DT_MAX_ARRFUNCS_SLOT \
+  NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
+
 
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
@@ -81,6 +92,8 @@ typedef struct {
 #define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)
 #define NPY_DT_is_abstract(dtype) (((dtype)->flags & NPY_DT_ABSTRACT) != 0)
 #define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
+#define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
+#define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
 
 /*
  * Macros for convenient classmethod calls, since these require
@@ -111,7 +124,7 @@ typedef struct {
  * (Error checking is not required for DescrFromType, assuming that the
  * type is valid.)
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 PyArray_DTypeFromTypeNum(int typenum)
 {
     PyArray_Descr *descr = PyArray_DescrFromType(typenum);
@@ -127,7 +140,8 @@ python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *cls, PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(PyArray_Descr *dtypem);
+dtypemeta_wrap_legacy_descriptor(
+        PyArray_Descr *dtypem, const char *name, const char *alias);
 
 #ifdef __cplusplus
 }

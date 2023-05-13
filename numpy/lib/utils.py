@@ -5,9 +5,10 @@ import types
 import re
 import warnings
 import functools
+import platform
 
+from .._utils import set_module
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 
@@ -24,6 +25,8 @@ def show_runtime():
     including available intrinsic support and BLAS/LAPACK library
     in use
 
+    .. versionadded:: 1.24.0
+
     See Also
     --------
     show_config : Show libraries in the system on which NumPy was built.
@@ -31,45 +34,20 @@ def show_runtime():
     Notes
     -----
     1. Information is derived with the help of `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
-       library.
+       library if available.
     2. SIMD related information is derived from ``__cpu_features__``,
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.show_runtime()
-    [{'simd_extensions': {'baseline': ['SSE', 'SSE2', 'SSE3'],
-                          'found': ['SSSE3',
-                                    'SSE41',
-                                    'POPCNT',
-                                    'SSE42',
-                                    'AVX',
-                                    'F16C',
-                                    'FMA3',
-                                    'AVX2'],
-                          'not_found': ['AVX512F',
-                                        'AVX512CD',
-                                        'AVX512_KNL',
-                                        'AVX512_KNM',
-                                        'AVX512_SKX',
-                                        'AVX512_CLX',
-                                        'AVX512_CNL',
-                                        'AVX512_ICL']}},
-     {'architecture': 'Zen',
-      'filepath': '/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so',
-      'internal_api': 'openblas',
-      'num_threads': 12,
-      'prefix': 'libopenblas',
-      'threading_layer': 'pthreads',
-      'user_api': 'blas',
-      'version': '0.3.20'}]
     """
     from numpy.core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
     from pprint import pprint
-    config_found = []
+    config_found = [{
+        "numpy_version": np.__version__,
+        "python": sys.version,
+        "uname": platform.uname(),
+        }]
     features_found, features_not_found = [], []
     for feature in __cpu_dispatch__:
         if __cpu_features__[feature]:
@@ -550,15 +528,16 @@ def _info(obj, output=None):
 @set_module('numpy')
 def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
-    Get help information for a function, class, or module.
+    Get help information for an array, function, class, or module.
 
     Parameters
     ----------
     object : object or str, optional
-        Input object or name to get information about. If `object` is a
-        numpy object, its docstring is given. If it is a string, available
-        modules are searched for matching objects.  If None, information
-        about `info` itself is returned.
+        Input object or name to get information about. If `object` is
+        an `ndarray` instance, information about the array is printed.
+        If `object` is a numpy object, its docstring is given. If it is
+        a string, available modules are searched for matching objects.
+        If None, information about `info` itself is returned.
     maxwidth : int, optional
         Printing width.
     output : file like object, optional
@@ -596,6 +575,22 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     ...
          *** Repeat reference found in numpy.fft.fftpack ***
          *** Total of 3 references found. ***
+
+    When the argument is an array, information about the array is printed.
+
+    >>> a = np.array([[1 + 2j, 3, -4], [-5j, 6, 0]], dtype=np.complex64)
+    >>> np.info(a)
+    class:  ndarray
+    shape:  (2, 3)
+    strides:  (24, 8)
+    itemsize:  8
+    aligned:  True
+    contiguous:  True
+    fortran:  False
+    data pointer: 0x562b6e0d2860  # may vary
+    byteorder:  little
+    byteswap:  False
+    type: complex64
 
     """
     global _namedict, _dictlist

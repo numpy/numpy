@@ -294,10 +294,6 @@ basic slicing that returns a :term:`view`).
    the former will trigger advanced indexing. Be sure to understand
    why this occurs.
 
-   Also recognize that ``x[[1, 2, 3]]`` will trigger advanced indexing,
-   whereas due to the deprecated Numeric compatibility mentioned above,
-   ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
-
 Integer array indexing
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -485,12 +481,13 @@ tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
 arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
-If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
-filled with the elements of *x* corresponding to the :py:data:`True`
-values of *obj*.  The search order will be :term:`row-major`,
-C-style. If *obj* has :py:data:`True` values at entries that are outside
-of the bounds of *x*, then an index error will be raised. If *obj* is
-smaller than *x* it is identical to filling it with :py:data:`False`.
+If ``obj.ndim == x.ndim``, ``x[obj]``
+returns a 1-dimensional array filled with the elements of *x*
+corresponding to the :py:data:`True` values of *obj*. The search order
+will be :term:`row-major`, C-style. An index error will be raised if
+the shape of *obj* does not match the corresponding dimensions of *x*,
+regardless of whether those values are :py:data:`True` or
+:py:data:`False`.
 
 A common use case for this is filtering for desired element values.
 For example, one may wish to select all entries from an array which

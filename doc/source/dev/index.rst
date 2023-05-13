@@ -45,7 +45,7 @@ Here's the short summary, complete TOC links are below:
 
    * Clone the project to your local computer::
 
-      git clone https://github.com/your-username/numpy.git
+      git clone --recurse-submodules https://github.com/your-username/numpy.git
 
    * Change the directory::
 
@@ -60,12 +60,16 @@ Here's the short summary, complete TOC links are below:
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork
 
-2. Develop your contribution:
-
-   * Pull the latest changes from upstream::
+   * Pull the latest changes from upstream, including tags::
 
       git checkout main
-      git pull upstream main
+      git pull upstream main --tags
+
+   * Initialize numpy's submodules::
+
+      git submodule update --init
+
+2. Develop your contribution:
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -180,7 +184,7 @@ Guidelines
   get no response to your pull request within a week.
 
 .. _stylistic-guidelines:
-  
+
 Stylistic Guidelines
 --------------------
 
@@ -210,7 +214,7 @@ Running NumPy's test suite locally requires some additional packages, such as
 in ``test_requirements.txt`` in the top-level directory, and can conveniently
 be installed with::
 
-    pip install -r test_requirements.txt
+    $ python -m pip install -r test_requirements.txt
 
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
@@ -258,7 +262,6 @@ The rest of the story
 
    Git Basics <gitwash/index>
    development_environment
-   development_gitpod
    howto_build_docs
    development_workflow
    development_advanced_debugging

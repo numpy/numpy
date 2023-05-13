@@ -160,7 +160,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
-static NPY_INLINE void
+static inline void
 multi_DECREF(PyObject **objects, npy_intp n)
 {
     npy_intp i;
@@ -176,7 +176,7 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * Useful if a tuple is being iterated over multiple times, or for a code path
  * that doesn't always want the overhead of allocating a tuple.
  */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
@@ -194,7 +194,7 @@ unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 }
 
 /* Unpack a single scalar index, taking a new reference to match unpack_tuple */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 {
     Py_INCREF(index);
@@ -889,13 +889,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+    *view = (PyArrayObject *)PyArray_NewFromDescr_int(
             ensure_array ? &PyArray_Type : Py_TYPE(self),
             PyArray_DESCR(self),
             new_dim, new_shape, new_strides, data_ptr,
             PyArray_FLAGS(self),
             ensure_array ? NULL : (PyObject *)self,
-            (PyObject *)self);
+            (PyObject *)self, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (*view == NULL) {
         return -1;
     }
@@ -1361,7 +1361,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_BYTES(arr) + offset,
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (*view == NULL) {
             return 0;
         }
@@ -1415,7 +1416,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_DATA(arr),
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
 
         if (*view == NULL) {
             return 0;

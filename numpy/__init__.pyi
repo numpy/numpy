@@ -1,18 +1,14 @@
 import builtins
 import os
-import sys
 import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
 import enum
 from abc import abstractmethod
-from types import TracebackType, MappingProxyType
+from types import TracebackType, MappingProxyType, GenericAlias
 from contextlib import ContextDecorator
 from contextlib import contextmanager
-
-if sys.version_info >= (3, 9):
-    from types import GenericAlias
 
 from numpy._pytesttester import PytestTester
 from numpy.core._internal import _ctypes
@@ -42,6 +38,7 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _DTypeLike,
+    _DTypeLikeVoid,
     _SupportsDType,
     _VoidDTypeLike,
 
@@ -203,6 +200,7 @@ from typing import (
 # Ensures that the stubs are picked up
 from numpy import (
     ctypeslib as ctypeslib,
+    exceptions as exceptions,
     fft as fft,
     lib as lib,
     linalg as linalg,
@@ -211,6 +209,8 @@ from numpy import (
     random as random,
     testing as testing,
     version as version,
+    exceptions as exceptions,
+    dtypes as dtypes,
 )
 
 from numpy.core import defchararray, records
@@ -252,6 +252,8 @@ from numpy.core.fromnumeric import (
     any as any,
     cumsum as cumsum,
     ptp as ptp,
+    max as max,
+    min as min,
     amax as amax,
     amin as amin,
     prod as prod,
@@ -259,6 +261,7 @@ from numpy.core.fromnumeric import (
     ndim as ndim,
     size as size,
     around as around,
+    round as round,
     mean as mean,
     std as std,
     var as var,
@@ -410,6 +413,15 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
+from numpy.exceptions import (
+    ComplexWarning as ComplexWarning,
+    ModuleDeprecationWarning as ModuleDeprecationWarning,
+    VisibleDeprecationWarning as VisibleDeprecationWarning,
+    TooHardError as TooHardError,
+    DTypePromotionError as DTypePromotionError,
+    AxisError as AxisError,
+)
+
 from numpy.lib import (
     emath as emath,
 )
@@ -456,7 +468,6 @@ from numpy.lib.function_base import (
     digitize as digitize,
     cov as cov,
     corrcoef as corrcoef,
-    msort as msort,
     median as median,
     sinc as sinc,
     hamming as hamming,
@@ -620,6 +631,7 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+    show_runtime as show_runtime,
 )
 
 from numpy.matrixlib import (
@@ -663,19 +675,9 @@ test: PytestTester
 #
 # Placeholders for classes
 
-# Some of these are aliases; others are wrappers with an identical signature
-round = around
-round_ = around
-max = amax
-min = amin
-product = prod
-cumproduct = cumprod
-sometrue = any
-alltrue = all
-
 def show_config() -> None: ...
 
-_NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
+_NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray[Any, Any])
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
@@ -801,7 +803,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: _VoidCodes, align: bool = ..., copy: bool = ...) -> dtype[void]: ...
     @overload
-    def __new__(cls, dtype: _ObjectCodes | type[ct.py_object], align: bool = ..., copy: bool = ...) -> dtype[object_]: ...
+    def __new__(cls, dtype: _ObjectCodes | type[ct.py_object[Any]], align: bool = ..., copy: bool = ...) -> dtype[object_]: ...
 
     # dtype of a dtype is the same dtype
     @overload
@@ -843,8 +845,7 @@ class dtype(Generic[_DTypeScalar_co]):
         copy: bool = ...,
     ) -> dtype[object_]: ...
 
-    if sys.version_info >= (3, 9):
-        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+    def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
     @overload
     def __getitem__(self: dtype[void], key: list[builtins.str]) -> dtype[void]: ...
@@ -926,13 +927,13 @@ class dtype(Generic[_DTypeScalar_co]):
 
 _ArrayLikeInt = Union[
     int,
-    integer,
-    Sequence[Union[int, integer]],
+    integer[Any],
+    Sequence[Union[int, integer[Any]]],
     Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
-    ndarray
+    ndarray[Any, Any]
 ]
 
-_FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
+_FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter[Any])
 
 @final
 class flatiter(Generic[_NdArraySubClass]):
@@ -950,7 +951,7 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __getitem__(
         self: flatiter[ndarray[Any, dtype[_ScalarType]]],
-        key: int | integer | tuple[int | integer],
+        key: int | integer[Any] | tuple[int | integer[Any]],
     ) -> _ScalarType: ...
     @overload
     def __getitem__(
@@ -1145,7 +1146,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
 
     @overload
     def choose(
@@ -1153,7 +1154,7 @@ class _ArrayOrScalarCommon:
         choices: ArrayLike,
         out: None = ...,
         mode: _ModeKind = ...,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def choose(
         self,
@@ -1169,7 +1170,7 @@ class _ArrayOrScalarCommon:
         max: None | ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def clip(
         self,
@@ -1177,7 +1178,7 @@ class _ArrayOrScalarCommon:
         max: ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def clip(
         self,
@@ -1201,7 +1202,7 @@ class _ArrayOrScalarCommon:
         a: ArrayLike,
         axis: None | SupportsIndex = ...,
         out: None = ...,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def compress(
         self,
@@ -1220,7 +1221,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def cumprod(
         self,
@@ -1235,7 +1236,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-    ) -> ndarray: ...
+    ) -> ndarray[Any, Any]: ...
     @overload
     def cumsum(
         self,
@@ -1480,7 +1481,7 @@ class _SupportsImag(Protocol[_T_co]):
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     __hash__: ClassVar[None]
     @property
-    def base(self) -> None | ndarray: ...
+    def base(self) -> None | ndarray[Any, Any]: ...
     @property
     def ndim(self) -> int: ...
     @property
@@ -1507,8 +1508,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
 
-    if sys.version_info >= (3, 9):
-        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+    def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
     @overload
     def __array__(self, dtype: None = ..., /) -> ndarray[Any, _DType_co]: ...
@@ -1533,7 +1533,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     # NOTE: In practice any object is accepted by `obj`, but as `__array_finalize__`
     # is a pseudo-abstract method the type has been narrowed down in order to
-    # grant subclasses a bit more flexiblity
+    # grant subclasses a bit more flexibility
     def __array_finalize__(self, obj: None | NDArray[Any], /) -> None: ...
 
     def __array_wrap__(
@@ -1648,7 +1648,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     # 1D + 1D returns a scalar;
     # all other with at least 1 non-0D array return an ndarray.
     @overload
-    def dot(self, b: _ScalarLike_co, out: None = ...) -> ndarray: ...
+    def dot(self, b: _ScalarLike_co, out: None = ...) -> ndarray[Any, Any]: ...
     @overload
     def dot(self, b: ArrayLike, out: None = ...) -> Any: ...  # type: ignore[misc]
     @overload
@@ -1925,7 +1925,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __neg__(self: NDArray[object_]) -> Any: ...
 
     # Binary ops
-    # NOTE: `ndarray` does not implement `__imatmul__`
     @overload
     def __matmul__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
     @overload
@@ -2512,6 +2511,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __ior__(self: NDArray[object_], other: Any) -> NDArray[object_]: ...
 
+    @overload
+    def __imatmul__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NDArray[bool_]: ...
+    @overload
+    def __imatmul__(self: NDArray[unsignedinteger[_NBit1]], other: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[_NBit1]]: ...
+    @overload
+    def __imatmul__(self: NDArray[signedinteger[_NBit1]], other: _ArrayLikeInt_co) -> NDArray[signedinteger[_NBit1]]: ...
+    @overload
+    def __imatmul__(self: NDArray[floating[_NBit1]], other: _ArrayLikeFloat_co) -> NDArray[floating[_NBit1]]: ...
+    @overload
+    def __imatmul__(self: NDArray[complexfloating[_NBit1, _NBit1]], other: _ArrayLikeComplex_co) -> NDArray[complexfloating[_NBit1, _NBit1]]: ...
+    @overload
+    def __imatmul__(self: NDArray[object_], other: Any) -> NDArray[object_]: ...
+
     def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
 
@@ -2671,8 +2683,7 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
-    if sys.version_info >= (3, 9):
-        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+    def __class_getitem__(self, item: Any) -> GenericAlias: ...
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
@@ -2743,8 +2754,6 @@ class bool_(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
-bool8 = bool_
-
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
     @property
@@ -2756,8 +2765,6 @@ class object_(generic):
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
-
-object0 = object_
 
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
@@ -2830,20 +2837,20 @@ class integer(number[_NBit1]):  # type: ignore
     def __index__(self) -> int: ...
     __truediv__: _IntTrueDiv[_NBit1]
     __rtruediv__: _IntTrueDiv[_NBit1]
-    def __mod__(self, value: _IntLike_co) -> integer: ...
-    def __rmod__(self, value: _IntLike_co) -> integer: ...
+    def __mod__(self, value: _IntLike_co) -> integer[Any]: ...
+    def __rmod__(self, value: _IntLike_co) -> integer[Any]: ...
     def __invert__(self: _IntType) -> _IntType: ...
     # Ensure that objects annotated as `integer` support bit-wise operations
-    def __lshift__(self, other: _IntLike_co) -> integer: ...
-    def __rlshift__(self, other: _IntLike_co) -> integer: ...
-    def __rshift__(self, other: _IntLike_co) -> integer: ...
-    def __rrshift__(self, other: _IntLike_co) -> integer: ...
-    def __and__(self, other: _IntLike_co) -> integer: ...
-    def __rand__(self, other: _IntLike_co) -> integer: ...
-    def __or__(self, other: _IntLike_co) -> integer: ...
-    def __ror__(self, other: _IntLike_co) -> integer: ...
-    def __xor__(self, other: _IntLike_co) -> integer: ...
-    def __rxor__(self, other: _IntLike_co) -> integer: ...
+    def __lshift__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __rlshift__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __rshift__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __rrshift__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __and__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __rand__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __or__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __ror__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __xor__(self, other: _IntLike_co) -> integer[Any]: ...
+    def __rxor__(self, other: _IntLike_co) -> integer[Any]: ...
 
 class signedinteger(integer[_NBit1]):
     def __init__(self, value: _IntValue = ..., /) -> None: ...
@@ -2881,7 +2888,6 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int0 = signedinteger[_NBitIntP]
 int_ = signedinteger[_NBitInt]
 longlong = signedinteger[_NBitLongLong]
 
@@ -2963,15 +2969,14 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint0 = unsignedinteger[_NBitIntP]
 uint = unsignedinteger[_NBitInt]
 ulonglong = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit1]):  # type: ignore
     def __getnewargs__(self: inexact[_64Bit]) -> tuple[float, ...]: ...
 
-_IntType = TypeVar("_IntType", bound=integer)
-_FloatType = TypeVar('_FloatType', bound=floating)
+_IntType = TypeVar("_IntType", bound=integer[Any])
+_FloatType = TypeVar('_FloatType', bound=floating[Any])
 
 class floating(inexact[_NBit1]):
     def __init__(self, value: _FloatValue = ..., /) -> None: ...
@@ -2985,9 +2990,8 @@ class floating(inexact[_NBit1]):
     @classmethod
     def fromhex(cls: type[float64], string: str, /) -> float64: ...
     def as_integer_ratio(self) -> tuple[int, int]: ...
-    if sys.version_info >= (3, 9):
-        def __ceil__(self: float64) -> int: ...
-        def __floor__(self: float64) -> int: ...
+    def __ceil__(self: float64) -> int: ...
+    def __floor__(self: float64) -> int: ...
     def __trunc__(self: float64) -> int: ...
     def __getnewargs__(self: float64) -> tuple[float]: ...
     def __getformat__(self: float64, typestr: L["double", "float"], /) -> str: ...
@@ -3070,7 +3074,10 @@ class flexible(generic): ...  # type: ignore
 # depending on whether or not it's used as an opaque bytes sequence
 # or a structure
 class void(flexible):
-    def __init__(self, value: _IntLike_co | bytes, /) -> None: ...
+    @overload
+    def __init__(self, value: _IntLike_co | bytes, /, dtype : None = ...) -> None: ...
+    @overload
+    def __init__(self, value: Any, /, dtype: _DTypeLikeVoid) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -3087,8 +3094,6 @@ class void(flexible):
         key: str | list[str] | SupportsIndex,
         value: ArrayLike,
     ) -> None: ...
-
-void0 = void
 
 class character(flexible):  # type: ignore
     def __int__(self) -> int: ...
@@ -3110,7 +3115,6 @@ class bytes_(character, bytes):
     def tolist(self) -> bytes: ...
 
 string_ = bytes_
-bytes0 = bytes_
 
 class str_(character, str):
     @overload
@@ -3125,7 +3129,6 @@ class str_(character, str):
     def tolist(self) -> str: ...
 
 unicode_ = str_
-str0 = str_
 
 #
 # Constants
@@ -3145,10 +3148,6 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-
-CLIP: L[0]
-WRAP: L[1]
-RAISE: L[2]
 
 ERR_IGNORE: L[0]
 ERR_WARN: L[1]
@@ -3218,7 +3217,7 @@ class ufunc:
     # can't type them very precisely.
     reduce: Any
     accumulate: Any
-    reduce: Any
+    reduceat: Any
     outer: Any
     # Similarly at won't be defined for ufuncs that return multiple
     # outputs, so we can't type it very precisely.
@@ -3324,21 +3323,7 @@ class _CopyMode(enum.Enum):
     NEVER: L[2]
 
 # Warnings
-class ModuleDeprecationWarning(DeprecationWarning): ...
-class VisibleDeprecationWarning(UserWarning): ...
-class ComplexWarning(RuntimeWarning): ...
 class RankWarning(UserWarning): ...
-
-# Errors
-class TooHardError(RuntimeError): ...
-
-class AxisError(ValueError, IndexError):
-    axis: None | int
-    ndim: None | int
-    @overload
-    def __init__(self, axis: str, ndim: None = ..., msg_prefix: None = ...) -> None: ...
-    @overload
-    def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
 
 _CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
 

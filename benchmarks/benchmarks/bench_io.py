@@ -1,7 +1,7 @@
-from .common import Benchmark, get_squares
+from .common import Benchmark, get_squares, get_squares_
 
 import numpy as np
-from io import StringIO
+from io import SEEK_SET, StringIO, BytesIO
 
 
 class Copy(Benchmark):
@@ -66,6 +66,15 @@ class Savez(Benchmark):
     def time_vb_savez_squares(self):
         np.savez('tmp.npz', **self.squares)
 
+
+class LoadNpyOverhead(Benchmark):
+    def setup(self):
+        self.buffer = BytesIO()
+        np.save(self.buffer, get_squares_()['float32'])
+
+    def time_loadnpy_overhead(self):
+        self.buffer.seek(0, SEEK_SET)
+        np.load(self.buffer)
 
 class LoadtxtCSVComments(Benchmark):
     # benchmarks for np.loadtxt comment handling

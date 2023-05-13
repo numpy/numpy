@@ -64,7 +64,6 @@ class TestSimpleStridedCall:
             self.method._simple_strided_call(*args)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
 @pytest.mark.parametrize(
     "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
 )
@@ -84,10 +83,3 @@ class TestClassGetItem:
             match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
             with pytest.raises(TypeError, match=match):
                 cls[arg_tup]
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
-def test_class_getitem_38() -> None:
-    match = "Type subscription requires python >= 3.9"
-    with pytest.raises(TypeError, match=match):
-        np.ndarray[Any, Any]

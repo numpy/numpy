@@ -21,6 +21,7 @@
 
 #include "convert.h"
 #include "array_coercion.h"
+#include "refcount.h"
 
 int
 fallocate(int fd, int mode, off_t offset, off_t len);
@@ -157,7 +158,24 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_BEGIN_ALLOW_THREADS;
 
 #if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Ticket #1660 */
+            /* Workaround Win64 fwrite() bug. Issue gh-2556
+             * If you touch this code, please run this test which is so slow
+             * it was removed from the test suite
+             *
+             * fourgbplus = 2**32 + 2**16
+             * testbytes = np.arange(8, dtype=np.int8)
+             * n = len(testbytes)
+             * flike = tempfile.NamedTemporaryFile()
+             * f = flike.file
+             * np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
+             * flike.seek(0)
+             * a = np.fromfile(f, dtype=np.int8)
+             * flike.close()
+             * assert_(len(a) == fourgbplus)
+             * # check only start and end for speed:
+             * assert_((a[:n] == testbytes).all())
+             * assert_((a[-n:] == testbytes).all())
+             */
             {
                 npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
                 npy_intp chunksize;
@@ -305,7 +323,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
 
     /*        if (PyArray_TYPE(self) == NPY_OBJECT) {
               PyErr_SetString(PyExc_ValueError, "a string for the data" \
@@ -359,6 +377,11 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
+
+    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
+        return -1;
+    }
+
     /*
      * If we knew that the output array has at least one element, we would
      * not actually need a helping buffer, we always null it, just in case.
@@ -393,12 +416,17 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
             descr, value);
 
+    if (PyDataType_REFCHK(descr)) {
+        PyArray_ClearBuffer(descr, value, 0, 1, 1);
+    }
     PyMem_FREE(value_buffer_heap);
     return retcode;
 }
 
 /*
- * Fills an array with zeros.
+ * Internal function to fill an array with zeros.
+ * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
+ * and not a str or struct
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
@@ -409,21 +437,26 @@ NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
                    PyArrayObject *wheremask)
 {
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value False */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
+    int retcode = 0;
+    if (PyArray_ISOBJECT(dst)) {
+        PyObject * pZero = PyLong_FromLong(0);
+        retcode = PyArray_AssignRawScalar(dst, PyArray_DESCR(dst),
+                                     (char *)&pZero, wheremask, NPY_SAFE_CASTING);
+        Py_DECREF(pZero);
     }
-    value = 0;
+    else {
+        /* Create a raw bool scalar with the value False */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return -1;
+        }
+        npy_bool value = 0;
 
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
+        retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                          wheremask, NPY_SAFE_CASTING);
 
-    Py_DECREF(bool_dtype);
+        Py_DECREF(bool_dtype);
+    }
     return retcode;
 }
 
@@ -483,7 +516,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
             PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

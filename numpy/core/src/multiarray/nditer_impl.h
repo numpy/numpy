@@ -23,6 +23,8 @@
 
 #include "lowlevel_strided_loops.h"
 #include "dtype_transfer.h"
+#include "dtype_traversal.h"
+
 
 /********** ITERATOR CONSTRUCTION TIMING **************/
 #define NPY_IT_CONSTRUCTION_TIMING 0
@@ -152,7 +154,7 @@ struct NpyIter_InternalOnly {
     /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
     /* The rest is variable */
-    char iter_flexdata;
+    char iter_flexdata[];
 };
 
 typedef struct NpyIter_AxisData_tag NpyIter_AxisData;
@@ -221,27 +223,28 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_ITERINDEX(iter) \
         (iter->iterindex)
 #define NIT_PERM(iter)  ((npy_int8 *)( \
-        &(iter)->iter_flexdata + NIT_PERM_OFFSET()))
+        iter->iter_flexdata + NIT_PERM_OFFSET()))
 #define NIT_DTYPES(iter) ((PyArray_Descr **)( \
-        &(iter)->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
 #define NIT_RESETDATAPTR(iter) ((char **)( \
-        &(iter)->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, nop)))
 #define NIT_BASEOFFSETS(iter) ((npy_intp *)( \
-        &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPERANDS(iter) ((PyArrayObject **)( \
-        &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPITFLAGS(iter) ((npyiter_opitflags *)( \
-        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
-        &(iter)->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
-        &(iter)->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
+        iter->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
 /* Internal-only BUFFERDATA MEMBER ACCESS */
 
 struct NpyIter_TransferInfo_tag {
     NPY_cast_info read;
     NPY_cast_info write;
+    NPY_traverse_info clear;
     /* Probably unnecessary, but make sure what follows is intp aligned: */
     npy_intp _unused_ensure_alignment[];
 };
@@ -329,7 +332,7 @@ struct NpyIter_AxisData_tag {
  * @return The unpermuted axis. Without `op_axes` this is correct, with
  *         `op_axes` this indexes into `op_axes` (unpermuted iterator axis)
  */
-static NPY_INLINE int
+static inline int
 npyiter_undo_iter_axis_perm(
         int axis, int ndim, const npy_int8 *perm, npy_bool *axis_flipped)
 {

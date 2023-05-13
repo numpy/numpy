@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdbool.h>
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#include <stdio.h>
+#include <stdbool.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -194,11 +194,11 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
 
     parser_config pc = {
         .delimiter = ',',
-        .comment = '#',
         .quote = '"',
-        .imaginary_unit = 'j',
-        .delimiter_is_whitespace = false,
+        .comment = '#',
         .ignore_leading_whitespace = false,
+        .delimiter_is_whitespace = false,
+        .imaginary_unit = 'j',
         .python_byte_converters = false,
         .c_byte_converters = false,
         .gave_int_via_float_warning = false,

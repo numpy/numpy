@@ -1,23 +1,27 @@
-# Python CircleCI 2.0 configuration file
+# Python CircleCI 2.1 configuration file
 #
-# Check https://circleci.com/docs/2.0/language-python/ for more details
+# Check https://circleci.com/docs/2.1/language-python/ for more details
 #
-version: 2
+version: 2.1
+
+# Aliases to reuse
+_defaults: &defaults
+  docker:
+    # CircleCI maintains a library of pre-built images
+    # documented at https://circleci.com/docs/2.1/circleci-images/
+    # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
+    # therefore a new base image chose instead to guarantee to
+    # have a newer version >= 1.8.10 to avoid warnings
+    # that related to the default behaviors or non-exist config options
+    - image: cimg/python:3.9
+  working_directory: ~/repo
+
+
 jobs:
   build:
-    docker:
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
-      # therefore a new base image chose instead to guarantee to
-      # have a newer version >= 1.8.10 to avoid warnings
-      # that related to the default behaviors or non-exist config options
-      - image: cimg/base:2021.05
-
-    working_directory: ~/repo
-
+    <<: *defaults
     steps:
-      - checkout:
+      - checkout
 
       - run:
           name: Check-skip
@@ -47,9 +51,10 @@ jobs:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y python3.8 python3.8-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
-              texlive-latex-extra latexmk texlive-xetex doxygen
-            python3.8 -m venv venv
+            #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
+            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
+              texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
+            python3.9 -m venv venv
             . venv/bin/activate
 
       - run:
@@ -82,77 +87,92 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j4 -n" make -e html || echo "ignoring errors for now, see gh-13114"
-
-      - run:
-          name: build devdocs
-          no_output_timeout: 30m
-          command: |
-            . venv/bin/activate
-            cd doc
-            make clean
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
+                echo "doc build failed: build/html is empty"
+                exit -1
+            fi
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -q" make -e html
 
       - store_artifacts:
           path: doc/build/html/
-
 
       - store_artifacts:
           path: doc/neps/_build/html/
      #      destination: neps
 
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - doc/build/html
+            - doc/neps/_build
+            - tools/ci/push_docs_to_repo.py
+
+  deploy:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - attach_workspace:
+          at: ~/repo
+
       - add_ssh_keys:
           fingerprints:
-            - "9f:8c:e5:3f:53:40:0b:ee:c9:c3:0f:fd:0f:3c:cc:55"
+            - "45:d8:d1:d6:f7:53:47:c5:d0:9e:35:19:79:e7:ff:24"
 
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "main" ]; then
-              touch doc/build/html/.nojekyll
+            touch doc/build/html/.nojekyll
 
-              ./tools/ci/push_docs_to_repo.py doc/build/html \
-                  git@github.com:numpy/devdocs.git \
-                  --committer "numpy-circleci-bot" \
-                  --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
-                  --force
-            else
-              echo "Not on the main branch; skipping deployment"
-            fi
+            ./tools/ci/push_docs_to_repo.py doc/build/html \
+                --committer "numpy-circleci-bot" \
+                --email "numpy-circleci-bot@nomail" \
+                --message "Docs build of $CIRCLE_SHA1" \
+                --count 5 \
+                --force \
+                git@github.com:numpy/devdocs.git
 
       - add_ssh_keys:
           fingerprints:
-            - "11:fb:19:69:80:3a:6d:37:9c:d1:ac:20:17:cd:c8:17"
+            - "df:8b:fb:34:2d:38:7d:49:fc:1b:e8:44:4f:bd:2c:0e"
 
       - run:
           name: select SSH key for neps repo
           command: |
-            cat <<\EOF > ~/.ssh/config
+            cat \<<\EOF > ~/.ssh/config
             Host github.com
               IdentitiesOnly yes
-              IdentityFile /home/circleci/.ssh/id_rsa_11fb1969803a6d379cd1ac2017cdc817
+              IdentityFile /home/circleci/.ssh/id_rsa_df8bfb342d387d49fc1be8444fbd2c0e
             EOF
 
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" == "main" ]; then
-              touch doc/neps/_build/html/.nojekyll
+            touch doc/neps/_build/html/.nojekyll
 
-              ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
-                  git@github.com:numpy/neps.git \
-                  --committer "numpy-circleci-bot" \
-                  --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
-                  --force
-            else
-              echo "Not on the main branch; skipping deployment"
-            fi
+            ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
+                --committer "numpy-circleci-bot" \
+                --email "numpy-circleci-bot@nomail" \
+                --message "Docs build of $CIRCLE_SHA1" \
+                --count 5 \
+                --force \
+                git@github.com:numpy/neps.git \
+
+workflows:
+  version: 2
+  default:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main

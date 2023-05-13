@@ -269,13 +269,23 @@ NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
 #ifdef NPY_HAVE_SSE41
     return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT);
 #else
-    const npyv_f32 szero = _mm_set1_ps(-0.0f);
-    __m128i roundi = _mm_cvtps_epi32(a);
-    __m128i overflow = _mm_cmpeq_epi32(roundi, _mm_castps_si128(szero));
-    __m128 r = _mm_cvtepi32_ps(roundi);
-    // respect sign of zero
-    r = _mm_or_ps(r, _mm_and_ps(a, szero));
-    return npyv_select_f32(overflow, a, r);
+    const __m128 szero = _mm_set1_ps(-0.0f);
+    const __m128i exp_mask = _mm_set1_epi32(0xff000000);
+
+    __m128i nfinite_mask = _mm_slli_epi32(_mm_castps_si128(a), 1);
+            nfinite_mask = _mm_and_si128(nfinite_mask, exp_mask);
+            nfinite_mask = _mm_cmpeq_epi32(nfinite_mask, exp_mask);
+
+    // eliminate nans/inf to avoid invalid fp errors
+    __m128 x = _mm_xor_ps(a, _mm_castsi128_ps(nfinite_mask));
+    __m128i roundi = _mm_cvtps_epi32(x);
+    __m128 round = _mm_cvtepi32_ps(roundi);
+    // respect signed zero
+    round = _mm_or_ps(round, _mm_and_ps(a, szero));
+    // if overflow return a
+    __m128i overflow_mask = _mm_cmpeq_epi32(roundi, _mm_castps_si128(szero));
+    // a if a overflow or nonfinite
+    return npyv_select_f32(_mm_or_si128(nfinite_mask, overflow_mask), a, round);
 #endif
 }
 
@@ -285,16 +295,22 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
 #ifdef NPY_HAVE_SSE41
     return _mm_round_pd(a, _MM_FROUND_TO_NEAREST_INT);
 #else
-    const npyv_f64 szero = _mm_set1_pd(-0.0);
-    const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
-    npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
+    const __m128d szero = _mm_set1_pd(-0.0);
+    const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
+    __m128d nan_mask = _mm_cmpunord_pd(a, a);
+    // eliminate nans to avoid invalid fp errors within cmpge
+    __m128d abs_x = npyv_abs_f64(_mm_xor_pd(nan_mask, a));
     // round by add magic number 2^52
-    npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
-    // respect signed zero, e.g. -0.5 -> -0.0
-    return _mm_or_pd(round, _mm_and_pd(a, szero));
+    // assuming that MXCSR register is set to rounding
+    __m128d round = _mm_sub_pd(_mm_add_pd(two_power_52, abs_x), two_power_52);
+    // copysign
+    round = _mm_or_pd(round, _mm_and_pd(a, szero));
+    // a if |a| >= 2^52 or a == NaN
+    __m128d mask = _mm_cmpge_pd(abs_x, two_power_52);
+            mask = _mm_or_pd(mask, nan_mask);
+    return npyv_select_f64(_mm_castpd_si128(mask), a, round);
 #endif
 }
-
 // ceil
 #ifdef NPY_HAVE_SSE41
     #define npyv_ceil_f32 _mm_ceil_ps
@@ -302,27 +318,48 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
 #else
     NPY_FINLINE npyv_f32 npyv_ceil_f32(npyv_f32 a)
     {
-        const npyv_f32 szero = _mm_set1_ps(-0.0f);
-        const npyv_f32 one = _mm_set1_ps(1.0f);
-        npyv_s32 roundi = _mm_cvttps_epi32(a);
-        npyv_f32 round = _mm_cvtepi32_ps(roundi);
-        npyv_f32 ceil = _mm_add_ps(round, _mm_and_ps(_mm_cmplt_ps(round, a), one));
-        // respect signed zero, e.g. -0.5 -> -0.0
-        npyv_f32 rzero = _mm_or_ps(ceil, _mm_and_ps(a, szero));
+        const __m128 one = _mm_set1_ps(1.0f);
+        const __m128 szero = _mm_set1_ps(-0.0f);
+        const __m128i exp_mask = _mm_set1_epi32(0xff000000);
+
+        __m128i nfinite_mask = _mm_slli_epi32(_mm_castps_si128(a), 1);
+                nfinite_mask = _mm_and_si128(nfinite_mask, exp_mask);
+                nfinite_mask = _mm_cmpeq_epi32(nfinite_mask, exp_mask);
+
+        // eliminate nans/inf to avoid invalid fp errors
+        __m128 x = _mm_xor_ps(a, _mm_castsi128_ps(nfinite_mask));
+        __m128i roundi = _mm_cvtps_epi32(x);
+        __m128 round = _mm_cvtepi32_ps(roundi);
+        __m128 ceil = _mm_add_ps(round, _mm_and_ps(_mm_cmplt_ps(round, x), one));
+        // respect signed zero
+        ceil = _mm_or_ps(ceil, _mm_and_ps(a, szero));
         // if overflow return a
-        return npyv_select_f32(_mm_cmpeq_epi32(roundi, _mm_castps_si128(szero)), a, rzero);
+        __m128i overflow_mask = _mm_cmpeq_epi32(roundi, _mm_castps_si128(szero));
+        // a if a overflow or nonfinite
+        return npyv_select_f32(_mm_or_si128(nfinite_mask, overflow_mask), a, ceil);
     }
     NPY_FINLINE npyv_f64 npyv_ceil_f64(npyv_f64 a)
     {
-        const npyv_f64 szero = _mm_set1_pd(-0.0);
-        const npyv_f64 one = _mm_set1_pd(1.0);
-        const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
-        npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
+        const __m128d one = _mm_set1_pd(1.0);
+        const __m128d szero = _mm_set1_pd(-0.0);
+        const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
+        __m128d nan_mask = _mm_cmpunord_pd(a, a);
+        // eliminate nans to avoid invalid fp errors within cmpge
+        __m128d x = _mm_xor_pd(nan_mask, a);
+        __m128d abs_x = npyv_abs_f64(x);
+        __m128d sign_x = _mm_and_pd(x, szero);
         // round by add magic number 2^52
-        npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
-        npyv_f64 ceil = _mm_add_pd(round, _mm_and_pd(_mm_cmplt_pd(round, a), one));
-        // respect signed zero, e.g. -0.5 -> -0.0
-        return _mm_or_pd(ceil, _mm_and_pd(a, szero));
+        // assuming that MXCSR register is set to rounding
+        __m128d round = _mm_sub_pd(_mm_add_pd(two_power_52, abs_x), two_power_52);
+        // copysign
+        round = _mm_or_pd(round, sign_x);
+        __m128d ceil = _mm_add_pd(round, _mm_and_pd(_mm_cmplt_pd(round, x), one));
+        // respects sign of 0.0
+        ceil = _mm_or_pd(ceil, sign_x);
+        // a if |a| >= 2^52 or a == NaN
+        __m128d mask = _mm_cmpge_pd(abs_x, two_power_52);
+                mask = _mm_or_pd(mask, nan_mask);
+        return npyv_select_f64(_mm_castpd_si128(mask), a, ceil);
     }
 #endif
 
@@ -333,24 +370,43 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
 #else
     NPY_FINLINE npyv_f32 npyv_trunc_f32(npyv_f32 a)
     {
-        const npyv_f32 szero = _mm_set1_ps(-0.0f);
-        npyv_s32 roundi = _mm_cvttps_epi32(a);
-        npyv_f32 trunc = _mm_cvtepi32_ps(roundi);
+        const __m128 szero = _mm_set1_ps(-0.0f);
+        const __m128i exp_mask = _mm_set1_epi32(0xff000000);
+
+        __m128i nfinite_mask = _mm_slli_epi32(_mm_castps_si128(a), 1);
+                nfinite_mask = _mm_and_si128(nfinite_mask, exp_mask);
+                nfinite_mask = _mm_cmpeq_epi32(nfinite_mask, exp_mask);
+
+        // eliminate nans/inf to avoid invalid fp errors
+        __m128 x = _mm_xor_ps(a, _mm_castsi128_ps(nfinite_mask));
+        __m128i trunci = _mm_cvttps_epi32(x);
+        __m128 trunc = _mm_cvtepi32_ps(trunci);
         // respect signed zero, e.g. -0.5 -> -0.0
-        npyv_f32 rzero = _mm_or_ps(trunc, _mm_and_ps(a, szero));
+        trunc = _mm_or_ps(trunc, _mm_and_ps(a, szero));
         // if overflow return a
-        return npyv_select_f32(_mm_cmpeq_epi32(roundi, _mm_castps_si128(szero)), a, rzero);
+        __m128i overflow_mask = _mm_cmpeq_epi32(trunci, _mm_castps_si128(szero));
+        // a if a overflow or nonfinite
+        return npyv_select_f32(_mm_or_si128(nfinite_mask, overflow_mask), a, trunc);
     }
     NPY_FINLINE npyv_f64 npyv_trunc_f64(npyv_f64 a)
     {
-        const npyv_f64 szero = _mm_set1_pd(-0.0);
-        const npyv_f64 one = _mm_set1_pd(1.0);
-        const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
-        npyv_f64 abs_a = npyv_abs_f64(a);
+        const __m128d one = _mm_set1_pd(1.0);
+        const __m128d szero = _mm_set1_pd(-0.0);
+        const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
+        __m128d nan_mask = _mm_cmpunord_pd(a, a);
+        // eliminate nans to avoid invalid fp errors within cmpge
+        __m128d abs_x = npyv_abs_f64(_mm_xor_pd(nan_mask, a));
         // round by add magic number 2^52
-        npyv_f64 abs_round = _mm_sub_pd(_mm_add_pd(abs_a, two_power_52), two_power_52);
-        npyv_f64 subtrahend = _mm_and_pd(_mm_cmpgt_pd(abs_round, abs_a), one);
-        return _mm_or_pd(_mm_sub_pd(abs_round, subtrahend), _mm_and_pd(a, szero));
+        // assuming that MXCSR register is set to rounding
+        __m128d abs_round = _mm_sub_pd(_mm_add_pd(two_power_52, abs_x), two_power_52);
+        __m128d subtrahend = _mm_and_pd(_mm_cmpgt_pd(abs_round, abs_x), one);
+        __m128d trunc = _mm_sub_pd(abs_round, subtrahend);
+        // copysign
+        trunc = _mm_or_pd(trunc, _mm_and_pd(a, szero));
+        // a if |a| >= 2^52 or a == NaN
+        __m128d mask = _mm_cmpge_pd(abs_x, two_power_52);
+               mask = _mm_or_pd(mask, nan_mask);
+        return npyv_select_f64(_mm_castpd_si128(mask), a, trunc);
     }
 #endif
 
@@ -361,15 +417,46 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
 #else
     NPY_FINLINE npyv_f32 npyv_floor_f32(npyv_f32 a)
     {
-        const npyv_f32 one = _mm_set1_ps(1.0f);
-        npyv_f32 round = npyv_rint_f32(a);
-        return _mm_sub_ps(round, _mm_and_ps(_mm_cmpgt_ps(round, a), one));
+        const __m128 one = _mm_set1_ps(1.0f);
+        const __m128 szero = _mm_set1_ps(-0.0f);
+        const __m128i exp_mask = _mm_set1_epi32(0xff000000);
+
+        __m128i nfinite_mask = _mm_slli_epi32(_mm_castps_si128(a), 1);
+                nfinite_mask = _mm_and_si128(nfinite_mask, exp_mask);
+                nfinite_mask = _mm_cmpeq_epi32(nfinite_mask, exp_mask);
+
+        // eliminate nans/inf to avoid invalid fp errors
+        __m128 x = _mm_xor_ps(a, _mm_castsi128_ps(nfinite_mask));
+        __m128i roundi = _mm_cvtps_epi32(x);
+        __m128 round = _mm_cvtepi32_ps(roundi);
+        __m128 floor = _mm_sub_ps(round, _mm_and_ps(_mm_cmpgt_ps(round, x), one));
+        // respect signed zero
+        floor = _mm_or_ps(floor, _mm_and_ps(a, szero));
+        // if overflow return a
+        __m128i overflow_mask = _mm_cmpeq_epi32(roundi, _mm_castps_si128(szero));
+        // a if a overflow or nonfinite
+        return npyv_select_f32(_mm_or_si128(nfinite_mask, overflow_mask), a, floor);
     }
     NPY_FINLINE npyv_f64 npyv_floor_f64(npyv_f64 a)
     {
-        const npyv_f64 one = _mm_set1_pd(1.0);
-        npyv_f64 round = npyv_rint_f64(a);
-        return _mm_sub_pd(round, _mm_and_pd(_mm_cmpgt_pd(round, a), one));
+        const __m128d one = _mm_set1_pd(1.0f);
+        const __m128d szero = _mm_set1_pd(-0.0f);
+        const __m128d two_power_52 = _mm_set1_pd(0x10000000000000);
+        __m128d nan_mask = _mm_cmpunord_pd(a, a);
+        // eliminate nans to avoid invalid fp errors within cmpge
+        __m128d x = _mm_xor_pd(nan_mask, a);
+        __m128d abs_x = npyv_abs_f64(x);
+        __m128d sign_x = _mm_and_pd(x, szero);
+        // round by add magic number 2^52
+        // assuming that MXCSR register is set to rounding
+        __m128d round = _mm_sub_pd(_mm_add_pd(two_power_52, abs_x), two_power_52);
+        // copysign
+        round = _mm_or_pd(round, sign_x);
+        __m128d floor = _mm_sub_pd(round, _mm_and_pd(_mm_cmpgt_pd(round, x), one));
+        // a if |a| >= 2^52 or a == NaN
+        __m128d mask = _mm_cmpge_pd(abs_x, two_power_52);
+               mask = _mm_or_pd(mask, nan_mask);
+        return npyv_select_f64(_mm_castpd_si128(mask), a, floor);
     }
 #endif // NPY_HAVE_SSE41
 

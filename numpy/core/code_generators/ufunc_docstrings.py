@@ -667,7 +667,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     --------
     The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
-    then ``000111011``, or 29:
+    then ``00011101``, or 29:
 
     >>> np.bitwise_or(13, 16)
     29
@@ -2021,7 +2021,7 @@ add_newdoc('numpy.core.umath', 'log',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
-    
+
     In the cases where the input has a negative real part and a very small
     negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.
@@ -2457,7 +2457,7 @@ add_newdoc('numpy.core.umath', 'maximum',
     """
     Element-wise maximum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     maxima. If one of the elements being compared is a NaN, then that
     element is returned. If both elements are NaNs then the first is
     returned. The latter distinction is important for complex NaNs, which
@@ -2516,7 +2516,7 @@ add_newdoc('numpy.core.umath', 'minimum',
     """
     Element-wise minimum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     minima. If one of the elements being compared is a NaN, then that
     element is returned. If both elements are NaNs then the first is
     returned. The latter distinction is important for complex NaNs, which
@@ -2575,7 +2575,7 @@ add_newdoc('numpy.core.umath', 'fmax',
     """
     Element-wise maximum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     maxima. If one of the elements being compared is a NaN, then the
     non-nan element is returned. If both elements are NaNs then the first
     is returned.  The latter distinction is important for complex NaNs,
@@ -2633,7 +2633,7 @@ add_newdoc('numpy.core.umath', 'fmin',
     """
     Element-wise minimum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     minima. If one of the elements being compared is a NaN, then the
     non-nan element is returned. If both elements are NaNs then the first
     is returned.  The latter distinction is important for complex NaNs,
@@ -3833,7 +3833,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
     --------
     emath.sqrt
         A version which returns complex numbers when given negative reals.
-        Note: 0.0 and -0.0 are handled differently for complex inputs.
+        Note that 0.0 and -0.0 are handled differently for complex inputs.
 
     Notes
     -----

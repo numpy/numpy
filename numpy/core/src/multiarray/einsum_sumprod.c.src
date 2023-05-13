@@ -1026,6 +1026,57 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 
 /**end repeat**/
 
+/**begin repeat
+ * #fn_name = 
+ *  object_sum_of_products_any,
+ *  object_sum_of_products_one,
+ *  object_sum_of_products_two,
+ *  object_sum_of_products_three,
+ *  object_sum_of_products_contig_any,
+ *  object_sum_of_products_contig_one,
+ *  object_sum_of_products_contig_two,
+ *  object_sum_of_products_contig_three,
+ *  object_sum_of_products_outstride0_any,
+ *  object_sum_of_products_outstride0_one,
+ *  object_sum_of_products_outstride0_two,
+ *  object_sum_of_products_outstride0_three#
+ */
+static void
+@fn_name@(int nop, char **dataptr,
+                                npy_intp const *strides, npy_intp count)
+{
+    while(count--){
+        PyObject *prod = *(PyObject **)dataptr[0];
+        if (!prod) {
+            prod = Py_None;  // convention is to treat nulls as None
+        }
+        Py_INCREF(prod);
+        for (int i = 1; i < nop; ++i){
+            PyObject *curr = *(PyObject **)dataptr[i];
+            if (!curr) {
+                curr = Py_None;  // convention is to treat nulls as None
+            }
+            Py_SETREF(prod, PyNumber_Multiply(prod, curr));
+            if (!prod) {
+                return;
+            }
+        }
+
+        PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
+        Py_DECREF(prod);
+        if (!sum) {
+            return;
+        }
+        
+        Py_XDECREF(*(PyObject **)dataptr[nop]);
+        *(PyObject **)dataptr[nop] = sum;
+        for (int i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+    }
+}
+/**end repeat**/
+
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
 _contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
@@ -1116,7 +1167,7 @@ static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES][4] = {
  *        1, 1,
  *        1, 1, 1,
  *        1, 1, 1,
- *        0, 0, 0, 0,
+ *        1, 0, 0, 0,
  *        0, 0, 1#
  */
 #if @use@
@@ -1152,7 +1203,7 @@ static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES][4] = {
  *        1, 1,
  *        1, 1, 1,
  *        1, 1, 1,
- *        0, 0, 0, 0,
+ *        1, 0, 0, 0,
  *        0, 0, 1#
  */
 #if @use@
@@ -1188,7 +1239,7 @@ static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
  *        1, 1,
  *        1, 1, 1,
  *        1, 1, 1,
- *        0, 0, 0, 0,
+ *        1, 0, 0, 0,
  *        0, 0, 1#
  */
 #if @use@

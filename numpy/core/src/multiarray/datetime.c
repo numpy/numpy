@@ -1622,6 +1622,12 @@ compute_datetime_metadata_greatest_common_divisor(
 
     return 0;
 
+    /*
+     * We do not use `DTypePromotionError` below.  The reason this is that a
+     * `DTypePromotionError` indicates that `arr_dt1 != arr_dt2` for
+     * all values, but this is wrong for "0".  This could be changed but
+     * for now we consider them errors that occur _while_ promoting.
+     */
 incompatible_units: {
         PyObject *umeta1 = metastr_to_unicode(meta1, 0);
         if (umeta1 == NULL) {
@@ -4089,12 +4095,12 @@ PyArray_InitializeDatetimeCasts()
         .nout = 1,
         .casting = NPY_UNSAFE_CASTING,
         .flags = NPY_METH_SUPPORTS_UNALIGNED,
-        .slots = slots,
         .dtypes = dtypes,
+        .slots = slots,
     };
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_time_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &time_to_time_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4124,7 +4130,7 @@ PyArray_InitializeDatetimeCasts()
 
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &datetime_to_timedelta_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &legacy_cast_get_strided_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4197,7 +4203,7 @@ PyArray_InitializeDatetimeCasts()
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_string_resolve_descriptors;
     /* Strided loop differs for the two */
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
@@ -4246,7 +4252,7 @@ PyArray_InitializeDatetimeCasts()
     /* The default type resolution should work fine. */
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &string_to_datetime_cast_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
+    slots[1].slot = _NPY_METH_get_loop;
     slots[1].pfunc = &string_to_datetime_cast_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;

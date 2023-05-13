@@ -437,15 +437,15 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    
+
     # Add some spare space so that the array header can be modified in-place
     # when changing the array size, e.g. when growing it by appending data at
-    # the end. 
+    # the end.
     shape = d['shape']
     header += " " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(
         shape[-1 if d['fortran_order'] else 0]
     ))) if len(shape) > 0 else 0)
-    
+
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -505,7 +505,7 @@ def read_array_header_1_0(fp, max_header_size=_MAX_HEADER_SIZE):
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
 
     Raises
     ------
@@ -532,7 +532,7 @@ def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
 
     Returns
     -------
@@ -623,13 +623,27 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     #   "descr" : dtype.descr
     # Versions (2, 0) and (1, 0) could have been created by a Python 2
     # implementation before header filtering was implemented.
-    if version <= (2, 0):
-        header = _filter_header(header)
+    #
+    # For performance reasons, we try without _filter_header first though
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}"
-        raise ValueError(msg.format(header)) from e
+        if version <= (2, 0):
+            header = _filter_header(header)
+            try:
+                d = safe_eval(header)
+            except SyntaxError as e2:
+                msg = "Cannot parse header: {!r}"
+                raise ValueError(msg.format(header)) from e2
+            else:
+                warnings.warn(
+                    "Reading `.npy` or `.npz` file required additional "
+                    "header parsing as it was created on Python 2. Save the "
+                    "file again to speed up loading and avoid this warning.",
+                    UserWarning, stacklevel=4)
+        else:
+            msg = "Cannot parse header: {!r}"
+            raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
@@ -750,7 +764,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
         This option is ignored when `allow_pickle` is passed.  In that case
         the file is by definition trusted and the limit is unnecessary.
 
@@ -869,7 +883,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
-        See :py:meth:`ast.literal_eval()` for details.
+        See :py:func:`ast.literal_eval()` for details.
 
     Returns
     -------

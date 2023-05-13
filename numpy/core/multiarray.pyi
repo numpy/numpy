@@ -428,6 +428,7 @@ def copyto(
 
 def putmask(
     a: NDArray[Any],
+    /,
     mask: _ArrayLikeBool_co,
     values: ArrayLike,
 ) -> None: ...

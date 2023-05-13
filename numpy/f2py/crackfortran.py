@@ -147,10 +147,11 @@ import os
 import copy
 import platform
 import codecs
+from pathlib import Path
 try:
-    import chardet
+    import charset_normalizer
 except ImportError:
-    chardet = None
+    charset_normalizer = None
 
 from . import __version__
 
@@ -289,69 +290,69 @@ def undo_rmbadname(names):
     return [undo_rmbadname1(_m) for _m in names]
 
 
-def getextension(name):
-    i = name.rfind('.')
-    if i == -1:
-        return ''
-    if '\\' in name[i:]:
-        return ''
-    if '/' in name[i:]:
-        return ''
-    return name[i + 1:]
-
-is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
 _has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
 _has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
 
+# Extensions
+COMMON_FREE_EXTENSIONS = ['.f90', '.f95', '.f03', '.f08']
+COMMON_FIXED_EXTENSIONS = ['.for', '.ftn', '.f77', '.f']
+
 
 def openhook(filename, mode):
     """Ensures that filename is opened with correct encoding parameter.
 
-    This function uses chardet package, when available, for
-    determining the encoding of the file to be opened. When chardet is
-    not available, the function detects only UTF encodings, otherwise,
-    ASCII encoding is used as fallback.
+    This function uses charset_normalizer package, when available, for
+    determining the encoding of the file to be opened. When charset_normalizer
+    is not available, the function detects only UTF encodings, otherwise, ASCII
+    encoding is used as fallback.
     """
-    bytes = min(32, os.path.getsize(filename))
-    with open(filename, 'rb') as f:
-        raw = f.read(bytes)
-    if raw.startswith(codecs.BOM_UTF8):
-        encoding = 'UTF-8-SIG'
-    elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
-        encoding = 'UTF-32'
-    elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
-        encoding = 'UTF-16'
+    # Reads in the entire file. Robust detection of encoding.
+    # Correctly handles comments or late stage unicode characters
+    # gh-22871
+    if charset_normalizer is not None:
+        encoding = charset_normalizer.from_path(filename).best().encoding
     else:
-        if chardet is not None:
-            encoding = chardet.detect(raw)['encoding']
-        else:
-            # hint: install chardet to ensure correct encoding handling
-            encoding = 'ascii'
+        # hint: install charset_normalizer for correct encoding handling
+        # No need to read the whole file for trying with startswith
+        nbytes = min(32, os.path.getsize(filename))
+        with open(filename, 'rb') as fhandle:
+            raw = fhandle.read(nbytes)
+            if raw.startswith(codecs.BOM_UTF8):
+                encoding = 'UTF-8-SIG'
+            elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+                encoding = 'UTF-32'
+            elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
+                encoding = 'UTF-16'
+            else:
+                # Fallback, without charset_normalizer
+                encoding = 'ascii'
     return open(filename, mode, encoding=encoding)
 
 
-def is_free_format(file):
+def is_free_format(fname):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
-    result = 0
-    with openhook(file, 'r') as f:
-        line = f.readline()
+    result = False
+    if Path(fname).suffix.lower() in COMMON_FREE_EXTENSIONS:
+        result = True
+    with openhook(fname, 'r') as fhandle:
+        line = fhandle.readline()
         n = 15  # the number of non-comment lines to scan for hints
         if _has_f_header(line):
             n = 0
         elif _has_f90_header(line):
             n = 0
-            result = 1
+            result = True
         while n > 0 and line:
             if line[0] != '!' and line.strip():
                 n -= 1
                 if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
-                    result = 1
+                    result = True
                     break
-            line = f.readline()
+            line = fhandle.readline()
     return result
 
 
@@ -394,7 +395,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         except UnicodeDecodeError as msg:
             raise Exception(
                 f'readfortrancode: reading {fin.filename()}#{fin.lineno()}'
-                f' failed with\n{msg}.\nIt is likely that installing chardet'
+                f' failed with\n{msg}.\nIt is likely that installing charset_normalizer'
                 ' package will help f2py determine the input file encoding'
                 ' correctly.')
         if not l:
@@ -407,7 +408,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             strictf77 = 0
             sourcecodeform = 'fix'
             ext = os.path.splitext(currentfilename)[1]
-            if is_f_file(currentfilename) and \
+            if Path(currentfilename).suffix.lower() in COMMON_FIXED_EXTENSIONS and \
                     not (_has_f90_header(l) or _has_fix_header(l)):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
@@ -612,15 +613,15 @@ beginpattern90 = re.compile(
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, r'.*'), re.I), 'end'
+    beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
 endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
          r'critical|enum|team)'
 endifpattern = re.compile(
-    beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
+    beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
 #
 moduleprocedures = r'module\s*procedure'
 moduleprocedurepattern = re.compile(
-    beforethisafter % ('', moduleprocedures, moduleprocedures, r'.*'), re.I), \
+    beforethisafter % ('', moduleprocedures, moduleprocedures, '.*'), re.I), \
     'moduleprocedure'
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
@@ -934,7 +935,7 @@ typedefpattern = re.compile(
     r'(?:,(?P<attributes>[\w(),]+))?(::)?(?P<name>\b[a-z$_][\w$]*\b)'
     r'(?:\((?P<params>[\w,]*)\))?\Z', re.I)
 nameargspattern = re.compile(
-    r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
+    r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>(?:(?!@\)@).)*)\s*@\)@))*\s*\Z', re.I)
 operatorpattern = re.compile(
     r'\s*(?P<scheme>(operator|assignment))'
     r'@\(@\s*(?P<name>[^)]+)\s*@\)@\s*\Z', re.I)
@@ -1739,6 +1740,28 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         d1[k] = unmarkouterparen(d1[k])
                     else:
                         del d1[k]
+
+                if 'len' in d1:
+                    if typespec in ['complex', 'integer', 'logical', 'real']:
+                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
+                            edecl['kindselector'] = {}
+                        edecl['kindselector']['*'] = d1['len']
+                        del d1['len']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
+
+                if 'init' in d1:
+                    if '=' in edecl and (not edecl['='] == d1['init']):
+                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
+                            ename, edecl['='], d1['init']))
+                    else:
+                        edecl['='] = d1['init']
+
                 if 'len' in d1 and 'array' in d1:
                     if d1['len'] == '':
                         d1['len'] = d1['array']
@@ -1748,6 +1771,7 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         del d1['len']
                         errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
                             typespec, e, typespec, ename, d1['array']))
+
                 if 'array' in d1:
                     dm = 'dimension(%s)' % d1['array']
                     if 'attrspec' not in edecl or (not edecl['attrspec']):
@@ -1761,23 +1785,6 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                                         % (ename, dm1, dm))
                                 break
 
-                if 'len' in d1:
-                    if typespec in ['complex', 'integer', 'logical', 'real']:
-                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
-                            edecl['kindselector'] = {}
-                        edecl['kindselector']['*'] = d1['len']
-                    elif typespec == 'character':
-                        if ('charselector' not in edecl) or (not edecl['charselector']):
-                            edecl['charselector'] = {}
-                        if 'len' in edecl['charselector']:
-                            del edecl['charselector']['len']
-                        edecl['charselector']['*'] = d1['len']
-                if 'init' in d1:
-                    if '=' in edecl and (not edecl['='] == d1['init']):
-                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            ename, edecl['='], d1['init']))
-                    else:
-                        edecl['='] = d1['init']
             else:
                 outmess('updatevars: could not crack entity declaration "%s". Ignoring.\n' % (
                     ename + m.group('after')))
@@ -2386,19 +2393,19 @@ def _selected_int_kind_func(r):
 
 def _selected_real_kind_func(p, r=0, radix=0):
     # XXX: This should be processor dependent
-    # This is only good for 0 <= p <= 20
+    # This is only verified for 0 <= p <= 20, possibly good for p <= 33 and above
     if p < 7:
         return 4
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
-        if p <= 20:
+    if machine.startswith(('aarch64', 'arm64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+        if p <= 33:
             return 16
     else:
         if p < 19:
             return 10
-        elif p <= 20:
+        elif p <= 33:
             return 16
     return -1
 
@@ -2849,6 +2856,11 @@ def analyzevars(block):
                         kindselect, charselect, typename = cracktypespec(
                             typespec, selector)
                         vars[n]['typespec'] = typespec
+                        try:
+                            if block['result']:
+                                vars[block['result']]['typespec'] = typespec
+                        except Exception:
+                            pass
                         if kindselect:
                             if 'kind' in kindselect:
                                 try:

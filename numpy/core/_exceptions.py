@@ -5,7 +5,7 @@ in python where it's easier.
 By putting the formatting in `__str__`, we also avoid paying the cost for
 users who silence the exceptions.
 """
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 def _unpack_tuple(tup):
     if len(tup) == 1:
@@ -36,22 +36,6 @@ class UFuncTypeError(TypeError):
 
 
 @_display_as_base
-class _UFuncBinaryResolutionError(UFuncTypeError):
-    """ Thrown when a binary resolution fails """
-    def __init__(self, ufunc, dtypes):
-        super().__init__(ufunc)
-        self.dtypes = tuple(dtypes)
-        assert len(self.dtypes) == 2
-
-    def __str__(self):
-        return (
-            "ufunc {!r} cannot use operands with types {!r} and {!r}"
-        ).format(
-            self.ufunc.__name__, *self.dtypes
-        )
-
-
-@_display_as_base
 class _UFuncNoLoopError(UFuncTypeError):
     """ Thrown when a ufunc loop cannot be found """
     def __init__(self, ufunc, dtypes):
@@ -66,6 +50,21 @@ class _UFuncNoLoopError(UFuncTypeError):
             self.ufunc.__name__,
             _unpack_tuple(self.dtypes[:self.ufunc.nin]),
             _unpack_tuple(self.dtypes[self.ufunc.nin:])
+        )
+
+
+@_display_as_base
+class _UFuncBinaryResolutionError(_UFuncNoLoopError):
+    """ Thrown when a binary resolution fails """
+    def __init__(self, ufunc, dtypes):
+        super().__init__(ufunc, dtypes)
+        assert len(self.dtypes) == 2
+
+    def __str__(self):
+        return (
+            "ufunc {!r} cannot use operands with types {!r} and {!r}"
+        ).format(
+            self.ufunc.__name__, *self.dtypes
         )
 
 
@@ -112,113 +111,6 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         ).format(
             self.ufunc.__name__, i_str, self.from_, self.to, self.casting
         )
-
-
-# Exception used in shares_memory()
-@set_module('numpy')
-class TooHardError(RuntimeError):
-    """max_work was exceeded.
-
-    This is raised whenever the maximum number of candidate solutions 
-    to consider specified by the ``max_work`` parameter is exceeded.
-    Assigning a finite number to max_work may have caused the operation 
-    to fail.
-
-    """
-    
-    pass
-
-
-@set_module('numpy')
-class AxisError(ValueError, IndexError):
-    """Axis supplied was invalid.
-
-    This is raised whenever an ``axis`` parameter is specified that is larger
-    than the number of array dimensions.
-    For compatibility with code written against older numpy versions, which
-    raised a mixture of `ValueError` and `IndexError` for this situation, this
-    exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch `AxisError`.
-
-    .. versionadded:: 1.13
-
-    Parameters
-    ----------
-    axis : int or str
-        The out of bounds axis or a custom exception message.
-        If an axis is provided, then `ndim` should be specified as well.
-    ndim : int, optional
-        The number of array dimensions.
-    msg_prefix : str, optional
-        A prefix for the exception message.
-
-    Attributes
-    ----------
-    axis : int, optional
-        The out of bounds axis or ``None`` if a custom exception
-        message was provided. This should be the axis as passed by
-        the user, before any normalization to resolve negative indices.
-
-        .. versionadded:: 1.22
-    ndim : int, optional
-        The number of array dimensions or ``None`` if a custom exception
-        message was provided.
-
-        .. versionadded:: 1.22
-
-
-    Examples
-    --------
-    >>> array_1d = np.arange(10)
-    >>> np.cumsum(array_1d, axis=1)
-    Traceback (most recent call last):
-      ...
-    numpy.AxisError: axis 1 is out of bounds for array of dimension 1
-
-    Negative axes are preserved:
-
-    >>> np.cumsum(array_1d, axis=-2)
-    Traceback (most recent call last):
-      ...
-    numpy.AxisError: axis -2 is out of bounds for array of dimension 1
-
-    The class constructor generally takes the axis and arrays'
-    dimensionality as arguments:
-
-    >>> print(np.AxisError(2, 1, msg_prefix='error'))
-    error: axis 2 is out of bounds for array of dimension 1
-
-    Alternatively, a custom exception message can be passed:
-
-    >>> print(np.AxisError('Custom error message'))
-    Custom error message
-
-    """
-
-    __slots__ = ("axis", "ndim", "_msg")
-
-    def __init__(self, axis, ndim=None, msg_prefix=None):
-        if ndim is msg_prefix is None:
-            # single-argument form: directly set the error message
-            self._msg = axis
-            self.axis = None
-            self.ndim = None
-        else:
-            self._msg = msg_prefix
-            self.axis = axis
-            self.ndim = ndim
-
-    def __str__(self):
-        axis = self.axis
-        ndim = self.ndim
-
-        if axis is ndim is None:
-            return self._msg
-        else:
-            msg = f"axis {axis} is out of bounds for array of dimension {ndim}"
-            if self._msg is not None:
-                msg = f"{self._msg}: {msg}"
-            return msg
 
 
 @_display_as_base

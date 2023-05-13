@@ -3,16 +3,15 @@ import sys
 import math
 import warnings
 
+import numpy as np
+from .._utils import set_module
 import numpy.core.numeric as _nx
-from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
-)
+from numpy.core.numeric import ScalarType, array
 from numpy.core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
@@ -94,7 +93,7 @@ def ix_(*args):
     nd = len(args)
     for k, new in enumerate(args):
         if not isinstance(new, _nx.ndarray):
-            new = asarray(new)
+            new = np.asarray(new)
             if new.size == 0:
                 # Explicitly type empty arrays to avoid float default
                 new = new.astype(_nx.intp)
@@ -232,7 +231,9 @@ class MGridClass(nd_grid):
     --------
     lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -283,7 +284,9 @@ class OGridClass(nd_grid):
     --------
     np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
+    meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -389,7 +392,7 @@ class AxisConcatenator:
                 scalar = True
                 newobj = item
             else:
-                item_ndim = ndim(item)
+                item_ndim = np.ndim(item)
                 newobj = array(item, copy=False, subok=True, ndmin=ndmin)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
@@ -594,7 +597,7 @@ class ndenumerate:
     """
 
     def __init__(self, arr):
-        self.iter = asarray(arr).flat
+        self.iter = np.asarray(arr).flat
 
     def __next__(self):
         """
@@ -907,9 +910,9 @@ def fill_diagonal(a, val, wrap=False):
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
-        if not alltrue(diff(a.shape) == 0):
+        if not np.all(diff(a.shape) == 0):
             raise ValueError("All dimensions of input must be of equal length")
-        step = 1 + (cumprod(a.shape[:-1])).sum()
+        step = 1 + (np.cumprod(a.shape[:-1])).sum()
 
     # Write the value out into the diagonal.
     a.flat[:end:step] = val
@@ -980,7 +983,7 @@ def diag_indices(n, ndim=2):
             [0, 1]]])
 
     """
-    idx = arange(n)
+    idx = np.arange(n)
     return (idx,) * ndim
 
 
@@ -1007,13 +1010,39 @@ def diag_indices_from(arr):
     -----
     .. versionadded:: 1.4.0
 
+    Examples
+    --------
+    
+    Create a 4 by 4 array.
+
+    >>> a = np.arange(16).reshape(4, 4)
+    >>> a
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+    
+    Get the indices of the diagonal elements.
+
+    >>> di = np.diag_indices_from(a)
+    >>> di
+    (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
+
+    >>> a[di]
+    array([ 0,  5, 10, 15])
+
+    This is simply syntactic sugar for diag_indices.
+
+    >>> np.diag_indices(a.shape[0])
+    (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
+
     """
 
     if not arr.ndim >= 2:
         raise ValueError("input array must be at least 2-d")
     # For more than d=2, the strided formula is only valid for arrays with
     # all dimensions equal, so we check first.
-    if not alltrue(diff(arr.shape) == 0):
+    if not np.all(diff(arr.shape) == 0):
         raise ValueError("All dimensions of input must be of equal length")
 
     return diag_indices(arr.shape[0], arr.ndim)

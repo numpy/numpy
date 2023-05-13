@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from numpy import ufunc
-from numpy.core.overrides import set_module
+from .. import ufunc
+from .._utils import set_module
 from typing import TYPE_CHECKING, final
 
 
@@ -180,6 +180,7 @@ from ._dtype_like import (
     _DTypeLikeComplex_co as _DTypeLikeComplex_co,
 )
 from ._array_like import (
+    NDArray as NDArray,
     ArrayLike as ArrayLike,
     _ArrayLike as _ArrayLike,
     _FiniteNestedSequence as _FiniteNestedSequence,
@@ -200,11 +201,6 @@ from ._array_like import (
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
     _ArrayLikeUnknown as _ArrayLikeUnknown,
     _UnknownType as _UnknownType,
-)
-from ._generic_alias import (
-    NDArray as NDArray,
-    _DType as _DType,
-    _GenericAlias as _GenericAlias,
 )
 
 if TYPE_CHECKING:

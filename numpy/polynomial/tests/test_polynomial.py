@@ -5,6 +5,8 @@ from functools import reduce
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
+import pickle
+from copy import deepcopy
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     assert_warns, assert_array_equal, assert_raises_regex)
@@ -41,6 +43,15 @@ class TestConstants:
     def test_polyx(self):
         assert_equal(poly.polyx, [0, 1])
 
+    def test_copy(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = deepcopy(x)
+        assert_equal(x, y)
+
+    def test_pickle(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = pickle.loads(pickle.dumps(x))
+        assert_equal(x, y)
 
 class TestArithmetic:
 

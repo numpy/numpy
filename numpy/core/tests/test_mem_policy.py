@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import threading
 import warnings
-from numpy.testing import extbuild, assert_warns
+from numpy.testing import extbuild, assert_warns, IS_WASM
 import sys
 
 
@@ -18,6 +18,8 @@ def get_module(tmp_path):
     """
     if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
+    if IS_WASM:
+        pytest.skip("Can't build module inside Wasm")
     functions = [
         ("get_default_policy", "METH_NOARGS", """
              Py_INCREF(PyDataMem_DefaultHandler);
@@ -87,6 +89,7 @@ def get_module(tmp_path):
          """),
     ]
     prologue = '''
+        #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
         #include <numpy/arrayobject.h>
         /*

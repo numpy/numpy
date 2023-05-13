@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
+        suppress_warnings, IS_WASM
         )
 from numpy import random
 import sys
@@ -1615,6 +1615,7 @@ class TestBroadcast:
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup_method(self):

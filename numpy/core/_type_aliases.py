@@ -107,13 +107,15 @@ def _add_aliases():
         if name in ('longdouble', 'clongdouble') and myname in allTypes:
             continue
 
-        allTypes[myname] = info.type
-
-        # add mapping for both the bit name and the numarray name
-        sctypeDict[myname] = info.type
+        # Add to the main namespace if desired:
+        if bit != 0 and base != "bool":
+            allTypes[myname] = info.type
 
         # add forward, reverse, and string mapping to numarray
         sctypeDict[char] = info.type
+
+        # add mapping for both the bit name
+        sctypeDict[myname] = info.type
 
 
 _add_aliases()
@@ -148,8 +150,6 @@ void = allTypes['void']
 #
 def _set_up_aliases():
     type_pairs = [('complex_', 'cdouble'),
-                  ('int0', 'intp'),
-                  ('uint0', 'uintp'),
                   ('single', 'float'),
                   ('csingle', 'cfloat'),
                   ('singlecomplex', 'cfloat'),
@@ -233,7 +233,8 @@ _set_array_types()
 
 # Add additional strings to the sctypeDict
 _toadd = ['int', 'float', 'complex', 'bool', 'object',
-          'str', 'bytes', ('a', 'bytes_')]
+          'str', 'bytes', ('a', 'bytes_'),
+          ('int0', 'intp'), ('uint0', 'uintp')]
 
 for name in _toadd:
     if isinstance(name, tuple):

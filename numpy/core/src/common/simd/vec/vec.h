@@ -39,8 +39,10 @@
 
 #ifdef NPY_HAVE_VX
     #define NPY_SIMD_BIGENDIAN 1
+    #define NPY_SIMD_CMPSIGNAL 0
 #else
     #define NPY_SIMD_BIGENDIAN 0
+    #define NPY_SIMD_CMPSIGNAL 1
 #endif
 
 typedef __vector unsigned char      npyv_u8;

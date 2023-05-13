@@ -49,7 +49,7 @@ set_zero_divide(void) {
 
 /* Integer arithmetic utilities */
 
-static NPY_INLINE npy_int32
+static inline npy_int32
 safe_neg(npy_int32 x) {
     if (x==(npy_int32)1<<31) {
         set_overflow();
@@ -57,7 +57,7 @@ safe_neg(npy_int32 x) {
     return -x;
 }
 
-static NPY_INLINE npy_int32
+static inline npy_int32
 safe_abs32(npy_int32 x) {
     npy_int32 nx;
     if (x>=0) {
@@ -70,7 +70,7 @@ safe_abs32(npy_int32 x) {
     return nx;
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 safe_abs64(npy_int64 x) {
     npy_int64 nx;
     if (x>=0) {
@@ -83,7 +83,7 @@ safe_abs64(npy_int64 x) {
     return nx;
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 gcd(npy_int64 x, npy_int64 y) {
     x = safe_abs64(x);
     y = safe_abs64(y);
@@ -102,7 +102,7 @@ gcd(npy_int64 x, npy_int64 y) {
     return x;
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 lcm(npy_int64 x, npy_int64 y) {
     npy_int64 lcm;
     if (!x || !y) {
@@ -128,7 +128,7 @@ typedef struct {
     npy_int32 dmm;
 } rational;
 
-static NPY_INLINE rational
+static inline rational
 make_rational_int(npy_int64 n) {
     rational r = {(npy_int32)n,0};
     if (r.n != n) {
@@ -164,7 +164,7 @@ make_rational_slow(npy_int64 n_, npy_int64 d_) {
     return r;
 }
 
-static NPY_INLINE npy_int32
+static inline npy_int32
 d(rational r) {
     return r.dmm+1;
 }
@@ -184,7 +184,7 @@ make_rational_fast(npy_int64 n_, npy_int64 d_) {
     return r;
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_negative(rational r) {
     rational x;
     x.n = safe_neg(r.n);
@@ -192,7 +192,7 @@ rational_negative(rational r) {
     return x;
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_add(rational x, rational y) {
     /*
      * Note that the numerator computation can never overflow int128_t,
@@ -202,25 +202,25 @@ rational_add(rational x, rational y) {
         (npy_int64)d(x)*d(y));
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_subtract(rational x, rational y) {
     /* We're safe from overflow as with + */
     return make_rational_fast((npy_int64)x.n*d(y)-(npy_int64)d(x)*y.n,
         (npy_int64)d(x)*d(y));
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_multiply(rational x, rational y) {
     /* We're safe from overflow as with + */
     return make_rational_fast((npy_int64)x.n*y.n,(npy_int64)d(x)*d(y));
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_divide(rational x, rational y) {
     return make_rational_slow((npy_int64)x.n*d(y),(npy_int64)d(x)*y.n);
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 rational_floor(rational x) {
     /* Always round down */
     if (x.n>=0) {
@@ -233,18 +233,18 @@ rational_floor(rational x) {
     return -((-(npy_int64)x.n+d(x)-1)/d(x));
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 rational_ceil(rational x) {
     return -rational_floor(rational_negative(x));
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_remainder(rational x, rational y) {
     return rational_subtract(x, rational_multiply(y,make_rational_int(
                     rational_floor(rational_divide(x,y)))));
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_abs(rational x) {
     rational y;
     y.n = safe_abs32(x.n);
@@ -252,7 +252,7 @@ rational_abs(rational x) {
     return y;
 }
 
-static NPY_INLINE npy_int64
+static inline npy_int64
 rational_rint(rational x) {
     /*
      * Round towards nearest integer, moving exact half integers towards
@@ -262,12 +262,12 @@ rational_rint(rational x) {
     return (2*(npy_int64)x.n+(x.n<0?-d_:d_))/(2*(npy_int64)d_);
 }
 
-static NPY_INLINE int
+static inline int
 rational_sign(rational x) {
     return x.n<0?-1:x.n==0?0:1;
 }
 
-static NPY_INLINE rational
+static inline rational
 rational_inverse(rational x) {
     rational y = {0};
     if (!x.n) {
@@ -286,7 +286,7 @@ rational_inverse(rational x) {
     return y;
 }
 
-static NPY_INLINE int
+static inline int
 rational_eq(rational x, rational y) {
     /*
      * Since we enforce d > 0, and store fractions in reduced form,
@@ -295,42 +295,42 @@ rational_eq(rational x, rational y) {
     return x.n==y.n && x.dmm==y.dmm;
 }
 
-static NPY_INLINE int
+static inline int
 rational_ne(rational x, rational y) {
     return !rational_eq(x,y);
 }
 
-static NPY_INLINE int
+static inline int
 rational_lt(rational x, rational y) {
     return (npy_int64)x.n*d(y) < (npy_int64)y.n*d(x);
 }
 
-static NPY_INLINE int
+static inline int
 rational_gt(rational x, rational y) {
     return rational_lt(y,x);
 }
 
-static NPY_INLINE int
+static inline int
 rational_le(rational x, rational y) {
     return !rational_lt(y,x);
 }
 
-static NPY_INLINE int
+static inline int
 rational_ge(rational x, rational y) {
     return !rational_lt(x,y);
 }
 
-static NPY_INLINE npy_int32
+static inline npy_int32
 rational_int(rational x) {
     return x.n/d(x);
 }
 
-static NPY_INLINE double
+static inline double
 rational_double(rational x) {
     return (double)x.n/d(x);
 }
 
-static NPY_INLINE int
+static inline int
 rational_nonzero(rational x) {
     return x.n!=0;
 }
@@ -367,7 +367,7 @@ typedef struct {
 
 static PyTypeObject PyRational_Type;
 
-static NPY_INLINE int
+static inline int
 PyRational_Check(PyObject* object) {
     return PyObject_IsInstance(object,(PyObject*)&PyRational_Type);
 }
@@ -753,7 +753,7 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
     return 0;
 }
 
-static NPY_INLINE void
+static inline void
 byteswap(npy_int32* x) {
     char* p = (char*)x;
     size_t i;
@@ -996,7 +996,7 @@ UNARY_UFUNC(reciprocal,rational,rational_inverse(x))
 UNARY_UFUNC(numerator,npy_int64,x.n)
 UNARY_UFUNC(denominator,npy_int64,d(x))
 
-static NPY_INLINE void
+static inline void
 rational_matrix_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     /* pointers to data for input and output arrays */

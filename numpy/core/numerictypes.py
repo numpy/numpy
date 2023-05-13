@@ -47,14 +47,14 @@ Exported symbols include:
      |   |   |     byte
      |   |   |     short
      |   |   |     intc
-     |   |   |     intp            int0
+     |   |   |     intp
      |   |   |     int_
      |   |   |     longlong
      |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
      |   |         ubyte
      |   |         ushort
      |   |         uintc
-     |   |         uintp           uint0
+     |   |         uintp
      |   |         uint_
      |   |         ulonglong
      |   +-> inexact
@@ -82,11 +82,11 @@ Exported symbols include:
 import numbers
 import warnings
 
-from numpy.core.multiarray import (
+from .multiarray import (
         ndarray, array, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
         )
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypes',

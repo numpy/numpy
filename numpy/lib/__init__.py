@@ -11,7 +11,6 @@ Most contains basic functions that are used by several submodules and are
 useful to have in the main name-space.
 
 """
-import math
 
 from numpy.version import version as __version__
 
@@ -58,7 +57,7 @@ from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
 
-__all__ = ['emath', 'math', 'tracemalloc_domain', 'Arrayterator']
+__all__ = ['emath', 'tracemalloc_domain', 'Arrayterator']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
@@ -77,3 +76,19 @@ __all__ += histograms.__all__
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester
+
+def __getattr__(attr):
+    # Warn for reprecated attributes
+    import math
+    import warnings
+
+    if attr == 'math':
+        warnings.warn(
+            "`np.lib.math` is a deprecated alias for the standard library "
+            "`math` module (Deprecated Numpy 1.25). Replace usages of "
+            "`numpy.lib.math` with `math`", DeprecationWarning, stacklevel=2)
+        return math
+    else:
+        raise AttributeError("module {!r} has no attribute "
+                             "{!r}".format(__name__, attr))
+        

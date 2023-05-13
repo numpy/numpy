@@ -247,6 +247,10 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     // negate multiply and subtract, -(a*b) - c
     #define npyv_nmulsub_f32 _mm256_fnmsub_ps
     #define npyv_nmulsub_f64 _mm256_fnmsub_pd
+    // multiply, add for odd elements and subtract even elements.
+    // (a * b) -+ c
+    #define npyv_muladdsub_f32 _mm256_fmaddsub_ps
+    #define npyv_muladdsub_f64 _mm256_fmaddsub_pd
 #else
     // multiply and add, a*b + c
     NPY_FINLINE npyv_f32 npyv_muladd_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
@@ -274,6 +278,13 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         npyv_f64 neg_a = npyv_xor_f64(a, npyv_setall_f64(-0.0));
         return npyv_sub_f64(npyv_mul_f64(neg_a, b), c);
     }
+    // multiply, add for odd elements and subtract even elements.
+    // (a * b) -+ c
+    NPY_FINLINE npyv_f32 npyv_muladdsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    { return _mm256_addsub_ps(npyv_mul_f32(a, b), c); }
+    NPY_FINLINE npyv_f64 npyv_muladdsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    { return _mm256_addsub_pd(npyv_mul_f64(a, b), c); }
+
 #endif // !NPY_HAVE_FMA3
 
 /***************************
