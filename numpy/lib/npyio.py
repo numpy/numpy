@@ -260,7 +260,7 @@ class NpzFile(Mapping):
             else:
                 return self.zip.read(key)
         else:
-            raise KeyError("%s is not a file in the archive" % key)
+            raise KeyError(f"{key} is not a file in the archive")
 
     def __contains__(self, key):
         return (key in self._files or key in self.files)

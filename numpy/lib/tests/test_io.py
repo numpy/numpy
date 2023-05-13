@@ -232,6 +232,17 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
+
+    def test_tuple_getitem_raises(self):
+        # gh-23748
+        a = np.array([1, 2, 3])
+        f = BytesIO()
+        np.savez(f, a=a)
+        f.seek(0)
+        l = np.load(f)
+        with pytest.raises(KeyError, match="(1, 2)"):
+            l[1, 2]
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
