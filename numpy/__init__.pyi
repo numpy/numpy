@@ -396,7 +396,6 @@ from numpy.core.numerictypes import (
     issubsctype as issubsctype,
     issubdtype as issubdtype,
     sctype2char as sctype2char,
-    find_common_type as find_common_type,
     nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
