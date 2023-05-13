@@ -240,7 +240,7 @@ class TestSavezLoad(RoundtripTest):
         np.savez(f, a=a)
         f.seek(0)
         l = np.load(f)
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match="(1, 2)"):
             l[1, 2]
 
     def test_BagObj(self):
