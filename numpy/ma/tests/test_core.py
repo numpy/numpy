@@ -4543,7 +4543,7 @@ class TestMaskedArrayFunctions:
         x = np.arange(4, dtype=np.int32)
         y = np.arange(4, dtype=np.float32) * 2.2
         test = where(x > 1.5, y, x).dtype
-        control = np.find_common_type([np.int32, np.float32], [])
+        control = np.result_type(np.int32, np.float32)
         assert_equal(test, control)
 
     def test_where_broadcast(self):

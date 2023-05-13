@@ -1667,7 +1667,9 @@ class TestRegression:
 
     def test_find_common_type_boolean(self):
         # Ticket #1695
-        assert_(np.find_common_type([], ['?', '?']) == '?')
+        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
+            res = np.find_common_type([], ['?', '?'])
+        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])
