@@ -49,6 +49,17 @@ def asstr(s):
 def isfileobj(f):
     return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
 
+def _isfileobj(f):
+    if not isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter)):
+        return False
+    try:
+        # BufferedReader/Writer may raise OSError when
+        # fetching `fileno()` (e.g. when wrapping BytesIO).
+        f.fileno()
+        return True
+    except OSError:
+        return False
+
 def open_latin1(filename, mode='r'):
     return open(filename, mode=mode, encoding='iso-8859-1')
 
