@@ -931,6 +931,13 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_Transpose(self, NULL);
 }
 
+static PyObject *
+array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    int ndim = PyArray_NDIM(self);
+    return PyArray_SwapAxes(self, ndim - 2, ndim - 1);
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -990,6 +997,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"T",
         (getter)array_transpose_get,
+        NULL,
+        NULL, NULL},
+    {"mT",
+        (getter)array_matrix_transpose_get,
         NULL,
         NULL, NULL},
     {"__array_interface__",
