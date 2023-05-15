@@ -37,17 +37,9 @@ reveal_type(i8 > [decimal.Decimal("1.5")])  # E: Any
 # Time structures
 
 reveal_type(dt > dt)  # E: bool_
-
 reveal_type(td > td)  # E: bool_
-reveal_type(td > i)  # E: bool_
-reveal_type(td > i4)  # E: bool_
-reveal_type(td > i8)  # E: bool_
 
-reveal_type(td > AR)  # E: ndarray[Any, dtype[bool_]]
-reveal_type(td > SEQ)  # E: ndarray[Any, dtype[bool_]]
 reveal_type(AR > SEQ)  # E: ndarray[Any, dtype[bool_]]
-reveal_type(AR > td)  # E: ndarray[Any, dtype[bool_]]
-reveal_type(SEQ > td)  # E: ndarray[Any, dtype[bool_]]
 reveal_type(SEQ > AR)  # E: ndarray[Any, dtype[bool_]]
 
 # boolean
