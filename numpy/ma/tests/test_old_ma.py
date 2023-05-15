@@ -194,16 +194,16 @@ class TestMa:
         assert_(eq(np.sum(x, axis=0), sum(x, axis=0)))
         assert_(eq(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0)))
         assert_(eq(np.sum(x, 0), sum(x, 0)))
-        assert_(eq(np.product(x, axis=0), product(x, axis=0)))
-        assert_(eq(np.product(x, 0), product(x, 0)))
-        assert_(eq(np.product(filled(xm, 1), axis=0),
+        assert_(eq(np.prod(x, axis=0), product(x, axis=0)))
+        assert_(eq(np.prod(x, 0), product(x, 0)))
+        assert_(eq(np.prod(filled(xm, 1), axis=0),
                            product(xm, axis=0)))
         if len(s) > 1:
             assert_(eq(np.concatenate((x, y), 1),
                                concatenate((xm, ym), 1)))
             assert_(eq(np.add.reduce(x, 1), add.reduce(x, 1)))
             assert_(eq(np.sum(x, 1), sum(x, 1)))
-            assert_(eq(np.product(x, 1), product(x, 1)))
+            assert_(eq(np.prod(x, 1), product(x, 1)))
 
     def test_testCI(self):
         # Test of conversions and indexing

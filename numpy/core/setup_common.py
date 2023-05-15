@@ -48,7 +48,13 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000f - 1.22.x
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
-C_API_VERSION = 0x00000010
+# 0x00000011 - 1.25.x
+C_API_VERSION = 0x00000011
+
+# By default, when compiling downstream libraries against NumPy,```
+# pick an older feature version.  For example, for 1.25.x we default to the
+# 1.19 API and support going back all the way to 1.15.x (if so desired).
+# This is set up in `numpyconfig.h`.
 
 class MismatchCAPIError(ValueError):
     pass
@@ -91,6 +97,10 @@ def check_api_version(apiversion, codegen_dir):
                f"checksum in core/codegen_dir/cversions.txt is {api_hash}. If "
                "functions were added in the C API, you have to update "
                f"C_API_VERSION in {__file__}."
+               "\n"
+               "Please make sure that new additions are guarded with "
+               "MinVersion() to make them unavailable when wishing support "
+               "for older NumPy versions."
                )
         raise MismatchCAPIError(msg)
 

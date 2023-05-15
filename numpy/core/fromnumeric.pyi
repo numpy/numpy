@@ -1047,3 +1047,7 @@ def var(
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> _ArrayType: ...
+
+max = amax
+min = amin
+round = around

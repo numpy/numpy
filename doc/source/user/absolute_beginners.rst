@@ -64,8 +64,8 @@ To access NumPy and its functions import it in your Python code like this::
   import numpy as np
 
 We shorten the imported name to ``np`` for better readability of code using
-NumPy. This is a widely adopted convention that you should follow so that
-anyone working with your code can easily understand it.
+NumPy. This is a widely adopted convention that makes your code more readable
+for everyone working on it. We recommend to always use import numpy as ``np``.
 
 Reading the example code
 ------------------------

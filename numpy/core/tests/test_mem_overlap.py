@@ -55,7 +55,7 @@ def _indices(ndims):
 def _check_assignment(srcidx, dstidx):
     """Check assignment arr[dstidx] = arr[srcidx] works."""
 
-    arr = np.arange(np.product(shape)).reshape(shape)
+    arr = np.arange(np.prod(shape)).reshape(shape)
 
     cpy = arr.copy()
 

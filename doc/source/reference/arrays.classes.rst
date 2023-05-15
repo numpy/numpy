@@ -71,10 +71,11 @@ NumPy provides several hooks that classes can customize:
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the input or output arguments has a :func:`__array_ufunc__`
+   If one of the input, output, or ``where`` arguments has a :func:`__array_ufunc__`
    method, it is executed *instead* of the ufunc.  If more than one of the
    arguments implements :func:`__array_ufunc__`, they are tried in the
-   order: subclasses before superclasses, inputs before outputs, otherwise
+   order: subclasses before superclasses, inputs before outputs,
+   outputs before ``where``, otherwise
    left to right. The first routine returning something other than
    :obj:`NotImplemented` determines the result. If all of the
    :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
@@ -161,15 +162,6 @@ NumPy provides several hooks that classes can customize:
 .. py:method:: class.__array_function__(func, types, args, kwargs)
 
    .. versionadded:: 1.16
-
-   .. note::
-
-       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
-         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
-       - In NumPy 1.16, you need to set the environment variable
-         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
-         NumPy function overrides.
-       - Eventually, expect to ``__array_function__`` to always be enabled.
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.

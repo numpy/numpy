@@ -197,7 +197,7 @@ typedef struct _tagPyUFuncObject {
         npy_uint32 iter_flags;
 
         /* New in NPY_API_VERSION 0x0000000D and above */
-
+    #if NPY_FEATURE_VERSION >= NPY_1_16_API_VERSION
         /*
          * for each core_num_dim_ix distinct dimension names,
          * the possible "frozen" size (-1 if not frozen).
@@ -211,13 +211,15 @@ typedef struct _tagPyUFuncObject {
 
         /* Identity for reduction, when identity == PyUFunc_IdentityValue */
         PyObject *identity_value;
+    #endif  /* NPY_FEATURE_VERSION >= NPY_1_16_API_VERSION */
 
         /* New in NPY_API_VERSION 0x0000000F and above */
-
+    #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
         /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
+    #endif
 } PyUFuncObject;
 
 #include "arrayobject.h"

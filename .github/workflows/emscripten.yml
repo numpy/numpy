@@ -21,17 +21,17 @@ jobs:
     runs-on: ubuntu-22.04
     if: "github.repository == 'numpy/numpy'"
     env:
-      PYODIDE_VERSION: 0.22.1
+      PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.10.7
-      EMSCRIPTEN_VERSION: 3.1.27
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
       NODE_VERSION: 18
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -42,11 +42,11 @@ jobs:
 
       - name: set up python
         id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: mymindstorm/setup-emsdk@v12
+      - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache
@@ -58,7 +58,7 @@ jobs:
         run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 

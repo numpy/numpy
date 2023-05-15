@@ -44,7 +44,8 @@ C_ABI_VERSION = '0x01000009'
 # 0x0000000f - 1.22.x
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
-C_API_VERSION = '0x00000010'
+# 0x00000011 - 1.25.x
+C_API_VERSION = '0x00000011'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -83,6 +84,9 @@ if use_svml
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
 endif
+if not fs.exists('src/npysort/x86-simd-sort/README.md')
+  error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
 
 # Check sizes of types. Note, some of these landed in config.h before, but were
 # unused. So clean that up and only define the NPY_SIZEOF flavors rather than
@@ -109,7 +113,7 @@ cdata.set('NPY_SIZEOF_PY_LONG_LONG',
 if cc.has_header('complex.h')
   cdata.set10('HAVE_COMPLEX_H', true)
   cdata.set10('NPY_USE_C99_COMPLEX', true)
-  if cc.get_id() == 'msvc'
+  if cc.get_argument_syntax() == 'msvc'
     complex_types_to_check = [
       ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex', 'float'],
       ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex', 'double'],
@@ -258,7 +262,7 @@ else
   # function is not available in CI. For the latter there is a fallback path,
   # but that is broken because we don't have the exact long double
   # representation checks.
-  if cc.get_id() != 'msvc'
+  if cc.get_argument_syntax() != 'msvc'
     cdata.set10('HAVE_STRTOLD_L', false)
   endif
 endif
@@ -427,6 +431,7 @@ _numpyconfig_h = configure_file(
 # ----------------------------
 
 staticlib_cflags = []
+staticlib_cppflags = []
 if cc.get_id() == 'msvc'
   # Disable voltbl section for vc142 to allow link using mingw-w64; see:
   # https://github.com/matthew-brett/dll_investigation/issues/1#issuecomment-1100468171
@@ -440,6 +445,7 @@ endif
 # https://mesonbuild.com/Build-options.html#build-options
 if get_option('disable-simd-optimizations')
   staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
+  staticlib_cppflags += '-DNPY_DISABLE_OPTIMIZATION'
 endif
 
 npy_math_internal_h = custom_target(
@@ -452,12 +458,13 @@ npymath_sources = [
   src_file.process('src/npymath/ieee754.c.src'),
   src_file.process('src/npymath/npy_math_complex.c.src'),
   npy_math_internal_h,
-  'src/npymath/halffloat.c',
+  'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
+  cpp_args: staticlib_cppflags,
   include_directories: ['include', 'src/npymath', 'src/common'],
   dependencies: py_dep,
   install: true,
@@ -565,7 +572,7 @@ c_args_common = [
 cpp_args_common = c_args_common + [
   '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
-if cc.get_id() != 'msvc'
+if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
     '-fno-exceptions',  # no exception support
     '-fno-rtti',  # no runtime type information

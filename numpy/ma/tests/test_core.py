@@ -377,6 +377,24 @@ class TestMaskedArray:
         assert_equal(s1, s2)
         assert_(x1[1:1].shape == (0,))
 
+    def test_setitem_no_warning(self):
+        # Setitem shouldn't warn, because the assignment might be masked
+        # and warning for a masked assignment is weird (see gh-23000)
+        # (When the value is masked, otherwise a warning would be acceptable
+        # but is not given currently.)
+        x = np.ma.arange(60).reshape((6, 10))
+        index = (slice(1, 5, 2), [7, 5])
+        value = np.ma.masked_all((2, 2))
+        value._data[...] = np.inf  # not a valid integer...
+        x[index] = value
+        # The masked scalar is special cased, but test anyway (it's NaN):
+        x[...] = np.ma.masked
+        # Finally, a large value that cannot be cast to the float32 `x`
+        x = np.ma.arange(3., dtype=np.float32)
+        value = np.ma.array([2e234, 1, 1], mask=[True, False, False])
+        x[...] = value
+        x[[0, 1, 2]] = value
+
     @suppress_copy_mask_on_assignment
     def test_copy(self):
         # Tests of some subtle points of copying and sizing.
@@ -1336,16 +1354,16 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.sum(x, axis=0), sum(x, axis=0))
         assert_equal(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0))
         assert_equal(np.sum(x, 0), sum(x, 0))
-        assert_equal(np.product(x, axis=0), product(x, axis=0))
-        assert_equal(np.product(x, 0), product(x, 0))
-        assert_equal(np.product(filled(xm, 1), axis=0), product(xm, axis=0))
+        assert_equal(np.prod(x, axis=0), product(x, axis=0))
+        assert_equal(np.prod(x, 0), product(x, 0))
+        assert_equal(np.prod(filled(xm, 1), axis=0), product(xm, axis=0))
         s = (3, 4)
         x.shape = y.shape = xm.shape = ym.shape = s
         if len(s) > 1:
             assert_equal(np.concatenate((x, y), 1), concatenate((xm, ym), 1))
             assert_equal(np.add.reduce(x, 1), add.reduce(x, 1))
             assert_equal(np.sum(x, 1), sum(x, 1))
-            assert_equal(np.product(x, 1), product(x, 1))
+            assert_equal(np.prod(x, 1), product(x, 1))
 
     def test_binops_d2D(self):
         # Test binary operations on 2D data
@@ -3411,6 +3429,24 @@ class TestMaskedArrayMethods:
         assert_equal(a.ravel(order='C'), [1, 2, 3, 4])
         assert_equal(a.ravel(order='F'), [1, 3, 2, 4])
 
+    @pytest.mark.parametrize("order", "AKCF")
+    @pytest.mark.parametrize("data_order", "CF")
+    def test_ravel_order(self, order, data_order):
+        # Ravelling must ravel mask and data in the same order always to avoid
+        # misaligning the two in the ravel result.
+        arr = np.ones((5, 10), order=data_order)
+        arr[0, :] = 0
+        mask = np.ones((10, 5), dtype=bool, order=data_order).T
+        mask[0, :] = False
+        x = array(arr, mask=mask)
+        assert x._data.flags.fnc != x._mask.flags.fnc
+        assert (x.filled(0) == 0).all()
+        raveled = x.ravel(order)
+        assert (raveled.filled(0) == 0).all()
+
+        # NOTE: Can be wrong if arr order is neither C nor F and `order="K"` 
+        assert_array_equal(arr.ravel(order), x.ravel(order)._data)
+
     def test_reshape(self):
         # Tests reshape
         x = arange(4)
@@ -4507,7 +4543,7 @@ class TestMaskedArrayFunctions:
         x = np.arange(4, dtype=np.int32)
         y = np.arange(4, dtype=np.float32) * 2.2
         test = where(x > 1.5, y, x).dtype
-        control = np.find_common_type([np.int32, np.float32], [])
+        control = np.result_type(np.int32, np.float32)
         assert_equal(test, control)
 
     def test_where_broadcast(self):

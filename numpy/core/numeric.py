@@ -4,6 +4,7 @@ import operator
 import sys
 import warnings
 import numbers
+import builtins
 
 import numpy as np
 from . import multiarray
@@ -842,14 +843,13 @@ def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
-    Given two vectors, ``a = [a0, a1, ..., aM]`` and
-    ``b = [b0, b1, ..., bN]``,
+    Given two vectors `a` and `b` of length ``M`` and ``N``, repsectively,
     the outer product [1]_ is::
 
-      [[a0*b0  a0*b1 ... a0*bN ]
-       [a1*b0    .
+      [[a_0*b_0  a_0*b_1 ... a_0*b_{N-1} ]
+       [a_1*b_0    .
        [ ...          .
-       [aM*b0            aM*bN ]]
+       [a_{M-1}*b_0            a_{M-1}*b_{N-1} ]]
 
     Parameters
     ----------
@@ -881,9 +881,9 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
-             ed., Baltimore, MD, Johns Hopkins University Press, 1996,
-             pg. 8.
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
+           ed., Baltimore, MD, Johns Hopkins University Press, 1996,
+           pg. 8.
 
     Examples
     --------
@@ -2023,7 +2023,7 @@ def binary_repr(num, width=None):
         binary = bin(num)[2:]
         binwidth = len(binary)
         outwidth = (binwidth if width is None
-                    else max(binwidth, width))
+                    else builtins.max(binwidth, width))
         warn_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
@@ -2043,7 +2043,7 @@ def binary_repr(num, width=None):
             binary = bin(twocomp)[2:]
             binwidth = len(binary)
 
-            outwidth = max(binwidth, width)
+            outwidth = builtins.max(binwidth, width)
             warn_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary
 

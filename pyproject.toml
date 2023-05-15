@@ -9,7 +9,7 @@ requires = [
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
     # likely to be removed as a dependency in meson-python 0.12.0.
     "wheel==0.38.1",
-    "Cython>=0.29.30,<3.0",
+    "Cython>=0.29.34,<3.0",
 #    "meson-python>=0.10.0",
 ]
 
@@ -30,7 +30,7 @@ requires = [
 #maintainers = [
 #    {name = "NumPy Developers", email="numpy-discussion@python.org"},
 #]
-#requires-python = ">=3.8"
+#requires-python = ">=3.9"
 #readme = "README.md"
 #classifiers = [
 #    'Development Status :: 5 - Production/Stable',
@@ -40,7 +40,6 @@ requires = [
 #    'Programming Language :: C',
 #    'Programming Language :: Python',
 #    'Programming Language :: Python :: 3',
-#    'Programming Language :: Python :: 3.8',
 #    'Programming Language :: Python :: 3.9',
 #    'Programming Language :: Python :: 3.10',
 #    'Programming Language :: Python :: 3.11',
@@ -164,9 +163,9 @@ environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-deb
 # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
 # for more info
 archs = "x86_64 arm64"
-test-skip = "*_arm64 *_universal2:arm64"
+test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
 
 [tool.cibuildwheel.windows]
 environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="", LDFLAGS="" }
@@ -175,9 +174,9 @@ environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFL
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
 
-[tool.devpy]
+[tool.spin]
 package = 'numpy'
 
-[tool.devpy.commands]
-"Build" = ["devpy.build", "devpy.test"]
-"Environments" = ["devpy.shell", "devpy.ipython", "devpy.python"]
+[tool.spin.commands]
+"Build" = ["spin.cmds.meson.build", "spin.cmds.meson.test"]
+"Environments" = ["spin.cmds.meson.shell", "spin.cmds.meson.ipython", "spin.cmds.meson.python"]

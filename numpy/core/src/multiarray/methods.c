@@ -28,6 +28,7 @@
 #include "strfuncs.h"
 #include "array_assign.h"
 #include "npy_dlpack.h"
+#include "multiarraymodule.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -436,7 +437,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
             PyArray_BYTES(self) + offset,
             PyArray_FLAGS(self) & ~NPY_ARRAY_F_CONTIGUOUS,
             (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ALLOW_EMPTY_STRING);
     return ret;
 }
 
@@ -923,29 +924,28 @@ array_astype(PyArrayObject *self,
 
     PyArrayObject *ret;
 
-    /* This steals the reference to dtype, so no DECREF of dtype */
+    /* This steals the reference to dtype */
+    Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewLikeArray(
                                 self, order, dtype, subok);
     if (ret == NULL) {
-        return NULL;
-    }
-    /* NumPy 1.20, 2020-10-01 */
-    if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
-            DEPRECATE_FUTUREWARNING(
-                "casting an array to a subarray dtype "
-                "will not use broadcasting in the future, but cast each "
-                "element to the new dtype and then append the dtype's shape "
-                "to the new array. You can opt-in to the new behaviour, by "
-                "additional field to the cast: "
-                "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
-                "This may lead to a different result or to current failures "
-                "succeeding.  "
-                "(FutureWarning since NumPy 1.20)") < 0) {
-        Py_DECREF(ret);
+        Py_DECREF(dtype);
         return NULL;
     }
 
-    if (PyArray_CopyInto(ret, self) < 0) {
+    /* Decrease the number of dimensions removing subarray ones again */
+    int out_ndim = PyArray_NDIM(ret);
+    PyArray_Descr *out_descr = PyArray_DESCR(ret);
+    ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
+    ((PyArrayObject_fields *)ret)->descr = dtype;
+
+    int success = PyArray_CopyInto(ret, self);
+
+    Py_DECREF(dtype);
+    ((PyArrayObject_fields *)ret)->nd = out_ndim;
+    ((PyArrayObject_fields *)ret)->descr = out_descr;
+
+    if (success < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -1102,7 +1102,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int nin, nout;
     PyObject *out_kwd_obj;
     PyObject *fast;
-    PyObject **in_objs, **out_objs;
+    PyObject **in_objs, **out_objs, *where_obj;
 
     /* check inputs */
     nin = PyTuple_Size(args);
@@ -1133,6 +1133,17 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         }
     }
     Py_DECREF(out_kwd_obj);
+    /* check where if it exists */
+    where_obj = PyDict_GetItemWithError(kwds, npy_ma_str_where);
+    if (where_obj == NULL) {
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+    } else {
+        if (PyUFunc_HasOverride(where_obj)){
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -2792,9 +2803,7 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArray_Descr *dtype;
     PyObject *c;
 
-    if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError,
-                "only length-1 arrays can be converted to Python scalars");
+    if (check_is_convertible_to_scalar(self) < 0) {
         return NULL;
     }
 

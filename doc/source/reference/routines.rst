@@ -24,7 +24,6 @@ indentation.
    routines.ctypeslib
    routines.datetime
    routines.dtype
-   routines.dual
    routines.emath
    routines.err
    routines.fft

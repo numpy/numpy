@@ -93,7 +93,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', ['bool8'],
+add_newdoc_for_scalar_type('bool_', [],
     """
     Boolean type (True or False), stored as a byte.
 
@@ -204,7 +204,11 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
     r"""
     A unicode string.
 
-    When used in arrays, this type strips trailing null codepoints.
+    This type strips trailing null codepoints.
+
+    >>> s = np.str_("abc\x00")
+    >>> s
+    'abc'
 
     Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
     contents as UCS4:

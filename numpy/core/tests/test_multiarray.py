@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections.abc
 import tempfile
 import sys
@@ -28,7 +30,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
-    runstring, temppath, suppress_warnings, break_cycles,
+    runstring, temppath, suppress_warnings, break_cycles, _SUPPORTS_SVE,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
@@ -1194,6 +1196,17 @@ class TestCreation:
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
 
+    @pytest.mark.parametrize("func", [
+        np.array, np.asarray, np.asanyarray, np.ascontiguousarray,
+        np.asfortranarray])
+    def test_creation_from_dtypemeta(self, func):
+        dtype = np.dtype('i')
+        arr1 = func([1, 2, 3], dtype=dtype)
+        arr2 = func([1, 2, 3], dtype=type(dtype))
+        assert_array_equal(arr1, arr2)
+        assert arr2.dtype == dtype
+
+
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
@@ -1921,8 +1934,9 @@ class TestMethods:
                 assert_array_equal(a2.prod(axis=-1),
                                    np.array([24, 1890, 600], ctype))
 
-    def test_repeat(self):
-        m = np.array([1, 2, 3, 4, 5, 6])
+    @pytest.mark.parametrize('dtype', [None, object])
+    def test_repeat(self, dtype):
+        m = np.array([1, 2, 3, 4, 5, 6], dtype=dtype)
         m_rect = m.reshape((2, 3))
 
         A = m.repeat([1, 3, 2, 1, 1, 2])
@@ -3631,9 +3645,13 @@ class TestMethods:
             msg = 'dtype: {0}'.format(dt)
             ap = complex(a)
             assert_equal(ap, a, msg)
-            bp = complex(b)
+
+            with assert_warns(DeprecationWarning):
+                bp = complex(b)
             assert_equal(bp, b, msg)
-            cp = complex(c)
+
+            with assert_warns(DeprecationWarning):
+                cp = complex(c)
             assert_equal(cp, c, msg)
 
     def test__complex__should_not_work(self):
@@ -3656,7 +3674,8 @@ class TestMethods:
         assert_raises(TypeError, complex, d)
 
         e = np.array(['1+1j'], 'U')
-        assert_raises(TypeError, complex, e)
+        with assert_warns(DeprecationWarning):
+            assert_raises(TypeError, complex, e)
 
 class TestCequenceMethods:
     def test_array_contains(self):
@@ -3718,7 +3737,7 @@ class TestBinop:
             'and':      (np.bitwise_and, True, int),
             'xor':      (np.bitwise_xor, True, int),
             'or':       (np.bitwise_or, True, int),
-            'matmul':   (np.matmul, False, float),
+            'matmul':   (np.matmul, True, float),
             # 'ge':       (np.less_equal, False),
             # 'gt':       (np.less, False),
             # 'le':       (np.greater_equal, False),
@@ -6662,6 +6681,22 @@ class TestDot:
         r = np.empty((1024, 32), dtype=int)
         assert_raises(ValueError, dot, f, v, r)
 
+    def test_dot_out_result(self):
+        x = np.ones((), dtype=np.float16)
+        y = np.ones((5,), dtype=np.float16)
+        z = np.zeros((5,), dtype=np.float16)
+        res = x.dot(y, out=z)
+        assert np.array_equal(res, y)
+        assert np.array_equal(z, y)
+
+    def test_dot_out_aliasing(self):
+        x = np.ones((), dtype=np.float16)
+        y = np.ones((5,), dtype=np.float16)
+        z = np.zeros((5,), dtype=np.float16)
+        res = x.dot(y, out=z)
+        z[0] = 2
+        assert np.array_equal(res, z)
+
     def test_dot_array_order(self):
         a = np.array([[1, 2], [3, 4]], order='C')
         b = np.array([[1, 2], [3, 4]], order='F')
@@ -7169,16 +7204,69 @@ class TestMatmulOperator(MatmulCommon):
         assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
         assert_raises(TypeError, self.matmul, np.arange(10), np.void(b'abc'))
 
-def test_matmul_inplace():
-    # It would be nice to support in-place matmul eventually, but for now
-    # we don't have a working implementation, so better just to error out
-    # and nudge people to writing "a = a @ b".
-    a = np.eye(3)
-    b = np.eye(3)
-    assert_raises(TypeError, a.__imatmul__, b)
-    import operator
-    assert_raises(TypeError, operator.imatmul, a, b)
-    assert_raises(TypeError, exec, "a @= b", globals(), locals())
+
+class TestMatmulInplace:
+    DTYPES = {}
+    for i in MatmulCommon.types:
+        for j in MatmulCommon.types:
+            if np.can_cast(j, i):
+                DTYPES[f"{i}-{j}"] = (np.dtype(i), np.dtype(j))
+
+    @pytest.mark.parametrize("dtype1,dtype2", DTYPES.values(), ids=DTYPES)
+    def test_basic(self, dtype1: np.dtype, dtype2: np.dtype) -> None:
+        a = np.arange(10).reshape(5, 2).astype(dtype1)
+        a_id = id(a)
+        b = np.ones((2, 2), dtype=dtype2)
+
+        ref = a @ b
+        a @= b
+
+        assert id(a) == a_id
+        assert a.dtype == dtype1
+        assert a.shape == (5, 2)
+        if dtype1.kind in "fc":
+            np.testing.assert_allclose(a, ref)
+        else:
+            np.testing.assert_array_equal(a, ref)
+
+    SHAPES = {
+        "2d_large": ((10**5, 10), (10, 10)),
+        "3d_large": ((10**4, 10, 10), (1, 10, 10)),
+        "1d": ((3,), (3,)),
+        "2d_1d": ((3, 3), (3,)),
+        "1d_2d": ((3,), (3, 3)),
+        "2d_broadcast": ((3, 3), (3, 1)),
+        "2d_broadcast_reverse": ((1, 3), (3, 3)),
+        "3d_broadcast1": ((3, 3, 3), (1, 3, 1)),
+        "3d_broadcast2": ((3, 3, 3), (1, 3, 3)),
+        "3d_broadcast3": ((3, 3, 3), (3, 3, 1)),
+        "3d_broadcast_reverse1": ((1, 3, 3), (3, 3, 3)),
+        "3d_broadcast_reverse2": ((3, 1, 3), (3, 3, 3)),
+        "3d_broadcast_reverse3": ((1, 1, 3), (3, 3, 3)),
+    }
+
+    @pytest.mark.parametrize("a_shape,b_shape", SHAPES.values(), ids=SHAPES)
+    def test_shapes(self, a_shape: tuple[int, ...], b_shape: tuple[int, ...]):
+        a_size = np.prod(a_shape)
+        a = np.arange(a_size).reshape(a_shape).astype(np.float64)
+        a_id = id(a)
+
+        b_size = np.prod(b_shape)
+        b = np.arange(b_size).reshape(b_shape)
+
+        ref = a @ b
+        if ref.shape != a_shape:
+            with pytest.raises(ValueError):
+                a @= b
+            return
+        else:
+            a @= b
+
+        assert id(a) == a_id
+        assert a.dtype.type == np.float64
+        assert a.shape == a_shape
+        np.testing.assert_allclose(a, ref)
+
 
 def test_matmul_axes():
     a = np.arange(3*4*5).reshape(3, 4, 5)
@@ -8674,8 +8762,10 @@ class TestConversion:
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
             assert_equal(int_func(np.array(0)), 0)
-            assert_equal(int_func(np.array([1])), 1)
-            assert_equal(int_func(np.array([[42]])), 42)
+            with assert_warns(DeprecationWarning):
+                assert_equal(int_func(np.array([1])), 1)
+            with assert_warns(DeprecationWarning):
+                assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
             # gh-9972
@@ -8690,7 +8780,8 @@ class TestConversion:
                     def __trunc__(self):
                         return 3
                 assert_equal(3, int_func(np.array(HasTrunc())))
-                assert_equal(3, int_func(np.array([HasTrunc()])))
+                with assert_warns(DeprecationWarning):
+                    assert_equal(3, int_func(np.array([HasTrunc()])))
             else:
                 pass
 
@@ -8699,8 +8790,9 @@ class TestConversion:
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            assert_raises(NotImplementedError,
-                int_func, np.array([NotConvertible()]))
+            with assert_warns(DeprecationWarning):
+                assert_raises(NotImplementedError,
+                    int_func, np.array([NotConvertible()]))
 
 
 class TestWhere:
@@ -9837,6 +9929,7 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
+@pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
 # Test various array sizes that hit different code paths in quicksort-avx512
 @pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['e', 'f', 'd'])

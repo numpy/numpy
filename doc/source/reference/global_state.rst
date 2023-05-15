@@ -1,7 +1,7 @@
 .. _global_state:
 
 ************
-Global State
+Global state
 ************
 
 NumPy has a few import-time, compile-time, or runtime options
@@ -11,10 +11,10 @@ purposes and will not be interesting to the vast majority
 of users.
 
 
-Performance-Related Options
+Performance-related options
 ===========================
 
-Number of Threads used for Linear Algebra
+Number of threads used for Linear Algebra
 -----------------------------------------
 
 NumPy itself is normally intentionally limited to a single thread
@@ -55,24 +55,11 @@ SIMD feature selection
 Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
 See :ref:`runtime-simd-dispatch`.
 
-Interoperability-Related Options
-================================
 
-The array function protocol which allows array-like objects to
-hook into the NumPy API is currently enabled by default.
-This option exists since NumPy 1.16 and is enabled by default since
-NumPy 1.17. It can be disabled using::
-
-    NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
-
-See also :py:meth:`numpy.class.__array_function__` for more information.
-This flag is checked at import time.
-
-
-Debugging-Related Options
+Debugging-related options
 =========================
 
-Relaxed Strides Checking
+Relaxed strides checking
 ------------------------
 
 The *compile-time* environment variable::

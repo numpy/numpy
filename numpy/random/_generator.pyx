@@ -240,12 +240,18 @@ cdef class Generator:
 
     def spawn(self, int n_children):
         """
+        spawn(n_children)
+
         Create new independent child generators.
 
         See :ref:`seedsequence-spawn` for additional notes on spawning
         children.
 
         .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
 
         Returns
         -------
@@ -2628,7 +2634,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -4321,7 +4327,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If any value in ``alpha`` is less than or equal to zero
+            If any value in ``alpha`` is less than zero
 
         Notes
         -----
@@ -4400,8 +4406,8 @@ cdef class Generator:
         alpha_arr = <np.ndarray>np.PyArray_FROMANY(
             alpha, np.NPY_DOUBLE, 1, 1,
             np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        if np.any(np.less_equal(alpha_arr, 0)):
-            raise ValueError('alpha <= 0')
+        if np.any(np.less(alpha_arr, 0)):
+            raise ValueError('alpha < 0')
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         if size is None:

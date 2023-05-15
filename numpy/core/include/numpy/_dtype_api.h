@@ -5,14 +5,14 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 9
+#define __EXPERIMENTAL_DTYPE_API_VERSION 10
 
 struct PyArrayMethodObject_tag;
 
 /*
  * Largely opaque struct for DType classes (i.e. metaclass instances).
  * The internal definition is currently in `ndarraytypes.h` (export is a bit
- * more complex because `PyArray_Descr` is a DTypeMeta internall but not
+ * more complex because `PyArray_Descr` is a DTypeMeta internally but not
  * externally).
  */
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
@@ -199,9 +199,8 @@ typedef int (get_reduction_initial_function)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         char *initial);
 
-
 /*
- * The following functions are only used be the wrapping array method defined
+ * The following functions are only used by the wrapping array method defined
  * in umath/wrapping_array_method.c
  */
 
@@ -257,14 +256,13 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * strided-loop function. This is designed for loops that need to visit every
  * element of a single array.
  *
- * Currently this is only used for array clearing, via the
- * NPY_DT_get_clear_loop, api hook, particularly for arrays storing embedded
- * references to python objects or heap-allocated data. If you define a dtype
- * that uses embedded references, the NPY_ITEM_REFCOUNT flag must be set on the
- * dtype instance.
+ * Currently this is used for array clearing, via the NPY_DT_get_clear_loop
+ * API hook, and zero-filling, via the NPY_DT_get_fill_zero_loop API hook.
+ * These are most useful for handling arrays storing embedded references to
+ * python objects or heap-allocated data.
  *
  * The `void *traverse_context` is passed in because we may need to pass in
- * Intepreter state or similar in the futurem, but we don't want to pass in
+ * Intepreter state or similar in the future, but we don't want to pass in
  * a full context (with pointers to dtypes, method, caller which all make
  * no sense for a traverse function).
  *
@@ -280,9 +278,10 @@ typedef int (traverse_loop_function)(
 /*
  * Simplified get_loop function specific to dtype traversal
  *
- * Currently this is only used for clearing arrays. It should set the flags
- * needed for the traversal loop and set out_loop to the loop function, which
- * must be a valid traverse_loop_function pointer.
+ * It should set the flags needed for the traversal loop and set out_loop to the
+ * loop function, which must be a valid traverse_loop_function
+ * pointer. Currently this is used for zero-filling and clearing arrays storing
+ * embedded references.
  *
  */
 typedef int (get_traverse_loop_function)(
@@ -319,6 +318,7 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_setitem 7
 #define NPY_DT_getitem 8
 #define NPY_DT_get_clear_loop 9
+#define NPY_DT_get_fill_zero_loop 10
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;

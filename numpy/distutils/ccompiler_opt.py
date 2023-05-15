@@ -16,15 +16,6 @@ import re
 import subprocess
 import textwrap
 
-# These flags are used to compile any C++ source within Numpy.
-# They are chosen to have very few runtime dependencies.
-NPY_CXX_FLAGS = [
-    '-std=c++11',  # Minimal standard version
-    '-D__STDC_VERSION__=0',  # for compatibility with C headers
-    '-fno-exceptions',  # no exception support
-    '-fno-rtti']  # no runtime type information
-
-
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
     these class attributes can be used to change the default behavior
@@ -229,6 +220,11 @@ class _Config:
             native = None,
             opt = '/O2',
             werror = '/WX',
+        ),
+        fcc = dict(
+            native = '-mcpu=a64fx',
+            opt = None,
+            werror = None,
         )
     )
     conf_min_features = dict(
@@ -342,7 +338,7 @@ class _Config:
             return {}
 
         on_x86 = self.cc_on_x86 or self.cc_on_x64
-        is_unix = self.cc_is_gcc or self.cc_is_clang
+        is_unix = self.cc_is_gcc or self.cc_is_clang or self.cc_is_fcc
 
         if on_x86 and is_unix: return dict(
             SSE    = dict(flags="-msse"),
@@ -989,12 +985,14 @@ class _CCompiler:
             ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*", ""),
             ("cc_is_icc",      ".*(intel|icc).*", ""),  # intel unix like
             ("cc_is_msvc",     ".*msvc.*", ""),
+            ("cc_is_fcc",     ".*fcc.*", ""),
             # undefined compiler will be treat it as gcc
             ("cc_is_nocc",     "", ""),
         )
         detect_args = (
            ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*", ""),
-           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*", ""),
+           ("cc_has_native",
+                ".*(-march=native|-xHost|/QxHost|-mcpu=a64fx).*", ""),
            # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
            ("cc_noopt", ".*DISABLE_OPT.*", ""),
         )
@@ -1055,7 +1053,7 @@ class _CCompiler:
                 break
 
         self.cc_name = "unknown"
-        for name in ("gcc", "clang", "iccw", "icc", "msvc"):
+        for name in ("gcc", "clang", "iccw", "icc", "msvc", "fcc"):
             if getattr(self, "cc_is_" + name):
                 self.cc_name = name
                 break

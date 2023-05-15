@@ -36,19 +36,19 @@ cdef extern from 'src/philox/philox.h':
 
     ctypedef s_philox_state philox_state
 
-    uint64_t philox_next64(philox_state *state)  nogil
-    uint32_t philox_next32(philox_state *state)  nogil
+    uint64_t philox_next64(philox_state *state)  noexcept nogil
+    uint32_t philox_next32(philox_state *state)  noexcept nogil
     void philox_jump(philox_state *state)
     void philox_advance(uint64_t *step, philox_state *state)
 
 
-cdef uint64_t philox_uint64(void*st) nogil:
+cdef uint64_t philox_uint64(void*st) noexcept nogil:
     return philox_next64(<philox_state *> st)
 
-cdef uint32_t philox_uint32(void *st) nogil:
+cdef uint32_t philox_uint32(void *st) noexcept nogil:
     return philox_next32(<philox_state *> st)
 
-cdef double philox_double(void*st) nogil:
+cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
 cdef class Philox(BitGenerator):

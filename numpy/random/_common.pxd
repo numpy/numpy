@@ -39,32 +39,32 @@ cdef extern from "include/aligned_malloc.h":
     cdef void *PyArray_calloc_aligned(size_t n, size_t s)
     cdef void PyArray_free_aligned(void *p)
 
-ctypedef void (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out) nogil
-ctypedef double (*random_double_0)(void *state) nogil
-ctypedef double (*random_double_1)(void *state, double a) nogil
-ctypedef double (*random_double_2)(void *state, double a, double b) nogil
-ctypedef double (*random_double_3)(void *state, double a, double b, double c) nogil
+ctypedef void (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out)  noexcept nogil
+ctypedef double (*random_double_0)(void *state)  noexcept nogil
+ctypedef double (*random_double_1)(void *state, double a)  noexcept nogil
+ctypedef double (*random_double_2)(void *state, double a, double b)  noexcept nogil
+ctypedef double (*random_double_3)(void *state, double a, double b, double c)  noexcept nogil
 
-ctypedef void (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out) nogil
-ctypedef float (*random_float_0)(bitgen_t *state) nogil
-ctypedef float (*random_float_1)(bitgen_t *state, float a) nogil
+ctypedef void (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out)  noexcept nogil
+ctypedef float (*random_float_0)(bitgen_t *state)  noexcept nogil
+ctypedef float (*random_float_1)(bitgen_t *state, float a)  noexcept nogil
 
-ctypedef int64_t (*random_uint_0)(void *state) nogil
-ctypedef int64_t (*random_uint_d)(void *state, double a) nogil
-ctypedef int64_t (*random_uint_dd)(void *state, double a, double b) nogil
-ctypedef int64_t (*random_uint_di)(void *state, double a, uint64_t b) nogil
-ctypedef int64_t (*random_uint_i)(void *state, int64_t a) nogil
-ctypedef int64_t (*random_uint_iii)(void *state, int64_t a, int64_t b, int64_t c) nogil
+ctypedef int64_t (*random_uint_0)(void *state)  noexcept nogil
+ctypedef int64_t (*random_uint_d)(void *state, double a)  noexcept nogil
+ctypedef int64_t (*random_uint_dd)(void *state, double a, double b)  noexcept nogil
+ctypedef int64_t (*random_uint_di)(void *state, double a, uint64_t b)  noexcept nogil
+ctypedef int64_t (*random_uint_i)(void *state, int64_t a)  noexcept nogil
+ctypedef int64_t (*random_uint_iii)(void *state, int64_t a, int64_t b, int64_t c)  noexcept nogil
 
-ctypedef uint32_t (*random_uint_0_32)(bitgen_t *state) nogil
-ctypedef uint32_t (*random_uint_1_i_32)(bitgen_t *state, uint32_t a) nogil
+ctypedef uint32_t (*random_uint_0_32)(bitgen_t *state)  noexcept nogil
+ctypedef uint32_t (*random_uint_1_i_32)(bitgen_t *state, uint32_t a)  noexcept nogil
 
-ctypedef int32_t (*random_int_2_i_32)(bitgen_t *state, int32_t a, int32_t b) nogil
-ctypedef int64_t (*random_int_2_i)(bitgen_t *state, int64_t a, int64_t b) nogil
+ctypedef int32_t (*random_int_2_i_32)(bitgen_t *state, int32_t a, int32_t b)  noexcept nogil
+ctypedef int64_t (*random_int_2_i)(bitgen_t *state, int64_t a, int64_t b)  noexcept nogil
 
-cdef double kahan_sum(double *darr, np.npy_intp n)
+cdef double kahan_sum(double *darr, np.npy_intp n) noexcept
 
-cdef inline double uint64_to_double(uint64_t rnd) nogil:
+cdef inline double uint64_to_double(uint64_t rnd) noexcept nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
 
 cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out)

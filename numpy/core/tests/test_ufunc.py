@@ -2054,6 +2054,17 @@ class TestUfunc:
         # If it is [-1, -1, -1, -100, 0] then the regular strided loop was used
         assert np.all(arr == [-1, -1, -1, -200, -1])
 
+    def test_ufunc_at_large(self):
+        # issue gh-23457
+        indices = np.zeros(8195, dtype=np.int16)
+        b = np.zeros(8195, dtype=float)
+        b[0] = 10
+        b[1] = 5
+        b[8192:] = 100
+        a = np.zeros(1, dtype=float)
+        np.add.at(a, indices, b)
+        assert a[0] == b.sum()
+
     def test_cast_index_fastpath(self):
         arr = np.zeros(10)
         values = np.ones(100000)
@@ -2854,10 +2865,10 @@ class TestLowlevelAPIAccess:
         r = np.equal.resolve_dtypes((S0, S0, None))
         assert r == (S0, S0, np.dtype(bool))
 
-        # Subarray dtypes are weird and only really exist nested, they need
-        # the shift to full NEP 50 to be implemented nicely:
+        # Subarray dtypes are weird and may not work fully, we preserve them
+        # leading to a TypeError (currently no equal loop for void/structured)
         dts = np.dtype("10i")
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(TypeError):
             np.equal.resolve_dtypes((dts, dts, None))
 
     def test_resolve_dtypes_reduction(self):
@@ -2956,3 +2967,10 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             # cannot call it a second time:
             np.negative._get_strided_loop(call_info)
+
+    def test_long_arrays(self):
+        t = np.zeros((1029, 917), dtype=np.single)
+        t[0][0] = 1
+        t[28][414] = 1
+        tc = np.cos(t)
+        assert_equal(tc[0][0], tc[28][414])

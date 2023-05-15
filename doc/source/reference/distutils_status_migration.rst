@@ -83,7 +83,7 @@ present in ``setuptools``:
 - Support for a few other scientific libraries, like FFTW and UMFPACK
 - Better MinGW support
 - Per-compiler build flag customization (e.g. `-O3` and `SSE2` flags are default)
-- a simple user build config system, see [site.cfg.example](https://github.com/numpy/numpy/blob/master/site.cfg.example)
+- a simple user build config system, see `site.cfg.example <https://github.com/numpy/numpy/blob/master/site.cfg.example>`__
 - SIMD intrinsics support
 
 The most widely used feature is nested ``setup.py`` files. This feature will

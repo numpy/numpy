@@ -55,9 +55,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims,
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
 
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret);
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
@@ -334,6 +331,13 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
     }
     return tuple;
 }
+
+/*
+ * Returns 0 if the array has rank 0, -1 otherwise. Prints a deprecation
+ * warning for arrays of _size_ 1.
+ */
+NPY_NO_EXPORT int
+check_is_convertible_to_scalar(PyArrayObject *v);
 
 
 #include "ucsnarrow.h"

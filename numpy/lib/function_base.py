@@ -2117,10 +2117,10 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
 @set_module('numpy')
 class vectorize:
     """
-    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
-              signature=None)
+    vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
+    cache=False, signature=None)
 
-    Generalized function class.
+    Returns an object that acts like pyfunc, but takes arrays as input.
 
     Define a vectorized function which takes a nested sequence of objects or
     numpy arrays as inputs and returns a single numpy array or a tuple of numpy
@@ -2134,8 +2134,9 @@ class vectorize:
 
     Parameters
     ----------
-    pyfunc : callable
+    pyfunc : callable, optional
         A python function or method.
+        Can be omitted to produce a decorator with keyword arguments.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -2167,8 +2168,9 @@ class vectorize:
 
     Returns
     -------
-    vectorized : callable
-        Vectorized function.
+    out : callable
+        A vectorized function if ``pyfunc`` was provided,
+        a decorator otherwise.
 
     See Also
     --------
@@ -2265,18 +2267,44 @@ class vectorize:
            [0., 0., 1., 2., 1., 0.],
            [0., 0., 0., 1., 2., 1.]])
 
+    Decorator syntax is supported.  The decorator can be called as
+    a function to provide keyword arguments.
+    >>>@np.vectorize
+    ...def identity(x):
+    ...    return x
+    ...
+    >>>identity([0, 1, 2])
+    array([0, 1, 2])
+    >>>@np.vectorize(otypes=[float])
+    ...def as_float(x):
+    ...    return x
+    ...
+    >>>as_float([0, 1, 2])
+    array([0., 1., 2.])
     """
-    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
-                 cache=False, signature=None):
+    def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
+                 excluded=None, cache=False, signature=None):
+
+        if (pyfunc != np._NoValue) and (not callable(pyfunc)):
+            #Splitting the error message to keep
+            #the length below 79 characters.
+            part1 = "When used as a decorator, "
+            part2 = "only accepts keyword arguments."
+            raise TypeError(part1 + part2)
+
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
-        self._ufunc = {}    # Caching to improve default performance
+        if pyfunc != np._NoValue and hasattr(pyfunc, '__name__'):
+            self.__name__ = pyfunc.__name__
 
-        if doc is None:
+        self._ufunc = {}    # Caching to improve default performance
+        self._doc = None
+        self.__doc__ = doc
+        if doc is None and hasattr(pyfunc, '__doc__'):
             self.__doc__ = pyfunc.__doc__
         else:
-            self.__doc__ = doc
+            self._doc = doc
 
         if isinstance(otypes, str):
             for char in otypes:
@@ -2298,7 +2326,15 @@ class vectorize:
         else:
             self._in_and_out_core_dims = None
 
-    def __call__(self, *args, **kwargs):
+    def _init_stage_2(self, pyfunc, *args, **kwargs):
+        self.__name__ = pyfunc.__name__
+        self.pyfunc = pyfunc
+        if self._doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = self._doc
+
+    def _call_as_normal(self, *args, **kwargs):
         """
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
@@ -2327,6 +2363,13 @@ class vectorize:
             vargs.extend([kwargs[_n] for _n in names])
 
         return self._vectorize_call(func=func, args=vargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.pyfunc is np._NoValue:
+            self._init_stage_2(*args, **kwargs)
+            return self
+
+        return self._call_as_normal(*args, **kwargs)
 
     def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
@@ -2956,10 +2999,15 @@ def blackman(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -3064,10 +3112,15 @@ def bartlett(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3168,10 +3221,15 @@ def hanning(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3268,10 +3326,15 @@ def hamming(M):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3547,11 +3610,19 @@ def kaiser(M, beta):
     >>> plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.  (Simplified result_type with 0.0
+    # strongly typed.  result-type is not/less order sensitive, but that mainly
+    # matters for integers anyway.)
+    values = np.array([0.0, M, beta])
+    M = values[1]
+    beta = values[2]
+
     if M == 1:
-        return np.ones(1, dtype=np.result_type(M, 0.0))
+        return np.ones(1, dtype=values.dtype)
     n = arange(0, M)
     alpha = (M-1)/2.0
-    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
+    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
 
 
 def _sinc_dispatcher(x):
@@ -3937,8 +4008,8 @@ def percentile(a,
     a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
-        Percentile or sequence of percentiles to compute, which must be between
-        0 and 100 inclusive.
+        Percentage or sequence of percentages for the percentiles to compute.
+        Values must be between 0 and 100 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the percentiles are computed. The
         default is to compute the percentile(s) along a flattened
@@ -4237,8 +4308,8 @@ def quantile(a,
     a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
-        Quantile or sequence of quantiles to compute, which must be between
-        0 and 1 inclusive.
+        Probability or sequence of probabilities for the quantiles to compute.
+        Values must be between 0 and 1 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the quantiles are computed. The default is
         to compute the quantile(s) along a flattened version of the array.
@@ -4292,8 +4363,8 @@ def quantile(a,
     Returns
     -------
     quantile : scalar or ndarray
-        If `q` is a single quantile and `axis=None`, then the result
-        is a scalar. If multiple quantiles are given, first axis of
+        If `q` is a single probability and `axis=None`, then the result
+        is a scalar. If multiple probabilies levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
@@ -4910,23 +4981,22 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-if overrides.ARRAY_FUNCTION_ENABLED:
-    # If array-function is enabled (normal), we wrap everything into a C
-    # callable, which has no __code__ or other attributes normal Python funcs
-    # have.  SciPy however, tries to "clone" `trapz` into a new Python function
-    # which requires `__code__` and a few other attributes.
-    # So we create a dummy clone and copy over its attributes allowing
-    # SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
-    assert not hasattr(trapz, "__code__")
+# __array_function__ has no __code__ or other attributes normal Python funcs we
+# wrap everything into a C callable. SciPy however, tries to "clone" `trapz`
+# into a new Python function which requires `__code__` and a few other
+# attributes. So we create a dummy clone and copy over its attributes allowing
+# SciPy <= 1.10 to work: https://github.com/scipy/scipy/issues/17811
+assert not hasattr(trapz, "__code__")
 
-    def _fake_trapz(y, x=None, dx=1.0, axis=-1):
-        return trapz(y, x=x, dx=dx, axis=axis)
+def _fake_trapz(y, x=None, dx=1.0, axis=-1):
+    return trapz(y, x=x, dx=dx, axis=axis)
 
-    trapz.__code__ = _fake_trapz.__code__
-    trapz.__globals__ = _fake_trapz.__globals__
-    trapz.__defaults__ = _fake_trapz.__defaults__
-    trapz.__closure__ = _fake_trapz.__closure__
-    trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
+
+trapz.__code__ = _fake_trapz.__code__
+trapz.__globals__ = _fake_trapz.__globals__
+trapz.__defaults__ = _fake_trapz.__defaults__
+trapz.__closure__ = _fake_trapz.__closure__
+trapz.__kwdefaults__ = _fake_trapz.__kwdefaults__
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
@@ -4937,7 +5007,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 @array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
-    Return coordinate matrices from coordinate vectors.
+    Return a list of coordinate matrices from coordinate vectors.
 
     Make N-D coordinate arrays for vectorized evaluations of
     N-D scalar/vector fields over N-D grids, given
@@ -4978,7 +5048,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Returns
     -------
-    X1, X2,..., XN : ndarray
+    X1, X2,..., XN : list of ndarrays
         For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
         returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
         or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'

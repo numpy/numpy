@@ -333,6 +333,10 @@ __all__ += [
     "trunc",
 ]
 
+from ._indexing_functions import take
+
+__all__ += ["take"]
+
 # linalg is an extension in the array API spec, which is a sub-namespace. Only
 # a subset of functions in it are imported into the top-level namespace.
 from . import linalg

@@ -516,22 +516,15 @@ class TestRegression:
     def test_method_args(self):
         # Make sure methods and functions have same default axis
         # keyword and arguments
-        funcs1 = ['argmax', 'argmin', 'sum', ('product', 'prod'),
-                 ('sometrue', 'any'),
-                 ('alltrue', 'all'), 'cumsum', ('cumproduct', 'cumprod'),
-                 'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
-                 'round', 'min', 'max', 'argsort', 'sort']
+        funcs1 = ['argmax', 'argmin', 'sum', 'any', 'all', 'cumsum',
+                  'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
+                  'round', 'min', 'max', 'argsort', 'sort']
         funcs2 = ['compress', 'take', 'repeat']
 
         for func in funcs1:
             arr = np.random.rand(8, 7)
             arr2 = arr.copy()
-            if isinstance(func, tuple):
-                func_meth = func[1]
-                func = func[0]
-            else:
-                func_meth = func
-            res1 = getattr(arr, func_meth)()
+            res1 = getattr(arr, func)()
             res2 = getattr(np, func)(arr2)
             if res1 is None:
                 res1 = arr
@@ -1336,8 +1329,8 @@ class TestRegression:
         # Ticket #1058
         a = np.fromiter(list(range(10)), dtype='b')
         b = np.fromiter(list(range(10)), dtype='B')
-        assert_(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        assert_(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assert_(np.all(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assert_(np.all(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_array_from_sequence_scalar_array(self):
         # Ticket #1078: segfaults when creating an array with a sequence of
@@ -1515,8 +1508,8 @@ class TestRegression:
     def test_fromiter_comparison(self):
         a = np.fromiter(list(range(10)), dtype='b')
         b = np.fromiter(list(range(10)), dtype='B')
-        assert_(np.alltrue(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        assert_(np.alltrue(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assert_(np.all(a == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        assert_(np.all(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
@@ -1535,9 +1528,12 @@ class TestRegression:
             for y in dtypes:
                 c = a.astype(y)
                 try:
-                    np.dot(b, c)
+                    d = np.dot(b, c)
                 except TypeError:
                     failures.append((x, y))
+                else:
+                    if d != 0:
+                        failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
@@ -1671,7 +1667,9 @@ class TestRegression:
 
     def test_find_common_type_boolean(self):
         # Ticket #1695
-        assert_(np.find_common_type([], ['?', '?']) == '?')
+        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
+            res = np.find_common_type([], ['?', '?'])
+        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])
