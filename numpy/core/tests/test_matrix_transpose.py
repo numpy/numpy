@@ -16,7 +16,7 @@ def test_matrix_transpose_equals_transpose_2d():
     assert_array_equal(arr.T, arr.mT)
 
 
-@given(shape=array_shapes(min_dims=3))
+@given(shape=array_shapes(max_dims=7))
 def test_matrix_transpose_equals_swapaxes(shape):
     num_of_axes = len(shape)
     total_elements = np.prod(shape)
