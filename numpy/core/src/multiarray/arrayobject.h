@@ -41,10 +41,10 @@ static const int NPY_ARRAY_WAS_PYTHON_INT = (1 << 30);
 static const int NPY_ARRAY_WAS_PYTHON_FLOAT = (1 << 29);
 static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
 /*
- * Mark that this was a huge int and the array needed replace (no re-use).
- * This flag is only used in the ufunc machinery where it is tricky to cover
- * correct all type resolution paths where `np.array(large_integer)` returns
- * an object array.
+ * Mark that this was a huge int which was turned into an object array (or
+ * unsigned/non-default integer array), but then replaced by a temporary
+ * array for further processing. This flag is only in the ufunc machinery
+ * where it is tricky to cover correctly all type resolution paths.
  */
 static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
