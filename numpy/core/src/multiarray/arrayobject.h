@@ -43,7 +43,7 @@ static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
 /*
  * Mark that this was a huge int which was turned into an object array (or
  * unsigned/non-default integer array), but then replaced by a temporary
- * array for further processing. This flag is only in the ufunc machinery
+ * array for further processing. This flag is only used in the ufunc machinery
  * where it is tricky to cover correctly all type resolution paths.
  */
 static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
