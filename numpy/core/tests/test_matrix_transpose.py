@@ -6,12 +6,12 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 
-def test_matrix_transpose_equals_swapaxes_1d():
+def test_matrix_transpose_equals_transpose_1d():
     arr = np.arange(48)
     assert_array_equal(arr.T, arr.mT)
 
 
-def test_matrix_transpose_equals_swapaxes_2d():
+def test_matrix_transpose_equals_transpose_2d():
     arr = np.arange(48).reshape((6, 8))
     assert_array_equal(arr.T, arr.mT)
 
