@@ -370,11 +370,11 @@ multiarray_funcs_api = {
     'PyDataMem_SetHandler':                 (304, MinVersion("1.22")),
     'PyDataMem_GetHandler':                 (305, MinVersion("1.22")),
     # End 1.22 API
-    'NpyDatetime_ConvertDatetime64ToDatetimeStruct':   (307,),
-    'NpyDatetime_ConvertDatetimeStructToDatetime64':   (308,),
-    'NpyDatetime_ConvertPyDateTimeToDatetimeStruct':   (309,),
-    'NpyDatetime_GetDatetimeISO8601StrLen':            (310,),
-    'NpyDatetime_MakeISO8601Datetime':                 (311,),
+    'NpyDatetime_ConvertDatetime64ToDatetimeStruct': (307, MinVersion("1.25")),
+    'NpyDatetime_ConvertDatetimeStructToDatetime64': (308, MinVersion("1.25")),
+    'NpyDatetime_ConvertPyDateTimeToDatetimeStruct': (309, MinVersion("1.25")),
+    'NpyDatetime_GetDatetimeISO8601StrLen':          (310, MinVersion("1.25")),
+    'NpyDatetime_MakeISO8601Datetime':               (311, MinVersion("1.25")),
 }
 
 ufunc_types_api = {
