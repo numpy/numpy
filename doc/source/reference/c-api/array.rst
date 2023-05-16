@@ -1149,11 +1149,11 @@ Converting data types
 
     .. versionadded:: 1.6
 
-    This applies type promotion to all the inputs,
-    using the NumPy rules for combining scalars and arrays, to
-    determine the output type of a set of operands.  This is the
-    same result type that ufuncs produce. The specific algorithm
-    used is as follows.
+    This applies type promotion to all the input arrays and dtype
+    objects, using the NumPy rules for combining scalars and arrays, to
+    determine the output type for an operation with the given set of
+    operands. This is the same result type that ufuncs produce. The
+    specific algorithm used is as follows.
 
     Categories are determined by first checking which of boolean,
     integer (int/uint), or floating point (float/complex) the maximum
