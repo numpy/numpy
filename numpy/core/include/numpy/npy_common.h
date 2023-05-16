@@ -333,9 +333,11 @@ typedef unsigned char npy_bool;
  */
 #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
     #define NPY_LONGDOUBLE_FMT "g"
+    #define longdouble_t double
     typedef double npy_longdouble;
 #else
     #define NPY_LONGDOUBLE_FMT "Lg"
+    #define longdouble_t long double
     typedef long double npy_longdouble;
 #endif
 
@@ -361,49 +363,51 @@ typedef double npy_double;
 typedef Py_hash_t npy_hash_t;
 #define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
 
-/*
- * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
- * able to do .real/.imag. Will have to convert code first.
- */
-#if 0
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_DOUBLE)
-typedef complex npy_cdouble;
+#ifdef __cplusplus
+extern "C++" {
+#include <complex>
+}
 #else
-typedef struct { double real, imag; } npy_cdouble;
+#include <complex.h>
 #endif
 
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_FLOAT)
-typedef complex float npy_cfloat;
-#else
-typedef struct { float real, imag; } npy_cfloat;
-#endif
-
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_LONG_DOUBLE)
-typedef complex long double npy_clongdouble;
-#else
-typedef struct {npy_longdouble real, imag;} npy_clongdouble;
-#endif
-#endif
 #if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
 #error npy_cdouble definition is not compatible with C99 complex definition ! \
         Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
-typedef struct { double real, imag; } npy_cdouble;
-
 #if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
 #error npy_cfloat definition is not compatible with C99 complex definition ! \
         Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
-typedef struct { float real, imag; } npy_cfloat;
-
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
 #error npy_clongdouble definition is not compatible with C99 complex definition ! \
         Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
-typedef struct { npy_longdouble real, imag; } npy_clongdouble;
+
+
+#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+typedef _Dcomplex npy_cdouble;
+typedef _Fcomplex npy_cfloat;
+typedef _Lcomplex npy_clongdouble;
+#elif defined(__cplusplus) /* && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
+typedef std::complex<double> npy_cdouble;
+typedef std::complex<float> npy_cfloat;
+typedef std::complex<longdouble_t> npy_clongdouble;
+#else /* !defined(__cplusplus) && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
+typedef complex double npy_cdouble;
+typedef complex float npy_cfloat;
+typedef complex longdouble_t npy_clongdouble;
+#endif
+
+#define NPY_CDOUBLE_GET_REAL(comp) ( *((double *) (comp)) )
+#define NPY_CDOUBLE_GET_IMAG(comp) ( *(((double *) (comp)) + 1) )
+#define NPY_CFLOAT_GET_REAL(comp) ( *((float *) (comp)) )
+#define NPY_CFLOAT_GET_IMAG(comp) ( *(((float *) (comp)) + 1) )
+#define NPY_CLONGDOUBLE_GET_REAL(comp) ( *((npy_longdouble *) (comp)) )
+#define NPY_CLONGDOUBLE_GET_IMAG(comp) ( *(((npy_longdouble *) (comp)) + 1) )
 
 /*
  * numarray-style bit-width typedefs

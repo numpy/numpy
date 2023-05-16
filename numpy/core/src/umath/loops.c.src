@@ -158,11 +158,11 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
     func_type *f = (func_type *)func;
     UNARY_LOOP {
         npy_cdouble tmp, out;
-        tmp.real = (double)((float *)ip1)[0];
-        tmp.imag = (double)((float *)ip1)[1];
+        NPY_CDOUBLE_GET_REAL(&tmp) = (double)((float *)ip1)[0];
+        NPY_CDOUBLE_GET_IMAG(&tmp) = (double)((float *)ip1)[1];
         f(&tmp, &out);
-        ((float *)op1)[0] = (float)out.real;
-        ((float *)op1)[1] = (float)out.imag;
+        ((float *)op1)[0] = (float)NPY_CDOUBLE_GET_REAL(&out);
+        ((float *)op1)[1] = (float)NPY_CDOUBLE_GET_IMAG(&out);
     }
 }
 
@@ -174,13 +174,13 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
     func_type *f = (func_type *)func;
     BINARY_LOOP {
         npy_cdouble tmp1, tmp2, out;
-        tmp1.real = (double)((float *)ip1)[0];
-        tmp1.imag = (double)((float *)ip1)[1];
-        tmp2.real = (double)((float *)ip2)[0];
-        tmp2.imag = (double)((float *)ip2)[1];
+        NPY_CDOUBLE_GET_REAL(&tmp1) = (double)((float *)ip1)[0];
+        NPY_CDOUBLE_GET_IMAG(&tmp1) = (double)((float *)ip1)[1];
+        NPY_CDOUBLE_GET_REAL(&tmp2) = (double)((float *)ip2)[0];
+        NPY_CDOUBLE_GET_IMAG(&tmp2) = (double)((float *)ip2)[1];
         f(&tmp1, &tmp2, &out);
-        ((float *)op1)[0] = (float)out.real;
-        ((float *)op1)[1] = (float)out.imag;
+        ((float *)op1)[0] = (float)NPY_CDOUBLE_GET_REAL(&out);
+        ((float *)op1)[1] = (float)NPY_CDOUBLE_GET_IMAG(&out);
     }
 }
 

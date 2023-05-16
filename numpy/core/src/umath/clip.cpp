@@ -59,17 +59,42 @@ template <class T>
 T
 _NPY_MIN(T a, T b, npy::complex_tag const &)
 {
-    return npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CLT(a, b)
+    if (std::is_same<T, npy_cdouble>::value) {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CLT(a, b, CDOUBLE)
                    ? (a)
                    : (b);
+    }
+    else if (std::is_same<T, npy_cfloat>::value) {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CLT(a, b, CFLOAT)
+                   ? (a)
+                   : (b);
+    }
+    else {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CLT(a, b, CLONGDOUBLE)
+                   ? (a)
+                   : (b);
+    }
 }
+
 template <class T>
 T
 _NPY_MAX(T a, T b, npy::complex_tag const &)
 {
-    return npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CGT(a, b)
+    if (std::is_same<T, npy_cdouble>::value) {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CGT(a, b, CDOUBLE)
                    ? (a)
                    : (b);
+    }
+    else if (std::is_same<T, npy_cfloat>::value) {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CGT(a, b, CFLOAT)
+                   ? (a)
+                   : (b);
+    }
+    else {
+        return npy_isnan(a.real()) || npy_isnan(a.imag()) || PyArray_CGT(a, b, CLONGDOUBLE)
+                   ? (a)
+                   : (b);
+    }
 }
 
 template <class T>

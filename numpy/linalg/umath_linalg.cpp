@@ -1046,8 +1046,10 @@ det_from_slogdet(typ sign, typ logdet)
 npy_float npyabs(npy_cfloat z) { return npy_cabsf(z);}
 npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
 
-#define RE(COMPLEX) (COMPLEX).real
-#define IM(COMPLEX) (COMPLEX).imag
+#define RE(COMPLEX) (COMPLEX).real()
+#define IM(COMPLEX) (COMPLEX).imag()
+#define SETRE(COMPLEX, VALUE) (COMPLEX).real(VALUE)
+#define SETIM(COMPLEX, VALUE) (COMPLEX).imag(VALUE)
 
 template<typename typ>
 static inline typ
@@ -1055,8 +1057,8 @@ mult(typ op1, typ op2)
 {
     typ rv;
 
-    RE(rv) = RE(op1)*RE(op2) - IM(op1)*IM(op2);
-    IM(rv) = RE(op1)*IM(op2) + IM(op1)*RE(op2);
+    SETRE(rv, RE(op1)*RE(op2) - IM(op1)*IM(op2));
+    SETIM(rv, RE(op1)*IM(op2) + IM(op1)*RE(op2));
 
     return rv;
 }
@@ -1077,8 +1079,8 @@ slogdet_from_factored_diagonal(typ* src,
     {
         basetyp abs_element = npyabs(*src);
         typ sign_element;
-        RE(sign_element) = RE(*src) / abs_element;
-        IM(sign_element) = IM(*src) / abs_element;
+        SETRE(sign_element, RE(*src) / abs_element);
+        SETIM(sign_element, IM(*src) / abs_element);
 
         sign_acc = mult(sign_acc, sign_element);
         logdet_acc += npylog(abs_element);
@@ -1094,12 +1096,14 @@ static inline typ
 det_from_slogdet(typ sign, basetyp logdet)
 {
     typ tmp;
-    RE(tmp) = npyexp(logdet);
-    IM(tmp) = numeric_limits<basetyp>::zero;
+    SETRE(tmp, npyexp(logdet));
+    SETIM(tmp, numeric_limits<basetyp>::zero);
     return mult(sign, tmp);
 }
 #undef RE
 #undef IM
+#undef SETRE
+#undef SETIM
 
 
 /* As in the linalg package, the determinant is computed via LU factorization
@@ -3982,7 +3986,7 @@ abs2(typ *p, npy_intp n, complex_trait) {
     basetype_t<typ> res = 0;
     for (i = 0; i < n; i++) {
         typ el = p[i];
-        res += el.real*el.real + el.imag*el.imag;
+        res += el.real()*el.real() + el.imag()*el.imag();
     }
     return res;
 }

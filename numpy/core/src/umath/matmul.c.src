@@ -232,8 +232,8 @@ NPY_NO_EXPORT void
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
 #if @IS_COMPLEX@ == 1
-            (*(@typ@ *)op).real = 0;
-            (*(@typ@ *)op).imag = 0;
+            NPY_@TYPE@_GET_REAL(op) = 0;
+            NPY_@TYPE@_GET_IMAG(op) = 0;
 #elif @IS_HALF@
             float sum = 0;
 #else
@@ -245,10 +245,10 @@ NPY_NO_EXPORT void
 #if @IS_HALF@
                 sum += npy_half_to_float(val1) * npy_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                (*(@typ@ *)op).real += (val1.real * val2.real) -
-                                       (val1.imag * val2.imag);
-                (*(@typ@ *)op).imag += (val1.real * val2.imag) +
-                                       (val1.imag * val2.real);
+                NPY_@TYPE@_GET_REAL(op) += (NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_REAL(&val2)) -
+                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_IMAG(&val2));
+                NPY_@TYPE@_GET_IMAG(op) += (NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_IMAG(&val2)) +
+                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_REAL(&val2));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif

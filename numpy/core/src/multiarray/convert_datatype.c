@@ -1539,8 +1539,8 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_DOUBLE, is_small_unsigned);
             }
             */
-            if (value.real > -3.4e38 && value.real < 3.4e38 &&
-                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+            if (NPY_CDOUBLE_GET_REAL(&value) > -3.4e38 && NPY_CDOUBLE_GET_REAL(&value) < 3.4e38 &&
+                     NPY_CDOUBLE_GET_IMAG(&value) > -3.4e38 && NPY_CDOUBLE_GET_IMAG(&value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
             break;
@@ -1553,12 +1553,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_LONGDOUBLE, is_small_unsigned);
             }
             */
-            if (value.real > -3.4e38 && value.real < 3.4e38 &&
-                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+            if (NPY_CLONGDOUBLE_GET_REAL(&value) > -3.4e38 && NPY_CLONGDOUBLE_GET_REAL(&value) < 3.4e38 &&
+                     NPY_CLONGDOUBLE_GET_IMAG(&value) > -3.4e38 && NPY_CLONGDOUBLE_GET_IMAG(&value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
-            else if (value.real > -1.7e308 && value.real < 1.7e308 &&
-                     value.imag > -1.7e308 && value.imag < 1.7e308) {
+            else if (NPY_CLONGDOUBLE_GET_REAL(&value) > -1.7e308 && NPY_CLONGDOUBLE_GET_REAL(&value) < 1.7e308 &&
+                     NPY_CLONGDOUBLE_GET_IMAG(&value) > -1.7e308 && NPY_CLONGDOUBLE_GET_IMAG(&value) < 1.7e308) {
                 return NPY_CDOUBLE;
             }
             break;

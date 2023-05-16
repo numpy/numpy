@@ -357,84 +357,59 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
  * Complex declarations
  */
 
-/*
- * C99 specifies that complex numbers have the same representation as
- * an array of two elements, where the first element is the real part
- * and the second element is the imaginary part.
- */
-#define __NPY_CPACK_IMP(x, y, type, ctype)   \
-    union {                                  \
-        ctype z;                             \
-        type a[2];                           \
-    } z1;                                    \
-                                             \
-    z1.a[0] = (x);                           \
-    z1.a[1] = (y);                           \
-                                             \
-    return z1.z;
-
 static inline npy_cdouble npy_cpack(double x, double y)
 {
-    __NPY_CPACK_IMP(x, y, double, npy_cdouble);
+    npy_cdouble z;
+    NPY_CDOUBLE_GET_REAL(&z) = x;
+    NPY_CDOUBLE_GET_IMAG(&z) = y;
+    return z;
 }
 
 static inline npy_cfloat npy_cpackf(float x, float y)
 {
-    __NPY_CPACK_IMP(x, y, float, npy_cfloat);
+    npy_cfloat z;
+    NPY_CFLOAT_GET_REAL(&z) = x;
+    NPY_CFLOAT_GET_IMAG(&z) = y;
+    return z;
 }
 
 static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
-    __NPY_CPACK_IMP(x, y, npy_longdouble, npy_clongdouble);
+    npy_clongdouble z;
+    NPY_CLONGDOUBLE_GET_REAL(&z) = x;
+    NPY_CLONGDOUBLE_GET_IMAG(&z) = y;
+    return z;
 }
-#undef __NPY_CPACK_IMP
-
-/*
- * Same remark as above, but in the other direction: extract first/second
- * member of complex number, assuming a C99-compatible representation
- *
- * Those are defineds as static inline, and such as a reasonable compiler would
- * most likely compile this to one or two instructions (on CISC at least)
- */
-#define __NPY_CEXTRACT_IMP(z, index, type, ctype)   \
-    union {                                         \
-        ctype z;                                    \
-        type a[2];                                  \
-    } __z_repr;                                     \
-    __z_repr.z = z;                                 \
-                                                    \
-    return __z_repr.a[index];
 
 static inline double npy_creal(npy_cdouble z)
 {
-    __NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
+    return NPY_CDOUBLE_GET_REAL(&z);
 }
 
 static inline double npy_cimag(npy_cdouble z)
 {
-    __NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
+    return NPY_CDOUBLE_GET_IMAG(&z);
 }
 
 static inline float npy_crealf(npy_cfloat z)
 {
-    __NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
+    return NPY_CFLOAT_GET_REAL(&z);
 }
 
 static inline float npy_cimagf(npy_cfloat z)
 {
-    __NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
+    return NPY_CFLOAT_GET_IMAG(&z);
 }
 
 static inline npy_longdouble npy_creall(npy_clongdouble z)
 {
-    __NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
+    return NPY_CLONGDOUBLE_GET_REAL(&z);
 }
 
 static inline npy_longdouble npy_cimagl(npy_clongdouble z)
 {
-    __NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
+    return NPY_CLONGDOUBLE_GET_IMAG(&z);
 }
-#undef __NPY_CEXTRACT_IMP
 
 /*
  * Double precision complex functions

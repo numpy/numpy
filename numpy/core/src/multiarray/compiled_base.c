@@ -734,12 +734,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         lval = dy[0];
     }
     else {
-        lval.real = PyComplex_RealAsDouble(left);
-        if (error_converting(lval.real)) {
+        NPY_CDOUBLE_GET_REAL(&lval) = PyComplex_RealAsDouble(left);
+        if (error_converting(NPY_CDOUBLE_GET_REAL(&lval))) {
             goto fail;
         }
-        lval.imag = PyComplex_ImagAsDouble(left);
-        if (error_converting(lval.imag)) {
+        NPY_CDOUBLE_GET_IMAG(&lval) = PyComplex_ImagAsDouble(left);
+        if (error_converting(NPY_CDOUBLE_GET_IMAG(&lval))) {
             goto fail;
         }
     }
@@ -748,12 +748,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         rval = dy[lenxp - 1];
     }
     else {
-        rval.real = PyComplex_RealAsDouble(right);
-        if (error_converting(rval.real)) {
+        NPY_CDOUBLE_GET_REAL(&rval) = PyComplex_RealAsDouble(right);
+        if (error_converting(NPY_CDOUBLE_GET_REAL(&rval))) {
             goto fail;
         }
-        rval.imag = PyComplex_ImagAsDouble(right);
-        if (error_converting(rval.imag)) {
+        NPY_CDOUBLE_GET_IMAG(&rval) = PyComplex_ImagAsDouble(right);
+        if (error_converting(NPY_CDOUBLE_GET_IMAG(&rval))) {
             goto fail;
         }
     }
@@ -788,8 +788,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
-                slopes[i].real = (dy[i+1].real - dy[i].real) * inv_dx;
-                slopes[i].imag = (dy[i+1].imag - dy[i].imag) * inv_dx;
+                NPY_CDOUBLE_GET_REAL(&slopes[i]) = (NPY_CDOUBLE_GET_REAL(&dy[i+1]) - NPY_CDOUBLE_GET_REAL(&dy[i])) * inv_dx;
+                NPY_CDOUBLE_GET_IMAG(&slopes[i]) = (NPY_CDOUBLE_GET_IMAG(&dy[i+1]) - NPY_CDOUBLE_GET_IMAG(&dy[i])) * inv_dx;
             }
         }
 
@@ -797,8 +797,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
             const npy_double x_val = dz[i];
 
             if (npy_isnan(x_val)) {
-                dres[i].real = x_val;
-                dres[i].imag = 0.0;
+                NPY_CDOUBLE_GET_REAL(&dres[i]) = x_val;
+                NPY_CDOUBLE_GET_IMAG(&dres[i]) = 0.0;
                 continue;
             }
 
@@ -823,25 +823,25 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                 }
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
-                    slope.real = (dy[j+1].real - dy[j].real) * inv_dx;
-                    slope.imag = (dy[j+1].imag - dy[j].imag) * inv_dx;
+                    NPY_CDOUBLE_GET_REAL(&slope) = (NPY_CDOUBLE_GET_REAL(&dy[j+1]) - NPY_CDOUBLE_GET_REAL(&dy[j])) * inv_dx;
+                    NPY_CDOUBLE_GET_IMAG(&slope) = (NPY_CDOUBLE_GET_IMAG(&dy[j+1]) - NPY_CDOUBLE_GET_IMAG(&dy[j])) * inv_dx;
                 }
 
                 /* If we get nan in one direction, try the other */
-                dres[i].real = slope.real*(x_val - dx[j]) + dy[j].real;
-                if (NPY_UNLIKELY(npy_isnan(dres[i].real))) {
-                    dres[i].real = slope.real*(x_val - dx[j+1]) + dy[j+1].real;
-                    if (NPY_UNLIKELY(npy_isnan(dres[i].real)) &&
-                            dy[j].real == dy[j+1].real) {
-                        dres[i].real = dy[j].real;
+                NPY_CDOUBLE_GET_REAL(&dres[i]) = NPY_CDOUBLE_GET_REAL(&slope)*(x_val - dx[j]) + NPY_CDOUBLE_GET_REAL(&dy[j]);
+                if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_REAL(&dres[i])))) {
+                    NPY_CDOUBLE_GET_REAL(&dres[i]) = NPY_CDOUBLE_GET_REAL(&slope)*(x_val - dx[j+1]) + NPY_CDOUBLE_GET_REAL(&dy[j+1]);
+                    if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_REAL(&dres[i]))) &&
+                            NPY_CDOUBLE_GET_REAL(&dy[j]) == NPY_CDOUBLE_GET_REAL(&dy[j+1])) {
+                        NPY_CDOUBLE_GET_REAL(&dres[i]) = NPY_CDOUBLE_GET_REAL(&dy[j]);
                     }
                 }
-                dres[i].imag = slope.imag*(x_val - dx[j]) + dy[j].imag;
-                if (NPY_UNLIKELY(npy_isnan(dres[i].imag))) {
-                    dres[i].imag = slope.imag*(x_val - dx[j+1]) + dy[j+1].imag;
-                    if (NPY_UNLIKELY(npy_isnan(dres[i].imag)) &&
-                            dy[j].imag == dy[j+1].imag) {
-                        dres[i].imag = dy[j].imag;
+                NPY_CDOUBLE_GET_IMAG(&dres[i]) = NPY_CDOUBLE_GET_IMAG(&slope)*(x_val - dx[j]) + NPY_CDOUBLE_GET_IMAG(&dy[j]);
+                if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_IMAG(&dres[i])))) {
+                    NPY_CDOUBLE_GET_IMAG(&dres[i]) = NPY_CDOUBLE_GET_IMAG(&slope)*(x_val - dx[j+1]) + NPY_CDOUBLE_GET_IMAG(&dy[j+1]);
+                    if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_IMAG(&dres[i]))) &&
+                            NPY_CDOUBLE_GET_IMAG(&dy[j]) == NPY_CDOUBLE_GET_IMAG(&dy[j+1])) {
+                        NPY_CDOUBLE_GET_IMAG(&dres[i]) = NPY_CDOUBLE_GET_IMAG(&dy[j]);
                     }
                 }
             }

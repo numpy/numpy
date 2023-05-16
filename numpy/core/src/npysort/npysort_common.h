@@ -197,17 +197,17 @@ CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (NPY_CFLOAT_GET_REAL(&a) < NPY_CFLOAT_GET_REAL(&b)) {
+        ret = NPY_CFLOAT_GET_IMAG(&a) == NPY_CFLOAT_GET_IMAG(&a) || NPY_CFLOAT_GET_IMAG(&b) != NPY_CFLOAT_GET_IMAG(&b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (NPY_CFLOAT_GET_REAL(&a) > NPY_CFLOAT_GET_REAL(&b)) {
+        ret = NPY_CFLOAT_GET_IMAG(&b) != NPY_CFLOAT_GET_IMAG(&b) && NPY_CFLOAT_GET_IMAG(&a) == NPY_CFLOAT_GET_IMAG(&a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (NPY_CFLOAT_GET_REAL(&a) == NPY_CFLOAT_GET_REAL(&b) || (NPY_CFLOAT_GET_REAL(&a) != NPY_CFLOAT_GET_REAL(&a) && NPY_CFLOAT_GET_REAL(&b) != NPY_CFLOAT_GET_REAL(&b))) {
+        ret =  NPY_CFLOAT_GET_IMAG(&a) < NPY_CFLOAT_GET_IMAG(&b) || (NPY_CFLOAT_GET_IMAG(&b) != NPY_CFLOAT_GET_IMAG(&b) && NPY_CFLOAT_GET_IMAG(&a) == NPY_CFLOAT_GET_IMAG(&a));
     }
     else {
-        ret = b.real != b.real;
+        ret = NPY_CFLOAT_GET_REAL(&b) != NPY_CFLOAT_GET_REAL(&b);
     }
 
     return ret;
@@ -219,17 +219,17 @@ CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (NPY_CDOUBLE_GET_REAL(&a) < NPY_CDOUBLE_GET_REAL(&b)) {
+        ret = NPY_CDOUBLE_GET_IMAG(&a) == NPY_CDOUBLE_GET_IMAG(&a) || NPY_CDOUBLE_GET_IMAG(&b) != NPY_CDOUBLE_GET_IMAG(&b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (NPY_CDOUBLE_GET_REAL(&a) > NPY_CDOUBLE_GET_REAL(&b)) {
+        ret = NPY_CDOUBLE_GET_IMAG(&b) != NPY_CDOUBLE_GET_IMAG(&b) && NPY_CDOUBLE_GET_IMAG(&a) == NPY_CDOUBLE_GET_IMAG(&a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (NPY_CDOUBLE_GET_REAL(&a) == NPY_CDOUBLE_GET_REAL(&b) || (NPY_CDOUBLE_GET_REAL(&a) != NPY_CDOUBLE_GET_REAL(&a) && NPY_CDOUBLE_GET_REAL(&b) != NPY_CDOUBLE_GET_REAL(&b))) {
+        ret =  NPY_CDOUBLE_GET_IMAG(&a) < NPY_CDOUBLE_GET_IMAG(&b) || (NPY_CDOUBLE_GET_IMAG(&b) != NPY_CDOUBLE_GET_IMAG(&b) && NPY_CDOUBLE_GET_IMAG(&a) == NPY_CDOUBLE_GET_IMAG(&a));
     }
     else {
-        ret = b.real != b.real;
+        ret = NPY_CDOUBLE_GET_REAL(&b) != NPY_CDOUBLE_GET_REAL(&b);
     }
 
     return ret;
@@ -241,17 +241,17 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (NPY_CLONGDOUBLE_GET_REAL(&a) < NPY_CLONGDOUBLE_GET_REAL(&b)) {
+        ret = NPY_CLONGDOUBLE_GET_IMAG(&a) == NPY_CLONGDOUBLE_GET_IMAG(&a) || NPY_CLONGDOUBLE_GET_IMAG(&b) != NPY_CLONGDOUBLE_GET_IMAG(&b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (NPY_CLONGDOUBLE_GET_REAL(&a) > NPY_CLONGDOUBLE_GET_REAL(&b)) {
+        ret = NPY_CLONGDOUBLE_GET_IMAG(&b) != NPY_CLONGDOUBLE_GET_IMAG(&b) && NPY_CLONGDOUBLE_GET_IMAG(&a) == NPY_CLONGDOUBLE_GET_IMAG(&a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (NPY_CLONGDOUBLE_GET_REAL(&a) == NPY_CLONGDOUBLE_GET_REAL(&b) || (NPY_CLONGDOUBLE_GET_REAL(&a) != NPY_CLONGDOUBLE_GET_REAL(&a) && NPY_CLONGDOUBLE_GET_REAL(&b) != NPY_CLONGDOUBLE_GET_REAL(&b))) {
+        ret =  NPY_CLONGDOUBLE_GET_IMAG(&a) < NPY_CLONGDOUBLE_GET_IMAG(&b) || (NPY_CLONGDOUBLE_GET_IMAG(&b) != NPY_CLONGDOUBLE_GET_IMAG(&b) && NPY_CLONGDOUBLE_GET_IMAG(&a) == NPY_CLONGDOUBLE_GET_IMAG(&a));
     }
     else {
-        ret = b.real != b.real;
+        ret = NPY_CLONGDOUBLE_GET_REAL(&b) != NPY_CLONGDOUBLE_GET_REAL(&b);
     }
 
     return ret;
