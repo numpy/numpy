@@ -181,6 +181,7 @@ def test_nep50_integer_regression():
     assert (arr + 2**63).dtype == np.float64
     assert (arr[()] + 2**63).dtype == np.float64
 
+
 def test_nep50_with_axisconcatenator():
     # I promised that this will be an error in the future in the 1.25
     # release notes;  test this (NEP 50 opt-in makes the deprecation an error).
@@ -188,3 +189,46 @@ def test_nep50_with_axisconcatenator():
 
     with pytest.raises(OverflowError):
         np.r_[np.arange(5, dtype=np.int8), 255]
+
+
+@pytest.mark.parametrize("ufunc", [np.add, np.power])
+@pytest.mark.parametrize("state", ["weak", "weak_and_warn"])
+def test_nep50_huge_integers(ufunc, state):
+    # Very large integers are complicated, because they go to uint64 or
+    # object dtype.  This tests covers a few possible paths (some of which
+    # cannot give the NEP 50 warnings).
+    np._set_promotion_state(state)
+
+    with pytest.raises(OverflowError):
+        ufunc(np.int64(0), 2**63)  # 2**63 too large for int64
+
+    if state == "weak_and_warn":
+        with pytest.warns(UserWarning,
+                match="result dtype changed.*float64.*uint64"):
+            with pytest.raises(OverflowError):
+                ufunc(np.uint64(0), 2**64)
+    else:
+        with pytest.raises(OverflowError):
+            ufunc(np.uint64(0), 2**64)  # 2**64 cannot be represented by uint64
+
+    # However, 2**63 can be represented by the uint64 (and that is used):
+    if state == "weak_and_warn":
+        with pytest.warns(UserWarning,
+                match="result dtype changed.*float64.*uint64"):
+            res = ufunc(np.uint64(1), 2**63)
+    else:
+        res = ufunc(np.uint64(1), 2**63)
+
+    assert res.dtype == np.uint64
+    assert res == ufunc(1, 2**63, dtype=object)
+
+    # The following paths fail to warn correctly about the change:
+    with pytest.raises(OverflowError):
+        ufunc(np.int64(1), 2**63)  # np.array(2**63) would go to uint
+
+    with pytest.raises(OverflowError):
+        ufunc(np.int64(1), 2**100)  # np.array(2**100) would go to object
+
+    # This would go to object and thus a Python float, not a NumPy one:
+    res = ufunc(1.0, 2**100)
+    assert isinstance(res, np.float64)
