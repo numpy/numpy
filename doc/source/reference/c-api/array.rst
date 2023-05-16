@@ -1152,26 +1152,10 @@ Converting data types
     This applies type promotion to all the input arrays and dtype
     objects, using the NumPy rules for combining scalars and arrays, to
     determine the output type for an operation with the given set of
-    operands. This is the same result type that ufuncs produce. The
-    specific algorithm used is as follows.
+    operands. This is the same result type that ufuncs produce.
 
-    Categories are determined by first checking which of boolean,
-    integer (int/uint), or floating point (float/complex) the maximum
-    kind of all the arrays and the scalars are.
-
-    If there are only scalars or the maximum category of the scalars
-    is higher than the maximum category of the arrays,
-    the data types are combined with :c:func:`PyArray_PromoteTypes`
-    to produce the return value.
-
-    Otherwise, PyArray_MinScalarType is called on each array, and
-    the resulting data types are all combined with
-    :c:func:`PyArray_PromoteTypes` to produce the return value.
-
-    The set of int values is not a subset of the uint values for types
-    with the same number of bits, something not reflected in
-    :c:func:`PyArray_MinScalarType`, but handled as a special case in
-    PyArray_ResultType.
+    See the documentation of :func:`numpy.result_type` for more
+    detail about the type promotion algorithm.
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
