@@ -67,6 +67,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "mem_overlap.h"
 #include "typeinfo.h"
 #include "convert.h" /* for PyArray_AssignZero */
+#include "lowlevel_strided_loops.h"
+#include "dtype_transfer.h"
 
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
@@ -3381,6 +3383,9 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
+    NPY_cast_info x_cast_info = {.func = NULL};
+    NPY_cast_info y_cast_info = {.func = NULL};
+
     ax = (PyArrayObject*)PyArray_FROM_O(x);
     ay = (PyArrayObject*)PyArray_FROM_O(y);
     if (ax == NULL || ay == NULL) {
@@ -3423,6 +3428,43 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
 
+        PyArray_Descr **dts = NpyIter_GetDescrArray(iter);
+        PyArray_Descr *dtx = dts[2];
+        PyArray_Descr *dty = dts[3];
+        npy_intp itemsize = dts[0]->elsize;
+
+        npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
+        npy_intp cstride = strides[1];
+        npy_intp xstride = strides[2];
+        npy_intp ystride = strides[3];
+
+        int axswap = PyDataType_ISBYTESWAPPED(dtx);
+        int ayswap = PyDataType_ISBYTESWAPPED(dty);
+        int native = (axswap == ayswap) && (axswap == 0) && !needs_api;
+
+        NPY_ARRAYMETHOD_FLAGS x_transfer_flags;
+        NPY_ARRAYMETHOD_FLAGS y_transfer_flags;
+
+        int x_is_aligned = IsAligned(ax);
+        int y_is_aligned = IsAligned(ay);
+
+        npy_intp xstrides[2] = {xstride, itemsize};
+        npy_intp ystrides[2] = {xstride, itemsize};
+
+        npy_intp one = 1;
+
+        if (PyArray_GetDTypeTransferFunction(
+                x_is_aligned, xstrides[0], xstrides[1], dtx, common_dt, 0,
+                &x_cast_info, &x_transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+
+        if (PyArray_GetDTypeTransferFunction(
+                y_is_aligned, ystrides[0], ystrides[1], dty, common_dt, 0,
+                &y_cast_info, &y_transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+
         NPY_BEGIN_THREADS_NDITER(iter);
 
         if (NpyIter_GetIterSize(iter) != 0) {
@@ -3431,18 +3473,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             char **dataptrarray = NpyIter_GetDataPtrArray(iter);
 
             do {
-                PyArray_Descr * dtx = NpyIter_GetDescrArray(iter)[2];
-                PyArray_Descr * dty = NpyIter_GetDescrArray(iter)[3];
-                int axswap = PyDataType_ISBYTESWAPPED(dtx);
-                int ayswap = PyDataType_ISBYTESWAPPED(dty);
-                PyArray_CopySwapFunc *copyswapx = dtx->f->copyswap;
-                PyArray_CopySwapFunc *copyswapy = dty->f->copyswap;
-                int native = (axswap == ayswap) && (axswap == 0) && !needs_api;
                 npy_intp n = (*innersizeptr);
-                npy_intp itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
-                npy_intp cstride = NpyIter_GetInnerStrideArray(iter)[1];
-                npy_intp xstride = NpyIter_GetInnerStrideArray(iter)[2];
-                npy_intp ystride = NpyIter_GetInnerStrideArray(iter)[3];
                 char * dst = dataptrarray[0];
                 char * csrc = dataptrarray[1];
                 char * xsrc = dataptrarray[2];
@@ -3465,14 +3496,25 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                     INNER_WHERE_LOOP(1);
                 }
                 else {
-                    /* copyswap is faster than memcpy even if we are native */
                     npy_intp i;
                     for (i = 0; i < n; i++) {
                         if (*csrc) {
-                            copyswapx(dst, xsrc, axswap, ret);
+                            char *args[2] = {xsrc, dst};
+
+                            if (x_cast_info.func(
+                                    &x_cast_info.context, args, &one, strides,
+                                    x_cast_info.auxdata) < 0) {
+                                goto fail;
+                            }
                         }
                         else {
-                            copyswapy(dst, ysrc, ayswap, ret);
+                            char *args[2] = {ysrc, dst};
+
+                            if (y_cast_info.func(
+                                    &y_cast_info.context, args, &one, strides,
+                                    y_cast_info.auxdata) < 0) {
+                                goto fail;
+                            }
                         }
                         dst += itemsize;
                         xsrc += xstride;
@@ -3489,6 +3531,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(arr);
         Py_DECREF(ax);
         Py_DECREF(ay);
+        NPY_cast_info_xfree(&x_cast_info);
+        NPY_cast_info_xfree(&y_cast_info);
 
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(ret);
@@ -3502,6 +3546,8 @@ fail:
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
+    NPY_cast_info_xfree(&x_cast_info);
+    NPY_cast_info_xfree(&y_cast_info);
     return NULL;
 }
 
