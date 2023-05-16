@@ -157,9 +157,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined(_MSC_VER) && defined(_WIN64) || \
-    defined(__MINGW32__) || defined(__MINGW64__)
-            /* Workaround Win64 fwrite() bug. Issue gh-2256
+#if defined(NPY_OS_WIN64)
+            /*
+             * Workaround Win64 fwrite() bug. Issue gh-2256
+             * The native 64 windows runtime has this issue, the above will
+             * also trigger UCRT (which doesn't), so it could be more precise.
+             *
              * If you touch this code, please run this test which is so slow
              * it was removed from the test suite. Note that the original
              * failure mode involves an infinite loop during tofile()
@@ -181,8 +184,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
              * assert_((a[-n:] == testbytes).all())
              */
             {
-                npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
-                npy_intp chunksize;
+                size_t maxsize = 2147483648 / (size_t)PyArray_DESCR(self)->elsize;
+                size_t chunksize;
 
                 n = 0;
                 while (size > 0) {
@@ -190,7 +193,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     n2 = fwrite((const void *)
                              ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
                              (size_t) PyArray_DESCR(self)->elsize,
-                             (size_t) chunksize, fp);
+                             chunksize, fp);
                     if (n2 < chunksize) {
                         break;
                     }
