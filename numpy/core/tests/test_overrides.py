@@ -10,14 +10,9 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
+    verify_matching_signatures)
 from numpy.compat import pickle
 import pytest
-
-
-requires_array_function = pytest.mark.skipif(
-    not ARRAY_FUNCTION_ENABLED,
-    reason="__array_function__ dispatch not enabled.")
 
 
 def _return_not_implemented(self, *args, **kwargs):
@@ -150,7 +145,6 @@ class TestGetImplementingArgs:
 
 class TestNDArrayArrayFunction:
 
-    @requires_array_function
     def test_method(self):
 
         class Other:
@@ -209,7 +203,6 @@ class TestNDArrayArrayFunction:
                                      args=(array,), kwargs={})
 
 
-@requires_array_function
 class TestArrayFunctionDispatch:
 
     def test_pickle(self):
@@ -248,8 +241,20 @@ class TestArrayFunctionDispatch:
         with assert_raises_regex(TypeError, 'no implementation found'):
             dispatched_one_arg(array)
 
+    def test_where_dispatch(self):
 
-@requires_array_function
+        class DuckArray:
+            def __array_function__(self, ufunc, method, *inputs, **kwargs):
+                return "overridden"
+
+        array = np.array(1)
+        duck_array = DuckArray()
+
+        result = np.std(array, where=duck_array)
+
+        assert_equal(result, "overridden")
+
+
 class TestVerifyMatchingSignatures:
 
     def test_verify_matching_signatures(self):
@@ -302,7 +307,6 @@ def _new_duck_type_and_implements():
     return (MyArray, implements)
 
 
-@requires_array_function
 class TestArrayFunctionImplementation:
 
     def test_one_arg(self):
@@ -472,7 +476,6 @@ class TestNumPyFunctions:
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
 
-    @requires_array_function
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
 
@@ -482,7 +485,6 @@ class TestNumPyFunctions:
 
         assert_equal(np.sum(MyArray()), 'yes')
 
-    @requires_array_function
     def test_sum_on_mock_array(self):
 
         # We need a proxy for mocks because __array_function__ is only looked
@@ -503,7 +505,6 @@ class TestNumPyFunctions:
             np.sum, (ArrayProxy,), (proxy,), {})
         proxy.value.__array__.assert_not_called()
 
-    @requires_array_function
     def test_sum_forwarding_implementation(self):
 
         class MyArray(np.ndarray):
@@ -555,7 +556,6 @@ class TestArrayLike:
     def func_args(*args, **kwargs):
         return args, kwargs
 
-    @requires_array_function
     def test_array_like_not_implemented(self):
         self.add_method('array', self.MyArray)
 
@@ -588,7 +588,6 @@ class TestArrayLike:
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     @pytest.mark.parametrize('numpy_ref', [True, False])
-    @requires_array_function
     def test_array_like(self, function, args, kwargs, numpy_ref):
         self.add_method('array', self.MyArray)
         self.add_method(function, self.MyArray)
@@ -621,7 +620,6 @@ class TestArrayLike:
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     @pytest.mark.parametrize('ref', [1, [1], "MyNoArrayFunctionArray"])
-    @requires_array_function
     def test_no_array_function_like(self, function, args, kwargs, ref):
         self.add_method('array', self.MyNoArrayFunctionArray)
         self.add_method(function, self.MyNoArrayFunctionArray)
@@ -663,7 +661,6 @@ class TestArrayLike:
                 assert type(array_like) is self.MyArray
                 assert array_like.function is self.MyArray.fromfile
 
-    @requires_array_function
     def test_exception_handling(self):
         self.add_method('array', self.MyArray, enable_value_error=True)
 
@@ -692,7 +689,6 @@ class TestArrayLike:
         assert_equal(array_like, expected)
 
 
-@requires_array_function
 def test_function_like():
     # We provide a `__get__` implementation, make sure it works
     assert type(np.mean) is np.core._multiarray_umath._ArrayFunctionDispatcher 

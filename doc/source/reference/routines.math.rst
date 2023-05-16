@@ -39,6 +39,7 @@ Rounding
 .. autosummary::
    :toctree: generated/
 
+   round
    around
    rint
    fix
@@ -148,13 +149,15 @@ Extrema Finding
    :toctree: generated/
 
    maximum
-   fmax
+   max
    amax
+   fmax
    nanmax
    
    minimum
-   fmin
+   min
    amin
+   fmin
    nanmin
    
 

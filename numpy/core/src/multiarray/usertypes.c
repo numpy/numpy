@@ -261,20 +261,52 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         return -1;
     }
 
+    /*
+     * Legacy user DTypes classes cannot have a name, since the user never
+     * defined one.  So we create a name for them here. These DTypes are
+     * effectively static types.
+     *
+     * Note: we have no intention of freeing the memory again since this
+     * behaves identically to static type definition.
+     */
+
+    const char *scalar_name = descr->typeobj->tp_name;
+    /*
+     * We have to take only the name, and ignore the module to get
+     * a reasonable __name__, since static types are limited in this regard
+     * (this is not ideal, but not a big issue in practice).
+     * This is what Python does to print __name__ for static types.
+     */
+    const char *dot = strrchr(scalar_name, '.');
+    if (dot) {
+        scalar_name = dot + 1;
+    }
+    Py_ssize_t name_length = strlen(scalar_name) + 14;
+
+    char *name = PyMem_Malloc(name_length);
+    if (name == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    snprintf(name, name_length, "numpy.dtype[%s]", scalar_name);
+
     userdescrs[NPY_NUMUSERTYPES++] = descr;
 
     descr->type_num = typenum;
-    if (dtypemeta_wrap_legacy_descriptor(descr) < 0) {
+    if (dtypemeta_wrap_legacy_descriptor(descr, name, NULL) < 0) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
+        PyMem_Free(name);  /* free the name only on failure */
         return -1;
     }
     if (use_void_clearimpl) {
         /* See comment where use_void_clearimpl is set... */
-        PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
         NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
                 &npy_get_clear_void_and_legacy_user_dtype_loop);
-        Py_DECREF(Void);
+        /* Also use the void zerofill since there may be objects */
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+                &npy_get_zerofill_void_and_legacy_user_dtype_loop);
     }
 
     return typenum;

@@ -3,6 +3,7 @@ import warnings
 import operator
 import types
 
+import numpy as np
 from . import numeric as _nx
 from .numeric import result_type, NaN, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
@@ -167,7 +168,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     y += start
 
     if endpoint and num > 1:
-        y[-1] = stop
+        y[-1, ...] = stop
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
@@ -183,7 +184,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
 def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
                          dtype=None, axis=None):
-    return (start, stop)
+    return (start, stop, base)
 
 
 @array_function_dispatch(_logspace_dispatcher)
@@ -198,6 +199,9 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     .. versionchanged:: 1.16.0
         Non-scalar `start` and `stop` are now supported.
+
+    .. versionchanged:: 1.25.0
+        Non-scalar 'base` is now supported
 
     Parameters
     ----------
@@ -223,9 +227,10 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         an integer; `float` is chosen even if the arguments would produce an
         array of integers.
     axis : int, optional
-        The axis in the result to store the samples.  Relevant only if start
-        or stop are array-like.  By default (0), the samples will be along a
-        new axis inserted at the beginning. Use -1 to get an axis at the end.
+        The axis in the result to store the samples.  Relevant only if start,
+        stop, or base are array-like.  By default (0), the samples will be
+        along a new axis inserted at the beginning. Use -1 to get an axis at
+        the end.
 
         .. versionadded:: 1.16.0
 
@@ -247,7 +252,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     Notes
     -----
-    Logspace is equivalent to the code
+    If base is a scalar, logspace is equivalent to the code
 
     >>> y = np.linspace(start, stop, num=num, endpoint=endpoint)
     ... # doctest: +SKIP
@@ -262,6 +267,9 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     array([100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
     array([4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    >>> np.logspace(2.0, 3.0, num=4, base=[2.0, 3.0], axis=-1)
+    array([[ 4.        ,  5.0396842 ,  6.34960421,  8.        ],
+           [ 9.        , 12.98024613, 18.72075441, 27.        ]])
 
     Graphical illustration:
 
@@ -279,7 +287,13 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     >>> plt.show()
 
     """
+    ndmax = np.broadcast(start, stop, base).ndim
+    start, stop, base = (
+        np.array(a, copy=False, subok=True, ndmin=ndmax)
+        for a in (start, stop, base)
+    )
     y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
+    base = np.expand_dims(base, axis=axis)
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype, copy=False)

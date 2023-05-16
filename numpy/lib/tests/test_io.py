@@ -232,6 +232,17 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
+
+    def test_tuple_getitem_raises(self):
+        # gh-23748
+        a = np.array([1, 2, 3])
+        f = BytesIO()
+        np.savez(f, a=a)
+        f.seek(0)
+        l = np.load(f)
+        with pytest.raises(KeyError, match="(1, 2)"):
+            l[1, 2]
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
@@ -320,6 +331,21 @@ class TestSavezLoad(RoundtripTest):
             fp = data.zip.fp
             data.close()
             assert_(fp.closed)
+
+    @pytest.mark.parametrize("count, expected_repr", [
+        (1, "NpzFile {fname!r} with keys: arr_0"),
+        (5, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4"),
+        # _MAX_REPR_ARRAY_COUNT is 5, so files with more than 5 keys are
+        # expected to end in '...'
+        (6, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4..."),
+    ])
+    def test_repr_lists_keys(self, count, expected_repr):
+        a = np.array([[1, 2], [3, 4]], float)
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, *[a]*count)
+            l = np.load(tmp)
+            assert repr(l) == expected_repr.format(fname=tmp)
+            l.close()
 
 
 class TestSaveTxt:
@@ -597,8 +623,8 @@ class TestSaveTxt:
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
 
-        # Since Python 3.8, the default start method for multiprocessing has 
-        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency 
+        # Since Python 3.8, the default start method for multiprocessing has
+        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
         # on memory sharing model, lead to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))

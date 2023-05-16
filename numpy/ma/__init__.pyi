@@ -155,7 +155,6 @@ from numpy.ma.core import (
     resize as resize,
     right_shift as right_shift,
     round as round,
-    round_ as round_,
     set_fill_value as set_fill_value,
     shape as shape,
     sin as sin,

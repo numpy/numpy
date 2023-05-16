@@ -16,8 +16,9 @@ def main(ctx):
     if env.get("CIRRUS_REPO_FULL_NAME") != "numpy/numpy":
         return []
 
-    # if env.get("CIRRUS_CRON", "") == "nightly":
-    #     return fs.read("ci/cirrus_wheels.yml")
+    # only run the wheels entry on a cron job
+    if env.get("CIRRUS_CRON", "") == "nightly":
+        return fs.read("tools/ci/cirrus_wheels.yml")
 
     # Obtain commit message for the event. Unfortunately CIRRUS_CHANGE_MESSAGE
     # only contains the actual commit message on a non-PR trigger event.
@@ -31,8 +32,8 @@ def main(ctx):
     if "[skip cirrus]" in dct["message"] or "[skip ci]" in dct["message"]:
         return []
 
-    config =  fs.read("tools/ci/cirrus_general.yml")
-
     # add extra jobs to the cirrus run by += adding to config
+    config = fs.read("tools/ci/cirrus_wheels.yml")
+    config += fs.read("tools/ci/cirrus_macosx_arm64.yml")
 
     return config

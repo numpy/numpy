@@ -278,7 +278,7 @@ def str_len(a):
 
     See Also
     --------
-    builtins.len
+    len
 
     Examples
     --------

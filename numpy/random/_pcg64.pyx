@@ -26,26 +26,26 @@ cdef extern from "src/pcg64/pcg64.h":
     void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32, uint32_t *uinteger)
     void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
 
-    uint64_t pcg64_cm_next64(pcg64_state *state)  nogil
-    uint32_t pcg64_cm_next32(pcg64_state *state)  nogil
+    uint64_t pcg64_cm_next64(pcg64_state *state)  noexcept nogil
+    uint32_t pcg64_cm_next32(pcg64_state *state)  noexcept nogil
     void pcg64_cm_advance(pcg64_state *state, uint64_t *step)
 
-cdef uint64_t pcg64_uint64(void* st) nogil:
+cdef uint64_t pcg64_uint64(void* st) noexcept nogil:
     return pcg64_next64(<pcg64_state *>st)
 
-cdef uint32_t pcg64_uint32(void *st) nogil:
+cdef uint32_t pcg64_uint32(void *st) noexcept nogil:
     return pcg64_next32(<pcg64_state *> st)
 
-cdef double pcg64_double(void* st) nogil:
+cdef double pcg64_double(void* st) noexcept nogil:
     return uint64_to_double(pcg64_next64(<pcg64_state *>st))
 
-cdef uint64_t pcg64_cm_uint64(void* st) nogil:
+cdef uint64_t pcg64_cm_uint64(void* st) noexcept nogil:
     return pcg64_cm_next64(<pcg64_state *>st)
 
-cdef uint32_t pcg64_cm_uint32(void *st) nogil:
+cdef uint32_t pcg64_cm_uint32(void *st) noexcept nogil:
     return pcg64_cm_next32(<pcg64_state *> st)
 
-cdef double pcg64_cm_double(void* st) nogil:
+cdef double pcg64_cm_double(void* st) noexcept nogil:
     return uint64_to_double(pcg64_cm_next64(<pcg64_state *>st))
 
 cdef class PCG64(BitGenerator):
@@ -515,4 +515,3 @@ cdef class PCG64DXSM(BitGenerator):
         pcg64_cm_advance(&self.rng_state, <uint64_t *>np.PyArray_DATA(d))
         self._reset_state_variables()
         return self
-

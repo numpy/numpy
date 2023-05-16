@@ -17,6 +17,7 @@
 #include "numpyos.h"
 #include "arrayobject.h"
 #include "scalartypes.h"
+#include "dtypemeta.h"
 
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
@@ -417,9 +418,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         default:
-            PyErr_Format(PyExc_ValueError,
-                         "cannot include dtype '%c' in a buffer",
-                         descr->type);
+            if (NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+                PyErr_Format(PyExc_ValueError,
+                             "cannot include dtype '%c' in a buffer",
+                             descr->type);
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                             "cannot include dtype '%s' in a buffer",
+                             ((PyTypeObject*)NPY_DTYPE(descr))->tp_name);
+            }
             return -1;
         }
     }

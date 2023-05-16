@@ -23,7 +23,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
     add, multiply, sqrt, sum, isfinite,
-    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
+    finfo, errstate, geterrobj, moveaxis, amin, amax, prod, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal
@@ -196,7 +196,7 @@ def _assert_finite(*arrays):
 
 def _is_empty_2d(arr):
     # check size first for efficiency
-    return arr.size == 0 and product(arr.shape[-2:]) == 0
+    return arr.size == 0 and prod(arr.shape[-2:]) == 0
 
 
 def transpose(a):

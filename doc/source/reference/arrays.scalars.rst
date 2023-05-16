@@ -293,6 +293,10 @@ elements the data type consists of.)
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.character
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.bytes_
    :members: __init__
    :exclude-members: __init__
@@ -332,8 +336,6 @@ are also provided.
 
 .. note that these are documented with ..attribute because that is what
    autoclass does for aliases under the hood.
-
-.. autoclass:: numpy.bool8
 
 .. attribute:: int8
                int16

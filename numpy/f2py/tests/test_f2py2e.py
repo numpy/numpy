@@ -63,6 +63,15 @@ def hello_world_f90(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
+def gh23598_warn(tmpdir_factory):
+    """F90 file for testing warnings in gh23598"""
+    fdat = util.getpath("tests", "src", "crackfortran", "gh23598Warn.f90").read_text()
+    fn = tmpdir_factory.getbasetemp() / "gh23598Warn.f90"
+    fn.write_text(fdat, encoding="ascii")
+    return fn
+
+
+@pytest.fixture(scope="session")
 def hello_world_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
     fdat = util.getpath("tests", "src", "cli", "hi77.f").read_text()
@@ -89,6 +98,19 @@ def f2cmap_f90(tmpdir_factory):
     fn.write_text(fdat, encoding="ascii")
     fmap.write_text(f2cmap, encoding="ascii")
     return fn
+
+
+def test_gh23598_warn(capfd, gh23598_warn, monkeypatch):
+    foutl = get_io_paths(gh23598_warn, mname="test")
+    ipath = foutl.f90inp
+    monkeypatch.setattr(
+        sys, "argv",
+        f'f2py {ipath} -m test'.split())
+
+    with util.switchdir(ipath.parent):
+        f2pycli()  # Generate files
+        wrapper = foutl.wrap90.read_text()
+        assert "intproductf2pywrap, intpr" not in wrapper
 
 
 def test_gen_pyf(capfd, hello_world_f90, monkeypatch):

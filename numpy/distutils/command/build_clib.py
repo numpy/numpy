@@ -307,6 +307,7 @@ class build_clib(old_build_clib):
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
             cxx_sources = []
+            extra_cflags += extra_cxxflags
 
         # filtering C dispatch-table sources when optimization is not disabled,
         # otherwise treated as normal sources.

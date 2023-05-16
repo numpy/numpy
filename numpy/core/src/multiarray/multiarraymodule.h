@@ -16,5 +16,6 @@ NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_axis1;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_axis2;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_like;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_numpy;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_where;
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

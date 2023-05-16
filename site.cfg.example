@@ -225,9 +225,10 @@
 #
 # UMFPACK is not used by NumPy.
 #
-#   https://www.cise.ufl.edu/research/sparse/umfpack/
-#   https://www.cise.ufl.edu/research/sparse/amd/
+#   https://github.com/DrTimothyAldenDavis/SuiteSparse/tree/dev/UMFPACK
+#   https://github.com/DrTimothyAldenDavis/SuiteSparse/tree/dev/AMD
 #   https://scikit-umfpack.github.io/scikit-umfpack/
+#   https://people.engr.tamu.edu/davis/suitesparse.html
 #
 #[amd]
 #libraries = amd
@@ -252,3 +253,13 @@
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
+
+# Fujitsu SSL2
+# ----
+#[ssl2]
+#library_dirs = /opt/FJSVstclanga/v1.1.0/lib64
+#include_dirs = /opt/FJSVstclanga/v1.1.0/clang-comp/include
+# Single-threaded version.
+#libraies = fjlapacksve
+# Multi-threaded version. Python itself must be built by Fujitsu compiler.
+#libraies = fjlapackexsve

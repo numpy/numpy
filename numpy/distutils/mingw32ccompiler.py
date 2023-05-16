@@ -206,10 +206,7 @@ def find_python_dll():
     if implementation == 'cpython':
         dllname = f'python{major_version}{minor_version}.dll'
     elif implementation == 'pypy':
-        if sys.version_info >= (3, 9):
-            dllname = f'libpypy{major_version}.{minor_version}-c.dll'
-        else:
-            dllname = f'libpypy{major_version}-c.dll'
+        dllname = f'libpypy{major_version}.{minor_version}-c.dll'
     else:
         dllname = f'Unknown platform {implementation}' 
     print("Looking for %s" % dllname)

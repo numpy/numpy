@@ -83,7 +83,7 @@ Data sources
 
    DataSource
 
-Binary Format Description
+Binary format description
 -------------------------
 .. autosummary::
    :toctree: generated/

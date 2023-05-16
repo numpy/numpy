@@ -44,23 +44,6 @@
 #define NPY_FAIL 0
 #define NPY_SUCCEED 1
 
-/*
- * Binary compatibility version number.  This number is increased
- * whenever the C-API is changed such that binary compatibility is
- * broken, i.e. whenever a recompile of extension modules is needed.
- */
-#define NPY_VERSION NPY_ABI_VERSION
-
-/*
- * Minor API version.  This number is increased whenever a change is
- * made to the C-API -- whether it breaks binary compatibility or not.
- * Some changes, such as adding a function pointer to the end of the
- * function table, can be made without breaking binary compatibility.
- * In this case, only the NPY_FEATURE_VERSION (*not* NPY_VERSION)
- * would be increased.  Whenever binary compatibility is broken, both
- * NPY_VERSION and NPY_FEATURE_VERSION should be increased.
- */
-#define NPY_FEATURE_VERSION NPY_API_VERSION
 
 enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_BYTE, NPY_UBYTE,
@@ -729,11 +712,15 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+#if NPY_FEATURE_VERSION >= NPY_1_20_API_VERSION
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
+#endif
     /*
      * For malloc/calloc/realloc/free per object
      */
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
     PyObject *mem_handler;
+#endif
 } PyArrayObject_fields;
 
 /*
@@ -1671,11 +1658,13 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
 
-static inline NPY_RETURNS_BORROWED_REF PyObject *
-PyArray_HANDLER(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->mem_handler;
-}
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+    static inline NPY_RETURNS_BORROWED_REF PyObject *
+    PyArray_HANDLER(PyArrayObject *arr)
+    {
+        return ((PyArrayObject_fields *)arr)->mem_handler;
+    }
+#endif
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 

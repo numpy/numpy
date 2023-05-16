@@ -15,17 +15,17 @@ into a problem._
   # also make sure you have pkg-config and the usual system dependencies for
   # NumPy`
 
-Then install devpy:
-- `python -m pip install git+https://github.com/scientific-python/devpy`
+Then install spin:
+- `python -m pip install spin`
 
-**Compile and install:** `./dev.py build`
+**Compile and install:** `spin build`
 
 This builds in the `build/` directory, and installs into the `build-install` directory.
 
-Then run the test suite or a shell via `dev.py`:
+Then run the test suite or a shell via `spin`:
 ```
-./dev.py test
-./dev.py ipython
+spin test
+spin ipython
 ```
 
 Alternatively, to use the package, add it to your `PYTHONPATH`:
@@ -44,7 +44,7 @@ Note that `pip` will use the default build system, which is (as of now) still
 After that is done, `pip install .` or `pip install --no-build-isolation .`
 will work as expected. As does building an sdist or wheel with `python -m build`.
 Note, however, that `pip install -e .` (in-place developer install) does not!
-Use `dev.py` instead (see above).
+Use `spin` instead (see above).
 
 
 
@@ -67,5 +67,5 @@ Libs: -L${libdir} -lopenblas
 Then build with:
 
 ```
-./dev.py build -- -Dpkg_config_path=${HOME}/lib/pkgconfig
+spin build -- -Dpkg_config_path=${HOME}/lib/pkgconfig
 ```

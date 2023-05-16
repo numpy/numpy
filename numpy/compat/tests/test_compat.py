@@ -1,4 +1,5 @@
 from os.path import join
+from io import BufferedReader, BytesIO
 
 from numpy.compat import isfileobj
 from numpy.testing import assert_
@@ -17,3 +18,5 @@ def test_isfileobj():
 
         with open(filename, 'rb') as f:
             assert_(isfileobj(f))
+
+        assert_(isfileobj(BufferedReader(BytesIO())) is False)

@@ -14,22 +14,13 @@ in several different formats.
 Development environments
 ========================
 
-Before proceeding further it should be noted that the documentation is built with the ``make`` tool,
-which is not natively available on Windows. MacOS or Linux users can jump
-to :ref:`how-todoc.prerequisites`. It is recommended for Windows users to set up their development
-environment on :ref:`Gitpod <development-gitpod>` or `Windows Subsystem
-for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_. WSL is a good option
-for a persistent local set-up.
-
-Gitpod
-~~~~~~
-Gitpod is an open-source platform that automatically creates the correct development environment right
-in your browser, reducing the need to install local development environments and deal with
-incompatible dependencies.
-
-If you have good internet connectivity and want a temporary set-up,
-it is often faster to build with Gitpod. Here are the in-depth instructions for
-:ref:`building NumPy with Gitpod <development-gitpod>`.
+Before proceeding further it should be noted that the documentation is built
+with the ``make`` tool, which is not natively available on Windows. MacOS or
+Linux users can jump to :ref:`how-todoc.prerequisites`. It is recommended for
+Windows users to set up their development environment on
+GitHub Codespaces (see :ref:`recommended-development-setup`) or
+`Windows Subsystem for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
+WSL is a good option for a persistent local set-up.
 
 
 .. _how-todoc.prerequisites:

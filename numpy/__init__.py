@@ -74,10 +74,6 @@ test
     Run numpy unittests
 show_config
     Show numpy build configuration
-dual
-    Overwrite certain functions with high-performance SciPy tools.
-    Note: `numpy.dual` is deprecated.  Use the functions from NumPy or Scipy
-    directly instead of importing them from `numpy.dual`.
 matlib
     Make everything matrices.
 __version__
@@ -144,6 +140,7 @@ else:
     from .core import *
     from . import compat
     from . import exceptions
+    from . import dtypes
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
@@ -219,9 +216,16 @@ else:
     __deprecated_attrs__.update({
         n: (alias, _msg.format(n=n, an=an)) for n, alias, an in _type_info})
 
-    del _msg, _type_info
+    import math
 
-    from .core import round, abs, max, min
+    __deprecated_attrs__['math'] = (math,
+        "`np.math` is a deprecated alias for the standard library `math` "
+        "module (Deprecated Numpy 1.25). Replace usages of `np.math` with "
+        "`math`")
+
+    del math, _msg, _type_info
+
+    from .core import abs
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
@@ -276,6 +280,7 @@ else:
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
         import warnings
+        import math
         try:
             msg = __expired_functions__[attr]
         except KeyError:

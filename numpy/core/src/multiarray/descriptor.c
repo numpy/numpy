@@ -2447,7 +2447,6 @@ arraydescr_new(PyTypeObject *subtype,
                 PyErr_NoMemory();
                 return NULL;
             }
-            PyObject_Init((PyObject *)descr, subtype);
             descr->f = &NPY_DT_SLOTS(DType)->f;
             Py_XINCREF(DType->scalar_type);
             descr->typeobj = DType->scalar_type;

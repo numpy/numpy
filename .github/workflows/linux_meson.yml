@@ -21,15 +21,15 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  meson_devpy:
+  meson_spin:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
       env:
         TERM: xterm-256color
       run:
-        ./dev.py build -- --werror
+        spin build -- --werror
     - name: Check build-internal dependencies
       run:
         ninja -C build -t missingdeps
@@ -54,4 +54,4 @@ jobs:
         TERM: xterm-256color
       run: |
         pip install pytest hypothesis typing_extensions
-        ./dev.py test
+        spin test

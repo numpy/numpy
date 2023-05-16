@@ -431,7 +431,7 @@ def test_extended_precision() -> None:
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
 
-    with open(path, "r") as f:
+    with open(path) as f:
         expression_list = f.readlines()
 
     for _msg in output_mypy[path]:

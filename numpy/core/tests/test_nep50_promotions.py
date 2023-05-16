@@ -180,3 +180,11 @@ def test_nep50_integer_regression():
     arr = np.array(1)
     assert (arr + 2**63).dtype == np.float64
     assert (arr[()] + 2**63).dtype == np.float64
+
+def test_nep50_with_axisconcatenator():
+    # I promised that this will be an error in the future in the 1.25
+    # release notes;  test this (NEP 50 opt-in makes the deprecation an error).
+    np._set_promotion_state("weak")
+
+    with pytest.raises(OverflowError):
+        np.r_[np.arange(5, dtype=np.int8), 255]

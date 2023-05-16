@@ -728,7 +728,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         * if False no optimization is taken
         * if True defaults to the 'greedy' algorithm
         * 'optimal' An algorithm that combinatorially explores all possible
-          ways of contracting the listed tensors and choosest the least costly
+          ways of contracting the listed tensors and chooses the least costly
           path. Scales exponentially with the number of terms in the
           contraction.
         * 'greedy' An algorithm that chooses the best pair contraction

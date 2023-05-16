@@ -9,6 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     assert_raises_regex,
     )
+from numpy.core.arrayprint import _typelessdata
 import textwrap
 
 class TestArrayRepr:
@@ -257,8 +258,7 @@ class TestArray2String:
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
-
-    def test_structure_format(self):
+    def test_structure_format_mixed(self):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
         assert_equal(np.array2string(x),
@@ -300,6 +300,7 @@ class TestArray2String:
              ( 'NaT',) ( 'NaT',) ( 'NaT',)]""")
         )
 
+    def test_structure_format_int(self):
         # See #8160
         struct_int = np.array([([1, -1],), ([123, 1],)], dtype=[('B', 'i4', 2)])
         assert_equal(np.array2string(struct_int),
@@ -309,6 +310,7 @@ class TestArray2String:
         assert_equal(np.array2string(struct_2dint),
                 "[([[ 0,  1], [ 2,  3]],) ([[12,  0], [ 0,  0]],)]")
 
+    def test_structure_format_float(self):
         # See #8172
         array_scalar = np.array(
                 (1., 2.1234567890123456789, 3.), dtype=('f8,f8,f8'))
@@ -351,6 +353,33 @@ class TestArray2String:
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
         assert_equal(repr(A), reprA)
+
+    def test_summarize_structure(self):
+        A = (np.arange(2002, dtype="<i8").reshape(2, 1001)
+             .view([('i', "<i8", (1001,))]))
+        strA = ("[[([   0,    1,    2, ...,  998,  999, 1000],)]\n"
+                " [([1001, 1002, 1003, ..., 1999, 2000, 2001],)]]")
+        assert_equal(str(A), strA)
+
+        reprA = ("array([[([   0,    1,    2, ...,  998,  999, 1000],)],\n"
+                 "       [([1001, 1002, 1003, ..., 1999, 2000, 2001],)]],\n"
+                 "      dtype=[('i', '<i8', (1001,))])")
+        assert_equal(repr(A), reprA)
+
+        B = np.ones(2002, dtype=">i8").view([('i', ">i8", (2, 1001))])
+        strB = "[([[1, 1, 1, ..., 1, 1, 1], [1, 1, 1, ..., 1, 1, 1]],)]"
+        assert_equal(str(B), strB)
+
+        reprB = (
+            "array([([[1, 1, 1, ..., 1, 1, 1], [1, 1, 1, ..., 1, 1, 1]],)],\n"
+            "      dtype=[('i', '>i8', (2, 1001))])"
+        )
+        assert_equal(repr(B), reprB)
+
+        C = (np.arange(22, dtype="<i8").reshape(2, 11)
+             .view([('i1', "<i8"), ('i10', "<i8", (10,))]))
+        strC = "[[( 0, [ 1, ..., 10])]\n [(11, [12, ..., 21])]]"
+        assert_equal(np.array2string(C, threshold=1, edgeitems=1), strC)
 
     def test_linewidth(self):
         a = np.full(6, 1)
@@ -796,6 +825,47 @@ class TestPrintOptions:
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
 
+    @pytest.mark.parametrize(
+        ['native'],
+        [
+            ('bool',),
+            ('uint8',),
+            ('uint16',),
+            ('uint32',),
+            ('uint64',),
+            ('int8',),
+            ('int16',),
+            ('int32',),
+            ('int64',),
+            ('float16',),
+            ('float32',),
+            ('float64',),
+            ('U1',),     # 4-byte width string
+        ],
+    )
+    def test_dtype_endianness_repr(self, native):
+        '''
+        there was an issue where
+        repr(array([0], dtype='<u2')) and repr(array([0], dtype='>u2'))
+        both returned the same thing:
+        array([0], dtype=uint16)
+        even though their dtypes have different endianness.
+        '''
+        native_dtype = np.dtype(native)
+        non_native_dtype = native_dtype.newbyteorder()
+        non_native_repr = repr(np.array([1], non_native_dtype))
+        native_repr = repr(np.array([1], native_dtype))
+        # preserve the sensible default of only showing dtype if nonstandard
+        assert ('dtype' in native_repr) ^ (native_dtype in _typelessdata),\
+                ("an array's repr should show dtype if and only if the type "
+                 'of the array is NOT one of the standard types '
+                 '(e.g., int32, bool, float64).')
+        if non_native_dtype.itemsize > 1:
+            # if the type is >1 byte, the non-native endian version
+            # must show endianness.
+            assert non_native_repr != native_repr
+            assert f"dtype='{non_native_dtype.byteorder}" in non_native_repr
+
     def test_linewidth_repr(self):
         a = np.full(7, fill_value=2)
         np.set_printoptions(linewidth=17)
@@ -920,6 +990,16 @@ class TestPrintOptions:
                     ..., 
                     [[ 0.]]]])""")
         )
+
+    def test_edgeitems_structured(self):
+        np.set_printoptions(edgeitems=1, threshold=1)
+        A = np.arange(5*2*3, dtype="<i8").view([('i', "<i8", (5, 2, 3))])
+        reprA = (
+            "array([([[[ 0, ...,  2], [ 3, ...,  5]], ..., "
+            "[[24, ..., 26], [27, ..., 29]]],)],\n"
+            "      dtype=[('i', '<i8', (5, 2, 3))])"
+        )
+        assert_equal(repr(A), reprA)
 
     def test_bad_args(self):
         assert_raises(ValueError, np.set_printoptions, threshold=float('nan'))

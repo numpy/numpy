@@ -66,6 +66,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "compiled_base.h"
 #include "mem_overlap.h"
 #include "typeinfo.h"
+#include "convert.h" /* for PyArray_AssignZero */
 
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
@@ -494,7 +495,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr, ndim, shape, strides, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }
@@ -599,7 +600,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Allocate the array for the result. This steals the 'dtype' reference. */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr,  1, &shape, &stride, NULL, 0, NULL,
-                NULL, 0, 1);
+                NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             return NULL;
         }
@@ -1042,12 +1043,11 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 #endif
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
-        result = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
-        result = (PyArrayObject *)Py_TYPE(result)->tp_as_number->nb_multiply(
-                                        (PyObject *)ap1, (PyObject *)ap2);
+        PyObject *mul_res = PyObject_CallFunctionObjArgs(
+                n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
-        return (PyObject *)result;
+        return mul_res;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {
@@ -1085,7 +1085,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     /* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
-        memset(PyArray_DATA(out_buf), 0, PyArray_NBYTES(out_buf));
+        if (PyArray_AssignZero(out_buf, NULL) < 0) {
+            goto fail;
+        }
     }
 
     dot = PyArray_DESCR(out_buf)->f->dotfunc;
@@ -1635,25 +1637,35 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
+
 static inline PyObject *
 _array_fromobject_generic(
-        PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
-        npy_bool subok, int ndmin)
+        PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
+        _PyArray_CopyMode copy, NPY_ORDER order, npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
     int nd, flags = 0;
 
+    /* Hold on to `in_descr` as `dtype`, since we may also set it below. */
+    Py_XINCREF(in_descr);
+    PyArray_Descr *dtype = in_descr;
+
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                 "ndmin bigger than allowable number of dimensions "
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
-        return NULL;
+        goto finish;
     }
     /* fast exit if simple call */
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
-        if (type == NULL) {
+
+        if (dtype == NULL && in_DType == NULL) {
+            /*
+             * User did not ask for a specific dtype instance or class. So
+             * we can return either self or a copy.
+             */
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
@@ -1663,17 +1675,30 @@ _array_fromobject_generic(
                 if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
-                    return NULL;
+                    goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 goto finish;
             }
         }
+        else if (dtype == NULL) {
+            /*
+             * If the user passed a DType class but not a dtype instance,
+             * we must use `PyArray_AdaptDescriptorToArray` to find the
+             * correct dtype instance.
+             * Even if the fast-path doesn't work we will use this.
+             */
+            dtype = PyArray_AdaptDescriptorToArray(oparr, in_DType, NULL);
+            if (dtype == NULL) {
+                goto finish;
+            }
+        }
+
         /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, type)) {
+        if (PyArray_EquivTypes(oldtype, dtype)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
-                if (oldtype == type) {
+                if (oldtype == dtype) {
                     Py_INCREF(op);
                     ret = oparr;
                 }
@@ -1681,10 +1706,10 @@ _array_fromobject_generic(
                     /* Create a new PyArrayObject from the caller's
                      * PyArray_Descr. Use the reference `op` as the base
                      * object. */
-                    Py_INCREF(type);
+                    Py_INCREF(dtype);
                     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                             Py_TYPE(op),
-                            type,
+                            dtype,
                             PyArray_NDIM(oparr),
                             PyArray_DIMS(oparr),
                             PyArray_STRIDES(oparr),
@@ -1700,10 +1725,10 @@ _array_fromobject_generic(
                 if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
-                    return NULL;
+                    goto finish;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                if (oldtype == type || ret == NULL) {
+                if (oldtype == dtype || ret == NULL) {
                     goto finish;
                 }
                 Py_INCREF(oldtype);
@@ -1734,11 +1759,13 @@ _array_fromobject_generic(
     }
 
     flags |= NPY_ARRAY_FORCECAST;
-    Py_XINCREF(type);
-    ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
-                                                0, 0, flags, NULL);
+
+    ret = (PyArrayObject *)PyArray_CheckFromAny_int(
+            op, dtype, in_DType, 0, 0, flags, NULL);
 
 finish:
+    Py_XDECREF(dtype);
+
     if (ret == NULL) {
         return NULL;
     }
@@ -1765,7 +1792,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     npy_bool subok = NPY_FALSE;
     _PyArray_CopyMode copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
-    PyArray_Descr *type = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
@@ -1773,21 +1800,23 @@ array_array(PyObject *NPY_UNUSED(ignored),
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("array", args, len_args, kwnames,
                 "object", NULL, &op,
-                "|dtype", &PyArray_DescrConverter2, &type,
+                "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "$copy", &PyArray_CopyConverter, &copy,
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
-            Py_XDECREF(type);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "array", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(type);
+                Py_XDECREF(dt_info.descr);
+                Py_XDECREF(dt_info.dtype);
                 return deferred;
             }
         }
@@ -1798,8 +1827,9 @@ array_array(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, copy, order, subok, ndmin);
-    Py_XDECREF(type);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return res;
 }
 
@@ -1808,7 +1838,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
-    PyArray_Descr *type = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
@@ -1816,18 +1846,20 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asarray", args, len_args, kwnames,
                 "a", NULL, &op,
-                "|dtype", &PyArray_DescrConverter2, &type,
+                "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "|order", &PyArray_OrderConverter, &order,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
-            Py_XDECREF(type);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(type);
+                Py_XDECREF(dt_info.descr);
+                Py_XDECREF(dt_info.dtype);
                 return deferred;
             }
         }
@@ -1837,8 +1869,9 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, NPY_FALSE, order, NPY_FALSE, 0);
-    Py_XDECREF(type);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_FALSE, 0);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return res;
 }
 
@@ -1847,7 +1880,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
-    PyArray_Descr *type = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
@@ -1855,18 +1888,20 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asanyarray", args, len_args, kwnames,
                 "a", NULL, &op,
-                "|dtype", &PyArray_DescrConverter2, &type,
+                "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "|order", &PyArray_OrderConverter, &order,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
-            Py_XDECREF(type);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asanyarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(type);
+                Py_XDECREF(dt_info.descr);
+                Py_XDECREF(dt_info.dtype);
                 return deferred;
             }
         }
@@ -1876,8 +1911,9 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, NPY_FALSE, order, NPY_TRUE, 0);
-    Py_XDECREF(type);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, order, NPY_TRUE, 0);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return res;
 }
 
@@ -1887,24 +1923,26 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
-    PyArray_Descr *type = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("ascontiguousarray", args, len_args, kwnames,
                 "a", NULL, &op,
-                "|dtype", &PyArray_DescrConverter2, &type,
+                "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
-            Py_XDECREF(type);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "ascontiguousarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(type);
+                Py_XDECREF(dt_info.descr);
+                Py_XDECREF(dt_info.dtype);
                 return deferred;
             }
         }
@@ -1914,8 +1952,10 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, NPY_FALSE, NPY_CORDER, NPY_FALSE, 1);
-    Py_XDECREF(type);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_CORDER, NPY_FALSE,
+            1);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return res;
 }
 
@@ -1925,24 +1965,26 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
-    PyArray_Descr *type = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asfortranarray", args, len_args, kwnames,
                 "a", NULL, &op,
-                "|dtype", &PyArray_DescrConverter2, &type,
+                "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
-            Py_XDECREF(type);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asfortranarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(type);
+                Py_XDECREF(dt_info.descr);
+                Py_XDECREF(dt_info.dtype);
                 return deferred;
             }
         }
@@ -1952,8 +1994,10 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, NPY_FALSE, NPY_FORTRANORDER, NPY_FALSE, 1);
-    Py_XDECREF(type);
+            op, dt_info.descr, dt_info.dtype, NPY_FALSE, NPY_FORTRANORDER,
+            NPY_FALSE, 1);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return res;
 }
 
@@ -4843,6 +4887,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_where = NULL;
 
 static int
 intern_strings(void)
@@ -4897,6 +4942,10 @@ intern_strings(void)
     }
     npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
     if (npy_ma_str_numpy == NULL) {
+        return -1;
+    }
+    npy_ma_str_where = PyUnicode_InternFromString("where");
+    if (npy_ma_str_where == NULL) {
         return -1;
     }
     return 0;

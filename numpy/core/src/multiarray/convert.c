@@ -21,6 +21,7 @@
 
 #include "convert.h"
 #include "array_coercion.h"
+#include "refcount.h"
 
 int
 fallocate(int fd, int mode, off_t offset, off_t len);
@@ -392,7 +393,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     char *value = (char *)value_buffer_stack;
     PyArray_Descr *descr = PyArray_DESCR(arr);
 
-    if (descr->elsize > sizeof(value_buffer_stack)) {
+    if ((size_t)descr->elsize > sizeof(value_buffer_stack)) {
         /* We need a large temporary buffer... */
         value_buffer_heap = PyObject_Calloc(1, descr->elsize);
         if (value_buffer_heap == NULL) {
@@ -416,14 +417,16 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             descr, value);
 
     if (PyDataType_REFCHK(descr)) {
-        PyArray_Item_XDECREF(value, descr);
+        PyArray_ClearBuffer(descr, value, 0, 1, 1);
     }
     PyMem_FREE(value_buffer_heap);
     return retcode;
 }
 
 /*
- * Fills an array with zeros.
+ * Internal function to fill an array with zeros.
+ * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
+ * and not a str or struct
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
@@ -434,21 +437,26 @@ NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
                    PyArrayObject *wheremask)
 {
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value False */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
+    int retcode = 0;
+    if (PyArray_ISOBJECT(dst)) {
+        PyObject * pZero = PyLong_FromLong(0);
+        retcode = PyArray_AssignRawScalar(dst, PyArray_DESCR(dst),
+                                     (char *)&pZero, wheremask, NPY_SAFE_CASTING);
+        Py_DECREF(pZero);
     }
-    value = 0;
+    else {
+        /* Create a raw bool scalar with the value False */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return -1;
+        }
+        npy_bool value = 0;
 
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
+        retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                          wheremask, NPY_SAFE_CASTING);
 
-    Py_DECREF(bool_dtype);
+        Py_DECREF(bool_dtype);
+    }
     return retcode;
 }
 
@@ -508,7 +516,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
             PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;
