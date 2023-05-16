@@ -3453,16 +3453,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         npy_intp one = 1;
 
-        if (PyArray_GetDTypeTransferFunction(
-                x_is_aligned, xstrides[0], xstrides[1], dtx, common_dt, 0,
-                &x_cast_info, &x_transfer_flags) != NPY_SUCCEED) {
-            goto fail;
-        }
+        if (!native || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
+                        (itemsize != 2) && (itemsize != 1))) {
+            if (PyArray_GetDTypeTransferFunction(
+                    x_is_aligned, xstrides[0], xstrides[1], dtx, common_dt, 0,
+                    &x_cast_info, &x_transfer_flags) != NPY_SUCCEED) {
+                goto fail;
+            }
 
-        if (PyArray_GetDTypeTransferFunction(
-                y_is_aligned, ystrides[0], ystrides[1], dty, common_dt, 0,
-                &y_cast_info, &y_transfer_flags) != NPY_SUCCEED) {
-            goto fail;
+            if (PyArray_GetDTypeTransferFunction(
+                    y_is_aligned, ystrides[0], ystrides[1], dty, common_dt, 0,
+                    &y_cast_info, &y_transfer_flags) != NPY_SUCCEED) {
+                goto fail;
+            }
         }
 
         NPY_BEGIN_THREADS_NDITER(iter);
