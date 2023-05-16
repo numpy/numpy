@@ -78,7 +78,7 @@ inline bool quicksort_dispatch(T*, npy_intp)
     return false;
 }
 template<typename T>
-inline bool aquicksort_dispatch(T*, npy_intp*. npy_intp)
+inline bool aquicksort_dispatch(T*, npy_intp*, npy_intp)
 {
     return false;
 }
