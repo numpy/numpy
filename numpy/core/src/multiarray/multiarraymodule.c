@@ -49,6 +49,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert_datatype.h"
 #include "conversion_utils.h"
 #include "nditer_pywrap.h"
+#define NPY_ITERATOR_IMPLEMENTATION_CODE
+#include "nditer_impl.h"
 #include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
@@ -3383,8 +3385,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
-    NPY_cast_info x_cast_info = {.func = NULL};
-    NPY_cast_info y_cast_info = {.func = NULL};
+    NPY_cast_info cast_info = {.func = NULL};
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
     ay = (PyArrayObject*)PyArray_FROM_O(y);
@@ -3399,7 +3400,9 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         };
         npy_uint32 op_flags[4] = {
             NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_NO_SUBTYPE,
-            NPY_ITER_READONLY, NPY_ITER_READONLY, NPY_ITER_READONLY
+            NPY_ITER_READONLY,
+            NPY_ITER_READONLY | NPY_ITER_ALIGNED,
+            NPY_ITER_READONLY | NPY_ITER_ALIGNED
         };
         PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
                                                        0, NULL);
@@ -3442,33 +3445,32 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         int ayswap = PyDataType_ISBYTESWAPPED(dty);
         int native = (axswap == ayswap) && (axswap == 0) && !needs_api;
 
-        NPY_ARRAYMETHOD_FLAGS x_transfer_flags;
-        NPY_ARRAYMETHOD_FLAGS y_transfer_flags;
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
 
-        int x_is_aligned = IsAligned(ax);
-        int y_is_aligned = IsAligned(ay);
-
-        npy_intp xstrides[2] = {xstride, itemsize};
-        npy_intp ystrides[2] = {xstride, itemsize};
+        npy_intp transfer_strides[2] = {xstride, itemsize};
 
         npy_intp one = 1;
 
         if (!native || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
                         (itemsize != 2) && (itemsize != 1))) {
+            // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
+            // of the input arrays.
+            //
+            // There's also no need to set up a cast for y, since the iterator
+            // ensures both casts are identical.
             if (PyArray_GetDTypeTransferFunction(
-                    x_is_aligned, xstrides[0], xstrides[1], dtx, common_dt, 0,
-                    &x_cast_info, &x_transfer_flags) != NPY_SUCCEED) {
-                goto fail;
-            }
-
-            if (PyArray_GetDTypeTransferFunction(
-                    y_is_aligned, ystrides[0], ystrides[1], dty, common_dt, 0,
-                    &y_cast_info, &y_transfer_flags) != NPY_SUCCEED) {
+                    1, xstride, itemsize, dtx, common_dt, 0,
+                    &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
         }
 
-        NPY_BEGIN_THREADS_NDITER(iter);
+        transfer_flags = PyArrayMethod_COMBINED_FLAGS(
+            transfer_flags, NpyIter_GetTransferFlags(iter));
+
+        if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+        }
 
         if (NpyIter_GetIterSize(iter) != 0) {
             NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3504,18 +3506,18 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                         if (*csrc) {
                             char *args[2] = {xsrc, dst};
 
-                            if (x_cast_info.func(
-                                    &x_cast_info.context, args, &one, strides,
-                                    x_cast_info.auxdata) < 0) {
+                            if (cast_info.func(
+                                    &cast_info.context, args, &one,
+                                    transfer_strides, cast_info.auxdata) < 0) {
                                 goto fail;
                             }
                         }
                         else {
                             char *args[2] = {ysrc, dst};
 
-                            if (y_cast_info.func(
-                                    &y_cast_info.context, args, &one, strides,
-                                    y_cast_info.auxdata) < 0) {
+                            if (cast_info.func(
+                                    &cast_info.context, args, &one,
+                                    transfer_strides, cast_info.auxdata) < 0) {
                                 goto fail;
                             }
                         }
@@ -3534,8 +3536,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(arr);
         Py_DECREF(ax);
         Py_DECREF(ay);
-        NPY_cast_info_xfree(&x_cast_info);
-        NPY_cast_info_xfree(&y_cast_info);
+        NPY_cast_info_xfree(&cast_info);
 
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(ret);
@@ -3549,8 +3550,7 @@ fail:
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
-    NPY_cast_info_xfree(&x_cast_info);
-    NPY_cast_info_xfree(&y_cast_info);
+    NPY_cast_info_xfree(&cast_info);
     return NULL;
 }
 
