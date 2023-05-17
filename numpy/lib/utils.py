@@ -1101,17 +1101,23 @@ def _median_nancheck(data, result, axis):
     """
     if data.size == 0:
         return result
-    n = np.isnan(data.take(-1, axis=axis))
-    # masked NaN values are ok
+    potential_nans = data.take(-1, axis=axis)
+    n = np.isnan(potential_nans)
+    # masked NaN values are ok, although for masked the copyto may fail for
+    # unmasked ones (this was always broken) when the result is a scalar.
     if np.ma.isMaskedArray(n):
         n = n.filled(False)
-    if np.count_nonzero(n.ravel()) > 0:
-        # Without given output, it is possible that the current result is a
-        # numpy scalar, which is not writeable.  If so, just return nan.
-        if isinstance(result, np.generic):
-            return data.dtype.type(np.nan)
 
-        result[n] = np.nan
+    if not n.any():
+        return result
+
+    # Without given output, it is possible that the current result is a
+    # numpy scalar, which is not writeable.  If so, just return nan.
+    if isinstance(result, np.generic):
+        return potential_nans
+
+    # Otherwise copy NaNs (if there are any)
+    np.copyto(result, potential_nans, where=n)
     return result
 
 def _opt_info():
