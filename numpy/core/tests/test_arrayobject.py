@@ -4,9 +4,11 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 
-def test_matrix_transpose_equals_transpose_1d():
+def test_matrix_transpose_raises_error_for_1d():
+    msg = "matrix transpose with ndim < 2 is undefined"
     arr = np.arange(48)
-    assert_array_equal(arr.T, arr.mT)
+    with pytest.raises(ValueError, match=msg):
+        arr.mT
 
 
 def test_matrix_transpose_equals_transpose_2d():
@@ -15,7 +17,6 @@ def test_matrix_transpose_equals_transpose_2d():
 
 
 ARRAY_SHAPES_TO_TEST = (
-    (5,),
     (5, 2),
     (5, 2, 3),
     (5, 2, 3, 4),

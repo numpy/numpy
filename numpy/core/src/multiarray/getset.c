@@ -935,6 +935,12 @@ static PyObject *
 array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     int ndim = PyArray_NDIM(self);
+
+    if (ndim < 2) {
+        PyErr_SetString(PyExc_ValueError,
+                        "matrix transpose with ndim < 2 is undefined");
+        return NULL;
+    }
     return PyArray_SwapAxes(self, ndim - 2, ndim - 1);
 }
 
