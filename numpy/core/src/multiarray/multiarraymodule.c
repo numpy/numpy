@@ -3409,7 +3409,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                     common_dt, common_dt};
         NpyIter * iter;
-        int needs_api;
         NPY_BEGIN_THREADS_DEF;
 
         if (common_dt == NULL || op_dt[1] == NULL) {
@@ -3426,23 +3425,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             goto fail;
         }
 
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
 
         npy_intp itemsize = common_dt->elsize;
 
-        int swap = PyDataType_ISBYTESWAPPED(common_dt);
-        int native = (swap == 0) && !needs_api;
+        int has_ref = PyDataType_REFCHK(common_dt);
 
         NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
 
         npy_intp transfer_strides[2] = {itemsize, itemsize};
-
         npy_intp one = 1;
 
-        if (!native || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
+        if (has_ref || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
                         (itemsize != 2) && (itemsize != 1))) {
             // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
             // of the input arrays.
@@ -3483,19 +3478,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                 npy_intp ystride = strides[3];
 
                 /* constant sizes so compiler replaces memcpy */
-                if (native && itemsize == 16) {
+                if (!has_ref && itemsize == 16) {
                     INNER_WHERE_LOOP(16);
                 }
-                else if (native && itemsize == 8) {
+                else if (!has_ref && itemsize == 8) {
                     INNER_WHERE_LOOP(8);
                 }
-                else if (native && itemsize == 4) {
+                else if (!has_ref && itemsize == 4) {
                     INNER_WHERE_LOOP(4);
                 }
-                else if (native && itemsize == 2) {
+                else if (!has_ref && itemsize == 2) {
                     INNER_WHERE_LOOP(2);
                 }
-                else if (native && itemsize == 1) {
+                else if (!has_ref && itemsize == 1) {
                     INNER_WHERE_LOOP(1);
                 }
                 else {
