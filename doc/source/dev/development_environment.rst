@@ -67,9 +67,8 @@ any) found on current PYTHONPATH.
 .. note::
 
     If the above commands return a RuntimeError with the message "Cannot parse version 0+untagged.xxxxx,"
-    it indicates that you are currently developing on a commit that lacks a release tag.
-    To resolve this issue, execute the following command: ``git tag -a vX.XX.X.dev+<commit_id>``,
-    replacing ``X`` with the latest release version and ``<commit_id>`` with the current commit.
+    it indicates that you are currently developing on a fork that lacks release tags.
+    To resolve this issue, execute the following command in your ``main`` branch: ``git pull upstream main --tags`` 
 
 When specifying a target using ``-s``, ``-t``, or ``--python``, additional
 arguments may be forwarded to the target embedded by ``runtests.py`` by passing
