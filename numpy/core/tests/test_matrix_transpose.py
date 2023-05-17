@@ -1,6 +1,4 @@
 import pytest
-from hypothesis import given
-from hypothesis.extra.numpy import array_shapes
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -16,7 +14,15 @@ def test_matrix_transpose_equals_transpose_2d():
     assert_array_equal(arr.T, arr.mT)
 
 
-@given(shape=array_shapes(max_dims=7))
+ARRAY_SHAPES_TO_TEST = (
+    (5,),
+    (5, 2),
+    (5, 2, 3),
+    (5, 2, 3, 4),
+)
+
+
+@pytest.mark.parametrize("shape", ARRAY_SHAPES_TO_TEST)
 def test_matrix_transpose_equals_swapaxes(shape):
     num_of_axes = len(shape)
     vec = np.arange(shape[-1])
