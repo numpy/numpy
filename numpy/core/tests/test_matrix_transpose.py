@@ -19,8 +19,8 @@ def test_matrix_transpose_equals_transpose_2d():
 @given(shape=array_shapes(max_dims=7))
 def test_matrix_transpose_equals_swapaxes(shape):
     num_of_axes = len(shape)
-    total_elements = np.prod(shape)
-    arr = np.arange(total_elements).reshape(shape)
+    vec = np.arange(shape[-1])
+    arr = np.broadcast_to(vec, shape)
     tgt = np.swapaxes(arr, num_of_axes - 2, num_of_axes - 1)
     mT = arr.mT
     assert_array_equal(tgt, mT)
