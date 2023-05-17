@@ -3433,11 +3433,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
         npy_intp itemsize = common_dt->elsize;
 
-        npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
-        npy_intp cstride = strides[1];
-        npy_intp xstride = strides[2];
-        npy_intp ystride = strides[3];
-
         int swap = PyDataType_ISBYTESWAPPED(common_dt);
         int native = (swap == 0) && !needs_api;
 
@@ -3455,7 +3450,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             // There's also no need to set up a cast for y, since the iterator
             // ensures both casts are identical.
             if (PyArray_GetDTypeTransferFunction(
-                    1, xstride, itemsize, common_dt, common_dt, 0,
+                    1, itemsize, itemsize, common_dt, common_dt, 0,
                     &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
@@ -3472,6 +3467,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
             npy_intp * innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
             char **dataptrarray = NpyIter_GetDataPtrArray(iter);
+            npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
 
             do {
                 npy_intp n = (*innersizeptr);
@@ -3479,6 +3475,12 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                 char * csrc = dataptrarray[1];
                 char * xsrc = dataptrarray[2];
                 char * ysrc = dataptrarray[3];
+
+                // the iterator might mutate these pointers,
+                // so need to update them every iteration
+                npy_intp cstride = strides[1];
+                npy_intp xstride = strides[2];
+                npy_intp ystride = strides[3];
 
                 /* constant sizes so compiler replaces memcpy */
                 if (native && itemsize == 16) {
