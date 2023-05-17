@@ -3431,23 +3431,19 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         /* Get the result from the iterator object array */
         ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
 
-        PyArray_Descr **dts = NpyIter_GetDescrArray(iter);
-        PyArray_Descr *dtx = dts[2];
-        PyArray_Descr *dty = dts[3];
-        npy_intp itemsize = dts[0]->elsize;
+        npy_intp itemsize = common_dt->elsize;
 
         npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
         npy_intp cstride = strides[1];
         npy_intp xstride = strides[2];
         npy_intp ystride = strides[3];
 
-        int axswap = PyDataType_ISBYTESWAPPED(dtx);
-        int ayswap = PyDataType_ISBYTESWAPPED(dty);
-        int native = (axswap == ayswap) && (axswap == 0) && !needs_api;
+        int swap = PyDataType_ISBYTESWAPPED(common_dt);
+        int native = (swap == 0) && !needs_api;
 
         NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
 
-        npy_intp transfer_strides[2] = {xstride, itemsize};
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
 
         npy_intp one = 1;
 
@@ -3459,7 +3455,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
             // There's also no need to set up a cast for y, since the iterator
             // ensures both casts are identical.
             if (PyArray_GetDTypeTransferFunction(
-                    1, xstride, itemsize, dtx, common_dt, 0,
+                    1, xstride, itemsize, common_dt, common_dt, 0,
                     &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
