@@ -37,7 +37,7 @@ from numpy.linalg import _umath_linalg
 from numpy._typing import NDArray
 
 class EigResult(NamedTuple):
-    eigenvalues: NDArray
+    eigenvalues: NDArray[Any]
     eigenvectors: NDArray
 
 class EighResult(NamedTuple):
