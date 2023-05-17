@@ -17,7 +17,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import functools
 import operator
 import warnings
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 from .._utils import set_module
 from numpy.core import (
@@ -38,24 +38,24 @@ from numpy._typing import NDArray
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
-    eigenvectors: NDArray
+    eigenvectors: NDArray[Any]
 
 class EighResult(NamedTuple):
-    eigenvalues: NDArray
-    eigenvectors: NDArray
+    eigenvalues: NDArray[Any]
+    eigenvectors: NDArray[Any]
 
 class QRResult(NamedTuple):
-    Q: NDArray
-    R: NDArray
+    Q: NDArray[Any]
+    R: NDArray[Any]
 
 class SlogdetResult(NamedTuple):
-    sign: NDArray
-    logabsdet: NDArray
+    sign: NDArray[Any]
+    logabsdet: NDArray[Any]
 
 class SVDResult(NamedTuple):
-    U: NDArray
-    S: NDArray
-    Vh: NDArray
+    U: NDArray[Any]
+    S: NDArray[Any]
+    Vh: NDArray[Any]
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.linalg')
