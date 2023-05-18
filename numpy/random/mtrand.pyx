@@ -686,7 +686,7 @@ cdef class RandomState:
         `high` is None (the default), then results are from [0, `low`).
 
         .. note::
-            New code should use the `~numpy.random.Generator.randint`
+            New code should use the `~numpy.random.Generator.integers`
             method of a `~numpy.random.Generator` instance instead;
             please see the :ref:`random-quick-start`.
 
