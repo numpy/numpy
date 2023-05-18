@@ -24,8 +24,7 @@ and functions that have better alternatives.
 Motivation and Scope
 --------------------
 
-NumPy has a large API surface that evolved organically over many
-years:
+NumPy has a large API surface that evolved organically over many years:
 
 .. code:: python
 
@@ -42,7 +41,7 @@ The above doesn't even include items that are public but have been
 been hidden from ``__dir__``.
 A particularly problematic example of that is ``np.core``,
 which is technically private but heavily used in practice.
-For a full overview of what's consider public, private or a bit in between, see
+For a full overview of what's considered public, private or a bit in between, see
 `<https://github.com/numpy/numpy/blob/main/numpy/tests/test_public_api.py>`__.
 
 The size of the API and the lacking definition of its boundaries
@@ -51,31 +50,31 @@ incur significant costs:
 - **Users find it hard to disambiguate between similarly named
   functions.**
 
-  Looking for functions with
-  tab completion in IPython, a notebook, or an IDE is a challenge. E.g., type
-  ``np.<TAB>`` and look at the first six items offered: two ufuncs
-  (``abs``, ``add``), one alias (``absolute``), and three functions that are
-  not intended for end-users (``add_docstring``, ``add_newdoc``, ``add_newdoc_ufunc``).
-  As a result, the learning curve for NumPy is steeper than it has to be.
+  Looking for functions with tab completion in IPython, a notebook, or an IDE
+  is a challenge. E.g., type ``np.<TAB>`` and look at the first six items
+  offered: two ufuncs (``abs``, ``add``), one alias (``absolute``), and three
+  functions that are not intended for end-users (``add_docstring``,
+  ``add_newdoc``, ``add_newdoc_ufunc``). As a result, the learning curve for
+  NumPy is steeper than it has to be.
 
 - **Libraries that mimic the NumPy API face significant implementation barriers.**
 
-  For maintainers of NumPy API-compatible array libraries (Dask, CuPy, JAX, PyTorch,
-  TensorFlow, cuNumeric, etc.) and compilers/transpilers (Numba, Pythran,
-  Cython, etc.) there is an implementation cost to each object in the
+  For maintainers of NumPy API-compatible array libraries (Dask, CuPy, JAX,
+  PyTorch, TensorFlow, cuNumeric, etc.) and compilers/transpilers (Numba,
+  Pythran, Cython, etc.) there is an implementation cost to each object in the
   namespace. In practice, no other library has full support for the entire
   NumPy API, partly because it is so hard to know what to include when faced
   with a slew of aliases and legacy objects.
 
 - **Teaching NumPy is more complicated than it needs to be.**
 
-  Similarly, a larger API is confusing to learners, who not only have
-  to *find* functions but have to choose *which* functions to use.
+  Similarly, a larger API is confusing to learners, who not only have to *find*
+  functions but have to choose *which* functions to use.
 
 - **Developers are hesitant to grow the API surface.**
 
-  This happens even when the changes are warranted, because they are
-  aware of the above concerns.
+  This happens even when the changes are warranted, because they are aware of
+  the above concerns.
 
 .. R: TODO: find and link discussion about restructuring namespaces! (e.g.,
    find the thread with the GUI explorer person)
@@ -129,9 +128,8 @@ Detailed description
 Cleaning up the main namespace
 ``````````````````````````````
 
-We expect to reduce the main namespace by a large number of entries,
-on the order of 100.
-Here is a representative set of examples:
+We expect to reduce the main namespace by a large number of entries, on the
+order of 100. Here is a representative set of examples:
 
 - ``np.inf`` and ``np.nan`` have 8 aliases between them, of which most can be removed.
 - A collection of random and undocumented functions (e.g., ``byte_bounds``, ``disp``,
@@ -179,8 +177,7 @@ in ``numpy`` and ``numpy.lib``) need to find a single home.
 
 We will reorganize the API reference guide along main and submodule namespaces,
 and only within the main namespace use the current subdivision along
-functionality groupings. Also by "mainstream" and special-purpose namespaces.
-Details TBD, something like:
+functionality groupings. Also by "mainstream" and special-purpose namespaces:
 
 ::
 
@@ -287,8 +284,8 @@ Related Work
 ------------
 
 A clear split between public and private API was recently established
-as part of SciPy 1.8.0 (2021),
-see `tracking issue scipy#14360 <https://github.com/scipy/scipy/issues/14360>`__.
+as part of SciPy 1.8.0 (2021), see
+`tracking issue scipy#14360 <https://github.com/scipy/scipy/issues/14360>`__.
 The results were beneficial, and the impact on users relatively modest.
 
 
