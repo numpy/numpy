@@ -86,20 +86,14 @@ incur significant costs:
 The scope of this NEP includes:
 
 - Deprecating or removing functionality that is too niche for NumPy, not
-  well-designed, superceded by better alternatives, or otherwise a candidate
-  for removal.
+  well-designed, superseded by better alternatives, an unnecessary alias,
+  or otherwise a candidate for removal.
 - Clearly separating public from private NumPy API by use of underscores.
 - Restructuring the NumPy namespaces to be easier to understand and navigate.
 
 Out of scope for this NEP are:
 
 - Introducing new functionality or performance enhancements.
-
-TBD whether in or out of scope for this NEP:
-
-- Whether or not to clean up some of the more niche ``ndarray`` methods (this
-  was suggested in the NumPy 2.0 developer meeting, with mildly positive
-  feedback from the crowd).
 
 
 Usage and Impact
@@ -196,7 +190,6 @@ Details TBD, something like:
     numpy.exceptions
     numpy.fft
     numpy.linalg
-    numpy.ma
     numpy.polynomial
     numpy.random
     numpy.testing
@@ -208,21 +201,25 @@ Details TBD, something like:
     numpy.ctypeslib
     numpy.emath
     numpy.f2py  # only a couple of public functions, like `compile` and `get_include`
-    numpy.math
     numpy.lib.stride_tricks
     numpy.rec
     numpy.types
 
-    # Legacy (prefer not to use). Third grouping in the reference guide.
+    # Legacy (prefer not to use, there are better alternatives and/or this code
+    # is deprecated or isn't reliable). This will be a third grouping in the
+    # reference guide; it's still there, but de-emphasized and the problems
+    # with it or better alternatives are explained in the docs.
     numpy.char
     numpy.distutils
-    numpy.matrixlib  # or deprecate?
+    numpy.ma
 
     # To remove
     numpy.compat
     numpy.core  # rename to _core
     numpy.doc
+    numpy.math
     numpy.matlib
+    numpy.matrixlib
     numpy.version
 
     # To clean out or somehow deal with: everything in `numpy.lib`
@@ -233,11 +230,6 @@ Details TBD, something like:
     functions/objects, like ``Arrayterator`` (a candidate for removal) and the
     ``stride_tricks`` subsubmodule. ``numpy.lib`` itself is not a coherent
     namespace, and does not even have a reference guide page.
-
-.. note::
-
-   TBD: is ``numpy.math`` actually used at all? If not, should we hide/remove
-   it?
 
 We will make all submodules available lazily, so that users don't have to type
 ``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
@@ -264,10 +256,12 @@ the larger usability problems in the NumPy API. E.g.:
 
 These aliases can go: https://numpy.org/devdocs/reference/arrays.scalars.html#other-aliases
 
+All one-character type code strings and related routines like ``mintypecode``
+will be marked as legacy.
+
 To discuss:
 
-- move *all* dtype-related classes to ``np.types``?
-- mark one-character type code strings and related routines like ``mintypecode`` as legacy?
+- move *all* dtype-related classes to ``np.dtypes``?
 - canonical way to compare/select dtypes: ``np.isdtype`` (new, xref array API
   NEP), leaving ``np.issubdtype`` for the more niche use of numpy's dtype class
   hierarchy, and hide most other stuff.
@@ -275,7 +269,18 @@ To discuss:
   and are too easy to shoot yourself in the foot with.
 
 
-.. S: consider `np.dtypes`.
+Cleaning up the niche methods on ``numpy.ndarray``
+``````````````````````````````````````````````````
+
+The ``ndarray`` object has a lot of attributes and  methods, some of which are
+too niche to be that prominent, all that does is distract the average user.
+E.g.:
+
+- ``.ctypes``
+- ``.itemset`` (already discouraged)
+- ``.newbyteorder`` (too niche)
+- ``.ptp`` (niche, use ``np.ptp`` function instead)
+- ``.repeat`` (niche, use ``np.ptp`` function instead)
 
 
 Related Work
