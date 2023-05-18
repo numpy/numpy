@@ -2923,8 +2923,58 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+    static char *kwnames[] = {"", "", NULL};  /* positional-only */
+    static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
+    PyObject *real_obj = NULL;
+    PyObject *imag_obj = NULL;
+    if (PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
+        if ((real_obj == NULL) && (imag_obj == NULL)) {
+            obj = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+            if (obj == NULL) {
+                return NULL;
+            }
+        }
+        else if (PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) {
+            if (PyComplex_Check(real_obj) || PyComplex_Check(imag_obj)) {
+                PyErr_Format(PyExc_TypeError, parse_error, args);
+                return NULL;
+            }
+            obj = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+            if (obj == NULL) {
+                return NULL;
+            }
+        }
+        else if (PyNumber_Check(real_obj) && imag_obj == NULL) {
+            if (PyComplex_Check(real_obj) || PyArray_Check(real_obj)) {
+                obj = real_obj;
+                Py_INCREF(obj);
+            }
+            else {
+                PyObject *arg = PyTuple_Pack(1, real_obj);
+                obj = PyComplex_Type.tp_new(&PyComplex_Type, arg, NULL);
+                Py_DECREF(arg);
+                if (obj == NULL) {
+                    return NULL;
+                }
+            }
+        }
+        else if (imag_obj == NULL) {
+            // let PyArray_FromAny handle all other things that
+            // can be converted to scalars (e.g. strings) or array-likes
+            obj = real_obj;
+            Py_INCREF(obj);
+        }
+        else {
+            PyErr_Format(PyExc_TypeError, parse_error, args);
+            return NULL;
+        }
+    }
+    else {
+#else
     static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+#endif
         return NULL;
     }
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
@@ -2947,6 +2997,9 @@ static PyObject *
     Py_INCREF(typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+    Py_DECREF(obj);
+#endif
     if (arr == NULL) {
         Py_DECREF(typecode);
         return NULL;
