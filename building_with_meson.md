@@ -9,11 +9,11 @@ into a problem._
 
 **Install build tools:** Use one of:
 
-- `mamba env create -f environment.yml && mamba activate numpy-dev
+- `mamba env create -f environment.yml && mamba activate numpy-dev`
 
-- `python -m pip install -r build_requirements.txt
-  # also make sure you have pkg-config and the usual system dependencies for
-  # NumPy`
+- `python -m pip install -r build_requirements.txt`
+  *Note: also make sure you have `pkg-config` and the usual system dependencies
+  for NumPy*
 
 Then install spin:
 - `python -m pip install spin`
@@ -42,10 +42,10 @@ Note that `pip` will use the default build system, which is (as of now) still
 `build-backend = "mesonpy"` line at the top of `pyproject.toml`.
 
 After that is done, `pip install .` or `pip install --no-build-isolation .`
-will work as expected. As does building an sdist or wheel with `python -m build`.
-Note, however, that `pip install -e .` (in-place developer install) does not!
-Use `spin` instead (see above).
-
+will work as expected. As does building an sdist or wheel with `python -m build`,
+or `pip install -e . --no-build-isolation` for an editable install.
+For a more complete developer experience than editable installs, consider using
+`spin` instead though (see above).
 
 
 ### Workaround for a hiccup on Fedora
