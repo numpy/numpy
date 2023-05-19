@@ -77,9 +77,8 @@ more important than the casting change itself.
 
 .. note::
 
-    As of the early NumPy 1.24 development branch, NumPy has preliminary and
-    limited support to test this proposal.  To try it, you can use the
-    development wheels from: https://anaconda.org/scientific-python-nightly-wheels/numpy
+    As of the NumPy 1.24.x series, NumPy has preliminary and limited support to
+    test this proposal.
 
     It is further necessary to set the following environment variable::
 
