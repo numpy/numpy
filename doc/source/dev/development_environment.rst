@@ -64,6 +64,11 @@ This builds NumPy first, so the first time it may take a few minutes.  If
 you specify ``-n``, the tests are run against the version of NumPy (if
 any) found on current PYTHONPATH.
 
+.. note::
+
+    If the above commands result in ``RuntimeError: Cannot parse version 0+untagged.xxxxx``,
+    run ``git pull upstream main --tags``.
+
 When specifying a target using ``-s``, ``-t``, or ``--python``, additional
 arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
