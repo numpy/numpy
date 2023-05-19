@@ -217,18 +217,24 @@ arrays that are not 0-D, such as ``array([2])``.
    * - ``float32(1) + 3e100``
      - ``float64(3e100)``
      - ``float32(Inf)`` *and* ``RuntimeWarning`` [T7]_
-   * - ``array([0.1], float32) == 0.1``
-     - ``array([False])``
+   * - ``array([1.0], float32) + 1e-14 == 1.0``  [T8]_
+     - ``array([True])``
      - *unchanged*
-   * - ``array([0.1], float32) == float64(0.1)``
-     - ``array([ True])``
-     - ``array([False])``  [T8]_
+   * - ``array(1.0, float32) + 1e-14 == 1.0``  [T8]_
+     - ``False``
+     - ``True``
    * - ``array([1.], float32) + 3``
      - ``array([4.], float32)``
      - *unchanged*
    * - ``array([1.], float32) + int64(3)``
      - ``array([4.], float32)``
      - ``array([4.], float64)``  [T9]_
+   * - ``(3j + array(3, complex64)).dtype``
+     - ``complex128``
+     - ``complex64`` [T10]_
+   * - ``(float32(1) + 1j)).dtype``
+     - ``complex128``
+     - ``complex64`` [T11]_
 
 .. [T1] New behaviour honours the dtype of the ``uint8`` scalar.
 .. [T2] Current NumPy ignores the precision of 0-D arrays or NumPy scalars
@@ -242,10 +248,18 @@ arrays that are not 0-D, such as ``array([2])``.
         overflow.  A ``RuntimeWarning`` indicating overflow is given for the
         NumPy scalars.
 .. [T7] ``np.float32(3e100)`` overflows to infinity with a warning.
-.. [T8] ``0.1`` loses precision when cast to ``float32``, but old behaviour
-        casts the ``float64(0.1)`` and then matches.
+.. [T8] ``1 + 1e-14`` loses precision when done in float32 but not in float64.
+        The old behavior was casting the scalar argument to to float32 or
+        float64 differently depending on the dimensionality of the array;
+        with the new behavior the computation is always done in the array
+        precision (float32 in this case).
 .. [T9] NumPy promotes ``float32`` and ``int64`` to ``float64``.  The old
         behaviour ignored the ``int64`` here.
+.. [T10] The new behavior is consistent between ``array(3, complex64)`` and
+         ``array([3], complex64)``: the dtype of the result is that of the
+         array argument.
+.. [T11] The new behavior uses the complex dtype of the precision compatible
+         with the array argument, ``float32``.
 
 
 Motivation and Scope
