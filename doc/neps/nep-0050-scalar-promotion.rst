@@ -235,6 +235,9 @@ arrays that are not 0-D, such as ``array([2])``.
    * - ``(float32(1) + 1j)).dtype``
      - ``complex128``
      - ``complex64`` [T11]_
+   * - ``(int32(1) + 5j).dtype``
+     - ``complex128``
+     - *unchanged* [T12]_
 
 .. [T1] New behaviour honours the dtype of the ``uint8`` scalar.
 .. [T2] Current NumPy ignores the precision of 0-D arrays or NumPy scalars
@@ -249,9 +252,9 @@ arrays that are not 0-D, such as ``array([2])``.
         NumPy scalars.
 .. [T7] ``np.float32(3e100)`` overflows to infinity with a warning.
 .. [T8] ``1 + 1e-14`` loses precision when done in float32 but not in float64.
-        The old behavior was casting the scalar argument to to float32 or
-        float64 differently depending on the dimensionality of the array;
-        with the new behavior the computation is always done in the array
+        The old behavior was casting the scalar argument to float32 or float64
+        differently depending on the dimensionality of the array; with the new
+        behavior the computation is always done in the array
         precision (float32 in this case).
 .. [T9] NumPy promotes ``float32`` and ``int64`` to ``float64``.  The old
         behaviour ignored the ``int64`` here.
@@ -260,6 +263,8 @@ arrays that are not 0-D, such as ``array([2])``.
          array argument.
 .. [T11] The new behavior uses the complex dtype of the precision compatible
          with the array argument, ``float32``.
+.. [T12] Since the array kind is integer, the result uses the default complex
+         precision, which is ``complex128``.
 
 
 Motivation and Scope
