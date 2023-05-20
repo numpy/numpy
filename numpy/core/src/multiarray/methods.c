@@ -2399,6 +2399,12 @@ array_transpose(PyArrayObject *self, PyObject *args)
     return ret;
 }
 
+static PyObject *
+array_matrix_transpose(PyArrayObject *self)
+{
+    return PyArray_MatrixTranspose(self);
+}
+
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : NPY_NOTYPE)
 
 static PyObject *
@@ -3081,6 +3087,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"transpose",
         (PyCFunction)array_transpose,
         METH_VARARGS, NULL},
+    {"matrix_transpose",
+        (PyCFunction)array_matrix_transpose,
+        NULL, NULL},
     {"var",
         (PyCFunction)array_variance,
         METH_VARARGS | METH_KEYWORDS, NULL},

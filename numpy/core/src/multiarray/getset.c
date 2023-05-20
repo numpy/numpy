@@ -934,14 +934,7 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    int ndim = PyArray_NDIM(self);
-
-    if (ndim < 2) {
-        PyErr_SetString(PyExc_ValueError,
-                        "matrix transpose with ndim < 2 is undefined");
-        return NULL;
-    }
-    return PyArray_SwapAxes(self, ndim - 2, ndim - 1);
+    return PyArray_MatrixTranspose(self);
 }
 
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {

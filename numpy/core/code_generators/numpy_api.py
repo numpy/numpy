@@ -370,6 +370,8 @@ multiarray_funcs_api = {
     'PyDataMem_SetHandler':                 (304, MinVersion("1.22")),
     'PyDataMem_GetHandler':                 (305, MinVersion("1.22")),
     # End 1.22 API
+    'PyArray_MatrixTranspose':              (306, MinVersion("1.25")),  # TODO: What does `MinVersion` do?
+    # End 1.25 API
 }
 
 ufunc_types_api = {
