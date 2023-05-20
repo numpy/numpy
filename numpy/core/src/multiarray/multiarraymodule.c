@@ -2380,8 +2380,8 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         }
     }
     
-    
-    return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep, whitespace);
+
+    return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
 
 
