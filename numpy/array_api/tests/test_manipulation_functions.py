@@ -17,7 +17,8 @@ def test_concat_errors():
 
 
 def test_stack_errors():
-    assert_raises(TypeError, lambda: stack([asarray([1, 1], dtype=int8), asarray([2, 2], dtype=float64)]))
+    assert_raises(TypeError, lambda: stack([asarray([1, 1], dtype=int8), 
+                                            asarray([2, 2], dtype=float64)]))
 
 
 def test_reshape_copy():
