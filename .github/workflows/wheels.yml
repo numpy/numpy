@@ -150,7 +150,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
@@ -232,7 +232,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy

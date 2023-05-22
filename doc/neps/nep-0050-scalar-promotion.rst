@@ -79,7 +79,7 @@ more important than the casting change itself.
 
     As of the early NumPy 1.24 development branch, NumPy has preliminary and
     limited support to test this proposal.  To try it, you can use the
-    development wheels from: https://anaconda.org/scipy-wheels-nightly/numpy
+    development wheels from: https://anaconda.org/scientific-python-nightly-wheels/numpy
 
     It is further necessary to set the following environment variable::
 
