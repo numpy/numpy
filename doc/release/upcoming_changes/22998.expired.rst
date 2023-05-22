@@ -1,2 +1,0 @@
-* ``+arr`` will now raise an error when the dtype is not
-  numeric (and positive is undefined).

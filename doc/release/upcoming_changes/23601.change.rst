@@ -1,6 +1,0 @@
-C++ standard library usage
---------------------------
-
-NumPy builds now depend on the C++ standard library, because
-the ``numpy.core._multiarray_umath`` extension is linked with
-the C++ linker.

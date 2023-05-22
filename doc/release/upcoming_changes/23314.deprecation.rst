@@ -1,4 +1,0 @@
-* ``np.product`` is deprecated. Use `np.prod` instead.
-* ``np.cumproduct`` is deprecated. Use `np.cumprod` instead.
-* ``np.sometrue`` is deprecated. Use `np.any` instead.
-* ``np.alltrue`` is deprecated. Use `np.all` instead.
