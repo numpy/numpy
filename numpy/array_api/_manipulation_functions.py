@@ -53,13 +53,24 @@ def permute_dims(x: Array, /, axes: Tuple[int, ...]) -> Array:
 
 
 # Note: the optional argument is called 'shape', not 'newshape'
-def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
+def reshape(x: Array, 
+            /, 
+            shape: Tuple[int, ...],
+            *,
+            copy: Optional[Bool] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.reshape <numpy.reshape>`.
 
     See its docstring for more information.
     """
-    return Array._new(np.reshape(x._array, shape))
+    if copy is False:
+        raise NotImplementedError("copy=False is not yet implemented")
+
+    data = x._array
+    if copy:
+        data = np.copy(data)
+
+    return Array._new(np.reshape(data, shape))
 
 
 def roll(
