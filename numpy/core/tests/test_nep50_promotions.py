@@ -232,3 +232,15 @@ def test_nep50_huge_integers(ufunc, state):
     # This would go to object and thus a Python float, not a NumPy one:
     res = ufunc(1.0, 2**100)
     assert isinstance(res, np.float64)
+
+
+def test_nep50_in_concat_and_choose():
+    np._set_promotion_state("weak_and_warn")
+
+    with pytest.warns(UserWarning, match="result dtype changed"):
+        res = np.concatenate([np.float32(1), 1.], axis=None)
+    assert res.dtype == "float32"
+
+    with pytest.warns(UserWarning, match="result dtype changed"):
+        res = np.choose(1, [np.float32(1), 1.])
+    assert res.dtype == "float32"
