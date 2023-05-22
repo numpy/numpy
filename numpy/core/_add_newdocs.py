@@ -6009,8 +6009,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     >>> # '=' is the byteorder
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> dt = np.dtype(native_code + 'i2')
     >>> dt.byteorder
     '='
@@ -6449,8 +6449,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     --------
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> native_dt = np.dtype(native_code+'i2')
     >>> swapped_dt = np.dtype(swapped_code+'i2')
     >>> native_dt.newbyteorder('S') == swapped_dt
