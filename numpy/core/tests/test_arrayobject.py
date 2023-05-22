@@ -4,13 +4,6 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 
-def test_array_matrix_transpose():
-    # This only tests that `ndarray.matrix_transpose()` exists
-    # other tests should verify it is correct.
-    a = np.arange(48).reshape((8, 6))
-    a.matrix_transpose()
-
-
 def test_matrix_transpose_raises_error_for_1d():
     msg = "matrix transpose with ndim < 2 is undefined"
     arr = np.arange(48)
