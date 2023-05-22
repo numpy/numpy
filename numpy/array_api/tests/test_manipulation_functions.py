@@ -13,11 +13,12 @@ from .._manipulation_functions import (
 
 def test_concat_errors():
     assert_raises(TypeError, lambda: concat((1, 1), axis=None))
-    assert_raises(TypeError, lambda: concat([asarray([1], dtype=int8), asarray([1], dtype=float64)]))
+    assert_raises(TypeError, lambda: concat([asarray([1], dtype=int8),
+                                             asarray([1], dtype=float64)]))
 
 
 def test_stack_errors():
-    assert_raises(TypeError, lambda: stack([asarray([1, 1], dtype=int8), 
+    assert_raises(TypeError, lambda: stack([asarray([1, 1], dtype=int8),
                                             asarray([2, 2], dtype=float64)]))
 
 
