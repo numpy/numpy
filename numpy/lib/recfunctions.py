@@ -955,7 +955,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
        The dtype of the output unstructured array.
     copy : bool, optional
         If true, always return a copy. If false, a view is returned if
-        possible, which is when the `dtype` and strides of the fields are
+        possible, such as when the `dtype` and strides of the fields are
         suitable and the array subtype is one of `np.ndarray`, `np.recarray`
         or `np.memmap`.
 
