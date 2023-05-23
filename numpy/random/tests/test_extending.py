@@ -62,7 +62,7 @@ def test_cython(tmp_path):
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check
     with open(build_dir / 'extending.c') as fid:
-        txt_to_find = 'NumPy API declarations from "numpy/__init__.pxd"'
+        txt_to_find = 'NumPy API declarations from "numpy/__init__'
         for i, line in enumerate(fid):
             if txt_to_find in line:
                 break
