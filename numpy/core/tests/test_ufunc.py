@@ -14,7 +14,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM
+    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
@@ -203,6 +203,7 @@ class TestUfunc:
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
+    @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
         # lead to allowing qualnames as names.  Future ufuncs should
