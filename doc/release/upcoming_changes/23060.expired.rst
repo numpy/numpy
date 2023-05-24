@@ -1,5 +1,0 @@
-The ``numpy.testing.utils`` shim has been removed.
---------------------------------------------------
-Importing from the ``numpy.testing.utils`` shim has been deprecated since 2019,
-the shim has now been removed. All imports should be made directly from
-``numpy.testing``.

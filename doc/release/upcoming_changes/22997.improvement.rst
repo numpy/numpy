@@ -1,5 +1,0 @@
-Corrected error handling for NumPy C-API in Cython
---------------------------------------------------
-Many NumPy C functions defined for use in Cython were lacking the
-correct error indicator like ``except -1`` or ``except *``.
-These have now been added.
