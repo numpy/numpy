@@ -5243,8 +5243,6 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
     Examples
     --------
-    >>> np.core.umath_tests.matrix_multiply.signature
-    '(m,n),(n,p)->(m,p)'
     >>> np.linalg._umath_linalg.det.signature
     '(m,m)->()'
     >>> np.add.signature is None
