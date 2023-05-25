@@ -1532,7 +1532,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.plot(xvals, yinterp, '-x')
     [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
 
     Interpolation with periodic x-coordinates:
 
@@ -1627,7 +1627,7 @@ def angle(z, deg=False):
     Examples
     --------
     >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
-    array([ 0.        ,  1.57079633,  0.78539816]) # may vary
+    array([ 0.        ,  1.57079633,  0.78539816])
     >>> np.angle(1+1j, deg=True)                  # in degrees
     45.0
     >>> np.angle([0., -0., complex(0., -0.), complex(-0., -0.)])  # convention
@@ -1703,9 +1703,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
-    array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
+    array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531])
     >>> np.unwrap(phase)
-    array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
+    array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ])
     >>> np.unwrap([0, 1, 2, -1, 0], period=4)
     array([0, 1, 2, 3, 4])
     >>> np.unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], period=6)
@@ -2649,10 +2649,10 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     >>> y = [3,  1.1,  0.12]
     >>> X = np.stack((x, y), axis=0)
     >>> np.cov(X)
-    array([[11.71      , -4.286     ], # may vary
+    array([[11.71      , -4.286     ],
            [-4.286     ,  2.144133]])
     >>> np.cov(x, y)
-    array([[11.71      , -4.286     ], # may vary
+    array([[11.71      , -4.286     ],
            [-4.286     ,  2.144133]])
     >>> np.cov(x)
     array(11.71)
@@ -2967,7 +2967,7 @@ def blackman(M):
     --------
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
-    array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
+    array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01,
             4.14397981e-01,   7.36045180e-01,   9.67046769e-01,
             9.67046769e-01,   7.36045180e-01,   4.14397981e-01,
             1.59903635e-01,   3.26064346e-02,  -1.38777878e-17])
@@ -3075,7 +3075,7 @@ def bartlett(M):
     --------
     >>> import matplotlib.pyplot as plt
     >>> np.bartlett(12)
-    array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273, # may vary
+    array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273,
             0.90909091,  0.90909091,  0.72727273,  0.54545455,  0.36363636,
             0.18181818,  0.        ])
 
@@ -3274,7 +3274,7 @@ def hamming(M):
     Examples
     --------
     >>> np.hamming(12)
-    array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594, # may vary
+    array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594,
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
             0.15302337,  0.08      ])
 
@@ -3550,7 +3550,7 @@ def kaiser(M, beta):
     --------
     >>> import matplotlib.pyplot as plt
     >>> np.kaiser(12, 14)
-     array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02, # may vary
+     array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02,
             2.29737120e-01, 5.99885316e-01, 9.45674898e-01,
             9.45674898e-01, 5.99885316e-01, 2.29737120e-01,
             4.65200189e-02, 3.46009194e-03, 7.72686684e-06])
@@ -3653,7 +3653,7 @@ def sinc(x):
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
-     array([-3.89804309e-17,  -4.92362781e-02,  -8.40918587e-02, # may vary
+     array([-3.89804309e-17,  -4.92362781e-02,  -8.40918587e-02,
             -8.90384387e-02,  -5.84680802e-02,   3.89804309e-17,
             6.68206631e-02,   1.16434881e-01,   1.26137788e-01,
             8.50444803e-02,  -3.89804309e-17,  -1.03943254e-01,
@@ -3676,7 +3676,7 @@ def sinc(x):
     Text(0, 0.5, 'Amplitude')
     >>> plt.xlabel("X")
     Text(0.5, 0, 'X')
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
 
     """
     x = np.asanyarray(x)
@@ -4183,7 +4183,7 @@ def percentile(a,
             yticks=a)
         ax.legend(bbox_to_anchor=(1.03, 1))
         plt.tight_layout()
-        plt.show()
+        plt.show()  # doctest: +SKIP
 
     References
     ----------
@@ -5049,7 +5049,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(xv, yv, marker='o', color='k', linestyle='none')
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
 
     You can create sparse output arrays to save memory and computation time.
 
@@ -5082,7 +5082,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
     >>> plt.colorbar()
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
     """
     ndim = len(xi)
 

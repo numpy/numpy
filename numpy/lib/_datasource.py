@@ -41,6 +41,8 @@ from .._utils import set_module
 
 _open = open
 
+__doctest_skip__ = ['DataSource']
+
 
 def _check_mode(mode, encoding, newline):
     """Check mode and that encoding and newline are compatible.

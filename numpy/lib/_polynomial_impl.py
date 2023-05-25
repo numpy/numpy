@@ -114,7 +114,7 @@ def poly(seq_of_zeros):
     The line above represents z**3 - z/4
 
     >>> np.poly((np.random.random(1)[0], 0, np.random.random(1)[0]))
-    array([ 1.        , -0.77086955,  0.08618131,  0.        ]) # random
+    array([ 1.        , -0.77086955,  0.08618131,  0.        ])
 
     Given a square array object:
 
@@ -300,7 +300,7 @@ def polyint(p, m=1, k=None):
     >>> p = np.poly1d([1,1,1])
     >>> P = np.polyint(p)
     >>> P
-     poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ]) # may vary
+     poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ])
     >>> np.polyder(P) == p
     True
 
@@ -315,7 +315,7 @@ def polyint(p, m=1, k=None):
     0.0
     >>> P = np.polyint(p, 3, k=[6,5,3])
     >>> P
-    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3. ,  5. ,  3. ]) # may vary
+    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3. ,  5. ,  3. ])
 
     Note that 3 = 6 / 2!, and that the constants are given in the order of
     integrations. Constant of the highest-order polynomial term comes first:
@@ -580,17 +580,17 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
     >>> z = np.polyfit(x, y, 3)
     >>> z
-    array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254]) # may vary
+    array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254])
 
     It is convenient to use `poly1d` objects for dealing with polynomials:
 
     >>> p = np.poly1d(z)
     >>> p(0.5)
-    0.6143849206349179 # may vary
+    0.6143849206349179
     >>> p(3.5)
-    -0.34732142857143039 # may vary
+    -0.34732142857143039
     >>> p(10)
-    22.579365079365115 # may vary
+    22.579365079365115
 
     High-order polynomials may oscillate wildly:
 
@@ -599,11 +599,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     ...     p30 = np.poly1d(np.polyfit(x, y, 30))
     ...
     >>> p30(4)
-    -0.80000000000000204 # may vary
+    -0.80000000000000204
     >>> p30(5)
-    -0.99999999999999445 # may vary
+    -0.99999999999999445
     >>> p30(4.5)
-    -0.10547061179440398 # may vary
+    -0.10547061179440398
 
     Illustration:
 
@@ -1113,7 +1113,7 @@ class poly1d:
     >>> p.r
     array([-1.+1.41421356j, -1.-1.41421356j])
     >>> p(p.r)
-    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j]) # may vary
+    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j])
 
     These numbers in the previous line represent (0, 0) to machine precision
 

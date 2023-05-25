@@ -61,6 +61,7 @@ _format_options = {
     # str/False on the way in/out.
     'legacy': sys.maxsize}
 
+
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
                        sign=None, formatter=None, floatmode=None, legacy=None):
@@ -241,7 +242,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> np.set_printoptions(precision=4)
     >>> np.array([1.123456789])
-    [1.1235]
+    array([1.1235])
 
     Long arrays can be summarised:
 

@@ -266,13 +266,13 @@ def unique(ar, return_index=False, return_inverse=False,
     array([1, 2, 3, 4, 6])
     >>> counts
     array([1, 3, 1, 1, 1])
-    >>> np.repeat(values, counts)
-    array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
+    >>> np.repeat(values, counts)  # original order not preserved
+    array([1, 2, 2, 2, 3, 4, 6])
 
     """
     ar = np.asanyarray(ar)
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts, 
+        ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan)
         return _unpack_tuple(ret)
 
@@ -871,11 +871,11 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         # However, here we set the requirement that by default
         # the intermediate array can only be 6x
         # the combined memory allocation of the original
-        # arrays. See discussion on 
+        # arrays. See discussion on
         # https://github.com/numpy/numpy/pull/12065.
 
         if (
-            range_safe_from_overflow and 
+            range_safe_from_overflow and
             (below_memory_constraint or kind == 'table')
         ):
 

@@ -599,7 +599,7 @@ def vander(x, N=None, increasing=False):
     of the differences between the values of the input vector:
 
     >>> np.linalg.det(np.vander(x))
-    48.000000000000043 # may vary
+    48.000000000000043
     >>> (5-3)*(5-2)*(5-1)*(3-2)*(3-1)*(2-1)
     48
 
