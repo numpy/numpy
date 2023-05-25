@@ -1,8 +1,0 @@
-
-``np.linalg`` functions return namedtuples
-------------------------------------------
-
-``np.linalg`` functions that return tuples now return namedtuples. These
-functions are ``eig()``, ``eigh()``, ``qr()``, ``slogdet()``, and ``svd()``.
-The return type is unchanged in instances where these functions return
-non-tuples with certain keyword arguments (like ``svd(compute_uv=False)``).

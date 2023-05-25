@@ -1,2 +1,0 @@
-* A sequence must now be passed into the stacking family of functions
-  (``stack``, ``vstack``, ``hstack``, ``dstack`` and ``column_stack``).

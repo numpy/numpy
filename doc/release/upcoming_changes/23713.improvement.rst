@@ -1,9 +1,0 @@
-Signed and unsigned integers always compare correctly
------------------------------------------------------
-When ``uint64`` and ``int64`` are mixed in NumPy, NumPy typically
-promotes both to ``float64``.  This behavior may be argued about
-but is confusing for comparisons ``==``, ``<=``, since the results
-returned can be incorrect but the conversion is hidden since the
-result is a boolean.
-NumPy will now return the correct results for these by avoiding
-the cast to float.
