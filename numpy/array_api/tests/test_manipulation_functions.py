@@ -23,10 +23,15 @@ def test_stack_errors():
 
 
 def test_reshape_copy():
-    a = asarray([1])
-    b = reshape(a, (1, 1), copy=True)
-    a[0] = 0
-    assert all(b[0, 0] == 1)
-    assert all(a[0] == 0)
-    assert_raises(NotImplementedError, lambda: reshape(a, (1, 1), copy=False))
+    a = asarray(np.ones((2,3)))
+    b = reshape(a, (3, 2), copy=True)
+    assert not np.shares_memory(a._array, b._array)
+    
+    a = asarray(np.ones((2,3)))
+    b = reshape(a, (3, 2), copy=False)
+    assert np.shares_memory(a._array, b._array)
+
+    a = asarray(np.ones((2,3)).T)
+    b = reshape(a, (3, 2), copy=True)
+    assert_raises(AttributeError, lambda: reshape(a, (2, 3), copy=False))
 

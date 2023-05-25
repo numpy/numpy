@@ -63,14 +63,17 @@ def reshape(x: Array,
 
     See its docstring for more information.
     """
-    if copy is False:
-        raise NotImplementedError("copy=False is not yet implemented")
 
     data = x._array
     if copy:
         data = np.copy(data)
 
-    return Array._new(np.reshape(data, shape))
+    reshaped = np.reshape(data, shape)
+
+    if copy is False and not np.shares_memory(data, reshaped):
+        raise AttributeError("Incompatible shape for in-place modification.")
+
+    return Array._new(reshaped)
 
 
 def roll(
