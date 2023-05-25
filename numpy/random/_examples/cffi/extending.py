@@ -4,7 +4,8 @@ Use cffi to access any of the underlying C functions from distributions.h
 import os
 import numpy as np
 import cffi
-from .parse import parse_distributions_h
+from numpy.random._examples.cffi.parse import parse_distributions_h
+
 ffi = cffi.FFI()
 
 inc_dir = os.path.join(np.get_include(), 'numpy')
