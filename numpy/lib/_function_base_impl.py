@@ -4183,7 +4183,7 @@ def percentile(a,
             yticks=a)
         ax.legend(bbox_to_anchor=(1.03, 1))
         plt.tight_layout()
-        plt.show()  # doctest: +SKIP
+        plt.show()
 
     References
     ----------
