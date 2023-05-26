@@ -67,8 +67,8 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
 /**begin repeat1
  * #func = tan#
  * #default_val = 0#
- * #fxnan = 0#
  */
+// Temporary duplicate of the above for f32 tan until it's implemented in NumPy intrinsics
 static void
 simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
                         npyv_lanetype_@sfx@ *dst, npy_intp sdst, npy_intp len)
@@ -89,15 +89,8 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
                 x = npyv_loadn_tillz_@sfx@(src, ssrc, len);
             }
         #endif
-    #if @fxnan@ == @len@
-        // Workaround, invalid value encountered when x is set to nan
-        npyv_b@len@ nnan_mask = npyv_notnan_@sfx@(x);
-        npyv_@sfx@ x_exnan = npyv_select_@sfx@(nnan_mask, x, npyv_setall_@sfx@(@default_val@));
-        npyv_@sfx@ out = __svml_@func@@func_suffix@(x_exnan);
-        out = npyv_select_@sfx@(nnan_mask, out, x);
-    #else
+
         npyv_@sfx@ out = __svml_@func@@func_suffix@(x);
-    #endif
         if (sdst == 1) {
             npyv_store_till_@sfx@(dst, len, out);
         } else {
@@ -237,6 +230,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
  *  #func = tan#
  *  #intrin = tan#
  */
+// Temporary duplicate of the above for f32 tan until it's implemented in NumPy intrinsics
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {

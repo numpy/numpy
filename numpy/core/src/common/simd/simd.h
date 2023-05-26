@@ -92,7 +92,7 @@ typedef double     npyv_lanetype_f64;
     #include "emulate_maskop.h"
 #endif
 
-// enable emulated mask operations for all SIMD extension except for AVX512
+// enable emulated negative operations for all SIMD extension except for ASIMD
 #if !defined(NPY_HAVE_NEON) && NPY_SIMD
     #include "negative.h"
 #endif
@@ -100,11 +100,6 @@ typedef double     npyv_lanetype_f64;
 // enable integer divisor generator for all SIMD extensions
 #if NPY_SIMD
     #include "intdiv.h"
-#endif
-
-// include Estrin helper macros
-#if NPY_SIMD_F64
-    #include "estrin.h"
 #endif
 
 /**

@@ -17,7 +17,6 @@
 #endif
 #define NPY_SIMD_BIGENDIAN 0
 #define NPY_SIMD_CMPSIGNAL 1
-#define NPY_SIMD_CVT_F64 1
 
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;

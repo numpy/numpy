@@ -10,6 +10,8 @@
 #include "loops_utils.h"
 #include "loops.h"
 #include "fast_loop_macros.h"
+#include "estrin.h"
+
 /*
  * TODO:
  * - use vectorized version of Payne-Hanek style reduction for large elements or
@@ -66,7 +68,6 @@ simd_@op@_scalar_f64(npyv_f64 out, npy_uint64 cmp_bits)
 }
 /**end repeat**/
 
-#if NPY_SIMD_CVT_F64
 #if defined(NPY_OS_WIN32) || defined(NPY_OS_CYGWIN)
 NPY_FINLINE npyv_f64
 #else
@@ -91,7 +92,6 @@ simd_tan_scalar_f64(npyv_f64 out)
 NPY_FINLINE
 npyv_f64 simd_inner_tan(npyv_f64 x) {
     const npyv_f64 shift = npyv_setall_f64(0x1.8p52);
-    const npyv_u64 abs_mask = npyv_setall_u64(0x7fffffffffffffff);
     const npyv_u64 range_val = npyv_setall_u64(0x4160000000000000);
     const npyv_u64 tiny_bound = npyv_setall_u64(0x3e50000000000000);
     const npyv_f64 two_over_pi = npyv_setall_f64(0x1.45f306dc9c883p-1);
@@ -103,7 +103,7 @@ npyv_f64 simd_inner_tan(npyv_f64 x) {
         0x1.7ea75d05b583ep-10, 0x1.289f22964a03cp-11, 0x1.4e4fd14147622p-12
     };
 
-    npyv_u64 iax = npyv_and_u64(npyv_reinterpret_u64_f64(x), abs_mask);
+    npyv_u64 iax = npyv_reinterpret_u64_f64(npyv_abs_f64(x));
 
     /* Our argument reduction cannot calculate q with sufficient accuracy for very
         large inputs. Fall back to scalar routine for all lanes if any are too
@@ -116,8 +116,9 @@ npyv_f64 simd_inner_tan(npyv_f64 x) {
     }
 
     /* q = nearest integer to 2 * x / pi.  */
-    npyv_f64 q = npyv_sub_f64(npyv_muladd_f64(x, two_over_pi, shift), shift);
-    npyv_s64 qi = npyv_cvt_s64_f64(q);
+    npyv_f64 xp_magic = npyv_muladd_f64(x, two_over_pi, shift);
+    npyv_f64 q = npyv_sub_f64(xp_magic, shift);
+    npyv_s64 qi = npyv_sub_s64(npyv_reinterpret_s64_f64(xp_magic), npyv_reinterpret_s64_f64(shift));
 
     /* Use q to reduce x to r in [-pi/4, pi/4], by:
         r = x - q * pi/2, in extended precision.  */
@@ -138,7 +139,7 @@ npyv_f64 simd_inner_tan(npyv_f64 x) {
     npyv_f64 r4 = npyv_mul_f64(r2, r2);
     npyv_f64 r8 = npyv_mul_f64(r4, r4);
     /* Use offset version of Estrin wrapper to evaluate from C1 onwards.  */
-    npyv_f64 p = npyv_estrin_7_f64(r2, r4, r8, poly, 1);
+    npyv_f64 p = simd_estrin_7_f64(r2, r4, r8, poly, 1);
     p = npyv_muladd_f64(p, r2, npyv_setall_f64(poly[0]));
     p = npyv_muladd_f64(r2, npyv_mul_f64(p, r), r);
 
@@ -155,7 +156,6 @@ npyv_f64 simd_inner_tan(npyv_f64 x) {
 
     return npyv_div_f64(npyv_select_f64(use_recip, npyv_negative_f64(d), n), npyv_select_f64(use_recip, n, d));
 }
-#endif
 
 
 /*
@@ -253,7 +253,6 @@ simd_sin_poly_f64(npyv_f64 r, npyv_u64 ir, npyv_u64 sign)
     return npyv_reinterpret_f64_u64(npyv_xor_u64(npyv_xor_u64(npyv_reinterpret_u64_f64(y), sign), odd));
 }
 
-#if NPY_SIMD_CVT_F64
 NPY_FINLINE void
 simd_tan_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
 {
@@ -279,7 +278,6 @@ simd_tan_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_i
     }
     npyv_cleanup();
 }
-#endif
 
 /**begin repeat
  *  #op = cos, sin#
@@ -504,12 +502,11 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
 
 /**begin repeat
  *  #func = cos, sin, tan#
- *  #check = 1, 1, NPY_SIMD_CVT_F64#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F64 && NPY_SIMD_FMA3 && @check@
+#if NPY_SIMD_F64 && NPY_SIMD_FMA3
     const double *src = (double*)args[0];
           double *dst = (double*)args[1];
     const int lsize = sizeof(src[0]);
