@@ -284,6 +284,16 @@ discover_dtype_from_pyobject(
 
     PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
+        if (fixed_DType != NULL && DType != Py_None &&
+            !NPY_DT_is_legacy(DType) &&
+            !NPY_DT_is_legacy(fixed_DType)) {
+            PyErr_Format(PyExc_RuntimeError,
+                         "Received scalar type '%S' which maps to DType '%S', "
+                         "but DType '%S' was explicitly specified",
+                         (PyObject *)Py_TYPE(obj), (PyObject *)DType,
+                         (PyObject *)fixed_DType);
+            return NULL;
+        }
         return DType;
     }
     /*
