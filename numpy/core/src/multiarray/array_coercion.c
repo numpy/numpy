@@ -284,7 +284,7 @@ discover_dtype_from_pyobject(
 
     PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
-        if (fixed_DType != NULL && DType != Py_None &&
+        if (fixed_DType != NULL && DType != (PyArray_DTypeMeta *)Py_None &&
             !NPY_DT_is_legacy(DType) &&
             !NPY_DT_is_legacy(fixed_DType)) {
             PyErr_Format(PyExc_RuntimeError,
