@@ -85,14 +85,11 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
-    >>> old_settings = np.seterr(all='ignore')  #seterr to known value
-    >>> np.seterr(over='raise')
-    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
-    >>> np.seterr(**old_settings)  # reset to default
-    {'divide': 'ignore', 'over': 'raise', 'under': 'ignore', 'invalid': 'ignore'}
-
+    >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
     30464
+    >>> np.seterr(over='raise')
+    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
     >>> old_settings = np.seterr(all='warn', over='raise')
     >>> np.int16(32000) * np.int16(3)
     Traceback (most recent call last):
@@ -104,6 +101,8 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
     >>> np.int16(32000) * np.int16(3)
     30464
+    >>> np.seterr(**orig_settings)  # restore original
+    {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
 
     """
 
@@ -155,14 +154,18 @@ def geterr():
     --------
     >>> np.geterr()
     {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
-    >>> np.arange(3.) / np.arange(3.)
+    >>> np.arange(3.) / np.arange(3.)  # doctest: +SHOW_WARNINGS
     array([nan,  1.,  1.])
+    RuntimeWarning: invalid value encountered in divide
 
-    >>> oldsettings = np.seterr(all='warn', over='raise')
+    >>> oldsettings = np.seterr(all='warn', invalid='raise')
     >>> np.geterr()
-    {'divide': 'warn', 'over': 'raise', 'under': 'warn', 'invalid': 'warn'}
+    {'divide': 'warn', 'over': 'warn', 'under': 'warn', 'invalid': 'raise'}
     >>> np.arange(3.) / np.arange(3.)
-    array([nan,  1.,  1.])
+    Traceback (most recent call last):
+      ...
+    FloatingPointError: invalid value encountered in divide
+    >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
     maskvalue = umath.geterrobj()[1]
@@ -267,16 +270,16 @@ def seterrcall(func):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
 
-    >>> saved_handler = np.seterrcall(err_handler)
-    >>> save_err = np.seterr(all='call')
+    >>> orig_handler = np.seterrcall(err_handler)
+    >>> orig_err = np.seterr(all='call')
 
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([inf, inf, inf])
 
-    >>> np.seterrcall(saved_handler)
+    >>> np.seterrcall(orig_handler)
     <function err_handler at 0x...>
-    >>> np.seterr(**save_err)
+    >>> np.seterr(**orig_err)
     {'divide': 'call', 'over': 'call', 'under': 'call', 'invalid': 'call'}
 
     Log error message:
@@ -294,9 +297,9 @@ def seterrcall(func):
     LOG: Warning: divide by zero encountered in divide
     array([inf, inf, inf])
 
-    >>> np.seterrcall(saved_handler)
-    <numpy.core.numeric.Log object at 0x...>
-    >>> np.seterr(**save_err)
+    >>> np.seterrcall(orig_handler)
+    <numpy.Log object at 0x...>
+    >>> np.seterr(**orig_err)
     {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
@@ -341,10 +344,10 @@ def geterrcall():
     --------
     >>> np.geterrcall()  # we did not yet set a handler, returns None
 
-    >>> oldsettings = np.seterr(all='call')
+    >>> orig_settings = np.seterr(all='call')
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
-    >>> oldhandler = np.seterrcall(err_handler)
+    >>> old_handler = np.seterrcall(err_handler)
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([inf, inf, inf])
@@ -352,6 +355,8 @@ def geterrcall():
     >>> cur_handler = np.geterrcall()
     >>> cur_handler is err_handler
     True
+    >>> old_settings = np.seterr(**orig_settings)  # restore original
+    >>> old_handler = np.seterrcall(None)  # restore original
 
     """
     return umath.geterrobj()[2]
@@ -404,7 +409,7 @@ class errstate(contextlib.ContextDecorator):
 
     >>> np.arange(3) / 0.
     array([nan, inf, inf])
-    >>> with np.errstate(divide='warn'):
+    >>> with np.errstate(divide='ignore'):
     ...     np.arange(3) / 0.
     array([nan, inf, inf])
 
@@ -420,6 +425,7 @@ class errstate(contextlib.ContextDecorator):
 
     >>> np.geterr()
     {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
+    >>> olderr = np.seterr(**olderr)  # restore original state
 
     """
 

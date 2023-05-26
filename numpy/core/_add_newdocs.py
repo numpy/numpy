@@ -4808,7 +4808,8 @@ add_newdoc('numpy.core.umath', 'geterrobj',
 
     Examples
     --------
-    >>> np.geterrobj()  # first get the defaults
+    >>> orig_errobj = np.geterrobj()[:]  # get a copy of the errobj
+    >>> orig_errobj
     [8192, 521, None]
 
     >>> def err_handler(type, flag):
@@ -4818,7 +4819,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     >>> old_err = np.seterr(divide='raise')
     >>> old_handler = np.seterrcall(err_handler)
     >>> np.geterrobj()
-    [8192, 521, <function err_handler at 0x91dcaac>]
+    [20000, 522, <function err_handler at 0x...>]
 
     >>> old_err = np.seterr(all='ignore')
     >>> np.base_repr(np.geterrobj()[1], 8)
@@ -4827,6 +4828,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     ...                     invalid='print')
     >>> np.base_repr(np.geterrobj()[1], 8)
     '4351'
+    >>> old_errobj = np.seterrobj(orig_errobj)  # restore the error state
 
     """)
 
@@ -4871,8 +4873,8 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
     Examples
     --------
-    >>> old_errobj = np.geterrobj()  # first get the defaults
-    >>> old_errobj
+    >>> orig_errobj = np.geterrobj()[:]  # get a copy of the errobj
+    >>> orig_errobj
     [8192, 521, None]
 
     >>> def err_handler(type, flag):
@@ -4883,9 +4885,10 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     >>> np.base_repr(12, 8)  # int for divide=4 ('print') and over=1 ('warn')
     '14'
     >>> np.geterr()
-    {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
+    {'divide': 'print', 'over': 'warn', 'under': 'ignore', 'invalid': 'ignore'}
     >>> np.geterrcall() is err_handler
     True
+    >>> old_errobj = np.seterrobj(orig_errobj)  # restore the original state
 
     """)
 
