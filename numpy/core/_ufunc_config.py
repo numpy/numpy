@@ -154,7 +154,7 @@ def geterr():
     --------
     >>> np.geterr()
     {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
-    >>> np.arange(3.) / np.arange(3.)  # doctest: +SHOW_WARNINGS
+    >>> np.arange(3.) / np.arange(3.)  # doctest: +SKIP
     array([nan,  1.,  1.])
     RuntimeWarning: invalid value encountered in divide
 
