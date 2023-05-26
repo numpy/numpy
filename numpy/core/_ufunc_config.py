@@ -85,7 +85,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
-    >>> orig_settings = np.seterr(all='ignore')  #seterr to known value
+    >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
     30464
     >>> np.seterr(over='raise')
