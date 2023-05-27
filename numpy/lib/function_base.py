@@ -2969,6 +2969,7 @@ def blackman(M):
     .. plot::
         :include-source:
 
+        import matplotlib.pyplot as plt
         from numpy.fft import fft, fftshift
         window = np.blackman(51)
         plt.plot(window)
@@ -3075,6 +3076,7 @@ def bartlett(M):
     .. plot::
         :include-source:
 
+        import matplotlib.pyplot as plt
         from numpy.fft import fft, fftshift
         window = np.bartlett(51)
         plt.plot(window)
@@ -3551,6 +3553,7 @@ def kaiser(M, beta):
     .. plot::
         :include-source:
 
+        import matplotlib.pyplot as plt
         from numpy.fft import fft, fftshift
         window = np.kaiser(51, 14)
         plt.plot(window)
