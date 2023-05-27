@@ -161,7 +161,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
@@ -382,7 +382,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -442,7 +442,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -493,7 +493,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -604,7 +604,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -631,7 +631,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -660,7 +660,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -689,7 +689,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str
+        files : list of str or pathlib.Path
             List of file names (not containing a directory part).
 
         Notes
