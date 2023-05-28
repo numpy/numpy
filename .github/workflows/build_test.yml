@@ -181,7 +181,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  debug:
+  debug_and_cython3:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
@@ -195,6 +195,10 @@ jobs:
     - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: install cython3
+      run: python -m pip install --pre cython
+
     - uses: ./.github/actions
 
   blas64:
