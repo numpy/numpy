@@ -5,7 +5,6 @@ import os
 import threading
 import time
 import warnings
-import io
 import re
 import pytest
 from pathlib import Path
@@ -701,7 +700,7 @@ class LoadTxtBase:
         # test native string converters enabled by setting an encoding
         utf8 = b'\xcf\x96'.decode('UTF-8')
         with temppath() as path:
-            with io.open(path, 'wt', encoding='UTF-8') as f:
+            with open(path, 'wt', encoding='UTF-8') as f:
                 f.write(utf8)
             x = self.loadfunc(path, dtype=np.str_,
                               converters={0: lambda x: x + 't'},
@@ -2264,7 +2263,7 @@ M   33  21.99
 
         # skip test if cannot encode utf8 test string with preferred
         # encoding. The preferred encoding is assumed to be the default
-        # encoding of io.open. Will need to change this for PyTest, maybe
+        # encoding of open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
             encoding = locale.getpreferredencoding()
@@ -2274,7 +2273,7 @@ M   33  21.99
                         'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
-            with io.open(path, "wt") as f:
+            with open(path, "wt") as f:
                 f.write("norm1,norm2,norm3\n")
                 f.write("norm1," + latin1 + ",norm3\n")
                 f.write("test1,testNonethe" + utf8 + ",test3\n")

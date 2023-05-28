@@ -35,7 +35,6 @@ Example::
 
 """
 import os
-import io
 
 from .._utils import set_module
 
@@ -98,7 +97,7 @@ class _FileOpeners:
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: io.open}
+        self._file_openers = {None: open}
 
     def _load(self):
         if self._loaded:
@@ -173,7 +172,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         The default path is the current directory.
     encoding : {None, str}, optional
         Open text file with given encoding. The default encoding will be
-        what `io.open` uses.
+        what `open` uses.
     newline : {None, str}, optional
         Newline to use when reading text file.
 
@@ -501,7 +500,7 @@ class DataSource:
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -670,7 +669,7 @@ class Repository (DataSource):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
