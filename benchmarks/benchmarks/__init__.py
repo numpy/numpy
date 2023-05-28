@@ -43,7 +43,7 @@ def dirty_lock(lock_name, lock_on_count=1):
             f.seek(0)
             f.truncate()
             f.write(f"{str(count)} {str(ppid)}")
-    except IOError:
+    except OSError:
         pass
     return False
 
