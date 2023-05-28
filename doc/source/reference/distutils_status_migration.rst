@@ -17,32 +17,27 @@ the Python 3.12 release (Oct 2025).
 Migration advice
 ----------------
 
-It is **not necessary** to migrate immediately - the release date for Python 3.12
-is October 2023. It may be beneficial to wait with migrating until there are
-examples from other projects to follow (see below).
-
 There are several build systems which are good options to migrate to. Assuming
 you have compiled code in your package (if not, we recommend using Flit_) and
 you want to be using a well-designed, modern and reliable build system, we
 recommend:
 
 1. Meson_
-2. CMake_ (or scikit-build_ as an interface to CMake)
+2. CMake_ (or scikit-build-core_ as an interface to CMake)
 
 If you have modest needs (only simple Cython/C extensions, and perhaps nested
 ``setup.py`` files) and have been happy with ``numpy.distutils`` so far, you
 can also consider switching to ``setuptools``. Note that most functionality of
 ``numpy.distutils`` is unlikely to be ported to ``setuptools``.
 
-
 Moving to Meson
 ~~~~~~~~~~~~~~~
 
-SciPy is moving to Meson for its 1.9.0 release, planned for July 2022. During
-this process, any remaining issues with Meson's Python support and achieving
-feature parity with ``numpy.distutils`` will be resolved. *Note: parity means a
-large superset, but right now some BLAS/LAPACK support is missing and there are
-a few open issues related to Cython.* SciPy uses almost all functionality that
+SciPy has moved to Meson for its 1.9.0 release. During
+this process, remaining issues with Meson's Python support and
+feature parity with ``numpy.distutils`` were resolved. *Note: parity means a
+large superset, but right now some BLAS/LAPACK support is missing*.
+SciPy uses almost all functionality that
 ``numpy.distutils`` offers, so if SciPy has successfully made a release with
 Meson as the build system, there should be no blockers left to migrate, and
 SciPy will be a good reference for other packages who are migrating.
@@ -51,22 +46,16 @@ For more details about the SciPy migration, see:
 - `RFC: switch to Meson as a build system <https://github.com/scipy/scipy/issues/13615>`__
 - `Tracking issue for Meson support <https://github.com/rgommers/scipy/issues/22>`__
 
-NumPy itself will very likely migrate to Meson as well, once the SciPy
-migration is done.
+NumPy will migrate to Meson for the 1.26 release.
 
 
 Moving to CMake / scikit-build
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See the `scikit-build documentation <https://scikit-build.readthedocs.io/en/latest/>`__
-for how to use scikit-build. Please note that as of Feb 2022, scikit-build
-still relies on setuptools, so it's probably not quite ready yet for a
-post-distutils world. How quickly this changes depends on funding, the current
-(Feb 2022) estimate is that if funding arrives then a viable ``numpy.distutils``
-replacement will be ready at the end of 2022, and a very polished replacement
-mid-2023.  For more details on this, see
-`this blog post by Henry Schreiner <https://iscinumpy.gitlab.io/post/scikit-build-proposal/>`__.
+The next generation of scikit-build is called `scikit-build-core`_. Where the
+older ``scikit-build`` used ``setuptools`` underneath, the rewrite does not.
 
+.. _`scikit-build-core`: https://scikit-build-core.readthedocs.io/en/latest/
 
 Moving to ``setuptools``
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,5 +123,4 @@ build requirement in ``pyproject.toml`` to avoid future breakage - see
 .. _Flit: https://flit.readthedocs.io
 .. _CMake: https://cmake.org/
 .. _Meson: https://mesonbuild.com/
-.. _scikit-build: https://scikit-build.readthedocs.io/
 
