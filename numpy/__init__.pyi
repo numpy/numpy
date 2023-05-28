@@ -626,10 +626,7 @@ from numpy.lib.utils import (
     get_include as get_include,
     info as info,
     source as source,
-    who as who,
     lookfor as lookfor,
-    byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
     show_runtime as show_runtime,
 )
 

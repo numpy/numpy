@@ -135,10 +135,10 @@ else:
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
+    __expired_functions__ = {}
 
     from . import core
     from .core import *
-    from . import compat
     from . import exceptions
     from . import dtypes
     from . import lib
@@ -154,6 +154,15 @@ else:
     from . import ma
     from . import matrixlib as _mat
     from .matrixlib import *
+
+    # Deprecations introduced in 1.25.0, 2023-05-xx TODO update day
+    from . import compat
+
+    __deprecated_attrs__["compat"] = (compat,
+        "`np.compat`, which was used during the Python 2 to 3 transition,"
+        " is deprecated since 1.25.0, and will be removed")
+
+    del compat
 
     # Deprecations introduced in NumPy 1.20.0, 2020-06-06
     import builtins as _builtins
@@ -232,8 +241,19 @@ else:
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
-    __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    _lib_expired_utils_names = ["byte_bounds", "safe_eval", "who"]
+    lib__all__ = lib.__all__[:]
+    for name in _lib_expired_utils_names:
+        lib__all__.remove(name)
+        __expired_functions__[name] = (
+            f"{name} is deprecated and removed from the "
+            f"main namespace. If you still want to use it "
+            f"please use it directly from np.lib or np.lib.utils"
+        )
+    del byte_bounds, safe_eval, who
+    __all__.extend(lib__all__)
 
     # Remove one of the two occurrences of `issubdtype`, which is exposed as
     # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
@@ -259,12 +279,13 @@ else:
     # a warning, and calling the function will raise an exception.
     _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
                         'ppmt', 'pv', 'rate']
-    __expired_functions__ = {
-        name: (f'In accordance with NEP 32, the function {name} was removed '
-               'from NumPy version 1.20.  A replacement for this function '
-               'is available in the numpy_financial library: '
-               'https://pypi.org/project/numpy-financial')
-        for name in _financial_names}
+    for name in _financial_names:
+        __expired_functions__[name] = (
+            f'In accordance with NEP 32, the function {name} was removed '
+            'from NumPy version 1.20.  A replacement for this function '
+            'is available in the numpy_financial library: '
+            'https://pypi.org/project/numpy-financial'
+        )
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")

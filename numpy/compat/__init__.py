@@ -7,7 +7,16 @@ extensions, which may be included for the following reasons:
   * compatibility
   * we may only need a small subset of the copied library/module
 
+This module is deprecated since 1.25.0 and will be removed in future versions.
+
 """
+
+import warnings
+
+warnings.warn(
+    "`np.compat`, which was used during the Python 2 to 3 transition,"
+    " is deprecated since 1.25.0, and will be removed", stacklevel=2
+)
 
 from .._utils import _inspect
 from .._utils._inspect import getargspec, formatargspec
