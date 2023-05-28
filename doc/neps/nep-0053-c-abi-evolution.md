@@ -66,7 +66,7 @@ aim to provide a full list of changes in this NEP.
 
 Adding state is out of scope
 ----------------------------
-New developements such as CPython's support for subinterpreters and the
+New developments such as CPython's support for subinterpreters and the
 HPy API may require the NumPy C-API to evolve in a way that may require
 (or at least prefer) state to be passed in.
 
@@ -227,7 +227,7 @@ An implementation can be found in the `PR 23528`_.
 
 The second part is mainly about identifying and implementing the desired
 changes in a way that backwards compatibility will not be broken and API
-breaks remain managable for downstream libraries.
+breaks remain manageable for downstream libraries.
 Everyone change we do must have a brief note on how to adapt to the
 API change (i.e. alternative functions).
 
