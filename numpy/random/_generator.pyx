@@ -3477,7 +3477,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        DEF HYPERGEOM_MAX = 10**9
+        cdef double HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
