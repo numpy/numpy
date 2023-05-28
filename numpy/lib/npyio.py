@@ -88,21 +88,6 @@ class BagObj:
         return list(object.__getattribute__(self, '_obj').keys())
 
 
-def zipfile_factory(file, *args, **kwargs):
-    """
-    Create a ZipFile.
-
-    Allows for Zip64, and the `file` argument can accept file, str, or
-    pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
-    constructor.
-    """
-    if not hasattr(file, 'read'):
-        file = os_fspath(file)
-    import zipfile
-    kwargs['allowZip64'] = True
-    return zipfile.ZipFile(file, *args, **kwargs)
-
-
 class NpzFile(Mapping):
     """
     NpzFile(fid)
@@ -184,10 +169,10 @@ class NpzFile(Mapping):
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
-                 max_header_size=format._MAX_HEADER_SIZE):
+                 max_header_size=format._MAX_HEADER_SIZE, mmap_mode=None):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
-        _zip = zipfile_factory(fid)
+        _zip = format.zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
         self.allow_pickle = allow_pickle
@@ -202,6 +187,7 @@ class NpzFile(Mapping):
         self.f = BagObj(self)
         if own_fid:
             self.fid = fid
+        self.mmap_mode = mmap_mode
 
     def __enter__(self):
         return self
@@ -252,11 +238,17 @@ class NpzFile(Mapping):
             magic = bytes.read(len(format.MAGIC_PREFIX))
             bytes.close()
             if magic == format.MAGIC_PREFIX:
-                bytes = self.zip.open(key)
-                return format.read_array(bytes,
-                                         allow_pickle=self.allow_pickle,
-                                         pickle_kwargs=self.pickle_kwargs,
-                                         max_header_size=self.max_header_size)
+                if self.mmap_mode:
+                    if self.allow_pickle:
+                        self.max_header_size = 2**64
+                    return format.open_memmap(self.zip.filename, mode=self.mmap_mode,
+                                              max_header_size=self.max_header_size, key=key)
+                else:
+                    bytes = self.zip.open(key)
+                    return format.read_array(bytes,
+                                             allow_pickle=self.allow_pickle,
+                                             pickle_kwargs=self.pickle_kwargs,
+                                             max_header_size=self.max_header_size)
             else:
                 return self.zip.read(key)
         else:
@@ -428,22 +420,20 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             own_fid = True
 
         # Code to distinguish from NumPy binary files and pickles.
-        _ZIP_PREFIX = b'PK\x03\x04'
-        _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
-        N = len(format.MAGIC_PREFIX)
+        N = format.MAGIC_LEN
         magic = fid.read(N)
         if not magic:
             raise EOFError("No data left in file")
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
+        if magic.startswith(format.ZIP_PREFIX) or magic.startswith(format.ZIP_SUFFIX):
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
                           pickle_kwargs=pickle_kwargs,
-                          max_header_size=max_header_size)
+                          max_header_size=max_header_size, mmap_mode=mmap_mode)
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
@@ -733,7 +723,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     else:
         compression = zipfile.ZIP_STORED
 
-    zipf = zipfile_factory(file, mode="w", compression=compression)
+    zipf = format.zipfile_factory(file, mode="w", compression=compression)
 
     for key, val in namedict.items():
         fname = key + '.npy'

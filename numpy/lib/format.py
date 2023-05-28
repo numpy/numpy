@@ -173,6 +173,8 @@ __all__ = []
 
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
+ZIP_PREFIX = b'PK\x03\x04'
+ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -197,6 +199,20 @@ def _check_version(version):
     if version not in [(1, 0), (2, 0), (3, 0), None]:
         msg = "we only support format version (1,0), (2,0), and (3,0), not %s"
         raise ValueError(msg % (version,))
+
+def zipfile_factory(file, *args, **kwargs):
+    """
+    Create a ZipFile.
+
+    Allows for Zip64, and the `file` argument can accept file, str, or
+    pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
+    constructor.
+    """
+    if not hasattr(file, 'read'):
+        file = os_fspath(file)
+    import zipfile
+    kwargs['allowZip64'] = True
+    return zipfile.ZipFile(file, *args, **kwargs)
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -843,7 +859,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 fortran_order=False, version=None, *,
-                max_header_size=_MAX_HEADER_SIZE):
+                max_header_size=_MAX_HEADER_SIZE, key=None): # XXX is there a better way than to pass key?
     """
     Open a .npy file as a memory-mapped array.
 
@@ -920,17 +936,46 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:
-        # Read the header of the file first.
-        with open(os_fspath(filename), 'rb') as fp:
-            version = read_magic(fp)
-            _check_version(version)
+        # XXX same code as np.load, refactor needed
+        fid = open(os_fspath(filename), "rb") # XXX close
+        own_fid = True
 
-            shape, fortran_order, dtype = _read_array_header(
-                    fp, version, max_header_size=max_header_size)
-            if dtype.hasobject:
-                msg = "Array can't be memory-mapped: Python objects in dtype."
-                raise ValueError(msg)
-            offset = fp.tell()
+        # Code to distinguish from NumPy binary files and pickles.
+        N = MAGIC_LEN
+        magic = fid.read(N)
+        if not magic:
+            raise EOFError("No data left in file")
+
+        # If zip file
+        if magic.startswith(ZIP_PREFIX) or magic.startswith(ZIP_SUFFIX):
+            # credits: https://github.com/numpy/numpy/issues/5976#issuecomment-701322834
+            zf = zipfile_factory(fid) # XXX close
+            # figure out offset of .npy in .npz
+            info = zf.NameToInfo[key]
+            assert info.compress_type == 0 # XXX handle gracefully
+            zf.fp.seek(info.header_offset + len(info.FileHeader()) + 20)
+            # read .npy header
+            version = read_magic(zf.fp)
+            _check_version(version)
+            shape, fortran_order, dtype = _read_array_header(zf.fp, version)
+            offset = zf.fp.tell()
+            # create memmap
+            return numpy.memmap(zf.filename, dtype=dtype, shape=shape,
+                             order='F' if fortran_order else 'C', mode='r',
+                             offset=offset)
+
+        # Read the header of the file first.
+        else: # XXX need more checks?
+            with open(os_fspath(filename), 'rb') as fp:
+                version = read_magic(fp)
+                _check_version(version)
+
+                shape, fortran_order, dtype = _read_array_header(
+                        fp, version, max_header_size=max_header_size)
+                if dtype.hasobject:
+                    msg = "Array can't be memory-mapped: Python objects in dtype."
+                    raise ValueError(msg)
+                offset = fp.tell()
 
     if fortran_order:
         order = 'F'
