@@ -65,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.11"]
     env:
