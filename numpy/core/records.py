@@ -157,7 +157,7 @@ class format_parser:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
             dtype = sb.dtype(
-                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
+                [(f'f{i}', format_) for i, format_ in enumerate(formats)],
                 aligned,
             )
         else:
@@ -546,7 +546,7 @@ class recarray(ndarray):
                 self, separator=', ', prefix=prefix, suffix=',')
         else:
             # show zero-length shape unless it is (0,)
-            lst = "[], shape=%s" % (repr(self.shape),)
+            lst = f"[], shape={self.shape!r}"
 
         lf = '\n'+' '*len(prefix)
         if _get_legacy_print_mode() <= 113:

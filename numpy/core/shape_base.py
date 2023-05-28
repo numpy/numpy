@@ -468,7 +468,7 @@ def _block_format_index(index):
     """
     Convert a list of indices ``[0, 1, 2]`` into ``"arrays[0][1][2]"``.
     """
-    idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+    idx_str = ''.join(f'[{i}]' for i in index if i is not None)
     return 'arrays' + idx_str
 
 
@@ -604,7 +604,7 @@ def _concatenate_shapes(shapes, axis):
     if any(shape[:axis] != first_shape_pre or
            shape[axis+1:] != first_shape_post for shape in shapes):
         raise ValueError(
-            'Mismatched array shapes in block along axis {}.'.format(axis))
+            f'Mismatched array shapes in block along axis {axis}.')
 
     shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis+1:])
 

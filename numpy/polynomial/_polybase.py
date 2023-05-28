@@ -435,7 +435,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions

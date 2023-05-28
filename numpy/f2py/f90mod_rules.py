@@ -94,11 +94,11 @@ def buildhooks(pymod):
     fhooks = ['']
 
     def fadd(line, s=fhooks):
-        s[0] = '%s\n      %s' % (s[0], line)
+        s[0] = '{}\n      {}'.format(s[0], line)
     doc = ['']
 
     def dadd(line, s=doc):
-        s[0] = '%s\n%s' % (s[0], line)
+        s[0] = '{}\n{}'.format(s[0], line)
     for m in findf90modules(pymod):
         sargs, fargs, efargs, modobjs, notvars, onlyvars = [], [], [], [], [
             m['name']], []
@@ -120,11 +120,11 @@ def buildhooks(pymod):
         chooks = ['']
 
         def cadd(line, s=chooks):
-            s[0] = '%s\n%s' % (s[0], line)
+            s[0] = '{}\n{}'.format(s[0], line)
         ihooks = ['']
 
         def iadd(line, s=ihooks):
-            s[0] = '%s\n%s' % (s[0], line)
+            s[0] = '{}\n{}'.format(s[0], line)
 
         vrd = capi_maps.modsign2map(m)
         cadd('static FortranDataDef f2py_%s_def[] = {' % (m['name']))
@@ -158,7 +158,7 @@ def buildhooks(pymod):
                     note = '\n'.join(note)
                 dadd('--- %s' % (note))
             if isallocatable(var):
-                fargs.append('f2py_%s_getdims_%s' % (m['name'], n))
+                fargs.append('f2py_{}_getdims_{}'.format(m['name'], n))
                 efargs.append(fargs[-1])
                 sargs.append(
                     'void (*%s)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)' % (n))
@@ -178,7 +178,7 @@ def buildhooks(pymod):
                 fargs.append(n)
                 sargs.append('char *%s' % (n))
                 sargsp.append('char*')
-                iadd('\tf2py_%s_def[i_f2py++].data = %s;' % (m['name'], n))
+                iadd('\tf2py_{}_def[i_f2py++].data = {};'.format(m['name'], n))
         if onlyvars:
             dadd('\\end{description}')
         if hasbody(m):
@@ -192,12 +192,12 @@ def buildhooks(pymod):
                 api, wrap = rules.buildapi(b)
                 if isfunction(b):
                     fhooks[0] = fhooks[0] + wrap
-                    fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
+                    fargs.append('f2pywrap_{}_{}'.format(m['name'], b['name']))
                     ifargs.append(func2subr.createfuncwrapper(b, signature=1))
                 else:
                     if wrap:
                         fhooks[0] = fhooks[0] + wrap
-                        fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
+                        fargs.append('f2pywrap_{}_{}'.format(m['name'], b['name']))
                         ifargs.append(
                             func2subr.createsubrwrapper(b, signature=1))
                     else:
@@ -218,7 +218,7 @@ def buildhooks(pymod):
                      (m['name'], b['name']))
         cadd('\t{NULL}\n};\n')
         iadd('}')
-        ihooks[0] = 'static void f2py_setup_%s(%s) {\n\tint i_f2py=0;%s' % (
+        ihooks[0] = 'static void f2py_setup_{}({}) {{\n\tint i_f2py=0;{}'.format(
             m['name'], ','.join(sargs), ihooks[0])
         if '_' in m['name']:
             F_FUNC = 'F_FUNC_US'
@@ -231,13 +231,13 @@ def buildhooks(pymod):
              % (F_FUNC, m['name'], m['name'].upper(), m['name']))
         iadd('}\n')
         ret['f90modhooks'] = ret['f90modhooks'] + chooks + ihooks
-        ret['initf90modhooks'] = ['\tPyDict_SetItemString(d, "%s", PyFortranObject_New(f2py_%s_def,f2py_init_%s));' % (
+        ret['initf90modhooks'] = ['\tPyDict_SetItemString(d, "{}", PyFortranObject_New(f2py_{}_def,f2py_init_{}));'.format(
             m['name'], m['name'], m['name'])] + ret['initf90modhooks']
         fadd('')
         fadd('subroutine f2pyinit%s(f2pysetupfunc)' % (m['name']))
         if mfargs:
             for a in undo_rmbadname(mfargs):
-                fadd('use %s, only : %s' % (m['name'], a))
+                fadd('use {}, only : {}'.format(m['name'], a))
         if ifargs:
             fadd(' '.join(['interface'] + ifargs))
             fadd('end interface')
@@ -252,7 +252,7 @@ def buildhooks(pymod):
             r'\subsection{', r'\subsubsection{'))
 
         ret['latexdoc'] = []
-        ret['docs'].append('"\t%s --- %s"' % (m['name'],
+        ret['docs'].append('"\t{} --- {}"'.format(m['name'],
                                               ','.join(undo_rmbadname(modobjs))))
 
     ret['routine_defs'] = ''

@@ -58,7 +58,7 @@ def buildusevars(m, r):
     if 'map' in r:
         for k in r['map'].keys():
             if r['map'][k] in revmap:
-                outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n' % (
+                outmess('\t\t\tVariable "{}<={}" is already mapped by "{}". Skipping.\n'.format(
                     r['map'][k], k, revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]] = k
@@ -73,7 +73,7 @@ def buildusevars(m, r):
                             (v, r['map'][v]))
             else:
                 outmess(
-                    '\t\t\tNo definition for variable "%s=>%s". Skipping.\n' % (v, r['map'][v]))
+                    '\t\t\tNo definition for variable "{}=>{}". Skipping.\n'.format(v, r['map'][v]))
     else:
         for v in m['vars'].keys():
             if v in revmap:
@@ -86,7 +86,7 @@ def buildusevars(m, r):
 
 
 def buildusevar(name, realname, vars, usemodulename):
-    outmess('\t\t\tConstructing wrapper function for variable "%s=>%s"...\n' % (
+    outmess('\t\t\tConstructing wrapper function for variable "{}=>{}"...\n'.format(
         name, realname))
     ret = {}
     vrd = {'name': name,
@@ -95,9 +95,9 @@ def buildusevar(name, realname, vars, usemodulename):
            'usemodulename': usemodulename,
            'USEMODULENAME': usemodulename.upper(),
            'texname': name.replace('_', '\\_'),
-           'begintitle': gentitle('%s=>%s' % (name, realname)),
-           'endtitle': gentitle('end of %s=>%s' % (name, realname)),
-           'apiname': '#modulename#_use_%s_from_%s' % (realname, usemodulename)
+           'begintitle': gentitle('{}=>{}'.format(name, realname)),
+           'endtitle': gentitle('end of {}=>{}'.format(name, realname)),
+           'apiname': '#modulename#_use_{}_from_{}'.format(realname, usemodulename)
            }
     nummap = {0: 'Ro', 1: 'Ri', 2: 'Rii', 3: 'Riii', 4: 'Riv',
               5: 'Rv', 6: 'Rvi', 7: 'Rvii', 8: 'Rviii', 9: 'Rix'}

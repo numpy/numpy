@@ -91,7 +91,7 @@ class ModuleTester:
                 match = 100-100.0*reduced.count(1)/len(reduced)
                 msg = build_err_msg([x, y],
                                     err_msg
-                                    + '\n(mismatch %s%%)' % (match,),
+                                    + f'\n(mismatch {match}%)',
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg

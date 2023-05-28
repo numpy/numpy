@@ -1418,7 +1418,7 @@ def buildcfuncs():
     for k in c2capi_map.keys():
         m = 'pyarr_from_p_%s1' % k
         cppmacros[
-            m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
+            m] = '#define {}(v) (PyArray_SimpleNewFromData(0,NULL,{},(char *)v))'.format(m, c2capi_map[k])
     k = 'string'
     m = 'pyarr_from_p_%s1' % k
     # NPY_CHAR compatibility, NPY_STRING with itemsize 1

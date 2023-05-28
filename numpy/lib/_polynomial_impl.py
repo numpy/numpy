@@ -1274,13 +1274,13 @@ class poly1d:
             elif real(coeff) == 0:
                 coefstr = '%sj' % fmt_float(imag(coeff))
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeff)),
+                coefstr = '({} + {}j)'.format(fmt_float(real(coeff)),
                                           fmt_float(imag(coeff)))
 
             power = (N-k)
             if power == 0:
                 if coefstr != '0':
-                    newstr = '%s' % (coefstr,)
+                    newstr = f'{coefstr}'
                 else:
                     if k == 0:
                         newstr = '0'
@@ -1292,7 +1292,7 @@ class poly1d:
                 elif coefstr == 'b':
                     newstr = var
                 else:
-                    newstr = '%s %s' % (coefstr, var)
+                    newstr = f'{coefstr} {var}'
             else:
                 if coefstr == '0':
                     newstr = ''
@@ -1304,9 +1304,9 @@ class poly1d:
             if k > 0:
                 if newstr != '':
                     if newstr.startswith('-'):
-                        thestr = "%s - %s" % (thestr, newstr[1:])
+                        thestr = f"{thestr} - {newstr[1:]}"
                     else:
-                        thestr = "%s + %s" % (thestr, newstr)
+                        thestr = f"{thestr} + {newstr}"
             else:
                 thestr = newstr
         return _raise_power(thestr)

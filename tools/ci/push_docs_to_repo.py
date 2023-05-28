@@ -64,7 +64,7 @@ run(['cp', '-R', os.path.join(args.dir, '.'), '.'])
 run(['git', 'add', '.'], stdout=False)
 run(['git', 'commit', '--allow-empty', '-m', args.message], stdout=False)
 
-print('- uploading as %s <%s>' % (args.committer, args.email))
+print(f'- uploading as {args.committer} <{args.email}>')
 if args.force:
     run(['git', 'push', 'origin', 'main', '--force'])
 else:

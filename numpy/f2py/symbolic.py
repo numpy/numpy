@@ -353,9 +353,9 @@ class Expr:
         elif self.op is Op.APPLY:
             name, args, kwargs = self.data
             if name is ArithOp.DIV and language is Language.C:
-                numer, denom = [arg.tostring(Precedence.PRODUCT,
+                numer, denom = (arg.tostring(Precedence.PRODUCT,
                                              language=language)
-                                for arg in args]
+                                for arg in args)
                 r = f'{numer} / {denom}'
                 precedence = Precedence.PRODUCT
             else:
@@ -377,9 +377,9 @@ class Expr:
             r = " // ".join(args)
             precedence = Precedence.PRODUCT
         elif self.op is Op.TERNARY:
-            cond, expr1, expr2 = [a.tostring(Precedence.TUPLE,
+            cond, expr1, expr2 = (a.tostring(Precedence.TUPLE,
                                              language=language)
-                                  for a in self.data]
+                                  for a in self.data)
             if language is Language.C:
                 r = f'({cond}?{expr1}:{expr2})'
             elif language is Language.Python:
@@ -563,7 +563,7 @@ class Expr:
         # TODO: implement a method for deciding when __call__ should
         # return an INDEXING expression.
         return as_apply(self, *map(as_expr, args),
-                        **dict((k, as_expr(v)) for k, v in kwargs.items()))
+                        **{k: as_expr(v) for k, v in kwargs.items()})
 
     def __getitem__(self, index):
         # Provided to support C indexing operations that .pyf files
@@ -629,8 +629,8 @@ class Expr:
             if isinstance(target, Expr):
                 target = target.substitute(symbols_map)
             args = tuple(a.substitute(symbols_map) for a in args)
-            kwargs = dict((k, v.substitute(symbols_map))
-                          for k, v in kwargs.items())
+            kwargs = {k: v.substitute(symbols_map)
+                          for k, v in kwargs.items()}
             return normalize(Expr(self.op, (target, args, kwargs)))
         if self.op is Op.INDEXING:
             func = self.data[0]
@@ -686,8 +686,8 @@ class Expr:
                     if isinstance(obj, Expr) else obj)
             operands = tuple(operand.traverse(visit, *args, **kwargs)
                              for operand in self.data[1])
-            kwoperands = dict((k, v.traverse(visit, *args, **kwargs))
-                              for k, v in self.data[2].items())
+            kwoperands = {k: v.traverse(visit, *args, **kwargs)
+                              for k, v in self.data[2].items()}
             return normalize(Expr(self.op, (func, operands, kwoperands)))
         elif self.op is Op.INDEXING:
             obj = self.data[0]
@@ -1004,7 +1004,7 @@ def as_apply(func, *args, **kwargs):
     """
     return Expr(Op.APPLY,
                 (func, tuple(map(as_expr, args)),
-                 dict((k, as_expr(v)) for k, v in kwargs.items())))
+                 {k: as_expr(v) for k, v in kwargs.items()}))
 
 
 def as_ternary(cond, expr1, expr2):
@@ -1077,9 +1077,9 @@ def as_factors(obj):
                 if coeff == 1:
                     return Expr(Op.FACTORS, {term: 1})
                 return Expr(Op.FACTORS, {term: 1, Expr.number(coeff): 1})
-        if ((obj.op is Op.APPLY
+        if (obj.op is Op.APPLY
              and obj.data[0] is ArithOp.DIV
-             and not obj.data[2])):
+             and not obj.data[2]):
             return Expr(Op.FACTORS, {obj.data[1][0]: 1, obj.data[1][1]: -1})
         return Expr(Op.FACTORS, {obj: 1})
     raise OpError(f'cannot convert {type(obj)} to terms Expr')
@@ -1487,8 +1487,8 @@ class _FromStringWorker:
             if not isinstance(args, tuple):
                 args = args,
             if paren == 'ROUND':
-                kwargs = dict((a.left, a.right) for a in args
-                              if isinstance(a, _Pair))
+                kwargs = {a.left: a.right for a in args
+                              if isinstance(a, _Pair)}
                 args = tuple(a for a in args if not isinstance(a, _Pair))
                 # Warning: this could also be Fortran indexing operation..
                 return as_apply(target, *args, **kwargs)

@@ -380,7 +380,7 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
+                            f"unknown special directive {item!r}"
                         ) from e
                 try:
                     axis = int(item)

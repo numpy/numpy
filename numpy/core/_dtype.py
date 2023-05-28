@@ -46,7 +46,7 @@ def __repr__(dtype):
     arg_str = _construction_repr(dtype, include_align=False)
     if dtype.isalignedstruct:
         arg_str = arg_str + ", align=True"
-    return "dtype({})".format(arg_str)
+    return f"dtype({arg_str})"
 
 
 def _unpack_field(dtype, offset, title=None):
@@ -135,10 +135,10 @@ def _scalar_str(dtype, short):
             return "'V%d'" % dtype.itemsize
 
     elif dtype.type == np.datetime64:
-        return "'%sM8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}M8{_datetime_metadata_str(dtype)}'"
 
     elif dtype.type == np.timedelta64:
-        return "'%sm8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}m8{_datetime_metadata_str(dtype)}'"
 
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
@@ -181,9 +181,9 @@ def _datetime_metadata_str(dtype):
     if unit == 'generic':
         return ''
     elif count == 1:
-        return '[{}]'.format(unit)
+        return f'[{unit}]'
     else:
-        return '[{}{}]'.format(count, unit)
+        return f'[{count}{unit}]'
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -283,9 +283,9 @@ def _struct_list_str(dtype):
 
         item = "("
         if title is not None:
-            item += "({!r}, {!r}), ".format(title, name)
+            item += f"({title!r}, {name!r}), "
         else:
-            item += "{!r}, ".format(name)
+            item += f"{name!r}, "
         # Special case subarray handling here
         if fld_dtype.subdtype is not None:
             base, shape = fld_dtype.subdtype
@@ -360,7 +360,7 @@ def _name_get(dtype):
 
     # append bit counts
     if _name_includes_bit_suffix(dtype):
-        name += "{}".format(dtype.itemsize * 8)
+        name += f"{dtype.itemsize * 8}"
 
     # append metadata to datetimes
     if dtype.type in (np.datetime64, np.timedelta64):

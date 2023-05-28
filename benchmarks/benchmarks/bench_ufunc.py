@@ -27,7 +27,7 @@ arrayfuncdisp = ['real', 'round']
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
-        print("Missing ufunc %r" % (name,))
+        print(f"Missing ufunc {name!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):
@@ -508,7 +508,7 @@ class ArgPack:
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+            [f'{k}={repr(v)}' for k, v in self.kwargs.items()]
         ))
 
 

@@ -1376,7 +1376,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
-            raise ValueError('repeated axis in `{}` argument'.format(argname))
+            raise ValueError(f'repeated axis in `{argname}` argument')
         else:
             raise ValueError('repeated axis')
     return axis

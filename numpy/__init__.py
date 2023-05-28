@@ -464,7 +464,8 @@ else:
             _mac_os_check()
             # Throw runtime error, if the test failed Check for warning and error_message
             if len(w) > 0:
-                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
+                error_message = (f"{w[-1].category.__name__}: "
+                                 f"{str(w[-1].message)}")
                 msg = (
                     "Polyfit sanity test emitted a warning, most likely due "
                     "to using a buggy Accelerate backend."

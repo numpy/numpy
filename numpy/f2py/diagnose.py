@@ -71,11 +71,11 @@ def run():
     if has_numpy_distutils:
         try:
             if has_numpy_distutils == 2:
-                print('Found numpy.distutils version %r in %r' % (
+                print('Found numpy.distutils version {!r} in {!r}'.format(
                     numpy.distutils.__version__,
                     numpy.distutils.__file__))
             else:
-                print('Found numpy_distutils version %r in %r' % (
+                print('Found numpy_distutils version {!r} in {!r}'.format(
                     numpy_distutils.numpy_distutils_version.numpy_distutils_version,
                     numpy_distutils.__file__))
             print('------')

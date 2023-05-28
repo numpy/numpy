@@ -449,7 +449,7 @@ def validate_rst_syntax(text, name, dots=True):
     if text is None:
         if dots:
             output_dot('E')
-        return False, "ERROR: %s: no documentation" % (name,)
+        return False, f"ERROR: {name}: no documentation"
 
     ok_unknown_items = set([
         'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
@@ -553,7 +553,7 @@ def check_rest(module, names, dots=True):
         obj = getattr(module, name, None)
 
         if obj is None:
-            results.append((full_name, False, "%s has no docstring" % (full_name,)))
+            results.append((full_name, False, f"{full_name} has no docstring"))
             continue
         elif isinstance(obj, skip_types):
             continue

@@ -50,19 +50,19 @@ def buildhooks(m):
     fwrap = ['']
 
     def fadd(line, s=fwrap):
-        s[0] = '%s\n      %s' % (s[0], line)
+        s[0] = '{}\n      {}'.format(s[0], line)
     chooks = ['']
 
     def cadd(line, s=chooks):
-        s[0] = '%s\n%s' % (s[0], line)
+        s[0] = '{}\n{}'.format(s[0], line)
     ihooks = ['']
 
     def iadd(line, s=ihooks):
-        s[0] = '%s\n%s' % (s[0], line)
+        s[0] = '{}\n{}'.format(s[0], line)
     doc = ['']
 
     def dadd(line, s=doc):
-        s[0] = '%s\n%s' % (s[0], line)
+        s[0] = '{}\n{}'.format(s[0], line)
     for (name, vnames, vars) in findcommonblocks(m):
         lower_name = name.lower()
         hnames, inames = [], []
@@ -72,10 +72,10 @@ def buildhooks(m):
             else:
                 inames.append(n)
         if hnames:
-            outmess('\t\tConstructing COMMON block support for "%s"...\n\t\t  %s\n\t\t  Hidden: %s\n' % (
+            outmess('\t\tConstructing COMMON block support for "{}"...\n\t\t  {}\n\t\t  Hidden: {}\n'.format(
                 name, ','.join(inames), ','.join(hnames)))
         else:
-            outmess('\t\tConstructing COMMON block support for "%s"...\n\t\t  %s\n' % (
+            outmess('\t\tConstructing COMMON block support for "{}"...\n\t\t  {}\n'.format(
                 name, ','.join(inames)))
         fadd('subroutine f2pyinit%s(setupfunc)' % name)
         fadd('external setupfunc')
@@ -84,7 +84,7 @@ def buildhooks(m):
         if name == '_BLNK_':
             fadd('common %s' % (','.join(vnames)))
         else:
-            fadd('common /%s/ %s' % (name, ','.join(vnames)))
+            fadd('common /{}/ {}'.format(name, ','.join(vnames)))
         fadd('call setupfunc(%s)' % (','.join(inames)))
         fadd('end\n')
         cadd('static FortranDataDef f2py_%s_def[] = {' % (name))
@@ -106,10 +106,10 @@ def buildhooks(m):
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
         inames1_tps = ','.join(['char *' + s for s in inames1])
-        cadd('static void f2py_setup_%s(%s) {' % (name, inames1_tps))
+        cadd('static void f2py_setup_{}({}) {{'.format(name, inames1_tps))
         cadd('\tint i_f2py=0;')
         for n in inames1:
-            cadd('\tf2py_%s_def[i_f2py++].data = %s;' % (name, n))
+            cadd('\tf2py_{}_def[i_f2py++].data = {};'.format(name, n))
         cadd('}')
         if '_' in lower_name:
             F_FUNC = 'F_FUNC_US'
@@ -122,7 +122,7 @@ def buildhooks(m):
         cadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'
              % (F_FUNC, lower_name, name.upper(), name))
         cadd('}\n')
-        iadd('\ttmp = PyFortranObject_New(f2py_%s_def,f2py_init_%s);' % (name, name))
+        iadd('\ttmp = PyFortranObject_New(f2py_{}_def,f2py_init_{});'.format(name, name))
         iadd('\tif (tmp == NULL) return NULL;')
         iadd('\tif (F2PyDict_SetItemString(d, \"%s\", tmp) == -1) return NULL;'
              % name)
@@ -140,7 +140,7 @@ def buildhooks(m):
                 dadd('--- %s' % (note))
         dadd('\\end{description}')
         ret['docs'].append(
-            '"\t/%s/ %s\\n"' % (name, ','.join(map(lambda v, d: v + d, inames, idims))))
+            '"\t/{}/ {}\\n"'.format(name, ','.join(map(lambda v, d: v + d, inames, idims))))
     ret['commonhooks'] = chooks
     ret['initcommonhooks'] = ihooks
     ret['latexdoc'] = doc[0]

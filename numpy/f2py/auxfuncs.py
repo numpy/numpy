@@ -601,7 +601,7 @@ class throw_error:
         self.mess = mess
 
     def __call__(self, var):
-        mess = '\n\n  var = %s\n  Message: %s\n' % (var, self.mess)
+        mess = f'\n\n  var = {var}\n  Message: {self.mess}\n'
         raise F2PYError(mess)
 
 
@@ -610,7 +610,7 @@ def l_and(*f):
     for i in range(len(f)):
         l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l1, ' and '.join(l2)))
+    return eval('{}:{}'.format(l1, ' and '.join(l2)))
 
 
 def l_or(*f):
@@ -618,7 +618,7 @@ def l_or(*f):
     for i in range(len(f)):
         l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l1, ' or '.join(l2)))
+    return eval('{}:{}'.format(l1, ' or '.join(l2)))
 
 
 def l_not(f):
@@ -775,7 +775,7 @@ def getrestdoc(rout):
 
 def gentitle(name):
     ln = (80 - len(name) - 6) // 2
-    return '/*%s %s %s*/' % (ln * '*', name, ln * '*')
+    return '/*{} {} {}*/'.format(ln * '*', name, ln * '*')
 
 
 def flatlist(lst):

@@ -402,7 +402,7 @@ def buildmodules(lst):
     ret = {}
     for module, name in zip(modules, mnames):
         if name in isusedby:
-            outmess('\tSkipping module "%s" which is used by %s.\n' % (
+            outmess('\tSkipping module "{}" which is used by {}.\n'.format(
                 name, ','.join('"%s"' % s for s in isusedby[name])))
         else:
             um = []

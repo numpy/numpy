@@ -852,8 +852,8 @@ def _lcm(a, b):
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
+    args_string = ', '.join([f'{arg!r}' for arg in inputs] +
+                            [f'{k}={v!r}'
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
@@ -864,7 +864,7 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    func_name = f'{public_api.__module__}.{public_api.__name__}'
     return ("no implementation found for '{}' on types that implement "
             '__array_function__: {}'.format(func_name, list(types)))
 
@@ -890,7 +890,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
+                f'out{i+1}' for i in range(ufunc.nout)),
             default=repr((None,)*ufunc.nout)
         )
 

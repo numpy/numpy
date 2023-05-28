@@ -123,7 +123,7 @@ version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
-print("%s %s" % (version, release))
+print(f"{version} {release}")
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -202,7 +202,7 @@ html_theme_options = {
   },
 }
 
-html_title = "%s v%s Manual" % (project, version)
+html_title = f"{project} v{version} Manual"
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
@@ -502,11 +502,10 @@ def linkcode_resolve(domain, info):
         linespec = ""
 
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
-           fn, linespec)
+        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
     else:
-        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
-           numpy.__version__, fn, linespec)
+        return (f"fhttps://github.com/numpy/numpy/blob/v{numpy.__version__}"
+                f"/numpy/{fn}{linespec}")
 
 from pygments.lexers import CLexer
 from pygments.lexer import inherit, bygroups

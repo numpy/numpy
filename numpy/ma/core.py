@@ -1744,7 +1744,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
         return m1
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
     if dtype1 != dtype2:
-        raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))
+        raise ValueError(f"Incompatible dtypes '{dtype1}'<>'{dtype2}'")
     if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
         newmask = np.empty(np.broadcast(m1, m2).shape, dtype1)
@@ -4086,7 +4086,7 @@ class MaskedArray(ndarray):
 
         # join keys with values and indentations
         result = ',\n'.join(
-            '{}{}={}'.format(indents[k], k, reprs[k])
+            f'{indents[k]}{k}={reprs[k]}'
             for k in keys
         )
         return prefix + result + ')'
@@ -6921,7 +6921,7 @@ class _frommethod:
             getattr(np, self.__name__, None)
         signature = self.__name__ + get_object_signature(meth)
         if meth is not None:
-            doc = """    %s\n%s""" % (
+            doc = "    {}\n{}".format(
                 signature, getattr(meth, '__doc__', None))
             return doc
 
@@ -8457,7 +8457,7 @@ class _convert2ma:
             doc = self._replace_return_type(doc, np_ret, np_ma_ret)
             # Add the signature of the function at the beginning of the doc
             if sig:
-                sig = "%s%s\n" % (self._func.__name__, sig)
+                sig = f"{self._func.__name__}{sig}\n"
             doc = sig + doc
         return doc
 
