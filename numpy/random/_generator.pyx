@@ -277,7 +277,7 @@ cdef class Generator:
         >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
         >>> rng = np.random.default_rng(entropy)
 
-        Create two new generators for example for parallel executation:
+        Create two new generators for example for parallel execution:
 
         >>> child_rng1, child_rng2 = rng.spawn(2)
 

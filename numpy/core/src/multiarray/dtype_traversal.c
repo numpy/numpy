@@ -1,5 +1,5 @@
 /*
- * This file is simlar to the low-level loops for data type transfer
+ * This file is similar to the low-level loops for data type transfer
  * in `dtype_transfer.c` but for those which only require visiting
  * a single array (and mutating it in-place).
  *
