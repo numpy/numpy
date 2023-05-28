@@ -187,6 +187,7 @@ jobs:
     if: github.event_name != 'push'
     env:
       USE_DEBUG: 1
+      USE_CYTHON3: 1
     steps:
     - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       with:
@@ -195,9 +196,6 @@ jobs:
     - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: install cython3
-      run: python -m pip install --pre cython
 
     - uses: ./.github/actions
 
