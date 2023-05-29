@@ -5245,6 +5245,8 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
     --------
     >>> np.linalg._umath_linalg.det.signature
     '(m,m)->()'
+    >>> np.matmul.signature
+    '(n?,k),(k,m?)->(n?,m?)'
     >>> np.add.signature is None
     True  # equivalent to '(),()->()'
     """))
