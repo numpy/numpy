@@ -224,14 +224,18 @@ functionality groupings. Also by "mainstream" and special-purpose namespaces:
 .. note::
 
     TBD: will we preserve ``np.lib`` or not? It only has a couple of unique
-    functions/objects, like ``Arrayterator`` (a candidate for removal) and the
-    ``stride_tricks`` subsubmodule. ``numpy.lib`` itself is not a coherent
-    namespace, and does not even have a reference guide page.
+    functions/objects, like ``Arrayterator`` (a candidate for removal), ``NumPyVersion``,
+    and the ``stride_tricks``, ``mixins`` and ``format`` subsubmodules.
+    ``numpy.lib`` itself is not a coherent namespace, and does not even have a
+    reference guide page.
 
 We will make all submodules available lazily, so that users don't have to type
 ``import numpy.xxx`` but can use ``import numpy as np; np.xxx.*``, while at the
 same time not negatively impacting the overhead of ``import numpy``. This has
-been very helpful for teaching scikit-image and SciPy.
+been very helpful for teaching scikit-image and SciPy, and it resolves a
+potential issue for Spyder users because Spyder already makes all submodules
+available - so code using the above import pattern then works in Spyder but not
+outside it.
 
 
 Reducing the number of ways to select dtypes
@@ -277,7 +281,7 @@ E.g.:
 - ``.itemset`` (already discouraged)
 - ``.newbyteorder`` (too niche)
 - ``.ptp`` (niche, use ``np.ptp`` function instead)
-- ``.repeat`` (niche, use ``np.ptp`` function instead)
+- ``.repeat`` (niche, use ``np.repeat`` function instead)
 
 
 Related Work
