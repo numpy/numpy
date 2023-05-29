@@ -193,7 +193,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.records",
     "core.shape_base",
     "core.umath",
-    "core.umath_tests",
     "distutils.armccompiler",
     "distutils.fujitsuccompiler",
     "distutils.ccompiler",
