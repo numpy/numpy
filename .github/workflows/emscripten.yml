@@ -55,7 +55,11 @@ jobs:
         run: pip install pyodide-build==$PYODIDE_VERSION
 
       - name: Build
-        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+        run: |
+          # Pyodide is still in the process of adding better/easier support for
+          # non-setup.py based builds.
+          cp pyproject.toml.setuppy pyproject.toml
+          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
