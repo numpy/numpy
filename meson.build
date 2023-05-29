@@ -4,7 +4,7 @@ project(
   # Note that the git commit hash cannot be added dynamically here
   # It is dynamically added upon import by versioneer
   # See `numpy/__init__.py`
-  version: '1.24.0.dev0',
+  version: '2.0.0.dev0',
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [
