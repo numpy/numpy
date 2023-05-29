@@ -37,26 +37,14 @@ steps:
 
 - powershell: |
     ls openblas
-    If ($(BITS) -eq 32) {
-        $env:CFLAGS = "-m32"
-        $env:LDFLAGS = "-m32"
-        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
-    }
-    Else
-    {
-        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
-    }
+    $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         $env:OPENBLAS64_ = "openblas"
     } else {
         $env:OPENBLAS = "openblas"
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    python -m pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
-
-    ls dist -r | Foreach-Object {
-        python -m pip install $_.FullName
-    }
+    python -m pip install .
   displayName: 'Build NumPy'
 
 - script: |
@@ -65,16 +53,12 @@ steps:
   displayName: 'Check OpenBLAS version'
 
 - powershell: |
-    If ($(BITS) -eq 32) {
-        $env:CFLAGS = "-m32"
-        $env:LDFLAGS = "-m32"
-        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
+    $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
+    If ( Test-Path env:TEST_MODE -eq full ) {
+      pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
+    } else {
+      pytest --pyargs numpy -m "not slow" -rsx --junitxml=junit/test-results.xml
     }
-    Else
-    {
-        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
-    }
-    python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
   displayName: 'Run NumPy Test Suite'
 
 - task: PublishTestResults@2
