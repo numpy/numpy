@@ -9,8 +9,8 @@ Used primarily to generate type name aliases.
 _all_chars = tuple(map(chr, range(256)))
 _ascii_upper = _all_chars[65:65+26]
 _ascii_lower = _all_chars[97:97+26]
-LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
-UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
+LOWER_TABLE = _all_chars[:65] + _ascii_lower + _all_chars[65+26:]
+UPPER_TABLE = _all_chars[:97] + _ascii_upper + _all_chars[97+26:]
 
 
 def english_lower(s):
