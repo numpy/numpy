@@ -181,6 +181,14 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     else if (to->type_num == NPY_VOID) {
         res = PyArray_GetGenericToVoidCastingImpl();
     }
+    /*
+     * Reject non-legacy dtypes. They need to use the new API to add casts and
+     * doing that would have added a cast to the from descriptor's castingimpl
+     * dict
+     */
+    else if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
+        Py_RETURN_NONE;
+    }
     else if (from->type_num < NPY_NTYPES && to->type_num < NPY_NTYPES) {
         /* All builtin dtypes have their casts explicitly defined. */
         PyErr_Format(PyExc_RuntimeError,
@@ -189,10 +197,6 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         return NULL;
     }
     else {
-        /* Reject non-legacy dtypes (they need to use the new API) */
-        if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
-            Py_RETURN_NONE;
-        }
         if (from != to) {
             /* A cast function must have been registered */
             PyArray_VectorUnaryFunc *castfunc = PyArray_GetCastFunc(
