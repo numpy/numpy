@@ -41,6 +41,12 @@ from numpy.core.multiarray import _get_ndarray_c_version
 from datetime import timedelta, datetime
 
 
+def assert_arg_sorted(arr, arg):
+    # resulting array should be sorted and arg values should be unique
+    assert_equal(arr[arg], np.sort(arr))
+    assert_equal(np.sort(arg), np.arange(len(arg)))
+
+
 def _aligned_zeros(shape, dtype=float, order="C", align=None):
     """
     Allocate a new ndarray with aligned memory.
@@ -9989,3 +9995,35 @@ def test_sort_uint():
 
 def test_private_get_ndarray_c_version():
     assert isinstance(_get_ndarray_c_version(), int)
+
+
+@pytest.mark.parametrize("N", np.arange(1, 512))
+@pytest.mark.parametrize("dtype", ['e', 'f', 'd'])
+def test_argsort_float(N, dtype):
+    np.random.seed(42)
+    # (1) Regular data with a few nan: doesn't use vectorized sort
+    arr = -0.5 + np.random.sample(N).astype(dtype)
+    arr[np.random.choice(arr.shape[0], 3)] = np.nan
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+    # random data with inf at the end of array
+    # See: https://github.com/intel/x86-simd-sort/pull/39
+    arr = -0.5 + np.random.sample(N).astype(dtype)
+    arr[N-1] = np.inf
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+
+@pytest.mark.parametrize("N", np.arange(1, 512))
+@pytest.mark.parametrize("dtype", ['h', 'H', 'i', 'I', 'l', 'L'])
+def test_argsort_int(N, dtype):
+    # Random data with MAX and MIN sprinkled
+    minv = np.iinfo(dtype).min
+    maxv = np.iinfo(dtype).max
+    arr = np.random.randint(low=minv, high=maxv-1, size=N, dtype=dtype)
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+    # random data with inf at the end of array
+    # See: https://github.com/intel/x86-simd-sort/pull/39
+    arr = np.random.randint(low=minv, high=maxv-1, size=N, dtype=dtype)
+    arr[N-1] = maxv
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
