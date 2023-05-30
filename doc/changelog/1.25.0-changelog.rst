@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 145 people contributed to this release.  People with a "+" by their
+A total of 148 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -10,6 +10,7 @@ names contributed a patch for the first time.
 * @pierreloicq +
 * @pkubaj +
 * @pmvz +
+* @pratiklp00 +
 * @tajbinjohn +
 * A Chethan Reddy +
 * Aaron Meurer
@@ -24,6 +25,7 @@ names contributed a patch for the first time.
 * Berke Kocaoğlu +
 * Bob Eldering
 * Brian Soto
+* Brian Walshe +
 * Brock Mendel
 * Charles Harris
 * Charles Young +
@@ -114,6 +116,7 @@ names contributed a patch for the first time.
 * Paulo Almeida +
 * Pedro Lameiras +
 * Peter Hawkins
+* Pey Lian Lim
 * Peyton Murray +
 * Philip Holzmann +
 * Pierre Blanchard +
@@ -154,7 +157,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 511 pull requests were merged for this release.
+A total of 530 pull requests were merged for this release.
 
 * `#10615 <https://github.com/numpy/numpy/pull/10615>`__: DEP: deprecate scalar conversions for arrays with ndim > 0
 * `#16604 <https://github.com/numpy/numpy/pull/16604>`__: BUG: SWIG overloaded long functions on pyfragments.swg will seg...
@@ -667,3 +670,22 @@ A total of 511 pull requests were merged for this release.
 * `#23794 <https://github.com/numpy/numpy/pull/23794>`__: API: add aliases for object and void dtype classes to dtype API
 * `#23797 <https://github.com/numpy/numpy/pull/23797>`__: TST: adjust tests for cython3, pypy
 * `#23802 <https://github.com/numpy/numpy/pull/23802>`__: MAINT: Bump actions/setup-python from 4.6.0 to 4.6.1
+* `#23840 <https://github.com/numpy/numpy/pull/23840>`__: REL: Prepare for the NumPy 1.25.0rc1 release
+* `#23872 <https://github.com/numpy/numpy/pull/23872>`__: DOC: Try to clarify the `NPY_TARGET_VERSION` release note
+* `#23875 <https://github.com/numpy/numpy/pull/23875>`__: MAINT: Update ``download-wheels``.
+* `#23876 <https://github.com/numpy/numpy/pull/23876>`__: NEP: Fix NEP 53 file format and minor formatting issue
+* `#23877 <https://github.com/numpy/numpy/pull/23877>`__: DOC: update distutils migration guide
+* `#23882 <https://github.com/numpy/numpy/pull/23882>`__: TST: Add tests for np.argsort (#23846)
+* `#23888 <https://github.com/numpy/numpy/pull/23888>`__: TYP,DOC: Annotate and document the ``metadata`` parameter of...
+* `#23905 <https://github.com/numpy/numpy/pull/23905>`__: MAINT: Use ``--allow-downgrade`` option for rtools.
+* `#23932 <https://github.com/numpy/numpy/pull/23932>`__: BUG: Allow np.info on non-hashable objects with a dtype
+* `#23933 <https://github.com/numpy/numpy/pull/23933>`__: MAINT: Disable SIMD version of float64 sin and cos
+* `#23945 <https://github.com/numpy/numpy/pull/23945>`__: BUG: Fixup for win64 fwrite issue
+* `#23946 <https://github.com/numpy/numpy/pull/23946>`__: BUG: Fix NpyIter cleanup in einsum error path
+* `#23948 <https://github.com/numpy/numpy/pull/23948>`__: DOC: Update required C++ version in building.rst (and copy-edit).
+* `#23949 <https://github.com/numpy/numpy/pull/23949>`__: BUG:Fix for call to 'vec_st' is ambiguous
+* `#23951 <https://github.com/numpy/numpy/pull/23951>`__: MAINT: Upgrade install-rtools version
+* `#23955 <https://github.com/numpy/numpy/pull/23955>`__: ENH: Add array API standard v2022.12 support to numpy.array_api
+* `#23956 <https://github.com/numpy/numpy/pull/23956>`__: BUG: Fix AVX2 intrinsic npyv_store2_till_s64 on MSVC > 19.29
+* `#23957 <https://github.com/numpy/numpy/pull/23957>`__: ENH: add copy parameter for api.reshape function
+* `#23963 <https://github.com/numpy/numpy/pull/23963>`__: TEST: change subprocess call to capture stderr too
