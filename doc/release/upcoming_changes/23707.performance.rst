@@ -1,0 +1,7 @@
+Faster ``np.argsort`` on AVX-512 enabled processors
+---------------------------------------------------
+32-bit and 64-bit quicksort algorithm for np.argsort gain up to 6x speed up on
+processors that support AVX-512 instruction set.
+
+Thanks to `Intel corporation <https://open.intel.com/>`_ for sponsoring this
+work.
