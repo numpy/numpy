@@ -1875,6 +1875,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
+    * Custom converters may receive unexpected values due to dtype
+      discovery. 
 
     References
     ----------
