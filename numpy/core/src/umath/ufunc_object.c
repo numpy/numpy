@@ -5157,8 +5157,8 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
-                        char *types, int ntypes,
+PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void *const *data,
+                        const char *types, int ntypes,
                         int nin, int nout, int identity,
                         const char *name, const char *doc, int unused)
 {
@@ -5168,8 +5168,8 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
-                                     char *types, int ntypes,
+PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void *const *data,
+                                     const char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
                                      int unused, const char *signature)
@@ -5181,8 +5181,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 
 /*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, void **data,
-                                     char *types, int ntypes,
+PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, void *const *data,
+                                     const char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
                                      const int unused, const char *signature,
@@ -5287,7 +5287,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
         }
     }
 
-    char *curr_types = ufunc->types;
+    const char *curr_types = ufunc->types;
     for (int i = 0; i < ntypes * (nin + nout); i += nin + nout) {
         /*
          * Add all legacy wrapping loops here. This is normally not necessary,

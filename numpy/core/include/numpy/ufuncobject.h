@@ -109,7 +109,7 @@ typedef struct _tagPyUFuncObject {
         /* Array of one-dimensional core loops */
         PyUFuncGenericFunction *functions;
         /* Array of funcdata that gets passed into the functions */
-        void **data;
+        void *const *data;
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
@@ -120,7 +120,7 @@ typedef struct _tagPyUFuncObject {
         const char *name;
 
         /* Array of type numbers, of size ('nargs' * 'ntypes') */
-        char *types;
+        const char *types;
 
         /* Documentation string */
         const char *doc;
