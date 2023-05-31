@@ -115,7 +115,7 @@ wheels_upload_task:
     export IS_PUSH="false"
 
     # cron job
-    if [[ "$CIRRUS_CRON" == "weekly" ]]; then
+    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
       export IS_SCHEDULE_DISPATCH="true"
     fi
 
