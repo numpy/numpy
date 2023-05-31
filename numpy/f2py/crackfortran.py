@@ -613,15 +613,15 @@ beginpattern90 = re.compile(
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, r'.*'), re.I), 'end'
+    beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
 endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
          r'critical|enum|team)'
 endifpattern = re.compile(
-    beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
+    beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
 #
 moduleprocedures = r'module\s*procedure'
 moduleprocedurepattern = re.compile(
-    beforethisafter % ('', moduleprocedures, moduleprocedures, r'.*'), re.I), \
+    beforethisafter % ('', moduleprocedures, moduleprocedures, '.*'), re.I), \
     'moduleprocedure'
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'

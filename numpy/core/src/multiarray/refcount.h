@@ -24,7 +24,4 @@ PyArray_XDECREF(PyArrayObject *mp);
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj);
 
-NPY_NO_EXPORT void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
-
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_ */

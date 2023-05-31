@@ -354,7 +354,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                 npyv_storen_till_f32(dst, sdst, len, cos);
             }
         }
-        if (simd_maski != ((1 << vstep) - 1)) {
+        if (simd_maski != (npy_uint64)((1 << vstep) - 1)) {
             float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[npyv_nlanes_f32];
             npyv_storea_f32(ip_fback, x_in);
 

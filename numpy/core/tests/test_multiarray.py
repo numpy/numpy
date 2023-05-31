@@ -5361,7 +5361,7 @@ class TestIO:
         def fail(*args, **kwargs):
             raise OSError('Can not tell or seek')
 
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             f.seek = fail
             f.tell = fail
             assert_raises(OSError, np.fromfile, f, dtype=x.dtype)
@@ -5369,7 +5369,7 @@ class TestIO:
     def test_io_open_unbuffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             y = np.fromfile(f, dtype=x.dtype)
             assert_array_equal(y, x.flat)
 
@@ -5396,7 +5396,7 @@ class TestIO:
     def test_io_open_buffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=-1) as f:
+        with open(tmp_filename, 'rb', buffering=-1) as f:
             y = np.fromfile(f, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 

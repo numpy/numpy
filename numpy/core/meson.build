@@ -930,7 +930,6 @@ python_sources = [
   'shape_base.py',
   'shape_base.pyi',
   'umath.py',
-  'umath_tests.py',
 ]
 
 py.install_sources(

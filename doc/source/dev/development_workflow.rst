@@ -260,7 +260,7 @@ windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
 files. You can access them from the Summary page of the "Wheel builder"
 Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
 Additionally, the wheels will be uploaded to
-https://anaconda.org/scipy-wheels-nightly/ on the following conditions:
+https://anaconda.org/scientific-python-nightly-wheels/ on the following conditions:
 
 - by a weekly cron job or
 - if the github action or travis build has been manually triggered, which requires appropriate permissions

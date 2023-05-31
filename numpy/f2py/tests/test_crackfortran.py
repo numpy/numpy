@@ -135,6 +135,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces("a 'b c' 'd e'") == "a 'b@_@c' 'd@_@e'"
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
+
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -244,6 +245,7 @@ class TestModuleDeclaration:
         assert len(mod) == 1
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
+
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
@@ -268,6 +270,7 @@ class TestFortranReader(util.F2PyTest):
         mod = crackfortran.crackfortran([str(f_path)])
         assert mod[0]['name'] == 'foo'
 
+
 class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
@@ -277,6 +280,7 @@ class TestUnicodeComment(util.F2PyTest):
     )
     def test_encoding_comment(self):
         self.module.foo(3)
+
 
 class TestNameArgsPatternBacktracking:
     @pytest.mark.parametrize(
@@ -321,3 +325,13 @@ class TestFunctionReturn(util.F2PyTest):
     def test_function_rettype(self):
         # gh-23598
         assert self.module.intproduct(3, 4) == 12
+
+
+class TestFortranGroupCounters(util.F2PyTest):
+    def test_end_if_comment(self):
+        # gh-23533
+        fpath = util.getpath("tests", "src", "crackfortran", "gh23533.f")
+        try:
+            crackfortran.crackfortran([str(fpath)])
+        except Exception as exc:
+            assert False, f"'crackfortran.crackfortran' raised an exception {exc}"

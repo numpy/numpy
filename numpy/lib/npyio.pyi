@@ -239,7 +239,7 @@ def genfromtxt(
     *,
     ndmin: L[0, 1, 2] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[float64]: ...
+) -> NDArray[Any]: ...
 @overload
 def genfromtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],

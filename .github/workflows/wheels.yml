@@ -102,7 +102,7 @@ jobs:
           fetch-depth: 0
 
       # Used to push the built wheels
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
           python-version: "3.x"
 
@@ -118,7 +118,7 @@ jobs:
         if: ${{ matrix.buildplat[1] == 'win32' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f # v2.12.3
+        uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8 # v2.13.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
@@ -150,7 +150,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
@@ -184,7 +184,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
@@ -232,7 +232,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy

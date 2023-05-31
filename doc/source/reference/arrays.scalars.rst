@@ -337,8 +337,6 @@ are also provided.
 .. note that these are documented with ..attribute because that is what
    autoclass does for aliases under the hood.
 
-.. autoclass:: numpy.bool8
-
 .. attribute:: int8
                int16
                int32

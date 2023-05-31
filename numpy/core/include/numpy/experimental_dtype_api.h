@@ -307,7 +307,9 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 /* Datetime/Timedelta */
 #define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
 #define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
-
+/* Object/Void */
+#define PyArray_ObjectDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[42])
+#define PyArray_VoidDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[43])
 
 /*
  * ********************************

@@ -328,12 +328,14 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 NPY_cast_info *cast_info);
 
 NPY_NO_EXPORT int
-mapiter_trivial_get(PyArrayObject *self, PyArrayObject *ind,
-                       PyArrayObject *result);
+mapiter_trivial_get(
+        PyArrayObject *self, PyArrayObject *ind, PyArrayObject *result,
+        int is_aligned, NPY_cast_info *cast_info);
 
 NPY_NO_EXPORT int
-mapiter_trivial_set(PyArrayObject *self, PyArrayObject *ind,
-                       PyArrayObject *result);
+mapiter_trivial_set(
+        PyArrayObject *self, PyArrayObject *ind, PyArrayObject *result,
+        int is_aligned, NPY_cast_info *cast_info);
 
 NPY_NO_EXPORT int
 mapiter_get(

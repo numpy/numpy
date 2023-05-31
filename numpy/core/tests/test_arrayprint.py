@@ -258,8 +258,7 @@ class TestArray2String:
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
-
-    def test_structure_format(self):
+    def test_structure_format_mixed(self):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
         assert_equal(np.array2string(x),
@@ -301,6 +300,7 @@ class TestArray2String:
              ( 'NaT',) ( 'NaT',) ( 'NaT',)]""")
         )
 
+    def test_structure_format_int(self):
         # See #8160
         struct_int = np.array([([1, -1],), ([123, 1],)], dtype=[('B', 'i4', 2)])
         assert_equal(np.array2string(struct_int),
@@ -310,6 +310,7 @@ class TestArray2String:
         assert_equal(np.array2string(struct_2dint),
                 "[([[ 0,  1], [ 2,  3]],) ([[12,  0], [ 0,  0]],)]")
 
+    def test_structure_format_float(self):
         # See #8172
         array_scalar = np.array(
                 (1., 2.1234567890123456789, 3.), dtype=('f8,f8,f8'))

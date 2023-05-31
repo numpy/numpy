@@ -148,7 +148,7 @@ class NpzFile(Mapping):
 
     Parameters
     ----------
-    fid : file or str
+    fid : file, str, or pathlib.Path
         The zipped archive to open. This is either a file-like object
         or a string containing the path to the archive.
     own_fid : bool, optional
@@ -260,7 +260,7 @@ class NpzFile(Mapping):
             else:
                 return self.zip.read(key)
         else:
-            raise KeyError("%s is not a file in the archive" % key)
+            raise KeyError(f"{key} is not a file in the archive")
 
     def __contains__(self, key):
         return (key in self._files or key in self.files)
@@ -564,7 +564,7 @@ def savez(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str or file
+    file : file, str, or pathlib.Path
         Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
         ``.npz`` extension will be appended to the filename if it is not
@@ -657,7 +657,7 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str or file
+    file : file, str, or pathlib.Path
         Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
         ``.npz`` extension will be appended to the filename if it is not
@@ -824,7 +824,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     Parameters
     ----------
-    fname : str or file object
+    fname : file, str, or pathlib.Path
         The filename or the file to be read.
     delimiter : str, optional
         Field delimiter of the fields in line of the file.
@@ -1395,7 +1395,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     Parameters
     ----------
-    fname : filename or file handle
+    fname : filename, file handle or pathlib.Path
         If the filename ends in ``.gz``, the file is automatically saved in
         compressed gzip format.  `loadtxt` understands gzipped files
         transparently.
@@ -1646,7 +1646,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Parameters
     ----------
-    file : path or file
+    file : file, str, or pathlib.Path
         Filename or file object to read.
 
         .. versionchanged:: 1.22.0

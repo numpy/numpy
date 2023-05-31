@@ -177,7 +177,7 @@ extern void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
 
 /*
  * Fills an array with cnt random npy_bool between off and off + rng
- * inclusive. It is assumed tha npy_bool as the same size as npy_uint8.
+ * inclusive. It is assumed that npy_bool is the same size as npy_uint8.
  */
 extern void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
                            npy_bool *out, rk_state *state);

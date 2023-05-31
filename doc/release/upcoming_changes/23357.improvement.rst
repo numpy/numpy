@@ -1,9 +1,0 @@
-Explicitly show keys of .npz file in repr
------------------------------------------
-``NpzFile`` shows keys of loaded .npz file when printed.
-
-.. code-block:: python
-
-   >>> npzfile = np.load('arr.npz')
-   >>> npzfile
-   NpzFile 'arr.npz' with keys arr_0, arr_1, arr_2, arr_3, arr_4...

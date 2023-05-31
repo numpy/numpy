@@ -1029,7 +1029,7 @@ def configuration(parent_package='',top_path=None):
                          extra_info=extra_info)
 
     #######################################################################
-    #                        umath_tests module                           #
+    #                       _umath_tests module                           #
     #######################################################################
 
     config.add_extension('_umath_tests', sources=[

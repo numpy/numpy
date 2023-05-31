@@ -315,10 +315,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
-        PyObject *override_obj;
-        PyObject *override_array_ufunc;
+        PyObject *override_obj = NULL;
+        PyObject *override_array_ufunc = NULL;
 
-        override_obj = NULL;
         *result = NULL;
 
         /* Choose an overriding argument */

@@ -5,7 +5,6 @@ import os
 import threading
 import time
 import warnings
-import io
 import re
 import pytest
 from pathlib import Path
@@ -231,6 +230,17 @@ class TestSavezLoad(RoundtripTest):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
+
+
+    def test_tuple_getitem_raises(self):
+        # gh-23748
+        a = np.array([1, 2, 3])
+        f = BytesIO()
+        np.savez(f, a=a)
+        f.seek(0)
+        l = np.load(f)
+        with pytest.raises(KeyError, match="(1, 2)"):
+            l[1, 2]
 
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
@@ -460,11 +470,12 @@ class TestSaveTxt:
         assert_equal(c.read(),
                      asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
 
-    def test_file_roundtrip(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_file_roundtrip(self, filename_type):
         with temppath() as name:
             a = np.array([(1, 2), (3, 4)])
-            np.savetxt(name, a)
-            b = np.loadtxt(name)
+            np.savetxt(filename_type(name), a)
+            b = np.loadtxt(filename_type(name))
             assert_array_equal(a, b)
 
     def test_complex_arrays(self):
@@ -689,7 +700,7 @@ class LoadTxtBase:
         # test native string converters enabled by setting an encoding
         utf8 = b'\xcf\x96'.decode('UTF-8')
         with temppath() as path:
-            with io.open(path, 'wt', encoding='UTF-8') as f:
+            with open(path, 'wt', encoding='UTF-8') as f:
                 f.write(utf8)
             x = self.loadfunc(path, dtype=np.str_,
                               converters={0: lambda x: x + 't'},
@@ -2252,7 +2263,7 @@ M   33  21.99
 
         # skip test if cannot encode utf8 test string with preferred
         # encoding. The preferred encoding is assumed to be the default
-        # encoding of io.open. Will need to change this for PyTest, maybe
+        # encoding of open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
             encoding = locale.getpreferredencoding()
@@ -2262,7 +2273,7 @@ M   33  21.99
                         'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
-            with io.open(path, "wt") as f:
+            with open(path, "wt") as f:
                 f.write("norm1,norm2,norm3\n")
                 f.write("norm1," + latin1 + ",norm3\n")
                 f.write("test1,testNonethe" + utf8 + ",test3\n")
@@ -2556,10 +2567,10 @@ class TestPathUsage:
                 break_cycles()
 
     @pytest.mark.xfail(IS_WASM, reason="memmap doesn't work correctly")
-    def test_save_load_memmap_readwrite(self):
-        # Test that pathlib.Path instances can be written mem-mapped.
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_save_load_memmap_readwrite(self, filename_type):
         with temppath(suffix='.npy') as path:
-            path = Path(path)
+            path = filename_type(path)
             a = np.array([[1, 2], [3, 4]], int)
             np.save(path, a)
             b = np.load(path, mmap_mode='r+')
@@ -2572,35 +2583,37 @@ class TestPathUsage:
             data = np.load(path)
             assert_array_equal(data, a)
 
-    def test_savez_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_savez_load(self, filename_type):
         with temppath(suffix='.npz') as path:
-            path = Path(path)
+            path = filename_type(path)
             np.savez(path, lab='place holder')
             with np.load(path) as data:
                 assert_array_equal(data['lab'], 'place holder')
 
-    def test_savez_compressed_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_savez_compressed_load(self, filename_type):
         with temppath(suffix='.npz') as path:
-            path = Path(path)
+            path = filename_type(path)
             np.savez_compressed(path, lab='place holder')
             data = np.load(path)
             assert_array_equal(data['lab'], 'place holder')
             data.close()
 
-    def test_genfromtxt(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_genfromtxt(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
+            path = filename_type(path)
             a = np.array([(1, 2), (3, 4)])
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
-    def test_recfromtxt(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_recfromtxt(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
+            path = filename_type(path)
+            with open(path, 'w') as f:
                 f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
@@ -2610,10 +2623,11 @@ class TestPathUsage:
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
-    def test_recfromcsv(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_recfromcsv(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
+            path = filename_type(path)
+            with open(path, 'w') as f:
                 f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)

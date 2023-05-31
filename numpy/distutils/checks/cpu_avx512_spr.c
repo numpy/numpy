@@ -15,6 +15,10 @@
 
 int main(int argc, char **argv)
 {
+/* clang has a bug regarding our spr coode, see gh-23730. */
+#if __clang__
+#error
+#endif
     __m512h a = _mm512_loadu_ph((void*)argv[argc-1]);
     __m512h temp = _mm512_fmadd_ph(a, a, a);
     _mm512_storeu_ph((void*)(argv[argc-1]), temp);

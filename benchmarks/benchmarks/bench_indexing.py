@@ -1,4 +1,5 @@
-from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
+from .common import (
+    Benchmark, get_square_, get_indexes_, get_indexes_rand_, TYPES1)
 
 from os.path import join as pjoin
 import shutil
@@ -8,27 +9,49 @@ from tempfile import mkdtemp
 
 
 class Indexing(Benchmark):
-    params = [["indexes_", "indexes_rand_"],
+    params = [TYPES1 + ["object", "O,i"],
+              ["indexes_", "indexes_rand_"],
               ['I', ':,I', 'np.ix_(I, I)'],
               ['', '=1']]
-    param_names = ['indexes', 'sel', 'op']
+    param_names = ['dtype', 'indexes', 'sel', 'op']
 
-    def setup(self, indexes, sel, op):
+    def setup(self, dtype, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': get_squares_(),
+        ns = {'a': get_square_(dtype),
               'np': np,
               'indexes_': get_indexes_(),
               'indexes_rand_': get_indexes_rand_()}
 
-        code = "def run():\n    for a in squares_.values(): a[%s]%s"
+        code = "def run():\n    a[%s]%s"
         code = code % (sel, op)
 
         exec(code, ns)
         self.func = ns['run']
 
-    def time_op(self, indexes, sel, op):
+    def time_op(self, dtype, indexes, sel, op):
         self.func()
+
+
+class IndexingWith1DArr(Benchmark):
+    # Benchmark similar to the take one
+    params = [
+        [(1000,), (1000, 1), (1000, 2), (2, 1000, 1), (1000, 3)],
+        TYPES1 + ["O", "i,O"]]
+    param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        self.arr = np.ones(shape, dtype)
+        self.index = np.arange(1000)
+        # index the second dimension:
+        if len(shape) == 3:
+            self.index = (slice(None), self.index)
+
+    def time_getitem_ordered(self, shape, dtype):
+        self.arr[self.index]
+
+    def time_setitem_ordered(self, shape, dtype):
+        self.arr[self.index] = 0
 
 
 class ScalarIndexing(Benchmark):

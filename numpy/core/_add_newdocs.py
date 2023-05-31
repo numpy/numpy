@@ -4808,7 +4808,8 @@ add_newdoc('numpy.core.umath', 'geterrobj',
 
     Examples
     --------
-    >>> np.geterrobj()  # first get the defaults
+    >>> orig_errobj = np.geterrobj()[:]  # get a copy of the errobj
+    >>> orig_errobj
     [8192, 521, None]
 
     >>> def err_handler(type, flag):
@@ -4818,7 +4819,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     >>> old_err = np.seterr(divide='raise')
     >>> old_handler = np.seterrcall(err_handler)
     >>> np.geterrobj()
-    [8192, 521, <function err_handler at 0x91dcaac>]
+    [20000, 522, <function err_handler at 0x...>]
 
     >>> old_err = np.seterr(all='ignore')
     >>> np.base_repr(np.geterrobj()[1], 8)
@@ -4827,6 +4828,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     ...                     invalid='print')
     >>> np.base_repr(np.geterrobj()[1], 8)
     '4351'
+    >>> old_errobj = np.seterrobj(orig_errobj)  # restore the error state
 
     """)
 
@@ -4871,8 +4873,8 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
     Examples
     --------
-    >>> old_errobj = np.geterrobj()  # first get the defaults
-    >>> old_errobj
+    >>> orig_errobj = np.geterrobj()[:]  # get a copy of the errobj
+    >>> orig_errobj
     [8192, 521, None]
 
     >>> def err_handler(type, flag):
@@ -4883,9 +4885,10 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     >>> np.base_repr(12, 8)  # int for divide=4 ('print') and over=1 ('warn')
     '14'
     >>> np.geterr()
-    {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
+    {'divide': 'print', 'over': 'warn', 'under': 'ignore', 'invalid': 'ignore'}
     >>> np.geterrcall() is err_handler
     True
+    >>> old_errobj = np.seterrobj(orig_errobj)  # restore the original state
 
     """)
 
@@ -5243,10 +5246,10 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
     Examples
     --------
-    >>> np.core.umath_tests.matrix_multiply.signature
-    '(m,n),(n,p)->(m,p)'
     >>> np.linalg._umath_linalg.det.signature
     '(m,m)->()'
+    >>> np.matmul.signature
+    '(n?,k),(k,m?)->(n?,m?)'
     >>> np.add.signature is None
     True  # equivalent to '(),()->()'
     """))
@@ -6009,8 +6012,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     >>> # '=' is the byteorder
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> dt = np.dtype(native_code + 'i2')
     >>> dt.byteorder
     '='
@@ -6449,8 +6452,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     --------
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> native_dt = np.dtype(native_code+'i2')
     >>> swapped_dt = np.dtype(swapped_code+'i2')
     >>> native_dt.newbyteorder('S') == swapped_dt
