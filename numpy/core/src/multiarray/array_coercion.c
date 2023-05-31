@@ -543,7 +543,9 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     int res = cast_raw_scalar_item(tmp_descr, data, descr, item);
 
     if (PyDataType_REFCHK(tmp_descr)) {
-        PyArray_ClearBuffer(tmp_descr, data, 0, 1, 1);
+        if (PyArray_ClearBuffer(tmp_descr, data, 0, 1, 1) < 0) {
+            res = -1;
+        }
     }
 
     PyObject_Free(data);
