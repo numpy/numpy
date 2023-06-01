@@ -1311,10 +1311,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
-    elif np._using_numpy2_behavior():
-        return tuple(outvals)
-    else:
-        return outvals
+    return tuple(outvals)
 
 
 def _diff_dispatcher(a, n=None, axis=None, prepend=None, append=None):

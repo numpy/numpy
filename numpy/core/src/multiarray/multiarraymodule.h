@@ -1,8 +1,6 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 
-NPY_VISIBILITY_HIDDEN extern int npy_numpy2_behavior;
-
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_current_allocator;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array_function;

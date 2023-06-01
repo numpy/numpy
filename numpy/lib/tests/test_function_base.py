@@ -1219,10 +1219,7 @@ class TestGradient:
 
     def test_return_type(self):
         res = np.gradient(([1, 2], [2, 3]))
-        if np._using_numpy2_behavior():
-            assert type(res) is tuple
-        else:
-            assert type(res) is list
+        assert type(res) is tuple
 
 
 class TestAngle:
