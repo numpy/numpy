@@ -21,7 +21,7 @@ on:
     #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
-    - cron: "42 2 ? * SUN,WED *"
+    - cron: "42 2 * * SUN,WED"
   push:
   pull_request:
     types: [labeled, opened, synchronize, reopened]
