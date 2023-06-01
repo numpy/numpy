@@ -69,7 +69,8 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     *legacy* and sanity checks.
     """
 
-    options = {k: v for k, v in locals().items() if v is not None}
+    optitems = list(locals().items())
+    options = {k: v for k, v in optitems if v is not None}
 
     if suppress is not None:
         options['suppress'] = bool(suppress)
