@@ -15,8 +15,8 @@ Highlights are:
 - Object arrays are now supported in einsum
 - Support for inplace matrix multiplication (``@=``).
 
-We will be releasing a NumPy 1.26 when Python 12 comes out. That is needed
-because distutils has been dropped by Python 12 and we will be switching to using
+We will be releasing a NumPy 1.26 when Python 3.12 comes out. That is needed
+because distutils has been dropped by Python 3.12 and we will be switching to using
 meson for future builds. The next mainline release will be NumPy 2.0.0. We plan
 that the 2.0 series will still support downstream projects built against earlier
 versions of NumPy.
