@@ -9998,32 +9998,36 @@ def test_private_get_ndarray_c_version():
 
 
 @pytest.mark.parametrize("N", np.arange(1, 512))
-@pytest.mark.parametrize("dtype", ['e', 'f', 'd'])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_argsort_float(N, dtype):
-    np.random.seed(42)
+    rnd = np.random.RandomState(116112)
     # (1) Regular data with a few nan: doesn't use vectorized sort
-    arr = -0.5 + np.random.sample(N).astype(dtype)
-    arr[np.random.choice(arr.shape[0], 3)] = np.nan
+    arr = -0.5 + rnd.rand(N).astype(dtype)
+    arr[rnd.choice(arr.shape[0], 3)] = np.nan
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
-    # random data with inf at the end of array
+    # (2) Random data with inf at the end of array
     # See: https://github.com/intel/x86-simd-sort/pull/39
-    arr = -0.5 + np.random.sample(N).astype(dtype)
+    arr = -0.5 + rnd.rand(N).astype(dtype)
     arr[N-1] = np.inf
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
 
-@pytest.mark.parametrize("N", np.arange(1, 512))
-@pytest.mark.parametrize("dtype", ['h', 'H', 'i', 'I', 'l', 'L'])
+@pytest.mark.parametrize("N", np.arange(2, 512))
+@pytest.mark.parametrize("dtype", [np.int32, np.uint32, np.int64, np.uint64])
 def test_argsort_int(N, dtype):
-    # Random data with MAX and MIN sprinkled
+    rnd = np.random.RandomState(1100710816)
+    # (1) random data with min and max values
     minv = np.iinfo(dtype).min
     maxv = np.iinfo(dtype).max
-    arr = np.random.randint(low=minv, high=maxv-1, size=N, dtype=dtype)
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+    i, j = rnd.choice(N, 2, replace=False)
+    arr[i] = minv
+    arr[j] = maxv
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
-    # random data with inf at the end of array
+    # (2) random data with max value at the end of array
     # See: https://github.com/intel/x86-simd-sort/pull/39
-    arr = np.random.randint(low=minv, high=maxv-1, size=N, dtype=dtype)
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
     arr[N-1] = maxv
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
