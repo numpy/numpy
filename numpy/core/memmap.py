@@ -22,7 +22,6 @@ mode_equivalents = {
 @set_module('numpy')
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
-    
     Memory-mapped files are used for accessing small segments of large files
     on disk, without reading the entire file into memory.  NumPy's
     memmap's are array-like objects.  This differs from Python's ``mmap``
@@ -82,7 +81,7 @@ class memmap(ndarray):
         will be 1-D with the number of elements determined by file size
         and data-type.
 
-        .. versionchanged:: 1.25
+        .. versionchanged:: 2.0
          The shape parameter can now be any integer sequence type, previously
          types were limited to tuple and int.
     

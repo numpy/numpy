@@ -6,9 +6,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile
 
 from numpy import (
-    memmap, sum, average, prod, ndarray, isscalar, add, subtract, multiply, 
-    array
-    )
+    memmap, sum, average, prod, ndarray, isscalar, add, subtract, multiply)
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
@@ -220,4 +218,4 @@ class TestMemmap:
         memmap(self.tmpfp, shape=3, mode='w+')
         memmap(self.tmpfp, shape=self.shape, mode='w+')
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
-        memmap(self.tmpfp, shape=array(self.shape), mode='w+')
+        memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
