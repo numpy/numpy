@@ -821,6 +821,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
           dtype=np.float64, encoding="bytes"):
     r"""
     Read a NumPy array from a text file.
+    This is a helper function for loadtxt.
 
     Parameters
     ----------
@@ -881,30 +882,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     -------
     ndarray
         NumPy array.
-
-    Examples
-    --------
-    First we create a file for the example.
-
-    >>> s1 = '1.0,2.0,3.0\n4.0,5.0,6.0\n'
-    >>> with open('example1.csv', 'w') as f:
-    ...     f.write(s1)
-    >>> a1 = read_from_filename('example1.csv')
-    >>> a1
-    array([[1., 2., 3.],
-           [4., 5., 6.]])
-
-    The second example has columns with different data types, so a
-    one-dimensional array with a structured data type is returned.
-    The tab character is used as the field delimiter.
-
-    >>> s2 = '1.0\t10\talpha\n2.3\t25\tbeta\n4.5\t16\tgamma\n'
-    >>> with open('example2.tsv', 'w') as f:
-    ...     f.write(s2)
-    >>> a2 = read_from_filename('example2.tsv', delimiter='\t')
-    >>> a2
-    array([(1. , 10, b'alpha'), (2.3, 25, b'beta'), (4.5, 16, b'gamma')],
-          dtype=[('f0', '<f8'), ('f1', 'u1'), ('f2', 'S5')])
     """
     # Handle special 'bytes' keyword for encoding
     byte_converters = False
