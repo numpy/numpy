@@ -1,0 +1,3 @@
+* ``np.gradient()`` now returns a tuple rather than list making the
+  return value immutable.
+

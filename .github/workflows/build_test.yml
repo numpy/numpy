@@ -289,26 +289,6 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  numpy2_flag:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      # Test for numpy-2.0 feature-flagged behavior.
-      NPY_NUMPY_2_BEHAVIOR: 1
-      # Using the future "weak" state doesn't pass tests
-      # currently unfortunately
-      NPY_PROMOTION_STATE: legacy
-    steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
   no_openblas:
     needs: [smoke_test]
     runs-on: ubuntu-latest
