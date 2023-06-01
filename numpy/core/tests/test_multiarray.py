@@ -10002,7 +10002,7 @@ def test_private_get_ndarray_c_version():
 def test_argsort_float(N, dtype):
     rnd = np.random.RandomState(116112)
     # (1) Regular data with a few nan: doesn't use vectorized sort
-    arr = -0.5 + rnd.rand(N).astype(dtype)
+    arr = -0.5 + rnd.random(N).astype(dtype)
     arr[rnd.choice(arr.shape[0], 3)] = np.nan
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
