@@ -1,5 +1,5 @@
 from contextlib import nullcontext
-
+import operator
 import numpy as np
 from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
@@ -75,12 +75,17 @@ class memmap(ndarray):
         additional data. By default, ``memmap`` will start at the beginning of
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
-    shape : tuple, optional
+    shape : int or sequence of ints, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
         and data-type.
+
+        .. versionchanged:: 2.0
+         The shape parameter can now be any integer sequence type, previously
+         types were limited to tuple and int.
+    
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -242,8 +247,12 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if not isinstance(shape, tuple):
-                    shape = (shape,)
+                if type(shape) not in (tuple, list):
+                    try:
+                        shape = [operator.index(shape)]
+                    except TypeError:
+                        pass
+                shape = tuple(shape)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
                     size *= k
