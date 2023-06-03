@@ -37,10 +37,27 @@ typedef struct {
      * clear a second time must be safe.
      * If the DType class does not implement `get_clear_loop` setting
      * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
-     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * acceptable for  NPY_ITEM_REFCOUNT to indicate references that are not
      * Python objects.
      */
     get_traverse_loop_function *get_clear_loop;
+    /*
+       Either NULL or a function that sets a function pointer to a traversal
+       loop that fills an array with zero values appropriate for the dtype. If
+       get_fill_zero_loop is undefined or the function pointer set by it is
+       NULL, the array buffer is allocated with calloc. If this function is
+       defined and it sets a non-NULL function pointer, the array buffer is
+       allocated with malloc and the zero-filling loop function pointer is
+       called to fill the buffer. For the best performance, avoid using this
+       function if a zero-filled array buffer allocated with calloc makes sense
+       for the dtype.
+
+       Note that this is currently used only for zero-filling a newly allocated
+       array. While it can be used to zero-fill an already-filled buffer, that
+       will not work correctly for arrays holding references. If you need to do
+       that, clear the array first.
+    */
+    get_traverse_loop_function *get_fill_zero_loop;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
@@ -63,7 +80,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 9
+#define NPY_NUM_DTYPE_SLOTS 10
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -123,7 +140,8 @@ python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *cls, PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(PyArray_Descr *dtypem);
+dtypemeta_wrap_legacy_descriptor(
+        PyArray_Descr *dtypem, const char *name, const char *alias);
 
 #ifdef __cplusplus
 }

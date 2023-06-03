@@ -1528,9 +1528,12 @@ class TestRegression:
             for y in dtypes:
                 c = a.astype(y)
                 try:
-                    np.dot(b, c)
+                    d = np.dot(b, c)
                 except TypeError:
                     failures.append((x, y))
+                else:
+                    if d != 0:
+                        failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
@@ -1664,7 +1667,9 @@ class TestRegression:
 
     def test_find_common_type_boolean(self):
         # Ticket #1695
-        assert_(np.find_common_type([], ['?', '?']) == '?')
+        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
+            res = np.find_common_type([], ['?', '?'])
+        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])

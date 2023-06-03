@@ -135,6 +135,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces("a 'b c' 'd e'") == "a 'b@_@c' 'd@_@e'"
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
+
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -244,6 +245,7 @@ class TestModuleDeclaration:
         assert len(mod) == 1
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
+
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
@@ -268,6 +270,7 @@ class TestFortranReader(util.F2PyTest):
         mod = crackfortran.crackfortran([str(f_path)])
         assert mod[0]['name'] == 'foo'
 
+
 class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
@@ -277,6 +280,7 @@ class TestUnicodeComment(util.F2PyTest):
     )
     def test_encoding_comment(self):
         self.module.foo(3)
+
 
 class TestNameArgsPatternBacktracking:
     @pytest.mark.parametrize(
@@ -290,36 +294,44 @@ class TestNameArgsPatternBacktracking:
     def test_nameargspattern_backtracking(self, adversary):
         '''address ReDOS vulnerability:
         https://github.com/numpy/numpy/issues/23338'''
-        last_median = 0.
-        trials_per_count = 128
+        trials_per_batch = 12
+        batches_per_regex = 4
         start_reps, end_reps = 15, 25
-        times_median_doubled = 0
         for ii in range(start_reps, end_reps):
             repeated_adversary = adversary * ii
-            times = []
-            for _ in range(trials_per_count):
-                t0 = time.perf_counter()
-                mtch = nameargspattern.search(repeated_adversary)
-                times.append(time.perf_counter() - t0)
-            # We should use a measure of time that's resilient to outliers.
-            # Times jump around a lot due to the CPU's scheduler.
-            median = np.median(times)
+            # test times in small batches.
+            # this gives us more chances to catch a bad regex
+            # while still catching it before too long if it is bad
+            for _ in range(batches_per_regex):
+                times = []
+                for _ in range(trials_per_batch):
+                    t0 = time.perf_counter()
+                    mtch = nameargspattern.search(repeated_adversary)
+                    times.append(time.perf_counter() - t0)
+                # our pattern should be much faster than 0.2s per search
+                # it's unlikely that a bad regex will pass even on fast CPUs
+                assert np.median(times) < 0.2
             assert not mtch
             # if the adversary is capped with @)@, it becomes acceptable
             # according to the old version of the regex.
             # that should still be true.
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
-            if ii > start_reps:
-                # the hallmark of exponentially catastrophic backtracking
-                # is that runtime doubles for every added instance of
-                # the problematic pattern.
-                times_median_doubled += median > 2 * last_median
-                # also try to rule out non-exponential but still bad cases
-                # arbitrarily, we should set a hard limit of 10ms as too slow
-                assert median < trials_per_count * 0.01
-            last_median = median
-        # we accept that maybe the median might double once, due to
-        # the CPU scheduler acting weird or whatever. More than that
-        # seems suspicious.
-        assert times_median_doubled < 2
+
+
+class TestFunctionReturn(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
+
+    def test_function_rettype(self):
+        # gh-23598
+        assert self.module.intproduct(3, 4) == 12
+
+
+class TestFortranGroupCounters(util.F2PyTest):
+    def test_end_if_comment(self):
+        # gh-23533
+        fpath = util.getpath("tests", "src", "crackfortran", "gh23533.f")
+        try:
+            crackfortran.crackfortran([str(fpath)])
+        except Exception as exc:
+            assert False, f"'crackfortran.crackfortran' raised an exception {exc}"

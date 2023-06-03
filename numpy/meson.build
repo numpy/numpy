@@ -11,23 +11,15 @@ endif
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
-if is_windows
+if is_mingw
   # For mingw-w64, link statically against the UCRT.
   gcc_link_args = ['-lucrt', '-static']
-  if is_mingw
-    add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
-    # Force gcc to float64 long doubles for compatibility with MSVC
-    # builds, for C only.
-    add_project_arguments('-mlong-double-64', language: 'c')
-    # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
-    add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
-    # Manual add of MS_WIN64 macro when not using MSVC.
-    # https://bugs.python.org/issue28267
-    bitness = run_command('_build_utils/gcc_build_bitness.py').stdout().strip()
-    if bitness == '64'
-      add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
-    endif
-  endif
+  add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
+  # Force gcc to float64 long doubles for compatibility with MSVC
+  # builds, for C only.
+  add_project_arguments('-mlong-double-64', language: 'c')
+  # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
+  add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
 endif
 
 # Enable UNIX large file support on 32-bit systems (64 bit off_t,
@@ -58,13 +50,27 @@ lapack_name = get_option('lapack')
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
 if blas_name == 'openblas'
-  blas_name = ['openblas', 'OpenBLAS']
+  blas = dependency(['openblas', 'OpenBLAS'], required: false)
+else
+  blas = dependency(blas_name, required: false)
 endif
+have_blas = blas.found()
+if have_blas and blas_name == 'blas'
+  # Netlib BLAS has a separate `libcblas.so` which we use directly in the g77
+  # ABI wrappers, so detect it and error out if we cannot find it.
+  # In the future, this should be done automatically for:
+  #   `dependency('blas', modules: cblas)`
+  # see https://github.com/mesonbuild/meson/pull/10921.
+  cblas = dependency('cblas')
+else
+  cblas = []
+endif
+
 if lapack_name == 'openblas'
   lapack_name = ['openblas', 'OpenBLAS']
 endif
-blas = dependency(blas_name, required: false)
 lapack = dependency(lapack_name, required: false)
+have_lapack = lapack.found()
 
 dependency_map = {
   'BLAS': blas,
@@ -74,8 +80,6 @@ dependency_map = {
 # BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
 # which provides a CBLAS interface.
 # TODO: add ILP64 support
-have_blas = blas.found() # TODO: and blas.has_cblas()
-have_lapack = lapack.found()
 if have_blas
   # TODO: this is a shortcut - it needs to be checked rather than used
   # unconditionally, and then added to the extension modules that need the
@@ -104,6 +108,8 @@ python_sources = [
   'ctypeslib.pyi',
   'exceptions.py',
   'exceptions.pyi',
+  'dtypes.py',
+  'dtypes.pyi',
   'matlib.py',
   'py.typed',
   'version.py'

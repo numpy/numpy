@@ -889,13 +889,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+    *view = (PyArrayObject *)PyArray_NewFromDescr_int(
             ensure_array ? &PyArray_Type : Py_TYPE(self),
             PyArray_DESCR(self),
             new_dim, new_shape, new_strides, data_ptr,
             PyArray_FLAGS(self),
             ensure_array ? NULL : (PyObject *)self,
-            (PyObject *)self);
+            (PyObject *)self, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (*view == NULL) {
         return -1;
     }
@@ -1361,7 +1361,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_BYTES(arr) + offset,
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (*view == NULL) {
             return 0;
         }
@@ -1415,7 +1416,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_DATA(arr),
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
 
         if (*view == NULL) {
             return 0;
@@ -1563,7 +1565,20 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 goto finish;
             }
 
-            if (mapiter_trivial_get(self, ind, (PyArrayObject *)result) < 0) {
+            NPY_ARRAYMETHOD_FLAGS transfer_flags;
+            npy_intp itemsize = PyArray_ITEMSIZE(self);
+            /* We can assume the newly allocated result is aligned */
+            int is_aligned = IsUintAligned(self);
+
+            if (PyArray_GetDTypeTransferFunction(is_aligned,
+                    itemsize, itemsize,
+                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+                goto finish;
+            }
+
+            if (mapiter_trivial_get(
+                    self, ind, (PyArrayObject *)result, is_aligned, &cast_info) < 0) {
                 Py_DECREF(result);
                 result = NULL;
                 goto finish;
@@ -1632,6 +1647,19 @@ array_subscript(PyArrayObject *self, PyObject *op)
         if (PyArray_GetDTypeTransferFunction(is_aligned,
                 fixed_strides[0], fixed_strides[1],
                 PyArray_DESCR(self), PyArray_DESCR(mit->extra_op),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto finish;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+    else {
+        /* May need a generic copy function (only for refs and odd sizes) */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+
+        if (PyArray_GetDTypeTransferFunction(1,
+                itemsize, itemsize,
+                PyArray_DESCR(self), PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto finish;
         }
@@ -1952,8 +1980,20 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
+            NPY_ARRAYMETHOD_FLAGS transfer_flags;
+            npy_intp itemsize = PyArray_ITEMSIZE(self);
+            int is_aligned = IsUintAligned(self) && IsUintAligned(tmp_arr);
+
+            if (PyArray_GetDTypeTransferFunction(is_aligned,
+                    itemsize, itemsize,
+                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+                goto fail;
+            }
+
             /* trivial_set checks the index for us */
-            if (mapiter_trivial_set(self, ind, tmp_arr) < 0) {
+            if (mapiter_trivial_set(
+                    self, ind, tmp_arr, is_aligned, &cast_info) < 0) {
                 goto fail;
             }
             goto success;
@@ -2029,6 +2069,19 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_GetDTypeTransferFunction(is_aligned,
                 fixed_strides[1], fixed_strides[0],
                 PyArray_DESCR(mit->extra_op), PyArray_DESCR(self),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+    else {
+        /* May need a generic copy function (only for refs and odd sizes) */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+
+        if (PyArray_GetDTypeTransferFunction(1,
+                itemsize, itemsize,
+                PyArray_DESCR(self), PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }

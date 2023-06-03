@@ -19,6 +19,21 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         traverse_loop_function **out_loop, NpyAuxData **out_traversedata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+/* NumPy DType zero-filling implementations */
+
+NPY_NO_EXPORT int
+npy_object_get_fill_zero_loop(
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
+        traverse_loop_function **out_loop, NpyAuxData **NPY_UNUSED(out_auxdata),
+        NPY_ARRAYMETHOD_FLAGS *flags);
+
+NPY_NO_EXPORT int
+npy_get_zerofill_void_and_legacy_user_dtype_loop(
+        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        npy_intp stride, traverse_loop_function **out_func,
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags);
+
 
 /* Helper to deal with calling or nesting simple strided loops */
 
@@ -34,6 +49,7 @@ NPY_traverse_info_init(NPY_traverse_info *cast_info)
 {
     cast_info->func = NULL;  /* mark as uninitialized. */
     cast_info->auxdata = NULL;  /* allow leaving auxdata untouched */
+    cast_info->descr = NULL;  /* mark as uninitialized. */
 }
 
 
@@ -45,7 +61,7 @@ NPY_traverse_info_xfree(NPY_traverse_info *traverse_info)
     }
     traverse_info->func = NULL;
     NPY_AUXDATA_FREE(traverse_info->auxdata);
-    Py_DECREF(traverse_info->descr);
+    Py_XDECREF(traverse_info->descr);
 }
 
 

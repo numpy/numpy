@@ -140,6 +140,7 @@ else:
     from .core import *
     from . import compat
     from . import exceptions
+    from . import dtypes
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
@@ -426,10 +427,9 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-    # default to "weak" promotion for "NumPy 2".
+    # TODO: Switch to defaulting to "weak".
     core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE",
-                       "weak" if _using_numpy2_behavior() else "legacy"))
+        os.environ.get("NPY_PROMOTION_STATE", "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

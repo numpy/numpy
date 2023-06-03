@@ -139,7 +139,9 @@ typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
         PyUnicodeObject base;
         Py_UCS4 *obval;
+    #if NPY_FEATURE_VERSION >= NPY_1_20_API_VERSION
         char *buffer_fmt;
+    #endif
 } PyUnicodeScalarObject;
 
 
@@ -149,7 +151,9 @@ typedef struct {
         PyArray_Descr *descr;
         int flags;
         PyObject *base;
+    #if NPY_FEATURE_VERSION >= NPY_1_20_API_VERSION
         void *_buffer_info;  /* private buffer info, tagged to allow warning */
+    #endif
 } PyVoidScalarObject;
 
 /* Macros

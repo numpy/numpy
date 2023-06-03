@@ -369,6 +369,64 @@ class TestComparisons:
         with pytest.raises(TypeError, match="No loop matching"):
             np.equal(1, 1, sig=(None, None, "l"))
 
+    @pytest.mark.parametrize("dtypes", ["qQ", "Qq"])
+    @pytest.mark.parametrize('py_comp, np_comp', [
+        (operator.lt, np.less),
+        (operator.le, np.less_equal),
+        (operator.gt, np.greater),
+        (operator.ge, np.greater_equal),
+        (operator.eq, np.equal),
+        (operator.ne, np.not_equal)
+    ])
+    @pytest.mark.parametrize("vals", [(2**60, 2**60+1), (2**60+1, 2**60)])
+    def test_large_integer_direct_comparison(
+            self, dtypes, py_comp, np_comp, vals):
+        # Note that float(2**60) + 1 == float(2**60).
+        a1 = np.array([2**60], dtype=dtypes[0])
+        a2 = np.array([2**60 + 1], dtype=dtypes[1])
+        expected = py_comp(2**60, 2**60+1)
+
+        assert py_comp(a1, a2) == expected
+        assert np_comp(a1, a2) == expected
+        # Also check the scalars:
+        s1 = a1[0]
+        s2 = a2[0]
+        assert isinstance(s1, np.integer)
+        assert isinstance(s2, np.integer)
+        # The Python operator here is mainly interesting:
+        assert py_comp(s1, s2) == expected
+        assert np_comp(s1, s2) == expected
+
+    @pytest.mark.parametrize("dtype", np.typecodes['UnsignedInteger'])
+    @pytest.mark.parametrize('py_comp_func, np_comp_func', [
+        (operator.lt, np.less),
+        (operator.le, np.less_equal),
+        (operator.gt, np.greater),
+        (operator.ge, np.greater_equal),
+        (operator.eq, np.equal),
+        (operator.ne, np.not_equal)
+    ])
+    @pytest.mark.parametrize("flip", [True, False])
+    def test_unsigned_signed_direct_comparison(
+            self, dtype, py_comp_func, np_comp_func, flip):
+        if flip:
+            py_comp = lambda x, y: py_comp_func(y, x)
+            np_comp = lambda x, y: np_comp_func(y, x)
+        else:
+            py_comp = py_comp_func
+            np_comp = np_comp_func
+
+        arr = np.array([np.iinfo(dtype).max], dtype=dtype)
+        expected = py_comp(int(arr[0]), -1)
+
+        assert py_comp(arr, -1) == expected
+        assert np_comp(arr, -1) == expected
+        scalar = arr[0]
+        assert isinstance(scalar, np.integer)
+        # The Python operator here is mainly interesting:
+        assert py_comp(scalar, -1) == expected
+        assert np_comp(scalar, -1) == expected
+
 
 class TestAdd:
     def test_reduce_alignment(self):
@@ -1426,23 +1484,50 @@ class TestSpecialFloats:
             np.log(a)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    def test_sincos_values(self):
+    @pytest.mark.parametrize('dtype', ['e', 'f', 'd', 'g'])
+    def test_sincos_values(self, dtype):
         with np.errstate(all='ignore'):
             x = [np.nan, np.nan, np.nan, np.nan]
             y = [np.nan, -np.nan, np.inf, -np.inf]
-            for dt in ['e', 'f', 'd', 'g']:
-                xf = np.array(x, dtype=dt)
-                yf = np.array(y, dtype=dt)
-                assert_equal(np.sin(yf), xf)
-                assert_equal(np.cos(yf), xf)
+            xf = np.array(x, dtype=dtype)
+            yf = np.array(y, dtype=dtype)
+            assert_equal(np.sin(yf), xf)
+            assert_equal(np.cos(yf), xf)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.xfail(
+        sys.platform.startswith("darwin"),
+        reason="underflow is triggered for scalar 'sin'"
+    )
+    def test_sincos_underflow(self):
+        with np.errstate(under='raise'):
+            underflow_trigger = np.array(
+                float.fromhex("0x1.f37f47a03f82ap-511"),
+                dtype=np.float64
+            )
+            np.sin(underflow_trigger)
+            np.cos(underflow_trigger)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize('callable', [np.sin, np.cos])
+    @pytest.mark.parametrize('dtype', ['e', 'f', 'd'])
+    @pytest.mark.parametrize('value', [np.inf, -np.inf])
+    def test_sincos_errors(self, callable, dtype, value):
         with np.errstate(invalid='raise'):
-            for callable in [np.sin, np.cos]:
-                for value in [np.inf, -np.inf]:
-                    for dt in ['e', 'f', 'd']:
-                        assert_raises(FloatingPointError, callable,
-                                np.array([value], dtype=dt))
+            assert_raises(FloatingPointError, callable,
+                np.array([value], dtype=dtype))
+
+    @pytest.mark.parametrize('callable', [np.sin, np.cos])
+    @pytest.mark.parametrize('dtype', ['f', 'd'])
+    @pytest.mark.parametrize('stride', [-1, 1, 2, 4, 5])
+    def test_sincos_overlaps(self, callable, dtype, stride):
+        N = 100
+        M = N // abs(stride)
+        rng = np.random.default_rng(42)
+        x = rng.standard_normal(N, dtype)
+        y = callable(x[::stride])
+        callable(x[::stride], out=x[:M])
+        assert_equal(x[:M], y)
 
     @pytest.mark.parametrize('dt', ['e', 'f', 'd', 'g'])
     def test_sqrt_values(self, dt):

@@ -9,7 +9,6 @@ distribution.
 """
 import os
 import sys
-import io
 import re
 import argparse
 
@@ -36,7 +35,7 @@ def main():
 
     # Check license text
     license_txt = os.path.join(os.path.dirname(mod.__file__), "LICENSE.txt")
-    with io.open(license_txt, "r", encoding="utf-8") as f:
+    with open(license_txt, encoding="utf-8") as f:
         text = f.read()
 
     ok = check_text(text)

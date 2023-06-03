@@ -7,7 +7,7 @@ import numpy as np
 from .._utils import set_module
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ScalarType, array
-from numpy.core.numerictypes import find_common_type, issubdtype
+from numpy.core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
 from .function_base import diff
@@ -210,13 +210,13 @@ class nd_grid:
 
 class MGridClass(nd_grid):
     """
-    `nd_grid` instance which returns a dense multi-dimensional "meshgrid".
+    An instance which returns a dense multi-dimensional "meshgrid".
 
-    An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
-    (or fleshed out) mesh-grid when indexed, so that each returned argument
-    has the same shape.  The dimensions and number of the output arrays are
-    equal to the number of indexing dimensions.  If the step length is not a
-    complex number, then the stop is not inclusive.
+    An instance which returns a dense (or fleshed out) mesh-grid
+    when indexed, so that each returned argument has the same shape.
+    The dimensions and number of the output arrays are equal to the
+    number of indexing dimensions.  If the step length is not a complex
+    number, then the stop is not inclusive.
 
     However, if the step length is a **complex number** (e.g. 5j), then
     the integer part of its magnitude is interpreted as specifying the
@@ -229,8 +229,7 @@ class MGridClass(nd_grid):
 
     See Also
     --------
-    lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
-    ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    ogrid : like `mgrid` but returns open (not fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
     :ref:`how-to-partition`
@@ -262,13 +261,13 @@ mgrid = MGridClass()
 
 class OGridClass(nd_grid):
     """
-    `nd_grid` instance which returns an open multi-dimensional "meshgrid".
+    An instance which returns an open multi-dimensional "meshgrid".
 
-    An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
-    (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
-    of each returned array is greater than 1.  The dimension and number of the
-    output arrays are equal to the number of indexing dimensions.  If the step
-    length is not a complex number, then the stop is not inclusive.
+    An instance which returns an open (i.e. not fleshed out) mesh-grid
+    when indexed, so that only one dimension of each returned array is
+    greater than 1.  The dimension and number of the output arrays are
+    equal to the number of indexing dimensions.  If the step length is
+    not a complex number, then the stop is not inclusive.
 
     However, if the step length is a **complex number** (e.g. 5j), then
     the integer part of its magnitude is interpreted as specifying the
@@ -282,7 +281,6 @@ class OGridClass(nd_grid):
 
     See Also
     --------
-    np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
@@ -342,9 +340,8 @@ class AxisConcatenator:
         axis = self.axis
 
         objs = []
-        scalars = []
-        arraytypes = []
-        scalartypes = []
+        # dtypes or scalars for weak scalar handling in result_type
+        result_type_objs = []
 
         for k, item in enumerate(key):
             scalar = False
@@ -390,10 +387,8 @@ class AxisConcatenator:
                 except (ValueError, TypeError) as e:
                     raise ValueError("unknown special directive") from e
             elif type(item) in ScalarType:
-                newobj = array(item, ndmin=ndmin)
-                scalars.append(len(objs))
                 scalar = True
-                scalartypes.append(newobj.dtype)
+                newobj = item
             else:
                 item_ndim = np.ndim(item)
                 newobj = array(item, copy=False, subok=True, ndmin=ndmin)
@@ -405,15 +400,20 @@ class AxisConcatenator:
                     defaxes = list(range(ndmin))
                     axes = defaxes[:k1] + defaxes[k2:] + defaxes[k1:k2]
                     newobj = newobj.transpose(axes)
-            objs.append(newobj)
-            if not scalar and isinstance(newobj, _nx.ndarray):
-                arraytypes.append(newobj.dtype)
 
-        # Ensure that scalars won't up-cast unless warranted
-        final_dtype = find_common_type(arraytypes, scalartypes)
-        if final_dtype is not None:
-            for k in scalars:
-                objs[k] = objs[k].astype(final_dtype)
+            objs.append(newobj)
+            if scalar:
+                result_type_objs.append(item)
+            else:
+                result_type_objs.append(newobj.dtype)
+
+        # Ensure that scalars won't up-cast unless warranted, for 0, drops
+        # through to error in concatenate.
+        if len(result_type_objs) != 0:
+            final_dtype = _nx.result_type(*result_type_objs)
+            # concatenate could do cast, but that can be overridden:
+            objs = [array(obj, copy=False, subok=True,
+                          ndmin=ndmin, dtype=final_dtype) for obj in objs]
 
         res = self.concatenate(tuple(objs), axis=axis)
 

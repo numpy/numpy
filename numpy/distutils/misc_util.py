@@ -475,7 +475,7 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    with open(source, 'r') as f:
+    with open(source) as f:
         for line in f:
             m = f90_module_name_match(line)
             if m:
@@ -1932,7 +1932,7 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            with open(branch_cache_fn, 'r') as f:
+            with open(branch_cache_fn) as f:
                 for line in f:
                     branch1, revision1  = line.split()[:2]
                     if revision1==revision0:

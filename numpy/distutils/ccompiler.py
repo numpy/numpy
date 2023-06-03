@@ -59,7 +59,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments
-    with open(dep_file, "r") as f:
+    with open(dep_file) as f:
         lines = f.readlines()
 
     cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)

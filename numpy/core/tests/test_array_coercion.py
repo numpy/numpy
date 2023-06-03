@@ -39,9 +39,9 @@ def arraylikes():
     yield subclass
 
     class _SequenceLike():
-        # We are giving a warning that array-like's were also expected to be
-        # sequence-like in `np.array([array_like])`. This can be removed
-        # when the deprecation expired (started NumPy 1.20).
+        # Older NumPy versions, sometimes cared whether a protocol array was
+        # also _SequenceLike.  This shouldn't matter, but keep it for now
+        # for __array__ and not the others.
         def __len__(self):
             raise TypeError
 
@@ -62,7 +62,7 @@ def arraylikes():
     yield param(memoryview, id="memoryview")
 
     # Array-interface
-    class ArrayInterface(_SequenceLike):
+    class ArrayInterface:
         def __init__(self, a):
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
@@ -70,7 +70,7 @@ def arraylikes():
     yield param(ArrayInterface, id="__array_interface__")
 
     # Array-Struct
-    class ArrayStruct(_SequenceLike):
+    class ArrayStruct:
         def __init__(self, a):
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
@@ -654,6 +654,14 @@ class TestArrayLikes:
         res = np.array([obj], dtype=object)
         assert res[0] is obj
 
+    @pytest.mark.parametrize("arraylike", arraylikes())
+    @pytest.mark.parametrize("arr", [np.array(0.), np.arange(4)])
+    def test_object_assignment_special_case(self, arraylike, arr):
+        obj = arraylike(arr)
+        empty = np.arange(1, dtype=object)
+        empty[:] = [obj]
+        assert empty[0] is obj
+
     def test_0d_generic_special_case(self):
         class ArraySubclass(np.ndarray):
             def __float__(self):
@@ -837,3 +845,28 @@ class TestSpecialAttributeLookupFailure:
             np.array(self.WeirdArrayLike())
         with pytest.raises(RuntimeError):
             np.array(self.WeirdArrayInterface())
+
+
+def test_subarray_from_array_construction():
+    # Arrays are more complex, since they "broadcast" on success:
+    arr = np.array([1, 2])
+
+    res = arr.astype("(2)i,")
+    assert_array_equal(res, [[1, 1], [2, 2]])
+
+    res = np.array(arr, dtype="(2)i,")
+
+    assert_array_equal(res, [[1, 1], [2, 2]])
+
+    res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+    assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 1], [2, 2]]])
+
+    # Also try a multi-dimensional example:
+    arr = np.arange(5 * 2).reshape(5, 2)
+    expected = np.broadcast_to(arr[:, :, np.newaxis, np.newaxis], (5, 2, 2, 2))
+
+    res = arr.astype("(2,2)f")
+    assert_array_equal(res, expected)
+
+    res = np.array(arr, dtype="(2,2)f")
+    assert_array_equal(res, expected)

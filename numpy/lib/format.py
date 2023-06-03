@@ -163,7 +163,7 @@ evolved with time and this document is more current.
 """
 import numpy
 import warnings
-from numpy.lib.utils import safe_eval
+from numpy.lib.utils import safe_eval, drop_metadata
 from numpy.compat import (
     isfileobj, os_fspath, pickle
     )
@@ -239,15 +239,6 @@ def read_magic(fp):
     major, minor = magic_str[-2:]
     return major, minor
 
-def _has_metadata(dt):
-    if dt.metadata is not None:
-        return True
-    elif dt.names is not None:
-        return any(_has_metadata(dt[k]) for k in dt.names)
-    elif dt.subdtype is not None:
-        return _has_metadata(dt.base)
-    else:
-        return False
 
 def dtype_to_descr(dtype):
     """
@@ -272,9 +263,12 @@ def dtype_to_descr(dtype):
         replicate the input dtype.
 
     """
-    if _has_metadata(dtype):
-        warnings.warn("metadata on a dtype may be saved or ignored, but will "
-                      "raise if saved when read. Use another form of storage.",
+    # NOTE: that drop_metadata may not return the right dtype e.g. for user
+    #       dtypes.  In that case our code below would fail the same, though.
+    new_dtype = drop_metadata(dtype)
+    if new_dtype is not dtype:
+        warnings.warn("metadata on a dtype is not saved to an npy/npz. "
+                      "Use another format (such as pickle) to store it.",
                       UserWarning, stacklevel=2)
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the

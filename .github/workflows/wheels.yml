@@ -21,7 +21,7 @@ on:
     #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
-    - cron: "42 1 * * 4"
+    - cron: "42 2 * * SUN,WED"
   push:
   pull_request:
     types: [labeled, opened, synchronize, reopened]
@@ -102,19 +102,23 @@ jobs:
           fetch-depth: 0
 
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
           python-version: "3.x"
+
+      # We need rtools 4.0 to have 32 bit support on windows
+      - if: runner.os == 'windows'
+        uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
 
       - name: setup rtools for 32-bit
         run: |
           echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
+          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
           gfortran --version
         if: ${{ matrix.buildplat[1] == 'win32' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@02ad79a31bf7aa0eee07f690509048d2fb9fd445 # v2.12.1
+        uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8 # v2.13.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
@@ -146,7 +150,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
@@ -180,7 +184,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
           # Build sdist on lowest supported Python
           python-version: "3.9"
@@ -228,7 +232,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy

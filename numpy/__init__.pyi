@@ -209,6 +209,8 @@ from numpy import (
     random as random,
     testing as testing,
     version as version,
+    exceptions as exceptions,
+    dtypes as dtypes,
 )
 
 from numpy.core import defchararray, records
@@ -394,7 +396,6 @@ from numpy.core.numerictypes import (
     issubsctype as issubsctype,
     issubdtype as issubdtype,
     sctype2char as sctype2char,
-    find_common_type as find_common_type,
     nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
@@ -409,6 +410,15 @@ from numpy.core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
+)
+
+from numpy.exceptions import (
+    ComplexWarning as ComplexWarning,
+    ModuleDeprecationWarning as ModuleDeprecationWarning,
+    VisibleDeprecationWarning as VisibleDeprecationWarning,
+    TooHardError as TooHardError,
+    DTypePromotionError as DTypePromotionError,
+    AxisError as AxisError,
 )
 
 from numpy.lib import (
@@ -663,13 +673,6 @@ test: PytestTester
 # their annotations are properly implemented
 #
 # Placeholders for classes
-
-# Some of these are aliases; others are wrappers with an identical signature
-round_ = around
-product = prod
-cumproduct = cumprod
-sometrue = any
-alltrue = all
 
 def show_config() -> None: ...
 
@@ -3319,21 +3322,7 @@ class _CopyMode(enum.Enum):
     NEVER: L[2]
 
 # Warnings
-class ModuleDeprecationWarning(DeprecationWarning): ...
-class VisibleDeprecationWarning(UserWarning): ...
-class ComplexWarning(RuntimeWarning): ...
 class RankWarning(UserWarning): ...
-
-# Errors
-class TooHardError(RuntimeError): ...
-
-class AxisError(ValueError, IndexError):
-    axis: None | int
-    ndim: None | int
-    @overload
-    def __init__(self, axis: str, ndim: None = ..., msg_prefix: None = ...) -> None: ...
-    @overload
-    def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
 
 _CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
 

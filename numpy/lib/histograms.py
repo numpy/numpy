@@ -763,16 +763,20 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     .. versionadded:: 1.11.0
 
     Automated Bin Selection Methods example, using 2 peak random data
-    with 2000 points:
+    with 2000 points.
 
-    >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.RandomState(10)  # deterministic random data
-    >>> a = np.hstack((rng.normal(size=1000),
-    ...                rng.normal(loc=5, scale=2, size=1000)))
-    >>> _ = plt.hist(a, bins='auto')  # arguments are passed to np.histogram
-    >>> plt.title("Histogram with 'auto' bins")
-    Text(0.5, 1.0, "Histogram with 'auto' bins")
-    >>> plt.show()
+    .. plot::
+        :include-source:
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        rng = np.random.RandomState(10)  # deterministic random data
+        a = np.hstack((rng.normal(size=1000),
+                       rng.normal(loc=5, scale=2, size=1000)))
+        plt.hist(a, bins='auto')  # arguments are passed to np.histogram
+        plt.title("Histogram with 'auto' bins")
+        plt.show()
 
     """
     a, weights = _ravel_and_check_weights(a, weights)

@@ -1,6 +1,6 @@
 .. _distutils-user-guide:
 
-NumPy Distutils - Users Guide
+NumPy distutils - users guide
 =============================
 
 .. warning::

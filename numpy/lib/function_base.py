@@ -495,11 +495,11 @@ def average(a, axis=None, weights=None, returned=False, *,
         ...
     TypeError: Axis must be specified when shapes of a and weights differ.
 
-    >>> a = np.ones(5, dtype=np.float128)
+    >>> a = np.ones(5, dtype=np.float64)
     >>> w = np.ones(5, dtype=np.complex64)
     >>> avg = np.average(a, weights=w)
     >>> print(avg.dtype)
-    complex256
+    complex128
 
     With ``keepdims=True``, the following result has shape (3, 1).
 
@@ -1311,10 +1311,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     if len_axes == 1:
         return outvals[0]
-    elif np._using_numpy2_behavior():
-        return tuple(outvals)
-    else:
-        return outvals
+    return tuple(outvals)
 
 
 def _diff_dispatcher(a, n=None, axis=None, prepend=None, append=None):
@@ -2964,45 +2961,44 @@ def blackman(M):
             9.67046769e-01,   7.36045180e-01,   4.14397981e-01,
             1.59903635e-01,   3.26064346e-02,  -1.38777878e-17])
 
-    Plot the window and the frequency response:
+    Plot the window and the frequency response.
 
-    >>> from numpy.fft import fft, fftshift
-    >>> window = np.blackman(51)
-    >>> plt.plot(window)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Blackman window")
-    Text(0.5, 1.0, 'Blackman window')
-    >>> plt.ylabel("Amplitude")
-    Text(0, 0.5, 'Amplitude')
-    >>> plt.xlabel("Sample")
-    Text(0.5, 0, 'Sample')
-    >>> plt.show()
+    .. plot::
+        :include-source:
 
-    >>> plt.figure()
-    <Figure size 640x480 with 0 Axes>
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = np.abs(fftshift(A))
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> with np.errstate(divide='ignore', invalid='ignore'):
-    ...     response = 20 * np.log10(mag)
-    ...
-    >>> response = np.clip(response, -100, 100)
-    >>> plt.plot(freq, response)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Frequency response of Blackman window")
-    Text(0.5, 1.0, 'Frequency response of Blackman window')
-    >>> plt.ylabel("Magnitude [dB]")
-    Text(0, 0.5, 'Magnitude [dB]')
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    Text(0.5, 0, 'Normalized frequency [cycles per sample]')
-    >>> _ = plt.axis('tight')
-    >>> plt.show()
+        import matplotlib.pyplot as plt
+        from numpy.fft import fft, fftshift
+        window = np.blackman(51)
+        plt.plot(window)
+        plt.title("Blackman window")
+        plt.ylabel("Amplitude")
+        plt.xlabel("Sample")
+        plt.show()  # doctest: +SKIP
+
+        plt.figure()
+        A = fft(window, 2048) / 25.5
+        mag = np.abs(fftshift(A))
+        freq = np.linspace(-0.5, 0.5, len(A))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            response = 20 * np.log10(mag)
+        response = np.clip(response, -100, 100)
+        plt.plot(freq, response)
+        plt.title("Frequency response of Blackman window")
+        plt.ylabel("Magnitude [dB]")
+        plt.xlabel("Normalized frequency [cycles per sample]")
+        plt.axis('tight')
+        plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -3072,45 +3068,43 @@ def bartlett(M):
             0.90909091,  0.90909091,  0.72727273,  0.54545455,  0.36363636,
             0.18181818,  0.        ])
 
-    Plot the window and its frequency response (requires SciPy and matplotlib):
+    Plot the window and its frequency response (requires SciPy and matplotlib).
 
-    >>> from numpy.fft import fft, fftshift
-    >>> window = np.bartlett(51)
-    >>> plt.plot(window)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Bartlett window")
-    Text(0.5, 1.0, 'Bartlett window')
-    >>> plt.ylabel("Amplitude")
-    Text(0, 0.5, 'Amplitude')
-    >>> plt.xlabel("Sample")
-    Text(0.5, 0, 'Sample')
-    >>> plt.show()
+    .. plot::
+        :include-source:
 
-    >>> plt.figure()
-    <Figure size 640x480 with 0 Axes>
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = np.abs(fftshift(A))
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> with np.errstate(divide='ignore', invalid='ignore'):
-    ...     response = 20 * np.log10(mag)
-    ...
-    >>> response = np.clip(response, -100, 100)
-    >>> plt.plot(freq, response)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Frequency response of Bartlett window")
-    Text(0.5, 1.0, 'Frequency response of Bartlett window')
-    >>> plt.ylabel("Magnitude [dB]")
-    Text(0, 0.5, 'Magnitude [dB]')
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    Text(0.5, 0, 'Normalized frequency [cycles per sample]')
-    >>> _ = plt.axis('tight')
-    >>> plt.show()
+        import matplotlib.pyplot as plt
+        from numpy.fft import fft, fftshift
+        window = np.bartlett(51)
+        plt.plot(window)
+        plt.title("Bartlett window")
+        plt.ylabel("Amplitude")
+        plt.xlabel("Sample")
+        plt.show()
+        plt.figure()
+        A = fft(window, 2048) / 25.5
+        mag = np.abs(fftshift(A))
+        freq = np.linspace(-0.5, 0.5, len(A))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            response = 20 * np.log10(mag)
+        response = np.clip(response, -100, 100)
+        plt.plot(freq, response)
+        plt.title("Frequency response of Bartlett window")
+        plt.ylabel("Magnitude [dB]")
+        plt.xlabel("Normalized frequency [cycles per sample]")
+        plt.axis('tight')
+        plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3174,47 +3168,44 @@ def hanning(M):
            0.97974649, 0.97974649, 0.82743037, 0.57115742, 0.29229249,
            0.07937323, 0.        ])
 
-    Plot the window and its frequency response:
+    Plot the window and its frequency response.
 
-    >>> import matplotlib.pyplot as plt
-    >>> from numpy.fft import fft, fftshift
-    >>> window = np.hanning(51)
-    >>> plt.plot(window)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Hann window")
-    Text(0.5, 1.0, 'Hann window')
-    >>> plt.ylabel("Amplitude")
-    Text(0, 0.5, 'Amplitude')
-    >>> plt.xlabel("Sample")
-    Text(0.5, 0, 'Sample')
-    >>> plt.show()
+    .. plot::
+        :include-source:
 
-    >>> plt.figure()
-    <Figure size 640x480 with 0 Axes>
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = np.abs(fftshift(A))
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> with np.errstate(divide='ignore', invalid='ignore'):
-    ...     response = 20 * np.log10(mag)
-    ...
-    >>> response = np.clip(response, -100, 100)
-    >>> plt.plot(freq, response)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Frequency response of the Hann window")
-    Text(0.5, 1.0, 'Frequency response of the Hann window')
-    >>> plt.ylabel("Magnitude [dB]")
-    Text(0, 0.5, 'Magnitude [dB]')
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    Text(0.5, 0, 'Normalized frequency [cycles per sample]')
-    >>> plt.axis('tight')
-    ...
-    >>> plt.show()
+        import matplotlib.pyplot as plt
+        from numpy.fft import fft, fftshift
+        window = np.hanning(51)
+        plt.plot(window)
+        plt.title("Hann window")
+        plt.ylabel("Amplitude")
+        plt.xlabel("Sample")
+        plt.show()
+
+        plt.figure()
+        A = fft(window, 2048) / 25.5
+        mag = np.abs(fftshift(A))
+        freq = np.linspace(-0.5, 0.5, len(A))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            response = 20 * np.log10(mag)
+        response = np.clip(response, -100, 100)
+        plt.plot(freq, response)
+        plt.title("Frequency response of the Hann window")
+        plt.ylabel("Magnitude [dB]")
+        plt.xlabel("Normalized frequency [cycles per sample]")
+        plt.axis('tight')
+        plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3276,45 +3267,43 @@ def hamming(M):
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
             0.15302337,  0.08      ])
 
-    Plot the window and the frequency response:
+    Plot the window and the frequency response.
 
-    >>> import matplotlib.pyplot as plt
-    >>> from numpy.fft import fft, fftshift
-    >>> window = np.hamming(51)
-    >>> plt.plot(window)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Hamming window")
-    Text(0.5, 1.0, 'Hamming window')
-    >>> plt.ylabel("Amplitude")
-    Text(0, 0.5, 'Amplitude')
-    >>> plt.xlabel("Sample")
-    Text(0.5, 0, 'Sample')
-    >>> plt.show()
+    .. plot::
+        :include-source:
 
-    >>> plt.figure()
-    <Figure size 640x480 with 0 Axes>
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = np.abs(fftshift(A))
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
-    >>> response = np.clip(response, -100, 100)
-    >>> plt.plot(freq, response)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Frequency response of Hamming window")
-    Text(0.5, 1.0, 'Frequency response of Hamming window')
-    >>> plt.ylabel("Magnitude [dB]")
-    Text(0, 0.5, 'Magnitude [dB]')
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    Text(0.5, 0, 'Normalized frequency [cycles per sample]')
-    >>> plt.axis('tight')
-    ...
-    >>> plt.show()
+        import matplotlib.pyplot as plt
+        from numpy.fft import fft, fftshift
+        window = np.hamming(51)
+        plt.plot(window)
+        plt.title("Hamming window")
+        plt.ylabel("Amplitude")
+        plt.xlabel("Sample")
+        plt.show()
+
+        plt.figure()
+        A = fft(window, 2048) / 25.5
+        mag = np.abs(fftshift(A))
+        freq = np.linspace(-0.5, 0.5, len(A))
+        response = 20 * np.log10(mag)
+        response = np.clip(response, -100, 100)
+        plt.plot(freq, response)
+        plt.title("Frequency response of Hamming window")
+        plt.ylabel("Magnitude [dB]")
+        plt.xlabel("Normalized frequency [cycles per sample]")
+        plt.axis('tight')
+        plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.
+    values = np.array([0.0, M])
+    M = values[1]
+
     if M < 1:
-        return array([], dtype=np.result_type(M, 0.0))
+        return array([], dtype=values.dtype)
     if M == 1:
-        return ones(1, dtype=np.result_type(M, 0.0))
+        return ones(1, dtype=values.dtype)
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3556,45 +3545,47 @@ def kaiser(M, beta):
             4.65200189e-02, 3.46009194e-03, 7.72686684e-06])
 
 
-    Plot the window and the frequency response:
+    Plot the window and the frequency response.
 
-    >>> from numpy.fft import fft, fftshift
-    >>> window = np.kaiser(51, 14)
-    >>> plt.plot(window)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Kaiser window")
-    Text(0.5, 1.0, 'Kaiser window')
-    >>> plt.ylabel("Amplitude")
-    Text(0, 0.5, 'Amplitude')
-    >>> plt.xlabel("Sample")
-    Text(0.5, 0, 'Sample')
-    >>> plt.show()
+    .. plot::
+        :include-source:
 
-    >>> plt.figure()
-    <Figure size 640x480 with 0 Axes>
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = np.abs(fftshift(A))
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
-    >>> response = np.clip(response, -100, 100)
-    >>> plt.plot(freq, response)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> plt.title("Frequency response of Kaiser window")
-    Text(0.5, 1.0, 'Frequency response of Kaiser window')
-    >>> plt.ylabel("Magnitude [dB]")
-    Text(0, 0.5, 'Magnitude [dB]')
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    Text(0.5, 0, 'Normalized frequency [cycles per sample]')
-    >>> plt.axis('tight')
-    (-0.5, 0.5, -100.0, ...) # may vary
-    >>> plt.show()
+        import matplotlib.pyplot as plt
+        from numpy.fft import fft, fftshift
+        window = np.kaiser(51, 14)
+        plt.plot(window)
+        plt.title("Kaiser window")
+        plt.ylabel("Amplitude")
+        plt.xlabel("Sample")
+        plt.show()
+
+        plt.figure()
+        A = fft(window, 2048) / 25.5
+        mag = np.abs(fftshift(A))
+        freq = np.linspace(-0.5, 0.5, len(A))
+        response = 20 * np.log10(mag)
+        response = np.clip(response, -100, 100)
+        plt.plot(freq, response)
+        plt.title("Frequency response of Kaiser window")
+        plt.ylabel("Magnitude [dB]")
+        plt.xlabel("Normalized frequency [cycles per sample]")
+        plt.axis('tight')
+        plt.show()
 
     """
+    # Ensures at least float64 via 0.0.  M should be an integer, but conversion
+    # to double is safe for a range.  (Simplified result_type with 0.0
+    # strongly typed.  result-type is not/less order sensitive, but that mainly
+    # matters for integers anyway.)
+    values = np.array([0.0, M, beta])
+    M = values[1]
+    beta = values[2]
+
     if M == 1:
-        return np.ones(1, dtype=np.result_type(M, 0.0))
+        return np.ones(1, dtype=values.dtype)
     n = arange(0, M)
     alpha = (M-1)/2.0
-    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
+    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
 
 
 def _sinc_dispatcher(x):
@@ -3915,8 +3906,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         kth = [szh - 1, szh]
     else:
         kth = [(sz - 1) // 2]
-    # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact):
+
+    # We have to check for NaNs (as of writing 'M' doesn't actually work).
+    supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind in 'Mm'
+    if supports_nans:
         kth.append(-1)
 
     if overwrite_input:
@@ -3947,8 +3940,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     # Use mean in both odd and even case to coerce data type,
     # using out array if needed.
     rout = mean(part[indexer], axis=axis, out=out)
-    # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact) and sz > 0:
+    if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
         rout = np.lib.utils._median_nancheck(part, rout, axis)
 
@@ -3980,8 +3972,8 @@ def percentile(a,
     a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
-        Percentile or sequence of percentiles to compute, which must be between
-        0 and 100 inclusive.
+        Percentage or sequence of percentages for the percentiles to compute.
+        Values must be between 0 and 100 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the percentiles are computed. The
         default is to compute the percentile(s) along a flattened
@@ -4280,8 +4272,8 @@ def quantile(a,
     a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
-        Quantile or sequence of quantiles to compute, which must be between
-        0 and 1 inclusive.
+        Probability or sequence of probabilities for the quantiles to compute.
+        Values must be between 0 and 1 inclusive.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the quantiles are computed. The default is
         to compute the quantile(s) along a flattened version of the array.
@@ -4335,8 +4327,8 @@ def quantile(a,
     Returns
     -------
     quantile : scalar or ndarray
-        If `q` is a single quantile and `axis=None`, then the result
-        is a scalar. If multiple quantiles are given, first axis of
+        If `q` is a single probability and `axis=None`, then the result
+        is a scalar. If multiple probabilies levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
@@ -4756,9 +4748,9 @@ def _quantile(
     values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
-    DATA_AXIS = 0
-    if axis != DATA_AXIS:  # But moveaxis is slow, so only call it if axis!=0.
-        arr = np.moveaxis(arr, axis, destination=DATA_AXIS)
+
+    if axis != 0:  # But moveaxis is slow, so only call it if necessary.
+        arr = np.moveaxis(arr, axis, destination=0)
     # --- Computation of indexes
     # Index where to find the value in the sorted array.
     # Virtual because it is a floating point value, not an valid index.
@@ -4771,12 +4763,16 @@ def _quantile(
             f"{_QuantileMethods.keys()}") from None
     virtual_indexes = method["get_virtual_index"](values_count, quantiles)
     virtual_indexes = np.asanyarray(virtual_indexes)
+
+    supports_nans = (
+            np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm')
+
     if np.issubdtype(virtual_indexes.dtype, np.integer):
         # No interpolation needed, take the points along axis
-        if np.issubdtype(arr.dtype, np.inexact):
+        if supports_nans:
             # may contain nan, which would sort to the end
             arr.partition(concatenate((virtual_indexes.ravel(), [-1])), axis=0)
-            slices_having_nans = np.isnan(arr[-1])
+            slices_having_nans = np.isnan(arr[-1, ...])
         else:
             # cannot contain nan
             arr.partition(virtual_indexes.ravel(), axis=0)
@@ -4792,16 +4788,14 @@ def _quantile(
                                       previous_indexes.ravel(),
                                       next_indexes.ravel(),
                                       ))),
-            axis=DATA_AXIS)
-        if np.issubdtype(arr.dtype, np.inexact):
-            slices_having_nans = np.isnan(
-                take(arr, indices=-1, axis=DATA_AXIS)
-            )
+            axis=0)
+        if supports_nans:
+            slices_having_nans = np.isnan(arr[-1, ...])
         else:
             slices_having_nans = None
         # --- Get values from indexes
-        previous = np.take(arr, previous_indexes, axis=DATA_AXIS)
-        next = np.take(arr, next_indexes, axis=DATA_AXIS)
+        previous = arr[previous_indexes]
+        next = arr[next_indexes]
         # --- Linear interpolation
         gamma = _get_gamma(virtual_indexes, previous_indexes, method)
         result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
@@ -4812,10 +4806,10 @@ def _quantile(
                        out=out)
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
-            # can't write to a scalar
-            result = arr.dtype.type(np.nan)
+            # can't write to a scalar, but indexing will be correct
+            result = arr[-1]
         else:
-            result[..., slices_having_nans] = np.nan
+            np.copyto(result, arr[-1, ...], where=slices_having_nans)
     return result
 
 

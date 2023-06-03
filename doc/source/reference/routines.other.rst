@@ -59,3 +59,5 @@ Matlab-like Functions
    disp
 
 .. automodule:: numpy.exceptions
+
+.. automodule:: numpy.dtypes

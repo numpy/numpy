@@ -157,11 +157,18 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Issue gh-2556
-             * If you touch this code, please run this test which is so slow
-             * it was removed from the test suite
+#if defined(NPY_OS_WIN64)
+            /*
+             * Workaround Win64 fwrite() bug. Issue gh-2256
+             * The native 64 windows runtime has this issue, the above will
+             * also trigger UCRT (which doesn't), so it could be more precise.
              *
+             * If you touch this code, please run this test which is so slow
+             * it was removed from the test suite. Note that the original
+             * failure mode involves an infinite loop during tofile()
+             *
+             * import tempfile, numpy as np
+             * from numpy.testing import (assert_)
              * fourgbplus = 2**32 + 2**16
              * testbytes = np.arange(8, dtype=np.int8)
              * n = len(testbytes)
@@ -177,8 +184,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
              * assert_((a[-n:] == testbytes).all())
              */
             {
-                npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
-                npy_intp chunksize;
+                size_t maxsize = 2147483648 / (size_t)PyArray_DESCR(self)->elsize;
+                size_t chunksize;
 
                 n = 0;
                 while (size > 0) {
@@ -186,7 +193,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     n2 = fwrite((const void *)
                              ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
                              (size_t) PyArray_DESCR(self)->elsize,
-                             (size_t) chunksize, fp);
+                             chunksize, fp);
                     if (n2 < chunksize) {
                         break;
                     }
@@ -393,7 +400,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     char *value = (char *)value_buffer_stack;
     PyArray_Descr *descr = PyArray_DESCR(arr);
 
-    if (descr->elsize > sizeof(value_buffer_stack)) {
+    if ((size_t)descr->elsize > sizeof(value_buffer_stack)) {
         /* We need a large temporary buffer... */
         value_buffer_heap = PyObject_Calloc(1, descr->elsize);
         if (value_buffer_heap == NULL) {
@@ -424,7 +431,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 }
 
 /*
- * Fills an array with zeros.
+ * Internal function to fill an array with zeros.
+ * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
+ * and not a str or struct
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
@@ -435,21 +444,26 @@ NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
                    PyArrayObject *wheremask)
 {
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value False */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
+    int retcode = 0;
+    if (PyArray_ISOBJECT(dst)) {
+        PyObject * pZero = PyLong_FromLong(0);
+        retcode = PyArray_AssignRawScalar(dst, PyArray_DESCR(dst),
+                                     (char *)&pZero, wheremask, NPY_SAFE_CASTING);
+        Py_DECREF(pZero);
     }
-    value = 0;
+    else {
+        /* Create a raw bool scalar with the value False */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return -1;
+        }
+        npy_bool value = 0;
 
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
+        retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                          wheremask, NPY_SAFE_CASTING);
 
-    Py_DECREF(bool_dtype);
+        Py_DECREF(bool_dtype);
+    }
     return retcode;
 }
 
@@ -509,7 +523,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
             PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

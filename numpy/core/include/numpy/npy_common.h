@@ -105,6 +105,14 @@
     #define NPY_FINLINE static
 #endif
 
+#if defined(_MSC_VER)
+    #define NPY_NOINLINE static __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define NPY_NOINLINE static __attribute__((noinline))
+#else
+    #define NPY_NOINLINE static
+#endif
+
 #ifdef HAVE___THREAD
     #define NPY_TLS __thread
 #else
@@ -129,7 +137,7 @@
  #define NPY_STEALS_REF_TO_ARG(n)
 #endif
 
-/* 64 bit file position support, also on win-amd64. Ticket #1660 */
+/* 64 bit file position support, also on win-amd64. Issue gh-2256 */
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
     defined(__MINGW32__) || defined(__MINGW64__)
     #include <io.h>

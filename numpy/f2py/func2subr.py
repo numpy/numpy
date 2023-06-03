@@ -119,6 +119,12 @@ def createfuncwrapper(rout, signature=0):
 
     sargs = ', '.join(args)
     if f90mode:
+        # gh-23598 fix warning
+        # Essentially, this gets called again with modules where the name of the
+        # function is added to the arguments, which is not required, and removed
+        sargs = sargs.replace(f"{name}, ", '')
+        args = [arg for arg in args if arg != name]
+        rout['args'] = args
         add('subroutine f2pywrap_%s_%s (%s)' %
             (rout['modulename'], name, sargs))
         if not signature:

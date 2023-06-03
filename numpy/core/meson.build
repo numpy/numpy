@@ -44,7 +44,8 @@ C_ABI_VERSION = '0x01000009'
 # 0x0000000f - 1.22.x
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
-C_API_VERSION = '0x00000010'
+# 0x00000011 - 1.25.x
+C_API_VERSION = '0x00000011'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -430,6 +431,7 @@ _numpyconfig_h = configure_file(
 # ----------------------------
 
 staticlib_cflags = []
+staticlib_cppflags = []
 if cc.get_id() == 'msvc'
   # Disable voltbl section for vc142 to allow link using mingw-w64; see:
   # https://github.com/matthew-brett/dll_investigation/issues/1#issuecomment-1100468171
@@ -443,6 +445,7 @@ endif
 # https://mesonbuild.com/Build-options.html#build-options
 if get_option('disable-simd-optimizations')
   staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
+  staticlib_cppflags += '-DNPY_DISABLE_OPTIMIZATION'
 endif
 
 npy_math_internal_h = custom_target(
@@ -455,12 +458,13 @@ npymath_sources = [
   src_file.process('src/npymath/ieee754.c.src'),
   src_file.process('src/npymath/npy_math_complex.c.src'),
   npy_math_internal_h,
-  'src/npymath/halffloat.c',
+  'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
+  cpp_args: staticlib_cppflags,
   include_directories: ['include', 'src/npymath', 'src/common'],
   dependencies: py_dep,
   install: true,
@@ -926,7 +930,6 @@ python_sources = [
   'shape_base.py',
   'shape_base.pyi',
   'umath.py',
-  'umath_tests.py',
 ]
 
 py.install_sources(

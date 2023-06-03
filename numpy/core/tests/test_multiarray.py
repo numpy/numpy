@@ -1934,8 +1934,9 @@ class TestMethods:
                 assert_array_equal(a2.prod(axis=-1),
                                    np.array([24, 1890, 600], ctype))
 
-    def test_repeat(self):
-        m = np.array([1, 2, 3, 4, 5, 6])
+    @pytest.mark.parametrize('dtype', [None, object])
+    def test_repeat(self, dtype):
+        m = np.array([1, 2, 3, 4, 5, 6], dtype=dtype)
         m_rect = m.reshape((2, 3))
 
         A = m.repeat([1, 3, 2, 1, 1, 2])
@@ -3644,9 +3645,13 @@ class TestMethods:
             msg = 'dtype: {0}'.format(dt)
             ap = complex(a)
             assert_equal(ap, a, msg)
-            bp = complex(b)
+
+            with assert_warns(DeprecationWarning):
+                bp = complex(b)
             assert_equal(bp, b, msg)
-            cp = complex(c)
+
+            with assert_warns(DeprecationWarning):
+                cp = complex(c)
             assert_equal(cp, c, msg)
 
     def test__complex__should_not_work(self):
@@ -3669,7 +3674,8 @@ class TestMethods:
         assert_raises(TypeError, complex, d)
 
         e = np.array(['1+1j'], 'U')
-        assert_raises(TypeError, complex, e)
+        with assert_warns(DeprecationWarning):
+            assert_raises(TypeError, complex, e)
 
 class TestCequenceMethods:
     def test_array_contains(self):
@@ -5360,7 +5366,7 @@ class TestIO:
         def fail(*args, **kwargs):
             raise OSError('Can not tell or seek')
 
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             f.seek = fail
             f.tell = fail
             assert_raises(OSError, np.fromfile, f, dtype=x.dtype)
@@ -5368,7 +5374,7 @@ class TestIO:
     def test_io_open_unbuffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             y = np.fromfile(f, dtype=x.dtype)
             assert_array_equal(y, x.flat)
 
@@ -5395,7 +5401,7 @@ class TestIO:
     def test_io_open_buffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=-1) as f:
+        with open(tmp_filename, 'rb', buffering=-1) as f:
             y = np.fromfile(f, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 
@@ -8761,8 +8767,10 @@ class TestConversion:
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
             assert_equal(int_func(np.array(0)), 0)
-            assert_equal(int_func(np.array([1])), 1)
-            assert_equal(int_func(np.array([[42]])), 42)
+            with assert_warns(DeprecationWarning):
+                assert_equal(int_func(np.array([1])), 1)
+            with assert_warns(DeprecationWarning):
+                assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
             # gh-9972
@@ -8777,7 +8785,8 @@ class TestConversion:
                     def __trunc__(self):
                         return 3
                 assert_equal(3, int_func(np.array(HasTrunc())))
-                assert_equal(3, int_func(np.array([HasTrunc()])))
+                with assert_warns(DeprecationWarning):
+                    assert_equal(3, int_func(np.array([HasTrunc()])))
             else:
                 pass
 
@@ -8786,8 +8795,9 @@ class TestConversion:
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            assert_raises(NotImplementedError,
-                int_func, np.array([NotConvertible()]))
+            with assert_warns(DeprecationWarning):
+                assert_raises(NotImplementedError,
+                    int_func, np.array([NotConvertible()]))
 
 
 class TestWhere:

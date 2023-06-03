@@ -1011,6 +1011,34 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * necessary to propagate the information to the legacy type resolution.
          */
         if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
+            if (PyArray_FLAGS(out_op[i]) & NPY_ARRAY_WAS_PYTHON_INT
+                    && PyArray_TYPE(out_op[i]) != NPY_LONG) {
+                /*
+                 * When `np.array(integer)` is not the default integer (mainly
+                 * object dtype), this confuses many type resolvers.  Simply
+                 * forcing a default integer array is unfortunately easiest.
+                 * In this disables the optional NEP 50 warnings, but in
+                 * practice when this happens we should _usually_ pick the
+                 * default integer loop and that raises an error.
+                 * (An exception is `float64(1.) + 10**100` which silently
+                 * will give a float64 result rather than a Python float.)
+                 *
+                 * TODO: Just like the general dual NEP 50/legacy promotion
+                 * support this is meant as a temporary hack for NumPy 1.25.
+                 */
+                static PyArrayObject *zero_arr = NULL;
+                if (NPY_UNLIKELY(zero_arr == NULL)) {
+                    zero_arr = (PyArrayObject *)PyArray_ZEROS(
+                            0, NULL, NPY_LONG, NPY_FALSE);
+                    if (zero_arr == NULL) {
+                        goto fail;
+                    }
+                    ((PyArrayObject_fields *)zero_arr)->flags |= (
+                        NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
+                }
+                Py_INCREF(zero_arr);
+                Py_SETREF(out_op[i], zero_arr);
+            }
             *promoting_pyscalars = NPY_TRUE;
         }
     }
@@ -4929,9 +4957,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             if (!(orig_flags & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
                 continue;
             }
-            /* If the descriptor matches, no need to worry about conversion */
-            if (PyArray_EquivTypes(
-                    PyArray_DESCR(operands[i]), operation_descrs[i])) {
+            /*
+             * If descriptor matches, no need to convert, but integers may
+             * have been too large.
+             */
+            if (!(orig_flags & NPY_ARRAY_WAS_INT_AND_REPLACED)
+                    && PyArray_EquivTypes(
+                        PyArray_DESCR(operands[i]), operation_descrs[i])) {
                 continue;
             }
             /* Otherwise, replace the operand with a new array */
@@ -6607,14 +6639,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             Py_INCREF(descr);
             dummy_arrays[i] = (PyArrayObject *)PyArray_NewFromDescr_int(
                     &PyArray_Type, descr, 0, NULL, NULL, NULL,
-                    0, NULL, NULL, 0, 1);
+                    0, NULL, NULL, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
             if (dummy_arrays[i] == NULL) {
-                goto finish;
-            }
-            if (PyArray_DESCR(dummy_arrays[i]) != descr) {
-                PyErr_SetString(PyExc_NotImplementedError,
-                    "dtype was replaced during array creation, the dtype is "
-                    "unsupported currently (a subarray dtype?).");
                 goto finish;
             }
             DTypes[i] = NPY_DTYPE(descr);

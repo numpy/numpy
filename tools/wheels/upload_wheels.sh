@@ -23,7 +23,7 @@ set_upload_vars() {
         export ANACONDA_UPLOAD="true"
     elif [[ "$IS_SCHEDULE_DISPATCH" == "true" ]]; then
         echo scheduled or dispatched event
-        export ANACONDA_ORG="scipy-wheels-nightly"
+        export ANACONDA_ORG="scientific-python-nightly-wheels"
         export TOKEN="$NUMPY_NIGHTLY_UPLOAD_TOKEN"
         export ANACONDA_UPLOAD="true"
     else

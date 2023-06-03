@@ -797,18 +797,15 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
     else {
         Py_INCREF(PyArray_DESCR(self));
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                                    PyArray_DESCR(self),
-                                                    PyArray_NDIM(self),
-                                                    PyArray_DIMS(self),
-                                                    NULL, NULL,
-                                                    PyArray_ISFORTRAN(self),
-                                                    (PyObject *)self);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                Py_TYPE(self),
+                PyArray_DESCR(self),
+                PyArray_NDIM(self),
+                PyArray_DIMS(self),
+                NULL, NULL,
+                PyArray_ISFORTRAN(self),
+                (PyObject *)self, NULL, _NPY_ARRAY_ZEROED);
         if (ret == NULL) {
-            return NULL;
-        }
-        if (_zerofill(ret) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
         PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);

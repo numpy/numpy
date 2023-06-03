@@ -200,11 +200,45 @@ sequences. In such cases you may explicitly skip CI by including one of these
 fragments in your commit message:
 
 * ``[skip ci]``: skip all CI
+
+  Only recommended if you are still not ready for the checks to run on your PR
+  (for example, if this is only a draft.)
+
 * ``[skip actions]``: skip GitHub Actions jobs
+
+  `GitHub Actions <https://docs.github.com/actions>`__ is where most of the CI
+  checks are run, including the linter, benchmarking, running basic tests for
+  most architectures and OSs, and several compiler and CPU optimization
+  settings.
+  `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
+
 * ``[skip travis]``: skip TravisCI jobs
+
+  `TravisCI <https://www.travis-ci.com/>`__ will test your changes against
+  Python 3.9 on the PowerPC and s390x architectures.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.travis.yml>`__
+
 * ``[skip azp]``: skip Azure jobs
+
+  `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
+  where all comprehensive tests are run. This is an expensive run, and one you
+  could typically skip if you do documentation-only changes, for example.
+  `See the main configuration file for these checks. <https://github.com/numpy/numpy/blob/main/azure-pipelines.yml>`__
+
 * ``[skip circle]``: skip CircleCI jobs
+
+  `CircleCI <https://circleci.com/>`__ is where we build the documentation and
+  store the generated artifact for preview in each PR. This check will also run
+  all the docstrings examples and verify their results. If you don't make
+  documentation changes, but you make changes to a function's API, for example,
+  you may need to run these tests to verify that the doctests are still valid.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
+
 * ``[skip cirrus]``: skip Cirrus jobs
+
+  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
+  uploads.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
 
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
@@ -226,7 +260,7 @@ windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
 files. You can access them from the Summary page of the "Wheel builder"
 Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
 Additionally, the wheels will be uploaded to
-https://anaconda.org/scipy-wheels-nightly/ on the following conditions:
+https://anaconda.org/scientific-python-nightly-wheels/ on the following conditions:
 
 - by a weekly cron job or
 - if the github action or travis build has been manually triggered, which requires appropriate permissions
