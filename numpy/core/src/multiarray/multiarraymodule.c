@@ -2341,10 +2341,10 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     static char *kwlist[] = {"string", "dtype", "count", "sep", "like", "whitespace", NULL};
     PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
-    char whitespace = Py_None; 
+    char whitespace = NULL; 
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$Oc:fromstring", kwlist,
                 &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like, &whitespace)) {
         Py_XDECREF(descr);
         return NULL;
@@ -2369,7 +2369,8 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         }
     }
     
-    if (whitespace != Py_None) {
+
+    if (whitespace != NULL) {
         if (PyBytes_Check(whitespace)) {
             whitespace = PyBytes_AS_STRING(whitespace)[0];
         }
@@ -2383,9 +2384,8 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
             return NULL;
         }
     }
-    
 
-    return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
+    return PyArray_FromString(data, (npy_intp) s, descr, (npy_intp) nin, sep);
 }
 
 
