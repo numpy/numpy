@@ -2341,7 +2341,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     static char *kwlist[] = {"string", "dtype", "count", "sep", "like", "whitespace", NULL};
     PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
-    char whitespace = NULL; 
+    char whitespace = '\0'; 
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "s#|O&" NPY_SSIZE_T_PYFMT "s$Oc:fromstring", kwlist,
@@ -2370,12 +2370,12 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     }
     
 
-    if (whitespace != NULL) {
+    if (whitespace != '\0') {
         if (PyBytes_Check(whitespace)) {
-            whitespace = PyBytes_AS_STRING(whitespace)[0];
+            whitespace = PyBytes_AS_STRING(&whitespace)[0];
         }
         else if (PyUnicode_Check(whitespace)) {
-            whitespace = PyUnicode_AsUTF8(whitespace)[0];
+            whitespace = PyUnicode_AsUTF8(&whitespace)[0];
         }
         else {
             PyErr_SetString(PyExc_TypeError,
