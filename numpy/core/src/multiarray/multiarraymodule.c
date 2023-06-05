@@ -2338,14 +2338,13 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     Py_ssize_t nin = -1;
     char *sep = NULL;
     Py_ssize_t s;
-    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", "whitespace", NULL};
+    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
     PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
-    char whitespace = '\0'; 
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s$Oc:fromstring", kwlist,
-                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like, &whitespace)) {
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
+                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like)) {
         Py_XDECREF(descr);
         return NULL;
     }
@@ -2368,27 +2367,8 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
             return NULL;
         }
     }
-    
-
-    if (whitespace != '\0') {
-        if (PyBytes_Check(whitespace)) {
-            whitespace = PyBytes_AS_STRING(&whitespace)[0];
-        }
-        else if (PyUnicode_Check(whitespace)) {
-            whitespace = PyUnicode_AsUTF8(&whitespace)[0];
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "whitespace must be a string of length 1");
-            Py_XDECREF(descr);
-            return NULL;
-        }
-    }
-
-    return PyArray_FromString(data, (npy_intp) s, descr, (npy_intp) nin, sep);
+    return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
-
-
 
 static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)

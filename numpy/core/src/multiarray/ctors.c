@@ -3470,6 +3470,194 @@ fail:
 }
 #undef FROM_BUFFER_SIZE
 
+/*
+ * 
+ * Create an array by reading from the given stream, using the passed
+ * next_element and skip_separator functions.
+ * Does not steal the reference to dtype.
+ */
+#define FROM_BUFFER_SIZE 4096
+static PyArrayObject *
+array_from_text_whitespace(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nread,
+                void *stream, next_element next, skip_separator skip_sep,
+                void *stream_data, PyObject *whitespace)
+{
+    PyArrayObject *r;
+    npy_intp i;
+    char *dptr, *clean_sep, *tmp;
+    int err = 0;
+    int stop_reading_flag = 0;  /* -1 means end reached; -2 a parsing error */
+    npy_intp thisbuf = 0;
+    npy_intp size;
+    npy_intp bytes, totalbytes;
+    
+
+    size = (num >= 0) ? num : FROM_BUFFER_SIZE;
+
+    PyObject *converted_whitespace = NULL;
+
+    if (whitespace != NULL) {
+        if (PyLong_Check(whitespace)) {
+            long whitespace_long = PyLong_AsLong(whitespace);
+            converted_whitespace = PyLong_FromLong(whitespace_long);
+        } else if (PyFloat_Check(whitespace)) {
+            double whitespace_double = PyFloat_AsDouble(whitespace);
+            converted_whitespace = PyFloat_FromDouble(whitespace_double);
+        } else {
+            PyErr_SetString(PyExc_TypeError, "whitespace must be int or float");
+            Py_DECREF(dtype);
+            return NULL;
+        }
+    }
+
+    /*
+     * Array creation may move sub-array dimensions from the dtype to array
+     * dimensions, so we need to use the original dtype when reading.
+     */
+    Py_INCREF(dtype);
+
+    r = (PyArrayObject *)
+        PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
+                             NULL, NULL, 0, NULL);
+    if (r == NULL) {
+        return NULL;
+    }
+
+    clean_sep = swab_separator(sep);
+    if (clean_sep == NULL) {
+        err = 1;
+        goto fail;
+    }
+
+    NPY_BEGIN_ALLOW_THREADS;
+    totalbytes = bytes = size * dtype->elsize;
+    dptr = PyArray_DATA(r);
+    for (i = 0; num < 0 || i < num; i++) {
+        stop_reading_flag = next(&stream, dptr, dtype, stream_data);
+        if (stop_reading_flag < 0) {
+            break;
+        }
+        *nread += 1;
+        thisbuf += 1;
+        dptr += dtype->elsize;
+        if (num < 0 && thisbuf == size) {
+            totalbytes += bytes;
+            /* The handler is always valid */
+            tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,
+                                    PyArray_HANDLER(r));
+            if (tmp == NULL) {
+                err = 1;
+                break;
+            }
+            ((PyArrayObject_fields *)r)->data = tmp;
+            dptr = tmp + (totalbytes - bytes);
+            thisbuf = 0;
+        }
+        stop_reading_flag = skip_sep(&stream, clean_sep, stream_data);
+        if (stop_reading_flag < 0) {
+            if (num == i + 1) {
+                /* if we read as much as requested sep is optional */
+                stop_reading_flag = -1;
+            }
+            break;
+        }
+        // Replace whitespace with the converted value
+        if (converted_whitespace != NULL) {
+            PyObject *old_value = PyArray_Scalar(dptr, dtype);
+            PyObject *new_value = PyObject_RichCompare(converted_whitespace, Py_None, Py_EQ);
+            if (new_value == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to compare whitespace with None");
+                Py_DECREF(dtype);
+                Py_XDECREF(old_value);
+                return NULL;
+            }
+            if (PyObject_IsTrue(new_value)) {
+                Py_XDECREF(new_value);
+                Py_DECREF(old_value);
+                continue;  // Skip replacing whitespace
+            }
+            PyObject *converted_value = PyObject_RichCompare(new_value, Py_True, Py_EQ);
+            if (converted_value == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to convert whitespace to bool");
+                Py_DECREF(dtype);
+                Py_XDECREF(old_value);
+                Py_XDECREF(new_value);
+                return NULL;
+            }
+            if (PyObject_IsTrue(converted_value)) {
+                Py_DECREF(converted_value);
+                Py_DECREF(new_value);
+                Py_DECREF(old_value);
+                continue;  // Skip replacing whitespace
+            }
+            if (PyLong_Check(old_value)) {
+                long old_long = PyLong_AsLong(old_value);
+                converted_value = PyLong_FromLong(old_long);
+            } else if (PyFloat_Check(old_value)) {
+                double old_double = PyFloat_AsDouble(old_value);
+                converted_value = PyFloat_FromDouble(old_double);
+            } else {
+                PyErr_SetString(PyExc_TypeError, "Unexpected data type encountered");
+                Py_DECREF(dtype);
+                Py_XDECREF(old_value);
+                Py_XDECREF(new_value);
+                Py_XDECREF(converted_value);
+                return NULL;
+            }
+            Py_DECREF(old_value);
+            Py_DECREF(new_value);
+            // Update the value in the array with the converted whitespace value
+            memcpy(dptr, PyArray_DATA(converted_value), dtype->elsize);
+            Py_DECREF(converted_value);
+        }
+    }
+    if (num < 0) {
+        const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
+
+        if (nsize != 0) {
+            /* The handler is always valid */
+            tmp = PyDataMem_UserRENEW(PyArray_DATA(r), nsize,
+                                  PyArray_HANDLER(r));
+            if (tmp == NULL) {
+                err = 1;
+            }
+            else {
+                PyArray_DIMS(r)[0] = *nread;
+                ((PyArrayObject_fields *)r)->data = tmp;
+            }
+        }
+    }
+    NPY_END_ALLOW_THREADS;
+
+    free(clean_sep);
+    Py_XDECREF(converted_whitespace);
+
+    if (stop_reading_flag == -2) {
+        if (PyErr_Occurred()) {
+            /* If an error is already set (unlikely), do not create new one */
+            Py_DECREF(r);
+            return NULL;
+        }
+        /* 2019-09-12, NumPy 1.18 */
+        if (DEPRECATE(
+                "string or file could not be read to its end due to unmatched "
+                "data; this will raise a ValueError in the future.") < 0) {
+            goto fail;
+        }
+    }
+
+fail:
+    if (err == 1) {
+        PyErr_NoMemory();
+    }
+    if (PyErr_Occurred()) {
+        Py_DECREF(r);
+        return NULL;
+    }
+    return r;
+}
+#undef FROM_BUFFER_SIZE
+
 /*NUMPY_API
  *
  * Given a ``FILE *`` pointer ``fp``, and a ``PyArray_Descr``, return an
@@ -3698,7 +3886,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
-                   npy_intp num, char *sep)
+                   npy_intp num, char *sep, PyObject *whitespace)
 {
     int itemsize;
     PyArrayObject *ret;
@@ -3779,11 +3967,10 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         else {
             end = data + slen;
         }
-        ret = array_from_text(dtype, num, sep, &nread,
-                              data,
+        ret = array_from_text_whitespace(dtype, num, sep, &nread, data,
                               (next_element) fromstr_next_element,
                               (skip_separator) fromstr_skip_separator,
-                              end);
+                              end, whitespace);
         Py_DECREF(dtype);
     }
     return (PyObject *)ret;
