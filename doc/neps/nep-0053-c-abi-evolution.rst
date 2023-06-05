@@ -36,6 +36,7 @@ The implementation of this NEP consists would consist of two steps:
    compatible builds with the newest available NumPy version.
    (New API is not available unless opted-in.)
 2. The NumPy 2.0 will:
+
    * require recompilation of downstream packages against NumPy 2.0 to be
      compatible with NumPy 2.0.
    * need a ``numpy2_compat`` as a dependency when running on NumPy 1.x.
