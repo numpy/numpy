@@ -1,15 +1,1 @@
 Add copy parameter for api.reshape function.
---------------------------------------------
-
-It is now possible to specify a copy parameter in the 
-Array API ``reshape`` function.
-
-.. code-block:: python
-
-   >>> import numpy.array_api as nx
-   >>> array = nx.arange(10, dtype=nx.int64)
-   >>> other = nx.reshape(array, (2, 5), copy=True)
-   >>> array[:5] = -1
-   >>> print(other)
-   [[0 1 2 3 4]
-    [5 6 7 8 9]]
