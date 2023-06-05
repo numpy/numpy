@@ -55,7 +55,7 @@ Further, many structs used by NumPy have always been public making it
 impossible to change them outside of a major release.
 Some changes have been planned for years and were the reason for
 ``NPY_NO_DEPRECATED_API`` and further deprecations as explained in
-`c_api_deprecations`_.
+:ref:`c_api_deprecations`.
 
 While we probably have little reason to change the layout of the array struct
 (``PyArrayObject_fields``) for example the development and improvement of
