@@ -24,6 +24,7 @@ from ._dtypes import (
     _integer_dtypes,
     _integer_or_boolean_dtypes,
     _floating_dtypes,
+    _complex_floating_dtypes,
     _numeric_dtypes,
     _result_type,
     _dtype_categories,
@@ -139,7 +140,7 @@ class Array:
 
         if self.dtype not in _dtype_categories[dtype_category]:
             raise TypeError(f"Only {dtype_category} dtypes are allowed in {op}")
-        if isinstance(other, (int, float, bool)):
+        if isinstance(other, (int, complex, float, bool)):
             other = self._promote_scalar(other)
         elif isinstance(other, Array):
             if other.dtype not in _dtype_categories[dtype_category]:
@@ -189,10 +190,22 @@ class Array:
                 raise TypeError(
                     "Python int scalars cannot be promoted with bool arrays"
                 )
+            if self.dtype in _integer_dtypes:
+                info = np.iinfo(self.dtype)
+                if not (info.min <= scalar <= info.max):
+                    raise OverflowError(
+                        "Python int scalars must be within the bounds of the dtype for integer arrays"
+                    )
+            # int + array(floating) is allowed
         elif isinstance(scalar, float):
             if self.dtype not in _floating_dtypes:
                 raise TypeError(
                     "Python float scalars can only be promoted with floating-point arrays."
+                )
+        elif isinstance(scalar, complex):
+            if self.dtype not in _complex_floating_dtypes:
+                raise TypeError(
+                    "Python complex scalars can only be promoted with complex floating-point arrays."
                 )
         else:
             raise TypeError("'scalar' must be a Python scalar")
@@ -454,9 +467,17 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("bool is only allowed on arrays with 0 dimensions")
-        if self.dtype not in _boolean_dtypes:
-            raise ValueError("bool is only allowed on boolean arrays")
         res = self._array.__bool__()
+        return res
+
+    def __complex__(self: Array, /) -> float:
+        """
+        Performs the operation __complex__.
+        """
+        # Note: This is an error here.
+        if self._array.ndim != 0:
+            raise TypeError("complex is only allowed on arrays with 0 dimensions")
+        res = self._array.__complex__()
         return res
 
     def __dlpack__(self: Array, /, *, stream: None = None) -> PyCapsule:
@@ -492,8 +513,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("float is only allowed on arrays with 0 dimensions")
-        if self.dtype not in _floating_dtypes:
-            raise ValueError("float is only allowed on floating-point arrays")
+        if self.dtype in _complex_floating_dtypes:
+            raise TypeError("float is not allowed on complex floating-point arrays")
         res = self._array.__float__()
         return res
 
@@ -501,7 +522,7 @@ class Array:
         """
         Performs the operation __floordiv__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__floordiv__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__floordiv__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -512,7 +533,7 @@ class Array:
         """
         Performs the operation __ge__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__ge__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__ge__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -542,7 +563,7 @@ class Array:
         """
         Performs the operation __gt__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__gt__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__gt__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -556,8 +577,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("int is only allowed on arrays with 0 dimensions")
-        if self.dtype not in _integer_dtypes:
-            raise ValueError("int is only allowed on integer arrays")
+        if self.dtype in _complex_floating_dtypes:
+            raise TypeError("int is not allowed on complex floating-point arrays")
         res = self._array.__int__()
         return res
 
@@ -581,7 +602,7 @@ class Array:
         """
         Performs the operation __le__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__le__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__le__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -603,7 +624,7 @@ class Array:
         """
         Performs the operation __lt__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__lt__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__lt__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -626,7 +647,7 @@ class Array:
         """
         Performs the operation __mod__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__mod__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__mod__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -808,7 +829,7 @@ class Array:
         """
         Performs the operation __ifloordiv__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__ifloordiv__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__ifloordiv__")
         if other is NotImplemented:
             return other
         self._array.__ifloordiv__(other._array)
@@ -818,7 +839,7 @@ class Array:
         """
         Performs the operation __rfloordiv__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__rfloordiv__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__rfloordiv__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
@@ -874,7 +895,7 @@ class Array:
         """
         Performs the operation __imod__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__imod__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__imod__")
         if other is NotImplemented:
             return other
         self._array.__imod__(other._array)
@@ -884,7 +905,7 @@ class Array:
         """
         Performs the operation __rmod__.
         """
-        other = self._check_allowed_dtypes(other, "numeric", "__rmod__")
+        other = self._check_allowed_dtypes(other, "real numeric", "__rmod__")
         if other is NotImplemented:
             return other
         self, other = self._normalize_two_args(self, other)
