@@ -288,7 +288,7 @@ subclasses before using ``super().__array_ufunc__``.
 Compiling against the NumPy C API is now backwards compatible by default
 ------------------------------------------------------------------------
 NumPy now defaults to exposing a backwards compatible subset of the C-API.
-This makes the use of ``oldest-support-numpy`` unnecessary.
+This makes the use of ``oldest-supported-numpy`` unnecessary.
 Libraries can override the default minimal version to be compatible with
 using::
 
