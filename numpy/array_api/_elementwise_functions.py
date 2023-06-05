@@ -3,6 +3,7 @@ from __future__ import annotations
 from ._dtypes import (
     _boolean_dtypes,
     _floating_dtypes,
+    _complex_floating_dtypes,
     _integer_dtypes,
     _integer_or_boolean_dtypes,
     _numeric_dtypes,
@@ -238,6 +239,17 @@ def ceil(x: Array, /) -> Array:
     return Array._new(np.ceil(x._array))
 
 
+def conj(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.conj <numpy.conj>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in conj")
+    return Array._new(np.conj(x))
+
+
 def cos(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.cos <numpy.cos>`.
@@ -362,6 +374,17 @@ def greater_equal(x1: Array, x2: Array, /) -> Array:
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.greater_equal(x1._array, x2._array))
+
+
+def imag(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.imag <numpy.imag>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in imag")
+    return Array._new(np.imag(x))
 
 
 def isfinite(x: Array, /) -> Array:
@@ -597,6 +620,17 @@ def pow(x1: Array, x2: Array, /) -> Array:
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.power(x1._array, x2._array))
+
+
+def real(x: Array, /) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.real <numpy.real>`.
+
+    See its docstring for more information.
+    """
+    if x.dtype not in _complex_floating_dtypes:
+        raise TypeError("Only complex floating-point dtypes are allowed in real")
+    return Array._new(np.real(x))
 
 
 def remainder(x1: Array, x2: Array, /) -> Array:
