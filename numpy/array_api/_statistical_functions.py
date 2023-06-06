@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from ._dtypes import (
-    _floating_dtypes,
+    _real_floating_dtypes,
+    _real_numeric_dtypes,
     _numeric_dtypes,
 )
 from ._array_object import Array
-from ._creation_functions import asarray
 from ._dtypes import float32, float64, complex64, complex128
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union
@@ -23,8 +23,8 @@ def max(
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     keepdims: bool = False,
 ) -> Array:
-    if x.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in max")
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in max")
     return Array._new(np.max(x._array, axis=axis, keepdims=keepdims))
 
 
@@ -35,8 +35,8 @@ def mean(
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     keepdims: bool = False,
 ) -> Array:
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in mean")
+    if x.dtype not in _real_floating_dtypes:
+        raise TypeError("Only real floating-point dtypes are allowed in mean")
     return Array._new(np.mean(x._array, axis=axis, keepdims=keepdims))
 
 
@@ -47,8 +47,8 @@ def min(
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     keepdims: bool = False,
 ) -> Array:
-    if x.dtype not in _numeric_dtypes:
-        raise TypeError("Only numeric dtypes are allowed in min")
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in min")
     return Array._new(np.min(x._array, axis=axis, keepdims=keepdims))
 
 
@@ -82,8 +82,8 @@ def std(
     keepdims: bool = False,
 ) -> Array:
     # Note: the keyword argument correction is different here
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in std")
+    if x.dtype not in _real_floating_dtypes:
+        raise TypeError("Only real floating-point dtypes are allowed in std")
     return Array._new(np.std(x._array, axis=axis, ddof=correction, keepdims=keepdims))
 
 
@@ -117,6 +117,6 @@ def var(
     keepdims: bool = False,
 ) -> Array:
     # Note: the keyword argument correction is different here
-    if x.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in var")
+    if x.dtype not in _real_floating_dtypes:
+        raise TypeError("Only real floating-point dtypes are allowed in var")
     return Array._new(np.var(x._array, axis=axis, ddof=correction, keepdims=keepdims))
