@@ -173,6 +173,7 @@ from ._data_type_functions import (
     broadcast_to,
     can_cast,
     finfo,
+    isdtype,
     iinfo,
     result_type,
 )
