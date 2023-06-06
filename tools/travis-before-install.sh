@@ -36,7 +36,7 @@ gcc --version
 
 popd
 
-pip install --upgrade pip 'setuptools<49.2.0' wheel
+pip install --upgrade pip setuptools wheel
 
 # 'setuptools', 'wheel' and 'cython' are build dependencies.  This information
 # is stored in pyproject.toml, but there is not yet a standard way to install
