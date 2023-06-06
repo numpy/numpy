@@ -159,24 +159,32 @@ static MatrixShape
 _select_matrix_shape(PyArrayObject *array)
 {
     switch (PyArray_NDIM(array)) {
+
         case 0:
             return _scalar;
+
         case 1:
             if (PyArray_DIM(array, 0) > 1)
                 return _column;
-            return _scalar;
-        case 2:
-            if (PyArray_DIM(array, 0) > 1) {
-                if (PyArray_DIM(array, 1) == 1)
-                    return _column;
-                else
-                    return _matrix;
-            }
-            if (PyArray_DIM(array, 1) == 1)
+            else
                 return _scalar;
-            return _row;
+
+        case 2:
+            if (PyArray_DIM(array, 0) > 1)
+                if (PyArray_DIM(array, 1) > 1)                    
+                    return _matrix;
+                else
+                    return _column;
+
+            else
+                if (PyArray_DIM(array, 1) > 1)
+                    return _row;
+                else
+                    return _scalar;
+
+        default:
+            return _matrix;
     }
-    return _matrix;
 }
 
 
