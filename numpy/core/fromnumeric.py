@@ -21,7 +21,7 @@ __all__ = [
     'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
-    'max', 'min',
+    'mean_std', 'mean_var', 'max', 'min',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
@@ -3440,7 +3440,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     See Also
     --------
     average : Weighted average
-    std, var, nanmean, nanstd, nanvar
+    std, mean_std, mean_var, var, nanmean, nanstd, nanvar
 
     Notes
     -----
@@ -3569,7 +3569,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     See Also
     --------
-    var, mean, nanmean, nanstd, nanvar
+    var, mean, mean_std, mean_var, nanmean, nanstd, nanvar
     :ref:`ufuncs-output-type`
 
     Notes
@@ -3646,6 +3646,232 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
+
+def _mean_std_dispatcher(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, mean_out, std_out)
+
+
+@array_function_dispatch(_mean_std_dispatcher)
+def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
+    """
+    Compute the standard deviation and the mean along the specified axis.
+
+    Returns the mean and the standard deviation, a measure of the spread of a distribution,
+    of the array elements. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Calculate the standard deviation of these values.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which the standard deviation is computed. The
+        default is to compute the standard deviation of the flattened array.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a standard deviation is performed over
+        multiple axes, instead of a single axis or all the axes as before.
+    dtype : dtype, optional
+        Type to use in computing the standard deviation. For arrays of
+        integer type the default is float64, for arrays of float types it is
+        the same as the array type.
+    mean_out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type (of the calculated
+        values) will be cast if necessary.
+    std_out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type (of the calculated
+        values) will be cast if necessary.
+    ddof : int, optional
+        Means Delta Degrees of Freedom.  The divisor used in calculations
+        is ``N - ddof``, where ``N`` represents the number of elements.
+        By default `ddof` is zero.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `std` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-class' method does not implement `keepdims` any
+        exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the standard deviation.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.24.1
+
+    Returns
+    -------
+    mean: ndarray, see dtype parameter above
+    
+    If `out=None`, returns a new array containing the means,
+    otherwise a reference to the output array is returned.
+    
+    standard_deviation : ndarray, see dtype parameter above.
+    
+    If `out` is None, return a new array containing the standard deviation,
+    otherwise return a reference to the output array.
+
+    See Also
+    --------
+    var, std, mean, mean_var, nanmean, nanstd, nanvar
+    :ref:`ufuncs-output-type`
+
+    Notes
+    -----
+    Calculation of the mean and the standard deviation is in line with
+     the function mean and std. The notes there explain their definitions.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_std(a)
+    (2.5, 1.118033988749895)
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_std(a, axis=0)
+    (array([2., 3.]), array([1., 1.]))
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_std(a, axis=1)
+    (array([1.5, 3.5]), array([0.5, 0.5]))
+    """
+    
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
+    if type(a) is not mu.ndarray:
+        try:
+            std = a.mean_std
+        except AttributeError:
+            pass
+        else:
+            return mean_std(axis=axis, dtype=dtype, mean_out=mean_out, std_out=std_out, ddof=ddof, **kwargs)
+
+    return _methods._mean_std(a, axis=axis, dtype=dtype, mean_out=mean_out, std_out=std_out, ddof=ddof,
+                         **kwargs)
+
+
+def _mean_var_dispatcher(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, mean_out, var_out)
+
+
+@array_function_dispatch(_mean_var_dispatcher)
+def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
+    """
+    Compute the mean and the variance along the specified axis.
+
+    Returns the mean and the variance, a measure of the spread of a distribution,
+    of the array elements. The variance is computed for the
+    flattened array by default, otherwise over the specified axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Calculate the variance of these values.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which the variance is computed. The
+        default is to compute the variance of the flattened array.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a variance is performed over
+        multiple axes, instead of a single axis or all the axes as before.
+    dtype : dtype, optional
+        Type to use in computing the standard deviation. For arrays of
+        integer type the default is float64, for arrays of float types it is
+        the same as the array type.
+    mean_out : ndarray, optional
+        Alternative output array in which to place the result for the mean. It must have
+        the same shape as the expected output but the type (of the calculated
+        values) will be cast if necessary.
+    var_out : ndarray, optional
+        Alternative output array in which to place the result for the variance. It must have
+        the same shape as the expected output but the type (of the calculated
+        values) will be cast if necessary.
+    ddof : int, optional
+        Means Delta Degrees of Freedom.  The divisor used in calculations
+        is ``N - ddof``, where ``N`` represents the number of elements.
+        By default `ddof` is zero.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `std` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-class' method does not implement `keepdims` any
+        exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the variance.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. version added:: 1.24.1
+
+    Returns
+    -------
+    mean: ndarray, see dtype parameter above
+    
+    If `out=None`, returns a new array containing the means,
+    otherwise a reference to the output array is returned.
+    
+    variance : ndarray, see dtype parameter above.
+    
+    If `out` is None, return a new array containing the variance,
+    otherwise return a reference to the output array.
+
+    See Also
+    --------
+    var, mean_std, std, mean, nanmean, nanstd, nanvar
+    :ref:`ufuncs-output-type`
+
+    Notes
+    -----
+    Calculation of the mean and the variance is in line with
+     the function mean and var. The notes there explain their definitions.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_var(a)
+    (2.5, 1.25)
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_var(a, axis=0)
+    (array([2., 3.]), array([1., 1.]))
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.mean_var(a, axis=1)
+    (array([1.5, 3.5]), array([0.25, 0.25]))
+    """
+    
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
+    if type(a) is not mu.ndarray:
+        try:
+            std = a.mean_var
+        except AttributeError:
+            pass
+        else:
+            return mean_var(axis=axis, dtype=dtype, mean_out=mean_out, var_out=var_out, ddof=ddof, **kwargs)
+
+    return _methods._mean_var(a, axis=axis, dtype=dtype, mean_out=mean_out, var_out=var_out, ddof=ddof,
+                         **kwargs)
+
+
+
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
                     keepdims=None, *, where=None):
     return (a, where, out)
@@ -3711,7 +3937,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     See Also
     --------
-    std, mean, nanmean, nanstd, nanvar
+    std, mean, mean_std, mean_var, nanmean, nanstd, nanvar
     :ref:`ufuncs-output-type`
 
     Notes

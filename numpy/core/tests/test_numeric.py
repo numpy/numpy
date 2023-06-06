@@ -298,6 +298,107 @@ class TestNonarrayArgs:
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
 
+    def test_mean_std_keepdims_true(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20,5)+0.5
+
+        mean_out = np.zeros((10,1,5))
+        std_out = np.zeros((10,1,5))
+        mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,axis=1, keepdims=True)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([10,1,5]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A,axis=1, keepdims=True)
+        mean_old = np.mean(A,axis=1, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        # The returned  objects should be the objects specified during calling
+        assert mean_out is mean
+        assert std_out is std
+
+
+    def test_mean_std_keepdims_true(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20,5)+0.5
+
+        mean, std = np.mean_std(A, mean_out=None, std_out=None, axis=1, keepdims=False)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([10,5]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A,axis=1)
+        mean_old = np.mean(A,axis=1)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_equal(std, std_old)
+
+    def test_mean_var_keepdims_true(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20,5)+0.5
+
+        mean_out = np.zeros((10,1,5))
+        var_out = np.zeros((10,1,5))
+        mean, var = np.mean_(A, mean_out=mean_out, var_out=var_out,axis=1, keepdims=True)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([10,1,5]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A,axis=1, keepdims=True)
+        mean_old = np.mean(A,axis=1, keepdims=True)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(var, var_old)
+        assert_almost_equal(mean, mean_old)
+
+        # The returned  objects should be the objects specified during calling
+        assert mean_out is mean
+        assert var_out is var
+
+    def test_mean_var_keepdims_true(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20,5)+0.5
+
+        mean, var = np.mean_var(A, mean_out=None, var_out=None, axis=1, keepdims=False)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([10,5]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A,axis=1)
+        mean_old = np.mean(A,axis=1)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_equal(var, var_old)
+
+    def test_mean_var_multiple_axis(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20,5)+0.5
+        axis=(0,2)
+        mean, var = np.mean_var(A, mean_out=None, var_out=None, axis=axis, keepdims=False)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([20]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A,axis=axis)
+        mean_old = np.mean(A,axis=axis)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_equal(var, var_old)
 
 class TestIsscalar:
     def test_isscalar(self):

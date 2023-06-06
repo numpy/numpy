@@ -132,7 +132,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     return ret
 
-def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
+def _mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keepdims=False, *,
          where=True):
     arr = asanyarray(a)
 
@@ -149,28 +149,42 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     # Compute the mean.
     # Note that if dtype is not of inexact type then arraymean will
     # not be either.
-    arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=where)
-    # The shape of rcount has to match arrmean to not change the shape of out
-    # in broadcasting. Otherwise, it cannot be stored back to arrmean.
+
+    if mean_out is not None:
+        broadcast_shape = asanyarray(arr.shape, dtype=int)
+        if axis is not None:
+            broadcast_shape[axis] = 1
+        else:
+            broadcast_shape[:] = 1
+
+        broadcast_shape = tuple(broadcast_shape)
+        mean_shape = mean_out.shape
+        mean_out.resize(broadcast_shape)
+
+    ret_mean = umr_sum(arr, axis, dtype, mean_out, keepdims=True, where=where)
+
+    # The shape of rcount has to match ret_mean to not change the shape of out
+    # in broadcasting. Otherwise, it cannot be stored back to ret_mean.
     if rcount.ndim == 0:
         # fast-path for default case when where is True
         div = rcount
     else:
-        # matching rcount to arrmean when where is specified as array
-        div = rcount.reshape(arrmean.shape)
-    if isinstance(arrmean, mu.ndarray):
+        # matching rcount to ret_mean when where is specified as array
+        div = rcount.reshape(ret_mean.shape)
+
+    if isinstance(ret_mean, mu.ndarray):
         with _no_nep50_warning():
-            arrmean = um.true_divide(arrmean, div, out=arrmean,
+            ret_mean = um.true_divide(ret_mean, div, out=ret_mean,
                                      casting='unsafe', subok=False)
-    elif hasattr(arrmean, "dtype"):
-        arrmean = arrmean.dtype.type(arrmean / rcount)
+    elif hasattr(ret_mean, "dtype"):
+        ret_mean = ret_mean.dtype.type(ret_mean / rcount)
     else:
-        arrmean = arrmean / rcount
+        ret_mean = ret_mean / rcount
 
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
-    x = asanyarray(arr - arrmean)
+    x = asanyarray(arr - ret_mean)
 
     if issubclass(arr.dtype.type, (nt.floating, nt.integer)):
         x = um.multiply(x, x, out=x)
@@ -184,36 +198,61 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     else:
         x = um.multiply(x, um.conjugate(x), out=x).real
 
-    ret = umr_sum(x, axis, dtype, out, keepdims=keepdims, where=where)
+    ret_var = umr_sum(x, axis, dtype, var_out, keepdims=keepdims, where=where)
 
     # Compute degrees of freedom and make sure it is not negative.
     rcount = um.maximum(rcount - ddof, 0)
 
     # divide by degrees of freedom
-    if isinstance(ret, mu.ndarray):
+    if isinstance(ret_var, mu.ndarray):
         with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
-    elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(ret / rcount)
+            ret_var = um.true_divide(
+                    ret_var, rcount, out=ret_var, casting='unsafe', subok=False)
+        ret_mean.resize(ret_var.shape)  # Make the mean output follow the var output
+    elif hasattr(ret_var, 'dtype'):
+        ret_var = ret_var.dtype.type(ret_var / rcount)
+        ret_mean = ret_mean.dtype.type(ret_mean)  # Make the mean output follow the var output
     else:
-        ret = ret / rcount
+        ret_var = ret_var / rcount
 
-    return ret
+    return ret_mean, ret_var
+
+def _mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keepdims=False, *,
+         where=True):
+
+    ret_mean, ret_var = _mean_var(a, axis=axis, dtype=dtype, mean_out=mean_out, var_out=std_out, ddof=ddof,
+               keepdims=keepdims, where=where)
+
+    if isinstance(ret_var, mu.ndarray):
+        ret_var = um.sqrt(ret_var, out=ret_var)
+    elif hasattr(ret_var, 'dtype'):
+        ret_var = ret_var.dtype.type(um.sqrt(ret_var))
+    else:
+        ret_var = um.sqrt(ret_var)
+
+    return ret_mean, ret_var
+
+def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
+         where=True):
+
+    ret_mean, ret_var = _mean_var(a, axis=axis, dtype=dtype, mean_out=None, var_out=out, ddof=ddof, keepdims=keepdims, where=where)
+
+    return ret_var
 
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
          where=True):
-    ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+    ret_var = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                keepdims=keepdims, where=where)
 
-    if isinstance(ret, mu.ndarray):
-        ret = um.sqrt(ret, out=ret)
-    elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(um.sqrt(ret))
+    if isinstance(ret_var, mu.ndarray):
+        ret_var = um.sqrt(ret_var, out=ret_var)
+    elif hasattr(ret_var, 'dtype'):
+        ret_var = ret_var.dtype.type(um.sqrt(ret_var))
     else:
-        ret = um.sqrt(ret)
+        ret_var = um.sqrt(ret_var)
 
-    return ret
+    return ret_var
+
 
 def _ptp(a, axis=None, out=None, keepdims=False):
     return um.subtract(
