@@ -484,10 +484,15 @@ class TestNonarrayArgs:
         assert_equal(std, std_old)
 
     def test_mean_std_keepdims_true_masked(self):
-        A = ma.array([[2., 3., 4., 5.,],[1., 2., 3., 4.]], mask=[[True, False, True, False],[True, False, True, False]])
+        A = ma.array([[2., 3., 4., 5.,],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
 
-        mean_out = ma.array([[0., 0., 0., 0.,]], mask=[[True, True, True, True]])
-        std_out = ma.array([[0., 0., 0., 0.,]], mask=[[True, True, True, True]])
+        mean_out = ma.array([[0., 0., 0., 0.,]],
+                            mask=[[True, True, True, True]])
+        std_out = ma.array([[0., 0., 0., 0.,]],
+                           mask=[[True, True, True, True]])
 
         axis = 0
         mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
@@ -510,7 +515,10 @@ class TestNonarrayArgs:
         assert std_out is std
 
         # masked elements should be ignored
-        B = ma.array([[100., 3., 104., 5.,],[101., 2., 103., 4.]], mask=[[True, False, True, False],[True, False, True, False]])
+        B = ma.array([[100., 3., 104., 5.,],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
         mean_b, std_b = np.mean_std(A, axis=axis, keepdims=True)
         assert_almost_equal(std, std_b)
         assert_almost_equal(mean, mean_b)
