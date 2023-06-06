@@ -4,12 +4,12 @@
 #build-backend = "mesonpy"
 requires = [
     # setuptools, wheel and Cython are needed for the setup.py based build
-    "setuptools==59.2.0",
+    "setuptools==67.8.0",
     # `wheel` is needed for non-isolated builds, given that `meson-python`
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
     # likely to be removed as a dependency in meson-python 0.12.0.
-    "wheel==0.38.1",
-    "Cython>=0.29.34,<3.0",
+    "wheel==0.40.0",
+    "Cython>=0.29.35,<3.0",
 #    "meson-python>=0.10.0",
 ]
 
