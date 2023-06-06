@@ -6,7 +6,7 @@ from ._dtypes import (
 )
 from ._array_object import Array
 from ._creation_functions import asarray
-from ._dtypes import float32, float64
+from ._dtypes import float32, float64, complex64, complex128
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
@@ -62,10 +62,14 @@ def prod(
 ) -> Array:
     if x.dtype not in _numeric_dtypes:
         raise TypeError("Only numeric dtypes are allowed in prod")
-    # Note: sum() and prod() always upcast float32 to float64 for dtype=None
-    # We need to do so here before computing the product to avoid overflow
-    if dtype is None and x.dtype == float32:
-        dtype = float64
+    # Note: sum() and prod() always upcast for dtype=None. `np.prod` does that
+    # for integers, but not for float32 or complex64, so we need to
+    # special-case it here
+    if dtype is None:
+        if x.dtype == float32:
+            dtype = float64
+        elif x.dtype == complex64:
+            dtype = complex128
     return Array._new(np.prod(x._array, dtype=dtype, axis=axis, keepdims=keepdims))
 
 
@@ -93,11 +97,14 @@ def sum(
 ) -> Array:
     if x.dtype not in _numeric_dtypes:
         raise TypeError("Only numeric dtypes are allowed in sum")
-    # Note: sum() and prod() always upcast integers to (u)int64 and float32 to
-    # float64 for dtype=None. `np.sum` does that too for integers, but not for
-    # float32, so we need to special-case it here
-    if dtype is None and x.dtype == float32:
-        dtype = float64
+    # Note: sum() and prod() always upcast for dtype=None. `np.sum` does that
+    # for integers, but not for float32 or complex64, so we need to
+    # special-case it here
+    if dtype is None:
+        if x.dtype == float32:
+            dtype = float64
+        elif x.dtype == complex64:
+            dtype = complex128
     return Array._new(np.sum(x._array, axis=axis, dtype=dtype, keepdims=keepdims))
 
 
