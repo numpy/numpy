@@ -37,6 +37,8 @@ _real_floating_dtypes = (float32, float64)
 _floating_dtypes = (float32, float64, complex64, complex128)
 _complex_floating_dtypes = (complex64, complex128)
 _integer_dtypes = (int8, int16, int32, int64, uint8, uint16, uint32, uint64)
+_signed_integer_dtypes = (int8, int16, int32, int64)
+_unsigned_integer_dtypes = (uint8, uint16, uint32, uint64)
 _integer_or_boolean_dtypes = (
     bool,
     int8,
