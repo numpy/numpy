@@ -310,11 +310,11 @@ class TestNonarrayArgs:
 
         # Shape of returned mean and std should be same
         assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([10,1,5]))
+        assert_equal(np.array(std.shape), np.array([10, 1, 5]))
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A,axis=1, keepdims=True)
-        mean_old = np.mean(A,axis=1, keepdims=True)
+        std_old = np.std(A, axis=1, keepdims=True)
+        mean_old = np.mean(A, axis=1, keepdims=True)
 
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
         assert_almost_equal(std, std_old)
@@ -324,17 +324,16 @@ class TestNonarrayArgs:
         assert mean_out is mean
         assert std_out is std
 
-
     def test_mean_std_keepdims_false(self):
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
-        mean, std = np.mean_std(A, mean_out=None, std_out=None, 
+        mean, std = np.mean_std(A, mean_out=None, std_out=None,
                                 axis=1, keepdims=False)
 
         # Shape of returned mean and std should be same
         assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([10,5]))
+        assert_equal(np.array(std.shape), np.array([10, 5]))
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=1)
@@ -349,16 +348,16 @@ class TestNonarrayArgs:
 
         where = A > 0.5
 
-        mean, std = np.mean_std(A, mean_out=None, std_out=None, 
+        mean, std = np.mean_std(A, mean_out=None, std_out=None,
                                 axis=1, where = where)
 
         # Shape of returned mean and std should be same
         assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([10,5]))
+        assert_equal(np.array(std.shape), np.array([10, 5]))
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A,axis=1, where=where)
-        mean_old = np.mean(A,axis=1, where=where)
+        std_old = np.std(A, axis=1, where=where)
+        mean_old = np.mean(A, axis=1, where=where)
 
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
         assert_equal(std, std_old)
@@ -375,7 +374,7 @@ class TestNonarrayArgs:
 
         # Shape of returned mean and var should be same
         assert_equal(np.array(var.shape), np.array(mean.shape))
-        assert_equal(np.array(var.shape), np.array([10,1,5]))
+        assert_equal(np.array(var.shape), np.array([10, 1, 5]))
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, keepdims=True)
@@ -393,12 +392,12 @@ class TestNonarrayArgs:
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
-        mean, var = np.mean_var(A, mean_out=None, var_out=None, 
+        mean, var = np.mean_var(A, mean_out=None, var_out=None,
                                 axis=1, keepdims=False)
 
         # Shape of returned mean and var should be same
         assert_equal(np.array(var.shape), np.array(mean.shape))
-        assert_equal(np.array(var.shape), np.array([10,5]))
+        assert_equal(np.array(var.shape), np.array([10, 5]))
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1)
@@ -413,12 +412,12 @@ class TestNonarrayArgs:
 
         where = A > 0.5
 
-        mean, var = np.mean_var(A, mean_out=None, var_out=None, 
+        mean, var = np.mean_var(A, mean_out=None, var_out=None,
                                 axis=1, where=where)
 
         # Shape of returned mean and var should be same
         assert_equal(np.array(var.shape), np.array(mean.shape))
-        assert_equal(np.array(var.shape), np.array([10,5]))
+        assert_equal(np.array(var.shape), np.array([10, 5]))
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, where=where)
@@ -431,7 +430,7 @@ class TestNonarrayArgs:
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
         axis = (0, 2)
-        mean, var = np.mean_var(A, mean_out=None, var_out=None, 
+        mean, var = np.mean_var(A, mean_out=None, var_out=None,
                                 axis=axis, keepdims=False)
 
         # Shape of returned mean and var should be same
@@ -439,8 +438,8 @@ class TestNonarrayArgs:
         assert_equal(np.array(var.shape), np.array([20]))
 
         # Output should be the same as from the individual algorithms
-        var_old = np.var(A,axis=axis)
-        mean_old = np.mean(A,axis=axis)
+        var_old = np.var(A, axis=axis)
+        mean_old = np.mean(A, axis=axis)
 
         assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
         assert_equal(var, var_old)
@@ -448,8 +447,8 @@ class TestNonarrayArgs:
     def test_mean_std_multiple_axis(self):
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5)+0.5
-        axis=(0, 2)
-        mean, std = np.mean_std(A, mean_out=None, 
+        axis = (0, 2)
+        mean, std = np.mean_std(A, mean_out=None,
                                 std_out=None, axis=axis, keepdims=False)
 
         # Shape of returned mean and std should be same
@@ -468,7 +467,7 @@ class TestNonarrayArgs:
         A = rng.randn(10, 20, 5) + 0.5
 
         axis = None
-        mean, std = np.mean_std(A, mean_out=None, std_out=None, 
+        mean, std = np.mean_std(A, mean_out=None, std_out=None,
                                 axis=axis, keepdims=False)
 
         # Shape of returned mean and std should be same

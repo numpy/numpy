@@ -240,7 +240,7 @@ def reshape(a, newshape, order='C'):
     -----
     It is not always possible to change the shape of an array without copying
     the data.
-    
+
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
     For example, let's say you have an array:
@@ -2741,7 +2741,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     max : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -2884,7 +2884,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     min : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -3072,7 +3072,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     array([  2.,  12.])
     >>> np.prod(a, axis=0)
     array([3., 8.])
-    
+
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
@@ -3640,21 +3640,23 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         except AttributeError:
             pass
         else:
-            return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
+            return std(axis=axis, dtype=dtype,
+                       out=out, ddof=ddof, **kwargs)
 
-    return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                         **kwargs)
+    return _methods._std(a, axis=axis, dtype=dtype,
+                         out=out, ddof=ddof, **kwargs)
 
 
-
-def _mean_std_dispatcher(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=None,
-                    keepdims=None, *, where=None):
+def _mean_std_dispatcher(a, axis=None, dtype=None, mean_out=None,
+                         std_out=None, ddof=None,
+                         keepdims=None, *, where=None):
     return (a, where, mean_out, std_out)
 
 
 @array_function_dispatch(_mean_std_dispatcher)
-def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+def mean_std(a, axis=None, dtype=None, mean_out=None,
+             std_out=None, ddof=0, keepdims=np._NoValue, *,
+             where=np._NoValue):
     """
     Compute the standard deviation and the mean along the specified axis.
 
@@ -3710,12 +3712,12 @@ def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keep
     Returns
     -------
     mean: ndarray, see dtype parameter above
-    
+
     If `out=None`, returns a new array containing the means,
     otherwise a reference to the output array is returned.
-    
+
     standard_deviation : ndarray, see dtype parameter above.
-    
+
     If `out` is None, return a new array containing the standard deviation,
     otherwise return a reference to the output array.
 
@@ -3741,7 +3743,7 @@ def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keep
     >>> np.mean_std(a, axis=1)
     (array([1.5, 3.5]), array([0.5, 0.5]))
     """
-    
+
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
@@ -3753,20 +3755,25 @@ def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keep
         except AttributeError:
             pass
         else:
-            return mean_std(axis=axis, dtype=dtype, mean_out=mean_out, std_out=std_out, ddof=ddof, **kwargs)
+            return mean_std(axis=axis, dtype=dtype,
+                            mean_out=mean_out, std_out=std_out,
+                            ddof=ddof, **kwargs)
 
-    return _methods._mean_std(a, axis=axis, dtype=dtype, mean_out=mean_out, std_out=std_out, ddof=ddof,
-                         **kwargs)
+    return _methods._mean_std(a, axis=axis, dtype=dtype,
+                              mean_out=mean_out, std_out=std_out,
+                              ddof=ddof, **kwargs)
 
 
-def _mean_var_dispatcher(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=None,
-                    keepdims=None, *, where=None):
+def _mean_var_dispatcher(a, axis=None, dtype=None,
+                         mean_out=None, var_out=None, ddof=None,
+                         keepdims=None, *, where=None):
     return (a, where, mean_out, var_out)
 
 
 @array_function_dispatch(_mean_var_dispatcher)
-def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+def mean_var(a, axis=None, dtype=None, mean_out=None,
+             var_out=None, ddof=0, keepdims=np._NoValue, *,
+             where=np._NoValue):
     """
     Compute the mean and the variance along the specified axis.
 
@@ -3822,12 +3829,12 @@ def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keep
     Returns
     -------
     mean: ndarray, see dtype parameter above
-    
+
     If `out=None`, returns a new array containing the means,
     otherwise a reference to the output array is returned.
-    
+
     variance : ndarray, see dtype parameter above.
-    
+
     If `out` is None, return a new array containing the variance,
     otherwise return a reference to the output array.
 
@@ -3853,7 +3860,7 @@ def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keep
     >>> np.mean_var(a, axis=1)
     (array([1.5, 3.5]), array([0.25, 0.25]))
     """
-    
+
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
@@ -3865,10 +3872,13 @@ def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keep
         except AttributeError:
             pass
         else:
-            return mean_var(axis=axis, dtype=dtype, mean_out=mean_out, var_out=var_out, ddof=ddof, **kwargs)
+            return mean_var(axis=axis, dtype=dtype,
+                            mean_out=mean_out, var_out=var_out,
+                            ddof=ddof, **kwargs)
 
-    return _methods._mean_var(a, axis=axis, dtype=dtype, mean_out=mean_out, var_out=var_out, ddof=ddof,
-                         **kwargs)
+    return _methods._mean_var(a, axis=axis, dtype=dtype,
+                              mean_out=mean_out, var_out=var_out,
+                              ddof=ddof, **kwargs)
 
 
 
@@ -4014,7 +4024,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
-# Aliases of other functions. Provided unique docstrings 
+# Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
 
