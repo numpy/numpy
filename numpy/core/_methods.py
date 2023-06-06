@@ -207,8 +207,8 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None,
     # divide by degrees of freedom
     if isinstance(ret_var, mu.ndarray):
         with _no_nep50_warning():
-            ret_var = um.true_divide(
-                    ret_var, rcount, out=ret_var, casting='unsafe', subok=False)
+            ret_var = um.true_divide(ret_var, rcount, out=ret_var,
+                                     casting='unsafe', subok=False)
         # Make the mean output follow the var output shape
         ret_mean.resize(ret_var.shape)
     elif hasattr(ret_var, 'dtype'):

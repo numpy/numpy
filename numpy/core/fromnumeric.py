@@ -3660,9 +3660,10 @@ def mean_std(a, axis=None, dtype=None, mean_out=None,
     """
     Compute the standard deviation and the mean along the specified axis.
 
-    Returns the mean and the standard deviation, a measure of the spread of a distribution,
-    of the array elements. The standard deviation is computed for the
-    flattened array by default, otherwise over the specified axis.
+    Returns the mean and the standard deviation, a measure of the
+    spread of a distribution, of the array elements. The standard
+    deviation is computed for the flattened array by default, otherwise
+    over the specified axis.
 
     Parameters
     ----------
@@ -3777,9 +3778,9 @@ def mean_var(a, axis=None, dtype=None, mean_out=None,
     """
     Compute the mean and the variance along the specified axis.
 
-    Returns the mean and the variance, a measure of the spread of a distribution,
-    of the array elements. The variance is computed for the
-    flattened array by default, otherwise over the specified axis.
+    Returns the mean and the variance, a measure of the spread of a
+    distribution, of the array elements. The variance is computed for
+    the flattened array by default, otherwise over the specified axis.
 
     Parameters
     ----------
@@ -3792,19 +3793,21 @@ def mean_var(a, axis=None, dtype=None, mean_out=None,
         .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a variance is performed over
-        multiple axes, instead of a single axis or all the axes as before.
+        multiple axes, instead of a single axis or all the axes as
+        before.
     dtype : dtype, optional
         Type to use in computing the standard deviation. For arrays of
-        integer type the default is float64, for arrays of float types it is
-        the same as the array type.
+        integer type the default is float64, for arrays of float types
+        it is the same as the array type.
     mean_out : ndarray, optional
-        Alternative output array in which to place the result for the mean. It must have
-        the same shape as the expected output but the type (of the calculated
-        values) will be cast if necessary.
+        Alternative output array in which to place the result for the
+        mean. It must have the same shape as the expected output but
+        the type (of the calculated values) will be cast if necessary.
     var_out : ndarray, optional
-        Alternative output array in which to place the result for the variance. It must have
-        the same shape as the expected output but the type (of the calculated
-        values) will be cast if necessary.
+        Alternative output array in which to place the result for the
+        variance. It must have the same shape as the expected output
+        but the type (of the calculated values) will be cast if
+        necessary.
     ddof : int, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
