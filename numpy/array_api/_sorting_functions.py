@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
+from ._dtypes import _real_numeric_dtypes
 
 import numpy as np
 
@@ -14,6 +15,8 @@ def argsort(
 
     See its docstring for more information.
     """
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in argsort")
     # Note: this keyword argument is different, and the default is different.
     kind = "stable" if stable else "quicksort"
     if not descending:
@@ -41,6 +44,8 @@ def sort(
 
     See its docstring for more information.
     """
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in sort")
     # Note: this keyword argument is different, and the default is different.
     kind = "stable" if stable else "quicksort"
     res = np.sort(x._array, axis=axis, kind=kind)
