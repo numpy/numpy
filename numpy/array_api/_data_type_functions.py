@@ -90,6 +90,7 @@ class finfo_object:
     max: float
     min: float
     smallest_normal: float
+    dtype: Dtype
 
 
 @dataclass
@@ -97,6 +98,7 @@ class iinfo_object:
     bits: int
     max: int
     min: int
+    dtype: Dtype
 
 
 def finfo(type: Union[Dtype, Array], /) -> finfo_object:
@@ -114,6 +116,7 @@ def finfo(type: Union[Dtype, Array], /) -> finfo_object:
         float(fi.max),
         float(fi.min),
         float(fi.smallest_normal),
+        fi.dtype,
     )
 
 
@@ -124,7 +127,7 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     See its docstring for more information.
     """
     ii = np.iinfo(type)
-    return iinfo_object(ii.bits, ii.max, ii.min)
+    return iinfo_object(ii.bits, ii.max, ii.min, ii.dtype)
 
 
 # Note: isdtype is a new function from the 2022.12 array API specification.
