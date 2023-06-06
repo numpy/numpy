@@ -2928,37 +2928,33 @@ static PyObject *
     static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
     PyObject *real_obj = NULL;
     PyObject *imag_obj = NULL;
-    if (PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
-        if (imag_obj == NULL) {
-            obj = real_obj;
-            Py_XINCREF(obj);
-        }
-        else if (PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) {
-            if (PyComplex_Check(real_obj) || PyComplex_Check(imag_obj)) {
-                PyErr_Format(PyExc_TypeError, parse_error, args);
-                return NULL;
-            }
-            obj = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
-            if (obj == NULL) {
-                return NULL;
-            }
-        }
-        else {
-            PyErr_Format(PyExc_TypeError, parse_error, args);
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
+        return NULL;
+    }
+    if (!((imag_obj == NULL) ||
+          ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
+           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
+        PyErr_Format(PyExc_TypeError, parse_error, args);
+        return NULL;
+    }
+    if (imag_obj == NULL) {
+        obj = real_obj;
+        Py_XINCREF(obj);
+    }
+    else {
+        obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
+        if (obj == NULL) {
             return NULL;
         }
     }
-    else {
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+        return NULL;
+    }
 #endif
-        return NULL;
-    }
+    // getting the typecode like this cannot fail
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
-    if (typecode == NULL) {
-        return NULL;
-    }
     if (obj == NULL) {
         PyObject *robj = PyArray_Scalar(NULL, typecode, NULL);
         Py_DECREF(typecode);
