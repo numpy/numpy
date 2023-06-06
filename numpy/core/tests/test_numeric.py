@@ -484,14 +484,14 @@ class TestNonarrayArgs:
         assert_equal(std, std_old)
 
     def test_mean_std_keepdims_true_masked(self):
-        A = ma.array([[2., 3., 4., 5.,],
+        A = ma.array([[2., 3., 4., 5.],
                       [1., 2., 3., 4.]],
                      mask=[[True, False, True, False],
                            [True, False, True, False]])
 
-        mean_out = ma.array([[0., 0., 0., 0.,]],
+        mean_out = ma.array([[0., 0., 0., 0.]],
                             mask=[[True, True, True, True]])
-        std_out = ma.array([[0., 0., 0., 0.,]],
+        std_out = ma.array([[0., 0., 0., 0.]],
                            mask=[[True, True, True, True]])
 
         axis = 0
@@ -500,7 +500,7 @@ class TestNonarrayArgs:
 
         # Shape of returned mean and std should be same
         assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([1,4]))
+        assert_equal(np.array(std.shape), np.array([1, 4]))
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=axis, keepdims=True)
@@ -515,7 +515,7 @@ class TestNonarrayArgs:
         assert std_out is std
 
         # masked elements should be ignored
-        B = ma.array([[100., 3., 104., 5.,],
+        B = ma.array([[100., 3., 104., 5.],
                       [101., 2., 103., 4.]],
                       mask=[[True, False, True, False],
                             [True, False, True, False]])
