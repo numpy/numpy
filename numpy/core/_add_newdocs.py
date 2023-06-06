@@ -5867,7 +5867,7 @@ add_newdoc('numpy.core', 'ufunc', ('_get_strided_loop',
 
 add_newdoc('numpy.core.multiarray', 'dtype',
     """
-    dtype(dtype, align=False, copy=False)
+    dtype(dtype, align=False, copy=False, [metadata])
 
     Create a data type object.
 
@@ -5887,6 +5887,8 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     copy : bool, optional
         Make a new copy of the data-type object. If ``False``, the result
         may just be a reference to a built-in data-type object.
+    metadata : dict, optional
+        An optional dictionary with dtype metadata.
 
     See also
     --------
