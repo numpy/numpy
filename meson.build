@@ -35,8 +35,8 @@ elif cc.get_id() == 'msvc'
           'when building with MSVC')
   endif
 endif
-if not cy.version().version_compare('>=0.29.34')
-  error('NumPy requires Cython >= 0.29.34')
+if not cy.version().version_compare('>=0.29.35')
+  error('NumPy requires Cython >= 0.29.35')
 endif
 
 py = import('python').find_installation(pure: false)

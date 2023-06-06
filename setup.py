@@ -328,8 +328,8 @@ def generate_cython():
         raise OSError(msg) from e
     else:
         # Note: keep in sync with that in pyproject.toml
-        # Update for Python 3.11
-        required_version = '0.29.30'
+        # Update for Python 3.12
+        required_version = '0.29.35'
 
         if _pep440.parse(cython_version) < _pep440.Version(required_version):
             cython_path = Cython.__file__
