@@ -1,0 +1,5 @@
+Array API v2022.12 support in ``numpy.array_api``
+-------------------------------------------------
+
+- ``numpy.array_api`` now full supports the `v2022.12 version
+  <https://data-apis.org/array-api/2022.12>`__ of the array API standard.
