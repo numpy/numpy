@@ -470,7 +470,7 @@ class Array:
         res = self._array.__bool__()
         return res
 
-    def __complex__(self: Array, /) -> float:
+    def __complex__(self: Array, /) -> complex:
         """
         Performs the operation __complex__.
         """
