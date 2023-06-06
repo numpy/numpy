@@ -211,7 +211,7 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, kee
         ret_mean.resize(ret_var.shape)  # Make the mean output follow the var output
     elif hasattr(ret_var, 'dtype'):
         ret_var = ret_var.dtype.type(ret_var / rcount)
-        ret_mean = ret_mean.dtype.type(ret_mean)  # Make the mean output follow the var output
+        ret_mean = ret_mean.dtype.type(ret_mean.item())  # Make the mean output follow the var output
     else:
         ret_var = ret_var / rcount
 

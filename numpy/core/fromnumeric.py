@@ -3749,7 +3749,7 @@ def mean_std(a, axis=None, dtype=None, mean_out=None, std_out=None, ddof=0, keep
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
-            std = a.mean_std
+            mean_std = a.mean_std
         except AttributeError:
             pass
         else:
@@ -3861,7 +3861,7 @@ def mean_var(a, axis=None, dtype=None, mean_out=None, var_out=None, ddof=0, keep
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
-            std = a.mean_var
+            mean_var = a.mean_var
         except AttributeError:
             pass
         else:
