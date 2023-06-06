@@ -8,7 +8,7 @@ from contextlib import nullcontext
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
-from numpy.core.multiarray import asanyarray
+from numpy.core.multiarray import asanyarray, zeros
 from numpy.core import numerictypes as nt
 from numpy.core import _exceptions
 from numpy.core._ufunc_config import _no_nep50_warning
@@ -136,7 +136,8 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None,
               var_out=None, ddof=0, keepdims=False, *,
               where=True):
     arr = asanyarray(a)
-
+    mean_out_stored = None
+     
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     # Make this warning show up on top.
     if ddof >= rcount if where is True else umr_any(ddof >= rcount, axis=None):
@@ -160,7 +161,13 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None,
 
         broadcast_shape = tuple(broadcast_shape)
         mean_shape = mean_out.shape
-        mean_out.resize(broadcast_shape)
+        
+        # Make the mean output follow the var output shape
+        if hasattr(mean_out, 'mask'):
+            mean_out_stored = mean_out
+            mean_out = zeros(broadcast_shape)
+        else:
+            mean_out.shape = broadcast_shape
 
     ret_mean = umr_sum(arr, axis, dtype, mean_out, keepdims=True, where=where)
 
@@ -210,7 +217,12 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None,
             ret_var = um.true_divide(ret_var, rcount, out=ret_var,
                                      casting='unsafe', subok=False)
         # Make the mean output follow the var output shape
-        ret_mean.resize(ret_var.shape)
+        ret_mean.shape = ret_var.shape
+        
+        if mean_out_stored is not None:            
+            mean_out_stored[:] = ret_mean[:]
+            ret_mean = mean_out_stored
+            
     elif hasattr(ret_var, 'dtype'):
         ret_var = ret_var.dtype.type(ret_var / rcount)
         # Make the mean output follow the var output shape

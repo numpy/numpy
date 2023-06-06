@@ -15,7 +15,7 @@ from numpy.testing import (
     assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
 from numpy.core._rational_tests import rational
-
+from numpy import ma
 from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
 
@@ -482,6 +482,38 @@ class TestNonarrayArgs:
 
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
         assert_equal(std, std_old)
+
+    def test_mean_std_keepdims_true_masked(self):
+        A = ma.array([[2., 3., 4., 5.,],[1.,2.,3.,4.]], mask=[[True, False, True, False],[True, False, True, False]])
+
+        mean_out = ma.array([[0.,0.,0.,0.,]], mask=[[True, True, True, True]])
+        std_out = ma.array([[0.,0.,0.,0.,]], mask=[[True, True, True, True]])
+
+        axis = 0
+        mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
+                                axis=axis, keepdims=True)
+        print(f'{mean=}, {std=}')
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([1,4]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        # The returned  objects should be the objects specified during calling
+        assert mean_out is mean
+        assert std_out is std
+
+        # masked elements should be ignored
+        B = ma.array([[100., 3., 104., 5.,],[101.,2.,103.,4.]], mask=[[True, False, True, False],[True, False, True, False]])
+        mean_b, std_b = np.mean_std(A, axis=axis, keepdims=True)
+        assert_almost_equal(std, std_b)
+        assert_almost_equal(mean, mean_b)
 
 
 class TestIsscalar:
