@@ -6,6 +6,7 @@ dtype_V: np.dtype[np.void]
 dtype_i8: np.dtype[np.int64]
 
 reveal_type(np.dtype(np.float64))  # E: dtype[{float64}]
+reveal_type(np.dtype(np.float64, metadata={"test": "test"}))  # E: dtype[{float64}]
 reveal_type(np.dtype(np.int64))  # E: dtype[{int64}]
 
 # String aliases
