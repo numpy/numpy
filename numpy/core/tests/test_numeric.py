@@ -508,11 +508,11 @@ class TestNonarrayArgs:
         assert_equal(var, var_old)
 
     def test_mean_std_keepdims_true_masked(self):
+        
         A = ma.array([[2., 3., 4., 5.],
                       [1., 2., 3., 4.]],
                      mask=[[True, False, True, False],
                            [True, False, True, False]])
-
 
         B = ma.array([[100., 3., 104., 5.],
                       [101., 2., 103., 4.]],
@@ -541,12 +541,8 @@ class TestNonarrayArgs:
         assert_almost_equal(std, std_old)
         assert_almost_equal(mean, mean_old)
 
-        # The returned  objects being masked arrays are replaced by None during calling
-        if mean_out is not None:
-            assert mean_out is mean
-
-        if std_out is not None:
-            assert std_out is std
+        assert mean_out is mean
+        assert std_out is std
 
         # masked elements should be ignored
         mean_b, std_b = np.mean_std(B, axis=axis, keepdims=True)
@@ -554,11 +550,11 @@ class TestNonarrayArgs:
         assert_almost_equal(mean, mean_b)
 
     def test_mean_var_keepdims_true_masked(self):
+
         A = ma.array([[2., 3., 4., 5.],
                       [1., 2., 3., 4.]],
                      mask=[[True, False, True, False],
                            [True, False, True, False]])
-
 
         B = ma.array([[100., 3., 104., 5.],
                       [101., 2., 103., 4.]],
@@ -587,12 +583,8 @@ class TestNonarrayArgs:
         assert_almost_equal(var, var_old)
         assert_almost_equal(mean, mean_old)
 
-        # The returned  objects being masked arrays are replaced by None during calling
-        if mean_out is not None:
-            assert mean_out is mean
-
-        if var_out is not None:
-            assert var_out is var
+        assert mean_out is mean
+        assert var_out is var
 
         # masked elements should be ignored
         mean_b, var_b = np.mean_var(B, axis=axis, keepdims=True)
@@ -698,7 +690,7 @@ class TestNonarrayArgs:
         assert_equal(np.array(std.shape), np.array([4]))
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A, axis=axis,keepdims=False)
+        std_old = np.std(A, axis=axis, keepdims=False)
         mean_old = np.mean(A, axis=axis, keepdims=False)
 
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
