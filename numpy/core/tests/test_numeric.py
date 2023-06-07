@@ -462,7 +462,7 @@ class TestNonarrayArgs:
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
         assert_equal(std, std_old)
 
-    def test_mean_stdaxis_None(self):
+    def test_mean_std_axis_None(self):
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
@@ -483,16 +483,130 @@ class TestNonarrayArgs:
         assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
         assert_equal(std, std_old)
 
+    def test_mean_var_axis_None(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        mean_out = np.zeros(())
+        var_out = np.zeros(())
+
+        axis = None
+        mean, var = np.mean_var(A, mean_out= mean_out, var_out=var_out,
+                                axis=axis, keepdims=False)
+
+        # Shape of returned mean and var should be same
+        assert_equal(type(var), type(mean))
+        assert_equal(np.array(var.shape), np.array([]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=axis)
+        mean_old = np.mean(A, axis=axis)
+
+        assert_equal(type(var_old), type(mean_old))
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_equal(var, var_old)
+
     def test_mean_std_keepdims_true_masked(self):
         A = ma.array([[2., 3., 4., 5.],
                       [1., 2., 3., 4.]],
                      mask=[[True, False, True, False],
                            [True, False, True, False]])
 
+
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
         mean_out = ma.array([[0., 0., 0., 0.]],
-                            mask=[[True, True, True, True]])
+                            mask=[[False, False, False, False]])
         std_out = ma.array([[0., 0., 0., 0.]],
-                           mask=[[True, True, True, True]])
+                           mask=[[False, False, False, False]])
+
+        axis = 0
+
+        mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
+                                    axis=axis, keepdims=True)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([1, 4]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        # The returned  objects being masked arrays are replaced by None during calling
+        if mean_out is not None:
+            assert mean_out is mean
+
+        if std_out is not None:
+            assert std_out is std
+
+        # masked elements should be ignored
+        mean_b, std_b = np.mean_std(B, axis=axis, keepdims=True)
+        assert_almost_equal(std, std_b)
+        assert_almost_equal(mean, mean_b)
+
+    def test_mean_var_keepdims_true_masked(self):
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
+        mean_out = ma.array([[0., 0., 0., 0.]],
+                            mask=[[False, False, False, False]])
+        var_out = ma.array([[0., 0., 0., 0.]],
+                           mask=[[False, False, False, False]])
+
+        axis = 0
+
+        mean, var = np.mean_var(A, mean_out=mean_out, var_out=var_out,
+                                    axis=axis, keepdims=True)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([1, 4]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(var, var_old)
+        assert_almost_equal(mean, mean_old)
+
+        # The returned  objects being masked arrays are replaced by None during calling
+        if mean_out is not None:
+            assert mean_out is mean
+
+        if var_out is not None:
+            assert var_out is var
+
+        # masked elements should be ignored
+        mean_b, var_b = np.mean_var(B, axis=axis, keepdims=True)
+        assert_almost_equal(var, var_b)
+        assert_almost_equal(mean, mean_b)
+
+    def test_mean_std_keepdims_true_masked2(self):
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+        mean_out = np.array([[0., 0., 0., 0.]])
+        std_out = np.array([[0., 0., 0., 0.]])
 
         axis = 0
         mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
@@ -519,10 +633,92 @@ class TestNonarrayArgs:
                       [101., 2., 103., 4.]],
                       mask=[[True, False, True, False],
                             [True, False, True, False]])
-        mean_b, std_b = np.mean_std(A, axis=axis, keepdims=True)
+        mean_b, std_b = np.mean_std(B, axis=axis, keepdims=True)
         assert_almost_equal(std, std_b)
         assert_almost_equal(mean, mean_b)
 
+    def test_mean_std_keepdims_true_masked3(self):
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+        mean_out = None
+        std_out = None
+
+        axis = 0
+        mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
+                                axis=axis, keepdims=True)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([1, 4]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        # masked elements should be ignored
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
+        mean_b, std_b = np.mean_std(B, axis=axis, keepdims=True)
+        assert_almost_equal(std, std_b)
+        assert_almost_equal(mean, mean_b)
+
+    def test_mean_std_keepdims_true_masked4(self):
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+        mean_out = None
+        std_out = None
+
+        axis = 0
+        mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
+                                axis=axis, keepdims=False)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            mean, std = np.mean_std(A, mean_out=mean_out, std_out=std_out,
+                                    axis=axis, keepdims=False)
+            for _warning in w:
+                assert issubclass(_warning.category, RuntimeWarning)
+                assert "_mean_var" in str(_warning.message)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([4]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis,keepdims=False)
+        mean_old = np.mean(A, axis=axis, keepdims=False)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        # masked elements should be ignored
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
+        with warnings.catch_warnings(record=True) as w:
+            mean_b, std_b = np.mean_std(B, axis=axis, keepdims=False)
+            for _warning in w:
+                assert issubclass(_warning.category, RuntimeWarning)
+                assert "_mean_var" in str(_warning.message)
+
+        assert_almost_equal(std, std_b)
+        assert_almost_equal(mean, mean_b)
 
 class TestIsscalar:
     def test_isscalar(self):

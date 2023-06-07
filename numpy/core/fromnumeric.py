@@ -2676,6 +2676,8 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
         kwargs['keepdims'] = keepdims
     if type(a) is not mu.ndarray:
         try:
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
             ptp = a.ptp
         except AttributeError:
             pass
@@ -3495,6 +3497,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
             mean = a.mean
         except AttributeError:
             pass
@@ -3636,6 +3640,8 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
             std = a.std
         except AttributeError:
             pass
@@ -3752,13 +3758,19 @@ def mean_std(a, axis=None, dtype=None, mean_out=None,
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
-            mean_std = a.mean_std
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
+            mean = a.mean
+            std = a.std
         except AttributeError:
             pass
         else:
-            return mean_std(axis=axis, dtype=dtype,
-                            mean_out=mean_out, std_out=std_out,
-                            ddof=ddof, **kwargs)
+            return (mean(axis=axis, dtype=dtype,
+                         out=mean_out, **kwargs),
+                    std(axis=axis, dtype=dtype,
+                        out=std_out,
+                        ddof=ddof, **kwargs)
+                    )
 
     return _methods._mean_std(a, axis=axis, dtype=dtype,
                               mean_out=mean_out, std_out=std_out,
@@ -3871,13 +3883,18 @@ def mean_var(a, axis=None, dtype=None, mean_out=None,
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
-            mean_var = a.mean_var
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
+            mean = a.mean
+            var = a.var
         except AttributeError:
             pass
         else:
-            return mean_var(axis=axis, dtype=dtype,
-                            mean_out=mean_out, var_out=var_out,
-                            ddof=ddof, **kwargs)
+            return (mean(axis=axis, dtype=dtype,
+                         out=mean_out, **kwargs),
+                    var(axis=axis, dtype=dtype,
+                        out=var_out,
+                        ddof=ddof, **kwargs))
 
     return _methods._mean_var(a, axis=axis, dtype=dtype,
                               mean_out=mean_out, var_out=var_out,
@@ -4016,8 +4033,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     if type(a) is not mu.ndarray:
         try:
+            # Check whether the object implements the functions,
+            # this is used to handle for example MaskerArray's
             var = a.var
-
         except AttributeError:
             pass
         else:
