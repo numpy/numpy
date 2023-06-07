@@ -207,7 +207,12 @@ def _mean_var(a, axis=None, dtype=None, mean_out=None,
         with _no_nep50_warning():
             ret_var = um.true_divide(ret_var, rcount, out=ret_var,
                                      casting='unsafe', subok=False)
-        ret_mean.resize(ret_var.shape)
+                                     
+        # If called from a MaskedArray the mean is not used.
+        if hasattr(ret_mean, 'mask'):
+            pass
+        else:
+            ret_mean.resize(ret_var.shape)
     elif hasattr(ret_var, 'dtype'):
         ret_var = ret_var.dtype.type(ret_var / rcount)
         # Make the mean output follow the var output shape
