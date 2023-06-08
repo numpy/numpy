@@ -593,7 +593,7 @@ def transpose(a, axes=None):
     For a 1-D array, this returns an unchanged view of the original array, as a
     transposed vector is simply the same vector.
     To convert a 1-D array into a 2-D column vector, an additional dimension
-    must be added, e.g., ``np.atleast2d(a).T`` achieves this, as does
+    must be added, e.g., ``np.atleast_2d(a).T`` achieves this, as does
     ``a[:, np.newaxis]``.
     For a 2-D array, this is the standard matrix transpose.
     For an n-D array, if axes are given, their order indicates how the
