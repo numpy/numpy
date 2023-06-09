@@ -1887,10 +1887,10 @@ class TestUfunc:
         result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
         assert_equal(result, target)
 
-        # But, it can be fooled, e.g. (use scalars, which forces legacy
-        # type resolution to kick in, which then fails):
-        with assert_raises(TypeError):
-            _rational_tests.test_add(a, np.uint16(2))
+        # This path used to go into legacy promotion, but doesn't now:
+        result = _rational_tests.test_add(a, np.uint16(2))
+        target = np.array([2, 3, 4], dtype=_rational_tests.rational)
+        assert_equal(result, target)
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)

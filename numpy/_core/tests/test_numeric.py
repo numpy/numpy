@@ -1039,19 +1039,24 @@ class TestTypes:
         assert_equal(promote_func(np.array([b]), u8), np.dtype(np.uint8))
         assert_equal(promote_func(np.array([b]), i32), np.dtype(np.int32))
         assert_equal(promote_func(np.array([b]), u32), np.dtype(np.uint32))
-        assert_equal(promote_func(np.array([i8]), i64), np.dtype(np.int8))
-        assert_equal(promote_func(u64, np.array([i32])), np.dtype(np.int32))
-        assert_equal(promote_func(i64, np.array([u32])), np.dtype(np.uint32))
+        assert_equal(promote_func(np.array([i8]), i64), np.dtype(np.int64))
+        # unsigned and signed unfortunately tend to promote to float64:
+        assert_equal(promote_func(u64, np.array([i32])), np.dtype(np.float64))
+        assert_equal(promote_func(i64, np.array([u32])), np.dtype(np.int64))
+        assert_equal(promote_func(np.array([u16]), i32), np.dtype(np.int32))
         assert_equal(promote_func(np.int32(-1), np.array([u64])),
                      np.dtype(np.float64))
-        assert_equal(promote_func(f64, np.array([f32])), np.dtype(np.float32))
-        assert_equal(promote_func(fld, np.array([f32])), np.dtype(np.float32))
+        assert_equal(promote_func(f64, np.array([f32])), np.dtype(np.float64))
+        assert_equal(promote_func(fld, np.array([f32])),
+                     np.dtype(np.longdouble))
         assert_equal(promote_func(np.array([f64]), fld), np.dtype(np.float64))
         assert_equal(promote_func(fld, np.array([c64])),
-                     np.dtype(np.complex64))
+                     np.dtype(np.clongdouble))
         assert_equal(promote_func(c64, np.array([f64])),
                      np.dtype(np.complex128))
         assert_equal(promote_func(np.complex64(3j), np.array([f64])),
+                     np.dtype(np.complex128))
+        assert_equal(promote_func(np.array([f32]), c128),
                      np.dtype(np.complex128))
 
         # coercion between scalars and 1-D arrays, where
@@ -1062,16 +1067,6 @@ class TestTypes:
         assert_equal(promote_func(np.array([i8]), f64), np.dtype(np.float64))
         assert_equal(promote_func(np.array([u16]), f64), np.dtype(np.float64))
 
-        # uint and int are treated as the same "kind" for
-        # the purposes of array-scalar promotion.
-        assert_equal(promote_func(np.array([u16]), i32), np.dtype(np.uint16))
-
-        # float and complex are treated as the same "kind" for
-        # the purposes of array-scalar promotion, so that you can do
-        # (0j + float32array) to get a complex64 array instead of
-        # a complex128 array.
-        assert_equal(promote_func(np.array([f32]), c128),
-                     np.dtype(np.complex64))
 
     def test_coercion(self):
         def res_type(a, b):
