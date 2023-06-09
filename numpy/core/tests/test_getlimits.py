@@ -75,8 +75,8 @@ class TestFinfo:
 
     def test_regression_gh23867(self):
         class NonHashableWithDtype:
-          __hash__ = None
-          dtype = np.dtype('float32')
+            __hash__ = None
+            dtype = np.dtype('float32')
   
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
