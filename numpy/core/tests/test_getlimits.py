@@ -73,6 +73,15 @@ class TestFinfo:
         f2 = np.finfo(np.float64(1.0))
         assert f1 != f2
 
+    def test_regression_gh23867(self):
+        class NonHashableWithDtype:
+            __hash__ = None
+            dtype = np.dtype('float32')
+  
+        x = NonHashableWithDtype()
+        assert np.finfo(x) == np.finfo(x.dtype)
+        
+
 class TestIinfo:
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
