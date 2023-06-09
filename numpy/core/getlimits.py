@@ -487,7 +487,7 @@ class finfo:
             if obj is not None:
                 return obj
         except TypeError:
-            obj = None
+            pass
 
         if dtype is None:
             # Deprecated in NumPy 1.25, 2023-01-16
