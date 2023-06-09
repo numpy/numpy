@@ -911,31 +911,32 @@ def test_operator_scalars(op, type1, type2):
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-@pytest.mark.parametrize("val", [None, 2**64])
-def test_longdouble_inf_loop(op, val):
-    # Note: The 2**64 value will pass once NEP 50 is adopted.
+@pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
+def test_longdouble_inf_loop(sctype, op):
     try:
-        op(np.longdouble(3), val)
+        op(sctype(3), None)
     except TypeError:
         pass
     try:
-        op(val, np.longdouble(3))
+        op(None, sctype(3))
     except TypeError:
         pass
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-@pytest.mark.parametrize("val", [None, 2**64])
-def test_clongdouble_inf_loop(op, val):
-    # Note: The 2**64 value will pass once NEP 50 is adopted.
-    try:
-        op(np.clongdouble(3), val)
-    except TypeError:
-        pass
-    try:
-        op(val, np.longdouble(3))
-    except TypeError:
-        pass
+@pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
+@np.errstate(all="ignore")
+def test_longdouble_inf_loop(sctype, op):
+    # NEP 50 means that the result is clearly a (c)longdouble here:
+    if sctype == np.clongdouble and op in [operator.mod, operator.floordiv]:
+        # The above operators are not support for complex though...
+        with pytest.raises(TypeError):
+            op(sctype(3), 2**64)
+        with pytest.raises(TypeError):
+            op(sctype(3), 2**64)
+    else:
+        assert op(sctype(3), 2**64) == op(sctype(3), sctype(2**64))
+        assert op(2**64, sctype(3)) == op(sctype(2**64), sctype(3))
 
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
