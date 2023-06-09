@@ -235,6 +235,14 @@ class TestSFloat:
         arr2 = np.array([1., 2., 3.], dtype=SF(1.))
         assert_array_equal(arr1.view(np.float64), arr2.view(np.float64))
 
+        # empty and zeros don't support creating arrays using
+        # a parametric dtype class
+        with pytest.raises(RuntimeError):
+            np.empty(3, dtype=SF)
+
+        with pytest.raises(RuntimeError):
+            np.zeros(3, dtype=SF)
+
 
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)

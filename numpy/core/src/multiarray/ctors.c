@@ -1023,7 +1023,9 @@ PyArray_NewFromDescrAndBase(
  *             NPY_FORTRANORDER - Fortran-contiguous result.
  *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
- * dtype     - If not NULL, overrides the data type of the result.
+ * descr     - If not NULL, overrides the data type of the result.
+ * dtype     - If not NULL and if descr is NULL, overrides the data type
+               of the result, so long as dtype is non-parameteric
  * ndim      - If not -1, overrides the shape of the result.
  * dims      - If ndim is not -1, overrides the shape of the result.
  * subok     - If 1, use the prototype's array subtype, otherwise
@@ -1034,7 +1036,8 @@ PyArray_NewFromDescrAndBase(
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
-                              PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok)
+                              PyArray_Descr *descr, PyArray_DTypeMeta *dtype, int ndim,
+                              npy_intp const *dims, int subok)
 {
     PyObject *ret = NULL;
 
@@ -1046,10 +1049,21 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
         order = NPY_CORDER;
     }
 
-    /* If no override data type, use the one from the prototype */
-    if (dtype == NULL) {
-        dtype = PyArray_DESCR(prototype);
-        Py_INCREF(dtype);
+    if (descr == NULL && dtype == NULL) {
+        /* If no override data type, use the one from the prototype */
+        descr = PyArray_DESCR(prototype);
+        Py_INCREF(descr);
+    }
+    else if (descr == NULL) {
+        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "Cannot create empty array with a parametric dtype class. "
+                "Use a dtype instance instead.");
+            return NULL;
+        }
+        descr = dtype->singleton;
+        Py_INCREF(descr);
     }
 
     /* Handle ANYORDER and simple KEEPORDER cases */
@@ -1075,7 +1089,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
     /* If it's not KEEPORDER, this is simple */
     if (order != NPY_KEEPORDER) {
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
-                                        dtype,
+                                        descr,
                                         ndim,
                                         dims,
                                         NULL,
@@ -1094,10 +1108,10 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
                                         strideperm);
 
         /* Build the new strides */
-        stride = dtype->elsize;
-        if (stride == 0 && PyDataType_ISSTRING(dtype)) {
+        stride = descr->elsize;
+        if (stride == 0 && PyDataType_ISSTRING(descr)) {
             /* Special case for dtype=str or dtype=bytes. */
-            if (dtype->type_num == NPY_STRING) {
+            if (descr->type_num == NPY_STRING) {
                 /* dtype is bytes */
                 stride = 1;
             }
@@ -1114,7 +1128,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
         /* Finally, allocate the array */
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
-                                        dtype,
+                                        descr,
                                         ndim,
                                         dims,
                                         strides,
@@ -1163,7 +1177,7 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
             "prototype is NULL in PyArray_NewLikeArray");
         return NULL;
     }
-    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, -1, NULL, subok);
+    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, NULL, -1, NULL, subok);
 }
 
 /*NUMPY_API
@@ -2847,24 +2861,69 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 NPY_NO_EXPORT PyObject *
 PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
-    PyArrayObject *ret;
+    npy_dtype_info dt_info = {NULL, NULL};
 
-    if (!type) {
-        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        type, &dt_info.descr, &dt_info.dtype);
+
+    // steal reference
+    Py_XDECREF(type);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
     }
 
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            &PyArray_Type, type,
+    PyObject *ret = PyArray_Zeros_int(nd, dims, dt_info.descr, dt_info.dtype,
+                                      is_f_order);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+
+    return ret;
+}
+
+/*
+ *  Internal version of PyArray_Zeros that accepts a dtypemeta.
+ *  Borrows references to the descriptor and dtype.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order)
+{
+    PyObject *ret = NULL;
+
+    if (descr == NULL && dtype == NULL) {
+        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    else if (descr == NULL) {
+        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "Cannot create zero-filled array with a parametric dtype "
+                "class. Use a dtype instance instead.");
+            return NULL;
+        }
+        descr = dtype->singleton;
+        Py_INCREF(descr);
+    }
+
+    /*
+     * PyArray_NewFromDescr_int steals a ref to descr,
+     * incref so caller of this function can clean up descr
+     */
+    Py_INCREF(descr);
+    ret = PyArray_NewFromDescr_int(
+            &PyArray_Type, descr,
             nd, dims, NULL, NULL,
             is_f_order, NULL, NULL,
             _NPY_ARRAY_ZEROED);
 
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    return (PyObject *)ret;
+    return ret;
 }
+
 
 /*NUMPY_API
  * Empty
@@ -2875,16 +2934,62 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 NPY_NO_EXPORT PyObject *
 PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
+    npy_dtype_info dt_info = {NULL, NULL};
+
+    int res = PyArray_ExtractDTypeAndDescriptor(
+        type, &dt_info.descr, &dt_info.dtype);
+
+    // steal reference
+    Py_XDECREF(type);
+
+    if (res < 0) {
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
+    PyObject *ret = PyArray_Empty_int(
+        nd, dims, dt_info.descr, dt_info.dtype, is_f_order);
+
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
+    return ret;
+}
+
+
+/*
+ *  Internal version of PyArray_Empty that accepts a dtypemeta.
+ *  Borrows references to the descriptor and dtype.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order)
+{
     PyArrayObject *ret;
 
-    if (!type) type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    if (descr == NULL && dtype == NULL) {
+        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    else if (descr == NULL) {
+        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "Cannot create empty array with a parametric dtype class. "
+                "Use a dtype instance instead.");
+            return NULL;
+        }
+        descr = dtype->singleton;
+        Py_INCREF(descr);
+    }
 
     /*
-     * PyArray_NewFromDescr steals a ref,
-     * but we need to look at type later.
-     * */
+     * PyArray_NewFromDescr steals a ref to descr,
+     * incref so caller of this function can clean up descr
+     */
+    Py_INCREF(descr);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                                type, nd, dims,
+                                                descr, nd, dims,
                                                 NULL, NULL,
                                                 is_f_order, NULL);
     if (ret == NULL) {
