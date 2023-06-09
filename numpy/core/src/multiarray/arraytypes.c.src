@@ -1771,13 +1771,6 @@ static void
         if (temp == NULL) {
             return;
         }
-#if @is_string_to_bool@
-        /* Legacy behaviour converts strings to integers before going to bool */
-        Py_SETREF(temp, PyNumber_Long(temp));
-        if (temp == NULL) {
-            return;
-        }
-#endif
         if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
@@ -2802,79 +2795,45 @@ static npy_bool
 /**end repeat**/
 
 
-#define WHITESPACE " \t\n\r\v\f"
-#define WHITELEN 6
-
-static npy_bool
-Py_STRING_ISSPACE(char ch)
-{
-    char white[] = WHITESPACE;
-    int j;
-    npy_bool space = NPY_FALSE;
-
-    for (j = 0; j < WHITELEN; j++) {
-        if (ch == white[j]) {
-            space = NPY_TRUE;
-            break;
-        }
-    }
-    return space;
-}
 
 static npy_bool
 STRING_nonzero (char *ip, PyArrayObject *ap)
 {
     int len = PyArray_DESCR(ap)->elsize;
-    int i;
-    npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
 
-    for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
+    for (int i = 0; i < len; i++) {
+        if (ip[i]) {
+            return NPY_TRUE;
         }
-        else if (seen_null || !Py_STRING_ISSPACE(*ip)) {
-            nonz = NPY_TRUE;
-            break;
-        }
-        ip++;
     }
-    return nonz;
+
+    return NPY_FALSE;
 }
 
 static npy_bool
-UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
+UNICODE_nonzero (char *ip, PyArrayObject *ap)
 {
-    int len = PyArray_DESCR(ap)->elsize >> 2;
-    int i;
-    npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
-    char *buffer = NULL;
-
-    if (PyArray_ISBYTESWAPPED(ap) || !PyArray_ISALIGNED(ap)) {
-        buffer = PyArray_malloc(PyArray_DESCR(ap)->elsize);
-        if (buffer == NULL) {
-            return nonz;
+    if (PyArray_ISALIGNED(ap)) {
+        /* go character by character */
+        Py_UCS4 *chars = (Py_UCS4 *)ip;
+        int len = PyArray_DESCR(ap)->elsize / 4;
+        for (int i = 0; i < len; i++) {
+            if (chars[i]) {
+                return NPY_TRUE;
+            }
         }
-        memcpy(buffer, ip, PyArray_DESCR(ap)->elsize);
-        if (PyArray_ISBYTESWAPPED(ap)) {
-            byte_swap_vector(buffer, len, 4);
+    }
+    else {
+        /* go char/byte by char/byte, it doesn't matter where the nonzero is */
+        int len = PyArray_DESCR(ap)->elsize;
+        for (int i = 0; i < len; i++) {
+            if (ip[i]) {
+                return NPY_TRUE;
+            }
         }
-        ip = (npy_ucs4 *)buffer;
     }
 
-    for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
-        }
-        else if (seen_null || !Py_UNICODE_ISSPACE(*ip)) {
-            nonz = NPY_TRUE;
-            break;
-        }
-        ip++;
-    }
-    PyArray_free(buffer);
-    return nonz;
+    return NPY_FALSE;
 }
 
 static npy_bool
