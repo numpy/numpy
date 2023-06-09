@@ -63,34 +63,36 @@ NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
 
 
 /*
- * Forwards an ndarray method to a the Python function
- * numpy.core._methods.<name>(...)
+ * Forwards a method call to a Python function while adding `self`:
+ * callable(self, ...)
  */
 static PyObject *
-forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
-                            PyObject *forwarding_callable)
+npy_forward_method(
+        PyObject *callable, PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject *sargs, *ret;
-    int i, n;
+    /* 
+     * We only need to add `self` to args, so allocate `new_args` and copy it.
+     * (If `len_args` is short this could be micro-optimized on the stack.)
+     * Python currently seems to never flag `PY_VECTORCALL_ARGUMENTS_OFFSET`
+     * (at least in practice) so it is not implemented here (yet).
+     */
+    len_args = PyVectorcall_NARGS(len_args);
+    npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
 
-    /* Combine 'self' and 'args' together into one tuple */
-    n = PyTuple_GET_SIZE(args);
-    sargs = PyTuple_New(n + 1);
-    if (sargs == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    PyTuple_SET_ITEM(sargs, 0, (PyObject *)self);
-    for (i = 0; i < n; ++i) {
-        PyObject *item = PyTuple_GET_ITEM(args, i);
-        Py_INCREF(item);
-        PyTuple_SET_ITEM(sargs, i+1, item);
+    size_t original_arg_size = (len_args + len_kwargs) * sizeof(PyObject *);
+    PyObject **new_args = (PyObject **)PyMem_MALLOC(
+            original_arg_size + sizeof(PyObject *));
+    if (new_args == NULL) {
+        return PyErr_NoMemory();
     }
 
-    /* Call the function and return */
-    ret = PyObject_Call(forwarding_callable, sargs, kwds);
-    Py_DECREF(sargs);
-    return ret;
+    new_args[0] = self;
+    memcpy(&new_args[1], args, original_arg_size);
+    PyObject *res = PyObject_Vectorcall(callable, new_args, len_args+1, kwnames);
+
+    PyMem_FREE(new_args);
+    return res;
 }
 
 /*
@@ -105,7 +107,7 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
         if (callable == NULL) { \
             return NULL; \
         } \
-        return forward_ndarray_method(self, args, kwds, callable)
+        return npy_forward_method(callable, (PyObject *)self, args, len_args, kwnames)
 
 
 static PyObject *
@@ -339,19 +341,22 @@ array_argmin(PyArrayObject *self,
 }
 
 static PyObject *
-array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_max(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_amax");
 }
 
 static PyObject *
-array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_min(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_amin");
 }
 
 static PyObject *
-array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_ptp(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_ptp");
 }
@@ -2344,14 +2349,16 @@ PyArray_Dumps(PyObject *self, int protocol)
 
 
 static PyObject *
-array_dump(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_dump(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_dump");
 }
 
 
 static PyObject *
-array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_dumps(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_dumps");
 }
@@ -2402,13 +2409,15 @@ array_transpose(PyArrayObject *self, PyObject *args)
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : NPY_NOTYPE)
 
 static PyObject *
-array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_mean(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_mean");
 }
 
 static PyObject *
-array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_sum(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_sum");
 }
@@ -2437,7 +2446,8 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_prod(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_prod");
 }
@@ -2496,26 +2506,30 @@ array_dot(PyArrayObject *self,
 
 
 static PyObject *
-array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_any(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_any");
 }
 
 
 static PyObject *
-array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_all(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_all");
 }
 
 static PyObject *
-array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_stddev(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_std");
 }
 
 static PyObject *
-array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_variance(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_var");
 }
@@ -2595,7 +2609,8 @@ array_trace(PyArrayObject *self,
 
 
 static PyObject *
-array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_clip(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_FORWARD_NDARRAY_METHOD("_clip");
 }
@@ -2906,10 +2921,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dumps",
         (PyCFunction) array_dumps,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"dump",
         (PyCFunction) array_dump,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
 
     {"__complex__",
         (PyCFunction) array_complex,
@@ -2927,10 +2942,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* Original and Extended methods added 2005 */
     {"all",
         (PyCFunction)array_all,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"any",
         (PyCFunction)array_any,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argmax",
         (PyCFunction)array_argmax,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -2954,7 +2969,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"clip",
         (PyCFunction)array_clip,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"compress",
         (PyCFunction)array_compress,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2996,13 +3011,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"max",
         (PyCFunction)array_max,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"mean",
         (PyCFunction)array_mean,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"min",
         (PyCFunction)array_min,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"newbyteorder",
         (PyCFunction)array_newbyteorder,
         METH_VARARGS, NULL},
@@ -3014,10 +3029,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"prod",
         (PyCFunction)array_prod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"ptp",
         (PyCFunction)array_ptp,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"put",
         (PyCFunction)array_put,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -3053,10 +3068,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"std",
         (PyCFunction)array_stddev,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"sum",
         (PyCFunction)array_sum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)array_swapaxes,
         METH_VARARGS, NULL},
@@ -3083,7 +3098,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"var",
         (PyCFunction)array_variance,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"view",
         (PyCFunction)array_view,
         METH_FASTCALL | METH_KEYWORDS, NULL},
