@@ -2600,7 +2600,7 @@ class TestClip:
     @pytest.mark.parametrize("arr, amin, amax, exp", [
         # for a bug in npy_ObjectClip, based on a
         # case produced by hypothesis
-        (np.zeros(10, dtype=np.int64),
+        (np.zeros(10, dtype=object),
          0,
          -2**64+1,
          np.full(10, -2**64+1, dtype=object)),

@@ -78,7 +78,7 @@ class TestFromInt:
         assert_equal(1024, np.intp(1024))
 
     def test_uint64_from_negative(self):
-        with pytest.warns(DeprecationWarning):
+        with pytest.raises(OverflowError):
             assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
 
 

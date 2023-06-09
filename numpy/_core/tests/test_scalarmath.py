@@ -485,10 +485,8 @@ class TestConversion:
 
     def test_iinfo_long_values(self):
         for code in 'bBhH':
-            with pytest.warns(DeprecationWarning):
-                res = np.array(np.iinfo(code).max + 1, dtype=code)
-            tgt = np.iinfo(code).min
-            assert_(res == tgt)
+            with pytest.raises(OverflowError):
+                np.array(np.iinfo(code).max + 1, dtype=code)
 
         for code in np.typecodes['AllInteger']:
             res = np.array(np.iinfo(code).max, dtype=code)
@@ -560,9 +558,13 @@ class TestConversion:
 
         #Unsigned integers
         for dt1 in 'BHILQP':
-            assert_(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            # NEP 50 means the -1 is currently rejected (we may change this)
+            with pytest.raises(OverflowError):
+                -1 < np.array(1, dtype=dt1)[()]
+            with pytest.raises(OverflowError):
+                -1 > np.array(1, dtype=dt1)[()]
+            with pytest.raises(OverflowError):
+                -1 != np.array(1, dtype=dt1)[()]
 
             #unsigned vs signed
             for dt2 in 'bhilqp':

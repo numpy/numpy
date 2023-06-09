@@ -4125,7 +4125,8 @@ class TestTemporaryElide:
     def test_temporary_with_cast(self):
         # check that we don't elide into a temporary which would need casting
         d = np.ones(200000, dtype=np.int64)
-        assert_equal(((d + d) + 2**222).dtype, np.dtype('O'))
+        r = ((d + d) + np.array(2**222, dtype='O'))
+        assert_equal(r.dtype, np.dtype('O'))
 
         r = ((d + d) / 2)
         assert_equal(r.dtype, np.dtype('f8'))
@@ -5012,7 +5013,19 @@ class TestClip:
             self._clip_type(
                 'uint', 1024, 0, 0, inplace=inplace)
             self._clip_type(
-                'uint', 1024, -120, 100, inplace=inplace, expected_min=0)
+                'uint', 1024, 10, 100, inplace=inplace)
+
+    @pytest.mark.parametrize("inplace", [False, True])
+    def test_int_range_error(self, inplace):
+        # E.g. clipping uint with negative integers fails to promote
+        # (changed with NEP 50 and may be adaptable)
+        # Similar to last check in `test_basic`
+        x = (np.random.random(1000) * 255).astype("uint8")
+        with pytest.raises(OverflowError):
+            x.clip(-1, 10, out=x if inplace else None)
+
+        with pytest.raises(OverflowError):
+            x.clip(0, 256, out=x if inplace else None)
 
     def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
@@ -8694,9 +8707,14 @@ class TestConversion:
 
         # Unsigned integers
         for dt1 in 'BHILQP':
-            assert_(-1 < np.array(1, dtype=dt1), "type %s failed" % (dt1,))
-            assert_(not -1 > np.array(1, dtype=dt1), "type %s failed" % (dt1,))
-            assert_(-1 != np.array(1, dtype=dt1), "type %s failed" % (dt1,))
+            # NEP 50 broke comparison of unsigned with -1 for the time being
+            # (this may be fixed in the future of course).
+            with pytest.raises(OverflowError):
+                -1 < np.array(1, dtype=dt1)
+            with pytest.raises(OverflowError):
+                -1 > np.array(1, dtype=dt1)
+            with pytest.raises(OverflowError):
+                -1 != np.array(1, dtype=dt1)
 
             # Unsigned vs signed
             for dt2 in 'bhilqp':
