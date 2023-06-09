@@ -15,7 +15,7 @@ steps:
 
 - powershell: |
     # rtools 42+ does not support 32 bits builds.
-    choco install --confirm --no-progress --side-by-side rtools --version=4.0.0.20220206
+    choco install --confirm --no-progress --allow-downgrade rtools --version=4.0.0.20220206
     echo "##vso[task.setvariable variable=RTOOLS40_HOME]c:\rtools40"
   displayName: 'Install rtools'
 
