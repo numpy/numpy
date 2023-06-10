@@ -71,27 +71,39 @@ npy_forward_method(
         PyObject *callable, PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    /* 
-     * We only need to add `self` to args, so allocate `new_args` and copy it.
-     * (If `len_args` is short this could be micro-optimized on the stack.)
-     * Python currently seems to never flag `PY_VECTORCALL_ARGUMENTS_OFFSET`
-     * (at least in practice) so it is not implemented here (yet).
-     */
-    len_args = PyVectorcall_NARGS(len_args);
-    npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
+    PyObject **new_args;
 
+    /*
+     * Unfortunately, `PY_VECTORCALL_ARGUMENTS_OFFSET` seems currently never
+     * set for methods at this time, so not implementing just modifying
+     * args[-1] here.
+     */
+    npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
     size_t original_arg_size = (len_args + len_kwargs) * sizeof(PyObject *);
-    PyObject **new_args = (PyObject **)PyMem_MALLOC(
-            original_arg_size + sizeof(PyObject *));
-    if (new_args == NULL) {
-        return PyErr_NoMemory();
+
+    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
+        new_args = (PyObject **)PyMem_MALLOC(original_arg_size + sizeof(PyObject *));
+        if (new_args == NULL) {
+            /*
+             * If this fails Python uses `PY_VECTORCALL_ARGUMENTS_OFFSET` and
+             * we should probably add a fast-path for that (hopefully almost)
+             * always taken.
+             */
+            return PyErr_NoMemory();
+        }
+    }
+    else {
+        /* Almost guaranteed a stack allocation is enough. */
+        new_args = alloca(original_arg_size + sizeof(PyObject *));
     }
 
     new_args[0] = self;
     memcpy(&new_args[1], args, original_arg_size);
     PyObject *res = PyObject_Vectorcall(callable, new_args, len_args+1, kwnames);
 
-    PyMem_FREE(new_args);
+    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
+        PyMem_FREE(new_args);
+    }
     return res;
 }
 
