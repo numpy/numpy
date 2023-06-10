@@ -155,15 +155,6 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
 
-    # Deprecations introduced in 1.25.0, 2023-05-xx TODO update day
-    from . import compat
-
-    __deprecated_attrs__["compat"] = (compat,
-        "`np.compat`, which was used during the Python 2 to 3 transition,"
-        " is deprecated since 1.25.0, and will be removed")
-
-    del compat
-
     # Deprecations introduced in NumPy 1.20.0, 2020-06-06
     import builtins as _builtins
 
@@ -241,19 +232,8 @@ else:
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
+    __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
-
-    _lib_expired_utils_names = ["byte_bounds", "safe_eval", "who"]
-    lib__all__ = lib.__all__[:]
-    for name in _lib_expired_utils_names:
-        lib__all__.remove(name)
-        __expired_functions__[name] = (
-            f"{name} is deprecated and removed from the "
-            f"main namespace. If you still want to use it "
-            f"please use it directly from np.lib or np.lib.utils"
-        )
-    del byte_bounds, safe_eval, who
-    __all__.extend(lib__all__)
 
     # Remove one of the two occurrences of `issubdtype`, which is exposed as
     # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
@@ -339,6 +319,9 @@ else:
         elif attr == 'Tester':
             "Removed in NumPy 1.25.0"
             raise RuntimeError("Tester was removed in NumPy 1.25.")
+        elif attr == "compat":
+            import numpy.compat as compat
+            return compat
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))

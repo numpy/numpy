@@ -5,6 +5,7 @@ import ctypes
 import gc
 import types
 from typing import Any
+import pickle
 
 import numpy as np
 import numpy.dtypes
@@ -13,7 +14,6 @@ from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
     IS_PYSTON, _OLD_PROMOTION)
-from numpy.compat import pickle
 from itertools import permutations
 import random
 
@@ -33,8 +33,7 @@ def assert_dtype_not_equal(a, b):
             "two different types hash to the same value !")
 
 class TestBuiltin:
-    @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
-                                   np.compat.unicode])
+    @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object])
     def test_run(self, t):
         """Only test hash runs at all."""
         dt = np.dtype(t)
@@ -1299,7 +1298,7 @@ class TestPickling:
             assert_equal(x[0], y[0])
 
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
-                                   np.compat.unicode, bool])
+                                   bool])
     def test_builtin(self, t):
         self.check_pickling(np.dtype(t))
 

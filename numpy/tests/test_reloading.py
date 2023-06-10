@@ -1,3 +1,11 @@
+import sys
+import subprocess
+import textwrap
+from importlib import reload
+import pickle
+
+import pytest
+
 from numpy.testing import (
     assert_raises,
     assert_warns,
@@ -5,13 +13,6 @@ from numpy.testing import (
     assert_equal,
     IS_WASM,
 )
-from numpy.compat import pickle
-
-import pytest
-import sys
-import subprocess
-import textwrap
-from importlib import reload
 
 
 def test_numpy_reloading():

@@ -3,7 +3,6 @@ from contextlib import nullcontext
 import numpy as np
 from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
-from numpy.compat import os_fspath, is_pathlib_path
 
 __all__ = ['memmap']
 
@@ -226,7 +225,10 @@ class memmap(ndarray):
         if hasattr(filename, 'read'):
             f_ctx = nullcontext(filename)
         else:
-            f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
+            f_ctx = open(
+                os.fspath(filename),
+                ('r' if mode == 'c' else mode)+'b'
+            )
 
         with f_ctx as fid:
             fid.seek(0, 2)
@@ -273,7 +275,7 @@ class memmap(ndarray):
             self.offset = offset
             self.mode = mode
 
-            if is_pathlib_path(filename):
+            if isinstance(filename, os.PathLike):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()

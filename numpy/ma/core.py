@@ -35,11 +35,9 @@ from numpy.core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import (
-    getargspec, formatargspec, long, unicode, bytes
-    )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
+from numpy._utils._inspect import getargspec, formatargspec
 
 
 __all__ = [

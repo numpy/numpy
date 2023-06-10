@@ -161,12 +161,13 @@ alternatives, is described in the
 evolved with time and this document is more current.
 
 """
-import numpy
+import io
+import os
+import pickle
 import warnings
+
+import numpy
 from numpy.lib.utils import safe_eval, drop_metadata
-from numpy.compat import (
-    isfileobj, os_fspath, pickle
-    )
 
 
 __all__ = []
@@ -916,12 +917,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        with open(os_fspath(filename), mode+'b') as fp:
+        with open(os.fspath(filename), mode+'b') as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:
         # Read the header of the file first.
-        with open(os_fspath(filename), 'rb') as fp:
+        with open(os.fspath(filename), 'rb') as fp:
             version = read_magic(fp)
             _check_version(version)
 
@@ -974,3 +975,15 @@ def _read_bytes(fp, size, error_template="ran out of data"):
         raise ValueError(msg % (error_template, size, len(data)))
     else:
         return data
+
+
+def isfileobj(f):
+    if not isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter)):
+        return False
+    try:
+        # BufferedReader/Writer may raise OSError when
+        # fetching `fileno()` (e.g. when wrapping BytesIO).
+        f.fileno()
+        return True
+    except OSError:
+        return False

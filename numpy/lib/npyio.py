@@ -8,6 +8,7 @@ import contextlib
 import operator
 from operator import itemgetter, index as opindex, methodcaller
 from collections.abc import Mapping
+import pickle
 
 import numpy as np
 from . import format
@@ -21,11 +22,7 @@ from ._iotools import (
     ConverterLockError, ConversionWarning, _is_string_like,
     has_nested_fields, flatten_dtype, easy_dtype, _decode_line
     )
-
-from numpy.compat import (
-    asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle
-    )
+from numpy._utils._convertions import asunicode, asbytes
 
 
 __all__ = [
@@ -97,7 +94,7 @@ def zipfile_factory(file, *args, **kwargs):
     constructor.
     """
     if not hasattr(file, 'read'):
-        file = os_fspath(file)
+        file = os.fspath(file)
     import zipfile
     kwargs['allowZip64'] = True
     return zipfile.ZipFile(file, *args, **kwargs)
@@ -424,7 +421,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             fid = file
             own_fid = False
         else:
-            fid = stack.enter_context(open(os_fspath(file), "rb"))
+            fid = stack.enter_context(open(os.fspath(file), "rb"))
             own_fid = True
 
         # Code to distinguish from NumPy binary files and pickles.
@@ -536,7 +533,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     if hasattr(file, 'write'):
         file_ctx = contextlib.nullcontext(file)
     else:
-        file = os_fspath(file)
+        file = os.fspath(file)
         if not file.endswith('.npy'):
             file = file + '.npy'
         file_ctx = open(file, "wb")
@@ -716,7 +713,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     import zipfile
 
     if not hasattr(file, 'write'):
-        file = os_fspath(file)
+        file = os.fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
 
@@ -1510,11 +1507,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     """
 
-    # Py3 conversions first
-    if isinstance(fmt, bytes):
-        fmt = asstr(fmt)
-    delimiter = asstr(delimiter)
-
     class WriteWrap:
         """Convert to bytes on bytestream inputs.
 
@@ -1549,8 +1541,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.write = self.write_bytes
 
     own_fh = False
-    if isinstance(fname, os_PathLike):
-        fname = os_fspath(fname)
+    if isinstance(fname, os.PathLike):
+        fname = os.fspath(fname)
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
         open(fname, 'wt').close()
@@ -1587,7 +1579,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
-            format = asstr(delimiter).join(map(asstr, fmt))
+            format = delimiter.join(fmt)
         elif isinstance(fmt, str):
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
@@ -1712,8 +1704,6 @@ def fromregex(file, regexp, dtype, encoding=None):
         content = file.read()
         if isinstance(content, bytes) and isinstance(regexp, str):
             regexp = asbytes(regexp)
-        elif isinstance(content, str) and isinstance(regexp, bytes):
-            regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
             regexp = re.compile(regexp)
@@ -1974,8 +1964,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
-    if isinstance(fname, os_PathLike):
-        fname = os_fspath(fname)
+    if isinstance(fname, os.PathLike):
+        fname = os.fspath(fname)
     if isinstance(fname, str):
         fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
         fid_ctx = contextlib.closing(fid)

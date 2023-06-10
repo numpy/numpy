@@ -12,7 +12,6 @@ from numpy.distutils import log
 from numpy.distutils.msvccompiler import lib_opts_if_msvc
 from distutils.dep_util import newer
 from sysconfig import get_config_var
-from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means

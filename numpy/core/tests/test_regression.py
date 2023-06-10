@@ -6,6 +6,7 @@ import pytest
 from os import path
 from io import BytesIO
 from itertools import chain
+import pickle
 
 import numpy as np
 from numpy.testing import (
@@ -15,7 +16,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy.compat import asbytes, asunicode, pickle
+from numpy._utils._convertions import asbytes, asunicode
 
 
 class TestRegression:

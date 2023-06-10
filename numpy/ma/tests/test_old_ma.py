@@ -1,4 +1,5 @@
 from functools import reduce
+import pickle
 
 import pytest
 
@@ -21,7 +22,6 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.compat import pickle
 
 pi = np.pi
 

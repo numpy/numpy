@@ -817,19 +817,8 @@ class TestMathAlias(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.lib.math)
 
 
-class TestCompatImport(_DeprecationTestCase):
-    # Deprecated in Numpy 1.25.0, 2023-05-xx TODO update day
-    def test_deprecated_np_compat(self):
-        self.assert_deprecated(lambda: np.compat)
-
-
 class TestLibImports(_DeprecationTestCase):
-    # Deprecated in Numpy 1.25.0, 2023-05-xx TODO update day
-    def test_lib_functions_deprecation(self):
-        self.assert_deprecated(lambda: np.byte_bounds)
-        self.assert_deprecated(lambda: np.safe_eval)
-        self.assert_deprecated(lambda: np.who)
-
+    # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
         from numpy.lib import byte_bounds, safe_eval, who
         self.assert_deprecated(lambda: byte_bounds(np.array([1])))

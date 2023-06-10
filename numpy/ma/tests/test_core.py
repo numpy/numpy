@@ -12,10 +12,10 @@ import copy
 import operator
 import itertools
 import textwrap
-import pytest
-
+import pickle
 from functools import reduce
 
+import pytest
 
 import numpy as np
 import numpy.ma.core
@@ -26,7 +26,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import requires_memory
 from numpy import ndarray
-from numpy.compat import asbytes
+from numpy._utils._convertions import asbytes
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal,
     assert_equal_records, fail_if_equal, assert_not_equal,
@@ -49,7 +49,6 @@ from numpy.ma.core import (
     putmask, ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort,
     sqrt, subtract, sum, take, tan, tanh, transpose, where, zeros, zeros_like,
     )
-from numpy.compat import pickle
 
 pi = np.pi
 
