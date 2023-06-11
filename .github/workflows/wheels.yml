@@ -101,6 +101,11 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
 
+      - name: pkg-config-for-win
+        run: |
+          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        if: runner.os == 'windows'
+
       # Used to push the built wheels
       - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
