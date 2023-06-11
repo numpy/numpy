@@ -177,6 +177,11 @@ environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFL
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
 
+[tool.meson-python.args]
+setup = ['--vsenv']
+# This should not be set on 32-bit builds...
+compile = ['-DBLAS_SYMBOL_SUFFIX=64_']
+
 [tool.spin]
 package = 'numpy'
 
