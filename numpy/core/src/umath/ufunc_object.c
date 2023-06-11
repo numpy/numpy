@@ -2749,22 +2749,6 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
 }
 
 
-/*UFUNC_API*/
-NPY_NO_EXPORT int
-PyUFunc_GenericFunction(PyUFuncObject *NPY_UNUSED(ufunc),
-        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds),
-        PyArrayObject **NPY_UNUSED(op))
-{
-    /* NumPy 1.21, 2020-03-29 */
-    PyErr_SetString(PyExc_RuntimeError,
-            "The `PyUFunc_GenericFunction()` C-API function has been disabled. "
-            "Please use `PyObject_Call(ufunc, args, kwargs)`, which has "
-            "identical behaviour but allows subclass and `__array_ufunc__` "
-            "override handling and only returns the normal ufunc result.");
-    return -1;
-}
-
-
 /*
  * Promote and resolve a reduction like operation.
  *
@@ -5323,18 +5307,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
      *       datetimes (and not floats or error), arguably wrong, but...
      */
     return (PyObject *)ufunc;
-}
-
-
-/*UFUNC_API*/
-NPY_NO_EXPORT int
-PyUFunc_SetUsesArraysAsData(void **NPY_UNUSED(data), size_t NPY_UNUSED(i))
-{
-    /* NumPy 1.21, 201-03-29 */
-    PyErr_SetString(PyExc_RuntimeError,
-            "PyUFunc_SetUsesArraysAsData() C-API function has been "
-            "disabled.  It was initially deprecated in NumPy 1.19.");
-    return -1;
 }
 
 

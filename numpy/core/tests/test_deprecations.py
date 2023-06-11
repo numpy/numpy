@@ -256,18 +256,6 @@ class TestNPY_CHAR(_DeprecationTestCase):
         assert_(npy_char_deprecation() == 'S1')
 
 
-class TestPyArray_AS1D(_DeprecationTestCase):
-    def test_npy_pyarrayas1d_deprecation(self):
-        from numpy.core._multiarray_tests import npy_pyarrayas1d_deprecation
-        assert_raises(NotImplementedError, npy_pyarrayas1d_deprecation)
-
-
-class TestPyArray_AS2D(_DeprecationTestCase):
-    def test_npy_pyarrayas2d_deprecation(self):
-        from numpy.core._multiarray_tests import npy_pyarrayas2d_deprecation
-        assert_raises(NotImplementedError, npy_pyarrayas2d_deprecation)
-
-
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
     def test_3_tuple(self):
