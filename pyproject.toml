@@ -157,7 +157,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DDBLAS_SYMBOL_SUFFIX=64_", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
 
 [tool.cibuildwheel.macos]
 # For universal2 wheels, we will need to fuse them manually
@@ -168,10 +168,10 @@ environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-deb
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DDBLAS_SYMBOL_SUFFIX=64_", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
 
 [tool.cibuildwheel.windows]
-environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="", LDFLAGS="" }
+environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="-DDBLAS_SYMBOL_SUFFIX=64_", LDFLAGS="" }
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"
@@ -179,8 +179,6 @@ environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFL
 
 [tool.meson-python.args]
 setup = ['--vsenv']
-# This should not be set on 32-bit builds...
-compile = ['-DBLAS_SYMBOL_SUFFIX=64_']
 
 [tool.spin]
 package = 'numpy'

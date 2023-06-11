@@ -106,17 +106,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      # We need rtools 4.0 to have 32 bit support on windows
-      - if: runner.os == 'windows'
-        uses: r-windows/install-rtools@ca1090c210479e995c03019a22b9798cdf57073a # main
-
-      - name: setup rtools for 32-bit
-        run: |
-          echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
-          gfortran --version
-        if: ${{ matrix.buildplat[1] == 'win32' }}
-
       - name: Build wheels
         uses: pypa/cibuildwheel@0ecddd92b62987d7a2ae8911f4bb8ec9e2e4496a # v2.13.1
         env:
