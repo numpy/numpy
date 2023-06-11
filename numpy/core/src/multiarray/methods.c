@@ -71,12 +71,13 @@ npy_forward_method(
         PyObject *callable, PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject **new_args;
+    PyObject *args_buffer[NPY_MAXARGS];
+    /* Practically guaranteed NPY_MAXARGS is enough. */
+    PyObject **new_args = args_buffer;
 
     /*
-     * Unfortunately, `PY_VECTORCALL_ARGUMENTS_OFFSET` seems currently never
-     * set for methods at this time, so not implementing just modifying
-     * args[-1] here.
+     * `PY_VECTORCALL_ARGUMENTS_OFFSET` seems never set, probably `args[-1]`
+     * is always `self` but do not rely on it unless Python documents that.
      */
     npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
     size_t original_arg_size = (len_args + len_kwargs) * sizeof(PyObject *);
@@ -91,10 +92,6 @@ npy_forward_method(
              */
             return PyErr_NoMemory();
         }
-    }
-    else {
-        /* Almost guaranteed a stack allocation is enough. */
-        new_args = alloca(original_arg_size + sizeof(PyObject *));
     }
 
     new_args[0] = self;
