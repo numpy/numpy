@@ -71,8 +71,12 @@ _import_array(void)
       return -1;
   }
 
-  /* Perform runtime check of C API version */
-  if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
+  /*
+   * Perform runtime check of C API version.  As of now NumPy 2.0 is ABI
+   * backwards compatible (in the exposed feature subset!) for all practical
+   * purposes.
+   */
+  if (NPY_VERSION < PyArray_GetNDArrayCVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
              "ABI version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
