@@ -48,7 +48,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
 # 0x00000011 - 1.25.x
-C_API_VERSION = '0x00000011'
+# 0x00000012 - 2.0.x
+C_API_VERSION = '0x00000012'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
