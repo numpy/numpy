@@ -31,14 +31,12 @@ if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
-    ls /tmp
     mkdir -p openblas
     # bash on windows does not like cp -r $target/* openblas
     for f in $(ls $target); do
         cp -r $target/$f openblas
     done
     ls openblas
-    echo "PKG_CONFIG_PATH=$PWD/openblas/lib/pkgconfig;" >> $env:GITHUB_ENV
 fi
 
 if [[ $RUNNER_OS == "macOS" ]]; then
