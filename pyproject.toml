@@ -157,7 +157,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="-Wl,--strip-debug", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
 # For universal2 wheels, we will need to fuse them manually
@@ -168,10 +168,10 @@ environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_",
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS" }
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS"}
 
 [tool.cibuildwheel.windows]
-environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_", LDFLAGS="" }
+environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS=""}
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"

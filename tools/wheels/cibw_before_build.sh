@@ -38,6 +38,7 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
         cp -r $target/$f openblas
     done
     ls openblas
+    echo "PKG_CONFIG_PATH=$PWD/openblas/lib/pkgconfig;" >> $env:GITHUB_ENV
 fi
 
 if [[ $RUNNER_OS == "macOS" ]]; then
