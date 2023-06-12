@@ -8,13 +8,8 @@ requires = [
 [project]
 name = "numpy"
 version = "2.0.0.dev0"
-
-# Using https://peps.python.org/pep-0639/ which is still in draft
-license = {text = "BSD-3-Clause"}
-license-files.paths = [
-    "LICENSE.txt",
-    "LICENSES_bundles.txt"
-]
+# TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
+license = {file = "LICENSE.txt"}
 
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
