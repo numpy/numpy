@@ -260,7 +260,7 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   Git Basics <gitwash/index>
+   Git for development <gitwash/index>
    development_environment
    howto_build_docs
    development_workflow
