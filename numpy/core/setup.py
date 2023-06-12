@@ -809,7 +809,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
             join('include', 'numpy', 'arrayscalars.h'),
-            join('include', 'numpy', 'noprefix.h'),
             join('include', 'numpy', 'npy_3kcompat.h'),
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),

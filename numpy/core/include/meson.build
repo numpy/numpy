@@ -7,7 +7,6 @@ installed_headers = [
   'numpy/halffloat.h',
   'numpy/ndarrayobject.h',
   'numpy/ndarraytypes.h',
-  'numpy/noprefix.h',
   'numpy/npy_1_7_deprecated_api.h',
   'numpy/npy_3kcompat.h',
   'numpy/npy_common.h',

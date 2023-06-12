@@ -4,8 +4,4 @@
 
 #include "ndarrayobject.h"
 
-#ifdef NPY_NO_PREFIX
-#include "noprefix.h"
-#endif
-
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYOBJECT_H_ */
