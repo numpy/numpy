@@ -531,7 +531,8 @@ def expand_dims(a, axis):
 
         .. versionchanged:: 1.18.0
             A tuple of axes is now supported.  Out of range axes as
-            described above are now forbidden and raise an `AxisError`.
+            described above are now forbidden and raise an
+            `~exceptions.AxisError`.
 
     Returns
     -------

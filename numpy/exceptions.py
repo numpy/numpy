@@ -103,7 +103,7 @@ class AxisError(ValueError, IndexError):
     For compatibility with code written against older numpy versions, which
     raised a mixture of `ValueError` and `IndexError` for this situation, this
     exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch `AxisError`.
+    ``except IndexError`` statements continue to catch `~exceptions.AxisError`.
 
     .. versionadded:: 1.13
 
