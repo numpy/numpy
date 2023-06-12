@@ -664,8 +664,6 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_ClipmodeConverter (object, NPY_CLIPMODE *) except 0
     #int PyArray_OutputConverter (object, ndarray*) except 0
     object PyArray_BroadcastToShape (object, npy_intp *, int)
-    void _PyArray_SigintHandler (int)
-    void* _PyArray_GetSigintBuf ()
     #int PyArray_DescrAlignConverter (object, dtype*) except 0
     #int PyArray_DescrAlignConverter2 (object, dtype*) except 0
     int PyArray_SearchsideConverter (object, void *) except 0

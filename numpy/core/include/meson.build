@@ -13,7 +13,6 @@ installed_headers = [
   'numpy/npy_common.h',
   'numpy/npy_cpu.h',
   'numpy/npy_endian.h',
-  'numpy/npy_interrupt.h',
   'numpy/npy_math.h',
   'numpy/npy_no_deprecated_api.h',
   'numpy/npy_os.h',
