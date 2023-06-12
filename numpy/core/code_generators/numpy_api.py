@@ -98,7 +98,7 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [67, 68, 163, 164, 201, 202, 278],
+    '__unused_indices__': [67, 68, 163, 164, 201, 202, 278, 291],
     'PyArray_GetNDArrayCVersion':           (0,),
     'PyArray_SetNumericOps':                (40,),
     'PyArray_GetNumericOps':                (41,),
@@ -350,7 +350,7 @@ multiarray_funcs_api = {
     'PyDataMem_NEW':                        (288,),
     'PyDataMem_FREE':                       (289,),
     'PyDataMem_RENEW':                      (290,),
-    'PyDataMem_SetEventHook':               (291,),
+    # Unused slot 291, was `PyDataMem_SetEventHook`
     'PyArray_MapIterSwapAxes':              (293,),
     'PyArray_MapIterArray':                 (294,),
     'PyArray_MapIterNext':                  (295,),
