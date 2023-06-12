@@ -6097,7 +6097,25 @@ class MaskedArray(ndarray):
     @property
     def mT(self):
         """
-        TODO: Fill in documentation
+        Return the matrix-transpose of the masked array.
+
+        The matrix transpose is the transpose of the last two dimensions, even
+        if the array is of higher dimension.
+
+        Returns
+        -------
+        result: MaskedArray
+            The masked array with the last two dimensions transposed
+
+        Raises
+        ------
+        ValueError
+            If the array is of dimension less than 2.
+
+        See Also
+        --------
+        ndarray.mT:
+            Equivalent method for arrays
         """
 
         if self.ndim < 2:
