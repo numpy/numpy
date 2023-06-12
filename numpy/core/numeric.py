@@ -971,15 +971,17 @@ def tensordot(a, b, axes=2):
         * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
         * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
-    When `axes` is integer_like, the sequence for evaluation will be: first
-    the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
-    (N-1)th axis in `b` last. When N-1 is smaller than 0, or when -N is larger
-    than -1, the element of 'a' and 'b' are defined as the 'axes'.
+    When `axes` is integer_like, the sequence of axes for evaluation will be: from
+    the -Nth axis to the -1th axis in `a`, and from the 0th axis to (N-1)th axis in `b`.
+    For example, ``axes = 2`` is the equal to ``axes = [[-2, -1], [0, 1]]``.
+    When N-1 is smaller than 0, or when -N is larger than -1,
+    the element of 'a' and 'b' are defined as the 'axes'.
 
     When there is more than one axis to sum over - and they are not the last
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
+    The calculation is the same as enisum.
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
@@ -989,7 +991,7 @@ def tensordot(a, b, axes=2):
     "traditional" examples:
     >>> # An example on integer_like
     >>> a_0 = np.array([[1, 2], [3, 4]])
-    >>> b_0 = np.array([[5, 6],[7, 8]])
+    >>> b_0 = np.array([[5, 6], [7, 8]])
     >>> c_0 = np.tensordot(a_0, b_0, axes=0)
     >>> c_0.shape
     (2, 2, 2, 2)
