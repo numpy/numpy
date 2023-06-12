@@ -14,11 +14,10 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
                 int *errmask, PyObject **errobj);
 
 NPY_NO_EXPORT int
-_check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name);
+_check_ufunc_fperr(int errmask, const char *ufunc_name);
 
 NPY_NO_EXPORT int
-_get_bufsize_errmask(PyObject * extobj, const char *ufunc_name,
-                     int *buffersize, int *errormask);
+_get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask);
 
 /********************/
 #define USE_USE_DEFAULTS 1

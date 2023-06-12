@@ -340,7 +340,7 @@ PyUFunc_GiveFloatingpointErrors(const char *name, int fpe_errors)
  *  - ufunc_name: name of ufunc
  */
 NPY_NO_EXPORT int
-_check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
+_check_ufunc_fperr(int errmask, const char *ufunc_name) {
     int fperr;
     PyObject *errobj = NULL;
     int ret;
@@ -349,17 +349,15 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     if (!errmask) {
         return 0;
     }
-    fperr = npy_get_floatstatus_barrier((char*)extobj);
+    fperr = npy_get_floatstatus_barrier((char*)ufunc_name);
     if (!fperr) {
         return 0;
     }
 
     /* Get error object globals */
-    if (extobj == NULL) {
-        extobj = get_global_ext_obj();
-        if (extobj == NULL && PyErr_Occurred()) {
-            return -1;
-        }
+    PyObject *extobj = get_global_ext_obj();
+    if (extobj == NULL && PyErr_Occurred()) {
+        return -1;
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         NULL, NULL, &errobj) < 0) {
@@ -375,15 +373,12 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
 
 
 NPY_NO_EXPORT int
-_get_bufsize_errmask(PyObject * extobj, const char *ufunc_name,
-                     int *buffersize, int *errormask)
+_get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask)
 {
     /* Get the buffersize and errormask */
-    if (extobj == NULL) {
-        extobj = get_global_ext_obj();
-        if (extobj == NULL && PyErr_Occurred()) {
-            return -1;
-        }
+    PyObject *extobj = get_global_ext_obj();
+    if (extobj == NULL && PyErr_Occurred()) {
+        return -1;
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         buffersize, errormask, NULL) < 0) {

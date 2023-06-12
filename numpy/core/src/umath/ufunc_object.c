@@ -1211,7 +1211,7 @@ static int
 try_trivial_single_output_loop(PyArrayMethod_Context *context,
         PyArrayObject *op[], NPY_ORDER order,
         PyObject *arr_prep[], ufunc_full_args full_args,
-        int errormask, PyObject *extobj)
+        int errormask)
 {
     int nin = context->method->nin;
     int nop = nin + 1;
@@ -1360,7 +1360,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        res = _check_ufunc_fperr(errormask, extobj, name);
+        res = _check_ufunc_fperr(errormask, name);
     }
     return res;
 }
@@ -1409,7 +1409,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
         PyArrayObject **op, NPY_ORDER order, npy_intp buffersize,
         NPY_CASTING casting,
         PyObject **arr_prep, ufunc_full_args full_args,
-        npy_uint32 *op_flags, int errormask, PyObject *extobj)
+        npy_uint32 *op_flags, int errormask)
 {
     PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
     int nin = context->method->nin, nout = context->method->nout;
@@ -1610,7 +1610,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        res = _check_ufunc_fperr(errormask, extobj, name);
+        res = _check_ufunc_fperr(errormask, name);
     }
 
     if (!NpyIter_Deallocate(iter)) {
@@ -2131,8 +2131,7 @@ _initialize_variable_parts(PyUFuncObject *ufunc,
 static int
 PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         PyArrayMethodObject *ufuncimpl, PyArray_Descr *operation_descrs[],
-        PyArrayObject *op[], PyObject *extobj,
-        NPY_CASTING casting, NPY_ORDER order,
+        PyArrayObject *op[], NPY_CASTING casting, NPY_ORDER order,
         PyObject *axis, PyObject *axes, int keepdims)
 {
     int nin, nout;
@@ -2154,7 +2153,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     npy_uint32 iter_flags;
     npy_intp total_problem_size;
 
-    /* These parameters come from extobj= or from a TLS global */
+    /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
     /* The dimensions which get passed to the inner loop */
@@ -2382,7 +2381,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 #endif
 
     /* Get the buffersize and errormask */
-    if (_get_bufsize_errmask(extobj, ufunc_name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
         retval = -1;
         goto fail;
     }
@@ -2578,7 +2577,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 
     if (retval == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        retval = _check_ufunc_fperr(errormask, extobj, ufunc_name);
+        retval = _check_ufunc_fperr(errormask, ufunc_name);
     }
 
     PyArray_free(inner_strides);
@@ -2608,8 +2607,7 @@ fail:
 static int
 PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         PyArrayMethodObject *ufuncimpl, PyArray_Descr *operation_descrs[],
-        PyArrayObject *op[], PyObject *extobj,
-        NPY_CASTING casting, NPY_ORDER order,
+        PyArrayObject *op[], NPY_CASTING casting, NPY_ORDER order,
         PyObject *output_array_prepare[], ufunc_full_args full_args,
         PyArrayObject *wheremask)
 {
@@ -2620,13 +2618,13 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     npy_intp default_op_out_flags;
     npy_uint32 op_flags[NPY_MAXARGS];
 
-    /* These parameters come from extobj= or from a TLS global */
+    /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Get the buffersize and errormask */
-    if (_get_bufsize_errmask(extobj, ufunc_name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
         return -1;
     }
 
@@ -2668,7 +2666,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         return execute_ufunc_loop(&context, 1,
                 op, order, buffersize, casting,
                 output_array_prepare, full_args, op_flags,
-                errormask, extobj);
+                errormask);
     }
     else {
         NPY_UF_DBG_PRINT("Executing normal inner loop\n");
@@ -2686,7 +2684,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
             /* Try to handle everything without using the (heavy) iterator */
             int retval = try_trivial_single_output_loop(&context,
                     op, order, output_array_prepare, full_args,
-                    errormask, extobj);
+                    errormask);
             if (retval != -2) {
                 return retval;
             }
@@ -2695,7 +2693,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         return execute_ufunc_loop(&context, 0,
                 op, order, buffersize, casting,
                 output_array_prepare, full_args, op_flags,
-                errormask, extobj);
+                errormask);
     }
 }
 
@@ -2995,7 +2993,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         axis_flags[axis] = 1;
     }
 
-    if (_get_bufsize_errmask(NULL, "reduce", &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask("reduce", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3041,7 +3039,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     NpyIter *iter = NULL;
 
-    /* These parameters come from extobj= or from a TLS global */
+    /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
     NPY_BEGIN_THREADS_DEF;
@@ -3054,7 +3052,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     printf("\n");
 #endif
 
-    if (_get_bufsize_errmask(NULL, "accumulate", &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask("accumulate", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3374,7 +3372,7 @@ finish:
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, NULL, "accumulate");
+        res = _check_ufunc_fperr(errormask, "accumulate");
     }
 
     if (res < 0) {
@@ -3444,7 +3442,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     char *opname = "reduceat";
 
-    /* These parameters come from extobj= or from a TLS global */
+    /* These parameters comefrom a TLS global */
     int buffersize = 0, errormask = 0;
 
     NPY_BEGIN_THREADS_DEF;
@@ -3472,7 +3470,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     printf("Index size is %d\n", (int)ind_size);
 #endif
 
-    if (_get_bufsize_errmask(NULL, opname, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(opname, &buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3795,7 +3793,7 @@ finish:
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, NULL, "reduceat");
+        res = _check_ufunc_fperr(errormask, "reduceat");
     }
 
     if (res < 0) {
@@ -4727,7 +4725,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyObject *axes_obj = NULL, *axis_obj = NULL;
     PyObject *keepdims_obj = NULL, *casting_obj = NULL, *order_obj = NULL;
     PyObject *subok_obj = NULL, *signature_obj = NULL, *sig_obj = NULL;
-    PyObject *dtype_obj = NULL, *extobj = NULL;
+    PyObject *dtype_obj = NULL;
 
     /* Skip parsing if there are no keyword arguments, nothing left to do */
     if (kwnames != NULL) {
@@ -4743,7 +4741,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                     "$dtype", NULL, &dtype_obj,
                     "$signature", NULL, &signature_obj,
                     "$sig", NULL, &sig_obj,
-                    "$extobj", NULL, &extobj,
                     NULL, NULL, NULL) < 0) {
                 goto fail;
             }
@@ -4762,7 +4759,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                     "$dtype", NULL, &dtype_obj,
                     "$signature", NULL, &signature_obj,
                     "$sig", NULL, &sig_obj,
-                    "$extobj", NULL, &extobj,
                     NULL, NULL, NULL) < 0) {
                 goto fail;
             }
@@ -4927,13 +4923,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     if (!ufunc->core_enabled) {
         errval = PyUFunc_GenericFunctionInternal(ufunc, ufuncimpl,
-                operation_descrs, operands, extobj, casting, order,
+                operation_descrs, operands, casting, order,
                 output_array_prepare, full_args,  /* for __array_prepare__ */
                 wheremask);
     }
     else {
         errval = PyUFunc_GeneralizedFunctionInternal(ufunc, ufuncimpl,
-                operation_descrs, operands, extobj, casting, order,
+                operation_descrs, operands, casting, order,
                 /* GUFuncs never (ever) called __array_prepare__! */
                 axis_obj, axes_obj, keepdims);
     }
@@ -5898,11 +5894,10 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         const char * ufunc_name =
                         ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        if (_get_bufsize_errmask(NULL, ufunc_name,
-                                 &buffersize, &errormask) < 0) {
+        if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
             return -1;
         }
-        res = _check_ufunc_fperr(errormask, NULL, ufunc_name);
+        res = _check_ufunc_fperr(errormask, ufunc_name);
     }
     return res;
 }
@@ -5921,7 +5916,7 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     int res = 0;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(ufunc->name, &buffersize, &errormask) < 0) {
         return -1;
     }
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
@@ -5974,7 +5969,7 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, NULL, "at");
+        res = _check_ufunc_fperr(errormask, "at");
     }
     return res;
 }
@@ -5999,7 +5994,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(ufunc->name, &buffersize, &errormask) < 0) {
         return -1;
     }
     array_operands[0] = new_array_op(op1_array, iter->dataptr);
@@ -6143,7 +6138,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     }
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, NULL, "at");
+        res = _check_ufunc_fperr(errormask, "at");
     }
     NpyIter_Deallocate(iter_buffer);
     for (int i = 0; i < 3; i++) {
