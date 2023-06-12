@@ -981,7 +981,7 @@ def tensordot(a, b, axes=2):
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
-    The calculation is the same as enisum.
+    The calculation can be referred to enisum().
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
