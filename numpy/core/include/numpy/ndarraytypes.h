@@ -1850,13 +1850,6 @@ typedef struct {
                            */
 } PyArrayInterface;
 
-/*
- * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
- * See the documentation for PyDataMem_SetEventHook.
- */
-typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
-                                       void *user_data);
-
 
 /*
  * PyArray_DTypeMeta related definitions.

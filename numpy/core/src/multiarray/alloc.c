@@ -223,54 +223,6 @@ WARN_NO_RETURN(PyObject* warning, const char * msg) {
 }
 
 
-
-/* malloc/free/realloc hook */
-NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook = NULL;
-NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data = NULL;
-
-/*NUMPY_API
- * Sets the allocation event hook for numpy array data.
- * Takes a PyDataMem_EventHookFunc *, which has the signature:
- *        void hook(void *old, void *new, size_t size, void *user_data).
- *   Also takes a void *user_data, and void **old_data.
- *
- * Returns a pointer to the previous hook or NULL.  If old_data is
- * non-NULL, the previous user_data pointer will be copied to it.
- *
- * If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
- *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size, user_data)
- *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0, user_data)
- *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size, user_data)
- *
- * When the hook is called, the GIL will be held by the calling
- * thread.  The hook should be written to be reentrant, if it performs
- * operations that might cause new allocation events (such as the
- * creation/destruction numpy objects, or creating/destroying Python
- * objects which might cause a gc)
- *
- * Deprecated in 1.23
- */
-NPY_NO_EXPORT PyDataMem_EventHookFunc *
-PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
-                       void *user_data, void **old_data)
-{
-    PyDataMem_EventHookFunc *temp;
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API
-    /* 2021-11-18, 1.23 */
-    WARN_NO_RETURN(PyExc_DeprecationWarning,
-                     "PyDataMem_SetEventHook is deprecated, use tracemalloc "
-                     "and the 'np.lib.tracemalloc_domain' domain");
-    temp = _PyDataMem_eventhook;
-    _PyDataMem_eventhook = newhook;
-    if (old_data != NULL) {
-        *old_data = _PyDataMem_eventhook_user_data;
-    }
-    _PyDataMem_eventhook_user_data = user_data;
-    NPY_DISABLE_C_API
-    return temp;
-}
-
 /*NUMPY_API
  * Allocates memory for array data.
  */
@@ -281,15 +233,6 @@ PyDataMem_NEW(size_t size)
 
     assert(size != 0);
     result = malloc(size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
@@ -303,15 +246,6 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
     void *result;
 
     result = calloc(nmemb, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, nmemb * size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     return result;
 }
@@ -324,15 +258,6 @@ PyDataMem_FREE(void *ptr)
 {
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     free(ptr);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, NULL, 0,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
 }
 
 /*NUMPY_API
@@ -349,15 +274,6 @@ PyDataMem_RENEW(void *ptr, size_t size)
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     return result;
 }
 
@@ -440,15 +356,6 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
@@ -462,15 +369,6 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, nmemb * size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     return result;
 }
@@ -487,15 +385,6 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     handler->allocator.free(handler->allocator.ctx, ptr, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, NULL, 0,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
 }
 
 NPY_NO_EXPORT void *
@@ -513,15 +402,6 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
-    if (_PyDataMem_eventhook != NULL) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
-        NPY_DISABLE_C_API
-    }
     return result;
 }
 

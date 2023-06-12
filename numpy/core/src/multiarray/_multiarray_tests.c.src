@@ -466,57 +466,6 @@ clean_ax:
     return NULL;
 }
 
-/* PyDataMem_SetHook tests */
-static int malloc_free_counts[2];
-static PyDataMem_EventHookFunc *old_hook = NULL;
-static void *old_data;
-
-static void test_hook(void *old, void *new, size_t size, void *user_data)
-{
-    int* counters = (int *) user_data;
-    if (old == NULL) {
-        counters[0]++; /* malloc counter */
-    }
-    if (size == 0) {
-        counters[1]++; /* free counter */
-    }
-}
-
-static PyObject*
-test_pydatamem_seteventhook_start(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    malloc_free_counts[0] = malloc_free_counts[1] = 0;
-    old_hook = PyDataMem_SetEventHook(test_hook, (void *) malloc_free_counts, &old_data);
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-test_pydatamem_seteventhook_end(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyDataMem_EventHookFunc *my_hook;
-    void *my_data;
-
-    my_hook = PyDataMem_SetEventHook(old_hook, old_data, &my_data);
-    if ((my_hook != test_hook) || (my_data != (void *) malloc_free_counts)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "hook/data was not the expected test hook");
-        return NULL;
-    }
-
-    if (malloc_free_counts[0] == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "malloc count is zero after test");
-        return NULL;
-    }
-    if (malloc_free_counts[1] == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "free count is zero after test");
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
 
 typedef void (*inplace_map_binop)(PyArrayMapIterObject *, PyArrayIterObject *);
 
@@ -2367,12 +2316,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_neighborhood_iterator_oob",
         test_neighborhood_iterator_oob,
         METH_VARARGS, NULL},
-    {"test_pydatamem_seteventhook_start",
-        test_pydatamem_seteventhook_start,
-        METH_NOARGS, NULL},
-    {"test_pydatamem_seteventhook_end",
-        test_pydatamem_seteventhook_end,
-        METH_NOARGS, NULL},
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
