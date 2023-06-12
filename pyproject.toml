@@ -123,6 +123,11 @@ requires = [
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "c_api_removal"
+        name = "NumPy 2.0 C API removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "new_feature"
         name = "New Features"
         showcontent = true

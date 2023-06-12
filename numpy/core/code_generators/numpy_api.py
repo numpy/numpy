@@ -98,7 +98,7 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [67, 68, 163, 164, 278],
+    '__unused_indices__': [67, 68, 163, 164, 201, 202, 278],
     'PyArray_GetNDArrayCVersion':           (0,),
     'PyArray_SetNumericOps':                (40,),
     'PyArray_GetNumericOps':                (41,),
@@ -261,8 +261,8 @@ multiarray_funcs_api = {
     'PyArray_ClipmodeConverter':            (198,),
     'PyArray_OutputConverter':              (199,),
     'PyArray_BroadcastToShape':             (200,),
-    '_PyArray_SigintHandler':               (201,),
-    '_PyArray_GetSigintBuf':                (202,),
+    # Unused slot 201, was `_PyArray_SigintHandler`
+    # Unused slot 202, was `_PyArray_GetSigintBuf`
     'PyArray_DescrAlignConverter':          (203,),
     'PyArray_DescrAlignConverter2':         (204,),
     'PyArray_SearchsideConverter':          (205,),
