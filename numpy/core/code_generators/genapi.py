@@ -476,7 +476,11 @@ def merge_api_dicts(dicts):
     return ret
 
 def check_api_dict(d):
-    """Check that an api dict is valid (does not use the same index twice)."""
+    """Check that an api dict is valid (does not use the same index twice)
+    and removed `__unused_indices__` from it (which is important only here)
+    """
+    # Pop the `__unused_indices__` field:  These are known holes:
+    removed = set(d.pop("__unused_indices__", []))
     # remove the extra value fields that aren't the index
     index_d = {k: v[0] for k, v in d.items()}
 
@@ -501,9 +505,12 @@ def check_api_dict(d):
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
     indexes = set(index_d.values())
-    expected = set(range(len(indexes)))
-    if indexes != expected:
-        diff = expected.symmetric_difference(indexes)
+    expected = set(range(len(indexes) + len(removed)))
+    if not indexes.isdisjoint(removed):
+        raise ValueError("API index used but marked unused: "
+                         f"{indexes.intersection(removed)}")
+    if indexes.union(removed) != expected:
+        diff = expected.symmetric_difference(indexes.union(removed))
         msg = "There are some holes in the API indexing: " \
               "(symmetric diff is %s)" % diff
         raise ValueError(msg)
@@ -522,6 +529,8 @@ def fullapi_hash(api_dicts):
     of the list of items in the API (as a string)."""
     a = []
     for d in api_dicts:
+        d = d.copy()
+        d.pop("__unused_indices__", None)
         for name, data in order_dict(d):
             a.extend(name)
             a.extend(','.join(map(str, data)))

@@ -311,35 +311,6 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     return 0;
 }
 
-/* Deprecated --- Use PyArray_AsCArray instead */
-
-/*NUMPY_API
- * Convert to a 1D C-array
- */
-NPY_NO_EXPORT int
-PyArray_As1D(PyObject **NPY_UNUSED(op), char **NPY_UNUSED(ptr),
-             int *NPY_UNUSED(d1), int NPY_UNUSED(typecode))
-{
-    /* 2008-07-14, 1.5 */
-    PyErr_SetString(PyExc_NotImplementedError,
-                "PyArray_As1D: use PyArray_AsCArray.");
-    return -1;
-}
-
-/*NUMPY_API
- * Convert to a 2D C-array
- */
-NPY_NO_EXPORT int
-PyArray_As2D(PyObject **NPY_UNUSED(op), char ***NPY_UNUSED(ptr),
-             int *NPY_UNUSED(d1), int *NPY_UNUSED(d2), int NPY_UNUSED(typecode))
-{
-    /* 2008-07-14, 1.5 */
-    PyErr_SetString(PyExc_NotImplementedError,
-                "PyArray_As2D: use PyArray_AsCArray.");
-    return -1;
-}
-
-/* End Deprecated */
 
 /*NUMPY_API
  * Free pointers created if As2D is called
@@ -3199,7 +3170,13 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-    return (unsigned int)NPY_ABI_VERSION;
+    // return (unsigned int)NPY_ABI_VERSION;
+    /*
+     * TODO: Preliminary returning the 1.x API version, that is a lie but
+     *       allows (for the moment) downstream modules to mix and match
+     *       and us to import old matplotlib versions in our doc builds...
+     */
+    return (unsigned int)0x01000009;
 }
 
 /*NUMPY_API

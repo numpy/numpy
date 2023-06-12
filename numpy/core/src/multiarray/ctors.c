@@ -1475,25 +1475,6 @@ _array_from_array_like(PyObject *op,
 }
 
 
-/*NUMPY_API*/
-NPY_NO_EXPORT int
-PyArray_GetArrayParamsFromObject(PyObject *NPY_UNUSED(op),
-        PyArray_Descr *NPY_UNUSED(requested_dtype),
-        npy_bool NPY_UNUSED(writeable),
-        PyArray_Descr **NPY_UNUSED(out_dtype),
-        int *NPY_UNUSED(out_ndim), npy_intp *NPY_UNUSED(out_dims),
-        PyArrayObject **NPY_UNUSED(out_arr), PyObject *NPY_UNUSED(context))
-{
-    /* Deprecated in NumPy 1.19, removed in NumPy 1.20. */
-    PyErr_SetString(PyExc_RuntimeError,
-            "PyArray_GetArrayParamsFromObject() C-API function is removed "
-            "`PyArray_FromAny()` should be used at this time.  New C-API "
-            "may be exposed in the future (please do request this if it "
-            "would help you).");
-    return -1;
-}
-
-
 /*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
@@ -2480,38 +2461,6 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
     }
 }
 
-/* These are also old calls (should use PyArray_NewFromDescr) */
-
-/* They all zero-out the memory as previously done */
-
-/* steals reference to descr -- and enforces native byteorder on it.*/
-
-/*NUMPY_API
-  Deprecated, use PyArray_NewFromDescr instead.
-*/
-NPY_NO_EXPORT PyObject *
-PyArray_FromDimsAndDataAndDescr(int NPY_UNUSED(nd), int *NPY_UNUSED(d),
-                                PyArray_Descr *descr,
-                                char *NPY_UNUSED(data))
-{
-    PyErr_SetString(PyExc_NotImplementedError,
-                "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.");
-    Py_DECREF(descr);
-    return NULL;
-}
-
-/*NUMPY_API
-  Deprecated, use PyArray_SimpleNew instead.
-*/
-NPY_NO_EXPORT PyObject *
-PyArray_FromDims(int NPY_UNUSED(nd), int *NPY_UNUSED(d), int NPY_UNUSED(type))
-{
-    PyErr_SetString(PyExc_NotImplementedError,
-                "PyArray_FromDims: use PyArray_SimpleNew.");
-    return NULL;
-}
-
-/* end old calls */
 
 /*NUMPY_API
  * This is a quick wrapper around

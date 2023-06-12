@@ -533,8 +533,6 @@ cdef extern from "numpy/arrayobject.h":
     #int PyArray_CastScalarDirect (object, dtype, void *, int)
     object PyArray_ScalarFromObject (object)
     #PyArray_VectorUnaryFunc * PyArray_GetCastFunc (dtype, int)
-    object PyArray_FromDims (int, int *, int)
-    #object PyArray_FromDimsAndDataAndDescr (int, int *, dtype, char *)
     #object PyArray_FromAny (object, dtype, int, int, int, object)
     object PyArray_EnsureArray (object)
     object PyArray_EnsureAnyArray (object)
@@ -630,8 +628,6 @@ cdef extern from "numpy/arrayobject.h":
     void * PyArray_GetPtr (ndarray, npy_intp*)
     int PyArray_CompareLists (npy_intp *, npy_intp *, int)
     #int PyArray_AsCArray (object*, void *, npy_intp *, int, dtype)
-    #int PyArray_As1D (object*, char **, int *, int)
-    #int PyArray_As2D (object*, char ***, int *, int *, int)
     int PyArray_Free (object, void *)
     #int PyArray_Converter (object, object*)
     int PyArray_IntpFromSequence (object, npy_intp *, int) except -1
