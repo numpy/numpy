@@ -53,9 +53,8 @@ class TestUfuncKwargs:
         assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
-    def test_extobj_refcount(self):
-        # Should not segfault with USE_DEBUG.
-        assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
+    def test_extobj_removed(self):
+        assert_raises(TypeError, np.add, 1, 2, extobj=[4096])
 
 
 class TestUfuncGenericLoops:
