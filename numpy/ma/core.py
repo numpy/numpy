@@ -6104,8 +6104,7 @@ class MaskedArray(ndarray):
             raise ValueError("matrix transpose with ndim < 2 is undefined")
 
         if self._mask is nomask:
-            # TODO: Should this return a masked_array or regular array?
-            return self._data.mT
+            return masked_array(data=self._data.mT)
         else:
             return masked_array(data=self.data.mT, mask=self.mask.mT)
 
