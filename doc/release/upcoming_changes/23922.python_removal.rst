@@ -1,0 +1,3 @@
+* ``np.geterrobj``, ``np.seterrobj`` and the related ufunc keyword argument
+  ``extobj=`` have been removed.  The preferred replacement for all of these
+  is using the context manager ``with np.errstate():``.
