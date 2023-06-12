@@ -6094,6 +6094,22 @@ class MaskedArray(ndarray):
     T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
 
+    @property
+    def mT(self):
+        """
+        TODO: Fill in documentation
+        """
+
+        if self.ndim < 2:
+            raise ValueError("matrix transpose with ndim < 2 is undefined")
+
+        if self._mask is nomask:
+            # TODO: Should this return a masked_array or regular array?
+            return self._data.mT
+        else:
+            return masked_array(data=self.data.mT, mask=self.mask.mT)
+
+
     def tolist(self, fill_value=None):
         """
         Return the data portion of the masked array as a hierarchical Python list.
