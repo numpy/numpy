@@ -1,7 +1,7 @@
 """
 Functions for changing global ufunc configuration
 
-This provides helpers which wrap `umath.geterrobj` and `umath.seterrobj`
+This provides helpers which wrap `umath._geterrobj` and `umath._seterrobj`
 """
 import collections.abc
 import contextlib
@@ -106,7 +106,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     """
 
-    pyvals = umath.geterrobj()
+    pyvals = umath._geterrobj()
     old = geterr()
 
     if divide is None:
@@ -124,7 +124,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
                  (_errdict[invalid] << SHIFT_INVALID))
 
     pyvals[1] = maskvalue
-    umath.seterrobj(pyvals)
+    umath._seterrobj(pyvals)
     return old
 
 
@@ -168,7 +168,7 @@ def geterr():
     >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
-    maskvalue = umath.geterrobj()[1]
+    maskvalue = umath._geterrobj()[1]
     mask = 7
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
@@ -200,10 +200,10 @@ def setbufsize(size):
     if size % 16 != 0:
         raise ValueError("Buffer size, %s, is not a multiple of 16." % size)
 
-    pyvals = umath.geterrobj()
+    pyvals = umath._geterrobj()
     old = getbufsize()
     pyvals[0] = size
-    umath.seterrobj(pyvals)
+    umath._seterrobj(pyvals)
     return old
 
 
@@ -218,7 +218,7 @@ def getbufsize():
         Size of ufunc buffer in bytes.
 
     """
-    return umath.geterrobj()[0]
+    return umath._geterrobj()[0]
 
 
 @set_module('numpy')
@@ -307,10 +307,10 @@ def seterrcall(func):
         if (not hasattr(func, 'write') or
                 not isinstance(func.write, collections.abc.Callable)):
             raise ValueError("Only callable can be used as callback")
-    pyvals = umath.geterrobj()
+    pyvals = umath._geterrobj()
     old = geterrcall()
     pyvals[2] = func
-    umath.seterrobj(pyvals)
+    umath._seterrobj(pyvals)
     return old
 
 
@@ -359,7 +359,7 @@ def geterrcall():
     >>> old_handler = np.seterrcall(None)  # restore original
 
     """
-    return umath.geterrobj()[2]
+    return umath._geterrobj()[2]
 
 
 class _unspecified:
@@ -446,7 +446,7 @@ class errstate(contextlib.ContextDecorator):
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
-    umath.seterrobj(defval)
+    umath._seterrobj(defval)
 
 
 # set the default values

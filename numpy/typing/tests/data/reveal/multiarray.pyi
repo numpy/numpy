@@ -98,10 +98,6 @@ reveal_type(np.shares_memory(AR_f8, AR_f8, max_work=1))  # E: bool
 reveal_type(np.may_share_memory(1, 2))  # E: bool
 reveal_type(np.may_share_memory(AR_f8, AR_f8, max_work=1))  # E: bool
 
-reveal_type(np.geterrobj())  # E: list[Any]
-
-reveal_type(np.seterrobj([8192, 521, None]))  # E: None
-
 reveal_type(np.promote_types(np.int32, np.int64))  # E: dtype[Any]
 reveal_type(np.promote_types("f4", float))  # E: dtype[Any]
 
