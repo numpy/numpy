@@ -45,11 +45,6 @@ class _SupportsArrayUFunc(Protocol):
     ) -> Any: ...
 
 
-# NOTE: In reality `extobj` should be a length of list 3 containing an
-# int, an int, and a callable, but there's no way to properly express
-# non-homogenous lists.
-# Use `Any` over `Union` to avoid issues related to lists invariance.
-
 # NOTE: `reduce`, `accumulate`, `reduceat` and `outer` raise a ValueError for
 # ufuncs that don't accept two input arguments and return one output argument.
 # In such cases the respective methods are simply typed as `None`.
@@ -96,7 +91,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _2Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> Any: ...
     @overload
     def __call__(
@@ -110,7 +104,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _2Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
     @overload
     def __call__(
@@ -124,7 +117,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _2Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> Any: ...
 
     def at(
@@ -163,7 +155,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> Any: ...
     @overload
     def __call__(
@@ -178,7 +169,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
 
     def at(
@@ -231,7 +221,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> Any: ...
     @overload
     def outer(  # type: ignore[misc]
@@ -246,7 +235,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
 
 class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
@@ -288,7 +276,6 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> _2Tuple[Any]: ...
     @overload
     def __call__(
@@ -304,7 +291,6 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
     @overload
     def __call__(
@@ -320,7 +306,6 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> _2Tuple[Any]: ...
 
 class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
@@ -363,7 +348,6 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _4Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> _2Tuple[Any]: ...
     @overload
     def __call__(
@@ -380,7 +364,6 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _4Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
 
 class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
@@ -425,7 +408,6 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: 
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
     ) -> Any: ...
     @overload
@@ -440,6 +422,5 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: 
         dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: str | _3Tuple[None | str] = ...,
-        extobj: list[Any] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
     ) -> NDArray[Any]: ...
