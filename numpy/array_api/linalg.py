@@ -292,8 +292,7 @@ def slogdet(x: Array, /) -> SlogdetResult:
 def _solve(a, b):
     from ..linalg.linalg import (_makearray, _assert_stacked_2d,
                                  _assert_stacked_square, _commonType,
-                                 isComplexType, get_linalg_error_extobj,
-                                 _raise_linalgerror_singular)
+                                 isComplexType, _raise_linalgerror_singular)
     from ..linalg import _umath_linalg
 
     a, _ = _makearray(a)
@@ -311,8 +310,9 @@ def _solve(a, b):
     # This does nothing currently but is left in because it will be relevant
     # when complex dtype support is added to the spec in 2022.
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
-    extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
-    r = gufunc(a, b, signature=signature, extobj=extobj)
+    with errstate(call=_raise_linalgerror_singular, invalid='call',
+                  over='ignore', divide='ignore', under='ignore'):
+        r = gufunc(a, b, signature=signature, extobj=extobj)
 
     return wrap(r.astype(result_t, copy=False))
 
