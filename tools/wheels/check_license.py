@@ -33,7 +33,7 @@ def main():
     __import__(args.module)
     mod = sys.modules[args.module]
 
-    # LICENSE.txt is installed in the .dist-info directory, so find ot tjere"
+    # LICENSE.txt is installed in the .dist-info directory, so find it there
     sitepkgs = pathlib.Path(mod.__file__).parent.parent
     distinfo_path = [s for s in sitepkgs.glob("numpy-*.dist-info")][0]
 

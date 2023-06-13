@@ -35,7 +35,9 @@ steps:
 
 - powershell: |
     ls openblas
-    $env:PATH = "$env:RTOOLS43_HOME\\mingw64\\bin;$env:PATH"
+    $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+    python -c"import os, pprint; pprint.pprint(os.environ['PATH'])"
+    gcc --version
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         $env:OPENBLAS64_ = "openblas"
     } else {
