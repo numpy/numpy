@@ -2706,12 +2706,12 @@ class TestCreationFuncs:
         dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
         # void, bytes, str
         variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
-        self.dtypes = (sorted(dtypes - variable_sized |
-                              {np.dtype(tp.str.replace("0", str(i)))
-                               for tp in variable_sized for i in range(1, 10)},
-                              key=lambda dtype: dtype.str) +
-                       [type(dt) for dt in
-                        sorted(dtypes - variable_sized, key=lambda dtype: dtype.str)])
+        keyfunc = lambda dtype: dtype.str
+        self.dtypes = sorted(dtypes - variable_sized |
+                             {np.dtype(tp.str.replace("0", str(i)))
+                              for tp in variable_sized for i in range(1, 10)},
+                             key=keyfunc)
+        self.dtypes += [type(dt) for dt in sorted(dtypes, key=keyfunc)]
         self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
         self.ndims = 10
 
@@ -2727,9 +2727,11 @@ class TestCreationFuncs:
         for size, ndims, order, dtype in itertools.product(*par):
             shape = ndims * [size]
 
+            is_void = dtype is np.dtypes.VoidDType or (
+                isinstance(dtype, np.dtype) and dtype.str.startswith('|V'))
+
             # do not fill void type
-            if (fill_kwarg and isinstance(dtype, np.dtype) and
-                dtype.str.startswith('|V')):
+            if fill_kwarg and is_void:
                 continue
 
             arr = func(shape, order=order, dtype=dtype,
@@ -2738,11 +2740,15 @@ class TestCreationFuncs:
             if isinstance(dtype, np.dtype):
                 assert_equal(arr.dtype, dtype)
             elif isinstance(dtype, type(np.dtype)):
-                assert_equal(arr.dtype, np.dtype(dtype.type))
+                if dtype in (np.dtypes.StrDType, np.dtypes.BytesDType):
+                    dtype_str = np.dtype(dtype.type).str.replace('0', '1')
+                    assert_equal(arr.dtype, np.dtype(dtype_str))
+                else:
+                    assert_equal(arr.dtype, np.dtype(dtype.type))
             assert_(getattr(arr.flags, self.orders[order]))
 
             if fill_value is not None:
-                if isinstance(dtype, np.dtype) and dtype.str.startswith('|S'):
+                if arr.dtype.str.startswith('|S'):
                     val = str(fill_value)
                 else:
                     val = fill_value

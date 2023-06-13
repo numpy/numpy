@@ -459,6 +459,21 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 }
 
+// private helper to get a default descriptor from a
+// possibly NULL dtype, returns NULL on error, which
+// can only happen if PyAray_GetDefaultDescr errors.
+
+static PyArray_Descr *
+_infer_descr_from_dtype(PyArray_DTypeMeta *dtype) {
+    if (dtype == NULL) {
+        return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    if (dtype->singleton != NULL) {
+        Py_INCREF(dtype->singleton);
+        return dtype->singleton;
+    }
+    return NPY_DT_CALL_default_descr(dtype);
+}
 
 /*
  * Recursive helper to assign using a coercion cache. This function
@@ -1055,15 +1070,10 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
         Py_INCREF(descr);
     }
     else if (descr == NULL) {
-        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "Cannot create empty array with a parametric dtype class. "
-                "Use a dtype instance instead.");
+        descr = _infer_descr_from_dtype(dtype);
+        if (descr == NULL) {
             return NULL;
         }
-        descr = dtype->singleton;
-        Py_INCREF(descr);
     }
 
     /* Handle ANYORDER and simple KEEPORDER cases */
@@ -2851,6 +2861,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     return temp2;
 }
 
+
 /*NUMPY_API
  * Zeros
  *
@@ -2895,19 +2906,11 @@ PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 {
     PyObject *ret = NULL;
 
-    if (descr == NULL && dtype == NULL) {
-        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-    }
-    else if (descr == NULL) {
-        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "Cannot create zero-filled array with a parametric dtype "
-                "class. Use a dtype instance instead.");
+    if (descr == NULL) {
+        descr = _infer_descr_from_dtype(dtype);
+        if (descr == NULL) {
             return NULL;
         }
-        descr = dtype->singleton;
-        Py_INCREF(descr);
     }
 
     /*
@@ -2956,7 +2959,6 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
     return ret;
 }
 
-
 /*
  *  Internal version of PyArray_Empty that accepts a dtypemeta.
  *  Borrows references to the descriptor and dtype.
@@ -2968,19 +2970,11 @@ PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 {
     PyArrayObject *ret;
 
-    if (descr == NULL && dtype == NULL) {
-        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-    }
-    else if (descr == NULL) {
-        if (NPY_DT_is_parametric(dtype) && !NPY_DT_is_legacy(dtype)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "Cannot create empty array with a parametric dtype class. "
-                "Use a dtype instance instead.");
+    if (descr == NULL) {
+        descr = _infer_descr_from_dtype(dtype);
+        if (descr == NULL) {
             return NULL;
         }
-        descr = dtype->singleton;
-        Py_INCREF(descr);
     }
 
     /*
