@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <cmath>
+#include <math.h>
 #include <random>
 #include <cstdio>
 #include <ctime>
@@ -111,8 +111,8 @@ main()
 {
     srand(42);
     std::vector<struct ufunc> umathfunc = {
-            {"sin", sin, sin, 2.37, 3.3},
-            {"cos", cos, cos, 2.36, 3.38},
+            {"sin", sin, sin, 1.49, 1.00},
+            {"cos", cos, cos, 1.49, 1.00},
             {"tan", tan, tan, 3.91, 3.93},
             {"arcsin", asin, asin, 3.12, 2.55},
             {"arccos", acos, acos, 2.1, 1.67},
