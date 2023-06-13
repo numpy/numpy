@@ -461,7 +461,7 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 
 // private helper to get a default descriptor from a
 // possibly NULL dtype, returns NULL on error, which
-// can only happen if PyAray_GetDefaultDescr errors.
+// can only happen if NPY_DT_CALL_default_descr errors.
 
 static PyArray_Descr *
 _infer_descr_from_dtype(PyArray_DTypeMeta *dtype) {
