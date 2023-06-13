@@ -18,22 +18,21 @@
 
 static int
 _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
-               int retstatus, int *first);
+               int retstatus);
 
 
 #define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
             handle = errmask & UFUNC_MASK_##NAME;                       \
             if (handle &&                                               \
                 _error_handler(name, handle >> UFUNC_SHIFT_##NAME,      \
-                               pyfunc, str, retstatus, first) < 0)      \
+                               pyfunc, str, retstatus) < 0)      \
                 return -1;                                              \
         }}
 
 
 static int
 PyUFunc_handlefperr(
-        const char *name, int errmask, PyObject *pyfunc, int retstatus,
-        int *first)
+        const char *name, int errmask, PyObject *pyfunc, int retstatus)
 {
     int handle;
     if (errmask && retstatus) {
@@ -51,8 +50,7 @@ PyUFunc_handlefperr(
 /*
  * fpstatus is the ufunc_formatted hardware status
  * errmask is the handling mask specified by the user.
- * errobj is a Python object with (string, callable object or None)
- * or NULL
+ * pyfunc is a Python callable or write method (logging).
  */
 
 /*
@@ -66,7 +64,7 @@ PyUFunc_handlefperr(
 
 static int
 _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
-               int retstatus, int *first)
+               int retstatus)
 {
     PyObject *ret, *args;
     char msg[100];
@@ -80,10 +78,7 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
 
     /* don't need C API for a simple print */
     if (method == UFUNC_ERR_PRINT) {
-        if (*first) {
-            fprintf(stderr, "Warning: %s encountered in %s\n", errtype, name);
-            *first = 0;
-        }
+        fprintf(stderr, "Warning: %s encountered in %s\n", errtype, name);
         return 0;
     }
 
@@ -120,23 +115,20 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
         Py_DECREF(ret);
         break;
     case UFUNC_ERR_LOG:
-        if (first) {
-            *first = 0;
-            if (pyfunc == Py_None) {
-                PyErr_Format(PyExc_NameError,
-                        "log specified for %s (in %s) but no " \
-                        "object with write method found.",
-                        errtype, name);
-                goto fail;
-            }
-            PyOS_snprintf(msg, sizeof(msg),
-                    "Warning: %s encountered in %s\n", errtype, name);
-            ret = PyObject_CallMethod(pyfunc, "write", "s", msg);
-            if (ret == NULL) {
-                goto fail;
-            }
-            Py_DECREF(ret);
+        if (pyfunc == Py_None) {
+            PyErr_Format(PyExc_NameError,
+                    "log specified for %s (in %s) but no " \
+                    "object with write method found.",
+                    errtype, name);
+            goto fail;
         }
+        PyOS_snprintf(msg, sizeof(msg),
+                "Warning: %s encountered in %s\n", errtype, name);
+        ret = PyObject_CallMethod(pyfunc, "write", "s", msg);
+        if (ret == NULL) {
+            goto fail;
+        }
+        Py_DECREF(ret);
         break;
     }
     NPY_DISABLE_C_API;
@@ -279,8 +271,7 @@ PyUFunc_GiveFloatingpointErrors(const char *name, int fpe_errors)
         Py_XDECREF(pyfunc);
         return -1;
     }
-    int first = 1;
-    if (PyUFunc_handlefperr(name, errmask, pyfunc, fpe_errors, &first)) {
+    if (PyUFunc_handlefperr(name, errmask, pyfunc, fpe_errors)) {
         Py_XDECREF(pyfunc);
         return -1;
     }
@@ -301,7 +292,6 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
     int fperr;
     PyObject *pyfunc = NULL;
     int ret;
-    int first = 1;
 
     if (!errmask) {
         return 0;
@@ -317,7 +307,7 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
         return -1;
     }
 
-    ret = PyUFunc_handlefperr(ufunc_name, errmask, pyfunc, fperr, &first);
+    ret = PyUFunc_handlefperr(ufunc_name, errmask, pyfunc, fperr);
     Py_XDECREF(pyfunc);
 
     return ret;
