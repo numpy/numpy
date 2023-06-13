@@ -22,10 +22,35 @@
 static PyObject *default_extobj_capsule = NULL;
 static PyObject *extobj_contextvar = NULL;
 
+
+#define UFUNC_ERR_IGNORE 0
+#define UFUNC_ERR_WARN   1
+#define UFUNC_ERR_RAISE  2
+#define UFUNC_ERR_CALL   3
+#define UFUNC_ERR_PRINT  4
+#define UFUNC_ERR_LOG    5
+
+/* Integer mask */
+#define UFUNC_MASK_DIVIDEBYZERO 0x07
+#define UFUNC_MASK_OVERFLOW (0x07 << UFUNC_SHIFT_OVERFLOW)
+#define UFUNC_MASK_UNDERFLOW (0x07 << UFUNC_SHIFT_UNDERFLOW)
+#define UFUNC_MASK_INVALID (0x07 << UFUNC_SHIFT_INVALID)
+
+#define UFUNC_SHIFT_DIVIDEBYZERO 0
+#define UFUNC_SHIFT_OVERFLOW     3
+#define UFUNC_SHIFT_UNDERFLOW    6
+#define UFUNC_SHIFT_INVALID      9
+
 /* The python strings for the above error modes defined in extobj.h */
 const char *errmode_cstrings[] = {
         "ignore", "warn", "raise", "call", "print", "log"};
 static PyObject *errmode_strings[6] = {NULL};
+
+/* Default user error mode (underflows are ignored, others warn) */
+#define UFUNC_ERR_DEFAULT                               \
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_OVERFLOW) +      \
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
 
 
 static int
@@ -98,7 +123,7 @@ make_extobj_capsule(npy_intp bufsize, int errmask, PyObject *pyfunc)
  * On success, the filled `extobj` must be cleared using `npy_extobj_clear`.
  * Returns -1 on failure and 0 on success.
  */
-NPY_NO_EXPORT int
+static int
 fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
@@ -126,7 +151,7 @@ fetch_curr_extobj_state(npy_extobj *extobj)
  * Update the current extobj state to the state passed in and returns the
  * contexxtvar token to restore it.
  */
-NPY_NO_EXPORT PyObject *
+static PyObject *
 update_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *new_capsule = make_extobj_capsule(
@@ -173,7 +198,7 @@ init_extobj(void)
  * Parsing helper for extobj_seterrobj to extract the modes
  * "ignore", "raise", etc.
  */
-int
+static int
 errmodeconverter(PyObject *obj, int *mode)
 {
     if (obj == Py_None) {
@@ -233,6 +258,7 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
     if (token != NULL) {
         /* ignore everything else, reset to the token */
         if (PyContextVar_Reset(extobj_contextvar, token) < 0) {
@@ -304,6 +330,7 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
         extobj.errmask &= ~UFUNC_MASK_INVALID;
         extobj.errmask |= invalid_mode << UFUNC_SHIFT_INVALID;
     }
+
     if (bufsize > 0) {
         extobj.bufsize = bufsize;
     }

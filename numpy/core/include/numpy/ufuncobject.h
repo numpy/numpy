@@ -231,34 +231,10 @@ typedef struct _tagPyUFuncObject {
 /* flags inferred during execution */
 #define UFUNC_CORE_DIM_MISSING 0x00040000
 
-#define UFUNC_ERR_IGNORE 0
-#define UFUNC_ERR_WARN   1
-#define UFUNC_ERR_RAISE  2
-#define UFUNC_ERR_CALL   3
-#define UFUNC_ERR_PRINT  4
-#define UFUNC_ERR_LOG    5
-
-        /* Python side integer mask */
-
-#define UFUNC_MASK_DIVIDEBYZERO 0x07
-#define UFUNC_MASK_OVERFLOW (0x07 << UFUNC_SHIFT_OVERFLOW)
-#define UFUNC_MASK_UNDERFLOW (0x07 << UFUNC_SHIFT_UNDERFLOW)
-#define UFUNC_MASK_INVALID (0x07 << UFUNC_SHIFT_INVALID)
-
-#define UFUNC_SHIFT_DIVIDEBYZERO 0
-#define UFUNC_SHIFT_OVERFLOW     3
-#define UFUNC_SHIFT_UNDERFLOW    6
-#define UFUNC_SHIFT_INVALID      9
-
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
 
-   /* Default user error mode */
-#define UFUNC_ERR_DEFAULT                               \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_OVERFLOW) +      \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
 
 #if NPY_ALLOW_THREADS
 #define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0);

@@ -8,11 +8,6 @@ import contextlib
 import contextvars
 
 from .._utils import set_module
-from .umath import (
-    UFUNC_BUFSIZE_DEFAULT,
-    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG, ERR_DEFAULT,
-    SHIFT_DIVIDEBYZERO, SHIFT_OVERFLOW, SHIFT_UNDERFLOW, SHIFT_INVALID,
-)
 from . import umath
 
 __all__ = [

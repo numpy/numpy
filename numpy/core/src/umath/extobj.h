@@ -20,6 +20,7 @@ typedef struct {
 } npy_extobj;
 
 
+/* Clearing is only `pyfunc` XDECREF, but could grow in principle */
 static inline void
 npy_extobj_clear(npy_extobj *extobj)
 {
@@ -32,6 +33,9 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name);
 NPY_NO_EXPORT int
 _get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask);
 
+
+NPY_NO_EXPORT int
+init_extobj(void);
 
 /*
  * Private Python exposure of the extobj.

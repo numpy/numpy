@@ -15,11 +15,9 @@ from ._multiarray_umath import (
     _UFUNC_API, _add_newdoc_ufunc, _ones_like, _geterrobj, _seterrobj)
 
 __all__ = [
-    '_UFUNC_API', 'ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG',
-    'ERR_PRINT', 'ERR_RAISE', 'ERR_WARN', 'FLOATING_POINT_SUPPORT',
-    'FPE_DIVIDEBYZERO', 'FPE_INVALID', 'FPE_OVERFLOW', 'FPE_UNDERFLOW', 'NAN',
-    'NINF', 'NZERO', 'PINF', 'PZERO', 'SHIFT_DIVIDEBYZERO', 'SHIFT_INVALID',
-    'SHIFT_OVERFLOW', 'SHIFT_UNDERFLOW', 'UFUNC_BUFSIZE_DEFAULT',
+    '_UFUNC_API', 'FLOATING_POINT_SUPPORT',
+    'FPE_DIVIDEBYZERO', 'FPE_INVALID', 'FPE_OVERFLOW', 'FPE_UNDERFLOW',
+    'NAN', 'NINF', 'NZERO', 'PINF', 'PZERO', 'UFUNC_BUFSIZE_DEFAULT',
     'UFUNC_PYVALS_NAME', '_add_newdoc_ufunc', 'absolute', 'add',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj',
