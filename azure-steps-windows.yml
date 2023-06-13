@@ -17,35 +17,38 @@ steps:
     # Note that rtools 42+ does not support 32 bits builds. We dropped testing
     # those, but if there's a need to go back on that, use version 4.0.0.20220206
     choco install --confirm --no-progress --side-by-side rtools --version=4.3.5550
+    choco install unzip -y
+    choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
     echo "##vso[task.setvariable variable=RTOOLS43_HOME]c:\rtools43"
-  displayName: 'Install rtools'
+  displayName: 'Install utilities'
 
 - powershell: |
     $ErrorActionPreference = "Stop"
-    # Download and get the path to "openblas". We cannot copy it
-    # to $PYTHON_EXE's directory since that is on a different drive which
-    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
-    # since OPENBLAS will be picked up by the openblas discovery
-    $target = $(python tools/openblas_support.py)
-    mkdir openblas
-    echo "Copying $target to openblas/"
-    cp -r $target/* openblas/
-    $env:OPENBLAS = $target
+    mkdir  C:/opt/openblas/openblas_dll
+    mkdir  C:/opt/32/lib/pkgconfig
+    mkdir  C:/opt/64/lib/pkgconfig
+    # TBD: support 32 bit testing
+    $target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); ilp64=obs.get_ilp64(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, ilp64);print(target)")
+    unzip -o -d c:/opt/ $target
+    echo "##vso[task.setvariable variable=PKG_CONFIG_PATH]c:/opt/64/lib/pkgconfig"
+    copy C:/opt/64/bin/*.dll C:/opt/openblas/openblas_dll
   displayName: 'Download / Install OpenBLAS'
 
 - powershell: |
-    ls openblas
-    # Not strictly needed since we are forcing use of vsenv
-    $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
-    python -c"import os, pprint; pprint.pprint(os.environ['PATH'])"
-    gcc --version
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
-        $env:OPENBLAS64_ = "openblas"
+        $env:OPENBLAS64_="openblas"
+        # This does not work, the flags are passed together and not separately
+        $env:CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
+        $env:CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
     } else {
         $env:OPENBLAS = "openblas"
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
     python -m pip install . --config-settings=setup-args="--vsenv"
+    # copy from c:/opt/openblas/openblas_dll to numpy/.libs
+    $target = $(python -c "import sysconfig; print(sysconfig.get_path('platlib'))")
+    mkdir $target/numpy/.libs
+    copy C:/opt/openblas/openblas_dll/*.dll $target/numpy/.libs
   displayName: 'Build NumPy'
 
 - script: |
