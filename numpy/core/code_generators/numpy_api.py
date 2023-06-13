@@ -378,7 +378,7 @@ ufunc_types_api = {
 }
 
 ufunc_funcs_api = {
-    '__unused_indices__': [3, 32],
+    '__unused_indices__': [3, 25, 26, 29, 32],
     'PyUFunc_FromFuncAndData':                  (1,),
     'PyUFunc_RegisterLoopForType':              (2,),
     # Unused slot 3, was `PyUFunc_GenericFunction`
@@ -403,11 +403,11 @@ ufunc_funcs_api = {
     'PyUFunc_O_O_method':                       (22,),
     'PyUFunc_OO_O_method':                      (23,),
     'PyUFunc_On_Om':                            (24,),
-    'PyUFunc_GetPyValues':                      (25,),
-    'PyUFunc_checkfperr':                       (26,),
+    # Unused slot 25, was `PyUFunc_GetPyValues`
+    # Unused slot 26, was `PyUFunc_checkfperr`
     'PyUFunc_clearfperr':                       (27,),
     'PyUFunc_getfperr':                         (28,),
-    'PyUFunc_handlefperr':                      (29,),
+    # Unused slot 29, was `PyUFunc_handlefperr`
     'PyUFunc_ReplaceLoopBySignature':           (30,),
     'PyUFunc_FromFuncAndDataAndSignature':      (31,),
     # Unused slot 32, was `PyUFunc_SetUsesArraysAsData`

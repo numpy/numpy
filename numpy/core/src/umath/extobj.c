@@ -18,6 +18,45 @@
 #if USE_USE_DEFAULTS==1
 static int PyUFunc_NUM_NODEFAULTS = 0;
 
+
+/*
+ * On return, if errobj is populated with a non-NULL value, the caller
+ * owns a new reference to errobj.
+ */
+static int
+PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
+{
+    PyObject *ref = get_global_ext_obj();
+
+    return _extract_pyvals(ref, name, bufsize, errmask, errobj);
+}
+
+
+#define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
+            handle = errmask & UFUNC_MASK_##NAME;                       \
+            if (handle &&                                               \
+                _error_handler(handle >> UFUNC_SHIFT_##NAME,            \
+                               errobj, str, retstatus, first) < 0)      \
+                return -1;                                              \
+        }}
+
+
+static int
+PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
+{
+    int handle;
+    if (errmask && retstatus) {
+        HANDLEIT(DIVIDEBYZERO, "divide by zero");
+        HANDLEIT(OVERFLOW, "overflow");
+        HANDLEIT(UNDERFLOW, "underflow");
+        HANDLEIT(INVALID, "invalid value");
+    }
+    return 0;
+}
+
+#undef HANDLEIT
+
+
 /*
  * This is a strategy to buy a little speed up and avoid the dictionary
  * look-up in the default case.  It should work in the presence of

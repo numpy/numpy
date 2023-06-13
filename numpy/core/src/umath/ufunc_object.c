@@ -133,42 +133,6 @@ PyUFunc_getfperr(void)
     return npy_clear_floatstatus_barrier(&param);
 }
 
-#define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
-            handle = errmask & UFUNC_MASK_##NAME;                       \
-            if (handle &&                                               \
-                _error_handler(handle >> UFUNC_SHIFT_##NAME,            \
-                               errobj, str, retstatus, first) < 0)      \
-                return -1;                                              \
-        }}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT int
-PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
-{
-    int handle;
-    if (errmask && retstatus) {
-        HANDLEIT(DIVIDEBYZERO, "divide by zero");
-        HANDLEIT(OVERFLOW, "overflow");
-        HANDLEIT(UNDERFLOW, "underflow");
-        HANDLEIT(INVALID, "invalid value");
-    }
-    return 0;
-}
-
-#undef HANDLEIT
-
-
-/*UFUNC_API*/
-NPY_NO_EXPORT int
-PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
-{
-    /* clearing is done for backward compatibility */
-    int retstatus;
-    retstatus = npy_clear_floatstatus_barrier((char*)&retstatus);
-
-    return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
-}
-
 
 /* Checking the status flag clears it */
 /*UFUNC_API*/
@@ -532,19 +496,6 @@ _apply_array_wrap(
     }
 }
 
-
-/*UFUNC_API
- *
- * On return, if errobj is populated with a non-NULL value, the caller
- * owns a new reference to errobj.
- */
-NPY_NO_EXPORT int
-PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
-{
-    PyObject *ref = get_global_ext_obj();
-
-    return _extract_pyvals(ref, name, bufsize, errmask, errobj);
-}
 
 /* Return the position of next non-white-space char in the string */
 static int

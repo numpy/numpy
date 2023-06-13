@@ -287,35 +287,9 @@ Functions
     signature is an array of data-type numbers indicating the inputs
     followed by the outputs assumed by the 1-d loop.
 
-.. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
-
-    A simple interface to the IEEE error-flag checking support. The
-    *errmask* argument is a mask of ``UFUNC_MASK_{ERR}`` bitmasks
-    indicating which errors to check for (and how to check for
-    them). The *errobj* must be a Python tuple with two elements: a
-    string containing the name which will be used in any communication
-    of error and either a callable Python object (call-back function)
-    or :c:data:`Py_None`. The callable object will only be used if
-    :c:data:`UFUNC_ERR_CALL` is set as the desired error checking
-    method. This routine manages the GIL and is safe to call even
-    after releasing the GIL. If an error in the IEEE-compatible
-    hardware is determined a -1 is returned, otherwise a 0 is
-    returned.
-
 .. c:function:: void PyUFunc_clearfperr()
 
     Clear the IEEE error flags.
-
-.. c:function:: void PyUFunc_GetPyValues( \
-        char* name, int* bufsize, int* errmask, PyObject** errobj)
-
-    Get the Python values used for ufunc processing from the
-    thread-local storage area unless the defaults have been set in
-    which case the name lookup is bypassed. The name is placed as a
-    string in the first element of *\*errobj*. The second element is
-    the looked-up function to call on error callback. The value of the
-    looked-up buffer-size to use is passed into *bufsize*, and the
-    value of the error mask is placed into *errmask*.
 
 
 Generic functions
