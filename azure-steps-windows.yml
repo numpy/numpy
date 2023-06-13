@@ -35,6 +35,7 @@ steps:
 
 - powershell: |
     ls openblas
+    # Not strictly needed since we are forcing use of vsenv
     $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
     python -c"import os, pprint; pprint.pprint(os.environ['PATH'])"
     gcc --version
@@ -44,7 +45,7 @@ steps:
         $env:OPENBLAS = "openblas"
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    python -m pip install .
+    python -m pip install . --config-settings=setup-args="--vsenv"
   displayName: 'Build NumPy'
 
 - script: |
@@ -53,7 +54,8 @@ steps:
   displayName: 'Check OpenBLAS version'
 
 - powershell: |
-    $env:PATH = "$env:RTOOLS43_HOME\\mingw64\\bin;$env:PATH"
+    # Get a gfortran onto the path for f2py tests
+    $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
     If ( Test-Path env:TEST_MODE -eq full ) {
       pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
     } else {

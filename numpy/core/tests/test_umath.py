@@ -4161,7 +4161,8 @@ class TestComplexFunctions:
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
     @pytest.mark.xfail(
-        _glibc_older_than("2.17"),
+        # manylinux2014 uses glibc2.17
+        _glibc_older_than("2.18"),
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
     @pytest.mark.xfail(IS_MUSL, reason="gh23049")
