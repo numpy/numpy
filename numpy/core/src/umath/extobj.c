@@ -543,7 +543,7 @@ NPY_NO_EXPORT int
 PyUFunc_GiveFloatingpointErrors(const char *name, int fpe_errors)
 {
     int bufsize, errmask;
-    PyObject *pyfunc;
+    PyObject *pyfunc = NULL;
 
     if (_extract_pyvals(&bufsize, &errmask, &pyfunc) < 0) {
         Py_XDECREF(pyfunc);
