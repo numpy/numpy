@@ -59,7 +59,7 @@ steps:
 - powershell: |
     # Get a gfortran onto the path for f2py tests
     $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
-    If ( Test-Path env:TEST_MODE -eq full ) {
+    If ( $env:TEST_MODE -eq "full" ) {
       pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
     } else {
       pytest --pyargs numpy -m "not slow" -rsx --junitxml=junit/test-results.xml

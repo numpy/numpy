@@ -174,10 +174,6 @@ repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32", PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
 
-[tool.meson-python.args]
-# These should be the defaults for a normal NumPy build
-setup = ['-Dbuildtype=custom','-Doptimization=0', '-Db_ndebug=true']
-
 [tool.spin]
 package = 'numpy'
 
