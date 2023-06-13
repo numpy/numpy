@@ -1638,11 +1638,11 @@ class mr_class(MAxisConcatenator):
     """
     Translate slice objects to concatenation along the first axis.
 
-    This is the masked array version of `lib.index_tricks.RClass`.
+    This is the masked array version of `r_`.
 
     See Also
     --------
-    lib.index_tricks.RClass
+    r_
 
     Examples
     --------
