@@ -843,7 +843,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 fortran_order=False, version=None, *,
-                max_header_size=_MAX_HEADER_SIZE):
+                max_header_size=_MAX_HEADER_SIZE, offset=0):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -878,6 +878,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
         See :py:func:`ast.literal_eval()` for details.
+    offset : int, optional
+        In the file, array data starts at this offset. Since `offset` is
+        measured in bytes, it should normally be a multiple of the byte-size
+        of `dtype`. By default, ``open_memmap`` will start at the beginning of
+        the file.
 
     Returns
     -------
@@ -917,11 +922,13 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         )
         # If we got here, then it should be safe to create the file.
         with open(os_fspath(filename), mode+'b') as fp:
+            fp.seek(offset)
             _write_array_header(fp, d, version)
-            offset = fp.tell()
+            offset += fp.tell()
     else:
         # Read the header of the file first.
         with open(os_fspath(filename), 'rb') as fp:
+            fp.seek(offset)
             version = read_magic(fp)
             _check_version(version)
 
@@ -930,7 +937,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             if dtype.hasobject:
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
-            offset = fp.tell()
+            offset += fp.tell()
 
     if fortran_order:
         order = 'F'
