@@ -6,14 +6,26 @@
 #include <Python.h>
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_argparse.h"
+
+#include "conversion_utils.h"
 
 #include "extobj.h"
 #include "numpy/ufuncobject.h"
 
 #include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
 #include "common.h"
+
+
+/* The global ContextVar to store the extobject */
+static PyObject *default_extobj_capsule = NULL;
+static PyObject *extobj_contextvar = NULL;
+
+/* The python strings for the above error modes defined in extobj.h */
+const char *errmode_cstrings[] = {
+        "ignore", "warn", "raise", "call", "print", "log"};
+static PyObject *errmode_strings[6] = {NULL};
 
 
 static int
@@ -45,6 +57,324 @@ PyUFunc_handlefperr(
 }
 
 #undef HANDLEIT
+
+
+static void
+extobj_capsule_destructor(PyObject *capsule)
+{
+    npy_extobj *extobj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
+    npy_extobj_clear(extobj);
+    PyMem_FREE(extobj);
+}
+
+
+static PyObject *
+make_extobj_capsule(npy_intp bufsize, int errmask, PyObject *pyfunc)
+{
+    npy_extobj *extobj = PyMem_Malloc(sizeof(npy_extobj));
+    if (extobj == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    extobj->bufsize = bufsize;
+    extobj->errmask = errmask;
+    Py_XINCREF(pyfunc);
+    extobj->pyfunc = pyfunc;
+
+    PyObject *capsule = PyCapsule_New(
+            extobj, "numpy.ufunc.extobj",
+            (destructor)&extobj_capsule_destructor);
+    if (capsule == NULL) {
+        npy_extobj_clear(extobj);
+        PyMem_Free(extobj);
+        return NULL;
+    }
+    return capsule;
+}
+
+
+/*
+ * Fetch the current error/extobj state and fill it into `npy_extobj *extobj`.
+ * On success, the filled `extobj` must be cleared using `npy_extobj_clear`.
+ * Returns -1 on failure and 0 on success.
+ */
+NPY_NO_EXPORT int
+fetch_curr_extobj_state(npy_extobj *extobj)
+{
+    PyObject *capsule;
+    if (PyContextVar_Get(
+            extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
+        return -1;
+    }
+    npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
+    if (obj == NULL) {
+        Py_DECREF(capsule);
+        return -1;
+    }
+
+    extobj->bufsize = obj->bufsize;
+    extobj->errmask = obj->errmask;
+    extobj->pyfunc = obj->pyfunc;
+    Py_INCREF(extobj->pyfunc);
+
+    Py_DECREF(capsule);
+    return 0;
+}
+
+
+/*
+ * Update the current extobj state to the state passed in and returns the
+ * contexxtvar token to restore it.
+ */
+NPY_NO_EXPORT PyObject *
+update_curr_extobj_state(npy_extobj *extobj)
+{
+    PyObject *new_capsule = make_extobj_capsule(
+            extobj->bufsize, extobj->errmask, extobj->pyfunc);
+    if (new_capsule == NULL) {
+        return NULL;
+    }
+    PyObject *token = PyContextVar_Set(extobj_contextvar, new_capsule);
+    Py_DECREF(new_capsule);
+    return token;
+}
+
+
+NPY_NO_EXPORT int
+init_extobj(void)
+{
+    /*
+     * First initialize the string constants we need to parse `errstate()`
+     * inputs.
+     */
+    for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
+        errmode_strings[i] = PyUnicode_InternFromString(errmode_cstrings[i]);
+        if (errmode_strings[i] == NULL) {
+            return -1;
+        }
+    }
+
+    default_extobj_capsule = make_extobj_capsule(
+            NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
+    if (default_extobj_capsule == NULL) {
+        return -1;
+    }
+    extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", default_extobj_capsule);
+    if (extobj_contextvar == NULL) {
+        Py_CLEAR(default_extobj_capsule);
+        return -1;
+    }
+    return 0;
+}
+
+
+/*
+ * Parsing helper for extobj_seterrobj to extract the modes
+ * "ignore", "raise", etc.
+ */
+int
+errmodeconverter(PyObject *obj, int *mode)
+{
+    if (obj == Py_None) {
+        return 1;
+    }
+    int i = 0;
+    for (; i <= UFUNC_ERR_LOG; i++) {
+        int eq = PyObject_RichCompareBool(obj, errmode_strings[i], Py_EQ);
+        if (eq == -1) {
+            return 0;
+        }
+        else if (eq) {
+            break;
+        }
+    }
+    if (i > UFUNC_ERR_LOG) {
+        PyErr_Format(PyExc_ValueError, "invalid error mode %.100R", obj);
+        return 0;
+    }
+
+    *mode = i;
+    return 1;
+ }
+
+
+/*
+ * This function is currently exposed as `umath._seterrobj()`, it is private
+ * and has two modes:
+ * 1. passing kwargs to set the errstate, call, and buffersize.  This mode
+ *    return a token to allow restoring the previous state.
+ * 2. passing a single positional argument (the above token) to restore the
+ *    state (returns `None`);  may also be passed as `restore_token`.
+ */
+NPY_NO_EXPORT PyObject *
+extobj_seterrobj(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *token = NULL;
+    int all_mode = -1;
+    int divide_mode = -1;
+    int over_mode = -1;
+    int under_mode = -1;
+    int invalid_mode = -1;
+    npy_intp bufsize = -1;
+    PyObject *pyfunc = NULL;
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("_seterrobj", args, len_args, kwnames,
+            "|restore_token", NULL, &token,
+            "$all", &errmodeconverter, &all_mode,
+            "$divide", &errmodeconverter, &divide_mode,
+            "$over", &errmodeconverter, &over_mode,
+            "$under", &errmodeconverter, &under_mode,
+            "$invalid", &errmodeconverter, &invalid_mode,
+            "$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize,
+            "$call", NULL, &pyfunc,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    if (token != NULL) {
+        /* ignore everything else, reset to the token */
+        if (PyContextVar_Reset(extobj_contextvar, token) < 0) {
+            return NULL;
+        }
+        Py_RETURN_NONE;
+    }
+    /* Check that the new buffersize is valid (negative ones mean no change) */
+    if (bufsize >= 0) {
+        if (bufsize > 10e6) {
+            PyErr_Format(PyExc_ValueError,
+                    "Buffer size, %" NPY_INTP_FMT ", is too big",
+                    bufsize);
+            return NULL;
+        }
+        if (bufsize < 5) {
+            PyErr_Format(PyExc_ValueError,
+                    "Buffer size, %" NPY_INTP_FMT ", is too small",
+                    bufsize);
+            return NULL;
+        }
+        if (bufsize % 16 != 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "Buffer size, %" NPY_INTP_FMT ", is not a multiple of 16",
+                    bufsize);
+            return NULL;
+        }
+    }
+    /* Validate func (probably): None, callable, or callable write attribute */
+    if (pyfunc != NULL && pyfunc != Py_None && !PyCallable_Check(pyfunc)) {
+        PyObject *temp;
+        temp = PyObject_GetAttrString(pyfunc, "write");
+        if (temp == NULL || !PyCallable_Check(temp)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "python object must be callable or have "
+                            "a callable write method");
+            Py_XDECREF(temp);
+            return NULL;
+        }
+        Py_DECREF(temp);
+    }
+
+    /* Fetch the current extobj, we will mutate it and then store it: */
+    npy_extobj extobj;
+    if (fetch_curr_extobj_state(&extobj) < 0) {
+        return NULL;
+    }
+
+    if (all_mode != -1) {
+        /* if all is passed use it for any mode not passed explicitly */
+        divide_mode = divide_mode == -1 ? all_mode : divide_mode;
+        over_mode = over_mode == -1 ? all_mode : over_mode;
+        under_mode = under_mode == -1 ? all_mode : under_mode;
+        invalid_mode = invalid_mode == -1 ? all_mode : invalid_mode;
+    }
+    if (divide_mode != -1) {
+        extobj.errmask &= ~UFUNC_MASK_DIVIDEBYZERO;
+        extobj.errmask |= divide_mode << UFUNC_SHIFT_DIVIDEBYZERO;
+    }
+    if (over_mode != -1) {
+        extobj.errmask &= ~UFUNC_MASK_OVERFLOW;
+        extobj.errmask |= over_mode << UFUNC_SHIFT_OVERFLOW;
+    }
+    if (under_mode != -1) {
+        extobj.errmask &= ~UFUNC_MASK_UNDERFLOW;
+        extobj.errmask |= under_mode << UFUNC_SHIFT_UNDERFLOW;
+    }
+    if (invalid_mode != -1) {
+        extobj.errmask &= ~UFUNC_MASK_INVALID;
+        extobj.errmask |= invalid_mode << UFUNC_SHIFT_INVALID;
+    }
+    if (bufsize > 0) {
+        extobj.bufsize = bufsize;
+    }
+    if (pyfunc != NULL) {
+        Py_INCREF(pyfunc);
+        Py_SETREF(extobj.pyfunc, pyfunc);
+    }
+    token = update_curr_extobj_state(&extobj);
+    npy_extobj_clear(&extobj);
+    return token;
+}
+
+
+/*
+ * For inspection purposes, allow fetching a dictionary representing the
+ * current extobj/errobj.
+ */
+NPY_NO_EXPORT PyObject *
+extobj_geterrobj(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
+{
+    PyObject *result = NULL, *bufsize_obj = NULL;
+    npy_extobj extobj;
+    int mode;
+
+    if (fetch_curr_extobj_state(&extobj) < 0) {
+        goto fail;
+    }
+    result = PyDict_New();
+    if (result == NULL) {
+        goto fail;
+    }
+    /* Set all error modes: */
+    mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
+    if (PyDict_SetItemString(result, "divide", errmode_strings[mode]) < 0) {
+        goto fail;
+    }
+    mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
+    if (PyDict_SetItemString(result, "over", errmode_strings[mode]) < 0) {
+        goto fail;
+    }
+    mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
+    if (PyDict_SetItemString(result, "under", errmode_strings[mode]) < 0) {
+        goto fail;
+    }
+    mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
+    if (PyDict_SetItemString(result, "invalid", errmode_strings[mode]) < 0) {
+        goto fail;
+    }
+
+    /* Set the callable: */
+    if (PyDict_SetItemString(result, "call", extobj.pyfunc) < 0) {
+        goto fail;
+    }
+    /* And the bufsize: */
+    bufsize_obj = PyLong_FromSsize_t(extobj.bufsize);
+    if (bufsize_obj == NULL) {
+        goto fail;
+    }
+    if (PyDict_SetItemString(result, "bufsize", bufsize_obj) < 0) {
+        goto fail;
+    }
+    Py_DECREF(bufsize_obj);
+    npy_extobj_clear(&extobj);
+    return result;
+
+  fail:
+    Py_XDECREF(result);
+    Py_XDECREF(bufsize_obj);
+    npy_extobj_clear(&extobj);
+    return NULL;
+}
 
 
 /*
@@ -140,23 +470,6 @@ fail:
 }
 
 
-
-static PyObject *
-get_global_ext_obj(void)
-{
-    PyObject *thedict;
-    PyObject *ref = NULL;
-
-    thedict = PyThreadState_GetDict();
-    if (thedict == NULL) {
-        thedict = PyEval_GetBuiltins();
-    }
-    ref = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
-
-    return ref;
-}
-
-
 /*
  * Extracts some values from the global pyvals tuple.
  * all destinations may be NULL, in which case they are not retrieved
@@ -171,86 +484,24 @@ get_global_ext_obj(void)
 static int
 _extract_pyvals(int *bufsize, int *errmask, PyObject **pyfunc)
 {
-    PyObject *ref = get_global_ext_obj();
-    PyObject *retval;
-
-    if (ref == NULL && PyErr_Occurred()) {
-        return -1;
-    }
-
-    /* default errobj case, skips dictionary lookup */
-    if (ref == NULL) {
-        if (errmask) {
-            *errmask = UFUNC_ERR_DEFAULT;
-        }
-        if (pyfunc) {
-            Py_INCREF(Py_None);
-            *pyfunc = Py_None;
-        }
-        if (bufsize) {
-            *bufsize = NPY_BUFSIZE;
-        }
-        return 0;
-    }
-
-    if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
-        PyErr_Format(PyExc_TypeError,
-                "%s must be a length 3 list.", UFUNC_PYVALS_NAME);
+    npy_extobj extobj;
+    if (fetch_curr_extobj_state(&extobj) < 0) {
         return -1;
     }
 
     if (bufsize != NULL) {
-        *bufsize = PyLong_AsLong(PyList_GET_ITEM(ref, 0));
-        if (error_converting(*bufsize)) {
-            return -1;
-        }
-        if ((*bufsize < NPY_MIN_BUFSIZE) ||
-                (*bufsize > NPY_MAX_BUFSIZE) ||
-                (*bufsize % 16 != 0)) {
-            PyErr_Format(PyExc_ValueError,
-                    "buffer size (%d) is not in range "
-                    "(%"NPY_INTP_FMT" - %"NPY_INTP_FMT") or not a multiple of 16",
-                    *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
-                    (npy_intp) NPY_MAX_BUFSIZE);
-            return -1;
-        }
+        *bufsize = extobj.bufsize;
     }
 
     if (errmask != NULL) {
-        *errmask = PyLong_AsLong(PyList_GET_ITEM(ref, 1));
-        if (*errmask < 0) {
-            if (PyErr_Occurred()) {
-                return -1;
-            }
-            PyErr_Format(PyExc_ValueError,
-                         "invalid error mask (%d)",
-                         *errmask);
-            return -1;
-        }
+        *errmask = extobj.errmask;
     }
 
     if (pyfunc != NULL) {
-        *pyfunc = NULL;
-        retval = PyList_GET_ITEM(ref, 2);
-        if (retval != Py_None && !PyCallable_Check(retval)) {
-            PyObject *temp;
-            temp = PyObject_GetAttrString(retval, "write");
-            if (temp == NULL || !PyCallable_Check(temp)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "python object must be callable or have " \
-                                "a callable write method");
-                Py_XDECREF(temp);
-                return -1;
-            }
-            Py_DECREF(temp);
-        }
-
-        Py_INCREF(retval);
-        *pyfunc = retval;
-        if (*pyfunc == NULL) {
-            return -1;
-        }
+        *pyfunc = extobj.pyfunc;
+        Py_INCREF(*pyfunc);
     }
+    npy_extobj_clear(&extobj);
     return 0;
 }
 
@@ -317,14 +568,5 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
 NPY_NO_EXPORT int
 _get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask)
 {
-    /* Get the buffersize and errormask */
-    PyObject *extobj = get_global_ext_obj();
-    if (extobj == NULL && PyErr_Occurred()) {
-        return -1;
-    }
-    if (_extract_pyvals(buffersize, errormask, NULL) < 0) {
-        return -1;
-    }
-
-    return 0;
+    return _extract_pyvals(buffersize, errormask, NULL);
 }

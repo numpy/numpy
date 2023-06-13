@@ -4997,61 +4997,6 @@ ufunc_generic_vectorcall(PyObject *ufunc,
 }
 
 
-NPY_NO_EXPORT PyObject *
-ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(arg))
-{
-    PyObject *thedict;
-    PyObject *res;
-
-    thedict = PyThreadState_GetDict();
-    if (thedict == NULL) {
-        thedict = PyEval_GetBuiltins();
-    }
-    res = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
-    if (res == NULL && PyErr_Occurred()) {
-        return NULL;
-    }
-    else if (res != NULL) {
-        Py_INCREF(res);
-        return res;
-    }
-    /* Construct list of defaults */
-    res = PyList_New(3);
-    if (res == NULL) {
-        return NULL;
-    }
-    PyList_SET_ITEM(res, 0, PyLong_FromLong(NPY_BUFSIZE));
-    PyList_SET_ITEM(res, 1, PyLong_FromLong(UFUNC_ERR_DEFAULT));
-    PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
-    return res;
-}
-
-
-NPY_NO_EXPORT PyObject *
-ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *arg)
-{
-    PyObject *thedict;
-    int res;
-    PyObject *val = arg;
-    static char *msg = "Error object must be a list of length 3";
-
-    if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
-        PyErr_SetString(PyExc_ValueError, msg);
-        return NULL;
-    }
-    thedict = PyThreadState_GetDict();
-    if (thedict == NULL) {
-        thedict = PyEval_GetBuiltins();
-    }
-    res = PyDict_SetItem(thedict, npy_um_str_pyvals_name, val);
-    if (res < 0) {
-        return NULL;
-    }
-    Py_RETURN_NONE;
-}
-
-
-
 /*UFUNC_API*/
 NPY_NO_EXPORT int
 PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
