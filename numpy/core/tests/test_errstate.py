@@ -41,6 +41,9 @@ class TestErrstate:
             with assert_raises(FloatingPointError):
                 a // a
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.skipif(arm_softfloat,
+                        reason='platform/cpu issue with FPU (gh-15562)')
     def test_errcall(self):
         count = 0
         def foo(*args):
