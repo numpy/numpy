@@ -15,21 +15,9 @@
 #include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
 #include "common.h"
 
-#if USE_USE_DEFAULTS==1
-static int PyUFunc_NUM_NODEFAULTS = 0;
 
-
-/*
- * On return, if errobj is populated with a non-NULL value, the caller
- * owns a new reference to errobj.
- */
 static int
-PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
-{
-    PyObject *ref = get_global_ext_obj();
-
-    return _extract_pyvals(ref, name, bufsize, errmask, errobj);
-}
+_error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *first);
 
 
 #define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
@@ -58,38 +46,6 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 
 
 /*
- * This is a strategy to buy a little speed up and avoid the dictionary
- * look-up in the default case.  It should work in the presence of
- * threads.  If it is deemed too complicated or it doesn't actually work
- * it could be taken out.
- */
-NPY_NO_EXPORT int
-ufunc_update_use_defaults(void)
-{
-    PyObject *errobj = NULL;
-    int errmask, bufsize;
-    int res;
-
-    PyUFunc_NUM_NODEFAULTS += 1;
-    res = PyUFunc_GetPyValues("test", &bufsize, &errmask, &errobj);
-    PyUFunc_NUM_NODEFAULTS -= 1;
-    if (res < 0) {
-        Py_XDECREF(errobj);
-        return -1;
-    }
-    if ((errmask != UFUNC_ERR_DEFAULT) || (bufsize != NPY_BUFSIZE)
-            || (PyTuple_GET_ITEM(errobj, 1) != Py_None)) {
-        PyUFunc_NUM_NODEFAULTS += 1;
-    }
-    else if (PyUFunc_NUM_NODEFAULTS > 0) {
-        PyUFunc_NUM_NODEFAULTS -= 1;
-    }
-    Py_XDECREF(errobj);
-    return 0;
-}
-#endif
-
-/*
  * fpstatus is the ufunc_formatted hardware status
  * errmask is the handling mask specified by the user.
  * errobj is a Python object with (string, callable object or None)
@@ -105,7 +61,7 @@ ufunc_update_use_defaults(void)
  * If call, call a user-defined function with string
  */
 
-NPY_NO_EXPORT int
+static int
 _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *first)
 {
     PyObject *pyfunc, *ret, *args;
@@ -192,23 +148,17 @@ fail:
 
 
 
-NPY_NO_EXPORT PyObject *
+static PyObject *
 get_global_ext_obj(void)
 {
     PyObject *thedict;
     PyObject *ref = NULL;
 
-#if USE_USE_DEFAULTS==1
-    if (PyUFunc_NUM_NODEFAULTS != 0) {
-#endif
-        thedict = PyThreadState_GetDict();
-        if (thedict == NULL) {
-            thedict = PyEval_GetBuiltins();
-        }
-        ref = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
-#if USE_USE_DEFAULTS==1
+    thedict = PyThreadState_GetDict();
+    if (thedict == NULL) {
+        thedict = PyEval_GetBuiltins();
     }
-#endif
+    ref = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
 
     return ref;
 }
@@ -226,10 +176,15 @@ get_global_ext_obj(void)
  *          if an error handling method is 'call'
  */
 NPY_NO_EXPORT int
-_extract_pyvals(PyObject *ref, const char *name, int *bufsize,
+_extract_pyvals(const char *name, int *bufsize,
                 int *errmask, PyObject **errobj)
 {
+    PyObject *ref = get_global_ext_obj();
     PyObject *retval;
+
+    if (ref == NULL && PyErr_Occurred()) {
+        return -1;
+    }
 
     /* default errobj case, skips dictionary lookup */
     if (ref == NULL) {
@@ -318,8 +273,8 @@ PyUFunc_GiveFloatingpointErrors(const char *name, int fpe_errors)
     int bufsize, errmask;
     PyObject *errobj;
 
-    if (PyUFunc_GetPyValues((char *)name, &bufsize, &errmask,
-                            &errobj) < 0) {
+    if (_extract_pyvals(name, &bufsize, &errmask, &errobj) < 0) {
+        Py_XDECREF(errobj);
         return -1;
     }
     int first = 1;
@@ -354,13 +309,8 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
         return 0;
     }
 
-    /* Get error object globals */
-    PyObject *extobj = get_global_ext_obj();
-    if (extobj == NULL && PyErr_Occurred()) {
-        return -1;
-    }
-    if (_extract_pyvals(extobj, ufunc_name,
-                        NULL, NULL, &errobj) < 0) {
+    /* Get error state parameters */
+    if (_extract_pyvals(ufunc_name, NULL, NULL, &errobj) < 0) {
         Py_XDECREF(errobj);
         return -1;
     }
@@ -380,8 +330,7 @@ _get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask)
     if (extobj == NULL && PyErr_Occurred()) {
         return -1;
     }
-    if (_extract_pyvals(extobj, ufunc_name,
-                        buffersize, errormask, NULL) < 0) {
+    if (_extract_pyvals(ufunc_name, buffersize, errormask, NULL) < 0) {
         return -1;
     }
 

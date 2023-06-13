@@ -5047,11 +5047,6 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *arg)
     if (res < 0) {
         return NULL;
     }
-#if USE_USE_DEFAULTS==1
-    if (ufunc_update_use_defaults() < 0) {
-        return NULL;
-    }
-#endif
     Py_RETURN_NONE;
 }
 
