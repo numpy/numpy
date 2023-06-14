@@ -167,7 +167,7 @@ import pickle
 import warnings
 
 import numpy
-from numpy.lib.utils import safe_eval, drop_metadata
+from numpy.lib.utils import drop_metadata
 
 
 __all__ = []
@@ -591,6 +591,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     """
     # Read an unsigned, little-endian short int which has the length of the
     # header.
+    import ast
     import struct
     hinfo = _header_size_info.get(version)
     if hinfo is None:
@@ -621,12 +622,12 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     #
     # For performance reasons, we try without _filter_header first though
     try:
-        d = safe_eval(header)
+        d = ast.literal_eval(header)
     except SyntaxError as e:
         if version <= (2, 0):
             header = _filter_header(header)
             try:
-                d = safe_eval(header)
+                d = ast.literal_eval(header)
             except SyntaxError as e2:
                 msg = "Cannot parse header: {!r}"
                 raise ValueError(msg.format(header)) from e2

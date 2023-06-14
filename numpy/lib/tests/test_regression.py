@@ -5,6 +5,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
+import pytest
 
 
 class TestRegression:
@@ -157,6 +158,7 @@ class TestRegression:
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
+    @pytest.mark.filterwarnings("ignore:.*who.*:DeprecationWarning")
     def test_who_with_0dim_array(self):
         # ticket #1243
         import os

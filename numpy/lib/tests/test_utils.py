@@ -120,11 +120,13 @@ def test_deprecate_module():
     assert_(old_func.__module__ == __name__)
 
 
+@pytest.mark.filterwarnings("ignore:.*safe_eval.*:DeprecationWarning")
 def test_safe_eval_nameconstant():
     # Test if safe_eval supports Python 3.4 _ast.NameConstant
     utils.safe_eval('None')
 
 
+@pytest.mark.filterwarnings("ignore:.*byte_bounds.*:DeprecationWarning")
 class TestByteBounds:
 
     def test_byte_bounds(self):
