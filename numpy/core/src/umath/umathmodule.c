@@ -27,6 +27,7 @@
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
+#include "extobj.h"  /* for _extobject_contextvar exposure */
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -286,6 +287,8 @@ int initumath(PyObject *m)
 #undef ADDCONST
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
+
+    PyModule_AddObject(m, "_extobj_contextvar", npy_extobj_contextvar);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));

@@ -1,14 +1,15 @@
 """
 Functions for changing global ufunc configuration
 
-This provides helpers which wrap `umath._geterrobj` and `umath._seterrobj`
+This provides helpers which wrap `_geterrobj` and `_seterrobj`, and
+`_extobj_contextvar` from umath.
 """
 import collections.abc
 import contextlib
 import contextvars
 
 from .._utils import set_module
-from . import umath
+from .umath import _seterrobj, _geterrobj, _extobj_contextvar
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
@@ -92,12 +93,12 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     """
 
-    old = umath._geterrobj()
+    old = _geterrobj()
     # The errstate doesn't include call and bufsize, so pop them:
     old.pop("call", None)
     old.pop("bufsize", None)
 
-    umath._seterrobj(
+    _seterrobj(
             all=all, divide=divide, over=over, under=under, invalid=invalid)
     return old
 
@@ -142,7 +143,7 @@ def geterr():
     >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
-    res = umath._geterrobj()
+    res = _geterrobj()
     # The "geterr" doesn't include call and bufsize,:
     res.pop("call", None)
     res.pop("bufsize", None)
@@ -160,8 +161,8 @@ def setbufsize(size):
         Size of buffer.
 
     """
-    old = umath._geterrobj()["bufsize"]
-    umath._seterrobj(bufsize=size)
+    old = _geterrobj()["bufsize"]
+    _seterrobj(bufsize=size)
     return old
 
 
@@ -176,7 +177,7 @@ def getbufsize():
         Size of ufunc buffer in bytes.
 
     """
-    return umath._geterrobj()["bufsize"]
+    return _geterrobj()["bufsize"]
 
 
 @set_module('numpy')
@@ -261,8 +262,8 @@ def seterrcall(func):
     {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
-    old = umath._geterrobj()["call"]
-    umath._seterrobj(call=func)
+    old = _geterrobj()["call"]
+    _seterrobj(call=func)
     return old
 
 
@@ -311,7 +312,7 @@ def geterrcall():
     >>> old_handler = np.seterrcall(None)  # restore original
 
     """
-    return umath._geterrobj()["call"]
+    return _geterrobj()["call"]
 
 
 class _unspecified:
@@ -397,17 +398,17 @@ class errstate(contextlib.ContextDecorator):
         if self._token is not None:
             raise TypeError("Cannot enter `np.errstate` twice.")
         if self._call is _Unspecified:
-            self._token = umath._seterrobj(
+            self._token = _seterrobj(
                     all=self._all, divide=self._divide, over=self._over,
                     under=self._under, invalid=self._invalid)
         else:
-            self._token = umath._seterrobj(
+            self._token = _seterrobj(
                     call=self._call,
                     all=self._all, divide=self._divide, over=self._over,
                     under=self._under, invalid=self._invalid)
 
     def __exit__(self, *exc_info):
-        umath._seterrobj(self._token)
+        _extobj_contextvar.reset(self._token)
         # Allow entering twice, so long as it is sequential:
         self._token = None
 

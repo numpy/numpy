@@ -4,6 +4,9 @@
 #include <numpy/ndarraytypes.h>  /* for NPY_NO_EXPORT */
 
 
+/* For the private exposure of the extobject contextvar to Python */
+extern NPY_NO_EXPORT PyObject *npy_extobj_contextvar;
+
 /*
  * Represent the current ufunc error (and buffer) state.  we are using a
  * capsule for now to store this, but it could make sense to refactor it into
@@ -46,6 +49,5 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
 
 NPY_NO_EXPORT PyObject *
 extobj_geterrobj(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg));
-
 
 #endif

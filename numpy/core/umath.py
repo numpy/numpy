@@ -12,7 +12,8 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-11862
 # _ones_like is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _UFUNC_API, _add_newdoc_ufunc, _ones_like, _geterrobj, _seterrobj)
+    _UFUNC_API, _add_newdoc_ufunc, _ones_like, _geterrobj, _seterrobj,
+    _extobj_contextvar)
 
 __all__ = [
     '_UFUNC_API', 'FLOATING_POINT_SUPPORT',

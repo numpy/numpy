@@ -18,9 +18,12 @@
 #include "common.h"
 
 
-/* The global ContextVar to store the extobject */
+/*
+ * The global ContextVar to store the extobject this is exposed to Python
+ * as `_extobj_contextvar` to reset its state in `np.errstate.__exit__`.
+ */
 static PyObject *default_extobj_capsule = NULL;
-static PyObject *extobj_contextvar = NULL;
+NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -128,7 +131,7 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
+            npy_extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -159,7 +162,7 @@ update_curr_extobj_state(npy_extobj *extobj)
     if (new_capsule == NULL) {
         return NULL;
     }
-    PyObject *token = PyContextVar_Set(extobj_contextvar, new_capsule);
+    PyObject *token = PyContextVar_Set(npy_extobj_contextvar, new_capsule);
     Py_DECREF(new_capsule);
     return token;
 }
@@ -184,9 +187,9 @@ init_extobj(void)
     if (default_extobj_capsule == NULL) {
         return -1;
     }
-    extobj_contextvar = PyContextVar_New(
+    npy_extobj_contextvar = PyContextVar_New(
             "numpy.ufunc.extobj", default_extobj_capsule);
-    if (extobj_contextvar == NULL) {
+    if (npy_extobj_contextvar == NULL) {
         Py_CLEAR(default_extobj_capsule);
         return -1;
     }
@@ -236,7 +239,6 @@ NPY_NO_EXPORT PyObject *
 extobj_seterrobj(PyObject *NPY_UNUSED(mod),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject *token = NULL;
     int all_mode = -1;
     int divide_mode = -1;
     int over_mode = -1;
@@ -247,7 +249,6 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_seterrobj", args, len_args, kwnames,
-            "|restore_token", NULL, &token,
             "$all", &errmodeconverter, &all_mode,
             "$divide", &errmodeconverter, &divide_mode,
             "$over", &errmodeconverter, &over_mode,
@@ -259,13 +260,6 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
         return NULL;
     }
 
-    if (token != NULL) {
-        /* ignore everything else, reset to the token */
-        if (PyContextVar_Reset(extobj_contextvar, token) < 0) {
-            return NULL;
-        }
-        Py_RETURN_NONE;
-    }
     /* Check that the new buffersize is valid (negative ones mean no change) */
     if (bufsize >= 0) {
         if (bufsize > 10e6) {
@@ -338,7 +332,7 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
         Py_INCREF(pyfunc);
         Py_SETREF(extobj.pyfunc, pyfunc);
     }
-    token = update_curr_extobj_state(&extobj);
+    PyObject *token = update_curr_extobj_state(&extobj);
     npy_extobj_clear(&extobj);
     return token;
 }
