@@ -161,12 +161,13 @@ alternatives, is described in the
 evolved with time and this document is more current.
 
 """
-import numpy
+import io
+import os
+import pickle
 import warnings
-from numpy.lib.utils import safe_eval, drop_metadata
-from numpy.compat import (
-    isfileobj, os_fspath, pickle
-    )
+
+import numpy
+from numpy.lib.utils import drop_metadata
 
 
 __all__ = []
@@ -590,6 +591,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     """
     # Read an unsigned, little-endian short int which has the length of the
     # header.
+    import ast
     import struct
     hinfo = _header_size_info.get(version)
     if hinfo is None:
@@ -620,12 +622,12 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     #
     # For performance reasons, we try without _filter_header first though
     try:
-        d = safe_eval(header)
+        d = ast.literal_eval(header)
     except SyntaxError as e:
         if version <= (2, 0):
             header = _filter_header(header)
             try:
-                d = safe_eval(header)
+                d = ast.literal_eval(header)
             except SyntaxError as e2:
                 msg = "Cannot parse header: {!r}"
                 raise ValueError(msg.format(header)) from e2
@@ -916,12 +918,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        with open(os_fspath(filename), mode+'b') as fp:
+        with open(os.fspath(filename), mode+'b') as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:
         # Read the header of the file first.
-        with open(os_fspath(filename), 'rb') as fp:
+        with open(os.fspath(filename), 'rb') as fp:
             version = read_magic(fp)
             _check_version(version)
 
@@ -974,3 +976,15 @@ def _read_bytes(fp, size, error_template="ran out of data"):
         raise ValueError(msg % (error_template, size, len(data)))
     else:
         return data
+
+
+def isfileobj(f):
+    if not isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter)):
+        return False
+    try:
+        # BufferedReader/Writer may raise OSError when
+        # fetching `fileno()` (e.g. when wrapping BytesIO).
+        f.fileno()
+        return True
+    except OSError:
+        return False

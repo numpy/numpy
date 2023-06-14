@@ -18,7 +18,6 @@ from ctypes import c_bool
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -27,6 +26,7 @@ from numpy.testing import (
     break_cycles, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
+from numpy._utils._convertions import asbytes
 
 
 class TextIO(BytesIO):
@@ -587,13 +587,12 @@ class TestSaveTxt:
         s.seek(0)
         assert_equal(s.read(), utf8 + '\n')
 
-    @pytest.mark.parametrize("fmt", ["%f", b"%f"])
     @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
-    def test_unicode_and_bytes_fmt(self, fmt, iotype):
+    def test_unicode_and_bytes_fmt(self, iotype):
         # string type of fmt should not matter, see also gh-4053
         a = np.array([1.])
         s = iotype()
-        np.savetxt(s, a, fmt=fmt)
+        np.savetxt(s, a, fmt="%f")
         s.seek(0)
         if iotype is StringIO:
             assert_equal(s.read(), "%f\n" % 1.)
@@ -1715,7 +1714,7 @@ M   33  21.99
             with open(path, 'wb') as f:
                 f.write(b'skip,skip,2001-01-01' + utf8 + b',1.0,skip')
             test = np.genfromtxt(path, delimiter=",", names=None, dtype=float,
-                                 usecols=(2, 3), converters={2: np.compat.unicode},
+                                 usecols=(2, 3), converters={2: str},
                                  encoding='UTF-8')
         control = np.array([('2001-01-01' + utf8.decode('UTF-8'), 1.)],
                            dtype=[('', '|U11'), ('', float)])

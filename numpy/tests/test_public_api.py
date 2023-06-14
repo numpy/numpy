@@ -326,6 +326,8 @@ SKIP_LIST = [
 ]
 
 
+# suppressing warnings from deprecated modules
+@pytest.mark.filterwarnings("ignore:.*np.compat.*:DeprecationWarning")
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by

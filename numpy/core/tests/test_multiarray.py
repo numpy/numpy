@@ -15,9 +15,7 @@ import re
 import weakref
 import pytest
 from contextlib import contextmanager
-
-from numpy.compat import pickle
-
+import pickle
 import pathlib
 import builtins
 from decimal import Decimal

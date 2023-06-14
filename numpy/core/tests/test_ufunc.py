@@ -2,6 +2,7 @@ import warnings
 import itertools
 import sys
 import ctypes as ct
+import pickle
 
 import pytest
 from pytest import param
@@ -17,7 +18,6 @@ from numpy.testing import (
     assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
     )
 from numpy.testing._private.utils import requires_memory
-from numpy.compat import pickle
 
 
 import cython
