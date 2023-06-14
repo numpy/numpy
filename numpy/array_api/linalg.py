@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from ._dtypes import _floating_dtypes, _numeric_dtypes
+from ._dtypes import (
+    _floating_dtypes,
+    _numeric_dtypes,
+    float32,
+    float64,
+    complex64,
+    complex128
+)
 from ._manipulation_functions import reshape
 from ._array_object import Array
 
@@ -8,7 +15,7 @@ from ..core.numeric import normalize_axis_tuple
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._typing import Literal, Optional, Sequence, Tuple, Union
+    from ._typing import Literal, Optional, Sequence, Tuple, Union, Dtype
 
 from typing import NamedTuple
 
@@ -363,7 +370,7 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
     return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 
 # Note: trace is the numpy top-level namespace, not np.linalg
-def trace(x: Array, /, *, offset: int = 0) -> Array:
+def trace(x: Array, /, *, offset: int = 0, dtype: Optional[Dtype] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.trace <numpy.trace>`.
 
@@ -371,9 +378,17 @@ def trace(x: Array, /, *, offset: int = 0) -> Array:
     """
     if x.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in trace')
+
+    # Note: trace() works the same as sum() and prod() (see
+    # _statistical_functions.py)
+    if dtype is None:
+        if x.dtype == float32:
+            dtype = float64
+        elif x.dtype == complex64:
+            dtype = complex128
     # Note: trace always operates on the last two axes, whereas np.trace
     # operates on the first two axes by default
-    return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1)))
+    return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1, dtype=dtype)))
 
 # Note: vecdot is not in NumPy
 def vecdot(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:

@@ -1,6 +1,6 @@
 import operator
 
-from numpy.testing import assert_raises
+from numpy.testing import assert_raises, suppress_warnings
 import numpy as np
 import pytest
 
@@ -9,9 +9,12 @@ from .._array_object import Array
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
+    _real_floating_dtypes,
     _floating_dtypes,
+    _complex_floating_dtypes,
     _integer_dtypes,
     _integer_or_boolean_dtypes,
+    _real_numeric_dtypes,
     _numeric_dtypes,
     int8,
     int16,
@@ -85,13 +88,13 @@ def test_operators():
         "__add__": "numeric",
         "__and__": "integer_or_boolean",
         "__eq__": "all",
-        "__floordiv__": "numeric",
-        "__ge__": "numeric",
-        "__gt__": "numeric",
-        "__le__": "numeric",
+        "__floordiv__": "real numeric",
+        "__ge__": "real numeric",
+        "__gt__": "real numeric",
+        "__le__": "real numeric",
         "__lshift__": "integer",
-        "__lt__": "numeric",
-        "__mod__": "numeric",
+        "__lt__": "real numeric",
+        "__mod__": "real numeric",
         "__mul__": "numeric",
         "__ne__": "all",
         "__or__": "integer_or_boolean",
@@ -101,7 +104,6 @@ def test_operators():
         "__truediv__": "floating",
         "__xor__": "integer_or_boolean",
     }
-
     # Recompute each time because of in-place ops
     def _array_vals():
         for d in _integer_dtypes:
@@ -111,13 +113,15 @@ def test_operators():
         for d in _floating_dtypes:
             yield asarray(1.0, dtype=d)
 
+
+    BIG_INT = int(1e30)
     for op, dtypes in binary_op_dtypes.items():
         ops = [op]
         if op not in ["__eq__", "__ne__", "__le__", "__ge__", "__lt__", "__gt__"]:
             rop = "__r" + op[2:]
             iop = "__i" + op[2:]
             ops += [rop, iop]
-        for s in [1, 1.0, False]:
+        for s in [1, 1.0, 1j, BIG_INT, False]:
             for _op in ops:
                 for a in _array_vals():
                     # Test array op scalar. From the spec, the following combinations
@@ -125,13 +129,12 @@ def test_operators():
 
                     # - Python bool for a bool array dtype,
                     # - a Python int within the bounds of the given dtype for integer array dtypes,
-                    # - a Python int or float for floating-point array dtypes
-
-                    # We do not do bounds checking for int scalars, but rather use the default
-                    # NumPy behavior for casting in that case.
+                    # - a Python int or float for real floating-point array dtypes
+                    # - a Python int, float, or complex for complex floating-point array dtypes
 
                     if ((dtypes == "all"
                          or dtypes == "numeric" and a.dtype in _numeric_dtypes
+                         or dtypes == "real numeric" and a.dtype in _real_numeric_dtypes
                          or dtypes == "integer" and a.dtype in _integer_dtypes
                          or dtypes == "integer_or_boolean" and a.dtype in _integer_or_boolean_dtypes
                          or dtypes == "boolean" and a.dtype in _boolean_dtypes
@@ -141,10 +144,18 @@ def test_operators():
                         # isinstance here.
                         and (a.dtype in _boolean_dtypes and type(s) == bool
                              or a.dtype in _integer_dtypes and type(s) == int
-                             or a.dtype in _floating_dtypes and type(s) in [float, int]
+                             or a.dtype in _real_floating_dtypes and type(s) in [float, int]
+                             or a.dtype in _complex_floating_dtypes and type(s) in [complex, float, int]
                         )):
-                        # Only test for no error
-                        getattr(a, _op)(s)
+                        if a.dtype in _integer_dtypes and s == BIG_INT:
+                            assert_raises(OverflowError, lambda: getattr(a, _op)(s))
+                        else:
+                            # Only test for no error
+                            with suppress_warnings() as sup:
+                                # ignore warnings from pow(BIG_INT)
+                                sup.filter(RuntimeWarning,
+                                           "invalid value encountered in power")
+                                getattr(a, _op)(s)
                     else:
                         assert_raises(TypeError, lambda: getattr(a, _op)(s))
 
@@ -174,8 +185,9 @@ def test_operators():
                             # Ensure only those dtypes that are required for every operator are allowed.
                             elif (dtypes == "all" and (x.dtype in _boolean_dtypes and y.dtype in _boolean_dtypes
                                                       or x.dtype in _numeric_dtypes and y.dtype in _numeric_dtypes)
+                                or (dtypes == "real numeric" and x.dtype in _real_numeric_dtypes and y.dtype in _real_numeric_dtypes)
                                 or (dtypes == "numeric" and x.dtype in _numeric_dtypes and y.dtype in _numeric_dtypes)
-                                or dtypes == "integer" and x.dtype in _integer_dtypes and y.dtype in _numeric_dtypes
+                                or dtypes == "integer" and x.dtype in _integer_dtypes and y.dtype in _integer_dtypes
                                 or dtypes == "integer_or_boolean" and (x.dtype in _integer_dtypes and y.dtype in _integer_dtypes
                                                                        or x.dtype in _boolean_dtypes and y.dtype in _boolean_dtypes)
                                 or dtypes == "boolean" and x.dtype in _boolean_dtypes and y.dtype in _boolean_dtypes
@@ -263,31 +275,39 @@ def test_python_scalar_construtors():
     b = asarray(False)
     i = asarray(0)
     f = asarray(0.0)
+    c = asarray(0j)
 
     assert bool(b) == False
     assert int(i) == 0
     assert float(f) == 0.0
     assert operator.index(i) == 0
 
-    # bool/int/float should only be allowed on 0-D arrays.
+    # bool/int/float/complex should only be allowed on 0-D arrays.
     assert_raises(TypeError, lambda: bool(asarray([False])))
     assert_raises(TypeError, lambda: int(asarray([0])))
     assert_raises(TypeError, lambda: float(asarray([0.0])))
+    assert_raises(TypeError, lambda: complex(asarray([0j])))
     assert_raises(TypeError, lambda: operator.index(asarray([0])))
 
-    # bool/int/float should only be allowed on arrays of the corresponding
-    # dtype
-    assert_raises(ValueError, lambda: bool(i))
-    assert_raises(ValueError, lambda: bool(f))
+    # bool should work on all types of arrays
+    assert bool(b) is bool(i) is bool(f) is bool(c) is False
 
-    assert_raises(ValueError, lambda: int(b))
-    assert_raises(ValueError, lambda: int(f))
+    # int should fail on complex arrays
+    assert int(b) == int(i) == int(f) == 0
+    assert_raises(TypeError, lambda: int(c))
 
-    assert_raises(ValueError, lambda: float(b))
-    assert_raises(ValueError, lambda: float(i))
+    # float should fail on complex arrays
+    assert float(b) == float(i) == float(f) == 0.0
+    assert_raises(TypeError, lambda: float(c))
 
+    # complex should work on all types of arrays
+    assert complex(b) == complex(i) == complex(f) == complex(c) == 0j
+
+    # index should only work on integer arrays
+    assert operator.index(i) == 0
     assert_raises(TypeError, lambda: operator.index(b))
     assert_raises(TypeError, lambda: operator.index(f))
+    assert_raises(TypeError, lambda: operator.index(c))
 
 
 def test_device_property():
