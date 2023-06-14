@@ -108,7 +108,7 @@ jobs:
 
       # We need rtools 4.0 to have 32 bit support on windows
       - if: runner.os == 'windows'
-        uses: r-windows/install-rtools@13886bb4048f1b862d33869a18b73cdd446a3961 # main
+        uses: r-windows/install-rtools@ca1090c210479e995c03019a22b9798cdf57073a # main
 
       - name: setup rtools for 32-bit
         run: |
