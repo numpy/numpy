@@ -1494,7 +1494,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 int *out_needs_api)
 {
     int nargs = ufunc->nargs;
-    char *types;
+    const char *types;
     int i, j;
 
     /*
@@ -1960,7 +1960,7 @@ linear_search_type_resolver(PyUFuncObject *self,
      */
     no_castable_output = 0;
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < nop; ++j) {
@@ -2042,7 +2042,7 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
     }
 
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /*
          * Check specified types and copy into an int array for matching
