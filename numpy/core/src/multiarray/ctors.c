@@ -2946,8 +2946,6 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
     Py_XDECREF(type);
 
     if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
         return NULL;
     }
 
