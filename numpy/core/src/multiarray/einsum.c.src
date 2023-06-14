@@ -814,7 +814,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     int *op_axes[NPY_MAXARGS];
     npy_uint32 iter_flags, op_flags[NPY_MAXARGS];
 
-    NpyIter *iter;
+    NpyIter *iter = NULL;
     sum_of_products_fn sop;
     npy_intp fixed_strides[NPY_MAXARGS];
 
@@ -1133,7 +1133,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
-            NpyIter_Deallocate(iter);
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
@@ -1168,6 +1167,7 @@ finish:
     return ret;
 
 fail:
+    NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
     }
