@@ -19,8 +19,8 @@
 
 
 /*
- * The global ContextVar to store the extobject this is exposed to Python
- * as `_extobj_contextvar` to reset its state in `np.errstate.__exit__`.
+ * The global ContextVar to store the extobject. It is exposed to Python
+ * as `_extobj_contextvar`.
  */
 static PyObject *default_extobj_capsule = NULL;
 NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
