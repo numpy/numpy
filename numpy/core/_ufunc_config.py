@@ -1,7 +1,7 @@
 """
 Functions for changing global ufunc configuration
 
-This provides helpers which wrap `_geterrobj` and `_seterrobj`, and
+This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 `_extobj_contextvar` from umath.
 """
 import collections.abc
@@ -9,7 +9,7 @@ import contextlib
 import contextvars
 
 from .._utils import set_module
-from .umath import _seterrobj, _geterrobj, _extobj_contextvar
+from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
@@ -93,13 +93,14 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     """
 
-    old = _geterrobj()
+    old = _get_extobj_dict()
     # The errstate doesn't include call and bufsize, so pop them:
     old.pop("call", None)
     old.pop("bufsize", None)
 
-    _seterrobj(
+    extobj = _make_extobj(
             all=all, divide=divide, over=over, under=under, invalid=invalid)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -143,7 +144,7 @@ def geterr():
     >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
-    res = _geterrobj()
+    res = _get_extobj_dict()
     # The "geterr" doesn't include call and bufsize,:
     res.pop("call", None)
     res.pop("bufsize", None)
@@ -161,8 +162,9 @@ def setbufsize(size):
         Size of buffer.
 
     """
-    old = _geterrobj()["bufsize"]
-    _seterrobj(bufsize=size)
+    old = _get_extobj_dict()["bufsize"]
+    extobj = _make_extobj(bufsize=size)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -177,7 +179,7 @@ def getbufsize():
         Size of ufunc buffer in bytes.
 
     """
-    return _geterrobj()["bufsize"]
+    return _get_extobj_dict()["bufsize"]
 
 
 @set_module('numpy')
@@ -262,8 +264,9 @@ def seterrcall(func):
     {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
-    old = _geterrobj()["call"]
-    _seterrobj(call=func)
+    old = _get_extobj_dict()["call"]
+    _make_extobj(call=func)
+    _extobj_contextvar.set(_make_extobj)
     return old
 
 
@@ -312,7 +315,7 @@ def geterrcall():
     >>> old_handler = np.seterrcall(None)  # restore original
 
     """
-    return _geterrobj()["call"]
+    return _get_extobj_dict()["call"]
 
 
 class _unspecified:
@@ -398,14 +401,16 @@ class errstate(contextlib.ContextDecorator):
         if self._token is not None:
             raise TypeError("Cannot enter `np.errstate` twice.")
         if self._call is _Unspecified:
-            self._token = _seterrobj(
+            extobj = _make_extobj(
                     all=self._all, divide=self._divide, over=self._over,
                     under=self._under, invalid=self._invalid)
         else:
-            self._token = _seterrobj(
+            extobj = _make_extobj(
                     call=self._call,
                     all=self._all, divide=self._divide, over=self._over,
                     under=self._under, invalid=self._invalid)
+
+        self._token = _extobj_contextvar.set(extobj)
 
     def __exit__(self, *exc_info):
         _extobj_contextvar.reset(self._token)

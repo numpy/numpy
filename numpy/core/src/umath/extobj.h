@@ -44,10 +44,10 @@ init_extobj(void);
  * Private Python exposure of the extobj.
  */
 NPY_NO_EXPORT PyObject *
-extobj_seterrobj(PyObject *NPY_UNUSED(mod),
+extobj_make_extobj(PyObject *NPY_UNUSED(mod),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 NPY_NO_EXPORT PyObject *
-extobj_geterrobj(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg));
+extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg));
 
 #endif

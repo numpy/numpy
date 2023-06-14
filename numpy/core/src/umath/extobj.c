@@ -150,24 +150,6 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 }
 
 
-/*
- * Update the current extobj state to the state passed in and returns the
- * contexxtvar token to restore it.
- */
-static PyObject *
-update_curr_extobj_state(npy_extobj *extobj)
-{
-    PyObject *new_capsule = make_extobj_capsule(
-            extobj->bufsize, extobj->errmask, extobj->pyfunc);
-    if (new_capsule == NULL) {
-        return NULL;
-    }
-    PyObject *token = PyContextVar_Set(npy_extobj_contextvar, new_capsule);
-    Py_DECREF(new_capsule);
-    return token;
-}
-
-
 NPY_NO_EXPORT int
 init_extobj(void)
 {
@@ -229,14 +211,11 @@ errmodeconverter(PyObject *obj, int *mode)
 
 /*
  * This function is currently exposed as `umath._seterrobj()`, it is private
- * and has two modes:
- * 1. passing kwargs to set the errstate, call, and buffersize.  This mode
- *    return a token to allow restoring the previous state.
- * 2. passing a single positional argument (the above token) to restore the
- *    state (returns `None`);  may also be passed as `restore_token`.
+ * and returns a capsule representing the errstate.  This capsule is then
+ * assigned to the `npy_extobj_contextvar` in Python.
  */
 NPY_NO_EXPORT PyObject *
-extobj_seterrobj(PyObject *NPY_UNUSED(mod),
+extobj_make_extobj(PyObject *NPY_UNUSED(mod),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int all_mode = -1;
@@ -332,9 +311,10 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
         Py_INCREF(pyfunc);
         Py_SETREF(extobj.pyfunc, pyfunc);
     }
-    PyObject *token = update_curr_extobj_state(&extobj);
+    PyObject *capsule = make_extobj_capsule(
+            extobj.bufsize, extobj.errmask, extobj.pyfunc);
     npy_extobj_clear(&extobj);
-    return token;
+    return capsule;
 }
 
 
@@ -343,7 +323,7 @@ extobj_seterrobj(PyObject *NPY_UNUSED(mod),
  * current extobj/errobj.
  */
 NPY_NO_EXPORT PyObject *
-extobj_geterrobj(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
+extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
 {
     PyObject *result = NULL, *bufsize_obj = NULL;
     npy_extobj extobj;
