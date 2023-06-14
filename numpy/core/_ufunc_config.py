@@ -269,8 +269,8 @@ def seterrcall(func):
 
     """
     old = _get_extobj_dict()["call"]
-    _make_extobj(call=func)
-    _extobj_contextvar.set(_make_extobj)
+    extobj = _make_extobj(call=func)
+    _extobj_contextvar.set(extobj)
     return old
 
 
