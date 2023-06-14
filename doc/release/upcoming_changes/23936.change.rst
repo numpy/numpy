@@ -1,0 +1,5 @@
+* Being fully context and thread-safe, ``np.errstate`` can only
+  be entered once now.  It is possible to enter it again after
+  exiting first.
+* ``np.setbufsize`` is now tied to ``np.errstate()``:  Leaving an
+  ``np.errstate`` context will also reset the ``bufsize``.
