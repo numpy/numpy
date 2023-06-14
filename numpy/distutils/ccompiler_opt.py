@@ -495,9 +495,9 @@ class _Config:
             )
             if self.cc_is_clang:
                 partial["VSX"]["flags"]  = "-maltivec -mvsx"
-                partial["VSX2"]["flags"] = "-mpower8-vector"
-                partial["VSX3"]["flags"] = "-mpower9-vector"
-                partial["VSX4"]["flags"] = "-mpower10-vector"
+                partial["VSX2"]["flags"] = "-mcpu=power8"
+                partial["VSX3"]["flags"] = "-mcpu=power9"
+                partial["VSX4"]["flags"] = "-mcpu=power10"
 
             return partial
 
