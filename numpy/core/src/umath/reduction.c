@@ -427,7 +427,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even on error */
-        if (_check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+        if (_check_ufunc_fperr(errormask, "reduce") < 0) {
             goto fail;
         }
     }

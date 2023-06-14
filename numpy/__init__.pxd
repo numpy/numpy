@@ -900,14 +900,8 @@ cdef extern from "numpy/ufuncobject.h":
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_On_Om \
          (char **, npy_intp *, npy_intp *, void *)
-    int PyUFunc_GetPyValues \
-        (char *, int *, int *, PyObject **)
-    int PyUFunc_checkfperr \
-           (int, PyObject *, int *)
     void PyUFunc_clearfperr()
     int PyUFunc_getfperr()
-    int PyUFunc_handlefperr \
-        (int, PyObject *, int, int *) except -1
     int PyUFunc_ReplaceLoopBySignature \
         (ufunc, PyUFuncGenericFunction, int *, PyUFuncGenericFunction *)
     object PyUFunc_FromFuncAndDataAndSignature \

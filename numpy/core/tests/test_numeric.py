@@ -568,55 +568,6 @@ class TestSeterr:
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 
-    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
-    def test_errobj(self):
-        olderrobj = np.geterrobj()
-        self.called = 0
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
-                with np.errstate(divide='warn'):
-                    np.seterrobj([20000, 1, None])
-                    np.array([1.]) / np.array([0.])
-                    assert_equal(len(w), 1)
-
-            def log_err(*args):
-                self.called += 1
-                extobj_err = args
-                assert_(len(extobj_err) == 2)
-                assert_("divide" in extobj_err[0])
-
-            with np.errstate(divide='ignore'):
-                np.seterrobj([20000, 3, log_err])
-                np.array([1.]) / np.array([0.])
-            assert_equal(self.called, 1)
-
-            np.seterrobj(olderrobj)
-            with np.errstate(divide='ignore'):
-                np.divide(1., 0., extobj=[20000, 3, log_err])
-            assert_equal(self.called, 2)
-        finally:
-            np.seterrobj(olderrobj)
-            del self.called
-
-    def test_errobj_noerrmask(self):
-        # errmask = 0 has a special code path for the default
-        olderrobj = np.geterrobj()
-        try:
-            # set errobj to something non default
-            np.seterrobj([umath.UFUNC_BUFSIZE_DEFAULT,
-                         umath.ERR_DEFAULT + 1, None])
-            # call a ufunc
-            np.isnan(np.array([6]))
-            # same with the default, lots of times to get rid of possible
-            # pre-existing stack in the code
-            for i in range(10000):
-                np.seterrobj([umath.UFUNC_BUFSIZE_DEFAULT, umath.ERR_DEFAULT,
-                             None])
-            np.isnan(np.array([6]))
-        finally:
-            np.seterrobj(olderrobj)
-
 
 class TestFloatExceptions:
     def assert_raises_fpe(self, fpeerr, flop, x, y):

@@ -41,16 +41,27 @@ class TestErrstate:
             with assert_raises(FloatingPointError):
                 a // a
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.skipif(arm_softfloat,
+                        reason='platform/cpu issue with FPU (gh-15562)')
     def test_errcall(self):
+        count = 0
         def foo(*args):
-            print(args)
+            nonlocal count
+            count += 1
 
         olderrcall = np.geterrcall()
         with np.errstate(call=foo):
-            assert_(np.geterrcall() is foo, 'call is not foo')
+            assert np.geterrcall() is foo
             with np.errstate(call=None):
-                assert_(np.geterrcall() is None, 'call is not None')
-        assert_(np.geterrcall() is olderrcall, 'call is not olderrcall')
+                assert np.geterrcall() is None
+        assert np.geterrcall() is olderrcall
+        assert count == 0
+
+        with np.errstate(call=foo, invalid="call"):
+            np.array(np.inf) - np.array(np.inf)
+
+        assert count == 1
 
     def test_errstate_decorator(self):
         @np.errstate(all='ignore')

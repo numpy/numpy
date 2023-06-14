@@ -98,6 +98,11 @@ requires = [
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "python_removal"
+        name = "NumPy 2.0 Python API removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "deprecation"
         name = "Deprecations"
         showcontent = true

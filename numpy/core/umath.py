@@ -11,7 +11,8 @@ from ._multiarray_umath import *  # noqa: F403
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-11862
 # _ones_like is semi-public, on purpose not added to __all__
-from ._multiarray_umath import _UFUNC_API, _add_newdoc_ufunc, _ones_like
+from ._multiarray_umath import (
+    _UFUNC_API, _add_newdoc_ufunc, _ones_like, _geterrobj, _seterrobj)
 
 __all__ = [
     '_UFUNC_API', 'ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG',
@@ -25,12 +26,12 @@ __all__ = [
     'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide',
     'divmod', 'e', 'equal', 'euler_gamma', 'exp', 'exp2', 'expm1', 'fabs',
     'floor', 'floor_divide', 'float_power', 'fmax', 'fmin', 'fmod', 'frexp',
-    'frompyfunc', 'gcd', 'geterrobj', 'greater', 'greater_equal', 'heaviside',
+    'frompyfunc', 'gcd', 'greater', 'greater_equal', 'heaviside',
     'hypot', 'invert', 'isfinite', 'isinf', 'isnan', 'isnat', 'lcm', 'ldexp',
     'left_shift', 'less', 'less_equal', 'log', 'log10', 'log1p', 'log2',
     'logaddexp', 'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
     'logical_xor', 'maximum', 'minimum', 'mod', 'modf', 'multiply', 'negative',
     'nextafter', 'not_equal', 'pi', 'positive', 'power', 'rad2deg', 'radians',
-    'reciprocal', 'remainder', 'right_shift', 'rint', 'seterrobj', 'sign',
+    'reciprocal', 'remainder', 'right_shift', 'rint', 'sign',
     'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan',
     'tanh', 'true_divide', 'trunc']

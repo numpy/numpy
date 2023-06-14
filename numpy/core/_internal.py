@@ -904,9 +904,9 @@ def _ufunc_doc_signature_formatter(ufunc):
 
     # NOTE: gufuncs may or may not support the `axis` parameter
     if ufunc.signature is None:
-        kwargs = f", where=True{kwargs}[, signature, extobj]"
+        kwargs = f", where=True{kwargs}[, signature]"
     else:
-        kwargs += "[, signature, extobj, axes, axis]"
+        kwargs += "[, signature, axes, axis]"
 
     # join all the parts together
     return '{name}({in_args}{out_args}, *{kwargs})'.format(
