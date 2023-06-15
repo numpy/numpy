@@ -372,10 +372,29 @@ NPY_FINLINE void npyv_store2_till_s32(npy_int32 *ptr, npy_uintp nlane, npyv_s32 
 NPY_FINLINE void npyv_store2_till_s64(npy_int64 *ptr, npy_uintp nlane, npyv_s64 a)
 {
     assert(nlane > 0);
+#ifdef _MSC_VER
+   /*
+    * Although this version is compatible with all other compilers,
+    * there is no performance benefit in retaining the other branch.
+    * However, it serves as evidence of a newly emerging bug in MSVC
+    * that started to appear since v19.30.
+    * For some reason, the MSVC optimizer chooses to ignore the lower store (128-bit mov)
+    * and replace with full mov counting on ymmword pointer.
+    *
+    * For more details, please refer to the discussion on https://github.com/numpy/numpy/issues/23896.
+    */
+    if (nlane > 1) {
+        npyv_store_s64(ptr, a);
+    }
+    else {
+        npyv_storel_s64(ptr, a);
+    }
+#else
     npyv_storel_s64(ptr, a);
     if (nlane > 1) {
         npyv_storeh_s64(ptr + 2, a);
     }
+#endif
 }
 /*********************************
  * Non-contiguous partial store
