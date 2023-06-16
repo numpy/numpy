@@ -1248,8 +1248,8 @@ def check_support_sve():
     import subprocess
     cmd = 'lscpu'
     try:
-        return "sve" in (subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            shell=True).communicate()[0]).decode('utf-8')
+        output = subprocess.run(cmd, capture_output=True, text=True)
+        return 'sve' in output.stdout
     except OSError:
         return False
 
