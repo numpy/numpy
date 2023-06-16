@@ -140,9 +140,10 @@ Types
 Functions
 ---------
 
-.. c:function:: PyObject* PyUFunc_FromFuncAndData( \
-        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
-        int nin, int nout, int identity, char* name, char* doc, int unused)
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( \
+        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        int ntypes, int nin, int nout, int identity, const char *name, \
+        const char *doc, int unused)
 
     Create a new broadcasting universal function from required variables.
     Each ufunc builds around the notion of an element-by-element
@@ -219,9 +220,10 @@ Functions
     :param unused:
         Unused and present for backwards compatibility of the C-API.
 
-.. c:function:: PyObject* PyUFunc_FromFuncAndDataAndSignature( \
-        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
-        int nin, int nout, int identity, char* name, char* doc, int unused, char *signature)
+.. c:function:: PyObject *PyUFunc_FromFuncAndDataAndSignature( \
+        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        int ntypes, int nin, int nout, int identity, const char *name, \
+        const char *doc, int unused, const char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
    an extra *signature* argument, to define a
