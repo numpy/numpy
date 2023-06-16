@@ -158,7 +158,7 @@ def setbufsize(size):
 
     .. versionchanged:: 2.0
         The scope of setting the buffer is tied to the `np.errstate` context.
-        Exiting a ``with errstate():` will also restore the bufsize.
+        Exiting a ``with errstate():`` will also restore the bufsize.
 
     Parameters
     ----------
