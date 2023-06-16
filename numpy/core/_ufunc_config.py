@@ -1,33 +1,20 @@
 """
 Functions for changing global ufunc configuration
 
-This provides helpers which wrap `umath._geterrobj` and `umath._seterrobj`
+This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
+`_extobj_contextvar` from umath.
 """
 import collections.abc
 import contextlib
 import contextvars
 
 from .._utils import set_module
-from .umath import (
-    UFUNC_BUFSIZE_DEFAULT,
-    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG, ERR_DEFAULT,
-    SHIFT_DIVIDEBYZERO, SHIFT_OVERFLOW, SHIFT_UNDERFLOW, SHIFT_INVALID,
-)
-from . import umath
+from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
     "errstate", '_no_nep50_warning'
 ]
-
-_errdict = {"ignore": ERR_IGNORE,
-            "warn": ERR_WARN,
-            "raise": ERR_RAISE,
-            "call": ERR_CALL,
-            "print": ERR_PRINT,
-            "log": ERR_LOG}
-
-_errdict_rev = {value: key for key, value in _errdict.items()}
 
 
 @set_module('numpy')
@@ -106,25 +93,14 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     """
 
-    pyvals = umath._geterrobj()
-    old = geterr()
+    old = _get_extobj_dict()
+    # The errstate doesn't include call and bufsize, so pop them:
+    old.pop("call", None)
+    old.pop("bufsize", None)
 
-    if divide is None:
-        divide = all or old['divide']
-    if over is None:
-        over = all or old['over']
-    if under is None:
-        under = all or old['under']
-    if invalid is None:
-        invalid = all or old['invalid']
-
-    maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
-                 (_errdict[over] << SHIFT_OVERFLOW) +
-                 (_errdict[under] << SHIFT_UNDERFLOW) +
-                 (_errdict[invalid] << SHIFT_INVALID))
-
-    pyvals[1] = maskvalue
-    umath._seterrobj(pyvals)
+    extobj = _make_extobj(
+            all=all, divide=divide, over=over, under=under, invalid=invalid)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -168,17 +144,10 @@ def geterr():
     >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
-    maskvalue = umath._geterrobj()[1]
-    mask = 7
-    res = {}
-    val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
-    res['divide'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_OVERFLOW) & mask
-    res['over'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_UNDERFLOW) & mask
-    res['under'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_INVALID) & mask
-    res['invalid'] = _errdict_rev[val]
+    res = _get_extobj_dict()
+    # The "geterr" doesn't include call and bufsize,:
+    res.pop("call", None)
+    res.pop("bufsize", None)
     return res
 
 
@@ -187,23 +156,19 @@ def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
 
+    .. versionchanged:: 2.0
+        The scope of setting the buffer is tied to the `np.errstate` context.
+        Exiting a ``with errstate():` will also restore the bufsize.
+
     Parameters
     ----------
     size : int
         Size of buffer.
 
     """
-    if size > 10e6:
-        raise ValueError("Buffer size, %s, is too big." % size)
-    if size < 5:
-        raise ValueError("Buffer size, %s, is too small." % size)
-    if size % 16 != 0:
-        raise ValueError("Buffer size, %s, is not a multiple of 16." % size)
-
-    pyvals = umath._geterrobj()
-    old = getbufsize()
-    pyvals[0] = size
-    umath._seterrobj(pyvals)
+    old = _get_extobj_dict()["bufsize"]
+    extobj = _make_extobj(bufsize=size)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -218,7 +183,7 @@ def getbufsize():
         Size of ufunc buffer in bytes.
 
     """
-    return umath._geterrobj()[0]
+    return _get_extobj_dict()["bufsize"]
 
 
 @set_module('numpy')
@@ -303,14 +268,9 @@ def seterrcall(func):
     {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
-    if func is not None and not isinstance(func, collections.abc.Callable):
-        if (not hasattr(func, 'write') or
-                not isinstance(func.write, collections.abc.Callable)):
-            raise ValueError("Only callable can be used as callback")
-    pyvals = umath._geterrobj()
-    old = geterrcall()
-    pyvals[2] = func
-    umath._seterrobj(pyvals)
+    old = _get_extobj_dict()["call"]
+    extobj = _make_extobj(call=func)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -359,7 +319,7 @@ def geterrcall():
     >>> old_handler = np.seterrcall(None)  # restore original
 
     """
-    return umath._geterrobj()[2]
+    return _get_extobj_dict()["call"]
 
 
 class _unspecified:
@@ -428,29 +388,38 @@ class errstate(contextlib.ContextDecorator):
     >>> olderr = np.seterr(**olderr)  # restore original state
 
     """
+    __slots__ = [
+        "_call", "_all", "_divide", "_over", "_under", "_invalid", "_token"]
 
-    def __init__(self, *, call=_Unspecified, **kwargs):
-        self.call = call
-        self.kwargs = kwargs
+    def __init__(self, *, call=_Unspecified,
+                 all=None, divide=None, over=None, under=None, invalid=None):
+        self._token = None
+        self._call = call
+        self._all = all
+        self._divide = divide
+        self._over = over
+        self._under = under
+        self._invalid = invalid
 
     def __enter__(self):
-        self.oldstate = seterr(**self.kwargs)
-        if self.call is not _Unspecified:
-            self.oldcall = seterrcall(self.call)
+        if self._token is not None:
+            raise TypeError("Cannot enter `np.errstate` twice.")
+        if self._call is _Unspecified:
+            extobj = _make_extobj(
+                    all=self._all, divide=self._divide, over=self._over,
+                    under=self._under, invalid=self._invalid)
+        else:
+            extobj = _make_extobj(
+                    call=self._call,
+                    all=self._all, divide=self._divide, over=self._over,
+                    under=self._under, invalid=self._invalid)
+
+        self._token = _extobj_contextvar.set(extobj)
 
     def __exit__(self, *exc_info):
-        seterr(**self.oldstate)
-        if self.call is not _Unspecified:
-            seterrcall(self.oldcall)
-
-
-def _setdef():
-    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
-    umath._seterrobj(defval)
-
-
-# set the default values
-_setdef()
+        _extobj_contextvar.reset(self._token)
+        # Allow entering twice, so long as it is sequential:
+        self._token = None
 
 
 NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)

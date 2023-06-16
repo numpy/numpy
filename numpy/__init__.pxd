@@ -833,26 +833,10 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
-        UFUNC_ERR_IGNORE
-        UFUNC_ERR_WARN
-        UFUNC_ERR_RAISE
-        UFUNC_ERR_CALL
-        UFUNC_ERR_PRINT
-        UFUNC_ERR_LOG
-        UFUNC_MASK_DIVIDEBYZERO
-        UFUNC_MASK_OVERFLOW
-        UFUNC_MASK_UNDERFLOW
-        UFUNC_MASK_INVALID
-        UFUNC_SHIFT_DIVIDEBYZERO
-        UFUNC_SHIFT_OVERFLOW
-        UFUNC_SHIFT_UNDERFLOW
-        UFUNC_SHIFT_INVALID
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
-        UFUNC_ERR_DEFAULT
-        UFUNC_ERR_DEFAULT2
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)

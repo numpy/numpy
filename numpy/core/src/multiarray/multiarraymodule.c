@@ -4628,11 +4628,11 @@ static struct PyMethodDef array_module_methods[] = {
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"_seterrobj",
-        (PyCFunction) ufunc_seterr,
-        METH_O, NULL},
-    {"_geterrobj",
-        (PyCFunction) ufunc_geterr,
+    {"_make_extobj",
+        (PyCFunction)extobj_make_extobj,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_get_extobj_dict",
+        (PyCFunction)extobj_get_extobj_dict,
         METH_NOARGS, NULL},
     {"get_handler_name",
         (PyCFunction) get_handler_name,
@@ -4995,6 +4995,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (initialize_static_globals() < 0) {
+        goto err;
+    }
+
+    if (init_extobj() < 0) {
         goto err;
     }
 

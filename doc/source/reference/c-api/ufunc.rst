@@ -10,32 +10,7 @@ UFunc API
 Constants
 ---------
 
-``UFUNC_ERR_{HANDLER}``
-    .. c:macro:: UFUNC_ERR_IGNORE
-
-    .. c:macro:: UFUNC_ERR_WARN
-
-    .. c:macro:: UFUNC_ERR_RAISE
-
-    .. c:macro:: UFUNC_ERR_CALL
-
 ``UFUNC_{THING}_{ERR}``
-    .. c:macro:: UFUNC_MASK_DIVIDEBYZERO
-
-    .. c:macro:: UFUNC_MASK_OVERFLOW
-
-    .. c:macro:: UFUNC_MASK_UNDERFLOW
-
-    .. c:macro:: UFUNC_MASK_INVALID
-
-    .. c:macro:: UFUNC_SHIFT_DIVIDEBYZERO
-
-    .. c:macro:: UFUNC_SHIFT_OVERFLOW
-
-    .. c:macro:: UFUNC_SHIFT_UNDERFLOW
-
-    .. c:macro:: UFUNC_SHIFT_INVALID
-
     .. c:macro:: UFUNC_FPE_DIVIDEBYZERO
 
     .. c:macro:: UFUNC_FPE_OVERFLOW
