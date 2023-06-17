@@ -57,6 +57,12 @@ class TestPublicPrivate:
         assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
         assert set(tt['c']['attrspec']) == {'public'}
 
+    def test_nowrap_private_proceedures(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh23879.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        pyf = crackfortran.crack2fortran(mod)
+        assert 'bar' not in pyf
 
 class TestModuleProcedure():
     def test_moduleOperators(self, tmp_path):
