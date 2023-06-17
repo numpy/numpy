@@ -63,8 +63,8 @@ Build-time dependency
     have to compile with the oldest version you wish to support.
     This can be done by using
     `oldest-supported-numpy <https://github.com/scipy/oldest-supported-numpy/>`__.
-    Please see the NumPy 1.24 documentation at
-    `https://numpy.org/doc/1.24/dev/depending_on_numpy.html`__.
+    Please see the `NumPy 1.24 documentation
+    <https://numpy.org/doc/1.24/dev/depending_on_numpy.html>`__.
 
 
 If a package either uses the NumPy C API directly or it uses some other tool
