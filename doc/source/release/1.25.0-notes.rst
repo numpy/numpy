@@ -15,8 +15,8 @@ Highlights are:
 - Object arrays are now supported in einsum
 - Support for inplace matrix multiplication (``@=``).
 
-We will be releasing a NumPy 1.26 when Python 12 comes out. That is needed
-because distutils has been dropped by Python 12 and we will be switching to using
+We will be releasing a NumPy 1.26 when Python 3.12 comes out. That is needed
+because distutils has been dropped by Python 3.12 and we will be switching to using
 meson for future builds. The next mainline release will be NumPy 2.0.0. We plan
 that the 2.0 series will still support downstream projects built against earlier
 versions of NumPy.
@@ -551,6 +551,16 @@ the cast to float.
 
 Performance improvements and changes
 ====================================
+
+Faster ``np.argsort`` on AVX-512 enabled processors
+---------------------------------------------------
+32-bit and 64-bit quicksort algorithm for np.argsort gain up to 6x speed up on
+processors that support AVX-512 instruction set.
+
+Thanks to `Intel corporation <https://open.intel.com/>`_ for sponsoring this
+work.
+
+(`gh-23707 <https://github.com/numpy/numpy/pull/23707>`__)
 
 Faster ``np.sort`` on AVX-512 enabled processors
 ------------------------------------------------
