@@ -187,7 +187,7 @@ def trimcoef(c, tol=0):
 
     See Also
     --------
-    trimseq
+    polynomial.polyutils.trimseq
 
     Examples
     --------
