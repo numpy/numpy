@@ -2180,10 +2180,7 @@ def analyzebody(block, args, tab=''):
 
     setmesstext(block)
 
-    # Add private members to skipfuncs
-    # Fixes gh-23879
-    private_vars = {key: value for key, value in block['vars'].items() if 'attrspec' not in value or 'public' not in value['attrspec']}
-    skipfuncs.extend(private_vars.keys())
+    maybe_private = {key: value for key, value in block['vars'].items() if 'attrspec' not in value or 'public' not in value['attrspec']}
 
     body = []
     for b in block['body']:
@@ -2193,6 +2190,9 @@ def analyzebody(block, args, tab=''):
                 continue
             else:
                 as_ = b['args']
+            # Add private members to skipfuncs for gh-23879
+            if b['name'] in maybe_private.keys():
+                skipfuncs.append(b['name'])
             if b['name'] in skipfuncs:
                 continue
             if onlyfuncs and b['name'] not in onlyfuncs:
