@@ -2179,6 +2179,12 @@ def analyzebody(block, args, tab=''):
     global usermodules, skipfuncs, onlyfuncs, f90modulevars
 
     setmesstext(block)
+
+    # Add private members to skipfuncs
+    # Fixes gh-23879
+    private_vars = {key: value for key, value in block['vars'].items() if 'attrspec' not in value or 'public' not in value['attrspec']}
+    skipfuncs.extend(private_vars.keys())
+
     body = []
     for b in block['body']:
         b['parent_block'] = block
