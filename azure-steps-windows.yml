@@ -57,6 +57,7 @@ steps:
   displayName: 'Check OpenBLAS version'
 
 - powershell: |
+    cd tools  # avoid root dir to not pick up source tree
     # Get a gfortran onto the path for f2py tests
     $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
     If ( $env:TEST_MODE -eq "full" ) {
