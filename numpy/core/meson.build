@@ -372,8 +372,8 @@ if longdouble_size == 8
     longdouble_format = 'IEEE_DOUBLE_BE'
   endif
 elif longdouble_size == 12
-  # This is a HACK to make the build work on 32-bit Linux
-  longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+  # This is hardcoded to make the build work on 32-bit Linux
+  longdouble_format = 'INTEL_EXTENDED_12_BYTES_LE'
   #error('This should not be possible, 12 bits of "content" should still result in sizeof() being 16. Please report this error!')
 elif longdouble_size == 16
   if host_machine.endian() == 'little'
@@ -384,7 +384,7 @@ elif longdouble_size == 16
     error('No idea what this is ....')
   endif
 else
-  error('Unknown long double size: ' + londouble_size)
+  error('Unknown long double size: ' + longdouble_size)
 endif
 cdata.set10('HAVE_LDOUBLE_' + longdouble_format, true)
 
