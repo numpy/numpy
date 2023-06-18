@@ -219,8 +219,7 @@ def test_operators():
     # Finally, matmul() must be tested separately, because it works a bit
     # different from the other operations.
     def _matmul_array_vals():
-        for a in _array_vals():
-            yield a
+        yield from _array_vals()
         for d in _all_dtypes:
             yield ones((3, 4), dtype=d)
             yield ones((4, 2), dtype=d)
