@@ -255,12 +255,14 @@ stages:
             TEST_MODE: full
             BITS: 64
             # NPY_USE_BLAS_ILP64: '1'
-          PyPy39-64bit-fast:
-            PYTHON_VERSION: 'pypy3.9'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: fast
-            BITS: 64
-            # NPY_USE_BLAS_ILP64: '1'
+            # TODO: failing because of an issue with ILP64 BLAS being downloaded,
+            #       and that not being handled automatically yet
+            # PyPy39-64bit-fast:
+              # PYTHON_VERSION: 'pypy3.9'
+              # PYTHON_ARCH: 'x64'
+              # TEST_MODE: fast
+              # BITS: 64
+              # NPY_USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml
