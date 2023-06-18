@@ -473,6 +473,9 @@ def test_api_importable():
 
 
 @pytest.mark.xfail(
+    reason = "meson-python doesn't install this entrypoint correctly yet",
+)
+@pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG") is not None,
     reason=(
         "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
