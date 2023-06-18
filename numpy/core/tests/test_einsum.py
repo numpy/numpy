@@ -102,7 +102,7 @@ class TestEinsum:
 
     def test_einsum_object_errors(self):
         # Exceptions created by object arithmetic should
-        # successfully propogate
+        # successfully propagate
 
         class CustomException(Exception):
             pass

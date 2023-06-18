@@ -27,7 +27,7 @@ Malicious *values* or *data sizes* should never lead to privilege escalation.
 Note that the above refers to array data.  We do not currently consider for
 example ``f2py`` to be safe:
 it is typically used to compile a program that is then run.
-Any ``f2py`` invocation must thus use the same priviledge as the later execution.
+Any ``f2py`` invocation must thus use the same privilege as the later execution.
 
 The following points may be useful or should be noted when working with
 untrusted data:

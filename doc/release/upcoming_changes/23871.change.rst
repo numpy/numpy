@@ -15,7 +15,7 @@ This changes the following distinct cases:
   to integer first) or ``string_array == "0"`` (if the input is only ever ``0`` or ``1``).
   To get the new result on old NumPy versions use ``string_array != ""``.
 * ``np.nonzero(string_array)`` previously ignored whitespace so that
-  a string only containing whitepsace was considered ``False``.
+  a string only containing whitespace was considered ``False``.
   Whitespace is now considered ``True``.
 
 This change does not affect ``np.loadtxt``, ``np.fromstring``, or ``np.genfromtxt``.
