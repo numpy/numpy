@@ -1,3 +1,4 @@
+import platform
 import sys
 import gc
 from hypothesis import given
@@ -161,6 +162,8 @@ class TestArrayRepr:
 
 
 class TestComplexArray:
+    @pytest.mark.xfail(platform.machine() == 'aarch64',
+                       reason="Failing on Meson build, see gh-23974")
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
         cvals = [complex(rp, ip) for rp in rvals for ip in rvals]

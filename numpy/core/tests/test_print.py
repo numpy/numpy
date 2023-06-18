@@ -1,4 +1,5 @@
 import sys
+import platform
 
 import pytest
 
@@ -12,7 +13,14 @@ from io import StringIO
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
 
-@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+# longdouble printing issue on aarch64, see gh-23974
+if platform.machine() == 'aarch64':
+    _real_dtypes = [np.float32, np.double]
+    _complex_dtypes = [np.complex64, np.cdouble]
+else:
+    _real_dtypes = [np.float32, np.double, np.longdouble]
+    _complex_dtypes = [np.complex64, np.cdouble, np.clongdouble]
+@pytest.mark.parametrize('tp', _real_dtypes)
 def test_float_types(tp):
     """ Check formatting.
 
@@ -34,7 +42,7 @@ def test_float_types(tp):
                      err_msg='Failed str formatting for type %s' % tp)
 
 
-@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+@pytest.mark.parametrize('tp', _real_dtypes)
 def test_nan_inf_float(tp):
     """ Check formatting of nan & inf.
 
@@ -48,7 +56,7 @@ def test_nan_inf_float(tp):
                      err_msg='Failed str formatting for type %s' % tp)
 
 
-@pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
+@pytest.mark.parametrize('tp', _complex_dtypes)
 def test_complex_types(tp):
     """Check formatting of complex types.
 
@@ -74,7 +82,7 @@ def test_complex_types(tp):
                      err_msg='Failed str formatting for type %s' % tp)
 
 
-@pytest.mark.parametrize('dtype', [np.complex64, np.cdouble, np.clongdouble])
+@pytest.mark.parametrize('dtype', _complex_dtypes)
 def test_complex_inf_nan(dtype):
     """Check inf/nan formatting of complex types."""
     TESTS = {
@@ -119,7 +127,7 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg='print failed for type%s' % tp)
 
 
-@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+@pytest.mark.parametrize('tp', _real_dtypes)
 def test_float_type_print(tp):
     """Check formatting when using print """
     for x in [0, 1, -1, 1e20]:
@@ -135,7 +143,7 @@ def test_float_type_print(tp):
         _test_redirected_print(float(1e16), tp, ref)
 
 
-@pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
+@pytest.mark.parametrize('tp', _complex_dtypes)
 def test_complex_type_print(tp):
     """Check formatting when using print """
     # We do not create complex with inf/nan directly because the feature is

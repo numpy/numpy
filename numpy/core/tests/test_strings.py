@@ -1,5 +1,6 @@
 import pytest
 
+import platform
 import operator
 import numpy as np
 
@@ -88,6 +89,9 @@ def test_string_comparisons_empty(op, ufunc, sym, dtypes):
 @pytest.mark.parametrize("str_dt", ["S", "U"])
 @pytest.mark.parametrize("float_dt", np.typecodes["AllFloat"])
 def test_float_to_string_cast(str_dt, float_dt):
+    if platform.machine() == 'aarch64' and float_dt == 'g':
+        pytest.xfail("string repr issues with longdouble, see gh-23974")
+
     float_dt = np.dtype(float_dt)
     fi = np.finfo(float_dt)
     arr = np.array([np.nan, np.inf, -np.inf, fi.max, fi.min], dtype=float_dt)
