@@ -359,7 +359,7 @@ def test_thread_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
-@pytest.mark.slow
+@pytest.mark.skip(reason="too slow, see gh-23975")
 def test_new_policy(get_module):
     a = np.arange(10)
     orig_policy_name = np.core.multiarray.get_handler_name(a)
