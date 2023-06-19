@@ -33,8 +33,6 @@ repr_precision = len(repr(np.longdouble(0.1)))
 # +2 from macro block starting around line 842 in scalartypes.c.src.
 
 
-@pytest.mark.xfail(platform.machine() == 'aarch64',
-                   reason="Failing on Meson build, see gh-23974")
 @pytest.mark.skipif(IS_MUSL,
                     reason="test flaky on musllinux")
 @pytest.mark.skipif(LD_INFO.precision + 2 >= repr_precision,
