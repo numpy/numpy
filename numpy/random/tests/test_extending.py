@@ -4,8 +4,8 @@ import shutil
 import subprocess
 import sys
 import warnings
+
 import numpy as np
-from numpy.distutils.misc_util import exec_mod_from_location
 from numpy.testing import IS_WASM
 
 
@@ -45,10 +45,13 @@ else:
         cython = None
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12),
+                    reason="numpy.distutils not supported anymore")
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):
+    from numpy.distutils.misc_util import exec_mod_from_location
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')
     # build the examples and "install" them into a temporary directory
