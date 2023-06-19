@@ -2268,13 +2268,13 @@ class vectorize:
     a function to provide keyword arguments.
     >>> @np.vectorize
     ... def identity(x):
-    ...    return x
+    ...     return x
     ...
     >>> identity([0, 1, 2])
     array([0, 1, 2])
     >>> @np.vectorize(otypes=[float])
     ... def as_float(x):
-    ...    return x
+    ...     return x
     ...
     >>> as_float([0, 1, 2])
     array([0., 1., 2.])
