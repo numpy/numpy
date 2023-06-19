@@ -67,36 +67,84 @@ else
   blas = dependency(blas_name, required: false)
 endif
 have_blas = blas.found()
-if have_blas and blas_name == 'blas'
+cblas = []
+if have_blas
   # Netlib BLAS has a separate `libcblas.so` which we use directly in the g77
-  # ABI wrappers, so detect it and error out if we cannot find it.
+  # ABI wrappers, so detect it and error out if we cannot find it. OpenBLAS can
+  # be built without CBLAS too (see gh-23909, done by Arch Linux until
+  # recently)
   # In the future, this should be done automatically for:
   #   `dependency('blas', modules: cblas)`
   # see https://github.com/mesonbuild/meson/pull/10921.
-  cblas = dependency('cblas')
-else
-  cblas = []
+  have_cblas = false
+  if cc.links('''
+      #include <cblas.h>
+      int main(int argc, const char *argv[])
+      {
+          double a[4] = {1,2,3,4};
+          double b[4] = {5,6,7,8};
+          return cblas_ddot(4, a, 1, b, 1) > 10;
+      }
+      ''',
+      dependencies: blas,
+      name: 'CBLAS',
+    )
+    have_cblas = true
+  else
+    cblas = dependency('cblas', required: false)
+    if cblas.found()
+      have_cblas = true
+    endif
+  endif
 endif
 
 if lapack_name == 'openblas'
   lapack_name = ['openblas', 'OpenBLAS']
 endif
-lapack = dependency(lapack_name, required: false)
-have_lapack = lapack.found()
+lapack_dep = dependency(lapack_name, required: false)
+have_lapack = lapack_dep.found()
 
 dependency_map = {
   'BLAS': blas,
-  'LAPACK': lapack,
+  'LAPACK': lapack_dep,
 }
+
+use_ilp64 = get_option('use-ilp64')
+if not use_ilp64
+  # For now, keep supporting this environment variable too (same as in setup.py)
+  # `false is the default for the CLI flag, so check if env var was set
+  use_ilp64 = run_command(py,
+    [
+      '-c',
+      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", None) else print(0)'
+    ],
+    check: true
+  ).stdout().strip() == '1'
+endif
 
 # BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
 # which provides a CBLAS interface.
 # TODO: add ILP64 support
 if have_blas
-  # TODO: this is a shortcut - it needs to be checked rather than used
-  # unconditionally, and then added to the extension modules that need the
-  # macro, rather than as a project argument.
-  add_project_arguments('-DHAVE_CBLAS', language: ['c', 'cpp'])
+  c_args_blas = []  # note: used for C and C++ via `blas_dep` below
+  if have_cblas
+    c_args_blas += ['-DHAVE_CBLAS']
+  endif
+  if use_ilp64
+    c_args_blas += ['-DHAVE_BLAS_ILP64']
+  endif
+  # This is currently injected directly into CFLAGS/CXXFLAGS for wheel builds
+  # (see cibuildwheel settings in pyproject.toml)
+  blas_symbol_suffix = get_option('blas-symbol-suffix')
+  if blas_symbol_suffix != ''
+    c_args_blas += ['-DBLAS_SYMBOL_SUFFIX=' + blas_symbol_suffix]
+  endif
+  blas_dep = declare_dependency(
+    dependencies: [blas, cblas],
+    compile_args: c_args_blas,
+  )
+else
+  blas_dep = []
 endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
