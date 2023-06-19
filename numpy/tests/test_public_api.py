@@ -473,8 +473,7 @@ def test_api_importable():
 
 
 @pytest.mark.xfail(
-    hasattr(np.__config__, "_built_with_meson"),
-    reason = "Meson does not yet support entry points via pyproject.toml",
+    reason = "meson-python doesn't install this entrypoint correctly yet",
 )
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG") is not None,

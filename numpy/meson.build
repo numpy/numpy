@@ -198,10 +198,13 @@ foreach name, dep : dependency_map
   if dep.found()
     conf_data.set(name + '_VERSION', dep.version())
     conf_data.set(name + '_TYPE_NAME', dep.type_name())
-    conf_data.set(name + '_INCLUDEDIR', dep.get_variable('includedir'))
-    conf_data.set(name + '_LIBDIR', dep.get_variable('libdir'))
-    conf_data.set(name + '_OPENBLAS_CONFIG', dep.get_variable('openblas_config'))
-    conf_data.set(name + '_PCFILEDIR', dep.get_variable('pcfiledir'))
+    if dep.type_name() == 'pkgconfig'
+      # CMake detection yields less info, so we need to leave it blank there
+      conf_data.set(name + '_INCLUDEDIR', dep.get_variable('includedir'))
+      conf_data.set(name + '_LIBDIR', dep.get_variable('libdir'))
+      conf_data.set(name + '_OPENBLAS_CONFIG', dep.get_variable('openblas_config'))
+      conf_data.set(name + '_PCFILEDIR', dep.get_variable('pcfiledir'))
+    endif
   endif
 endforeach
 

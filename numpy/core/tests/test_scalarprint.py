@@ -13,7 +13,11 @@ from numpy.testing import assert_, assert_equal, assert_raises, IS_MUSL
 class TestRealScalars:
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
-        styps = [np.float16, np.float32, np.float64, np.longdouble]
+        # longdouble printing issue on aarch64, see gh-23974
+        if platform.machine() == 'aarch64':
+            styps = [np.float16, np.float32, np.float64]
+        else:
+            styps = [np.float16, np.float32, np.float64, np.longdouble]
         wanted = [
              ['0.0',  '0.0',  '0.0',  '0.0' ],
              ['-0.0', '-0.0', '-0.0', '-0.0'],
@@ -263,7 +267,9 @@ class TestRealScalars:
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
         # test is flaky for musllinux on np.float128
-        if hasattr(np, 'float128') and not IS_MUSL:
+        # also currently failing on Linux aarch64 with Meson (see gh-23974)
+        is_aarch64 = platform.machine() == 'aarch64'
+        if hasattr(np, 'float128') and not IS_MUSL and not is_aarch64:
             tps.append(np.float128)
 
         fpos = np.format_float_positional

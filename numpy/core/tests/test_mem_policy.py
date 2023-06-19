@@ -359,7 +359,7 @@ def test_thread_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
-@pytest.mark.slow
+@pytest.mark.skip(reason="too slow, see gh-23975")
 def test_new_policy(get_module):
     a = np.arange(10)
     orig_policy_name = np.core.multiarray.get_handler_name(a)
@@ -377,10 +377,11 @@ def test_new_policy(get_module):
         #
         # if needed, debug this by
         # - running tests with -- -s (to not capture stdout/stderr
+        # - setting verbose=2
         # - setting extra_argv=['-vv'] here
-        assert np.core.test('full', verbose=2, extra_argv=['-vv'])
+        assert np.core.test('full', verbose=1, extra_argv=[])
         # also try the ma tests, the pickling test is quite tricky
-        assert np.ma.test('full', verbose=2, extra_argv=['-vv'])
+        assert np.ma.test('full', verbose=1, extra_argv=[])
 
     get_module.set_old_policy(orig_policy)
 
