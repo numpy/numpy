@@ -2266,6 +2266,7 @@ class vectorize:
 
     Decorator syntax is supported.  The decorator can be called as
     a function to provide keyword arguments.
+
     >>> @np.vectorize
     ... def identity(x):
     ...     return x
