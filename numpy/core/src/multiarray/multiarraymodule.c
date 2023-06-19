@@ -2022,7 +2022,7 @@ static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyArray_Descr *typecode = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
@@ -2032,7 +2032,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
 
     if (npy_parse_arguments("empty", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
-            "|dtype", &PyArray_DescrConverter, &typecode,
+            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
@@ -2043,7 +2043,8 @@ array_empty(PyObject *NPY_UNUSED(ignored),
         PyObject *deferred = array_implement_c_array_function_creation(
                 "empty", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(typecode);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             npy_free_cache_dim_obj(shape);
             return deferred;
         }
@@ -2062,14 +2063,15 @@ array_empty(PyObject *NPY_UNUSED(ignored),
             goto fail;
     }
 
-    ret = (PyArrayObject *)PyArray_Empty(shape.len, shape.ptr,
-                                            typecode, is_f_order);
+    ret = (PyArrayObject *)PyArray_Empty_int(
+        shape.len, shape.ptr, dt_info.descr, dt_info.dtype, is_f_order);
 
     npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 
 fail:
-    Py_XDECREF(typecode);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     npy_free_cache_dim_obj(shape);
     return NULL;
 }
@@ -2079,7 +2081,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArrayObject *prototype = NULL;
-    PyArray_Descr *dtype = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
@@ -2090,27 +2092,30 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
 
     if (npy_parse_arguments("empty_like", args, len_args, kwnames,
             "prototype", &PyArray_Converter, &prototype,
-            "|dtype", &PyArray_DescrConverter2, &dtype,
+            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|shape", &PyArray_OptionalIntpConverter, &shape,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
-    /* steals the reference to dtype if it's not NULL */
-    ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(prototype, order, dtype,
-                                                         shape.len, shape.ptr, subok);
+    /* steals the reference to dt_info.descr if it's not NULL */
+    ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(
+            prototype, order, dt_info.descr, dt_info.dtype,
+            shape.len, shape.ptr, subok);
     npy_free_cache_dim_obj(shape);
     if (!ret) {
         goto fail;
     }
+    Py_XDECREF(dt_info.dtype);
     Py_DECREF(prototype);
 
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(prototype);
-    Py_XDECREF(dtype);
+    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF(dt_info.descr);
     return NULL;
 }
 
@@ -2226,7 +2231,7 @@ static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyArray_Descr *typecode = NULL;
+    npy_dtype_info dt_info = {NULL, NULL};
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
@@ -2236,11 +2241,11 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
 
     if (npy_parse_arguments("zeros", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
-            "|dtype", &PyArray_DescrConverter, &typecode,
+            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
             "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
-        goto fail;
+        goto finish;
     }
 
 
@@ -2248,7 +2253,8 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
         PyObject *deferred = array_implement_c_array_function_creation(
                 "zeros", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(typecode);
+            Py_XDECREF(dt_info.descr);
+            Py_XDECREF(dt_info.dtype);
             npy_free_cache_dim_obj(shape);
             return deferred;
         }
@@ -2264,18 +2270,16 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
         default:
             PyErr_SetString(PyExc_ValueError,
                             "only 'C' or 'F' order is permitted");
-            goto fail;
+            goto finish;
     }
 
-    ret = (PyArrayObject *)PyArray_Zeros(shape.len, shape.ptr,
-                                        typecode, (int) is_f_order);
+    ret = (PyArrayObject *)PyArray_Zeros_int(
+        shape.len, shape.ptr, dt_info.descr, dt_info.dtype, (int) is_f_order);
 
+finish:
     npy_free_cache_dim_obj(shape);
-    return (PyObject *)ret;
-
-fail:
-    Py_XDECREF(typecode);
-    npy_free_cache_dim_obj(shape);
+    Py_XDECREF(dt_info.descr);
+    Py_XDECREF(dt_info.dtype);
     return (PyObject *)ret;
 }
 
