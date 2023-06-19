@@ -9,6 +9,11 @@ from numpy.testing import extbuild, assert_warns, IS_WASM
 import sys
 
 
+# FIXME: numpy.testing.extbuild uses `numpy.distutils`, so this won't work on
+# Python 3.12 and up. It's an internal test utility, so for now we just skip
+# these tests.
+
+
 @pytest.fixture
 def get_module(tmp_path):
     """ Add a memory policy that returns a false pointer 64 bytes into the
@@ -213,6 +218,7 @@ def get_module(tmp_path):
                                                more_init=more_init)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_set_policy(get_module):
 
     get_handler_name = np.core.multiarray.get_handler_name
@@ -241,6 +247,7 @@ def test_set_policy(get_module):
         assert get_handler_name() == orig_policy_name
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_default_policy_singleton(get_module):
     get_handler_name = np.core.multiarray.get_handler_name
 
@@ -262,6 +269,7 @@ def test_default_policy_singleton(get_module):
     assert def_policy_1 is def_policy_2 is get_module.get_default_policy()
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_policy_propagation(get_module):
     # The memory policy goes hand-in-hand with flags.owndata
 
@@ -320,6 +328,7 @@ async def async_test_context_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_context_locality(get_module):
     if (sys.implementation.name == 'pypy'
             and sys.pypy_version_info[:3] < (7, 3, 6)):
@@ -341,6 +350,7 @@ def concurrent_thread2(get_module, event):
     get_module.set_secret_data_policy()
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_thread_locality(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
@@ -359,6 +369,7 @@ def test_thread_locality(get_module):
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 @pytest.mark.skip(reason="too slow, see gh-23975")
 def test_new_policy(get_module):
     a = np.arange(10)
@@ -388,6 +399,8 @@ def test_new_policy(get_module):
     c = np.arange(10)
     assert np.core.multiarray.get_handler_name(c) == orig_policy_name
 
+
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 @pytest.mark.xfail(sys.implementation.name == "pypy",
                    reason=("bad interaction between getenv and "
                            "os.environ inside pytest"))
@@ -420,6 +433,8 @@ def test_switch_owner(get_module, policy):
         else:
             os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = oldval
 
+
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_owner_is_base(get_module):
     a = get_module.get_array_with_base()
     with pytest.warns(UserWarning, match='warn_on_free'):
