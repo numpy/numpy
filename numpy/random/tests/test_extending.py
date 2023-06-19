@@ -8,7 +8,6 @@ import numpy as np
 from numpy.distutils.misc_util import exec_mod_from_location
 from numpy.testing import IS_WASM
 
-IS_WINDOWS = os.name == "nt"
 
 try:
     import cffi
@@ -46,7 +45,6 @@ else:
         cython = None
 
 
-@pytest.mark.xfail(IS_WINDOWS, reason="Wheel builds are missing npyrandom.lib")
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow

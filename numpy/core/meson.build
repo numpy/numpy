@@ -537,6 +537,8 @@ npymath_lib = static_library('npymath',
   dependencies: py_dep,
   install: true,
   install_dir: np_dir / 'core/lib',
+  name_prefix: name_prefix_staticlib,
+  name_suffix: name_suffix_staticlib,
 )
 
 dir_separator = '/'
