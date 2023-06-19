@@ -1772,7 +1772,7 @@ def set_string_function(f, repr=True):
     'random'
     >>> x.__repr__()
     'array([0, 1, 2, 3])'
-
+    >>> np.set_string_function(None, repr=False)  # reset to default
     """
 
     # Deprecated in NumPy 2.0, 2023-07-11
