@@ -122,62 +122,6 @@ _PyArray_SetNumericOps(PyObject *dict)
 }
 
 
-/* Note - macro contains goto */
-#define GET(op) if (n_ops.op &&                                         \
-                    (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
-        goto fail;
-
-NPY_NO_EXPORT PyObject *
-_PyArray_GetNumericOps(void)
-{
-    PyObject *dict;
-    if ((dict = PyDict_New())==NULL)
-        return NULL;
-    GET(add);
-    GET(subtract);
-    GET(multiply);
-    GET(divide);
-    GET(remainder);
-    GET(divmod);
-    GET(power);
-    GET(square);
-    GET(reciprocal);
-    GET(_ones_like);
-    GET(sqrt);
-    GET(negative);
-    GET(positive);
-    GET(absolute);
-    GET(invert);
-    GET(left_shift);
-    GET(right_shift);
-    GET(bitwise_and);
-    GET(bitwise_or);
-    GET(bitwise_xor);
-    GET(less);
-    GET(less_equal);
-    GET(equal);
-    GET(not_equal);
-    GET(greater);
-    GET(greater_equal);
-    GET(floor_divide);
-    GET(true_divide);
-    GET(logical_or);
-    GET(logical_and);
-    GET(floor);
-    GET(ceil);
-    GET(maximum);
-    GET(minimum);
-    GET(rint);
-    GET(conjugate);
-    GET(matmul);
-    GET(clip);
-    return dict;
-
- fail:
-    Py_DECREF(dict);
-    return NULL;
-}
-
 static PyObject *
 _get_keywords(int rtype, PyArrayObject *out)
 {
