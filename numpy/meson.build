@@ -150,7 +150,6 @@ pure_subdirs = [
   '_utils',
   'array_api',
   'compat',
-  'distutils',
   'doc',
   'f2py',
   'lib',
@@ -161,6 +160,9 @@ pure_subdirs = [
   'tests',
   'typing',
 ]
+if py.version().version_compare('<3.12')
+  pure_subdirs += 'distutils'
+endif
 
 np_dir = py.get_install_dir() / 'numpy'
 
