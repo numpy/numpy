@@ -39,7 +39,7 @@ __all__ = [
     'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
-    'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
+    'set_legacy_print_mode', 'set_string_function',
     'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
     '_get_promotion_state', '_set_promotion_state']
@@ -66,7 +66,6 @@ fromstring.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
-set_numeric_ops.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 _get_promotion_state.__module__ = 'numpy'
 _set_promotion_state.__module__ = 'numpy'

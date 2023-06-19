@@ -3282,30 +3282,6 @@ array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
     Py_RETURN_NONE;
 }
 
-static PyObject *
-array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
-        PyObject *kwds)
-{
-    PyObject *oldops = NULL;
-
-    if ((oldops = _PyArray_GetNumericOps()) == NULL) {
-        return NULL;
-    }
-    /*
-     * Should probably ensure that objects are at least callable
-     *  Leave this to the caller for now --- error will be raised
-     *  later when use is attempted
-     */
-    if (kwds && PyArray_SetNumericOps(kwds) == -1) {
-        Py_DECREF(oldops);
-        if (PyErr_Occurred() == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                "one or more objects not callable");
-        }
-        return NULL;
-    }
-    return oldops;
-}
 
 static PyObject *
 array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
@@ -4450,9 +4426,6 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"set_string_function",
         (PyCFunction)array_set_string_function,
-        METH_VARARGS|METH_KEYWORDS, NULL},
-    {"set_numeric_ops",
-        (PyCFunction)array_set_ops_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_datetimeparse_function",
         (PyCFunction)array_set_datetimeparse_function,

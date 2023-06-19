@@ -548,8 +548,6 @@ cdef extern from "numpy/arrayobject.h":
     # Functions taking dtype and returning object/ndarray are disabled
     # for now as they steal dtype references. I'm conservative and disable
     # more than is probably needed until it can be checked further.
-    int PyArray_SetNumericOps (object) except -1
-    object PyArray_GetNumericOps ()
     int PyArray_INCREF (ndarray) except *  # uses PyArray_Item_INCREF...
     int PyArray_XDECREF (ndarray) except *  # uses PyArray_Item_DECREF...
     void PyArray_SetStringFunction (object, int)
