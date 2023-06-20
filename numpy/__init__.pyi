@@ -2965,17 +2965,35 @@ class unsignedinteger(integer[_NBit1]):
     __divmod__: _UnsignedIntDivMod[_NBit1]
     __rdivmod__: _UnsignedIntDivMod[_NBit1]
 
-uint8 = unsignedinteger[_8Bit]
-uint16 = unsignedinteger[_16Bit]
-uint32 = unsignedinteger[_32Bit]
-uint64 = unsignedinteger[_64Bit]
+class uint8(unsignedinteger[_8Bit]):
+    ...
 
-ubyte = unsignedinteger[_NBitByte]
-ushort = unsignedinteger[_NBitShort]
-uintc = unsignedinteger[_NBitIntC]
-uintp = unsignedinteger[_NBitIntP]
-uint = unsignedinteger[_NBitInt]
-ulonglong = unsignedinteger[_NBitLongLong]
+class uint16(unsignedinteger[_16Bit]):
+    ...
+
+class uint32(unsignedinteger[_32Bit]):
+    ...
+
+class uint64(unsignedinteger[_64Bit]):
+    ...
+
+class ubyte(unsignedinteger[_NBitByte]):
+    ...
+
+class ushort(unsignedinteger[_NBitShort]):
+    ...
+
+class uintc(unsignedinteger[_NBitIntC]):
+    ...
+
+class uintp(unsignedinteger[_NBitIntP]):
+    ...
+
+class uint(unsignedinteger[_NBitInt]):
+    ...
+
+class ulonglong(unsignedinteger[_NBitLongLong]):
+    ...
 
 class inexact(number[_NBit1]):  # type: ignore
     def __getnewargs__(self: inexact[_64Bit]) -> tuple[float, ...]: ...
