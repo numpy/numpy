@@ -2130,20 +2130,6 @@ printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyObject *ret;
-    PyObject *ops = PyArray_GetNumericOps();
-    if (ops == NULL) {
-        return NULL;
-    }
-    ret = PyLong_FromLong(PyArray_SetNumericOps(ops));
-    Py_DECREF(ops);
-    return ret;
-}
-
-
-static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
     char byteorder;
@@ -2424,9 +2410,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
-    {"getset_numericops",
-        getset_numericops,
-        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */

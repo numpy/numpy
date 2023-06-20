@@ -17,7 +17,7 @@ from .multiarray import (
     empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
+    putmask, result_type, shares_memory, vdot, where,
     zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
 
 from . import overrides
@@ -44,7 +44,7 @@ __all__ = [
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
-    'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
+    'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',

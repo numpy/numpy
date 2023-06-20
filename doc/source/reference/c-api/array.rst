@@ -3246,47 +3246,6 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
 Internal Flexibility
 ~~~~~~~~~~~~~~~~~~~~
 
-.. c:function:: int PyArray_SetNumericOps(PyObject* dict)
-
-    NumPy stores an internal table of Python callable objects that are
-    used to implement arithmetic operations for arrays as well as
-    certain array calculation methods. This function allows the user
-    to replace any or all of these Python objects with their own
-    versions. The keys of the dictionary, *dict*, are the named
-    functions to replace and the paired value is the Python callable
-    object to use. Care should be taken that the function used to
-    replace an internal array operation does not itself call back to
-    that internal array operation (unless you have designed the
-    function to handle that), or an unchecked infinite recursion can
-    result (possibly causing program crash). The key names that
-    represent operations that can be replaced are:
-
-        **add**, **subtract**, **multiply**, **divide**,
-        **remainder**, **power**, **square**, **reciprocal**,
-        **ones_like**, **sqrt**, **negative**, **positive**,
-        **absolute**, **invert**, **left_shift**, **right_shift**,
-        **bitwise_and**, **bitwise_xor**, **bitwise_or**,
-        **less**, **less_equal**, **equal**, **not_equal**,
-        **greater**, **greater_equal**, **floor_divide**,
-        **true_divide**, **logical_or**, **logical_and**,
-        **floor**, **ceil**, **maximum**, **minimum**, **rint**.
-
-
-    These functions are included here because they are used at least once
-    in the array object's methods. The function returns -1 (without
-    setting a Python Error) if one of the objects being assigned is not
-    callable.
-
-    .. deprecated:: 1.16
-
-.. c:function:: PyObject* PyArray_GetNumericOps(void)
-
-    Return a Python dictionary containing the callable Python objects
-    stored in the internal arithmetic operation table. The keys of
-    this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
-
-    .. deprecated:: 1.16
-
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 
     This function allows you to alter the tp_str and tp_repr methods
