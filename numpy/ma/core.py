@@ -6102,6 +6102,8 @@ class MaskedArray(ndarray):
         The matrix transpose is the transpose of the last two dimensions, even
         if the array is of higher dimension.
 
+    .. versionadded:: 2.0
+
         Returns
         -------
         result: MaskedArray
