@@ -366,7 +366,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                     "reduction operation '%s' does not have an identity, "
                     "so to use a where mask one has to specify 'initial'",
                     funcname);
-            return NULL;
+            goto fail;
         }
 
         /*
