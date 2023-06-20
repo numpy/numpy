@@ -1,5 +1,7 @@
 /*@targets
- * $maxopt $keep_baseline avx512_skx
+ * $maxopt $keep_baseline
+ * avx512_skx
+ * asimd
  */
 // policy $keep_baseline is used to avoid skip building avx512_skx
 // when its part of baseline features (--cpu-baseline), since
@@ -11,7 +13,8 @@
 #if defined(NPY_HAVE_AVX512_SKX)
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
     #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
-    #include "x86-simd-sort/src/avx512-64bit-argsort.hpp"
+#elif defined(NPY_HAVE_ASIMD)
+    #include "hwy/contrib/sort/vqsort.h"
 #endif
 
 namespace np { namespace qsort_simd {
@@ -89,31 +92,32 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
     avx512_qsort(arr, size);
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int32_t *arr, npy_intp *arg, npy_intp size)
+#elif defined(NPY_HAVE_ASIMD) && defined(NPY_CAN_LINK_HIGHWAY)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint32_t *arr, npy_intp *arg, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint32_t *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(int64_t *arr, npy_intp *arg, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int64_t *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(uint64_t *arr, npy_intp *arg, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint64_t *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(float *arr, npy_intp *arg, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(float *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(double *arr, npy_intp *arg, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
-    avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
+    hwy::VQSort(arr, size, hwy::SortAscending());
 }
-#endif  // NPY_HAVE_AVX512_SKX
+#endif
 
 }} // namespace np::simd
 

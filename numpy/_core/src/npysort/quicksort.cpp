@@ -84,7 +84,7 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
     }
     else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-        #ifndef NPY_DISABLE_OPTIMIZATION
+        #if !defined(NPY_DISABLE_OPTIMIZATION) && !(defined(NPY_HAVE_ASIMD) && !defined(NPY_CAN_LINK_HIGHWAY))
             #include "simd_qsort.dispatch.h"
         #endif
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
@@ -105,7 +105,7 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
     using TF = typename np::meta::FixedWidth<T>::Type;
     void (*dispfunc)(TF*, npy_intp*, npy_intp) = nullptr;
     #ifndef NPY_DISABLE_OPTIMIZATION
-        #include "simd_qsort.dispatch.h"
+        #include "simd_argsort.dispatch.h"
     #endif
     /* x86-simd-sort uses 8-byte int to store arg values, npy_intp is 4 bytes
      * in 32-bit*/

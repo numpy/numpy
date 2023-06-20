@@ -1,5 +1,6 @@
 /*@targets
- * $maxopt $keep_baseline avx512_icl avx512_spr
+ * $maxopt $keep_baseline 
+ * avx512_icl avx512_spr
  */
 // policy $keep_baseline is used to avoid skip building avx512_skx
 // when its part of baseline features (--cpu-baseline), since
