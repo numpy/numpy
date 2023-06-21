@@ -3318,9 +3318,9 @@ class _CopyMode(enum.Enum):
 # Warnings
 class RankWarning(UserWarning): ...
 
-_CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
+_CallType = TypeVar("_CallType", bound=Callable[..., Any])
 
-class errstate(Generic[_CallType]):
+class errstate:
     def __init__(
         self,
         *,
@@ -3339,7 +3339,7 @@ class errstate(Generic[_CallType]):
         traceback: None | TracebackType,
         /,
     ) -> None: ...
-    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]: ...
+    def __call__(self, func: _CallType) -> _CallType: ...
 
 @contextmanager
 def _no_nep50_warning() -> Generator[None, None, None]: ...
