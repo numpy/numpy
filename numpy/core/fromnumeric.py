@@ -2421,6 +2421,20 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     array([[ True,  True],
            [False, False],
            [ True,  True]])
+
+    Examples of using numpy.any with different data types.
+
+    Example 1: Integer array
+    >>> np.any([[0, 0, 0], [0, 0, 0]])
+    False
+
+    Example 2: Float array
+    >>> np.any([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    False
+
+    Example 3: Mixed integer and float array
+    >>> np.any([[0, 0, 0], [0.0, 0.0, 0.0]])
+    False
     
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
