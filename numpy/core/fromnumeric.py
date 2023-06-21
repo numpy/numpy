@@ -2397,7 +2397,31 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
+    >>> np.any([[[True, False], [True, True]],
+    ...          [[False, False], [False, False]],
+    ...          [[True, True], [False, True]]])
+    True
 
+    >>> np.any([[[True, False], [True, True]],
+    ...          [[False, False], [False, False]],
+    ...          [[True, True], [False, True]]], axis=0)
+    array([[True, True],
+           [True, True]])
+
+    >>> np.any([[[True, False], [True, True]],
+    ...          [[False, False], [False, False]],
+    ...          [[True, True], [False, True]]], axis=1)
+    array([[ True,  True],
+           [False, False],
+           [ True,  True]])
+
+    >>> np.any([[[True, False], [True, True]],
+    ...          [[False, False], [False, False]],
+    ...          [[True, True], [False, True]]], axis=2)
+    array([[ True,  True],
+           [False, False],
+           [ True,  True]])
+    
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
@@ -3813,11 +3837,22 @@ def round_(a, decimals=0, out=None):
         ``round_`` is deprecated as of NumPy 1.25.0, and will be
         removed in NumPy 2.0. Please use `round` instead.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.round(56294995342131.5, 3)
+    56294995342131.51
+    >>> round(56294995342131.5, 3)
+    56294995342131.5
+    >>> np.round(16.055, 2), round(16.055, 2)  # equals 16.0549999999999997
+    (16.06, 16.05)
+
     See Also
     --------
     around : equivalent function; see for details.
     """
     return around(a, decimals=decimals, out=out)
+
 
 
 def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
