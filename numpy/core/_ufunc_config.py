@@ -393,8 +393,8 @@ class errstate:
     >>> olderr = np.seterr(**olderr)  # restore original state
 
     """
-    __slots__ = [
-        "_call", "_all", "_divide", "_over", "_under", "_invalid", "_token"]
+    __slots__ = (
+        "_call", "_all", "_divide", "_over", "_under", "_invalid", "_token")
 
     def __init__(self, *, call=_Unspecified,
                  all=None, divide=None, over=None, under=None, invalid=None):
