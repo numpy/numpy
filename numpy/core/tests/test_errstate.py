@@ -70,3 +70,45 @@ class TestErrstate:
             a // 0
             
         foo()
+
+    def test_asyncio_safe(self):
+        # May not be available e.g. on web assembly
+        asyncio = pytest.importorskip("asyncio")
+
+        @np.errstate(invalid="ignore")
+        def decorated():
+            # Decorated non-async function (it is not safe to decorate an
+            # async one)
+            assert np.geterr()["invalid"] == "ignore"
+
+        async def func1():
+            decorated()
+            await asyncio.sleep(0.1)
+            decorated()
+
+        async def func2():
+            with np.errstate(invalid="raise"):
+                assert np.geterr()["invalid"] == "raise"
+                await asyncio.sleep(0.125)
+                assert np.geterr()["invalid"] == "raise"
+
+        # for good sport, a third one with yet another state:
+        async def func3():
+            with np.errstate(invalid="print"):
+                assert np.geterr()["invalid"] == "print"
+                await asyncio.sleep(0.11)
+                assert np.geterr()["invalid"] == "print"
+
+        async def main():
+            # simply run all three function multiple times:
+            await asyncio.gather(
+                    func1(), func2(), func3(), func1(), func2(), func3(),
+                    func1(), func2(), func3(), func1(), func2(), func3())
+
+        loop = asyncio.new_event_loop()
+        with np.errstate(invalid="warn"):
+            asyncio.run(main())
+            assert np.geterr()["invalid"] == "warn"
+
+        assert np.geterr()["invalid"] == "warn"  # the default
+        loop.close()

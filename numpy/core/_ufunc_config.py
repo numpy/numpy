@@ -7,6 +7,7 @@ This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 import collections.abc
 import contextlib
 import contextvars
+import functools
 
 from .._utils import set_module
 from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
@@ -330,7 +331,7 @@ _Unspecified = _unspecified()
 
 
 @set_module('numpy')
-class errstate(contextlib.ContextDecorator):
+class errstate:
     """
     errstate(**kwargs)
 
@@ -344,7 +345,11 @@ class errstate(contextlib.ContextDecorator):
     ..  versionchanged:: 1.17.0
         `errstate` is also usable as a function decorator, saving
         a level of indentation if an entire function is wrapped.
-        See :py:class:`contextlib.ContextDecorator` for more information.
+
+    .. versionchanged:: 2.0
+        `errstate` is now fully thread and asyncio safe, but may not be
+        entered more than once (unless sequentially).
+        It is not safe to decorate async functions using ``errstate``.
 
     Parameters
     ----------
@@ -402,6 +407,7 @@ class errstate(contextlib.ContextDecorator):
         self._invalid = invalid
 
     def __enter__(self):
+        # Note that __call__ duplicates much of this logic
         if self._token is not None:
             raise TypeError("Cannot enter `np.errstate` twice.")
         if self._call is _Unspecified:
@@ -420,6 +426,32 @@ class errstate(contextlib.ContextDecorator):
         _extobj_contextvar.reset(self._token)
         # Allow entering twice, so long as it is sequential:
         self._token = None
+
+    def __call__(self, func):
+        # We need to customize `__call__` compared to `ContextDecorator`
+        # because we must store the token per-thread so cannot store it on
+        # the instance (we could create a new instance for this).
+        # This duplicates the code from `__enter__`.
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
+            if self._call is _Unspecified:
+                extobj = _make_extobj(
+                        all=self._all, divide=self._divide, over=self._over,
+                        under=self._under, invalid=self._invalid)
+            else:
+                extobj = _make_extobj(
+                        call=self._call,
+                        all=self._all, divide=self._divide, over=self._over,
+                        under=self._under, invalid=self._invalid)
+
+            _token = _extobj_contextvar.set(extobj)
+            try:
+                # Call the original, decorated, function:
+                return func(*args, **kwargs)
+            finally:
+                _extobj_contextvar.reset(_token)
+
+        return inner
 
 
 NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
