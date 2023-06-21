@@ -6092,6 +6092,41 @@ class MaskedArray(ndarray):
     T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
 
+    @property
+    def mT(self):
+        """
+        Return the matrix-transpose of the masked array.
+
+        The matrix transpose is the transpose of the last two dimensions, even
+        if the array is of higher dimension.
+
+    .. versionadded:: 2.0
+
+        Returns
+        -------
+        result: MaskedArray
+            The masked array with the last two dimensions transposed
+
+        Raises
+        ------
+        ValueError
+            If the array is of dimension less than 2.
+
+        See Also
+        --------
+        ndarray.mT:
+            Equivalent method for arrays
+        """
+
+        if self.ndim < 2:
+            raise ValueError("matrix transpose with ndim < 2 is undefined")
+
+        if self._mask is nomask:
+            return masked_array(data=self._data.mT)
+        else:
+            return masked_array(data=self.data.mT, mask=self.mask.mT)
+
+
     def tolist(self, fill_value=None):
         """
         Return the data portion of the masked array as a hierarchical Python list.
