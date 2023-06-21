@@ -278,10 +278,10 @@ gentype_nonzero_number(PyObject *m1)
 static PyObject *
 genint_type_str(PyObject *self)
 {
-    PyObject  *item, *item_str, *dtype_name;
+    PyObject  *item, *item_str;
     PyArray_Descr *dtype = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
     void *val = scalar_value(self, dtype);
-    switch (descr->type_num) {
+    switch (dtype->type_num) {
         case NPY_BYTE:
             item = PyLong_FromLong(*(int8_t *)val);
             break;
