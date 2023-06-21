@@ -3844,7 +3844,6 @@ def round_(a, decimals=0, out=None):
     return around(a, decimals=decimals, out=out)
 
 
-
 def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
                         initial=None, where=None):
     # 2023-03-02, 1.25.0
