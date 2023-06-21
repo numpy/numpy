@@ -115,10 +115,5 @@
 #define NPY_STR_fs "fs"
 #define NPY_STR_as "as"
 
-/*
- * The macros in old_defines.h are Deprecated as of NumPy 1.7 and will be
- * removed in the next major release.
- */
-#include "old_defines.h"
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_ */

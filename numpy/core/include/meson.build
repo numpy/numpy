@@ -16,7 +16,6 @@ installed_headers = [
   'numpy/npy_no_deprecated_api.h',
   'numpy/npy_os.h',
   'numpy/numpyconfig.h',
-  'numpy/old_defines.h',
   'numpy/ufuncobject.h',
   'numpy/utils.h',
 ]
