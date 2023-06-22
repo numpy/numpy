@@ -2613,15 +2613,13 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
 {
     int nin = ufunc->nin, nout = ufunc->nout, nop = nin + nout;
 
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-
     npy_intp default_op_out_flags;
     npy_uint32 op_flags[NPY_MAXARGS];
 
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
-    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_get_name_cstr(ufunc));
 
     /* Get the buffersize and errormask */
     if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
