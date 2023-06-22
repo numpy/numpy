@@ -1108,8 +1108,8 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             return 1;
         }
         else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_CLONGDOUBLE) {
-            (*v).r = ((npy_clongdouble *)PyArray_DATA(obj))->real;
-            (*v).i = ((npy_clongdouble *)PyArray_DATA(obj))->imag;
+            (*v).r = NPY_CLONGDOUBLE_GET_REAL(((npy_clongdouble *)PyArray_DATA(obj)));
+            (*v).i = NPY_CLONGDOUBLE_GET_IMAG(((npy_clongdouble *)PyArray_DATA(obj)));
             return 1;
         }
     }
@@ -1138,14 +1138,14 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (PyArray_IsScalar(obj, CFloat)) {
             npy_cfloat new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)new.real;
-            (*v).i = (double)new.imag;
+            (*v).r = (double)NPY_CFLOAT_GET_REAL(&new);
+            (*v).i = (double)NPY_CFLOAT_GET_IMAG(&new);
         }
         else if (PyArray_IsScalar(obj, CLongDouble)) {
             npy_clongdouble new;
             PyArray_ScalarAsCtype(obj, &new);
-            (*v).r = (double)new.real;
-            (*v).i = (double)new.imag;
+            (*v).r = (double)NPY_CLONGDOUBLE_GET_REAL(&new);
+            (*v).i = (double)NPY_CLONGDOUBLE_GET_IMAG(&new);
         }
         else { /* if (PyArray_IsScalar(obj, CDouble)) */
             PyArray_ScalarAsCtype(obj, v);
@@ -1163,8 +1163,8 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         if (arr == NULL) {
             return 0;
         }
-        (*v).r = ((npy_cdouble *)PyArray_DATA(arr))->real;
-        (*v).i = ((npy_cdouble *)PyArray_DATA(arr))->imag;
+        (*v).r = NPY_CDOUBLE_GET_REAL(((npy_cdouble *)PyArray_DATA(arr)));
+        (*v).i = NPY_CDOUBLE_GET_IMAG(((npy_cdouble *)PyArray_DATA(arr)));
         Py_DECREF(arr);
         return 1;
     }
