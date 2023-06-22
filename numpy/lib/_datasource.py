@@ -17,7 +17,9 @@ DataSource files can originate locally or remotely:
 DataSource files can also be compressed or uncompressed.  Currently only
 gzip, bz2 and xz are supported.
 
-Example::
+Example
+
+.. doctest-skip::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
     >>> from numpy import DataSource
@@ -216,7 +218,9 @@ class DataSource:
     Notes
     -----
     URLs require a scheme string (``http://``) to be used, without it they
-    will fail::
+    will fail:
+
+    .. doctest-skip::
 
         >>> repos = np.lib.npyio.DataSource()
         >>> repos.exists('www.google.com/index.html')
@@ -228,7 +232,7 @@ class DataSource:
 
     Examples
     --------
-    ::
+    .. doctest-skip::
 
         >>> ds = np.lib.npyio.DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/'
@@ -560,7 +564,9 @@ class Repository (DataSource):
     Examples
     --------
     To analyze all files in the repository, do something like this
-    (note: this is not self-contained code)::
+    (note: this is not self-contained code):
+
+    .. doctest-skip::
 
         >>> repos = np.lib._datasource.Repository('/home/user/data/dir/')
         >>> for filename in filelist:
@@ -568,7 +574,9 @@ class Repository (DataSource):
         ...     fp.analyze()
         ...     fp.close()
 
-    Similarly you could use a URL for a repository::
+    Similarly you could use a URL for a repository:
+
+    .. doctest-skip::
 
         >>> repos = np.lib._datasource.Repository('http://www.xyz.edu/data')
 
