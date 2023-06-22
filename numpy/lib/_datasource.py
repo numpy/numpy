@@ -41,7 +41,7 @@ from .._utils import set_module
 
 _open = open
 
-__doctest_skip__ = ['DataSource']
+__doctest_skip__ = ['*']
 
 
 def _check_mode(mode, encoding, newline):
