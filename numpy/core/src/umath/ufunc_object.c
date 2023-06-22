@@ -2381,7 +2381,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 #endif
 
     /* Get the buffersize and errormask */
-    if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         retval = -1;
         goto fail;
     }
@@ -2624,7 +2624,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Get the buffersize and errormask */
-    if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return -1;
     }
 
@@ -2993,7 +2993,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         axis_flags[axis] = 1;
     }
 
-    if (_get_bufsize_errmask("reduce", &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3052,7 +3052,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     printf("\n");
 #endif
 
-    if (_get_bufsize_errmask("accumulate", &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -3470,7 +3470,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     printf("Index size is %d\n", (int)ind_size);
 #endif
 
-    if (_get_bufsize_errmask(opname, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return NULL;
     }
 
@@ -5834,7 +5834,7 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         const char * ufunc_name =
                         ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        if (_get_bufsize_errmask(ufunc_name, &buffersize, &errormask) < 0) {
+        if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
             return -1;
         }
         res = _check_ufunc_fperr(errormask, ufunc_name);
@@ -5856,7 +5856,7 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     int res = 0;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_get_bufsize_errmask(ufunc->name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return -1;
     }
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
@@ -5934,7 +5934,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_get_bufsize_errmask(ufunc->name, &buffersize, &errormask) < 0) {
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return -1;
     }
     array_operands[0] = new_array_op(op1_array, iter->dataptr);

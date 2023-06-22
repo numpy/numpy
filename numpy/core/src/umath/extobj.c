@@ -567,7 +567,7 @@ _check_ufunc_fperr(int errmask, const char *ufunc_name) {
 
 
 NPY_NO_EXPORT int
-_get_bufsize_errmask(const char *ufunc_name, int *buffersize, int *errormask)
+_get_bufsize_errmask(int *buffersize, int *errormask)
 {
     return _extract_pyvals(buffersize, errormask, NULL);
 }
