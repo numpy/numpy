@@ -2445,17 +2445,20 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
            [ True, False, False],
            [False, False,  True]])
 
-    The input array `a` represents a boolean array where `1` stands for `True` and `0` stands for `False`.
+    The input array `a` represents a boolean array 
+    where `1` stands for `True` and `0` stands for `False`.
 
     >>> np.any(a, axis=0)
     array([ True, False,  True])
-
-    Applying `np.any` along `axis=0` checks if there is any `True` value in each column.
+    
+    Applying `np.any` along `axis=0` checks if there
+    is any `True` value in each column.
 
     >>> np.any(a, axis=1)
     array([ True,  True,  True])
 
-    Applying `np.any` along `axis=1` checks if there is any `True` value in each row.
+    Applying `np.any` along `axis=1` checks if there is
+    any `True` value in each row.
     
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
