@@ -546,7 +546,7 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     """
     a, mask = _replace_nan(a, np.inf)
-    if mask is not None:
+    if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):
             raise ValueError("All-NaN slice encountered")
@@ -607,7 +607,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     """
     a, mask = _replace_nan(a, -np.inf)
-    if mask is not None:
+    if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):
             raise ValueError("All-NaN slice encountered")
