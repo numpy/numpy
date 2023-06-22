@@ -60,6 +60,8 @@
 #include <utility>
 
 #define NOT_USED NPY_UNUSED(unused)
+#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || (defined(__aarch64__) && !defined(NPY_CAN_LINK_HIGHWAY)))
+
 /*
  * pushing largest partition has upper bound of log2(n) space
  * we store two pointers each time
@@ -83,12 +85,14 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         #endif
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
     }
+    #if !DISABLE_HIGHWAY_OPTIMIZATION
     else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-        #if !defined(NPY_DISABLE_OPTIMIZATION) && !(defined(NPY_HAVE_ASIMD) && !defined(NPY_CAN_LINK_HIGHWAY))
+        #if !defined(NPY_DISABLE_OPTIMIZATION)
             #include "simd_qsort.dispatch.h"
         #endif
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
     }
+    #endif
     if (dispfunc) {
         (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
         return true;

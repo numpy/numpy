@@ -10,10 +10,12 @@
 #include "simd_qsort.hpp"
 #ifndef __CYGWIN__
 
+#define USE_HIGHWAY defined(__aarch64__) && defined(NPY_CAN_LINK_HIGHWAY)
+
 #if defined(NPY_HAVE_AVX512_SKX)
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
     #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
-#elif defined(NPY_HAVE_ASIMD)
+#elif USE_HIGHWAY
     #include "hwy/contrib/sort/vqsort.h"
 #endif
 
@@ -92,7 +94,7 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
     avx512_qsort(arr, size);
 }
-#elif defined(NPY_HAVE_ASIMD) && defined(NPY_CAN_LINK_HIGHWAY)
+#elif USE_HIGHWAY
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
 {
     hwy::VQSort(arr, size, hwy::SortAscending());

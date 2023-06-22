@@ -3,13 +3,17 @@
 
 #include "common.hpp"
 
+#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || (defined(__aarch64__) && !defined(NPY_CAN_LINK_HIGHWAY)))
+
 namespace np { namespace qsort_simd {
 
+#if !DISABLE_HIGHWAY_OPTIMIZATION
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "simd_qsort.dispatch.h"
 #endif
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, intptr_t size))
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp num, npy_intp kth))
+#endif
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "simd_argsort.dispatch.h"
@@ -24,4 +28,7 @@ NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, intptr_t siz
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp num, npy_intp kth))
 
 } } // np::qsort_simd
+
+#undef DISABLE_HIGHWAY_OPTIMIZATION
+
 #endif // NUMPY_SRC_COMMON_NPYSORT_SIMD_QSORT_HPP
