@@ -114,6 +114,10 @@ def check_fpu_mode(request):
 
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
+    # NumPy should probably use more `.. plot::` directives even in
+    # examples, but as long as we don't, do not block on `plt.show()`
+    import matplotlib
+    matplotlib.use("Agg")
     doctest_namespace['np'] = numpy
 
 @pytest.fixture(autouse=True)
