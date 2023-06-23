@@ -16,4 +16,4 @@ typing_extensions>=4.2.0
 # for optional f2py encoding detection
 charset-normalizer
 # for automatic benchmarking with Airspeed velocity
-asv
+asv==0.5.1
