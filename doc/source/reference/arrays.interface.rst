@@ -252,7 +252,7 @@ flag is present.
 
 .. note::
 
-    :obj:`__array_struct__` is considered legacy and should not be used for new
+    :obj:`~object.__array_struct__` is considered legacy and should not be used for new
     code. Use the :doc:`buffer protocol <python:c-api/buffer>` or the DLPack protocol
     `numpy.from_dlpack` instead.
 
