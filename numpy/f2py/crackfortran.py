@@ -2180,7 +2180,11 @@ def analyzebody(block, args, tab=''):
 
     setmesstext(block)
 
-    maybe_private = {key: value for key, value in block['vars'].items() if 'attrspec' not in value or 'public' not in value['attrspec']}
+    maybe_private = {
+        key: value
+        for key, value in block['vars'].items()
+        if 'attrspec' not in value or 'public' not in value['attrspec']
+    }
 
     body = []
     for b in block['body']:
