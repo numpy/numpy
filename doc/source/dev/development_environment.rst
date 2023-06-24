@@ -76,6 +76,11 @@ Before running the tests, first install the test dependencies::
 
     $ python -m pip install -r test_requirements.txt
 
+.. note:: 
+    For running the benchmarks, install the ``asv`` library by running command in the interactive shell::
+
+        $ python -m pip install asv
+
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
 do one of::
