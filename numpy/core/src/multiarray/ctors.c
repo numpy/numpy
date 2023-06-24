@@ -3883,6 +3883,12 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
  * text data, with ``sep`` as the separator between elements. Whitespace in
  * the separator matches any length of whitespace in the text, and a match
  * for whitespace around the separator is added.
+ * 
+ * If ``whitespace`` is not NULL, then it is used to replace whitespace in the
+ * input string with the value of ``whitespace``.  If ``whitespace`` is an int
+ * or float, then it is converted to the appropriate type.  If ``whitespace``
+ * is None, then whitespace is ignored.  If ``whitespace`` is not None, int,
+ * or float, then an error is raised.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
