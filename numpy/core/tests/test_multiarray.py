@@ -5315,6 +5315,10 @@ class TestIO:
         d = np.fromstring(" ", sep = ",", whitespace = 3)
         assert d.shape == (3,)
 
+    def test_fromstring_empty4(self):
+        d = np.fromstring("1, 3, 5, 6 ", sep = ",", whitespace = 6)
+        assert_array_equal(d, [1, 3, 5, 6])
+
     def test_empty_files_text(self, tmp_filename):
         with open(tmp_filename, 'w') as f:
             pass
