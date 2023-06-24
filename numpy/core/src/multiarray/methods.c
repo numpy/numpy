@@ -1121,6 +1121,9 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         }
     }
     Py_DECREF(fast);
+    if (kwds == NULL) {
+        return 0;
+    }
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {
