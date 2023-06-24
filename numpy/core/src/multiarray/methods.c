@@ -857,7 +857,7 @@ array_astype(PyArrayObject *self,
      * TODO: UNSAFE default for compatibility, I think
      *       switching to SAME_KIND by default would be good.
      */
-    npy_dtype_info dt_info;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     _PyArray_CopyMode forcecopy = 1;
