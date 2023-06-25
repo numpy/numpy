@@ -1,10 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.24.4 Release Notes
-==========================
-NumPy 1.24.4 is a maintenance release that fixes bugs and regressions discovered after the
-1.24.3 release. The Python versions supported by this release are 3.8-3.11.
 
 Contributors
 ============
@@ -28,4 +21,3 @@ A total of 6 pull requests were merged for this release.
 * `#23761 <https://github.com/numpy/numpy/pull/23761>`__: BUG: Fix masked array ravel order for A (and somewhat K)
 * `#23890 <https://github.com/numpy/numpy/pull/23890>`__: TYP,DOC: Annotate and document the ``metadata`` parameter of...
 * `#23994 <https://github.com/numpy/numpy/pull/23994>`__: MAINT: Update rtools installation
-
