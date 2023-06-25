@@ -74,7 +74,9 @@ wheels_upload_task:
     bash miniconda.sh -b -p ~/miniconda3
     ~/miniconda3/bin/conda init bash
     source ~/miniconda3/bin/activate
-    conda install -y anaconda-client
+    # conda install -y anaconda-client
+    # release of urllib3 >=2 broke anaconda-client
+    conda install -y anaconda-client 'urllib3<2.0.0'
 
     # cron job
     if [[ "$CIRRUS_CRON" == "weekly" ]]; then
