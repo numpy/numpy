@@ -16,7 +16,7 @@
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
     #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
 #elif USE_HIGHWAY
-    #include "hwy/contrib/sort/vqsort.h"
+    #include "hwy/contrib/sort/vqsort-inl.h"
 #endif
 
 namespace np { namespace qsort_simd {
@@ -97,27 +97,27 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 #elif USE_HIGHWAY
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint32_t *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int64_t *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint64_t *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(float *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, intptr_t size)
 {
-    hwy::VQSort(arr, size, hwy::SortAscending());
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
 }
 #endif
 
