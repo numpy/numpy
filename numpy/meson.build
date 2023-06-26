@@ -116,7 +116,7 @@ if not use_ilp64
   use_ilp64 = run_command(py,
     [
       '-c',
-      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", None) else print(0)'
+      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
     ],
     check: true
   ).stdout().strip() == '1'
