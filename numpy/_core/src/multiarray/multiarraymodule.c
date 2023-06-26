@@ -3252,7 +3252,7 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
 NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
-    PyArrayObject *arr, *ax, *ay;
+    PyArrayObject *arr, *ax, *ay = NULL;
     PyObject *ret = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
@@ -3274,10 +3274,15 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     NPY_cast_info cast_info = {.func = NULL};
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
-    ay = (PyArrayObject*)PyArray_FROM_O(y);
-    if (ax == NULL || ay == NULL) {
+    if (ax == NULL) {
         goto fail;
     }
+    ay = (PyArrayObject*)PyArray_FROM_O(y);
+    if (ay == NULL) {
+        goto fail;
+    }
+    npy_mark_tmp_array_if_pyscalar(x, ax, NULL);
+    npy_mark_tmp_array_if_pyscalar(y, ay, NULL);
 
     npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
                         NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
