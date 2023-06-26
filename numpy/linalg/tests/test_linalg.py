@@ -1785,7 +1785,6 @@ class TestQR:
 
 
 class TestCholesky:
-    # TODO: are there no other tests for cholesky?
 
     @pytest.mark.parametrize(
         'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
@@ -1794,7 +1793,6 @@ class TestCholesky:
         'dtype', (np.float32, np.float64, np.complex64, np.complex128)
     )
     def test_basic_property(self, shape, dtype):
-        # Check A = L L^H
         np.random.seed(1)
         a = np.random.randn(*shape)
         if np.issubdtype(dtype, np.complexfloating):
@@ -1808,10 +1806,16 @@ class TestCholesky:
 
         c = np.linalg.cholesky(a)
 
+        # Check A = L L^H
         b = np.matmul(c, c.transpose(t).conj())
         with np._no_nep50_warning():
             atol = 500 * a.shape[0] * np.finfo(dtype).eps
         assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
+
+        # Check diag(L) is real and positive
+        d = np.diagonal(c, axis1=-2, axis2=-1)
+        assert_(np.all(np.isreal(d)))
+        assert_(np.all(d >= 0))
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
