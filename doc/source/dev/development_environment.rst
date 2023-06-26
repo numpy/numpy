@@ -75,6 +75,8 @@ Testing builds
 Before running the tests, first install the test dependencies::
 
     $ python -m pip install -r test_requirements.txt
+    $ python -m pip install asv # only for running benchmarks
+      
 
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
