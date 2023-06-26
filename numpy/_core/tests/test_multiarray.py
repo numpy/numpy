@@ -8864,9 +8864,11 @@ class TestWhere:
         assert_equal(np.where(True, d, e).dtype, np.float32)
         e = float('-Infinity')
         assert_equal(np.where(True, d, e).dtype, np.float32)
-        # also check upcast
+        # With NEP 50 adopted, the float will overflow here:
         e = float(1e150)
-        assert_equal(np.where(True, d, e).dtype, np.float64)
+        with pytest.warns(RuntimeWarning, match="overflow"):
+            res = np.where(True, d, e)
+        assert res.dtype == np.float32
 
     def test_ndim(self):
         c = [True, False]
