@@ -38,6 +38,7 @@ upload_wheels() {
             echo no token set, not uploading
         else
             python -m pip install \
+            'urllib3<2.0.0' \
             git+https://github.com/Anaconda-Platform/anaconda-client.git@be1e14936a8e947da94d026c990715f0596d7043
             # sdists are located under dist folder when built through setup.py
             if compgen -G "./dist/*.gz"; then
