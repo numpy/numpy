@@ -717,7 +717,10 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'lowlevel_strided_loops.h'),
             join('src', 'common', 'mem_overlap.h'),
             join('src', 'common', 'npy_argparse.h'),
+            join('src', 'common', 'npy_blas_config.h'),
+            join('src', 'common', 'npy_blas_lapack.h'),
             join('src', 'common', 'npy_cblas.h'),
+            join('src', 'common', 'npy_cblas_base.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_dlpack.h'),
@@ -763,6 +766,20 @@ def configuration(parent_package='',top_path=None):
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
                            join('src', 'common', 'python_xerbla.c'),
                           ])
+        if (
+            ('ACCELERATE_NEW_LAPACK', None) in blas_info.get('define_macros', [])
+            and os.environ.get('NPY_USE_BLAS_ILP64', None) is None
+           ):
+            common_deps.extend([
+                join('src', 'common', 'lapack', 'accelerate_legacy.h'),
+                join('src', 'common', 'lapack', 'accelerate_legacy_blas.h'),
+                join('src', 'common', 'lapack', 'accelerate_legacy_cblas.h'),
+                join('src', 'common', 'lapack', 'accelerate_legacy_lapack.h'),
+            ])
+            common_src.extend([
+                join('src', 'common', 'lapack', 'accelerate_wrapper.c'),
+                join('src', 'common', 'lapack', 'accelerate_wrapper_cblas.c')
+            ])
     else:
         extra_info = {}
 

@@ -48,6 +48,13 @@ else
   ]
 endif
 
+macOS13_3_or_later = false
+if host_machine.system() == 'darwin'
+  r = run_command('xcrun', '-sdk', 'macosx', '--show-sdk-version', check: true)
+  sdkVersion = r.stdout().strip()
+
+  macOS13_3_or_later = sdkVersion.version_compare('>=13.3')
+endif
 
 # This is currently injected directly into CFLAGS/CXXFLAGS for wheel builds
 # (see cibuildwheel settings in pyproject.toml), but used by CI jobs already
@@ -81,6 +88,19 @@ endif
 # https://github.com/mesonbuild/meson/issues/2835
 blas_name = get_option('blas')
 lapack_name = get_option('lapack')
+use_ilp64 = get_option('use-ilp64')
+if not use_ilp64
+  # For now, keep supporting this environment variable too (same as in setup.py)
+  # `false is the default for the CLI flag, so check if env var was set
+  use_ilp64 = run_command(py,
+    [
+      '-c',
+      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
+    ],
+    check: true
+  ).stdout().strip() == '1'
+endif
+
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
 if blas_name == 'openblas'
@@ -90,6 +110,23 @@ if blas_name == 'openblas'
     _openblas_names = ['openblas', 'OpenBLAS']
   endif
   blas = dependency(_openblas_names, required: false)
+elif blas_name.to_lower() == 'accelerate'
+  # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
+  if macOS13_3_or_later
+    accelerate_compile_args = ['-DACCELERATE_NEW_LAPACK']
+    if(use_ilp64)
+      accelerate_compile_args += '-DACCELERATE_LAPACK_ILP64'
+    endif
+    blas = declare_dependency(
+            compile_args: accelerate_compile_args,
+            dependencies: dependency('Accelerate')
+          )
+  else
+    if(use_ilp64)
+      error('macOS SDK 13.3+ is required for ILP64 support.')
+    endif
+    blas = dependency('Accelerate')
+  endif
 else
   blas = dependency(blas_name, required: false)
 endif
@@ -119,7 +156,16 @@ if have_blas
       #define EXPAND(suffix) cblas_ddot ## suffix
       #define DDOT(suffix) EXPAND(suffix)
 
-      #include <cblas.h>
+      #if defined __has_include
+        #if __has_include(<Accelerate/Accelerate.h>)
+          #include <Accelerate/Accelerate.h>
+        #else
+          #include <cblas.h>
+        #endif
+      #else
+        #include <cblas.h>
+      #endif
+
       int main(int argc, const char *argv[])
       {
           double a[4] = {1,2,3,4};
@@ -178,9 +224,27 @@ else
 endif
 
 if lapack_name == 'openblas'
-  lapack_name = ['openblas', 'OpenBLAS']
+  lapack_dep = dependency(['openblas', 'OpenBLAS'], required: false)
+elif lapack_name.to_lower() == 'accelerate'
+  # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
+  if macOS13_3_or_later
+    accelerate_compile_args = ['-DACCELERATE_NEW_LAPACK']
+    if(use_ilp64)
+      accelerate_compile_args += '-DACCELERATE_LAPACK_ILP64'
+    endif
+    lapack_dep = declare_dependency(
+               compile_args: accelerate_compile_args,
+               dependencies: dependency('Accelerate')
+             )
+  else
+    if(use_ilp64)
+      error('macOS SDK 13.3+ is required for ILP64 support.')
+    endif
+    lapack_dep = dependency('Accelerate')
+  endif
+else
+  lapack_dep = dependency(lapack_name, required: false)
 endif
-lapack_dep = dependency(lapack_name, required: false)
 have_lapack = lapack_dep.found()
 if not have_lapack and not allow_noblas
   error('No LAPACK library detected! Install one, or use the ' + \

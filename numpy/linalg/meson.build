@@ -1,34 +1,41 @@
-lapack_lite_sources = [
-  'lapack_lite/f2c.c',
-  'lapack_lite/f2c_c_lapack.c',
-  'lapack_lite/f2c_d_lapack.c',
-  'lapack_lite/f2c_s_lapack.c',
-  'lapack_lite/f2c_z_lapack.c',
-  'lapack_lite/f2c_blas.c',
-  'lapack_lite/f2c_config.c',
-  'lapack_lite/f2c_lapack.c',
-  'lapack_lite/python_xerbla.c',
-]
+python_xerbla_sources = []
+if target_machine.system() == 'windows'
+  warning('python_xerbla.c is disabled for Windows')
+else
+  python_xerbla_sources = ['lapack_lite/python_xerbla.c']
+endif
+
+lapack_lite_sources = []
+if not have_lapack
+  warning('LAPACK was not found, NumPy is using an unoptimized, naive build from sources!')
+  lapack_lite_sources = [
+    'lapack_lite/f2c.c',
+    'lapack_lite/f2c_c_lapack.c',
+    'lapack_lite/f2c_d_lapack.c',
+    'lapack_lite/f2c_s_lapack.c',
+    'lapack_lite/f2c_z_lapack.c',
+    'lapack_lite/f2c_blas.c',
+    'lapack_lite/f2c_config.c',
+    'lapack_lite/f2c_lapack.c',
+  ]
+endif
 
 # TODO: ILP64 support
 
 lapack_lite_module_src = ['lapack_litemodule.c']
-if not have_lapack
-  lapack_lite_module_src += lapack_lite_sources
-endif
 
 py.extension_module('lapack_lite',
-  lapack_lite_module_src,
+  lapack_lite_module_src + python_xerbla_sources + lapack_lite_sources,
   dependencies: [np_core_dep, blas_dep, lapack_dep],
   install: true,
   subdir: 'numpy/linalg',
 )
 
-_umath_linalg_src = ['umath_linalg.cpp'] + lapack_lite_sources
+_umath_linalg_src = ['umath_linalg.cpp']
 
 py.extension_module('_umath_linalg',
-  _umath_linalg_src,
-  dependencies: np_core_dep,
+  _umath_linalg_src + python_xerbla_sources + lapack_lite_sources,
+  dependencies: [np_core_dep, blas_dep, lapack_dep],
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/linalg',

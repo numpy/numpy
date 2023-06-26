@@ -734,6 +734,12 @@ if have_blas
     'src/common/cblasfuncs.c',
     'src/common/python_xerbla.c',
   ]
+  if macOS13_3_or_later and not use_ilp64
+    src_multiarray_umath_common += [
+      'src/common/lapack/accelerate_wrapper.c',
+      'src/common/lapack/accelerate_wrapper_cblas.c',
+    ]
+  endif
 endif
 
 src_multiarray = [
