@@ -176,7 +176,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
         For more information:
         see the `documentation <https://numpy.org/devdocs/glossary.html#glossary>`.
         .. versionadded:: 1.20.0
-        
+
     Returns
     -------
     res : ndarray
