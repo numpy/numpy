@@ -52,6 +52,15 @@ endif
 add_project_arguments(
   cc.get_supported_arguments( '-fno-strict-aliasing'), language : 'c'
 )
+#
+# Clang defaults to a non-strict floating error point model, but we need strict
+# behavior. `-ftrapping-math` is equivalent to `-ffp-exception-behavior=strict`.
+# Note that this is only supported on macOS arm64 as of XCode 14.3
+if cc.get_id() == 'clang'
+  add_project_arguments(
+    cc.get_supported_arguments('-ftrapping-math'), language: ['c', 'cpp'],
+  )
+endif
 
 # Generate version number. Note that this will not (yet) update the version
 # number seen by pip or reflected in wheel filenames. See
