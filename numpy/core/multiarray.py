@@ -178,26 +178,26 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
 
-        - 'no': No casting is allowed. The data types should not be cast at all. Any
-          mismatch in data types between the arrays being concatenated will raise a
-          TypeError.
-        - 'equiv': Only byte-order changes are allowed. Casting between different byte
-          orders is permitted. However, other types of casting, such as changing the
-          data type or size, are not allowed.
-        - 'safe': Only casts that can preserve values are allowed. Upcasting (e.g.,
-          from int to float) is allowed, but downcasting is not. It ensures that the
-          values are not lost or corrupted during casting.
-        - 'same_kind': The 'same_kind' casting option allows safe casts and casts within
-          a kind. It means that it allows casting between data types that are of the
-          same kind or category. For example, casting from float64 to float32 is
-          considered safe because both are floating-point data types, and the casting
-          only involves reducing the precision. Casting between different kinds, such
-          as from float to int, is not allowed.
+        - 'no': No casting is allowed. The data types should not be cast at all.
+          Any mismatch in data types between the arrays being concatenated will
+          raise a TypeError.
+        - 'equiv': Only byte-order changes are allowed. Casting between different
+          byte orders is permitted. However, other types of casting, such as
+          changing the data type or size, are not allowed.
+        - 'safe': Only casts that can preserve values are allowed. Upcasting
+          (e.g., from int to float) is allowed, but downcasting is not. It ensures
+          that the values are not lost or corrupted during casting.
+        - 'same_kind': The 'same_kind' casting option allows safe casts and casts
+          within a kind. It means that it allows casting between data types that
+          are of the same kind or category. For example, casting from float64 to
+          float32 is considered safe because both are floating-point data types,
+          and the casting only involves reducing the precision. Casting between
+          different kinds, such as from float to int, is not allowed.
         - 'unsafe': The 'unsafe' casting option allows any data conversions to be
-          performed, even if it may result in loss of precision or data corruption. It
-          allows casting between different data types, sizes, and kinds without any
-          restrictions. This casting option should be used with caution, as it can
-          lead to unexpected results or data inconsistencies.
+          performed, even if it may result in loss of precision or data corruption.
+          It allows casting between different data types, sizes, and kinds without
+          any restrictions. This casting option should be used with caution, as it
+          can lead to unexpected results or data inconsistencies.
 
     Returns
     -------
