@@ -7,7 +7,6 @@ import datetime as dt
 import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType, GenericAlias
-from contextlib import ContextDecorator
 from contextlib import contextmanager
 
 from numpy._pytesttester import PytestTester
@@ -3319,17 +3318,13 @@ class _CopyMode(enum.Enum):
 # Warnings
 class RankWarning(UserWarning): ...
 
-_CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
+_CallType = TypeVar("_CallType", bound=Callable[..., Any])
 
-class errstate(Generic[_CallType], ContextDecorator):
-    call: _CallType
-    kwargs: _ErrDictOptional
-
-    # Expand `**kwargs` into explicit keyword-only arguments
+class errstate:
     def __init__(
         self,
         *,
-        call: _CallType = ...,
+        call: _ErrFunc | _SupportsWrite[str] = ...,
         all: None | _ErrKind = ...,
         divide: None | _ErrKind = ...,
         over: None | _ErrKind = ...,
@@ -3344,6 +3339,7 @@ class errstate(Generic[_CallType], ContextDecorator):
         traceback: None | TracebackType,
         /,
     ) -> None: ...
+    def __call__(self, func: _CallType) -> _CallType: ...
 
 @contextmanager
 def _no_nep50_warning() -> Generator[None, None, None]: ...
