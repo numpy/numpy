@@ -2400,7 +2400,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     >>> a = np.array([1, 0, 1], dtype=bool)
     >>> a
-    array([ True False  True])
+    array([ True, False,  True])
     >>> np.any(a)
     True
 
@@ -2423,14 +2423,14 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
            [[False, False,  True],
             [False, False,  True]]])
     >>> np.any(a, axis = 0)
-    array([[ True False  True]
-           [ True False  True]])
+    array([[ True, False,  True],
+           [ True, False,  True]])
     >>> np.any(a, axis = 1)
-    array([[ True False False]
-           [False False  True]])
+    array([[ True, False, False],
+           [False, False,  True]])
     >>> np.any(a, axis = 2)
-    array([[ True  True]
-           [ True  True]])
+    array([[ True,  True],
+           [ True,  True]])
     
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
