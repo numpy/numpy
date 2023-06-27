@@ -178,8 +178,8 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     - `'no'`: No casting is allowed. The data types should not be cast at all.
     Any mismatch in data types between the arrays being concatenated will raise a `TypeError`.
 
-    - `'equiv'`: Only byte-order changes are allowed. 
-    Casting between different byte orders is permitted. However, other types of casting, 
+    - `'equiv'`: Only byte-order changes are allowed. Casting between different 
+    byte orders is permitted. However, other types of casting, 
     such as changing the data type or size, are not allowed.
 
     - `'safe'`:  Only casts that can preserve values are allowed. 
