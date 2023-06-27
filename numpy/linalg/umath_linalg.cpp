@@ -326,34 +326,28 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 }
 
 static inline void
-print(npy_float s)
 {
     TRACE_TXT(" %8.4f", s);
 }
 static inline void
-print(npy_double d)
 {
     TRACE_TXT(" %10.6f", d);
 }
 static inline void
-print(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
     TRACE_TXT("(%8.4f, %8.4fj)", c_parts[0], c_parts[1]);
 }
 static inline void
-print(f2c_complex c)
 {
     TRACE_TXT("(%8.4f, %8.4fj)", c.r, c.i);
 }
 static inline void
-print(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
     TRACE_TXT("(%8.4f, %8.4fj)", z_parts[0], z_parts[1]);
 }
 static inline void
-print(f2c_doublecomplex z)
 {
     TRACE_TXT("(%8.4f, %8.4fj)", z.r, z.i);
 }
