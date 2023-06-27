@@ -71,6 +71,18 @@ class TestErrstate:
             
         foo()
 
+    def test_errstate_enter_once(self):
+        errstate = np.errstate(invalid="warn")
+        with errstate:
+            pass
+
+        # The errstate context cannot be entered twice as that would not be
+        # thread-safe
+        with pytest.raises(TypeError,
+                match="Cannot enter `np.errstate` twice"):
+            with errstate:
+                pass
+
     @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
     def test_asyncio_safe(self):
         # asyncio may not always work, lets assume its fine if missing

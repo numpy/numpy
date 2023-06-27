@@ -348,7 +348,7 @@ class errstate:
 
     .. versionchanged:: 2.0
         `errstate` is now fully thread and asyncio safe, but may not be
-        entered more than once (unless sequentially).
+        entered more than once.
         It is not safe to decorate async functions using ``errstate``.
 
     Parameters
@@ -424,8 +424,6 @@ class errstate:
 
     def __exit__(self, *exc_info):
         _extobj_contextvar.reset(self._token)
-        # Allow entering twice, so long as it is sequential:
-        self._token = None
 
     def __call__(self, func):
         # We need to customize `__call__` compared to `ContextDecorator`
