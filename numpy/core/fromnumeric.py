@@ -2397,56 +2397,39 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
-    >>> np.any([[[True, False], [True, True]],
-    ...          [[False, False], [False, False]],
-    ...          [[True, True], [False, True]]])
+
+    >>> a = np.array([1, 0, 1], dtype=bool)
+    >>> a
+    array([ True False  True])
+    >>> np.any(a)
     True
 
-    >>> np.any([[[True, False], [True, True]],
-    ...          [[False, False], [False, False]],
-    ...          [[True, True], [False, True]]], axis=0)
-    array([[True, True],
-           [True, True]])
-
-    >>> np.any([[[True, False], [True, True]],
-    ...          [[False, False], [False, False]],
-    ...          [[True, True], [False, True]]], axis=1)
-    array([[ True,  True],
-           [False, False],
-           [ True,  True]])
-
-    >>> np.any([[[True, False], [True, True]],
-    ...          [[False, False], [False, False]],
-    ...          [[True, True], [False, True]]], axis=2)
-    array([[ True,  True],
-           [False, False],
-           [ True,  True]])
-
-    Examples of using numpy.any with different data types.
-
-    Example 1: Integer array
-    >>> np.any([[0, 0, 0], [0, 0, 0]])
-    False
-
-    Example 2: Float array
-    >>> np.any([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
-    False
-
-    Example 3: Mixed integer and float array
-    >>> np.any([[0, 0, 0], [0.0, 0.0, 0.0]])
-    False
-
-    Example 4: boolean array
-
-    >>> np.any([[1, 0, 0],
-    ...          [1, 0, 0],
-    ...          [0, 0, 1]], axis=0)
+    >>> a = np.array([[1, 0, 0], [1, 0, 0], [0, 0, 1]], dtype=bool)
+    >>> a
+    array([[ True, False, False],
+           [ True, False, False],
+           [False, False,  True]])
+    >>> np.any(a, axis=0)
     array([ True, False,  True])
-
-    >>> np.any([[1, 0, 0],
-    ...          [1, 0, 0],
-    ...          [0, 0, 1]], axis=1)
+    >>> np.any(a, axis=1)
     array([ True,  True,  True])
+
+    >>> a = np.array([[[1, 0, 0], [1, 0, 0]], [[0, 0, 1], [0, 0, 1]]], dtype=bool)
+    >>> a
+    array([[[ True, False, False],
+            [ True, False, False]],
+
+           [[False, False,  True],
+            [False, False,  True]]])
+    >>> np.any(a, axis = 0)
+    array([[ True False  True]
+           [ True False  True]])
+    >>> np.any(a, axis = 1)
+    array([[ True False False]
+           [False False  True]])
+    >>> np.any(a, axis = 2)
+    array([[ True  True]
+           [ True  True]])
     
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
