@@ -2877,6 +2877,14 @@ class TestInterp:
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
 
+    def test_datetime64_interpolaton(self):
+        d1 = np.datetime64('2019-01-01')
+        d2 = np.datetime64('2019-01-03')
+        xp = np.array([d1, d2])
+        yp = np.array([1, 3])
+        x = np.datetime64('2019-01-02')
+        assert_equal(np.interp(x, xp, yp), 2.)
+
     def test_non_finite_behavior_exact_x(self):
         x = [1, 2, 2.5, 3, 4]
         xp = [1, 2, 3, 4]
