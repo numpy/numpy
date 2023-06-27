@@ -125,6 +125,32 @@ class TestSetOps:
         assert_array_equal([7, 1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5, 6, 1], ediff1d(two_elem, to_begin=[5, 6]))
 
+    def test_ediff1d_datetime64(self):
+        datetime64_elem = np.arange(np.datetime64('2000-01-01'), 2)
+        assert_array_equal(
+                [np.timedelta64(1, 'D')], ediff1d(datetime64_elem)
+        )
+        assert_array_equal(
+                [np.timedelta64(5, 'D'), np.timedelta64(1, 'D')],
+                ediff1d(datetime64_elem, to_begin=np.timedelta64(5, 'D'))
+        )
+        assert_array_equal(
+                [np.timedelta64(1, 'D'), np.timedelta64(5, 'D')],
+                ediff1d(datetime64_elem, to_end=np.timedelta64(5, 'D'))
+        )
+        assert_array_equal(
+                [
+                    np.timedelta64(2, 'D'),
+                    np.timedelta64(1, 'D'),
+                    np.timedelta64(5, 'D')
+                ],
+                ediff1d(
+                    datetime64_elem,
+                    to_begin=np.timedelta64(2, 'D'),
+                    to_end=np.timedelta64(5, 'D')
+                )
+        )
+
     @pytest.mark.parametrize("ary, prepend, append, expected", [
         # should fail because trying to cast
         # np.nan standard floating point value
@@ -149,6 +175,37 @@ class TestSetOps:
          'to_begin'),
          ])
     def test_ediff1d_forbidden_type_casts(self, ary, prepend, append, expected):
+        # verify resolution of gh-11490
+
+        # specifically, raise an appropriate
+        # Exception when attempting to append or
+        # prepend with an incompatible type
+        msg = 'dtype of `{}` must be compatible'.format(expected)
+        with assert_raises_regex(TypeError, msg):
+            ediff1d(ary=ary,
+                    to_end=append,
+                    to_begin=prepend)
+
+    @pytest.mark.parametrize("ary, prepend, append, expected", [
+        # should fail because dates will give a timedelta64(1, 'D') diff
+        (np.array(['2000-01-01', '2000-01-02'], dtype=np.datetime64),
+         None,
+         np.timedelta64(1, 'Y'),
+         'to_end'),
+        # should fail because attempting
+        # to cast to floats to timedelta64
+        (np.array(['2000-01-01', '2000-01-02'], dtype=np.datetime64),
+         np.array([5, 7, 2], dtype=np.float32),
+         None,
+         'to_begin'),
+         ])
+    def test_ediff1d_forbidden_datetime64_type_casts(
+            self,
+            ary,
+            prepend,
+            append,
+            expected
+    ):
         # verify resolution of gh-11490
 
         # specifically, raise an appropriate
