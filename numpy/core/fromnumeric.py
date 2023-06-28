@@ -2398,39 +2398,38 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
 
-    >>> a = np.array([1, 0, 1], dtype=bool)
-    >>> a
+    >>> a1 = np.array([1, 0, 1], dtype=bool)
+    >>> a1
     array([ True, False,  True])
-    >>> np.any(a)
+    >>> np.any(a1)
     True
 
-    >>> a = np.array([[1, 0, 0], [1, 0, 0], [0, 0, 1]], dtype=bool)
-    >>> a
+    >>> a2 = np.array([[1, 0, 0], [1, 0, 0], [0, 0, 1]], dtype=bool)
+    >>> a2
     array([[ True, False, False],
-           [ True, False, False],
-           [False, False,  True]])
-    >>> np.any(a, axis=0)
+    ...    [ True, False, False],
+    ...    [False, False,  True]])
+    >>> np.any(a2, axis=0)
     array([ True, False,  True])
-    >>> np.any(a, axis=1)
+    >>> np.any(a2, axis=1)
     array([ True,  True,  True])
 
-    >>> a = np.array([[[1, 0, 0], [1, 0, 0]],
-                      [[0, 0, 1], [0, 0, 1]]], dtype=bool)
-    >>> a
+    >>> a3 = np.array([[[1, 0, 0], [1, 0, 0]],
+    ...                 [[0, 0, 1], [0, 0, 1]]], dtype=bool)
+    >>> a3
     array([[[ True, False, False],
-            [ True, False, False]],
-
-           [[False, False,  True],
-            [False, False,  True]]])
-    >>> np.any(a, axis = 0)
+    ...     [ True, False, False]],
+    ...     [[False, False,  True],
+    ...     [False, False,  True]]])
+    >>> np.any(a3, axis = 0)
     array([[ True, False,  True],
-           [ True, False,  True]])
-    >>> np.any(a, axis = 1)
+    ...    [ True, False,  True]])
+    >>> np.any(a3, axis = 1)
     array([[ True, False, False],
-           [False, False,  True]])
-    >>> np.any(a, axis = 2)
+    ...    [False, False,  True]])
+    >>> np.any(a3, axis = 2)
     array([[ True,  True],
-           [ True,  True]])
+    ...    [ True,  True]])
     
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
