@@ -546,7 +546,8 @@ Glossary
          >>> y
          array([3, 2, 4])
     
-   casting : Optional Controls what kind of data casting may occur during concatenation.
+   casting
+       Controls what kind of data casting may occur. The different options are:
 
        ``no``: No casting is allowed. The data types should not be cast at all.
        Any mismatch in data types between the arrays being concatenated will
