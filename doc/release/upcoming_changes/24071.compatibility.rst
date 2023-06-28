@@ -1,0 +1,16 @@
+``NPY_MAXARGS`` and ``NPY_MAXDIMS`` increased
+---------------------------------------------
+``NPY_MAXDIMS`` is now 64 and ``NPY_MAXARGS`` is 128, downstream should
+not run into issues due to this, as these are typically only used for stack
+allocations, such as::
+
+    npy_intp shape[NPY_MAXDIMS];
+
+so that an increase is safe.  It will increase the stack usage a little.
+
+There is however a possible bigger complication if a downstream library uses
+one of these in its public headers.
+The library user and library might compile against different versions of
+NumPy and thus break ABI compatibility.
+In this event the downstream library will have to hard-code the old value or
+itself force downstream to recompile (if viable).
