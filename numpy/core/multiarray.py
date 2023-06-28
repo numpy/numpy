@@ -173,7 +173,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
-        For more information
+        For a description of the options, please see :term:`casting`.
         `<https://numpy.org/devdocs/glossary.html#glossary>`.
         
         .. versionadded:: 1.20.0
