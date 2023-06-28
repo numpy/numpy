@@ -1250,7 +1250,7 @@ class TestRegression:
 
     def test_array_ndmin_overflow(self):
         "Ticket #947."
-        assert_raises(ValueError, lambda: np.array([1], ndmin=33))
+        assert_raises(ValueError, lambda: np.array([1], ndmin=65))
 
     def test_void_scalar_with_titles(self):
         # No ticket
@@ -2238,7 +2238,7 @@ class TestRegression:
         def passer(*args):
             pass
 
-        assert_raises(ValueError, np.frompyfunc, passer, 32, 1)
+        assert_raises(ValueError, np.frompyfunc, passer, 128, 1)
 
     def test_repeat_broadcasting(self):
         # gh-5743

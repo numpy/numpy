@@ -1,6 +1,7 @@
 import itertools
 import sys
 import platform
+import string
 
 import pytest
 
@@ -1061,6 +1062,28 @@ class TestEinsum:
         for opt in [True, False]:
             tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
             assert_(tmp.flags.c_contiguous)
+
+    def test_huge_number_of_arguments(self):
+        # einsum limits the number of arguments to the function already,
+        # so the limit is a bit lower than that of the iterator (currently)
+        chars = ",".join(string.ascii_letters)
+        # With an index:
+        res = np.einsum(chars + "->", *[np.array([2.])] * 26*2)
+        assert res == 2.**(26*2)
+        # And without:
+        res = np.einsum("," * 100 + "->", *[np.array(2.)] * 101)
+        assert res == 2.**101
+
+        with pytest.raises(ValueError):
+            res = np.einsum("," * 130 + "->", *[np.array(2.)] * 130)
+
+        # Using the alternative call syntax:
+        res = np.einsum(*[np.array(2.), ()] * 127)
+        assert res == 2.**127
+
+        with pytest.raises(ValueError, match="too many operands"):
+            np.einsum(*[np.array(2.), ()] * 128)
+
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):

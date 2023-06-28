@@ -718,7 +718,7 @@ def test_iter_flags_errors():
     # Not enough operands
     assert_raises(ValueError, nditer, [], [], [])
     # Too many operands
-    assert_raises(ValueError, nditer, [a]*100, [], [['readonly']]*100)
+    assert_raises(ValueError, nditer, [a]*129, [], [['readonly']]*129)
     # Bad global flag
     assert_raises(ValueError, nditer, [a], ['bad flag'], [['readonly']])
     # Bad op flag
