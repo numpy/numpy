@@ -550,7 +550,7 @@ Glossary
        Controls what kind of data casting may occur. The different options are:
 
        ``no``: No casting is allowed. The data types should not be cast at all.
-       Any mismatch in data types between the arrays being concatenated will
+       Any mismatch in data types between the arrays will
        raise a TypeError.
        ``equiv``: Only byte-order changes are allowed. Casting between different
        byte orders is permitted. However, other types of casting, such as
