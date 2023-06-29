@@ -1,6 +1,6 @@
 @@ -380,7 +380,6 @@ L20:
      static logical nota, notb;
-     static complex temp;
+     static singlecomplex temp;
      static logical conja, conjb;
 -    static integer ncola;
      extern logical lsame_(char *, char *);
