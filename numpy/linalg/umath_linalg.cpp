@@ -471,9 +471,9 @@ const double numeric_limits<double>::nan = NPY_NAN;
 
 template<>
 struct numeric_limits<npy_cfloat> {
-static constexpr npy_cfloat one = {1.0f, 0.0f};
-static constexpr npy_cfloat zero = {0.0f, 0.0f};
-static constexpr npy_cfloat minus_one = {-1.0f, 0.0f};
+static constexpr npy_cfloat one = 1.0f;
+static constexpr npy_cfloat zero = 0.0f;
+static constexpr npy_cfloat minus_one = -1.0f;
 static const npy_cfloat ninf;
 static const npy_cfloat nan;
 };
@@ -499,9 +499,9 @@ const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
 template<>
 struct numeric_limits<npy_cdouble> {
-static constexpr npy_cdouble one = {1.0, 0.0};
-static constexpr npy_cdouble zero = {0.0, 0.0};
-static constexpr npy_cdouble minus_one = {-1.0, 0.0};
+static constexpr npy_cdouble one = 1.0;
+static constexpr npy_cdouble zero = 0.0;
+static constexpr npy_cdouble minus_one = -1.0;
 static const npy_cdouble ninf;
 static const npy_cdouble nan;
 };

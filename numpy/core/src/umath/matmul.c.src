@@ -62,8 +62,8 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
-static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
-static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
+static const npy_cdouble oneD = 1.0, zeroD = 0.0;
+static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
 
 /**begin repeat
  *
