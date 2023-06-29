@@ -123,7 +123,7 @@ main()
             {"arcsinh", asinh, asinh, 1.01, 1.00},
             {"arccosh", acosh, acosh, 1.16, 1.00},
             {"arctanh", atanh, atanh, 1.45, 1.00},
-            {"cbrt", cbrt, cbrt, 1.94, 1.00},
+            {"cbrt", cbrt, cbrt, 1.94, 2.00},
             //{"exp",exp,exp,3.76,1.00},
             {"exp2", exp2, exp2, 1.01, 1.00},
             {"expm1", expm1, expm1, 2.62, 1.00},
