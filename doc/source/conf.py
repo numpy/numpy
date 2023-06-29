@@ -191,8 +191,10 @@ html_theme_options = {
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
   "external_links": [
-      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
+      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
+      {"name": "NEPs", "url": "https://numpy.org/neps"}
       ],
+  "header_links_before_dropdown": 6,
   # Add light/dark mode and documentation version switcher:
   "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
   "switcher": {
