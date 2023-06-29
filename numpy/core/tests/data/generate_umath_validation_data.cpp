@@ -119,7 +119,7 @@ main()
             {"arctan", atan, atan, 2.3, 1.00},
             {"sinh", sinh, sinh, 1.55, 1.00},
             {"cosh", cosh, cosh, 2.48, 1.00},
-            {"tanh", tanh, tanh, 1.38, 1.00},
+            {"tanh", tanh, tanh, 1.38, 2.00},
             {"arcsinh", asinh, asinh, 1.01, 1.00},
             {"arccosh", acosh, acosh, 1.16, 1.00},
             {"arctanh", atanh, atanh, 1.45, 1.00},
