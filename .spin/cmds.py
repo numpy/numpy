@@ -67,7 +67,8 @@ def docs(ctx, sphinx_target, clean, install_deps, build, jobs):
 
     if build:
         click.secho(
-            "Invoking `build` prior to running tests:", bold=True, fg="bright_green"
+            "Invoking `build` prior to running tests:",
+            bold=True, fg="bright_green"
         )
         ctx.invoke(meson.build)
 
@@ -82,8 +83,14 @@ def docs(ctx, sphinx_target, clean, install_deps, build, jobs):
 
     opts = os.environ.get('SPHINXOPTS', "-W")
     os.environ['SPHINXOPTS'] = f'{opts} -j {jobs}'
-    click.secho(f"$ export SPHINXOPTS={os.environ['SPHINXOPTS']}", bold=True, fg="bright_blue")
+    click.secho(
+        f"$ export SPHINXOPTS={os.environ['SPHINXOPTS']}", bold=True,
+        fg="bright_blue"
+    )
 
     os.environ['PYTHONPATH'] = f'{site_path}{os.sep}:{os.environ.get("PYTHONPATH", "")}'
-    click.secho(f"$ export PYTHONPATH={os.environ['PYTHONPATH']}", bold=True, fg="bright_blue")
+    click.secho(
+        f"$ export PYTHONPATH={os.environ['PYTHONPATH']}",
+        bold=True, fg="bright_blue"
+    )
     util.run(['make', '-C', 'doc', 'html'], replace=True)
