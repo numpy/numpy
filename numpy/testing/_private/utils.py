@@ -59,17 +59,13 @@ HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 _OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
 IS_MUSL = False
-try:
-    from packaging.tags import sys_tags
-    _tags = list(sys_tags())
-    if 'musllinux' in _tags[0].platform:
-        IS_MUSL = True
-except ImportError:
-    # fallback to sysconfig (might be flaky)
-    # value could be None.
-    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
-    if 'musl' in v:
-        IS_MUSL = True
+# alternate way is
+# from packaging.tags import sys_tags
+#     _tags = list(sys_tags())
+#     if 'musllinux' in _tags[0].platform:
+_v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+if 'musl' in _v:
+    IS_MUSL = True
 
 
 def assert_(val, msg=''):
