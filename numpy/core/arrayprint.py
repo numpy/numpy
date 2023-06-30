@@ -592,9 +592,11 @@ def _array2string(a, options, separator=' ', prefix=""):
     if a.shape == ():
         a = data
 
-    threshold = options.pop("threshold")
-    linewidth = options.pop("linewidth")
-    edgeitems = options.pop("edgeitems")
+    # These options should not really be used by the item formatter, but
+    # the subarray one does use some of them:
+    threshold = options["threshold"]
+    linewidth = options["linewidth"]
+    edgeitems = options["edgeitems"]
 
     if a.size > threshold:
         summary_insert = "..."
@@ -1448,6 +1450,12 @@ class TimedeltaFormat(_TimelikeFormat):
 class SubArrayFormat:
     def __init__(self, format_function, **options):
         self.format_function = format_function
+
+        # The subarray formatter is special and needs the threshold/edgeitems
+        # always (even when a format is used).
+        if not options:
+            options = _format_options
+
         self.threshold = options['threshold']
         self.edge_items = options['edgeitems']
 
