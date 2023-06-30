@@ -52,4 +52,95 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
 NPY_NO_EXPORT PyObject *
 get_handler_version(PyObject *NPY_UNUSED(self), PyObject *obj);
 
+/* Helper to add an overflow check (and avoid inlininig this probably) */
+NPY_NO_EXPORT void *
+_Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize);
+
+
+/*
+ * Helper definition macro for a small work/scratchspace.
+ * The `NAME` is the C array to to be defined of with the type `TYPE`.
+ *
+ * The usage pattern for this is:
+ *
+ *     NPY_DEFINE_SMALL_WORKSPACE(arr, PyObject *, 14);
+ *     if (npy_init_small_workspace(arr, n_objects) < 0) {
+ *         return -1;  // Memory error is set
+ *     }
+ *     ...
+ *     npy_free_small_workspace(arr);
+ *
+ * Notes
+ * -----
+ * The reason is to avoid allocations in most cases, but gracefully
+ * succeed for large sizes as well.
+ * With some caches, it may be possible to malloc/calloc very quickly in which
+ * case we should not hesitate to replace this pattern.
+ */
+#define NPY_DEFINE_SMALL_WORKSPACE(NAME, TYPE, fixed_size)  \
+    TYPE NAME##_static[fixed_size];                         \
+    TYPE *NAME
+
+
+static inline int
+_npy_init_workspace(
+    void **buf, void *static_buf, size_t static_buf_size, size_t elsize, size_t size)
+{
+    if (NPY_LIKELY(size <= static_buf_size / elsize)) {
+        *buf = static_buf;
+        return 0;
+    }
+    else {
+        *buf = _Npy_MallocWithOverflowCheck(size, elsize);
+        if (*buf == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        return 0;
+    }
+}
+
+
+static inline int
+_npy_zero_init_workspace(
+    void **buf, void *static_buf, size_t static_buf_size, size_t elsize, size_t size)
+{
+    if (NPY_LIKELY(size <= static_buf_size / elsize)) {
+        *buf = static_buf;
+        memset(*buf, 0, size * elsize);
+        return 0;
+    }
+    else {
+        *buf = PyMem_Calloc(size, elsize);
+        if (*buf == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        return 0;
+    }
+}
+
+/* Init a small workspace allocation (may allocates based on size) */
+#define npy_init_workspace(NAME, size)  \
+    _npy_init_workspace(                \
+        (void **)&NAME, NAME##_static, sizeof(NAME##_static), sizeof(NAME##_static[0]), size)
+
+/* Init and zero a small workspace allocation (may allocates based on size) */
+#define npy_zero_init_workspace(NAME, size)  \
+    _npy_zero_init_workspace(                \
+        (void **)&NAME, NAME##_static, sizeof(NAME##_static), sizeof(NAME##_static[0]), size)
+
+
+static inline void
+_npy_free_small_workspace(void *buf, void *static_buf)
+{
+    if (buf != static_buf) {
+        PyMem_FREE(buf);
+    }
+}
+
+/* Free a small workspace allocation (macro to fetch the _static name) */
+#define npy_free_small_workspace(NAME)  \
+    _npy_free_small_workspace(NAME, NAME##_static)
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */
