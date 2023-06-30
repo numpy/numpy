@@ -402,12 +402,148 @@ typedef complex float npy_cfloat;
 typedef complex longdouble_t npy_clongdouble;
 #endif
 
-#define NPY_CDOUBLE_GET_REAL(comp) ( *((double *) (comp)) )
-#define NPY_CDOUBLE_GET_IMAG(comp) ( *(((double *) (comp)) + 1) )
-#define NPY_CFLOAT_GET_REAL(comp) ( *((float *) (comp)) )
-#define NPY_CFLOAT_GET_IMAG(comp) ( *(((float *) (comp)) + 1) )
-#define NPY_CLONGDOUBLE_GET_REAL(comp) ( *((npy_longdouble *) (comp)) )
-#define NPY_CLONGDOUBLE_GET_IMAG(comp) ( *(((npy_longdouble *) (comp)) + 1) )
+#ifndef __cplusplus
+typedef union {
+    double arr[2];
+    npy_cdouble comp;
+} _npy_cdouble_to_arr;
+
+typedef union {
+    float arr[2];
+    npy_cfloat comp;
+} _npy_cfloat_to_arr;
+
+typedef union {
+    longdouble_t arr[2];
+    npy_clongdouble comp;
+} _npy_clongdouble_to_arr;
+#endif
+
+inline double NPY_CDOUBLE_GET_REAL(const npy_cdouble *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const double *>(c)[0];
+#else
+    _npy_cdouble_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[0];
+#endif
+}
+
+inline double NPY_CDOUBLE_GET_IMAG(const npy_cdouble *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const double *>(c)[1];
+#else
+    _npy_cdouble_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[1];
+#endif
+}
+
+inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
+#ifdef __cplusplus
+    double *tmp = reinterpret_cast<double *>(c);
+    tmp[0] = real;
+#else
+    _npy_cdouble_to_arr tmp;
+    tmp.arr[0] = real;
+    *c = tmp.comp;
+#endif
+}
+
+inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
+#ifdef __cplusplus
+    double *tmp = reinterpret_cast<double *>(c);
+    tmp[1] = imag;
+#else
+    _npy_cdouble_to_arr tmp;
+    tmp.arr[1] = imag;
+    *c = tmp.comp;
+#endif
+}
+
+inline float NPY_CFLOAT_GET_REAL(const npy_cfloat *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const float *>(c)[0];
+#else
+    _npy_cfloat_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[0];
+#endif
+}
+
+inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const float *>(c)[1];
+#else
+    _npy_cdouble_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[1];
+#endif
+}
+
+inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
+#ifdef __cplusplus
+    float *tmp = reinterpret_cast<float *>(c);
+    tmp[0] = real;
+#else
+    _npy_cfloat_to_arr tmp;
+    tmp.arr[0] = real;
+    *c = tmp.comp;
+#endif
+}
+
+inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
+#ifdef __cplusplus
+    float *tmp = reinterpret_cast<float *>(c);
+    tmp[1] = imag;
+#else
+    _npy_cfloat_to_arr tmp;
+    tmp.arr[1] = imag;
+    *c = tmp.comp;
+#endif
+}
+
+inline longdouble_t NPY_CLONGDOUBLE_GET_REAL(const npy_clongdouble *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const longdouble_t *>(c)[0];
+#else
+    _npy_clongdouble_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[0];
+#endif
+}
+
+inline longdouble_t NPY_CLONGDOUBLE_GET_IMAG(const npy_clongdouble *c) {
+#ifdef __cplusplus
+    return reinterpret_cast<const longdouble_t *>(c)[1];
+#else
+    _npy_clongdouble_to_arr tmp;
+    tmp.comp = *c;
+    return tmp.arr[1];
+#endif
+}
+
+inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t real) {
+#ifdef __cplusplus
+    longdouble_t *tmp = reinterpret_cast<longdouble_t *>(c);
+    tmp[0] = real;
+#else
+    _npy_clongdouble_to_arr tmp;
+    tmp.arr[0] = real;
+    *c = tmp.comp;
+#endif
+}
+
+inline void NPY_CLONGDOUBLE_SET_IMAG(npy_clongdouble *c, longdouble_t imag) {
+#ifdef __cplusplus
+    longdouble_t *tmp = reinterpret_cast<longdouble_t *>(c);
+    tmp[1] = imag;
+#else
+    _npy_clongdouble_to_arr tmp;
+    tmp.arr[1] = imag;
+    *c = tmp.comp;
+#endif
+}
 
 /*
  * numarray-style bit-width typedefs

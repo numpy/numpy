@@ -422,10 +422,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cdouble *)PyArray_DATA(ap2);
                 ptr2 = (npy_cdouble *)PyArray_DATA(ap1);
                 res = (npy_cdouble *)PyArray_DATA(out_buf);
-                NPY_CDOUBLE_GET_REAL(res) = NPY_CDOUBLE_GET_REAL(ptr1) * NPY_CDOUBLE_GET_REAL(ptr2)
-                                            - NPY_CDOUBLE_GET_IMAG(ptr1) * NPY_CDOUBLE_GET_IMAG(ptr2);
-                NPY_CDOUBLE_GET_IMAG(res) = NPY_CDOUBLE_GET_REAL(ptr1) * NPY_CDOUBLE_GET_IMAG(ptr2)
-                                            + NPY_CDOUBLE_GET_IMAG(ptr1) * NPY_CDOUBLE_GET_REAL(ptr2);
+                NPY_CDOUBLE_SET_REAL(res, NPY_CDOUBLE_GET_REAL(ptr1) * NPY_CDOUBLE_GET_REAL(ptr2)
+                                            - NPY_CDOUBLE_GET_IMAG(ptr1) * NPY_CDOUBLE_GET_IMAG(ptr2));
+                NPY_CDOUBLE_SET_IMAG(res, NPY_CDOUBLE_GET_REAL(ptr1) * NPY_CDOUBLE_GET_IMAG(ptr2)
+                                            + NPY_CDOUBLE_GET_IMAG(ptr1) * NPY_CDOUBLE_GET_REAL(ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_zaxpy)(l,
@@ -497,10 +497,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cfloat *)PyArray_DATA(ap2);
                 ptr2 = (npy_cfloat *)PyArray_DATA(ap1);
                 res = (npy_cfloat *)PyArray_DATA(out_buf);
-                NPY_CFLOAT_GET_REAL(res) = NPY_CFLOAT_GET_REAL(ptr1) * NPY_CFLOAT_GET_REAL(ptr2)
-                                           - NPY_CFLOAT_GET_IMAG(ptr1) * NPY_CFLOAT_GET_IMAG(ptr2);
-                NPY_CFLOAT_GET_IMAG(res) = NPY_CFLOAT_GET_REAL(ptr1) * NPY_CFLOAT_GET_IMAG(ptr2)
-                                           + NPY_CFLOAT_GET_IMAG(ptr1) * NPY_CFLOAT_GET_REAL(ptr2);
+                NPY_CFLOAT_SET_REAL(res, NPY_CFLOAT_GET_REAL(ptr1) * NPY_CFLOAT_GET_REAL(ptr2)
+                                           - NPY_CFLOAT_GET_IMAG(ptr1) * NPY_CFLOAT_GET_IMAG(ptr2));
+                NPY_CFLOAT_SET_IMAG(res, NPY_CFLOAT_GET_REAL(ptr1) * NPY_CFLOAT_GET_IMAG(ptr2)
+                                           + NPY_CFLOAT_GET_IMAG(ptr1) * NPY_CFLOAT_GET_REAL(ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_caxpy)(l,

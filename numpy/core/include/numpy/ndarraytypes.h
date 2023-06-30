@@ -962,6 +962,23 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
 #define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
+
+#ifdef __cplusplus
+#define PyArray_CLT(p,q, type) (p).real() == (q).real() \
+                                ? (p).imag() < (q).imag() \
+                                : (p).real() < (q).real()
+#define PyArray_CGT(p,q, type) (p).real() == (q).real() \
+                                ? (p).imag() > (q).imag() \
+                                : (p).real() > (q).real()
+#define PyArray_CLE(p,q, type) (p).real() == (q).real() \
+                                ? (p).imag() <= (q).imag() \
+                                : (p).real() <= (q).real()
+#define PyArray_CGE(p,q, type) (p).real() == (q).real() \
+                                ? (p).imag() >= (q).imag() \
+                                : (p).real() >= (q).real()
+#define PyArray_CEQ(p,q, type) (p) == (q)
+#define PyArray_CNE(p,q, type) (p) != (q)
+#else
 #define PyArray_CLT(p,q, type) NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
                                 ? NPY_##type##_GET_IMAG(&(p)) < NPY_##type##_GET_IMAG(&(q)) \
                                 : NPY_##type##_GET_REAL(&(p)) < NPY_##type##_GET_REAL(&(q))
@@ -974,10 +991,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_CGE(p,q, type) NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
                                 ? NPY_##type##_GET_IMAG(&(p)) >= NPY_##type##_GET_IMAG(&(q)) \
                                 : NPY_##type##_GET_REAL(&(p)) >= NPY_##type##_GET_REAL(&(q))
-#define PyArray_CEQ(p,q, type) NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
-                                && NPY_##type##_GET_IMAG(&(p)) == NPY_##type##_GET_IMAG(&(q))
-#define PyArray_CNE(p,q, type) NPY_##type##_GET_REAL(&(p)) != NPY_##type##_GET_REAL(&(q)) \
-                                || NPY_##type##_GET_IMAG(&(p)) != NPY_##type##_GET_IMAG(&(q))
+#define PyArray_CEQ(p,q, type) (p) == (q)
+#define PyArray_CNE(p,q, type) (p) != (q)
+#endif
 
 /*
  * C API: consists of Macros and functions.  The MACROS are defined

@@ -292,16 +292,14 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
 static void
 nc_neg@c@(@ctype@ *a, @ctype@ *r)
 {
-    NPY_@NAME@_GET_REAL(r) = -NPY_@NAME@_GET_REAL(a);
-    NPY_@NAME@_GET_IMAG(r) = -NPY_@NAME@_GET_IMAG(a);
+    *r = -(*a);
     return;
 }
 
 static void
 nc_pos@c@(@ctype@ *a, @ctype@ *r)
 {
-    NPY_@NAME@_GET_REAL(r) = +NPY_@NAME@_GET_REAL(a);
-    NPY_@NAME@_GET_IMAG(r) = +NPY_@NAME@_GET_IMAG(a);
+    *r = +(*a);
     return;
 }
 
@@ -315,8 +313,8 @@ nc_sqrt@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_rint@c@(@ctype@ *x, @ctype@ *r)
 {
-    NPY_@NAME@_GET_REAL(r) = npy_rint@c@(NPY_@NAME@_GET_REAL(x));
-    NPY_@NAME@_GET_IMAG(r) = npy_rint@c@(NPY_@NAME@_GET_IMAG(x));
+    NPY_@NAME@_SET_REAL(r, npy_rint@c@(NPY_@NAME@_GET_REAL(x)));
+    NPY_@NAME@_SET_IMAG(r, npy_rint@c@(NPY_@NAME@_GET_IMAG(x)));
 }
 
 static void
@@ -330,8 +328,8 @@ static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ l = npy_hypot@c@(NPY_@NAME@_GET_REAL(x) + 1,NPY_@NAME@_GET_IMAG(x));
-    NPY_@NAME@_GET_IMAG(r) = npy_atan2@c@(NPY_@NAME@_GET_IMAG(x), NPY_@NAME@_GET_REAL(x) + 1);
-    NPY_@NAME@_GET_REAL(r) = npy_log@c@(l);
+    NPY_@NAME@_SET_IMAG(r, npy_atan2@c@(NPY_@NAME@_GET_IMAG(x), NPY_@NAME@_GET_REAL(x) + 1));
+    NPY_@NAME@_SET_REAL(r, npy_log@c@(l));
     return;
 }
 
@@ -346,8 +344,8 @@ static void
 nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 {
     @ctype@ a;
-    NPY_@NAME@_GET_REAL(&a) = NPY_@NAME@_GET_REAL(x)*NPY_LOGE2@c@;
-    NPY_@NAME@_GET_IMAG(&a) = NPY_@NAME@_GET_IMAG(x)*NPY_LOGE2@c@;
+    NPY_@NAME@_SET_REAL(&a, NPY_@NAME@_GET_REAL(x)*NPY_LOGE2@c@);
+    NPY_@NAME@_SET_IMAG(&a, NPY_@NAME@_GET_IMAG(x)*NPY_LOGE2@c@);
     nc_exp@c@(&a, r);
     return;
 }
@@ -356,8 +354,8 @@ static void
 nc_expm1@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ a = npy_sin@c@(NPY_@NAME@_GET_IMAG(x) / 2);
-    NPY_@NAME@_GET_REAL(r) = npy_expm1@c@(NPY_@NAME@_GET_REAL(x)) * npy_cos@c@(NPY_@NAME@_GET_IMAG(x)) - 2 * a * a;
-    NPY_@NAME@_GET_IMAG(r) = npy_exp@c@(NPY_@NAME@_GET_REAL(x)) * npy_sin@c@(NPY_@NAME@_GET_IMAG(x));
+    NPY_@NAME@_SET_REAL(r, npy_expm1@c@(NPY_@NAME@_GET_REAL(x)) * npy_cos@c@(NPY_@NAME@_GET_IMAG(x)) - 2 * a * a);
+    NPY_@NAME@_SET_IMAG(r,npy_exp@c@(NPY_@NAME@_GET_REAL(x)) * npy_sin@c@(NPY_@NAME@_GET_IMAG(x)));
     return;
 }
 
@@ -429,8 +427,8 @@ static void
 nc_log10@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
-    NPY_@NAME@_GET_REAL(r) *= NPY_LOG10E@c@;
-    NPY_@NAME@_GET_IMAG(r) *= NPY_LOG10E@c@;
+    NPY_@NAME@_SET_REAL(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG10E@c@);
+    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG10E@c@);
     return;
 }
 
@@ -438,8 +436,8 @@ static void
 nc_log2@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
-    NPY_@NAME@_GET_REAL(r) *= NPY_LOG2E@c@;
-    NPY_@NAME@_GET_IMAG(r) *= NPY_LOG2E@c@;
+    NPY_@NAME@_SET_REAL(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG2E@c@);
+    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG2E@c@);
     return;
 }
 

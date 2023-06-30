@@ -243,8 +243,8 @@ npy_to_cfloat(PyArray_Descr *descr,
         return -1;
     }
     npy_complex64 val;
-    NPY_CFLOAT_GET_REAL(&val) = (float) real;
-    NPY_CFLOAT_GET_IMAG(&val) = (float) imag;
+    NPY_CFLOAT_SET_REAL(&val, (float) real);
+    NPY_CFLOAT_SET_IMAG(&val, (float) imag);
     memcpy(dataptr, &val, sizeof(npy_complex64));
     if (!PyArray_ISNBO(descr->byteorder)) {
         npy_bswap4_unaligned(dataptr);
@@ -269,8 +269,8 @@ npy_to_cdouble(PyArray_Descr *descr,
         return -1;
     }
     npy_complex128 val;
-    NPY_CDOUBLE_GET_REAL(&val) = real;
-    NPY_CDOUBLE_GET_IMAG(&val) = imag;
+    NPY_CDOUBLE_SET_REAL(&val, real);
+    NPY_CDOUBLE_SET_IMAG(&val, imag);
     memcpy(dataptr, &val, sizeof(npy_complex128));
     if (!PyArray_ISNBO(descr->byteorder)) {
         npy_bswap8_unaligned(dataptr);

@@ -501,8 +501,8 @@ NPY_NO_EXPORT int
                 return -1;
             }
         }
-        NPY_@NAME@_GET_REAL(&temp) = (@ftype@) oop.real;
-        NPY_@NAME@_GET_IMAG(&temp) = (@ftype@) oop.imag;
+        NPY_@NAME@_SET_REAL(&temp, (@ftype@) oop.real);
+        NPY_@NAME@_SET_IMAG(&temp, (@ftype@) oop.imag);
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
         /* Overflow could have occurred converting double to float */
@@ -1948,7 +1948,7 @@ static int
     char next = getc(fp);
     if ((next == '+') || (next == '-')) {
         // Imaginary component specified
-        NPY_@fname@_GET_REAL(&output) = result;
+        NPY_@fname@_SET_REAL(&output, result);
         // Revert peek and read imaginary component
         ungetc(next, fp);
         ret_imag = NumPyOS_ascii_ftolf(fp, &result);
@@ -1956,23 +1956,23 @@ static int
         next = getc(fp);
         if ((ret_imag == 1) && (next == 'j')) {
             // If read is successful and the immediate following char is j
-            NPY_@fname@_GET_IMAG(&output) = result;
+            NPY_@fname@_SET_IMAG(&output, result);
         }
         else {
-            NPY_@fname@_GET_IMAG(&output) = 0;
+            NPY_@fname@_SET_IMAG(&output, 0);
             // Push an invalid char to trigger the not everything is read error
             ungetc('a', fp);
         }
     }
     else if (next == 'j') {
         // Real component not specified
-        NPY_@fname@_GET_REAL(&output) = 0;
-        NPY_@fname@_GET_IMAG(&output) = result;
+        NPY_@fname@_SET_REAL(&output, 0);
+        NPY_@fname@_SET_IMAG(&output, result);
     }
     else {
         // Imaginary component not specified
-        NPY_@fname@_GET_REAL(&output) = result;
-        NPY_@fname@_GET_IMAG(&output) = 0.;
+        NPY_@fname@_SET_REAL(&output, result);
+        NPY_@fname@_SET_IMAG(&output, 0.);
         // Next character is not + / - / j. Revert peek.
         ungetc(next, fp);
     }
@@ -2089,14 +2089,14 @@ static int
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
-        NPY_@fname@_GET_REAL(&output) = result;
+        NPY_@fname@_SET_REAL(&output, result);
         // Reading imaginary component
         char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
         if (endptr && *endptr[0] == 'j') {
             // Read is successful if the immediate following char is j
-            NPY_@fname@_GET_IMAG(&output) = result;
+            NPY_@fname@_SET_IMAG(&output, result);
             // Skip j
             ++*endptr;
         }
@@ -2106,20 +2106,20 @@ static int
              * read error
              */
             endptr = prev;
-            NPY_@fname@_GET_IMAG(&output) = 0;
+            NPY_@fname@_SET_IMAG(&output, 0);
         }
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
-        NPY_@fname@_GET_REAL(&output) = 0;
-        NPY_@fname@_GET_IMAG(&output) = result;
+        NPY_@fname@_SET_REAL(&output, 0);
+        NPY_@fname@_SET_IMAG(&output, result);
         // Skip j
         ++*endptr;
     }
     else {
         // Imaginary component not specified
-        NPY_@fname@_GET_REAL(&output) = result;
-        NPY_@fname@_GET_IMAG(&output) = 0.;
+        NPY_@fname@_SET_REAL(&output, result);
+        NPY_@fname@_SET_IMAG(&output, 0.);
     }
     *(@type@ *)ip = output;
     return 0;
@@ -3986,8 +3986,8 @@ static int
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        NPY_@NAME@_GET_REAL(buffer) = NPY_@NAME@_GET_REAL(&start) + i*NPY_@NAME@_GET_REAL(&delta);
-        NPY_@NAME@_GET_IMAG(buffer) = NPY_@NAME@_GET_IMAG(&start) + i*NPY_@NAME@_GET_IMAG(&delta);
+        NPY_@NAME@_SET_REAL(buffer, NPY_@NAME@_GET_REAL(&start) + i*NPY_@NAME@_GET_REAL(&delta));
+        NPY_@NAME@_SET_IMAG(buffer, NPY_@NAME@_GET_IMAG(&start) + i*NPY_@NAME@_GET_IMAG(&delta));
     }
     return 0;
 }
