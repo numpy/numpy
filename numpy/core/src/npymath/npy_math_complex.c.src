@@ -64,7 +64,7 @@ static const volatile npy_float tiny = 3.9443045e-31f;
 /*==========================================================
  * Constants
  *=========================================================*/
-static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
+static const @ctype@ c_1@c@ = 1.0@C@;
 
 /*==========================================================
  * Helper functions
@@ -422,13 +422,7 @@ npy_csqrt@c@(@ctype@ z)
 static @ctype@
 sys_cpow@c@(@ctype@ x, @ctype@ y)
 {
-    __@ctype@_to_c99_cast xcast;
-    __@ctype@_to_c99_cast ycast;
-    __@ctype@_to_c99_cast ret;
-    xcast.npy_z = x;
-    ycast.npy_z = y;
-    ret.c99_z = cpow@c@(xcast.c99_z, ycast.c99_z);
-    return ret.npy_z;
+    return cpow@c@(x, y);
 }
 #endif
 
@@ -1756,9 +1750,7 @@ npy_catanh@c@(@ctype@ z)
 @type@
 npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1;
-    z1.npy_z = z;
-    return @kind@@c@(z1.c99_z);
+    return @kind@@c@(z);
 }
 #endif
 /**end repeat1**/
@@ -1773,11 +1765,7 @@ npy_@kind@@c@(@ctype@ z)
 @ctype@
 npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1;
-    __@ctype@_to_c99_cast ret;
-    z1.npy_z = z;
-    ret.c99_z = @kind@@c@(z1.c99_z);
-    return ret.npy_z;
+    return @kind@@c@(z);
 }
 #endif
 /**end repeat1**/
