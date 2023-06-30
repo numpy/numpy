@@ -75,4 +75,4 @@
 # Version 18 (NumPy 2.0.0)
 # Many API deprecations have been finalized
 # Add datetime conversion functions GH#21199
-0x00000012 = 8cf95bb1f5ce4bd3c2195a31fce44a93
+0x00000012 = 52eabc83680fd0d381c08d63e264e72e

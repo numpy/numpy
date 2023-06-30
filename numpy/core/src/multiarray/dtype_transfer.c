@@ -941,17 +941,19 @@ _strided_to_strided_string_to_datetime(
             memcpy(tmp_buffer, src, src_itemsize);
             tmp_buffer[src_itemsize] = '\0';
 
-            if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
-                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL) < 0) {
+            if (NpyDatetime_ParseISO8601Datetime(
+                    tmp_buffer, src_itemsize,
+                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                    &dts, NULL, NULL) < 0) {
                 return -1;
             }
         }
         /* Otherwise parse the data in place */
         else {
-            if (parse_iso_8601_datetime(src, tmp - src,
-                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL) < 0) {
+            if (NpyDatetime_ParseISO8601Datetime(
+                    src, tmp - src,
+                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                    &dts, NULL, NULL) < 0) {
                 return -1;
             }
         }

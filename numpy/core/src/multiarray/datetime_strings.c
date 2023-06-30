@@ -187,7 +187,8 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
     return 0;
 }
 
-/*
+/*NUMPY_API
+ *
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
  * + The date "20100312" is parsed as the year 20100312, not as
@@ -219,12 +220,13 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char const *str, Py_ssize_t len,
-                    NPY_DATETIMEUNIT unit,
-                    NPY_CASTING casting,
-                    npy_datetimestruct *out,
-                    NPY_DATETIMEUNIT *out_bestunit,
-                    npy_bool *out_special)
+NpyDatetime_ParseISO8601Datetime(
+        char const *str, Py_ssize_t len,
+        NPY_DATETIMEUNIT unit,
+        NPY_CASTING casting,
+        npy_datetimestruct *out,
+        NPY_DATETIMEUNIT *out_bestunit,
+        npy_bool *out_special)
 {
     int year_leap = 0;
     int i, numdigits;

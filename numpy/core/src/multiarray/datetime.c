@@ -2402,8 +2402,9 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         /* Parse the ISO date */
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = NPY_FR_ERROR;
-        if (parse_iso_8601_datetime(str, len, meta->base, casting,
-                                &dts, &bestunit, NULL) < 0) {
+        if (NpyDatetime_ParseISO8601Datetime(
+                str, len, meta->base, casting,
+                &dts, &bestunit, NULL) < 0) {
             Py_DECREF(utf8);
             return -1;
         }
@@ -3534,18 +3535,20 @@ find_string_array_datetime64_type(PyArrayObject *arr,
                 tmp_buffer[maxlen] = '\0';
 
                 tmp_meta.base = NPY_FR_ERROR;
-                if (parse_iso_8601_datetime(tmp_buffer, maxlen, -1,
-                                    NPY_UNSAFE_CASTING, &dts,
-                                    &tmp_meta.base, NULL) < 0) {
+                if (NpyDatetime_ParseISO8601Datetime(
+                        tmp_buffer, maxlen, -1,
+                        NPY_UNSAFE_CASTING, &dts,
+                        &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }
             }
             /* Otherwise parse the data in place */
             else {
                 tmp_meta.base = NPY_FR_ERROR;
-                if (parse_iso_8601_datetime(data, tmp - data, -1,
-                                    NPY_UNSAFE_CASTING, &dts,
-                                    &tmp_meta.base, NULL) < 0) {
+                if (NpyDatetime_ParseISO8601Datetime(
+                        data, tmp - data, -1,
+                        NPY_UNSAFE_CASTING, &dts,
+                        &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }
             }

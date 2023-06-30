@@ -12,7 +12,7 @@ import os
 macros = [
     ("NPY_NO_DEPRECATED_API", 0),
     # Require 1.25+ to test datetime additions
-    ("NPY_TARGET_VERSION", "NPY_1_25_API_VERSION"),
+    ("NPY_TARGET_VERSION", "NPY_2_0_API_VERSION"),
 ]
 
 checks = Extension(
