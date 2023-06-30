@@ -88,7 +88,8 @@ def docs(ctx, sphinx_target, clean, install_deps, build, jobs):
         fg="bright_blue"
     )
 
-    os.environ['PYTHONPATH'] = f'{site_path}{os.sep}:{os.environ.get("PYTHONPATH", "")}'
+    os.environ['PYTHONPATH'] = \
+        f'{site_path}{os.sep}:{os.environ.get("PYTHONPATH", "")}'
     click.secho(
         f"$ export PYTHONPATH={os.environ['PYTHONPATH']}",
         bold=True, fg="bright_blue"
