@@ -2905,13 +2905,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mT',
     >>> a
     array([[[0, 1],
             [2, 3]],
-    
+    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
     >>> a.mT
     array([[[0, 2],
             [1, 3]],
-    
+    <BLANKLINE>
            [[4, 6],
             [5, 7]]])
     

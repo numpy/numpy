@@ -871,7 +871,7 @@ array_astype(PyArrayObject *self,
      * TODO: UNSAFE default for compatibility, I think
      *       switching to SAME_KIND by default would be good.
      */
-    npy_dtype_info dt_info;
+    npy_dtype_info dt_info = {NULL, NULL};
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     _PyArray_CopyMode forcecopy = 1;
@@ -1135,6 +1135,9 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         }
     }
     Py_DECREF(fast);
+    if (kwds == NULL) {
+        return 0;
+    }
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {

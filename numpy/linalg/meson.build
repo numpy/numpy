@@ -20,7 +20,7 @@ endif
 
 py.extension_module('lapack_lite',
   lapack_lite_module_src,
-  dependencies: [np_core_dep, lapack],
+  dependencies: [np_core_dep, blas_dep, lapack_dep],
   install: true,
   subdir: 'numpy/linalg',
 )

@@ -3916,6 +3916,19 @@ class TestSpecialMethods:
         assert_equal(a, check)
         assert_(a.info, {'inputs': [0, 2]})
 
+    def test_array_ufunc_direct_call(self):
+        # This is mainly a regression test for gh-24023 (shouldn't segfault)
+        a = np.array(1)
+        with pytest.raises(TypeError):
+            a.__array_ufunc__()
+
+        # No kwargs means kwargs may be NULL on the C-level
+        with pytest.raises(TypeError):
+            a.__array_ufunc__(1, 2)
+
+        # And the same with a valid call:
+        res = a.__array_ufunc__(np.add, "__call__", a, a)
+        assert_array_equal(res, a + a)
 
 class TestChoose:
     def test_mixed(self):

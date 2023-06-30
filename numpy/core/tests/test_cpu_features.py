@@ -162,7 +162,7 @@ if __name__ == "__main__":
             **self.SUBPROCESS_ARGS,
             )
 
-    # Helper function mimicing pytest.raises for subprocess call
+    # Helper function mimicking pytest.raises for subprocess call
     def _expect_error(
         self,
         msg,
