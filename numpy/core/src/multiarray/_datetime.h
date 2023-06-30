@@ -51,15 +51,6 @@ NPY_NO_EXPORT PyArray_Descr *
 datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
 
 /*
- * Converts a datetime from a datetimestruct to a datetime based
- * on some metadata.
- */
-NPY_NO_EXPORT int
-NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
-                                    const npy_datetimestruct *dts,
-                                    npy_datetime *out);
-
-/*
  * Extracts the month number, within the current year,
  * from a 'datetime64[D]' value. January is 1, etc.
  */
