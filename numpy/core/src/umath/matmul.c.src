@@ -242,10 +242,10 @@ NPY_NO_EXPORT void
 #if @IS_HALF@
                 sum += npy_half_to_float(val1) * npy_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                NPY_@TYPE@_SET_REAL((@typ@ *) op, NPY_@TYPE@_GET_REAL((@typ@ *) op) + (NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_REAL(&val2)) -
-                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_IMAG(&val2)));
-                NPY_@TYPE@_SET_IMAG((@typ@ *) op, NPY_@TYPE@_GET_REAL((@typ@ *) op) + (NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_IMAG(&val2)) +
-                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_REAL(&val2)));
+                NPY_@TYPE@_SET_REAL((@typ@ *) op, NPY_@TYPE@_GET_REAL((@typ@ *) op) + ((NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_REAL(&val2)) -
+                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_IMAG(&val2))));
+                NPY_@TYPE@_SET_IMAG((@typ@ *) op, NPY_@TYPE@_GET_IMAG((@typ@ *) op) + ((NPY_@TYPE@_GET_REAL(&val1) * NPY_@TYPE@_GET_IMAG(&val2)) +
+                                       (NPY_@TYPE@_GET_IMAG(&val1) * NPY_@TYPE@_GET_REAL(&val2))));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif
