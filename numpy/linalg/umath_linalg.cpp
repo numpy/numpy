@@ -975,7 +975,7 @@ identity_matrix(typ *matrix, size_t n)
 {
     size_t i;
     /* in IEEE floating point, zeroes are represented as bitwise 0 */
-    memset(matrix, 0, n*n*sizeof(typ));
+    memset((void *)matrix, 0, n*n*sizeof(typ));
 
     for (i = 0; i < n; ++i)
     {
