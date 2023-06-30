@@ -201,12 +201,6 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 #define PyArray_Put(ap, items, values)                                        \
         PyArray_PutTo(ap, items, values, NPY_RAISE)
 
-/* Compatibility with old Numeric stuff -- don't use in new code */
-
-#define PyArray_FromDimsAndData(nd, d, type, data)                            \
-        PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type),   \
-                                        data)
-
 
 /*
    Check to see if this key in the dictionary is the "title"

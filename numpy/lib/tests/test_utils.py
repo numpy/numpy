@@ -2,6 +2,7 @@ import inspect
 import sys
 import pytest
 
+import numpy as np
 from numpy.core import arange
 from numpy.testing import assert_, assert_equal, assert_raises_regex
 from numpy.lib import deprecate, deprecate_with_doc
@@ -119,11 +120,13 @@ def test_deprecate_module():
     assert_(old_func.__module__ == __name__)
 
 
+@pytest.mark.filterwarnings("ignore:.*safe_eval.*:DeprecationWarning")
 def test_safe_eval_nameconstant():
     # Test if safe_eval supports Python 3.4 _ast.NameConstant
     utils.safe_eval('None')
 
 
+@pytest.mark.filterwarnings("ignore:.*byte_bounds.*:DeprecationWarning")
 class TestByteBounds:
 
     def test_byte_bounds(self):
@@ -176,3 +179,52 @@ def test_info_method_heading():
 
     assert _has_method_heading(WithPublicMethods)
     assert not _has_method_heading(NoPublicMethods)
+
+
+def test_drop_metadata():
+    def _compare_dtypes(dt1, dt2):
+        return np.can_cast(dt1, dt2, casting='no')
+
+    # structured dtype
+    dt = np.dtype([('l1', [('l2', np.dtype('S8', metadata={'msg': 'toto'}))])],
+                  metadata={'msg': 'titi'})
+    dt_m = utils.drop_metadata(dt)
+    assert _compare_dtypes(dt, dt_m) is True
+    assert dt_m.metadata is None
+    assert dt_m['l1'].metadata is None
+    assert dt_m['l1']['l2'].metadata is None
+    
+    # alignment
+    dt = np.dtype([('x', '<f8'), ('y', '<i4')],
+                  align=True,
+                  metadata={'msg': 'toto'})
+    dt_m = utils.drop_metadata(dt)
+    assert _compare_dtypes(dt, dt_m) is True
+    assert dt_m.metadata is None
+
+    # subdtype
+    dt = np.dtype('8f',
+                  metadata={'msg': 'toto'})
+    dt_m = utils.drop_metadata(dt)
+    assert _compare_dtypes(dt, dt_m) is True
+    assert dt_m.metadata is None
+
+    # scalar
+    dt = np.dtype('uint32',
+                  metadata={'msg': 'toto'})
+    dt_m = utils.drop_metadata(dt)
+    assert _compare_dtypes(dt, dt_m) is True
+    assert dt_m.metadata is None
+
+
+@pytest.mark.parametrize("dtype",
+        [np.dtype("i,i,i,i")[["f1", "f3"]],
+        np.dtype("f8"),
+        np.dtype("10i")])
+def test_drop_metadata_identity_and_copy(dtype):
+    # If there is no metadata, the identity is preserved:
+    assert utils.drop_metadata(dtype) is dtype
+
+    # If there is any, it is dropped (subforms are checked above)
+    dtype = np.dtype(dtype, metadata={1: 2})
+    assert utils.drop_metadata(dtype).metadata is None

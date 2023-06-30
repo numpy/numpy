@@ -15,9 +15,7 @@ import re
 import weakref
 import pytest
 from contextlib import contextmanager
-
-from numpy.compat import pickle
-
+import pickle
 import pathlib
 import builtins
 from decimal import Decimal
@@ -39,6 +37,12 @@ from numpy.core.multiarray import _get_ndarray_c_version
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
+
+
+def assert_arg_sorted(arr, arg):
+    # resulting array should be sorted and arg values should be unique
+    assert_equal(arr[arg], np.sort(arr))
+    assert_equal(np.sort(arg), np.arange(len(arg)))
 
 
 def _aligned_zeros(shape, dtype=float, order="C", align=None):
@@ -5361,7 +5365,7 @@ class TestIO:
         def fail(*args, **kwargs):
             raise OSError('Can not tell or seek')
 
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             f.seek = fail
             f.tell = fail
             assert_raises(OSError, np.fromfile, f, dtype=x.dtype)
@@ -5369,7 +5373,7 @@ class TestIO:
     def test_io_open_unbuffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=0) as f:
+        with open(tmp_filename, 'rb', buffering=0) as f:
             y = np.fromfile(f, dtype=x.dtype)
             assert_array_equal(y, x.flat)
 
@@ -5396,7 +5400,7 @@ class TestIO:
     def test_io_open_buffered_fromfile(self, x, tmp_filename):
         # gh-6632
         x.tofile(tmp_filename)
-        with io.open(tmp_filename, 'rb', buffering=-1) as f:
+        with open(tmp_filename, 'rb', buffering=-1) as f:
             y = np.fromfile(f, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 
@@ -9111,10 +9115,10 @@ class TestBytestringArrayNonzero:
     def test_empty_bstring_array_is_falsey(self):
         assert_(not np.array([''], dtype=str))
 
-    def test_whitespace_bstring_array_is_falsey(self):
+    def test_whitespace_bstring_array_is_truthy(self):
         a = np.array(['spam'], dtype=str)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_bstring_array_is_falsey(self):
         a = np.array(['spam'], dtype=str)
@@ -9160,10 +9164,10 @@ class TestUnicodeArrayNonzero:
     def test_empty_ustring_array_is_falsey(self):
         assert_(not np.array([''], dtype=np.str_))
 
-    def test_whitespace_ustring_array_is_falsey(self):
+    def test_whitespace_ustring_array_is_truthy(self):
         a = np.array(['eggs'], dtype=np.str_)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_ustring_array_is_falsey(self):
         a = np.array(['eggs'], dtype=np.str_)
@@ -9989,3 +9993,39 @@ def test_sort_uint():
 
 def test_private_get_ndarray_c_version():
     assert isinstance(_get_ndarray_c_version(), int)
+
+
+@pytest.mark.parametrize("N", np.arange(1, 512))
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_argsort_float(N, dtype):
+    rnd = np.random.RandomState(116112)
+    # (1) Regular data with a few nan: doesn't use vectorized sort
+    arr = -0.5 + rnd.random(N).astype(dtype)
+    arr[rnd.choice(arr.shape[0], 3)] = np.nan
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+    # (2) Random data with inf at the end of array
+    # See: https://github.com/intel/x86-simd-sort/pull/39
+    arr = -0.5 + rnd.rand(N).astype(dtype)
+    arr[N-1] = np.inf
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+
+@pytest.mark.parametrize("N", np.arange(2, 512))
+@pytest.mark.parametrize("dtype", [np.int32, np.uint32, np.int64, np.uint64])
+def test_argsort_int(N, dtype):
+    rnd = np.random.RandomState(1100710816)
+    # (1) random data with min and max values
+    minv = np.iinfo(dtype).min
+    maxv = np.iinfo(dtype).max
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+    i, j = rnd.choice(N, 2, replace=False)
+    arr[i] = minv
+    arr[j] = maxv
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+    # (2) random data with max value at the end of array
+    # See: https://github.com/intel/x86-simd-sort/pull/39
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+    arr[N-1] = maxv
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))

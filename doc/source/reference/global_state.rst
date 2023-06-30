@@ -82,17 +82,3 @@ memory allocation policy, the default will be to call ``free``. If
 ``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``"1"``, a ``RuntimeWarning`` will
 be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
 and set the ``ndarray.base``.
-
-
-Testing planned future behavior
-===============================
-
-NumPy has some code paths which are planned to be activated in the future
-but are not yet the default behavior.
-You can try testing some of these which may be shipped with a new "major"
-release (NumPy 2.0) by setting an environment before importing NumPy:
-
-    NPY_NUMPY_2_BEHAVIOR=1
-
-By default this will also activate the :ref:`NEP 50 <NEP50>` related setting
-``NPY_PROMOTION_STATE`` (please see the NEP for details on this).

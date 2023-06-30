@@ -732,6 +732,22 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 }
 
 /*
+ * Return matrix transpose (swap last two dimensions).
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixTranspose(PyArrayObject *ap)
+{
+    int ndim = PyArray_NDIM(ap);
+
+    if (ndim < 2) {
+        PyErr_SetString(PyExc_ValueError,
+                        "matrix transpose with ndim < 2 is undefined");
+        return NULL;
+    }
+    return PyArray_SwapAxes(ap, ndim - 2, ndim - 1);
+}
+
+/*
  * Sorts items so stride is descending, because C-order
  * is the default in the face of ambiguity.
  */

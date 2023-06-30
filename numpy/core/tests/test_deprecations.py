@@ -256,18 +256,6 @@ class TestNPY_CHAR(_DeprecationTestCase):
         assert_(npy_char_deprecation() == 'S1')
 
 
-class TestPyArray_AS1D(_DeprecationTestCase):
-    def test_npy_pyarrayas1d_deprecation(self):
-        from numpy.core._multiarray_tests import npy_pyarrayas1d_deprecation
-        assert_raises(NotImplementedError, npy_pyarrayas1d_deprecation)
-
-
-class TestPyArray_AS2D(_DeprecationTestCase):
-    def test_npy_pyarrayas2d_deprecation(self):
-        from numpy.core._multiarray_tests import npy_pyarrayas2d_deprecation
-        assert_raises(NotImplementedError, npy_pyarrayas2d_deprecation)
-
-
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
     def test_3_tuple(self):
@@ -366,18 +354,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             # Should not raise:
             res = np.fromstring(x_str, sep=",", count=4)
             assert_array_equal(res, x)
-
-
-class Test_GetSet_NumericOps(_DeprecationTestCase):
-    # 2018-09-20, 1.16.0
-    def test_get_numeric_ops(self):
-        from numpy.core._multiarray_tests import getset_numericops
-        self.assert_deprecated(getset_numericops, num=2)
-
-        # empty kwargs prevents any state actually changing which would break
-        # other tests.
-        self.assert_deprecated(np.set_numeric_ops, kwargs={})
-        assert_raises(ValueError, np.set_numeric_ops, add='abc')
 
 
 class TestShape1Fields(_DeprecationTestCase):
@@ -631,25 +607,6 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")
 
 
-class TestMemEventHook(_DeprecationTestCase):
-    # Deprecated 2021-11-18, NumPy 1.23
-    def test_mem_seteventhook(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-        import numpy.core._multiarray_tests as ma_tests
-        with pytest.warns(DeprecationWarning,
-                          match='PyDataMem_SetEventHook is deprecated'):
-            ma_tests.test_pydatamem_seteventhook_start()
-        # force an allocation and free of a numpy array
-        # needs to be larger then limit of small memory cacher in ctors.c
-        a = np.zeros(1000)
-        del a
-        break_cycles()
-        with pytest.warns(DeprecationWarning,
-                          match='PyDataMem_SetEventHook is deprecated'):
-            ma_tests.test_pydatamem_seteventhook_end()
-
-
 class TestArrayFinalizeNone(_DeprecationTestCase):
     message = "Setting __array_finalize__ = None"
 
@@ -815,3 +772,12 @@ class TestMathAlias(_DeprecationTestCase):
 
     def test_deprecated_np_lib_math(self):
         self.assert_deprecated(lambda: np.lib.math)
+
+
+class TestLibImports(_DeprecationTestCase):
+    # Deprecated in Numpy 1.26.0, 2023-09
+    def test_lib_functions_deprecation_call(self):
+        from numpy.lib import byte_bounds, safe_eval, who
+        self.assert_deprecated(lambda: byte_bounds(np.array([1])))
+        self.assert_deprecated(lambda: safe_eval("None"))
+        self.assert_deprecated(lambda: who())

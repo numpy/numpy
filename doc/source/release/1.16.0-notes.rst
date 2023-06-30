@@ -64,7 +64,7 @@ New deprecations
 
 * The `numpy.set_array_ops` and `numpy.get_array_ops` functions are deprecated.
   As part of `NEP 15`, they have been deprecated along with the C-API functions
-  :c:func:`PyArray_SetNumericOps` and :c:func:`PyArray_GetNumericOps`. Users
+  ``PyArray_SetNumericOps`` and ``PyArray_GetNumericOps``. Users
   who wish to override the inner loop functions in built-in ufuncs should use
   :c:func:`PyUFunc_ReplaceLoopBySignature`.
 

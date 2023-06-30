@@ -411,7 +411,7 @@ class AxisConcatenator:
         # through to error in concatenate.
         if len(result_type_objs) != 0:
             final_dtype = _nx.result_type(*result_type_objs)
-            # concatenate could do cast, but that can be overriden:
+            # concatenate could do cast, but that can be overridden:
             objs = [array(obj, copy=False, subok=True,
                           ndmin=ndmin, dtype=final_dtype) for obj in objs]
 

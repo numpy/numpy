@@ -1,14 +1,15 @@
+import datetime
+import pickle
+
+import pytest
 
 import numpy
 import numpy as np
-import datetime
-import pytest
 from numpy.testing import (
     IS_WASM,
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     assert_raises_regex, assert_array_equal,
     )
-from numpy.compat import pickle
 
 # Use pytz to test out various time zones if available
 try:

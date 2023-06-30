@@ -527,6 +527,7 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="see gh-23988")
 @pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
 def test_python2_python3_interoperability():
     fname = 'win64python2.npy'
@@ -1021,8 +1022,7 @@ def test_metadata_dtype(dt, fail):
     else:
         arr2 = np.load(buf)
         # BUG: assert_array_equal does not check metadata
-        from numpy.lib.format import _has_metadata
+        from numpy.lib.utils import drop_metadata
         assert_array_equal(arr, arr2)
-        assert _has_metadata(arr.dtype)
-        assert not _has_metadata(arr2.dtype)
-
+        assert drop_metadata(arr.dtype) is not arr.dtype
+        assert drop_metadata(arr2.dtype) is arr2.dtype

@@ -5,6 +5,8 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
+import pickle
+
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
@@ -21,7 +23,6 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.compat import pickle
 
 
 class TestMRecords:

@@ -1,0 +1,4 @@
+* The ``numpy/old_defines.h`` which was part of the API deprecated since NumPy 1.7
+  has been removed.  This removes macros of the form ``PyArray_CONSTANT``.
+  The script at https://github.com/numpy/numpy/blob/main/tools/replace_old_macros.sed
+  may be useful to convert them to the ``NPY_CONSTANT`` version.

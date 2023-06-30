@@ -282,7 +282,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 #define PyArray_LongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
 #define PyArray_ULongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
 /* Integer aliases */
-#define PyArray_Int8Type (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
+#define PyArray_Int8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
 #define PyArray_UInt8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
 #define PyArray_Int16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
 #define PyArray_UInt16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
@@ -293,7 +293,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 #define PyArray_IntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
 #define PyArray_UIntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
 /* Floats */
-#define PyArray_HalfType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
+#define PyArray_HalfDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
 #define PyArray_FloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
 #define PyArray_DoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
 #define PyArray_LongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
@@ -307,7 +307,9 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 /* Datetime/Timedelta */
 #define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
 #define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
-
+/* Object/Void */
+#define PyArray_ObjectDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[42])
+#define PyArray_VoidDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[43])
 
 /*
  * ********************************

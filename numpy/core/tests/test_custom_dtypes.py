@@ -230,10 +230,18 @@ class TestSFloat:
         assert_array_equal(res.view(np.float64), expected.view(np.float64))
 
     def test_creation_class(self):
+        # passing in a dtype class should return
+        # the default descriptor
         arr1 = np.array([1., 2., 3.], dtype=SF)
         assert arr1.dtype == SF(1.)
         arr2 = np.array([1., 2., 3.], dtype=SF(1.))
         assert_array_equal(arr1.view(np.float64), arr2.view(np.float64))
+        assert arr1.dtype == arr2.dtype
+
+        assert np.empty(3, dtype=SF).dtype == SF(1.)
+        assert np.empty_like(arr1, dtype=SF).dtype == SF(1.)
+        assert np.zeros(3, dtype=SF).dtype == SF(1.)
+        assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
 
 
 def test_type_pickle():

@@ -85,7 +85,7 @@ NPY_FINLINE npyv_u64 npyv__loadl(const void *ptr)
     NPY_FINLINE void npyv_store_##SFX(npyv_lanetype_##SFX *ptr, npyv_##SFX vec)         \
     { npyv__store((npyv_lanetype_##DW_CAST*)ptr, (npyv_##DW_CAST)vec); }                \
     NPY_FINLINE void npyv_storea_##SFX(npyv_lanetype_##SFX *ptr, npyv_##SFX vec)        \
-    { npyv__storea((npyv_lanetype_##DW_CAST*)ptr, (npyv_##DW_CAST)vec); }               \
+    { npyv__storea((npyv_lanetype_u32*)ptr, (npyv_u32)vec); }                           \
     NPY_FINLINE void npyv_stores_##SFX(npyv_lanetype_##SFX *ptr, npyv_##SFX vec)        \
     { npyv_storea_##SFX(ptr, vec); }                                                    \
     NPY_FINLINE void npyv_storel_##SFX(npyv_lanetype_##SFX *ptr, npyv_##SFX vec)        \

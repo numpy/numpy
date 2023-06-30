@@ -69,6 +69,10 @@
 # Version 16 (NumPy 1.24) No change.
 0x00000010 = 04a7bf1e65350926a0e528798da263c0
 
-# Version 17 (NumPy 1.25)
+# Version 17 (NumPy 1.25) No actual change.
+0x00000011 = ca1aebdad799358149567d9d93cbca09
+
+# Version 18 (NumPy 2.0.0)
+# Many API deprecations have been finalized
 # Add datetime conversion functions GH#21199
-0x00000011 = 11300d78ccfa5e776b3a6cb845dd9cd6
+0x00000012 = 8cf95bb1f5ce4bd3c2195a31fce44a93

@@ -1219,10 +1219,7 @@ class TestGradient:
 
     def test_return_type(self):
         res = np.gradient(([1, 2], [2, 3]))
-        if np._using_numpy2_behavior():
-            assert type(res) is tuple
-        else:
-            assert type(res) is list
+        assert type(res) is tuple
 
 
 class TestAngle:
@@ -3537,6 +3534,25 @@ class TestPercentile:
         with pytest.raises(ValueError, match="Percentiles must be in"):
             np.percentile([1, 2, 3, 4.0], q)
 
+    @pytest.mark.parametrize("dtype", ["m8[D]", "M8[s]"])
+    @pytest.mark.parametrize("pos", [0, 23, 10])
+    def test_nat_basic(self, dtype, pos):
+        # TODO: Note that times have dubious rounding as of fixing NaTs!
+        # NaT and NaN should behave the same, do basic tests for NaT:
+        a = np.arange(0, 24, dtype=dtype)
+        a[pos] = "NaT"
+        res = np.percentile(a, 30)
+        assert res.dtype == dtype
+        assert np.isnat(res)
+        res = np.percentile(a, [30, 60])
+        assert res.dtype == dtype
+        assert np.isnat(res).all()
+
+        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a[pos, 1] = "NaT"
+        res = np.percentile(a, 30, axis=0)
+        assert_array_equal(np.isnat(res), [False, True, False])
+
 
 quantile_methods = [
     'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
@@ -4071,6 +4087,25 @@ class TestMedian:
         result = np.median(d, axis=axis, keepdims=True, out=out)
         assert result is out
         assert_equal(result.shape, shape_out)
+
+    @pytest.mark.parametrize("dtype", ["m8[s]"])
+    @pytest.mark.parametrize("pos", [0, 23, 10])
+    def test_nat_behavior(self, dtype, pos):
+        # TODO: Median does not support Datetime, due to `mean`.
+        # NaT and NaN should behave the same, do basic tests for NaT.
+        a = np.arange(0, 24, dtype=dtype)
+        a[pos] = "NaT"
+        res = np.median(a)
+        assert res.dtype == dtype
+        assert np.isnat(res)
+        res = np.percentile(a, [30, 60])
+        assert res.dtype == dtype
+        assert np.isnat(res).all()
+
+        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a[pos, 1] = "NaT"
+        res = np.median(a, axis=0)
+        assert_array_equal(np.isnat(res), [False, True, False])
 
 
 class TestAdd_newdoc_ufunc:

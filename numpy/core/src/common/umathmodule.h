@@ -3,6 +3,8 @@
 
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "extobj.h"  /* for the python side extobj set/get */
+
 
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args));

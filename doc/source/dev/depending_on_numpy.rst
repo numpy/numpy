@@ -37,9 +37,9 @@ Testing against the NumPy main branch or pre-releases
 For large, actively maintained packages that depend on NumPy, we recommend
 testing against the development version of NumPy in CI. To make this easy,
 nightly builds are provided as wheels at
-https://anaconda.org/scipy-wheels-nightly/. Example install command::
+https://anaconda.org/scientific-python-nightly-wheels/. Example install command::
 
-    pip install -U --pre --only-binary :all: -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
+    pip install -U --pre --only-binary :all: -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
 This helps detect regressions in NumPy that need fixing before the next NumPy
 release.  Furthermore, we recommend to raise errors on warnings in CI for this
@@ -63,8 +63,8 @@ Build-time dependency
     have to compile with the oldest version you wish to support.
     This can be done by using
     `oldest-supported-numpy <https://github.com/scipy/oldest-supported-numpy/>`__.
-    Please see the NumPy 1.24 documentation at
-    `https://numpy.org/doc/1.24/dev/depending_on_numpy.html`__.
+    Please see the `NumPy 1.24 documentation
+    <https://numpy.org/doc/1.24/dev/depending_on_numpy.html>`__.
 
 
 If a package either uses the NumPy C API directly or it uses some other tool

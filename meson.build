@@ -4,9 +4,9 @@ project(
   # Note that the git commit hash cannot be added dynamically here
   # It is dynamically added upon import by versioneer
   # See `numpy/__init__.py`
-  version: '1.24.0.dev0',
+  version: '2.0.0.dev0',
   license: 'BSD-3',
-  meson_version: '>= 0.64.0',
+  meson_version: '>= 1.1.0',
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
@@ -22,6 +22,7 @@ fs = import('fs')
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
+cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
@@ -34,14 +35,31 @@ elif cc.get_id() == 'msvc'
           'when building with MSVC')
   endif
 endif
+if not cy.version().version_compare('>=0.29.34')
+  error('NumPy requires Cython >= 0.29.34')
+endif
 
-# https://mesonbuild.com/Python-module.html
-py_mod = import('python')
-py = py_mod.find_installation(pure: false)
+py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
 if not cc.has_header('Python.h', dependencies: py_dep)
   error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
+endif
+
+# Add default compile flags for any compiler that supports them.
+# Note that MSVC does not support strict aliasing at all, and neither do the
+# Intel compilers on Windows, so the `-fno` flavor of the flag should be fine.
+add_project_arguments(
+  cc.get_supported_arguments( '-fno-strict-aliasing'), language : 'c'
+)
+#
+# Clang defaults to a non-strict floating error point model, but we need strict
+# behavior. `-ftrapping-math` is equivalent to `-ffp-exception-behavior=strict`.
+# Note that this is only supported on macOS arm64 as of XCode 14.3
+if cc.get_id() == 'clang'
+  add_project_arguments(
+    cc.get_supported_arguments('-ftrapping-math'), language: ['c', 'cpp'],
+  )
 endif
 
 # Generate version number. Note that this will not (yet) update the version

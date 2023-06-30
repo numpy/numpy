@@ -35,11 +35,9 @@ from numpy.core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import (
-    getargspec, formatargspec, long, unicode, bytes
-    )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
+from numpy._utils._inspect import getargspec, formatargspec
 
 
 __all__ = [
@@ -6093,6 +6091,41 @@ class MaskedArray(ndarray):
     swapaxes = _arraymethod('swapaxes')
     T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
+
+    @property
+    def mT(self):
+        """
+        Return the matrix-transpose of the masked array.
+
+        The matrix transpose is the transpose of the last two dimensions, even
+        if the array is of higher dimension.
+
+        .. versionadded:: 2.0
+
+        Returns
+        -------
+        result: MaskedArray
+            The masked array with the last two dimensions transposed
+
+        Raises
+        ------
+        ValueError
+            If the array is of dimension less than 2.
+
+        See Also
+        --------
+        ndarray.mT:
+            Equivalent method for arrays
+        """
+
+        if self.ndim < 2:
+            raise ValueError("matrix transpose with ndim < 2 is undefined")
+
+        if self._mask is nomask:
+            return masked_array(data=self._data.mT)
+        else:
+            return masked_array(data=self.data.mT, mask=self.mask.mT)
+
 
     def tolist(self, fill_value=None):
         """

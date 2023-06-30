@@ -12,7 +12,6 @@ from numpy.distutils import log
 from numpy.distutils.msvccompiler import lib_opts_if_msvc
 from distutils.dep_util import newer
 from sysconfig import get_config_var
-from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means
@@ -809,8 +808,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
             join('include', 'numpy', 'arrayscalars.h'),
-            join('include', 'numpy', 'noprefix.h'),
-            join('include', 'numpy', 'npy_interrupt.h'),
             join('include', 'numpy', 'npy_3kcompat.h'),
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
@@ -1029,7 +1026,7 @@ def configuration(parent_package='',top_path=None):
                          extra_info=extra_info)
 
     #######################################################################
-    #                        umath_tests module                           #
+    #                       _umath_tests module                           #
     #######################################################################
 
     config.add_extension('_umath_tests', sources=[

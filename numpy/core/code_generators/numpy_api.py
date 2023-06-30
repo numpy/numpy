@@ -98,9 +98,10 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
+    '__unused_indices__': [40, 41, 67, 68, 163, 164, 201, 202, 278, 291],
     'PyArray_GetNDArrayCVersion':           (0,),
-    'PyArray_SetNumericOps':                (40,),
-    'PyArray_GetNumericOps':                (41,),
+    # Unused slot 40, was `PyArray_SetNumericOps`
+    # Unused slot 41, was `PyArray_GetNumericOps`,
     'PyArray_INCREF':                       (42,),
     'PyArray_XDECREF':                      (43,),
     'PyArray_SetStringFunction':            (44,),
@@ -126,8 +127,8 @@ multiarray_funcs_api = {
     'PyArray_CastScalarDirect':             (64,),
     'PyArray_ScalarFromObject':             (65,),
     'PyArray_GetCastFunc':                  (66,),
-    'PyArray_FromDims':                     (67,),
-    'PyArray_FromDimsAndDataAndDescr':      (68, StealRef(3)),
+    # Unused slot 67, was `PyArray_FromDims`
+    # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
     'PyArray_FromAny':                      (69, StealRef(2)),
     'PyArray_EnsureArray':                  (70, StealRef(1)),
     'PyArray_EnsureAnyArray':               (71, StealRef(1)),
@@ -222,8 +223,8 @@ multiarray_funcs_api = {
     'PyArray_GetPtr':                       (160,),
     'PyArray_CompareLists':                 (161,),
     'PyArray_AsCArray':                     (162, StealRef(5)),
-    'PyArray_As1D':                         (163,),
-    'PyArray_As2D':                         (164,),
+    # Unused slot 163, was `PyArray_As1D`
+    # Unused slot 164, was `PyArray_As2D`
     'PyArray_Free':                         (165,),
     'PyArray_Converter':                    (166,),
     'PyArray_IntpFromSequence':             (167,),
@@ -260,8 +261,8 @@ multiarray_funcs_api = {
     'PyArray_ClipmodeConverter':            (198,),
     'PyArray_OutputConverter':              (199,),
     'PyArray_BroadcastToShape':             (200,),
-    '_PyArray_SigintHandler':               (201,),
-    '_PyArray_GetSigintBuf':                (202,),
+    # Unused slot 201, was `_PyArray_SigintHandler`
+    # Unused slot 202, was `_PyArray_GetSigintBuf`
     'PyArray_DescrAlignConverter':          (203,),
     'PyArray_DescrAlignConverter2':         (204,),
     'PyArray_SearchsideConverter':          (205,),
@@ -335,7 +336,7 @@ multiarray_funcs_api = {
     'PyArray_CanCastTypeTo':                (275,),
     'PyArray_EinsteinSum':                  (276,),
     'PyArray_NewLikeArray':                 (277, StealRef(3)),
-    'PyArray_GetArrayParamsFromObject':     (278,),
+    # Unused slot 278, was `PyArray_GetArrayParamsFromObject`
     'PyArray_ConvertClipmodeSequence':      (279,),
     'PyArray_MatrixProduct2':               (280,),
     # End 1.6 API
@@ -349,7 +350,7 @@ multiarray_funcs_api = {
     'PyDataMem_NEW':                        (288,),
     'PyDataMem_FREE':                       (289,),
     'PyDataMem_RENEW':                      (290,),
-    'PyDataMem_SetEventHook':               (291,),
+    # Unused slot 291, was `PyDataMem_SetEventHook`
     'PyArray_MapIterSwapAxes':              (293,),
     'PyArray_MapIterArray':                 (294,),
     'PyArray_MapIterNext':                  (295,),
@@ -382,9 +383,10 @@ ufunc_types_api = {
 }
 
 ufunc_funcs_api = {
+    '__unused_indices__': [3, 25, 26, 29, 32],
     'PyUFunc_FromFuncAndData':                  (1,),
     'PyUFunc_RegisterLoopForType':              (2,),
-    'PyUFunc_GenericFunction':                  (3,),
+    # Unused slot 3, was `PyUFunc_GenericFunction`
     'PyUFunc_f_f_As_d_d':                       (4,),
     'PyUFunc_d_d':                              (5,),
     'PyUFunc_f_f':                              (6,),
@@ -406,14 +408,14 @@ ufunc_funcs_api = {
     'PyUFunc_O_O_method':                       (22,),
     'PyUFunc_OO_O_method':                      (23,),
     'PyUFunc_On_Om':                            (24,),
-    'PyUFunc_GetPyValues':                      (25,),
-    'PyUFunc_checkfperr':                       (26,),
+    # Unused slot 25, was `PyUFunc_GetPyValues`
+    # Unused slot 26, was `PyUFunc_checkfperr`
     'PyUFunc_clearfperr':                       (27,),
     'PyUFunc_getfperr':                         (28,),
-    'PyUFunc_handlefperr':                      (29,),
+    # Unused slot 29, was `PyUFunc_handlefperr`
     'PyUFunc_ReplaceLoopBySignature':           (30,),
     'PyUFunc_FromFuncAndDataAndSignature':      (31,),
-    'PyUFunc_SetUsesArraysAsData':              (32,),
+    # Unused slot 32, was `PyUFunc_SetUsesArraysAsData`
     # End 1.5 API
     'PyUFunc_e_e':                              (33,),
     'PyUFunc_e_e_As_f_f':                       (34,),

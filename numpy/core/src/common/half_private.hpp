@@ -6,7 +6,7 @@
 
 /*
  * The following functions that emulating float/double/half conversions
- * are copied from npymath without any changes to its functionalty.
+ * are copied from npymath without any changes to its functionality.
  */
 namespace np { namespace half_private {
 
