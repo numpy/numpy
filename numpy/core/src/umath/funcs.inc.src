@@ -428,7 +428,7 @@ nc_log10@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
     NPY_@NAME@_SET_REAL(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG10E@c@);
-    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG10E@c@);
+    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_IMAG(r) * NPY_LOG10E@c@);
     return;
 }
 
@@ -437,7 +437,7 @@ nc_log2@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
     NPY_@NAME@_SET_REAL(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG2E@c@);
-    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_REAL(r) * NPY_LOG2E@c@);
+    NPY_@NAME@_SET_IMAG(r, NPY_@NAME@_GET_IMAG(r) * NPY_LOG2E@c@);
     return;
 }
 
