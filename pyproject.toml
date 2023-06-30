@@ -183,3 +183,4 @@ package = 'numpy'
 [tool.spin.commands]
 "Build" = ["spin.cmds.meson.build", "spin.cmds.meson.test"]
 "Environments" = ["spin.cmds.meson.shell", "spin.cmds.meson.ipython", "spin.cmds.meson.python"]
+"Documentation" = [".spin/cmds.py:docs"]
