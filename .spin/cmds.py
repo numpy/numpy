@@ -35,6 +35,20 @@ from spin import util
 @click.pass_context
 def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
     """📖 Build Sphinx documentation
+
+    By default, SPHINXOPTS="-W", raising errors on warnings.
+    To build without raising on warnings:
+
+      SPHINXOPTS="" spin docs
+
+    To list all Sphinx targets:
+
+      spin docs targets
+
+    To build another Sphinx target:
+
+      spin docs TARGET
+
     """
     if sphinx_target not in ('targets', 'help'):
         if install_deps:
@@ -43,8 +57,6 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
     meson.docs.ignore_unknown_options = True
     del ctx.params['install_deps']
     ctx.forward(meson.docs)
-
-docs.__doc__ = meson.docs.__doc__
 
 
 @click.command()
@@ -67,6 +79,36 @@ docs.__doc__ = meson.docs.__doc__
 @click.pass_context
 def test(ctx, pytest_args, markexpr, n_jobs):
     """🔧 Run tests
+
+    PYTEST_ARGS are passed through directly to pytest, e.g.:
+
+      spin test -- -v
+
+    To run tests on a directory or file:
+
+     \b
+     spin test numpy/linalg
+     spin test numpy/linalg/tests/test_linalg.py
+
+    To run specific tests, by module, function, class, or method:
+
+     \b
+     spin test -- --pyargs numpy.random
+     spin test -- --pyargs numpy.random.tests.test_generator_mt19937
+     spin test -- --pyargs numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric
+     spin test -- --pyargs numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric::test_edge_cases
+
+    To report the durations of the N slowest tests:
+
+      spin test -- --durations=N
+
+    To run tests that match a given pattern:
+
+     \b
+     spin test -- -k "geometric"
+     spin test -- -k "geometric and not rgeometric"
+
+    For more, see `pytest --help`.
     """
     if not pytest_args:
         pytest_args = ('numpy',)
@@ -82,9 +124,3 @@ def test(ctx, pytest_args, markexpr, n_jobs):
     for extra_param in ('markexpr', 'n_jobs'):
         del ctx.params[extra_param]
     ctx.forward(meson.test)
-
-testdoc = meson.test.__doc__.split('\n')
-testdoc = [l for l in testdoc if not
-           (('To parallelize' in l) or ('NUM_JOBS' in l))]
-testdoc = '\n'.join(testdoc).replace('\n\n', '\n')
-test.__doc__ = testdoc
