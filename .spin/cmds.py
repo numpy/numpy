@@ -108,7 +108,7 @@ def test(ctx, pytest_args, markexpr, n_jobs):
      spin test -- -k "geometric and not rgeometric"
 
     For more, see `pytest --help`.
-    """ # noqa: E501
+    """  # noqa: E501
     if not pytest_args:
         pytest_args = ('numpy',)
 
