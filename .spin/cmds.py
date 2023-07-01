@@ -124,3 +124,16 @@ def test(ctx, pytest_args, markexpr, n_jobs):
     for extra_param in ('markexpr', 'n_jobs'):
         del ctx.params[extra_param]
     ctx.forward(meson.test)
+
+
+@click.command()
+@click.argument('python_expr')
+def gdb(python_expr):
+    """👾 Execute a Python snippet with GDB
+
+    """
+    util.run(
+        ['gdb', '--args', 'python', '-m', 'spin', 'run',
+         'python', '-P', '-c', python_expr],
+        replace=True
+    )
