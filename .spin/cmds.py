@@ -75,7 +75,6 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
     default="auto",
     help="Number of parallel jobs for testing; use all CPUs by default"
 )
-
 @click.pass_context
 def test(ctx, pytest_args, markexpr, n_jobs):
     """🔧 Run tests
@@ -109,7 +108,7 @@ def test(ctx, pytest_args, markexpr, n_jobs):
      spin test -- -k "geometric and not rgeometric"
 
     For more, see `pytest --help`.
-    """
+    """ # noqa: E501
     if not pytest_args:
         pytest_args = ('numpy',)
 
