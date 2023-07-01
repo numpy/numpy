@@ -31,6 +31,8 @@ from spin import util
 )
 @click.pass_context
 def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
+    """📖 Build Sphinx documentation
+    """
     if sphinx_target not in ('targets', 'help'):
         if install_deps:
             util.run(['pip', 'install', '-q', '-r', 'doc_requirements.txt'])
