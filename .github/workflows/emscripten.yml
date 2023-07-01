@@ -52,7 +52,7 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
 
       - name: Build
         run: |
