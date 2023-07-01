@@ -1582,7 +1582,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     a = asarray(a)
     b = asarray(b)
 
-    if (a.ndim<1) or (b.ndim<1):
+    if (a.ndim < 1) or (b.ndim < 1):
         raise Exception("At least one array have zero dimension")
     
     # Check axisa and axisb are within bounds
