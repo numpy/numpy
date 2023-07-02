@@ -63,4 +63,4 @@ jobs:
 
         # use meson to build and test 
         spin build
-        spin test
+        spin test -j auto

@@ -54,4 +54,4 @@ macos_arm64_test_task:
     pip install pytest pytest-xdist hypothesis typing_extensions
     
     spin build
-    spin test
+    spin test -j auto
