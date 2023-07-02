@@ -26,6 +26,7 @@ __all__ = [
     'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'matrix_transpose',
 ]
 
 _gentype = types.GeneratorType
@@ -579,6 +580,10 @@ def swapaxes(a, axis1, axis2):
 
     """
     return _wrapfunc(a, 'swapaxes', axis1, axis2)
+
+
+def matrix_transpose(a):
+    return np.asarray(a).mT
 
 
 def _transpose_dispatcher(a, axes=None):
