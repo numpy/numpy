@@ -72,8 +72,9 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
     "-j",
     "n_jobs",
     metavar='N_JOBS',
-    default="auto",
-    help="Number of parallel jobs for testing; use all CPUs by default"
+    default="1",
+    help=("Number of parallel jobs for testing. "
+          "Can be set to `auto` to use all cores.")
 )
 @click.pass_context
 def test(ctx, pytest_args, markexpr, n_jobs):
@@ -115,7 +116,7 @@ def test(ctx, pytest_args, markexpr, n_jobs):
     if '-m' not in pytest_args:
         pytest_args = ('-m', markexpr) + pytest_args
 
-    if '-n' not in pytest_args:
+    if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
 
     ctx.params['pytest_args'] = pytest_args
