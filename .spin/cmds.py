@@ -76,27 +76,36 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
     help=("Number of parallel jobs for testing. "
           "Can be set to `auto` to use all cores.")
 )
+@click.option(
+    "--tests", "-t",
+    metavar='TESTS',
+    help=("""
+Which tests to run. Can be a module, function, class, or method:
+
+ \b
+ numpy.random
+ numpy.random.tests.test_generator_mt19937
+ numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric
+ numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric::test_edge_cases
+ \b
+""")
+)
+@click.option(
+    '--verbose', '-v', is_flag=True, default=False
+)
 @click.pass_context
-def test(ctx, pytest_args, markexpr, n_jobs):
+def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
     """🔧 Run tests
 
     PYTEST_ARGS are passed through directly to pytest, e.g.:
 
-      spin test -- -v
+      spin test -- --pdb
 
     To run tests on a directory or file:
 
      \b
      spin test numpy/linalg
      spin test numpy/linalg/tests/test_linalg.py
-
-    To run specific tests, by module, function, class, or method:
-
-     \b
-     spin test -- --pyargs numpy.random
-     spin test -- --pyargs numpy.random.tests.test_generator_mt19937
-     spin test -- --pyargs numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric
-     spin test -- --pyargs numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric::test_edge_cases
 
     To report the durations of the N slowest tests:
 
@@ -110,7 +119,7 @@ def test(ctx, pytest_args, markexpr, n_jobs):
 
     For more, see `pytest --help`.
     """  # noqa: E501
-    if not pytest_args:
+    if (not pytest_args) and (not tests):
         pytest_args = ('numpy',)
 
     if '-m' not in pytest_args:
@@ -119,9 +128,15 @@ def test(ctx, pytest_args, markexpr, n_jobs):
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
 
+    if tests and not ('--pyargs' in pytest_args):
+        pytest_args = ('--pyargs', tests) + pytest_args
+
+    if verbose:
+        pytest_args = ('-v',) + pytest_args
+
     ctx.params['pytest_args'] = pytest_args
 
-    for extra_param in ('markexpr', 'n_jobs'):
+    for extra_param in ('markexpr', 'n_jobs', 'tests', 'verbose'):
         del ctx.params[extra_param]
     ctx.forward(meson.test)
 
