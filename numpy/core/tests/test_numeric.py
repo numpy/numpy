@@ -3331,6 +3331,14 @@ class TestCross:
         assert_equal(np.cross(v, u), z)
         assert_equal(np.cross(u, v), -z)
 
+    def test_zero_dimension(self):
+        a_list = [0,[0,1]]
+        b_list = [[1,2],3]
+        for a,b in zip(a_list,b_list):
+            with pytest.raises(ValueError) as exc:
+               np.cross(a, b)
+            assert "At least one array have zero dimension" in str(exc.value)
+
 
 def test_outer_out_param():
     arr1 = np.ones((5,))
