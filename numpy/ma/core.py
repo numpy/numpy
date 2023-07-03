@@ -73,7 +73,7 @@ __all__ = [
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
-    'var', 'where', 'zeros', 'zeros_like',
+    'var', 'where', 'zeros', 'zeros_like', 'matrix_transpose',
     ]
 
 MaskType = np.bool_
@@ -7343,6 +7343,13 @@ def putmask(a, mask, values):  # , mode='raise'):
         np.copyto(a._mask, valmask, where=mask)
     np.copyto(a._data, valdata, where=mask)
     return
+
+
+def matrix_transpose(a):
+    try:
+        return np.matrix_transpose(a)
+    except AttributeError:
+        return narray(a, copy=False).mT.view(MaskedArray)
 
 
 def transpose(a, axes=None):
