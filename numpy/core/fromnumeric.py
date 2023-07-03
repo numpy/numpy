@@ -582,6 +582,11 @@ def swapaxes(a, axis1, axis2):
     return _wrapfunc(a, 'swapaxes', axis1, axis2)
 
 
+def _matrix_transpose_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
 def matrix_transpose(a):
     """
     Returns an array with the axes matrix transposed
