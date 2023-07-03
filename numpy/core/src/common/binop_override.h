@@ -105,12 +105,6 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
      * logic for forward binop implementations.
      */
 
-    /*
-     * NB: there's another copy of this code in
-     *    numpy.ma.core.MaskedArray._delegate_binop
-     * which should possibly be updated when this is.
-     */
-
     PyObject *attr;
     double self_prio, other_prio;
     int defer;
