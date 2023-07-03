@@ -83,32 +83,34 @@ arrays. Unfortunately, there's no upward compatibility.
 
 For example:
 
->>> import numpy.core.ma as old_ma
->>> import maskedarray as new_ma
->>> x = old_ma.array([1,2,3,4,5], mask=[0,0,1,0,0])
->>> x
-array(data =
- [     1      2 999999      4      5],
-      mask =
- [False False True False False],
-      fill_value=999999)
->>> y = new_ma.array([1,2,3,4,5], mask=[0,0,1,0,0])
->>> y
-array(data = [1 2 -- 4 5],
-      mask = [False False True False False],
-      fill_value=999999)
->>> x==y
-array(data =
- [True True True True True],
-      mask =
- [False False True False False],
-      fill_value=?)
->>> old_ma.getmask(x) == new_ma.getmask(x)
-array([True, True, True, True, True])
->>> old_ma.getmask(y) == new_ma.getmask(y)
-array([True, True, False, True, True])
->>> old_ma.getmask(y)
-False
+.. doctest-skip::
+
+  >>> import numpy.core.ma as old_ma
+  >>> import maskedarray as new_ma
+  >>> x = old_ma.array([1,2,3,4,5], mask=[0,0,1,0,0])
+  >>> x
+  array(data =
+  [     1      2 999999      4      5],
+        mask =
+  [False False True False False],
+        fill_value=999999)
+  >>> y = new_ma.array([1,2,3,4,5], mask=[0,0,1,0,0])
+  >>> y
+  array(data = [1 2 -- 4 5],
+        mask = [False False True False False],
+        fill_value=999999)
+  >>> x==y
+  array(data =
+  [True True True True True],
+        mask =
+  [False False True False False],
+        fill_value=?)
+  >>> old_ma.getmask(x) == new_ma.getmask(x)
+  array([True, True, True, True, True])
+  >>> old_ma.getmask(y) == new_ma.getmask(y)
+  array([True, True, False, True, True])
+  >>> old_ma.getmask(y)
+  False
 
 
 Using maskedarray with matplotlib
