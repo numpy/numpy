@@ -53,59 +53,59 @@ an "exploded" view of a datetime.
 
        Error or undetermined units.
 
-   .. c::enumerator:: NPY_FR_Y
+   .. c:enumerator:: NPY_FR_Y
 
        Years
 
-   .. c::enumerator:: NPY_FR_M
+   .. c:enumerator:: NPY_FR_M
 
        Months
 
-   .. c::enumerator:: NPY_FR_W
+   .. c:enumerator:: NPY_FR_W
 
        Weeks
 
-   .. c::enumerator:: NPY_FR_D
+   .. c:enumerator:: NPY_FR_D
 
        Days
 
-   .. c::enumerator:: NPY_FR_h
+   .. c:enumerator:: NPY_FR_h
 
        Hours
 
-   .. c::enumerator:: NPY_FR_m
+   .. c:enumerator:: NPY_FR_m
 
        Minutes
 
-   .. c::enumerator:: NPY_FR_s
+   .. c:enumerator:: NPY_FR_s
 
        Seconds
 
-   .. c::enumerator:: NPY_FR_ms
+   .. c:enumerator:: NPY_FR_ms
 
        Milliseconds
 
-   .. c::enumerator:: NPY_FR_us
+   .. c:enumerator:: NPY_FR_us
 
        Microseconds
 
-   .. c::enumerator:: NPY_FR_ns
+   .. c:enumerator:: NPY_FR_ns
 
        Nanoseconds
 
-   .. c::enumerator:: NPY_FR_ps
+   .. c:enumerator:: NPY_FR_ps
 
        Picoseconds
 
-   .. c::enumerator:: NPY_FR_fs
+   .. c:enumerator:: NPY_FR_fs
 
        Femtoseconds
 
-   .. c::enumerator:: NPY_FR_as
+   .. c:enumerator:: NPY_FR_as
 
        Attoseconds
 
-   .. c::enumerator:: NPY_FR_GENERIC
+   .. c:enumerator:: NPY_FR_GENERIC
 
        Unbound units, can convert to anything
 
@@ -150,7 +150,7 @@ Conversion functions
     Returns -1 on error, 0 on success, and 1 (with no error set)
     if obj doesn't have the needed date or datetime attributes.
 
-.. c:function:: NpyDatetime_ParseISO8601Datetime( \
+.. c:function:: int NpyDatetime_ParseISO8601Datetime( \
         char const *str, Py_ssize_t len, NPY_DATETIMEUNIT unit, \
         NPY_CASTING casting, npy_datetimestruct *out, \
         NPY_DATETIMEUNIT *out_bestunit, npy_bool *out_special)
@@ -184,7 +184,7 @@ Conversion functions
 
     Returns 0 on success, -1 on failure.
 
-.. c:function:: NpyDatetime_GetDatetimeISO8601StrLen(\
+.. c:function:: int NpyDatetime_GetDatetimeISO8601StrLen(\
         int local, NPY_DATETIMEUNIT base)
 
     Returns the string length to use for converting datetime
@@ -192,7 +192,7 @@ Conversion functions
     Use this when constructings strings to supply to
     ``NpyDatetime_MakeISO8601Datetime``.
 
-.. c:function:: NpyDatetime_MakeISO8601Datetime(\
+.. c:function:: int NpyDatetime_MakeISO8601Datetime(\
         npy_datetimestruct *dts, char *outstr, npy_intp outlen, \
         int local, int utc, NPY_DATETIMEUNIT base, int tzoffset, \
         NPY_CASTING casting)
