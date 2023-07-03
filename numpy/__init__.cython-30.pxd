@@ -712,6 +712,8 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_CompareString (char *, char *, size_t)
     int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
+    # additional datetime related functions are defined below
+
 
 # Typedefs that matches the runtime dtype objects in
 # the numpy module.
@@ -795,6 +797,10 @@ cdef extern from "numpy/ndarraytypes.h":
         NPY_DATETIMEUNIT base
         int64_t num
 
+    ctypedef struct npy_datetimestruct:
+        int64_t year
+        int32_t month, day, hour, min, sec, us, ps, as
+
 cdef extern from "numpy/arrayscalars.h":
 
     # abstract types
@@ -844,6 +850,31 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_ps
         NPY_FR_fs
         NPY_FR_as
+
+
+cdef extern from "numpy/arrayobject.h":
+    # These are part of the C-API defined in `__multiarray_api.h`
+
+    # NumPy internal definitions in datetime_strings.c:
+    int get_datetime_iso_8601_strlen "NpyDatetime_GetDatetimeISO8601StrLen" (
+            int local, NPY_DATETIMEUNIT base)
+    int make_iso_8601_datetime "NpyDatetime_MakeISO8601Datetime" (
+            npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+            int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+            NPY_CASTING casting) except -1
+
+    # NumPy internal definition in datetime.c:
+    # May return 1 to indicate that object does not appear to be a datetime
+    # (returns 0 on success).
+    int convert_pydatetime_to_datetimestruct "NpyDatetime_ConvertPyDateTimeToDatetimeStruct" (
+            PyObject *obj, npy_datetimestruct *out,
+            NPY_DATETIMEUNIT *out_bestunit, int apply_tzinfo) except -1
+    int convert_datetime64_to_datetimestruct "NpyDatetime_ConvertDatetime64ToDatetimeStruct" (
+            PyArray_DatetimeMetaData *meta, npy_datetime dt,
+            npy_datetimestruct *out) except -1
+    int convert_datetimestruct_to_datetime64 "NpyDatetime_ConvertDatetimeStructToDatetime64"(
+            PyArray_DatetimeMetaData *meta, const npy_datetimestruct *dts,
+            npy_datetime *out) except -1
 
 
 #

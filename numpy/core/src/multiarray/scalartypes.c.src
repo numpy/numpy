@@ -574,13 +574,13 @@ datetimetype_repr(PyObject *self)
 
     scal = (PyDatetimeScalarObject *)self;
 
-    if (convert_datetime_to_datetimestruct(&scal->obmeta,
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta,
                 scal->obval, &dts) < 0) {
         return NULL;
     }
 
     unit = scal->obmeta.base;
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
+    if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -669,13 +669,13 @@ datetimetype_str(PyObject *self)
 
     scal = (PyDatetimeScalarObject *)self;
 
-    if (convert_datetime_to_datetimestruct(&scal->obmeta, scal->obval,
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta, scal->obval,
                                                             &dts) < 0) {
         return NULL;
     }
 
     unit = scal->obmeta.base;
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
+    if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
