@@ -936,9 +936,10 @@ array_astype(PyArrayObject *self,
     /* Decrease the number of dimensions removing subarray ones again */
     int out_ndim = PyArray_NDIM(ret);
     PyArray_Descr *out_descr = PyArray_DESCR(ret);
-    ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
-    ((PyArrayObject_fields *)ret)->descr = dtype;
-
+    if (out_ndim != PyArray_NDIM(self)) {
+        ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
+        ((PyArrayObject_fields *)ret)->descr = dtype;
+    }
     int success = PyArray_CopyInto(ret, self);
 
     Py_DECREF(dtype);
