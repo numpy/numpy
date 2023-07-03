@@ -1812,7 +1812,7 @@ def nulp_diff(x, y, dtype=None):
     --------
     # By definition, epsilon is the smallest number such as 1 + eps != 1, so
     # there should be exactly one ULP between 1 and 1 + eps
-    >>> nulp_diff(1, 1 + np.finfo(x.dtype).eps)
+    >>> nulp_diff(1, 1 + np.finfo(x.dtype).eps)  # doctest: +SKIP
     1.0
     """
     import numpy as np

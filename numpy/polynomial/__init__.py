@@ -41,13 +41,13 @@ by arrays ``xdata`` and ``ydata``, the
 `~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
-    >>> c = Chebyshev.fit(xdata, ydata, deg=1)
+    >>> c = Chebyshev.fit(xdata, ydata, deg=1)  # doctest: +SKIP
 
 is preferred over the `chebyshev.chebfit` function from the
 ``np.polynomial.chebyshev`` module::
 
     >>> from numpy.polynomial.chebyshev import chebfit
-    >>> c = chebfit(xdata, ydata, deg=1)
+    >>> c = chebfit(xdata, ydata, deg=1)  # doctest: +SKIP
 
 See :doc:`routines.polynomials.classes` for more details.
 
