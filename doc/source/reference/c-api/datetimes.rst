@@ -183,7 +183,7 @@ Conversion functions
     resolution provided in the string, or -1 for NaT.
     
     ``out_special`` gets set to 1 if the parsed time was 'today',
-    'now', or 'NaT'. For 'today', the unit recommended is
+    'now', empty string, or 'NaT'. For 'today', the unit recommended is
     'D', for 'now', the unit recommended is 's', and for 'NaT'
     the unit recommended is 'Y'.
 
