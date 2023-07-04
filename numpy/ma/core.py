@@ -7346,6 +7346,41 @@ def putmask(a, mask, values):  # , mode='raise'):
 
 
 def matrix_transpose(a):
+    """
+    View of the matrix transposed array.
+
+    The matrix transpose is the transpose of the last two dimensions, even
+    if the array is of higher dimension.
+
+    .. versionadded:: 2.0
+
+    Raises
+    ------
+    ValueError
+        If the array is of dimension less than 2.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = ma.arange(4).reshape((2,2))
+    >>> x[1, 1] = ma.masked
+    >>> x
+    masked_array(
+      data=[[0, 1],
+            [2, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
+
+    >>> ma.matrix_transpose(x)
+    masked_array(
+      data=[[0, 2],
+            [1, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
+
+    """
     try:
         return np.matrix_transpose(a)
     except AttributeError:
