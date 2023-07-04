@@ -425,7 +425,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
-    int maxalign = 0;
+    int maxalign = 1;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
@@ -642,7 +642,7 @@ _convert_from_list(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
-    int maxalign = 0;
+    int maxalign = 1;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
@@ -1107,7 +1107,7 @@ _convert_from_dict(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
     int totalsize = 0;
-    int maxalign = 0;
+    int maxalign = 1;
     int has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
         /* Build item to insert (descr, offset, [title])*/
