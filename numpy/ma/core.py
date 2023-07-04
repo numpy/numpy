@@ -1876,7 +1876,7 @@ def masked_where(condition, a, copy=True):
     >>> ma.masked_where(a == 2, b)
     masked_array(data=['a', 'b', --, 'd'],
                  mask=[False, False,  True, False],
-           fill_value=np.str_('N/A'),
+           fill_value='N/A',
                 dtype='<U1')
 
     Effect of the `copy` argument.
@@ -4070,9 +4070,12 @@ class MaskedArray(ndarray):
 
         if self._fill_value is None:
             self.fill_value  # initialize fill_value
-        if self._fill_value.dtype == self.dtype:
+        if self._fill_value.dtype == self.dtype or (
+                self.dtype.kind in "SU"
+                and self.dtype.kind == self._fill_value.dtype.kind):
             # The dtype of the fill value should match that of the array
             # and it is unnecessary to print the full `np.int64(...)`
+            # Allow strings: "N/A" has length 3 so would mismatch often.
             fill_repr = np.core.arrayprint.get_formatter(
                     dtype=self._fill_value.dtype, fmt=repr)(self.fill_value)
         else:
