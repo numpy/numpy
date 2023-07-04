@@ -464,6 +464,21 @@ def _search_sorted_inclusive(a, v):
 
 
 def _histogram_bin_edges_dispatcher(a, bins=None, range=None, weights=None):
+    """
+    Dispatches the arguments for histogram bin edges calculation.
+
+    Parameters:
+        a (array-like): Input array or object that can be converted to an array.
+        bins (int or sequence, optional): The number of bins to use. If not provided,
+            it will be determined automatically.
+        range (tuple, optional): The lower and upper range of the bins. If not provided,
+            it is automatically determined from the data.
+        weights (array-like, optional): An array of weights associated with the data.
+
+    Returns:
+        tuple: A tuple containing the input arguments (a, bins, weights).
+
+    """
     return (a, bins, weights)
 
 
