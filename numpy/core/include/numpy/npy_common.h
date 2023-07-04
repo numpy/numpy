@@ -419,7 +419,7 @@ typedef union {
 } _npy_clongdouble_to_arr;
 #endif
 
-inline double NPY_CDOUBLE_GET_REAL(const npy_cdouble *c) {
+static inline double NPY_CDOUBLE_GET_REAL(const npy_cdouble *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const double *>(c)[0];
 #else
@@ -429,7 +429,7 @@ inline double NPY_CDOUBLE_GET_REAL(const npy_cdouble *c) {
 #endif
 }
 
-inline double NPY_CDOUBLE_GET_IMAG(const npy_cdouble *c) {
+static inline double NPY_CDOUBLE_GET_IMAG(const npy_cdouble *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const double *>(c)[1];
 #else
@@ -439,7 +439,7 @@ inline double NPY_CDOUBLE_GET_IMAG(const npy_cdouble *c) {
 #endif
 }
 
-inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
+static inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
 #ifdef __cplusplus
     double *tmp = reinterpret_cast<double *>(c);
     tmp[0] = real;
@@ -450,7 +450,7 @@ inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
 #endif
 }
 
-inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
+static inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
 #ifdef __cplusplus
     double *tmp = reinterpret_cast<double *>(c);
     tmp[1] = imag;
@@ -461,7 +461,7 @@ inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
 #endif
 }
 
-inline float NPY_CFLOAT_GET_REAL(const npy_cfloat *c) {
+static inline float NPY_CFLOAT_GET_REAL(const npy_cfloat *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const float *>(c)[0];
 #else
@@ -471,7 +471,7 @@ inline float NPY_CFLOAT_GET_REAL(const npy_cfloat *c) {
 #endif
 }
 
-inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
+static inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const float *>(c)[1];
 #else
@@ -481,7 +481,7 @@ inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
 #endif
 }
 
-inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
+static inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
 #ifdef __cplusplus
     float *tmp = reinterpret_cast<float *>(c);
     tmp[0] = real;
@@ -492,7 +492,7 @@ inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
 #endif
 }
 
-inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
+static inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
 #ifdef __cplusplus
     float *tmp = reinterpret_cast<float *>(c);
     tmp[1] = imag;
@@ -503,7 +503,7 @@ inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
 #endif
 }
 
-inline longdouble_t NPY_CLONGDOUBLE_GET_REAL(const npy_clongdouble *c) {
+static inline longdouble_t NPY_CLONGDOUBLE_GET_REAL(const npy_clongdouble *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const longdouble_t *>(c)[0];
 #else
@@ -513,7 +513,7 @@ inline longdouble_t NPY_CLONGDOUBLE_GET_REAL(const npy_clongdouble *c) {
 #endif
 }
 
-inline longdouble_t NPY_CLONGDOUBLE_GET_IMAG(const npy_clongdouble *c) {
+static inline longdouble_t NPY_CLONGDOUBLE_GET_IMAG(const npy_clongdouble *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const longdouble_t *>(c)[1];
 #else
@@ -523,7 +523,7 @@ inline longdouble_t NPY_CLONGDOUBLE_GET_IMAG(const npy_clongdouble *c) {
 #endif
 }
 
-inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t real) {
+static inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t real) {
 #ifdef __cplusplus
     longdouble_t *tmp = reinterpret_cast<longdouble_t *>(c);
     tmp[0] = real;
@@ -534,7 +534,7 @@ inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t real) {
 #endif
 }
 
-inline void NPY_CLONGDOUBLE_SET_IMAG(npy_clongdouble *c, longdouble_t imag) {
+static inline void NPY_CLONGDOUBLE_SET_IMAG(npy_clongdouble *c, longdouble_t imag) {
 #ifdef __cplusplus
     longdouble_t *tmp = reinterpret_cast<longdouble_t *>(c);
     tmp[1] = imag;
