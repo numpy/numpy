@@ -890,7 +890,7 @@ def test_empty_string():
     res = np.array(arr, dtype="S")
     assert_array_equal(res, b"")
     # TODO: This is arguably weird/wrong, but seems old:
-    assert res.dtype == "S8"
+    assert res.dtype == f"S{np.dtype('O').itemsize}"
 
     res = np.array([[""] * 10, arr], dtype="S")
     assert_array_equal(res, b"")
