@@ -29,7 +29,7 @@ an "exploded" view of a datetime.
 
        The unit of the datetime.
 
-   .. c:member:: num
+   .. c:member:: int num
 
        A multiplier for the unit.
 
@@ -170,17 +170,22 @@ Conversion functions
       day according to local time) and "Now" (current time in UTC).
 
     ``str`` must be a NULL-terminated string, and ``len`` must be its length.
+
     ``unit`` should contain -1 if the unit is unknown, or the unit
-       which will be used if it is.
+    which will be used if it is.
+
     ``casting`` controls how the detected unit from the string is allowed
-       to be cast to the 'unit' parameter.
+    to be cast to the 'unit' parameter.
+
     ``out`` gets filled with the parsed date-time.
+
     ``out_bestunit`` gives a suggested unit based on the amount of
-       resolution provided in the string, or -1 for NaT.
+    resolution provided in the string, or -1 for NaT.
+    
     ``out_special`` gets set to 1 if the parsed time was 'today',
-       'now', or ''/'NaT'. For 'today', the unit recommended is
-       'D', for 'now', the unit recommended is 's', and for 'NaT'
-       the unit recommended is 'Y'.
+    'now', or 'NaT'. For 'today', the unit recommended is
+    'D', for 'now', the unit recommended is 's', and for 'NaT'
+    the unit recommended is 'Y'.
 
     Returns 0 on success, -1 on failure.
 
