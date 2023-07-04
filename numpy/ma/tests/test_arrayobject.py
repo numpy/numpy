@@ -36,7 +36,7 @@ def test_matrix_transpose_equals_swapaxes(shape, kind):
     rng = np.random.default_rng(42)
     mask = rng.choice([0, 1], size=shape)
     ma_arr = masked_array(data=arr, mask=mask)
-    tgt = np.swapaxes(arr, num_of_axes - 2, num_of_axes - 1)
+    tgt = np.swapaxes(ma_arr, num_of_axes - 2, num_of_axes - 1)
 
     if kind == "attribute":
         tst = ma_arr.mT
