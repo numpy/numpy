@@ -154,7 +154,6 @@ def gdb(python_expr):
     )
 
 
-
 # From scipy: benchmarks/benchmarks/common.py
 def _set_mem_rlimit(max_mem=None):
     """
@@ -181,7 +180,11 @@ def _set_mem_rlimit(max_mem=None):
 def _commit_to_sha(commit):
     p = util.run(['git', 'rev-parse', commit], output=False, echo=False)
     if p.returncode != 0:
-        raise(click.ClickException(f'Could not find SHA matching commit `{commit}`'))
+        raise(
+            click.ClickException(
+                f'Could not find SHA matching commit `{commit}`'
+            )
+        )
 
     return p.stdout.decode('ascii').strip()
 
@@ -219,18 +222,15 @@ def _run_asv(cmd):
     try:
         util.run(cmd, cwd='benchmarks', env=env, sys_exit=False)
     except FileNotFoundError:
-        click.secho(
-            (
-                "Cannot find `asv`. "
-                "Please install Airspeed Velocity:\n\n"
-                "  https://asv.readthedocs.io/en/latest/installing.html\n"
-                "\n"
-                "Depending on your system, one of the following should work:\n\n"
-                "  pip install asv\n"
-                "  conda install asv\n"
-            ),
-            fg="red"
-        )
+        click.secho((
+            "Cannot find `asv`. "
+            "Please install Airspeed Velocity:\n\n"
+            "  https://asv.readthedocs.io/en/latest/installing.html\n"
+            "\n"
+            "Depending on your system, one of the following should work:\n\n"
+            "  pip install asv\n"
+            "  conda install asv\n"
+        ), fg="red")
         sys.exit(1)
 
 
@@ -287,7 +287,9 @@ def bench(ctx, tests, compare, verbose, commits):
     elif len(commits) == 1:
         commits = commits + ('HEAD',)
     elif len(commits) > 2:
-        raise click.ClickException('Need a maximum of two revisions to compare')
+        raise click.ClickException(
+            'Need a maximum of two revisions to compare'
+        )
 
     bench_args = []
     for t in tests:
@@ -300,7 +302,8 @@ def bench(ctx, tests, compare, verbose, commits):
         # No comparison requested; we build and benchmark the current version
 
         click.secho(
-            "Invoking `build` prior to running benchmarks:", bold=True, fg="bright_green"
+            "Invoking `build` prior to running benchmarks:",
+            bold=True, fg="bright_green"
         )
         ctx.invoke(meson.build)
 
