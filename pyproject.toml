@@ -187,3 +187,4 @@ package = 'numpy'
   "spin.cmds.meson.python", ".spin/cmds.py:gdb"
 ]
 "Documentation" = [".spin/cmds.py:docs"]
+"Metrics" = [".spin/cmds.py:bench"]

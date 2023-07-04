@@ -7,7 +7,7 @@
     "project": "numpy",
 
     // The project's homepage
-    "project_url": "https://www.numpy.org/",
+    "project_url": "https://numpy.org",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
@@ -16,6 +16,10 @@
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "tip" (for mercurial).
     "branches": ["HEAD"],
+
+    "build_command": [
+        "python -m build --wheel -o {build_cache_dir} {build_dir}"
+    ],
 
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
@@ -43,7 +47,7 @@
     // version.
     "matrix": {
         "Cython": [],
-        "setuptools": ["59.2.0"],
+        "build": [],
         "packaging": []
     },
 
