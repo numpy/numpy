@@ -1659,7 +1659,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with keepdims = True
           and the axis the same as used in the call to this var function.
-          For masked arrays this argument is ignored. 
+          For masked arrays this argument is ignored.
 
         .. versionadded:: 1.22.0
 
@@ -1731,7 +1731,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         _keepdims = np._NoValue
     else:
         _keepdims = True
-        
+
     if mean is not np._NoValue:
         avg = mean
     else:
@@ -1742,7 +1742,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         # so this used to work by serendipity.
         cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
                      where=where)
-        avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims, where=where)
+        avg = np.sum(arr, axis=axis, dtype=dtype,
+                     keepdims=_keepdims, where=where)
         avg = _divide_by_count(avg, cnt)
 
     # Compute squared deviation from mean.
@@ -1835,7 +1836,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with keepdims = True
           and the axis the same as used in the call to this var function.
-          For masked arrays this argument is ignored. 
+          For masked arrays this argument is ignored.
 
         .. versionadded:: 1.22.0
 
