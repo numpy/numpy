@@ -406,9 +406,9 @@ typedef std::complex<longdouble_t> npy_clongdouble;
 typedef complex double npy_cdouble;
 typedef complex float npy_cfloat;
 typedef complex longdouble_t npy_clongdouble;
-#define NPY_CDOUBLE_INIT(real, imag) CMPLX(real, imag)
-#define NPY_CFLOAT_INIT(real, imag) CMPLXF(real, imag)
-#define NPY_CLONGDOUBLE_INIT(real, imag) CMPLXL(real, imag)
+#define NPY_CDOUBLE_INIT(real, imag) ((npy_cdouble) ((double) (real) + _Complex_I * (double) (imag)))
+#define NPY_CFLOAT_INIT(real, imag) ((npy_cfloat) ((float) (real) + _Complex_I * (float) (imag)))
+#define NPY_CLONGDOUBLE_INIT(real, imag) ((npy_clongdouble) ((longdouble_t) (real) + _Complex_I * (longdouble_t) (imag)))
 #endif
 
 #ifndef __cplusplus
