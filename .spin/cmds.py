@@ -142,12 +142,24 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
 
 
 @click.command()
-@click.argument('python_expr')
-def gdb(python_expr):
+@click.option('--code', '-c', help='Python pogram passed in as a string')
+@click.argument('gdb_args', nargs=-1)
+def gdb(code, gdb_args):
     """👾 Execute a Python snippet with GDB
 
+    spin gdb -c 'import numpy as np; print(np.__version__)'
+
+    Or pass arguments to gdb:
+
+    spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
+
+    Or run another program, they way you normally would with gdb:
+
+    spin gdb ls
+    spin gdb -- --args ls -al
     """
     meson._set_pythonpath()
+    gdb_args = list(gdb_args)
 
     if sys.version_info[:2] >= (3, 11):
         PYTHON_FLAGS = ['-P']
@@ -156,12 +168,12 @@ def gdb(python_expr):
         PYTHON_FLAGS = []
         code_prefix = 'import sys; sys.path.pop(0); '
 
-    util.run(
-        ['gdb', '-ex', 'set follow-fork-mode child',
-         '--args', sys.executable, '-m', 'spin', 'run', 'python'] + PYTHON_FLAGS +
-        ['-c', code_prefix + python_expr],
-        replace=True
-    )
+    if code:
+        PYTHON_ARGS = ['-c', code_prefix + code]
+        gdb_args += ['--args', sys.executable] + PYTHON_FLAGS + PYTHON_ARGS
+
+    gdb_cmd = ['gdb', '-ex', 'set follow-fork-mode child'] + gdb_args
+    util.run(gdb_cmd, replace=True)
 
 
 # From scipy: benchmarks/benchmarks/common.py
