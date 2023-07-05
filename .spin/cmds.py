@@ -142,7 +142,7 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
 
 
 @click.command()
-@click.option('--code', '-c', help='Python pogram passed in as a string')
+@click.option('--code', '-c', help='Python program passed in as a string')
 @click.argument('gdb_args', nargs=-1)
 def gdb(code, gdb_args):
     """👾 Execute a Python snippet with GDB
@@ -157,9 +157,17 @@ def gdb(code, gdb_args):
 
     spin gdb ls
     spin gdb -- --args ls -al
+
+    You can also run Python progreams:
+
+    spin gdb my_tests.py
+    spin gdb -- my_tests.py --mytest-flag
     """
     meson._set_pythonpath()
     gdb_args = list(gdb_args)
+
+    if gdb_args and gdb_args[0].endswith('.py'):
+        gdb_args = ['--args', sys.executable] + gdb_args
 
     if sys.version_info[:2] >= (3, 11):
         PYTHON_FLAGS = ['-P']
