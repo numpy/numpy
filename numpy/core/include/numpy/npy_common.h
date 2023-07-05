@@ -445,6 +445,7 @@ static inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
     tmp[0] = real;
 #else
     _npy_cdouble_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[0] = real;
     *c = tmp.comp;
 #endif
@@ -456,6 +457,7 @@ static inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
     tmp[1] = imag;
 #else
     _npy_cdouble_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[1] = imag;
     *c = tmp.comp;
 #endif
@@ -487,6 +489,7 @@ static inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
     tmp[0] = real;
 #else
     _npy_cfloat_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[0] = real;
     *c = tmp.comp;
 #endif
@@ -498,6 +501,7 @@ static inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
     tmp[1] = imag;
 #else
     _npy_cfloat_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[1] = imag;
     *c = tmp.comp;
 #endif
@@ -529,6 +533,7 @@ static inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t rea
     tmp[0] = real;
 #else
     _npy_clongdouble_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[0] = real;
     *c = tmp.comp;
 #endif
@@ -540,6 +545,7 @@ static inline void NPY_CLONGDOUBLE_SET_IMAG(npy_clongdouble *c, longdouble_t ima
     tmp[1] = imag;
 #else
     _npy_clongdouble_to_arr tmp;
+    tmp.comp = *c;
     tmp.arr[1] = imag;
     *c = tmp.comp;
 #endif
