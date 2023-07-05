@@ -359,7 +359,7 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
 
 static inline npy_cdouble npy_cpack(double x, double y)
 {
-    npy_cdouble z;
+    npy_cdouble z = NPY_CDOUBLE_INIT(0.0, 0.0);
     NPY_CDOUBLE_SET_REAL(&z, x);
     NPY_CDOUBLE_SET_IMAG(&z, y);
     return z;
@@ -367,7 +367,7 @@ static inline npy_cdouble npy_cpack(double x, double y)
 
 static inline npy_cfloat npy_cpackf(float x, float y)
 {
-    npy_cfloat z;
+    npy_cfloat z = NPY_CFLOAT_INIT(0.0f, 0.0f);
     NPY_CFLOAT_SET_REAL(&z, x);
     NPY_CFLOAT_SET_IMAG(&z, y);
     return z;
@@ -375,7 +375,7 @@ static inline npy_cfloat npy_cpackf(float x, float y)
 
 static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
-    npy_clongdouble z;
+    npy_clongdouble z = NPY_CLONGDOUBLE_INIT(0.0l, 0.0l);
     NPY_CLONGDOUBLE_SET_REAL(&z, x);
     NPY_CLONGDOUBLE_SET_IMAG(&z, y);
     return z;

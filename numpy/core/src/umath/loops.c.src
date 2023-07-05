@@ -157,7 +157,7 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
     typedef void func_type(npy_cdouble *, npy_cdouble *);
     func_type *f = (func_type *)func;
     UNARY_LOOP {
-        npy_cdouble tmp, out;
+        npy_cdouble tmp = NPY_CDOUBLE_INIT(0.0, 0.0), out = NPY_CDOUBLE_INIT(0.0, 0.0);
         NPY_CDOUBLE_SET_REAL(&tmp, (double)((float *)ip1)[0]);
         NPY_CDOUBLE_SET_IMAG(&tmp, (double)((float *)ip1)[1]);
         f(&tmp, &out);
@@ -173,7 +173,7 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
     typedef void func_type(npy_cdouble *, npy_cdouble *, npy_cdouble *);
     func_type *f = (func_type *)func;
     BINARY_LOOP {
-        npy_cdouble tmp1, tmp2, out;
+        npy_cdouble tmp1 = NPY_CDOUBLE_INIT(0.0, 0.0), tmp2 = NPY_CDOUBLE_INIT(0.0, 0.0), out = NPY_CDOUBLE_INIT(0.0, 0.0);
         NPY_CDOUBLE_SET_REAL(&tmp1, (double)((float *)ip1)[0]);
         NPY_CDOUBLE_SET_IMAG(&tmp1, (double)((float *)ip1)[1]);
         NPY_CDOUBLE_SET_REAL(&tmp2, (double)((float *)ip2)[0]);

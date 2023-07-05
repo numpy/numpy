@@ -54,6 +54,7 @@ static const volatile npy_float tiny = 3.9443045e-31f;
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
+ * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  * #TMIN = FLT_MIN, DBL_MIN, LDBL_MIN#
  * #TMANT_DIG = FLT_MANT_DIG, DBL_MANT_DIG, LDBL_MANT_DIG#
@@ -64,13 +65,7 @@ static const volatile npy_float tiny = 3.9443045e-31f;
 /*==========================================================
  * Constants
  *=========================================================*/
-#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-static const @ctype@ c_1@c@ = {1.0@C@, 0.0@C@};
-#elif defined(__cplusplus)
-static const @ctype@ c_1@c@ (1.0@C@, 0.0@C@);
-#else
-static const @ctype@ c_1@c@ = 1.0@C@;
-#endif
+static const @ctype@ c_1@c@ = NPY_@NAME@_INIT(1.0@C@, 0.0@C@);
 
 /*==========================================================
  * Helper functions

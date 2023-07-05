@@ -675,7 +675,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
     const npy_double *dx, *dz;
     const npy_cdouble *dy;
-    npy_cdouble lval, rval;
+    npy_cdouble lval = NPY_CDOUBLE_INIT(0.0, 0.0), rval = NPY_CDOUBLE_INIT(0.0, 0.0);
     npy_cdouble *dres, *slopes = NULL;
 
     NPY_BEGIN_THREADS_DEF;
@@ -817,7 +817,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                 dres[i] = dy[j];
             }
             else {
-                npy_cdouble slope;
+                npy_cdouble slope = NPY_CDOUBLE_INIT(0.0, 0.0);
                 if (slopes != NULL) {
                     slope = slopes[j];
                 }
