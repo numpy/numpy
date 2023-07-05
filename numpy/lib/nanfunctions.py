@@ -1610,13 +1610,13 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None):
+                       keepdims=None, *, where=None, mean=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanvar_dispatcher)
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
@@ -1656,6 +1656,10 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
+    mean : optionally provide the mean to prevent recalculation, the mean
+          should have a shape as if it was calculated with keepdims = True
+          and the axis the same as used in the call to this var function.
+          For masked arrays this argument is ignored. 
 
         .. versionadded:: 1.22.0
 
@@ -1713,7 +1717,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     arr, mask = _replace_nan(a, 0)
     if mask is None:
         return np.var(arr, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                      keepdims=keepdims, where=where)
+                      keepdims=keepdims, where=where, mean=mean)
 
     if dtype is not None:
         dtype = np.dtype(dtype)
@@ -1727,15 +1731,19 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         _keepdims = np._NoValue
     else:
         _keepdims = True
-    # we need to special case matrix for reverse compatibility
-    # in order for this to work, these sums need to be called with
-    # keepdims=True, however matrix now raises an error in this case, but
-    # the reason that it drops the keepdims kwarg is to force keepdims=True
-    # so this used to work by serendipity.
-    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
-                 where=where)
-    avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims, where=where)
-    avg = _divide_by_count(avg, cnt)
+        
+    if mean is not np._NoValue:
+        avg = mean
+    else:
+        # we need to special case matrix for reverse compatibility
+        # in order for this to work, these sums need to be called with
+        # keepdims=True, however matrix now raises an error in this case, but
+        # the reason that it drops the keepdims kwarg is to force keepdims=True
+        # so this used to work by serendipity.
+        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
+                     where=where)
+        avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims, where=where)
+        avg = _divide_by_count(avg, cnt)
 
     # Compute squared deviation from mean.
     np.subtract(arr, avg, out=arr, casting='unsafe', where=where)
@@ -1771,13 +1779,13 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
 
 def _nanstd_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None):
+                       keepdims=None, *, where=None, mean=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanstd_dispatcher)
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue):
     """
     Compute the standard deviation along the specified axis, while
     ignoring NaNs.
@@ -1824,6 +1832,10 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
+    mean : optionally provide the mean to prevent recalculation, the mean
+          should have a shape as if it was calculated with keepdims = True
+          and the axis the same as used in the call to this var function.
+          For masked arrays this argument is ignored. 
 
         .. versionadded:: 1.22.0
 
@@ -1877,7 +1889,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     """
     var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                 keepdims=keepdims, where=where)
+                 keepdims=keepdims, where=where, mean=mean)
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
     elif hasattr(var, 'dtype'):
