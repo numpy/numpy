@@ -15,6 +15,7 @@ from numpy.testing import (
     assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
 from numpy.core._rational_tests import rational
+from numpy import ma
 
 from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
@@ -297,6 +298,320 @@ class TestNonarrayArgs:
         B = np.array([None, 0])
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
+
+    def test_std_with_mean_keyword(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        mean_out = np.zeros((10, 1, 5))
+        std_out = np.zeros((10, 1, 5))
+
+        mean = np.mean(A,
+                       out=mean_out,
+                       axis=1,
+                       keepdims=True)
+
+        std = np.std(A,
+                     out=std_out,
+                     axis=1,
+                     keepdims=True,
+                     mean=mean)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([10, 1, 5]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=1, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean.shape))
+        assert_almost_equal(std, std_old)
+
+        # The returned  objects should be the objects specified during calling
+        assert mean_out is mean
+        assert std_out is std
+
+    def test_var_with_mean_keyword(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        mean_out = np.zeros((10, 1, 5))
+        var_out = np.zeros((10, 1, 5))
+
+        mean = np.mean(A,
+                       out=mean_out,
+                       axis=1,
+                       keepdims=True)
+
+        var = np.var(A,
+                     out=var_out,
+                     axis=1,
+                     keepdims=True,
+                     mean=mean)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([10, 1, 5]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=1, keepdims=True)
+
+        assert_equal(np.array(var_old.shape), np.array(mean.shape))
+        assert_almost_equal(var, var_old)
+
+        # The returned  objects should be the objects specified during calling
+        assert mean_out is mean
+        assert var_out is var
+
+    def test_std_with_mean_keyword_keepdims_false(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        mean = np.mean(A,
+                       axis=1,
+                       keepdims=True)
+
+        std = np.std(A,
+                     axis=1,
+                     keepdims=False,
+                     mean=mean)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array([10, 5]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=1, keepdims=False)
+        mean_old = np.mean(A, axis=1, keepdims=False)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_equal(std, std_old)
+
+    def test_var_with_mean_keyword_keepdims_false(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        mean = np.mean(A,
+                       axis=1,
+                       keepdims=True)
+
+        var = np.var(A,
+                     axis=1,
+                     keepdims=False,
+                     mean=mean)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array([10, 5]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=1, keepdims=False)
+        mean_old = np.mean(A, axis=1, keepdims=False)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_equal(var, var_old)
+
+    def test_std_with_mean_keyword_where_nontrivial(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        where = A > 0.5
+
+        mean = np.mean(A,
+                       axis=1,
+                       keepdims=True,
+                       where=where)
+
+        std = np.std(A,
+                     axis=1,
+                     keepdims=False,
+                     mean=mean,
+                     where=where)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array([10, 5]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=1, where=where)
+        mean_old = np.mean(A, axis=1, where=where)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_equal(std, std_old)
+
+    def test_var_with_mean_keyword_where_nontrivial(self):
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        where = A > 0.5
+
+        mean = np.mean(A,
+                       axis=1,
+                       keepdims=True,
+                       where=where)
+
+        var = np.var(A,
+                     axis=1,
+                     keepdims=False,
+                     mean=mean,
+                     where=where)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array([10, 5]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=1, where=where)
+        mean_old = np.mean(A, axis=1, where=where)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_equal(var, var_old)
+
+    def test_std_with_mean_keyword_multiple_axis(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        axis = (0, 2)
+
+        mean = np.mean(A,
+                       out=None,
+                       axis=axis,
+                       keepdims=True)
+
+        std = np.std(A,
+                     out=None,
+                     axis=axis,
+                     keepdims=False,
+                     mean=mean)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array([20]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=False)
+
+        assert_equal(np.array(std_old.shape), np.array(std.shape))
+        assert_almost_equal(std, std_old)
+
+    def test_std_with_mean_keyword_axis_None(self):
+        # Setting the seed to make the test reproducable
+        rng = np.random.RandomState(1234)
+        A = rng.randn(10, 20, 5) + 0.5
+
+        axis = None
+
+        mean = np.mean(A,
+                       out=None,
+                       axis=axis,
+                       keepdims=True)
+
+        std = np.std(A,
+                     out=None,
+                     axis=axis,
+                     keepdims=False,
+                     mean=mean)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array([]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=False)
+
+        assert_equal(np.array(std_old.shape), np.array(std.shape))
+        assert_almost_equal(std, std_old)
+
+    def test_std_with_mean_keyword_keepdims_true_masked(self):
+
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
+        mean_out = ma.array([[0., 0., 0., 0.]],
+                            mask=[[False, False, False, False]])
+        std_out = ma.array([[0., 0., 0., 0.]],
+                           mask=[[False, False, False, False]])
+
+        axis = 0
+
+        mean = np.mean(A, out=mean_out,
+                       axis=axis, keepdims=True)
+
+        std = np.std(A, out=std_out,
+                     axis=axis, keepdims=True,
+                     mean=mean)
+
+        # Shape of returned mean and std should be same
+        assert_equal(np.array(std.shape), np.array(mean.shape))
+        assert_equal(np.array(std.shape), np.array([1, 4]))
+
+        # Output should be the same as from the individual algorithms
+        std_old = np.std(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(std, std_old)
+        assert_almost_equal(mean, mean_old)
+
+        assert mean_out is mean
+        assert std_out is std
+
+        # masked elements should be ignored
+        mean_b = np.mean(B, axis=axis, keepdims=True)
+        std_b = np.std(B, axis=axis, keepdims=True, mean=mean_b)
+        assert_almost_equal(std, std_b)
+        assert_almost_equal(mean, mean_b)
+
+    def test_var_with_mean_keyword_keepdims_true_masked(self):
+
+        A = ma.array([[2., 3., 4., 5.],
+                      [1., 2., 3., 4.]],
+                     mask=[[True, False, True, False],
+                           [True, False, True, False]])
+
+        B = ma.array([[100., 3., 104., 5.],
+                      [101., 2., 103., 4.]],
+                      mask=[[True, False, True, False],
+                            [True, False, True, False]])
+
+        mean_out = ma.array([[0., 0., 0., 0.]],
+                            mask=[[False, False, False, False]])
+        var_out = ma.array([[0., 0., 0., 0.]],
+                           mask=[[False, False, False, False]])
+
+        axis = 0
+
+        mean = np.mean(A, out=mean_out,
+                       axis=axis, keepdims=True)
+
+        var = np.var(A, out=var_out,
+                     axis=axis, keepdims=True,
+                     mean=mean)
+
+        # Shape of returned mean and var should be same
+        assert_equal(np.array(var.shape), np.array(mean.shape))
+        assert_equal(np.array(var.shape), np.array([1, 4]))
+
+        # Output should be the same as from the individual algorithms
+        var_old = np.var(A, axis=axis, keepdims=True)
+        mean_old = np.mean(A, axis=axis, keepdims=True)
+
+        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert_almost_equal(var, var_old)
+        assert_almost_equal(mean, mean_old)
+
+        assert mean_out is mean
+        assert var_out is var
+
+        # masked elements should be ignored
+        mean_b = np.mean(B, axis=axis, keepdims=True)
+        var_b = np.var(B, axis=axis, keepdims=True, mean=mean_b)
+        assert_almost_equal(var, var_b)
+        assert_almost_equal(mean, mean_b)
 
 
 class TestIsscalar:

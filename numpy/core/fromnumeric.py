@@ -3506,13 +3506,13 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
 
 
 def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None):
+                    keepdims=None, *, where=None, mean=None):
     return (a, where, out)
 
 
 @array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+        where=np._NoValue, mean=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
 
@@ -3558,6 +3558,10 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
+    mean : optionally provide the mean to prevent recalculation, the mean
+          should have a shape as if it was calculated with keepdims = True
+          and the axis the same as used in the call to this std function. 
+          For masked arrays this argument is ignored.
 
         .. versionadded:: 1.20.0
 
@@ -3634,6 +3638,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
+    if mean is not np._NoValue and type(a) is mu.ndarray:
+        kwargs['mean'] = mean
+        
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3647,13 +3654,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
 
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None):
+                    keepdims=None, *, where=None, mean=None):
     return (a, where, out)
 
 
 @array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+        where=np._NoValue, mean=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3700,7 +3707,11 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-
+    mean : optionally provide the mean to prevent recalculation, the mean
+          should have a shape as if it was calculated with keepdims = True
+          and the axis the same as used in the call to this var function.
+          For masked arrays this argument is ignored. 
+          
         .. versionadded:: 1.20.0
 
     Returns
@@ -3774,6 +3785,8 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
+    if mean is not np._NoValue and type(a) is mu.ndarray:
+        kwargs['mean'] = mean
 
     if type(a) is not mu.ndarray:
         try:
