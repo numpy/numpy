@@ -53,5 +53,5 @@ jobs:
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest hypothesis typing_extensions
-        spin test
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        spin test -j auto

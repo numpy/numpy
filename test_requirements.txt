@@ -6,6 +6,7 @@ hypothesis==6.24.1
 pytest==6.2.5
 pytz==2021.3
 pytest-cov==3.0.0
+pytest-xdist
 # for numpy.random.test.test_extending
 cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:

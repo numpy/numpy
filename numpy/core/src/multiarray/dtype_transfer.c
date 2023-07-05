@@ -783,12 +783,12 @@ _strided_to_strided_datetime_general_cast(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (convert_datetime_to_datetimestruct(&d->src_meta,
+        if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&d->src_meta,
                                                dt, &dts) < 0) {
             return -1;
         }
         else {
-            if (convert_datetimestruct_to_datetime(&d->dst_meta,
+            if (NpyDatetime_ConvertDatetimeStructToDatetime64(&d->dst_meta,
                                                    &dts, &dt) < 0) {
                 return -1;
             }
@@ -893,7 +893,7 @@ _strided_to_strided_datetime_to_string(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (convert_datetime_to_datetimestruct(&d->src_meta,
+        if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&d->src_meta,
                                                dt, &dts) < 0) {
             return -1;
         }
@@ -901,7 +901,7 @@ _strided_to_strided_datetime_to_string(
         /* Initialize the destination to all zeros */
         memset(dst, 0, dst_itemsize);
 
-        if (make_iso_8601_datetime(&dts, dst, dst_itemsize,
+        if (NpyDatetime_MakeISO8601Datetime(&dts, dst, dst_itemsize,
                                 0, 0, d->src_meta.base, -1,
                                 NPY_UNSAFE_CASTING) < 0) {
             return -1;
@@ -941,24 +941,26 @@ _strided_to_strided_string_to_datetime(
             memcpy(tmp_buffer, src, src_itemsize);
             tmp_buffer[src_itemsize] = '\0';
 
-            if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
-                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL) < 0) {
+            if (NpyDatetime_ParseISO8601Datetime(
+                    tmp_buffer, src_itemsize,
+                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                    &dts, NULL, NULL) < 0) {
                 return -1;
             }
         }
         /* Otherwise parse the data in place */
         else {
-            if (parse_iso_8601_datetime(src, tmp - src,
-                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
-                                    &dts, NULL, NULL) < 0) {
+            if (NpyDatetime_ParseISO8601Datetime(
+                    src, tmp - src,
+                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                    &dts, NULL, NULL) < 0) {
                 return -1;
             }
         }
 
         /* Convert to the datetime */
         if (dt != NPY_DATETIME_NAT &&
-                convert_datetimestruct_to_datetime(&d->dst_meta,
+                NpyDatetime_ConvertDatetimeStructToDatetime64(&d->dst_meta,
                                                &dts, &dt) < 0) {
             return -1;
         }
