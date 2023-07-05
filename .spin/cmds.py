@@ -158,7 +158,7 @@ def gdb(code, gdb_args):
     spin gdb ls
     spin gdb -- --args ls -al
 
-    You can also run Python progreams:
+    You can also run Python programs:
 
     spin gdb my_tests.py
     spin gdb -- my_tests.py --mytest-flag
@@ -180,7 +180,7 @@ def gdb(code, gdb_args):
         PYTHON_ARGS = ['-c', code_prefix + code]
         gdb_args += ['--args', sys.executable] + PYTHON_FLAGS + PYTHON_ARGS
 
-    gdb_cmd = ['gdb', '-ex', 'set follow-fork-mode child'] + gdb_args
+    gdb_cmd = ['gdb', '-ex', 'set detach-on-fork on'] + gdb_args
     util.run(gdb_cmd, replace=True)
 
 
