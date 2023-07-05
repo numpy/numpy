@@ -390,8 +390,9 @@ def ipython(ctx, ipython_args):
     ppath = meson._set_pythonpath()
 
     # Get NumPy version
-    p = util.run(
-        [sys.executable, '-c', 'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
+    p = util.run([
+        sys.executable, '-c',
+        'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
         output=False, echo=False
     )
     np_ver = p.stdout.strip().decode('ascii')
@@ -405,7 +406,8 @@ def ipython(ctx, ipython_args):
             f.write('import numpy as np\n')
 
         print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
-        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] + list(ipython_args))
+        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] +
+                 list(ipython_args))
 
 
 @click.command(context_settings={"ignore_unknown_options": True})
