@@ -148,8 +148,18 @@ def gdb(python_expr):
 
     """
     meson._set_pythonpath()
+
+    if sys.version_info[:2] >= (3, 11):
+        PYTHON_FLAGS = ['-P']
+        code_prefix = ''
+    else:
+        PYTHON_FLAGS = []
+        code_prefix = 'import sys; sys.path.pop(0); '
+
     util.run(
-        ['gdb', '--args', 'python', '-P', '-c', python_expr],
+        ['gdb', '-ex', 'set follow-fork-mode child',
+         '--args', sys.executable, '-m', 'spin', 'run', 'python'] + PYTHON_FLAGS +
+        ['-c', code_prefix + python_expr],
         replace=True
     )
 
