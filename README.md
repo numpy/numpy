@@ -28,10 +28,10 @@ NumPy is the fundamental package for scientific computing with Python.
 
 It provides:
 
-- a powerful N-dimensional array object
-- sophisticated (broadcasting) functions
-- tools for integrating C/C++ and Fortran code
-- useful linear algebra, Fourier transform, and random number capabilities
+- A powerful N-dimensional array object.
+- Sophisticated (broadcasting) functions.
+- Tools for integrating C/C++ and Fortran code.
+- Useful linear algebra, Fourier transform, and random number capabilities.
 
 Testing:
 
@@ -58,14 +58,14 @@ to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first.
 
 Writing code isn’t the only way to contribute to NumPy. You can also:
-- review pull requests
-- help us stay on top of new and old issues
-- develop tutorials, presentations, and other educational materials
-- maintain and improve [our website](https://github.com/numpy/numpy.org)
-- develop graphic design for our brand assets and promotional materials
-- translate website content
-- help with outreach and onboard new contributors
-- write grant proposals and help with other fundraising efforts
+- Review pull requests.
+- Help us stay on top of new and old issues.
+- Develop tutorials, presentations, and other educational materials.
+- Maintain and improve [our website](https://github.com/numpy/numpy.org).
+- Develop graphic design for our brand assets and promotional materials.
+- Translate website content.
+- Help with outreach and onboard new contributors.
+- Write grant proposals and help with other fundraising efforts.
 
 For more information about the ways you can contribute to NumPy, visit [our website](https://numpy.org/contribute/). 
 If you’re unsure where to start or how your skills fit in, reach out! You can
