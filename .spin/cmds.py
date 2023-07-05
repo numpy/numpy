@@ -147,9 +147,9 @@ def gdb(python_expr):
     """👾 Execute a Python snippet with GDB
 
     """
+    meson._set_pythonpath()
     util.run(
-        ['gdb', '--args', 'python', '-m', 'spin', 'run',
-         'python', '-P', '-c', python_expr],
+        ['gdb', '--args', 'python', '-P', '-c', python_expr],
         replace=True
     )
 
