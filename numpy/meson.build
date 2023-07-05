@@ -237,6 +237,14 @@ foreach name, compiler : compilers
   conf_data.set(name + '_COMP_LINKER_ID', compiler.get_linker_id())
   conf_data.set(name + '_COMP_VERSION', compiler.version())
   conf_data.set(name + '_COMP_CMD_ARRAY', ', '.join(compiler.cmd_array()))
+  conf_data.set(name + '_COMP_ARGS', ', '.join(
+      get_option(name.to_lower() + '_args')
+    )
+  )
+  conf_data.set(name + '_COMP_LINK_ARGS', ', '.join(
+      get_option(name.to_lower() + '_link_args')
+    )
+  )
 endforeach
 
 # Machines CPU and system information
