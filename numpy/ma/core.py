@@ -5406,7 +5406,7 @@ class MaskedArray(ndarray):
         kwargs = {}
 
         if keepdims is not np._NoValue:
-             kwargs['keepdims'] = keepdims
+            kwargs['keepdims'] = keepdims
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:

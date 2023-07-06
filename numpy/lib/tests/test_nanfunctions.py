@@ -769,12 +769,11 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
             assert ret.dtype == dtype_reference
             np.testing.assert_allclose(ret, reference)
 
-
     def test_nanstd_with_mean_keyword(self):
         # Setting the seed to make the test reproducable
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
-        A[:,5,:] = np.nan
+        A[:, 5, :] = np.nan
 
         mean_out = np.zeros((10, 1, 5))
         std_out = np.zeros((10, 1, 5))

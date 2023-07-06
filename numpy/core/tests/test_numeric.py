@@ -334,8 +334,6 @@ class TestNonarrayArgs:
         assert std_old.shape == mean.shape
         assert_almost_equal(std, std_old)
 
-
-
     def test_var_with_mean_keyword(self):
         # Setting the seed to make the test reproducable
         rng = np.random.RandomState(1234)
@@ -363,15 +361,13 @@ class TestNonarrayArgs:
 
         # Shape of returned mean and var should be same
         assert var.shape == mean.shape
-        assert var.shape== (10, 1, 5)
+        assert var.shape == (10, 1, 5)
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, keepdims=True)
 
         assert var_old.shape == mean.shape
         assert_almost_equal(var, var_old)
-
-      
 
     def test_std_with_mean_keyword_keepdims_false(self):
         rng = np.random.RandomState(1234)
@@ -437,7 +433,7 @@ class TestNonarrayArgs:
                      where=where)
 
         # Shape of returned mean and std should be same
-        assert std.shape ==(10, 5)
+        assert std.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=1, where=where)
@@ -606,7 +602,7 @@ class TestNonarrayArgs:
         var_old = np.var(A, axis=axis, keepdims=True)
         mean_old = np.mean(A, axis=axis, keepdims=True)
 
-        assert var_old.shape== mean_old.shape
+        assert var_old.shape == mean_old.shape
         assert_almost_equal(var, var_old)
         assert_almost_equal(mean, mean_old)
 
