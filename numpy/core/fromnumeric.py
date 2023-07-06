@@ -3563,8 +3563,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with ``keepdims = True``
-          and the axis the same as used in the call to this std function. 
-          For masked arrays this argument is ignored.
+          and the axis the same as used in the call to this std function.
 
         .. versionadded:: 1.26.0
 
@@ -3641,7 +3640,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
-    if mean is not np._NoValue and type(a) is mu.ndarray:
+    if mean is not np._NoValue:
         kwargs['mean'] = mean
         
     if type(a) is not mu.ndarray:
@@ -3716,7 +3715,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with ``keepdims = True``
           and the axis the same as used in the call to this var function.
-          For masked arrays this argument is ignored. 
           
         .. versionadded:: 1.26.0
 
@@ -3792,7 +3790,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
-    if mean is not np._NoValue and type(a) is mu.ndarray:
+    if mean is not np._NoValue:
         kwargs['mean'] = mean
 
     if type(a) is not mu.ndarray:
