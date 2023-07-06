@@ -3641,8 +3641,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
     >>> mean = np.mean(a, axis=1, keepdims=True)
     >>>
-    >>> t1 = timeit("std = np.std(a, axis=1, mean=mean)", globals=globals(), number = 10000)
-    >>> t2 = timeit("std = np.std(a, axis=1)", globals=globals(), number = 10000)
+    >>> t1 = timeit("std = np.std(a, axis=1, mean=mean)", 
+    >>>             globals=globals(), number=10000)
+    >>> t2 = timeit("std = np.std(a, axis=1)", globals=globals(), number=10000)
     >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
     Percentage execution time saved 30%
 
@@ -3803,8 +3804,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
     >>> mean = np.mean(a, axis=1, keepdims=True)
     >>>
-    >>> t1 = timeit("var = np.var(a, axis=1, mean=mean)", globals=globals(), number = 10000)
-    >>> t2 = timeit("var = np.var(a, axis=1)", globals=globals(), number = 10000)
+    >>> t1 = timeit("var = np.var(a, axis=1, mean=mean)",
+    >>>             globals=globals(), number=10000)
+    >>> t2 = timeit("var = np.var(a, axis=1)", globals=globals(), number=10000)
     >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
     Percentage execution time saved 32%
 
