@@ -3507,7 +3507,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
 
 def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
                     keepdims=None, *, where=None, mean=None):
-    return (a, where, out)
+    return (a, where, out, mean)
 
 
 @array_function_dispatch(_std_dispatcher)
@@ -3657,7 +3657,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
                     keepdims=None, *, where=None, mean=None):
-    return (a, where, out)
+    return (a, where, out, mean)
 
 
 @array_function_dispatch(_var_dispatcher)
