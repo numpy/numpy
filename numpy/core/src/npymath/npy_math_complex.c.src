@@ -65,7 +65,13 @@ static const volatile npy_float tiny = 3.9443045e-31f;
 /*==========================================================
  * Constants
  *=========================================================*/
-static const @ctype@ c_1@c@ = NPY_@NAME@_INIT(1.0@C@, 0.0@C@);
+#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+static const @ctype@ c_1@c@ = {1.0@C@, 0.0@C@};
+#elif defined(__cplusplus)
+static const @ctype@ c_1@c@ (1.0@C@, 0.0@C@);
+#else
+static const @ctype@ c_1@c@ = 1.0@C@;
+#endif
 
 /*==========================================================
  * Helper functions

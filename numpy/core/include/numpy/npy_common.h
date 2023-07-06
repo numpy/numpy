@@ -392,16 +392,16 @@ extern "C++" {
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
-#define NPY_CDOUBLE_INIT(real, imag) _CBuild(real, imag)
-#define NPY_CFLOAT_INIT(real, imag) _FCBuild(real, imag)
-#define NPY_CLONGDOUBLE_INIT(real, imag) _LCBuild(real, imag)
+#define NPY_CDOUBLE_INIT(real, imag) ((npy_cdouble) _Cbuild((double) (real), (double) (imag)))
+#define NPY_CFLOAT_INIT(real, imag) ((npy_cfloat) _FCbuild((float) (real), (float) (imag)))
+#define NPY_CLONGDOUBLE_INIT(real, imag) ((npy_clongdouble) _LCbuild((longdouble_t) (real), (longdouble_t) (imag)))
 #elif defined(__cplusplus) /* && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
 typedef std::complex<double> npy_cdouble;
 typedef std::complex<float> npy_cfloat;
 typedef std::complex<longdouble_t> npy_clongdouble;
-#define NPY_CDOUBLE_INIT(real, imag) std::complex<double>(real, imag)
-#define NPY_CFLOAT_INIT(real, imag) std::complex<float>(real, imag)
-#define NPY_CLONGDOUBLE_INIT(real, imag) std::complex<longdouble_t>(real, imag)
+#define NPY_CDOUBLE_INIT(real, imag) ((npy_cdouble) std::complex<double>((double) (real), (double) (imag)))
+#define NPY_CFLOAT_INIT(real, imag) ((npy_cfloat) std::complex<float>((float) (real), (float) (imag)))
+#define NPY_CLONGDOUBLE_INIT(real, imag) ((npy_clongdouble) std::complex<longdouble_t>((longdouble_t) (real), (longdouble_t) (imag)))
 #else /* !defined(__cplusplus) && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
 typedef complex double npy_cdouble;
 typedef complex float npy_cfloat;
@@ -486,7 +486,7 @@ static inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
 #ifdef __cplusplus
     return reinterpret_cast<const float *>(c)[1];
 #else
-    _npy_cdouble_to_arr tmp;
+    _npy_cfloat_to_arr tmp;
     tmp.comp = *c;
     return tmp.arr[1];
 #endif
