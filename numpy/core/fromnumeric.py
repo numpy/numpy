@@ -240,7 +240,7 @@ def reshape(a, newshape, order='C'):
     -----
     It is not always possible to change the shape of an array without copying
     the data.
-    
+
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
     For example, let's say you have an array:
@@ -2741,7 +2741,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     max : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -2884,7 +2884,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     min : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -3072,7 +3072,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     array([  2.,  12.])
     >>> np.prod(a, axis=0)
     array([3., 8.])
-    
+
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
@@ -3560,7 +3560,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         See `~numpy.ufunc.reduce` for details.
 
         .. versionadded:: 1.20.0
-        
+
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with ``keepdims = True``
           and the axis the same as used in the call to this std function.
@@ -3634,6 +3634,17 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> np.std(a, where=[[True], [True], [False]])
     2.0
 
+    Using the mean keyword to save computation time:
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> mean = np.mean(a, axis=1, keepdims=True)
+    >>>
+    >>> %timeit std = np.std(a, axis=1, mean=mean)
+    >>> %timeit std = np.std(a, axis=1)
+    14.1 µs ± 50.1 ns per loop (mean ± std. dev. of 7 runs,
+                                100,000 loops each)
+    20.3 µs ± 104 ns per loop (mean ± std. dev. of 7 runs,
+                               10,000 loops each)
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
@@ -3642,7 +3653,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         kwargs['where'] = where
     if mean is not np._NoValue:
         kwargs['mean'] = mean
-        
+
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3709,13 +3720,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-        
+
         .. versionadded:: 1.20.0
-                
+
     mean : optionally provide the mean to prevent recalculation, the mean
           should have a shape as if it was calculated with ``keepdims = True``
           and the axis the same as used in the call to this var function.
-          
+
         .. versionadded:: 1.26.0
 
 
@@ -3784,6 +3795,17 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> np.var(a, where=[[True], [True], [False]])
     4.0
 
+    Using the mean keyword to save computation time:
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> mean = np.mean(a, axis=1, keepdims=True)
+    >>>
+    >>> %timeit var = np.var(a, axis=1, mean=mean)
+    >>> %timeit var = np.var(a, axis=1)
+    13.3 µs ± 18.3 ns per loop (mean ± std. dev. of 7 runs,
+                                100,000 loops each)
+    18.6 µs ± 291 ns per loop (mean ± std. dev. of 7 runs,
+                               100,000 loops each)
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
@@ -3806,7 +3828,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
-# Aliases of other functions. Provided unique docstrings 
+# Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
 
