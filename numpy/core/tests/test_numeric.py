@@ -312,11 +312,17 @@ class TestNonarrayArgs:
                        axis=1,
                        keepdims=True)
 
+        # The returned  object should be the object specified during calling
+        assert mean_out is mean
+
         std = np.std(A,
                      out=std_out,
                      axis=1,
                      keepdims=True,
                      mean=mean)
+
+        # The returned  object should be the object specified during calling
+        assert std_out is std
 
         # Shape of returned mean and std should be same
         assert std.shape == mean.shape
@@ -328,9 +334,7 @@ class TestNonarrayArgs:
         assert std_old.shape == mean.shape
         assert_almost_equal(std, std_old)
 
-        # The returned  objects should be the objects specified during calling
-        assert mean_out is mean
-        assert std_out is std
+
 
     def test_var_with_mean_keyword(self):
         # Setting the seed to make the test reproducable
@@ -345,11 +349,17 @@ class TestNonarrayArgs:
                        axis=1,
                        keepdims=True)
 
+        # The returned  object should be the object specified during calling
+        assert mean_out is mean
+
         var = np.var(A,
                      out=var_out,
                      axis=1,
                      keepdims=True,
                      mean=mean)
+
+        # The returned  object should be the object specified during calling
+        assert var_out is var
 
         # Shape of returned mean and var should be same
         assert var.shape == mean.shape
@@ -361,9 +371,7 @@ class TestNonarrayArgs:
         assert var_old.shape == mean.shape
         assert_almost_equal(var, var_old)
 
-        # The returned  objects should be the objects specified during calling
-        assert mean_out is mean
-        assert var_out is var
+      
 
     def test_std_with_mean_keyword_keepdims_false(self):
         rng = np.random.RandomState(1234)
@@ -511,7 +519,7 @@ class TestNonarrayArgs:
 
         # Shape of returned mean and std should be same
         assert std.shape == ()
-        
+
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=axis, keepdims=False)
 
