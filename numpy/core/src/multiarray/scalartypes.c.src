@@ -608,9 +608,15 @@ voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        return _void_scalar_repr(self, 1);
+        /* use string on old versions */
+        return _void_scalar_repr(self, npy_legacy_print_mode >= 125);
     }
-    return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
+    if (npy_legacy_print_mode >= 125) {
+        return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
+    }
+    else {
+        return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+    }
 }
 
 static PyObject *
@@ -657,14 +663,24 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+        if (npy_legacy_print_mode >= 125) {
+            ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+        }
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
         if (meta == NULL) {
             return NULL;
         }
-        ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+        if (npy_legacy_print_mode >= 125) {
+            ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+        }
         Py_DECREF(meta);
     }
 
@@ -703,7 +719,12 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
+        if (npy_legacy_print_mode >= 125) {
+            ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.timedelta64(%S)", val);
+        }
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -711,7 +732,12 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
+        if (npy_legacy_print_mode >= 125) {
+            ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.timedelta64(%S,'%S')", val, meta);
+        }
         Py_DECREF(meta);
     }
     Py_DECREF(val);
@@ -1036,7 +1062,9 @@ static PyObject *
     if (string == NULL) {
         return NULL;
     }
-    Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
+    if (npy_legacy_print_mode >= 125) {
+        Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
+    }
 #endif  /* IS_repr */
 
     return string;
@@ -1096,10 +1124,16 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
+    PyObject *string;
 #ifdef IS_str
-    PyObject *string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    if (npy_legacy_print_mode >= 125) {
+        string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    }
+    else {
+        string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
+    }
 #else  /* IS_repr */
-    PyObject *string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
+    string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
 #endif  /* IS_repr */
 
     Py_DECREF(rstr);
