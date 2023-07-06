@@ -3646,6 +3646,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> t1 = timeit("std = np.std(a, axis=1, mean=mean)", globals=g, number=n)
     >>> t2 = timeit("std = np.std(a, axis=1)", globals=g, number=n)
     >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    #doctest: +SKIP
     Percentage execution time saved 30%
 
     """
@@ -3810,6 +3811,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> t1 = timeit("var = np.var(a, axis=1, mean=mean)", globals=g, number=n)
     >>> t2 = timeit("var = np.var(a, axis=1)", globals=g, number=n)
     >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    #doctest: +SKIP
     Percentage execution time saved 32%
 
     """
