@@ -154,7 +154,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
         # Note that if dtype is not of inexact type then arraymean will
         # not be either.
         arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=where)
-        # The shape of rcount has to match arrmean to not change the shape of 
+        # The shape of rcount has to match arrmean to not change the shape of
         # out in broadcasting. Otherwise, it cannot be stored back to arrmean.
         if rcount.ndim == 0:
             # fast-path for default case when where is True

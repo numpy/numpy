@@ -1734,7 +1734,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
                      where=where)
-                     
+
     if mean is not np._NoValue:
         avg = mean
     else:
