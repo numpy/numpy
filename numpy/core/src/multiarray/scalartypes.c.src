@@ -36,6 +36,9 @@
 
 #include "binop_override.h"
 
+/* determines if legacy mode is enabled, global set in multiarraymodule.c */
+extern int npy_legacy_print_mode;
+
 /*
  * used for allocating a single scalar, so use the default numpy
  * memory allocators instead of the (maybe) user overrides
@@ -331,6 +334,9 @@ genint_type_repr(PyObject *self)
     if (value_string == NULL) {
         return NULL;
     }
+    if (npy_legacy_print_mode <= 125) {
+        return value_string;
+    }
 
     int num = _typenum_fromtypeobj((PyObject *)Py_TYPE(self), 0);
 
@@ -365,6 +371,9 @@ genbool_type_str(PyObject *self)
 static PyObject *
 genbool_type_repr(PyObject *self)
 {
+    if (npy_legacy_print_mode <= 125) {
+        return genbool_type_str(self);
+    }
     return PyUnicode_FromString(
             ((PyBoolScalarObject *)self)->obval ? "np.True_" : "np.False_");
 }
@@ -488,7 +497,9 @@ stringtype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+    if (npy_legacy_print_mode > 125) {
+        Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+    }
 #endif   /* IS_repr */
     return ret;
 }
@@ -533,7 +544,9 @@ unicodetype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
+    if (npy_legacy_print_mode > 125) {
+        Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
+    }
 #endif  /* IS_repr */
 
     return ret;
@@ -609,9 +622,9 @@ voidtype_repr(PyObject *self)
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
         /* use string on old versions */
-        return _void_scalar_repr(self, npy_legacy_print_mode >= 125);
+        return _void_scalar_repr(self, npy_legacy_print_mode > 125);
     }
-    if (npy_legacy_print_mode >= 125) {
+    if (npy_legacy_print_mode > 125) {
         return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
     }
     else {
@@ -663,7 +676,7 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_legacy_print_mode >= 125) {
+        if (npy_legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
         }
         else {
@@ -675,7 +688,7 @@ datetimetype_repr(PyObject *self)
         if (meta == NULL) {
             return NULL;
         }
-        if (npy_legacy_print_mode >= 125) {
+        if (npy_legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
         }
         else {
@@ -719,7 +732,7 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        if (npy_legacy_print_mode >= 125) {
+        if (npy_legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
         }
         else {
@@ -732,7 +745,7 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        if (npy_legacy_print_mode >= 125) {
+        if (npy_legacy_print_mode > 125) {
             ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
         }
         else {
@@ -850,8 +863,6 @@ timedeltatype_str(PyObject *self)
  * scalars in numpy 1.13. One day we hope to remove it.
  */
 
-/* determines if legacy mode is enabled, global set in multiarraymodule.c */
-extern int npy_legacy_print_mode;
 
 #define HALFPREC_REPR 5
 #define HALFPREC_STR 5
@@ -1062,7 +1073,7 @@ static PyObject *
     if (string == NULL) {
         return NULL;
     }
-    if (npy_legacy_print_mode >= 125) {
+    if (npy_legacy_print_mode > 125) {
         Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
     }
 #endif  /* IS_repr */
@@ -1126,7 +1137,7 @@ c@name@type_@kind@(PyObject *self)
 
     PyObject *string;
 #ifdef IS_str
-    if (npy_legacy_print_mode >= 125) {
+    if (npy_legacy_print_mode > 125) {
         string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
     }
     else {
@@ -1159,10 +1170,21 @@ halftype_@kind@(PyObject *self)
 
     absval = floatval < 0 ? -floatval : floatval;
 
+    PyObject *string;
     if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
-        return format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
+        string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
-    return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
+    else {
+        string = format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
+    }
+#ifdef IS_str
+    return string;
+#else
+    if (string == NULL || npy_legacy_print_mode <= 125) {
+        return string;
+    }
+    return PyUnicode_FromFormat("np.float16(%S)", string);
+#endif
 }
 
 #undef IS_@kind@

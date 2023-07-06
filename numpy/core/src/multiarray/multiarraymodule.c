@@ -3320,7 +3320,7 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
 NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
-    PyArrayObject *arr, *ax, *ay;
+    PyArrayObject *arr, *ax, *ay = NULL;
     PyObject *ret = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
@@ -3342,156 +3342,160 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     NPY_cast_info cast_info = {.func = NULL};
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
-    ay = (PyArrayObject*)PyArray_FROM_O(y);
-    if (ax == NULL || ay == NULL) {
+    if (ax == NULL) {
         goto fail;
     }
-    else {
-        npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
-                           NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
-        PyArrayObject * op_in[4] = {
-            NULL, arr, ax, ay
-        };
-        npy_uint32 op_flags[4] = {
-            NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_NO_SUBTYPE,
-            NPY_ITER_READONLY,
-            NPY_ITER_READONLY | NPY_ITER_ALIGNED,
-            NPY_ITER_READONLY | NPY_ITER_ALIGNED
-        };
-        PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
-                                                       0, NULL);
-        PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
-                                    common_dt, common_dt};
-        NpyIter * iter;
-        NPY_BEGIN_THREADS_DEF;
-
-        if (common_dt == NULL || op_dt[1] == NULL) {
-            Py_XDECREF(op_dt[1]);
-            Py_XDECREF(common_dt);
-            goto fail;
-        }
-        iter =  NpyIter_MultiNew(4, op_in, flags,
-                                 NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                                 op_flags, op_dt);
-        Py_DECREF(op_dt[1]);
-        Py_DECREF(common_dt);
-        if (iter == NULL) {
-            goto fail;
-        }
-
-        /* Get the result from the iterator object array */
-        ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
-
-        npy_intp itemsize = common_dt->elsize;
-
-        int has_ref = PyDataType_REFCHK(common_dt);
-
-        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
-
-        npy_intp transfer_strides[2] = {itemsize, itemsize};
-        npy_intp one = 1;
-
-        if (has_ref || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
-                        (itemsize != 2) && (itemsize != 1))) {
-            // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
-            // of the input arrays.
-            //
-            // There's also no need to set up a cast for y, since the iterator
-            // ensures both casts are identical.
-            if (PyArray_GetDTypeTransferFunction(
-                    1, itemsize, itemsize, common_dt, common_dt, 0,
-                    &cast_info, &transfer_flags) != NPY_SUCCEED) {
-                goto fail;
-            }
-        }
-
-        transfer_flags = PyArrayMethod_COMBINED_FLAGS(
-            transfer_flags, NpyIter_GetTransferFlags(iter));
-
-        if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
-            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
-        }
-
-        if (NpyIter_GetIterSize(iter) != 0) {
-            NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-            npy_intp * innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-            char **dataptrarray = NpyIter_GetDataPtrArray(iter);
-            npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
-
-            do {
-                npy_intp n = (*innersizeptr);
-                char * dst = dataptrarray[0];
-                char * csrc = dataptrarray[1];
-                char * xsrc = dataptrarray[2];
-                char * ysrc = dataptrarray[3];
-
-                // the iterator might mutate these pointers,
-                // so need to update them every iteration
-                npy_intp cstride = strides[1];
-                npy_intp xstride = strides[2];
-                npy_intp ystride = strides[3];
-
-                /* constant sizes so compiler replaces memcpy */
-                if (!has_ref && itemsize == 16) {
-                    INNER_WHERE_LOOP(16);
-                }
-                else if (!has_ref && itemsize == 8) {
-                    INNER_WHERE_LOOP(8);
-                }
-                else if (!has_ref && itemsize == 4) {
-                    INNER_WHERE_LOOP(4);
-                }
-                else if (!has_ref && itemsize == 2) {
-                    INNER_WHERE_LOOP(2);
-                }
-                else if (!has_ref && itemsize == 1) {
-                    INNER_WHERE_LOOP(1);
-                }
-                else {
-                    npy_intp i;
-                    for (i = 0; i < n; i++) {
-                        if (*csrc) {
-                            char *args[2] = {xsrc, dst};
-
-                            if (cast_info.func(
-                                    &cast_info.context, args, &one,
-                                    transfer_strides, cast_info.auxdata) < 0) {
-                                goto fail;
-                            }
-                        }
-                        else {
-                            char *args[2] = {ysrc, dst};
-
-                            if (cast_info.func(
-                                    &cast_info.context, args, &one,
-                                    transfer_strides, cast_info.auxdata) < 0) {
-                                goto fail;
-                            }
-                        }
-                        dst += itemsize;
-                        xsrc += xstride;
-                        ysrc += ystride;
-                        csrc += cstride;
-                    }
-                }
-            } while (iternext(iter));
-        }
-
-        NPY_END_THREADS;
-
-        Py_INCREF(ret);
-        Py_DECREF(arr);
-        Py_DECREF(ax);
-        Py_DECREF(ay);
-        NPY_cast_info_xfree(&cast_info);
-
-        if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        return ret;
+    ay = (PyArrayObject*)PyArray_FROM_O(y);
+    if (ay == NULL) {
+        goto fail;
     }
+    npy_mark_tmp_array_if_pyscalar(x, ax, NULL);
+    npy_mark_tmp_array_if_pyscalar(y, ay, NULL);
+
+    npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
+                        NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
+    PyArrayObject * op_in[4] = {
+        NULL, arr, ax, ay
+    };
+    npy_uint32 op_flags[4] = {
+        NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_NO_SUBTYPE,
+        NPY_ITER_READONLY,
+        NPY_ITER_READONLY | NPY_ITER_ALIGNED,
+        NPY_ITER_READONLY | NPY_ITER_ALIGNED
+    };
+    PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
+                                                    0, NULL);
+    PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
+                                common_dt, common_dt};
+    NpyIter * iter;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (common_dt == NULL || op_dt[1] == NULL) {
+        Py_XDECREF(op_dt[1]);
+        Py_XDECREF(common_dt);
+        goto fail;
+    }
+    iter =  NpyIter_MultiNew(4, op_in, flags,
+                                NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                                op_flags, op_dt);
+    Py_DECREF(op_dt[1]);
+    Py_DECREF(common_dt);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    /* Get the result from the iterator object array */
+    ret = (PyObject*)NpyIter_GetOperandArray(iter)[0];
+
+    npy_intp itemsize = common_dt->elsize;
+
+    int has_ref = PyDataType_REFCHK(common_dt);
+
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+
+    npy_intp transfer_strides[2] = {itemsize, itemsize};
+    npy_intp one = 1;
+
+    if (has_ref || ((itemsize != 16) && (itemsize != 8) && (itemsize != 4) &&
+                    (itemsize != 2) && (itemsize != 1))) {
+        // The iterator has NPY_ITER_ALIGNED flag so no need to check alignment
+        // of the input arrays.
+        //
+        // There's also no need to set up a cast for y, since the iterator
+        // ensures both casts are identical.
+        if (PyArray_GetDTypeTransferFunction(
+                1, itemsize, itemsize, common_dt, common_dt, 0,
+                &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+    }
+
+    transfer_flags = PyArrayMethod_COMBINED_FLAGS(
+        transfer_flags, NpyIter_GetTransferFlags(iter));
+
+    if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+        npy_intp * innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+        char **dataptrarray = NpyIter_GetDataPtrArray(iter);
+        npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
+
+        do {
+            npy_intp n = (*innersizeptr);
+            char * dst = dataptrarray[0];
+            char * csrc = dataptrarray[1];
+            char * xsrc = dataptrarray[2];
+            char * ysrc = dataptrarray[3];
+
+            // the iterator might mutate these pointers,
+            // so need to update them every iteration
+            npy_intp cstride = strides[1];
+            npy_intp xstride = strides[2];
+            npy_intp ystride = strides[3];
+
+            /* constant sizes so compiler replaces memcpy */
+            if (!has_ref && itemsize == 16) {
+                INNER_WHERE_LOOP(16);
+            }
+            else if (!has_ref && itemsize == 8) {
+                INNER_WHERE_LOOP(8);
+            }
+            else if (!has_ref && itemsize == 4) {
+                INNER_WHERE_LOOP(4);
+            }
+            else if (!has_ref && itemsize == 2) {
+                INNER_WHERE_LOOP(2);
+            }
+            else if (!has_ref && itemsize == 1) {
+                INNER_WHERE_LOOP(1);
+            }
+            else {
+                npy_intp i;
+                for (i = 0; i < n; i++) {
+                    if (*csrc) {
+                        char *args[2] = {xsrc, dst};
+
+                        if (cast_info.func(
+                                &cast_info.context, args, &one,
+                                transfer_strides, cast_info.auxdata) < 0) {
+                            goto fail;
+                        }
+                    }
+                    else {
+                        char *args[2] = {ysrc, dst};
+
+                        if (cast_info.func(
+                                &cast_info.context, args, &one,
+                                transfer_strides, cast_info.auxdata) < 0) {
+                            goto fail;
+                        }
+                    }
+                    dst += itemsize;
+                    xsrc += xstride;
+                    ysrc += ystride;
+                    csrc += cstride;
+                }
+            }
+        } while (iternext(iter));
+    }
+
+    NPY_END_THREADS;
+
+    Py_INCREF(ret);
+    Py_DECREF(arr);
+    Py_DECREF(ax);
+    Py_DECREF(ay);
+    NPY_cast_info_xfree(&cast_info);
+
+    if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return ret;
 
 fail:
     Py_DECREF(arr);
