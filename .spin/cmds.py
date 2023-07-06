@@ -2,6 +2,9 @@ import os
 import shutil
 import sys
 import argparse
+import tempfile
+import pathlib
+import shutil
 
 import click
 from spin.cmds import meson
@@ -347,3 +350,84 @@ def bench(ctx, tests, compare, verbose, commits):
         ] + bench_args + [commit_a, commit_b]
 
         _run_asv(cmd_compare)
+
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.argument("python_args", metavar='', nargs=-1)
+@click.pass_context
+def python(ctx, python_args):
+    """🐍 Launch Python shell with PYTHONPATH set
+
+    OPTIONS are passed through directly to Python, e.g.:
+
+    spin python -c 'import sys; print(sys.path)'
+    """
+    env = os.environ
+    env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
+    ctx.invoke(meson.build)
+    ctx.forward(meson.python)
+
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.argument("ipython_args", metavar='', nargs=-1)
+@click.pass_context
+def ipython(ctx, ipython_args):
+    """💻 Launch IPython shell with PYTHONPATH set
+
+    OPTIONS are passed through directly to IPython, e.g.:
+
+    spin ipython -i myscript.py
+    """
+    env = os.environ
+    env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
+
+    ctx.invoke(meson.build)
+
+    ppath = meson._set_pythonpath()
+
+    # Get NumPy version
+    p = util.run([
+        sys.executable, '-c',
+        'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
+        output=False, echo=False
+    )
+    np_ver = p.stdout.strip().decode('ascii')
+
+    with tempfile.TemporaryDirectory() as d:
+        profile_dir = os.path.join(d, f'numpy_{np_ver}')
+        startup_dir = os.path.join(profile_dir, 'startup')
+
+        pathlib.Path(startup_dir).mkdir(parents=True)
+        with open(os.path.join(startup_dir, '00_numpy.py'), 'w') as f:
+            f.write('import numpy as np\n')
+
+        print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
+        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] +
+                 list(ipython_args))
+
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.argument("args", nargs=-1)
+@click.pass_context
+def run(ctx, args):
+    """🏁 Run a shell command with PYTHONPATH set
+
+    \b
+    spin run make
+    spin run 'echo $PYTHONPATH'
+    spin run python -c 'import sys; del sys.path[0]; import mypkg'
+
+    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
+    above, you need to provide a single, quoted command to `run`:
+
+    spin run 'echo $SHELL && echo $PWD'
+
+    On Windows, all shell commands are run via Bash.
+    Install Git for Windows if you don't have Bash already.
+    """
+    ctx.invoke(meson.build)
+    ctx.forward(meson.run)
