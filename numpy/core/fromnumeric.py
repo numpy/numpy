@@ -3636,15 +3636,15 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     2.0
 
     Using the mean keyword to save computation time:
+    >>> import numpy as np
+    >>> from timeit import timeit
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
     >>> mean = np.mean(a, axis=1, keepdims=True)
     >>>
-    >>> %timeit std = np.std(a, axis=1, mean=mean)
-    >>> %timeit std = np.std(a, axis=1)
-    14.1 µs ± 50.1 ns per loop (mean ± std. dev. of 7 runs,
-                                100,000 loops each)
-    20.3 µs ± 104 ns per loop (mean ± std. dev. of 7 runs,
-                               10,000 loops each)
+    >>> t1 = timeit("std = np.std(a, axis=1, mean=mean)", globals=globals(), number = 10000)
+    >>> t2 = timeit("std = np.std(a, axis=1)", globals=globals(), number = 10000)
+    >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    Percentage execution time saved 30%
 
     """
     kwargs = {}
@@ -3797,15 +3797,16 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     4.0
 
     Using the mean keyword to save computation time:
+    >>> import numpy as np
+    >>> from timeit import timeit
+    >>>
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
     >>> mean = np.mean(a, axis=1, keepdims=True)
     >>>
-    >>> %timeit var = np.var(a, axis=1, mean=mean)
-    >>> %timeit var = np.var(a, axis=1)
-    13.3 µs ± 18.3 ns per loop (mean ± std. dev. of 7 runs,
-                                100,000 loops each)
-    18.6 µs ± 291 ns per loop (mean ± std. dev. of 7 runs,
-                               100,000 loops each)
+    >>> t1 = timeit("var = np.var(a, axis=1, mean=mean)", globals=globals(), number = 10000)
+    >>> t2 = timeit("var = np.var(a, axis=1)", globals=globals(), number = 10000)
+    >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    Percentage execution time saved 32%
 
     """
     kwargs = {}
