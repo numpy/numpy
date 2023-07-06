@@ -3561,9 +3561,11 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         .. versionadded:: 1.20.0
 
-    mean : optionally provide the mean to prevent recalculation, the mean
-          should have a shape as if it was calculated with ``keepdims = True``
-          and the axis the same as used in the call to this std function.
+    mean : array like, optional
+        Provide the mean to prevent its recalculation. The mean
+        should have a shape as if it was calculated with ``keepdims=True``.
+        The axis for the calculation of the mean should be the same as used in
+        the call to this std function.
 
         .. versionadded:: 1.26.0
 
@@ -3723,9 +3725,11 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         .. versionadded:: 1.20.0
 
-    mean : optionally provide the mean to prevent recalculation, the mean
-          should have a shape as if it was calculated with ``keepdims = True``
-          and the axis the same as used in the call to this var function.
+    mean : array like, optional
+        Provide the mean to prevent its recalculation. The mean
+        should have a shape as if it was calculated with ``keepdims=True``.
+        The axis for the calculation of the mean should be the same as used in
+        the call to this var function.
 
         .. versionadded:: 1.26.0
 
