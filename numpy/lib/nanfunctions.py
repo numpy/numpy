@@ -1732,6 +1732,9 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     else:
         _keepdims = True
 
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
+                     where=where)
+                     
     if mean is not np._NoValue:
         avg = mean
     else:
@@ -1740,8 +1743,6 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         # keepdims=True, however matrix now raises an error in this case, but
         # the reason that it drops the keepdims kwarg is to force keepdims=True
         # so this used to work by serendipity.
-        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
-                     where=where)
         avg = np.sum(arr, axis=axis, dtype=dtype,
                      keepdims=_keepdims, where=where)
         avg = _divide_by_count(avg, cnt)
