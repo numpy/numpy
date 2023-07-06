@@ -319,13 +319,13 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([10, 1, 5]))
+        assert std.shape == mean.shape
+        assert std.shape == (10, 1, 5)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=1, keepdims=True)
 
-        assert_equal(np.array(std_old.shape), np.array(mean.shape))
+        assert std_old.shape == mean.shape
         assert_almost_equal(std, std_old)
 
         # The returned  objects should be the objects specified during calling
@@ -352,13 +352,13 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and var should be same
-        assert_equal(np.array(var.shape), np.array(mean.shape))
-        assert_equal(np.array(var.shape), np.array([10, 1, 5]))
+        assert var.shape == mean.shape
+        assert var.shape== (10, 1, 5)
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, keepdims=True)
 
-        assert_equal(np.array(var_old.shape), np.array(mean.shape))
+        assert var_old.shape == mean.shape
         assert_almost_equal(var, var_old)
 
         # The returned  objects should be the objects specified during calling
@@ -379,13 +379,13 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array([10, 5]))
+        assert std.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=1, keepdims=False)
         mean_old = np.mean(A, axis=1, keepdims=False)
 
-        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert std_old.shape == mean_old.shape
         assert_equal(std, std_old)
 
     def test_var_with_mean_keyword_keepdims_false(self):
@@ -402,13 +402,13 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and var should be same
-        assert_equal(np.array(var.shape), np.array([10, 5]))
+        assert var.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, keepdims=False)
         mean_old = np.mean(A, axis=1, keepdims=False)
 
-        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert var_old.shape == mean_old.shape
         assert_equal(var, var_old)
 
     def test_std_with_mean_keyword_where_nontrivial(self):
@@ -429,13 +429,13 @@ class TestNonarrayArgs:
                      where=where)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array([10, 5]))
+        assert std.shape ==(10, 5)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=1, where=where)
         mean_old = np.mean(A, axis=1, where=where)
 
-        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert std_old.shape == mean_old.shape
         assert_equal(std, std_old)
 
     def test_var_with_mean_keyword_where_nontrivial(self):
@@ -456,13 +456,13 @@ class TestNonarrayArgs:
                      where=where)
 
         # Shape of returned mean and var should be same
-        assert_equal(np.array(var.shape), np.array([10, 5]))
+        assert var.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=1, where=where)
         mean_old = np.mean(A, axis=1, where=where)
 
-        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert var_old.shape == mean_old.shape
         assert_equal(var, var_old)
 
     def test_std_with_mean_keyword_multiple_axis(self):
@@ -484,12 +484,11 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array([20]))
+        assert std.shape == (20,)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=axis, keepdims=False)
 
-        assert_equal(np.array(std_old.shape), np.array(std.shape))
         assert_almost_equal(std, std_old)
 
     def test_std_with_mean_keyword_axis_None(self):
@@ -511,12 +510,11 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array([]))
-
+        assert std.shape == ()
+        
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=axis, keepdims=False)
 
-        assert_equal(np.array(std_old.shape), np.array(std.shape))
         assert_almost_equal(std, std_old)
 
     def test_std_with_mean_keyword_keepdims_true_masked(self):
@@ -546,14 +544,14 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and std should be same
-        assert_equal(np.array(std.shape), np.array(mean.shape))
-        assert_equal(np.array(std.shape), np.array([1, 4]))
+        assert std.shape == mean.shape
+        assert std.shape == (1, 4)
 
         # Output should be the same as from the individual algorithms
         std_old = np.std(A, axis=axis, keepdims=True)
         mean_old = np.mean(A, axis=axis, keepdims=True)
 
-        assert_equal(np.array(std_old.shape), np.array(mean_old.shape))
+        assert std_old.shape == mean_old.shape
         assert_almost_equal(std, std_old)
         assert_almost_equal(mean, mean_old)
 
@@ -593,14 +591,14 @@ class TestNonarrayArgs:
                      mean=mean)
 
         # Shape of returned mean and var should be same
-        assert_equal(np.array(var.shape), np.array(mean.shape))
-        assert_equal(np.array(var.shape), np.array([1, 4]))
+        assert var.shape == mean.shape
+        assert var.shape == (1, 4)
 
         # Output should be the same as from the individual algorithms
         var_old = np.var(A, axis=axis, keepdims=True)
         mean_old = np.mean(A, axis=axis, keepdims=True)
 
-        assert_equal(np.array(var_old.shape), np.array(mean_old.shape))
+        assert var_old.shape== mean_old.shape
         assert_almost_equal(var, var_old)
         assert_almost_equal(mean, mean_old)
 
