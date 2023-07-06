@@ -147,21 +147,23 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
 def gdb(code, gdb_args):
     """👾 Execute a Python snippet with GDB
 
-    spin gdb -c 'import numpy as np; print(np.__version__)'
+      spin gdb -c 'import numpy as np; print(np.__version__)'
 
     Or pass arguments to gdb:
 
-    spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
+      spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
 
     Or run another program, they way you normally would with gdb:
 
-    spin gdb ls
-    spin gdb -- --args ls -al
+     \b
+     spin gdb ls
+     spin gdb -- --args ls -al
 
     You can also run Python programs:
 
-    spin gdb my_tests.py
-    spin gdb -- my_tests.py --mytest-flag
+     \b
+     spin gdb my_tests.py
+     spin gdb -- my_tests.py --mytest-flag
     """
     meson._set_pythonpath()
     gdb_args = list(gdb_args)
