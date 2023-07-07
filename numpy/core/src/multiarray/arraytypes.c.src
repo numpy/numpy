@@ -3984,8 +3984,13 @@ static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
 {
     npy_intp i;
-    @type@ start = buffer[0];
-    @type@ delta = buffer[1] - start;
+    @type@ start = NPY_@NAME@_INIT(0.0, 0.0);
+    @type@ delta = NPY_@NAME@_INIT(0.0, 0.0);
+
+    NPY_@NAME@_SET_REAL(&start, NPY_@NAME@_GET_REAL(buffer));
+    NPY_@NAME@_SET_IMAG(&start, NPY_@NAME@_GET_IMAG(buffer));
+    NPY_@NAME@_SET_REAL(&delta, NPY_@NAME@_GET_REAL(&buffer[1]) - NPY_@NAME@_GET_REAL(&start));
+    NPY_@NAME@_SET_IMAG(&delta, NPY_@NAME@_GET_IMAG(&buffer[1]) - NPY_@NAME@_GET_IMAG(&start));
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
