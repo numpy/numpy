@@ -2318,8 +2318,12 @@ def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
                     where=np._NoValue):
     return (a, where, out)
 
-
 @array_function_dispatch(_any_dispatcher)
+def ufunc_any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
+                          keepdims=keepdims, where=where)
+
+
 def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
@@ -2409,8 +2413,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+    return ufunc_any(a, axis, out, keepdims, where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
