@@ -281,13 +281,14 @@ def dtype_to_descr(dtype):
         # this must be a user-defined dtype since numpy does not yet expose any
         # non-legacy dtypes in the public API
         #
-        # non-legacy dtypes don't yet have __array_interface__ support. Instead,
-        # as a hack, we use pickle to save the array, and lie that the dtype is
-        # object. When the array is loaded, the descriptor is unpickled with the
-        # array and the object dtype in the header is discarded.
+        # non-legacy dtypes don't yet have __array_interface__
+        # support. Instead, as a hack, we use pickle to save the array, and lie
+        # that the dtype is object. When the array is loaded, the descriptor is
+        # unpickled with the array and the object dtype in the header is
+        # discarded.
         #
-        # a future NEP should define a way to serialize user-defined descriptors
-        # and ideally work out the possible security implications
+        # a future NEP should define a way to serialize user-defined
+        # descriptors and ideally work out the possible security implications
         warnings.warn("Custom dtypes are saved as python objects using the "
                       "pickle protocol. Loading this file requires "
                       "allow_pickle=True to be set.",
