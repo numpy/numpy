@@ -62,8 +62,18 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
+#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
+static const npy_cfloat oneF = {1.0f, 0.0f}, zeroF = {0.0f, 0.0f};
+#elif defined(__cplusplus)
+static const npy_cdouble oneD (1.0, 0.0);
+static const npy_cdouble zeroD (0.0, 0.0);
+static const npy_cfloat oneF (1.0f, 0.0f);
+static const npy_cfloat zeroF (0.0f, 0.0f);
+#else
 static const npy_cdouble oneD = 1.0, zeroD = 0.0;
 static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
+#endif
 
 /**begin repeat
  *
@@ -231,7 +241,9 @@ NPY_NO_EXPORT void
 
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
-#if @IS_HALF@
+#if @IS_COMPLEX@ == 1
+            *(@typ@ *)op = NPY_@TYPE@_INIT(0.0, 0.0);
+#elif @IS_HALF@
             float sum = 0;
 #else
             *(@typ@ *)op = 0;

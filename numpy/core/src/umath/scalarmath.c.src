@@ -422,14 +422,16 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
 static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
-    *out = a + b;
+    NPY_@TYPE@_SET_REAL(out, NPY_@TYPE@_GET_REAL(&a) + NPY_@TYPE@_GET_REAL(&b));
+    NPY_@TYPE@_SET_IMAG(out, NPY_@TYPE@_GET_IMAG(&a) + NPY_@TYPE@_GET_IMAG(&b));
     return 0;
 }
 
 static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
-    *out = a - b;
+    NPY_@TYPE@_SET_REAL(out, NPY_@TYPE@_GET_REAL(&a) - NPY_@TYPE@_GET_REAL(&b));
+    NPY_@TYPE@_SET_IMAG(out, NPY_@TYPE@_GET_IMAG(&a) - NPY_@TYPE@_GET_IMAG(&b));
     return 0;
 }
 
@@ -555,7 +557,8 @@ half_ctype_negative(npy_half a, npy_half *out)
 static inline int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
-    *out = -a;
+    NPY_@NAME@_SET_REAL(out, -NPY_@NAME@_GET_REAL(&a));
+    NPY_@NAME@_SET_IMAG(out, -NPY_@NAME@_GET_IMAG(&a));
     return 0;
 }
 /**end repeat**/
@@ -585,7 +588,8 @@ static inline int
 static inline int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
-    *out = +a;
+    NPY_@NAME@_SET_REAL(out, +NPY_@NAME@_GET_REAL(&a));
+    NPY_@NAME@_SET_IMAG(out, +NPY_@NAME@_GET_IMAG(&a));
     return 0;
 }
 

@@ -292,14 +292,16 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
 static void
 nc_neg@c@(@ctype@ *a, @ctype@ *r)
 {
-    *r = -(*a);
+    NPY_@NAME@_SET_REAL(r, -NPY_@NAME@_GET_REAL(a));
+    NPY_@NAME@_SET_IMAG(r, -NPY_@NAME@_GET_IMAG(a));
     return;
 }
 
 static void
 nc_pos@c@(@ctype@ *a, @ctype@ *r)
 {
-    *r = +(*a);
+    NPY_@NAME@_SET_REAL(r, +NPY_@NAME@_GET_REAL(a));
+    NPY_@NAME@_SET_IMAG(r, +NPY_@NAME@_GET_IMAG(a));
     return;
 }
 
