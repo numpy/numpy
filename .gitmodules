@@ -7,3 +7,6 @@
 [submodule "numpy/core/src/npysort/x86-simd-sort"]
 	path = numpy/core/src/npysort/x86-simd-sort
 	url = https://github.com/intel/x86-simd-sort
+[submodule "numpy/core/src/highway"]
+	path = numpy/core/src/highway
+	url = https://github.com/google/highway.git
