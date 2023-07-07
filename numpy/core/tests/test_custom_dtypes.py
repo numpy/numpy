@@ -1,3 +1,5 @@
+from tempfile import NamedTemporaryFile
+
 import pytest
 
 import numpy as np
@@ -242,6 +244,29 @@ class TestSFloat:
         assert np.empty_like(arr1, dtype=SF).dtype == SF(1.)
         assert np.zeros(3, dtype=SF).dtype == SF(1.)
         assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
+
+    def test_np_save_load(self):
+        # this monkeypatch is needed because pickle
+        # uses the repr of a type to reconstruct it
+        np._ScaledFloatTestDType = SF
+
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        # adapted from RoundtripTest.roundtrip in np.save tests
+        with NamedTemporaryFile("wb", delete=False, suffix=".npz") as f:
+            with pytest.warns() as record:
+                np.savez(f.name, arr)
+
+        assert len(record) == 1
+        assert record[0].category is UserWarning
+
+        with np.load(f.name, allow_pickle=True) as data:
+            larr = data["arr_0"]
+        assert_array_equal(arr.view(np.float64), larr.view(np.float64))
+        assert larr.dtype == arr.dtype == SF(1.0)
+
+        del np._ScaledFloatTestDType
+
 
 
 def test_type_pickle():
