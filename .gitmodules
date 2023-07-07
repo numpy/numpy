@@ -13,3 +13,6 @@
 [submodule "vendored-meson/meson-python"]
 	path = vendored-meson/meson-python
 	url = https://github.com/numpy/meson-python.git
+[submodule "numpy/core/src/highway"]
+	path = numpy/core/src/highway
+	url = https://github.com/google/highway.git
