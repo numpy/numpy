@@ -160,7 +160,6 @@ Generic types
     :class:`complexfloating`                               :class:`cfloat`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
-    :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
     =====================================================  ===============
 
@@ -188,8 +187,8 @@ Built-in Python types
     (all others)      :class:`object_`
     ================  ===============
 
-    Note that ``str`` corresponds to UCS4 encoded unicode strings, while
-    ``string`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
+    Note that ``str_`` corresponds to UCS4 encoded unicode strings, while
+    ``string_`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
     available as an alias to ``np.str_``, see :ref:`Note on string
     types<string-dtype-note>`.
 
