@@ -4900,13 +4900,16 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     /* Initialize CPU features */
-    if (npy_cpu_init() < 0) {
+    if (npy_hwy_init() < 0) {
         goto err;
     }
     /* Initialize CPU dispatch tracer */
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         goto err;
     }
+    // if (npy_cpu_init() < 0) {
+    //     goto err;
+    // }
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
@@ -5042,7 +5045,25 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     Py_DECREF(s);
+    s = npy_hwy_features_dict();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__hwy_features__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
 
+    s = npy_hwy_baseline_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__hwy_baseline__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
     s = npy_cpu_baseline_list();
     if (s == NULL) {
         goto err;
@@ -5058,6 +5079,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     if (PyDict_SetItemString(d, "__cpu_dispatch__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+    s = npy_hwy_dispatch_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__hwy_dispatch__", s) < 0) {
         Py_DECREF(s);
         goto err;
     }

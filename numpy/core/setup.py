@@ -546,6 +546,7 @@ def configuration(parent_package='',top_path=None):
         # allows using code generation in headers
         config.add_include_dirs(join(build_dir, "src", "common"))
         config.add_include_dirs(join(build_dir, "src", "npymath"))
+        config.add_include_dirs(join(build_dir, "src", "highway"))
 
         target = join(build_dir, header_dir, '_numpyconfig.h')
         d = os.path.dirname(target)
@@ -747,6 +748,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             join('src', 'common', 'npy_cpu_features.c'),
             join('src', 'common', 'npy_cpu_dispatch.c'),
+            join('src', 'common', 'npy_hwy_features.cpp'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
@@ -913,6 +915,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'npymath', 'arm64_exports.c'),
             join('src', 'npysort', 'simd_qsort.dispatch.cpp'),
             join('src', 'npysort', 'simd_qsort_16bit.dispatch.cpp'),
+            # Highway mapped to meson from CMake
+            'src/highway/hwy/aligned_allocator.cc',
+            'src/highway/hwy/per_target.cc',
+            'src/highway/hwy/print.cc',
+            'src/highway/hwy/targets.cc',
+            'src/highway/hwy/timer.cc'
             ]
 
     #######################################################################
@@ -972,6 +980,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
             join('src', 'umath', 'clip.cpp'),
+            join('src', 'umath', 'absolute.cpp'),
             join('src', 'umath', 'dispatching.c'),
             join('src', 'umath', 'legacy_array_method.c'),
             join('src', 'umath', 'wrapping_array_method.c'),
@@ -1042,6 +1051,7 @@ def configuration(parent_package='',top_path=None):
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
         join('src', 'common', 'npy_cpu_features.c'),
+        join('src', 'common', 'npy_hwy_features.cpp'),
     ])
 
     #######################################################################
@@ -1073,6 +1083,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_simd',
         sources=[
             join('src', 'common', 'npy_cpu_features.c'),
+            join('src', 'common', 'npy_hwy_features.cpp'),
             join('src', '_simd', '_simd.c'),
             join('src', '_simd', '_simd_inc.h.src'),
             join('src', '_simd', '_simd_data.inc.src'),
