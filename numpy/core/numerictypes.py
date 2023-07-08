@@ -434,14 +434,12 @@ class _typedict(dict):
         return dict.__getitem__(self, obj2sctype(obj))
 
 nbytes = _typedict()
-_alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
     for name, info in _concrete_typeinfo.items():
         obj = info.type
         nbytes[obj] = info.bits // 8
-        _alignment[obj] = info.alignment
         if len(info) > 5:
             _maxvals[obj] = info.max
             _minvals[obj] = info.min
