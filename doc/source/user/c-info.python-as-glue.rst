@@ -1,9 +1,11 @@
 ====================
 Using Python as glue
 ====================
-This was written in 2008 as part of the original
-`Guide to NumPy <https://archive.org/details/NumPyBook>`_ book
-by Travis E. Oliphant and may be out of date.
+
+.. warning::
+   This was written in 2008 as part of the original
+   `Guide to NumPy <https://archive.org/details/NumPyBook>`_ book
+   by Travis E. Oliphant and is out of date.
 
 |    There is no conversation more boring than the one where everybody
 |    agrees.
