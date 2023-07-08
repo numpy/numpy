@@ -700,6 +700,7 @@ test_modules_src = [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/umath/_umath_tests.dispatch.c',
       'src/common/npy_cpu_features.c',
+      'src/common/npy_hwy_features.cpp',
     ]],
   ['_rational_tests', 'src/umath/_rational_tests.c'],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c'],
@@ -728,6 +729,7 @@ src_multiarray_umath_common = [
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
+  'src/common/npy_hwy_features.cpp',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
@@ -859,6 +861,12 @@ src_umath = [
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
   'src/umath/_scaled_float_dtype.c',
+  # Highway mapped to meson from CMake
+  'src/highway/hwy/aligned_allocator.cc',
+  'src/highway/hwy/per_target.cc',
+  'src/highway/hwy/print.cc',
+  'src/highway/hwy/targets.cc',
+  'src/highway/hwy/timer.cc'
 ]
 
 # SVML object files. If functionality is migrated to universal intrinsics and
@@ -951,13 +959,14 @@ py.extension_module('_multiarray_umath',
 py.extension_module('_simd',
   [
     'src/common/npy_cpu_features.c',
+    'src/common/npy_hwy_features.cpp',
     'src/_simd/_simd.c',
     src_file.process('src/_simd/_simd_inc.h.src'),
     src_file.process('src/_simd/_simd_data.inc.src'),
     src_file.process('src/_simd/_simd.dispatch.c.src'),
   ],
   c_args: c_args_common,
-  include_directories: ['src/_simd', 'src/npymath'],
+  include_directories: ['src/_simd', 'src/npymath', 'src/highway'],
   dependencies: np_core_dep,
   link_with: npymath_lib,
   install: true,

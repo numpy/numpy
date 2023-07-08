@@ -20,18 +20,32 @@ namespace HWY_NAMESPACE {  // required: unique per target
 
 // Can skip hn:: prefixes if already inside hwy::HWY_NAMESPACE.
 namespace hn = hwy::HWY_NAMESPACE;
-using T = npy_int;
 
 // Alternative to per-function HWY_ATTR: see HWY_BEFORE_NAMESPACE
-HWY_ATTR void SuperAbsolute(const T* HWY_RESTRICT input_array,
-                T* HWY_RESTRICT output_array,
-                const size_t size) {
+template <typename T>
+HWY_ATTR void SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+  const T* HWY_RESTRICT input_array = (const T*) args[0];
+  T* HWY_RESTRICT output_array = (T*) args[1];
+  const size_t size = dimensions[0];
   const hn::ScalableTag<T> d;
+  
   for (size_t i = 0; i < size; i += hn::Lanes(d)) {
     const auto in = hn::Load(d, input_array + i);
     auto x = hn::Abs(in);
     hn::Store(x, d, output_array + i);
   }
+}
+
+HWY_ATTR void INT_SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+  SuperAbsolute<npy_int>(args, dimensions, steps);
+}
+
+HWY_ATTR void DOUBLE_SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+  SuperAbsolute<npy_double>(args, dimensions, steps);
+}
+
+HWY_ATTR void FLOAT_SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+  SuperAbsolute<npy_float>(args, dimensions, steps);
 }
 
 }
@@ -40,27 +54,35 @@ HWY_ATTR void SuperAbsolute(const T* HWY_RESTRICT input_array,
 #if HWY_ONCE
 namespace numpy {
 
-HWY_EXPORT(SuperAbsolute);
+HWY_EXPORT(INT_SuperAbsolute);
+HWY_EXPORT(FLOAT_SuperAbsolute);
+HWY_EXPORT(DOUBLE_SuperAbsolute);
 
 extern "C" {
+
 NPY_NO_EXPORT void
 INT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    npy_int *ip1 = (npy_int*) args[0];
-    npy_int *op1 = (npy_int*) args[1];
-    // npy_intp is1 = steps[0];
-    // npy_intp os1 = steps[1];
-    npy_intp n = dimensions[0];
-    // npy_intp i;
-  // This must reside outside of HWY_NAMESPACE because it references (calls the
-  // appropriate one from) the per-target implementations there.
-  // For static dispatch, use HWY_STATIC_DISPATCH.
-  static auto dispatcher = HWY_DYNAMIC_DISPATCH(SuperAbsolute);
-  return dispatcher(ip1, op1, n);
-}
+  static auto dispatcher = HWY_DYNAMIC_DISPATCH(INT_SuperAbsolute);
+  return dispatcher(args, dimensions, steps);
 }
 
+NPY_NO_EXPORT void
+DOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+  static auto dispatcher = HWY_DYNAMIC_DISPATCH(DOUBLE_SuperAbsolute);
+  return dispatcher(args, dimensions, steps);
 }
+
+NPY_NO_EXPORT void
+FLOAT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+  static auto dispatcher = HWY_DYNAMIC_DISPATCH(FLOAT_SuperAbsolute);
+  return dispatcher(args, dimensions, steps);
+}
+
+} // extern "C"
+} // numpy
 #endif
 
 
