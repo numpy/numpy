@@ -155,14 +155,13 @@ Generic types
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
-    =====================================================  =================
+    =====================================================  ===============
     :class:`number`, :class:`inexact`, :class:`floating`   :class:`float`
     :class:`complexfloating`                               :class:`cfloat`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
-    :class:`character`                                     :class:`string\_`
     :class:`generic`, :class:`flexible`                    :class:`void`
-    =====================================================  =================
+    =====================================================  ===============
 
     .. deprecated:: 1.19
 
