@@ -2319,7 +2319,7 @@ def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
     return (a, where, out)
 
 @array_function_dispatch(_any_dispatcher)
-def ufunc_any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
+def helper_any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
                           keepdims=keepdims, where=where)
 
@@ -2413,7 +2413,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return ufunc_any(a, axis, out, keepdims, where)
+    return helper_any(a, axis, out, keepdims, where=where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
