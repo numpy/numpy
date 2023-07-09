@@ -5812,14 +5812,19 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
         }
     }
 
-    npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
-
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)context);
     }
 
     do {
-        args[1] = (char *) iter->outer_ptrs[0];
+        npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
+        npy_intp * indxP = (npy_intp *)iter->outer_ptrs[0];
+        for (npy_intp i=0; i < *inner_size; i++) {
+            if (indxP[i] < 0) {
+                indxP[i] += iter->fancy_dims[0];
+            }
+        }
+        args[1] = (char *)indxP;
         steps[1] = iter->outer_strides[0];
 
         res = ufuncimpl->contiguous_indexed_loop(
