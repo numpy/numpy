@@ -46,3 +46,4 @@ def test_matrix_transpose_equals_swapaxes(shape, kind):
         raise ValueError("kind must be either `attribute` or `func`.")
 
     assert_array_equal(tgt, tst)
+    assert isinstance(tst, masked_array)

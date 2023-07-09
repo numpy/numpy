@@ -7382,7 +7382,7 @@ def matrix_transpose(a):
 
     """
     try:
-        return np.matrix_transpose(a)
+        return a.mT
     except AttributeError:
         return narray(a, copy=False).mT.view(MaskedArray)
 
