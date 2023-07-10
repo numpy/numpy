@@ -1082,7 +1082,7 @@ def test_scalar_repr_numbers(dtype, value):
         (np.datetime64("2012"),
             "numpy.datetime64('2012')", "np.datetime64('2012')"),
         (np.timedelta64(1), "numpy.timedelta64(1)", "np.timedelta64(1)"),
-        (np.void((True, 2), dtype="?,i8"),
+        (np.void((True, 2), dtype="?,<i8"),
             "(True, 2)",
             "np.void((True, 2), dtype=[('f0', '?'), ('f1', '<i8')])"),
         (np.void(b'a'), r"void(b'\x61')", r"np.void(b'\x61')"),
