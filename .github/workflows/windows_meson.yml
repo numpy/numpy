@@ -35,6 +35,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
+        pip uninstall -y cython
+        pip install git+https://github.com/cython/cython.git@436f8a32ea3a1b0411695db1b974c60434042b5b
     - name: openblas-libs
       run: |
         # Download and install pre-built OpenBLAS library
