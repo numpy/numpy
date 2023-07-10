@@ -42,6 +42,7 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
+from .._utils import deprecate
 import operator
 import warnings
 import contextlib
@@ -219,7 +220,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, printoptions, set_string_function, array2string
+    get_printoptions, printoptions, array2string
 
     Notes
     -----
@@ -316,7 +317,7 @@ def get_printoptions():
 
     See Also
     --------
-    set_printoptions, printoptions, set_string_function
+    set_printoptions, printoptions
 
     """
     opts = _format_options.copy()
@@ -1665,6 +1666,7 @@ _default_array_repr = functools.partial(_array_repr_implementation,
                                         array2string=_array2string_impl)
 
 
+@deprecate
 def set_string_function(f, repr=True):
     """
     Set a Python function to be used when pretty printing arrays.

@@ -1,8 +1,5 @@
 import numpy as np
 
-np.maximum_sctype("S8")
-np.maximum_sctype(object)
-
 np.issctype(object)
 np.issctype("S8")
 

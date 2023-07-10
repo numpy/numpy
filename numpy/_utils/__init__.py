@@ -8,6 +8,9 @@ If a utility requires the import of NumPy, it probably belongs
 in ``numpy.core``.
 """
 
+from ._deprecations import deprecate, deprecate_with_doc
+from ._convertions import asunicode, asbytes
+
 
 def set_module(module):
     """Private decorator for overriding __module__ on a function or class.

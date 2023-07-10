@@ -22,7 +22,7 @@ from ._iotools import (
     ConverterLockError, ConversionWarning, _is_string_like,
     has_nested_fields, flatten_dtype, easy_dtype, _decode_line
     )
-from numpy._utils._convertions import asunicode, asbytes
+from numpy._utils import asunicode, asbytes, deprecate
 
 
 __all__ = [
@@ -2446,6 +2446,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch()(genfromtxt)
 
 
+@deprecate
 def recfromtxt(fname, **kwargs):
     """
     Load ASCII data from a file and return it in a record array.
@@ -2478,6 +2479,7 @@ def recfromtxt(fname, **kwargs):
     return output
 
 
+@deprecate
 def recfromcsv(fname, **kwargs):
     """
     Load ASCII data stored in a comma-separated file.

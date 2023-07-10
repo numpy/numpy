@@ -566,6 +566,9 @@ class TestAssignment:
         assert_raises((AttributeError, TypeError), assign, C())
         assert_raises(ValueError, assign, [1])
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*set_string_function.*:DeprecationWarning"
+    )
     def test_unicode_assignment(self):
         # gh-5049
         from numpy.core.numeric import set_string_function

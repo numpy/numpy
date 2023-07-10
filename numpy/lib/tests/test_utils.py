@@ -5,8 +5,8 @@ import pytest
 import numpy as np
 from numpy.core import arange
 from numpy.testing import assert_, assert_equal, assert_raises_regex
-from numpy.lib import deprecate, deprecate_with_doc
 import numpy.lib.utils as utils
+from numpy._utils import deprecate, deprecate_with_doc
 
 from io import StringIO
 

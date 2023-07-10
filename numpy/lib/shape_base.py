@@ -10,6 +10,7 @@ from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
+from numpy._utils import deprecate
 
 
 __all__ = [
@@ -1048,6 +1049,7 @@ def get_array_prepare(*args):
     return None
 
 
+@deprecate
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
 

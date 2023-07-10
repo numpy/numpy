@@ -221,8 +221,6 @@ from numpy.lib.utils import (
     issubclass_ as issubclass_,
     issubsctype as issubsctype,
     issubdtype as issubdtype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
     get_include as get_include,
     info as info,
     source as source,
