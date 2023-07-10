@@ -120,13 +120,17 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
      spin test -- -k "geometric"
      spin test -- -k "geometric and not rgeometric"
 
+    By default, spin will run `-m 'not slow'`. To run the full test suite, use
+    `spin -m full`
+
     For more, see `pytest --help`.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('numpy',)
 
     if '-m' not in pytest_args:
-        pytest_args = ('-m', markexpr) + pytest_args
+        if markexpr != "full":
+            pytest_args = ('-m', markexpr) + pytest_args
 
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
