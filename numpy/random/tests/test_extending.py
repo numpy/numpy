@@ -1,8 +1,11 @@
+import importlib
 import os
+import pathlib
 import pytest
 import shutil
 import subprocess
 import sys
+import textwrap
 import warnings
 
 import numpy as np
@@ -39,33 +42,77 @@ else:
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = '0.29.30'
+    required_version = '0.29.35'
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12),
-                    reason="numpy.distutils not supported anymore")
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):
-    from numpy.distutils.misc_util import exec_mod_from_location
+    import glob
+    # build the examples in a temporary directory
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')
-    # build the examples and "install" them into a temporary directory
     build_dir = tmp_path / 'random' / '_examples' / 'cython'
-    subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
-                           '--prefix', str(tmp_path / 'installdir'),
-                           '--single-version-externally-managed',
-                           '--record', str(tmp_path/ 'tmp_install_log.txt'),
-                          ],
-                          cwd=str(build_dir),
-                      )
+    # We don't want a wheel build, so do the steps in a controlled way
+    # The meson.build file is not copied as part of the build, so generate it
+    with open(build_dir / "meson.build", "wt", encoding="utf-8") as fid:
+        fid.write(textwrap.dedent("""\
+            project('random-build-examples', 'c', 'cpp', 'cython')
+
+            # https://mesonbuild.com/Python-module.html
+            py_mod = import('python')
+            py3 = py_mod.find_installation(pure: false)
+            py3_dep = py3.dependency()
+
+            py_mod = import('python')
+            py = py_mod.find_installation(pure: false)
+            cc = meson.get_compiler('c')
+            cy = meson.get_compiler('cython')
+
+            if not cy.version().version_compare('>=0.29.35')
+              error('tests requires Cython >= 0.29.35')
+            endif
+
+            _numpy_abs = run_command(py3,
+                ['-c', 'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
+                check: true
+              ).stdout().strip()
+
+            npymath_path = _numpy_abs / 'core' / 'lib'
+            npy_include_path = _numpy_abs / 'core' / 'include'
+            npyrandom_path = _numpy_abs / 'random' / 'lib'
+            npymath_lib = cc.find_library('npymath', dirs: npymath_path)
+            npyrandom_lib = cc.find_library('npyrandom', dirs: npyrandom_path)
+
+            py.extension_module(
+                'extending_distributions',
+                'extending_distributions.pyx',
+                install: false,
+                include_directories: [npy_include_path],
+                dependencies: [npyrandom_lib, npymath_lib],
+            )
+            py.extension_module(
+                'extending',
+                'extending.pyx',
+                install: false,
+                include_directories: [npy_include_path],
+                dependencies: [npyrandom_lib, npymath_lib],
+            )
+        """))
+    target_dir = build_dir / "build"
+    os.makedirs(target_dir, exist_ok=True)
+    subprocess.check_call(["meson", "setup", str(build_dir)], cwd=target_dir)
+    subprocess.check_call(["meson", "compile"], cwd=target_dir)
+
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check
-    with open(build_dir / 'extending.c') as fid:
+
+    g = glob.glob(str(target_dir / "*" / "extending.pyx.c"))
+    with open(g[0]) as fid:
         txt_to_find = 'NumPy API declarations from "numpy/__init__'
         for i, line in enumerate(fid):
             if txt_to_find in line:
@@ -73,20 +120,15 @@ def test_cython(tmp_path):
         else:
             assert False, ("Could not find '{}' in C file, "
                            "wrong pxd used".format(txt_to_find))
-    # get the path to the so's
-    so1 = so2 = None
-    with open(tmp_path /'tmp_install_log.txt') as fid:
-        for line in fid:
-            if 'extending.' in line:
-                so1 = line.strip()
-            if 'extending_distributions' in line:
-                so2 = line.strip()
-    assert so1 is not None
-    assert so2 is not None
-    # import the so's without adding the directory to sys.path
-    exec_mod_from_location('extending', so1)
-    extending_distributions = exec_mod_from_location(
-                    'extending_distributions', so2)
+    # import without adding the directory to sys.path
+    so1 = sorted(glob.glob(str(target_dir / "extending.*")))[0]
+    so2 = sorted(glob.glob(str(target_dir / "extending_distributions.*")))[0]
+    spec1 = importlib.util.spec_from_file_location("extending", so1)
+    spec2 = importlib.util.spec_from_file_location("extending_distributions", so2)
+    extending = importlib.util.module_from_spec(spec1)
+    spec1.loader.exec_module(extending)
+    extending_distributions = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(extending_distributions)
     # actually test the cython c-extension
     from numpy.random import PCG64
     values = extending_distributions.uniforms_ex(PCG64(0), 10, 'd')
