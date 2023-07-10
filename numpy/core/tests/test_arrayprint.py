@@ -1049,3 +1049,48 @@ class TestContextManager:
         with np.printoptions(**opts) as ctx:
             saved_opts = ctx.copy()
         assert_equal({k: saved_opts[k] for k in opts}, opts)
+
+
+@pytest.mark.parametrize("dtype", "bhilqpBHILQPefdgFDG")
+@pytest.mark.parametrize("value", [0, 1])
+def test_scalar_repr_numbers(dtype, value):
+    # Test NEP 51 scalar repr (and legacy option) for numeric types
+    dtype = np.dtype(dtype)
+    scalar = np.array(value, dtype=dtype)[()]
+    assert isinstance(scalar, np.generic)
+
+    string = str(scalar)
+    repr_string = string.strip("()")  # complex may have extra brackets
+    representation = repr(scalar)
+    if dtype.char == "g":
+        assert representation == f"np.longdouble('{repr_string}')"
+    elif dtype.char == 'G':
+        assert representation == f"np.clongdouble('{repr_string}')"
+    else:
+        normalized_name = np.dtype(f"{dtype.kind}{dtype.itemsize}").type.__name__
+        assert representation == f"np.{normalized_name}({repr_string})"
+
+    np.set_printoptions(legacy="1.25")
+    assert repr(scalar) == string
+    np.set_printoptions(legacy=False)
+
+
+@pytest.mark.parametrize("scalar, legacy_repr,representation", [
+        (np.True_, "True", "np.True_"),
+        (np.bytes_(b'a'), "b'a'", "np.bytes_(b'a')"),
+        (np.str_('a'), "'a'", "np.str_('a')"),
+        (np.datetime64("2012"),
+            "numpy.datetime64('2012')", "np.datetime64('2012')"),
+        (np.timedelta64(1), "numpy.timedelta64(1)", "np.timedelta64(1)"),
+        (np.void((True, 2), dtype="?,i8"),
+            "(True, 2)",
+            "np.void((True, 2), dtype=[('f0', '?'), ('f1', '<i8')])"),
+        (np.void(b'a'), r"void(b'\x61')", r"np.void(b'\x61')"),
+    ])
+def test_scalar_repr_special(scalar, legacy_repr, representation):
+    # Test NEP 51 scalar repr (and legacy option) for numeric types
+    assert repr(scalar) == representation
+
+    np.set_printoptions(legacy="1.25")
+    assert repr(scalar) == legacy_repr
+    np.set_printoptions(legacy=False)

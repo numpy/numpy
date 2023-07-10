@@ -1032,6 +1032,8 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #repr_format = np.float32(%S), np.float64(%S), np.longdouble('%S')#
+ * #crepr_imag_format = np.complex64(%Sj), np.complex128(%Sj),
+ *                 np.clongdouble('%Sj')#
  * #crepr_format = np.complex64(%S%Sj), np.complex128(%S%Sj),
  *                 np.clongdouble('%S%Sj')#
  */
@@ -1097,7 +1099,17 @@ c@name@type_@kind@(PyObject *self)
         if (istr == NULL) {
             return NULL;
         }
-        PyObject *ret = PyUnicode_FromFormat("%Sj", istr);
+        PyObject *ret;
+#ifdef IS_str
+        ret = PyUnicode_FromFormat("%Sj", istr);
+#else  /* IS_repr */
+        if (npy_legacy_print_mode <= 125) {
+            ret = PyUnicode_FromFormat("%Sj", istr);
+        }
+        else {
+            ret = PyUnicode_FromFormat("@crepr_imag_format@", istr);
+        }
+#endif  /* IS_repr */
         Py_DECREF(istr);
         return ret;
     }
@@ -1137,14 +1149,14 @@ c@name@type_@kind@(PyObject *self)
 
     PyObject *string;
 #ifdef IS_str
+    string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+#else  /* IS_repr */
     if (npy_legacy_print_mode > 125) {
-        string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
-    }
-    else {
         string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
     }
-#else  /* IS_repr */
-    string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
+    else {
+        string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    }
 #endif  /* IS_repr */
 
     Py_DECREF(rstr);
