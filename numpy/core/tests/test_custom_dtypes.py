@@ -254,11 +254,10 @@ class TestSFloat:
 
         # adapted from RoundtripTest.roundtrip in np.save tests
         with NamedTemporaryFile("wb", delete=False, suffix=".npz") as f:
-            with pytest.warns() as record:
+            with pytest.warns(UserWarning) as record:
                 np.savez(f.name, arr)
 
         assert len(record) == 1
-        assert record[0].category is UserWarning
 
         with np.load(f.name, allow_pickle=True) as data:
             larr = data["arr_0"]
