@@ -44,11 +44,12 @@ From existing data
 
 .. _routines.array-creation.rec:
 
-Creating record arrays (:mod:`numpy.rec`)
------------------------------------------
+Creating record arrays
+----------------------
 
-.. note:: :mod:`numpy.rec` is the preferred alias for
-   :mod:`numpy.core.records`.
+.. note:: :mod:`numpy.core.records` is used to create record
+   array. Please refer to :ref:`arrays.classes.rec` for
+   record arrays.
 
 .. autosummary::
    :toctree: generated/
