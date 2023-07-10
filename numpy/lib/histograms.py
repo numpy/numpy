@@ -807,7 +807,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         n = np.zeros(n_equal_bins, ntype)
 
         # Pre-compute histogram scaling factor
-        norm = n_equal_bins / _unsigned_subtract(last_edge, first_edge)
+        norm_numerator = n_equal_bins
+        norm_denom = _unsigned_subtract(last_edge, first_edge)
 
         # We iterate over blocks here for two reasons: the first is that for
         # large arrays, it is actually faster (for example for a 10^8 array it
@@ -835,7 +836,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
             # Compute the bin indices, and for values that lie exactly on
             # last_edge we need to subtract one
-            f_indices = _unsigned_subtract(tmp_a, first_edge) * norm
+            f_indices = ((_unsigned_subtract(tmp_a, first_edge) / norm_denom)
+                         * norm_numerator)
             indices = f_indices.astype(np.intp)
             indices[indices == n_equal_bins] -= 1
 
