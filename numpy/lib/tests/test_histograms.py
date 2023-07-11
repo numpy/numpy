@@ -408,6 +408,13 @@ class TestHistogram:
         hist = np.histogramdd(sample=sample, bins=(xbins, ybins, zbins))
         assert_equal(type(hist), type((1, 2)))
 
+    def test_gh_23110(self):
+        hist, e = np.histogram(np.array([-0.9e-308], dtype='>f8'),
+                               bins=2,
+                               range=(-1e-308, -2e-313))
+        expected_hist = np.array([1, 0])
+        assert_array_equal(hist, expected_hist)
+
 
 class TestHistogramOptimBinNums:
     """
