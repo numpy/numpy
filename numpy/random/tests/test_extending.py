@@ -5,6 +5,7 @@ import pytest
 import shutil
 import subprocess
 import sys
+import sysconfig
 import textwrap
 import warnings
 
@@ -105,8 +106,17 @@ def test_cython(tmp_path):
         """))
     target_dir = build_dir / "build"
     os.makedirs(target_dir, exist_ok=True)
-    subprocess.check_call(["meson", "setup", str(build_dir)], cwd=target_dir)
-    subprocess.check_call(["meson", "compile"], cwd=target_dir)
+    if sys.platform == "win32":
+        subprocess.check_call(["meson", "setup",
+                               "--buildtype=release", 
+                               "--vsenv", str(build_dir)],
+                              cwd=target_dir,
+                              )
+    else:
+        subprocess.check_call(["meson", "setup", str(build_dir)],
+                              cwd=target_dir
+                              )
+    subprocess.check_call(["meson", "compile", "-vv"], cwd=target_dir)
 
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check
@@ -121,8 +131,9 @@ def test_cython(tmp_path):
             assert False, ("Could not find '{}' in C file, "
                            "wrong pxd used".format(txt_to_find))
     # import without adding the directory to sys.path
-    so1 = sorted(glob.glob(str(target_dir / "extending.*")))[0]
-    so2 = sorted(glob.glob(str(target_dir / "extending_distributions.*")))[0]
+    suffix = sysconfig.get_config_var('EXT_SUFFIX')
+    so1 = (target_dir / "extending").with_suffix(suffix)
+    so2 = (target_dir / "extending_distributions").with_suffix(suffix)
     spec1 = spec_from_file_location("extending", so1)
     spec2 = spec_from_file_location("extending_distributions", so2)
     extending = module_from_spec(spec1)

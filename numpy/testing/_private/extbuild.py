@@ -229,7 +229,16 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                 name_suffix: 'dummy',
             )
         """))
-    subprocess.check_call(["meson", "setup", "--vsenv", ".."], cwd=build_dir)
+    if sys.platform == "win32":
+        subprocess.check_call(["meson", "setup",
+                               "--buildtype=release", 
+                               "--vsenv", ".."],
+                              cwd=build_dir,
+                              )
+    else:
+        subprocess.check_call(["meson", "setup", "--vsenv", ".."],
+                              cwd=build_dir
+                              )
     subprocess.check_call(["meson", "compile"], cwd=build_dir)
     os.rename(str(build_dir / so_name) + ".dummy", cfile.parent / so_name)
         
