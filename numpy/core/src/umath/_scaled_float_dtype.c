@@ -197,60 +197,7 @@ sfloat_get_scaling(PyArray_SFloatDescr *self, PyObject *NPY_UNUSED(args))
 static PyObject *
 sfloat___reduce__(PyArray_SFloatDescr *self)
 {
-    PyObject *ret, *mod, *func, *obj, *state;
-
-    ret = PyTuple_New(3);
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
-    if (mod == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    func = PyObject_GetAttrString(mod, "_get_sfloat_dtype");
-    Py_DECREF(mod);
-    if (func == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    obj = PyObject_CallNoArgs(func);
-    Py_DECREF(func);
-    if (obj == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    PyTuple_SET_ITEM(ret, 0, obj);
-
-    PyTuple_SET_ITEM(ret, 1, PyTuple_New(0));
-
-    state = PyTuple_New(1);
-
-    PyTuple_SET_ITEM(state, 0, PyFloat_FromDouble(self->scaling));
-
-    PyTuple_SET_ITEM(ret, 2, state);
-
-    return ret;
-}
-
-static PyObject *
-sfloat___setstate__(PyArray_SFloatDescr *self, PyObject *args)
-{
-    if (PyTuple_GET_SIZE(args) != 1 ||
-        !(PyFloat_Check(PyTuple_GET_ITEM(args, 0)))) {
-        PyErr_BadInternalCall();
-        return NULL;
-    }
-
-    double scaling = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 0));
-
-    self->scaling = scaling;
-
-    Py_RETURN_NONE;
+    return Py_BuildValue("(O(d))", Py_TYPE(self), self->scaling);
 }
 
 PyMethodDef sfloat_methods[] = {
@@ -260,8 +207,6 @@ PyMethodDef sfloat_methods[] = {
         "avoid having to implement many ways to create new instances."},
     {"get_scaling",
         (PyCFunction)sfloat_get_scaling, METH_NOARGS, NULL},
-    {"__setstate__",
-       (PyCFunction)sfloat___setstate__, METH_O, NULL},
     {"__reduce__",
        (PyCFunction)sfloat___reduce__, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
