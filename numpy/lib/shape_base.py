@@ -1,4 +1,5 @@
 import functools
+import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, zeros, array, asanyarray
@@ -10,7 +11,6 @@ from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
-from numpy._utils import deprecate
 
 
 __all__ = [
@@ -1049,12 +1049,20 @@ def get_array_prepare(*args):
     return None
 
 
-@deprecate
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
 
     In case of ties, leftmost wins. If no wrapper is found, return None
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`get_array_wrap` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
                  x.__array_wrap__) for i, x in enumerate(args)
                                    if hasattr(x, '__array_wrap__'))

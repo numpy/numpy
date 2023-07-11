@@ -42,7 +42,6 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
-from .._utils import deprecate
 import operator
 import warnings
 import contextlib
@@ -1666,7 +1665,6 @@ _default_array_repr = functools.partial(_array_repr_implementation,
                                         array2string=_array2string_impl)
 
 
-@deprecate
 def set_string_function(f, repr=True):
     """
     Set a Python function to be used when pretty printing arrays.
@@ -1718,6 +1716,15 @@ def set_string_function(f, repr=True):
     'array([0, 1, 2, 3])'
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`set_string_function` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     if f is None:
         if repr:
             return multiarray.set_string_function(_default_array_repr, 1)

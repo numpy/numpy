@@ -86,7 +86,7 @@ from .multiarray import (
         ndarray, array, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
         )
-from .._utils import deprecate, set_module
+from .._utils import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypes',
@@ -129,7 +129,6 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
-@deprecate
 @set_module('numpy')
 def maximum_sctype(t):
     """
@@ -169,6 +168,15 @@ def maximum_sctype(t):
     <class 'numpy.float128'> # may vary
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`maximum_sctype` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     g = obj2sctype(t)
     if g is None:
         return t

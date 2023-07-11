@@ -28,7 +28,7 @@ from numpy.core.multiarray import (
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
-from numpy._utils import deprecate, set_module
+from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
@@ -1950,7 +1950,6 @@ def place(arr, mask, vals):
     return _place(arr, mask, vals)
 
 
-@deprecate
 def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
@@ -1983,6 +1982,16 @@ def disp(mesg, device=None, linefeed=True):
     '"Display" in a file\\n'
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`disp` is deprecated, "
+        "use your own printing function instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )    
+
     if device is None:
         device = sys.stdout
     if linefeed:

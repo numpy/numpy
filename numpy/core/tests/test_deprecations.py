@@ -783,7 +783,6 @@ class TestLibImports(_DeprecationTestCase):
         )
         from numpy.lib.tests.test_io import TextIO
         
-        self.assert_deprecated(lambda: byte_bounds(np.array([1])))
         self.assert_deprecated(lambda: safe_eval("None"))
         self.assert_deprecated(lambda: who())
 

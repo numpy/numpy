@@ -1,6 +1,11 @@
 from ast import AST
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, TypeVar, Protocol
+from typing import (
+    Any,
+    overload,
+    TypeVar,
+    Protocol,
+)
 
 from numpy import ndarray, generic
 from numpy.core.numerictypes import (
@@ -33,6 +38,24 @@ class _Deprecate:
     def __call__(self, func: _FuncType) -> _FuncType: ...
 
 def get_include() -> str: ...
+
+@overload
+def deprecate(
+    *,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
+) -> _Deprecate: ...
+@overload
+def deprecate(
+    func: _FuncType,
+    /,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
+) -> _FuncType: ...
+
+def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
 # implementing the `__array_interface__` protocol. The caveat is

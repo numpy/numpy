@@ -22,7 +22,7 @@ from ._iotools import (
     ConverterLockError, ConversionWarning, _is_string_like,
     has_nested_fields, flatten_dtype, easy_dtype, _decode_line
     )
-from numpy._utils import asunicode, asbytes, deprecate
+from numpy._utils import asunicode, asbytes
 
 
 __all__ = [
@@ -2446,7 +2446,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch()(genfromtxt)
 
 
-@deprecate
 def recfromtxt(fname, **kwargs):
     """
     Load ASCII data from a file and return it in a record array.
@@ -2468,6 +2467,16 @@ def recfromtxt(fname, **kwargs):
     array will be determined from the data.
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`recfromtxt` is deprecated, "
+        "use `numpy.genfromtxt` instead."
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
@@ -2479,7 +2488,6 @@ def recfromtxt(fname, **kwargs):
     return output
 
 
-@deprecate
 def recfromcsv(fname, **kwargs):
     """
     Load ASCII data stored in a comma-separated file.
@@ -2502,6 +2510,16 @@ def recfromcsv(fname, **kwargs):
     array will be determined from the data.
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`recfromcsv` is deprecated, "
+        "use `numpy.genfromtxt` with comma as `delimiter` instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     # Set default kwargs for genfromtxt as relevant to csv import.
     kwargs.setdefault("case_sensitive", "lower")
     kwargs.setdefault("names", True)
