@@ -1,4 +1,4 @@
-import importlib
+from importlib.util import spec_from_file_location, module_from_spec
 import os
 import pathlib
 import pytest
@@ -60,7 +60,9 @@ def test_cython(tmp_path):
     # We don't want a wheel build, so do the steps in a controlled way
     # The meson.build file is not copied as part of the build, so generate it
     with open(build_dir / "meson.build", "wt", encoding="utf-8") as fid:
-        fid.write(textwrap.dedent("""\
+        get_inc = ('import os; os.chdir(".."); import numpy; '
+                   'print(os.path.abspath(numpy.get_include() + "../../.."))')
+        fid.write(textwrap.dedent(f"""\
             project('random-build-examples', 'c', 'cpp', 'cython')
 
             # https://mesonbuild.com/Python-module.html
@@ -77,10 +79,8 @@ def test_cython(tmp_path):
               error('tests requires Cython >= 0.29.35')
             endif
 
-            _numpy_abs = run_command(py3,
-                ['-c', 'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
-                check: true
-              ).stdout().strip()
+            _numpy_abs = run_command(py3, ['-c', '{get_inc}'],
+                                     check: true).stdout().strip()
 
             npymath_path = _numpy_abs / 'core' / 'lib'
             npy_include_path = _numpy_abs / 'core' / 'include'
@@ -123,11 +123,11 @@ def test_cython(tmp_path):
     # import without adding the directory to sys.path
     so1 = sorted(glob.glob(str(target_dir / "extending.*")))[0]
     so2 = sorted(glob.glob(str(target_dir / "extending_distributions.*")))[0]
-    spec1 = importlib.util.spec_from_file_location("extending", so1)
-    spec2 = importlib.util.spec_from_file_location("extending_distributions", so2)
-    extending = importlib.util.module_from_spec(spec1)
+    spec1 = spec_from_file_location("extending", so1)
+    spec2 = spec_from_file_location("extending_distributions", so2)
+    extending = module_from_spec(spec1)
     spec1.loader.exec_module(extending)
-    extending_distributions = importlib.util.module_from_spec(spec2)
+    extending_distributions = module_from_spec(spec2)
     spec2.loader.exec_module(extending_distributions)
     # actually test the cython c-extension
     from numpy.random import PCG64
