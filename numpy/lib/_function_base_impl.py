@@ -4197,7 +4197,9 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, 100)
+    # Use dtype of array if possible (e.g., if q is a python int or float)
+    # by making the divisor have the dtype of the data array.
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
@@ -4458,7 +4460,12 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.asanyarray(q)
+    # Use dtype of array if possible (e.g., if q is a python int or float).
+    if isinstance(q, (int, float)) and a.dtype.kind == "f":
+        q = np.asanyarray(q, dtype=np.result_type(a, q))
+    else:
+        q = np.asanyarray(q)
+
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
@@ -4556,7 +4563,9 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     gamma = method["fix_gamma"](gamma, virtual_indexes)
-    return np.asanyarray(gamma)
+    # Ensure both that we have an array, and that we keep the dtype
+    # (which may have been matched to the input array).
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):
