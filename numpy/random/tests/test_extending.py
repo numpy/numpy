@@ -103,6 +103,15 @@ def test_cython(tmp_path):
                 include_directories: [npy_include_path],
                 dependencies: [npyrandom_lib, npymath_lib],
             )
+            py.extension_module(
+                'extending_cpp',
+                'extending_distributions.pyx',
+                install: false,
+                override_options : ['cython_language=cpp'],
+                cython_args: ['--module-name', 'extending_cpp'],
+                include_directories: [npy_include_path],
+                dependencies: [npyrandom_lib, npymath_lib],
+            )
         """))
     target_dir = build_dir / "build"
     os.makedirs(target_dir, exist_ok=True)
@@ -132,15 +141,19 @@ def test_cython(tmp_path):
                            "wrong pxd used".format(txt_to_find))
     # import without adding the directory to sys.path
     suffix = sysconfig.get_config_var('EXT_SUFFIX')
-    so1 = (target_dir / "extending").with_suffix(suffix)
-    so2 = (target_dir / "extending_distributions").with_suffix(suffix)
-    spec1 = spec_from_file_location("extending", so1)
-    spec2 = spec_from_file_location("extending_distributions", so2)
-    extending = module_from_spec(spec1)
-    spec1.loader.exec_module(extending)
-    extending_distributions = module_from_spec(spec2)
-    spec2.loader.exec_module(extending_distributions)
+
+    def load(modname):
+        so = (target_dir / modname).with_suffix(suffix)
+        spec = spec_from_file_location(modname, so)
+        mod = module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    # test that the module can be imported
+    load("extending")
+    load("extending_cpp")
     # actually test the cython c-extension
+    extending_distributions = load("extending_distributions")
     from numpy.random import PCG64
     values = extending_distributions.uniforms_ex(PCG64(0), 10, 'd')
     assert values.shape == (10,)
