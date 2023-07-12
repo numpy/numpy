@@ -9,6 +9,7 @@
 #define _MULTIARRAYMODULE
 #include "lowlevel_strided_loops.h"
 
+#include "numpy/npy_math.h"
 #include "conversions.h"
 #include "str_to_int.h"
 

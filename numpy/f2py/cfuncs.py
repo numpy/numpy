@@ -53,6 +53,7 @@ includes0['setjmp.h'] = '#include <setjmp.h>'
 
 includes['arrayobject.h'] = '''#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "arrayobject.h"'''
+includes['npy_math.h'] = '#include "numpy/npy_math.h"'
 
 includes['arrayobject.h'] = '#include "fortranobject.h"'
 includes['stdarg.h'] = '#include <stdarg.h>'
@@ -1096,7 +1097,7 @@ float_from_pyobj(float* v, PyObject *obj, const char *errmess)
 
 
 needs['complex_long_double_from_pyobj'] = ['complex_long_double', 'long_double',
-                                           'complex_double_from_pyobj']
+                                           'complex_double_from_pyobj', 'npy_math.h']
 cfuncs['complex_long_double_from_pyobj'] = """\
 static int
 complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char *errmess)
@@ -1123,7 +1124,7 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
 """
 
 
-needs['complex_double_from_pyobj'] = ['complex_double']
+needs['complex_double_from_pyobj'] = ['complex_double', 'npy_math.h']
 cfuncs['complex_double_from_pyobj'] = """\
 static int
 complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess) {
