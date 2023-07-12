@@ -2631,6 +2631,13 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         obj = (PyObject *)self->typeobj;
         Py_INCREF(obj);
     }
+    else if (!NPY_DT_is_legacy(NPY_DTYPE(self))) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Custom dtypes cannot use the default pickle implementation "
+                "for NumPy dtypes. Add a custom pickle implementation to the "
+                "DType to avoid this error");
+        return NULL;
+    }
     else {
         elsize = self->elsize;
         if (self->type_num == NPY_UNICODE) {
