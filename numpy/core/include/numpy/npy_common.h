@@ -363,14 +363,6 @@ typedef double npy_double;
 typedef Py_hash_t npy_hash_t;
 #define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
 
-#ifdef __cplusplus
-extern "C++" {
-#include <complex>
-}
-#else
-#include <complex.h>
-#endif
-
 #if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
 #error npy_cdouble definition is not compatible with C99 complex definition ! \
         Please contact NumPy maintainers and give detailed information about your \
@@ -389,6 +381,7 @@ extern "C++" {
 
 
 #if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#include <complex.h>
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
@@ -396,6 +389,9 @@ typedef _Lcomplex npy_clongdouble;
 #define NPY_CFLOAT_INIT(real, imag) (_FCbuild((float) (real), (float) (imag)))
 #define NPY_CLONGDOUBLE_INIT(real, imag) (_LCbuild((longdouble_t) (real), (longdouble_t) (imag)))
 #elif defined(__cplusplus) /* && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
+extern "C++" {
+#include <complex>
+}
 typedef std::complex<double> npy_cdouble;
 typedef std::complex<float> npy_cfloat;
 typedef std::complex<longdouble_t> npy_clongdouble;
@@ -403,9 +399,11 @@ typedef std::complex<longdouble_t> npy_clongdouble;
 #define NPY_CFLOAT_INIT(real, imag) (std::complex<float>((float) (real), (float) (imag)))
 #define NPY_CLONGDOUBLE_INIT(real, imag) (std::complex<longdouble_t>((longdouble_t) (real), (longdouble_t) (imag)))
 #else /* !defined(__cplusplus) && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
-typedef complex double npy_cdouble;
-typedef complex float npy_cfloat;
-typedef complex longdouble_t npy_clongdouble;
+#include <complex.h>
+#undef complex
+typedef double _Complex npy_cdouble;
+typedef float _Complex npy_cfloat;
+typedef longdouble_t _Complex npy_clongdouble;
 #define NPY_CDOUBLE_INIT(real, imag) ((double) (real) + _Complex_I * (double) (imag))
 #define NPY_CFLOAT_INIT(real, imag) ((float) (real) + _Complex_I * (float) (imag))
 #define NPY_CLONGDOUBLE_INIT(real, imag) ((longdouble_t) (real) + _Complex_I * (longdouble_t) (imag))
