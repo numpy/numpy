@@ -18,7 +18,6 @@
 #include "npy_config.h"
 
 #include "npy_cblas.h"
-#include "npy_blas_lapack.h"
 
 #include <cstddef>
 #include <cstdio>
@@ -74,6 +73,322 @@ dbg_stack_trace()
  */
 
 #define FNAME(x) BLAS_FUNC(x)
+
+typedef CBLAS_INT         fortran_int;
+
+typedef struct { float r, i; } f2c_complex;
+typedef struct { double r, i; } f2c_doublecomplex;
+/* typedef long int (*L_fp)(); */
+
+typedef float             fortran_real;
+typedef double            fortran_doublereal;
+typedef f2c_complex       fortran_complex;
+typedef f2c_doublecomplex fortran_doublecomplex;
+
+extern "C" fortran_int
+FNAME(sgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             float a[], fortran_int *lda, float wr[], float wi[],
+             float vl[], fortran_int *ldvl, float vr[], fortran_int *ldvr,
+             float work[], fortran_int lwork[],
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(dgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             double a[], fortran_int *lda, double wr[], double wi[],
+             double vl[], fortran_int *ldvl, double vr[], fortran_int *ldvr,
+             double work[], fortran_int lwork[],
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(cgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             f2c_complex a[], fortran_int *lda,
+             f2c_complex w[],
+             f2c_complex vl[], fortran_int *ldvl,
+             f2c_complex vr[], fortran_int *ldvr,
+             f2c_complex work[], fortran_int *lwork,
+             float rwork[],
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(zgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             f2c_doublecomplex a[], fortran_int *lda,
+             f2c_doublecomplex w[],
+             f2c_doublecomplex vl[], fortran_int *ldvl,
+             f2c_doublecomplex vr[], fortran_int *ldvr,
+             f2c_doublecomplex work[], fortran_int *lwork,
+             double rwork[],
+             fortran_int *info);
+
+extern "C" fortran_int
+FNAME(ssyevd)(char *jobz, char *uplo, fortran_int *n,
+              float a[], fortran_int *lda, float w[], float work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dsyevd)(char *jobz, char *uplo, fortran_int *n,
+              double a[], fortran_int *lda, double w[], double work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cheevd)(char *jobz, char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              float w[], f2c_complex work[],
+              fortran_int *lwork, float rwork[], fortran_int *lrwork, fortran_int iwork[],
+              fortran_int *liwork,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zheevd)(char *jobz, char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              double w[], f2c_doublecomplex work[],
+              fortran_int *lwork, double rwork[], fortran_int *lrwork, fortran_int iwork[],
+              fortran_int *liwork,
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(sgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              float a[], fortran_int *lda, float b[], fortran_int *ldb,
+              float s[], float *rcond, fortran_int *rank,
+              float work[], fortran_int *lwork, fortran_int iwork[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              double a[], fortran_int *lda, double b[], fortran_int *ldb,
+              double s[], double *rcond, fortran_int *rank,
+              double work[], fortran_int *lwork, fortran_int iwork[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              f2c_complex a[], fortran_int *lda,
+              f2c_complex b[], fortran_int *ldb,
+              float s[], float *rcond, fortran_int *rank,
+              f2c_complex work[], fortran_int *lwork,
+              float rwork[], fortran_int iwork[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex b[], fortran_int *ldb,
+              double s[], double *rcond, fortran_int *rank,
+              f2c_doublecomplex work[], fortran_int *lwork,
+              double rwork[], fortran_int iwork[],
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(dgeqrf)(fortran_int *m, fortran_int *n, double a[], fortran_int *lda,
+              double tau[], double work[],
+              fortran_int *lwork, fortran_int *info);
+extern "C" fortran_int
+FNAME(zgeqrf)(fortran_int *m, fortran_int *n, f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex tau[], f2c_doublecomplex work[],
+              fortran_int *lwork, fortran_int *info);
+
+extern "C" fortran_int
+FNAME(dorgqr)(fortran_int *m, fortran_int *n, fortran_int *k, double a[], fortran_int *lda,
+              double tau[], double work[],
+              fortran_int *lwork, fortran_int *info);
+extern "C" fortran_int
+FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k, f2c_doublecomplex a[],
+              fortran_int *lda, f2c_doublecomplex tau[],
+              f2c_doublecomplex work[], fortran_int *lwork, fortran_int *info);
+
+extern "C" fortran_int
+FNAME(sgesv)(fortran_int *n, fortran_int *nrhs,
+             float a[], fortran_int *lda,
+             fortran_int ipiv[],
+             float b[], fortran_int *ldb,
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(dgesv)(fortran_int *n, fortran_int *nrhs,
+             double a[], fortran_int *lda,
+             fortran_int ipiv[],
+             double b[], fortran_int *ldb,
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(cgesv)(fortran_int *n, fortran_int *nrhs,
+             f2c_complex a[], fortran_int *lda,
+             fortran_int ipiv[],
+             f2c_complex b[], fortran_int *ldb,
+             fortran_int *info);
+extern "C" fortran_int
+FNAME(zgesv)(fortran_int *n, fortran_int *nrhs,
+             f2c_doublecomplex a[], fortran_int *lda,
+             fortran_int ipiv[],
+             f2c_doublecomplex b[], fortran_int *ldb,
+             fortran_int *info);
+
+extern "C" fortran_int
+FNAME(sgetrf)(fortran_int *m, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dgetrf)(fortran_int *m, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cgetrf)(fortran_int *m, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zgetrf)(fortran_int *m, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(spotrf)(char *uplo, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dpotrf)(char *uplo, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cpotrf)(char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zpotrf)(char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(sgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              float a[], fortran_int *lda, float s[], float u[],
+              fortran_int *ldu, float vt[], fortran_int *ldvt, float work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *info);
+extern "C" fortran_int
+FNAME(dgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              double a[], fortran_int *lda, double s[], double u[],
+              fortran_int *ldu, double vt[], fortran_int *ldvt, double work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *info);
+extern "C" fortran_int
+FNAME(cgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              float s[], f2c_complex u[], fortran_int *ldu,
+              f2c_complex vt[], fortran_int *ldvt,
+              f2c_complex work[], fortran_int *lwork,
+              float rwork[], fortran_int iwork[], fortran_int *info);
+extern "C" fortran_int
+FNAME(zgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              double s[], f2c_doublecomplex u[], fortran_int *ldu,
+              f2c_doublecomplex vt[], fortran_int *ldvt,
+              f2c_doublecomplex work[], fortran_int *lwork,
+              double rwork[], fortran_int iwork[], fortran_int *info);
+
+extern "C" fortran_int
+FNAME(spotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              float a[], fortran_int *lda,
+              float b[], fortran_int *ldb,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              double a[], fortran_int *lda,
+              double b[], fortran_int *ldb,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              f2c_complex a[], fortran_int *lda,
+              f2c_complex b[], fortran_int *ldb,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex b[], fortran_int *ldb,
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(spotri)(char *uplo, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(dpotri)(char *uplo, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(cpotri)(char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int *info);
+extern "C" fortran_int
+FNAME(zpotri)(char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int *info);
+
+extern "C" fortran_int
+FNAME(scopy)(fortran_int *n,
+             float *sx, fortran_int *incx,
+             float *sy, fortran_int *incy);
+extern "C" fortran_int
+FNAME(dcopy)(fortran_int *n,
+             double *sx, fortran_int *incx,
+             double *sy, fortran_int *incy);
+extern "C" fortran_int
+FNAME(ccopy)(fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern "C" fortran_int
+FNAME(zcopy)(fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
+
+extern "C" float
+FNAME(sdot)(fortran_int *n,
+            float *sx, fortran_int *incx,
+            float *sy, fortran_int *incy);
+extern "C" double
+FNAME(ddot)(fortran_int *n,
+            double *sx, fortran_int *incx,
+            double *sy, fortran_int *incy);
+extern "C" void
+FNAME(cdotu)(f2c_complex *ret, fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern "C" void
+FNAME(zdotu)(f2c_doublecomplex *ret, fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
+extern "C" void
+FNAME(cdotc)(f2c_complex *ret, fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern "C" void
+FNAME(zdotc)(f2c_doublecomplex *ret, fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
+
+extern "C" fortran_int
+FNAME(sgemm)(char *transa, char *transb,
+             fortran_int *m, fortran_int *n, fortran_int *k,
+             float *alpha,
+             float *a, fortran_int *lda,
+             float *b, fortran_int *ldb,
+             float *beta,
+             float *c, fortran_int *ldc);
+extern "C" fortran_int
+FNAME(dgemm)(char *transa, char *transb,
+             fortran_int *m, fortran_int *n, fortran_int *k,
+             double *alpha,
+             double *a, fortran_int *lda,
+             double *b, fortran_int *ldb,
+             double *beta,
+             double *c, fortran_int *ldc);
+extern "C" fortran_int
+FNAME(cgemm)(char *transa, char *transb,
+             fortran_int *m, fortran_int *n, fortran_int *k,
+             f2c_complex *alpha,
+             f2c_complex *a, fortran_int *lda,
+             f2c_complex *b, fortran_int *ldb,
+             f2c_complex *beta,
+             f2c_complex *c, fortran_int *ldc);
+extern "C" fortran_int
+FNAME(zgemm)(char *transa, char *transb,
+             fortran_int *m, fortran_int *n, fortran_int *k,
+             f2c_doublecomplex *alpha,
+             f2c_doublecomplex *a, fortran_int *lda,
+             f2c_doublecomplex *b, fortran_int *ldb,
+             f2c_doublecomplex *beta,
+             f2c_doublecomplex *c, fortran_int *ldc);
+
 
 #define LAPACK_T(FUNC)                                          \
     TRACE_TXT("Calling LAPACK ( " # FUNC " )\n");               \
@@ -326,30 +641,26 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 }
 
 static inline void
+print(npy_float s)
 {
     TRACE_TXT(" %8.4f", s);
 }
 static inline void
+print(npy_double d)
 {
     TRACE_TXT(" %10.6f", d);
 }
 static inline void
+print(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
     TRACE_TXT("(%8.4f, %8.4fj)", c_parts[0], c_parts[1]);
 }
 static inline void
-{
-    TRACE_TXT("(%8.4f, %8.4fj)", c.r, c.i);
-}
-static inline void
+print(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
     TRACE_TXT("(%8.4f, %8.4fj)", z_parts[0], z_parts[1]);
-}
-static inline void
-{
-    TRACE_TXT("(%8.4f, %8.4fj)", z.r, z.i);
 }
 
 template<typename typ>
