@@ -2,6 +2,7 @@
 Try calling every method `numpy.ndarray` with deterministic
 but nonsensical arguments to see if we can induce a segfault.
 """
+import warnings
 import itertools
 import numpy as np
 
@@ -127,21 +128,24 @@ class TestJunkCalls:
         # a list of all methods on the numpy array
         methods = dir(np.empty(1))
 
-        # loop through the named methods
-        for method in methods:
-            print('checking method: `{}`'.format(method))
-            # if you are suspicious you can set `max_len=None` here
-            for array in generate_source_arrays(max_len=100):
-                # if you are suspicious you can set `max_len=3` here
-                for args in generate_args(max_len=2):
+        with warnings.catch_warnings():
+            # ignore all warnings inside this context manager
+            warnings.filterwarnings("ignore")
+            # loop through the named methods
+            for method in methods:
+                print('checking method: `{}`'.format(method))
+                # if you are suspicious you can set `max_len=None` here
+                for array in generate_source_arrays(max_len=100):
+                    # if you are suspicious you can set `max_len=3` here
+                    for args in generate_args(max_len=2):
 
-                    try:
-                        # evaluate the methods of
-                        # an `ndarray` with junk
-                        eval('array.{method}(*args)'.format(method=method))
-                    except BaseException:
-                        # should not be segfaulting
-                        pass
+                        try:
+                            # evaluate the methods of
+                            # an `ndarray` with junk
+                            eval('array.{method}(*args)'.format(method=method))
+                        except BaseException:
+                            # should not be segfaulting
+                            pass
 
 
 if __name__ == '__main__':
