@@ -2742,14 +2742,14 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 && ((strcmp(ufunc->name, "add") == 0)
                     || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_LONG;
+                typenum = NPY_INTP;
             }
-            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(long)) {
+            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(npy_intp)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_ULONG;
+                    typenum = NPY_UINTP;
                 }
                 else {
-                    typenum = NPY_LONG;
+                    typenum = NPY_INTP;
                 }
             }
             signature[0] = PyArray_DTypeFromTypeNum(typenum);
