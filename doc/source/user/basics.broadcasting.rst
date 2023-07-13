@@ -126,7 +126,7 @@ and *d* are all broadcastable to dimension (5,6); and
   to the other rows,
 
 - *c* acts like a (1,6) array and therefore like a (5,6) array
-  where ``c[:]`` is broadcast to every row, and finally,
+  where ``c[0,:]`` is broadcast to every row, and finally,
 
 - *d* acts like a (5,6) array where the single value is repeated.
 
