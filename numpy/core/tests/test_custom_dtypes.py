@@ -266,6 +266,25 @@ class TestSFloat:
 
         del np._ScaledFloatTestDType
 
+    def test_flatiter(self):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        for i, val in enumerate(arr.flat):
+            assert arr[i] == val
+
+        indices = [[1, 2], ..., slice(None, 2, None),
+                   np.array([True, True, False]), np.array([0, 1])]
+
+        for ind in indices:
+            arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+            np.testing.assert_array_equal(
+                arr[ind].view(np.float64), arr.flat[ind].view(np.float64))
+
+            arr2 = arr.copy()
+            arr[ind] = 5.0
+            arr2.flat[ind] = 5.0
+            np.testing.assert_array_equal(
+                arr.view(np.float64), arr2.view(np.float64))
 
 
 def test_type_pickle():

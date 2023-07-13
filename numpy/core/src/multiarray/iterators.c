@@ -19,6 +19,8 @@
 #include "conversion_utils.h"
 #include "array_coercion.h"
 #include "item_selection.h"
+#include "lowlevel_strided_loops.h"
+#include "array_assign.h"
 
 #define NEWAXIS_INDEX -1
 #define ELLIPSIS_INDEX -2
@@ -423,8 +425,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     npy_intp count = 0;
     char *dptr, *optr;
     PyArrayObject *ret;
-    int swap;
-    PyArray_CopySwapFunc *copyswap;
+    NPY_cast_info cast_info = {.func = NULL};
 
 
     if (PyArray_NDIM(ind) != 1) {
@@ -444,9 +445,10 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     count = count_boolean_trues(PyArray_NDIM(ind), PyArray_DATA(ind),
                                 PyArray_DIMS(ind), PyArray_STRIDES(ind));
     itemsize = PyArray_DESCR(self->ao)->elsize;
-    Py_INCREF(PyArray_DESCR(self->ao));
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
-                             PyArray_DESCR(self->ao), 1, &count,
+                             dtype, 1, &count,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
     if (ret == NULL) {
@@ -457,12 +459,24 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
         optr = PyArray_DATA(ret);
         counter = PyArray_DIMS(ind)[0];
         dptr = PyArray_DATA(ind);
-        copyswap = PyArray_DESCR(self->ao)->f->copyswap;
-        /* Loop over Boolean array */
-        swap = (PyArray_ISNOTSWAPPED(self->ao) != PyArray_ISNOTSWAPPED(ret));
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize, dtype, dtype, 0,
+                    &cast_info, &transfer_flags) < 0) {
+            return NULL;
+        }
         while (counter--) {
             if (*((npy_bool *)dptr) != 0) {
-                copyswap(optr, self->dataptr, swap, self->ao);
+                char *args[2] = {self->dataptr, optr};
+                if (cast_info.func(&cast_info.context, args, &one,
+                                   transfer_strides, cast_info.auxdata) < 0) {
+                    NPY_cast_info_xfree(&cast_info);
+                    return NULL;
+                }
                 optr += itemsize;
             }
             dptr += strides;
@@ -470,6 +484,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
         }
         PyArray_ITER_RESET(self);
     }
+    NPY_cast_info_xfree(&cast_info);
     return ret;
 }
 
@@ -480,10 +495,9 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     PyArrayObject *ret;
     PyArrayIterObject *ind_it;
     int itemsize;
-    int swap;
     char *optr;
     npy_intp counter;
-    PyArray_CopySwapFunc *copyswap;
+    NPY_cast_info cast_info = {.func = NULL};
 
     itemsize = PyArray_DESCR(self->ao)->elsize;
     if (PyArray_NDIM(ind) == 0) {
@@ -501,9 +515,10 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
     }
 
-    Py_INCREF(PyArray_DESCR(self->ao));
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
-                             PyArray_DESCR(self->ao),
+                             dtype,
                              PyArray_NDIM(ind),
                              PyArray_DIMS(ind),
                              NULL, NULL,
@@ -517,23 +532,43 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         Py_DECREF(ret);
         return NULL;
     }
+
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    npy_intp one = 1;
+    npy_intp transfer_strides[2] = {itemsize, itemsize};
+    /* We can assume the newly allocated output array is aligned */
+    int is_aligned = IsUintAligned(self->ao);
+    if (PyArray_GetDTypeTransferFunction(
+                is_aligned, itemsize, itemsize, dtype, dtype, 0, &cast_info,
+                &transfer_flags) < 0) {
+        return NULL;
+    }
+
     counter = ind_it->size;
-    copyswap = PyArray_DESCR(ret)->f->copyswap;
-    swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             Py_DECREF(ind_it);
             Py_DECREF(ret);
             PyArray_ITER_RESET(self);
+            NPY_cast_info_xfree(&cast_info);
             return NULL;
         }
         PyArray_ITER_GOTO1D(self, num);
-        copyswap(optr, self->dataptr, swap, ret);
+        char *args[2] = {self->dataptr, optr};
+        if (cast_info.func(&cast_info.context, args, &one,
+                           transfer_strides, cast_info.auxdata) < 0) {
+            Py_DECREF(ind_it);
+            Py_DECREF(ret);
+            PyArray_ITER_RESET(self);
+            NPY_cast_info_xfree(&cast_info);
+            return NULL;
+        }
         optr += itemsize;
         PyArray_ITER_NEXT(ind_it);
     }
     Py_DECREF(ind_it);
+    NPY_cast_info_xfree(&cast_info);
     PyArray_ITER_RESET(self);
     return (PyObject *)ret;
 }
@@ -551,7 +586,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     int size;
     PyObject *obj = NULL;
     PyObject *new;
-    PyArray_CopySwapFunc *copyswap;
+    NPY_cast_info cast_info = {.func = NULL};
 
     if (ind == Py_Ellipsis) {
         ind = PySlice_New(NULL, NULL, NULL);
@@ -627,9 +662,22 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             goto fail;
         }
         dptr = PyArray_DATA(ret);
-        copyswap = PyArray_DESCR(ret)->f->copyswap;
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        npy_intp transfer_strides[2] = {size, size};
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, size, size, dtype, dtype, 0, &cast_info,
+                    &transfer_flags) < 0) {
+            goto fail;
+        }
         while (n_steps--) {
-            copyswap(dptr, self->dataptr, 0, ret);
+            char *args[2] = {self->dataptr, dptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                goto fail;
+            }
             start += step_size;
             PyArray_ITER_GOTO1D(self, start);
             dptr += size;
@@ -678,6 +726,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
     Py_DECREF(indtype);
     Py_DECREF(obj);
+    NPY_cast_info_xfree(&cast_info);
     ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)new);
     Py_DECREF(new);
     return (PyObject *)ret;
@@ -689,6 +738,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
     Py_XDECREF(indtype);
     Py_XDECREF(obj);
+    NPY_cast_info_xfree(&cast_info);
+
     return NULL;
 
 }
@@ -696,11 +747,11 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
 static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
-                  PyArrayIterObject *val, int swap)
+                  PyArrayIterObject *val)
 {
     npy_intp counter, strides;
     char *dptr;
-    PyArray_CopySwapFunc *copyswap;
+    NPY_cast_info cast_info = {.func = NULL};
 
     if (PyArray_NDIM(ind) != 1) {
         PyErr_SetString(PyExc_ValueError,
@@ -719,10 +770,25 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     dptr = PyArray_DATA(ind);
     PyArray_ITER_RESET(self);
     /* Loop over Boolean array */
-    copyswap = PyArray_DESCR(self->ao)->f->copyswap;
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    npy_intp one = 1;
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    int itemsize = dtype->elsize;
+    npy_intp transfer_strides[2] = {itemsize, itemsize};
+    int is_aligned = IsUintAligned(self->ao) && IsUintAligned(val->ao);
+    if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize, dtype, dtype, 0,
+                    &cast_info, &transfer_flags) < 0) {
+        return -1;
+    }
     while (counter--) {
         if (*((npy_bool *)dptr) != 0) {
-            copyswap(self->dataptr, val->dataptr, swap, self->ao);
+            char *args[2] = {val->dataptr, self->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                NPY_cast_info_xfree(&cast_info);
+                return -1;
+            }
             PyArray_ITER_NEXT(val);
             if (val->index == val->size) {
                 PyArray_ITER_RESET(val);
@@ -732,30 +798,49 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         PyArray_ITER_NEXT(self);
     }
     PyArray_ITER_RESET(self);
+    NPY_cast_info_xfree(&cast_info);
     return 0;
 }
 
 static int
 iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
-                 PyArrayIterObject *val, int swap)
+                 PyArrayIterObject *val)
 {
     npy_intp num;
     PyArrayIterObject *ind_it;
     npy_intp counter;
-    PyArray_CopySwapFunc *copyswap;
+    NPY_cast_info cast_info = {.func = NULL};
 
-    copyswap = PyArray_DESCR(self->ao)->f->copyswap;
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    npy_intp one = 1;
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    int itemsize = dtype->elsize;
+    npy_intp transfer_strides[2] = {itemsize, itemsize};
+    int is_aligned = IsUintAligned(self->ao) && IsUintAligned(val->ao);
+    if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize, dtype, dtype, 0,
+                    &cast_info, &transfer_flags) < 0) {
+        return -1;
+    }
+
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
         if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
             return -1;
         }
         PyArray_ITER_GOTO1D(self, num);
-        copyswap(self->dataptr, val->dataptr, swap, self->ao);
+        char *args[2] = {val->dataptr, self->dataptr};
+        if (cast_info.func(&cast_info.context, args, &one,
+                           transfer_strides, cast_info.auxdata) < 0) {
+            NPY_cast_info_xfree(&cast_info);
+            return -1;
+        }
+        NPY_cast_info_xfree(&cast_info);
         return 0;
     }
     ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ind);
     if (ind_it == NULL) {
+        NPY_cast_info_xfree(&cast_info);
         return -1;
     }
     counter = ind_it->size;
@@ -766,7 +851,13 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
             return -1;
         }
         PyArray_ITER_GOTO1D(self, num);
-        copyswap(self->dataptr, val->dataptr, swap, self->ao);
+        char *args[2] = {val->dataptr, self->dataptr};
+        if (cast_info.func(&cast_info.context, args, &one,
+                           transfer_strides, cast_info.auxdata) < 0) {
+            NPY_cast_info_xfree(&cast_info);
+            Py_DECREF(ind_it);
+            return -1;
+        }
         PyArray_ITER_NEXT(ind_it);
         PyArray_ITER_NEXT(val);
         if (val->index == val->size) {
@@ -774,6 +865,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         }
     }
     Py_DECREF(ind_it);
+    NPY_cast_info_xfree(&cast_info);
     return 0;
 }
 
@@ -784,12 +876,11 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     PyArrayIterObject *val_it = NULL;
     PyArray_Descr *type;
     PyArray_Descr *indtype = NULL;
-    int swap, retval = -1;
+    int retval = -1;
     npy_intp start, step_size;
     npy_intp n_steps;
     PyObject *obj = NULL;
-    PyArray_CopySwapFunc *copyswap;
-
+    NPY_cast_info cast_info = {.func = NULL};
 
     if (val == NULL) {
         PyErr_SetString(PyExc_TypeError,
@@ -868,9 +959,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto finish;
     }
 
-    copyswap = PyArray_DESCR(arrval)->f->copyswap;
-    swap = (PyArray_ISNOTSWAPPED(self->ao)!=PyArray_ISNOTSWAPPED(arrval));
-
     /* Check Slice */
     if (PySlice_Check(ind)) {
         start = parse_index_entry(ind, &step_size, &n_steps, self->size, 0, 0);
@@ -883,15 +971,33 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
             goto finish;
         }
         PyArray_ITER_GOTO1D(self, start);
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        int itemsize = type->elsize;
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
+        /* We can assume the newly allocated arrval is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize, type, type, 0,
+                    &cast_info, &transfer_flags) < 0) {
+            goto finish;
+        }
         if (n_steps == SINGLE_INDEX) {
-            /* Integer */
-            copyswap(self->dataptr, PyArray_DATA(arrval), swap, arrval);
+            char *args[2] = {PyArray_DATA(arrval), self->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                goto finish;
+            }
             PyArray_ITER_RESET(self);
             retval = 0;
             goto finish;
         }
         while (n_steps--) {
-            copyswap(self->dataptr, val_it->dataptr, swap, arrval);
+            char *args[2] = {val_it->dataptr, self->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                goto finish;
+            }
             start += step_size;
             PyArray_ITER_GOTO1D(self, start);
             PyArray_ITER_NEXT(val_it);
@@ -919,7 +1025,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         /* Check for Boolean object */
         if (PyArray_TYPE((PyArrayObject *)obj)==NPY_BOOL) {
             if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,
-                                  val_it, swap) < 0) {
+                                  val_it) < 0) {
                 goto finish;
             }
             retval=0;
@@ -936,7 +1042,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 goto finish;
             }
             if (iter_ass_sub_int(self, (PyArrayObject *)obj,
-                                 val_it, swap) < 0) {
+                                 val_it) < 0) {
                 goto finish;
             }
             retval = 0;
@@ -951,6 +1057,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     Py_XDECREF(obj);
     Py_XDECREF(val_it);
     Py_XDECREF(arrval);
+    NPY_cast_info_xfree(&cast_info);
     return retval;
 
 }
