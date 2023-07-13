@@ -832,7 +832,7 @@ npy_fastrepeat(
 
     return npy_fastrepeat_impl(
         n_outer, n, nel, chunk, broadcast, counts, new_data, old_data, elsize,
-        cast_info, needs_refcounting);    
+        cast_info, needs_refcounting);
 }
 
 
@@ -1255,7 +1255,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             npy_intp npiv = 0;
             npy_intp i;
             for (i = 0; i < nkth; ++i) {
-                ret = part(bufptr, N, kth[i], pivots, &npiv, op);
+                ret = part(bufptr, N, kth[i], pivots, &npiv, nkth, op);
                 if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
@@ -1628,7 +1628,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         PyErr_SetString(PyExc_ValueError, "not a valid partition kind");
         return -1;
     }
-    part = get_partition_func(PyArray_TYPE(op), which);
+    part = get_partition_func(PyArray_TYPE(op), which, PyArray_SIZE(ktharray));
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
         if (PyArray_DESCR(op)->f->compare) {

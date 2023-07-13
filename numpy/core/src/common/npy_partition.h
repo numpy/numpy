@@ -11,12 +11,14 @@
 
 #define NPY_MAX_PIVOT_STACK 50
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 NPY_NO_EXPORT PyArray_PartitionFunc *
-get_partition_func(int type, NPY_SELECTKIND which);
+get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize);
+
 NPY_NO_EXPORT PyArray_ArgPartitionFunc *
 get_argpartition_func(int type, NPY_SELECTKIND which);
 

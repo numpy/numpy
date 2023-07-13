@@ -25,13 +25,65 @@
 #include <array>
 #include <cstdlib>
 #include <utility>
+#include "simd_qsort.hpp"
 
 #define NOT_USED NPY_UNUSED(unused)
 
+#if defined(_MSC_VER) || defined(__CYGWIN__)
+template<typename T>
+inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+#else
+template<typename T>
+inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
+{
+    using TF = typename np::meta::FixedWidth<T>::Type;
+    void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
+    if (sizeof(T) == sizeof(uint16_t)) {
+        #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "simd_qsort_16bit.dispatch.h"
+        #endif
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+    }
+    else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+        #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "simd_qsort.dispatch.h"
+        #endif
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+    }
+    if (dispfunc) {
+        (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
+        return true;
+    }
+    return false;
+}
+template<>
+inline bool quickselect_dispatch(npy_cfloat* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool quickselect_dispatch(npy_cdouble* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool quickselect_dispatch(npy_longdouble* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool quickselect_dispatch(npy_clongdouble* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+#endif
+
 template <typename Tag, bool arg, typename type>
 NPY_NO_EXPORT int
-introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-             npy_intp *pivots, npy_intp *npiv);
+introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth, npy_intp *pivots, npy_intp *npiv);
 
 /*
  *****************************************************************************
@@ -397,8 +449,12 @@ introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
 template <typename Tag>
 static int
 introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                  npy_intp *npiv, void *)
+                  npy_intp *npiv, npy_intp nkth, void *)
 {
+    using T = typename Tag::type;
+    if ((nkth == 1) && (quickselect_dispatch((T *)v, num, kth))) {
+        return 0;
+    }
     return introselect_<Tag, false>((typename Tag::type *)v, nullptr, num, kth,
                                     pivots, npiv);
 }
@@ -443,7 +499,7 @@ struct partition_t {
 constexpr std::array<arg_map, partition_t::taglist::size> partition_t::map;
 
 static inline PyArray_PartitionFunc *
-_get_partition_func(int type, NPY_SELECTKIND which)
+_get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize)
 {
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
@@ -480,9 +536,9 @@ _get_argpartition_func(int type, NPY_SELECTKIND which)
  */
 extern "C" {
 NPY_NO_EXPORT PyArray_PartitionFunc *
-get_partition_func(int type, NPY_SELECTKIND which)
+get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize)
 {
-    return _get_partition_func(type, which);
+    return _get_partition_func(type, which, kthsize);
 }
 NPY_NO_EXPORT PyArray_ArgPartitionFunc *
 get_argpartition_func(int type, NPY_SELECTKIND which)
