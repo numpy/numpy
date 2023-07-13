@@ -120,3 +120,11 @@ def get_multiiter_shape(bcast: "broadcast"):
 def get_multiiter_iters(bcast: "broadcast"):
     cdef cnp.broadcast multi = multiiter_from_broadcast_obj(bcast)
     return tuple([<cnp.flatiter>multi.iters[i] for i in range(bcast.numiter)])
+
+
+def get_default_integer():
+    if cnp.NPY_DEFAULT_INT == cnp.NPY_LONG:
+        return cnp.dtype("long")
+    if cnp.NPY_DEFAULT_INT == cnp.NPY_INTP:
+        return cnp.dtype("intp")
+    return None
