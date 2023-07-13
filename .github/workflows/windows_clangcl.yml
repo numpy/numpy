@@ -1,0 +1,91 @@
+name: Test Clang-CL Build (Windows)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+env:
+  PYTHON_VERSION: 3.11
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  meson:
+    name: Meson windows build/test
+    runs-on: windows-2019
+    # if: "github.repository == 'numpy/numpy'"
+    steps:
+    - name: Checkout
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Setup Python
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+    - name: openblas-libs
+      run: |
+        # Download and install pre-built OpenBLAS library
+        # with 32-bit interfaces
+        # Unpack it in the pkg-config hardcoded path
+        choco install unzip -y
+        choco install wget -y
+        # Install llvm, which contains clang-cl
+        choco install llvm -y --version=16.0.6 
+        choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        wget https://anaconda.org/multibuild-wheels-staging/openblas-libs/v0.3.21/download/openblas-v0.3.21-win_amd64-gcc_10_3_0.zip
+        unzip -d c:\opt openblas-v0.3.21-win_amd64-gcc_10_3_0.zip
+        echo "PKG_CONFIG_PATH=c:\opt\64\lib\pkgconfig;" >> $env:GITHUB_ENV
+    - name: meson-configure
+      run: |
+        "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'"  | Out-File $PWD/clang-cl-build.ini -Encoding ascii
+        meson setup build --prefix=$PWD\build-install --native-file=$PWD/clang-cl-build.ini -Ddebug=false --optimization 2 --vsenv
+    - name: meson-build
+      run: |
+        meson compile -C build -v
+
+    - name: meson-install
+      run: |
+        cd build
+        meson install --no-rebuild
+    - name: build-path
+      run: |
+        echo "installed_path=$PWD\build-install\Lib\site-packages" >> $env:GITHUB_ENV
+    - name: post-install
+      run: |
+        $numpy_path = "${env:installed_path}\numpy"
+        $libs_path = "${numpy_path}\.libs"
+        mkdir ${libs_path}
+        $ob_path = "C:/opt/64/bin/"
+        cp $ob_path/*.dll $libs_path
+        # Write _distributor_init.py to load .libs DLLs.
+        python -c "from tools import openblas_support; openblas_support.make_init(r'${numpy_path}')"
+
+    - name: prep-test
+      run: |
+        echo "PYTHONPATH=${env:installed_path}" >> $env:GITHUB_ENV
+        python -m pip install -r test_requirements.txt
+        python -m pip install threadpoolctl
+
+    - name: test
+      run: |
+        mkdir tmp
+        cd tmp
+        echo "============================================"
+        python -c "import numpy; print(numpy.show_runtime())"
+        echo "============================================"
+        echo "LASTEXITCODE is '$LASTEXITCODE'"
+        python -c "import numpy, sys; sys.exit(numpy.test(verbose=3) is False)"
+        echo "LASTEXITCODE is '$LASTEXITCODE'"
