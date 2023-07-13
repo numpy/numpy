@@ -781,6 +781,9 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     """
     a, weights = _ravel_and_check_weights(a, weights)
 
+    if not np.issubdtype(a.dtype, np.number):
+        raise ValueError(f"expected numeric input data type, got: {a.dtype}")
+
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
 
     # Histogram is an integer or a float array depending on the weights.
