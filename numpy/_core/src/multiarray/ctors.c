@@ -3223,7 +3223,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 
     if (!dtype) {
         /* intentionally made to be at least NPY_LONG */
-        dtype = PyArray_DescrFromType(NPY_LONG);
+        dtype = PyArray_DescrFromType(NPY_INTP);
         Py_SETREF(dtype, PyArray_DescrFromObject(start, dtype));
         if (dtype == NULL) {
             goto fail;

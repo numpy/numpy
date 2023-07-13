@@ -6564,7 +6564,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
          /* Explicitly allow int, float, and complex for the "weak" types. */
         else if (descr_obj == (PyObject *)&PyLong_Type) {
-            descr = PyArray_DescrFromType(NPY_LONG);
+            descr = PyArray_DescrFromType(NPY_INTP);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
