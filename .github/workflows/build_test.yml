@@ -96,7 +96,7 @@ jobs:
         # for add-apt-repository
         sudo apt install software-properties-common -y
         sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install python3.9-dev -y
+        sudo apt install python3.9-dev ninja-build -y
         sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt

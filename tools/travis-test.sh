@@ -80,6 +80,9 @@ setup_base()
 
 run_test()
 {
+  # see note in pyproject.toml for why ninja is installed as a test requirement
+  PYTHONOPTIMIZE="" $PIP install ninja
+
   # Install the test dependencies.
   # Clear PYTHONOPTIMIZE when running `pip install -r test_requirements.txt`
   # because version 2.19 of pycparser (a dependency of one of the packages
