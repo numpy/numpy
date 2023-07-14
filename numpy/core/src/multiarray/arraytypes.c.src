@@ -441,14 +441,13 @@ static PyObject *
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
- * #c = f, , l#
  */
 NPY_NO_EXPORT int
 @NAME@_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
-    @type@ temp = NPY_@NAME@_INIT(0.0@c@, 0.0@c@);
+    @type@ temp;
 
     if (PyArray_IsZeroDim(op)) {
         return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
@@ -1934,7 +1933,6 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
- * #c = f, #
  */
 static int
 @fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
@@ -1944,7 +1942,7 @@ static int
     int ret_real, ret_imag;
 
     ret_real = NumPyOS_ascii_ftolf(fp, &result);
-    @type@ output = NPY_@fname@_INIT(0.0@c@, 0.0@c@);
+    @type@ output;
     // Peek next character
     char next = getc(fp);
     if ((next == '+') || (next == '-')) {
@@ -2078,7 +2076,6 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
- * #c = f, #
  */
 static int
 @fname@_fromstr(char *str, void *ip, char **endptr,
@@ -2087,7 +2084,7 @@ static int
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    @type@ output = NPY_@fname@_INIT(0.0@c@, 0.0@c@);
+    @type@ output;
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
@@ -3983,8 +3980,8 @@ static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
 {
     npy_intp i;
-    @type@ start = NPY_@NAME@_INIT(0.0, 0.0);
-    @type@ delta = NPY_@NAME@_INIT(0.0, 0.0);
+    @type@ start;
+    @type@ delta;
 
     NPY_@NAME@_SET_REAL(&start, NPY_@NAME@_GET_REAL(buffer));
     NPY_@NAME@_SET_IMAG(&start, NPY_@NAME@_GET_IMAG(buffer));

@@ -345,7 +345,7 @@ nc_exp@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ctype@ a = NPY_@NAME@_INIT(0.0@c@, 0.0@c@);
+    @ctype@ a;
     NPY_@NAME@_SET_REAL(&a, NPY_@NAME@_GET_REAL(x)*NPY_LOGE2@c@);
     NPY_@NAME@_SET_IMAG(&a, NPY_@NAME@_GET_IMAG(x)*NPY_LOGE2@c@);
     nc_exp@c@(&a, r);

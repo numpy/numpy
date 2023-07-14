@@ -242,7 +242,8 @@ NPY_NO_EXPORT void
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
 #if @IS_COMPLEX@ == 1
-            *(@typ@ *)op = NPY_@TYPE@_INIT(0.0, 0.0);
+            NPY_@TYPE@_SET_REAL((@typ@ *)op, 0.0);
+            NPY_@TYPE@_SET_IMAG((@typ@ *)op, 0.0);
 #elif @IS_HALF@
             float sum = 0;
 #else

@@ -1626,31 +1626,13 @@ static PyObject *
  *          Byte, UByte, Short, UShort, Int, UInt,
  *          Long, ULong, LongLong, ULongLong#
  *
- * #ONAME = (BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *              LONG, ULONG, LONGLONG, ULONGLONG,
- *              HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *              CFLOAT, CDOUBLE, CLONGDOUBLE)*2,
- *          BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG,
- *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          FLOAT, DOUBLE, LONGDOUBLE,
- *
- *          BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG#
- *
- * #IS_COMPLEX = 0*14, 1*3, 0*14, 1*3, 0*27#
- *
  * #oper = negative*17, positive*17, absolute*17, invert*10#
  */
 static PyObject *
 @name@_@oper@(PyObject *a)
 {
     @type@ val;
-#if @IS_COMPLEX@ == 1
-    @otype@ out = NPY_@ONAME@_INIT(0.0, 0.0);
-#else
     @otype@ out;
-#endif
     PyObject *ret;
 
 

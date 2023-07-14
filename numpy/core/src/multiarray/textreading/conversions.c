@@ -243,7 +243,7 @@ npy_to_cfloat(PyArray_Descr *descr,
     if (!success) {
         return -1;
     }
-    npy_complex64 val = NPY_CFLOAT_INIT(0.0f, 0.0f);
+    npy_complex64 val;
     NPY_CFLOAT_SET_REAL(&val, (float) real);
     NPY_CFLOAT_SET_IMAG(&val, (float) imag);
     memcpy(dataptr, &val, sizeof(npy_complex64));
@@ -269,7 +269,7 @@ npy_to_cdouble(PyArray_Descr *descr,
     if (!success) {
         return -1;
     }
-    npy_complex128 val = NPY_CDOUBLE_INIT(0.0, 0.0);
+    npy_complex128 val;
     NPY_CDOUBLE_SET_REAL(&val, real);
     NPY_CDOUBLE_SET_IMAG(&val, imag);
     memcpy(dataptr, &val, sizeof(npy_complex128));
