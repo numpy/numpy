@@ -58,61 +58,6 @@ def test_cython(tmp_path):
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')
     build_dir = tmp_path / 'random' / '_examples' / 'cython'
-    # We don't want a wheel build, so do the steps in a controlled way
-    # The meson.build file is not copied as part of the build, so generate it
-    with open(build_dir / "meson.build", "wt", encoding="utf-8") as fid:
-        get_inc = ('import os; os.chdir(".."); import numpy; '
-                   'print(os.path.abspath(numpy.get_include() + "../../.."))')
-        fid.write(textwrap.dedent(f"""\
-            project('random-build-examples', 'c', 'cpp', 'cython')
-
-            # https://mesonbuild.com/Python-module.html
-            py_mod = import('python')
-            py3 = py_mod.find_installation(pure: false)
-            py3_dep = py3.dependency()
-
-            py_mod = import('python')
-            py = py_mod.find_installation(pure: false)
-            cc = meson.get_compiler('c')
-            cy = meson.get_compiler('cython')
-
-            if not cy.version().version_compare('>=0.29.35')
-              error('tests requires Cython >= 0.29.35')
-            endif
-
-            _numpy_abs = run_command(py3, ['-c', '{get_inc}'],
-                                     check: true).stdout().strip()
-
-            npymath_path = _numpy_abs / 'core' / 'lib'
-            npy_include_path = _numpy_abs / 'core' / 'include'
-            npyrandom_path = _numpy_abs / 'random' / 'lib'
-            npymath_lib = cc.find_library('npymath', dirs: npymath_path)
-            npyrandom_lib = cc.find_library('npyrandom', dirs: npyrandom_path)
-
-            py.extension_module(
-                'extending_distributions',
-                'extending_distributions.pyx',
-                install: false,
-                include_directories: [npy_include_path],
-                dependencies: [npyrandom_lib, npymath_lib],
-            )
-            py.extension_module(
-                'extending',
-                'extending.pyx',
-                install: false,
-                include_directories: [npy_include_path],
-                dependencies: [npyrandom_lib, npymath_lib],
-            )
-            py.extension_module(
-                'extending_cpp',
-                'extending_distributions.pyx',
-                install: false,
-                override_options : ['cython_language=cpp'],
-                cython_args: ['--module-name', 'extending_cpp'],
-                include_directories: [npy_include_path],
-                dependencies: [npyrandom_lib, npymath_lib],
-            )
-        """))
     target_dir = build_dir / "build"
     os.makedirs(target_dir, exist_ok=True)
     if sys.platform == "win32":

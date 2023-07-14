@@ -80,11 +80,7 @@ setup_base()
 
 run_test()
 {
-  # meson has a hard dependency on ninja, and we need meson to build
-  # c-extensions in tests. There is a hack ninja PyPI package used in
-  # build_requirements.txt for macOS, windows, linux but it cannot be in
-  # test_requirements.txt since pyodide, which uses test_requirements.txt, does
-  # not have it.
+  # see note in pyproject.toml for why ninja is installed as a test requirement
   PYTHONOPTIMIZE="" $PIP install ninja
 
   # Install the test dependencies.
