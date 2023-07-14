@@ -46,7 +46,7 @@ import operator
 import warnings
 import contextlib
 
-_default_format_options = {
+_format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
     'threshold': 1000,  # total items > triggers array summarization
     'floatmode': 'maxprec',
@@ -60,9 +60,6 @@ _default_format_options = {
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
     'legacy': sys.maxsize}
-
-_format_options = _default_format_options.copy()
-
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
@@ -402,17 +399,17 @@ def _object_format(o):
     return fmt.format(o)
 
 def repr_format(x):
-    if isinstance(x, (np.str_, np.bytes_)):
+    if isinstance(x, (np.str_, np.bytes_)) and _format_options['legacy'] > 125:
         return repr(x.item())
     return repr(x)
 
 def str_format(x):
-    if isinstance(x, (np.str_, np.bytes_)):
+    if isinstance(x, (np.str_, np.bytes_)) and _format_options['legacy'] > 125:
         return str(x.item())
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, dtype=None, **kwargs):
+                    formatter, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -420,21 +417,20 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign,
-            legacy=legacy),
+            data, precision, floatmode, suppress, sign, legacy=legacy),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign,
-            legacy=legacy, longdouble_quoting=True),
+            data, precision, floatmode, suppress, sign, legacy=legacy,
+            longdouble_quoting=True),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign,
-            legacy=legacy, longdouble_quoting=True),
-        'datetime': lambda: DatetimeFormat(data, legacy=legacy, dtype=dtype),
+            data, precision, floatmode, suppress, sign, legacy=legacy,
+            longdouble_quoting=True),
+        'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        'numpystr': lambda: repr_format if repr else str_format}
+        'numpystr': lambda: repr_format}
 
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
@@ -463,37 +459,13 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
 
     return formatdict
 
-def get_formatter(*, dtype=None, data=None, options=None):
+def _get_format_function(data, **options):
     """
-    Return a format function for a single element or scalar.
-
-    Parameters
-    ----------
-    dtype : dtype
-        datatype of the values to be formatted, either `data` or `dtype`
-        must be given.  If both are given, the ``data.dtype`` of data has
-        to match.
-    data : ndarray or None
-        The data to be printed.  This can be an N-D array including all
-        elements to be printed.
-    options: dict
-        Options dictionary, if given, must be compatible with
-        `np.get_printoptions()` and values not None replace the default
-        ones.
+    find the right formatting function for the dtype_
     """
-    if data is not None and not isinstance(data, np.ndarray):
-        raise TypeError("get_formatter: data must be None or a NumPy array.")
-
-    if dtype is not None and data is not None and data.dtype != dtype:
-        raise TypeError(
-            "get_formatter: data.dtype and dtype must be equivalent")
-    if dtype is None:
-        dtype = data.dtype
-
-    formatdict = _get_formatdict(data, dtype=dtype, **options)
-
-    dtypeobj = dtype.type
-
+    dtype_ = data.dtype
+    dtypeobj = dtype_.type
+    formatdict = _get_formatdict(data, **options)
     if dtypeobj is None:
         return formatdict["numpystr"]()
     elif issubclass(dtypeobj, _nt.bool_):
@@ -520,16 +492,8 @@ def get_formatter(*, dtype=None, data=None, options=None):
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
-        if dtype.names is not None:
-            if data is None:
-                data = np.zeros((), dtype)
+        if dtype_.names is not None:
             return StructuredVoidFormat.from_data(data, **options)
-        elif dtype.shape != ():
-            # This path can only be hit in nested calls when data is not
-            # given and `arr.dtype` cannot be a subarray dtype:
-            assert data is None
-            return SubArrayFormat(
-                get_formatter(dtype=dtype.base, options=options))
         else:
             return formatdict['void']()
     else:
@@ -568,35 +532,29 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
-    # The formatter __init__s in get_formatter cannot deal with
+    # The formatter __init__s in _get_format_function cannot deal with
     # subclasses yet, and we also need to avoid recursion issues in
     # _formatArray with subclasses which return 0d arrays in place of scalars
     data = asarray(a)
     if a.shape == ():
         a = data
 
-    # These options should not really be used by the item formatter, but
-    # the subarray one does use some of them:
-    threshold = options["threshold"]
-    linewidth = options["linewidth"]
-    edgeitems = options["edgeitems"]
-
-    if a.size > threshold:
+    if a.size > options['threshold']:
         summary_insert = "..."
-        data = _leading_trailing(data, edgeitems)
+        data = _leading_trailing(data, options['edgeitems'])
     else:
         summary_insert = ""
 
     # find the right formatting function for the array
-    format_function = get_formatter(data=data, options=options)
+    format_function = _get_format_function(data=data, **options)
 
     # skip over "["
     next_line_prefix = " "
     # skip over array(
     next_line_prefix += " "*len(prefix)
 
-    lst = _formatArray(a, format_function, linewidth,
-                       next_line_prefix, separator, edgeitems,
+    lst = _formatArray(a, format_function, options['linewidth'],
+                       next_line_prefix, separator, options['edgeitems'],
                        summary_insert, options['legacy'])
     return lst
 
@@ -986,7 +944,7 @@ class FloatingFormat:
 
         self.fillFormat(data)
 
-    def fillFormat(self, data):            
+    def fillFormat(self, data):
         # only the finite values are used to compute the number of digits
         finite_vals = data[isfinite(data)]
 
@@ -1007,7 +965,7 @@ class FloatingFormat:
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
-            self.min_digits = 1
+            self.min_digits = None
         elif self.exp_format:
             trim, unique = '.', True
             if self.floatmode == 'fixed' or self._legacy <= 113:
@@ -1083,23 +1041,23 @@ class FloatingFormat:
 
         if self.exp_format:
             res = dragon4_scientific(x,
-                                      precision=self.precision,
-                                      min_digits=self.min_digits,
-                                      unique=self.unique,
-                                      trim=self.trim,
-                                      sign=self.sign == '+',
-                                      pad_left=self.pad_left,
-                                      exp_digits=self.exp_size)
+                                     precision=self.precision,
+                                     min_digits=self.min_digits,
+                                     unique=self.unique,
+                                     trim=self.trim,
+                                     sign=self.sign == '+',
+                                     pad_left=self.pad_left,
+                                     exp_digits=self.exp_size)
         else:
             res = dragon4_positional(x,
-                                      precision=self.precision,
-                                      min_digits=self.min_digits,
-                                      unique=self.unique,
-                                      fractional=True,
-                                      trim=self.trim,
-                                      sign=self.sign == '+',
-                                      pad_left=self.pad_left,
-                                      pad_right=self.pad_right)
+                                     precision=self.precision,
+                                     min_digits=self.min_digits,
+                                     unique=self.unique,
+                                     fractional=True,
+                                     trim=self.trim,
+                                     sign=self.sign == '+',
+                                     pad_left=self.pad_left,
+                                     pad_right=self.pad_right)
         return f"'{res}'" if self.longdouble_quoting else res 
 
 @set_module('numpy')
@@ -1276,7 +1234,7 @@ def format_float_positional(x, precision=None, unique=True,
 
 class IntegerFormat:
     def __init__(self, data):
-        if data is not None and data.size > 0:
+        if data.size > 0:
             max_str_len = max(len(str(np.max(data))),
                               len(str(np.min(data))))
         else:
@@ -1290,12 +1248,8 @@ class IntegerFormat:
 class BoolFormat:
     def __init__(self, data, **kwargs):
         # add an extra space so " True" and "False" have the same length and
-        # array elements align nicely when printed, except in 0d arrays and
-        # when there is no data (e.g. scalar formatting we pass nothing)
-        if data is None or data.shape == ():
-            self.truestr = 'True'
-        else:
-            self.truestr = ' True'
+        # array elements align nicely when printed, except in 0d arrays
+        self.truestr = ' True' if data.shape != () else 'True'
 
     def __call__(self, x):
         return self.truestr if x else "False"
@@ -1321,11 +1275,11 @@ class ComplexFloatingFormat:
 
         self.real_format = FloatingFormat(
             x.real, precision, floatmode_real, suppress_small,
-            sign=sign, legacy=legacy, longdouble_quoting=False
+            sign=sign, legacy=legacy
         )
         self.imag_format = FloatingFormat(
             x.imag, precision, floatmode_imag, suppress_small,
-            sign='+', legacy=legacy, longdouble_quoting=False
+            sign='+', legacy=legacy
         )
 
     def __call__(self, x):
@@ -1340,20 +1294,16 @@ class ComplexFloatingFormat:
 
 class _TimelikeFormat:
     def __init__(self, data):
-        if data is not None:
-            non_nat = data[~isnat(data)]
-            if len(non_nat) > 0:
-                # Max str length of non-NaT elements
-                max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
-                                  len(self._format_non_nat(np.min(non_nat))))
-            else:
-                max_str_len = 0
-            if len(non_nat) < data.size:
-                # data contains a NaT
-                max_str_len = max(max_str_len, 5)
+        non_nat = data[~isnat(data)]
+        if len(non_nat) > 0:
+            # Max str length of non-NaT elements
+            max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
+                              len(self._format_non_nat(np.min(non_nat))))
         else:
             max_str_len = 0
-
+        if len(non_nat) < data.size:
+            # data contains a NaT
+            max_str_len = max(max_str_len, 5)
         self._format = '%{}s'.format(max_str_len)
         self._nat = "'NaT'".rjust(max_str_len)
 
@@ -1370,13 +1320,11 @@ class _TimelikeFormat:
 
 class DatetimeFormat(_TimelikeFormat):
     def __init__(self, x, unit=None, timezone=None, casting='same_kind',
-                 legacy=False, *, dtype=None):
+                 legacy=False):
         # Get the unit from the dtype
         if unit is None:
-            if dtype is None:
-                dtype = x.dtype
-            if dtype.kind == 'M':
-                unit = datetime_data(dtype)[0]
+            if x.dtype.kind == 'M':
+                unit = datetime_data(x.dtype)[0]
             else:
                 unit = 's'
 
@@ -1410,12 +1358,6 @@ class TimedeltaFormat(_TimelikeFormat):
 class SubArrayFormat:
     def __init__(self, format_function, **options):
         self.format_function = format_function
-
-        # The subarray formatter is special and needs the threshold/edgeitems
-        # always (even when a format is used).
-        if not options:
-            options = _format_options
-
         self.threshold = options['threshold']
         self.edge_items = options['edgeitems']
 
@@ -1458,8 +1400,7 @@ class StructuredVoidFormat:
         """
         format_functions = []
         for field_name in data.dtype.names:
-            format_function = get_formatter(
-                    data=data[field_name], options=options)
+            format_function = _get_format_function(data[field_name], **options)
             if data.dtype[field_name].shape != ():
                 format_function = SubArrayFormat(format_function, **options)
             format_functions.append(format_function)
