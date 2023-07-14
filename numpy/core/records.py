@@ -41,8 +41,7 @@ from contextlib import nullcontext
 from .._utils import set_module
 from . import numeric as sb
 from . import numerictypes as nt
-from .arrayprint import _get_legacy_print_mode, get_formatter as _get_formatter
-
+from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
 __all__ = [
@@ -233,11 +232,7 @@ class record(nt.void):
     def __repr__(self):
         if _get_legacy_print_mode() <= 113:
             return self.__str__()
-        # "Manually" print, mainly to get the dtype "right"
-        repr_dtype = sb.dtype((nt.void, self.dtype))
-        formatter = _get_formatter(dtype=repr_dtype, fmt=repr)
-        value_repr = formatter(self)
-        return f"np.record({value_repr}, dtype={repr_dtype!s})"
+        return super().__repr__()
 
     def __str__(self):
         if _get_legacy_print_mode() <= 113:

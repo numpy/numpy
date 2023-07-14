@@ -412,7 +412,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, fmt=None, dtype=None, **kwargs):
+                    formatter, dtype=None, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -421,20 +421,20 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, fmt=fmt),
+            legacy=legacy),
         'longfloat': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, fmt=fmt, longdouble_quoting=True),
+            legacy=legacy, longdouble_quoting=True),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, fmt=fmt, longdouble_quoting=True),
+            legacy=legacy, longdouble_quoting=True),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy, dtype=dtype),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        'numpystr': lambda: repr_format if repr else str_formt}
+        'numpystr': lambda: repr_format if repr else str_format}
 
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
@@ -463,7 +463,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
 
     return formatdict
 
-def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
+def get_formatter(*, dtype=None, data=None, options=None):
     """
     Return a format function for a single element or scalar.
 
@@ -475,12 +475,7 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         to match.
     data : ndarray or None
         The data to be printed.  This can be an N-D array including all
-        elements to be printed.  It may also be ``None`` when ``fmt`` is
-        ``"s"`` or ``"r"``
-    fmt : str, repr literal, str literal, or None
-        A formatting string indicating the desired format style.
-        Using `None` means that the options should be used for formatting
-        and is identical to the empty string.
+        elements to be printed.
     options: dict
         Options dictionary, if given, must be compatible with
         `np.get_printoptions()` and values not None replace the default
@@ -495,22 +490,7 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
     if dtype is None:
         dtype = data.dtype
 
-    if fmt is not None and options is not None:
-        raise TypeError(
-                "get_formatter: either `fmt` or `options` can be given.")
-
-    if fmt == "":
-        fmt = None
-
-    if fmt is not None:
-        options = _default_format_options
-
-        if fmt is not repr and fmt is not str:
-            raise TypeError(
-                    "get_formatter(): only `repr`, `str`, and None (or '') "
-                    "is currently supported for `fmt`.")
-
-    formatdict = _get_formatdict(data, dtype=dtype, fmt=fmt, **options)
+    formatdict = _get_formatdict(data, dtype=dtype, **options)
 
     dtypeobj = dtype.type
 
@@ -541,16 +521,15 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
         if dtype.names is not None:
-            if fmt is not None:
-                return StructuredVoidFormat._from_fmt(dtype, fmt)
+            if data is None:
+                data = np.zeros((), dtype)
             return StructuredVoidFormat.from_data(data, **options)
         elif dtype.shape != ():
             # This path can only be hit in nested calls when data is not
             # given and `arr.dtype` cannot be a subarray dtype:
             assert data is None
             return SubArrayFormat(
-                get_formatter(dtype=dtype.base, fmt=fmt,
-                              options=None if fmt is not None else options))
+                get_formatter(dtype=dtype.base, options=options))
         else:
             return formatdict['void']()
     else:
@@ -978,7 +957,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, legacy=None, fmt=None, longdouble_quoting=False):
+                 *, legacy=None, longdouble_quoting=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -1001,24 +980,11 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
+        self.longdouble_quoting = (longdouble_quoting
+                                   and legacy > 125
+                                   and data.dtype == np.longdouble)
 
-        if fmt is repr and longdouble_quoting:
-            self._fmt = repr  # use longdouble quoting
-        elif fmt is str or fmt is repr:
-            # string and repr are identical, simply use str:
-            self._fmt = str
-        elif fmt is None:
-            self._fmt = None
-        else:
-            raise ValueError("Only `str` and `repr` format implemented.")
-
-        if self._fmt is not None:
-            # We should allow format, in which case we probably still want
-            # to left pad when data is given, right now data must be empty.
-            if data is not None:
-                raise NotImplementedError("no data supported for float `fmt`.")
-        else:
-            self.fillFormat(data)
+        self.fillFormat(data)
 
     def fillFormat(self, data):            
         # only the finite values are used to compute the number of digits
@@ -1105,12 +1071,6 @@ class FloatingFormat:
             self.pad_left = max(self.pad_left, nanlen - offset, inflen - offset)
 
     def __call__(self, x):
-        if self._fmt is repr:
-            # use `str()` for the value, but add quotes with longdouble:
-            return f"'{x[()]!s}'"
-        elif self._fmt is str:
-            return str(x[()])
-
         if not np.isfinite(x):
             with errstate(invalid='ignore'):
                 if np.isnan(x):
@@ -1140,7 +1100,7 @@ class FloatingFormat:
                                       sign=self.sign == '+',
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
-        return res
+        return f"'{res}'" if self.longdouble_quoting else res 
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
@@ -1345,16 +1305,14 @@ class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
                  sign=False, *, legacy=None,
-                 fmt=None, longdouble_quoting=False):
+                 longdouble_quoting=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        if fmt is repr and longdouble_quoting:
-            self._quote = True
-            fmt = str  # always use string for the float parts (no quote)
-        else:
-            self._quote = False
+        self.longdouble_quoting = (longdouble_quoting
+                                   and legacy > 125
+                                   and x.dtype == np.longdouble)
 
         floatmode_real = floatmode_imag = floatmode
         if legacy <= 113:
@@ -1363,11 +1321,11 @@ class ComplexFloatingFormat:
 
         self.real_format = FloatingFormat(
             x.real, precision, floatmode_real, suppress_small,
-            sign=sign, legacy=legacy, fmt=fmt, longdouble_quoting=False
+            sign=sign, legacy=legacy, longdouble_quoting=False
         )
         self.imag_format = FloatingFormat(
             x.imag, precision, floatmode_imag, suppress_small,
-            sign='+', legacy=legacy, fmt=fmt, longdouble_quoting=False
+            sign='+', legacy=legacy, longdouble_quoting=False
         )
 
     def __call__(self, x):
@@ -1378,9 +1336,7 @@ class ComplexFloatingFormat:
         sp = len(i.rstrip())
         i = i[:sp] + 'j' + i[sp:]
 
-        if not self._quote:
-            return r + i
-        return f"'{r}{i}'"
+        return f"'{r}{i}'" if self.longdouble_quoting else r + i
 
 class _TimelikeFormat:
     def __init__(self, data):
@@ -1509,14 +1465,6 @@ class StructuredVoidFormat:
             format_functions.append(format_function)
         return cls(format_functions)
 
-    @classmethod
-    def _from_fmt(cls, dtype, fmt):
-        format_functions = []
-        for field_name in dtype.names:
-            format_function = get_formatter(dtype=dtype[field_name], fmt=fmt)
-            format_functions.append(format_function)
-        return cls(format_functions)
-
     def __call__(self, x):
         str_fields = [
             format_function(field)
@@ -1534,11 +1482,17 @@ def _void_scalar_repr(x, is_repr=True):
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    fmt = repr if is_repr else str
-    val_repr = StructuredVoidFormat._from_fmt(x.dtype, fmt)(x)
+    options = _format_options.copy()
+    if options.get('formatter') is None:
+        options['formatter'] = {}
+    options['formatter'].setdefault('float_kind', str)
+    val_repr = StructuredVoidFormat.from_data(array(x), **options)(x)
     if not is_repr:
         return val_repr
-    return f"np.void({val_repr}, dtype={x.dtype!s})"
+    cls = type(x)
+    cls_fqn = cls.__module__.replace("numpy", "np") + "." + cls.__name__
+    void_dtype = np.dtype((np.void, x.dtype))
+    return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
 _typelessdata = [int_, float_, complex_, bool_]

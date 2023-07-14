@@ -4076,11 +4076,10 @@ class MaskedArray(ndarray):
             # The dtype of the fill value should match that of the array
             # and it is unnecessary to print the full `np.int64(...)`
             # Allow strings: "N/A" has length 3 so would mismatch often.
-            fill_repr = np.core.arrayprint.get_formatter(
-                    dtype=self._fill_value.dtype, fmt=repr)(self.fill_value)
+            fill_repr = str(self.fill_value)
         else:
-            # Fall back to the normal repr just in case something is weird:
             fill_repr = repr(self.fill_value)
+
         reprs['fill_value'] = fill_repr
         if dtype_needed:
             reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
