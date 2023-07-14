@@ -41,6 +41,16 @@
  *     for a matching loop/promoter.
  *     I.e. for Numba a promoter could even add the desired loop.
  *
+ * - PyUFunc_GiveFloatingpointErrors:
+ *
+ *     Signal a floating point error respecting the error signaling setting in
+ *     the NumPy errstate. Takes the name of the operation to use in the error
+ *     message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
+ *     NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID. This allows for
+ *     custom floating point error signaling in cast and ufunc implementations
+ *     provided by DTypes without a need to query the errstate or reimplement
+ *     NumPy's error signaling.
+ *
  * - PyArrayInitDTypeMeta_FromSpec:
  *
  *     Initialize a new DType.  It must currently be a static Python C type
@@ -215,6 +225,11 @@ typedef int _ufunc_addpromoter_func(
         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter);
 #define PyUFunc_AddPromoter \
     (*(_ufunc_addpromoter_func *)(__experimental_dtype_api_table[1]))
+
+typedef int _give_floatingpoint_errors_func(
+        const char *name, int fpe_errors);
+#define PyUFunc_GiveFloatingpointErrors \
+  (*(_give_floatingpoint_errors_func *)(__experimental_dtype_api_table[8]))
 
 #define PyArrayDTypeMeta_Type \
     (*(PyTypeObject *)__experimental_dtype_api_table[2])

@@ -647,10 +647,10 @@ def savez_compressed(file, *args, **kwds):
     Save several arrays into a single file in compressed ``.npz`` format.
 
     Provide arrays as keyword arguments to store them under the
-    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+    corresponding name in the output file: ``savez_compressed(fn, x=x, y=y)``.
 
-    If arrays are specified as positional arguments, i.e., ``savez(fn,
-    x, y)``, their names will be `arr_0`, `arr_1`, etc.
+    If arrays are specified as positional arguments, i.e.,
+    ``savez_compressed(fn, x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
