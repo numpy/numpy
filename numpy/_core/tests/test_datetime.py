@@ -304,11 +304,12 @@ class TestDateTime:
                      np.datetime64('1920'))
 
     def test_datetime_scalar_construction_timezone(self):
+        msg = "no explicit representation of timezones available for np.datetime64"
         # verify that supplying an explicit timezone works, but is deprecated
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(np.datetime64('2000-01-01T00Z'),
                          np.datetime64('2000-01-01T00'))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(np.datetime64('2000-01-01T00-08'),
                          np.datetime64('2000-01-01T08'))
 
@@ -1600,6 +1601,7 @@ class TestDateTime:
         assert_raises(ValueError, lambda: np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
+        msg = "no explicit representation of timezones available for np.datetime64"
         # Allow space instead of 'T' between date and time
         assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['1980-02-29 01:02:03'], np.dtype('M8[s]')))
@@ -1610,32 +1612,33 @@ class TestDateTime:
         assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['-1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # UTC specifier
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(
                 np.array(['+1980-02-29T01:02:03'], np.dtype('M8[s]')),
                 np.array(['+1980-02-29 01:02:03Z'], np.dtype('M8[s]')))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(
                 np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
                 np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8[s]')))
         # Time zone offset
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(
                 np.array(['1980-02-29T02:02:03'], np.dtype('M8[s]')),
                 np.array(['1980-02-29 00:32:03-0130'], np.dtype('M8[s]')))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(
                 np.array(['1980-02-28T22:32:03'], np.dtype('M8[s]')),
                 np.array(['1980-02-29 00:02:03+01:30'], np.dtype('M8[s]')))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(
                 np.array(['1980-02-29T02:32:03.506'], np.dtype('M8[s]')),
                 np.array(['1980-02-29 00:32:03.506-02'], np.dtype('M8[s]')))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_equal(np.datetime64('1977-03-02T12:30-0230'),
                          np.datetime64('1977-03-02T15:00'))
 
     def test_string_parser_error_check(self):
+        msg = "no explicit representation of timezones available for np.datetime64"
         # Arbitrary bad string
         assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
         # Character after year must be '-'
@@ -1702,19 +1705,19 @@ class TestDateTime:
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:60'],
                                                         np.dtype('M8[us]'))
         # Timezone offset must within a reasonable range
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+0661'],
                                                             np.dtype('M8[us]'))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+2500'],
                                                             np.dtype('M8[us]'))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-0070'],
                                                             np.dtype('M8[us]'))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-3000'],
                                                             np.dtype('M8[us]'))
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-25:00'],
                                                             np.dtype('M8[us]'))
 
@@ -2389,6 +2392,7 @@ class TestDateTime:
                      np.zeros(len(holidays), dtype='?'))
 
     def test_datetime_y2038(self):
+        msg = "no explicit representation of timezones available for np.datetime64"
         # Test parsing on either side of the Y2038 boundary
         a = np.datetime64('2038-01-19T03:14:07')
         assert_equal(a.view(np.int64), 2**31 - 1)
@@ -2397,10 +2401,10 @@ class TestDateTime:
 
         # Test parsing on either side of the Y2038 boundary with
         # a manually specified timezone offset
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             a = np.datetime64('2038-01-19T04:14:07+0100')
             assert_equal(a.view(np.int64), 2**31 - 1)
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(UserWarning, match=msg):
             a = np.datetime64('2038-01-19T04:14:08+0100')
             assert_equal(a.view(np.int64), 2**31)
 
