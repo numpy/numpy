@@ -304,7 +304,8 @@ class TestDateTime:
                      np.datetime64('1920'))
 
     def test_datetime_scalar_construction_timezone(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         # verify that supplying an explicit timezone works, but is deprecated
         with pytest.warns(UserWarning, match=msg):
             assert_equal(np.datetime64('2000-01-01T00Z'),
@@ -1601,7 +1602,8 @@ class TestDateTime:
         assert_raises(ValueError, lambda: np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         # Allow space instead of 'T' between date and time
         assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['1980-02-29 01:02:03'], np.dtype('M8[s]')))
@@ -1638,7 +1640,8 @@ class TestDateTime:
                          np.datetime64('1977-03-02T15:00'))
 
     def test_string_parser_error_check(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         # Arbitrary bad string
         assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
         # Character after year must be '-'
@@ -2392,7 +2395,8 @@ class TestDateTime:
                      np.zeros(len(holidays), dtype='?'))
 
     def test_datetime_y2038(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         # Test parsing on either side of the Y2038 boundary
         a = np.datetime64('2038-01-19T03:14:07')
         assert_equal(a.view(np.int64), 2**31 - 1)

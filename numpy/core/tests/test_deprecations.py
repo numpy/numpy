@@ -148,7 +148,8 @@ class TestDatetime64Timezone(_DeprecationTestCase):
     naive fashion.
     """
     def test_string(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
             np.datetime64('2000-01-01T00+01')
 
@@ -156,7 +157,8 @@ class TestDatetime64Timezone(_DeprecationTestCase):
             np.datetime64('2000-01-01T00Z')
 
     def test_datetime(self):
-        msg = "no explicit representation of timezones available for np.datetime64"
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
             t0 = np.datetime64('2023-06-09T12:18:40Z', 'ns')
 
