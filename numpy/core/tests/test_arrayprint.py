@@ -524,6 +524,93 @@ class TestArray2String:
         gc.enable()
         assert_(r1 == r2)
 
+    def test_with_sign(self):
+        # mixed negative and positive value array
+        a = np.array([-2, 0, 3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[-2 +0 +3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[-2  0  3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[-2  0  3]'
+        )
+        # all non-negative array
+        a = np.array([2, 0, 3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[+2 +0 +3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[2 0 3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[ 2  0  3]'
+        )
+        # all negative array
+        a = np.array([-2, -1, -3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[-2 -1 -3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[-2 -1 -3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[-2 -1 -3]'
+        )
+        # 2d array mixed negative and positive
+        a = np.array([[10, -1, 1, 1], [10, 10, 10, 10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[+10  -1  +1  +1]\n [+10 +10 +10 +10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[10 -1  1  1]\n [10 10 10 10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[10 -1  1  1]\n [10 10 10 10]]'
+        )
+        # 2d array all positive
+        a = np.array([[10, 0, 1, 1], [10, 10, 10, 10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[+10  +0  +1  +1]\n [+10 +10 +10 +10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[10  0  1  1]\n [10 10 10 10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[ 10   0   1   1]\n [ 10  10  10  10]]'
+        )
+        # 2d array all negative
+        a = np.array([[-10, -1, -1, -1], [-10, -10, -10, -10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+
+
 class TestPrintOptions:
     """Test getting and setting global print options."""
 
