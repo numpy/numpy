@@ -7,7 +7,6 @@ import datetime as dt
 import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType, GenericAlias
-from contextlib import ContextDecorator
 from contextlib import contextmanager
 
 from numpy._pytesttester import PytestTester
@@ -991,6 +990,8 @@ _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 class _ArrayOrScalarCommon:
     @property
     def T(self: _ArraySelf) -> _ArraySelf: ...
+    @property
+    def mT(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def data(self) -> memoryview: ...
     @property
@@ -3154,19 +3155,6 @@ infty: Final[float]
 nan: Final[float]
 pi: Final[float]
 
-ERR_IGNORE: L[0]
-ERR_WARN: L[1]
-ERR_RAISE: L[2]
-ERR_CALL: L[3]
-ERR_PRINT: L[4]
-ERR_LOG: L[5]
-ERR_DEFAULT: L[521]
-
-SHIFT_DIVIDEBYZERO: L[0]
-SHIFT_OVERFLOW: L[3]
-SHIFT_UNDERFLOW: L[6]
-SHIFT_INVALID: L[9]
-
 FPE_DIVIDEBYZERO: L[1]
 FPE_OVERFLOW: L[2]
 FPE_UNDERFLOW: L[4]
@@ -3330,17 +3318,13 @@ class _CopyMode(enum.Enum):
 # Warnings
 class RankWarning(UserWarning): ...
 
-_CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
+_CallType = TypeVar("_CallType", bound=Callable[..., Any])
 
-class errstate(Generic[_CallType], ContextDecorator):
-    call: _CallType
-    kwargs: _ErrDictOptional
-
-    # Expand `**kwargs` into explicit keyword-only arguments
+class errstate:
     def __init__(
         self,
         *,
-        call: _CallType = ...,
+        call: _ErrFunc | _SupportsWrite[str] = ...,
         all: None | _ErrKind = ...,
         divide: None | _ErrKind = ...,
         over: None | _ErrKind = ...,
@@ -3355,6 +3339,7 @@ class errstate(Generic[_CallType], ContextDecorator):
         traceback: None | TracebackType,
         /,
     ) -> None: ...
+    def __call__(self, func: _CallType) -> _CallType: ...
 
 @contextmanager
 def _no_nep50_warning() -> Generator[None, None, None]: ...

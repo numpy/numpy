@@ -17,7 +17,10 @@
 # Binary compatibility version number. This number is increased whenever the
 # C-API is changed such that binary compatibility is broken, i.e. whenever a
 # recompile of extension modules is needed.
-C_ABI_VERSION = '0x01000009'
+# NOTE: This is the version against which an extension module was compiled.
+#       As of now compiling against version 2 (0x02000000) yields version 1
+#       compatible binaries (subset).  See also NEP 53.
+C_ABI_VERSION = '0x02000000'
 
 # Minor API version.  This number is increased whenever a change is made to the
 # C-API -- whether it breaks binary compatibility or not.  Some changes, such
@@ -45,11 +48,16 @@ C_ABI_VERSION = '0x01000009'
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
 # 0x00000011 - 1.25.x
-C_API_VERSION = '0x00000011'
+# 0x00000012 - 2.0.x
+C_API_VERSION = '0x00000012'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
-run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION, check: true)
+r = run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION)
+
+if r.returncode() != 0
+  error('verify_c_api_version.py failed with output:\n' + r.stderr().strip())
+endif
 
 
 # Generate config.h and _numpyconfig.h
@@ -357,29 +365,93 @@ foreach intrin: optional_intrinsics
   endif
 endforeach
 
-# long double representation detection (see setup_common.py)
-# TODO: this is still incomplete, and different from how it's done in the
-# numpy.distutils based build, see https://github.com/mesonbuild/meson/issues/11068
-longdouble_size = cc.sizeof('long double')
-if longdouble_size == 8
-  if host_machine.endian() == 'little'
-    longdouble_format = 'IEEE_DOUBLE_LE'
-  else
-    longdouble_format = 'IEEE_DOUBLE_BE'
-  endif
-elif longdouble_size == 12
-  error('This should not be possible, 12 bits of "content" should still result in sizeof() being 16. Please report this error!'
-  )
-elif longdouble_size == 16
-  if host_machine.endian() == 'little'
-    # FIXME: this varies, there's multiple formats here! Not yet implemented.
-    #        TBD how we deal with the mess of old long double formats.
-    longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
-  else
-    error('No idea what this is ....')
-  endif
-else
-  error('Unknown long double size: ' + londouble_size)
+# This is a port of the old python code for identifying the long double
+# representation to C.  The old Python code is in this range:
+# https://github.com/numpy/numpy/blob/eead09a3d02c09374942cdc787c0b5e4fe9e7472/numpy/core/setup_common.py#L264-L434
+# This port is in service of solving gh-23972
+# as well as https://github.com/mesonbuild/meson/issues/11068
+longdouble_format = meson.get_compiler('c').run(
+'''
+#include <stdio.h>
+#include <string.h>
+
+#define repcmp(z) (memcmp((const char *)&foo.x, z, sizeof(foo.x)) == 0)
+
+const struct {
+  char before[16];
+  long double x;
+  char after[8];
+} foo = {{'\0'}, -123456789.0, {'\0'}};
+
+int main(void) {
+  switch (sizeof(foo.x)) {
+  case 8: {
+    if (repcmp(
+            ((const char[]){0000, 0000, 0000, 0124, 0064, 0157, 0235, 0301}))) {
+      fprintf(stdout, "IEEE_DOUBLE_LE");
+      return 0;
+    }
+    if (repcmp(
+            ((const char[]){0301, 0235, 0157, 0064, 0124, 0000, 0000, 0000}))) {
+      fprintf(stdout, "IEEE_DOUBLE_BE");
+      return 0;
+    }
+    fprintf(stdout, "UNKNOWN");
+    return 1;
+  }
+  case 12: {
+    if (repcmp(((const char[]){0000, 0000, 0000, 0000, 0240, 0242, 0171, 0353,
+                               0031, 0300, 0000, 0000}))) {
+      fprintf(stdout, "INTEL_EXTENDED_12_BYTES_LE");
+      return 0;
+    }
+    if (repcmp(((const char[]){0300, 0031, 0000, 0000, 0353, 0171, 0242, 0240,
+                               0000, 0000, 0000, 0000}))) {
+      fprintf(stdout, "MOTOROLA_EXTENDED_12_BYTES_BE");
+      return 0;
+    }
+    fprintf(stdout, "UNKNOWN");
+    return 1;
+  }
+  case 16: {
+    if (repcmp(
+            ((const char[]){0000, 0000, 0000, 0000, 0240, 0242, 0171, 0353,
+                            0031, 0300, 0000, 0000, 0000, 0000, 0000, 0000}))) {
+      fprintf(stdout, "INTEL_EXTENDED_16_BYTES_LE");
+      return 0;
+    }
+    if (repcmp(
+            ((const char[]){0300, 0031, 0326, 0363, 0105, 0100, 0000, 0000,
+                            0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000}))) {
+      fprintf(stdout, "IEEE_QUAD_BE");
+      return 0;
+    }
+    if (repcmp(
+            ((const char[]){0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+                            0000, 0000, 0100, 0105, 0363, 0326, 0031, 0300}))) {
+      fprintf(stdout, "IEEE_QUAD_LE");
+      return 0;
+    }
+    if (repcmp(
+            ((const char[]){0000, 0000, 0000, 0124, 0064, 0157, 0235, 0301,
+                            0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000}))) {
+      fprintf(stdout, "IBM_DOUBLE_DOUBLE_LE");
+      return 0;
+    }
+    if (repcmp(
+            ((const char[]){0301, 0235, 0157, 0064, 0124, 0000, 0000, 0000,
+                            0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000}))) {
+      fprintf(stdout, "IBM_DOUBLE_DOUBLE_BE");
+      return 0;
+    }
+    fprintf(stdout, "UNKNOWN");
+    return 1;
+  }
+  }
+}
+''').stdout()
+if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
+  error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
 endif
 cdata.set10('HAVE_LDOUBLE_' + longdouble_format, true)
 
@@ -469,6 +541,8 @@ npymath_lib = static_library('npymath',
   dependencies: py_dep,
   install: true,
   install_dir: np_dir / 'core/lib',
+  name_prefix: name_prefix_staticlib,
+  name_suffix: name_suffix_staticlib,
 )
 
 dir_separator = '/'
@@ -859,7 +933,7 @@ py.extension_module('_multiarray_umath',
     'src/npymath',
     'src/umath',
   ],
-  dependencies: blas,
+  dependencies: blas_dep,
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/core',

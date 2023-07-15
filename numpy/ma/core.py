@@ -35,11 +35,9 @@ from numpy.core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import (
-    getargspec, formatargspec, long, unicode, bytes
-    )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
+from numpy._utils._inspect import getargspec, formatargspec
 
 
 __all__ = [
@@ -5391,7 +5389,7 @@ class MaskedArray(ndarray):
             return self - expand_dims(m, axis)
 
     def var(self, axis=None, dtype=None, out=None, ddof=0,
-            keepdims=np._NoValue):
+            keepdims=np._NoValue, mean=np._NoValue):
         """
         Returns the variance of the array elements along given axis.
 
@@ -5405,10 +5403,17 @@ class MaskedArray(ndarray):
         numpy.ndarray.var : corresponding function for ndarrays
         numpy.var : Equivalent function
         """
-        kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
+        kwargs = {}
+
+        if keepdims is not np._NoValue:
+            kwargs['keepdims'] = keepdims
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:
+
+            if mean is not np._NoValue:
+                kwargs['mean'] = mean
+
             ret = super().var(axis=axis, dtype=dtype, out=out, ddof=ddof,
                               **kwargs)[()]
             if out is not None:
@@ -5419,7 +5424,12 @@ class MaskedArray(ndarray):
 
         # Some data are masked, yay!
         cnt = self.count(axis=axis, **kwargs) - ddof
-        danom = self - self.mean(axis, dtype, keepdims=True)
+
+        if mean is not np._NoValue:
+            danom = self - mean
+        else:
+            danom = self - self.mean(axis, dtype, keepdims=True)
+
         if iscomplexobj(self):
             danom = umath.absolute(danom) ** 2
         else:
@@ -5455,7 +5465,7 @@ class MaskedArray(ndarray):
     var.__doc__ = np.var.__doc__
 
     def std(self, axis=None, dtype=None, out=None, ddof=0,
-            keepdims=np._NoValue):
+            keepdims=np._NoValue, mean=np._NoValue):
         """
         Returns the standard deviation of the array elements along given axis.
 
@@ -6093,6 +6103,41 @@ class MaskedArray(ndarray):
     swapaxes = _arraymethod('swapaxes')
     T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
+
+    @property
+    def mT(self):
+        """
+        Return the matrix-transpose of the masked array.
+
+        The matrix transpose is the transpose of the last two dimensions, even
+        if the array is of higher dimension.
+
+        .. versionadded:: 2.0
+
+        Returns
+        -------
+        result: MaskedArray
+            The masked array with the last two dimensions transposed
+
+        Raises
+        ------
+        ValueError
+            If the array is of dimension less than 2.
+
+        See Also
+        --------
+        ndarray.mT:
+            Equivalent method for arrays
+        """
+
+        if self.ndim < 2:
+            raise ValueError("matrix transpose with ndim < 2 is undefined")
+
+        if self._mask is nomask:
+            return masked_array(data=self._data.mT)
+        else:
+            return masked_array(data=self.data.mT, mask=self.mask.mT)
+
 
     def tolist(self, fill_value=None):
         """
@@ -7062,7 +7107,7 @@ def compressed(x):
 
     Examples
     --------
-    
+
     Create an array with negative values masked:
 
     >>> import numpy as np

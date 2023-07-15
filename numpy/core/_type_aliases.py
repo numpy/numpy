@@ -17,7 +17,6 @@ and sometimes other mappings too.
 
 """
 
-from numpy.compat import unicode
 from numpy.core._string_helpers import english_lower
 from numpy.core.multiarray import typeinfo, dtype
 from numpy.core._dtype import _kind_name
@@ -195,10 +194,11 @@ _set_up_aliases()
 
 
 sctypes = {'int': [],
-           'uint':[],
-           'float':[],
-           'complex':[],
-           'others':[bool, object, bytes, unicode, void]}
+           'uint': [],
+           'float': [],
+           'complex': [],
+           'others': [bool, object, bytes, str, void]}
+
 
 def _add_array_type(typename, bits):
     try:

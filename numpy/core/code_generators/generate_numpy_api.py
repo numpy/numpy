@@ -71,8 +71,12 @@ _import_array(void)
       return -1;
   }
 
-  /* Perform runtime check of C API version */
-  if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
+  /*
+   * Perform runtime check of C API version.  As of now NumPy 2.0 is ABI
+   * backwards compatible (in the exposed feature subset!) for all practical
+   * purposes.
+   */
+  if (NPY_VERSION < PyArray_GetNDArrayCVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
              "ABI version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
@@ -216,6 +220,11 @@ def do_generate_api(targets, sources):
     extension_list = []
     for name, index in genapi.order_dict(multiarray_api_index):
         api_item = multiarray_api_dict[name]
+        # In NumPy 2.0 the API may have holes (which may be filled again)
+        # in that case, add `NULL` to fill it.
+        while len(init_list) < api_item.index:
+            init_list.append("        NULL")
+
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())

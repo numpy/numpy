@@ -12,7 +12,6 @@ from numpy.distutils import log
 from numpy.distutils.msvccompiler import lib_opts_if_msvc
 from distutils.dep_util import newer
 from sysconfig import get_config_var
-from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means
@@ -78,6 +77,13 @@ def can_link_svml():
     return ("x86_64" in platform
             and "linux" in platform
             and sys.maxsize > 2**31)
+
+def can_link_svml_fp16():
+    """SVML FP16 requires binutils >= 2.38 for an updated assembler
+    """
+    if can_link_svml():
+        binutils_ver = os.popen("ld -v").readlines()[0].strip()[-4:]
+        return float(binutils_ver) >= 2.38
 
 def check_git_submodules():
     out = os.popen("git submodule status")
@@ -809,8 +815,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
             join('include', 'numpy', 'arrayscalars.h'),
-            join('include', 'numpy', 'noprefix.h'),
-            join('include', 'numpy', 'npy_interrupt.h'),
             join('include', 'numpy', 'npy_3kcompat.h'),
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
@@ -1009,6 +1013,8 @@ def configuration(parent_package='',top_path=None):
         # The ordering of names returned by glob is undefined, so we sort
         # to make builds reproducible.
         svml_objs.sort()
+        if not can_link_svml_fp16():
+            svml_objs = [o for o in svml_objs if not o.endswith('_h_la.s')]
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +

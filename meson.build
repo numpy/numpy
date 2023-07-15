@@ -4,7 +4,7 @@ project(
   # Note that the git commit hash cannot be added dynamically here
   # It is dynamically added upon import by versioneer
   # See `numpy/__init__.py`
-  version: '1.24.0.dev0',
+  version: '2.0.0.dev0',
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [
@@ -52,6 +52,15 @@ endif
 add_project_arguments(
   cc.get_supported_arguments( '-fno-strict-aliasing'), language : 'c'
 )
+#
+# Clang defaults to a non-strict floating error point model, but we need strict
+# behavior. `-ftrapping-math` is equivalent to `-ffp-exception-behavior=strict`.
+# Note that this is only supported on macOS arm64 as of XCode 14.3
+if cc.get_id() == 'clang'
+  add_project_arguments(
+    cc.get_supported_arguments('-ftrapping-math'), language: ['c', 'cpp'],
+  )
+endif
 
 # Generate version number. Note that this will not (yet) update the version
 # number seen by pip or reflected in wheel filenames. See

@@ -448,7 +448,7 @@ You can use ``np.newaxis`` to add a new axis::
   >>> a2.shape
   (1, 6)
 
-You can explicitly convert a 1D array with either a row vector or a column
+You can explicitly convert a 1D array to either a row vector or a column
 vector using ``np.newaxis``. For example, you can convert a 1D array to a row
 vector by inserting an axis along the first dimension::
 

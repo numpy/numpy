@@ -5,7 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode
+from numpy._utils._convertions import asbytes, asunicode
 
 
 def _decode_line(line, encoding=None):

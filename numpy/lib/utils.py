@@ -267,6 +267,7 @@ def deprecate_with_doc(msg):
 # Determine if two arrays can share memory
 #--------------------------------------------
 
+@deprecate
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.
@@ -324,6 +325,7 @@ def byte_bounds(a):
 #-----------------------------------------------------------------------------
 
 
+@deprecate
 def who(vardict=None):
     """
     Print the NumPy arrays in the given dictionary.
@@ -1024,6 +1026,7 @@ def _getmembers(item):
     return members
 
 
+@deprecate
 def safe_eval(source):
     """
     Protected string evaluation.

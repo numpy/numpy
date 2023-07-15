@@ -2266,17 +2266,18 @@ class vectorize:
 
     Decorator syntax is supported.  The decorator can be called as
     a function to provide keyword arguments.
-    >>>@np.vectorize
-    ...def identity(x):
-    ...    return x
+
+    >>> @np.vectorize
+    ... def identity(x):
+    ...     return x
     ...
-    >>>identity([0, 1, 2])
+    >>> identity([0, 1, 2])
     array([0, 1, 2])
-    >>>@np.vectorize(otypes=[float])
-    ...def as_float(x):
-    ...    return x
+    >>> @np.vectorize(otypes=[float])
+    ... def as_float(x):
+    ...     return x
     ...
-    >>>as_float([0, 1, 2])
+    >>> as_float([0, 1, 2])
     array([0., 1., 2.])
     """
     def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
@@ -5049,7 +5050,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
     ogrid : Construct an open multi-dimensional "meshgrid" using indexing
             notation.
-    how-to-index
+    :ref:`how-to-index`
 
     Examples
     --------

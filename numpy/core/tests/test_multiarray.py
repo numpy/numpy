@@ -15,9 +15,7 @@ import re
 import weakref
 import pytest
 from contextlib import contextmanager
-
-from numpy.compat import pickle
-
+import pickle
 import pathlib
 import builtins
 from decimal import Decimal
@@ -9195,10 +9193,10 @@ class TestBytestringArrayNonzero:
     def test_empty_bstring_array_is_falsey(self):
         assert_(not np.array([''], dtype=str))
 
-    def test_whitespace_bstring_array_is_falsey(self):
+    def test_whitespace_bstring_array_is_truthy(self):
         a = np.array(['spam'], dtype=str)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_bstring_array_is_falsey(self):
         a = np.array(['spam'], dtype=str)
@@ -9244,10 +9242,10 @@ class TestUnicodeArrayNonzero:
     def test_empty_ustring_array_is_falsey(self):
         assert_(not np.array([''], dtype=np.str_))
 
-    def test_whitespace_ustring_array_is_falsey(self):
+    def test_whitespace_ustring_array_is_truthy(self):
         a = np.array(['eggs'], dtype=np.str_)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_ustring_array_is_falsey(self):
         a = np.array(['eggs'], dtype=np.str_)

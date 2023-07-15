@@ -1,0 +1,2 @@
+* The ``np.core.umath_tests`` submodule has been removed from the public API.
+  (Deprecated in NumPy 1.15)

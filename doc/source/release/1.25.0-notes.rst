@@ -15,8 +15,8 @@ Highlights are:
 - Object arrays are now supported in einsum
 - Support for inplace matrix multiplication (``@=``).
 
-We will be releasing a NumPy 1.26 when Python 12 comes out. That is needed
-because distutils has been dropped by Python 12 and we will be switching to using
+We will be releasing a NumPy 1.26 when Python 3.12 comes out. That is needed
+because distutils has been dropped by Python 3.12 and we will be switching to using
 meson for future builds. The next mainline release will be NumPy 2.0.0. We plan
 that the 2.0 series will still support downstream projects built against earlier
 versions of NumPy.
@@ -285,22 +285,24 @@ subclasses before using ``super().__array_ufunc__``.
 
 (`gh-23240 <https://github.com/numpy/numpy/pull/23240>`__)
 
-By default, the exported NumPy C API is now compatible with NumPy 1.19
-----------------------------------------------------------------------
-Starting with NumPy 1.25 when including NumPy headers, NumPy now
-defaults to exposing a backwards compatible API.
-This means that by default binaries such as wheels build against
-NumPy 1.25 will also work with NumPy 1.16 because it has the same API version
-as NumPy 1.19 which is the oldest NumPy version compatible with Python 3.9.
-
-You can customize this behavior using::
+Compiling against the NumPy C API is now backwards compatible by default
+------------------------------------------------------------------------
+NumPy now defaults to exposing a backwards compatible subset of the C-API.
+This makes the use of ``oldest-supported-numpy`` unnecessary.
+Libraries can override the default minimal version to be compatible with
+using::
 
     #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
 
-or the equivalent ``-D`` option to the compiler.  For more details
-please see :ref:`for-downstream-package-authors`.
-A change should only be required in rare cases when a package relies on newly
-added C-API.
+before including NumPy or by passing the equivalent ``-D`` option to the
+compiler.
+The NumPy 1.25 default is ``NPY_1_19_API_VERSION``.  Because the NumPy 1.19
+C API was identical to the NumPy 1.16 one resulting programs will be compatible
+with NumPy 1.16 (from a C-API perspective).
+This default will be increased in future non-bugfix releases.
+You can still compile against an older NumPy version and run on a newer one.
+
+For more details please see :ref:`for-downstream-package-authors`.
 
 (`gh-23528 <https://github.com/numpy/numpy/pull/23528>`__)
 
@@ -549,6 +551,16 @@ the cast to float.
 
 Performance improvements and changes
 ====================================
+
+Faster ``np.argsort`` on AVX-512 enabled processors
+---------------------------------------------------
+32-bit and 64-bit quicksort algorithm for np.argsort gain up to 6x speed up on
+processors that support AVX-512 instruction set.
+
+Thanks to `Intel corporation <https://open.intel.com/>`_ for sponsoring this
+work.
+
+(`gh-23707 <https://github.com/numpy/numpy/pull/23707>`__)
 
 Faster ``np.sort`` on AVX-512 enabled processors
 ------------------------------------------------

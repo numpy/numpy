@@ -482,9 +482,12 @@ class finfo:
     _finfo_cache = {}
 
     def __new__(cls, dtype):
-        obj = cls._finfo_cache.get(dtype)  # most common path
-        if obj is not None:
-            return obj
+        try:
+            obj = cls._finfo_cache.get(dtype)  # most common path
+            if obj is not None:
+                return obj
+        except TypeError:
+            pass
 
         if dtype is None:
             # Deprecated in NumPy 1.25, 2023-01-16

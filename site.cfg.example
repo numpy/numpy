@@ -260,6 +260,6 @@
 #library_dirs = /opt/FJSVstclanga/v1.1.0/lib64
 #include_dirs = /opt/FJSVstclanga/v1.1.0/clang-comp/include
 # Single-threaded version.
-#libraies = fjlapacksve
+#libraries = fjlapacksve
 # Multi-threaded version. Python itself must be built by Fujitsu compiler.
-#libraies = fjlapackexsve
+#libraries = fjlapackexsve

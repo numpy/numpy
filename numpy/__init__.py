@@ -66,7 +66,7 @@ testing
     NumPy testing tools
 distutils
     Enhancements to distutils with support for
-    Fortran compilers support and more.
+    Fortran compilers support and more (for Python <= 3.11)
 
 Utilities
 ---------
@@ -135,10 +135,10 @@ else:
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
+    __expired_functions__ = {}
 
     from . import core
     from .core import *
-    from . import compat
     from . import exceptions
     from . import dtypes
     from . import lib
@@ -259,12 +259,13 @@ else:
     # a warning, and calling the function will raise an exception.
     _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
                         'ppmt', 'pv', 'rate']
-    __expired_functions__ = {
-        name: (f'In accordance with NEP 32, the function {name} was removed '
-               'from NumPy version 1.20.  A replacement for this function '
-               'is available in the numpy_financial library: '
-               'https://pypi.org/project/numpy-financial')
-        for name in _financial_names}
+    for name in _financial_names:
+        __expired_functions__[name] = (
+            f'In accordance with NEP 32, the function {name} was removed '
+            'from NumPy version 1.20.  A replacement for this function '
+            'is available in the numpy_financial library: '
+            'https://pypi.org/project/numpy-financial'
+        )
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -318,6 +319,9 @@ else:
         elif attr == 'Tester':
             "Removed in NumPy 1.25.0"
             raise RuntimeError("Tester was removed in NumPy 1.25.")
+        elif attr == "compat":
+            import numpy.compat as compat
+            return compat
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))

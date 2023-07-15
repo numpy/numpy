@@ -21,4 +21,10 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
+/*
+ * Return matrix transpose (swap last two dimensions).
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixTranspose(PyArrayObject *ap);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */

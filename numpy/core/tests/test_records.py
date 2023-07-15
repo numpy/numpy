@@ -3,6 +3,8 @@ import textwrap
 from io import BytesIO
 from os import path
 from pathlib import Path
+import pickle
+
 import pytest
 
 import numpy as np
@@ -10,7 +12,6 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath,
     )
-from numpy.compat import pickle
 
 
 class TestFromrecords:

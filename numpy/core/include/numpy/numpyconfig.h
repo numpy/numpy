@@ -83,6 +83,7 @@
 #define NPY_1_23_API_VERSION 0x00000010
 #define NPY_1_24_API_VERSION 0x00000010
 #define NPY_1_25_API_VERSION 0x00000011
+#define NPY_2_0_API_VERSION 0x00000012
 
 
 /*
@@ -113,7 +114,7 @@
  * Users of the stable ABI may wish to target the last Python that is not
  * end of life.  This would be 3.8 at NumPy 1.25 release time.
  * 1.17 as default was the choice of oldest-support-numpy at the time and
- * has in practice no limit (comapared to 1.19).  Even earlier becomes legacy.
+ * has in practice no limit (compared to 1.19).  Even earlier becomes legacy.
  */
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /* NumPy internal build, always use current version. */

@@ -2,6 +2,7 @@ import warnings
 import itertools
 import sys
 import ctypes as ct
+import pickle
 
 import pytest
 from pytest import param
@@ -17,7 +18,6 @@ from numpy.testing import (
     assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
     )
 from numpy.testing._private.utils import requires_memory
-from numpy.compat import pickle
 
 
 import cython
@@ -53,9 +53,8 @@ class TestUfuncKwargs:
         assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
-    def test_extobj_refcount(self):
-        # Should not segfault with USE_DEBUG.
-        assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
+    def test_extobj_removed(self):
+        assert_raises(TypeError, np.add, 1, 2, extobj=[4096])
 
 
 class TestUfuncGenericLoops:
@@ -2224,6 +2223,14 @@ class TestUfunc:
         a = np.array([1, 2, 3])
         np.maximum.at(a, [0], 0)
         assert_equal(a, np.array([1, 2, 3]))
+
+    def test_at_negative_indexes(self):
+        a = np.arange(10)
+        indxs = np.array([-1, 1, -1, 2])
+        np.add.at(a, indxs, 1)
+        assert a[-1] == 11  # issue 24147
+        assert a[1] == 2
+        assert a[2] == 3
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError

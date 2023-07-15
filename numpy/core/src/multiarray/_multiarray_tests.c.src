@@ -466,57 +466,6 @@ clean_ax:
     return NULL;
 }
 
-/* PyDataMem_SetHook tests */
-static int malloc_free_counts[2];
-static PyDataMem_EventHookFunc *old_hook = NULL;
-static void *old_data;
-
-static void test_hook(void *old, void *new, size_t size, void *user_data)
-{
-    int* counters = (int *) user_data;
-    if (old == NULL) {
-        counters[0]++; /* malloc counter */
-    }
-    if (size == 0) {
-        counters[1]++; /* free counter */
-    }
-}
-
-static PyObject*
-test_pydatamem_seteventhook_start(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    malloc_free_counts[0] = malloc_free_counts[1] = 0;
-    old_hook = PyDataMem_SetEventHook(test_hook, (void *) malloc_free_counts, &old_data);
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-test_pydatamem_seteventhook_end(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyDataMem_EventHookFunc *my_hook;
-    void *my_data;
-
-    my_hook = PyDataMem_SetEventHook(old_hook, old_data, &my_data);
-    if ((my_hook != test_hook) || (my_data != (void *) malloc_free_counts)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "hook/data was not the expected test hook");
-        return NULL;
-    }
-
-    if (malloc_free_counts[0] == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "malloc count is zero after test");
-        return NULL;
-    }
-    if (malloc_free_counts[1] == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "free count is zero after test");
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
 
 typedef void (*inplace_map_binop)(PyArrayMapIterObject *, PyArrayIterObject *);
 
@@ -802,43 +751,6 @@ npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
     PyArray_Descr * descr = PyArray_DescrFromType(NPY_CHAR);
     return (PyObject *)descr;
-}
-
-/* used to test PyArray_As1D usage emits not implemented error */
-static PyObject*
-npy_pyarrayas1d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyObject *op = Py_BuildValue("i", 42);
-    PyObject *result = op;
-    int dim = 4;
-    double arg[2] = {1, 2};
-    int temp = PyArray_As1D(&result, (char **)&arg, &dim, NPY_DOUBLE);
-    if (temp < 0) {
-        Py_DECREF(op);
-        return NULL;
-    }
-    /* op != result */
-    Py_DECREF(op);
-    return result;
-}
-
-/* used to test PyArray_As2D usage emits not implemented error */
-static PyObject*
-npy_pyarrayas2d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyObject *op = Py_BuildValue("i", 42);
-    PyObject *result = op;
-    int dim1 = 4;
-    int dim2 = 6;
-    double arg[2][2] = {{1, 2}, {3, 4}};
-    int temp = PyArray_As2D(&result, (char ***)&arg, &dim1, &dim2, NPY_DOUBLE);
-    if (temp < 0) {
-        Py_DECREF(op);
-        return NULL;
-    }
-    /* op != result */
-    Py_DECREF(op);
-    return result;
 }
 
 /* used to create array with WRITEBACKIFCOPY flag */
@@ -2054,13 +1966,13 @@ get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
     {
         unsigned int result = 0;
         result = _controlfp(0, 0);
         return PyLong_FromLongLong(result);
     }
-#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+#elif (defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))) || (defined(_MSC_VER) && defined(__clang__))
     {
         unsigned short cw = 0;
         __asm__("fstcw %w0" : "=m" (cw));
@@ -2216,20 +2128,6 @@ printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
     return PrintFloat_Printf_g(obj, precision);
 }
-
-static PyObject *
-getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-    PyObject *ret;
-    PyObject *ops = PyArray_GetNumericOps();
-    if (ops == NULL) {
-        return NULL;
-    }
-    ret = PyLong_FromLong(PyArray_SetNumericOps(ops));
-    Py_DECREF(ops);
-    return ret;
-}
-
 
 static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
@@ -2404,12 +2302,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_neighborhood_iterator_oob",
         test_neighborhood_iterator_oob,
         METH_VARARGS, NULL},
-    {"test_pydatamem_seteventhook_start",
-        test_pydatamem_seteventhook_start,
-        METH_NOARGS, NULL},
-    {"test_pydatamem_seteventhook_end",
-        test_pydatamem_seteventhook_end,
-        METH_NOARGS, NULL},
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
@@ -2430,12 +2322,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"npy_char_deprecation",
         npy_char_deprecation,
-        METH_NOARGS, NULL},
-    {"npy_pyarrayas1d_deprecation",
-        npy_pyarrayas1d_deprecation,
-        METH_NOARGS, NULL},
-    {"npy_pyarrayas2d_deprecation",
-        npy_pyarrayas2d_deprecation,
         METH_NOARGS, NULL},
     {"npy_create_writebackifcopy",
         npy_create_writebackifcopy,
@@ -2524,9 +2410,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
-    {"getset_numericops",
-        getset_numericops,
-        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
