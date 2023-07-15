@@ -528,23 +528,6 @@ npy_remainder@c@(@type@ a, @type@ b)
     return mod;
 }
 
-NPY_INPLACE @type@
-npy_floor_divide@c@(@type@ a, @type@ b) {
-    @type@ div, mod;
-    if (NPY_UNLIKELY(!b)) {
-        /*
-         * in2 == 0 (and not NaN): normal division will give the correct
-         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
-         * evaluating to NaN.
-         */
-        div = a / b;
-    }
-    else {
-        div = npy_divmod@c@(a, b, &mod);
-    }
-    return div;
-}
-
 /*
  * Python version of divmod.
  *
@@ -598,6 +581,59 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 #undef DEG2RAD
 #undef NPY__FP_SFX
 /**end repeat**/
+
+/**begin repeat
+ * #type = npy_longdouble, npy_float#
+ * #c = l,f#
+ */
+NPY_INPLACE @type@
+npy_floor_divide@c@(@type@ a, @type@ b) {
+    @type@ div, mod;
+    if (NPY_UNLIKELY(!b)) {
+        /*
+         * in2 == 0 (and not NaN): normal division will give the correct
+         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
+         * evaluating to NaN.
+         */
+        div = a / b;
+    }
+    else {
+        div = npy_divmod@c@(a, b, &mod);
+    }
+    return div;
+}
+/**end repeat**/
+
+NPY_INPLACE npy_double
+npy_floor_divide(npy_double a, npy_double b) {
+    npy_double mod;
+    if (NPY_UNLIKELY(!b)) {
+        if(npy_isinf(a)) {
+            return NPY_NAN;
+        }
+
+        /*
+         * in2 == 0 (and not NaN): normal division will give the correct
+         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
+         * evaluating to NaN.
+         */
+        return a / b;
+    }
+
+    if(npy_isinf(a) && npy_isinf(b)) {
+        return NPY_NAN;
+
+    } else if(npy_isinf(a)) {
+        return npy_copysign(NPY_INFINITY, a/b);
+
+    } else if(npy_isinf(b)) {
+        return npy_copysign(0, a/b);
+        
+    } else {
+        return npy_divmod(a, b, &mod);
+        
+    }
+}
 
 /**begin repeat
  *
