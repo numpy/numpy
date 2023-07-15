@@ -148,16 +148,17 @@ class TestDatetime64Timezone(_DeprecationTestCase):
     naive fashion.
     """
     def test_string(self):
-        self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
-        self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
+        msg = "no explicit representation of timezones available for np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            np.datetime64('2000-01-01T00+01')
 
-    @pytest.mark.skipif(not _has_pytz,
-                        reason="The pytz module is not available.")
+        with pytest.warns(UserWarning, match=msg):
+            np.datetime64('2000-01-01T00Z')
+
     def test_datetime(self):
-        tz = pytz.timezone('US/Eastern')
-        dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
-        self.assert_deprecated(np.datetime64, args=(dt,))
-
+        msg = "no explicit representation of timezones available for np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            t0 = np.datetime64('2023-06-09T12:18:40Z', 'ns')
 
 class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
     """Assigning the 'data' attribute of an ndarray is unsafe as pointed
