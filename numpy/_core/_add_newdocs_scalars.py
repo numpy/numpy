@@ -293,8 +293,8 @@ add_newdoc_for_scalar_type('datetime64', [],
     If created from string, the string can be in ISO 8601 date
     or datetime format.
     
-    When parsing a string to create a datetime object, if the string contains a timezone,
-    the timezone will be dropped.
+    When parsing a string to create a datetime object, if the string contains
+    a timezone, the timezone will be dropped.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
