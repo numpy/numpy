@@ -476,8 +476,8 @@ def repeat(a, repeats, axis=None):
            [3, 3, 3, 4, 4, 4],
            [3, 3, 3, 4, 4, 4]])
     >>> x = np.repeat(x, (3, [1, 2], 1), (1, 0))
-    array([1, 1, 1, 2, 2, 2],
-           3, 3, 3, 4, 4, 4],
+    array([1, 1, 1, 2, 2, 2,
+           3, 3, 3, 4, 4, 4,
            3, 3, 3, 4, 4, 4])
 
     """
@@ -512,7 +512,10 @@ def repeat(a, repeats, axis=None):
             raise TypeError("`axis` values must be integers, not {name}."
                             .format(name=type(element).__name__))
         if element < 0:
-            raise TypeError("all elements of `axis` must be non-negative.")
+            raise TypeError("All elements of `axis` must be non-negative.")
+        if element > a.ndim - 1:
+            raise TypeError(f"Axis {element} is out of bounds for array of "
+                            f"dimension {a.ndim}.")
         
     # Takes into account flat output arrays
     flattened_repeats = repeats[len(axis):]
