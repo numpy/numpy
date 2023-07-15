@@ -5,6 +5,7 @@ import contextlib
 import functools
 import operator
 import warnings
+import numbers
 
 import numpy as np
 from numpy.core import overrides
@@ -779,6 +780,26 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         plt.show()
 
     """
+    # Validate that input is numeric
+    if isinstance(a, np.ndarray):
+        # May want to further consider mM cases, see test_datetime
+        if a.dtype.kind in 'OSUV':
+            raise ValueError(
+                f"Input numpy array must have a numeric type, "
+                f"input array is {a.dtype.name} type.")
+    else:
+        for idx, elem in enumerate(a):
+            if not (isinstance(elem, numbers.Number)
+                    or isinstance(elem, np.ndarray)):
+                raise ValueError(
+                    f"Input array must be all numeric values. "
+                    f"Non-numeric value {elem} found at index {idx}.")
+            if isinstance(elem, np.ndarray) and elem.dtype.kind in 'OSUV':
+                raise ValueError(
+                    f"Input array must be all numeric values. "
+                    f"Non-numeric value {elem} found at index {idx}.")
+
+
     a, weights = _ravel_and_check_weights(a, weights)
 
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)

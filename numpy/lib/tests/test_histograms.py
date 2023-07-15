@@ -323,6 +323,19 @@ class TestHistogram:
         assert_equal(d_edge.dtype, dates.dtype)
         assert_equal(t_edge.dtype, td)
 
+    def test_fails_on_bad_input(self):
+        # gh-24032
+        # Fails on OSUV arrays
+        assert_raises(ValueError, histogram, np.array([object]))
+        assert_raises(ValueError, histogram, np.array([b'x']))
+        assert_raises(ValueError, histogram, np.array(['x']))
+        assert_raises(
+            ValueError, histogram, a = np.array([b'x'], dtype=np.dtype('V')))
+
+        # Fails on non-numeric, non-np arrays
+        assert_raises(ValueError, histogram, [0, None])
+        assert_raises(ValueError, histogram, [0, '1'])
+
     def do_signed_overflow_bounds(self, dtype):
         exponent = 8 * np.dtype(dtype).itemsize - 1
         arr = np.array([-2**exponent + 4, 2**exponent - 4], dtype=dtype)
