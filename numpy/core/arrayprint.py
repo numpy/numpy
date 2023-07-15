@@ -778,7 +778,7 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
     return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
-                 separator, edge_items, summary_insert, legacy):
+                 separator, edge_items, summary_insert, legacy, sign):
     """formatArray is designed for two modes of operation:
 
     1. Full output
@@ -882,7 +882,11 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
         # remove the hanging indent, and wrap in []
         s = '[' + s[len(hanging_indent):] + ']'
+        if sign:
+            s = s.replace(" ", f" {sign}")
         return s
+
+
 
     try:
         # invoke the recursive part with an initial index and prefix
