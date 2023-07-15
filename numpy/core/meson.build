@@ -45,11 +45,16 @@ C_ABI_VERSION = '0x01000009'
 # 0x00000010 - 1.23.x
 # 0x00000010 - 1.24.x
 # 0x00000011 - 1.25.x
+# 0x00000011 - 1.26.x
 C_API_VERSION = '0x00000011'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
-run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION, check: true)
+r = run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION)
+
+if r.returncode() != 0
+  error('verify_c_api_version.py failed with output:\n' + r.stderr().strip())
+endif
 
 
 # Generate config.h and _numpyconfig.h
@@ -533,6 +538,8 @@ npymath_lib = static_library('npymath',
   dependencies: py_dep,
   install: true,
   install_dir: np_dir / 'core/lib',
+  name_prefix: name_prefix_staticlib,
+  name_suffix: name_suffix_staticlib,
 )
 
 dir_separator = '/'
@@ -923,7 +930,7 @@ py.extension_module('_multiarray_umath',
     'src/npymath',
     'src/umath',
   ],
-  dependencies: blas,
+  dependencies: blas_dep,
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/core',
@@ -994,7 +1001,6 @@ python_sources = [
   'shape_base.py',
   'shape_base.pyi',
   'umath.py',
-  'umath_tests.py',
 ]
 
 py.install_sources(
