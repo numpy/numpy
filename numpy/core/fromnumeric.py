@@ -522,7 +522,7 @@ def repeat(a, repeats, axis=None):
 
     # Optimize performance by prioritizing axes with greater repeat total
     repeats, axis = (tuple(x) for x in zip(*sorted(zip(repeats[0:len(axis)],
-                     axis), key = lambda k : k[0] * np.shape(a)[k[1]] 
+                     axis), key = lambda k: k[0] * np.shape(a)[k[1]] 
                      if type(k[0]) is int else np.sum(k[0]))))
     
     repeats += flattened_repeats

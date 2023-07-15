@@ -7526,6 +7526,10 @@ class TestRepeat:
         assert_raises(TypeError, np.repeat, self.m_square,
                       ([2, 2, 1], [2, 2, 1], 2), axis=(0, -1))
 
+    def test_out_of_bounds_axis(self):
+        assert_raises(TypeError, np.repeat, self.m_square,
+                      ([2, 2, 1], [2, 2, 1]), axis=(0, 2))
+
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
 
