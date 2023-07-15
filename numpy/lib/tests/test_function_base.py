@@ -3683,30 +3683,32 @@ class TestQuantile:
     def test_quantile_identification_equation(self, method, alpha):
         # Test that the identification equation holds for the empirical
         # CDF:
-        #   E[V(x, Y)] = 0  <=>  x is quantile
+        #   dE[V(x, Y) * (x - y)]/dx = 0  <=>  x is quantile
         # with Y the random variable for which we have observed values and
         # V(x, y) the canonical identification function for the quantile (at
         # level alpha), see
-        # https://doi.org/10.48550/arXiv.0912.0902        
+        # https://doi.org/10.48550/arXiv.0912.0902
+
+        # This test case sets up a uniform distribution [0, 1), for which
+        # the above formula has an analytical solution:
+        # x = alpha & E[V(x, Y) * (x - y)] = alpha / 2 * (1 - alpha),
+        # and tests that the numerical integral using np.quantile()'s result
+        # (actual) is reasonably close to the analytical result (expected).
         rng = np.random.default_rng(4321)
-        # We choose n and alpha such that we cover 3 cases:
-        #  - n * alpha is an integer
-        #  - n * alpha is a float that gets rounded down
-        #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
-        y = rng.random(n)
+        y = np.sort(rng.random(n))
+
+        # Here we compute the numerical integral (actual).
+        # NOTE: The following estimate of dy assumes no duplicate y values.
+        dy = np.diff(np.append(y, [1]))  # a crude approximation of bin widths
+        dy = dy / np.sum(dy)  # normalize to make sure bin widths sum to 1
         x = np.quantile(y, alpha, method=method)
-        if method in ("higher",):
-            # These methods do not fulfill the identification equation.
-            assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
-        elif int(n * alpha) == n * alpha:
-            # We can expect exact results, up to machine precision.
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0, atol=1e-14)
-        else:
-            # V = (x >= y) - alpha cannot sum to zero exactly but within
-            # "sample precision".
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0,
-                atol=1 / n / np.amin([alpha, 1 - alpha]))
+
+        # For a uniform distribution (0, 1], the minimum occurs at x = alpha,
+        # where E[V(x, Y) * (x - y)] = alpha / 2 * (1 - alpha).
+        actual = np.sum(self.V(x, y, alpha) * (x - y) * dy)  # crude integral.
+        expected = alpha / 2 * (1 - alpha)
+        assert_allclose(actual, expected, rtol=1/n)  # rtol ~ average bin width
 
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
