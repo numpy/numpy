@@ -962,7 +962,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 {
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
-    int n, elsize;
+    PyArray_CopySwapFunc *copyswap;
+    int n, elsize, swap;
     npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
@@ -1042,6 +1043,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     elsize = PyArray_DESCR(obj)->elsize;
     ret_data = PyArray_DATA(obj);
+    copyswap = dtype->f->copyswap;
+    swap = !PyArray_ISNBO(dtype->byteorder);
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
@@ -1074,12 +1077,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        memmove(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
+        copyswap(ret_data, PyArray_MultiIter_DATA(multi, mi), swap, NULL);
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
 
-    PyArray_INCREF(obj);
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
