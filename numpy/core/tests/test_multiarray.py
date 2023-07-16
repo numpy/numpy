@@ -6797,6 +6797,15 @@ class TestDot:
         with pytest.raises(TypeError):
             np.dot(3.0, BadObject())
 
+    @pytest.mark.parametrize("operand", [
+        np.array([[0.]]),
+        np.array([[1.]]),
+        ])
+    def test_gh_21342(self, operand):
+        actual = np.signbit(np.dot(np.array([[-0.], [-0.]]), operand))
+        expected = np.signbit(np.array([[-0.], [-0.]]))
+        assert_array_equal(actual, expected)
+
 
 class MatmulCommon:
     """Common tests for '@' operator and numpy.matmul.

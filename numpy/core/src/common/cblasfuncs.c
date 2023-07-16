@@ -387,6 +387,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                                                  *((double *)PyArray_DATA(ap1));
             }
             else if (ap1shape != _matrix) {
+                for (size_t i = 0; i < PyArray_SIZE(out_buf); i += 1) {
+                    ((double *)PyArray_DATA(out_buf))[i] = -0.0;
+                }
+
                 CBLAS_FUNC(cblas_daxpy)(l,
                             *((double *)PyArray_DATA(ap2)),
                             (double *)PyArray_DATA(ap1),
