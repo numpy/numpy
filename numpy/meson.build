@@ -200,10 +200,10 @@ python_sources = [
   '__init__.py',
   '__init__.pyi',
   '_distributor_init.py',
+  '_gitversion.py',
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
-  '_version.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
@@ -212,8 +212,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -243,7 +242,7 @@ pure_subdirs = [
   'polynomial',
   'testing',
   'tests',
-  'typing',
+  'typing'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'

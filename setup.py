@@ -22,9 +22,6 @@ if sys.version_info[:2] < (3, 9):
     raise RuntimeError("Python version >= 3.9 required.")
 
 
-import versioneer
-
-
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
 # avoid attempting to load components that aren't built yet.  While ugly, it's
@@ -34,7 +31,9 @@ builtins.__NUMPY_SETUP__ = True
 # Needed for backwards code compatibility below and in some CI scripts.
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
-FULLVERSION = versioneer.get_version()
+FULLVERSION = subprocess.check_output(
+    [sys.executable, 'numpy/_gitversion.py']
+).strip().decode('ascii')
 
 # Capture the version string:
 # 1.22.0.dev0+ ... -> ISRELEASED == False, VERSION == 1.22.0
@@ -80,10 +79,6 @@ if int(setuptools.__version__.split('.')[0]) >= 60:
             raise RuntimeError("setuptools versions >= '60.0.0' require "
                     "SETUPTOOLS_USE_DISTUTILS=stdlib in the environment")
 
-# Initialize cmdclass from versioneer
-from numpy.distutils.core import numpy_cmdclass
-cmdclass = versioneer.get_cmdclass(numpy_cmdclass)
-
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
 Intended Audience :: Science/Research
@@ -105,7 +100,6 @@ Operating System :: POSIX
 Operating System :: Unix
 Operating System :: MacOS
 """
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -173,10 +167,9 @@ class concat_license_files():
         with open(self.f1, 'w') as f:
             f.write(self.bsd_text)
 
-
 # Need to inherit from versioneer version of sdist to get the encoded
 # version information.
-class sdist_checked(cmdclass['sdist']):
+class sdist_checked:
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
@@ -480,6 +473,8 @@ def get_docs_url():
         return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
 
 
+from numpy.distutils.core import numpy_cmdclass as cmdclass
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
@@ -498,7 +493,6 @@ def setup_package():
             'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
-    cmdclass["sdist"] = sdist_checked
     metadata = dict(
         name='numpy',
         maintainer="NumPy Developers",
@@ -518,7 +512,7 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
-        version=versioneer.get_version(),
+        version=VERSION,
         cmdclass=cmdclass,
         python_requires='>=3.9',
         zip_safe=False,
