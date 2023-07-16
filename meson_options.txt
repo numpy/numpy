@@ -12,8 +12,15 @@ option('disable-svml', type: 'boolean', value: false,
         description: 'Disable building against SVML')
 option('disable-threading', type: 'boolean', value: false,
         description: 'Disable threading support (see `NPY_ALLOW_THREADS` docs)')
-# TODO: flip value to 'false' once we have `npy_cpu_dispatch_config.h` & co.
-option('disable-simd-optimizations', type: 'boolean', value: true,
-        description: 'Disable SIMD features beyond the baseline ones')
+option('disable-optimization', type: 'boolean', value: 'false',
+        description: 'Disable CPU optimized code(dispatch,simd,unroll...)')
+option('cpu-baseline', type: 'string', value: 'min',
+        description: 'minimal set of required CPU features')
+option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
+        description: 'dispatched set of additional CPU features')
+option('test-simd', type: 'string', value: 'baseline sse2 sse42 xop fma4 avx2_fma3 avx512_common avx512_skx vsx vsx2 vsx3 vsx4 neon asimd vx vxe vxe2',
+        description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
+option('test-simd-args', type: 'string', value: '',
+        description: 'Extra args to be passed to _simd module that used for testing Numpy SIMD inteface')
 option('relaxed-strides-debug', type: 'boolean', value: false,
         description: 'Enable relaxed strides debug mode (see `NPY_RELAXED_STRIDES_DEBUG` docs)')

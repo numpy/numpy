@@ -80,4 +80,6 @@ else
     meson.add_dist_script(py, versioneer, '-o', '_version_meson.py')
 endif
 
+subdir('meson_cpu')
 subdir('numpy')
+subdir('meson_cpu/log')

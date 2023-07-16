@@ -3,3 +3,4 @@ Cython
 wheel==0.38.1
 ninja
 spin==0.4
+git+https://github.com/seiko2plus/meson@module_feature

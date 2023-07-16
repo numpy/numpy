@@ -518,7 +518,7 @@ if cc.get_id() == 'msvc'
 endif
 # TODO: change to "feature" option in meson_options.txt? See
 # https://mesonbuild.com/Build-options.html#build-options
-if get_option('disable-simd-optimizations')
+if get_option('disable-optimization')
   staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
   staticlib_cppflags += '-DNPY_DISABLE_OPTIMIZATION'
 endif
@@ -633,7 +633,7 @@ src_ufunc_api = custom_target('__ufunc_api',
 # TODO: change to "feature" option in meson_options.txt? See
 # https://mesonbuild.com/Build-options.html#build-options
 disable_simd_optimizations = []
-if get_option('disable-simd-optimizations')
+if get_option('disable-optimization')
   disable_simd_optimizations = '-DNPY_DISABLE_OPTIMIZATION'
 endif
 
@@ -674,7 +674,6 @@ np_core_dep = declare_dependency(
   compile_args: disable_simd_optimizations
 )
 
-
 # Build multiarray_tests module
 # -----------------------------
 py.extension_module('_multiarray_tests',
@@ -694,15 +693,31 @@ py.extension_module('_multiarray_tests',
   subdir: 'numpy/core',
 )
 
+mtargets_res = mod_features.multi_target(
+  '_umath_tests.dispatch.h',
+  'src/umath/_umath_tests.dispatch.c',
+  dispatch: [
+    AVX2, SSE41, SSE2,
+    ASIMDHP, ASIMD, NEON,
+    VSX3, VSX2, VSX,
+    VXE, VX,
+  ],
+  baseline: CPU_BASELINE,
+  prefix: 'NPY_',
+  dependencies: [py_dep, np_core_dep]
+)
+CPU_MTARGETS_LOG += {'_umath_tests.dispatch.h': mtargets_res[0]}
+
 test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
-      'src/umath/_umath_tests.dispatch.c',
       'src/common/npy_cpu_features.c',
-    ]],
-  ['_rational_tests', 'src/umath/_rational_tests.c'],
-  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c'],
-  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c'],
+    ],
+    mtargets_res[1]
+  ],
+  ['_rational_tests', 'src/umath/_rational_tests.c', []],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -712,7 +727,252 @@ foreach gen: test_modules_src
     dependencies: np_core_dep,
     install: true,
     subdir: 'numpy/core',
+    link_with: gen[2],
   )
+endforeach
+
+# Build multiarray dispatch-able sources
+# --------------------------------------
+multiarray_gen_headers = [
+  src_file.process('src/multiarray/arraytypes.h.src'),
+  src_file.process('src/common/npy_sort.h.src'),
+]
+multiarray_umath_dispatch_link = []
+foreach gen_mtargets : [
+  [
+    'argfunc.dispatch.h',
+    src_file.process('src/multiarray/argfunc.dispatch.c.src'),
+    [
+      AVX512_SKX, AVX2, XOP, SSE42, SSE2,
+      VSX2,
+      ASIMD, NEON,
+      VXE, VX
+    ]
+  ],
+]
+mtargets_res = mod_features.multi_target(
+  gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
+  dispatch: gen_mtargets[2],
+  baseline: CPU_BASELINE,
+  prefix: 'NPY_',
+  dependencies: [py_dep, np_core_dep],
+  c_args: c_args_common,
+  cpp_args: cpp_args_common,
+  include_directories: [
+    'include',
+    'src/common',
+    'src/multiarray',
+    'src/npymath',
+    'src/umath'
+  ]
+)
+CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+multiarray_umath_dispatch_link += mtargets_res[1]
+endforeach
+
+# Build npysort dispatch-able sources
+# -----------------------------------
+foreach gen_mtargets : [
+  [
+    'simd_qsort.dispatch.h',
+    'src/npysort/simd_qsort.dispatch.cpp',
+    [
+      AVX512_SKX
+    ]
+  ],
+  [
+    'simd_qsort_16bit.dispatch.h',
+    'src/npysort/simd_qsort_16bit.dispatch.cpp',
+    [
+      # TODO: AVX512_SPR
+    ]
+  ],
+]
+mtargets_res = mod_features.multi_target(
+  gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
+  dispatch: gen_mtargets[2],
+  # baseline: CPU_BASELINE, it doesn't provide baseline fallback
+  prefix: 'NPY_',
+  dependencies: [py_dep, np_core_dep],
+  c_args: c_args_common,
+  cpp_args: cpp_args_common,
+  include_directories: [
+    'include',
+    'src/common',
+    'src/multiarray',
+    'src/npymath',
+    'src/umath'
+  ]
+)
+CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+multiarray_umath_dispatch_link += mtargets_res[1]
+endforeach
+
+# Build umath dispatch-able sources
+# ---------------------------------
+mod_features = import('feature')
+umath_gen_headers = [
+  src_file.process('src/umath/loops.h.src'),
+  src_file.process('src/umath/loops_utils.h.src'),
+]
+foreach gen_mtargets : [
+  [
+    'loops_arithm_fp.dispatch.h',
+    src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
+    [
+      [AVX2, FMA3], SSE2,
+      ASIMD, NEON,
+      VSX3, VSX2,
+      VXE, VX,
+    ]
+  ],
+  [
+    'loops_arithmetic.dispatch.h',
+    src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+    [
+      AVX512_SKX, AVX512F, AVX2, SSE41, SSE2,
+      NEON,
+      VSX4, VSX2,
+      VX,
+    ]
+  ],
+  [
+    'loops_comparison.dispatch.h',
+    src_file.process('src/umath/loops_comparison.dispatch.c.src'),
+    [
+      AVX512_SKX, AVX512F, AVX2, SSE42, SSE2,
+      VSX3, VSX2,
+      NEON,
+      VXE, VX,
+    ]
+  ],
+  [
+    'loops_exponent_log.dispatch.h',
+    src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
+    [
+      AVX512_SKX, AVX512F, [AVX2, FMA3]
+    ]
+  ],
+  [
+    'loops_hyperbolic.dispatch.h',
+    src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+    [
+      AVX512_SKX, [AVX2, FMA3],
+      VSX4, VSX2,
+      NEON_VFPV4,
+      VXE, VX
+    ]
+  ],
+  [
+    'loops_logical.dispatch.h',
+    src_file.process('src/umath/loops_logical.dispatch.c.src'),
+    [
+      ASIMD, NEON,
+      AVX512_SKX, AVX2, SSE2,
+      VSX2,
+      VX,
+    ]
+  ],
+  [
+    'loops_minmax.dispatch.h',
+    src_file.process('src/umath/loops_minmax.dispatch.c.src'),
+    [
+      ASIMD, NEON,
+      AVX512_SKX, AVX2, SSE2,
+      VSX2,
+      VXE, VX,
+    ]
+  ],
+  [
+    'loops_modulo.dispatch.h',
+    src_file.process('src/umath/loops_modulo.dispatch.c.src'),
+    [
+      VSX4
+    ]
+  ],
+  [
+    'loops_trigonometric.dispatch.h',
+    src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
+    [
+      AVX512F, [AVX2, FMA3],
+      VSX4, VSX3, VSX2,
+      NEON_VFPV4,
+      VXE2, VXE
+    ]
+  ],
+  [
+    'loops_umath_fp.dispatch.h',
+    src_file.process('src/umath/loops_umath_fp.dispatch.c.src'),
+    [AVX512_SKX]
+  ],
+  [
+    'loops_unary.dispatch.h',
+    src_file.process('src/umath/loops_unary.dispatch.c.src'),
+    [
+      ASIMD, NEON,
+      AVX512_SKX, AVX2, SSE2,
+      VSX2,
+      VXE, VX
+    ]
+  ],
+  [
+    'loops_unary_fp.dispatch.h',
+    src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+    [
+      SSE41, SSE2,
+      VSX2,
+      ASIMD, NEON,
+      VXE, VX
+    ]
+  ],
+  [
+    'loops_unary_fp_le.dispatch.h',
+    src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
+    [
+      SSE41, SSE2,
+      VSX2,
+      ASIMD, NEON,
+    ]
+  ],
+  [
+    'loops_unary_complex.dispatch.h',
+    src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
+    [
+      AVX512F, [AVX2, FMA3], SSE2,
+      ASIMD, NEON,
+      VSX3, VSX2,
+      VXE, VX,
+    ]
+  ],
+  [
+    'loops_autovec.dispatch.h',
+    src_file.process('src/umath/loops_autovec.dispatch.c.src'),
+    [
+      AVX2, SSE2,
+      NEON,
+      VSX2,
+      VX,
+    ]
+  ],
+]
+mtargets_res = mod_features.multi_target(
+  gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
+  dispatch: gen_mtargets[2],
+  baseline: CPU_BASELINE,
+  prefix: 'NPY_',
+  dependencies: [py_dep, np_core_dep],
+  c_args: c_args_common,
+  cpp_args: cpp_args_common,
+  include_directories: [
+    'include',
+    'src/common',
+    'src/multiarray',
+    'src/npymath',
+    'src/umath'
+  ]
+)
+CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
 # Build _multiarray_umath module
@@ -736,12 +996,10 @@ if have_blas
   ]
 endif
 
-src_multiarray = [
+src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
   'src/multiarray/alloc.c',
-  src_file.process('src/multiarray/argfunc.dispatch.c.src'),
   'src/multiarray/arrayobject.c',
-  src_file.process('src/multiarray/arraytypes.h.src'),
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_method.c',
   'src/multiarray/array_assign_scalar.c',
@@ -795,9 +1053,6 @@ src_multiarray = [
   'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
-  src_file.process('src/common/npy_sort.h.src'),
-  'src/npysort/simd_qsort.dispatch.cpp',
-  'src/npysort/simd_qsort_16bit.dispatch.cpp',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',
@@ -820,26 +1075,9 @@ src_multiarray = [
   'src/npymath/arm64_exports.c',
 ]
 
-src_umath = [
+src_umath = umath_gen_headers + [
   src_file.process('src/umath/funcs.inc.src'),
-  src_file.process('src/umath/loops.h.src'),
-  src_file.process('src/umath/loops_utils.h.src'),
   src_file.process('src/umath/loops.c.src'),
-  src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
-  src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
-  src_file.process('src/umath/loops_comparison.dispatch.c.src'),
-  src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
-  src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
-  src_file.process('src/umath/loops_logical.dispatch.c.src'),
-  src_file.process('src/umath/loops_minmax.dispatch.c.src'),
-  src_file.process('src/umath/loops_modulo.dispatch.c.src'),
-  src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
-  src_file.process('src/umath/loops_umath_fp.dispatch.c.src'),
-  src_file.process('src/umath/loops_unary.dispatch.c.src'),
-  src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
-  src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
-  src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
-  src_file.process('src/umath/loops_autovec.dispatch.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
   'src/umath/ufunc_type_resolution.c',
@@ -866,52 +1104,24 @@ src_umath = [
 # may be able to avoid the accuracy regressions in SVML.
 svml_objects = []
 if use_svml
-  svml_objects += [
-    'src/umath/svml/linux/avx512/svml_z0_acos_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_acos_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_acosh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_acosh_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_asin_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_asin_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_asinh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_asinh_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atan2_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atan2_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atan_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atan_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atanh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_atanh_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cbrt_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cbrt_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cos_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cos_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cosh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_cosh_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_exp2_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_exp2_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_exp_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_exp_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_expm1_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_expm1_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log10_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log10_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log1p_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log1p_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log2_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log2_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_log_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_pow_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_pow_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_sin_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_sin_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_sinh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_sinh_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_tan_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_tan_s_la.s',
-    # 'src/umath/svml/linux/avx512/svml_z0_tanh_d_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_tanh_s_la.s',
+  foreach svml_func : [
+    'acos', 'acosh', 'asin',
+    'asinh', 'atan2',
+    'atan',  'atanh',
+    'cbrt', 'cos',
+    'cosh', 'exp2',
+    'exp', 'expm1',
+    'log10', 'log1p',
+    'log2', 'log',
+    'pow', 'sin', 'sinh', 'tan',
+    'tanh'
   ]
+    foreach svml_sfx : ['d_la', 's_la', 'd_ha', 's_la']
+      svml_objects += [
+        'src/umath/svml/linux/avx512/svml_z0_'+svml_func+'_'+svml_sfx+'.s'
+      ]
+    endforeach
+  endforeach
 endif
 
 py.extension_module('_multiarray_umath',
@@ -937,26 +1147,39 @@ py.extension_module('_multiarray_umath',
     'src/umath',
   ],
   dependencies: blas_dep,
-  link_with: npymath_lib,
+  link_with: multiarray_umath_dispatch_link + npymath_lib,
   install: true,
   subdir: 'numpy/core',
 )
 
 # Build SIMD module
 # -----------------
+mtargets_res = mod_features.multi_target(
+  '_simd.dispatch.h',
+  [
+    src_file.process('src/_simd/_simd_inc.h.src'),
+    src_file.process('src/_simd/_simd_data.inc.src'),
+    src_file.process('src/_simd/_simd.dispatch.c.src'),
+  ],
+  dispatch: [SSE2, AVX2, AVX512_SKX],
+  baseline: CPU_BASELINE,
+  prefix: 'NPY_',
+  dependencies: [py_dep, np_core_dep],
+  include_directories: ['src/_simd', 'src/npymath'],
+  c_args: c_args_common,
+  cpp_args: cpp_args_common
+)
+CPU_MTARGETS_LOG += {'_simd.dispatch.h': mtargets_res[0]}
 
 py.extension_module('_simd',
   [
     'src/common/npy_cpu_features.c',
     'src/_simd/_simd.c',
-    src_file.process('src/_simd/_simd_inc.h.src'),
-    src_file.process('src/_simd/_simd_data.inc.src'),
-    src_file.process('src/_simd/_simd.dispatch.c.src'),
   ],
   c_args: c_args_common,
   include_directories: ['src/_simd', 'src/npymath'],
-  dependencies: np_core_dep,
-  link_with: npymath_lib,
+  dependencies: [py_dep, np_core_dep],
+  link_with: mtargets_res[1] + npymath_lib,
   install: true,
   subdir: 'numpy/core',
 )
