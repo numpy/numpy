@@ -2,6 +2,10 @@ option('blas', type: 'string', value: 'openblas',
         description: 'option for BLAS library switching')
 option('lapack', type: 'string', value: 'openblas',
         description: 'option for LAPACK library switching')
+option('use-ilp64', type: 'boolean', value: false,
+       description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
+option('blas-symbol-suffix', type: 'string', value: '',
+        description: 'BLAS and LAPACK symbol suffix to use, if any (often `64_` for ILP64)')
 option('disable-svml', type: 'boolean', value: false,
         description: 'Disable building against SVML')
 option('disable-threading', type: 'boolean', value: false,
