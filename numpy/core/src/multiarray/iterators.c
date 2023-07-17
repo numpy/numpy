@@ -527,24 +527,22 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (check_and_adjust_index(&num, self->size, -1, NULL) < 0) {
-            Py_DECREF(ind_it);
-            Py_DECREF(ret);
-            PyArray_ITER_RESET(self);
-            return NULL;
+            Py_CLEAR(ret);
+            goto finish;
         }
         PyArray_ITER_GOTO1D(self, num);
         char *args[2] = {self->dataptr, optr};
         npy_intp transfer_strides[2] = {itemsize, itemsize};
         if (cast_info->func(&cast_info->context, args, &one,
                             transfer_strides, cast_info->auxdata) < 0) {
-            Py_DECREF(ind_it);
-            Py_DECREF(ret);
-            PyArray_ITER_RESET(self);
-            return NULL;
+            Py_CLEAR(ret);
+            goto finish;
         }
         optr += itemsize;
         PyArray_ITER_NEXT(ind_it);
     }
+
+ finish:
     Py_DECREF(ind_it);
     PyArray_ITER_RESET(self);
     return (PyObject *)ret;
