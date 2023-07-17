@@ -11,6 +11,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
 
 #include "npy_pycompat.h"
 
@@ -27,11 +28,6 @@
 
 
 static const char* umath_linalg_version_string = "0.1.5";
-
-struct scalar_trait {};
-struct complex_trait {};
-template<typename typ>
-using dispatch_scalar = typename std::conditional<std::is_scalar<typ>::value, scalar_trait, complex_trait>::type;
 
 /*
  ****************************************************************************
@@ -469,6 +465,21 @@ constexpr double numeric_limits<double>::minus_one;
 const double numeric_limits<double>::ninf = -NPY_INFINITY;
 const double numeric_limits<double>::nan = NPY_NAN;
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+template<>
+struct numeric_limits<npy_cfloat> {
+static constexpr npy_cfloat one = {1.0f, 0.0f};
+static constexpr npy_cfloat zero = {0.0f, 0.0f};
+static constexpr npy_cfloat minus_one = {-1.0f, 0.0f};
+static const npy_cfloat ninf;
+static const npy_cfloat nan;
+};
+constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
+constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
+constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
+const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
+#else
 template<>
 struct numeric_limits<npy_cfloat> {
 static constexpr npy_cfloat one = 1.0f;
@@ -480,8 +491,9 @@ static const npy_cfloat nan;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::one;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::zero;
 constexpr npy_cfloat numeric_limits<npy_cfloat>::minus_one;
-const npy_cfloat numeric_limits<npy_cfloat>::ninf = {-NPY_INFINITYF, 0.0f};
-const npy_cfloat numeric_limits<npy_cfloat>::nan = {NPY_NANF, NPY_NANF};
+const npy_cfloat numeric_limits<npy_cfloat>::ninf = -NPY_INFINITYF;
+const npy_cfloat numeric_limits<npy_cfloat>::nan = NPY_NANF;
+#endif
 
 template<>
 struct numeric_limits<f2c_complex> {
@@ -497,6 +509,21 @@ constexpr f2c_complex numeric_limits<f2c_complex>::minus_one;
 const f2c_complex numeric_limits<f2c_complex>::ninf = {-NPY_INFINITYF, 0.0f};
 const f2c_complex numeric_limits<f2c_complex>::nan = {NPY_NANF, NPY_NANF};
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+template<>
+struct numeric_limits<npy_cdouble> {
+static constexpr npy_cdouble one = {1.0, 0.0};
+static constexpr npy_cdouble zero = {0.0, 0.0};
+static constexpr npy_cdouble minus_one = {-1.0, 0.0};
+static const npy_cdouble ninf;
+static const npy_cdouble nan;
+};
+constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
+constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
+constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
+const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
+#else
 template<>
 struct numeric_limits<npy_cdouble> {
 static constexpr npy_cdouble one = 1.0;
@@ -508,8 +535,9 @@ static const npy_cdouble nan;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::one;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::zero;
 constexpr npy_cdouble numeric_limits<npy_cdouble>::minus_one;
-const npy_cdouble numeric_limits<npy_cdouble>::ninf = {-NPY_INFINITY, 0.0};
-const npy_cdouble numeric_limits<npy_cdouble>::nan = {NPY_NAN, NPY_NAN};
+const npy_cdouble numeric_limits<npy_cdouble>::ninf = -NPY_INFINITY;
+const npy_cdouble numeric_limits<npy_cdouble>::nan = NPY_NAN;
+#endif
 
 template<>
 struct numeric_limits<f2c_doublecomplex> {
@@ -840,6 +868,12 @@ template<> struct basetype<f2c_doublecomplex> { using type = fortran_doublereal;
 template<typename T>
 using basetype_t = typename basetype<T>::type;
 
+struct scalar_trait {};
+struct complex_trait {};
+template<typename typ>
+using dispatch_scalar = typename std::conditional<sizeof(basetype_t<typ>) == sizeof(typ), scalar_trait, complex_trait>::type;
+
+
              /* rearranging of 2D matrices using blas */
 
 template<typename typ>
@@ -1046,10 +1080,26 @@ det_from_slogdet(typ sign, typ logdet)
 npy_float npyabs(npy_cfloat z) { return npy_cabsf(z);}
 npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
 
-#define RE(COMPLEX) (COMPLEX).real()
-#define IM(COMPLEX) (COMPLEX).imag()
-#define SETRE(COMPLEX, VALUE) (COMPLEX).real(VALUE)
-#define SETIM(COMPLEX, VALUE) (COMPLEX).imag(VALUE)
+inline float RE(npy_cfloat *c) { return NPY_CFLOAT_GET_REAL(c); }
+inline double RE(npy_cdouble *c) { return NPY_CDOUBLE_GET_REAL(c); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline longdouble_t RE(npy_clongdouble *c) { return NPY_CLONGDOUBLE_GET_REAL(c); }
+#endif
+inline float IM(npy_cfloat *c) { return NPY_CFLOAT_GET_IMAG(c); }
+inline double IM(npy_cdouble *c) { return NPY_CDOUBLE_GET_IMAG(c); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline longdouble_t IM(npy_clongdouble *c) { return NPY_CLONGDOUBLE_GET_IMAG(c); }
+#endif
+inline void SETRE(npy_cfloat *c, float real) { NPY_CFLOAT_SET_REAL(c, real); }
+inline void SETRE(npy_cdouble *c, double real) { NPY_CDOUBLE_SET_REAL(c, real); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline void SETRE(npy_clongdouble *c, double real) { NPY_CLONGDOUBLE_SET_REAL(c, real); }
+#endif
+inline void SETIM(npy_cfloat *c, float real) { NPY_CFLOAT_SET_IMAG(c, real); }
+inline void SETIM(npy_cdouble *c, double real) { NPY_CDOUBLE_SET_IMAG(c, real); }
+#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+inline void SETIM(npy_clongdouble *c, double real) { NPY_CLONGDOUBLE_SET_IMAG(c, real); }
+#endif
 
 template<typename typ>
 static inline typ
@@ -1057,8 +1107,8 @@ mult(typ op1, typ op2)
 {
     typ rv;
 
-    SETRE(rv, RE(op1)*RE(op2) - IM(op1)*IM(op2));
-    SETIM(rv, RE(op1)*IM(op2) + IM(op1)*RE(op2));
+    SETRE(&rv, RE(&op1)*RE(&op2) - IM(&op1)*IM(&op2));
+    SETIM(&rv, RE(&op1)*IM(&op2) + IM(&op1)*RE(&op2));
 
     return rv;
 }
@@ -1079,8 +1129,8 @@ slogdet_from_factored_diagonal(typ* src,
     {
         basetyp abs_element = npyabs(*src);
         typ sign_element;
-        SETRE(sign_element, RE(*src) / abs_element);
-        SETIM(sign_element, IM(*src) / abs_element);
+        SETRE(&sign_element, RE(src) / abs_element);
+        SETIM(&sign_element, IM(src) / abs_element);
 
         sign_acc = mult(sign_acc, sign_element);
         logdet_acc += npylog(abs_element);
@@ -1096,14 +1146,10 @@ static inline typ
 det_from_slogdet(typ sign, basetyp logdet)
 {
     typ tmp;
-    SETRE(tmp, npyexp(logdet));
-    SETIM(tmp, numeric_limits<basetyp>::zero);
+    SETRE(&tmp, npyexp(logdet));
+    SETIM(&tmp, numeric_limits<basetyp>::zero);
     return mult(sign, tmp);
 }
-#undef RE
-#undef IM
-#undef SETRE
-#undef SETIM
 
 
 /* As in the linalg package, the determinant is computed via LU factorization
@@ -3986,7 +4032,7 @@ abs2(typ *p, npy_intp n, complex_trait) {
     basetype_t<typ> res = 0;
     for (i = 0; i < n; i++) {
         typ el = p[i];
-        res += el.real()*el.real() + el.imag()*el.imag();
+        res += RE(&el)*RE(&el) + IM(&el)*IM(&el);
     }
     return res;
 }

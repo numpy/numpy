@@ -380,20 +380,19 @@ typedef Py_hash_t npy_hash_t;
 #endif
 
 
-#if !defined(__cplusplus) && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #include <complex.h>
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
-#elif defined(__cplusplus) /* && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
-extern "C++" {
-#include <complex>
-}
-typedef std::complex<double> npy_cdouble;
-typedef std::complex<float> npy_cfloat;
-typedef std::complex<longdouble_t> npy_clongdouble;
 #else /* !defined(__cplusplus) && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
+#ifdef __cplusplus
+extern "C++" {
+#endif
 #include <complex.h>
+#ifdef __cplusplus
+}
+#endif
 #undef complex
 typedef double _Complex npy_cdouble;
 typedef float _Complex npy_cfloat;
