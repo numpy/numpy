@@ -3671,7 +3671,7 @@ NPY_NO_EXPORT void
     else
 #endif
     {
-        @type@ sum = (@type@)0;  /* could make this double */
+        @type@ sum = (@type@)-0.0;  /* could make this double */
         npy_intp i;
 
         for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {

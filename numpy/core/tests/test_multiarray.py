@@ -6797,13 +6797,57 @@ class TestDot:
         with pytest.raises(TypeError):
             np.dot(3.0, BadObject())
 
-    @pytest.mark.parametrize("operand", [
-        np.array([[0.]]),
-        np.array([[1.]]),
+    @pytest.mark.parametrize("arr1, arr2, expected", [
+        # arr1 strides (8, 8)
+        (np.array([[-0.], [-0.]]),
+         np.array([[0.]]),
+         np.array([[-0.], [-0.]]),
+        ),
+        # arr1 strides (8, 8)
+        (np.array([[-0.], [-0.]]),
+         np.array([[1.]]),
+         np.array([[-0.], [-0.]]),
+        ),
+        # arr1 strides (8, 16)
+        (np.array([[-0.], [-0.]], order="F"),
+         np.array([[1.]]),
+         np.array([[-0.], [-0.]]),
+        ),
+        # arr1 strides (16, 16, 8, 8)
+        (np.array([[-0.], [-0.]]).reshape(1, 1, 2, 1),
+         np.array([[1.]]),
+         np.array([[-0.], [-0.]]).reshape(1, 1, 2, 1),
+        ),
+        # arr1 strides (24, 8, 8, 8, 8)
+        # check for sign flip
+        (np.array([[-0.], [-0.], [-0.]]).reshape(1, 3, 1, 1, 1),
+         np.array([[-0.]]),
+         np.array([[0.], [0.], [0.]]).reshape(1, 3, 1, 1, 1),
+        ),
+        # 2 0-D arrays
+        (np.array(-0.),
+         np.array(0.),
+         np.array(-0.),
+        ),
+        # 2-D * 0-D
+        (np.array([[-0.], [-0.]]),
+         np.array(0.),
+         np.array([[-0.], [-0.]]),
+        ),
+        # 2-D * 0-D sign flip
+        (np.array([[-0.], [-0.]]),
+         np.array(-0.),
+         np.array([[0.], [0.]]),
+        ),
+        # two arrays of size 0
+        (np.array([]),
+         np.array([]),
+         np.array(0.),
+        ),
         ])
-    def test_gh_21342(self, operand):
-        actual = np.signbit(np.dot(np.array([[-0.], [-0.]]), operand))
-        expected = np.signbit(np.array([[-0.], [-0.]]))
+    def test_gh_21342(self, arr1, arr2, expected):
+        actual = np.signbit(np.dot(arr1, arr2))
+        expected = np.signbit(expected)
         assert_array_equal(actual, expected)
 
 
