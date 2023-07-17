@@ -8,7 +8,7 @@ from numpy import (
     ndindex as ndindex,
 )
 
-from numpy.version import version
+from numpy._version import version
 
 from numpy.lib import (
     format as format,
