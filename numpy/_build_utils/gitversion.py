@@ -5,16 +5,20 @@ def init_version():
     init = os.path.join(os.path.dirname(__file__), '../__init__.py')
     data = open(init).readlines()
 
-    version_line = next(line for line in data if line.startswith('__version__ ='))
+    version_line = next(
+        line for line in data if line.startswith('__version__ =')
+    )
 
-    version = version_line.strip().split(' = ')[1].replace('"', '').replace("'", '')
+    version = version_line.strip().split(' = ')[1]
+    version = version.replace('"', '').replace("'", '')
 
     return version
 
 
 def git_version(version):
     if 'dev' in version:
-        # Append last commit date and hash to dev version information, if available
+        # Append last commit date and hash to dev version information,
+        # if available
 
         import subprocess
         import os.path

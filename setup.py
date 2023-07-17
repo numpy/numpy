@@ -31,9 +31,10 @@ builtins.__NUMPY_SETUP__ = True
 # Needed for backwards code compatibility below and in some CI scripts.
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
-FULLVERSION = subprocess.check_output(
-    [sys.executable, 'numpy/_build_utils/gitversion.py', '--write', 'numpy/_version.py']
-).strip().decode('ascii')
+FULLVERSION = subprocess.check_output([
+    sys.executable,
+    'numpy/_build_utils/gitversion.py', '--write', 'numpy/_version.py'
+]).strip().decode('ascii')
 
 # Capture the version string:
 # 1.22.0.dev0+ ... -> ISRELEASED == False, VERSION == 1.22.0
