@@ -119,6 +119,7 @@ doc/source/savefig/
 
 # Things specific to this project #
 ###################################
+numpy/_version.py
 numpy/core/__svn_version__.py
 doc/numpy.scipy.org/_build
 numpy/__config__.py

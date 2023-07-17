@@ -1,10 +1,9 @@
 project(
   'NumPy',
   'c', 'cpp', 'cython',
-  # Note that the git commit hash cannot be added dynamically here
-  # It is dynamically added upon import by versioneer
-  # See `numpy/__init__.py`
-  version: run_command(['python', 'numpy/_gitversion.py'], check: true).stdout().strip(),
+  version: run_command(
+    ['python', 'numpy/_build_utils/gitversion.py', '--write', 'numpy/_version.py'],
+    check: true).stdout().strip(),
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [

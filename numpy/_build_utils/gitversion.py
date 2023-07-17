@@ -2,7 +2,7 @@ import os
 
 
 def init_version():
-    init = os.path.join(os.path.dirname(__file__), '__init__.py')
+    init = os.path.join(os.path.dirname(__file__), '../__init__.py')
     data = open(init).readlines()
 
     version_line = next(line for line in data if line.startswith('__version__ ='))
@@ -50,4 +50,16 @@ def git_version(version):
 
 
 if __name__ == "__main__":
-    print(git_version(init_version()))
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--write', help="Save version to this file")
+    args = parser.parse_args()
+
+    version = git_version(init_version())
+
+    if args.write:
+        with open(args.write, 'w') as f:
+            f.write(f'version = "{version}"\n')
+
+    print(version)

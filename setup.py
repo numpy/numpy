@@ -32,7 +32,7 @@ builtins.__NUMPY_SETUP__ = True
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
 FULLVERSION = subprocess.check_output(
-    [sys.executable, 'numpy/_gitversion.py']
+    [sys.executable, 'numpy/_build_utils/gitversion.py', '--write', 'numpy/_version.py']
 ).strip().decode('ascii')
 
 # Capture the version string:

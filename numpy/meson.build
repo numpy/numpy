@@ -200,7 +200,7 @@ python_sources = [
   '__init__.py',
   '__init__.pyi',
   '_distributor_init.py',
-  '_gitversion.py',
+  '_version.py',
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
