@@ -6,7 +6,7 @@ hypothesis==6.81.1
 pytest==7.4.0
 pytz==2023.3
 pytest-cov==4.1.0
-meson
+git+https://github.com/seiko2plus/meson@module_feature
 pytest-xdist
 # for numpy.random.test.test_extending
 cffi; python_version < '3.10'
