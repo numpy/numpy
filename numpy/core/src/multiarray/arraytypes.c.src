@@ -3653,14 +3653,21 @@ NPY_NO_EXPORT void
 
     if (is1b && is2b)
     {
-        double sum = 0.;  /* double for stability */
+        double sum = -0.;  /* double for stability */
+        double result;
 
         while (n > 0) {
             CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
 
-            sum += CBLAS_FUNC(cblas_@prefix@dot)(chunk,
+            result = CBLAS_FUNC(cblas_@prefix@dot)(chunk,
                                      (@type@ *) ip1, is1b,
                                      (@type@ *) ip2, is2b);
+            if (npy_signbit(((@type@ *)ip1)[0]) &&
+                ((@type@ *)ip1)[0] == 0 &&
+                !npy_signbit(((@type@ *)ip2)[0])) {
+                result = -0.0;
+            }
+            sum += result;
             /* use char strides here */
             ip1 += chunk * is1;
             ip2 += chunk * is2;

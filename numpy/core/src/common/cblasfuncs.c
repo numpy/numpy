@@ -9,6 +9,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -396,6 +397,18 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                             (double *)PyArray_DATA(ap1),
                             ap1stride/sizeof(double),
                             (double *)PyArray_DATA(out_buf), 1);
+                /*
+                 * Negative zero semantics appear incorrect with cblas_daxpy
+                 * if ap2 is a scalar, so adjust signs
+                 */
+                if (ap2shape == _scalar &&
+                    ((double *)(PyArray_DATA(ap2)))[0] == 0.0 &&
+                    npy_signbit(((double *)(PyArray_DATA(ap2)))[0])
+                   ) {
+                    for (size_t i = 0; i < PyArray_SIZE(out_buf); i += 1) {
+                        ((double *)PyArray_DATA(out_buf))[i] *= -1.0;
+                    }
+                }
             }
             else {
                 int maxind, oind;
