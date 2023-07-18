@@ -4070,12 +4070,13 @@ class MaskedArray(ndarray):
 
         if self._fill_value is None:
             self.fill_value  # initialize fill_value
-        if self._fill_value.dtype == self.dtype or (
-                self.dtype.kind in "SU"
+        if (self._fill_value.dtype in "SU"
                 and self.dtype.kind == self._fill_value.dtype.kind):
-            # The dtype of the fill value should match that of the array
-            # and it is unnecessary to print the full `np.int64(...)`
-            # Allow strings: "N/A" has length 3 so would mismatch often.
+            # Allow strings: "N/A" has length 3 so would mismatch.
+            fill_repr = repr(self.fill_value.item())
+        if self._fill_value.dtype == self.dtype:
+            # Guess that it is OK to use the string as item repr.  To really
+            # fix this, it needs new logic (shared with structured scalars)
             fill_repr = str(self.fill_value)
         else:
             fill_repr = repr(self.fill_value)
