@@ -1,3 +1,4 @@
+import sys
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -266,7 +267,27 @@ class TestSFloat:
 
         del np._ScaledFloatTestDType
 
+    def test_flatiter(self):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
 
+        for i, val in enumerate(arr.flat):
+            assert arr[i] == val
+
+    @pytest.mark.parametrize(
+        "index", [
+            [1, 2], ..., slice(None, 2, None),
+            np.array([True, True, False]), np.array([0, 1])
+        ], ids=["int_list", "ellipsis", "slice", "bool_array", "int_array"])
+    def test_flatiter_index(self, index):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+        np.testing.assert_array_equal(
+            arr[index].view(np.float64), arr.flat[index].view(np.float64))
+
+        arr2 = arr.copy()
+        arr[index] = 5.0
+        arr2.flat[index] = 5.0
+        np.testing.assert_array_equal(
+            arr.view(np.float64), arr2.view(np.float64))
 
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)
