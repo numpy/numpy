@@ -33,6 +33,12 @@ fast operations on arrays, including mathematical, logical, shape manipulation,
 sorting, selecting, I/O, discrete Fourier transforms, basic linear algebra,
 basic statistical operations, random simulation and much more.
 
+NumPy fully supports an object-oriented approach, starting, once again, with ndarray. 
+For example, ndarray is a class, possessing numerous methods and attributes. Many of its 
+methods are mirrored by functions in the outer-most NumPy namespace, allowing the programmer 
+to code in whichever paradigm they prefer. This flexibility has allowed the NumPy array dialect 
+and NumPy ndarray class to become the de-facto language of multi-dimensional data interchange 
+used in Python.
 
 
 .. grid:: 2
