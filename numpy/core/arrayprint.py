@@ -1035,25 +1035,24 @@ class FloatingFormat:
                 return ' '*(self.pad_left + self.pad_right + 1 - len(ret)) + ret
 
         if self.exp_format:
-            res = dragon4_scientific(x,
-                                     precision=self.precision,
-                                     min_digits=self.min_digits,
-                                     unique=self.unique,
-                                     trim=self.trim,
-                                     sign=self.sign == '+',
-                                     pad_left=self.pad_left,
-                                     exp_digits=self.exp_size)
+            return dragon4_scientific(x,
+                                      precision=self.precision,
+                                      min_digits=self.min_digits,
+                                      unique=self.unique,
+                                      trim=self.trim,
+                                      sign=self.sign == '+',
+                                      pad_left=self.pad_left,
+                                      exp_digits=self.exp_size)
         else:
-            res = dragon4_positional(x,
-                                     precision=self.precision,
-                                     min_digits=self.min_digits,
-                                     unique=self.unique,
-                                     fractional=True,
-                                     trim=self.trim,
-                                     sign=self.sign == '+',
-                                     pad_left=self.pad_left,
-                                     pad_right=self.pad_right)
-        return res
+            return dragon4_positional(x,
+                                      precision=self.precision,
+                                      min_digits=self.min_digits,
+                                      unique=self.unique,
+                                      fractional=True,
+                                      trim=self.trim,
+                                      sign=self.sign == '+',
+                                      pad_left=self.pad_left,
+                                      pad_right=self.pad_right)
 
 
 @set_module('numpy')
@@ -1283,6 +1282,7 @@ class ComplexFloatingFormat:
 
         return r + i
 
+
 class _TimelikeFormat:
     def __init__(self, data):
         non_nat = data[~isnat(data)]
@@ -1408,7 +1408,7 @@ class StructuredVoidFormat:
             return "({})".format(", ".join(str_fields))
 
 
-def _void_scalar_repr(x, is_repr=True):
+def _void_scalar_to_string(x, is_repr=True):
     """
     Implements the repr for structured-void scalars. It is called from the
     scalartypes.c.src code, and is placed here because it uses the elementwise
