@@ -4070,11 +4070,12 @@ class MaskedArray(ndarray):
 
         if self._fill_value is None:
             self.fill_value  # initialize fill_value
-        if (self._fill_value.dtype in "SU"
+
+        if (self._fill_value.dtype.kind in ("S", "U")
                 and self.dtype.kind == self._fill_value.dtype.kind):
             # Allow strings: "N/A" has length 3 so would mismatch.
             fill_repr = repr(self.fill_value.item())
-        if self._fill_value.dtype == self.dtype:
+        elif self._fill_value.dtype == self.dtype:
             # Guess that it is OK to use the string as item repr.  To really
             # fix this, it needs new logic (shared with structured scalars)
             fill_repr = str(self.fill_value)
