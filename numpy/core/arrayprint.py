@@ -399,12 +399,12 @@ def _object_format(o):
     return fmt.format(o)
 
 def repr_format(x):
-    if isinstance(x, (np.str_, np.bytes_)) and _format_options['legacy'] > 125:
+    if isinstance(x, (np.str_, np.bytes_)):
         return repr(x.item())
     return repr(x)
 
 def str_format(x):
-    if isinstance(x, (np.str_, np.bytes_)) and _format_options['legacy'] > 125:
+    if isinstance(x, (np.str_, np.bytes_)):
         return str(x.item())
     return str(x)
 
@@ -419,13 +419,11 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy,
-            longdouble_quoting=True),
+            data, precision, floatmode, suppress, sign, legacy=legacy),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy,
-            longdouble_quoting=True),
+            data, precision, floatmode, suppress, sign, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -915,7 +913,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, legacy=None, longdouble_quoting=False):
+                 *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -938,9 +936,6 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        self.longdouble_quoting = (longdouble_quoting
-                                   and legacy > 125
-                                   and data.dtype == np.longdouble)
 
         self.fillFormat(data)
 
@@ -1058,7 +1053,8 @@ class FloatingFormat:
                                      sign=self.sign == '+',
                                      pad_left=self.pad_left,
                                      pad_right=self.pad_right)
-        return f"'{res}'" if self.longdouble_quoting else res 
+        return res
+
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
@@ -1258,15 +1254,10 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, *, legacy=None,
-                 longdouble_quoting=False):
+                 sign=False, *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
-
-        self.longdouble_quoting = (longdouble_quoting
-                                   and legacy > 125
-                                   and x.dtype == np.longdouble)
 
         floatmode_real = floatmode_imag = floatmode
         if legacy <= 113:
@@ -1290,7 +1281,7 @@ class ComplexFloatingFormat:
         sp = len(i.rstrip())
         i = i[:sp] + 'j' + i[sp:]
 
-        return f"'{r}{i}'" if self.longdouble_quoting else r + i
+        return r + i
 
 class _TimelikeFormat:
     def __init__(self, data):
