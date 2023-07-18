@@ -962,8 +962,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 {
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
-    PyArray_CopySwapFunc *copyswap;
-    int n, elsize, swap;
+    int n, elsize;
     npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
@@ -1043,8 +1042,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     elsize = PyArray_DESCR(obj)->elsize;
     ret_data = PyArray_DATA(obj);
-    copyswap = dtype->f->copyswap;
-    swap = !PyArray_ISNBO(dtype->byteorder);
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
@@ -1077,11 +1074,34 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        copyswap(ret_data, PyArray_MultiIter_DATA(multi, mi), swap, NULL);
+        if (out != NULL) {
+            char *args[2] = {PyArray_MultiIter_DATA(multi, mi), ret_data};
+            npy_intp transfer_strides[2] = {elsize, elsize};
+            npy_intp one = 1;
+            NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+            NPY_cast_info cast_info = {.func = NULL};
+            PyArrayIterObject *ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
+            int is_aligned = IsUintAligned(ind_it->ao);
+            PyArray_GetDTypeTransferFunction(
+                        is_aligned,
+                        PyArray_DESCR(mps[0])->elsize,
+                        PyArray_DESCR(obj)->elsize,
+                        PyArray_DESCR(mps[0]),
+                        PyArray_DESCR(obj), 0, &cast_info,
+                        &transfer_flags);
+            cast_info.func(&cast_info.context, args, &one,
+                                transfer_strides, cast_info.auxdata);
+        }
+        else {
+            memmove(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
+        }
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
 
+    if (out == NULL) {
+        PyArray_INCREF(obj);
+    }
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
