@@ -37,14 +37,14 @@ repr_precision = len(repr(np.longdouble(0.1)))
                     reason="test flaky on musllinux")
 @pytest.mark.skipif(LD_INFO.precision + 2 >= repr_precision,
                     reason="repr precision not enough to show eps")
-def test_repr_roundtrip():
+def test_str_roundtrip():
     # We will only see eps in repr if within printing precision.
     o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(str(o)), o, "str was %s" % str(o))
 
 
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
-def test_repr_roundtrip_bytes():
+def test_str_roundtrip_bytes():
     o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(str(o).encode("ascii")), o)
 
@@ -275,7 +275,7 @@ class TestFileBased:
 # Conversions long double -> string
 
 
-def test_repr_exact():
+def test_str_exact():
     o = 1 + LD_INFO.eps
     assert_(str(o) != '1')
 
@@ -314,7 +314,7 @@ def test_array_repr():
 
 class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
-    def test_repr_roundtrip_foreign(self):
+    def test_str_roundtrip_foreign(self):
         o = 1.5
         assert_equal(o, np.longdouble(str(o)))
 

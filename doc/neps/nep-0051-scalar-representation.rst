@@ -233,7 +233,8 @@ Implementation
 ==============
 
 .. note::
-    This part has *not* been implemented with the initial changes.
+    This part has *not* been implemented in the
+    `initial PR <https://github.com/numpy/numpy/pull/22449>`_.
     A similar change will be required to fix certain cases in printing and
     allow fully correct printing e.g. of structured scalars which include
     longdoubles.

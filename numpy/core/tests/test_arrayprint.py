@@ -1070,9 +1070,8 @@ def test_scalar_repr_numbers(dtype, value):
         normalized_name = np.dtype(f"{dtype.kind}{dtype.itemsize}").type.__name__
         assert representation == f"np.{normalized_name}({repr_string})"
 
-    np.set_printoptions(legacy="1.25")
-    assert repr(scalar) == string
-    np.set_printoptions(legacy=False)
+    with np.printoptions(legacy="1.25"):
+        assert repr(scalar) == string
 
 
 @pytest.mark.parametrize("scalar, legacy_repr,representation", [
@@ -1091,6 +1090,5 @@ def test_scalar_repr_special(scalar, legacy_repr, representation):
     # Test NEP 51 scalar repr (and legacy option) for numeric types
     assert repr(scalar) == representation
 
-    np.set_printoptions(legacy="1.25")
-    assert repr(scalar) == legacy_repr
-    np.set_printoptions(legacy=False)
+    with np.printoptions(legacy="1.25"):
+        assert repr(scalar) == legacy_repr

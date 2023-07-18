@@ -544,7 +544,7 @@ def _array2string(a, options, separator=' ', prefix=""):
         summary_insert = ""
 
     # find the right formatting function for the array
-    format_function = _get_format_function(data=data, **options)
+    format_function = _get_format_function(data, **options)
 
     # skip over "["
     next_line_prefix = " "

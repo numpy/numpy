@@ -10,6 +10,6 @@ explicit strings, for example by using ``str()`` or ``f"{scalar!s}"``.
 For the time being, affected users can use ``np.set_printoptions(legacy="1.25")``
 to get the old behavior (with possibly a few exceptions).
 Documentation of downstream projects may require larger updates,
-if tested, we are working on tooling for:
+if code snippets are tested.  We are working on tooling for:
 `doctest-plus <https://github.com/scientific-python/pytest-doctestplus/issues/107>`__
 to facilitate updates.
