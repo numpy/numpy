@@ -49,7 +49,7 @@ setup_base()
   else
     # SIMD extensions that need to be tested on both runtime and compile-time via (test_simd.py)
     # any specified features will be ignored if they're not supported by compiler or platform
-    # note: it almost the same default value of --simd-test execpt adding policy `$werror` to treat all
+    # note: it almost the same default value of --simd-test except adding policy `$werror` to treat all
     # warnings as errors
     build_args+=("--simd-test=\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD VX VXE VXE2")
   fi
@@ -154,7 +154,7 @@ EOF
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
-    # Travis has a limit on log length that is causeing test failutes.
+    # Travis has a limit on log length that is causing test failutes.
     # The fix here is to remove the "-v" from the runtest arguments.
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON -b ../runtests.py -n --mode=full $DURATIONS_FLAG $COVERAGE_FLAG

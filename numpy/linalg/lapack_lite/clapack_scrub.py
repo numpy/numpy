@@ -237,7 +237,7 @@ def removeSubroutinePrototypes(source):
     # While we could "fix" this function to do what the name implies
     # it should do, we have no hint of what it should really do.
     #
-    # Therefore we keep the existing (non-)functionaity, documenting
+    # Therefore we keep the existing (non-)functionality, documenting
     # this function as doing nothing at all.
     return source
 
