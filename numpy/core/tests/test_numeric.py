@@ -300,7 +300,7 @@ class TestNonarrayArgs:
         assert_almost_equal(np.var(B), 0.25)
 
     def test_std_with_mean_keyword(self):
-        # Setting the seed to make the test reproducable
+        # Setting the seed to make the test reproducible
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
@@ -335,7 +335,7 @@ class TestNonarrayArgs:
         assert_almost_equal(std, std_old)
 
     def test_var_with_mean_keyword(self):
-        # Setting the seed to make the test reproducable
+        # Setting the seed to make the test reproducible
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
@@ -470,7 +470,7 @@ class TestNonarrayArgs:
         assert_equal(var, var_old)
 
     def test_std_with_mean_keyword_multiple_axis(self):
-        # Setting the seed to make the test reproducable
+        # Setting the seed to make the test reproducible
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
@@ -496,7 +496,7 @@ class TestNonarrayArgs:
         assert_almost_equal(std, std_old)
 
     def test_std_with_mean_keyword_axis_None(self):
-        # Setting the seed to make the test reproducable
+        # Setting the seed to make the test reproducible
         rng = np.random.RandomState(1234)
         A = rng.randn(10, 20, 5) + 0.5
 
