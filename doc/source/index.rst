@@ -40,7 +40,8 @@ to code in whichever paradigm they prefer. This flexibility has allowed the NumP
 and NumPy ndarray class to become the de-facto language of multi-dimensional data interchange 
 used in Python.
 
-#Why is NumPy Fast?
+Why is NumPy Fast?
+
 Vectorization describes the absence of any explicit looping, indexing, etc., 
 in the code - these things are taking place, of course, just “behind the scenes” 
 in optimized, pre-compiled C code. Vectorized code has many advantages, among which are:
