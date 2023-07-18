@@ -417,8 +417,8 @@ double random_beta(bitgen_t *bitgen_state, double a, double b) {
       Y = pow(V, 1.0 / b);
       XpY = X + Y;
       /* Reject if both U and V are 0.0, which is approx 1 in 10^106 */
-      if ((XpY <= 1.0) && (XpY > 0.0)) {
-        if (X + Y > 0) {
+      if ((XpY <= 1.0) && (U + V > 0.0)) {
+        if (XpY > 0) {
           return X / XpY;
         } else {
           double logX = log(U) / a;
