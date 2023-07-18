@@ -85,9 +85,13 @@ PyMODINIT_FUNC PyInit__simd(void)
                 goto err;                                                      \
             }                                                                  \
         }
-
-    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
-    NPY__CPU_DISPATCH_BASELINE_CALL(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
+    #ifdef NPY__CPU_MESON_BUILD
+        NPY_MTARGETS_CONF_DISPATCH(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
+        NPY_MTARGETS_CONF_BASELINE(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
+    #else
+        NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
+        NPY__CPU_DISPATCH_BASELINE_CALL(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
+    #endif
     return m;
 err:
     Py_DECREF(m);
