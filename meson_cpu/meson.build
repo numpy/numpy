@@ -115,6 +115,8 @@ foreach opt_name, conf : parse_options
     elif tok == '-'
       append = false
       continue
+    elif tok == 'NONE'
+      continue
     elif tok == 'NATIVE'
       if not is_variable('cpu_native_features')
         compiler_id = meson.get_compiler('c').get_id()
@@ -214,7 +216,7 @@ else
 endif
 # The name of the baseline features including
 # its implied features.
-CPU_BASELINE_NAMES = baseline['features']
+CPU_BASELINE_NAMES = baseline.get('features', [])
 CPU_BASELINE = []
 foreach fet_name : CPU_BASELINE_NAMES
   CPU_BASELINE += [CPU_FEATURES[fet_name]]

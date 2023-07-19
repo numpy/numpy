@@ -87,6 +87,8 @@ cdata.set('NPY_API_VERSION', C_API_VERSION)
 use_svml = (
   host_machine.system() == 'linux' and
   host_machine.cpu_family() == 'x86_64' and
+  ('AVX512_SKX' in CPU_DISPATCH_NAMES or
+   'AVX512_SKX' in CPU_BASELINE_NAMES) and
   not get_option('disable-svml')
 )
 if use_svml
@@ -516,12 +518,6 @@ if cc.get_id() == 'msvc'
      staticlib_cflags +=  '-d2VolatileMetadata-'
   endif
 endif
-# TODO: change to "feature" option in meson_options.txt? See
-# https://mesonbuild.com/Build-options.html#build-options
-if get_option('disable-optimization')
-  staticlib_cflags += '-DNPY_DISABLE_OPTIMIZATION'
-  staticlib_cppflags += '-DNPY_DISABLE_OPTIMIZATION'
-endif
 
 npy_math_internal_h = custom_target(
   output: 'npy_math_internal.h',
@@ -629,19 +625,10 @@ src_ufunc_api = custom_target('__ufunc_api',
 
 # Set common build flags for C and C++ code
 # -----------------------------------------
-
-# TODO: change to "feature" option in meson_options.txt? See
-# https://mesonbuild.com/Build-options.html#build-options
-disable_simd_optimizations = []
-if get_option('disable-optimization')
-  disable_simd_optimizations = '-DNPY_DISABLE_OPTIMIZATION'
-endif
-
 # Common build flags
 c_args_common = [
   '-DNPY_INTERNAL_BUILD',
   '-DHAVE_NPY_CONFIG_H',
-  disable_simd_optimizations,
   cflags_large_file_support,
 ]
 
@@ -670,8 +657,7 @@ np_core_dep = declare_dependency(
     '.',
     'include',
     'src/common',
-  ],
-  compile_args: disable_simd_optimizations
+  ]
 )
 
 # Build multiarray_tests module
