@@ -296,9 +296,6 @@ endforeach
 
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
-  'xmmintrin.h',  # SSE
-  'emmintrin.h',  # SSE2
-  'immintrin.h',  # AVX
   'features.h',   # for glibc version linux
   'xlocale.h',    # see GH#8367
   'dlfcn.h',      # dladdr
@@ -762,16 +759,12 @@ foreach gen_mtargets : [
   [
     'simd_qsort.dispatch.h',
     'src/npysort/simd_qsort.dispatch.cpp',
-    [
-      AVX512_SKX
-    ]
+    [AVX512_SKX]
   ],
   [
     'simd_qsort_16bit.dispatch.h',
     'src/npysort/simd_qsort_16bit.dispatch.cpp',
-    [
-      # TODO: AVX512_SPR
-    ]
+    [AVX512_SPR]
   ],
 ]
 mtargets_res = mod_features.multi_target(
