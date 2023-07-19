@@ -1133,6 +1133,24 @@ py.extension_module('_multiarray_umath',
 
 # Build SIMD module
 # -----------------
+_simd_dispatch = []
+_simd_baseline = []
+foreach target : get_option('test-simd')
+  target = target.strip().to_upper().split(',')
+  mfeatures = []
+  foreach fet_name : target
+    if fet_name == 'BASELINE'
+      _simd_baseline = CPU_BASELINE
+      break
+    endif
+    if fet_name not in CPU_FEATURES
+      error('Expected a valid feature name, got('+fet_name+')')
+    endif
+    mfeatures += CPU_FEATURES[fet_name]
+  endforeach
+  _simd_dispatch += [mfeatures]
+endforeach
+
 mtargets_res = mod_features.multi_target(
   '_simd.dispatch.h',
   [
@@ -1140,8 +1158,8 @@ mtargets_res = mod_features.multi_target(
     src_file.process('src/_simd/_simd_data.inc.src'),
     src_file.process('src/_simd/_simd.dispatch.c.src'),
   ],
-  dispatch: [SSE2, AVX2, AVX512_SKX],
-  baseline: CPU_BASELINE,
+  dispatch: _simd_dispatch,
+  baseline: _simd_baseline,
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
   include_directories: ['src/_simd', 'src/npymath'],

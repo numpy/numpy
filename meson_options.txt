@@ -18,7 +18,14 @@ option('cpu-baseline', type: 'string', value: 'min',
         description: 'minimal set of required CPU features')
 option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
         description: 'dispatched set of additional CPU features')
-option('test-simd', type: 'string', value: 'baseline sse2 sse42 xop fma4 avx2_fma3 avx512_common avx512_skx vsx vsx2 vsx3 vsx4 neon asimd vx vxe vxe2',
+option('test-simd', type: 'array',
+        value: [
+          'BASELINE', 'SSE2', 'SSE42', 'XOP', 'FMA4',
+          'AVX2', 'FMA3', 'AVX2,FMA3', 'AVX512F', 'AVX512_SKX',
+          'VSX', 'VSX2', 'VSX3', 'VSX4',
+          'NEON', 'ASIMD',
+          'VX', 'VXE', 'VXE2',
+        ],
         description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
 option('test-simd-args', type: 'string', value: '',
         description: 'Extra args to be passed to _simd module that used for testing Numpy SIMD inteface')
