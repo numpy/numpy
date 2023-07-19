@@ -1,4 +1,4 @@
-name: Test Address Sanitizer Build (Linux)
+name: Test with compiler sanitizers (Linux)
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  meson_sanitizers:
+  gcc_sanitizers:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     steps:
