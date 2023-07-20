@@ -840,7 +840,9 @@ foreach gen_mtargets : [
   [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
-    [
+    # Enables SIMD on clang-cl raises spurious FP exceptions
+    # TODO(seiko2plus): Debug spurious FP exceptions for single-precision log/exp
+    compiler_id == 'clang-cl' ? [] : [
       AVX512_SKX, AVX512F, [AVX2, FMA3]
     ]
   ],
@@ -884,7 +886,9 @@ foreach gen_mtargets : [
   [
     'loops_trigonometric.dispatch.h',
     src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
-    [
+    # Enables SIMD on clang-cl raises spurious FP exceptions
+    # TODO(seiko2plus): Debug spurious FP exceptions for single-precision sin/cos
+    compiler_id == 'clang-cl' ? [] : [
       AVX512F, [AVX2, FMA3],
       VSX4, VSX3, VSX2,
       NEON_VFPV4,
