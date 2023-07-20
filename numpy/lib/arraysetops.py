@@ -131,13 +131,15 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       kind=None):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True,
+           kind=None):
     """
     Find the unique elements of an array.
 
@@ -176,6 +178,24 @@ def unique(ar, return_index=False, return_inverse=False,
         If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
+
+    kind : {None, 'sort', 'table'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
+
+        * If 'sort', will use a mergesort-based approach.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar` plus the max-min value of `ar`. The options
+          `return_index`, `return_inverse`, `axis`, and `equal_nan`
+          are unavailable with this option.
+        * If None, will automatically choose 'table' if possible,
+          and the required memory allocation is less than or equal to
+          6 times the size of `ar`. Will otherwise will use 'sort'.
+          This is done to not use a large amount of memory by default,
+          even though 'table' may be faster in most cases.
 
     Returns
     -------
@@ -272,8 +292,13 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan)
+                        equal_nan=equal_nan, kind=kind)
         return _unpack_tuple(ret)
+    elif kind == "table":
+        raise ValueError(
+            "Using `kind='table'` is not supported "
+            "when a particular axis is specified."
+        )
 
     # axis was specified and not None
     try:
@@ -315,17 +340,104 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nan=equal_nan)
+                       return_inverse, return_counts,
+                       equal_nan=equal_nan, kind=kind)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True):
+              return_counts=False, *, equal_nan=True, kind=None):
     """
     Find the unique elements of an array, ignoring shape.
     """
     ar = np.asanyarray(ar).flatten()
+
+    is_integer_array = ar.dtype.kind in "uib"
+
+    if kind not in {None, 'sort', 'table'}:
+        raise ValueError(
+            f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
+    
+    use_table_method = (
+        is_integer_array
+        and kind in {'table', None}
+        and not return_index
+        and not return_inverse
+        and not isinstance(ar, np.ma.MaskedArray)
+    )
+
+    if use_table_method:
+        if ar.size == 0:
+            ret = (np.array([], dtype=ar.dtype),)
+            if return_counts:
+                ret += (np.array([], dtype=np.intp),)
+            return ret
+
+        orig_dtype = ar.dtype
+        if ar.dtype == bool:
+            ar = ar.astype(np.uint8)
+
+        # Can use lookup table-like approach.
+        ar_min = np.min(ar)
+        ar_max = np.max(ar)
+
+        ar_range = int(ar_max) - int(ar_min)
+
+        # Constraints on whether we can actually use the table method:
+        range_safe_from_overflow = ar_range < np.iinfo(ar.dtype).max
+        if return_counts:
+            # We use np.bincount for `return_counts`, which converts
+            # to int64, and so we also need to check that limit
+            # for overflow
+            range_safe_from_overflow &= ar_range < np.iinfo(np.intp).max
+
+        below_memory_constraint = ar_range <= 6 * ar.size
+
+        if (
+            range_safe_from_overflow and 
+            (below_memory_constraint or kind == 'table')
+        ):
+
+            value = np.arange(ar_min, ar_max + 1, dtype=ar.dtype)
+
+            if return_counts:
+                counts = np.bincount(ar.astype(np.intp)
+                                     - ar_min.astype(np.intp),
+                                     minlength=ar_range)
+                exists = counts > 0
+                out_values, out_counts = (value[exists], counts[exists])
+                if orig_dtype != out_values.dtype:
+                    out_values = out_values.astype(orig_dtype)
+                return (out_values, out_counts)
+            else:
+                exists = np.zeros(ar_range + 1, dtype=bool)
+                exists[ar - ar_min] = 1
+                out_values = value[exists]
+                if orig_dtype != out_values.dtype:
+                    out_values = out_values.astype(orig_dtype)
+                return (out_values,)
+
+        elif kind == 'table':  # not range_safe_from_overflow
+            raise RuntimeError(
+                "You have specified kind='table', "
+                "but the range of values in `ar` exceeds the "
+                "maximum integer of the datatype. "
+                "Please set `kind` to None or 'sort'."
+            )
+    elif kind == 'table':
+        # Specify why the table method should not be used:
+        prefix_error = "The 'table' method is not supported"
+        if not is_integer_array:
+            postfix_error = "for non-integer arrays."
+        if return_index:
+            postfix_error = "for `return_index=True`."
+        if return_inverse:
+            postfix_error = "for `return_inverse=True`."
+        if isinstance(ar, np.ma.MaskedArray):
+            postfix_error = "for masked arrays."
+        raise ValueError(prefix_error + " " + postfix_error)
+
 
     optional_indices = return_index or return_inverse
 

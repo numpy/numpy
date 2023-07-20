@@ -171,3 +171,32 @@ class Isin(Benchmark):
 
     def time_isin(self, size, highest_element):
         np.isin(self.array, self.in_array)
+
+
+class Unique(Benchmark):
+    """Integer array benchmarks for `numpy.unique`."""
+
+    param_names = ["size", "highest_element"]
+    params = [
+        list(np.logspace(np.log10(10), np.log10(100_000_000),
+                         num=5, dtype=np.intp)),
+        list(np.logspace(np.log10(10), np.log10(100_000_000),
+                         num=5, dtype=np.intp)),
+    ]
+
+    def setup(self, size, highest_element):
+        self.rstate = np.random.RandomState(0)
+        self.array = self.rstate.randint(
+                low=0, high=highest_element, size=size)
+
+    def time_unique(self, size, highest_element):
+        np.unique(self.array)
+
+    def time_unique_with_counts(self, size, highest_element):
+        np.unique(self.array, return_counts=True)
+
+    def time_unique_with_inverse(self, size, highest_element):
+        np.unique(self.array, return_inverse=True)
+    
+    def time_unique_with_index(self, size, highest_element):
+        np.unique(self.array, return_index=True)
