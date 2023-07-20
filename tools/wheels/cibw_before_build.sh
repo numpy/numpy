@@ -1,3 +1,4 @@
+#!/bin/bash
 set -xe
 
 PROJECT_DIR="$1"
