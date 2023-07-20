@@ -324,6 +324,17 @@ optional_function_attributes = [
 #  endif
 #endforeach
 
+# Max possible optimiztion flags
+# We pass this flags to all our dispatch-able
+# (multi_targets) sources.
+compiler = meson.get_compiler('c')
+compiler_id = compiler.get_id()
+max_opt = {
+  'msvc': ['/O2'],
+  'intel-cl': ['/O3'],
+}.get(compiler_id, ['-O3'])
+max_opt = compiler.has_multi_arguments(max_opt) ? max_opt : []
+
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
 # Call arguments are required as the compiler will do strict signature checking
@@ -739,8 +750,8 @@ mtargets_res = mod_features.multi_target(
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common,
-  cpp_args: cpp_args_common,
+  c_args: c_args_common + max_opt,
+  cpp_args: cpp_args_common + max_opt,
   include_directories: [
     'include',
     'src/common',
@@ -773,8 +784,8 @@ mtargets_res = mod_features.multi_target(
   # baseline: CPU_BASELINE, it doesn't provide baseline fallback
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common,
-  cpp_args: cpp_args_common,
+  c_args: c_args_common + max_opt,
+  cpp_args: cpp_args_common + max_opt,
   include_directories: [
     'include',
     'src/common',
@@ -794,6 +805,7 @@ umath_gen_headers = [
   src_file.process('src/umath/loops.h.src'),
   src_file.process('src/umath/loops_utils.h.src'),
 ]
+
 foreach gen_mtargets : [
   [
     'loops_arithm_fp.dispatch.h',
@@ -940,8 +952,8 @@ mtargets_res = mod_features.multi_target(
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common,
-  cpp_args: cpp_args_common,
+  c_args: c_args_common + max_opt,
+  cpp_args: cpp_args_common + max_opt,
   include_directories: [
     'include',
     'src/common',
