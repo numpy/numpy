@@ -1896,13 +1896,13 @@ class TestUfunc:
         assert_equal(result, target)
 
     def test_operand_flags(self):
-        a = np.arange(16, dtype='l').reshape(4, 4)
-        b = np.arange(9, dtype='l').reshape(3, 3)
+        a = np.arange(16, dtype=int).reshape(4, 4)
+        b = np.arange(9, dtype=int).reshape(3, 3)
         opflag_tests.inplace_add(a[:-1, :-1], b)
         assert_equal(a, np.array([[0, 2, 4, 3], [7, 9, 11, 7],
-            [14, 16, 18, 11], [12, 13, 14, 15]], dtype='l'))
+            [14, 16, 18, 11], [12, 13, 14, 15]]))
 
-        a = np.array(0, dtype="l")
+        a = np.array(0)
         opflag_tests.inplace_add(a, 3)
         assert_equal(a, 3)
         opflag_tests.inplace_add(a, [3, 4])
