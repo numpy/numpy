@@ -622,7 +622,7 @@ cdef class RandomState:
         tomaxint(size=None)
 
         Return a sample of uniformly distributed random integers in the interval
-        [0, ``np.iinfo("long"").max``].
+        [0, ``np.iinfo("long").max``].
 
         .. warning::
            This function users the C-long dtype, which is 32bit on windows
@@ -680,9 +680,9 @@ cdef class RandomState:
                 randoms_data[i] = random_positive_int(&self._bitgen)
         return randoms
 
-    def randint(self, low, high=None, size=None, dtype="long"):
+    def randint(self, low, high=None, size=None, dtype=np.long):
         """
-        randint(low, high=None, size=None, dtype="long")
+        randint(low, high=None, size=None, dtype=np.long)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -711,7 +711,7 @@ cdef class RandomState:
             single value is returned.
         dtype : dtype, optional
             Desired dtype of the result. Byteorder must be native.
-            The default value is "long".
+            The default value is long.
 
             .. versionadded:: 1.11.0
 
@@ -1010,7 +1010,7 @@ cdef class RandomState:
                 idx = cdf.searchsorted(uniform_samples, side='right')
                 # searchsorted returns a scalar
                 # force cast to int for LLP64
-                idx = np.array(idx, copy=False).astype("long", casting='unsafe')
+                idx = np.array(idx, copy=False).astype(np.long, casting='unsafe')
             else:
                 idx = self.randint(0, pop_size, size=shape)
         else:
@@ -1025,7 +1025,7 @@ cdef class RandomState:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
-                found = np.zeros(shape, dtype="long")
+                found = np.zeros(shape, dtype=np.long)
                 flat_found = found.ravel()
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
@@ -3477,10 +3477,10 @@ cdef class RandomState:
             check_array_constraint(p_arr, 'p', CONS_BOUNDED_0_1)
             check_array_constraint(n_arr, 'n', CONS_NON_NEGATIVE)
             if size is not None:
-                randoms = <np.ndarray>np.empty(size, int)
+                randoms = <np.ndarray>np.empty(size, np.long)
             else:
                 it = np.PyArray_MultiIterNew2(p_arr, n_arr)
-                randoms = <np.ndarray>np.empty(it.shape, int)
+                randoms = <np.ndarray>np.empty(it.shape, np.long)
 
             cnt = np.PyArray_SIZE(randoms)
 
@@ -3508,7 +3508,7 @@ cdef class RandomState:
                 return <long>legacy_random_binomial(&self._bitgen, _dp, _in,
                                                     &self._binomial)
 
-        randoms = <np.ndarray>np.empty(size, "long")
+        randoms = <np.ndarray>np.empty(size, np.long)
         cnt = np.PyArray_SIZE(randoms)
         randoms_data = <long *>np.PyArray_DATA(randoms)
 
@@ -4405,7 +4405,7 @@ cdef class RandomState:
                 shape = (operator.index(size), d)
             except:
                 shape = tuple(size) + (d,)
-        multin = np.zeros(shape, dtype="long")
+        multin = np.zeros(shape, dtype=np.long)
         mnarr = <np.ndarray>multin
         mnix = <long*>np.PyArray_DATA(mnarr)
         sz = np.PyArray_SIZE(mnarr)
