@@ -36,10 +36,6 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
 
    f2py-user
    f2py-reference
-   python-usage
-   signature-file
-   buildtools/index
-   advanced
    windows/index
 
 .. _Python: https://www.python.org/
