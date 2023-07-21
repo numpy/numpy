@@ -94,7 +94,8 @@ class TypeDescription:
 
 
 def _check_order(types1, types2):
-    dtype_order = allP + "O"
+    # Insert kK (int64) after all other ints (assumes long long isn't larger)
+    dtype_order = bints + 'kK' + times + flts + cmplxP + "O"
     for t1, t2 in zip(types1, types2):
         # We have no opinion on object or time ordering for now:
         if t1 in "OP" or t2 in "OP":
@@ -275,6 +276,10 @@ chartoname = {
     'I': 'uint',
     'l': 'long',
     'L': 'ulong',
+    # We sometimes need int64, but we have no obvious char for it, use k and
+    # define it as `int64` below.
+    'k': 'int64',
+    'K': 'uint64',
     'q': 'longlong',
     'Q': 'ulonglong',
     'e': 'half',
@@ -330,13 +335,8 @@ nodatetime_or_obj = bints + inexact
 no_bool_times_obj = ints + inexact
 
 # Find which code corresponds to int64.
-int64 = ''
-uint64 = ''
-for code in 'bhilq':
-    if struct.calcsize(code) == 8:
-        int64 = code
-        uint64 = english_upper(code)
-        break
+int64 = 'k'
+uint64 = 'K'
 
 # This dictionary describes all the ufunc implementations, generating
 # all the function names and their corresponding ufunc signatures.  TD is
