@@ -24,7 +24,7 @@ INT_FUNCS = {'binomial': (100.0, 0.6),
              'zipf': (2,),
              }
 
-if np.iinfo(int).max < 2**32:
+if np.iinfo(np.long).max < 2**32:
     # Windows and some 32-bit platforms, e.g., ARM
     INT_FUNC_HASHES = {'binomial': '2fbead005fc63942decb5326d36a1f32fe2c9d32c904ee61e46866b88447c263',
                        'logseries': '23ead5dcde35d4cfd4ef2c105e4c3d43304b45dc1b1444b7823b9ee4fa144ebb',
