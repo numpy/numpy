@@ -495,7 +495,7 @@ class TestRandomDist:
         random.seed(self.seed)
         rs = random.RandomState(self.seed)
         actual = rs.tomaxint(size=(3, 2))
-        if np.iinfo(int).max == 2147483647:
+        if np.iinfo(np.long).max == 2147483647:
             desired = np.array([[1328851649,  731237375],
                                 [1270502067,  320041495],
                                 [1908433478,  499156889]], dtype=np.int64)
