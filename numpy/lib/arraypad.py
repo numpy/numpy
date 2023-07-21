@@ -742,7 +742,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
     pad_width = np.asarray(pad_width)
 
     if not pad_width.dtype.kind == 'i':
-        raise TypeError('`pad_width` must be of integral type.')
+        raise TypeError('`pad_width` must be of integer type.')
 
     # Broadcast to shape (array.ndim, 2)
     pad_width = _as_pairs(pad_width, array.ndim, as_index=True)
