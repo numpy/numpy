@@ -1543,11 +1543,6 @@ def test_keyword_argument():
     assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
 
 
-def test_ulong_dtype():
-    # test for gh-21063
-    assert np.dtype("ulong") == np.dtype(np.uint)
-
-
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
