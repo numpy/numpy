@@ -4743,7 +4743,8 @@ cdef class RandomState:
         """
 
         if isinstance(x, (int, np.integer)):
-            arr = np.arange(x)
+            # keep using long as the default here (main numpy switched to intp)
+            arr = np.arange(x, dtype=np.result_type(x, np.long))
             self.shuffle(arr)
             return arr
 
