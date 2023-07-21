@@ -26,6 +26,9 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             validate_output_shape
         )
 
+cdef extern from "limits.h":
+    cdef long LONG_MAX  # NumPy has it, maybe `__init__.pyd` should expose it
+
 cdef extern from "numpy/random/distributions.h":
     struct s_binomial_t:
         int has_binomial
@@ -3490,6 +3493,10 @@ cdef class RandomState:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 2))[0]
+                    if _in > LONG_MAX:
+                        raise ValueError(
+                                "`n` is out of bounds for long, consider using "
+                                "the new generator API for 64bit integers.")
                     (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
                         legacy_random_binomial(&self._bitgen, _dp, _in,
                                                &self._binomial)
@@ -3499,9 +3506,13 @@ cdef class RandomState:
             return randoms
 
         _dp = PyFloat_AsDouble(p)
-        _in = <long>n
+        _in = <np.npy_intp>n
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1)
         check_constraint(<double>_in, 'n', CONS_NON_NEGATIVE)
+        if _in > LONG_MAX:
+            raise ValueError(
+                    "`n` is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
 
         if size is None:
             with self.lock:
@@ -3957,15 +3968,18 @@ cdef class RandomState:
         cdef int64_t lngood, lnbad, lnsample
 
         # This cast to long is required to ensure that the values are inbounds
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_LONG, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_LONG, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_LONG, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
-
             lngood = <int64_t>ngood
             lnbad = <int64_t>nbad
             lnsample = <int64_t>nsample
+            if lnsample > LONG_MAX:
+                raise ValueError(
+                        "`nsample` is out of bounds for long, consider using "
+                        "the new generator API for 64bit integers.")
 
             if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
@@ -3978,10 +3992,11 @@ cdef class RandomState:
 
         if np.any(np.less(np.add(ongood, onbad), onsample)):
             raise ValueError("ngood + nbad < nsample")
-        # Convert to int64, if necessary, to use int64 infrastructure
-        ongood = ongood.astype(np.int64)
-        onbad = onbad.astype(np.int64)
-        onsample = onsample.astype(np.int64)
+        if np.any(onsample > LONG_MAX):
+            raise ValueError(
+                    "`nsample` is out of bounds for long, consider using "
+                    "the new generator API for 64bit integers.")
+
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
                                      ongood, 'ngood', CONS_NON_NEGATIVE,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
