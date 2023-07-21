@@ -3461,7 +3461,7 @@ cdef class RandomState:
 
         # Uses a custom implementation since self._binomial is required
         cdef double _dp = 0
-        cdef long _in = 0
+        cdef np.npy_intp _in = 0
         cdef bint is_scalar = True
         cdef np.npy_intp i, cnt
         cdef np.ndarray randoms
@@ -3470,7 +3470,7 @@ cdef class RandomState:
 
         p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
-        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_LONG, np.NPY_ALIGNED)
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INTP, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
 
         if not is_scalar:
@@ -3489,7 +3489,7 @@ cdef class RandomState:
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
-                    _in = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
+                    _in = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 2))[0]
                     (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
                         legacy_random_binomial(&self._bitgen, _dp, _in,
                                                &self._binomial)
