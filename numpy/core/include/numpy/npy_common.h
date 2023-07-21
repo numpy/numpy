@@ -381,10 +381,27 @@ typedef Py_hash_t npy_hash_t;
 
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#ifdef __cplusplus
+typedef struct 
+{
+    double _Val[2];
+} npy_cdouble;
+
+typedef struct
+{
+    float _Val[2];
+} npy_cfloat;
+
+typedef struct
+{
+    long double _Val[2];
+} npy_clongdouble;
+#else
 #include <complex.h>
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
+#endif
 #else /* !defined(__cplusplus) && (!defined(_MSC_VER) || defined(__INTEL_COMPILER)) */
 #ifdef __cplusplus
 extern "C++" {
