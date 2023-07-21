@@ -49,7 +49,7 @@ jobs:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
     env:
-      WITHOUT_SIMD: 1
+      MESON_ARGS: "-Dcpu-baseline=none -Dcpu-dispatch=none"
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -58,7 +58,7 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+    - uses: ./.github/meson_actions
 
   basic:
     needs: [smoke_test]
@@ -122,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     env:
-      WITHOUT_OPTIMIZATIONS: 1
+      MESON_ARGS: "-Ddisable-optimization=true"
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -131,14 +131,14 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+    - uses: ./.github/meson_actions
 
   with_baseline_only:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     env:
-      CPU_DISPATCH: "none"
+      MESON_ARGS: "-Dcpu-dispatch=none"
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -147,14 +147,14 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+    - uses: ./.github/meson_actions
 
   without_avx512:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     env:
-      CPU_DISPATCH: "max -xop -fma4 -avx512f -avx512cd -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
+      MESON_ARGS: "-Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3"
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -163,14 +163,14 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+    - uses: ./.github/meson_actions
 
   without_avx512_avx2_fma3:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     env:
-      CPU_DISPATCH: "SSSE3 SSE41 POPCNT SSE42 AVX F16C"
+      MESON_ARGS: "-Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C"
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -179,7 +179,7 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+    - uses: ./.github/meson_actions
 
   debug:
     needs: [smoke_test]
