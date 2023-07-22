@@ -279,6 +279,9 @@ class TestGeomspace:
         assert_raises(ValueError, geomspace, 0, 10)
         assert_raises(ValueError, geomspace, 10, 0)
         assert_raises(ValueError, geomspace, 0, 0)
+        with pytest.raises(AttributeError) as error:
+            geomspace(10, 2**65)
+        assert "Please consider end point less than or equal to 2^64" in str(error.value)
 
 
 class TestLinspace:
