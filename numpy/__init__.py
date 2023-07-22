@@ -235,6 +235,12 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+    # Remove min and max from __all__ to avoid `from numpy import *` override
+    # the builtins min/max. Temporary fix for 1.25.x/1.26.x, see gh-24229.
+    __all__.remove('min')
+    __all__.remove('max')
+    __all__.remove('round')
+
     # Remove one of the two occurrences of `issubdtype`, which is exposed as
     # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
     __all__.remove('issubdtype')
