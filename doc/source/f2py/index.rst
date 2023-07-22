@@ -26,6 +26,10 @@ available in your system, you may have to run it as a module::
 
    python -m numpy.f2py
 
+Using the ``python -m`` invocation is also good practice if you have multiple
+Python installs with NumPy in your system (outside of virtual environments) and
+you want to ensure you pick up a particular version of Python/F2PY.
+
 If you run ``f2py`` with no arguments, and the line ``numpy Version`` at the
 end matches the NumPy version printed from ``python -m numpy.f2py``, then you
 can use the shorter version. If not, or if you cannot run ``f2py``, you should
