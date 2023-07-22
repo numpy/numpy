@@ -414,7 +414,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         raise ValueError('Geometric sequence cannot include zero')
 
     if _nx.any(stop >= 2**64):
-        raise AttributeError('Please keep endpoint of the sequence below 2^64')
+        raise AttributeError('Please consider end point less than or equal to 2^64')
         
     dt = result_type(start, stop, float(num), _nx.zeros((), dtype))
     if dtype is None:
