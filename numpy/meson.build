@@ -1,5 +1,6 @@
 # We need -lm for all C code (assuming it uses math functions, which is safe to
-# assume for numpy).
+# assume for NumPy). For C++ it isn't needed, because libstdc++/libc++ is
+# guaranteed to depend on it.
 m_dep = cc.find_library('m', required : false)
 mlib_linkflag = ''
 if m_dep.found()
@@ -204,10 +205,6 @@ src_file = generator(src_file_cli,
 )
 
 tempita_cli = find_program('_build_utils/tempita.py')
-tempita = generator(tempita_cli,
-  arguments : ['@INPUT@', '--outfile', '@OUTPUT@'],
-  output : '@BASENAME@'
-)
 
 pure_subdirs = [
   '_pyinstaller',
