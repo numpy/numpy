@@ -44,8 +44,25 @@ if get_option('disable-optimization')
   CPU_CONF_BASELINE = 'none'
   CPU_CONF_DISPATCH = 'none'
 else
+  baseline_detect = false
+  c_args = get_option('c_args')
+  foreach arg : c_args
+    foreach carch : ['-march', '-mcpu', '-xhost', '/QxHost']
+      if arg.contains(carch)
+        message('Appending option "detect" to "cpu-baseline" due to detecting global architecture c_arg "' + arg + '"')
+        baseline_detect = true
+        break
+      endif
+    endforeach
+    if baseline_detect
+      break
+    endif
+  endforeach
   # The required minimal set of required CPU features.
   CPU_CONF_BASELINE = get_option('cpu-baseline')
+  if baseline_detect
+    CPU_CONF_BASELINE += '+detect'
+  endif
   # The required dispatched set of additional CPU features.
   CPU_CONF_DISPATCH = get_option('cpu-dispatch')
 endif
@@ -145,7 +162,7 @@ foreach opt_name, conf : parse_options
       if not is_variable('cpu_detect_features')
         test_detect = mod_features.test(
           max_features, anyfet: true,
-          force_args: ['-DDETECT_FEATURES']
+          force_args: ['-DDETECT_FEATURES'] + get_option('c_args')
         )
         cpu_detect_features = []
         foreach fet_name : test_detect[1].get('features')
@@ -185,10 +202,9 @@ foreach opt_name, conf : parse_options
   endforeach # tok : tokens
   if ignored.length() > 0
     message(
-      'During parsing', opt_name,
-      ': The following CPU features were ignored due to',
-      'platform incompatibility or not being supported:',
-      '\n"'+' '.join(ignored)+'"'
+      'During parsing ' + opt_name +
+      ': The following CPU features were ignored due to platform ' +
+      'incompatibility or lack of support:\n"' + ' '.join(ignored) + '"'
     )
   endif
   if result.length() > 0
