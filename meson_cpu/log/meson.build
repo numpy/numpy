@@ -1,6 +1,6 @@
 foreach cpu_req_var : [
-  'CPU_REQ_BASELINE', 'CPU_BASELINE_NAMES',
-  'CPU_REQ_DISPATCH', 'CPU_DISPATCH_NAMES',
+  'CPU_CONF_BASELINE', 'CPU_BASELINE_NAMES',
+  'CPU_CONF_DISPATCH', 'CPU_DISPATCH_NAMES',
   'CPU_MTARGETS_LOG',
 ]
   if not is_variable(cpu_req_var)
@@ -58,8 +58,8 @@ CPU dispatch  :
   Enabled     : @3@
 Generated     : @4@
 '''.format(
-    CPU_REQ_BASELINE, ' '.join(CPU_BASELINE_NAMES),
-    CPU_REQ_DISPATCH, ' '.join(CPU_DISPATCH_NAMES),
+    CPU_CONF_BASELINE, ' '.join(CPU_BASELINE_NAMES),
+    CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES),
     generated_targets
   )
 )
