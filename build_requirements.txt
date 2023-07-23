@@ -1,5 +1,5 @@
 meson-python>=0.10.0
-Cython<3.1
+Cython
 wheel==0.38.1
 ninja
 spin==0.4
