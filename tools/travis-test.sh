@@ -16,6 +16,11 @@ fi
 
 source builds/venv/bin/activate
 
+pip install --upgrade pip 'setuptools<49.2.0'
+
+pip install -r build_requirements.txt
+
+if [ -n "$USE_ASV" ]; then pip install asv; fi
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
