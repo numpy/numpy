@@ -40,7 +40,8 @@ setup_base()
   # use default python flags but remove sign-compare
   sysflags="$($PYTHON -c "import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
-  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  # For cython3.0 add -Wno-error=undef, see cython/cython#5557
+  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare -Wno-error=undef"
 
   build_args=()
   # Strictly disable all kinds of optimizations
@@ -59,13 +60,6 @@ setup_base()
     build_args+=("--simd-test=\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD VX VXE VXE2")
   fi
   if [ -z "$USE_DEBUG" ]; then
-    # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
-    # extension breaks the build due to the following error:
-    #
-    # error: "HAVE_FFI_PREP_CIF_VAR" is not defined, evaluates to 0 [-Werror=undef]
-    # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
-    #
-    export CFLAGS="$CFLAGS -Werror=undef"
     $PYTHON setup.py build "${build_args[@]}" install 2>&1 | tee log
   else
     # The job run with USE_DEBUG=1 on travis needs this.
@@ -204,7 +198,7 @@ export PIP
 
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # ensure some warnings are not issued
-  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
   # adjust gcc flags if C coverage requested
   if [ -n "$RUN_COVERAGE" ]; then
      export NPY_DISTUTILS_APPEND_FLAGS=1
@@ -228,7 +222,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # temporary workaround for sdist failures.
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
-  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   $PYTHON -m venv venv-for-wheel
