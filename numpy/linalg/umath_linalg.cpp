@@ -4597,5 +4597,11 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
         return NULL;
     }
 
+#ifdef HAVE_BLAS_ILP64
+    PyDict_SetItemString(d, "_ilp64", Py_True);
+#else
+    PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
+
     return m;
 }
