@@ -48,12 +48,7 @@ pip install --upgrade pip 'setuptools<49.2.0' wheel
 # A specific version of cython is required, so we read the cython package
 # requirement using `grep cython test_requirements.txt` instead of simply
 # writing 'pip install setuptools wheel cython'.
-if [ -n "$USE_CYTHON3" ]
-then
-  pip install --pre --force-reinstall cython
-else
-  pip install `grep cython test_requirements.txt`
-fi
+pip install `grep cython test_requirements.txt`
 
 if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd

@@ -90,9 +90,6 @@ run_test()
   # file does not install correctly when Python's optimization level is set
   # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
   PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt pyinstaller
-  if [ -n "$USE_CYTHON3" ] ; then
-    $PIP install --pre --force-reinstall cython
-  fi
   DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
