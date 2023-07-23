@@ -50,11 +50,13 @@ endif
 
 
 # This is currently injected directly into CFLAGS/CXXFLAGS for wheel builds
-# (see cibuildwheel settings in pyproject.toml)
+# (see cibuildwheel settings in pyproject.toml), but used by CI jobs already
 blas_symbol_suffix = get_option('blas-symbol-suffix')
 
 
-# TODO: 64-bit BLAS and LAPACK
+# TODO: 64-bit (ILP64) BLAS and LAPACK support (e.g., check for more .pc files
+# so we detect `openblas64_.so` directly). Partially supported now, needs more
+# auto-detection.
 #
 # Note that this works as long as BLAS and LAPACK are detected properly via
 # pkg-config. By default we look for OpenBLAS, other libraries can be configured via
@@ -119,17 +121,6 @@ if have_blas
   endif
 endif
 
-if lapack_name == 'openblas'
-  lapack_name = ['openblas', 'OpenBLAS']
-endif
-lapack_dep = dependency(lapack_name, required: false)
-have_lapack = lapack_dep.found()
-
-dependency_map = {
-  'BLAS': blas,
-  'LAPACK': lapack_dep,
-}
-
 use_ilp64 = get_option('use-ilp64')
 if not use_ilp64
   # For now, keep supporting this environment variable too (same as in setup.py)
@@ -144,26 +135,34 @@ if not use_ilp64
 endif
 
 # BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
-# which provides a CBLAS interface.
-# TODO: add ILP64 support
+# which provides a CBLAS interface. So disable BLAS completely if CBLAS is not
+# found (lapack-lite will be used instead; xref gh-24200 for a discussion on
+# whether this silent disabling should stay as-is)
 if have_blas
-  c_args_blas = []  # note: used for C and C++ via `blas_dep` below
+  _args_blas = []  # note: used for C and C++ via `blas_dep` below
   if have_cblas
-    c_args_blas += ['-DHAVE_CBLAS']
+    _args_blas += ['-DHAVE_CBLAS']
   endif
   if use_ilp64
-    c_args_blas += ['-DHAVE_BLAS_ILP64']
+    _args_blas += ['-DHAVE_BLAS_ILP64']
   endif
   if blas_symbol_suffix != ''
-    c_args_blas += ['-DBLAS_SYMBOL_SUFFIX=' + blas_symbol_suffix]
+    _args_blas += ['-DBLAS_SYMBOL_SUFFIX=' + blas_symbol_suffix]
   endif
   blas_dep = declare_dependency(
     dependencies: [blas, cblas],
-    compile_args: c_args_blas,
+    compile_args: _args_blas,
   )
 else
   blas_dep = []
 endif
+
+if lapack_name == 'openblas'
+  lapack_name = ['openblas', 'OpenBLAS']
+endif
+lapack_dep = dependency(lapack_name, required: false)
+have_lapack = lapack_dep.found()
+
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
@@ -275,7 +274,20 @@ conf_data.set('CROSS_COMPILED', meson.is_cross_build())
 conf_data.set('PYTHON_PATH', py.full_path())
 conf_data.set('PYTHON_VERSION', py.language_version())
 
-# Dependencies information
+# BLAS/LAPACK dependency info. Ensure we report dependencies correctly for
+# `np.show_config()`; needs some special handling for the case BLAS was found
+# but CBLAS not (and hence BLAS was also disabled)
+dependency_map = {
+  'LAPACK': lapack_dep,
+}
+if have_blas and have_cblas
+  dependency_map += {'BLAS': blas}
+else
+  conf_data.set('BLAS_NAME', blas_name)
+  conf_data.set('BLAS_FOUND', false)
+endif
+
+
 foreach name, dep : dependency_map
   conf_data.set(name + '_NAME', dep.name())
   conf_data.set(name + '_FOUND', dep.found())
