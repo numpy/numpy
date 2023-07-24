@@ -10050,12 +10050,16 @@ def test_partition_int(N, dtype):
     k = rnd.choice(N, 1)[0]
     assert_arr_partitioned(np.sort(arr)[k], k,
             np.partition(arr, k, kind='introselect'))
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            arr[np.argpartition(arr, k, kind='introselect')])
 
     # (2) random data with max value at the end of array
     arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
     arr[N-1] = maxv
     assert_arr_partitioned(np.sort(arr)[k], k,
             np.partition(arr, k, kind='introselect'))
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            arr[np.argpartition(arr, k, kind='introselect')])
 
 
 @pytest.mark.parametrize("N", np.arange(2, 512))
@@ -10066,3 +10070,5 @@ def test_partition_fp(N, dtype):
     k = rnd.choice(N, 1)[0]
     assert_arr_partitioned(np.sort(arr)[k], k,
             np.partition(arr, k, kind='introselect'))
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            arr[np.argpartition(arr, k, kind='introselect')])
