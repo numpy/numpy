@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 NPY_NO_EXPORT PyArray_PartitionFunc *
-get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize);
+get_partition_func(int type, NPY_SELECTKIND which);
 
 NPY_NO_EXPORT PyArray_ArgPartitionFunc *
 get_argpartition_func(int type, NPY_SELECTKIND which);

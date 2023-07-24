@@ -1628,7 +1628,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         PyErr_SetString(PyExc_ValueError, "not a valid partition kind");
         return -1;
     }
-    part = get_partition_func(PyArray_TYPE(op), which, PyArray_SIZE(ktharray));
+    part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
         if (PyArray_DESCR(op)->f->compare) {

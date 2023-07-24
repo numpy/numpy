@@ -499,7 +499,7 @@ struct partition_t {
 constexpr std::array<arg_map, partition_t::taglist::size> partition_t::map;
 
 static inline PyArray_PartitionFunc *
-_get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize)
+_get_partition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
@@ -536,9 +536,9 @@ _get_argpartition_func(int type, NPY_SELECTKIND which)
  */
 extern "C" {
 NPY_NO_EXPORT PyArray_PartitionFunc *
-get_partition_func(int type, NPY_SELECTKIND which, npy_intp kthsize)
+get_partition_func(int type, NPY_SELECTKIND which)
 {
-    return _get_partition_func(type, which, kthsize);
+    return _get_partition_func(type, which);
 }
 NPY_NO_EXPORT PyArray_ArgPartitionFunc *
 get_argpartition_func(int type, NPY_SELECTKIND which)
