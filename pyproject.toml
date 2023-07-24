@@ -154,7 +154,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = { CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="-Wl,--strip-debug", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
+environment = { CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="-Wl,--strip-debug", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
 # For universal2 wheels, we will need to fuse them manually
@@ -165,19 +165,20 @@ environment = { CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLA
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols
-environment = { CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS"}
+environment = {CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++", RUNNER_OS="macOS"}
 
 [tool.cibuildwheel.windows]
 archs = ['AMD64']
-environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="", PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
+environment = {NPY_USE_BLAS_ILP64="1", CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64", LDFLAGS="", PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
 config-settings = "setup-args=--vsenv"
 repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 #[[tool.cibuildwheel.overrides]]
 # Note: 32-bit Python wheel builds are skipped right now; probably needs
 # --native-file to build due to `arch != pyarch` check in Meson's `python` dependency
+# Note: uses 32-bit rather than 64-bit OpenBLAS
 #select = "*-win32"
-#environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32", PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
+#environment = CFLAGS="-m32", LDFLAGS="-m32", PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
 
 [tool.spin]
 package = 'numpy'
