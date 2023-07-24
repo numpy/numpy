@@ -934,6 +934,9 @@ get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
     npy_intp zero = 0;
 
     writeable = PyObject_IsTrue(arg);
+    if (writeable == -1) {
+        return NULL;
+    }
     if (error_converting(writeable)) {
         return NULL;
     }
@@ -1046,6 +1049,9 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
         return NULL;
     }
     replace = PyObject_IsTrue(replace_obj);
+    if (replace == -1) {
+        return NULL;
+    }
     if (error_converting(replace)) {
         return NULL;
     }

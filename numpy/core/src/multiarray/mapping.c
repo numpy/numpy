@@ -488,7 +488,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 indices[curr_idx].type = HAS_0D_BOOL;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
-                if (PyObject_IsTrue((PyObject *)arr)) {
+                int istrue = PyObject_IsTrue((PyObject *)arr);
+                if (istrue == -1) {
+                    return -1;
+                }
+                if (istrue) {
                     n = 1;
                 }
                 else {
