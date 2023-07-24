@@ -313,8 +313,10 @@ class Partition(Benchmark):
                 dtype, *array_type[1:])
 
     def time_partition(self, dtype, array_type, k):
-        np.partition(self.arr, k)
+        temp = np.partition(self.arr, k)
 
+    def time_argpartition(self, dtype, array_type, k):
+        temp = np.argpartition(self.arr, k)
 
 class SortWorst(Benchmark):
     def setup(self):
