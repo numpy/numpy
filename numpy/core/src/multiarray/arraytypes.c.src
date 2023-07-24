@@ -2846,11 +2846,7 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         }
         int istrue = PyObject_IsTrue(*ip);
         if (istrue == -1) {
-<<<<<<< HEAD
-            return NULL;
-=======
             return NPY_FALSE;
->>>>>>> 11f00840041eaea22507238a33faf815aeaf8445
         }
         return (npy_bool) istrue;
     }
@@ -2862,11 +2858,7 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         }
         int istrue = PyObject_IsTrue(obj);
         if (istrue == -1) {
-<<<<<<< HEAD
-            return NULL;
-=======
             return NPY_FALSE;
->>>>>>> 11f00840041eaea22507238a33faf815aeaf8445
         }
         return (npy_bool) istrue;
     }

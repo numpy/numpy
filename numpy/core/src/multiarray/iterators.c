@@ -880,15 +880,9 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         retval = 0;
         int istrue = PyObject_IsTrue(ind);
         if (istrue == -1) {
-<<<<<<< HEAD
-            return NULL;
-        }
-        if (isnot) {
-=======
             return -1;
         }
         if (istrue) {
->>>>>>> 11f00840041eaea22507238a33faf815aeaf8445
             retval = PyArray_Pack(
                     PyArray_DESCR(self->ao), self->dataptr, val);
         }
