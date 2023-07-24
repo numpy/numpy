@@ -3661,16 +3661,17 @@ class TestQuantile:
         assert np.isscalar(actual)
         assert_equal(np.quantile(a, 0.5), np.nan)
 
+    @pytest.mark.parametrize("weights", [False, True])
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
-    def test_quantile_identification_equation(self, method, alpha):
+    def test_quantile_identification_equation(self, weights, method, alpha):
         # Test that the identification equation holds for the empirical
         # CDF:
         #   E[V(x, Y)] = 0  <=>  x is quantile
         # with Y the random variable for which we have observed values and
         # V(x, y) the canonical identification function for the quantile (at
         # level alpha), see
-        # https://doi.org/10.48550/arXiv.0912.0902        
+        # https://doi.org/10.48550/arXiv.0912.0902
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we cover 3 cases:
         #  - n * alpha is an integer
@@ -3678,17 +3679,22 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        x = np.quantile(y, alpha, method=method)
+        w = rng.integers(low=0, high=10, size=n) if weights else None
+        if weights and method not in ["inverted_cdf"]:
+            pytest.skip("Weights not supported by method.")
+        else:
+            x = np.quantile(y, alpha, method=method, weights=w)
+
         if method in ("higher",):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
-        elif int(n * alpha) == n * alpha:
+        elif int(n * alpha) == n * alpha and not weights:
             # We can expect exact results, up to machine precision.
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0, atol=1e-14)
+            assert_allclose(np.average(self.V(x, y, alpha), weights=w), 0, atol=1e-14)
         else:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".
-            assert_allclose(np.mean(self.V(x, y, alpha)), 0,
+            assert_allclose(np.average(self.V(x, y, alpha), weights=w), 0,
                 atol=1 / n / np.amin([alpha, 1 - alpha]))
 
     @pytest.mark.parametrize("method", quantile_methods)
@@ -3748,6 +3754,26 @@ class TestQuantile:
             # "averaged_inverted_cdf", "hazen", "weibull", "linear",
             # "median_unbiased", "normal_unbiased", "midpoint"
             assert_allclose(q, np.quantile(y, alpha, method=method))
+
+    @pytest.mark.parametrize("method", ["inverted_cdf"])
+    @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
+    def test_quantile_constant_weights(self, method, alpha):
+        rng = np.random.default_rng(4321)
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
+        y = rng.random(n)
+        q = np.quantile(y, alpha, method=method)
+
+        w = np.ones_like(y)
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        assert_allclose(qw, q)
+
+        w = 8.125 * np.ones_like(y)
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        assert_allclose(qw, q)
 
 
 class TestLerp:
