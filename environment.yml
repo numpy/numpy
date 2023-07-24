@@ -15,8 +15,9 @@ dependencies:
   - setuptools=59.2.0
   - ninja
   - pkg-config
-  - meson-python>=0.10.0
-  - spin=0.4
+  - meson-python
+  - pip
+  - spin
   # For testing
   - pytest
   - pytest-cov
