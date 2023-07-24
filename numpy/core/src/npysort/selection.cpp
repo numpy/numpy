@@ -35,6 +35,11 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
     return false;
 }
+template<typename T>
+inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
+{
+    return false;
+}
 #else
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
@@ -59,6 +64,29 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
     }
     return false;
 }
+
+template<typename T>
+inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
+{
+    using TF = typename np::meta::FixedWidth<T>::Type;
+    void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp) = nullptr;
+    if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+        /* x86-simd-sort uses 8-byte int to store arg values, npy_intp is 4 bytes
+         * in 32-bit*/
+        if (sizeof(npy_intp) == sizeof(int64_t)) {
+            #ifndef NPY_DISABLE_OPTIMIZATION
+                #include "simd_qsort.dispatch.h"
+            #endif
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSelect, <TF>);
+        }
+    }
+    if (dispfunc) {
+        (*dispfunc)(reinterpret_cast<TF*>(v), arg, num, kth);
+        return true;
+    }
+    return false;
+}
+
 template<>
 inline bool quickselect_dispatch(npy_cfloat* v, npy_intp num, npy_intp kth)
 {
@@ -76,6 +104,26 @@ inline bool quickselect_dispatch(npy_longdouble* v, npy_intp num, npy_intp kth)
 }
 template<>
 inline bool quickselect_dispatch(npy_clongdouble* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool argquickselect_dispatch(npy_cfloat* v, npy_intp* arg, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool argquickselect_dispatch(npy_cdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool argquickselect_dispatch(npy_longdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
+{
+    return false;
+}
+template<>
+inline bool argquickselect_dispatch(npy_clongdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
     return false;
 }
@@ -462,8 +510,12 @@ introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
 template <typename Tag>
 static int
 introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                npy_intp *pivots, npy_intp *npiv, void *)
+                npy_intp *pivots, npy_intp *npiv, npy_intp nkth, void *)
 {
+    using T = typename Tag::type;
+    if ((nkth == 1) && (argquickselect_dispatch((T *)v, tosort, num, kth))) {
+        return 0;
+    }
     return introselect_<Tag, true>((typename Tag::type *)v, tosort, num, kth,
                                    pivots, npiv);
 }
