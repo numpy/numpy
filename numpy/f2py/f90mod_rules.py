@@ -161,8 +161,8 @@ def buildhooks(pymod):
                 fargs.append('f2py_%s_getdims_%s' % (m['name'], n))
                 efargs.append(fargs[-1])
                 sargs.append(
-                    'void (*%s)(int*,int*,void(*)(char*,int*),int*)' % (n))
-                sargsp.append('void (*)(int*,int*,void(*)(char*,int*),int*)')
+                    'void (*%s)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)' % (n))
+                sargsp.append('void (*)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
                 iadd('\tf2py_%s_def[i_f2py++].func = %s;' % (m['name'], n))
                 fadd('subroutine %s(r,s,f2pysetdata,flag)' % (fargs[-1]))
                 fadd('use %s, only: d => %s\n' %
