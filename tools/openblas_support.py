@@ -15,8 +15,9 @@ from urllib.error import HTTPError
 
 OPENBLAS_V = '0.3.23.dev'
 OPENBLAS_LONG = 'v0.3.23-246-g3d31191b'
-BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
-BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
+BASE_LOC = (
+    'https://anaconda.org/scientific-python-nightly-wheels/openblas-libs'
+)
 SUPPORTED_PLATFORMS = [
     'linux-aarch64',
     'linux-x86_64',
@@ -91,7 +92,7 @@ def get_linux(arch):
         return get_musllinux(arch)
 
 
-def download_openblas(target, plat, ilp64):
+def download_openblas(target, plat, ilp64, *, openblas_version=OPENBLAS_LONG):
     osname, arch = plat.split("-")
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
@@ -120,7 +121,8 @@ def download_openblas(target, plat, ilp64):
 
     if not suffix:
         return None
-    filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+    BASEURL = f'{BASE_LOC}/{openblas_version}/download'
+    filename = f'{BASEURL}/openblas{fnsuffix}-{openblas_version}-{suffix}'
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)
@@ -141,7 +143,7 @@ def download_openblas(target, plat, ilp64):
     return typ
 
 
-def setup_openblas(plat=get_plat(), ilp64=get_ilp64()):
+def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
     '''
     Download and setup an openblas library for building. If successful,
     the configuration script will find it automatically.
@@ -156,6 +158,10 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64()):
     if not plat:
         raise ValueError('unknown platform')
     typ = download_openblas(tmp, plat, ilp64)
+    openblas_version = "HEAD" if nightly else OPENBLAS_LONG
+    typ = download_openblas(
+        tmp, plat, ilp64, openblas_version=openblas_version
+    )
     if not typ:
         return ''
     osname, arch = plat.split("-")
@@ -343,11 +349,13 @@ if __name__ == '__main__':
     parser.add_argument('--check_version', nargs='?', default='',
                         help='Check provided OpenBLAS version string '
                              'against available OpenBLAS')
+    parser.add_argument('--nightly', action='store_true',
+                        help='If set, use nightly OpenBLAS build.')
     args = parser.parse_args()
     if args.check_version != '':
         test_version(args.check_version)
     elif args.test is None:
-        print(setup_openblas())
+        print(setup_openblas(nightly=args.nightly))
     else:
         if len(args.test) == 0 or 'all' in args.test:
             test_setup(SUPPORTED_PLATFORMS)

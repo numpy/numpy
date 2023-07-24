@@ -24,6 +24,11 @@ jobs:
   meson_spin:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        USE_NIGHTLY_OPENBLAS: [false, true]
+    env:
+      USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -36,8 +41,13 @@ jobs:
       run: |
         pip install -r build_requirements.txt
         # Install OpenBLAS
+        set -xe
         chmod +x tools/wheels/cibw_before_build.sh
-        sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
+        if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
+          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
+        else
+          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
+        fi
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:

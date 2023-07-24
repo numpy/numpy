@@ -1,7 +1,18 @@
 #!/bin/bash
 set -xe
 
-PROJECT_DIR="$1"
+NIGHTLY_FLAG=""
+
+if [ "$#" -eq 1 ]; then
+    PROJECT_DIR="$1"
+elif [ "$#" -eq 2 ] && [ "$1" = "--nightly" ]; then
+    NIGHTLY_FLAG="--nightly"
+    PROJECT_DIR="$2"
+else
+    echo "Usage: $0 [--nightly] <project_dir>"
+    exit 1
+fi
+
 PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
 
 # Update license
@@ -15,7 +26,7 @@ fi
 
 # Install Openblas
 if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
-    basedir=$(python tools/openblas_support.py)
+    basedir=$(python tools/openblas_support.py $NIGHTLY_FLAG)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
         sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/lib/cmake/openblas
