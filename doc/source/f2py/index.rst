@@ -38,14 +38,8 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
 .. toctree::
    :maxdepth: 3
 
-   f2py.getting-started
    f2py-user
    f2py-reference
-   usage
-   python-usage
-   signature-file
-   buildtools/index
-   advanced
    windows/index
 
 .. _Python: https://www.python.org/
