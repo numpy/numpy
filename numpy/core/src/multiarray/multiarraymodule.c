@@ -4379,6 +4379,24 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
+{
+    int res = PyObject_IsTrue(arg);
+    if (res < 0) {
+        return NULL;
+    }
+    int old_value = numpy_warn_if_no_mem_policy;
+    numpy_warn_if_no_mem_policy = res;
+    if (old_value) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
     static int initialized = 0;
 
@@ -4625,6 +4643,9 @@ static struct PyMethodDef array_module_methods[] = {
          METH_O, "Set the NEP 50 promotion state.  This is not thread-safe.\n"
                  "The optional warnings can be safely silenced using the \n"
                  "`np._no_nep50_warning()` context manager."},
+    {"_set_numpy_warn_if_no_mem_policy",
+         (PyCFunction)_set_numpy_warn_if_no_mem_policy,
+         METH_O, "Change the warn if no mem policy flag for testing."},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
@@ -4911,6 +4932,14 @@ initialize_static_globals(void)
             &npy_UFuncNoLoopError);
     if (npy_UFuncNoLoopError == NULL) {
         return -1;
+    }
+
+    char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
+    if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
+        numpy_warn_if_no_mem_policy = 1;
+    }
+    else {
+        numpy_warn_if_no_mem_policy = 0;
     }
 
     return 0;
