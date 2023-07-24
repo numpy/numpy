@@ -547,29 +547,12 @@ def average(a, axis=None, weights=None, returned=False, *,
         avg_as_array = np.asanyarray(avg)
         scl = avg_as_array.dtype.type(a.size/avg_as_array.size)
     else:
-        wgt = np.asanyarray(weights)
+        wgt = _weights_are_valid(weights=weights, a=a, axis=axis)
 
         if issubclass(a.dtype.type, (np.integer, np.bool_)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
-
-        # Sanity checks
-        if a.shape != wgt.shape:
-            if axis is None:
-                raise TypeError(
-                    "Axis must be specified when shapes of a and weights "
-                    "differ.")
-            if wgt.ndim != 1:
-                raise TypeError(
-                    "1D weights expected when shapes of a and weights differ.")
-            if wgt.shape[0] != a.shape[axis]:
-                raise ValueError(
-                    "Length of weights not compatible with specified axis.")
-
-            # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
-            wgt = wgt.swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
