@@ -17,9 +17,8 @@ from .multiarray import (
     empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state,
-    _using_numpy2_behavior)
+    putmask, result_type, shares_memory, vdot, where,
+    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
 
 from . import overrides
 from . import umath
@@ -45,7 +44,7 @@ __all__ = [
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
-    'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
+    'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
@@ -56,8 +55,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state',
-    '_using_numpy2_behavior']
+    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -843,14 +841,13 @@ def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
-    Given two vectors, ``a = [a0, a1, ..., aM]`` and
-    ``b = [b0, b1, ..., bN]``,
+    Given two vectors `a` and `b` of length ``M`` and ``N``, respectively,
     the outer product [1]_ is::
 
-      [[a0*b0  a0*b1 ... a0*bN ]
-       [a1*b0    .
+      [[a_0*b_0  a_0*b_1 ... a_0*b_{N-1} ]
+       [a_1*b_0    .
        [ ...          .
-       [aM*b0            aM*bN ]]
+       [a_{M-1}*b_0            a_{M-1}*b_{N-1} ]]
 
     Parameters
     ----------
@@ -882,9 +879,9 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
-             ed., Baltimore, MD, Johns Hopkins University Press, 1996,
-             pg. 8.
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
+           ed., Baltimore, MD, Johns Hopkins University Press, 1996,
+           pg. 8.
 
     Examples
     --------
@@ -1584,6 +1581,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
         axisa, axisb, axisc = (axis,) * 3
     a = asarray(a)
     b = asarray(b)
+
+    if (a.ndim < 1) or (b.ndim < 1):
+        raise ValueError("At least one array has zero dimension")
+    
     # Check axisa and axisb are within bounds
     axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')

@@ -165,6 +165,11 @@ def do_generate_api(targets, sources):
 
     for name, index in genapi.order_dict(ufunc_api_index):
         api_item = ufunc_api_dict[name]
+        # In NumPy 2.0 the API may have holes (which may be filled again)
+        # in that case, add `NULL` to fill it.
+        while len(init_list) < api_item.index:
+            init_list.append("        NULL")
+
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())

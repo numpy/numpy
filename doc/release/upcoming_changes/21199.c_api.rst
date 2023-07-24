@@ -1,0 +1,10 @@
+Datetime functionality exposed in the C API and Cython bindings
+---------------------------------------------------------------
+
+The functions ``NpyDatetime_ConvertDatetime64ToDatetimeStruct``,
+``NpyDatetime_ConvertDatetimeStructToDatetime64``,
+``NpyDatetime_ConvertPyDateTimeToDatetimeStruct``,
+``NpyDatetime_GetDatetimeISO8601StrLen``, ``NpyDatetime_MakeISO8601Datetime``,
+and ``NpyDatetime_ParseISO8601Datetime`` have been added to the C API to
+facilitate converting between strings, Python datetimes, and NumPy datetimes in
+external libraries.

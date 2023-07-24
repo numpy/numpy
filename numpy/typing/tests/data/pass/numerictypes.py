@@ -23,11 +23,6 @@ np.issubdtype(np.float64, np.float32)
 np.sctype2char("S1")
 np.sctype2char(list)
 
-np.find_common_type([], [np.int64, np.float32, complex])
-np.find_common_type((), (np.int64, np.float32, complex))
-np.find_common_type([np.int64, np.float32], [])
-np.find_common_type([np.float32], [np.int64, np.float64])
-
 np.cast[int]
 np.cast["i8"]
 np.cast[np.int64]

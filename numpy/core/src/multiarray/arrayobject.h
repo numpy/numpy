@@ -5,6 +5,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_
 
+extern NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy;
+
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip);
@@ -40,6 +42,13 @@ static const int NPY_ARRAY_WARN_ON_WRITE = (1 << 31);
 static const int NPY_ARRAY_WAS_PYTHON_INT = (1 << 30);
 static const int NPY_ARRAY_WAS_PYTHON_FLOAT = (1 << 29);
 static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
+/*
+ * Mark that this was a huge int which was turned into an object array (or
+ * unsigned/non-default integer array), but then replaced by a temporary
+ * array for further processing. This flag is only used in the ufunc machinery
+ * where it is tricky to cover correctly all type resolution paths.
+ */
+static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_ */

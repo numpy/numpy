@@ -2,6 +2,7 @@ import warnings
 import itertools
 import sys
 import ctypes as ct
+import pickle
 
 import pytest
 from pytest import param
@@ -14,11 +15,17 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM
+    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
     )
 from numpy.testing._private.utils import requires_memory
-from numpy.compat import pickle
 
+
+import cython
+from packaging.version import parse, Version
+
+# Remove this when cython fixes https://github.com/cython/cython/issues/5411
+cython_version = parse(cython.__version__)
+BUG_5411 = Version("3.0.0a7") <= cython_version <= Version("3.0.0b3")
 
 UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
@@ -46,9 +53,8 @@ class TestUfuncKwargs:
         assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
-    def test_extobj_refcount(self):
-        # Should not segfault with USE_DEBUG.
-        assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
+    def test_extobj_removed(self):
+        assert_raises(TypeError, np.add, 1, 2, extobj=[4096])
 
 
 class TestUfuncGenericLoops:
@@ -203,6 +209,10 @@ class TestUfunc:
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
+    @pytest.mark.skipif(BUG_5411,
+        reason=("cython raises a AttributeError where it should raise a "
+                "ModuleNotFoundError"))
+    @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
         # lead to allowing qualnames as names.  Future ufuncs should
@@ -1695,11 +1705,11 @@ class TestUfunc:
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
 
-    def test_empty_reduction_and_idenity(self):
+    def test_empty_reduction_and_identity(self):
         arr = np.zeros((0, 5))
         # OK, since the reduction itself is *not* empty, the result is
         assert np.true_divide.reduce(arr, axis=1).shape == (0,)
-        # Not OK, the reduction itself is empty and we have no idenity
+        # Not OK, the reduction itself is empty and we have no identity
         with pytest.raises(ValueError):
             np.true_divide.reduce(arr, axis=0)
 
@@ -2213,6 +2223,14 @@ class TestUfunc:
         a = np.array([1, 2, 3])
         np.maximum.at(a, [0], 0)
         assert_equal(a, np.array([1, 2, 3]))
+
+    def test_at_negative_indexes(self):
+        a = np.arange(10)
+        indxs = np.array([-1, 1, -1, 2])
+        np.add.at(a, indxs, 1)
+        assert a[-1] == 11  # issue 24147
+        assert a[1] == 2
+        assert a[2] == 3
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError

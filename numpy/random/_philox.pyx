@@ -1,3 +1,5 @@
+#cython: binding=True
+
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
@@ -11,7 +13,7 @@ __all__ = ['Philox']
 
 np.import_array()
 
-DEF PHILOX_BUFFER_SIZE=4
+cdef int PHILOX_BUFFER_SIZE=4
 
 cdef extern from 'src/philox/philox.h':
     struct s_r123array2x64:
@@ -30,25 +32,25 @@ cdef extern from 'src/philox/philox.h':
         philox4x64_ctr_t *ctr
         philox4x64_key_t *key
         int buffer_pos
-        uint64_t buffer[PHILOX_BUFFER_SIZE]
+        uint64_t *buffer
         int has_uint32
         uint32_t uinteger
 
     ctypedef s_philox_state philox_state
 
-    uint64_t philox_next64(philox_state *state)  nogil
-    uint32_t philox_next32(philox_state *state)  nogil
+    uint64_t philox_next64(philox_state *state)  noexcept nogil
+    uint32_t philox_next32(philox_state *state)  noexcept nogil
     void philox_jump(philox_state *state)
     void philox_advance(uint64_t *step, philox_state *state)
 
 
-cdef uint64_t philox_uint64(void*st) nogil:
+cdef uint64_t philox_uint64(void*st) noexcept nogil:
     return philox_next64(<philox_state *> st)
 
-cdef uint32_t philox_uint32(void *st) nogil:
+cdef uint32_t philox_uint32(void *st) noexcept nogil:
     return philox_next32(<philox_state *> st)
 
-cdef double philox_double(void*st) nogil:
+cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
 cdef class Philox(BitGenerator):
@@ -193,11 +195,13 @@ cdef class Philox(BitGenerator):
         self._bitgen.next_raw = &philox_uint64
 
     cdef _reset_state_variables(self):
-        self.rng_state.has_uint32 = 0
-        self.rng_state.uinteger = 0
-        self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
+        cdef philox_state *rng_state = &self.rng_state
+         
+        rng_state[0].has_uint32 = 0
+        rng_state[0].uinteger = 0
+        rng_state[0].buffer_pos = PHILOX_BUFFER_SIZE
         for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = 0
+            rng_state[0].buffer[i] = 0
 
     @property
     def state(self):

@@ -43,7 +43,6 @@ EXCLUDE_LIST = {
         "numarray",
         "oldnumeric",
         "safe_eval",
-        "set_numeric_ops",
         "test",
         "typeDict",
         # Builtins

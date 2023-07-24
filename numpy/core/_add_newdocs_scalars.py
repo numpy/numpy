@@ -93,7 +93,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_scalar_type('bool_', ['bool8'],
+add_newdoc_for_scalar_type('bool_', [],
     """
     Boolean type (True or False), stored as a byte.
 
@@ -243,11 +243,11 @@ add_newdoc_for_scalar_type('void', [],
        This can be an array-like, in which case an array may
        be returned.
     dtype : dtype, optional
-        If provided the dtype of the new scalar.  This dtype must
-        be "void" dtype (i.e. a structured or unstructured void,
-        see also :ref:`defining-structured-types`).
+       If provided the dtype of the new scalar.  This dtype must
+       be "void" dtype (i.e. a structured or unstructured void,
+       see also :ref:`defining-structured-types`).
 
-       ..versionadded:: 1.24
+       .. versionadded:: 1.24
 
     Notes
     -----

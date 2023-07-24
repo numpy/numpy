@@ -41,6 +41,16 @@
  *     for a matching loop/promoter.
  *     I.e. for Numba a promoter could even add the desired loop.
  *
+ * - PyUFunc_GiveFloatingpointErrors:
+ *
+ *     Signal a floating point error respecting the error signaling setting in
+ *     the NumPy errstate. Takes the name of the operation to use in the error
+ *     message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
+ *     NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID. This allows for
+ *     custom floating point error signaling in cast and ufunc implementations
+ *     provided by DTypes without a need to query the errstate or reimplement
+ *     NumPy's error signaling.
+ *
  * - PyArrayInitDTypeMeta_FromSpec:
  *
  *     Initialize a new DType.  It must currently be a static Python C type
@@ -216,6 +226,11 @@ typedef int _ufunc_addpromoter_func(
 #define PyUFunc_AddPromoter \
     (*(_ufunc_addpromoter_func *)(__experimental_dtype_api_table[1]))
 
+typedef int _give_floatingpoint_errors_func(
+        const char *name, int fpe_errors);
+#define PyUFunc_GiveFloatingpointErrors \
+  (*(_give_floatingpoint_errors_func *)(__experimental_dtype_api_table[8]))
+
 #define PyArrayDTypeMeta_Type \
     (*(PyTypeObject *)__experimental_dtype_api_table[2])
 typedef int __dtypemeta_fromspec(
@@ -282,7 +297,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 #define PyArray_LongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
 #define PyArray_ULongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
 /* Integer aliases */
-#define PyArray_Int8Type (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
+#define PyArray_Int8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
 #define PyArray_UInt8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
 #define PyArray_Int16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
 #define PyArray_UInt16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
@@ -293,7 +308,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 #define PyArray_IntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
 #define PyArray_UIntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
 /* Floats */
-#define PyArray_HalfType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
+#define PyArray_HalfDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
 #define PyArray_FloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
 #define PyArray_DoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
 #define PyArray_LongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
@@ -307,7 +322,9 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 /* Datetime/Timedelta */
 #define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
 #define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
-
+/* Object/Void */
+#define PyArray_ObjectDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[42])
+#define PyArray_VoidDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[43])
 
 /*
  * ********************************

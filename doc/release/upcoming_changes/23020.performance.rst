@@ -1,5 +1,0 @@
-``__array_function__`` machinery is now much faster
----------------------------------------------------
-The overhead of the majority of functions in NumPy is now smaller
-especially when keyword arguments are used.  This change significantly
-speeds up many simple function calls.

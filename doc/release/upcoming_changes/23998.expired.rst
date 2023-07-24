@@ -1,0 +1,3 @@
+* The deprecation of ``set_numeric_ops`` and the C functions
+  ``PyArray_SetNumericOps`` and ``PyArray_GetNumericOps`` has
+  been expired and the functions removed.  (Deprecated NumPy 1.16)

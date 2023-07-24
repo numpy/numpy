@@ -23,6 +23,7 @@
 #include "common.h"
 #include "_datetime.h"
 #include "npy_import.h"
+#include "refcount.h"
 
 #include "umathmodule.h"
 
@@ -542,9 +543,11 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     int res = cast_raw_scalar_item(tmp_descr, data, descr, item);
 
     if (PyDataType_REFCHK(tmp_descr)) {
-        /* We could probably use move-references above */
-        PyArray_Item_XDECREF(data, tmp_descr);
+        if (PyArray_ClearBuffer(tmp_descr, data, 0, 1, 1) < 0) {
+            res = -1;
+        }
     }
+
     PyObject_Free(data);
     Py_DECREF(tmp_descr);
     return res;

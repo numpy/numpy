@@ -392,7 +392,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> _SCT: ...
 @overload
 def clip(
@@ -406,7 +405,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> Any: ...
 @overload
 def clip(
@@ -420,7 +418,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def clip(
@@ -434,7 +431,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def clip(
@@ -448,7 +444,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> Any: ...
 @overload
 def clip(
@@ -462,7 +457,6 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
 ) -> _ArrayType: ...
 
 @overload
@@ -1047,3 +1041,7 @@ def var(
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> _ArrayType: ...
+
+max = amax
+min = amin
+round = around

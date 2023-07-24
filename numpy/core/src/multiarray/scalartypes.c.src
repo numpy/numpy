@@ -279,7 +279,44 @@ static PyObject *
 genint_type_str(PyObject *self)
 {
     PyObject  *item, *item_str;
-    item = gentype_generic_method(self, NULL, NULL, "item");
+    PyArray_Descr *descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
+    void *val = scalar_value(self, descr);
+    switch (descr->type_num) {
+        case NPY_BYTE:
+            item = PyLong_FromLong(*(int8_t *)val);
+            break;
+        case NPY_UBYTE:
+            item = PyLong_FromUnsignedLong(*(uint8_t *)val);
+            break;
+        case NPY_SHORT:
+            item = PyLong_FromLong(*(int16_t *)val);
+            break;
+        case NPY_USHORT:
+            item = PyLong_FromUnsignedLong(*(uint16_t *)val);
+            break;
+        case NPY_INT:
+            item = PyLong_FromLong(*(int32_t *)val);
+            break;
+        case NPY_UINT:
+            item = PyLong_FromUnsignedLong(*(uint32_t *)val);
+            break;
+        case NPY_LONG:
+            item = PyLong_FromLong(*(int64_t *)val);
+            break;
+        case NPY_ULONG:
+            item = PyLong_FromUnsignedLong(*(uint64_t *)val);
+            break;
+        case NPY_LONGLONG:
+            item = PyLong_FromLongLong(*(long long *)val);
+            break;
+        case NPY_ULONGLONG:
+            item = PyLong_FromUnsignedLongLong(*(unsigned long long *)val);
+            break;
+        default:
+            item = gentype_generic_method(self, NULL, NULL, "item");
+            break;
+    }
+    Py_DECREF(descr);
     if (item == NULL) {
         return NULL;
     }
@@ -538,13 +575,13 @@ datetimetype_repr(PyObject *self)
 
     scal = (PyDatetimeScalarObject *)self;
 
-    if (convert_datetime_to_datetimestruct(&scal->obmeta,
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta,
                 scal->obval, &dts) < 0) {
         return NULL;
     }
 
     unit = scal->obmeta.base;
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
+    if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -633,13 +670,13 @@ datetimetype_str(PyObject *self)
 
     scal = (PyDatetimeScalarObject *)self;
 
-    if (convert_datetime_to_datetimestruct(&scal->obmeta, scal->obval,
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta, scal->obval,
                                                             &dts) < 0) {
         return NULL;
     }
 
     unit = scal->obmeta.base;
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
+    if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -2887,14 +2924,38 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+    static char *kwnames[] = {"", "", NULL};  /* positional-only */
+    static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
+    PyObject *real_obj = NULL;
+    PyObject *imag_obj = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
+        return NULL;
+    }
+    if (!((imag_obj == NULL) ||
+          ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
+           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
+        PyErr_Format(PyExc_TypeError, parse_error, args);
+        return NULL;
+    }
+    if (imag_obj == NULL) {
+        obj = real_obj;
+        Py_XINCREF(obj);
+    }
+    else {
+        obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
+        if (obj == NULL) {
+            return NULL;
+        }
+    }
+#else
     static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
+#endif
+    // getting the typecode like this cannot fail
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
-    if (typecode == NULL) {
-        return NULL;
-    }
     if (obj == NULL) {
         PyObject *robj = PyArray_Scalar(NULL, typecode, NULL);
         Py_DECREF(typecode);
@@ -2911,6 +2972,9 @@ static PyObject *
     Py_INCREF(typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+    Py_DECREF(obj);
+#endif
     if (arr == NULL) {
         Py_DECREF(typecode);
         return NULL;

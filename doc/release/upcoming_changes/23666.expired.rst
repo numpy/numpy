@@ -1,5 +1,0 @@
-* The niche ``FutureWarning`` when casting to a subarray dtype in ``astype``
-  or the array creation functions such as ``asarray`` is now finalized.
-  The behavior is now always the same as if the subarray dtype was
-  wrapped into a single field (which was the workaround, previously).
-  (FutureWarning since NumPy 1.20)

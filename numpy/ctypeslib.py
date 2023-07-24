@@ -120,28 +120,26 @@ else:
             If there is no library with the expected extension, or the
             library is defective and cannot be loaded.
         """
-        if ctypes.__version__ < '1.0.1':
-            import warnings
-            warnings.warn("All features of ctypes interface may not work "
-                          "with ctypes < 1.0.1", stacklevel=2)
-
         # Convert path-like objects into strings
         libname = os.fsdecode(libname)
         loader_path = os.fsdecode(loader_path)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
+            import sys
+            import sysconfig
             # Try to load library with platform-specific name, otherwise
-            # default to libname.[so|pyd].  Sometimes, these files are built
-            # erroneously on non-linux platforms.
-            from numpy.distutils.misc_util import get_shared_lib_extension
-            so_ext = get_shared_lib_extension()
-            libname_ext = [libname + so_ext]
-            # mac, windows and linux >= py3.2 shared library and loadable
-            # module have different extensions so try both
-            so_ext2 = get_shared_lib_extension(is_python_ext=True)
-            if not so_ext2 == so_ext:
-                libname_ext.insert(0, libname + so_ext2)
+            # default to libname.[so|dll|dylib].  Sometimes, these files are
+            # built erroneously on non-linux platforms.
+            base_ext = ".so"
+            if sys.platform.startswith("darwin"):
+                base_ext = ".dylib"
+            elif sys.platform.startswith("win"):
+                base_ext = ".dll"
+            libname_ext = [libname + base_ext]
+            so_ext = sysconfig.get_config_var("EXT_SUFFIX")
+            if not so_ext == base_ext:
+                libname_ext.insert(0, libname + so_ext)
         else:
             libname_ext = [libname]
 

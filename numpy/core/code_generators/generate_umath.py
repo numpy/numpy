@@ -109,6 +109,11 @@ def _check_order(types1, types2):
         if t2i > t1i:
             break
 
+    if types1 == "QQ?" and types2 == "qQ?":
+        # Explicitly allow this mixed case, rather than figure out what order
+        # is nicer or how to encode it.
+        return
+
     raise TypeError(
             f"Input dtypes are unsorted or duplicate: {types1} and {types2}")
 
@@ -523,49 +528,67 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'greater_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'not_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
-          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD(bints, out='?'),
+          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
+          TD(inexact+times, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           TD('O', out='?'),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'logical_and':
     Ufunc(2, 1, True_,
@@ -1172,7 +1195,10 @@ def make_arrays(funcdict):
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
-                cfunc_fname = f"{tname}_{t.in_}_{t.out}_{cfunc_alias}"
+                if t.out == "?":
+                    cfunc_fname = f"{tname}_{t.in_}_bool_{cfunc_alias}"
+                else:
+                    cfunc_fname = f"{tname}_{t.in_}_{t.out}_{cfunc_alias}"
             elif isinstance(t.func_data, FuncNameSuffix):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])

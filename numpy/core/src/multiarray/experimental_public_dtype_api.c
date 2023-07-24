@@ -14,7 +14,7 @@
 #include "array_coercion.h"
 #include "convert_datatype.h"
 #include "common_dtype.h"
-
+#include "umathmodule.h"
 
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
@@ -441,7 +441,7 @@ _PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
-    static void *experimental_api_table[42] = {
+    static void *experimental_api_table[44] = {
             &PyUFunc_AddLoopFromSpec,
             &PyUFunc_AddPromoter,
             &PyArrayDTypeMeta_Type,
@@ -450,7 +450,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
             &PyArray_PromoteDTypeSequence,
             &_PyArray_GetDefaultDescr,
             &PyUFunc_AddWrappingLoop,
-            NULL,
+            &PyUFunc_GiveFloatingpointErrors,
             NULL,
             /* NumPy's builtin DTypes (starting at offset 10 going to 41) */
     };
@@ -493,6 +493,9 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
         /* Datetime/Timedelta */
         experimental_api_table[40] = PyArray_DTypeFromTypeNum(NPY_DATETIME);
         experimental_api_table[41] = PyArray_DTypeFromTypeNum(NPY_TIMEDELTA);
+        /* Object and Structured */
+        experimental_api_table[42] = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+        experimental_api_table[43] = PyArray_DTypeFromTypeNum(NPY_VOID);
     }
 
     char *env = getenv("NUMPY_EXPERIMENTAL_DTYPE_API");

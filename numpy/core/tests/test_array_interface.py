@@ -1,7 +1,7 @@
 import sys
 import pytest
 import numpy as np
-from numpy.testing import extbuild
+from numpy.testing import extbuild, IS_WASM
 
 
 @pytest.fixture
@@ -12,6 +12,8 @@ def get_module(tmp_path):
 
     if not sys.platform.startswith('linux'):
         pytest.skip('link fails on cygwin')
+    if IS_WASM:
+        pytest.skip("Can't build module inside Wasm")
 
     prologue = '''
         #include <Python.h>

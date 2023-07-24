@@ -11,3 +11,7 @@ micromamba env create -f environment.yml --yes
 # user (same applies to `conda activate`)
 
 git submodule update --init
+
+# Enables users to activate environment without having to specify the full path
+echo "envs_dirs:
+  - /home/codespace/micromamba/envs" > /opt/conda/.condarc

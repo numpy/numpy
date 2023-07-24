@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
 from collections.abc import Sequence
@@ -686,7 +686,7 @@ cdef class RandomState:
         `high` is None (the default), then results are from [0, `low`).
 
         .. note::
-            New code should use the `~numpy.random.Generator.randint`
+            New code should use the `~numpy.random.Generator.integers`
             method of a `~numpy.random.Generator` instance instead;
             please see the :ref:`random-quick-start`.
 

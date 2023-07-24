@@ -40,7 +40,8 @@ PyArray_NewFromDescr_int(
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(
         PyArrayObject *prototype, NPY_ORDER order,
-        PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok);
+        PyArray_Descr *descr, PyArray_DTypeMeta *dtype,
+        int ndim, npy_intp const *dims, int subok);
 
 NPY_NO_EXPORT PyObject *
 PyArray_New(
@@ -133,5 +134,12 @@ byte_swap_vector(void *p, npy_intp n, int size);
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
+NPY_NO_EXPORT PyObject *
+PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order);
+
+NPY_NO_EXPORT PyObject *
+PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

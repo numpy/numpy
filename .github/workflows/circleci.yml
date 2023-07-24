@@ -17,7 +17,7 @@ jobs:
       statuses: write
     steps:
       - name: GitHub Action step
-        uses: larsoner/circleci-artifacts-redirector-action@0a7552bf8cf99cbd40a8928fa48e858e205b98c8 # master
+        uses: larsoner/circleci-artifacts-redirector-action@7e80b26b4c58b5d3272effc05491c18296b1ad6e # master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           api-token: ${{ secrets.CIRCLE_TOKEN }}

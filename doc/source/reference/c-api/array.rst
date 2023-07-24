@@ -1149,29 +1149,13 @@ Converting data types
 
     .. versionadded:: 1.6
 
-    This applies type promotion to all the inputs,
-    using the NumPy rules for combining scalars and arrays, to
-    determine the output type of a set of operands.  This is the
-    same result type that ufuncs produce. The specific algorithm
-    used is as follows.
+    This applies type promotion to all the input arrays and dtype
+    objects, using the NumPy rules for combining scalars and arrays, to
+    determine the output type for an operation with the given set of
+    operands. This is the same result type that ufuncs produce.
 
-    Categories are determined by first checking which of boolean,
-    integer (int/uint), or floating point (float/complex) the maximum
-    kind of all the arrays and the scalars are.
-
-    If there are only scalars or the maximum category of the scalars
-    is higher than the maximum category of the arrays,
-    the data types are combined with :c:func:`PyArray_PromoteTypes`
-    to produce the return value.
-
-    Otherwise, PyArray_MinScalarType is called on each array, and
-    the resulting data types are all combined with
-    :c:func:`PyArray_PromoteTypes` to produce the return value.
-
-    The set of int values is not a subset of the uint values for types
-    with the same number of bits, something not reflected in
-    :c:func:`PyArray_MinScalarType`, but handled as a special case in
-    PyArray_ResultType.
+    See the documentation of :func:`numpy.result_type` for more
+    detail about the type promotion algorithm.
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
@@ -2249,7 +2233,7 @@ Array Functions
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
 
-.. c:function:: PyObject* PyArray_EinsteinSum( \
+.. c:function:: PyArrayObject* PyArray_EinsteinSum( \
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
         PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, \
         PyArrayObject* out)
@@ -3261,47 +3245,6 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
 
 Internal Flexibility
 ~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: int PyArray_SetNumericOps(PyObject* dict)
-
-    NumPy stores an internal table of Python callable objects that are
-    used to implement arithmetic operations for arrays as well as
-    certain array calculation methods. This function allows the user
-    to replace any or all of these Python objects with their own
-    versions. The keys of the dictionary, *dict*, are the named
-    functions to replace and the paired value is the Python callable
-    object to use. Care should be taken that the function used to
-    replace an internal array operation does not itself call back to
-    that internal array operation (unless you have designed the
-    function to handle that), or an unchecked infinite recursion can
-    result (possibly causing program crash). The key names that
-    represent operations that can be replaced are:
-
-        **add**, **subtract**, **multiply**, **divide**,
-        **remainder**, **power**, **square**, **reciprocal**,
-        **ones_like**, **sqrt**, **negative**, **positive**,
-        **absolute**, **invert**, **left_shift**, **right_shift**,
-        **bitwise_and**, **bitwise_xor**, **bitwise_or**,
-        **less**, **less_equal**, **equal**, **not_equal**,
-        **greater**, **greater_equal**, **floor_divide**,
-        **true_divide**, **logical_or**, **logical_and**,
-        **floor**, **ceil**, **maximum**, **minimum**, **rint**.
-
-
-    These functions are included here because they are used at least once
-    in the array object's methods. The function returns -1 (without
-    setting a Python Error) if one of the objects being assigned is not
-    callable.
-
-    .. deprecated:: 1.16
-
-.. c:function:: PyObject* PyArray_GetNumericOps(void)
-
-    Return a Python dictionary containing the callable Python objects
-    stored in the internal arithmetic operation table. The keys of
-    this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
-
-    .. deprecated:: 1.16
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 

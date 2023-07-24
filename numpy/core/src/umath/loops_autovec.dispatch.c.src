@@ -178,7 +178,7 @@ NPY_NO_EXPORT void  NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 {
     /*
      * The (void)in; suppresses an unused variable warning raised by gcc and allows
-     * us to re-use this macro even though we do not depend on in
+     * us to reuse this macro even though we do not depend on in
      */
     UNARY_LOOP_FAST(@type@, npy_bool, (void)in; *out = @val@);
 }

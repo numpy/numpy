@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.21'
-OPENBLAS_LONG = 'v0.3.21'
+OPENBLAS_V = '0.3.23.dev'
+OPENBLAS_LONG = 'v0.3.23-246-g3d31191b'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -102,6 +102,9 @@ def download_openblas(target, plat, ilp64):
     if osname == "linux":
         suffix = get_linux(arch)
         typ = 'tar.gz'
+    elif osname == "musllinux":
+        suffix = get_musllinux(arch)
+        typ = 'tar.gz'
     elif plat == 'macosx-x86_64':
         suffix = 'macosx_10_9_x86_64-gf_c469a42.tar.gz'
         typ = 'tar.gz'
@@ -179,10 +182,11 @@ def unpack_windows_zip(fname, plat):
     # Copy the lib to openblas.lib. Once we can properly use pkg-config
     # this will not be needed
     lib = glob.glob(os.path.join(target, 'lib', '*.lib'))
-    assert len(lib) == 1
-    for f in lib:
-        shutil.copy(f, os.path.join(target, 'lib', 'openblas.lib'))
-        shutil.copy(f, os.path.join(target, 'lib', 'openblas64_.lib'))
+    if len(lib) == 1:
+        # The 64-bit tarball already has these copied, no need to do it
+        for f in lib:
+            shutil.copy(f, os.path.join(target, 'lib', 'openblas.lib'))
+            shutil.copy(f, os.path.join(target, 'lib', 'openblas64_.lib'))
     # Copy the dll from bin to lib so system_info can pick it up
     dll = glob.glob(os.path.join(target, 'bin', '*.dll'))
     for f in dll:
@@ -296,15 +300,11 @@ def test_setup(plats):
             if not target:
                 raise RuntimeError(f'Could not setup {plat}')
             print('success with', plat, ilp64)
-            if osname == 'win':
-                if not target.endswith('.a'):
-                    raise RuntimeError("Not .a extracted!")
-            else:
-                files = glob.glob(os.path.join(target, "lib", "*.a"))
-                if not files:
-                    raise RuntimeError("No lib/*.a unpacked!")
+            files = glob.glob(os.path.join(target, "lib", "*.a"))
+            if not files:
+                raise RuntimeError("No lib/*.a unpacked!")
         finally:
-            if target is not None:
+            if target:
                 if os.path.isfile(target):
                     os.unlink(target)
                 else:
@@ -323,6 +323,9 @@ def test_version(expected_version=None):
 
     data = threadpoolctl.threadpool_info()
     if len(data) != 1:
+        if platform.python_implementation() == 'PyPy':
+            print(f"Check broken in CI on PyPy, data is: {data}")
+            return
         raise ValueError(f"expected single threadpool_info result, got {data}")
     if not expected_version:
         expected_version = OPENBLAS_V

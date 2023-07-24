@@ -1476,7 +1476,7 @@ def test_iter_copy_casts_structured2():
 
     # Array of two structured scalars:
     for res in res1, res2:
-        # Cast to tuple by getitem, which may be weird and changable?:
+        # Cast to tuple by getitem, which may be weird and changeable?:
         assert type(res["a"][0]) == tuple
         assert res["a"][0] == (1, 1)
 

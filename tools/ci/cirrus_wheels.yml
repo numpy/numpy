@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel==2.12.1
+    - python -m pip install cibuildwheel==2.14.0
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
@@ -32,6 +32,10 @@ linux_aarch64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_BUILD: cp312-*
 
   build_script: |
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
@@ -56,6 +60,10 @@ macosx_arm64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-* cp311-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_BUILD: cp312-*
   env:
     PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
@@ -68,7 +76,8 @@ macosx_arm64_task:
       RUNNER_OS=macOS
       SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-      CFLAGS="-std=c99 -fno-strict-aliasing"
+      CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
+      CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
       OPENBLAS64_="/usr/local"
       NPY_USE_BLAS_ILP64="1"
 
@@ -106,7 +115,7 @@ wheels_upload_task:
 
   env:
     NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[!5a69522ae0c2af9edb2bc1cdfeaca6292fb3666d9ecd82dca0615921834a6ce3b702352835d8bde4ea2a9ed5ef8424ac!]
-    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[!196422e6c3419a3b1d79815e1026094a215cb0f346fe34ed0f9d3ca1c19339df7398d04556491b1e0420fc1fe3713289!]
+    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[ef04347663cfcb58d121385707e55951dc8e03b009edeed988aa4a33ba8205c54ca9980ac4da88e1adfdebff8b9d7ed4]
 
   upload_script: |
     apt-get update
@@ -115,7 +124,7 @@ wheels_upload_task:
     export IS_PUSH="false"
 
     # cron job
-    if [[ "$CIRRUS_CRON" == "weekly" ]]; then
+    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
       export IS_SCHEDULE_DISPATCH="true"
     fi
 
@@ -127,31 +136,33 @@ wheels_upload_task:
     # only upload wheels to staging if it's a tag beginning with 'v' and you're
     # on a maintenance branch
     if [[ "$CIRRUS_TAG" == v* ]] && [[ $CIRRUS_TAG != *"dev0"* ]]; then
-      export IS_PUSH="true"    
+      export IS_PUSH="true"
     fi
 
     if [[ $IS_PUSH == "true" ]] || [[ $IS_SCHEDULE_DISPATCH == "true" ]]; then
         # install miniconda in the home directory. For some reason HOME isn't set by Cirrus
         export HOME=$PWD
-    
+
         # install miniconda for uploading to anaconda
         wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
         bash miniconda.sh -b -p $HOME/miniconda3
         $HOME/miniconda3/bin/conda init bash
         source $HOME/miniconda3/bin/activate
-        conda install -y anaconda-client
-    
+        #conda install -y anaconda-client
+        # pin urllib3 until anaconda-client is fixed upstream
+        conda install -y anaconda-client 'urllib3<2.0.0'
+
         # The name of the zip file is derived from the `wheels_artifact` line.
         # If you change the artifact line to `myfile_artifact` then it would be
         # called myfile.zip
-        
+
         curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
         unzip wheels.zip
-        
+
         source ./tools/wheels/upload_wheels.sh
         # IS_PUSH takes precedence over IS_SCHEDULE_DISPATCH
         set_upload_vars
-        
+
         # Will be skipped if not a push/tag/scheduled build
         upload_wheels
     fi

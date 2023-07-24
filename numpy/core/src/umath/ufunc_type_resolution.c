@@ -381,8 +381,28 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            if (PyArray_ISINTEGER(operands[0])
+                    && PyArray_ISINTEGER(operands[1])
+                    && !PyDataType_ISINTEGER(out_dtypes[0])) {
+                /*
+                 * NumPy promotion allows uint+int to go to float, avoid it
+                 * (input must have been a mix of signed and unsigned)
+                 */
+                if (PyArray_ISSIGNED(operands[0])) {
+                    Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_LONGLONG));
+                    out_dtypes[1] = PyArray_DescrFromType(NPY_ULONGLONG);
+                    Py_INCREF(out_dtypes[1]);
+                }
+                else {
+                    Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_ULONGLONG));
+                    out_dtypes[1] = PyArray_DescrFromType(NPY_LONGLONG);
+                    Py_INCREF(out_dtypes[1]);
+                }
+            }
+            else {
+                out_dtypes[1] = out_dtypes[0];
+                Py_INCREF(out_dtypes[1]);
+            }
         }
         else {
             /* Not doing anything will lead to a loop no found error. */
@@ -398,15 +418,8 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                 operands, type_tup, out_dtypes);
     }
 
-    /* Output type is always boolean */
+    /* Output type is always boolean (cannot fail for builtins) */
     out_dtypes[2] = PyArray_DescrFromType(NPY_BOOL);
-    if (out_dtypes[2] == NULL) {
-        for (i = 0; i < 2; ++i) {
-            Py_DECREF(out_dtypes[i]);
-            out_dtypes[i] = NULL;
-        }
-        return -1;
-    }
 
     /* Check against the casting rules */
     if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
@@ -1481,7 +1494,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 int *out_needs_api)
 {
     int nargs = ufunc->nargs;
-    char *types;
+    const char *types;
     int i, j;
 
     /*
@@ -1947,7 +1960,7 @@ linear_search_type_resolver(PyUFuncObject *self,
      */
     no_castable_output = 0;
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < nop; ++j) {
@@ -2029,7 +2042,7 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
     }
 
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /*
          * Check specified types and copy into an int array for matching

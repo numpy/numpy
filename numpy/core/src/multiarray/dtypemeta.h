@@ -37,7 +37,7 @@ typedef struct {
      * clear a second time must be safe.
      * If the DType class does not implement `get_clear_loop` setting
      * NPY_ITEM_REFCOUNT on its dtype instances is invalid.  Note that it is
-     * acceptable for  NPY_ITEM_REFCOUNT to inidicate references that are not
+     * acceptable for  NPY_ITEM_REFCOUNT to indicate references that are not
      * Python objects.
      */
     get_traverse_loop_function *get_clear_loop;
@@ -86,7 +86,6 @@ typedef struct {
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
 
 
-#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
 
 #define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)

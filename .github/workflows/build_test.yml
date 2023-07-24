@@ -31,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install linter requirements
@@ -51,11 +51,11 @@ jobs:
     env:
       WITHOUT_SIMD: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -66,15 +66,15 @@ jobs:
     if: github.event_name != 'push'
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.11"]
+        python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.12"]
     env:
       EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
@@ -96,7 +96,7 @@ jobs:
         # for add-apt-repository
         sudo apt install software-properties-common -y
         sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install python3.9-dev -y
+        sudo apt install python3.9-dev ninja-build -y
         sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
@@ -124,11 +124,11 @@ jobs:
     env:
       WITHOUT_OPTIMIZATIONS: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -140,11 +140,11 @@ jobs:
     env:
       CPU_DISPATCH: "none"
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -156,11 +156,11 @@ jobs:
     env:
       CPU_DISPATCH: "max -xop -fma4 -avx512f -avx512cd -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -172,11 +172,11 @@ jobs:
     env:
       CPU_DISPATCH: "SSSE3 SSE41 POPCNT SSE42 AVX F16C"
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -188,13 +188,14 @@ jobs:
     env:
       USE_DEBUG: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+
     - uses: ./.github/actions
 
   blas64:
@@ -204,11 +205,11 @@ jobs:
     env:
       NPY_USE_BLAS_ILP64: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -222,11 +223,11 @@ jobs:
       RUN_COVERAGE: 1
       INSTALL_PICKLE5: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -244,11 +245,11 @@ jobs:
       NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
       USE_ASV: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -262,11 +263,11 @@ jobs:
       NPY_USE_BLAS_ILP64: 1
       NPY_RELAXED_STRIDES_DEBUG: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -278,31 +279,11 @@ jobs:
     env:
       USE_WHEEL: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  numpy2_flag:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      # Test for numpy-2.0 feature-flagged behavior.
-      NPY_NUMPY_2_BEHAVIOR: 1
-      # Using the future "weak" state doesn't pass tests
-      # currently unfortunately
-      NPY_PROMOTION_STATE: legacy
-    steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -317,11 +298,11 @@ jobs:
       ATLAS: None
       DOWNLOAD_OPENBLAS: ''
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -333,11 +314,11 @@ jobs:
     env:
       USE_SDIST: 1
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -348,7 +329,7 @@ jobs:
     runs-on: ubuntu-22.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
@@ -361,11 +342,10 @@ jobs:
         sudo apt update
         sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf gfortran-arm-linux-gnueabihf
 
-        # Keep the `test_requirements.txt` dependency-subset synced
-        docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:22.04 /bin/bash -c "
+        docker run --name the_container --interactive -v /:/host -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/bash -c "
           apt update &&
           apt install -y git python3 python3-dev python3-pip  &&
-          python3 -m pip install cython==0.29.30 setuptools\<49.2.0 hypothesis==6.23.3 pytest==6.2.5 'typing_extensions>=4.2.0' &&
+          python3 -m pip install -r /numpy/test_requirements.txt
           ln -s /host/lib64 /lib64 &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/arm-linux-gnueabihf /usr/arm-linux-gnueabihf &&
@@ -405,11 +385,11 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
@@ -434,11 +414,11 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.4.0
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.4.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
@@ -454,12 +434,14 @@ jobs:
       run: |
         export CC=/usr/bin/gcc-12
         export CXX=/usr/bin/g++-12
-        python -m pip install -e .
+        python setup.py develop
     - name: Show config
       run: |
         python -c "import numpy as np; np.show_config()"
     # Run only a few tests, running everything in an SDE takes a long time
     # Using pytest directly, unable to use python runtests.py -n -t ...
+    # Disabled running in the SDE because of an SDE bug
     - name: Run linalg/ufunc/umath tests
       run: |
-        sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        #sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*

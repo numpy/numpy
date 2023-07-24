@@ -350,6 +350,11 @@ PyArray_XDECREF(PyArrayObject *mp)
     return 0;
 }
 
+
+static void
+_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+
+
 /*NUMPY_API
  * Assumes contiguous
  */
@@ -392,7 +397,7 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
     }
 }
 
-NPY_NO_EXPORT void
+static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {

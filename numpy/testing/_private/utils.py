@@ -21,7 +21,8 @@ import sysconfig
 import numpy as np
 from numpy.core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-import numpy.linalg.lapack_lite
+from numpy import isfinite, isnan, isinf
+import numpy.linalg._umath_linalg
 
 from io import StringIO
 
@@ -53,22 +54,18 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
-HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
+HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
 _OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
 IS_MUSL = False
-try:
-    from packaging.tags import sys_tags
-    _tags = list(sys_tags())
-    if 'musllinux' in _tags[0].platform:
-        IS_MUSL = True
-except ImportError:
-    # fallback to sysconfig (might be flaky)
-    # value could be None.
-    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
-    if 'musl' in v:
-        IS_MUSL = True
+# alternate way is
+# from packaging.tags import sys_tags
+#     _tags = list(sys_tags())
+#     if 'musllinux' in _tags[0].platform:
+_v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+if 'musl' in _v:
+    IS_MUSL = True
 
 
 def assert_(val, msg=''):
@@ -89,62 +86,6 @@ def assert_(val, msg=''):
         except TypeError:
             smsg = msg
         raise AssertionError(smsg)
-
-
-def gisnan(x):
-    """like isnan, but always raise an error if type not supported instead of
-    returning a TypeError object.
-
-    Notes
-    -----
-    isnan and other ufunc sometimes return a NotImplementedType object instead
-    of raising any exception. This function is a wrapper to make sure an
-    exception is always raised.
-
-    This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isnan
-    st = isnan(x)
-    if isinstance(st, type(NotImplemented)):
-        raise TypeError("isnan not supported for this type")
-    return st
-
-
-def gisfinite(x):
-    """like isfinite, but always raise an error if type not supported instead
-    of returning a TypeError object.
-
-    Notes
-    -----
-    isfinite and other ufunc sometimes return a NotImplementedType object
-    instead of raising any exception. This function is a wrapper to make sure
-    an exception is always raised.
-
-    This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isfinite, errstate
-    with errstate(invalid='ignore'):
-        st = isfinite(x)
-        if isinstance(st, type(NotImplemented)):
-            raise TypeError("isfinite not supported for this type")
-    return st
-
-
-def gisinf(x):
-    """like isinf, but always raise an error if type not supported instead of
-    returning a TypeError object.
-
-    Notes
-    -----
-    isinf and other ufunc sometimes return a NotImplementedType object instead
-    of raising any exception. This function is a wrapper to make sure an
-    exception is always raised.
-
-    This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isinf, errstate
-    with errstate(invalid='ignore'):
-        st = isinf(x)
-        if isinstance(st, type(NotImplemented)):
-            raise TypeError("isinf not supported for this type")
-    return st
 
 
 if os.name == 'nt':
@@ -390,8 +331,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     # Inf/nan/negative zero handling
     try:
-        isdesnan = gisnan(desired)
-        isactnan = gisnan(actual)
+        isdesnan = isnan(desired)
+        isactnan = isnan(actual)
         if isdesnan and isactnan:
             return  # both nan, so equal
 
@@ -401,7 +342,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
         if (array_actual.dtype.char in 'Mm' or
                 array_desired.dtype.char in 'Mm'):
             # version 1.18
-            # until this version, gisnan failed for datetime64 and timedelta64.
+            # until this version, isnan failed for datetime64 and timedelta64.
             # Now it succeeds but comparison to scalar with a different type
             # emits a DeprecationWarning.
             # Avoid that by skipping the next check
@@ -582,9 +523,9 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
         # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            if gisnan(desired) or gisnan(actual):
-                if not (gisnan(desired) and gisnan(actual)):
+        if not (isfinite(desired) and isfinite(actual)):
+            if isnan(desired) or isnan(actual):
+                if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(_build_err_msg())
             else:
                 if not desired == actual:
@@ -683,9 +624,9 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
         # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            if gisnan(desired) or gisnan(actual):
-                if not (gisnan(desired) and gisnan(actual)):
+        if not (isfinite(desired) and isfinite(actual)):
+            if isnan(desired) or isnan(actual):
+                if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(msg)
             else:
                 if not desired == actual:
@@ -1066,9 +1007,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     def compare(x, y):
         try:
-            if npany(gisinf(x)) or npany(gisinf(y)):
-                xinfid = gisinf(x)
-                yinfid = gisinf(y)
+            if npany(isinf(x)) or npany(isinf(y)):
+                xinfid = isinf(x)
+                yinfid = isinf(y)
                 if not (xinfid == yinfid).all():
                     return False
                 # if one item, x and y is +- inf
@@ -1122,7 +1063,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Raises
     ------
     AssertionError
-      If actual and desired objects are not equal.
+      If x is not strictly smaller than y, element-wise.
 
     See Also
     --------
@@ -1303,8 +1244,8 @@ def check_support_sve():
     import subprocess
     cmd = 'lscpu'
     try:
-        return "sve" in (subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            shell=True).communicate()[0]).decode('utf-8')
+        output = subprocess.run(cmd, capture_output=True, text=True)
+        return 'sve' in output.stdout
     except OSError:
         return False
 

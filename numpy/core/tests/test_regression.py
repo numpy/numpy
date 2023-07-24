@@ -6,6 +6,7 @@ import pytest
 from os import path
 from io import BytesIO
 from itertools import chain
+import pickle
 
 import numpy as np
 from numpy.testing import (
@@ -15,7 +16,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy.compat import asbytes, asunicode, pickle
+from numpy._utils._convertions import asbytes, asunicode
 
 
 class TestRegression:
@@ -1464,6 +1465,10 @@ class TestRegression:
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 12),
+        reason="Python 3.12 has immortal refcounts, this test no longer works."
+    )
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
@@ -1667,7 +1672,9 @@ class TestRegression:
 
     def test_find_common_type_boolean(self):
         # Ticket #1695
-        assert_(np.find_common_type([], ['?', '?']) == '?')
+        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
+            res = np.find_common_type([], ['?', '?'])
+        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])

@@ -104,14 +104,14 @@ simd_range_reduction_pi2(npyv_f64 r, npyv_f64 n) {
     return simd_range_reduction_f64(r, n, pi1, pi2, pi3);
 }
 
-NPY_FINLINE npyv_b64 simd_cos_range_check_f64(npyv_u64 ir) {
+NPY_FINLINE npyv_b64 simd_sin_range_check_f64(npyv_u64 ir) {
     const npyv_u64 tiny_bound = npyv_setall_u64(0x202); /* top12 (asuint64 (0x1p-509)).  */
     const npyv_u64 simd_thresh = npyv_setall_u64(0x214); /* top12 (asuint64 (RangeVal)) - SIMD_TINY_BOUND.  */
 
     return npyv_cmpge_u64(npyv_sub_u64(npyv_shri_u64(ir, 52), tiny_bound), simd_thresh);
 }
 
-NPY_FINLINE npyv_b64 simd_sin_range_check_f64(npyv_u64 ir) {
+NPY_FINLINE npyv_b64 simd_cos_range_check_f64(npyv_u64 ir) {
     const npyv_f64 range_val = npyv_setall_f64(0x1p23);
 
     return npyv_cmpge_u64(ir, npyv_reinterpret_u64_f64(range_val));
@@ -354,7 +354,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                 npyv_storen_till_f32(dst, sdst, len, cos);
             }
         }
-        if (simd_maski != ((1 << vstep) - 1)) {
+        if (simd_maski != (npy_uint64)((1 << vstep) - 1)) {
             float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[npyv_nlanes_f32];
             npyv_storea_f32(ip_fback, x_in);
 
@@ -388,7 +388,11 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-#if NPY_SIMD_F64 && NPY_SIMD_FMA3
+    /* Disable SIMD code and revert to libm: see
+     * https://mail.python.org/archives/list/numpy-discussion@python.org/thread/C6EYZZSR4EWGVKHAZXLE7IBILRMNVK7L/
+     * for detailed discussion on this*/
+//#if NPY_SIMD_F64 && NPY_SIMD_FMA3
+#if 0
     const double *src = (double*)args[0];
           double *dst = (double*)args[1];
     const int lsize = sizeof(src[0]);

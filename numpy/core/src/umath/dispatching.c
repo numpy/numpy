@@ -826,7 +826,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
          * This check should ensure a the right error message, but in principle
          * we could try to call the loop getter here.
          */
-        char *types = ufunc->types;
+        const char *types = ufunc->types;
         npy_bool loop_exists = NPY_FALSE;
         for (int i = 0; i < ufunc->ntypes; ++i) {
             loop_exists = NPY_TRUE;  /* assume it exists, break if not */

@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 10
+#define __EXPERIMENTAL_DTYPE_API_VERSION 13
 
 struct PyArrayMethodObject_tag;
 
@@ -99,7 +99,7 @@ typedef enum {
 typedef struct PyArrayMethod_Context_tag {
     /* The caller, which is typically the original ufunc.  May be NULL */
     PyObject *caller;
-    /* The method "self".  Publically currentl an opaque object. */
+    /* The method "self".  Currently an opaque object. */
     struct PyArrayMethodObject_tag *method;
 
     /* Operand descriptors, filled in by resolve_descriptors */
@@ -262,7 +262,7 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * python objects or heap-allocated data.
  *
  * The `void *traverse_context` is passed in because we may need to pass in
- * Intepreter state or similar in the future, but we don't want to pass in
+ * Interpreter state or similar in the future, but we don't want to pass in
  * a full context (with pointers to dtypes, method, caller which all make
  * no sense for a traverse function).
  *
@@ -309,7 +309,7 @@ typedef int (get_traverse_loop_function)(
  */
 
 #define NPY_DT_discover_descr_from_pyobject 1
-// this slot is considered private because its API hasn't beed decided
+// this slot is considered private because its API hasn't been decided
 #define _NPY_DT_is_known_scalar_type 2
 #define NPY_DT_default_descr 3
 #define NPY_DT_common_dtype 4
@@ -403,6 +403,12 @@ typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
  */
 typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
+
+/*
+ * Convenience utility for getting a reference to the DType metaclass associated
+ * with a dtype instance.
+ */
+#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

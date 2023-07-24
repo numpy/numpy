@@ -71,3 +71,6 @@
 
 # Version 17 (NumPy 1.25) No actual change.
 0x00000011 = ca1aebdad799358149567d9d93cbca09
+
+# Version 18 (NumPy 2.0.0)
+0x00000012 = 52eabc83680fd0d381c08d63e264e72e

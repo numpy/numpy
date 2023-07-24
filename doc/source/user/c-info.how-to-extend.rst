@@ -439,7 +439,7 @@ writeable). The syntax is
         of the desired properties of the returned array object. All
         of the flags are explained in the detailed API chapter. The
         flags most commonly needed are :c:data:`NPY_ARRAY_IN_ARRAY`,
-        :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
+        :c:data:`NPY_ARRAY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
         :c:data:`NPY_ARRAY_IN_ARRAY`
             This flag is useful for arrays that must be in C-contiguous
