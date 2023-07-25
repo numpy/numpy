@@ -96,3 +96,6 @@ release (NumPy 2.0) by setting an environment before importing NumPy:
 
 By default this will also activate the :ref:`NEP 50 <NEP50>` related setting
 ``NPY_PROMOTION_STATE`` (please see the NEP for details on this).
+
+.. versionchanged:: 1.25.2
+    This variable is only checked on the first import.
