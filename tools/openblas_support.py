@@ -92,7 +92,7 @@ def get_linux(arch):
         return get_musllinux(arch)
 
 
-def download_openblas(target, plat, ilp64, *, openblas_version=OPENBLAS_LONG):
+def download_openblas(target, plat, ilp64, *, nightly=False):
     osname, arch = plat.split("-")
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
@@ -121,6 +121,7 @@ def download_openblas(target, plat, ilp64, *, openblas_version=OPENBLAS_LONG):
 
     if not suffix:
         return None
+    openblas_version = "HEAD" if nightly else OPENBLAS_LONG
     filename = (
         f'{BASE_LOC}/{openblas_version}/download/'
         f'openblas{fnsuffix}-{openblas_version}-{suffix}'
@@ -159,10 +160,7 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
     _, tmp = mkstemp()
     if not plat:
         raise ValueError('unknown platform')
-    openblas_version = "HEAD" if nightly else OPENBLAS_LONG
-    typ = download_openblas(
-        tmp, plat, ilp64, openblas_version=openblas_version
-    )
+    typ = download_openblas(tmp, plat, ilp64, nightly=nightly)
     if not typ:
         return ''
     osname, arch = plat.split("-")
