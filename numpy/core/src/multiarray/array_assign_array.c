@@ -132,7 +132,10 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char*)&src_data);
     }
-    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+
+    /* Ensure number of elements exceeds threshold for threading */
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)
+            && PyArray_MultiplyList(shape_it, ndim) > 512) {
         NPY_BEGIN_THREADS;
     }
 
