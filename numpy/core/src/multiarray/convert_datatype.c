@@ -1539,8 +1539,8 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_DOUBLE, is_small_unsigned);
             }
             */
-            if (NPY_CDOUBLE_GET_REAL(&value) > -3.4e38 && NPY_CDOUBLE_GET_REAL(&value) < 3.4e38 &&
-                     NPY_CDOUBLE_GET_IMAG(&value) > -3.4e38 && NPY_CDOUBLE_GET_IMAG(&value) < 3.4e38) {
+            if (npy_creal(value) > -3.4e38 && npy_creal(value) < 3.4e38 &&
+                     npy_cimag(value) > -3.4e38 && npy_cimag(value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
             break;
@@ -1553,12 +1553,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             NPY_LONGDOUBLE, is_small_unsigned);
             }
             */
-            if (NPY_CLONGDOUBLE_GET_REAL(&value) > -3.4e38 && NPY_CLONGDOUBLE_GET_REAL(&value) < 3.4e38 &&
-                     NPY_CLONGDOUBLE_GET_IMAG(&value) > -3.4e38 && NPY_CLONGDOUBLE_GET_IMAG(&value) < 3.4e38) {
+            if (npy_creall(value) > -3.4e38 && npy_creall(value) < 3.4e38 &&
+                     npy_cimagl(value) > -3.4e38 && npy_cimagl(value) < 3.4e38) {
                 return NPY_CFLOAT;
             }
-            else if (NPY_CLONGDOUBLE_GET_REAL(&value) > -1.7e308 && NPY_CLONGDOUBLE_GET_REAL(&value) < 1.7e308 &&
-                     NPY_CLONGDOUBLE_GET_IMAG(&value) > -1.7e308 && NPY_CLONGDOUBLE_GET_IMAG(&value) < 1.7e308) {
+            else if (npy_creall(value) > -1.7e308 && npy_creall(value) < 1.7e308 &&
+                     npy_cimagl(value) > -1.7e308 && npy_cimagl(value) < 1.7e308) {
                 return NPY_CDOUBLE;
             }
             break;

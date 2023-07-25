@@ -441,6 +441,7 @@ static PyObject *
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
+ * #suffix = f, , l#
  */
 NPY_NO_EXPORT int
 @NAME@_setitem(PyObject *op, void *ov, void *vap)
@@ -500,13 +501,13 @@ NPY_NO_EXPORT int
                 return -1;
             }
         }
-        NPY_@NAME@_SET_REAL(&temp, (@ftype@) oop.real);
-        NPY_@NAME@_SET_IMAG(&temp, (@ftype@) oop.imag);
+        npy_csetreal@suffix@(&temp, (@ftype@) oop.real);
+        npy_csetimag@suffix@(&temp, (@ftype@) oop.imag);
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
         /* Overflow could have occurred converting double to float */
-        if (NPY_UNLIKELY((npy_isinf(NPY_@NAME@_GET_REAL(&temp)) && !npy_isinf(oop.real)) ||
-                         (npy_isinf(NPY_@NAME@_GET_IMAG(&temp)) && !npy_isinf(oop.imag)))) {
+        if (NPY_UNLIKELY((npy_isinf(npy_creal@suffix@(temp)) && !npy_isinf(oop.real)) ||
+                         (npy_isinf(npy_cimag@suffix@(temp)) && !npy_isinf(oop.imag)))) {
             if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
                 return -1;
             }
@@ -1522,6 +1523,7 @@ HALF_to_BOOL(void *input, void *output, npy_intp n,
  *
  * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #fromtype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #ft = f, , l#
  */
 static void
 @FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
@@ -1531,8 +1533,8 @@ static void
     npy_bool *op = output;
 
     while (n--) {
-        *op = (npy_bool)((NPY_@FROMTYPE@_GET_REAL(ip) != NPY_FALSE) ||
-                (NPY_@FROMTYPE@_GET_IMAG(ip) != NPY_FALSE));
+        *op = (npy_bool)((npy_creal@ft@(*ip) != NPY_FALSE) ||
+                (npy_cimag@ft@(*ip) != NPY_FALSE));
         op++;
         ip++;
     }
@@ -1933,6 +1935,7 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
+ * #suffix = f, #
  */
 static int
 @fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
@@ -1947,7 +1950,7 @@ static int
     char next = getc(fp);
     if ((next == '+') || (next == '-')) {
         // Imaginary component specified
-        NPY_@fname@_SET_REAL(&output, result);
+        npy_csetreal@suffix@(&output, result);
         // Revert peek and read imaginary component
         ungetc(next, fp);
         ret_imag = NumPyOS_ascii_ftolf(fp, &result);
@@ -1955,23 +1958,23 @@ static int
         next = getc(fp);
         if ((ret_imag == 1) && (next == 'j')) {
             // If read is successful and the immediate following char is j
-            NPY_@fname@_SET_IMAG(&output, result);
+            npy_csetimag@suffix@(&output, result);
         }
         else {
-            NPY_@fname@_SET_IMAG(&output, 0);
+            npy_csetimag@suffix@(&output, 0);
             // Push an invalid char to trigger the not everything is read error
             ungetc('a', fp);
         }
     }
     else if (next == 'j') {
         // Real component not specified
-        NPY_@fname@_SET_REAL(&output, 0);
-        NPY_@fname@_SET_IMAG(&output, result);
+        npy_csetreal@suffix@(&output, 0);
+        npy_csetimag@suffix@(&output, result);
     }
     else {
         // Imaginary component not specified
-        NPY_@fname@_SET_REAL(&output, result);
-        NPY_@fname@_SET_IMAG(&output, 0.);
+        npy_csetreal@suffix@(&output, result);
+        npy_csetimag@suffix@(&output, 0.);
         // Next character is not + / - / j. Revert peek.
         ungetc(next, fp);
     }
@@ -2076,6 +2079,7 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
+ * #suffix = f, #
  */
 static int
 @fname@_fromstr(char *str, void *ip, char **endptr,
@@ -2088,14 +2092,14 @@ static int
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
-        NPY_@fname@_SET_REAL(&output, result);
+        npy_csetreal@suffix@(&output, result);
         // Reading imaginary component
         char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
         if (endptr && *endptr[0] == 'j') {
             // Read is successful if the immediate following char is j
-            NPY_@fname@_SET_IMAG(&output, result);
+            npy_csetimag@suffix@(&output, result);
             // Skip j
             ++*endptr;
         }
@@ -2105,20 +2109,20 @@ static int
              * read error
              */
             endptr = prev;
-            NPY_@fname@_SET_IMAG(&output, 0);
+            npy_csetimag@suffix@(&output, 0);
         }
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
-        NPY_@fname@_SET_REAL(&output, 0);
-        NPY_@fname@_SET_IMAG(&output, result);
+        npy_csetreal@suffix@(&output, 0);
+        npy_csetimag@suffix@(&output, result);
         // Skip j
         ++*endptr;
     }
     else {
         // Imaginary component not specified
-        NPY_@fname@_SET_REAL(&output, result);
-        NPY_@fname@_SET_IMAG(&output, 0.);
+        npy_csetreal@suffix@(&output, result);
+        npy_csetimag@suffix@(&output, 0.);
     }
     *(@type@ *)ip = output;
     return 0;
@@ -2777,19 +2781,20 @@ static npy_bool
  *
  * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #suffix = f, , l#
  */
 static npy_bool
 @fname@_nonzero (char *ip, PyArrayObject *ap)
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
-        return (npy_bool) ((NPY_@fname@_GET_REAL(ptmp) != 0) || (NPY_@fname@_GET_IMAG(ptmp) != 0));
+        return (npy_bool) ((npy_creal@suffix@(*ptmp) != 0) || (npy_cimag@suffix@(*ptmp) != 0));
     }
     else {
         @type@ tmp;
         PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
-        return (npy_bool) ((NPY_@fname@_GET_REAL(&tmp) != 0) || (NPY_@fname@_GET_IMAG(&tmp) != 0));
+        return (npy_bool) ((npy_creal@suffix@(tmp) != 0) || (npy_cimag@suffix@(tmp) != 0));
     }
 }
 /**end repeat**/
@@ -3975,6 +3980,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
  *
  * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #t = f, , l#
 */
 static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
@@ -3983,15 +3989,15 @@ static int
     @type@ start;
     @type@ delta;
 
-    NPY_@NAME@_SET_REAL(&start, NPY_@NAME@_GET_REAL(buffer));
-    NPY_@NAME@_SET_IMAG(&start, NPY_@NAME@_GET_IMAG(buffer));
-    NPY_@NAME@_SET_REAL(&delta, NPY_@NAME@_GET_REAL(&buffer[1]) - NPY_@NAME@_GET_REAL(&start));
-    NPY_@NAME@_SET_IMAG(&delta, NPY_@NAME@_GET_IMAG(&buffer[1]) - NPY_@NAME@_GET_IMAG(&start));
+    npy_csetreal@t@(&start, npy_creal@t@(*buffer));
+    npy_csetimag@t@(&start, npy_cimag@t@(*buffer));
+    npy_csetreal@t@(&delta, npy_creal@t@(buffer[1]) - npy_creal@t@(start));
+    npy_csetimag@t@(&delta, npy_cimag@t@(buffer[1]) - npy_cimag@t@(start));
 
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        NPY_@NAME@_SET_REAL(buffer, NPY_@NAME@_GET_REAL(&start) + i*NPY_@NAME@_GET_REAL(&delta));
-        NPY_@NAME@_SET_IMAG(buffer, NPY_@NAME@_GET_IMAG(&start) + i*NPY_@NAME@_GET_IMAG(&delta));
+        npy_csetreal@t@(buffer, npy_creal@t@(start) + i*npy_creal@t@(delta));
+        npy_csetimag@t@(buffer, npy_cimag@t@(start) + i*npy_cimag@t@(delta));
     }
     return 0;
 }

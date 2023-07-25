@@ -734,12 +734,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         lval = dy[0];
     }
     else {
-        NPY_CDOUBLE_SET_REAL(&lval, PyComplex_RealAsDouble(left));
-        if (error_converting(NPY_CDOUBLE_GET_REAL(&lval))) {
+        npy_csetreal(&lval, PyComplex_RealAsDouble(left));
+        if (error_converting(npy_creal(lval))) {
             goto fail;
         }
-        NPY_CDOUBLE_SET_IMAG(&lval, PyComplex_ImagAsDouble(left));
-        if (error_converting(NPY_CDOUBLE_GET_IMAG(&lval))) {
+        npy_csetimag(&lval, PyComplex_ImagAsDouble(left));
+        if (error_converting(npy_cimag(lval))) {
             goto fail;
         }
     }
@@ -748,12 +748,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         rval = dy[lenxp - 1];
     }
     else {
-        NPY_CDOUBLE_SET_REAL(&rval, PyComplex_RealAsDouble(right));
-        if (error_converting(NPY_CDOUBLE_GET_REAL(&rval))) {
+        npy_csetreal(&rval, PyComplex_RealAsDouble(right));
+        if (error_converting(npy_creal(rval))) {
             goto fail;
         }
-        NPY_CDOUBLE_SET_IMAG(&rval, PyComplex_ImagAsDouble(right));
-        if (error_converting(NPY_CDOUBLE_GET_IMAG(&rval))) {
+        npy_csetimag(&rval, PyComplex_ImagAsDouble(right));
+        if (error_converting(npy_cimag(rval))) {
             goto fail;
         }
     }
@@ -788,8 +788,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
-                NPY_CDOUBLE_SET_REAL(&slopes[i], (NPY_CDOUBLE_GET_REAL(&dy[i+1]) - NPY_CDOUBLE_GET_REAL(&dy[i])) * inv_dx);
-                NPY_CDOUBLE_SET_IMAG(&slopes[i], (NPY_CDOUBLE_GET_IMAG(&dy[i+1]) - NPY_CDOUBLE_GET_IMAG(&dy[i])) * inv_dx);
+                npy_csetreal(&slopes[i], (npy_creal(dy[i+1]) - npy_creal(dy[i])) * inv_dx);
+                npy_csetimag(&slopes[i], (npy_cimag(dy[i+1]) - npy_cimag(dy[i])) * inv_dx);
             }
         }
 
@@ -797,8 +797,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
             const npy_double x_val = dz[i];
 
             if (npy_isnan(x_val)) {
-                NPY_CDOUBLE_SET_REAL(&dres[i], x_val);
-                NPY_CDOUBLE_SET_IMAG(&dres[i], 0.0);
+                npy_csetreal(&dres[i], x_val);
+                npy_csetimag(&dres[i], 0.0);
                 continue;
             }
 
@@ -823,25 +823,25 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                 }
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
-                    NPY_CDOUBLE_SET_REAL(&slope, (NPY_CDOUBLE_GET_REAL(&dy[j+1]) - NPY_CDOUBLE_GET_REAL(&dy[j])) * inv_dx);
-                    NPY_CDOUBLE_SET_IMAG(&slope, (NPY_CDOUBLE_GET_IMAG(&dy[j+1]) - NPY_CDOUBLE_GET_IMAG(&dy[j])) * inv_dx);
+                    npy_csetreal(&slope, (npy_creal(dy[j+1]) - npy_creal(dy[j])) * inv_dx);
+                    npy_csetimag(&slope, (npy_cimag(dy[j+1]) - npy_cimag(dy[j])) * inv_dx);
                 }
 
                 /* If we get nan in one direction, try the other */
-                NPY_CDOUBLE_SET_REAL(&dres[i], NPY_CDOUBLE_GET_REAL(&slope)*(x_val - dx[j]) + NPY_CDOUBLE_GET_REAL(&dy[j]));
-                if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_REAL(&dres[i])))) {
-                    NPY_CDOUBLE_SET_REAL(&dres[i], NPY_CDOUBLE_GET_REAL(&slope)*(x_val - dx[j+1]) + NPY_CDOUBLE_GET_REAL(&dy[j+1]));
-                    if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_REAL(&dres[i]))) &&
-                            NPY_CDOUBLE_GET_REAL(&dy[j]) == NPY_CDOUBLE_GET_REAL(&dy[j+1])) {
-                        NPY_CDOUBLE_SET_REAL(&dres[i], NPY_CDOUBLE_GET_REAL(&dy[j]));
+                npy_csetreal(&dres[i], npy_creal(slope)*(x_val - dx[j]) + npy_creal(dy[j]));
+                if (NPY_UNLIKELY(npy_isnan(npy_creal(dres[i])))) {
+                    npy_csetreal(&dres[i], npy_creal(slope)*(x_val - dx[j+1]) + npy_creal(dy[j+1]));
+                    if (NPY_UNLIKELY(npy_isnan(npy_creal(dres[i]))) &&
+                            npy_creal(dy[j]) == npy_creal(dy[j+1])) {
+                        npy_csetreal(&dres[i], npy_creal(dy[j]));
                     }
                 }
-                NPY_CDOUBLE_SET_IMAG(&dres[i], NPY_CDOUBLE_GET_IMAG(&slope)*(x_val - dx[j]) + NPY_CDOUBLE_GET_IMAG(&dy[j]));
-                if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_IMAG(&dres[i])))) {
-                    NPY_CDOUBLE_SET_IMAG(&dres[i], NPY_CDOUBLE_GET_IMAG(&slope)*(x_val - dx[j+1]) + NPY_CDOUBLE_GET_IMAG(&dy[j+1]));
-                    if (NPY_UNLIKELY(npy_isnan(NPY_CDOUBLE_GET_IMAG(&dres[i]))) &&
-                            NPY_CDOUBLE_GET_IMAG(&dy[j]) == NPY_CDOUBLE_GET_IMAG(&dy[j+1])) {
-                        NPY_CDOUBLE_SET_IMAG(&dres[i], NPY_CDOUBLE_GET_IMAG(&dy[j]));
+                npy_csetimag(&dres[i], npy_cimag(slope)*(x_val - dx[j]) + npy_cimag(dy[j]));
+                if (NPY_UNLIKELY(npy_isnan(npy_cimag(dres[i])))) {
+                    npy_csetimag(&dres[i], npy_cimag(slope)*(x_val - dx[j+1]) + npy_cimag(dy[j+1]));
+                    if (NPY_UNLIKELY(npy_isnan(npy_cimag(dres[i]))) &&
+                            npy_cimag(dy[j]) == npy_cimag(dy[j+1])) {
+                        npy_csetimag(&dres[i], npy_cimag(dy[j]));
                     }
                 }
             }

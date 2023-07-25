@@ -360,145 +360,112 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
  * Complex declarations
  */
 
-typedef union {
-    double *arr;
-    const npy_cdouble *comp;
-} _npy_cdouble_to_arr;
+#define REAL 0
+#define IMAG 1
+#define CREATE_UNION(ctype, npy_ctype)  \
+    typedef union {                     \
+        ctype *arr;                     \
+        const npy_ctype *comp;          \
+    } _u;
+#define NPY_COMPLEX_GET(ctype, npy_ctype, c, real_or_imag)  \
+    CREATE_UNION(ctype, npy_ctype)                          \
+    _u tmp;                                                 \
+    tmp.comp = &c;                                           \
+    return tmp.arr[real_or_imag];                           \
 
-typedef union {
-    float *arr;
-    const npy_cfloat *comp;
-} _npy_cfloat_to_arr;
+#define NPY_COMPLEX_SET(ctype, npy_ctype, c, val, real_or_imag) \
+    CREATE_UNION(ctype, npy_ctype)                              \
+    _u tmp;                                                     \
+    tmp.comp = c;                                               \
+    tmp.arr[real_or_imag] = val;                                \
 
-typedef union {
-    longdouble_t *arr;
-    const npy_clongdouble *comp;
-} _npy_clongdouble_to_arr;
-
-static inline double NPY_CDOUBLE_GET_REAL(const npy_cdouble *c) {
-    _npy_cdouble_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[0];
+static inline double npy_creal(npy_cdouble z)
+{
+    NPY_COMPLEX_GET(double, npy_cdouble, z, REAL)
 }
 
-static inline double NPY_CDOUBLE_GET_IMAG(const npy_cdouble *c) {
-    _npy_cdouble_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[1];
+static inline void npy_csetreal(npy_cdouble *z, double r)
+{
+    NPY_COMPLEX_SET(double, npy_cdouble, z, r, REAL)
 }
 
-static inline void NPY_CDOUBLE_SET_REAL(npy_cdouble *c, double real) {
-    _npy_cdouble_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[0] = real;
+static inline double npy_cimag(npy_cdouble z)
+{
+    NPY_COMPLEX_GET(double, npy_cdouble, z, IMAG)
 }
 
-static inline void NPY_CDOUBLE_SET_IMAG(npy_cdouble *c, double imag) {
-    _npy_cdouble_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[1] = imag;
+static inline void npy_csetimag(npy_cdouble *z, double i)
+{
+    NPY_COMPLEX_SET(double, npy_cdouble, z, i, IMAG)
 }
 
-static inline float NPY_CFLOAT_GET_REAL(const npy_cfloat *c) {
-    _npy_cfloat_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[0];
+static inline float npy_crealf(npy_cfloat z)
+{
+    NPY_COMPLEX_GET(float, npy_cfloat, z, REAL)
 }
 
-static inline float NPY_CFLOAT_GET_IMAG(const npy_cfloat *c) {
-    _npy_cfloat_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[1];
+static inline void npy_csetrealf(npy_cfloat *z, float r)
+{
+    NPY_COMPLEX_SET(float, npy_cfloat, z, r, REAL)
 }
 
-static inline void NPY_CFLOAT_SET_REAL(npy_cfloat *c, float real) {
-    _npy_cfloat_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[0] = real;
+static inline float npy_cimagf(npy_cfloat z)
+{
+    NPY_COMPLEX_GET(float, npy_cfloat, z, IMAG)
 }
 
-static inline void NPY_CFLOAT_SET_IMAG(npy_cfloat *c, float imag) {
-    _npy_cfloat_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[1] = imag;
+static inline void npy_csetimagf(npy_cfloat *z, float i)
+{
+    NPY_COMPLEX_SET(float, npy_cfloat, z, i, IMAG)
 }
 
-static inline longdouble_t NPY_CLONGDOUBLE_GET_REAL(const npy_clongdouble *c) {
-    _npy_clongdouble_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[0];
+static inline npy_longdouble npy_creall(npy_clongdouble z)
+{
+    NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, REAL)
 }
 
-static inline longdouble_t NPY_CLONGDOUBLE_GET_IMAG(const npy_clongdouble *c) {
-    _npy_clongdouble_to_arr tmp;
-    tmp.comp = c;
-    return tmp.arr[1];
+static inline void npy_csetreall(npy_clongdouble *z, longdouble_t r)
+{
+    NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, r, REAL)
 }
 
-static inline void NPY_CLONGDOUBLE_SET_REAL(npy_clongdouble *c, longdouble_t real) {
-    _npy_clongdouble_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[0] = real;
+static inline npy_longdouble npy_cimagl(npy_clongdouble z)
+{
+    NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, IMAG)
 }
 
-static inline void NPY_CLONGDOUBLE_SET_IMAG(npy_clongdouble *c, longdouble_t imag) {
-    _npy_clongdouble_to_arr tmp;
-    tmp.comp = c;
-    tmp.arr[1] = imag;
+static inline void npy_csetimagl(npy_clongdouble *z, longdouble_t i)
+{
+    NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, i, IMAG)
 }
+#undef REAL
+#undef IMAG
+#undef CREATE_UNION
+#undef NPY_COMPLEX_GET
+#undef NPY_COMPLEX_SET
 
 static inline npy_cdouble npy_cpack(double x, double y)
 {
     npy_cdouble z;
-    NPY_CDOUBLE_SET_REAL(&z, x);
-    NPY_CDOUBLE_SET_IMAG(&z, y);
+    npy_csetreal(&z, x);
+    npy_csetimag(&z, y);
     return z;
 }
 
 static inline npy_cfloat npy_cpackf(float x, float y)
 {
     npy_cfloat z;
-    NPY_CFLOAT_SET_REAL(&z, x);
-    NPY_CFLOAT_SET_IMAG(&z, y);
+    npy_csetrealf(&z, x);
+    npy_csetimagf(&z, y);
     return z;
 }
 
 static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
     npy_clongdouble z;
-    NPY_CLONGDOUBLE_SET_REAL(&z, x);
-    NPY_CLONGDOUBLE_SET_IMAG(&z, y);
+    npy_csetreall(&z, x);
+    npy_csetimagl(&z, y);
     return z;
-}
-
-static inline double npy_creal(npy_cdouble z)
-{
-    return NPY_CDOUBLE_GET_REAL(&z);
-}
-
-static inline double npy_cimag(npy_cdouble z)
-{
-    return NPY_CDOUBLE_GET_IMAG(&z);
-}
-
-static inline float npy_crealf(npy_cfloat z)
-{
-    return NPY_CFLOAT_GET_REAL(&z);
-}
-
-static inline float npy_cimagf(npy_cfloat z)
-{
-    return NPY_CFLOAT_GET_IMAG(&z);
-}
-
-static inline npy_longdouble npy_creall(npy_clongdouble z)
-{
-    return NPY_CLONGDOUBLE_GET_REAL(&z);
-}
-
-static inline npy_longdouble npy_cimagl(npy_clongdouble z)
-{
-    return NPY_CLONGDOUBLE_GET_IMAG(&z);
 }
 
 /*

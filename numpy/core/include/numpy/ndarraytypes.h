@@ -2,7 +2,6 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
 #include "npy_common.h"
-#include "npy_math.h"
 #include "npy_endian.h"
 #include "npy_cpu.h"
 #include "utils.h"

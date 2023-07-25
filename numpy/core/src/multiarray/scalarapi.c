@@ -373,8 +373,8 @@ PyArray_ScalarFromObject(PyObject *object)
     else if (PyComplex_Check(object)) {
         ret = PyArrayScalar_New(CDouble);
         if (ret != NULL) {
-            NPY_CDOUBLE_SET_REAL(&PyArrayScalar_VAL(ret, CDouble), PyComplex_RealAsDouble(object));
-            NPY_CDOUBLE_SET_IMAG(&PyArrayScalar_VAL(ret, CDouble), PyComplex_ImagAsDouble(object));
+            npy_csetreal(&PyArrayScalar_VAL(ret, CDouble), PyComplex_RealAsDouble(object));
+            npy_csetimag(&PyArrayScalar_VAL(ret, CDouble), PyComplex_ImagAsDouble(object));
         }
         return ret;
     }
