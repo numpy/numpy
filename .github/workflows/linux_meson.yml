@@ -42,12 +42,13 @@ jobs:
         pip install -r build_requirements.txt
         # Install OpenBLAS
         set -xe
-        chmod +x tools/wheels/cibw_before_build.sh
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
-          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh --nightly .
+          target=$(python tools/openblas_support.py --nightly)
         else
-          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
+          target=$(python tools/openblas_support.py)
         fi
+        sudo cp -r $target/lib/* /usr/lib
+        sudo cp $target/include/* /usr/include
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
