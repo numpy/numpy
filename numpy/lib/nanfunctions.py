@@ -1606,7 +1606,9 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear", weights=None):
+def _nanquantile_1d(
+    arr1d, q, overwrite_input=False, method="linear", weights=None,
+):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
@@ -1618,7 +1620,12 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear", weights=No
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return function_base._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, method=method, weights=weights)
+        arr1d,
+        q,
+        overwrite_input=overwrite_input,
+        method=method,
+        weights=weights,
+    )
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
