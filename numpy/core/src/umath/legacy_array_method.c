@@ -282,7 +282,7 @@ get_initial_from_ufunc(
         return -1;
     }
     if (identity_obj == Py_None) {
-        /* UFunc has no idenity (should not happen) */
+        /* UFunc has no identity (should not happen) */
         Py_DECREF(identity_obj);
         return 0;
     }

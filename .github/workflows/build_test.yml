@@ -96,7 +96,7 @@ jobs:
         # for add-apt-repository
         sudo apt install software-properties-common -y
         sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install python3.9-dev -y
+        sudo apt install python3.9-dev ninja-build -y
         sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
@@ -181,13 +181,12 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  debug_and_cython3:
+  debug:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     env:
       USE_DEBUG: 1
-      USE_CYTHON3: 1
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -343,11 +342,10 @@ jobs:
         sudo apt update
         sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf gfortran-arm-linux-gnueabihf
 
-        # Keep the `test_requirements.txt` dependency-subset synced
-        docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:22.04 /bin/bash -c "
+        docker run --name the_container --interactive -v /:/host -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/bash -c "
           apt update &&
           apt install -y git python3 python3-dev python3-pip  &&
-          python3 -m pip install cython==0.29.34 setuptools\<49.2.0 hypothesis==6.23.3 pytest==6.2.5 'typing_extensions>=4.2.0' &&
+          python3 -m pip install -r /numpy/test_requirements.txt
           ln -s /host/lib64 /lib64 &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/arm-linux-gnueabihf /usr/arm-linux-gnueabihf &&

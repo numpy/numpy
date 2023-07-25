@@ -71,6 +71,7 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          python -c "import sys; print(sys.platform)"
           pip install -r test_requirements.txt
       - name: Test
         run: |

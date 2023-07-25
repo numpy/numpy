@@ -409,16 +409,19 @@ def test_switch_owner(get_module, policy):
     a = get_module.get_array()
     assert np.core.multiarray.get_handler_name(a) is None
     get_module.set_own(a)
-    oldval = os.environ.get('NUMPY_WARN_IF_NO_MEM_POLICY', None)
+
     if policy is None:
-        if 'NUMPY_WARN_IF_NO_MEM_POLICY' in os.environ:
-            os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
+        # See what we expect to be set based on the env variable
+        policy = os.getenv("NUMPY_WARN_IF_NO_MEM_POLICY", "0") == "1"
+        oldval = None
     else:
-        os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = policy
+        policy = policy == "1"
+        oldval = np.core._multiarray_umath._set_numpy_warn_if_no_mem_policy(
+            policy)
     try:
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
-        if policy == "1":
+        if policy:
             with assert_warns(RuntimeWarning) as w:
                 del a
                 gc.collect()
@@ -427,11 +430,8 @@ def test_switch_owner(get_module, policy):
             gc.collect()
 
     finally:
-        if oldval is None:
-            if 'NUMPY_WARN_IF_NO_MEM_POLICY' in os.environ:
-                os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
-        else:
-            os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = oldval
+        if oldval is not None:
+            np.core._multiarray_umath._set_numpy_warn_if_no_mem_policy(oldval)
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")

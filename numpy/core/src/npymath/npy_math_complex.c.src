@@ -480,7 +480,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
           r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
           return r;
     }
-    if (bi == 0 && (n=(npy_intp)br) == br) {
+    if (bi == 0 && br > -100 && br < 100 && (n=(npy_intp)br) == br) {
         if (n == 1) {
             /* unroll: handle inf better */
             return npy_cpack@c@(ar, ai);

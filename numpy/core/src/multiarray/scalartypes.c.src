@@ -316,6 +316,7 @@ genint_type_str(PyObject *self)
             item = gentype_generic_method(self, NULL, NULL, "item");
             break;
     }
+    Py_DECREF(descr);
     if (item == NULL) {
         return NULL;
     }
