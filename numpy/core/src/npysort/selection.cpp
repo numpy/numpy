@@ -29,7 +29,7 @@
 
 #define NOT_USED NPY_UNUSED(unused)
 
-#if defined(_MSC_VER) || defined(__CYGWIN__)
+#if defined(__CYGWIN__)
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
