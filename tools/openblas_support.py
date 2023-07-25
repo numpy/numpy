@@ -159,7 +159,6 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
     _, tmp = mkstemp()
     if not plat:
         raise ValueError('unknown platform')
-    typ = download_openblas(tmp, plat, ilp64)
     openblas_version = "HEAD" if nightly else OPENBLAS_LONG
     typ = download_openblas(
         tmp, plat, ilp64, openblas_version=openblas_version
