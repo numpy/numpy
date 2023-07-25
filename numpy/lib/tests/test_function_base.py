@@ -3706,7 +3706,9 @@ class TestQuantile:
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         elif int(n * alpha) == n * alpha and not weights:
             # We can expect exact results, up to machine precision.
-            assert_allclose(np.average(self.V(x, y, alpha), weights=w), 0, atol=1e-14)
+            assert_allclose(
+                np.average(self.V(x, y, alpha), weights=w), 0, atol=1e-14,
+            )
         else:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".

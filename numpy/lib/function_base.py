@@ -4371,9 +4371,9 @@ def quantile(a,
     probability distribution :math:`P` is defined as any number :math:`x`
     that fulfills the *coverage conditions*
     
-    .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \geq q
+    .. math:: P(Y < x) \\leq q \\quad\\text{and}\\quad P(Y \\leq x) \\geq q
     
-    with random variable :math:`Y\sim P`.
+    with random variable :math:`Y\\sim P`.
     For empirical quantiles as considered here, :math:`P` is the empirical
     distribution function of the given data vector ``a`` of length ``n``,
     i.e. :math:`P(Y \\leq t) = \\frac{1}{n} \\sum_i 1_{a_i \\leq t}`.
@@ -4830,7 +4830,9 @@ def _quantile(
             # No interpolation needed, take the points along axis
             if supports_nans:
                 # may contain nan, which would sort to the end
-                arr.partition(concatenate((virtual_indexes.ravel(), [-1])), axis=0)
+                arr.partition(
+                    concatenate((virtual_indexes.ravel(), [-1])), axis=0,
+                )
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
                 # cannot contain nan
@@ -4839,14 +4841,14 @@ def _quantile(
             result = take(arr, virtual_indexes, axis=0, out=out)
         else:
             previous_indexes, next_indexes = _get_indexes(arr,
-                                                        virtual_indexes,
-                                                        values_count)
+                                                          virtual_indexes,
+                                                          values_count)
             # --- Sorting
             arr.partition(
                 np.unique(np.concatenate(([0, -1],
-                                        previous_indexes.ravel(),
-                                        next_indexes.ravel(),
-                                        ))),
+                                          previous_indexes.ravel(),
+                                          next_indexes.ravel(),
+                                          ))),
                 axis=0)
             if supports_nans:
                 slices_having_nans = np.isnan(arr[-1, ...])
