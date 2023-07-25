@@ -44,7 +44,7 @@ jobs:
         set -xe
         chmod +x tools/wheels/cibw_before_build.sh
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
-          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
+          sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh --nightly .
         else
           sudo RUNNER_OS=${{ runner.os }} tools/wheels/cibw_before_build.sh .
         fi
