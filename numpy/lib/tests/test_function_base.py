@@ -3804,7 +3804,6 @@ class TestQuantile:
         qw = np.quantile(y, alpha, method=method, weights=w)
         assert_allclose(qw, q)
 
-
     @pytest.mark.parametrize("method", methods_supporting_weights)
     @pytest.mark.parametrize("alpha", [0, 0.2, 0.5, 0.9, 1])
     def test_quantile_with_integer_weights(self, method, alpha):
