@@ -5050,7 +5050,7 @@ initialize_static_globals(void)
         npy_numpy2_behavior = NPY_TRUE;
     }
 
-    char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
+    env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
         numpy_warn_if_no_mem_policy = 1;
     }
