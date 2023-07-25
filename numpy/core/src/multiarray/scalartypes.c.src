@@ -283,34 +283,34 @@ genint_type_str(PyObject *self)
     void *val = scalar_value(self, descr);
     switch (descr->type_num) {
         case NPY_BYTE:
-            item = PyLong_FromLong(*(int8_t *)val);
+            item = PyLong_FromLong(*(npy_byte *)val);
             break;
         case NPY_UBYTE:
-            item = PyLong_FromUnsignedLong(*(uint8_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ubyte *)val);
             break;
         case NPY_SHORT:
-            item = PyLong_FromLong(*(int16_t *)val);
+            item = PyLong_FromLong(*(npy_short *)val);
             break;
         case NPY_USHORT:
-            item = PyLong_FromUnsignedLong(*(uint16_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ushort *)val);
             break;
         case NPY_INT:
-            item = PyLong_FromLong(*(int32_t *)val);
+            item = PyLong_FromLong(*(npy_int *)val);
             break;
         case NPY_UINT:
-            item = PyLong_FromUnsignedLong(*(uint32_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_uint *)val);
             break;
         case NPY_LONG:
-            item = PyLong_FromLong(*(int64_t *)val);
+            item = PyLong_FromLong(*(npy_long *)val);
             break;
         case NPY_ULONG:
-            item = PyLong_FromUnsignedLong(*(uint64_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ulong *)val);
             break;
         case NPY_LONGLONG:
-            item = PyLong_FromLongLong(*(long long *)val);
+            item = PyLong_FromLongLong(*(npy_longlong *)val);
             break;
         case NPY_ULONGLONG:
-            item = PyLong_FromUnsignedLongLong(*(unsigned long long *)val);
+            item = PyLong_FromUnsignedLongLong(*(npy_ulonglong *)val);
             break;
         default:
             item = gentype_generic_method(self, NULL, NULL, "item");

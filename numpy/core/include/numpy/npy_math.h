@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
+#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
+
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
  * for INFINITY)

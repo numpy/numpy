@@ -316,11 +316,17 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__([dtype])
 
-   If a class (ndarray subclass or not) having the :func:`__array__`
-   method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will *not* be written to the object
-   returned by :func:`__array__`. This practice will return ``TypeError``.
+    If defined on an object, should return an ``ndarray``.
+    This method is called by array-coercion functions like np.array()
+    if an object implementing this interface is passed to those functions.
+    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
+    for the protocol hierarchy, of which ``__array__`` is the oldest and least
+    desirable.
 
+    .. note::  If a class (ndarray subclass or not) having the :func:`__array__`
+               method is used as the output object of an :ref:`ufunc
+               <ufuncs-output-type>`, results will *not* be written to the object
+               returned by :func:`__array__`. This practice will return ``TypeError``.
 
 .. _matrix-objects:
 

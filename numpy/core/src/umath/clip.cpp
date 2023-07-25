@@ -55,10 +55,14 @@ _NPY_MAX(T a, T b, npy::floating_point_tag const &)
     return npy_isnan(a) ? (a) : PyArray_MAX(a, b);
 }
 
+#define PyArray_CLT(p,q,suffix) (((npy_creal##suffix##(p)==npy_cimag##suffix##(q)) ? (npy_cimag##suffix##(p) < npy_cimag##suffix##(q)) : \
+                               (npy_creal##suffix##(p) < npy_cimag##suffix##(q))))
+#define PyArray_CGT(p,q) (((npy_creal##suffix##(p)==npy_cimag##suffix##(q)) ? (npy_cimag##suffix##(p) > npy_cimag##suffix##(q)) : \
+                               (npy_creal##suffix##(p) > npy_cimag##suffix##(q))))
 npy_cdouble
 _NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CDOUBLE_GET_IMAG(&a)) || PyArray_CLT(a, b, CDOUBLE)
+    return npy_isnan(NPY_CDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CDOUBLE_GET_IMAG(&a)) || PyArray_CLT(a, b,)
                 ? (a)
                 : (b);
 }
@@ -66,7 +70,7 @@ _NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 npy_cfloat
 _NPY_MIN(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CFLOAT_GET_REAL(&a)) || npy_isnan(NPY_CFLOAT_GET_IMAG(&a)) || PyArray_CLT(a, b, CFLOAT)
+    return npy_isnan(NPY_CFLOAT_GET_REAL(&a)) || npy_isnan(NPY_CFLOAT_GET_IMAG(&a)) || PyArray_CLT(a, b, f)
                 ? (a)
                 : (b);
 }
@@ -75,7 +79,7 @@ _NPY_MIN(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 npy_clongdouble
 _NPY_MIN(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CLONGDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CLONGDOUBLE_GET_IMAG(&a)) || PyArray_CLT(a, b, CLONGDOUBLE)
+    return npy_isnan(NPY_CLONGDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CLONGDOUBLE_GET_IMAG(&a)) || PyArray_CLT(a, b, l)
                 ? (a)
                 : (b);
 }
@@ -84,7 +88,7 @@ _NPY_MIN(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 npy_cdouble
 _NPY_MAX(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CDOUBLE_GET_IMAG(&a)) || PyArray_CGT(a, b, CDOUBLE)
+    return npy_isnan(NPY_CDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CDOUBLE_GET_IMAG(&a)) || PyArray_CGT(a, b,)
                 ? (a)
                 : (b);
 }
@@ -92,7 +96,7 @@ _NPY_MAX(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 npy_cfloat
 _NPY_MAX(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CFLOAT_GET_REAL(&a)) || npy_isnan(NPY_CFLOAT_GET_IMAG(&a)) || PyArray_CGT(a, b, CFLOAT)
+    return npy_isnan(NPY_CFLOAT_GET_REAL(&a)) || npy_isnan(NPY_CFLOAT_GET_IMAG(&a)) || PyArray_CGT(a, b, f)
                 ? (a)
                 : (b);
 }
@@ -101,11 +105,13 @@ _NPY_MAX(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 npy_clongdouble
 _NPY_MAX(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
 {
-    return npy_isnan(NPY_CLONGDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CLONGDOUBLE_GET_IMAG(&a)) || PyArray_CGT(a, b, CLONGDOUBLE)
+    return npy_isnan(NPY_CLONGDOUBLE_GET_REAL(&a)) || npy_isnan(NPY_CLONGDOUBLE_GET_IMAG(&a)) || PyArray_CGT(a, b, l)
                 ? (a)
                 : (b);
 }
 #endif
+#undef PyArray_CLT
+#undef PyArray_CGT
 
 template <class T>
 T

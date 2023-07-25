@@ -961,24 +961,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /* buffer stress test size: */
 /*#define NPY_BUFSIZE 17*/
 
-#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
-#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
-
-#define PyArray_CLT(p,q, type) (NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
-                                ? NPY_##type##_GET_IMAG(&(p)) < NPY_##type##_GET_IMAG(&(q)) \
-                                : NPY_##type##_GET_REAL(&(p)) < NPY_##type##_GET_REAL(&(q)))
-#define PyArray_CGT(p,q, type) (NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
-                                ? NPY_##type##_GET_IMAG(&(p)) > NPY_##type##_GET_IMAG(&(q)) \
-                                : NPY_##type##_GET_REAL(&(p)) > NPY_##type##_GET_REAL(&(q)))
-#define PyArray_CLE(p,q, type) (NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
-                                ? NPY_##type##_GET_IMAG(&(p)) <= NPY_##type##_GET_IMAG(&(q)) \
-                                : NPY_##type##_GET_REAL(&(p)) <= NPY_##type##_GET_REAL(&(q)))
-#define PyArray_CGE(p,q, type) (NPY_##type##_GET_REAL(&(p)) == NPY_##type##_GET_REAL(&(q)) \
-                                ? NPY_##type##_GET_IMAG(&(p)) >= NPY_##type##_GET_IMAG(&(q)) \
-                                : NPY_##type##_GET_REAL(&(p)) >= NPY_##type##_GET_REAL(&(q)))
-#define PyArray_CEQ(p,q, type) ((p) == (q))
-#define PyArray_CNE(p,q, type) ((p) != (q))
-
 /*
  * C API: consists of Macros and functions.  The MACROS are defined
  * here.
