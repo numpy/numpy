@@ -800,7 +800,7 @@ endforeach
 
 # Build umath dispatch-able sources
 # ---------------------------------
-mod_features = import('feature')
+mod_features = import('features')
 umath_gen_headers = [
   src_file.process('src/umath/loops.h.src'),
   src_file.process('src/umath/loops_utils.h.src'),

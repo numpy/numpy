@@ -77,10 +77,10 @@ subdir('s390x')
 subdir('arm')
 
 CPU_FEATURES = {}
+CPU_FEATURES += ARM_FEATURES
 CPU_FEATURES += X86_FEATURES
 CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
-CPU_FEATURES += ARM_FEATURES
 
 # Parse the requsted baseline(CPU_CONF_BASELINE)
 # and dispatch features(CPU_CONF_DISPATCH).
@@ -120,7 +120,7 @@ parse_result = {
   'cpu-baseline': [],
   'cpu-dispatch': []
 }
-mod_features = import('feature')
+mod_features = import('features')
 foreach opt_name, conf : parse_options
   # no support for regex :(?
   tokens = conf.replace(',', ' ').replace('+', ' + ').replace('-', ' - ').strip().to_upper().split()

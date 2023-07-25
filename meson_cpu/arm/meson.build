@@ -1,5 +1,5 @@
 source_root = meson.project_source_root()
-mod_features = import('feature')
+mod_features = import('features')
 NEON = mod_features.new(
   'NEON', 1,
   test_code: files(source_root + '/numpy/distutils/checks/cpu_neon.c')[0]

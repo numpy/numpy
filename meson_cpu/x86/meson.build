@@ -1,5 +1,5 @@
 source_root = meson.project_source_root()
-mod_features = import('feature')
+mod_features = import('features')
 SSE = mod_features.new(
   'SSE', 1,  args: '-msse',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sse.c')[0]

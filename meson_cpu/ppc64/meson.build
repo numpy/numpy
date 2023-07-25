@@ -1,5 +1,5 @@
 source_root = meson.project_source_root()
-mod_features = import('feature')
+mod_features = import('features')
 compiler_id = meson.get_compiler('c').get_id()
 
 VSX = mod_features.new(

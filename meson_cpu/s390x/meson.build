@@ -1,5 +1,5 @@
 source_root = meson.project_source_root()
-mod_features = import('feature')
+mod_features = import('features')
 VX = mod_features.new(
   'VX', 1, args: ['-mzvector', '-march=arch11'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vx.c')[0],
