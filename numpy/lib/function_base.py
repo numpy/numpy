@@ -4867,6 +4867,7 @@ def _quantile(
                         out=out)
     else:
         # Weighted case, we need to sort anyway.
+        # This implements method="inverted_cdf".
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
@@ -4875,7 +4876,7 @@ def _quantile(
         slices_having_nans = None
         # TODO: Deal with nan values, e.g. np.isnan(arr(index_array[-1])) by
         # be true.
-        # TODO: Special case quantiles == 0 and quantiles == 0
+        # TODO: Special case quantiles == 0 and quantiles == 1?
         arr = np.take_along_axis(arr, index_array, axis=axis)
         weights = np.take_along_axis(weights, index_array, axis=axis)
         # Normalize weights to sum to one such that it corresponds to the
@@ -4884,6 +4885,9 @@ def _quantile(
         # Only inverted_cdf is supported. Search index i such that
         # sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
         i = np.searchsorted(weights.cumsum(axis=axis), quantiles, side="left")
+        # We might have reached the maximum with i = len(arr), e.g. for
+        # quantile = 1.
+        i = np.minimum(i, values_count - 1)
         result = take(arr, i, axis=0, out=out)
 
     if np.any(slices_having_nans):

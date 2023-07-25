@@ -3561,6 +3561,9 @@ quantile_methods = [
     'midpoint']
 
 
+methods_supporting_weights = ["inverted_cdf"]
+
+
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
@@ -3688,6 +3691,8 @@ class TestQuantile:
         # V(x, y) the canonical identification function for the quantile (at
         # level alpha), see
         # https://doi.org/10.48550/arXiv.0912.0902
+        if weights and method not in methods_supporting_weights:
+            pytest.skip("Weights not supported by method.")
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we cover 3 cases:
         #  - n * alpha is an integer
@@ -3696,10 +3701,7 @@ class TestQuantile:
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
         w = rng.integers(low=0, high=10, size=n) if weights else None
-        if weights and method not in ["inverted_cdf"]:
-            pytest.skip("Weights not supported by method.")
-        else:
-            x = np.quantile(y, alpha, method=method, weights=w)
+        x = np.quantile(y, alpha, method=method, weights=w)
 
         if method in ("higher",):
             # These methods do not fulfill the identification equation.
@@ -3715,9 +3717,10 @@ class TestQuantile:
             assert_allclose(np.average(self.V(x, y, alpha), weights=w), 0,
                 atol=1 / n / np.amin([alpha, 1 - alpha]))
 
+    @pytest.mark.parametrize("weights", [False, True])
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
-    def test_quantile_add_and_multiply_constant(self, method, alpha):
+    def test_quantile_add_and_multiply_constant(self, weights, method, alpha):
         # Test that
         #  1. quantile(c + x) = c + quantile(x)
         #  2. quantile(c * x) = c * quantile(x)
@@ -3725,6 +3728,8 @@ class TestQuantile:
         #     On empirical quantiles, this equation does not hold exactly.
         # Koenker (2005) "Quantile Regression" Chapter 2.2.3 calls these
         # properties equivariance.
+        if weights and method not in methods_supporting_weights:
+            pytest.skip("Weights not supported by method.")
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we have cases for
         #  - n * alpha is an integer
@@ -3732,14 +3737,20 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        q = np.quantile(y, alpha, method=method)
+        w = rng.integers(low=0, high=10, size=n) if weights else None
+        q = np.quantile(y, alpha, method=method, weights=w)
         c = 13.5
 
         # 1
-        assert_allclose(np.quantile(c + y, alpha, method=method), c + q)
+        assert_allclose(np.quantile(c + y, alpha, method=method, weights=w),
+                        c + q)
         # 2
-        assert_allclose(np.quantile(c * y, alpha, method=method), c * q)
+        assert_allclose(np.quantile(c * y, alpha, method=method, weights=w),
+                        c * q)
         # 3
+        if weights:
+            # From here on, we would need more methods to support weights.
+            return
         q = -np.quantile(-y, 1 - alpha, method=method)
         if method == "inverted_cdf":
             if (
@@ -3773,7 +3784,7 @@ class TestQuantile:
             # "median_unbiased", "normal_unbiased", "midpoint"
             assert_allclose(q, np.quantile(y, alpha, method=method))
 
-    @pytest.mark.parametrize("method", ["inverted_cdf"])
+    @pytest.mark.parametrize("method", methods_supporting_weights)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
     def test_quantile_constant_weights(self, method, alpha):
         rng = np.random.default_rng(4321)
@@ -3791,6 +3802,24 @@ class TestQuantile:
 
         w = 8.125 * np.ones_like(y)
         qw = np.quantile(y, alpha, method=method, weights=w)
+        assert_allclose(qw, q)
+
+
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    @pytest.mark.parametrize("alpha", [0, 0.2, 0.5, 0.9, 1])
+    def test_quantile_with_integer_weights(self, method, alpha):
+        # Integer weights can be interpreted as repeated observations.
+        rng = np.random.default_rng(4321)
+        # We choose n and alpha such that we have cases for
+        #  - n * alpha is an integer
+        #  - n * alpha is a float that gets rounded down
+        #  - n * alpha is a float that gest rounded up
+        n = 102  # n * alpha = 20.4, 51. , 91.8
+        y = rng.random(n)
+        w = rng.integers(low=0, high=10, size=n)
+
+        qw = np.quantile(y, alpha, method=method, weights=w)
+        q = np.quantile(np.repeat(y, w), alpha, method=method)
         assert_allclose(qw, q)
 
 
