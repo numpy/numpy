@@ -121,8 +121,10 @@ def download_openblas(target, plat, ilp64, *, openblas_version=OPENBLAS_LONG):
 
     if not suffix:
         return None
-    BASEURL = f'{BASE_LOC}/{openblas_version}/download'
-    filename = f'{BASEURL}/openblas{fnsuffix}-{openblas_version}-{suffix}'
+    filename = (
+        f'{BASE_LOC}/{openblas_version}/download/'
+        f'openblas{fnsuffix}-{openblas_version}-{suffix}'
+    )
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)
