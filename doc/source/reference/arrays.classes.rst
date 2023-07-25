@@ -171,9 +171,9 @@ NumPy provides several hooks that classes can customize:
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
       original call.
 
-   As a convenience for ``__array_function__`` implementors, ``types``
+   As a convenience for ``__array_function__`` implementers, ``types``
    provides all argument types with an ``'__array_function__'`` attribute.
-   This allows implementors to quickly identify cases where they should defer
+   This allows implementers to quickly identify cases where they should defer
    to ``__array_function__`` implementations on other arguments.
    Implementations should not rely on the iteration order of ``types``.
 

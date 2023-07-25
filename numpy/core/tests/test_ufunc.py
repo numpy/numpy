@@ -1705,11 +1705,11 @@ class TestUfunc:
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
 
-    def test_empty_reduction_and_idenity(self):
+    def test_empty_reduction_and_identity(self):
         arr = np.zeros((0, 5))
         # OK, since the reduction itself is *not* empty, the result is
         assert np.true_divide.reduce(arr, axis=1).shape == (0,)
-        # Not OK, the reduction itself is empty and we have no idenity
+        # Not OK, the reduction itself is empty and we have no identity
         with pytest.raises(ValueError):
             np.true_divide.reduce(arr, axis=0)
 
@@ -2223,6 +2223,14 @@ class TestUfunc:
         a = np.array([1, 2, 3])
         np.maximum.at(a, [0], 0)
         assert_equal(a, np.array([1, 2, 3]))
+
+    def test_at_negative_indexes(self):
+        a = np.arange(10)
+        indxs = np.array([-1, 1, -1, 2])
+        np.add.at(a, indxs, 1)
+        assert a[-1] == 11  # issue 24147
+        assert a[1] == 2
+        assert a[2] == 3
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError

@@ -1,3 +1,6 @@
+import sys
+from tempfile import NamedTemporaryFile
+
 import pytest
 
 import numpy as np
@@ -243,6 +246,48 @@ class TestSFloat:
         assert np.zeros(3, dtype=SF).dtype == SF(1.)
         assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
 
+    def test_np_save_load(self):
+        # this monkeypatch is needed because pickle
+        # uses the repr of a type to reconstruct it
+        np._ScaledFloatTestDType = SF
+
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        # adapted from RoundtripTest.roundtrip in np.save tests
+        with NamedTemporaryFile("wb", delete=False, suffix=".npz") as f:
+            with pytest.warns(UserWarning) as record:
+                np.savez(f.name, arr)
+
+        assert len(record) == 1
+
+        with np.load(f.name, allow_pickle=True) as data:
+            larr = data["arr_0"]
+        assert_array_equal(arr.view(np.float64), larr.view(np.float64))
+        assert larr.dtype == arr.dtype == SF(1.0)
+
+        del np._ScaledFloatTestDType
+
+    def test_flatiter(self):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        for i, val in enumerate(arr.flat):
+            assert arr[i] == val
+
+    @pytest.mark.parametrize(
+        "index", [
+            [1, 2], ..., slice(None, 2, None),
+            np.array([True, True, False]), np.array([0, 1])
+        ], ids=["int_list", "ellipsis", "slice", "bool_array", "int_array"])
+    def test_flatiter_index(self, index):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+        np.testing.assert_array_equal(
+            arr[index].view(np.float64), arr.flat[index].view(np.float64))
+
+        arr2 = arr.copy()
+        arr[index] = 5.0
+        arr2.flat[index] = 5.0
+        np.testing.assert_array_equal(
+            arr.view(np.float64), arr2.view(np.float64))
 
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)

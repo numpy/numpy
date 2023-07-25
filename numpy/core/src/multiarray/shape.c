@@ -242,7 +242,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     /*
      * sometimes we have to create a new copy of the array
      * in order to get the right orientation and
-     * because we can't just re-use the buffer with the
+     * because we can't just reuse the buffer with the
      * data in the order it is in.
      */
     Py_INCREF(self);

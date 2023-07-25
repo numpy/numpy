@@ -420,7 +420,7 @@ opt-in and would also allow for unambiguously overriding functions like
 ``asarray``, because ``np.api.asarray`` would always mean "convert an
 array-like object."  But it wouldn't solve all the dispatching needs met by
 ``__array_module__``, and would leave us with supporting a considerably more
-complex protocol both for array users and implementors.
+complex protocol both for array users and implementers.
 
 We could potentially implement such a new namespace *via* the
 ``__array_module__`` protocol. Certainly some users would find this convenient,

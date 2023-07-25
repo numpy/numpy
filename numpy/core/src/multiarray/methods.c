@@ -2737,7 +2737,11 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
 
     if (align_flag != Py_None) {
-        if (PyObject_Not(align_flag)) {
+        int isnot = PyObject_Not(align_flag);
+        if (isnot == -1) {
+            return NULL;
+        }
+        if (isnot) {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_ALIGNED);
         }
         else if (IsAligned(self)) {
@@ -2752,7 +2756,11 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (uic != Py_None) {
-        if (PyObject_IsTrue(uic)) {
+        int istrue = PyObject_IsTrue(uic);
+        if (istrue == -1) {
+            return NULL;
+        }
+        if (istrue) {
             fa->flags = flagback;
             PyErr_SetString(PyExc_ValueError,
                             "cannot set WRITEBACKIFCOPY "
@@ -2767,7 +2775,11 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (write_flag != Py_None) {
-        if (PyObject_IsTrue(write_flag)) {
+        int istrue = PyObject_IsTrue(write_flag);
+        if (istrue == -1) {
+            return NULL;
+        }
+        else if (istrue == 1) {
             if (_IsWriteable(self)) {
                 /*
                  * _IsWritable (and PyArray_UpdateFlags) allows flipping this,

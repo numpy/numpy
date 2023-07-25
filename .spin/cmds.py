@@ -2,6 +2,9 @@ import os
 import shutil
 import sys
 import argparse
+import tempfile
+import pathlib
+import shutil
 
 import click
 from spin.cmds import meson
@@ -117,13 +120,17 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
      spin test -- -k "geometric"
      spin test -- -k "geometric and not rgeometric"
 
+    By default, spin will run `-m 'not slow'`. To run the full test suite, use
+    `spin -m full`
+
     For more, see `pytest --help`.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('numpy',)
 
     if '-m' not in pytest_args:
-        pytest_args = ('-m', markexpr) + pytest_args
+        if markexpr != "full":
+            pytest_args = ('-m', markexpr) + pytest_args
 
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
@@ -142,16 +149,48 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
 
 
 @click.command()
-@click.argument('python_expr')
-def gdb(python_expr):
+@click.option('--code', '-c', help='Python program passed in as a string')
+@click.argument('gdb_args', nargs=-1)
+def gdb(code, gdb_args):
     """👾 Execute a Python snippet with GDB
 
+      spin gdb -c 'import numpy as np; print(np.__version__)'
+
+    Or pass arguments to gdb:
+
+      spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
+
+    Or run another program, they way you normally would with gdb:
+
+     \b
+     spin gdb ls
+     spin gdb -- --args ls -al
+
+    You can also run Python programs:
+
+     \b
+     spin gdb my_tests.py
+     spin gdb -- my_tests.py --mytest-flag
     """
-    util.run(
-        ['gdb', '--args', 'python', '-m', 'spin', 'run',
-         'python', '-P', '-c', python_expr],
-        replace=True
-    )
+    meson._set_pythonpath()
+    gdb_args = list(gdb_args)
+
+    if gdb_args and gdb_args[0].endswith('.py'):
+        gdb_args = ['--args', sys.executable] + gdb_args
+
+    if sys.version_info[:2] >= (3, 11):
+        PYTHON_FLAGS = ['-P']
+        code_prefix = ''
+    else:
+        PYTHON_FLAGS = []
+        code_prefix = 'import sys; sys.path.pop(0); '
+
+    if code:
+        PYTHON_ARGS = ['-c', code_prefix + code]
+        gdb_args += ['--args', sys.executable] + PYTHON_FLAGS + PYTHON_ARGS
+
+    gdb_cmd = ['gdb', '-ex', 'set detach-on-fork on'] + gdb_args
+    util.run(gdb_cmd, replace=True)
 
 
 # From scipy: benchmarks/benchmarks/common.py
@@ -347,3 +386,84 @@ def bench(ctx, tests, compare, verbose, commits):
         ] + bench_args + [commit_a, commit_b]
 
         _run_asv(cmd_compare)
+
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.argument("python_args", metavar='', nargs=-1)
+@click.pass_context
+def python(ctx, python_args):
+    """🐍 Launch Python shell with PYTHONPATH set
+
+    OPTIONS are passed through directly to Python, e.g.:
+
+    spin python -c 'import sys; print(sys.path)'
+    """
+    env = os.environ
+    env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
+    ctx.invoke(meson.build)
+    ctx.forward(meson.python)
+
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.argument("ipython_args", metavar='', nargs=-1)
+@click.pass_context
+def ipython(ctx, ipython_args):
+    """💻 Launch IPython shell with PYTHONPATH set
+
+    OPTIONS are passed through directly to IPython, e.g.:
+
+    spin ipython -i myscript.py
+    """
+    env = os.environ
+    env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
+
+    ctx.invoke(meson.build)
+
+    ppath = meson._set_pythonpath()
+
+    # Get NumPy version
+    p = util.run([
+        sys.executable, '-c',
+        'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
+        output=False, echo=False
+    )
+    np_ver = p.stdout.strip().decode('ascii')
+
+    with tempfile.TemporaryDirectory() as d:
+        profile_dir = os.path.join(d, f'numpy_{np_ver}')
+        startup_dir = os.path.join(profile_dir, 'startup')
+
+        pathlib.Path(startup_dir).mkdir(parents=True)
+        with open(os.path.join(startup_dir, '00_numpy.py'), 'w') as f:
+            f.write('import numpy as np\n')
+
+        print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
+        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] +
+                 list(ipython_args))
+
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.argument("args", nargs=-1)
+@click.pass_context
+def run(ctx, args):
+    """🏁 Run a shell command with PYTHONPATH set
+
+    \b
+    spin run make
+    spin run 'echo $PYTHONPATH'
+    spin run python -c 'import sys; del sys.path[0]; import mypkg'
+
+    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
+    above, you need to provide a single, quoted command to `run`:
+
+    spin run 'echo $SHELL && echo $PWD'
+
+    On Windows, all shell commands are run via Bash.
+    Install Git for Windows if you don't have Bash already.
+    """
+    ctx.invoke(meson.build)
+    ctx.forward(meson.run)

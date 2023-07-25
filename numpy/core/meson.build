@@ -53,7 +53,10 @@ C_API_VERSION = '0x00000012'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
-r = run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION)
+r = run_command(
+  'code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION,
+  check: true
+)
 
 if r.returncode() != 0
   error('verify_c_api_version.py failed with output:\n' + r.stderr().strip())

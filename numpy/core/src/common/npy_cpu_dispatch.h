@@ -187,7 +187,7 @@
 /**
  * Macro NPY_CPU_DISPATCH_CALL(LEFT, ...) is used for runtime dispatching
  * of the exported functions and variables within the dispatch-able sources
- * according to the highested interesed CPU features that supported by the
+ * according to the highest interested CPU features that are supported by the
  * running machine depending on the required optimizations.
  *
  * The first argument should ends with the exported function or variable name,
