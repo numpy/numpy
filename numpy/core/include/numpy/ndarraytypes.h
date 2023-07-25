@@ -960,19 +960,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /* buffer stress test size: */
 /*#define NPY_BUFSIZE 17*/
 
-#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
-#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
-#define PyArray_CLT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag) : \
-                               ((p).real < (q).real)))
-#define PyArray_CGT(p,q) ((((p).real==(q).real) ? ((p).imag > (q).imag) : \
-                               ((p).real > (q).real)))
-#define PyArray_CLE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag) : \
-                               ((p).real <= (q).real)))
-#define PyArray_CGE(p,q) ((((p).real==(q).real) ? ((p).imag >= (q).imag) : \
-                               ((p).real >= (q).real)))
-#define PyArray_CEQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
-#define PyArray_CNE(p,q) (((p).real!=(q).real) || ((p).imag != (q).imag))
-
 /*
  * C API: consists of Macros and functions.  The MACROS are defined
  * here.

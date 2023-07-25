@@ -3503,23 +3503,6 @@ Miscellaneous Macros
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:macro:: PyArray_CLT(a,b)
-
-.. c:macro:: PyArray_CGT(a,b)
-
-.. c:macro:: PyArray_CLE(a,b)
-
-.. c:macro:: PyArray_CGE(a,b)
-
-.. c:macro:: PyArray_CEQ(a,b)
-
-.. c:macro:: PyArray_CNE(a,b)
-
-    Implements the complex comparisons between two complex numbers
-    (structures with a real and imag member) using NumPy's definition
-    of the ordering which is lexicographic: comparing the real parts
-    first and then the complex parts if the real parts are equal.
-
 .. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
 
     Returns the reference count of any Python object.
