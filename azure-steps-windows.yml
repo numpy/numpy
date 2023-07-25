@@ -10,10 +10,7 @@ steps:
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
 
-- script: |
-    python -m pip install -r test_requirements.txt
-    python -m pip uninstall -y cython
-    python -m pip install git+https://github.com/cython/cython.git@436f8a32ea3a1b0411695db1b974c60434042b5b
+- script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
