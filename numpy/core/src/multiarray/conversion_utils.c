@@ -427,11 +427,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    int istrue = PyObject_IsTrue(object);
-    if (istrue == -1) {
-        return NPY_FAIL;
-    }
-    if (istrue) {
+    if (PyObject_IsTrue(object)) {
         *val = NPY_TRUE;
     }
     else {
