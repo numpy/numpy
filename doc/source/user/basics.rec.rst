@@ -24,7 +24,7 @@ a 32-bit integer named 'age', and 3. a 32-bit float named 'weight'.
 If you index ``x`` at position 1 you get a structure::
 
  >>> x[1]
- ('Fido', 3, 27.)
+ np.void(('Fido', 3, 27.0), dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 You can access and modify individual fields of a structured array by indexing
 with the field name::
@@ -515,7 +515,7 @@ a structured scalar::
  >>> x = np.array([(1, 2., 3.)], dtype='i, f, f')
  >>> scalar = x[0]
  >>> scalar
- (1, 2., 3.)
+ np.void((1, 2.0, 3.0), dtype=[('f0', '<i4'), ('f1', '<f4'), ('f2', '<f4')])
  >>> type(scalar)
  <class 'numpy.void'>
 

@@ -713,10 +713,9 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     >>> np.nansum([1, np.nan, np.NINF])
     -inf
     >>> from numpy.testing import suppress_warnings
-    >>> with suppress_warnings() as sup:
-    ...     sup.filter(RuntimeWarning)
+    >>> with np.errstate(invalid="ignore"):
     ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
-    nan
+    np.float64(nan)
 
     """
     a, mask = _replace_nan(a, 0)
@@ -1191,7 +1190,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     array([[10., nan,  4.],
            [ 3.,  2.,  1.]])
     >>> np.median(a)
-    nan
+    np.float64(nan)
     >>> np.nanmedian(a)
     3.0
     >>> np.nanmedian(a, axis=0)
@@ -1341,7 +1340,7 @@ def nanpercentile(
     array([[10.,  nan,   4.],
           [ 3.,   2.,   1.]])
     >>> np.percentile(a, 50)
-    nan
+    np.float64(nan)
     >>> np.nanpercentile(a, 50)
     3.0
     >>> np.nanpercentile(a, 50, axis=0)
@@ -1504,7 +1503,7 @@ def nanquantile(
     array([[10.,  nan,   4.],
           [ 3.,   2.,   1.]])
     >>> np.quantile(a, 0.5)
-    nan
+    np.float64(nan)
     >>> np.nanquantile(a, 0.5)
     3.0
     >>> np.nanquantile(a, 0.5, axis=0)
