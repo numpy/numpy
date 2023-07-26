@@ -379,62 +379,62 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
     tmp.comp = c;                                               \
     tmp.arr[real_or_imag] = val;                                \
 
-static inline double npy_creal(npy_cdouble z)
+static inline double npy_creal(const npy_cdouble z)
 {
     NPY_COMPLEX_GET(double, npy_cdouble, z, REAL)
 }
 
-static inline void npy_csetreal(npy_cdouble *z, double r)
+static inline void npy_csetreal(npy_cdouble *z, const double r)
 {
     NPY_COMPLEX_SET(double, npy_cdouble, z, r, REAL)
 }
 
-static inline double npy_cimag(npy_cdouble z)
+static inline double npy_cimag(const npy_cdouble z)
 {
     NPY_COMPLEX_GET(double, npy_cdouble, z, IMAG)
 }
 
-static inline void npy_csetimag(npy_cdouble *z, double i)
+static inline void npy_csetimag(npy_cdouble *z, const double i)
 {
     NPY_COMPLEX_SET(double, npy_cdouble, z, i, IMAG)
 }
 
-static inline float npy_crealf(npy_cfloat z)
+static inline float npy_crealf(const npy_cfloat z)
 {
     NPY_COMPLEX_GET(float, npy_cfloat, z, REAL)
 }
 
-static inline void npy_csetrealf(npy_cfloat *z, float r)
+static inline void npy_csetrealf(npy_cfloat *z, const float r)
 {
     NPY_COMPLEX_SET(float, npy_cfloat, z, r, REAL)
 }
 
-static inline float npy_cimagf(npy_cfloat z)
+static inline float npy_cimagf(const npy_cfloat z)
 {
     NPY_COMPLEX_GET(float, npy_cfloat, z, IMAG)
 }
 
-static inline void npy_csetimagf(npy_cfloat *z, float i)
+static inline void npy_csetimagf(npy_cfloat *z, const float i)
 {
     NPY_COMPLEX_SET(float, npy_cfloat, z, i, IMAG)
 }
 
-static inline npy_longdouble npy_creall(npy_clongdouble z)
+static inline npy_longdouble npy_creall(const npy_clongdouble z)
 {
     NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, REAL)
 }
 
-static inline void npy_csetreall(npy_clongdouble *z, longdouble_t r)
+static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
 {
     NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, r, REAL)
 }
 
-static inline npy_longdouble npy_cimagl(npy_clongdouble z)
+static inline npy_longdouble npy_cimagl(const npy_clongdouble z)
 {
     NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, IMAG)
 }
 
-static inline void npy_csetimagl(npy_clongdouble *z, longdouble_t i)
+static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)
 {
     NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, i, IMAG)
 }
