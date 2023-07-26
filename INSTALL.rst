@@ -38,7 +38,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 .. note::
 
    If you want to build NumPy in order to work on NumPy itself, use
-   ``runtests.py``.  For more details, see
+   ``spin``.  For more details, see
    https://numpy.org/devdocs/dev/development_environment.html
 
 .. note::
@@ -52,18 +52,15 @@ Basic Installation
 
 To install NumPy, run::
 
-    python setup.py build -j 4 install --prefix $HOME/.local
+    spin build -j 4
 
-This will compile numpy on 4 CPUs and install it into the specified prefix.
-To perform an inplace build that can be run from the source folder run::
+This will compile NumPy on 4 CPUs and install it into ``./build-install``.
+To run the build from the source folder run::
 
-    python setup.py build_ext --inplace -j 4
+    spin ipython  # Alternatively, `spin python`
 
 See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_
 for more details.
-
-The number of build jobs can also be specified via the environment variable
-NPY_NUM_BUILD_JOBS.
 
 
 Choosing compilers
@@ -79,10 +76,11 @@ On OS X and Linux, all common compilers will work. The minimum supported GCC
 version is 6.5.
 
 For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
-installed then ``g77`` will be detected and used first.  To explicitly select
-``gfortran`` in that case, do::
+installed then ``g77`` will be detected and used first.
 
-    python setup.py build --fcompiler=gnu95
+For more options including selecting compilers, setting custom compiler flags
+and controlling parallelism, see
+https://scipy.github.io/devdocs/building/compilers_and_options.html
 
 Windows
 -------

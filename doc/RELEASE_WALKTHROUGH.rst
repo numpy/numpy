@@ -122,7 +122,7 @@ repository::
 
 Sanity check::
 
-    $ python3 runtests.py -m "full"
+    $ spin test -m full
 
 Tag the release and push the tag. This requires write permission for the numpy
 repository::

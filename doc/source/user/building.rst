@@ -64,19 +64,64 @@ Building NumPy requires the following software installed:
 
    Clone the repository following the instructions in :doc:`/dev/index`.
 
-Basic Installation
+.. note::
+
+    Starting on version 1.26, NumPy will adopt Meson as its build system (see
+    :ref:`distutils-status-migration` and
+    :doc:`scipy:building/understanding_meson` for more details.)
+
+Basic installation
 ------------------
 
-To install NumPy, run::
+To build and install NumPy from a local copy of the source code, run::
 
     pip install .
 
-To perform an in-place build that can be run from the source folder run::
+This will install all build dependencies and use Meson to compile and install
+the NumPy C-extensions and Python modules. If you need more control of build
+options and commands, see the following sections.
 
-    python setup.py build_ext --inplace
+Building from source
+~~~~~~~~~~~~~~~~~~~~
 
-*Note: for build instructions to do development work on NumPy itself, see*
-:ref:`development-environment`.
+To build NumPy with meson, you can use the
+`spin <https://github.com/scientific-python/spin>`_ utility. First, install the
+build requirements with
+
+::
+
+    python -m pip install -r build_requirements.txt
+
+then run::
+
+    spin build
+
+This does not result in an in-place build, and to run the version of NumPy you
+have just built, you can use::
+
+    spin ipython  # alternatively, `spin python`
+
+and import NumPy as usual.
+
+For more information on the ``spin`` utility, use ``spin --help``.
+
+.. _parallel-builds:
+
+Parallel builds
+~~~~~~~~~~~~~~~
+
+It's possible to do a parallel build with the following command::
+
+    spin build -j 4
+
+This will compile NumPy on 4 CPUs and install it into ``./build-install``.
+
+Advanced building with Meson
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For more options including selecting compilers, setting custom compiler flags
+and controlling parallelism, see :doc:`scipy:building/compilers_and_options`
+(from the SciPy documentation.)
 
 Testing
 -------
@@ -87,52 +132,16 @@ all tests pass.
 The test suite requires additional dependencies, which can easily be 
 installed with::
 
-    $ python -m pip install -r test_requirements.txt
+    python -m pip install -r test_requirements.txt
 
-Run tests::
+Run the full test suite with::
 
-    $ python runtests.py -v -m full
+    spin test
+
+Note that ``spin`` will accept ``pytest`` arguments directly, e. g.
+``spin test -- -v`` will increase verbosity level.
 
 For detailed info on testing, see :ref:`testing-builds`.
-
-.. _parallel-builds:
-
-Parallel builds
-~~~~~~~~~~~~~~~
-
-It's possible to do a parallel build with::
-
-    python setup.py build -j 4 install --prefix $HOME/.local
-
-This will compile numpy on 4 CPUs and install it into the specified prefix.
-to perform a parallel in-place build, run::
-
-    python setup.py build_ext --inplace -j 4
-
-The number of build jobs can also be specified via the environment variable
-``NPY_NUM_BUILD_JOBS``.
-
-Choosing the fortran compiler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Compilers are auto-detected; building with a particular compiler can be done
-with ``--fcompiler``.  E.g. to select gfortran::
-
-    python setup.py build --fcompiler=gnu95
-
-For more information see::
-
-    python setup.py build --help-fcompiler
-
-How to check the ABI of BLAS/LAPACK libraries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-One relatively simple and reliable way to check for the compiler used to
-build a library is to use ldd on the library. If libg2c.so is a dependency,
-this means that g77 has been used (note: g77 is no longer supported for
-building NumPy). If libgfortran.so is a dependency, gfortran has been used.
-If both are dependencies, this means both have been used, which is almost
-always a very bad idea.
 
 .. _accelerated-blas-lapack-libraries:
 
@@ -141,7 +150,14 @@ Accelerated BLAS/LAPACK libraries
 
 NumPy searches for optimized linear algebra libraries such as BLAS and LAPACK.
 There are specific orders for searching these libraries, as described below and
-in the ``site.cfg.example`` file.
+in the
+`meson_options.txt <https://github.com/numpy/numpy/blob/main/meson_options.txt>`_
+file.
+
+.. note::
+
+    Support for the environment variables described below is still not present
+    in the Meson workflow at this time.
 
 BLAS
 ~~~~
@@ -273,16 +289,6 @@ variables. The default value is ``openblas64_,openblas_ilp64``.
 
    The symbol suffix avoids the symbol name clashes between 32-bit and
    64-bit BLAS/LAPACK libraries.
-
-
-Supplying additional compiler flags
------------------------------------
-
-Additional compiler flags can be supplied by setting the ``OPT``,
-``FOPT`` (for Fortran), and ``CC`` environment variables.
-When providing options that should improve the performance of the code
-ensure that you also set ``-DNDEBUG`` so that debugging code is not
-executed.
 
 Cross compilation
 -----------------

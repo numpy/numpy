@@ -63,14 +63,14 @@ example, the ``core`` module, use the following::
 Running tests from the command line
 -----------------------------------
 
-If you want to build NumPy in order to work on NumPy itself, use
-``runtests.py``.To run NumPy's full test suite::
+If you want to build NumPy in order to work on NumPy itself, use the ``spin``
+utility. To run NumPy's full test suite::
 
-  $ python runtests.py
+  $ spin test -m full
 
 Testing a subset of NumPy::
 
-  $python runtests.py -t numpy/core/tests
+  $ spin test -t numpy/core/tests
 
 For detailed info on testing, see :ref:`testing-builds`
 

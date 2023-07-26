@@ -7,7 +7,7 @@ Building the NumPy API and reference docs
 If you only want to get the documentation, note that pre-built
 versions can be found at
 
-    https://numpy.org/doc/
+https://numpy.org/doc/
 
 in several different formats.
 
@@ -89,18 +89,22 @@ Instructions
 
 Now you are ready to generate the docs, so write::
 
-    cd doc
-    make html
+    spin docs
 
-If all goes well, this will generate a
-``build/html`` subdirectory in the ``/doc`` directory, containing the built documentation. If
-you get a message about ``installed numpy != current repo git version``, you must
-either override the check by setting ``GITVER`` or re-install NumPy.
+This will build NumPy from source if you haven't already, and run Sphinx to
+build the ``html`` docs. If all goes well, this will generate a ``build/html``
+subdirectory in the ``/doc`` directory, containing the built documentation. If
+you get a message about ``installed numpy != current repo git version``, you
+must either override the check by setting ``GITVER`` or re-install NumPy.
+
+You can also use the ``Makefile`` under the ``/doc`` directory and run::
+
+    make html
 
 If you have built NumPy into a virtual environment and get an error
 that says ``numpy not found, cannot build documentation without...``,
 you need to override the makefile ``PYTHON`` variable at the command
-line, so instead of writing ``make  html`` write::
+line, so instead of writing ``make html`` write::
 
     make PYTHON=python html
 
