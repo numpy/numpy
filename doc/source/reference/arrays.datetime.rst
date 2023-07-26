@@ -62,32 +62,32 @@ letters, for a "Not A Time" value.
     A simple ISO date:
 
     >>> np.datetime64('2005-02-25')
-    numpy.datetime64('2005-02-25')
+    np.datetime64('2005-02-25')
 
     From an integer and a date unit, 1 year since the UNIX epoch:
 
     >>> np.datetime64(1, 'Y')
-    numpy.datetime64('1971')
+    np.datetime64('1971')
 
     Using months for the unit:
 
     >>> np.datetime64('2005-02')
-    numpy.datetime64('2005-02')
+    np.datetime64('2005-02')
 
     Specifying just the month, but forcing a 'days' unit:
 
     >>> np.datetime64('2005-02', 'D')
-    numpy.datetime64('2005-02-01')
+    np.datetime64('2005-02-01')
 
     From a date and time:
 
     >>> np.datetime64('2005-02-25T03:30')
-    numpy.datetime64('2005-02-25T03:30')
+    np.datetime64('2005-02-25T03:30')
 
     NAT (not a time):
 
     >>> np.datetime64('nat')
-    numpy.datetime64('NaT')
+    np.datetime64('NaT')
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
@@ -168,13 +168,13 @@ data type also accepts the string "NAT" in place of the number for a "Not A Time
 .. admonition:: Example
 
     >>> np.timedelta64(1, 'D')
-    numpy.timedelta64(1,'D')
+    np.timedelta64(1,'D')
 
     >>> np.timedelta64(4, 'h')
-    numpy.timedelta64(4,'h')
+    np.timedelta64(4,'h')
 
     >>> np.timedelta64('nAt')
-    numpy.timedelta64('NaT')
+    np.timedelta64('NaT')
 
 Datetimes and Timedeltas work together to provide ways for
 simple datetime calculations.
@@ -182,25 +182,25 @@ simple datetime calculations.
 .. admonition:: Example
 
     >>> np.datetime64('2009-01-01') - np.datetime64('2008-01-01')
-    numpy.timedelta64(366,'D')
+    np.timedelta64(366,'D')
 
     >>> np.datetime64('2009') + np.timedelta64(20, 'D')
-    numpy.datetime64('2009-01-21')
+    np.datetime64('2009-01-21')
 
     >>> np.datetime64('2011-06-15T00:00') + np.timedelta64(12, 'h')
-    numpy.datetime64('2011-06-15T12:00')
+    np.datetime64('2011-06-15T12:00')
 
     >>> np.timedelta64(1,'W') / np.timedelta64(1,'D')
     7.0
 
     >>> np.timedelta64(1,'W') % np.timedelta64(10,'D')
-    numpy.timedelta64(7,'D')
+    np.timedelta64(7,'D')
 
     >>> np.datetime64('nat') - np.datetime64('2009-01-01')
-    numpy.timedelta64('NaT','D')
+    np.timedelta64('NaT','D')
 
     >>> np.datetime64('2009-01-01') + np.timedelta64('nat')
-    numpy.datetime64('NaT')
+    np.datetime64('NaT')
 
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
@@ -289,10 +289,10 @@ specified in business days to datetimes with a unit of 'D' (day).
 .. admonition:: Example
 
     >>> np.busday_offset('2011-06-23', 1)
-    numpy.datetime64('2011-06-24')
+    np.datetime64('2011-06-24')
 
     >>> np.busday_offset('2011-06-23', 2)
-    numpy.datetime64('2011-06-27')
+    np.datetime64('2011-06-27')
 
 When an input date falls on the weekend or a holiday,
 :func:`busday_offset` first applies a rule to roll the
@@ -308,16 +308,16 @@ The rules most typically used are 'forward' and 'backward'.
     ValueError: Non-business day date in busday_offset
 
     >>> np.busday_offset('2011-06-25', 0, roll='forward')
-    numpy.datetime64('2011-06-27')
+    np.datetime64('2011-06-27')
 
     >>> np.busday_offset('2011-06-25', 2, roll='forward')
-    numpy.datetime64('2011-06-29')
+    np.datetime64('2011-06-29')
 
     >>> np.busday_offset('2011-06-25', 0, roll='backward')
-    numpy.datetime64('2011-06-24')
+    np.datetime64('2011-06-24')
 
     >>> np.busday_offset('2011-06-25', 2, roll='backward')
-    numpy.datetime64('2011-06-28')
+    np.datetime64('2011-06-28')
 
 In some cases, an appropriate use of the roll and the offset
 is necessary to get a desired answer.
@@ -327,16 +327,16 @@ is necessary to get a desired answer.
     The first business day on or after a date:
 
     >>> np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22')
+    np.datetime64('2011-03-22')
 
     The first business day strictly after a date:
 
     >>> np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23')
+    np.datetime64('2011-03-23')
 
 The function is also useful for computing some kinds of days
 like holidays. In Canada and the U.S., Mother's day is on
@@ -346,7 +346,7 @@ weekmask.
 .. admonition:: Example
 
     >>> np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13')
+    np.datetime64('2012-05-13')
 
 When performance is important for manipulating many business dates
 with one particular choice of weekmask and holidays, there is

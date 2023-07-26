@@ -246,6 +246,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
+            /*
+             * This is as documented.  If we have a low precision float value
+             * then it may convert to float64 and store unnecessary digits.
+             * TODO: This could be fixed, by not using `arr.item()` or using
+             *       the array printing/formatting functionality.
+             */
             obj = PyArray_GETITEM(self, it->dataptr);
             if (obj == NULL) {
                 Py_DECREF(it);
@@ -255,7 +261,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 /*
                  * standard writing
                  */
-                strobj = PyObject_Repr(obj);
+                strobj = PyObject_Str(obj);
                 Py_DECREF(obj);
                 if (strobj == NULL) {
                     Py_DECREF(it);
