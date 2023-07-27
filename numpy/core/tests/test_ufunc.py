@@ -2222,6 +2222,7 @@ class TestUfunc:
         assert a[-1] == 11  # issue 24147
         assert a[1] == 2
         assert a[2] == 3
+        assert np.all(indxs == [-1, 1, -1, 2])
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError
