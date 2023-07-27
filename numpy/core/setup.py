@@ -991,6 +991,7 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'halffloat.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'number.h'),
+            join('src', 'multiarray', 'mapping.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),

@@ -5,6 +5,7 @@
 #include "array_method.h"
 #include "dtype_transfer.h"
 #include "mem_overlap.h"
+#include "mapping.h"
 
 /* For PyArray_ macros used below */
 #include "numpy/ndarrayobject.h"
