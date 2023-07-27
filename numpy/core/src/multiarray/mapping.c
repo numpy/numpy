@@ -3104,13 +3104,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (!uses_subspace) {
         mit->outer_strides = NpyIter_GetInnerStrideArray(mit->outer);
     }
-    if (NpyIter_IterationNeedsAPI(mit->outer)) {
-        mit->needs_api = 1;
-        /* We may be doing a cast for the buffer, and that may have failed */
-        if (PyErr_Occurred()) {
-            goto fail;
-        }
-    }
 
     /* Get the allocated extra_op */
     if (extra_op_flags) {
@@ -3231,14 +3224,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
-
-    if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
-        mit->needs_api = 1;
-        /*
-         * NOTE: In this case, need to call PyErr_Occurred() after
-         *       basepointer resetting (buffer allocation)
-         */
-    }
 
     Py_XDECREF(extra_op);
     Py_DECREF(intp_descr);
@@ -3372,12 +3357,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         goto fail;
     }
 
-    /* Required for backward compatibility */
-    mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)a);
-    if (mit->ait == NULL) {
-        goto fail;
-    }
-
     if (PyArray_MapIterCheckIndices(mit) < 0) {
         goto fail;
     }
@@ -3421,7 +3400,6 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
     PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
-    Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
     Py_XDECREF(mit->extra_op);
     Py_XDECREF(mit->extra_op_dtype);
