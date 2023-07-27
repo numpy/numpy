@@ -59,6 +59,7 @@
 #include "convert_datatype.h"
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
+#include "mapping.h"
 
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE

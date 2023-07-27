@@ -112,8 +112,7 @@ _get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
 }
 
 
-/*NUMPY_API
- *
+/*
  * Swap the axes to or from their inserted form. MapIter always puts the
  * advanced (array) indices first in the iteration. But if they are
  * consecutive, will insert/transpose them back before returning.
@@ -2306,7 +2305,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 }
 
 
-/*NUMPY_API
+/*
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  *
@@ -3316,9 +3315,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 }
 
 
-/*NUMPY_API
- *
- * Same as PyArray_MapIterArray, but:
+/*
+ * Use advanced indexing to iterate an array.
  *
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
@@ -3412,17 +3410,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         Py_XDECREF(indices[i].object);
     }
     return NULL;
-}
-
-
-/*NUMPY_API
- *
- * Use advanced indexing to iterate an array.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
-{
-    return PyArray_MapIterArrayCopyIfOverlap(a, index, 0, NULL);
 }
 
 

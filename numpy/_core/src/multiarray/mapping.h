@@ -5,6 +5,97 @@ extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
 
 /*
+ * Store the information needed for fancy-indexing over an array. The
+ * fields are slightly unordered to keep consec, dataptr and subspace
+ * where they were originally.
+ */
+typedef struct {
+        PyObject_HEAD
+        /*
+         * Multi-iterator portion --- needs to be present in this
+         * order to work with PyArray_Broadcast
+         */
+
+        int                   numiter;                 /* number of index-array
+                                                          iterators */
+        npy_intp              size;                    /* size of broadcasted
+                                                          result */
+        npy_intp              index;                   /* current index */
+        int                   nd;                      /* number of dims */
+        npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
+        NpyIter               *outer;                  /* index objects
+                                                          iterator */
+        void                  *unused[NPY_MAXDIMS - 2];
+        PyArrayObject         *array;
+        /* Flat iterator for the indexed array. For compatibility solely. */
+        PyArrayIterObject     *ait;
+
+        /*
+         * Subspace array. For binary compatibility (was an iterator,
+         * but only the check for NULL should be used).
+         */
+        PyArrayObject         *subspace;
+
+        /*
+         * if subspace iteration, then this is the array of axes in
+         * the underlying array represented by the index objects
+         */
+        int                   iteraxes[NPY_MAXDIMS];
+        npy_intp              fancy_strides[NPY_MAXDIMS];
+
+        /* pointer when all fancy indices are 0 */
+        char                  *baseoffset;
+
+        /*
+         * after binding consec denotes at which axis the fancy axes
+         * are inserted.
+         */
+        int                   consec;
+        char                  *dataptr;
+
+        int                   nd_fancy;
+        npy_intp              fancy_dims[NPY_MAXDIMS];
+
+        /*
+         * Whether the iterator (any of the iterators) requires API.  This is
+         * unused by NumPy itself; ArrayMethod flags are more precise.
+         */
+        int                   needs_api;
+
+        /*
+         * Extra op information.
+         */
+        PyArrayObject         *extra_op;
+        PyArray_Descr         *extra_op_dtype;         /* desired dtype */
+        npy_uint32            *extra_op_flags;         /* Iterator flags */
+
+        NpyIter               *extra_op_iter;
+        NpyIter_IterNextFunc  *extra_op_next;
+        char                  **extra_op_ptrs;
+
+        /*
+         * Information about the iteration state.
+         */
+        NpyIter_IterNextFunc  *outer_next;
+        char                  **outer_ptrs;
+        npy_intp              *outer_strides;
+
+        /*
+         * Information about the subspace iterator.
+         */
+        NpyIter               *subspace_iter;
+        NpyIter_IterNextFunc  *subspace_next;
+        char                  **subspace_ptrs;
+        npy_intp              *subspace_strides;
+
+        /* Count for the external loop (which ever it is) for API iteration */
+        npy_intp              iter_count;
+
+} PyArrayMapIterObject;
+
+extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
+
+/*
  * Struct into which indices are parsed.
  * I.e. integer ones should only be parsed once, slices and arrays
  * need to be validated later and for the ellipsis we need to find how
@@ -70,4 +161,9 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 subspace_iter_flags, npy_uint32 subspace_flags,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype);
+
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
+                                  int copy_if_overlap, PyArrayObject *extra_op);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_ */
