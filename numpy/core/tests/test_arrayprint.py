@@ -1084,6 +1084,9 @@ def test_scalar_repr_numbers(dtype, value):
         (np.void((True, 2), dtype="?,<i8"),
             "(True, 2)",
             "np.void((True, 2), dtype=[('f0', '?'), ('f1', '<i8')])"),
+        (np.void((1, 2), dtype="<f8,>f4"),
+            "(1., 2.)",
+            "np.void((1.0, 2.0), dtype=[('f0', '<f8'), ('f1', '>f4')])"),
         (np.void(b'a'), r"void(b'\x61')", r"np.void(b'\x61')"),
     ])
 def test_scalar_repr_special(scalar, legacy_repr, representation):
@@ -1092,3 +1095,10 @@ def test_scalar_repr_special(scalar, legacy_repr, representation):
 
     with np.printoptions(legacy="1.25"):
         assert repr(scalar) == legacy_repr
+
+def test_scalar_void_float_str():
+    # Note that based on this currently we do not print the same as a tuple
+    # would, since the tuple would include the repr() inside for floats, but
+    # we do not do that.
+    scalar = np.void((1.0, 2.0), dtype=[('f0', '<f8'), ('f1', '>f4')])
+    assert str(scalar) == "(1.0, 2.0)"

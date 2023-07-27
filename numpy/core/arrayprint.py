@@ -1415,6 +1415,10 @@ def _void_scalar_to_string(x, is_repr=True):
     formatters defined above.
     """
     options = _format_options.copy()
+
+    if options["legacy"] <= 125:
+        return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+
     if options.get('formatter') is None:
         options['formatter'] = {}
     options['formatter'].setdefault('float_kind', str)
