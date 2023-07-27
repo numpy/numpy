@@ -5939,7 +5939,7 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     int buffersize=0, errormask = 0;
     int res;
     char *args[3];
-    npy_intp steps[3];
+    npy_intp steps[4];
     args[0] = (char *) iter->baseoffset;
     steps[0] = iter->fancy_strides[0];
     if (ufuncimpl->nin == 1) {
@@ -5962,16 +5962,17 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     do {
         npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
         npy_intp * indxP = (npy_intp *)iter->outer_ptrs[0];
-        for (npy_intp i=0; i < *inner_size; i++) {
-            if (indxP[i] < 0) {
-                indxP[i] += iter->fancy_dims[0];
-            }
-        }
         args[1] = (char *)indxP;
         steps[1] = iter->outer_strides[0];
+        /* 
+         * The value of iter->fancy_dims[0] is added to negative indexes
+         * inside the inner loop
+         */
+        steps[3] = iter->fancy_dims[0];
 
         res = ufuncimpl->contiguous_indexed_loop(
                 context, args, inner_size, steps, NULL);
+
         if (args[2] != NULL) {
             args[2] += (*inner_size) * steps[2];
         }
