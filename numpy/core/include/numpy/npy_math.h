@@ -438,6 +438,14 @@ static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)
 {
     NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, i, IMAG)
 }
+
+#define NPY_CSETREAL(z, r) npy_csetreal(z, r)
+#define NPY_CSETIMAG(z, i) npy_csetimag(z, i)
+#define NPY_CSETREALF(z, r) npy_csetrealf(z, r)
+#define NPY_CSETIMAGF(z, i) npy_csetimagf(z, i)
+#define NPY_CSETREALL(z, r) npy_csetreall(z, r)
+#define NPY_CSETIMAGL(z, i) npy_csetimagl(z, i)
+
 #undef REAL
 #undef IMAG
 #undef CREATE_UNION
