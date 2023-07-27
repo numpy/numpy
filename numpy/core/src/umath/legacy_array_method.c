@@ -19,6 +19,7 @@
 #include "dtypemeta.h"
 
 #include "ufunc_object.h"
+#include "ufunc_type_resolution.h"
 
 
 typedef struct {
@@ -216,7 +217,7 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 
     PyUFuncGenericFunction loop = NULL;
     /* Note that `needs_api` is not reliable (it was in fact unused normally) */
-    if (ufunc->legacy_inner_loop_selector(ufunc,
+    if (PyUFunc_DefaultLegacyInnerLoopSelector(ufunc,
             context->descriptors, &loop, &user_data, &needs_api) < 0) {
         return -1;
     }

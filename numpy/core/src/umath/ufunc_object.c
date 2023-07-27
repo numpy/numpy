@@ -1422,18 +1422,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
 
     if (masked) {
         assert(PyArray_TYPE(op[nop]) == NPY_BOOL);
-        if (ufunc->_always_null_previously_masked_innerloop_selector != NULL) {
-            if (PyErr_WarnFormat(PyExc_UserWarning, 1,
-                    "The ufunc %s has a custom masked-inner-loop-selector."
-                    "NumPy assumes that this is NEVER used. If you do make "
-                    "use of this please notify the NumPy developers to discuss "
-                    "future solutions. (See NEP 41 and 43)\n"
-                    "NumPy will continue, but ignore the custom loop selector. "
-                    "This should only affect performance.",
-                    ufunc_get_name_cstr(ufunc)) < 0) {
-                return -1;
-            }
-        }
 
         /*
          * NOTE: In the masked version, we consider the output read-write,
@@ -5109,8 +5097,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
-    ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
-    ufunc->_always_null_previously_masked_innerloop_selector = NULL;
 
     ufunc->op_flags = NULL;
     ufunc->_loops = NULL;
