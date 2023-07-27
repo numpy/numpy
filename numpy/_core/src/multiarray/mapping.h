@@ -11,29 +11,18 @@ extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
  */
 typedef struct {
         PyObject_HEAD
-        /*
-         * Multi-iterator portion --- needs to be present in this
-         * order to work with PyArray_Broadcast
-         */
 
         int                   numiter;                 /* number of index-array
                                                           iterators */
         npy_intp              size;                    /* size of broadcasted
                                                           result */
-        npy_intp              index;                   /* current index */
         int                   nd;                      /* number of dims */
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
         NpyIter               *outer;                  /* index objects
                                                           iterator */
-        void                  *unused[NPY_MAXDIMS - 2];
         PyArrayObject         *array;
-        /* Flat iterator for the indexed array. For compatibility solely. */
-        PyArrayIterObject     *ait;
 
-        /*
-         * Subspace array. For binary compatibility (was an iterator,
-         * but only the check for NULL should be used).
-         */
+        /* Subspace array. */
         PyArrayObject         *subspace;
 
         /*
@@ -55,12 +44,6 @@ typedef struct {
 
         int                   nd_fancy;
         npy_intp              fancy_dims[NPY_MAXDIMS];
-
-        /*
-         * Whether the iterator (any of the iterators) requires API.  This is
-         * unused by NumPy itself; ArrayMethod flags are more precise.
-         */
-        int                   needs_api;
 
         /*
          * Extra op information.
