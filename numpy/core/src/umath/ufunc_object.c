@@ -53,6 +53,7 @@
 #include "arrayobject.h"
 #include "common.h"
 #include "ctors.h"
+#include "mapping.h"
 #include "dtypemeta.h"
 #include "numpyos.h"
 #include "dispatching.h"
@@ -5781,20 +5782,23 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
 {
     int buffersize=0, errormask = 0;
     int res;
-    char *args[3];
-    npy_intp steps[4];
-    args[0] = (char *) iter->baseoffset;
-    steps[0] = iter->fancy_strides[0];
+    char *args[2];
+    npy_intp steps[2];
+
+    args[0] = (char *)iter->array_pointers;
+    steps[0] = NPY_MIN_INTP;  /* unused since it is indexed */
+    npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
+
     if (ufuncimpl->nin == 1) {
-        args[2] = NULL;
-        steps[2] = 0;
+        args[1] = NULL;
+        steps[1] = 0;
     } else {
-        args[2] = (char *)PyArray_DATA(op2_array);
+        args[1] = (char *)PyArray_DATA(op2_array);
         if (PyArray_NDIM(op2_array) == 0
-            || PyArray_DIM(op2_array, 0) <= 1) {
-            steps[2] = 0;
+                || PyArray_DIM(op2_array, 0) <= 1) {
+            steps[1] = 0;
         } else {
-            steps[2] = PyArray_STRIDE(op2_array, 0);
+            steps[1] = PyArray_STRIDE(op2_array, 0);
         }
     }
 
@@ -5802,24 +5806,26 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
         npy_clear_floatstatus_barrier((char *)context);
     }
 
-    do {
-        npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
-        npy_intp * indxP = (npy_intp *)iter->outer_ptrs[0];
-        args[1] = (char *)indxP;
-        steps[1] = iter->outer_strides[0];
-        /* 
-         * The value of iter->fancy_dims[0] is added to negative indexes
-         * inside the inner loop
-         */
-        steps[3] = iter->fancy_dims[0];
-
+    while (1) {
         res = ufuncimpl->contiguous_indexed_loop(
                 context, args, inner_size, steps, NULL);
-
-        if (args[2] != NULL) {
-            args[2] += (*inner_size) * steps[2];
+        if (res != 0) {
+            break;
         }
-    } while (res == 0 && iter->outer_next(iter->outer));
+
+        if (args[1] != NULL) {
+            args[1] += (*inner_size) * steps[1];
+        }
+
+        /*
+         * NOTE: Loop setup is slightly different because the way we set up
+         *       the mapiter `mapiter_update_pointers_set` was already called.
+         */
+        if (!iter->outer_next(iter->outer)) {
+            break;
+        }
+        mapiter_update_pointers_set(iter, *inner_size, NULL);
+    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         const char * ufunc_name =

@@ -1366,17 +1366,19 @@ typedef struct {
         NpyIter_IterNextFunc  *outer_next;
         char                  **outer_ptrs;
         npy_intp              *outer_strides;
+        npy_intp              outer_count;
 
         /*
          * Information about the subspace iterator.
          */
         NpyIter               *subspace_iter;
+        npy_intp              subspace_count;
         NpyIter_IterNextFunc  *subspace_next;
         char                  **subspace_ptrs;
         npy_intp              *subspace_strides;
 
         /* Count for the external loop (which ever it is) for API iteration */
-        npy_intp              iter_count;
+        char                  **array_pointers;
 
 } PyArrayMapIterObject;
 
