@@ -134,14 +134,22 @@ if not use_ilp64
   ).stdout().strip() == '1'
 endif
 
-# BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
-# which provides a CBLAS interface. So disable BLAS completely if CBLAS is not
-# found (lapack-lite will be used instead; xref gh-24200 for a discussion on
-# whether this silent disabling should stay as-is)
+# BLAS and LAPACK are dependencies for NumPy. Since NumPy 2.0, by default the
+# build will fail if they are missing; the performance impact is large, so
+# using fallback routines must be explicitly opted into by the user. xref
+# gh-24200 for a discussion on this.
+#
+# Note that we can only use a BLAS which provides a CBLAS interface. So disable
+# BLAS completely if CBLAS is not found.
+allow_noblas = get_option('allow-noblas')
 if have_blas
   _args_blas = []  # note: used for C and C++ via `blas_dep` below
   if have_cblas
     _args_blas += ['-DHAVE_CBLAS']
+  elif not allow_noblas
+    error('No CBLAS interface detected! Install a BLAS library with CBLAS ' + \
+          'support, or use the `allow-noblas` build option (note, this ' + \
+          'may be up to 100x slower for some linear algebra operations).')
   endif
   if use_ilp64
     _args_blas += ['-DHAVE_BLAS_ILP64']
@@ -154,7 +162,13 @@ if have_blas
     compile_args: _args_blas,
   )
 else
-  blas_dep = []
+  if allow_noblas
+    blas_dep = []
+  else
+    error('No BLAS library detected! Install one, or use the ' + \
+          '`allow-noblas` build option (note, this may be up to 100x slower ' + \
+          'for some linear algebra operations).')
+  endif
 endif
 
 if lapack_name == 'openblas'
@@ -162,7 +176,11 @@ if lapack_name == 'openblas'
 endif
 lapack_dep = dependency(lapack_name, required: false)
 have_lapack = lapack_dep.found()
-
+if not have_lapack and not allow_noblas
+  error('No LAPACK library detected! Install one, or use the ' + \
+        '`allow-noblas` build option (note, this may be up to 100x slower ' + \
+        'for some linear algebra operations).')
+endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
