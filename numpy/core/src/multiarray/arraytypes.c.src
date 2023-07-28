@@ -2858,7 +2858,7 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         }
         int istrue = PyObject_IsTrue(obj);
         if (istrue == -1) {
-            return NPY_FALSE;
+            return (npy_bool) -1;
         }
         return (npy_bool) istrue;
     }

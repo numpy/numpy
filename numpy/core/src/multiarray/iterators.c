@@ -592,7 +592,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     if (PyBool_Check(ind)) {
         int istrue = PyObject_IsTrue(ind);
         if (istrue == -1) {
-            return NULL;
+            goto fail;
         }
         if (istrue) {
             return PyArray_ToScalar(self->dataptr, self->ao);

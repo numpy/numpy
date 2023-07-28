@@ -47,9 +47,6 @@ array_contains(PyArrayObject *self, PyObject *el)
     }
 
     ret = PyObject_IsTrue(any);
-    if (ret == -1) {
-       return -1;
-    }
     Py_DECREF(any);
     return ret;
 }
