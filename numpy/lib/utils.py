@@ -549,10 +549,6 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     toplevel : str, optional
         Start search at this level.
 
-    See Also
-    --------
-    source, lookfor
-
     Notes
     -----
     When used interactively with an object, ``np.info(obj)`` is equivalent
