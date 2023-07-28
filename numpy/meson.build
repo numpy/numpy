@@ -53,6 +53,19 @@ endif
 # (see cibuildwheel settings in pyproject.toml), but used by CI jobs already
 blas_symbol_suffix = get_option('blas-symbol-suffix')
 
+use_ilp64 = get_option('use-ilp64')
+if not use_ilp64
+  # For now, keep supporting this environment variable too (same as in setup.py)
+  # `false is the default for the CLI flag, so check if env var was set
+  use_ilp64 = run_command(py,
+    [
+      '-c',
+      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
+    ],
+    check: true
+  ).stdout().strip() == '1'
+endif
+
 
 # TODO: 64-bit (ILP64) BLAS and LAPACK support (e.g., check for more .pc files
 # so we detect `openblas64_.so` directly). Partially supported now, needs more
@@ -70,7 +83,12 @@ lapack_name = get_option('lapack')
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
 if blas_name == 'openblas'
-  blas = dependency(['openblas', 'OpenBLAS'], required: false)
+  if use_ilp64
+    _openblas_names = ['openblas64', 'openblas', 'OpenBLAS']
+  else
+    _openblas_names = ['openblas', 'OpenBLAS']
+  endif
+  blas = dependency(_openblas_names, required: false)
 else
   blas = dependency(blas_name, required: false)
 endif
@@ -119,19 +137,6 @@ if have_blas
       have_cblas = true
     endif
   endif
-endif
-
-use_ilp64 = get_option('use-ilp64')
-if not use_ilp64
-  # For now, keep supporting this environment variable too (same as in setup.py)
-  # `false is the default for the CLI flag, so check if env var was set
-  use_ilp64 = run_command(py,
-    [
-      '-c',
-      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
-    ],
-    check: true
-  ).stdout().strip() == '1'
 endif
 
 # BLAS and LAPACK are dependencies for NumPy. Since NumPy 2.0, by default the
