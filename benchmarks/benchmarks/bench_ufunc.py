@@ -88,6 +88,21 @@ class At(Benchmark):
     def time_maximum_at(self, dtype):
         np.maximum.at(self.res, self.idx, self.vals)
 
+class At2D(Benchmark):
+    def setup(self):
+        rng = np.random.default_rng(1)
+        self.vals = rng.random(10_000)
+        self.idx = rng.integers(1000, size=10_000).astype(np.intp)
+        self.res = np.zeros((1000, 1000))
+
+    def time_add_at_sliced(self):
+        # Only one index to a 2-D array:
+        np.add.at(self.res, self.idx, self.vals[:, None])
+
+    def time_add_at_2d(self):
+        # Both dimension of the result are indexed:
+        np.add.at(self.res, (self.idx, self.idx), self.vals)
+
 
 class UFunc(Benchmark):
     params = [ufuncs]
