@@ -37,7 +37,7 @@ def main(ctx):
     tag = env.get("CIRRUS_TAG", "")
 
     if "[wheel build]" in commit_msg:
-        wheel = True
+        return fs.read("ci/cirrus_wheels.yml")
 
     if int(pr_number) > 0 and ("14 - Release" in labels or "36 - Build" in labels):
         wheel = True
