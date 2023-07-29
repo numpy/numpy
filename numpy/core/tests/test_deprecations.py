@@ -162,6 +162,9 @@ class TestDatetime64Timezone(_DeprecationTestCase):
         with pytest.warns(UserWarning, match=msg):
             t0 = np.datetime64('2023-06-09T12:18:40Z', 'ns')
 
+        t0 = np.datetime64('2023-06-09T12:18:40', 'ns')
+
+
 class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
     """Assigning the 'data' attribute of an ndarray is unsafe as pointed
      out in gh-7093. Eventually, such assignment should NOT be allowed, but
