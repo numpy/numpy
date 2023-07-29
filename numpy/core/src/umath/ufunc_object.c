@@ -5789,6 +5789,8 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     steps[0] = NPY_MIN_INTP;  /* unused since it is indexed */
     npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
 
+    _mapiter_update_pointers_func *update_pointers = iter->update_pointers;
+
     if (ufuncimpl->nin == 1) {
         args[1] = NULL;
         steps[1] = 0;
@@ -5819,12 +5821,13 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
 
         /*
          * NOTE: Loop setup is slightly different because the way we set up
-         *       the mapiter `mapiter_update_pointers_set` was already called.
+         *       the mapiter `update_pointers` was already called.
+         *       (we know this is a checked version which cannot fail)
          */
         if (!iter->outer_next(iter->outer)) {
             break;
         }
-        mapiter_update_pointers_set(iter, *inner_size, NULL);
+        update_pointers(iter, *inner_size, NULL);
     }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {

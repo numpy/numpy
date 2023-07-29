@@ -1,3 +1,4 @@
+#include "numpy/npy_common.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -2279,7 +2280,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     mit->dataptr = baseptrs[0];
     mit->outer_count = *NpyIter_GetInnerLoopSizePtr(mit->outer);
 
-    mapiter_update_pointers_set(mit, mit->outer_count, NULL);
+    mit->update_pointers(mit, mit->outer_count, NULL);
 
     if (mit->subspace_iter) {
         if (!NpyIter_ResetBasePointers(mit->subspace_iter, baseptrs, NULL)) {
@@ -2642,6 +2643,14 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
 
         NPY_END_THREADS;
         NpyIter_Deallocate(op_iter);
+    }
+
+    /* Checked all indices, so we can swap in the update pointer func */
+    if (mit->update_pointers == &mapiter_update_pointers_unchecked_contig) {
+        mit->update_pointers = &mapiter_update_pointers_checked_contig;
+    }
+    else {
+        mit->update_pointers = &mapiter_update_pointers_checked;
     }
 
     NPY_END_THREADS;
@@ -3158,6 +3167,18 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         goto fail;
     }
 
+    /*
+     * Find the best functioni to update the index (pointers), initially
+     * we assume that this is unchecked.
+     */
+    npy_intp *fixed_strides = NpyIter_GetInnerStrideArray(mit->outer);
+    mit->update_pointers = &mapiter_update_pointers_unchecked_contig;
+    for (int i = 0; i < mit->numiter; i++) {
+        if (fixed_strides[i] != NPY_SIZEOF_INTP) {
+            mit->update_pointers = &mapiter_update_pointers_unchecked;
+        }
+    }
+
     /* Can now return early if no subspace is being used */
     if (!uses_subspace) {
         Py_XDECREF(extra_op);
@@ -3416,105 +3437,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 #undef HAS_BOOL
 #undef HAS_SCALAR_ARRAY
 #undef HAS_0D_BOOL
-
-
-
-NPY_NO_EXPORT int
-mapiter_update_pointers_get(
-        PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save)
-{
-    /* Specialize for a single iterator (could specialize function) */
-    npy_intp fancy_dim = mit->fancy_dims[0];
-    npy_intp fancy_stride = mit->fancy_strides[0];
-    int iteraxis = mit->iteraxes[0];
-    char *baseoffset = mit->baseoffset;
-
-    char *indval = mit->outer_ptrs[0];
-    npy_intp indval_stride = mit->outer_strides[0];
-
-    char **pointers = mit->array_pointers;
-
-    for (npy_intp i = 0; i < count; i++, indval += indval_stride, pointers++) {
-        npy_intp curr_indval = *(npy_intp *)indval;
-        if (NPY_UNLIKELY(check_and_adjust_index(
-                &curr_indval, fancy_dim, iteraxis, _save) < 0 )) {
-            return -1;
-        }
-        *pointers = baseoffset + curr_indval * fancy_stride;
-    }
-    if (NPY_LIKELY(mit->numiter == 1)) {
-        return 0;
-    }
-
-    for (int op = 1; op < mit->numiter; op++) {
-        fancy_dim = mit->fancy_dims[op];
-        fancy_stride = mit->fancy_strides[op];
-        iteraxis = mit->iteraxes[op];
-
-        indval = mit->outer_ptrs[op];
-        indval_stride = mit->outer_strides[op];
-
-        pointers = mit->array_pointers;
-
-        for (npy_intp i = 0; i < count; i++, indval += indval_stride, pointers++) {
-            npy_intp curr_indval = *(npy_intp *)indval;
-            if (NPY_UNLIKELY(check_and_adjust_index(
-                    &curr_indval, fancy_dim, iteraxis, _save) < 0 )) {
-                return -1;
-            }
-            *pointers += curr_indval * fancy_stride;
-        }
-    }
-
-    return 0;
-}
-
-
-NPY_NO_EXPORT int
-mapiter_update_pointers_set(
-        PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save)
-{
-    /* Specialize for a single iterator (could specialize function) */
-    npy_intp fancy_dim = mit->fancy_dims[0];
-    npy_intp fancy_stride = mit->fancy_strides[0];
-    char *baseoffset = mit->baseoffset;
-
-    char *restrict indval = mit->outer_ptrs[0];
-    npy_intp indval_stride = mit->outer_strides[0];
-
-    char *restrict *pointers = mit->array_pointers;
-
-    for (npy_intp i = 0; i < count; i++, indval += indval_stride, pointers++) {
-        npy_intp curr_indval = *(npy_intp *)indval;
-        if (curr_indval < 0) {
-            curr_indval += fancy_dim;
-        }
-        *pointers = baseoffset + curr_indval * fancy_stride;
-    }
-    if (NPY_LIKELY(mit->numiter == 1)) {
-        return 0;
-    }
-
-    for (int op = 1; op < mit->numiter; op++) {
-        fancy_dim = mit->fancy_dims[op];
-        fancy_stride = mit->fancy_strides[op];
-
-        indval = mit->outer_ptrs[op];
-        indval_stride = mit->outer_strides[op];
-
-        pointers = mit->array_pointers;
-
-        for (npy_intp i = 0; i < count; i++, indval += indval_stride, pointers++) {
-            npy_intp curr_indval = *(npy_intp *)indval;
-            if (curr_indval < 0) {
-                curr_indval += fancy_dim;
-            }
-            *pointers += curr_indval * fancy_stride;
-        }
-    }
-    return 0;
-}
-
 
 
 

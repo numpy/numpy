@@ -71,12 +71,24 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype);
 
+/* checked version assumes indices are checked and cannot fail. */
 NPY_NO_EXPORT int
-mapiter_update_pointers_set(
+mapiter_update_pointers_checked(
         PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save);
 
+/* unchecked version assumes indices are unchecked and can fail. */
 NPY_NO_EXPORT int
-mapiter_update_pointers_get(
+mapiter_update_pointers_unchecked(
+        PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save);
+
+/* checked version assumes indices are checked and cannot fail. */
+NPY_NO_EXPORT int
+mapiter_update_pointers_checked_contig(
+        PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save);
+
+/* unchecked version assumes indices are unchecked and can fail. */
+NPY_NO_EXPORT int
+mapiter_update_pointers_unchecked_contig(
         PyArrayMapIterObject *mit, npy_intp count, PyThreadState *_save);
 
 
