@@ -376,6 +376,7 @@ INT32_negative_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 {
     int32_t **indexed = (int32_t **)args[0];
     npy_intp n = dimensions[0];
+
     for (npy_intp i = 0; i < n; i++, indexed++) {
         if (i == 3) {
             **indexed = -200;

@@ -403,8 +403,8 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
     char *value = args[1];
     npy_intp isv = steps[1];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    for(i = 0; i < n; i++, indexed++, value += isv) {
+
+    for (npy_intp i = 0; i < n; i++, indexed++, value += isv) {
         **indexed = floor_div_@TYPE@(**indexed, *(@type@ *)value);
     }
     return 0;
@@ -486,8 +486,8 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
     char *value = args[1];
     npy_intp isv = steps[1];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    for(i = 0; i < n; i++, indexed++, value += isv) {
+
+    for (npy_intp i = 0; i < n; i++, indexed++, value += isv) {
         @type@ in2 = *(@type@ *)value;
         if (NPY_UNLIKELY(in2 == 0)) {
             npy_set_floatstatus_divbyzero();
