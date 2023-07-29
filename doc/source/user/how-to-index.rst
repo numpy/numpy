@@ -193,13 +193,13 @@ Non-zero elements
 Use :meth:`nonzero` to get a tuple of array indices of non-zero elements 
 corresponding to every dimension::
 
-	>>> z = np.array([[1, 2, 3, 0], [0, 0, 5, 3], [4, 6, 0, 0]])
-       >>> z
-       array([[1, 2, 3, 0],
-              [0, 0, 5, 3],
-              [4, 6, 0, 0]])
-       >>> np.nonzero(z)
-       (array([0, 0, 0, 1, 1, 2, 2]), array([0, 1, 2, 2, 3, 0, 1]))
+    >>> z = np.array([[1, 2, 3, 0], [0, 0, 5, 3], [4, 6, 0, 0]])
+    >>> z
+    array([[1, 2, 3, 0],
+           [0, 0, 5, 3],
+           [4, 6, 0, 0]])
+    >>> np.nonzero(z)
+    (array([0, 0, 0, 1, 1, 2, 2]), array([0, 1, 2, 2, 3, 0, 1]))
 
 Use :meth:`flatnonzero` to fetch indices of elements that are non-zero in
 the flattened version of the ndarray::
