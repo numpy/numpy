@@ -24,7 +24,7 @@ def main(ctx):
     # only contains the actual commit message on a non-PR trigger event.
     # For a PR event it contains the PR title and description.
     SHA = env.get("CIRRUS_CHANGE_IN_REPO")
-    url = "https://api.github.com/repos/scipy/scipy/git/commits/" + SHA
+    url = "https://api.github.com/repos/numpy/numpy/git/commits/" + SHA
     dct = http.get(url).json()
 
     commit_msg = dct["message"]
