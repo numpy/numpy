@@ -294,7 +294,11 @@ add_newdoc_for_scalar_type('datetime64', [],
     or datetime format.
     
     When parsing a string to create a datetime object, if the string contains
-    a timezone, the timezone will be dropped.
+    a trailing timezone (A 'Z' or a timezone offset), the timezone will be 
+    dropped and a User Warning is given.
+    
+    Datetime64 object should be considered to be UTC and therefore have an 
+    offset of +0000.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
