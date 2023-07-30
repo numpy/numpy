@@ -25,6 +25,21 @@ except NameError:
 
 
 class TestDateTime:
+
+    def test_string(self):
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            np.datetime64('2000-01-01T00+01')
+
+    def test_datetime(self):
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            t0 = np.datetime64('2023-06-09T12:18:40Z', 'ns')
+
+        t0 = np.datetime64('2023-06-09T12:18:40', 'ns')
+
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
