@@ -9,19 +9,6 @@ import numpy.lib.utils as utils
 from io import StringIO
 
 
-@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(
-    sys.version_info == (3, 10, 0, "candidate", 1),
-    reason="Broken as of bpo-44524",
-)
-def test_lookfor():
-    out = StringIO()
-    utils.lookfor('eigenvalue', module='numpy', output=out,
-                  import_modules=False)
-    out = out.getvalue()
-    assert_('numpy.linalg.eig' in out)
-
-
 @pytest.mark.filterwarnings("ignore:.*safe_eval.*:DeprecationWarning")
 def test_safe_eval_nameconstant():
     # Test if safe_eval supports Python 3.4 _ast.NameConstant

@@ -1719,7 +1719,8 @@ def set_string_function(f, repr=True):
 
     # Deprecated in NumPy 2.0, 2023-07-11
     warnings.warn(
-        "`set_string_function` is deprecated. "
+        "`set_string_function` is deprecated. Use `np.set_printoptions` "
+        "with a formatter for custom printing NumPy objects. "
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2

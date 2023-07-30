@@ -171,8 +171,8 @@ def maximum_sctype(t):
 
     # Deprecated in NumPy 2.0, 2023-07-11
     warnings.warn(
-        "`maximum_sctype` is deprecated. "
-        "(deprecated in NumPy 2.0)",
+        "`maximum_sctype` is deprecated. Use an explicit dtype like int64 "
+        "or float64 instead. (deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2
     )
