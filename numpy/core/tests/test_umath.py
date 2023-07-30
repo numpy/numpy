@@ -2062,6 +2062,44 @@ class TestLog1p:
             assert_equal(ncu.log1p(-2.), np.nan)
             assert_equal(ncu.log1p(-np.inf), np.nan)
 
+class TestLog1pComplex:
+    def test_log1p_complex(self):
+        assert_almost_equal(ncu.log1p(0.2 + 0.3j), ncu.log(1.2 + 0.3j))
+        assert_array_almost_equal_nulp(
+            ncu.log1p(1e-19 + 1e-18j), 1e-19 + 1e-18j)
+        # these numbers are obtained from wolfram alpha
+        assert_almost_equal(ncu.log1p(1e-18 + 0.1j), 0.00497517 + 0.0996687j)
+        assert_almost_equal(ncu.log1p(0.1 + 1e-18j).real, 0.0953102)
+        assert_array_almost_equal_nulp(
+            ncu.log1p(0.1 + 1e-18j).imag, 9.090909090909090909e-19)
+        assert_almost_equal(ncu.log1p(0.5 + 0j), 0.40546510810816 + 0j)
+        assert_almost_equal(ncu.log1p(0.0 + 0.5j), 0.111571776 + 0.463647609j)
+    
+    def test_extreme(self):
+        # these numbers are obtained from WarrenWeckesser
+        # and double checked with wolfram alpha
+        assert_almost_equal(ncu.log1p(-1 + 1e250j),
+                            575.6462732485114 + 1.5707963267948966j)
+        assert_almost_equal(ncu.log1p(1e250 + 1j).real,
+                            575.6462732485114)
+        assert_array_almost_equal_nulp(
+            ncu.log1p(1e250 + 1j).imag, 1e-250)
+        assert_almost_equal(ncu.log1p(1e250 + 1e250j),
+                            575.9928468387914 + 0.7853981633974483j)
+        assert_almost_equal(ncu.log1p(1e-250 + 1e250j),
+                            575.6462732485114 + 1.5707963267948966j)
+        assert_array_almost_equal_nulp(
+            ncu.log1p(1e-250 + 2e-250j), 1e-250 + 2e-250j)
+        assert_almost_equal(ncu.log1p(1e250 + 1e-250j),
+                            575.6462732485114 + 0.0j)
+
+    def test_special(self):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(ncu.log1p(np.nan + 1j), np.nan + np.nan * 1j)
+            assert_equal(ncu.log1p(np.inf + 1j), np.inf + 0j)
+            assert_equal(ncu.log1p(-np.inf + 1j), np.inf + np.pi * 1j)
+            assert_equal(ncu.log1p(complex(0, np.inf)), np.inf + np.pi * 0.5j)
+            assert_equal(ncu.log1p(-1 + 0j), -np.inf + 0j)
 
 class TestExpm1:
     def test_expm1(self):

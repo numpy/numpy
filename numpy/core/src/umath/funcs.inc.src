@@ -328,9 +328,26 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ l = npy_hypot@c@(x->real + 1,x->imag);
-    r->imag = npy_atan2@c@(x->imag, x->real + 1);
-    r->real = npy_log@c@(l);
+    @ftype@ xx = x->real;
+    @ftype@ yy = x->imag;
+    r->imag = npy_atan2@c@(yy, xx + 1);
+
+    @ftype@ z0 = npy_hypot@c@(xx + 1, yy);
+
+    // special case for inputs close to 1
+    if (z0 < 1.5) {
+        @ftype@ z = xx * (2 + xx) + yy * yy;
+        if (z == 0) {
+            // handle underflow
+            r->real = xx;
+        }
+        else {
+            r->real = 0.5 * npy_log1p@c@(z);
+        }
+    }
+    else {
+        r->real = npy_log@c@(z0);
+    }
     return;
 }
 
