@@ -1351,7 +1351,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                  mask=[(False, False,  True), (False, False,  True),
                        (False, False, False), (False, False, False),
                        (False, False, False)],
-           fill_value=(b'N/A', 1.e+20, 1.e+20),
+           fill_value=(b'N/A', 1e+20, 1e+20),
                 dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """

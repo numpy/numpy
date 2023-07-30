@@ -1,0 +1,55 @@
+name: Test with compiler sanitizers (Linux)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHON_VERSION: 3.11
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  gcc_sanitizers:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        sudo apt-get install -y libopenblas-serial-dev
+    - name: Build
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+      run:
+        spin build -- --werror -Db_sanitize=address,undefined
+    - name: Test
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+      run: |
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
+        LD_PRELOAD=$(gcc --print-file-name=libasan.so) \
+        python -m spin test -- -v -s
+        
+  

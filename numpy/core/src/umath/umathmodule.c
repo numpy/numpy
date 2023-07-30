@@ -58,19 +58,6 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
     return 0;
 }
 
-static int
-object_ufunc_loop_selector(PyUFuncObject *ufunc,
-                            PyArray_Descr **NPY_UNUSED(dtypes),
-                            PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata,
-                            int *out_needs_api)
-{
-    *out_innerloop = ufunc->functions[0];
-    *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[0];
-    *out_needs_api = 1;
-
-    return 0;
-}
 
 PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
@@ -166,7 +153,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
     PyObject_GC_Track(self);
 
     return (PyObject *)self;

@@ -1482,7 +1482,7 @@ class TestStructured:
         assert_equal(xx, [[b'', b''], [b'', b'']])
         # check for no uninitialized memory due to viewing S0 array
         assert_equal(xx[:].dtype, xx.dtype)
-        assert_array_equal(eval(repr(xx), dict(array=np.array)), xx)
+        assert_array_equal(eval(repr(xx), dict(np=np, array=np.array)), xx)
 
         b = io.BytesIO()
         np.save(b, xx)
@@ -5350,14 +5350,13 @@ class TestIO:
         x = x.real.ravel()
         s = "@".join(map(str, x))
         y = np.fromstring(s, sep="@")
-        # NB. str imbues less precision
         nan_mask = ~np.isfinite(x)
         assert_array_equal(x[nan_mask], y[nan_mask])
-        assert_array_almost_equal(x[~nan_mask], y[~nan_mask], decimal=5)
+        assert_array_equal(x[~nan_mask], y[~nan_mask])
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join(map(repr, x))
+        s = "@".join(map(lambda x: repr(x)[11:-1], x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
@@ -6070,7 +6069,7 @@ class TestStats:
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
-        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
+        self.omat = np.array([Decimal(str(r)) for r in self.rmat.flat])
         self.omat = self.omat.reshape(4, 5)
 
     def test_python_type(self):

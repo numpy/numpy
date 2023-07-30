@@ -820,8 +820,8 @@ PyUFunc_Type and PyUFuncObject
           int *core_offsets;
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
-          PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
           void *reserved2;
+          void *reserved3;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
           /* new in API version 0x0000000D */
@@ -889,10 +889,6 @@ PyUFunc_Type and PyUFuncObject
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data
        types) are available.
-
-   .. c:member:: int reserved1
-
-       Unused.
 
    .. c:member:: char *name
 
@@ -965,19 +961,6 @@ PyUFunc_Type and PyUFuncObject
 
        A function which resolves the types and fills an array with the dtypes
        for the inputs and outputs
-
-   .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector
-
-       .. deprecated:: 1.22
-
-            Some fallback support for this slot exists, but will be removed
-            eventually.  A universal function that relied on this will
-            have to be ported eventually.
-            See :ref:`NEP 41 <NEP41>` and :ref:`NEP 43 <NEP43>`
-
-   .. c:member:: void *reserved2
-
-       For a possible future loop selector with a different signature.
 
    .. c:member:: npy_uint32 op_flags
 

@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.23'
-OPENBLAS_LONG = 'v0.3.23'
+OPENBLAS_V = '0.3.23.dev'
+OPENBLAS_LONG = 'v0.3.23-246-g3d31191b'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -323,6 +323,9 @@ def test_version(expected_version=None):
 
     data = threadpoolctl.threadpool_info()
     if len(data) != 1:
+        if platform.python_implementation() == 'PyPy':
+            print(f"Not using OpenBLAS for PyPy in Azure CI, so skip this")
+            return
         raise ValueError(f"expected single threadpool_info result, got {data}")
     if not expected_version:
         expected_version = OPENBLAS_V

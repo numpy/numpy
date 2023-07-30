@@ -17,10 +17,10 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  meson:
-    name: Meson windows build/test
+  msvc_64bit_python_openblas:
+    name: MSVC, x86-64, LP64 OpenBLAS
     runs-on: windows-2019
-    # if: "github.repository == 'numpy/numpy'"
+    if: "github.repository == 'numpy/numpy'"
     steps:
     - name: Checkout
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -28,7 +28,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
     - name: Setup Python
-      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -86,3 +86,38 @@ jobs:
         echo "LASTEXITCODE is '$LASTEXITCODE'"
         python -c "import numpy, sys; sys.exit(numpy.test(verbose=3) is False)"
         echo "LASTEXITCODE is '$LASTEXITCODE'"
+
+  msvc_32bit_python_openblas:
+    name: MSVC, 32-bit Python, no BLAS
+    runs-on: windows-2019
+    if: "github.repository == 'numpy/numpy'"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python (32-bit)
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+        with:
+          python-version: '3.10'
+          architecture: 'x86'
+
+      - name: Setup MSVC (32-bit)
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
+
+      - name: Build and install
+        run: |
+          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r test_requirements.txt
+
+      - name: Run test suite (fast)
+        run: |
+          cd tools
+          python -m pytest --pyargs numpy -m "not slow" -n2

@@ -4663,7 +4663,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     >>> x[0] = (9, 10)
     >>> z[0]
-    (9, 10)
+    np.record((9, 10), dtype=[('a', 'i1'), ('b', 'i1')])
 
     Views that change the dtype size (bytes per entry) should normally be
     avoided on arrays defined by slices, transposes, fortran-ordering, etc.:

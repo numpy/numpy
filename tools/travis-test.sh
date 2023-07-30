@@ -16,6 +16,11 @@ fi
 
 source builds/venv/bin/activate
 
+pip install --upgrade pip 'setuptools<49.2.0'
+
+pip install -r build_requirements.txt
+
+if [ -n "$USE_ASV" ]; then pip install asv; fi
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
@@ -35,7 +40,8 @@ setup_base()
   # use default python flags but remove sign-compare
   sysflags="$($PYTHON -c "import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
-  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  # For cython3.0 add -Wno-error=undef, see cython/cython#5557
+  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare -Wno-error=undef"
 
   build_args=()
   # Strictly disable all kinds of optimizations
@@ -49,18 +55,11 @@ setup_base()
   else
     # SIMD extensions that need to be tested on both runtime and compile-time via (test_simd.py)
     # any specified features will be ignored if they're not supported by compiler or platform
-    # note: it almost the same default value of --simd-test execpt adding policy `$werror` to treat all
+    # note: it almost the same default value of --simd-test except adding policy `$werror` to treat all
     # warnings as errors
     build_args+=("--simd-test=\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD VX VXE VXE2")
   fi
   if [ -z "$USE_DEBUG" ]; then
-    # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
-    # extension breaks the build due to the following error:
-    #
-    # error: "HAVE_FFI_PREP_CIF_VAR" is not defined, evaluates to 0 [-Werror=undef]
-    # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
-    #
-    export CFLAGS="$CFLAGS -Werror=undef"
     $PYTHON setup.py build "${build_args[@]}" install 2>&1 | tee log
   else
     # The job run with USE_DEBUG=1 on travis needs this.
@@ -80,6 +79,9 @@ setup_base()
 
 run_test()
 {
+  # see note in pyproject.toml for why ninja is installed as a test requirement
+  PYTHONOPTIMIZE="" $PIP install ninja
+
   # Install the test dependencies.
   # Clear PYTHONOPTIMIZE when running `pip install -r test_requirements.txt`
   # because version 2.19 of pycparser (a dependency of one of the packages
@@ -87,9 +89,6 @@ run_test()
   # file does not install correctly when Python's optimization level is set
   # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
   PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt pyinstaller
-  if [ -n "$USE_CYTHON3" ] ; then
-    $PIP install --pre --force-reinstall cython
-  fi
   DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
@@ -151,7 +150,7 @@ EOF
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
-    # Travis has a limit on log length that is causeing test failutes.
+    # Travis has a limit on log length that is causing test failutes.
     # The fix here is to remove the "-v" from the runtest arguments.
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON -b ../runtests.py -n --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
@@ -199,7 +198,7 @@ export PIP
 
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # ensure some warnings are not issued
-  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
   # adjust gcc flags if C coverage requested
   if [ -n "$RUN_COVERAGE" ]; then
      export NPY_DISTUTILS_APPEND_FLAGS=1
@@ -223,7 +222,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # temporary workaround for sdist failures.
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
-  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   $PYTHON -m venv venv-for-wheel

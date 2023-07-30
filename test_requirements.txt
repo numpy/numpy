@@ -1,11 +1,12 @@
-cython>=0.29.34,<3.0
+Cython
 wheel==0.38.1
 setuptools==59.2.0 ; python_version < '3.12'
 setuptools         ; python_version >= '3.12'
-hypothesis==6.24.1
-pytest==6.2.5
-pytz==2021.3
-pytest-cov==3.0.0
+hypothesis==6.81.1
+pytest==7.4.0
+pytz==2023.3
+pytest-cov==4.1.0
+meson
 pytest-xdist
 # for numpy.random.test.test_extending
 cffi; python_version < '3.10'

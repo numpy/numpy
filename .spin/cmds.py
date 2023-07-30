@@ -120,13 +120,17 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
      spin test -- -k "geometric"
      spin test -- -k "geometric and not rgeometric"
 
+    By default, spin will run `-m 'not slow'`. To run the full test suite, use
+    `spin -m full`
+
     For more, see `pytest --help`.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('numpy',)
 
     if '-m' not in pytest_args:
-        pytest_args = ('-m', markexpr) + pytest_args
+        if markexpr != "full":
+            pytest_args = ('-m', markexpr) + pytest_args
 
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
@@ -421,25 +425,12 @@ def ipython(ctx, ipython_args):
 
     ppath = meson._set_pythonpath()
 
-    # Get NumPy version
-    p = util.run([
-        sys.executable, '-c',
-        'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
-        output=False, echo=False
-    )
-    np_ver = p.stdout.strip().decode('ascii')
-
-    with tempfile.TemporaryDirectory() as d:
-        profile_dir = os.path.join(d, f'numpy_{np_ver}')
-        startup_dir = os.path.join(profile_dir, 'startup')
-
-        pathlib.Path(startup_dir).mkdir(parents=True)
-        with open(os.path.join(startup_dir, '00_numpy.py'), 'w') as f:
-            f.write('import numpy as np\n')
-
-        print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
-        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] +
-                 list(ipython_args))
+    print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
+    preimport = (r"import numpy as np; "
+                 r"print(f'\nPreimported NumPy {np.__version__} as np')")
+    util.run(["ipython", "--ignore-cwd",
+              f"--TerminalIPythonApp.exec_lines={preimport}"] +
+             list(ipython_args))
 
 
 @click.command(context_settings={"ignore_unknown_options": True})

@@ -34,8 +34,8 @@ class TestRealScalars:
         def check(v):
             assert_equal(str(np.float64(v)), str(v))
             assert_equal(str(np.float64(v)), repr(v))
-            assert_equal(repr(np.float64(v)), repr(v))
-            assert_equal(repr(np.float64(v)), str(v))
+            assert_equal(repr(np.float64(v)), f"np.float64({v!r})")
+            assert_equal(repr(np.float64(v)), f"np.float64({v})")
 
         # check we use the same number of significant digits
         check(1.12345678901234567890)
@@ -153,7 +153,7 @@ class TestRealScalars:
                     "0.00000000000000000000000000000000000000000000140129846432"
                     "4817070923729583289916131280261941876515771757068283889791"
                     "08268586060148663818836212158203125")
-        
+
         assert_equal(fpos64(5e-324, unique=False, precision=1074),
                     "0.00000000000000000000000000000000000000000000000000000000"
                     "0000000000000000000000000000000000000000000000000000000000"

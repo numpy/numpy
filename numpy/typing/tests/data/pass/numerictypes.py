@@ -20,10 +20,6 @@ np.issubdtype(np.float64, np.float32)
 np.sctype2char("S1")
 np.sctype2char(list)
 
-np.cast[int]
-np.cast["i8"]
-np.cast[np.int64]
-
 np.nbytes[int]
 np.nbytes["i8"]
 np.nbytes[np.int64]
