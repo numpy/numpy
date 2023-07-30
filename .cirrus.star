@@ -39,8 +39,8 @@ def main(ctx):
     if "[wheel build]" in commit_msg:
         wheel = True
 
-    if int(pr_number) > 0 and ("14 - Release" in labels or "36 - Build" in labels):
-        wheel = True
+    # if int(pr_number) > 0 and ("14 - Release" in labels or "36 - Build" in labels):
+    #     wheel = True
 
     if tag.startswith("v") and "dev0" not in tag:
         wheel = True
