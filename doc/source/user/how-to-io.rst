@@ -96,7 +96,7 @@ Whitespace-delimited
 :func:`numpy.genfromtxt` can also parse whitespace-delimited data files
 that have missing values if
 
-* **Each field has a fixed width**: Use the width as the `delimiter` argument.
+* **Each field has a fixed width**: Use the width as the `delimiter` argument.::
 
     # File with width=4. The data does not have to be justified (for example,
     # the 2 in row 1), the last column can be less than width (for example, the 6
@@ -154,7 +154,7 @@ that have missing values if
 * **The delimiter whitespace character is different from the whitespace that
   indicates missing data**. For instance, if columns are delimited by ``\t``,
   then missing data will be recognized if it consists of one
-  or more spaces.
+  or more spaces.::
 
     >>> with open("tabs.txt", "r") as f:
     ...    data = (f.read())

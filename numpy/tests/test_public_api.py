@@ -488,10 +488,7 @@ def test_api_importable():
 
 
 @pytest.mark.xfail(
-    reason = "meson-python doesn't install this entrypoint correctly yet",
-)
-@pytest.mark.xfail(
-    sysconfig.get_config_var("Py_DEBUG") is not None,
+    sysconfig.get_config_var("Py_DEBUG") not in (None, 0, "0"),
     reason=(
         "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
         "which does not expose the `array_api` entry point. "
@@ -503,6 +500,11 @@ def test_array_api_entry_point():
     Entry point for Array API implementation can be found with importlib and
     returns the numpy.array_api namespace.
     """
+    # For a development install that did not go through meson-python,
+    # the entrypoint will not have been installed. So ensure this test fails
+    # only if numpy is inside site-packages.
+    numpy_in_sitepackages = sysconfig.get_path('platlib') in np.__file__
+
     eps = importlib.metadata.entry_points()
     try:
         xp_eps = eps.select(group="array_api")
@@ -512,12 +514,19 @@ def test_array_api_entry_point():
         # Array API entry points so that running this test in <=3.9 will
         # still work - see https://github.com/numpy/numpy/pull/19800.
         xp_eps = eps.get("array_api", [])
-    assert len(xp_eps) > 0, "No entry points for 'array_api' found"
+    if len(xp_eps) == 0:
+        if numpy_in_sitepackages:
+            msg = "No entry points for 'array_api' found"
+            raise AssertionError(msg) from None
+        return
 
     try:
         ep = next(ep for ep in xp_eps if ep.name == "numpy")
     except StopIteration:
-        raise AssertionError("'numpy' not in array_api entry points") from None
+        if numpy_in_sitepackages:
+            msg = "'numpy' not in array_api entry points"
+            raise AssertionError(msg) from None
+        return
 
     xp = ep.load()
     msg = (

@@ -21,7 +21,7 @@ physical units (astropy.units_, pint_, unyt_), among others that add additional
 functionality on top of the NumPy API.
 
 Yet, users still want to work with these arrays using the familiar NumPy API and
-re-use existing code with minimal (ideally zero) porting overhead. With this
+reuse existing code with minimal (ideally zero) porting overhead. With this
 goal in mind, various protocols are defined for implementations of
 multi-dimensional arrays with high-level APIs matching NumPy.
 
@@ -69,7 +69,7 @@ The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`array interface protocol <arrays.interface>` defines a way for
-array-like objects to re-use each other's data buffers. Its implementation
+array-like objects to reuse each other's data buffers. Its implementation
 relies on the existence of the following attributes or methods:
 
 -  ``__array_interface__``: a Python dictionary containing the shape, the

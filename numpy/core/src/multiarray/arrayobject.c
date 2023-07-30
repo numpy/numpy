@@ -62,6 +62,9 @@ maintainer email:  oliphant.travis@ieee.org
 #include "binop_override.h"
 #include "array_coercion.h"
 
+
+NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy = 0;
+
 /*NUMPY_API
   Compute the size of an array (in number of items)
 */
@@ -460,9 +463,8 @@ array_dealloc(PyArrayObject *self)
             }
         }
         if (fa->mem_handler == NULL) {
-            char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
-            if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-                char const * msg = "Trying to dealloc data, but a memory policy "
+            if (numpy_warn_if_no_mem_policy) {
+                char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
                 WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);

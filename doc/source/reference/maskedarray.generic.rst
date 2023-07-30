@@ -117,7 +117,7 @@ There are several ways to construct a masked array.
      >>> x.view(ma.MaskedArray)
      masked_array(data=[(1, 1.0), (2, 2.0)],
                   mask=[(False, False), (False, False)],
-            fill_value=(999999, 1.e+20),
+            fill_value=(999999, 1e+20),
                  dtype=[('a', '<i8'), ('b', '<f8')])
 
 * Yet another possibility is to use any of the following functions:

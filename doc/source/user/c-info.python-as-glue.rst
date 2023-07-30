@@ -767,7 +767,7 @@ C-code. Its advantages for extending Python include
 
     - no need to learn a new syntax except Python and C
 
-    - allows re-use of C code
+    - allows reuse of C code
 
     - functionality in shared libraries written for other purposes can be
       obtained with a simple Python wrapper and search for the library.

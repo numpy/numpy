@@ -55,6 +55,10 @@ _NPY_MAX(T a, T b, npy::floating_point_tag const &)
     return npy_isnan(a) ? (a) : PyArray_MAX(a, b);
 }
 
+#define PyArray_CLT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag) : \
+                               ((p).real < (q).real)))
+#define PyArray_CGT(p,q) ((((p).real==(q).real) ? ((p).imag > (q).imag) : \
+                               ((p).real > (q).real)))
 template <class T>
 T
 _NPY_MIN(T a, T b, npy::complex_tag const &)
@@ -71,6 +75,8 @@ _NPY_MAX(T a, T b, npy::complex_tag const &)
                    ? (a)
                    : (b);
 }
+#undef PyArray_CLT
+#undef PyArray_CGT
 
 template <class T>
 T
