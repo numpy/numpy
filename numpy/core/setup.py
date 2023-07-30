@@ -83,8 +83,13 @@ def can_link_svml_fp16():
     """SVML FP16 requires binutils >= 2.38 for an updated assembler
     """
     if can_link_svml():
-        binutils_ver = os.popen("ld -v").readlines()[0].strip()[-4:]
-        return float(binutils_ver) >= 2.38
+        import re
+        binutils_ver = os.popen("ld -v").readlines()[0].strip()
+        binutils_ver = re.search(r"\d\.\d\d", binutils_ver)
+        if binutils_ver is not None:
+            return float(binutils_ver.group()) >= 2.38
+        else:
+            return False
 
 def check_git_submodules():
     out = os.popen("git submodule status")

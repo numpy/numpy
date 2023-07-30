@@ -1,13 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.25.2 Release Notes
-==========================
-NumPy 1.25.2 is a maintenance release that fixes bugs and regressions
-discovered after the 1.25.1 release. This is the last planned release in the
-1.25.x series, the next release will be 1.26.0, which will use the meson build
-system and support Python 3.12. The Python versions supported by this release
-are 3.9-3.11.
 
 Contributors
 ============
@@ -53,4 +43,3 @@ A total of 19 pull requests were merged for this release.
 * `#24293 <https://github.com/numpy/numpy/pull/24293>`__: BUG: Fix C types in scalartypes
 * `#24294 <https://github.com/numpy/numpy/pull/24294>`__: BUG: do not modify the input to ufunc_at
 * `#24295 <https://github.com/numpy/numpy/pull/24295>`__: BUG: Further fixes to indexing loop and added tests
-
