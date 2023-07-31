@@ -126,6 +126,7 @@ def download_openblas(target, plat, ilp64, *, nightly=False):
         f'{BASE_LOC}/{openblas_version}/download/'
         f'openblas{fnsuffix}-{openblas_version}-{suffix}'
     )
+    print(f'Attempting to download {filename}', file=sys.stderr)
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)
