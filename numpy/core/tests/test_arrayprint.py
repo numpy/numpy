@@ -527,6 +527,93 @@ class TestArray2String:
         gc.enable()
         assert_(r1 == r2)
 
+    def test_with_sign(self):
+        # mixed negative and positive value array
+        a = np.array([-2, 0, 3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[-2 +0 +3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[-2  0  3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[-2  0  3]'
+        )
+        # all non-negative array
+        a = np.array([2, 0, 3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[+2 +0 +3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[2 0 3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[ 2  0  3]'
+        )
+        # all negative array
+        a = np.array([-2, -1, -3])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[-2 -1 -3]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[-2 -1 -3]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[-2 -1 -3]'
+        )
+        # 2d array mixed negative and positive
+        a = np.array([[10, -1, 1, 1], [10, 10, 10, 10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[+10  -1  +1  +1]\n [+10 +10 +10 +10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[10 -1  1  1]\n [10 10 10 10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[10 -1  1  1]\n [10 10 10 10]]'
+        )
+        # 2d array all positive
+        a = np.array([[10, 0, 1, 1], [10, 10, 10, 10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[+10  +0  +1  +1]\n [+10 +10 +10 +10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[10  0  1  1]\n [10 10 10 10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[ 10   0   1   1]\n [ 10  10  10  10]]'
+        )
+        # 2d array all negative
+        a = np.array([[-10, -1, -1, -1], [-10, -10, -10, -10]])
+        assert_equal(
+            np.array2string(a, sign='+'),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign='-'),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+        assert_equal(
+            np.array2string(a, sign=' '),
+            '[[-10  -1  -1  -1]\n [-10 -10 -10 -10]]'
+        )
+
+
 class TestPrintOptions:
     """Test getting and setting global print options."""
 
@@ -1084,6 +1171,9 @@ def test_scalar_repr_numbers(dtype, value):
         (np.void((True, 2), dtype="?,<i8"),
             "(True, 2)",
             "np.void((True, 2), dtype=[('f0', '?'), ('f1', '<i8')])"),
+        (np.void((1, 2), dtype="<f8,>f4"),
+            "(1., 2.)",
+            "np.void((1.0, 2.0), dtype=[('f0', '<f8'), ('f1', '>f4')])"),
         (np.void(b'a'), r"void(b'\x61')", r"np.void(b'\x61')"),
     ])
 def test_scalar_repr_special(scalar, legacy_repr, representation):
@@ -1092,3 +1182,10 @@ def test_scalar_repr_special(scalar, legacy_repr, representation):
 
     with np.printoptions(legacy="1.25"):
         assert repr(scalar) == legacy_repr
+
+def test_scalar_void_float_str():
+    # Note that based on this currently we do not print the same as a tuple
+    # would, since the tuple would include the repr() inside for floats, but
+    # we do not do that.
+    scalar = np.void((1.0, 2.0), dtype=[('f0', '<f8'), ('f1', '>f4')])
+    assert str(scalar) == "(1.0, 2.0)"

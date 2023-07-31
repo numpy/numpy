@@ -622,8 +622,8 @@ voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        /* use string on old versions */
-        return _void_scalar_to_string(self, npy_legacy_print_mode > 125);
+        /* Python helper checks for the legacy mode printing */
+        return _void_scalar_to_string(self, 1);
     }
     if (npy_legacy_print_mode > 125) {
         return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");

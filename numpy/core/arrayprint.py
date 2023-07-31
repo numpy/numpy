@@ -156,6 +156,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values. (default '-')
+
+        .. versionchanged:: 2.0
+             The sign parameter can now be an integer type, previously
+             types were floating-point types.
+
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -415,7 +420,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
-        'int': lambda: IntegerFormat(data),
+        'int': lambda: IntegerFormat(data, sign),
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longfloat': lambda: FloatingFormat(
@@ -647,6 +652,11 @@ def array2string(a, max_line_width=None, precision=None,
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values.
         Defaults to ``numpy.get_printoptions()['sign']``.
+
+        .. versionchanged:: 2.0
+             The sign parameter can now be an integer type, previously
+             types were floating-point types.
+
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types.
@@ -1226,19 +1236,24 @@ def format_float_positional(x, precision=None, unique=True,
                               sign=sign, pad_left=pad_left,
                               pad_right=pad_right, min_digits=min_digits)
 
-
 class IntegerFormat:
-    def __init__(self, data):
+    def __init__(self, data, sign='-'):
         if data.size > 0:
-            max_str_len = max(len(str(np.max(data))),
-                              len(str(np.min(data))))
+            data_max = np.max(data)
+            data_min = np.min(data)
+            data_max_str_len = len(str(data_max))
+            if sign == ' ' and data_min < 0:
+                sign = '-'
+            if data_max >= 0 and sign in "+ ":
+                data_max_str_len += 1
+            max_str_len = max(data_max_str_len,
+                              len(str(data_min)))
         else:
             max_str_len = 0
-        self.format = '%{}d'.format(max_str_len)
+        self.format = f'{{:{sign}{max_str_len}d}}'
 
     def __call__(self, x):
-        return self.format % x
-
+        return self.format.format(x)
 
 class BoolFormat:
     def __init__(self, data, **kwargs):
@@ -1415,6 +1430,10 @@ def _void_scalar_to_string(x, is_repr=True):
     formatters defined above.
     """
     options = _format_options.copy()
+
+    if options["legacy"] <= 125:
+        return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+
     if options.get('formatter') is None:
         options['formatter'] = {}
     options['formatter'].setdefault('float_kind', str)

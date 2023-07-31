@@ -1630,8 +1630,8 @@ Conversion
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
     to `PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
-    `offset` plus the itemsize of the new array type must be less than ``self
-    ->descr->elsize`` or an error is raised. The same shape and strides
+    `offset` plus the itemsize of the new array type must be less than
+    ``self->descr->elsize`` or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
     effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
