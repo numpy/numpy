@@ -2849,7 +2849,11 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         if (*ip == NULL) {
             return NPY_FALSE;
         }
-        return (npy_bool) PyObject_IsTrue(*ip);
+        int istrue = PyObject_IsTrue(*ip);
+        if (istrue == -1) {
+            return (npy_bool) -1;
+        }
+        return (npy_bool) istrue;
     }
     else {
         PyObject *obj;
@@ -2857,7 +2861,11 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         if (obj == NULL) {
             return NPY_FALSE;
         }
-        return (npy_bool) PyObject_IsTrue(obj);
+        int istrue = PyObject_IsTrue(obj);
+        if (istrue == -1) {
+            return (npy_bool) -1;
+        }
+        return (npy_bool) istrue;
     }
 }
 

@@ -591,7 +591,11 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     PyArray_ITER_RESET(self);
 
     if (PyBool_Check(ind)) {
-        if (PyObject_IsTrue(ind)) {
+        int istrue = PyObject_IsTrue(ind);
+        if (istrue == -1) {
+            goto fail;
+        }
+        if (istrue) {
             return PyArray_ToScalar(self->dataptr, self->ao);
         }
         else { /* empty array */
@@ -872,9 +876,14 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
      * Check for Boolean -- this is first because
      * Bool is a subclass of Int
      */
+   
     if (PyBool_Check(ind)) {
         retval = 0;
-        if (PyObject_IsTrue(ind)) {
+        int istrue = PyObject_IsTrue(ind);
+        if (istrue == -1) {
+            return -1;
+        }
+        if (istrue) {
             retval = PyArray_Pack(
                     PyArray_DESCR(self->ao), self->dataptr, val);
         }
