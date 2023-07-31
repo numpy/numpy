@@ -55,7 +55,11 @@ jobs:
         run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
 
       - name: Build
-        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+        run: |
+          # Pyodide is still in the process of adding better/easier support for
+          # non-setup.py based builds.
+          cp pyproject.toml.setuppy pyproject.toml
+          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
         uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3.7.0
@@ -67,6 +71,7 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          python -c "import sys; print(sys.platform)"
           pip install -r test_requirements.txt
       - name: Test
         run: |

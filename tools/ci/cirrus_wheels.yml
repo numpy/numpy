@@ -32,8 +32,13 @@ linux_aarch64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_BUILD: cp312-*
 
   build_script: |
+    apt update
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
     git fetch origin
     ./tools/travis-before-install.sh
@@ -56,6 +61,10 @@ macosx_arm64_task:
     - env:
         CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-* cp311-*
+    - env:
+        CIRRUS_CLONE_SUBMODULES: true
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_BUILD: cp312-*
   env:
     PATH: /opt/homebrew/opt/python@3.10/bin:/usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
@@ -68,7 +77,8 @@ macosx_arm64_task:
       RUNNER_OS=macOS
       SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
       LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-      CFLAGS="-std=c99 -fno-strict-aliasing"
+      CFLAGS="-fno-strict-aliasing -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
+      CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
       OPENBLAS64_="/usr/local"
       NPY_USE_BLAS_ILP64="1"
 
@@ -106,7 +116,7 @@ wheels_upload_task:
 
   env:
     NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[!5a69522ae0c2af9edb2bc1cdfeaca6292fb3666d9ecd82dca0615921834a6ce3b702352835d8bde4ea2a9ed5ef8424ac!]
-    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[!196422e6c3419a3b1d79815e1026094a215cb0f346fe34ed0f9d3ca1c19339df7398d04556491b1e0420fc1fe3713289!]
+    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[ef04347663cfcb58d121385707e55951dc8e03b009edeed988aa4a33ba8205c54ca9980ac4da88e1adfdebff8b9d7ed4]
 
   upload_script: |
     apt-get update
@@ -115,7 +125,7 @@ wheels_upload_task:
     export IS_PUSH="false"
 
     # cron job
-    if [[ "$CIRRUS_CRON" == "weekly" ]]; then
+    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
       export IS_SCHEDULE_DISPATCH="true"
     fi
 

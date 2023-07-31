@@ -153,7 +153,6 @@ py.install_sources(
   '_examples/cython/extending.pyx',
   '_examples/cython/extending_distributions.pyx',
   '_examples/cython/meson.build',
-  '_examples/cython/setup.py',
   ],
   subdir: 'numpy/random/_examples/cython'
 )

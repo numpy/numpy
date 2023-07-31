@@ -51,7 +51,7 @@ macos_arm64_test_task:
     popd
 
     pip install -r build_requirements.txt
-    pip install pytest hypothesis typing_extensions
+    pip install pytest pytest-xdist hypothesis typing_extensions
     
-    spin build
-    spin test
+    spin build -- -Dallow-noblas=true
+    spin test -j auto
