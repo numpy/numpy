@@ -70,4 +70,5 @@
 0x00000010 = 04a7bf1e65350926a0e528798da263c0
 
 # Version 17 (NumPy 1.25) No actual change.
+# Version 17 (NumPy 1.26) No change.
 0x00000011 = ca1aebdad799358149567d9d93cbca09
