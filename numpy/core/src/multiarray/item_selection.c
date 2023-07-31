@@ -993,9 +993,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (multi == NULL) {
         goto fail;
     }
+    dtype = PyArray_DESCR(mps[0]);
+
     /* Set-up return array */
     if (out == NULL) {
-        dtype = PyArray_DESCR(mps[0]);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
                                                     dtype,
@@ -1032,7 +1033,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        dtype = PyArray_DESCR(mps[0]);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
     }
@@ -1040,15 +1040,14 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (obj == NULL) {
         goto fail;
     }
-    elsize = PyArray_DESCR(obj)->elsize;
+    elsize = dtype->elsize;
     ret_data = PyArray_DATA(obj);
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     NPY_cast_info cast_info = {.func = NULL};
     if (PyDataType_REFCHK(dtype)) {
-        PyArrayIterObject *ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
-        int is_aligned = IsUintAligned(ind_it->ao);
+        int is_aligned = IsUintAligned(obj);
         PyArray_GetDTypeTransferFunction(
                     is_aligned,
                     dtype->elsize,
