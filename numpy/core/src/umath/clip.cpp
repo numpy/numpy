@@ -59,6 +59,7 @@ _NPY_MAX(T a, T b, npy::floating_point_tag const &)
                                (npy_creal##suffix(p) < npy_creal##suffix(q))))
 #define PyArray_CGT(p,q,suffix) (((npy_creal##suffix(p)==npy_creal##suffix(q)) ? (npy_cimag##suffix(p) > npy_cimag##suffix(q)) : \
                                (npy_creal##suffix(p) > npy_creal##suffix(q))))
+
 npy_cdouble
 _NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {

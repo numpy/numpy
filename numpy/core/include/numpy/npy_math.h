@@ -360,83 +360,64 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
  * Complex declarations
  */
 
-#define REAL 0
-#define IMAG 1
-#define CREATE_UNION(ctype, npy_ctype)  \
-    typedef union {                     \
-        ctype *arr;                     \
-        const npy_ctype *comp;          \
-    } _u;
-#define NPY_COMPLEX_GET(ctype, npy_ctype, c, real_or_imag)  \
-    CREATE_UNION(ctype, npy_ctype)                          \
-    _u tmp;                                                 \
-    tmp.comp = &c;                                           \
-    return tmp.arr[real_or_imag];                           \
-
-#define NPY_COMPLEX_SET(ctype, npy_ctype, c, val, real_or_imag) \
-    CREATE_UNION(ctype, npy_ctype)                              \
-    _u tmp;                                                     \
-    tmp.comp = c;                                               \
-    tmp.arr[real_or_imag] = val;                                \
-
 static inline double npy_creal(const npy_cdouble z)
 {
-    NPY_COMPLEX_GET(double, npy_cdouble, z, REAL)
+    return ((double *) &z)[0];
 }
 
 static inline void npy_csetreal(npy_cdouble *z, const double r)
 {
-    NPY_COMPLEX_SET(double, npy_cdouble, z, r, REAL)
+    ((double *) z)[0] = r;
 }
 
 static inline double npy_cimag(const npy_cdouble z)
 {
-    NPY_COMPLEX_GET(double, npy_cdouble, z, IMAG)
+    return ((double *) &z)[1];
 }
 
 static inline void npy_csetimag(npy_cdouble *z, const double i)
 {
-    NPY_COMPLEX_SET(double, npy_cdouble, z, i, IMAG)
+    ((double *) z)[1] = i;
 }
 
 static inline float npy_crealf(const npy_cfloat z)
 {
-    NPY_COMPLEX_GET(float, npy_cfloat, z, REAL)
+    return ((float *) &z)[0];
 }
 
 static inline void npy_csetrealf(npy_cfloat *z, const float r)
 {
-    NPY_COMPLEX_SET(float, npy_cfloat, z, r, REAL)
+    ((float *) z)[0] = r;
 }
 
 static inline float npy_cimagf(const npy_cfloat z)
 {
-    NPY_COMPLEX_GET(float, npy_cfloat, z, IMAG)
+    return ((float *) &z)[1];
 }
 
 static inline void npy_csetimagf(npy_cfloat *z, const float i)
 {
-    NPY_COMPLEX_SET(float, npy_cfloat, z, i, IMAG)
+    ((float *) z)[1] = i;
 }
 
 static inline npy_longdouble npy_creall(const npy_clongdouble z)
 {
-    NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, REAL)
+    return ((longdouble_t *) &z)[0];
 }
 
 static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
 {
-    NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, r, REAL)
+    ((longdouble_t *) z)[0] = r;
 }
 
 static inline npy_longdouble npy_cimagl(const npy_clongdouble z)
 {
-    NPY_COMPLEX_GET(longdouble_t, npy_clongdouble, z, IMAG)
+    return ((longdouble_t *) &z)[1];
 }
 
 static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)
 {
-    NPY_COMPLEX_SET(longdouble_t, npy_clongdouble, z, i, IMAG)
+    ((longdouble_t *) z)[1] = i;
 }
 
 #define NPY_CSETREAL(z, r) npy_csetreal(z, r)
@@ -445,12 +426,6 @@ static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)
 #define NPY_CSETIMAGF(z, i) npy_csetimagf(z, i)
 #define NPY_CSETREALL(z, r) npy_csetreall(z, r)
 #define NPY_CSETIMAGL(z, i) npy_csetimagl(z, i)
-
-#undef REAL
-#undef IMAG
-#undef CREATE_UNION
-#undef NPY_COMPLEX_GET
-#undef NPY_COMPLEX_SET
 
 static inline npy_cdouble npy_cpack(double x, double y)
 {

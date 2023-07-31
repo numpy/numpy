@@ -1777,10 +1777,6 @@ static PyObject *
 
 /**begin repeat
  *
- * #NAME = BYTE, UBYTE, SHORT, USHORT, INT,
- *         UINT, LONG, ULONG, LONGLONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #name = byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong,
  *             half, float, double, longdouble,
