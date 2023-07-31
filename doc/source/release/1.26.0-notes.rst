@@ -1,0 +1,12 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.26.0 Release Notes
+==========================
+
+The NumPy 1.26.0 release is a continuation of the 1.25.x release cycle, but
+with the distutils based build replaced by meson in order to work with Python
+3.12.
+
+The Python versions supported in this release are 3.9-3.12.
+
