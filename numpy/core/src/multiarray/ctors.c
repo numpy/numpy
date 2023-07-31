@@ -2271,7 +2271,7 @@ PyArray_FromInterface(PyObject *origin)
         }
         int istrue = PyObject_IsTrue(PyTuple_GET_ITEM(attr,1));
         if (istrue == -1) {
-            return NULL;
+            goto fail;
         }
         if (istrue) {
             dataflags &= ~NPY_ARRAY_WRITEABLE;
