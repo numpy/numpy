@@ -1088,15 +1088,16 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        if (cast_info.func != NULL) {
+        if (cast_info.func == NULL) {
+            /* We ensure memory doesn't overlap, so can use memcpy */
+            memcpy(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
+        }
+        else {
             char *args[2] = {PyArray_MultiIter_DATA(multi, mi), ret_data};
             if (cast_info.func(&cast_info.context, args, &one,
                                 transfer_strides, cast_info.auxdata) < 0) {
                 goto fail;
             }
-        }
-        else {
-            memmove(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
         }
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
