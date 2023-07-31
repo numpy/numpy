@@ -8,16 +8,16 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9 #need to pin to avoid issues with builds
-  - cython>=0.29.30
+  - cython>=3.0
   - compilers
   - openblas
   - nomkl
   - setuptools=59.2.0
-  - meson >= 0.64.0
   - ninja
   - pkg-config
   - meson-python
-  - pip   # so you can use pip to install spin
+  - pip
+  - spin
   # For testing
   - pytest
   - pytest-cov

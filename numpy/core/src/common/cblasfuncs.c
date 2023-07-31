@@ -9,6 +9,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -422,8 +423,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cdouble *)PyArray_DATA(ap2);
                 ptr2 = (npy_cdouble *)PyArray_DATA(ap1);
                 res = (npy_cdouble *)PyArray_DATA(out_buf);
-                res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
-                res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
+                npy_csetreal(res, npy_creal(*ptr1) * npy_creal(*ptr2)
+                                            - npy_cimag(*ptr1) * npy_cimag(*ptr2));
+                npy_csetimag(res, npy_creal(*ptr1) * npy_cimag(*ptr2)
+                                            + npy_cimag(*ptr1) * npy_creal(*ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_zaxpy)(l,
@@ -495,8 +498,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 ptr1 = (npy_cfloat *)PyArray_DATA(ap2);
                 ptr2 = (npy_cfloat *)PyArray_DATA(ap1);
                 res = (npy_cfloat *)PyArray_DATA(out_buf);
-                res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
-                res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
+                npy_csetrealf(res, npy_crealf(*ptr1) * npy_crealf(*ptr2)
+                                           - npy_cimagf(*ptr1) * npy_cimagf(*ptr2));
+                npy_csetimagf(res, npy_crealf(*ptr1) * npy_cimagf(*ptr2)
+                                           + npy_cimagf(*ptr1) * npy_crealf(*ptr2));
             }
             else if (ap1shape != _matrix) {
                 CBLAS_FUNC(cblas_caxpy)(l,

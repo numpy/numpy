@@ -54,6 +54,7 @@ static const volatile npy_float tiny = 3.9443045e-31f;
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
+ * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  * #TMIN = FLT_MIN, DBL_MIN, LDBL_MIN#
  * #TMANT_DIG = FLT_MANT_DIG, DBL_MANT_DIG, LDBL_MANT_DIG#
@@ -64,7 +65,11 @@ static const volatile npy_float tiny = 3.9443045e-31f;
 /*==========================================================
  * Constants
  *=========================================================*/
-static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+static const @ctype@ c_1@c@ = {1.0@C@, 0.0@C@};
+#else
+static const @ctype@ c_1@c@ = 1.0@C@;
+#endif
 
 /*==========================================================
  * Helper functions
@@ -422,13 +427,7 @@ npy_csqrt@c@(@ctype@ z)
 static @ctype@
 sys_cpow@c@(@ctype@ x, @ctype@ y)
 {
-    __@ctype@_to_c99_cast xcast;
-    __@ctype@_to_c99_cast ycast;
-    __@ctype@_to_c99_cast ret;
-    xcast.npy_z = x;
-    ycast.npy_z = y;
-    ret.c99_z = cpow@c@(xcast.c99_z, ycast.c99_z);
-    return ret.npy_z;
+    return cpow@c@(x, y);
 }
 #endif
 
@@ -481,7 +480,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
           r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
           return r;
     }
-    if (bi == 0 && (n=(npy_intp)br) == br) {
+    if (bi == 0 && br > -100 && br < 100 && (n=(npy_intp)br) == br) {
         if (n == 1) {
             /* unroll: handle inf better */
             return npy_cpack@c@(ar, ai);
@@ -1756,9 +1755,7 @@ npy_catanh@c@(@ctype@ z)
 @type@
 npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1;
-    z1.npy_z = z;
-    return @kind@@c@(z1.c99_z);
+    return @kind@@c@(z);
 }
 #endif
 /**end repeat1**/
@@ -1773,11 +1770,7 @@ npy_@kind@@c@(@ctype@ z)
 @ctype@
 npy_@kind@@c@(@ctype@ z)
 {
-    __@ctype@_to_c99_cast z1;
-    __@ctype@_to_c99_cast ret;
-    z1.npy_z = z;
-    ret.c99_z = @kind@@c@(z1.c99_z);
-    return ret.npy_z;
+    return @kind@@c@(z);
 }
 #endif
 /**end repeat1**/

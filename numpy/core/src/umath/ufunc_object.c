@@ -1422,18 +1422,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
 
     if (masked) {
         assert(PyArray_TYPE(op[nop]) == NPY_BOOL);
-        if (ufunc->_always_null_previously_masked_innerloop_selector != NULL) {
-            if (PyErr_WarnFormat(PyExc_UserWarning, 1,
-                    "The ufunc %s has a custom masked-inner-loop-selector."
-                    "NumPy assumes that this is NEVER used. If you do make "
-                    "use of this please notify the NumPy developers to discuss "
-                    "future solutions. (See NEP 41 and 43)\n"
-                    "NumPy will continue, but ignore the custom loop selector. "
-                    "This should only affect performance.",
-                    ufunc_get_name_cstr(ufunc)) < 0) {
-                return -1;
-            }
-        }
 
         /*
          * NOTE: In the masked version, we consider the output read-write,
@@ -5109,8 +5097,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
-    ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
-    ufunc->_always_null_previously_masked_innerloop_selector = NULL;
 
     ufunc->op_flags = NULL;
     ufunc->_loops = NULL;
@@ -5796,7 +5782,7 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     int buffersize=0, errormask = 0;
     int res;
     char *args[3];
-    npy_intp steps[3];
+    npy_intp steps[4];
     args[0] = (char *) iter->baseoffset;
     steps[0] = iter->fancy_strides[0];
     if (ufuncimpl->nin == 1) {
@@ -5819,16 +5805,17 @@ trivial_at_loop(PyArrayMethodObject *ufuncimpl, NPY_ARRAYMETHOD_FLAGS flags,
     do {
         npy_intp *inner_size = NpyIter_GetInnerLoopSizePtr(iter->outer);
         npy_intp * indxP = (npy_intp *)iter->outer_ptrs[0];
-        for (npy_intp i=0; i < *inner_size; i++) {
-            if (indxP[i] < 0) {
-                indxP[i] += iter->fancy_dims[0];
-            }
-        }
         args[1] = (char *)indxP;
         steps[1] = iter->outer_strides[0];
+        /* 
+         * The value of iter->fancy_dims[0] is added to negative indexes
+         * inside the inner loop
+         */
+        steps[3] = iter->fancy_dims[0];
 
         res = ufuncimpl->contiguous_indexed_loop(
                 context, args, inner_size, steps, NULL);
+
         if (args[2] != NULL) {
             args[2] += (*inner_size) * steps[2];
         }

@@ -62,8 +62,13 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
-static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
+static const npy_cfloat oneF = {1.0f, 0.0f}, zeroF = {0.0f, 0.0f};
+#else
+static const npy_cdouble oneD = 1.0, zeroD = 0.0;
+static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
+#endif
 
 /**begin repeat
  *
@@ -209,6 +214,7 @@ NPY_NO_EXPORT void
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #suff = , , , , f, , l, x*10#
  * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*10#
  * #IS_HALF = 0, 0, 0, 1, 0*13#
  */
@@ -232,8 +238,8 @@ NPY_NO_EXPORT void
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
 #if @IS_COMPLEX@ == 1
-            (*(@typ@ *)op).real = 0;
-            (*(@typ@ *)op).imag = 0;
+            npy_csetreal@suff@((@typ@ *)op, 0.0);
+            npy_csetimag@suff@((@typ@ *)op, 0.0);
 #elif @IS_HALF@
             float sum = 0;
 #else
@@ -245,10 +251,10 @@ NPY_NO_EXPORT void
 #if @IS_HALF@
                 sum += npy_half_to_float(val1) * npy_half_to_float(val2);
 #elif @IS_COMPLEX@ == 1
-                (*(@typ@ *)op).real += (val1.real * val2.real) -
-                                       (val1.imag * val2.imag);
-                (*(@typ@ *)op).imag += (val1.real * val2.imag) +
-                                       (val1.imag * val2.real);
+                npy_csetreal@suff@((@typ@ *) op, npy_creal@suff@(*((@typ@ *) op)) + ((npy_creal@suff@(val1) * npy_creal@suff@(val2)) -
+                                       (npy_cimag@suff@(val1) * npy_cimag@suff@(val2))));
+                npy_csetimag@suff@((@typ@ *) op, npy_cimag@suff@(*((@typ@ *) op)) + ((npy_creal@suff@(val1) * npy_cimag@suff@(val2)) +
+                                       (npy_cimag@suff@(val1) * npy_creal@suff@(val2))));
 #else
                 *(@typ@ *)op += val1 * val2;
 #endif

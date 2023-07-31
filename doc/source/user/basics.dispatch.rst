@@ -96,10 +96,10 @@ For this example we will only handle the method ``__call__``
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -147,10 +147,10 @@ conveniently by inheriting from the mixin
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -186,10 +186,10 @@ functions to our custom variants.
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))

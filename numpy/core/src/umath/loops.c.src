@@ -158,11 +158,11 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp const *dimensions, npy_intp const *step
     func_type *f = (func_type *)func;
     UNARY_LOOP {
         npy_cdouble tmp, out;
-        tmp.real = (double)((float *)ip1)[0];
-        tmp.imag = (double)((float *)ip1)[1];
+        npy_csetreal(&tmp, (double)((float *)ip1)[0]);
+        npy_csetimag(&tmp, (double)((float *)ip1)[1]);
         f(&tmp, &out);
-        ((float *)op1)[0] = (float)out.real;
-        ((float *)op1)[1] = (float)out.imag;
+        ((float *)op1)[0] = (float)npy_creal(out);
+        ((float *)op1)[1] = (float)npy_cimag(out);
     }
 }
 
@@ -174,13 +174,13 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
     func_type *f = (func_type *)func;
     BINARY_LOOP {
         npy_cdouble tmp1, tmp2, out;
-        tmp1.real = (double)((float *)ip1)[0];
-        tmp1.imag = (double)((float *)ip1)[1];
-        tmp2.real = (double)((float *)ip2)[0];
-        tmp2.imag = (double)((float *)ip2)[1];
+        npy_csetreal(&tmp1, (double)((float *)ip1)[0]);
+        npy_csetimag(&tmp1, (double)((float *)ip1)[1]);
+        npy_csetreal(&tmp2, (double)((float *)ip2)[0]);
+        npy_csetimag(&tmp2, (double)((float *)ip2)[1]);
         f(&tmp1, &tmp2, &out);
-        ((float *)op1)[0] = (float)out.real;
-        ((float *)op1)[1] = (float)out.imag;
+        ((float *)op1)[0] = (float)npy_creal(out);
+        ((float *)op1)[1] = (float)npy_cimag(out);
     }
 }
 
@@ -450,14 +450,19 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 int
                       void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @type@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
         *indexed = *indexed @OP@ *(@type@ *)value;
     }
     return 0;
@@ -1241,14 +1246,19 @@ NPY_NO_EXPORT int
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @type@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
         *indexed = npy_floor_divide@c@(*indexed, *(@type@ *)value);
     }
     return 0;
@@ -1395,14 +1405,19 @@ LONGDOUBLE_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     npy_longdouble *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (npy_longdouble *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (npy_longdouble *)(ip1 + is1 * indx);
         *indexed = *indexed @OP@ *(npy_longdouble *)value;
     }
     return 0;
@@ -1520,14 +1535,19 @@ HALF_@kind@_indexed(void *NPY_UNUSED(context),
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     npy_half *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (npy_half *)(ip1 + is1 * indx);
         const float v = npy_half_to_float(*(npy_half *)value);
         *indexed = npy_float_to_half(npy_half_to_float(*indexed) @OP@ v);
     }
@@ -1641,14 +1661,19 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     npy_half *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (npy_half *)(ip1 + is1 * indx);
         npy_half v = *(npy_half *)value;
         *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
     }
@@ -1679,14 +1704,19 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     npy_half *indexed;
-    for (i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+    for (i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (npy_half *)(ip1 + is1 * indx);
         npy_half v = *(npy_half *)value;
         *indexed = (@OP@(*indexed, v) || npy_half_isnan(v)) ? *indexed: v;
     }
@@ -1717,14 +1747,19 @@ HALF_floor_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
          void *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     npy_half *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (npy_half *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (npy_half *)(ip1 + is1 * indx);
         float v = npy_half_to_float(*(npy_half *)value);
         float div = npy_floor_dividef(npy_half_to_float(*indexed), v);
         *indexed = npy_float_to_half(div);
@@ -1947,14 +1982,19 @@ NPY_NO_EXPORT int @TYPE@_@kind@_indexed
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @ftype@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@ftype@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@ftype@ *)(ip1 + is1 * indx);
         const @ftype@ b_r = ((@ftype@ *)value)[0];
         const @ftype@ b_i = ((@ftype@ *)value)[1];
         indexed[0] @OP@= b_r;
@@ -1981,14 +2021,19 @@ NPY_NO_EXPORT int @TYPE@_multiply_indexed
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @ftype@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@ftype@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@ftype@ *)(ip1 + is1 * indx);
         const @ftype@ a_r = indexed[0];
         const @ftype@ a_i = indexed[1];
         const @ftype@ b_r = ((@ftype@ *)value)[0];

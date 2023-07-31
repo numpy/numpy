@@ -36,6 +36,9 @@
 
 #include "binop_override.h"
 
+/* determines if legacy mode is enabled, global set in multiarraymodule.c */
+extern int npy_legacy_print_mode;
+
 /*
  * used for allocating a single scalar, so use the default numpy
  * memory allocators instead of the (maybe) user overrides
@@ -279,51 +282,101 @@ static PyObject *
 genint_type_str(PyObject *self)
 {
     PyObject  *item, *item_str;
-    PyArray_Descr *descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
-    void *val = scalar_value(self, descr);
-    switch (descr->type_num) {
+    PyArray_Descr *dtype = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
+    void *val = scalar_value(self, dtype);
+    switch (dtype->type_num) {
         case NPY_BYTE:
-            item = PyLong_FromLong(*(int8_t *)val);
+            item = PyLong_FromLong(*(npy_byte *)val);
             break;
         case NPY_UBYTE:
-            item = PyLong_FromUnsignedLong(*(uint8_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ubyte *)val);
             break;
         case NPY_SHORT:
-            item = PyLong_FromLong(*(int16_t *)val);
+            item = PyLong_FromLong(*(npy_short *)val);
             break;
         case NPY_USHORT:
-            item = PyLong_FromUnsignedLong(*(uint16_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ushort *)val);
             break;
         case NPY_INT:
-            item = PyLong_FromLong(*(int32_t *)val);
+            item = PyLong_FromLong(*(npy_int *)val);
             break;
         case NPY_UINT:
-            item = PyLong_FromUnsignedLong(*(uint32_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_uint *)val);
             break;
         case NPY_LONG:
-            item = PyLong_FromLong(*(int64_t *)val);
+            item = PyLong_FromLong(*(npy_long *)val);
             break;
         case NPY_ULONG:
-            item = PyLong_FromUnsignedLong(*(uint64_t *)val);
+            item = PyLong_FromUnsignedLong(*(npy_ulong *)val);
             break;
         case NPY_LONGLONG:
-            item = PyLong_FromLongLong(*(long long *)val);
+            item = PyLong_FromLongLong(*(npy_longlong *)val);
             break;
         case NPY_ULONGLONG:
-            item = PyLong_FromUnsignedLongLong(*(unsigned long long *)val);
+            item = PyLong_FromUnsignedLongLong(*(npy_ulonglong *)val);
             break;
         default:
             item = gentype_generic_method(self, NULL, NULL, "item");
             break;
     }
-    Py_DECREF(descr);
+    Py_DECREF(dtype);
     if (item == NULL) {
         return NULL;
     }
-
     item_str = PyObject_Str(item);
     Py_DECREF(item);
     return item_str;
+}
+
+static PyObject *
+genint_type_repr(PyObject *self)
+{
+    PyObject *value_string = genint_type_str(self);
+    if (value_string == NULL) {
+        return NULL;
+    }
+    if (npy_legacy_print_mode <= 125) {
+        return value_string;
+    }
+
+    int num = _typenum_fromtypeobj((PyObject *)Py_TYPE(self), 0);
+
+    PyObject *repr;
+    if (num == 0) {
+        /* Not a builtin scalar (presumably), just use the name */
+        repr = PyUnicode_FromFormat("%S(%S)", Py_TYPE(self)->tp_name, value_string);
+        Py_DECREF(value_string);
+        return repr;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(num);  /* cannot fail */
+    int bitsize = descr->elsize * 8;
+    Py_DECREF(descr);
+    if (PyTypeNum_ISUNSIGNED(num)) {
+        repr = PyUnicode_FromFormat("np.uint%d(%S)", bitsize, value_string);
+    }
+    else {
+        repr = PyUnicode_FromFormat("np.int%d(%S)", bitsize, value_string);
+    }
+    Py_DECREF(value_string);
+    return repr;
+}
+
+static PyObject *
+genbool_type_str(PyObject *self)
+{
+    return PyUnicode_FromString(
+            ((PyBoolScalarObject *)self)->obval ? "True" : "False");
+}
+
+static PyObject *
+genbool_type_repr(PyObject *self)
+{
+    if (npy_legacy_print_mode <= 125) {
+        return genbool_type_str(self);
+    }
+    return PyUnicode_FromString(
+            ((PyBoolScalarObject *)self)->obval ? "np.True_" : "np.False_");
 }
 
 /*
@@ -422,6 +475,8 @@ format_@name@(@type@ val, npy_bool scientific,
 /**begin repeat
  * #form = repr, str#
  */
+#define IS_@form@
+
 static PyObject *
 stringtype_@form@(PyObject *self)
 {
@@ -439,8 +494,17 @@ stringtype_@form@(PyObject *self)
     }
     ret = PyBytes_Type.tp_@form@(new);
     Py_DECREF(new);
+#ifdef IS_repr
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (npy_legacy_print_mode > 125) {
+        Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+    }
+#endif   /* IS_repr */
     return ret;
 }
+#undef IS_@form@
 /**end repeat**/
 
 /*
@@ -451,6 +515,8 @@ stringtype_@form@(PyObject *self)
 /**begin repeat
  * #form = repr, str#
  */
+#define IS_@form@
+
 static PyObject *
 unicodetype_@form@(PyObject *self)
 {
@@ -474,8 +540,20 @@ unicodetype_@form@(PyObject *self)
     ret = PyUnicode_Type.tp_@form@(new);
     Py_DECREF(new);
     PyMem_Free(ip);
+
+#ifdef IS_repr
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (npy_legacy_print_mode > 125) {
+        Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
+    }
+#endif  /* IS_repr */
+
     return ret;
 }
+
+#undef IS_@form@
 /**end repeat**/
 
 /*
@@ -528,14 +606,15 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 }
 
 static PyObject *
-_void_scalar_repr(PyObject *obj) {
-    static PyObject *reprfunc = NULL;
+_void_scalar_to_string(PyObject *obj, int repr) {
+    static PyObject *tostring_func = NULL;
     npy_cache_import("numpy.core.arrayprint",
-                     "_void_scalar_repr", &reprfunc);
-    if (reprfunc == NULL) {
+                     "_void_scalar_to_string", &tostring_func);
+    if (tostring_func == NULL) {
         return NULL;
     }
-    return PyObject_CallFunction(reprfunc, "O", obj);
+    PyObject *is_repr = repr ? Py_True : Py_False;
+    return PyObject_CallFunctionObjArgs(tostring_func, obj, is_repr, NULL);
 }
 
 static PyObject *
@@ -543,9 +622,15 @@ voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        return _void_scalar_repr(self);
+        /* Python helper checks for the legacy mode printing */
+        return _void_scalar_to_string(self, 1);
     }
-    return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+    if (npy_legacy_print_mode > 125) {
+        return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
+    }
+    else {
+        return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+    }
 }
 
 static PyObject *
@@ -553,7 +638,7 @@ voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        return _void_scalar_repr(self);
+        return _void_scalar_to_string(self, 0);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }
@@ -592,14 +677,24 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+        if (npy_legacy_print_mode > 125) {
+            ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+        }
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
         if (meta == NULL) {
             return NULL;
         }
-        ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+        if (npy_legacy_print_mode > 125) {
+            ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+        }
         Py_DECREF(meta);
     }
 
@@ -638,7 +733,12 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%S)", val);
+        if (npy_legacy_print_mode > 125) {
+            ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.timedelta64(%S)", val);
+        }
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -646,7 +746,12 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%S,'%S')", val, meta);
+        if (npy_legacy_print_mode > 125) {
+            ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
+        }
+        else {
+            ret = PyUnicode_FromFormat("numpy.timedelta64(%S,'%S')", val, meta);
+        }
         Py_DECREF(meta);
     }
     Py_DECREF(val);
@@ -759,8 +864,6 @@ timedeltatype_str(PyObject *self)
  * scalars in numpy 1.13. One day we hope to remove it.
  */
 
-/* determines if legacy mode is enabled, global set in multiarraymodule.c */
-extern int npy_legacy_print_mode;
 
 #define HALFPREC_REPR 5
 #define HALFPREC_STR 5
@@ -784,7 +887,9 @@ extern int npy_legacy_print_mode;
 /**begin repeat1
  * #name = cfloat, cdouble, clongdouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #t = f, , l#
  * #suff = f, d, l#
  */
 
@@ -800,14 +905,14 @@ legacy_@name@_format@kind@(@type@ val)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+    if (npy_creal@t@(val) == 0.0 && npy_signbit(npy_creal@t@(val)) == 0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, val.imag, 0);
+        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, npy_cimag@t@(val), 0);
         if (res == NULL) {
             PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
             return NULL;
         }
-        if (!npy_isfinite(val.imag)) {
+        if (!npy_isfinite(npy_cimag@t@(val))) {
             strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
         strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
@@ -815,20 +920,20 @@ legacy_@name@_format@kind@(@type@ val)
     else {
         char re[64], im[64];
 
-        if (npy_isfinite(val.real)) {
+        if (npy_isfinite(npy_creal@t@(val))) {
             PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                                             val.real, 0);
+                                             npy_creal@t@(val), 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(val.real)) {
+            if (npy_isnan(npy_creal@t@(val))) {
                 strcpy(re, "nan");
             }
-            else if (val.real > 0){
+            else if (npy_creal@t@(val) > 0){
                 strcpy(re, "inf");
             }
             else {
@@ -837,26 +942,26 @@ legacy_@name@_format@kind@(@type@ val)
         }
 
 
-        if (npy_isfinite(val.imag)) {
+        if (npy_isfinite(npy_cimag@t@(val))) {
             PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                                             val.imag, 0);
+                                             npy_cimag@t@(val), 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(val.imag)) {
+            if (npy_isnan(npy_cimag@t@(val))) {
                 strcpy(im, "+nan");
             }
-            else if (val.imag > 0){
+            else if (npy_cimag@t@(val) > 0){
                 strcpy(im, "+inf");
             }
             else {
                 strcpy(im, "-inf");
             }
-            if (!npy_isfinite(val.imag)) {
+            if (!npy_isfinite(npy_cimag@t@(val))) {
                 strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
@@ -923,10 +1028,18 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #kind = str, repr#
  */
 
+#define IS_@kind@
+
 /**begin repeat1
  * #name = float, double, longdouble#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #n = f, , l#
+ * #repr_format = np.float32(%S), np.float64(%S), np.longdouble('%S')#
+ * #crepr_imag_format = np.complex64(%Sj), np.complex128(%Sj),
+ *                 np.clongdouble('%Sj')#
+ * #crepr_format = np.complex64(%S%Sj), np.complex128(%S%Sj),
+ *                 np.clongdouble('%S%Sj')#
  */
 
 /* helper function choose scientific of fractional output, based on a cutoff */
@@ -957,8 +1070,21 @@ static PyObject *
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    return @name@type_@kind@_either(PyArrayScalar_VAL(self, @Name@),
-                                  TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
+    PyObject *string;
+    string = @name@type_@kind@_either(
+            PyArrayScalar_VAL(self, @Name@),
+            TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
+
+#ifdef IS_repr
+    if (string == NULL) {
+        return NULL;
+    }
+    if (npy_legacy_print_mode > 125) {
+        Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
+    }
+#endif  /* IS_repr */
+
+    return string;
 }
 
 static PyObject *
@@ -972,23 +1098,33 @@ c@name@type_@kind@(PyObject *self)
         return legacy_c@name@_format@kind@(val);
     }
 
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
-        istr = @name@type_@kind@_either(val.imag, trim, trim, 0);
+    if (npy_creal@n@(val) == 0.0 && npy_signbit(npy_creal@n@(val)) == 0) {
+        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 0);
         if (istr == NULL) {
             return NULL;
         }
-        PyObject *ret = PyUnicode_FromFormat("%Sj", istr);
+        PyObject *ret;
+#ifdef IS_str
+        ret = PyUnicode_FromFormat("%Sj", istr);
+#else  /* IS_repr */
+        if (npy_legacy_print_mode <= 125) {
+            ret = PyUnicode_FromFormat("%Sj", istr);
+        }
+        else {
+            ret = PyUnicode_FromFormat("@crepr_imag_format@", istr);
+        }
+#endif  /* IS_repr */
         Py_DECREF(istr);
         return ret;
     }
 
-    if (npy_isfinite(val.real)) {
-        rstr = @name@type_@kind@_either(val.real, trim, trim, 0);
+    if (npy_isfinite(npy_creal@n@(val))) {
+        rstr = @name@type_@kind@_either(npy_creal@n@(val), trim, trim, 0);
     }
-    else if (npy_isnan(val.real)) {
+    else if (npy_isnan(npy_creal@n@(val))) {
         rstr = PyUnicode_FromString("nan");
     }
-    else if (val.real > 0){
+    else if (npy_creal@n@(val) > 0){
         rstr = PyUnicode_FromString("inf");
     }
     else {
@@ -998,13 +1134,13 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
-    if (npy_isfinite(val.imag)) {
-        istr = @name@type_@kind@_either(val.imag, trim, trim, 1);
+    if (npy_isfinite(npy_cimag@n@(val))) {
+        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 1);
     }
-    else if (npy_isnan(val.imag)) {
+    else if (npy_isnan(npy_cimag@n@(val))) {
         istr = PyUnicode_FromString("+nan");
     }
-    else if (val.imag > 0){
+    else if (npy_cimag@n@(val) > 0){
         istr = PyUnicode_FromString("+inf");
     }
     else {
@@ -1015,10 +1151,21 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
-    PyObject *ret = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    PyObject *string;
+#ifdef IS_str
+    string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+#else  /* IS_repr */
+    if (npy_legacy_print_mode > 125) {
+        string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
+    }
+    else {
+        string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    }
+#endif  /* IS_repr */
+
     Py_DECREF(rstr);
     Py_DECREF(istr);
-    return ret;
+    return string;
 }
 
 #undef PREC
@@ -1039,35 +1186,53 @@ halftype_@kind@(PyObject *self)
 
     absval = floatval < 0 ? -floatval : floatval;
 
+    PyObject *string;
     if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
-        return format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
+        string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
-    return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
+    else {
+        string = format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
+    }
+#ifdef IS_str
+    return string;
+#else
+    if (string == NULL || npy_legacy_print_mode <= 125) {
+        return string;
+    }
+    return PyUnicode_FromFormat("np.float16(%S)", string);
+#endif
 }
 
-
+#undef IS_@kind@
 /**end repeat**/
 
-/**begin repeat
- * #char = ,c#
- * #CHAR = ,C#
- * #POST = ,.real#
- */
 static PyObject *
-@char@longdoubletype_float(PyObject *self)
+longdoubletype_float(PyObject *self)
 {
-    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+    npy_longdouble val = PyArrayScalar_VAL(self, LongDouble);
     return PyFloat_FromDouble((double) val);
 }
 
 static PyObject *
-@char@longdoubletype_long(PyObject *self)
+longdoubletype_long(PyObject *self)
 {
-    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+    npy_longdouble val = PyArrayScalar_VAL(self, LongDouble);
     return npy_longdouble_to_PyLong(val);
 }
 
-/**end repeat**/
+static PyObject *
+clongdoubletype_float(PyObject *self)
+{
+    npy_longdouble val = npy_creall(PyArrayScalar_VAL(self, CLongDouble));
+    return PyFloat_FromDouble((double) val);
+}
+
+static PyObject *
+clongdoubletype_long(PyObject *self)
+{
+    npy_longdouble val = npy_creall(PyArrayScalar_VAL(self, CLongDouble));
+    return npy_longdouble_to_PyLong(val);
+}
 
 static PyNumberMethods gentype_as_number = {
     .nb_add = (binaryfunc)gentype_add,
@@ -1933,13 +2098,15 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
 /**begin repeat
  * #name = cfloat, clongdouble#
  * #Name = CFloat, CLongDouble#
+ * #NAME = CFLOAT, CLONGDOUBLE#
+ * #n = f, l#
  */
 static PyObject *
 @name@_complex(PyObject *self, PyObject *NPY_UNUSED(args),
                PyObject *NPY_UNUSED(kwds))
 {
-    return PyComplex_FromDoubles(PyArrayScalar_VAL(self, @Name@).real,
-                                 PyArrayScalar_VAL(self, @Name@).imag);
+    return PyComplex_FromDoubles(npy_creal@n@(PyArrayScalar_VAL(self, @Name@)),
+                                 npy_cimag@n@(PyArrayScalar_VAL(self, @Name@)));
 }
 /**end repeat**/
 
@@ -3437,6 +3604,8 @@ static npy_hash_t
 /**begin repeat
  * #lname = float, longdouble#
  * #name = Float, LongDouble#
+ * #NAME = FLOAT, LONGDOUBLE#
+ * #n = f, l#
  */
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
@@ -3450,13 +3619,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
     hashreal = Npy_HashDouble(
-            obj, (double)PyArrayScalar_VAL(obj, C@name@).real);
+            obj, (double)npy_creal@n@(PyArrayScalar_VAL(obj, C@name@)));
 
     if (hashreal == -1) {
         return -1;
     }
     hashimag = Npy_HashDouble(
-            obj, (double)PyArrayScalar_VAL(obj, C@name@).imag);
+            obj, (double)npy_cimag@n@(PyArrayScalar_VAL(obj, C@name@)));
     if (hashimag == -1) {
         return -1;
     }
@@ -4066,16 +4235,17 @@ initialize_numeric_types(void)
 
 
     /**begin repeat
-     * #Type = Bool, Byte, UByte, Short, UShort, Int, UInt, Long,
+     * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
      *         ULong, LongLong, ULongLong#
      */
 
-    /* both str/repr use genint_type_str to avoid trailing "L" of longs */
     Py@Type@ArrType_Type.tp_str = genint_type_str;
-    Py@Type@ArrType_Type.tp_repr = genint_type_str;
+    Py@Type@ArrType_Type.tp_repr = genint_type_repr;
 
     /**end repeat**/
 
+    PyBoolArrType_Type.tp_str = genbool_type_str;
+    PyBoolArrType_Type.tp_repr = genbool_type_repr;
 
 
     /**begin repeat

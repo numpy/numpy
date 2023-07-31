@@ -1630,8 +1630,8 @@ Conversion
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
     to `PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
-    `offset` plus the itemsize of the new array type must be less than ``self
-    ->descr->elsize`` or an error is raised. The same shape and strides
+    `offset` plus the itemsize of the new array type must be less than
+    ``self->descr->elsize`` or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
     effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
@@ -3502,23 +3502,6 @@ Miscellaneous Macros
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
-
-.. c:macro:: PyArray_CLT(a,b)
-
-.. c:macro:: PyArray_CGT(a,b)
-
-.. c:macro:: PyArray_CLE(a,b)
-
-.. c:macro:: PyArray_CGE(a,b)
-
-.. c:macro:: PyArray_CEQ(a,b)
-
-.. c:macro:: PyArray_CNE(a,b)
-
-    Implements the complex comparisons between two complex numbers
-    (structures with a real and imag member) using NumPy's definition
-    of the ordering which is lexicographic: comparing the real parts
-    first and then the complex parts if the real parts are equal.
 
 .. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
 

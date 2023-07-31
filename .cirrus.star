@@ -24,16 +24,28 @@ def main(ctx):
     # only contains the actual commit message on a non-PR trigger event.
     # For a PR event it contains the PR title and description.
     SHA = env.get("CIRRUS_CHANGE_IN_REPO")
-    url = "https://api.github.com/repos/scipy/scipy/git/commits/" + SHA
+    url = "https://api.github.com/repos/numpy/numpy/git/commits/" + SHA
     dct = http.get(url).json()
-    # if "[wheel build]" in dct["message"]:
-    #     return fs.read("ci/cirrus_wheels.yml")
 
-    if "[skip cirrus]" in dct["message"] or "[skip ci]" in dct["message"]:
+    commit_msg = dct["message"]
+    if "[skip cirrus]" in  commit_msg or "[skip ci]" in commit_msg:
         return []
 
-    # add extra jobs to the cirrus run by += adding to config
-    config = fs.read("tools/ci/cirrus_wheels.yml")
-    config += fs.read("tools/ci/cirrus_macosx_arm64.yml")
+    wheel = False
+    labels = env.get("CIRRUS_PR_LABELS", "")
+    pr_number = env.get("CIRRUS_PR", "-1")
+    tag = env.get("CIRRUS_TAG", "")
 
-    return config
+    if "[wheel build]" in commit_msg:
+        wheel = True
+
+    # if int(pr_number) > 0 and ("14 - Release" in labels or "36 - Build" in labels):
+    #     wheel = True
+
+    if tag.startswith("v") and "dev0" not in tag:
+        wheel = True
+
+    if wheel:
+        return fs.read("tools/ci/cirrus_wheels.yml")
+
+    return fs.read("tools/ci/cirrus_macosx_arm64.yml")

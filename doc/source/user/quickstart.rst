@@ -230,8 +230,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.Generator.rand`,
-    `numpy.random.Generator.randn`,
+    `random.Generator.random`,
+    `random.Generator.normal`,
     `fromfunction`,
     `fromfile`
 

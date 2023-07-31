@@ -329,6 +329,9 @@ def test_version(expected_version=None):
 
     data = threadpoolctl.threadpool_info()
     if len(data) != 1:
+        if platform.python_implementation() == 'PyPy':
+            print(f"Not using OpenBLAS for PyPy in Azure CI, so skip this")
+            return
         raise ValueError(f"expected single threadpool_info result, got {data}")
     if not expected_version:
         expected_version = OPENBLAS_V
