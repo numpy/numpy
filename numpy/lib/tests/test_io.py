@@ -26,7 +26,7 @@ from numpy.testing import (
     break_cycles, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
-from numpy._utils._convertions import asbytes
+from numpy._utils import asbytes
 
 
 class TextIO(BytesIO):
@@ -1650,6 +1650,7 @@ M   33  21.99
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
 
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
@@ -2290,6 +2291,7 @@ M   33  21.99
                      dtype=np.str_)
             assert_array_equal(test, ctl)
 
+    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
     def test_recfromtxt(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
@@ -2309,6 +2311,7 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
 
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_recfromcsv(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
@@ -2609,6 +2612,7 @@ class TestPathUsage:
             assert_array_equal(a, data)
 
     @pytest.mark.parametrize("filename_type", [Path, str])
+    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
     def test_recfromtxt(self, filename_type):
         with temppath(suffix='.txt') as path:
             path = filename_type(path)
@@ -2623,6 +2627,7 @@ class TestPathUsage:
             assert_equal(test, control)
 
     @pytest.mark.parametrize("filename_type", [Path, str])
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_recfromcsv(self, filename_type):
         with temppath(suffix='.txt') as path:
             path = filename_type(path)

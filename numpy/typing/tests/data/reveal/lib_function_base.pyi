@@ -97,10 +97,6 @@ reveal_type(np.extract(AR_i8, AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.place(AR_f8, mask=AR_i8, vals=5.0))  # E: None
 
-reveal_type(np.disp(1, linefeed=True))  # E: None
-with open("test", "w") as f:
-    reveal_type(np.disp("message", device=f))  # E: None
-
 reveal_type(np.cov(AR_f8, bias=True))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.cov(AR_f8, AR_c16, ddof=1))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.cov(AR_f8, aweights=AR_f8, dtype=np.float32))  # E: ndarray[Any, dtype[{float32}]]

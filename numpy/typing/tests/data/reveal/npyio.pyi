@@ -82,11 +82,3 @@ reveal_type(np.genfromtxt(str_file, comments="test"))  # E: ndarray[Any, dtype[A
 reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.genfromtxt(["1", "2", "3"], ndmin=2))  # E: ndarray[Any, dtype[Any]]
-
-reveal_type(np.recfromtxt(bytes_file))  # E: recarray[Any, dtype[record]]
-reveal_type(np.recfromtxt(pathlib_path, usemask=True))  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
-reveal_type(np.recfromtxt(["1", "2", "3"]))  # E: recarray[Any, dtype[record]]
-
-reveal_type(np.recfromcsv(bytes_file))  # E: recarray[Any, dtype[record]]
-reveal_type(np.recfromcsv(pathlib_path, usemask=True))  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
-reveal_type(np.recfromcsv(["1", "2", "3"]))  # E: recarray[Any, dtype[record]]

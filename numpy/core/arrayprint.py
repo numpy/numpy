@@ -226,7 +226,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, printoptions, set_string_function, array2string
+    get_printoptions, printoptions, array2string
 
     Notes
     -----
@@ -325,7 +325,7 @@ def get_printoptions():
 
     See Also
     --------
-    set_printoptions, printoptions, set_string_function
+    set_printoptions, printoptions
 
     """
     opts = _format_options.copy()
@@ -1706,6 +1706,10 @@ def set_string_function(f, repr=True):
     """
     Set a Python function to be used when pretty printing arrays.
 
+    .. deprecated:: 2.0
+        Use `np.set_printoptions` instead with a formatter for custom
+        printing of NumPy objects.
+
     Parameters
     ----------
     f : function or None
@@ -1753,6 +1757,16 @@ def set_string_function(f, repr=True):
     'array([0, 1, 2, 3])'
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`set_string_function` is deprecated. Use `np.set_printoptions` "
+        "with a formatter for custom printing NumPy objects. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     if f is None:
         if repr:
             return multiarray.set_string_function(_default_array_repr, 1)

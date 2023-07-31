@@ -24,7 +24,7 @@ from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core import overrides
-from numpy._utils._convertions import asbytes
+from numpy._utils import asbytes
 import numpy
 
 __all__ = [

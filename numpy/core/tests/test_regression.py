@@ -16,7 +16,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy._utils._convertions import asbytes, asunicode
+from numpy._utils import asbytes, asunicode
 
 
 class TestRegression:

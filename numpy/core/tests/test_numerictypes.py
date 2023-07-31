@@ -452,11 +452,13 @@ class TestSctypeDict:
             # We will probably allow this in the future:
             assert not hasattr(np, 'ulong')
 
+
 class TestBitName:
     def test_abstract(self):
         assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
 
 
+@pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
 class TestMaximumSctype:
 
     # note that parametrizing with sctype['int'] and similar would skip types

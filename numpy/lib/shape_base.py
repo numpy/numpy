@@ -1,4 +1,5 @@
 import functools
+import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, zeros, array, asanyarray
@@ -1051,8 +1052,19 @@ def get_array_prepare(*args):
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
 
-    In case of ties, leftmost wins. If no wrapper is found, return None
+    In case of ties, leftmost wins. If no wrapper is found, return None.
+
+    .. deprecated:: 2.0
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`get_array_wrap` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
                  x.__array_wrap__) for i, x in enumerate(args)
                                    if hasattr(x, '__array_wrap__'))

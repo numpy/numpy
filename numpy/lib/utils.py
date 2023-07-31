@@ -7,9 +7,9 @@ import warnings
 import functools
 import platform
 
-from .._utils import set_module
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
+from numpy._utils import set_module
 import numpy as np
 
 __all__ = [
@@ -191,6 +191,9 @@ def deprecate(*args, **kwargs):
 
     This function may also be used as a decorator.
 
+    .. deprecated:: 2.0
+        Use `warn` with `DeprecationWarning` instead.
+
     Parameters
     ----------
     func : function
@@ -227,6 +230,15 @@ def deprecate(*args, **kwargs):
     # If run as a function, we initialise the decorator class
     # and execute its __call__ method.
 
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`deprecate` is deprecated, "
+        "use `warn` with `DeprecationWarning` instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning, 
+        stacklevel=2
+    )
+
     if args:
         fn = args[0]
         args = args[1:]
@@ -239,6 +251,9 @@ def deprecate(*args, **kwargs):
 def deprecate_with_doc(msg):
     """
     Deprecates a function and includes the deprecation in its docstring.
+
+    .. deprecated:: 2.0
+        Use `warn` with `DeprecationWarning` instead.
 
     This function is used as a decorator. It returns an object that can be
     used to issue a DeprecationWarning, by passing the to-be decorated
@@ -260,6 +275,16 @@ def deprecate_with_doc(msg):
     obj : object
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`deprecate` is deprecated, "
+        "use `warn` with `DeprecationWarning` instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning, 
+        stacklevel=2
+    )
+
     return _Deprecate(message=msg)
 
 
@@ -267,7 +292,7 @@ def deprecate_with_doc(msg):
 # Determine if two arrays can share memory
 #--------------------------------------------
 
-@deprecate
+
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.
@@ -325,10 +350,11 @@ def byte_bounds(a):
 #-----------------------------------------------------------------------------
 
 
-@deprecate
 def who(vardict=None):
     """
     Print the NumPy arrays in the given dictionary.
+
+    .. deprecated:: 2.0
 
     If there is no dictionary passed in or `vardict` is None then returns
     NumPy arrays in the globals() dictionary (all NumPy arrays in the
@@ -370,6 +396,15 @@ def who(vardict=None):
     Upper bound on total bytes  =       40
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`who` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     if vardict is None:
         frame = sys._getframe().f_back
         vardict = frame.f_globals
@@ -690,10 +725,12 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         print(inspect.getdoc(object), file=output)
 
 
-@deprecate
 def safe_eval(source):
     """
     Protected string evaluation.
+
+    .. deprecated:: 2.0
+        Use `ast.literal_eval` instead.
 
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
@@ -740,6 +777,16 @@ def safe_eval(source):
     ValueError: malformed node or string: <_ast.Call object at 0x...>
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`safe_eval` is deprecated. Use `ast.literal_eval` instead. "
+        "Be aware of security implications, such as memory exhaustion "
+        "based attacks (deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     # Local import to speed up numpy's import time.
     import ast
     return ast.literal_eval(source)
