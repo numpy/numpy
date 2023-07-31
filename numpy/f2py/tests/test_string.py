@@ -19,6 +19,12 @@ class TestString(util.F2PyTest):
         assert out == pytest.approx(expected)
 
 
+class TestStringAssumedLength(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24008.f")]
+
+    def test_gh24008(self):
+        self.module.greet("joe", "bob")
+
 class TestDocStringArguments(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "string.f")]
 
