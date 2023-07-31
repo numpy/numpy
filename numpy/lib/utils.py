@@ -191,6 +191,9 @@ def deprecate(*args, **kwargs):
 
     This function may also be used as a decorator.
 
+    .. deprecated:: 2.0
+        Use `warn` with `DeprecationWarning` instead.
+
     Parameters
     ----------
     func : function
@@ -248,6 +251,9 @@ def deprecate(*args, **kwargs):
 def deprecate_with_doc(msg):
     """
     Deprecates a function and includes the deprecation in its docstring.
+
+    .. deprecated:: 2.0
+        Use `warn` with `DeprecationWarning` instead.
 
     This function is used as a decorator. It returns an object that can be
     used to issue a DeprecationWarning, by passing the to-be decorated
@@ -347,6 +353,8 @@ def byte_bounds(a):
 def who(vardict=None):
     """
     Print the NumPy arrays in the given dictionary.
+
+    .. deprecated:: 2.0
 
     If there is no dictionary passed in or `vardict` is None then returns
     NumPy arrays in the globals() dictionary (all NumPy arrays in the
@@ -720,6 +728,9 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
 def safe_eval(source):
     """
     Protected string evaluation.
+
+    .. deprecated:: 2.0
+        Use `ast.literal_eval` instead.
 
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.

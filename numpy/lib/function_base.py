@@ -1954,6 +1954,9 @@ def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
 
+    .. deprecated:: 2.0
+        Use your own printing function instead.
+
     Parameters
     ----------
     mesg : str

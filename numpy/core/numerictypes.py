@@ -134,6 +134,9 @@ def maximum_sctype(t):
     """
     Return the scalar type of highest precision of the same kind as the input.
 
+    .. deprecated:: 2.0
+        Use an explicit dtype like int64 or float64 instead.
+
     Parameters
     ----------
     t : dtype or dtype specifier

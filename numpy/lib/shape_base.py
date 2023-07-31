@@ -1052,7 +1052,9 @@ def get_array_prepare(*args):
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
 
-    In case of ties, leftmost wins. If no wrapper is found, return None
+    In case of ties, leftmost wins. If no wrapper is found, return None.
+
+    .. deprecated:: 2.0
     """
 
     # Deprecated in NumPy 2.0, 2023-07-11

@@ -1691,6 +1691,10 @@ def set_string_function(f, repr=True):
     """
     Set a Python function to be used when pretty printing arrays.
 
+    .. deprecated:: 2.0
+        Use `np.set_printoptions` instead with a formatter for custom
+        printing of NumPy objects.
+
     Parameters
     ----------
     f : function or None

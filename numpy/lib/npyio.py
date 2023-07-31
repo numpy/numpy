@@ -2453,6 +2453,9 @@ def recfromtxt(fname, **kwargs):
     If ``usemask=False`` a standard `recarray` is returned,
     if ``usemask=True`` a MaskedRecords array is returned.
 
+    .. deprecated:: 2.0
+        Use `numpy.genfromtxt` instead.
+
     Parameters
     ----------
     fname, kwargs : For a description of input parameters, see `genfromtxt`.
@@ -2495,6 +2498,9 @@ def recfromcsv(fname, **kwargs):
     The returned array is a record array (if ``usemask=False``, see
     `recarray`) or a masked record array (if ``usemask=True``,
     see `ma.mrecords.MaskedRecords`).
+
+    .. deprecated:: 2.0
+        Use `numpy.genfromtxt` with comma as `delimiter` instead.
 
     Parameters
     ----------
