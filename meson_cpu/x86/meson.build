@@ -65,7 +65,11 @@ AVX2 = mod_features.new(
 )
 # 25-40 left as margin for any extra features
 AVX512F = mod_features.new(
-  'AVX512F', 40, implies: [FMA3, AVX2], args: '-mavx512f',
+  'AVX512F', 40, implies: [FMA3, AVX2],
+  # Disables mmx due to cause stack corruption
+  # that may happens during mask converstions.
+  # TODO(seiko2plus): provides more clarification
+  args: ['-mno-mmx', '-mavx512f'],
   detect: {'val': 'AVX512F', 'match': '.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512f.c')[0],
   extra_tests: {
