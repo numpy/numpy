@@ -130,6 +130,10 @@ if compiler_id not in ['gcc', 'clang']
 endif
 # Common specializations bettween both Intel compilers (unix-like and msvc-like)
 if compiler_id in ['intel', 'intel-cl']
+  # POPCNT, and F16C don't own private FLAGS still
+  # the compiler provides ISA capability for them.
+  POPCNT.update(args: '')
+  F16C.update(args: '')
   # Intel compilers don't support the following features independently
   FMA3.update(implies: [F16C, AVX2])
   AVX2.update(implies: [F16C, FMA3])
@@ -137,15 +141,12 @@ if compiler_id in ['intel', 'intel-cl']
   AVX512CD.update(implies: [AVX512F, AVX512_SKX])
   XOP.update(disable: 'Intel Compiler does not support it')
   FMA4.update(disable: 'Intel Compiler does not support it')
-  # POPCNT, and F16C don't own private FLAGS still
-  # the compiler provides ISA capability for them.
-  POPCNT.update(args: '')
-  F16C.update(args: '')
 endif
 if compiler_id == 'intel-cl'
   foreach fet : [SSE, SSE2, SSE3, SSSE3, AVX]
     fet.update(args: {'val': '/arch:' + fet.get('name'), 'match': '/arch:.*'})
   endforeach
+  SSE41.update(args: {'val': '/arch:SSE4.1', 'match': '/arch:.*'})
   SSE42.update(args: {'val': '/arch:SSE4.2', 'match': '/arch:.*'})
   FMA3.update(args: {'val': '/arch:CORE-AVX2', 'match': '/arch:.*'})
   AVX2.update(args: {'val': '/arch:CORE-AVX2', 'match': '/arch:.*'})
