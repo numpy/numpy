@@ -411,15 +411,6 @@ typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
 typedef int (PyArray_ScalarKindFunc)(void *);
 
-typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
-                                    void *max, void *out);
-typedef void (PyArray_FastPutmaskFunc)(void *in, void *mask, npy_intp n_in,
-                                       void *values, npy_intp nv);
-typedef int  (PyArray_FastTakeFunc)(void *dest, void *src, npy_intp *indarray,
-                                       npy_intp nindarray, npy_intp n_outer,
-                                       npy_intp m_middle, npy_intp nelem,
-                                       NPY_CLIPMODE clipmode);
-
 typedef struct {
         npy_intp *ptr;
         int len;
@@ -525,9 +516,9 @@ typedef struct {
         int **cancastscalarkindto;
         int *cancastto;
 
-        PyArray_FastClipFunc *fastclip;
-        PyArray_FastPutmaskFunc *fastputmask;
-        PyArray_FastTakeFunc *fasttake;
+        void *_unused1;
+        void *_unused2;
+        void *_unused3;
 
         /*
          * Function to select smallest
