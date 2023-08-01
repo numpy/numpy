@@ -14,7 +14,7 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
 OPENBLAS_V = '0.3.23.dev'
-OPENBLAS_LONG = 'v0.3.23-246-g3d31191b'
+OPENBLAS_LONG = 'v0.3.23-293-gc2f4bdbb'
 BASE_LOC = (
     'https://anaconda.org/scientific-python-nightly-wheels/openblas-libs'
 )
