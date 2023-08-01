@@ -2251,11 +2251,6 @@ Array Functions
 
     See the :func:`~numpy.einsum` function for more details.
 
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
-
-    A specialized copy and transpose function that works only for 2-d
-    arrays. The returned array is a transposed copy of *op*.
-
 .. c:function:: PyObject* PyArray_Correlate( \
         PyObject* op1, PyObject* op2, int mode)
 
