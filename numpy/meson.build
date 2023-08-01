@@ -55,8 +55,9 @@ blas_symbol_suffix = get_option('blas-symbol-suffix')
 
 use_ilp64 = get_option('use-ilp64')
 if not use_ilp64
-  # For now, keep supporting this environment variable too (same as in setup.py)
-  # `false is the default for the CLI flag, so check if env var was set
+  # For now, keep supporting the `NPY_USE_BLAS_ILP64` environment variable too
+  # (same as in setup.py) `false is the default for the CLI flag, so check if
+  # env var was set
   use_ilp64 = run_command(py,
     [
       '-c',

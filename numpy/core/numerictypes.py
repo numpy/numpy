@@ -134,6 +134,9 @@ def maximum_sctype(t):
     """
     Return the scalar type of highest precision of the same kind as the input.
 
+    .. deprecated:: 2.0
+        Use an explicit dtype like int64 or float64 instead.
+
     Parameters
     ----------
     t : dtype or dtype specifier
@@ -168,6 +171,15 @@ def maximum_sctype(t):
     <class 'numpy.float128'> # may vary
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`maximum_sctype` is deprecated. Use an explicit dtype like int64 "
+        "or float64 instead. (deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     g = obj2sctype(t)
     if g is None:
         return t
@@ -245,7 +257,7 @@ def obj2sctype(rep, default=None):
 
     See Also
     --------
-    sctype2char, issctype, issubsctype, issubdtype, maximum_sctype
+    sctype2char, issctype, issubsctype, issubdtype
 
     Examples
     --------

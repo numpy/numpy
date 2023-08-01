@@ -2789,8 +2789,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
         offset = sum(np.array(i) * a.strides)
 
-    A more detailed explanation of strides can be found in the
-    "ndarray.rst" file in the NumPy reference guide.
+    A more detailed explanation of strides can be found in
+    :ref:`arrays.ndarray`.
 
     .. warning::
 

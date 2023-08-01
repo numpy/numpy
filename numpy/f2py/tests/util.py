@@ -20,7 +20,7 @@ import contextlib
 import numpy
 
 from pathlib import Path
-from numpy._utils._convertions import asunicode
+from numpy._utils import asunicode
 from numpy.testing import temppath, IS_WASM
 from importlib import import_module
 

@@ -487,8 +487,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
 
-                /* TODO: This can't fail, right? Is there a faster way? */
-                if (PyObject_IsTrue((PyObject *)arr)) {
+                /* TODO: The faster way can be n = ((npy_bool *)PyArray_BYTES(arr))[0] != 0 */
+                int istrue = PyObject_IsTrue((PyObject *)arr);
+                if (istrue == -1) {
+                    goto failed_building_indices;
+                }
+                if (istrue) {
                     n = 1;
                 }
                 else {
