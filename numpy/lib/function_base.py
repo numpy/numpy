@@ -749,12 +749,15 @@ def piecewise(x, condlist, funclist, *args, **kw):
         )
 
     y = zeros_like(x)
+
     for cond, func in zip(condlist, funclist):
         if not isinstance(func, collections.abc.Callable):
+            y = y.astype(asarray(func).dtype)
             y[cond] = func
         else:
             vals = x[cond]
             if vals.size > 0:
+                y = y.astype(asarray(func(vals, *args, **kw)).dtype)
                 y[cond] = func(vals, *args, **kw)
 
     return y
