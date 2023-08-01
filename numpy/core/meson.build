@@ -687,7 +687,7 @@ py.extension_module('_multiarray_tests',
   subdir: 'numpy/core',
 )
 
-mtargets_res = mod_features.multi_target(
+mtargets_res = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
   'src/umath/_umath_tests.dispatch.c',
   dispatch: [
@@ -744,7 +744,7 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-mtargets_res = mod_features.multi_target(
+mtargets_res = mod_features.multi_targets(
   gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   baseline: CPU_BASELINE,
@@ -778,7 +778,7 @@ foreach gen_mtargets : [
     [AVX512_SPR]
   ],
 ]
-mtargets_res = mod_features.multi_target(
+mtargets_res = mod_features.multi_targets(
   gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   # baseline: CPU_BASELINE, it doesn't provide baseline fallback
@@ -950,7 +950,7 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-mtargets_res = mod_features.multi_target(
+mtargets_res = mod_features.multi_targets(
   gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   baseline: CPU_BASELINE,
@@ -1167,7 +1167,7 @@ foreach target : get_option('test-simd')
   _simd_dispatch += [mfeatures]
 endforeach
 
-mtargets_res = mod_features.multi_target(
+mtargets_res = mod_features.multi_targets(
   '_simd.dispatch.h',
   [
     src_file.process('src/_simd/_simd_inc.h.src'),
