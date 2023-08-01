@@ -103,11 +103,6 @@ inline bool quickselect_dispatch(npy_longdouble* v, npy_intp num, npy_intp kth)
     return false;
 }
 template<>
-inline bool quickselect_dispatch(npy_clongdouble* v, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
 inline bool argquickselect_dispatch(npy_cfloat* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
     return false;
@@ -122,11 +117,22 @@ inline bool argquickselect_dispatch(npy_longdouble* v, npy_intp* arg, npy_intp n
 {
     return false;
 }
+/*
+ * Avoid duplicate definition on 32-bit ARM: npy_clongdouble and npy_cdouble
+ * are both __complex__ double
+ */
+#if !defined(__arm__)
+template<>
+inline bool quickselect_dispatch(npy_clongdouble* v, npy_intp num, npy_intp kth)
+{
+    return false;
+}
 template<>
 inline bool argquickselect_dispatch(npy_clongdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
     return false;
 }
+#endif
 #endif
 
 template <typename Tag, bool arg, typename type>
