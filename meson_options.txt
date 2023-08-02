@@ -12,7 +12,7 @@ option('disable-svml', type: 'boolean', value: false,
         description: 'Disable building against SVML')
 option('disable-threading', type: 'boolean', value: false,
         description: 'Disable threading support (see `NPY_ALLOW_THREADS` docs)')
-option('disable-optimization', type: 'boolean', value: 'false',
+option('disable-optimization', type: 'boolean', value: false,
         description: 'Disable CPU optimized code(dispatch,simd,unroll...)')
 option('cpu-baseline', type: 'string', value: 'min',
         description: 'minimal set of required CPU features')
