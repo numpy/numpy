@@ -1018,43 +1018,16 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         cast = 1;
 #endif  /* define(NPY_PY3K) */
     }
-    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
-        PyObject *new;
-        if (PyArray_TYPE(self) == NPY_STRING &&
-                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
-            PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
-            unicode->elsize = PyArray_DESCR(self)->elsize << 2;
-            new = PyArray_FromAny((PyObject *)self, unicode,
-                                  0, 0, 0, NULL);
-            if (new == NULL) {
-                return NULL;
-            }
-            Py_INCREF(other);
-            self = (PyArrayObject *)new;
+    if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
+        /* Cast `other` to the same byte order as `self` (both unicode here) */
+        PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
+        if (unicode == NULL) {
+            return NULL;
         }
-        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
-                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
-                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
-            PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-
-            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
-                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
-            }
-            else {
-                unicode->elsize = PyArray_DESCR(other)->elsize;
-            }
-            new = PyArray_FromAny((PyObject *)other, unicode,
-                                  0, 0, 0, NULL);
-            if (new == NULL) {
-                return NULL;
-            }
-            Py_INCREF(self);
-            other = (PyArrayObject *)new;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "invalid string data-types "
-                            "in comparison");
+        unicode->elsize = PyArray_DESCR(other)->elsize;
+        PyObject *new = PyArray_FromAny((PyObject *)other,
+                unicode, 0, 0, 0, NULL);
+        if (new == NULL) {
             return NULL;
         }
     }

@@ -560,6 +560,9 @@ PyArray_DescrFromScalar(PyObject *sc)
     descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
     if (PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {
             descr->elsize = PyString_GET_SIZE(sc);
