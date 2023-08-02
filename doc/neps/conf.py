@@ -91,7 +91,6 @@ html_favicon = '../source/_static/favicon/favicon.ico'
 
 html_theme_options = {
   "github_url": "https://github.com/numpy/numpy",
-  "twitter_url": "https://twitter.com/numpy_team",
   "external_links": [
       {"name": "Wishlist",
        "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
@@ -183,4 +182,3 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org', None)
 }
-
