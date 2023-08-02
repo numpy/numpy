@@ -67,7 +67,7 @@ else
   CPU_CONF_DISPATCH = get_option('cpu-dispatch')
 endif
 
-# Initlize the CPU features
+# Initialize the CPU features
 # Export the X86 features objects 'SSE', 'AVX', etc
 # and a dictionary "X86_FEATURES" which maps to each
 # object by its name
