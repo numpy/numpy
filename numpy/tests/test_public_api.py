@@ -144,7 +144,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "ma",
     "ma.extras",
     "ma.mrecords",
-    "matlib",
     "polynomial",
     "polynomial.chebyshev",
     "polynomial.hermite",
@@ -233,6 +232,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
+    "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
     "polynomial.polyutils",
@@ -536,15 +536,7 @@ def test_array_api_entry_point():
     assert xp is numpy.array_api, msg
 
 
-@pytest.mark.parametrize("name", [
-        'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-        'ComplexWarning', 'TooHardError', 'AxisError'])
-def test_moved_exceptions(name):
-    # These were moved to the exceptions namespace, but currently still
-    # available
-    assert name in np.__all__
-    assert name not in np.__dir__()
-    # Fetching works, but __module__ is set correctly:
-    assert getattr(np, name).__module__ == "numpy.exceptions"
-    assert name in np.exceptions.__all__
-    getattr(np.exceptions, name)
+# TODO add tests that checks if NumPy's __dir__ and __all__ conforms to
+# `_main_namespace_definition.py`
+def test_main_namespace_compliance():
+    pass

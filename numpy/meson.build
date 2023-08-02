@@ -204,6 +204,7 @@ python_sources = [
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_version.py',
+  '_main_namespace_definition.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
