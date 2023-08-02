@@ -7556,141 +7556,6 @@ def size(obj, axis=None):
 size.__doc__ = np.size.__doc__
 
 
-def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
-    """
-    Calculate the n-th discrete difference along the given axis.
-    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
-    the given axis, higher differences are calculated by using `diff`
-    recursively.
-    Preserves the input mask.
-
-    Parameters
-    ----------
-    a : array_like
-        Input array
-    n : int, optional
-        The number of times values are differenced. If zero, the input
-        is returned as-is.
-    axis : int, optional
-        The axis along which the difference is taken, default is the
-        last axis.
-    prepend, append : array_like, optional
-        Values to prepend or append to `a` along axis prior to
-        performing the difference.  Scalar values are expanded to
-        arrays with length 1 in the direction of axis and the shape
-        of the input array in along all other axes.  Otherwise the
-        dimension and shape must match `a` except along axis.
-
-    Returns
-    -------
-    diff : MaskedArray
-        The n-th differences. The shape of the output is the same as `a`
-        except along `axis` where the dimension is smaller by `n`. The
-        type of the output is the same as the type of the difference
-        between any two elements of `a`. This is the same as the type of
-        `a` in most cases. A notable exception is `datetime64`, which
-        results in a `timedelta64` output array.
-
-    See Also
-    --------
-    numpy.diff : Equivalent function in the top-level NumPy module.
-
-    Notes
-    -----
-    Type is preserved for boolean arrays, so the result will contain
-    `False` when consecutive elements are the same and `True` when they
-    differ.
-
-    For unsigned integer arrays, the results will also be unsigned. This
-    should not be surprising, as the result is consistent with
-    calculating the difference directly:
-
-    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
-    >>> np.ma.diff(u8_arr)
-    masked_array(data=[255],
-                 mask=False,
-           fill_value=np.int64(999999),
-                dtype=uint8)
-    >>> u8_arr[1,...] - u8_arr[0,...]
-    255
-
-    If this is not desirable, then the array should be cast to a larger
-    integer type first:
-
-    >>> i16_arr = u8_arr.astype(np.int16)
-    >>> np.ma.diff(i16_arr)
-    masked_array(data=[-1],
-                 mask=False,
-           fill_value=np.int64(999999),
-                dtype=int16)
-
-    Examples
-    --------
-    >>> a = np.array([1, 2, 3, 4, 7, 0, 2, 3])
-    >>> x = np.ma.masked_where(a < 2, a)
-    >>> np.ma.diff(x)
-    masked_array(data=[--, 1, 1, 3, --, --, 1],
-            mask=[ True, False, False, False,  True,  True, False],
-        fill_value=999999)
-
-    >>> np.ma.diff(x, n=2)
-    masked_array(data=[--, 0, 2, --, --, --],
-                mask=[ True, False, False,  True,  True,  True],
-        fill_value=999999)
-
-    >>> a = np.array([[1, 3, 1, 5, 10], [0, 1, 5, 6, 8]])
-    >>> x = np.ma.masked_equal(a, value=1)
-    >>> np.ma.diff(x)
-    masked_array(
-        data=[[--, --, --, 5],
-                [--, --, 1, 2]],
-        mask=[[ True,  True,  True, False],
-                [ True,  True, False, False]],
-        fill_value=1)
-
-    >>> np.ma.diff(x, axis=0)
-    masked_array(data=[[--, --, --, 1, -2]],
-            mask=[[ True,  True,  True, False, False]],
-        fill_value=1)
-
-    """
-    if n == 0:
-        return a
-    if n < 0:
-        raise ValueError("order must be non-negative but got " + repr(n))
-
-    a = np.ma.asanyarray(a)
-    if a.ndim == 0:
-        raise ValueError(
-            "diff requires input that is at least one dimensional"
-            )
-
-    combined = []
-    if prepend is not np._NoValue:
-        prepend = np.ma.asanyarray(prepend)
-        if prepend.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            prepend = np.broadcast_to(prepend, tuple(shape))
-        combined.append(prepend)
-
-    combined.append(a)
-
-    if append is not np._NoValue:
-        append = np.ma.asanyarray(append)
-        if append.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            append = np.broadcast_to(append, tuple(shape))
-        combined.append(append)
-
-    if len(combined) > 1:
-        a = np.ma.concatenate(combined, axis)
-
-    # GH 22465 np.diff without prepend/append preserves the mask
-    return np.diff(a, n, axis)
-
-
 ##############################################################################
 #                            Extra functions                                 #
 ##############################################################################
@@ -8557,6 +8422,12 @@ clip = _convert2ma(
     params=dict(fill_value=None, hardmask=False),
     np_ret='clipped_array : ndarray',
     np_ma_ret='clipped_array : MaskedArray',
+)
+diff = _convert2ma(
+    'diff',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='diff : ndarray',
+    np_ma_ret='diff : MaskedArray',
 )
 empty = _convert2ma(
     'empty',
