@@ -1,16 +1,10 @@
-foreach cpu_req_var : [
-  'CPU_CONF_BASELINE', 'CPU_BASELINE_NAMES',
-  'CPU_CONF_DISPATCH', 'CPU_DISPATCH_NAMES',
-  'CPU_MTARGETS_LOG',
-]
-  if not is_variable(cpu_req_var)
-    error('Variable', cpu_req_var, 'is not exist. CPU dispatcher is not properly initialized.')
-  endif
-endforeach
+if not is_variable('CPU_MTARGETS_DEBUG')
+  error('Variable "CPU_MTARGETS_DEBUG" is not defined. CPU dispatcher is not properly initialized.')
+endif
 
 targets_info = {}
 targets_config = {}
-foreach config_name, mtargets_info : CPU_MTARGETS_LOG
+foreach config_name, mtargets_info : CPU_MTARGETS_DEBUG
   foreach target_name, target_info : mtargets_info
     if target_name not in targets_info
       targets_info += {target_name: target_info}
@@ -46,20 +40,4 @@ foreach target_name, target_info : targets_info
     '\n                '.join(targets_config[target_name])
   )
 endforeach
-
-message(
-'''
-########### CPU OPTIMIZATION ###########
-CPU baseline  :
-  Requested   : @0@
-  Enabled     : @1@
-CPU dispatch  :
-  Requested   : @2@
-  Enabled     : @3@
-Generated     : @4@
-'''.format(
-    CPU_CONF_BASELINE, ' '.join(CPU_BASELINE_NAMES),
-    CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES),
-    generated_targets
-  )
-)
+debug('Generated CPU Targets:', generated_targets)

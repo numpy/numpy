@@ -700,7 +700,7 @@ mtargets_res = mod_features.multi_targets(
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep]
 )
-CPU_MTARGETS_LOG += {'_umath_tests.dispatch.h': mtargets_res[0]}
+CPU_MTARGETS_DEBUG += {'_umath_tests.dispatch.h': mtargets_res[0]}
 
 test_modules_src = [
   ['_umath_tests', [
@@ -760,7 +760,7 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
 multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
@@ -794,7 +794,7 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
 multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
@@ -966,7 +966,7 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_LOG += {gen_mtargets[0]: mtargets_res[0]}
+CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
 multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
@@ -1186,7 +1186,7 @@ mtargets_res = mod_features.multi_targets(
   c_args: c_args_common,
   cpp_args: cpp_args_common,
 )
-CPU_MTARGETS_LOG += {'_simd.dispatch.h': mtargets_res[0]}
+CPU_MTARGETS_DEBUG += {'_simd.dispatch.h': mtargets_res[0]}
 
 py.extension_module('_simd',
   [

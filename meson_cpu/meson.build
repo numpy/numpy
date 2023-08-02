@@ -26,10 +26,10 @@
 #
 # - `CPU_FEATURES`: A dictionary containing all supported CPU feature objects.
 #
-# - `CPU_MTARGETS_LOG`: Initializes an empty dictionary required by the log script.
-#                       This dictionary should hold the first element of the returned list
-#                       from `mod_features.multi_targets()` as the value,
-#                       where the key is the configuration file name.
+# - `CPU_MTARGETS_DEBUG`: Initializes an empty dictionary required by the debug script.
+#                         This dictionary should hold the first element of the returned list
+#                         from `mod_features.multi_targets()` as the value,
+#                         where the key is the configuration file name.
 #
 # Additionally, this script exposes a set of variables that represent each supported feature
 # to be used within the Meson function `mod_features.multi_targets()`.
@@ -259,7 +259,6 @@ foreach fet_obj : parse_result['cpu-dispatch']
   endif
   CPU_DISPATCH_NAMES += [fet_obj.get('name')]
 endforeach
-
 # Generate main configuration header
 # see 'main_config.h.in' for more clearfiction
 main_config = {
@@ -290,4 +289,19 @@ add_project_arguments(
   '-I' + meson.current_build_dir(),
   language: ['c', 'cpp']
 )
-CPU_MTARGETS_LOG = {}
+
+message(
+'''
+CPU Optimiztion Options
+  baseline:
+    Requested : @0@
+    Enabled   : @1@
+  dispatch:
+    Requested : @2@
+    Enabled   : @3@
+'''.format(
+    CPU_CONF_BASELINE, ' '.join(CPU_BASELINE_NAMES),
+    CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES)
+  )
+)
+CPU_MTARGETS_DEBUG = {}

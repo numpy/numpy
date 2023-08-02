@@ -82,4 +82,4 @@ endif
 
 subdir('meson_cpu')
 subdir('numpy')
-subdir('meson_cpu/log')
+subdir('meson_cpu/debug')
