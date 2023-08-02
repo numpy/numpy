@@ -390,7 +390,8 @@ add_newdoc('numpy.core', 'nditer',
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before
     using the result. The temporary data will be written back to the
-    original data when the :meth:`~object.__exit__` function is called but not before:
+    original data when the :meth:`~object.__exit__` function is called
+    but not before:
 
     >>> a = np.arange(6, dtype='i4')[::-2]
     >>> with np.nditer(a, [],
@@ -4486,7 +4487,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     a.tostring(order='C')
 
-    A compatibility alias for `~ndarray.tobytes`, with exactly the same behavior.
+    A compatibility alias for `~ndarray.tobytes`, with exactly the same
+    behavior.
 
     Despite its name, it returns `bytes` not `str`\ s.
 
