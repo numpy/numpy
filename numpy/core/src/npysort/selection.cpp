@@ -29,111 +29,68 @@
 
 #define NOT_USED NPY_UNUSED(unused)
 
-#if defined(__CYGWIN__)
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
-    return false;
-}
-template<typename T>
-inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-#else
-template<typename T>
-inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
-{
-    using TF = typename np::meta::FixedWidth<T>::Type;
-    void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
-    if (sizeof(T) == sizeof(uint16_t)) {
-        #ifndef NPY_DISABLE_OPTIMIZATION
-            #include "simd_qsort_16bit.dispatch.h"
-        #endif
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
-    }
-    else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-        #ifndef NPY_DISABLE_OPTIMIZATION
-            #include "simd_qsort.dispatch.h"
-        #endif
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
-    }
-    if (dispfunc) {
-        (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
-        return true;
-    }
-    return false;
-}
-
-template<typename T>
-inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    using TF = typename np::meta::FixedWidth<T>::Type;
-    void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp) = nullptr;
-    if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-        /* x86-simd-sort uses 8-byte int to store arg values, npy_intp is 4 bytes
-         * in 32-bit*/
-        if (sizeof(npy_intp) == sizeof(int64_t)) {
+#ifndef __CYGWIN__
+    /*
+     * Only defined for int16_t, uint16_t, float16, int32_t, uint32_t, float32,
+     * int64_t, uint64_t, double
+     */
+    if constexpr (
+        (std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_same_v<T, np::Half>) &&
+        (sizeof(T) == sizeof(uint16_t) || sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
+        if constexpr (sizeof(T) == sizeof(uint16_t)) {
+            #ifndef NPY_DISABLE_OPTIMIZATION
+                #include "simd_qsort_16bit.dispatch.h"
+            #endif
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+        }
+        else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
             #ifndef NPY_DISABLE_OPTIMIZATION
                 #include "simd_qsort.dispatch.h"
             #endif
-            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSelect, <TF>);
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+        }
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
+            return true;
         }
     }
-    if (dispfunc) {
-        (*dispfunc)(reinterpret_cast<TF*>(v), arg, num, kth);
-        return true;
-    }
+#endif
+    (void)v; (void)num; (void)kth; // to avoid unused arg warn
     return false;
 }
 
-template<>
-inline bool quickselect_dispatch(npy_cfloat* v, npy_intp num, npy_intp kth)
+template<typename T>
+inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
-    return false;
-}
-template<>
-inline bool quickselect_dispatch(npy_cdouble* v, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
-inline bool quickselect_dispatch(npy_longdouble* v, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
-inline bool argquickselect_dispatch(npy_cfloat* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
-inline bool argquickselect_dispatch(npy_cdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
-inline bool argquickselect_dispatch(npy_longdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-/*
- * Avoid duplicate definition on 32-bit ARM: npy_clongdouble and npy_cdouble
- * are both __complex__ double
- */
-#if !defined(__arm__)
-template<>
-inline bool quickselect_dispatch(npy_clongdouble* v, npy_intp num, npy_intp kth)
-{
-    return false;
-}
-template<>
-inline bool argquickselect_dispatch(npy_clongdouble* v, npy_intp* arg, npy_intp num, npy_intp kth)
-{
-    return false;
-}
+#ifndef __CYGWIN__
+    /*
+     * Only defined for int32_t, uint32_t, float32, int64_t, uint64_t, double
+     */
+    if constexpr (
+        (std::is_integral_v<T> || std::is_floating_point_v<T>) &&
+        (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) &&
+        // x86-simd-sort uses 8-byte int to store arg values, npy_intp is 4 bytes in 32-bit
+        sizeof(npy_intp) == sizeof(int64_t)) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "simd_qsort.dispatch.h"
+        #endif
+        void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSelect, <TF>);
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(v), arg, num, kth);
+            return true;
+        }
+    }
 #endif
-#endif
+    (void)v; (void)arg; (void)num; (void)kth; // to avoid unused arg warn
+    return false;
+}
 
 template <typename Tag, bool arg, typename type>
 NPY_NO_EXPORT int
