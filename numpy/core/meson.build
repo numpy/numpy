@@ -1174,13 +1174,17 @@ mtargets_res = mod_features.multi_targets(
     src_file.process('src/_simd/_simd_data.inc.src'),
     src_file.process('src/_simd/_simd.dispatch.c.src'),
   ],
+  # Skip validating the sort of `_simd_dispatch` because we execute all these features,
+  # not just the highest interest one. The sorting doesn't matter here,
+  # given the nature of this testing unit.
+  keep_sort: true,
   dispatch: _simd_dispatch,
   baseline: _simd_baseline,
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
   include_directories: ['src/_simd', 'src/npymath'],
   c_args: c_args_common,
-  cpp_args: cpp_args_common
+  cpp_args: cpp_args_common,
 )
 CPU_MTARGETS_LOG += {'_simd.dispatch.h': mtargets_res[0]}
 
