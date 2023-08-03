@@ -34,6 +34,7 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
+        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
         'add_newdoc': 'numpy.core.function_base.add_newdoc',
         'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
@@ -143,6 +144,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "ma",
     "ma.extras",
     "ma.mrecords",
+    "matlib",
     "polynomial",
     "polynomial.chebyshev",
     "polynomial.hermite",
@@ -231,7 +233,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
-    "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
     "polynomial.polyutils",
@@ -533,9 +534,3 @@ def test_array_api_entry_point():
         "does not point to our Array API implementation"
     )
     assert xp is numpy.array_api, msg
-
-
-# TODO add tests that checks if NumPy's __dir__ and __all__ conforms to
-# `_main_namespace_definition.py`
-def test_main_namespace_compliance():
-    pass

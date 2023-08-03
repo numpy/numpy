@@ -116,80 +116,26 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
         raise ImportError(msg) from e
+    
+    __all__ = ['exceptions']
 
-    # Initialize main namespace
     from . import core
-    # TODO explicit imports due to cyclic dependencies in codebase
-    from .core.numeric import (
-        ndarray, errstate, _no_nep50_warning,
-        unsignedinteger, integer, floating, complexfloating, timedelta64,
-        number, generic, void, dtype, signedinteger, datetime64, str_, bytes_,
-        object_, array, float64, flatiter, broadcast, inexact, flexible,
-        character, sqrt, uint32, zeros, concatenate, uint64, int64, isfinite, 
-        isnan, isinf, e, inf, nan, pi, asarray, frombuffer, intp, amax, amin,
-        bool_, overrides, umath, shape_base, longlong, intc, int_, float_,
-        complex_, bool_, ufunc, multiply, invert, sin, PINF, NAN, 
-        numerictypes, half, single, double, longdouble, csingle, cdouble, 
-        clongdouble, round_, var, ndim, shape, size, inner, outer, arange, 
-        clip, empty, empty_like, fromfunction, identity, indices, ones,
-        ones_like, squeeze, zeros_like
-    )
-    from .core.getlimits import iinfo
-    
-    from . import lib
-    # TODO explicit imports due to cyclic dependencies in codebase
-    from .lib import (  
-        iscomplexobj, angle, expand_dims, apply_along_axis, 
-        apply_over_axes, vander, polyfit
-    )
-    
-    # Regular namespaces
+    from .core import *
     from . import exceptions
-    from . import fft
+    from . import dtypes
+    from . import lib
+    # NOTE: to be revisited following future namespace cleanup.
+    # See gh-14454 and gh-15672 for discussion.
+    from .lib import *
+
     from . import linalg
+    from . import fft
     from . import polynomial
     from . import random
-    from . import testing
-
-    # Special-purpose namespaces
     from . import ctypeslib
-    from .lib import scimath as emath
-    from . import f2py
-    from .core import records as rec
-    from . import dtypes
-
-    # Legacy namespaces
-    from .core import defchararray as char
     from . import ma
-
-    from ._main_namespace_definition import (
-        core_imports, lib_imports, sized_aliases_imports, 
-        main_namespace as _main_ns
-    )
-
-    # Build main namespace
-    for module, imports in [(core, core_imports), (lib, lib_imports)]:
-        globals().update(
-            {name: getattr(module, name) for name in imports}
-        )
-
-    _accepted_sized_aliases = []
-    # Include sized aliases - they may vary on different machines
-    for sized_alias in sized_aliases_imports:
-        sized_attr = getattr(core, sized_alias, None)
-        if sized_attr is not None:
-            globals()[sized_alias] = sized_attr
-            _accepted_sized_aliases.append(sized_alias)
-
-    _main_ns = list(_main_ns) + _accepted_sized_aliases
-
-    def __dir__():
-        return _main_ns
-    
-    __all__ = _main_ns
-
-    del core_imports, lib_imports, sized_aliases_imports, \
-        _accepted_sized_aliases
+    from . import matrixlib as _mat
+    from .matrixlib import *
 
     # We build warning messages for former attributes
     _msg = (
@@ -231,8 +177,35 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
 
+    from .core import abs
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
+
+    __all__.extend(['__version__', 'show_config'])
+    __all__.extend(core.__all__)
+    __all__.extend(_mat.__all__)
+    __all__.extend(lib.__all__)
+    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
+
+    # These are exported by np.core, but are replaced by the builtins below
+    # remove them to ensure that we don't end up with `np.long == np.int_`,
+    # which would be a breaking change.
+    del long, unicode
+    __all__.remove('long')
+    __all__.remove('unicode')
+
+    # Remove things that are in the numpy.lib but not in the numpy namespace
+    # Note that there is a test under path: 
+    # `numpy/tests/test_public_api.py:test_numpy_namespace`
+    # that prevents adding more things to the main namespace by accident.
+    # The list below will grow until the `from .lib import *` fixme above is
+    # taken care of
+    __all__.remove('Arrayterator')
+    del Arrayterator
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -242,19 +215,28 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes
         import warnings
-        if attr in __former_attrs__:
-            raise AttributeError(__former_attrs__[attr])
 
-        elif attr in __future_scalars__:
-            # Add future warnings for those that will change, but also give
+        if attr in __future_scalars__:
+            # And future warnings for those that will change, but also give
             # the AttributeError
             warnings.warn(
                 f"In the future `np.{attr}` will be defined as the "
                 "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
+        if attr in __former_attrs__:
+            raise AttributeError(__former_attrs__[attr])
+
+        if attr == 'testing':
+            import numpy.testing as testing
+            return testing
+
         raise AttributeError("module {!r} has no attribute "
                             "{!r}".format(__name__, attr))
-            
+    
+    def __dir__():
+        public_symbols = globals().keys() | {'testing'}
+        public_symbols -= {"core", "matrixlib"}
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
@@ -273,8 +255,8 @@ else:
 
         """
         try:
-            x = core.ones(2, dtype=core.float32)
-            if not core.abs(x.dot(x) - core.float32(2.0)) < 1e-5:
+            x = ones(2, dtype=float32)
+            if not abs(x.dot(x) - float32(2.0)) < 1e-5:
                 raise AssertionError()
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
@@ -292,12 +274,11 @@ else:
         Quick Sanity check for Mac OS look for accelerate build bugs.
         Testing numpy polyfit calls init_dgelsd(LAPACK)
         """
-        from . import polynomial
         try:
-            c = core.array([3., 2., 1.])
-            x = core.linspace(0, 2, 5)
-            y = polynomial.polyval(c, x)
-            _ = polynomial.polyfit(x, y, 2, cov=True)
+            c = array([3., 2., 1.])
+            x = linspace(0, 2, 5)
+            y = polyval(c, x)
+            _ = polyfit(x, y, 2, cov=True)
         except ValueError:
             pass
 
@@ -359,8 +340,7 @@ else:
 
     # TODO: Switch to defaulting to "weak".
     core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE", "legacy")
-    )
+        os.environ.get("NPY_PROMOTION_STATE", "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

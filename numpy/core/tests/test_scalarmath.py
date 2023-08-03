@@ -511,7 +511,7 @@ class TestConversion:
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
         with suppress_warnings() as sup:
-            sup.record(np.ComplexWarning)
+            sup.record(np.exceptions.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
@@ -521,7 +521,7 @@ class TestConversion:
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
-            sup.record(np.ComplexWarning)
+            sup.record(np.exceptions.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)

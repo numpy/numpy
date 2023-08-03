@@ -9,6 +9,7 @@ from itertools import chain
 import pickle
 
 import numpy as np
+from numpy.exceptions import AxisError
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
@@ -440,9 +441,9 @@ class TestRegression:
         assert np.lexsort((xs,), axis=0).shape[0] == 2
 
     def test_lexsort_invalid_axis(self):
-        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
-        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
-        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
+        assert_raises(AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(AxisError, np.lexsort, (np.array(1),), axis=10)
 
     def test_lexsort_zerolen_element(self):
         dt = np.dtype([])  # a void dtype with no fields
@@ -1628,9 +1629,9 @@ class TestRegression:
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
-            assert_warns(np.ComplexWarning, float, x)
+            assert_warns(np.exceptions.ComplexWarning, float, x)
             with suppress_warnings() as sup:
-                sup.filter(np.ComplexWarning)
+                sup.filter(np.exceptions.ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):

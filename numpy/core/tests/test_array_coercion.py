@@ -288,7 +288,7 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr4)
 
     @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
-    @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("cast_to", scalar_instances())
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
         """
