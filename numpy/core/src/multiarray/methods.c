@@ -2064,7 +2064,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 else {
                     fa->descr = PyArray_DescrNew(typecode);
                     if (fa->descr == NULL) {
-                        Py_CLEAR(fa->mem_handler);
                         Py_DECREF(rawdata);
                         return NULL;
                     }
