@@ -163,20 +163,33 @@ else:
     from . import ma
 
     from ._main_namespace_definition import (
-        core_imports, lib_imports, main_namespace as _main_ns
+        core_imports, lib_imports, sized_aliases_imports, 
+        main_namespace as _main_ns
     )
 
+    # Build main namespace
     for module, imports in [(core, core_imports), (lib, lib_imports)]:
         globals().update(
             {name: getattr(module, name) for name in imports}
         )
 
-    def __dir__():
-        return list(_main_ns)
-    
-    __all__ = list(_main_ns)
+    _accepted_sized_aliases = []
+    # Include sized aliases - they may vary on different machines
+    for sized_alias in sized_aliases_imports:
+        sized_attr = getattr(core, sized_alias, None)
+        if sized_attr is not None:
+            globals()[sized_alias] = sized_attr
+            _accepted_sized_aliases.append(sized_alias)
 
-    del core_imports, lib_imports
+    _main_ns = list(_main_ns) + _accepted_sized_aliases
+
+    def __dir__():
+        return _main_ns
+    
+    __all__ = _main_ns
+
+    del core_imports, lib_imports, sized_aliases_imports, \
+        _accepted_sized_aliases
 
     # We build warning messages for former attributes
     _msg = (
@@ -302,7 +315,8 @@ else:
                     "\nOtherwise report this to the vendor "
                     "that provided NumPy.\n{}\n".format(error_message))
                 raise RuntimeError(msg)
-    del _mac_os_check, w
+        del w
+    del _mac_os_check
 
     def hugepage_setup():
         """

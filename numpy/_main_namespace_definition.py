@@ -81,9 +81,6 @@ core_imports = {  # TODO The list is still WIP
     "clongdouble",
     "clongfloat",
     "compare_chararrays",
-    "complex128",
-    "complex256",
-    "complex64",
     "complex_",
     "complexfloating",
     "compress",
@@ -131,10 +128,6 @@ core_imports = {  # TODO The list is still WIP
     "flatiter",
     "flatnonzero",
     "flexible",
-    "float128",
-    "float16",
-    "float32",
-    "float64",
     "float_",
     "float_power",
     "floating",
@@ -176,14 +169,9 @@ core_imports = {  # TODO The list is still WIP
     "inf",
     "infty",
     "inner",
-    "int16",
-    "int32",
-    "int64",
-    "int8",
     "int_",
     "intc",
     "integer",
-    "intp",
     "invert",
     "is_busday",
     "isclose",
@@ -326,12 +314,7 @@ core_imports = {  # TODO The list is still WIP
     "ubyte",
     "ufunc",
     "uint",
-    "uint16",
-    "uint32",
-    "uint64",
-    "uint8",
     "uintc",
-    "uintp",
     "ulonglong",
     "unicode_",
     "unsignedinteger",
@@ -345,10 +328,30 @@ core_imports = {  # TODO The list is still WIP
     "zeros_like"
 }
 
+sized_aliases_imports = {
+    "uint16",
+    "uint32",
+    "uint64",
+    "uint8",
+    "int16",
+    "int32",
+    "int64",
+    "int8",
+    "intp",
+    "uintp",
+    "complex128",
+    "complex196",
+    "complex256",
+    "complex64",
+    "float128",
+    "float16",
+    "float32",
+    "float64",
+    "float96",
+}
+
 lib_imports = {  # TODO The list is still WIP
-    "Arrayterator",
     "DataSource",
-    "NumpyVersion",
     "add_docstring",
     "add_newdoc",
     "add_newdoc_ufunc",
@@ -519,10 +522,15 @@ lib_imports = {  # TODO The list is still WIP
     "who"
 }
 
+misc_imports = {
+    "show_config"
+}
+
 main_namespace = (
     regular_submodules |
     special_submodules |
     legacy_or_hidden_submodules |
     core_imports |
-    lib_imports
+    lib_imports |
+    misc_imports
 )
