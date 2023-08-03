@@ -1,9 +1,4 @@
-python_xerbla_sources = []
-if target_machine.system() == 'windows'
-  warning('python_xerbla.c is disabled for Windows')
-else
-  python_xerbla_sources = ['lapack_lite/python_xerbla.c']
-endif
+python_xerbla_sources = ['lapack_lite/python_xerbla.c']
 
 lapack_lite_sources = []
 if not have_lapack
