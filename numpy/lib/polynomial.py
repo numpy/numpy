@@ -539,7 +539,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         The warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -606,7 +606,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     High-order polynomials may oscillate wildly:
 
     >>> with warnings.catch_warnings():
-    ...     warnings.simplefilter('ignore', np.exceptions.RankWarning)
+    ...     warnings.simplefilter('ignore', np.RankWarning)
     ...     p30 = np.poly1d(np.polyfit(x, y, 30))
     ...
     >>> p30(4)

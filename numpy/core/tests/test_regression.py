@@ -9,7 +9,7 @@ from itertools import chain
 import pickle
 
 import numpy as np
-from numpy.exceptions import AxisError
+from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
@@ -1629,9 +1629,9 @@ class TestRegression:
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
-            assert_warns(np.exceptions.ComplexWarning, float, x)
+            assert_warns(ComplexWarning, float, x)
             with suppress_warnings() as sup:
-                sup.filter(np.exceptions.ComplexWarning)
+                sup.filter(ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):

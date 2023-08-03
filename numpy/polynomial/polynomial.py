@@ -1285,7 +1285,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         be turned off by:
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------

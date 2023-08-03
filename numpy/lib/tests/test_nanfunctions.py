@@ -4,7 +4,7 @@ import inspect
 
 import numpy as np
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.exceptions import AxisError
+from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
@@ -473,7 +473,7 @@ class SharedNanFunctionsTestsMixin:
                 with suppress_warnings() as sup:
                     if nf in {np.nanstd, np.nanvar} and c in 'FDG':
                         # Giving the warning is a small bug, see gh-8000
-                        sup.filter(np.exceptions.ComplexWarning)
+                        sup.filter(ComplexWarning)
                     tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     assert_(res is tgt)
@@ -490,7 +490,7 @@ class SharedNanFunctionsTestsMixin:
                 with suppress_warnings() as sup:
                     if nf in {np.nanstd, np.nanvar} and c in 'FDG':
                         # Giving the warning is a small bug, see gh-8000
-                        sup.filter(np.exceptions.ComplexWarning)
+                        sup.filter(ComplexWarning)
                     tgt = rf(mat, dtype=c, axis=1).dtype.type
                     res = nf(mat, dtype=c, axis=1).dtype.type
                     assert_(res is tgt)
@@ -710,7 +710,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
             for ddof in range(5):
                 with suppress_warnings() as sup:
                     sup.record(RuntimeWarning)
-                    sup.filter(np.exceptions.ComplexWarning)
+                    sup.filter(ComplexWarning)
                     tgt = [ddof >= d for d in dsize]
                     res = nf(_ndat, axis=1, ddof=ddof)
                     assert_equal(np.isnan(res), tgt)

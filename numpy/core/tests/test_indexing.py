@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
-from numpy.exceptions import ComplexWarning
+from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
@@ -1200,9 +1200,7 @@ class TestMultiIndexingAutomated:
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
-            warnings.filterwarnings(
-                'error', '', np.exceptions.VisibleDeprecationWarning
-            )
+            warnings.filterwarnings('error', '', VisibleDeprecationWarning)
 
             def isskip(idx):
                 return isinstance(idx, str) and idx == "skip"

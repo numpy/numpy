@@ -231,8 +231,8 @@ else:
             return testing
 
         raise AttributeError("module {!r} has no attribute "
-                            "{!r}".format(__name__, attr))
-    
+                             "{!r}".format(__name__, attr))
+
     def __dir__():
         public_symbols = globals().keys() | {'testing'}
         public_symbols -= {"core", "matrixlib"}
