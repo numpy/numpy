@@ -9,7 +9,7 @@ import builtins
 import numpy as np
 from . import multiarray
 from .multiarray import (
-    fastCopyAndTranspose, ALLOW_THREADS,
+    ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, compare_chararrays,
@@ -43,7 +43,7 @@ __all__ = [
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
-    'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
+    'argwhere', 'copyto', 'concatenate', 'lexsort',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',

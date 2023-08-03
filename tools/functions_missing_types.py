@@ -37,7 +37,6 @@ EXCLUDE_LIST = {
         "add_newdoc_ufunc",
         "core",
         "compat",
-        "fastCopyAndTranspose",
         "get_array_wrap",
         "int_asbuffer",
         "numarray",

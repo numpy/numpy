@@ -4272,9 +4272,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
     NULL,
-    (PyArray_FastClipFunc *)NULL,
-    (PyArray_FastPutmaskFunc *)NULL,
-    (PyArray_FastTakeFunc *)NULL,
+    NULL,
+    NULL,
+    NULL,
     (PyArray_ArgFunc*)@from@_argmin
 };
 
@@ -4422,9 +4422,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
     NULL,
-    (PyArray_FastClipFunc*)NULL,
-    (PyArray_FastPutmaskFunc*)NULL,
-    (PyArray_FastTakeFunc*)NULL,
+    NULL,
+    NULL,
+    NULL,
     (PyArray_ArgFunc*)@from@_argmin
 };
 

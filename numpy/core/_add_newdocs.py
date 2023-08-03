@@ -1674,16 +1674,6 @@ add_newdoc('numpy.core.multiarray', 'from_dlpack',
     >>> y = np.from_dlpack(x)
     """)
 
-add_newdoc('numpy.core', 'fastCopyAndTranspose',
-    """
-    fastCopyAndTranspose(a)
-
-    .. deprecated:: 1.24
-
-       fastCopyAndTranspose is deprecated and will be removed. Use the copy and
-       transpose methods instead, e.g. ``arr.T.copy()``
-    """)
-
 add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
 
