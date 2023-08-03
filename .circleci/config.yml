@@ -61,10 +61,9 @@ jobs:
           name: build numpy
           command: |
             . venv/bin/activate
-            pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
             pip install --progress-bar=off -r test_requirements.txt
             pip install --progress-bar=off -r doc_requirements.txt
-            pip install .
+            pip install . --config-settings=setup-args="-Dallow-noblas=true"
 
       - run:
           name: create release notes

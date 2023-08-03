@@ -32,9 +32,6 @@ __all__ = [
 ]
 
 
-# Numarray and Numeric users should set this False
-using_newcore = True
-
 depargs = []
 lcb_map = {}
 lcb2_map = {}
@@ -58,89 +55,48 @@ c2py_map = {'double': 'float',
             'string': 'string',
             'character': 'bytes',
             }
-c2capi_map = {'double': 'NPY_DOUBLE',
-              'float': 'NPY_FLOAT',
-              'long_double': 'NPY_DOUBLE',           # forced casting
-              'char': 'NPY_STRING',
-              'unsigned_char': 'NPY_UBYTE',
-              'signed_char': 'NPY_BYTE',
-              'short': 'NPY_SHORT',
-              'unsigned_short': 'NPY_USHORT',
-              'int': 'NPY_INT',
-              'unsigned': 'NPY_UINT',
-              'long': 'NPY_LONG',
-              'long_long': 'NPY_LONG',                # forced casting
-              'complex_float': 'NPY_CFLOAT',
-              'complex_double': 'NPY_CDOUBLE',
-              'complex_long_double': 'NPY_CDOUBLE',   # forced casting
-              'string': 'NPY_STRING',
-              'character': 'NPY_CHAR'}
 
-# These new maps aren't used anywhere yet, but should be by default
-#  unless building numeric or numarray extensions.
-if using_newcore:
-    c2capi_map = {'double': 'NPY_DOUBLE',
-                  'float': 'NPY_FLOAT',
-                  'long_double': 'NPY_LONGDOUBLE',
-                  'char': 'NPY_BYTE',
-                  'unsigned_char': 'NPY_UBYTE',
-                  'signed_char': 'NPY_BYTE',
-                  'short': 'NPY_SHORT',
-                  'unsigned_short': 'NPY_USHORT',
-                  'int': 'NPY_INT',
-                  'unsigned': 'NPY_UINT',
-                  'long': 'NPY_LONG',
-                  'unsigned_long': 'NPY_ULONG',
-                  'long_long': 'NPY_LONGLONG',
-                  'unsigned_long_long': 'NPY_ULONGLONG',
-                  'complex_float': 'NPY_CFLOAT',
-                  'complex_double': 'NPY_CDOUBLE',
-                  'complex_long_double': 'NPY_CDOUBLE',
-                  'string': 'NPY_STRING',
-                  'character': 'NPY_STRING'}
+c2capi_map = {'double': 'NPY_DOUBLE',
+                'float': 'NPY_FLOAT',
+                'long_double': 'NPY_LONGDOUBLE',
+                'char': 'NPY_BYTE',
+                'unsigned_char': 'NPY_UBYTE',
+                'signed_char': 'NPY_BYTE',
+                'short': 'NPY_SHORT',
+                'unsigned_short': 'NPY_USHORT',
+                'int': 'NPY_INT',
+                'unsigned': 'NPY_UINT',
+                'long': 'NPY_LONG',
+                'unsigned_long': 'NPY_ULONG',
+                'long_long': 'NPY_LONGLONG',
+                'unsigned_long_long': 'NPY_ULONGLONG',
+                'complex_float': 'NPY_CFLOAT',
+                'complex_double': 'NPY_CDOUBLE',
+                'complex_long_double': 'NPY_CDOUBLE',
+                'string': 'NPY_STRING',
+                'character': 'NPY_STRING'}
 
 c2pycode_map = {'double': 'd',
                 'float': 'f',
-                'long_double': 'd',                       # forced casting
-                'char': '1',
-                'signed_char': '1',
-                'unsigned_char': 'b',
-                'short': 's',
-                'unsigned_short': 'w',
+                'long_double': 'g',
+                'char': 'b',
+                'unsigned_char': 'B',
+                'signed_char': 'b',
+                'short': 'h',
+                'unsigned_short': 'H',
                 'int': 'i',
-                'unsigned': 'u',
+                'unsigned': 'I',
                 'long': 'l',
-                'long_long': 'L',
+                'unsigned_long': 'L',
+                'long_long': 'q',
+                'unsigned_long_long': 'Q',
                 'complex_float': 'F',
                 'complex_double': 'D',
-                'complex_long_double': 'D',               # forced casting
-                'string': 'c',
-                'character': 'c'
-                }
-
-if using_newcore:
-    c2pycode_map = {'double': 'd',
-                    'float': 'f',
-                    'long_double': 'g',
-                    'char': 'b',
-                    'unsigned_char': 'B',
-                    'signed_char': 'b',
-                    'short': 'h',
-                    'unsigned_short': 'H',
-                    'int': 'i',
-                    'unsigned': 'I',
-                    'long': 'l',
-                    'unsigned_long': 'L',
-                    'long_long': 'q',
-                    'unsigned_long_long': 'Q',
-                    'complex_float': 'F',
-                    'complex_double': 'D',
-                    'complex_long_double': 'G',
-                    'string': 'S',
-                    'character': 'c'}
+                'complex_long_double': 'G',
+                'string': 'S',
+                'character': 'c'}
 
 # https://docs.python.org/3/c-api/arg.html#building-values
-# c2buildvalue_map is NumPy agnostic, so no need to bother with using_newcore
 c2buildvalue_map = {'double': 'd',
                     'float': 'f',
                     'char': 'b',

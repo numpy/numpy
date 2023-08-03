@@ -21,7 +21,7 @@ on:
     #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
-    - cron: "42 1 * * 4"
+    - cron: "42 2 * * SUN,WED"
   push:
   pull_request:
     types: [labeled, opened, synchronize, reopened]
@@ -78,8 +78,7 @@ jobs:
           - [ubuntu-20.04, musllinux_x86_64]
           - [macos-12, macosx_x86_64]
           - [windows-2019, win_amd64]
-          - [windows-2019, win32]
-        python: ["cp39", "cp310", "cp311", "pp39"]
+        python: ["cp39", "cp310", "cp311", "cp312"]  # "pp39"
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
@@ -101,25 +100,20 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
 
+      - name: pkg-config-for-win
+        run: |
+          choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        if: runner.os == 'windows'
+
       # Used to push the built wheels
       - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           python-version: "3.x"
 
-      # We need rtools 4.0 to have 32 bit support on windows
-      - if: runner.os == 'windows'
-        uses: r-windows/install-rtools@ca1090c210479e995c03019a22b9798cdf57073a # main
-
-      - name: setup rtools for 32-bit
-        run: |
-          echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=c:\rtools40\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
-          gfortran --version
-        if: ${{ matrix.buildplat[1] == 'win32' }}
-
       - name: Build wheels
         uses: pypa/cibuildwheel@f21bb8376a051ffb6cb5604b28ccaef7b90e8ab7 # v2.14.1
         env:
+          CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
@@ -192,12 +186,14 @@ jobs:
           python-version: "3.9"
       - name: Build sdist
         run: |
-          python setup.py sdist
+          python -m pip install -U pip build
+          python -m build --sdist -Csetup-args=-Dallow-noblas=true
       - name: Test the sdist
         run: |
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
-          python -m pip install dist/*.gz
+          python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
+          pip install ninja
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"

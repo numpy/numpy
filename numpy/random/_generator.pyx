@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
 from collections.abc import Sequence
@@ -277,7 +277,7 @@ cdef class Generator:
         >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
         >>> rng = np.random.default_rng(entropy)
 
-        Create two new generators for example for parallel executation:
+        Create two new generators for example for parallel execution:
 
         >>> child_rng1, child_rng2 = rng.spawn(2)
 
@@ -3477,7 +3477,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        DEF HYPERGEOM_MAX = 10**9
+        cdef double HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
