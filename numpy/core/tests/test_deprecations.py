@@ -778,13 +778,12 @@ class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
         from numpy import (
-            byte_bounds, safe_eval, who, recfromcsv, recfromtxt,
+            byte_bounds, safe_eval, recfromcsv, recfromtxt,
             disp, get_array_wrap, maximum_sctype
         )
         from numpy.lib.tests.test_io import TextIO
         
         self.assert_deprecated(lambda: safe_eval("None"))
-        self.assert_deprecated(lambda: who())
 
         data_gen = lambda: TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
