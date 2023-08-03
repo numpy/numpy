@@ -66,7 +66,7 @@ testing
     NumPy testing tools
 distutils
     Enhancements to distutils with support for
-    Fortran compilers support and more.
+    Fortran compilers support and more  (for Python <= 3.11).
 
 Utilities
 ---------

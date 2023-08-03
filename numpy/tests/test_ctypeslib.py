@@ -1,11 +1,12 @@
 import sys
-import pytest
+import sysconfig
 import weakref
 from pathlib import Path
 
+import pytest
+
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library, as_array
-from numpy.distutils.misc_util import get_shared_lib_extension
 from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
 
 try:
@@ -52,12 +53,9 @@ class TestLoadLibrary:
         # Regression for #801: load_library with a full library name
         # (including extension) does not work.
         try:
-            try:
-                so = get_shared_lib_extension(is_python_ext=True)
-                # Should succeed
-                load_library('_multiarray_umath%s' % so, np.core._multiarray_umath.__file__)
-            except ImportError:
-                print("No distutils available, skipping test.")
+            so_ext = sysconfig.get_config_var('EXT_SUFFIX')
+            load_library('_multiarray_umath%s' % so_ext,
+                         np.core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
                    " (import error was: %s)" % str(e))

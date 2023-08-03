@@ -756,6 +756,11 @@ def iter_struct_object_dtypes():
     yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 12),
+    reason="Python 3.12 has immortal refcounts, this test will no longer "
+           "work. See gh-23986"
+)
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 class TestStructuredObjectRefcounting:
     """These tests cover various uses of complicated structured types which
