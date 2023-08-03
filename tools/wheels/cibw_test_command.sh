@@ -26,10 +26,7 @@ fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
-if [[ $(python -c "import sys; print(sys.implementation.name)") == "pypy" ]]; then
-  # make PyPy more verbose, try to catch a segfault
-  python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', verbose=2))"
-else
-  python -c "import sys; import numpy; sys.exit(not numpy.test(label='full'))"
-fi
+# Run full tests with -n=auto. This makes pytest-xdist distribute tests across
+# the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
+python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"
 python $PROJECT_DIR/tools/wheels/check_license.py
