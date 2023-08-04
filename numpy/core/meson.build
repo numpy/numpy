@@ -687,7 +687,7 @@ py.extension_module('_multiarray_tests',
   subdir: 'numpy/core',
 )
 
-mtargets_res = mod_features.multi_targets(
+_umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
   'src/umath/_umath_tests.dispatch.c',
   dispatch: [
@@ -700,14 +700,13 @@ mtargets_res = mod_features.multi_targets(
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep]
 )
-CPU_MTARGETS_DEBUG += {'_umath_tests.dispatch.h': mtargets_res[0]}
 
 test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    mtargets_res[1]
+    _umath_tests_mtargets
   ],
   ['_rational_tests', 'src/umath/_rational_tests.c', []],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
@@ -744,7 +743,7 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-mtargets_res = mod_features.multi_targets(
+multiarray_umath_dispatch_link += mod_features.multi_targets(
   gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   baseline: CPU_BASELINE,
@@ -760,8 +759,6 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
-multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
 # Build npysort dispatch-able sources
@@ -778,7 +775,7 @@ foreach gen_mtargets : [
     [AVX512_SPR, AVX512_ICL]
   ],
 ]
-mtargets_res = mod_features.multi_targets(
+multiarray_umath_dispatch_link += mod_features.multi_targets(
   gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   # baseline: CPU_BASELINE, it doesn't provide baseline fallback
@@ -794,8 +791,6 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
-multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
 # Build umath dispatch-able sources
@@ -950,7 +945,7 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-mtargets_res = mod_features.multi_targets(
+multiarray_umath_dispatch_link += mod_features.multi_targets(
   gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
   dispatch: gen_mtargets[2],
   baseline: CPU_BASELINE,
@@ -966,8 +961,6 @@ mtargets_res = mod_features.multi_targets(
     'src/umath'
   ]
 )
-CPU_MTARGETS_DEBUG += {gen_mtargets[0]: mtargets_res[0]}
-multiarray_umath_dispatch_link += mtargets_res[1]
 endforeach
 
 # Build _multiarray_umath module
@@ -1167,7 +1160,7 @@ foreach target : get_option('test-simd')
   _simd_dispatch += [mfeatures]
 endforeach
 
-mtargets_res = mod_features.multi_targets(
+_simd_mtargets = mod_features.multi_targets(
   '_simd.dispatch.h',
   [
     src_file.process('src/_simd/_simd_inc.h.src'),
@@ -1186,7 +1179,6 @@ mtargets_res = mod_features.multi_targets(
   c_args: c_args_common,
   cpp_args: cpp_args_common,
 )
-CPU_MTARGETS_DEBUG += {'_simd.dispatch.h': mtargets_res[0]}
 
 py.extension_module('_simd',
   [
@@ -1196,7 +1188,7 @@ py.extension_module('_simd',
   c_args: c_args_common,
   include_directories: ['src/_simd', 'src/npymath'],
   dependencies: np_core_dep,
-  link_with: mtargets_res[1] + npymath_lib,
+  link_with: [_simd_mtargets] + npymath_lib,
   install: true,
   subdir: 'numpy/core',
 )

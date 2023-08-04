@@ -26,11 +26,6 @@
 #
 # - `CPU_FEATURES`: A dictionary containing all supported CPU feature objects.
 #
-# - `CPU_MTARGETS_DEBUG`: Initializes an empty dictionary required by the debug script.
-#                         This dictionary should hold the first element of the returned list
-#                         from `mod_features.multi_targets()` as the value,
-#                         where the key is the configuration file name.
-#
 # Additionally, this script exposes a set of variables that represent each supported feature
 # to be used within the Meson function `mod_features.multi_targets()`.
 
@@ -304,4 +299,3 @@ CPU Optimiztion Options
     CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES)
   )
 )
-CPU_MTARGETS_DEBUG = {}
