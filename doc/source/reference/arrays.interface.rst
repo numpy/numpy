@@ -179,7 +179,7 @@ This approach to the interface consists of the object having an
 
    **offset** (optional)
        An integer offset into the array data region. This can only be
-       used when data is ``None`` or returns a :class:`buffer`
+       used when data is ``None`` or returns a :class:`memoryview`
        object.
 
        **Default**: ``0``.
