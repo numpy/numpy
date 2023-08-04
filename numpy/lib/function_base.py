@@ -4877,8 +4877,8 @@ def _quantile(
         # TODO: Deal with nan values, e.g. np.isnan(arr(index_array[-1])) by
         # be true.
         # TODO: Special case quantiles == 0 and quantiles == 1?
-        arr = np.take_along_axis(arr, index_array, axis=axis)
-        weights = np.take_along_axis(weights, index_array, axis=axis)
+        arr = arr[index_array, ...]
+        weights = weights[index_array, ...]
         # Normalize weights to sum to one such that it corresponds to the
         # empirical distribution function.
         weights = weights / weights.sum(axis=axis)
