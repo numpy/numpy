@@ -267,13 +267,13 @@ add_newdoc_for_scalar_type('void', [],
     Examples
     --------
     >>> np.void(5)
-    void(b'\x00\x00\x00\x00\x00')
+    np.void(b'\x00\x00\x00\x00\x00')
     >>> np.void(b'abcd')
-    void(b'\x61\x62\x63\x64')
-    >>> np.void((5, 3.2, "eggs"), dtype="i,d,S5")
-    (5, 3.2, b'eggs')  # looks like a tuple, but is `np.void`
+    np.void(b'\x61\x62\x63\x64')
+    >>> np.void((3.2, b'eggs'), dtype="d,S5")
+    np.void((3.2, b'eggs'), dtype=[('f0', '<f8'), ('f1', 'S5')])
     >>> np.void(3, dtype=[('x', np.int8), ('y', np.int8)])
-    (3, 3)  # looks like a tuple, but is `np.void`
+    np.void((3, 3), dtype=[('x', 'i1'), ('y', 'i1')])
 
     """)
 

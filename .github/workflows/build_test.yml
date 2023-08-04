@@ -423,7 +423,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/751535/sde-external-9.14.0-2022-10-25-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
     - name: Install dependencies
@@ -440,8 +440,8 @@ jobs:
         python -c "import numpy as np; np.show_config()"
     # Run only a few tests, running everything in an SDE takes a long time
     # Using pytest directly, unable to use python runtests.py -n -t ...
-    # Disabled running in the SDE because of an SDE bug
     - name: Run linalg/ufunc/umath tests
       run: |
         python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*
+        # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
         #sde -spr -- python -m pytest numpy/core/tests/test_umath* numpy/core/tests/test_ufunc.py numpy/linalg/tests/test_*

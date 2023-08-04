@@ -5,6 +5,7 @@
 #define _UMATHMODULE
 
 #include "numpy/ndarraytypes.h"
+#include "numpy/npy_math.h"
 
 #include "numpyos.h"
 #include "dispatching.h"

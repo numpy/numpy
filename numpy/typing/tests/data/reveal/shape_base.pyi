@@ -46,9 +46,6 @@ reveal_type(np.dsplit(AR_LIKE_f8, [3, 5, 6, 10]))  # E: list[ndarray[Any, dtype[
 reveal_type(np.lib.shape_base.get_array_prepare(AR_i8))  # E: lib.shape_base._ArrayPrepare
 reveal_type(np.lib.shape_base.get_array_prepare(AR_i8, 1))  # E: Union[None, lib.shape_base._ArrayPrepare]
 
-reveal_type(np.get_array_wrap(AR_i8))  # E: lib.shape_base._ArrayWrap
-reveal_type(np.get_array_wrap(AR_i8, 1))  # E: Union[None, lib.shape_base._ArrayWrap]
-
 reveal_type(np.kron(AR_b, AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.kron(AR_b, AR_i8))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.kron(AR_f8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]

@@ -7,7 +7,7 @@ from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
-    assert_array_equal, suppress_warnings
+    assert_raises_regex, assert_array_equal, suppress_warnings
     )
 
 
@@ -303,7 +303,10 @@ class TestNanFunctions_ArgminArgmax:
         mat = np.zeros((0, 3))
         for f in self.nanfuncs:
             for axis in [0, None]:
-                assert_raises(ValueError, f, mat, axis=axis)
+                assert_raises_regex(
+                        ValueError,
+                        "attempt to get argm.. of an empty sequence",
+                        f, mat, axis=axis)
             for axis in [1]:
                 res = f(mat, axis=axis)
                 assert_equal(res, np.zeros(0))

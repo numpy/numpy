@@ -8,7 +8,6 @@ from typing import (
 )
 
 from numpy import ndarray, generic
-
 from numpy.core.numerictypes import (
     issubclass_ as issubclass_,
     issubdtype as issubdtype,

@@ -227,6 +227,8 @@ stages:
             TEST_MODE: fast
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
+            # Broken - it builds but _multiarray_umath doesn't import - needs investigating
+            DISABLE_BLAS: '1'
 
     steps:
     - template: azure-steps-windows.yml

@@ -2269,7 +2269,11 @@ PyArray_FromInterface(PyObject *origin)
                     "must be an integer.");
             goto fail;
         }
-        if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
+        int istrue = PyObject_IsTrue(PyTuple_GET_ITEM(attr,1));
+        if (istrue == -1) {
+            goto fail;
+        }
+        if (istrue) {
             dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
         base = origin;

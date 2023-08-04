@@ -3354,6 +3354,9 @@ class TestArgwhere:
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*set_string_function.*:DeprecationWarning"
+)
 class TestStringFunction:
 
     def test_set_string_function(self):

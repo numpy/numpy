@@ -9,7 +9,7 @@ import builtins
 import numpy as np
 from . import multiarray
 from .multiarray import (
-    fastCopyAndTranspose, ALLOW_THREADS,
+    ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, compare_chararrays,
@@ -43,7 +43,7 @@ __all__ = [
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
-    'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
+    'argwhere', 'copyto', 'concatenate', 'lexsort',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
@@ -661,12 +661,12 @@ def correlate(a, v, mode='valid'):
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
-    processing texts:
+    processing texts [1]_:
 
     .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v}_n
 
     with a and v sequences being zero-padded where necessary and
-    :math:`\overline x` denoting complex conjugation.
+    :math:`\overline v` denoting complex conjugation.
 
     Parameters
     ----------
@@ -693,7 +693,7 @@ def correlate(a, v, mode='valid'):
     Notes
     -----
     The definition of correlation above is not unique and sometimes correlation
-    may be defined differently. Another common definition is:
+    may be defined differently. Another common definition is [1]_:
 
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
@@ -702,7 +702,11 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-
+    
+    References
+    ----------
+    .. [1] Wikipedia, "Cross-correlation",
+           https://en.wikipedia.org/wiki/Cross-correlation
 
     Examples
     --------

@@ -1,10 +1,10 @@
+import builtins
 import collections.abc
 import functools
 import re
 import sys
 import warnings
 
-from .._utils import set_module
 import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import transpose
@@ -28,8 +28,7 @@ from numpy.core.multiarray import (
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
-
-import builtins
+from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
@@ -1964,6 +1963,9 @@ def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
 
+    .. deprecated:: 2.0
+        Use your own printing function instead.
+
     Parameters
     ----------
     mesg : str
@@ -1992,6 +1994,16 @@ def disp(mesg, device=None, linefeed=True):
     '"Display" in a file\\n'
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`disp` is deprecated, "
+        "use your own printing function instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )    
+
     if device is None:
         device = sys.stdout
     if linefeed:

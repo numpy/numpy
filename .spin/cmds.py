@@ -425,25 +425,12 @@ def ipython(ctx, ipython_args):
 
     ppath = meson._set_pythonpath()
 
-    # Get NumPy version
-    p = util.run([
-        sys.executable, '-c',
-        'import sys; sys.path.pop(0); import numpy; print(numpy.__version__)'],
-        output=False, echo=False
-    )
-    np_ver = p.stdout.strip().decode('ascii')
-
-    with tempfile.TemporaryDirectory() as d:
-        profile_dir = os.path.join(d, f'numpy_{np_ver}')
-        startup_dir = os.path.join(profile_dir, 'startup')
-
-        pathlib.Path(startup_dir).mkdir(parents=True)
-        with open(os.path.join(startup_dir, '00_numpy.py'), 'w') as f:
-            f.write('import numpy as np\n')
-
-        print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
-        util.run(["ipython", "--profile-dir", profile_dir, "--ignore-cwd"] +
-                 list(ipython_args))
+    print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
+    preimport = (r"import numpy as np; "
+                 r"print(f'\nPreimported NumPy {np.__version__} as np')")
+    util.run(["ipython", "--ignore-cwd",
+              f"--TerminalIPythonApp.exec_lines={preimport}"] +
+             list(ipython_args))
 
 
 @click.command(context_settings={"ignore_unknown_options": True})

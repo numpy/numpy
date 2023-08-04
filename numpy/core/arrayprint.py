@@ -88,12 +88,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         options['legacy'] = 113
     elif legacy == '1.21':
         options['legacy'] = 121
+    elif legacy == '1.25':
+        options['legacy'] = 125
     elif legacy is None:
         pass  # OK, do nothing.
     else:
         warnings.warn(
-            "legacy printing option can currently only be '1.13', '1.21', or "
-            "`False`", stacklevel=3)
+            "legacy printing option can currently only be '1.13', '1.21', "
+            "'1.25', or `False`", stacklevel=3)
 
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
@@ -154,6 +156,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values. (default '-')
+
+        .. versionchanged:: 2.0
+             The sign parameter can now be an integer type, previously
+             types were floating-point types.
+
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -219,7 +226,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, printoptions, set_string_function, array2string
+    get_printoptions, printoptions, array2string
 
     Notes
     -----
@@ -288,6 +295,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         _format_options['sign'] = '-'
     elif _format_options['legacy'] == 121:
         set_legacy_print_mode(121)
+    elif _format_options['legacy'] == 125:
+        set_legacy_print_mode(125)
     elif _format_options['legacy'] == sys.maxsize:
         set_legacy_print_mode(0)
 
@@ -316,12 +325,12 @@ def get_printoptions():
 
     See Also
     --------
-    set_printoptions, printoptions, set_string_function
+    set_printoptions, printoptions
 
     """
     opts = _format_options.copy()
     opts['legacy'] = {
-        113: '1.13', 121: '1.21', sys.maxsize: False,
+        113: '1.13', 121: '1.21', 125: '1.25', sys.maxsize: False,
     }[opts['legacy']]
     return opts
 
@@ -395,9 +404,13 @@ def _object_format(o):
     return fmt.format(o)
 
 def repr_format(x):
+    if isinstance(x, (np.str_, np.bytes_)):
+        return repr(x.item())
     return repr(x)
 
 def str_format(x):
+    if isinstance(x, (np.str_, np.bytes_)):
+        return str(x.item())
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
@@ -407,7 +420,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
-        'int': lambda: IntegerFormat(data),
+        'int': lambda: IntegerFormat(data, sign),
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longfloat': lambda: FloatingFormat(
@@ -639,6 +652,11 @@ def array2string(a, max_line_width=None, precision=None,
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values.
         Defaults to ``numpy.get_printoptions()['sign']``.
+
+        .. versionchanged:: 2.0
+             The sign parameter can now be an integer type, previously
+             types were floating-point types.
+
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types.
@@ -1218,19 +1236,24 @@ def format_float_positional(x, precision=None, unique=True,
                               sign=sign, pad_left=pad_left,
                               pad_right=pad_right, min_digits=min_digits)
 
-
 class IntegerFormat:
-    def __init__(self, data):
+    def __init__(self, data, sign='-'):
         if data.size > 0:
-            max_str_len = max(len(str(np.max(data))),
-                              len(str(np.min(data))))
+            data_max = np.max(data)
+            data_min = np.min(data)
+            data_max_str_len = len(str(data_max))
+            if sign == ' ' and data_min < 0:
+                sign = '-'
+            if data_max >= 0 and sign in "+ ":
+                data_max_str_len += 1
+            max_str_len = max(data_max_str_len,
+                              len(str(data_min)))
         else:
             max_str_len = 0
-        self.format = '%{}d'.format(max_str_len)
+        self.format = f'{{:{sign}{max_str_len}d}}'
 
     def __call__(self, x):
-        return self.format % x
-
+        return self.format.format(x)
 
 class BoolFormat:
     def __init__(self, data, **kwargs):
@@ -1400,13 +1423,27 @@ class StructuredVoidFormat:
             return "({})".format(", ".join(str_fields))
 
 
-def _void_scalar_repr(x):
+def _void_scalar_to_string(x, is_repr=True):
     """
     Implements the repr for structured-void scalars. It is called from the
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+    options = _format_options.copy()
+
+    if options["legacy"] <= 125:
+        return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+
+    if options.get('formatter') is None:
+        options['formatter'] = {}
+    options['formatter'].setdefault('float_kind', str)
+    val_repr = StructuredVoidFormat.from_data(array(x), **options)(x)
+    if not is_repr:
+        return val_repr
+    cls = type(x)
+    cls_fqn = cls.__module__.replace("numpy", "np") + "." + cls.__name__
+    void_dtype = np.dtype((np.void, x.dtype))
+    return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
 _typelessdata = [int_, float_, complex_, bool_]
@@ -1669,6 +1706,10 @@ def set_string_function(f, repr=True):
     """
     Set a Python function to be used when pretty printing arrays.
 
+    .. deprecated:: 2.0
+        Use `np.set_printoptions` instead with a formatter for custom
+        printing of NumPy objects.
+
     Parameters
     ----------
     f : function or None
@@ -1716,6 +1757,16 @@ def set_string_function(f, repr=True):
     'array([0, 1, 2, 3])'
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`set_string_function` is deprecated. Use `np.set_printoptions` "
+        "with a formatter for custom printing NumPy objects. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     if f is None:
         if repr:
             return multiarray.set_string_function(_default_array_repr, 1)

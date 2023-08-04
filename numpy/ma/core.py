@@ -3728,23 +3728,23 @@ class MaskedArray(ndarray):
         >>> for dt in [np.int32, np.int64, np.float64, np.complex128]:
         ...     np.ma.array([0, 1], dtype=dt).get_fill_value()
         ...
-        999999
-        999999
-        1e+20
-        (1e+20+0j)
+        np.int64(999999)
+        np.int64(999999)
+        np.float64(1e+20)
+        np.complex128(1e+20+0j)
 
         >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
         >>> x.fill_value
-        -inf
+        np.float64(-inf)
         >>> x.fill_value = np.pi
         >>> x.fill_value
-        3.1415926535897931 # may vary
+        np.float64(3.1415926535897931)
 
         Reset to default:
 
         >>> x.fill_value = None
         >>> x.fill_value
-        1e+20
+        np.float64(1e+20)
 
         """
         if self._fill_value is None:
@@ -4067,7 +4067,22 @@ class MaskedArray(ndarray):
             separator=", ",
             prefix=indents['mask'] + 'mask=',
             suffix=',')
-        reprs['fill_value'] = repr(self.fill_value)
+
+        if self._fill_value is None:
+            self.fill_value  # initialize fill_value
+
+        if (self._fill_value.dtype.kind in ("S", "U")
+                and self.dtype.kind == self._fill_value.dtype.kind):
+            # Allow strings: "N/A" has length 3 so would mismatch.
+            fill_repr = repr(self.fill_value.item())
+        elif self._fill_value.dtype == self.dtype and not self.dtype == object:
+            # Guess that it is OK to use the string as item repr.  To really
+            # fix this, it needs new logic (shared with structured scalars)
+            fill_repr = str(self.fill_value)
+        else:
+            fill_repr = repr(self.fill_value)
+
+        reprs['fill_value'] = fill_repr
         if dtype_needed:
             reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
 
@@ -6031,7 +6046,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1)
         masked_array(data=[ 126,  127, -128, -127],
                      mask=False,
-               fill_value=999999,
+               fill_value=np.int64(999999),
                     dtype=int8)
 
         A work-around is to use the `view()` method to view the result as
@@ -6040,7 +6055,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=999999,
+               fill_value=np.int64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -7553,7 +7568,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(u8_arr)
     masked_array(data=[255],
                  mask=False,
-           fill_value=999999,
+           fill_value=np.int64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     255
@@ -7565,7 +7580,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(i16_arr)
     masked_array(data=[-1],
                  mask=False,
-           fill_value=999999,
+           fill_value=np.int64(999999),
                 dtype=int16)
 
     Examples
@@ -8406,7 +8421,7 @@ def fromflex(fxarray):
             [0, 0]],
       mask=[[False, False],
             [False, False]],
-      fill_value=999999,
+      fill_value=np.int64(999999),
       dtype=int32)
 
     """

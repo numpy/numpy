@@ -170,13 +170,14 @@ Cython users may use the NumPy C-API via ``cimport numpy as cnp``.
 Due to the uncertainty of Cython development, there are two scenarios for
 impact on Cython users.
 
-If Cython 3 can be relied on, Cython users would be impacted *less* then C-API
+If Cython 3 can be relied on, Cython users would be impacted *less* than C-API
 users, because Cython 3 allows us to hide struct layout changes (i.e. changes
 to ``PyArray_Descr``).
-If this is not the case and we must support Cython 2.x, then Cython users
-will also have to use a function/macro like ``PyDataType_ITEMSIZE()`` (or
-use the Python object).  This is unfortunately less typical in Cython code,
-but also unlikely to be a common pattern for dtype struct fields/attributes.
+If this is not the case and we must support Cython 0.29.x (which is the historic branch
+before Cython 3), then Cython users will also have to use a function/macro like
+``PyDataType_ITEMSIZE()`` (or use the Python object).  This is unfortunately less
+typical in Cython code, but also unlikely to be a common pattern for dtype struct
+fields/attributes.
 
 A further impact is that some future API additions such as new classes may
 need to placed in a distinct ``.pyd`` file to avoid Cython generating code
@@ -199,7 +200,7 @@ is missing.
 
 Some new API can be backported
 -------------------------------
-One large advantage of allowing users to compile with the newst version of
+One large advantage of allowing users to compile with the newest version of
 NumPy is that in some cases we will be able to backport new API.
 Some new API functions can be written in terms of old ones or included
 directly.
@@ -229,7 +230,7 @@ An implementation can be found in the `PR 23528`_.
 The second part is mainly about identifying and implementing the desired
 changes in a way that backwards compatibility will not be broken and API
 breaks remain manageable for downstream libraries.
-Everyone change we do must have a brief note on how to adapt to the
+Every change we do must have a brief note on how to adapt to the
 API change (i.e. alternative functions).
 
 NumPy 2 compatibility and API table changes
@@ -239,12 +240,13 @@ NumPy 1.x (a table is a list of functions and symbols).
 
 For compatibility we would need to translate the 1.x table to the 2.0 table.
 This could be done in headers only in theory, but this seems unwieldy.
-We thus propose to add a ``numpy2_compat`` package.  This packages main
+We thus propose to add a ``numpy2_compat`` package.  This package's main
 purpose would be to provide a translation of the 1.x table to the 2.x one
 in a single place (filling in any necessary blanks).
 
 Introducing this package solves the "transition" issue because it allows
 a user to:
+
 * Install a SciPy version that is compatible with 2.0 and 1.x
 * and keep using NumPy 1.x because of other packages they are using are not
   yet compatible.
@@ -278,6 +280,7 @@ Backward compatibility
 ======================
 
 As mentioned above backwards compatibility is achieved by:
+
 1. Forcing downstream to recompile with NumPy 2.0
 2. Providing a ``numpy2_compat`` library.
 

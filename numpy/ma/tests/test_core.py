@@ -26,7 +26,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import requires_memory
 from numpy import ndarray
-from numpy._utils._convertions import asbytes
+from numpy._utils import asbytes
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal,
     assert_equal_records, fail_if_equal, assert_not_equal,
@@ -556,23 +556,23 @@ class TestMaskedArray:
         a[1,1] = np.ma.masked
         assert_equal(
             repr(a),
-            textwrap.dedent('''\
+            textwrap.dedent(f'''\
             masked_array(
               data=[[1, 2, 3],
                     [4, --, 6]],
               mask=[[False, False, False],
                     [False,  True, False]],
-              fill_value=999999,
+              fill_value={np.array(999999)[()]!r},
               dtype=int8)''')
         )
 
         # but not it they're a row vector
         assert_equal(
             repr(a[:1]),
-            textwrap.dedent('''\
+            textwrap.dedent(f'''\
             masked_array(data=[[1, 2, 3]],
                          mask=[[False, False, False]],
-                   fill_value=999999,
+                   fill_value={np.array(999999)[()]!r},
                         dtype=int8)''')
         )
 

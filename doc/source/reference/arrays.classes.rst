@@ -316,11 +316,17 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__([dtype])
 
-   If a class (ndarray subclass or not) having the :func:`__array__`
-   method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will *not* be written to the object
-   returned by :func:`__array__`. This practice will return ``TypeError``.
+    If defined on an object, should return an ``ndarray``.
+    This method is called by array-coercion functions like np.array()
+    if an object implementing this interface is passed to those functions.
+    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
+    for the protocol hierarchy, of which ``__array__`` is the oldest and least
+    desirable.
 
+    .. note::  If a class (ndarray subclass or not) having the :func:`__array__`
+               method is used as the output object of an :ref:`ufunc
+               <ufuncs-output-type>`, results will *not* be written to the object
+               returned by :func:`__array__`. This practice will return ``TypeError``.
 
 .. _matrix-objects:
 
@@ -505,8 +511,8 @@ on item retrieval and comparison operations.
 
 .. _arrays.classes.rec:
 
-Record arrays (:mod:`numpy.rec`)
-================================
+Record arrays
+=============
 
 .. seealso:: :ref:`routines.array-creation.rec`, :ref:`routines.dtype`,
              :ref:`arrays.dtypes`.
@@ -522,6 +528,11 @@ scalar data type object :class:`record`.
 
    recarray
    record
+
+.. note::
+
+   The pandas DataFrame is more powerful than record array. If possible,
+   please use pandas DataFrame instead.
 
 Masked arrays (:mod:`numpy.ma`)
 ===============================
@@ -657,9 +668,9 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in np.broadcast([[1,0],[2,3]],[0,1]):
+>>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
 ...     print(val)
-(1, 0)
-(0, 1)
-(2, 0)
-(3, 1)
+(np.int64(1), np.int64(0))
+(np.int64(0), np.int64(1))
+(np.int64(2), np.int64(0))
+(np.int64(3), np.int64(1))

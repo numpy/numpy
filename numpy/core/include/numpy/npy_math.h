@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
+#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
+
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
  * for INFINITY)
@@ -357,84 +360,96 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
  * Complex declarations
  */
 
-/*
- * C99 specifies that complex numbers have the same representation as
- * an array of two elements, where the first element is the real part
- * and the second element is the imaginary part.
- */
-#define __NPY_CPACK_IMP(x, y, type, ctype)   \
-    union {                                  \
-        ctype z;                             \
-        type a[2];                           \
-    } z1;                                    \
-                                             \
-    z1.a[0] = (x);                           \
-    z1.a[1] = (y);                           \
-                                             \
-    return z1.z;
+static inline double npy_creal(const npy_cdouble z)
+{
+    return ((double *) &z)[0];
+}
+
+static inline void npy_csetreal(npy_cdouble *z, const double r)
+{
+    ((double *) z)[0] = r;
+}
+
+static inline double npy_cimag(const npy_cdouble z)
+{
+    return ((double *) &z)[1];
+}
+
+static inline void npy_csetimag(npy_cdouble *z, const double i)
+{
+    ((double *) z)[1] = i;
+}
+
+static inline float npy_crealf(const npy_cfloat z)
+{
+    return ((float *) &z)[0];
+}
+
+static inline void npy_csetrealf(npy_cfloat *z, const float r)
+{
+    ((float *) z)[0] = r;
+}
+
+static inline float npy_cimagf(const npy_cfloat z)
+{
+    return ((float *) &z)[1];
+}
+
+static inline void npy_csetimagf(npy_cfloat *z, const float i)
+{
+    ((float *) z)[1] = i;
+}
+
+static inline npy_longdouble npy_creall(const npy_clongdouble z)
+{
+    return ((longdouble_t *) &z)[0];
+}
+
+static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
+{
+    ((longdouble_t *) z)[0] = r;
+}
+
+static inline npy_longdouble npy_cimagl(const npy_clongdouble z)
+{
+    return ((longdouble_t *) &z)[1];
+}
+
+static inline void npy_csetimagl(npy_clongdouble *z, const longdouble_t i)
+{
+    ((longdouble_t *) z)[1] = i;
+}
+
+#define NPY_CSETREAL(z, r) npy_csetreal(z, r)
+#define NPY_CSETIMAG(z, i) npy_csetimag(z, i)
+#define NPY_CSETREALF(z, r) npy_csetrealf(z, r)
+#define NPY_CSETIMAGF(z, i) npy_csetimagf(z, i)
+#define NPY_CSETREALL(z, r) npy_csetreall(z, r)
+#define NPY_CSETIMAGL(z, i) npy_csetimagl(z, i)
 
 static inline npy_cdouble npy_cpack(double x, double y)
 {
-    __NPY_CPACK_IMP(x, y, double, npy_cdouble);
+    npy_cdouble z;
+    npy_csetreal(&z, x);
+    npy_csetimag(&z, y);
+    return z;
 }
 
 static inline npy_cfloat npy_cpackf(float x, float y)
 {
-    __NPY_CPACK_IMP(x, y, float, npy_cfloat);
+    npy_cfloat z;
+    npy_csetrealf(&z, x);
+    npy_csetimagf(&z, y);
+    return z;
 }
 
 static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
-    __NPY_CPACK_IMP(x, y, npy_longdouble, npy_clongdouble);
+    npy_clongdouble z;
+    npy_csetreall(&z, x);
+    npy_csetimagl(&z, y);
+    return z;
 }
-#undef __NPY_CPACK_IMP
-
-/*
- * Same remark as above, but in the other direction: extract first/second
- * member of complex number, assuming a C99-compatible representation
- *
- * Those are defineds as static inline, and such as a reasonable compiler would
- * most likely compile this to one or two instructions (on CISC at least)
- */
-#define __NPY_CEXTRACT_IMP(z, index, type, ctype)   \
-    union {                                         \
-        ctype z;                                    \
-        type a[2];                                  \
-    } __z_repr;                                     \
-    __z_repr.z = z;                                 \
-                                                    \
-    return __z_repr.a[index];
-
-static inline double npy_creal(npy_cdouble z)
-{
-    __NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
-}
-
-static inline double npy_cimag(npy_cdouble z)
-{
-    __NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
-}
-
-static inline float npy_crealf(npy_cfloat z)
-{
-    __NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
-}
-
-static inline float npy_cimagf(npy_cfloat z)
-{
-    __NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
-}
-
-static inline npy_longdouble npy_creall(npy_clongdouble z)
-{
-    __NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
-}
-
-static inline npy_longdouble npy_cimagl(npy_clongdouble z)
-{
-    __NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
-}
-#undef __NPY_CEXTRACT_IMP
 
 /*
  * Double precision complex functions

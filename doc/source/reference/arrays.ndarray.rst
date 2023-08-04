@@ -26,7 +26,7 @@ changes made in one :class:`ndarray` may be visible in another. That
 is, an ndarray can be a *"view"* to another ndarray, and the data it
 is referring to is taken care of by the *"base"* ndarray. ndarrays can
 also be views to memory owned by Python :class:`strings <str>` or
-objects implementing the :class:`buffer` or :ref:`array
+objects implementing the :class:`memoryview` or :ref:`array
 <arrays.interface>` interfaces.
 
 

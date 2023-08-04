@@ -16,6 +16,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/npy_math.h"
 
 #include "npy_import.h"
 #include "npy_pycompat.h"
@@ -422,16 +423,16 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
 static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
-    out->real = a.real + b.real;
-    out->imag = a.imag + b.imag;
+    npy_csetreal@c@(out, npy_creal@c@(a) + npy_creal@c@(b));
+    npy_csetimag@c@(out, npy_cimag@c@(a) + npy_cimag@c@(b));
     return 0;
 }
 
 static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
-    out->real = a.real - b.real;
-    out->imag = a.imag - b.imag;
+    npy_csetreal@c@(out, npy_creal@c@(a) - npy_creal@c@(b));
+    npy_csetimag@c@(out, npy_cimag@c@(a) - npy_cimag@c@(b));
     return 0;
 }
 
@@ -443,8 +444,8 @@ static inline int
 static inline int
 @name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
 {
-    out->real = a.real * b.real - a.imag * b.imag;
-    out->imag = a.real * b.imag + a.imag * b.real;
+    npy_csetreal@c@(out, npy_creal@c@(a) * npy_creal@c@(b) - npy_cimag@c@(a) * npy_cimag@c@(b));
+    npy_csetimag@c@(out, npy_creal@c@(a) * npy_cimag@c@(b) + npy_cimag@c@(a) * npy_creal@c@(b));
     return 0;
 }
 
@@ -550,14 +551,16 @@ half_ctype_negative(npy_half a, npy_half *out)
 
 
 /**begin repeat
+ * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #c = f, , l#
  */
 static inline int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
-    out->real = -a.real;
-    out->imag = -a.imag;
+    npy_csetreal@c@(out, -npy_creal@c@(a));
+    npy_csetimag@c@(out, -npy_cimag@c@(a));
     return 0;
 }
 /**end repeat**/
@@ -579,6 +582,7 @@ static inline int
 /**end repeat**/
 
 /**begin repeat
+ * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f,,l#
@@ -586,8 +590,8 @@ static inline int
 static inline int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
-    out->real = a.real;
-    out->imag = a.imag;
+    npy_csetreal@c@(out, +npy_creal@c@(a));
+    npy_csetimag@c@(out, +npy_cimag@c@(a));
     return 0;
 }
 
@@ -833,6 +837,7 @@ typedef enum {
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #c = x*14, f, , l#
  */
 
 #define IS_@TYPE@ 1
@@ -852,8 +857,8 @@ typedef enum {
         *result = npy_float_to_half((float)(value))
 #elif defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
     #define CONVERT_TO_RESULT(value)  \
-        result->real = value;  \
-        result->imag = 0
+        npy_csetreal@c@(result, value);  \
+        npy_csetimag@c@(result, 0)
 #else
     #define CONVERT_TO_RESULT(value) *result = value
 #endif
@@ -884,12 +889,12 @@ typedef enum {
 
 #if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
 
-#define GET_CVALUE_OR_DEFER(OTHER, Other, value)  \
+#define GET_CVALUE_OR_DEFER(OTHER, Other, o, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
             assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
-            result->real = PyArrayScalar_VAL(value, Other).real;  \
-            result->imag = PyArrayScalar_VAL(value, Other).imag;  \
+            npy_csetreal@c@(result, npy_creal##o(PyArrayScalar_VAL(value, Other)));  \
+            npy_csetimag@c@(result, npy_cimag##o(PyArrayScalar_VAL(value, Other)));  \
             ret = 1;  \
         }  \
         else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
@@ -903,7 +908,7 @@ typedef enum {
 #else
 
 /* Getting a complex value to real is never safe: */
-#define GET_CVALUE_OR_DEFER(OTHER, Other, value)  \
+#define GET_CVALUE_OR_DEFER(OTHER, Other, o, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
             ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
@@ -1040,8 +1045,8 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         if (error_converting(val.real)) {
             return CONVERSION_ERROR;  /* should not be possible */
         }
-        result->real = val.real;
-        result->imag = val.imag;
+        npy_csetreal@c@(result, val.real);
+        npy_csetimag@c@(result, val.imag);
         return CONVERSION_SUCCESS;
 #else
         /* unreachable, always unsafe cast above; return to avoid warning */
@@ -1138,9 +1143,9 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         GET_VALUE_OR_DEFER(DOUBLE, Double, value);
         GET_VALUE_OR_DEFER(LONGDOUBLE, LongDouble, value);
         /* Complex: We should still defer, but the code won't work... */
-        GET_CVALUE_OR_DEFER(CFLOAT, CFloat, value);
-        GET_CVALUE_OR_DEFER(CDOUBLE, CDouble, value);
-        GET_CVALUE_OR_DEFER(CLONGDOUBLE, CLongDouble, value);
+        GET_CVALUE_OR_DEFER(CFLOAT, CFloat, f, value);
+        GET_CVALUE_OR_DEFER(CDOUBLE, CDouble,, value);
+        GET_CVALUE_OR_DEFER(CLONGDOUBLE, CLongDouble, l, value);
         default:
             /*
              * If there is no match, this is an unknown scalar object.  It
@@ -1665,6 +1670,10 @@ static PyObject *
 #define _IS_NONZERO(x) (x != 0)
 /**begin repeat
  *
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT,
+ *         UINT, LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #name = byte, ubyte, short, ushort, int,
  *         uint, long, ulong, longlong, ulonglong,
  *         half, float, double, longdouble,
@@ -1677,6 +1686,7 @@ static PyObject *
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #t = x*14, f, , l#
  * #simp = 1*14, 0*3#
  * #nonzero = _IS_NONZERO*10, !npy_half_iszero, _IS_NONZERO*6#
  */
@@ -1691,7 +1701,7 @@ static int
 #if @simp@
     ret = @nonzero@(val);
 #else
-    ret = (@nonzero@(val.real) || @nonzero@(val.imag));
+    ret = (@nonzero@(npy_creal@t@(val)) || @nonzero@(npy_cimag@t@(val)));
 #endif
 
     return ret;
@@ -1714,6 +1724,10 @@ emit_complexwarning(void)
 
 /**begin repeat
  *
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT,
+ *         UINT, LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #name = byte, ubyte, short, ushort, int,
  *         uint, long, ulong, longlong, ulonglong,
  *         half, float, double, longdouble,
@@ -1723,6 +1737,7 @@ emit_complexwarning(void)
  *         UInt, Long, ULong, LongLong, ULongLong,
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
+ * #n = x*14, f, , l#
  *
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #sign = (signed, unsigned)*5, , , , , , , #
@@ -1740,7 +1755,7 @@ static PyObject *
     PyObject *long_result;
 
 #if @cmplx@
-    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
+    @sign@ @ctype@ x = @to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@)));
 #else
     @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
 #endif
@@ -1770,6 +1785,7 @@ static PyObject *
  *             Long, ULong, LongLong, ULongLong,
  *             Half, Float, Double, LongDouble,
  *             CFloat, CDouble, CLongDouble#
+ * #n = x*14, f, , l#
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
  * #func = PyFloat_FromDouble*17#
@@ -1781,7 +1797,7 @@ static PyObject *
     if (emit_complexwarning() < 0) {
         return NULL;
     }
-    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
+    return @func@(@to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@))));
 #else
     return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
 #endif
@@ -1801,9 +1817,15 @@ static PyObject *
  *           npy_half_gt, npy_half_eq, npy_half_ne#
  */
 #define def_cmp_@oper@(arg1, arg2) (arg1 @op@ arg2)
-#define cmplx_cmp_@oper@(arg1, arg2) ((arg1.real == arg2.real) ?        \
-                                      arg1.imag @op@ arg2.imag :        \
-                                      arg1.real @op@ arg2.real)
+#define cmplx_cmp_@oper@(arg1, arg2) ((npy_creal(arg1) == npy_creal(arg2)) ?        \
+                                      npy_cimag(arg1) @op@ npy_cimag(arg2) :        \
+                                      npy_creal(arg1) @op@ npy_creal(arg2))
+#define fcmplx_cmp_@oper@(arg1, arg2) ((npy_crealf(arg1) == npy_crealf(arg2)) ?       \
+                                      npy_cimagf(arg1) @op@ npy_cimagf(arg2) :        \
+                                      npy_crealf(arg1) @op@ npy_crealf(arg2))
+#define lcmplx_cmp_@oper@(arg1, arg2) ((npy_creall(arg1) == npy_creall(arg2)) ?        \
+                                      npy_cimagl(arg1) @op@ npy_cimagl(arg2) :        \
+                                      npy_creall(arg1) @op@ npy_creall(arg2))
 #define def_half_cmp_@oper@(arg1, arg2) @halfop@(arg1, arg2)
 /**end repeat**/
 
@@ -1820,7 +1842,7 @@ static PyObject *
  *         LONG, ULONG, LONGLONG, ULONGLONG,
  *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #simp = def*10, def_half, def*3, cmplx*3#
+ * #simp = def*10, def_half, def*3, fcmplx, cmplx, lcmplx#
  */
 #define IS_@name@
 

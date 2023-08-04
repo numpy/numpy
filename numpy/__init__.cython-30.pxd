@@ -571,7 +571,6 @@ cdef extern from "numpy/arrayobject.h":
     void PyArray_ScalarAsCtype (object, void *)
     #int PyArray_CastScalarToCtype (object, void *, dtype)
     #int PyArray_CastScalarDirect (object, dtype, void *, int)
-    object PyArray_ScalarFromObject (object)
     #PyArray_VectorUnaryFunc * PyArray_GetCastFunc (dtype, int)
     #object PyArray_FromAny (object, dtype, int, int, int, object)
     object PyArray_EnsureArray (object)
@@ -674,7 +673,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_Concatenate (object, int)
     object PyArray_InnerProduct (object, object)
     object PyArray_MatrixProduct (object, object)
-    object PyArray_CopyAndTranspose (object)
     object PyArray_Correlate (object, object, int)
     int PyArray_TypestrConvert (int, int)
     #int PyArray_DescrConverter (object, dtype*) except 0

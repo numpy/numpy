@@ -505,9 +505,9 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     ----------
     place : str
         The absolute name of the module to import from
-    obj : str
+    obj : str or None
         The name of the object to add documentation to, typically a class or
-        function name
+        function name.
     doc : {str, Tuple[str, str], List[Tuple[str, str]]}
         If a string, the documentation to apply to `obj`
 
