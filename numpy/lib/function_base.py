@@ -4879,12 +4879,12 @@ def _quantile(
         # TODO: Special case quantiles == 0 and quantiles == 1?
         arr = arr[index_array, ...]
         weights = weights[index_array, ...]
-        # Normalize weights to sum to one such that it corresponds to the
-        # empirical distribution function.
-        weights = weights / weights.sum(axis=axis)
+        # We use the weights to calculate the empirical distribution function.
+        cdf = weights.cumsum(axis=axis, dtype=float)
+        cdf /= cdf[-1, ...]  # normalization
         # Only inverted_cdf is supported. Search index i such that
         # sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
-        i = np.searchsorted(weights.cumsum(axis=axis), quantiles, side="left")
+        i = np.searchsorted(cdf, quantiles, side="left")
         # We might have reached the maximum with i = len(arr), e.g. for
         # quantile = 1.
         i = np.minimum(i, values_count - 1)
