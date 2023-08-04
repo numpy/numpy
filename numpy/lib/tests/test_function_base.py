@@ -3815,7 +3815,7 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        w = rng.integers(low=0, high=10, size=n)
+        w = rng.integers(low=0, high=10, size=n, dtype=np.intp)
 
         qw = np.quantile(y, alpha, method=method, weights=w)
         q = np.quantile(np.repeat(y, w), alpha, method=method)
