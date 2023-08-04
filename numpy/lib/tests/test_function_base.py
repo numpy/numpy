@@ -3821,6 +3821,23 @@ class TestQuantile:
         q = np.quantile(np.repeat(y, w), alpha, method=method)
         assert_allclose(qw, q)
 
+    def test_quantile_weights_raises_negative_weights(self):
+        y = [1, 2]
+        w = [-0.5, 1]
+        with pytest.raises(ValueError, match="Weights must be non-negative"):
+            np.quantile(y, 0.5, weights=w, method="inverted_cdf")
+
+    @pytest.mark.parametrize(
+            "method",
+            list(set(quantile_methods) - set(methods_supporting_weights)),
+    )
+    def test_quantile_weights_raises_unsupported_methods(self, method):
+        y = [1, 2]
+        w = [0.5, 1]
+        msg = "Only method 'inverted_cdf' supports weights"
+        with pytest.raises(ValueError, match=msg):
+            np.quantile(y, 0.5, weights=w, method=method)
+
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,

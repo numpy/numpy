@@ -4563,6 +4563,8 @@ def quantile(a,
         if method != "inverted_cdf":
             raise ValueError("Only method 'inverted_cdf' supports weights.")
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
