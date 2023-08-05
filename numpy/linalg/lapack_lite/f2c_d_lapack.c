@@ -2769,7 +2769,7 @@ L210:
             If JOBVL = 'N', VL is not referenced.
             If the j-th eigenvalue is real, then u(j) = VL(:,j),
             the j-th column of VL.
-            If the j-th and (j+1)-st eigenvalues form a complex
+            If the j-th and (j+1)-st eigenvalues form a complex_
             conjugate pair, then u(j) = VL(:,j) + i*VL(:,j+1) and
             u(j+1) = VL(:,j) - i*VL(:,j+1).
 
@@ -2784,7 +2784,7 @@ L210:
             If JOBVR = 'N', VR is not referenced.
             If the j-th eigenvalue is real, then v(j) = VR(:,j),
             the j-th column of VR.
-            If the j-th and (j+1)-st eigenvalues form a complex
+            If the j-th and (j+1)-st eigenvalues form a complex_
             conjugate pair, then v(j) = VR(:,j) + i*VR(:,j+1) and
             v(j+1) = VR(:,j) - i*VR(:,j+1).
 
@@ -7554,7 +7554,7 @@ L10:
              On exit, if INFO = 0 and JOB = 'S', then H contains the
              upper quasi-triangular matrix T from the Schur decomposition
              (the Schur form); 2-by-2 diagonal blocks (corresponding to
-             complex conjugate pairs of eigenvalues) are returned in
+             complex_ conjugate pairs of eigenvalues) are returned in
              standard form, with H(i,i) = H(i+1,i+1) and
              H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and JOB = 'E', the
              contents of H are unspecified on exit.  (The output value of
@@ -7571,7 +7571,7 @@ L10:
        WR    (output) DOUBLE PRECISION array, dimension (N)
        WI    (output) DOUBLE PRECISION array, dimension (N)
              The real and imaginary parts, respectively, of the computed
-             eigenvalues. If two eigenvalues are computed as a complex
+             eigenvalues. If two eigenvalues are computed as a complex_
              conjugate pair, they are stored in consecutive elements of
              WR and WI, say the i-th and (i+1)th, with WI(i) .GT. 0 and
              WI(i+1) .LT. 0. If JOB = 'S', the eigenvalues are stored in
@@ -8540,7 +8540,7 @@ logical disnan_(doublereal *din)
     Purpose
     =======
 
-    DLADIV performs complex division in  real arithmetic
+    DLADIV performs complex_ division in  real arithmetic
 
                           a + i*b
                p + i*q = ---------
@@ -13569,7 +13569,7 @@ L50:
             The real and imaginary parts, respectively, of the computed
             eigenvalues ILO to IHI are stored in the corresponding
             elements of WR and WI. If two eigenvalues are computed as a
-            complex conjugate pair, they are stored in consecutive
+            complex_ conjugate pair, they are stored in consecutive
             elements of WR and WI, say the i-th and (i+1)th, with
             WI(i) > 0 and WI(i+1) < 0. If WANTT is .TRUE., the
             eigenvalues are stored in the same order as on the diagonal
@@ -13840,7 +13840,7 @@ L40:
 	    rtdisc = sqrt((abs(det)));
 	    if (det >= 0.) {
 
-/*              ==== complex conjugate shifts ==== */
+/*              ==== complex_ conjugate shifts ==== */
 
 		rt1r = tr * s;
 		rt2r = rt1r;
@@ -14497,11 +14497,11 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
     perturbation of A.  (A' means A-transpose.)
 
     A is an NA x NA real matrix, ca is a real scalar, D is an NA x NA
-    real diagonal matrix, w is a real or complex value, and X and B are
-    NA x 1 matrices -- real if w is real, complex if w is complex.  NA
+    real diagonal matrix, w is a real or complex_ value, and X and B are
+    NA x 1 matrices -- real if w is real, complex_ if w is complex_.  NA
     may be 1 or 2.
 
-    If w is complex, X and B are represented as NA x 2 matrices,
+    If w is complex_, X and B are represented as NA x 2 matrices,
     the first column of each being the real part and the second
     being the imaginary part.
 
@@ -14534,7 +14534,7 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
             The size of the matrix A.  It may (only) be 1 or 2.
 
     NW      (input) INTEGER
-            1 if "w" is real, 2 if "w" is complex.  It may only be 1
+            1 if "w" is real, 2 if "w" is complex_.  It may only be 1
             or 2.
 
     SMIN    (input) DOUBLE PRECISION
@@ -14560,7 +14560,7 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
 
     B       (input) DOUBLE PRECISION array, dimension (LDB,NW)
             The NA x NW matrix B (right-hand side).  If NW=2 ("w" is
-            complex), column 1 contains the real part of B and column 2
+            complex_), column 1 contains the real part of B and column 2
             contains the imaginary part.
 
     LDB     (input) INTEGER
@@ -14574,7 +14574,7 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
 
     X       (output) DOUBLE PRECISION array, dimension (LDX,NW)
             The NA x NW matrix X (unknowns), as computed by DLALN2.
-            If NW=2 ("w" is complex), on exit, column 1 will contain
+            If NW=2 ("w" is complex_), on exit, column 1 will contain
             the real part of X and column 2 will contain the imaginary
             part.
 
@@ -14672,7 +14672,7 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
 	} else {
 
 /*
-             Complex 1x1 system (w is complex)
+             Complex 1x1 system (w is complex_)
 
              C = ca A - w D
 */
@@ -14827,7 +14827,7 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
 	} else {
 
 /*
-             Complex 2x2 system  (w is complex)
+             Complex 2x2 system  (w is complex_)
 
              Find the largest element in C
 */
@@ -17043,7 +17043,7 @@ doublereal dlansy_(char *norm, char *uplo, integer *n, doublereal *a, integer
 
     where either
     1) CC = 0 so that AA and DD are real eigenvalues of the matrix, or
-    2) AA = DD and BB*CC < 0, so that AA + or - sqrt(BB*CC) are complex
+    2) AA = DD and BB*CC < 0, so that AA + or - sqrt(BB*CC) are complex_
     conjugate eigenvalues.
 
     Arguments
@@ -17062,7 +17062,7 @@ doublereal dlansy_(char *norm, char *uplo, integer *n, doublereal *a, integer
     RT2R    (output) DOUBLE PRECISION
     RT2I    (output) DOUBLE PRECISION
             The real and imaginary parts of the eigenvalues. If the
-            eigenvalues are a complex conjugate pair, RT1I > 0.
+            eigenvalues are a complex_ conjugate pair, RT1I > 0.
 
     CS      (output) DOUBLE PRECISION
     SN      (output) DOUBLE PRECISION
@@ -17442,7 +17442,7 @@ doublereal dlapy3_(doublereal *x, doublereal *y, doublereal *z__)
              On exit, if INFO = 0 and WANTT is .TRUE., then H contains
              the upper quasi-triangular matrix T from the Schur
              decomposition (the Schur form); 2-by-2 diagonal blocks
-             (corresponding to complex conjugate pairs of eigenvalues)
+             (corresponding to complex_ conjugate pairs of eigenvalues)
              are returned in standard form, with H(i,i) = H(i+1,i+1)
              and H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and WANTT is
              .FALSE., then the contents of H are unspecified on exit.
@@ -17460,7 +17460,7 @@ doublereal dlapy3_(doublereal *x, doublereal *y, doublereal *z__)
              The real and imaginary parts, respectively, of the computed
              eigenvalues of H(ILO:IHI,ILO:IHI) are stored in WR(ILO:IHI)
              and WI(ILO:IHI). If two eigenvalues are computed as a
-             complex conjugate pair, they are stored in consecutive
+             complex_ conjugate pair, they are stored in consecutive
              elements of WR and WI, say the i-th and (i+1)th, with
              WI(i) .GT. 0 and WI(i+1) .LT. 0. If WANTT is .TRUE., then
              the eigenvalues are stored in the same order as on the
@@ -17953,7 +17953,7 @@ L20:
 
 /*
                       ==== Sort the shifts (Helps a little)
-                      .    Bubble sort keeps complex conjugate
+                      .    Bubble sort keeps complex_ conjugate
                       .    pairs together. ====
 */
 
@@ -17990,8 +17990,8 @@ L60:
 
 /*
                    ==== Shuffle shifts into pairs of real shifts
-                   .    and pairs of complex conjugate shifts
-                   .    assuming complex conjugate shifts are
+                   .    and pairs of complex_ conjugate shifts
+                   .    assuming complex_ conjugate shifts are
                    .    already adjacent to one another. (Yes,
                    .    they are.)  ====
 */
@@ -19688,7 +19688,7 @@ L60:
              On exit, if INFO = 0 and WANTT is .TRUE., then H contains
              the upper quasi-triangular matrix T from the Schur
              decomposition (the Schur form); 2-by-2 diagonal blocks
-             (corresponding to complex conjugate pairs of eigenvalues)
+             (corresponding to complex_ conjugate pairs of eigenvalues)
              are returned in standard form, with H(i,i) = H(i+1,i+1)
              and H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and WANTT is
              .FALSE., then the contents of H are unspecified on exit.
@@ -19706,7 +19706,7 @@ L60:
              The real and imaginary parts, respectively, of the computed
              eigenvalues of H(ILO:IHI,ILO:IHI) are stored in WR(ILO:IHI)
              and WI(ILO:IHI). If two eigenvalues are computed as a
-             complex conjugate pair, they are stored in consecutive
+             complex_ conjugate pair, they are stored in consecutive
              elements of WR and WI, say the i-th and (i+1)th, with
              WI(i) .GT. 0 and WI(i+1) .LT. 0. If WANTT is .TRUE., then
              the eigenvalues are stored in the same order as on the
@@ -20192,7 +20192,7 @@ L20:
 
 /*
                       ==== Sort the shifts (Helps a little)
-                      .    Bubble sort keeps complex conjugate
+                      .    Bubble sort keeps complex_ conjugate
                       .    pairs together. ====
 */
 
@@ -20229,8 +20229,8 @@ L60:
 
 /*
                    ==== Shuffle shifts into pairs of real shifts
-                   .    and pairs of complex conjugate shifts
-                   .    assuming complex conjugate shifts are
+                   .    and pairs of complex_ conjugate shifts
+                   .    assuming complex_ conjugate shifts are
                    .    already adjacent to one another. (Yes,
                    .    they are.)  ====
 */
@@ -20566,7 +20566,7 @@ L90:
 
 /*
        ==== Shuffle shifts into pairs of real shifts and pairs
-       .    of complex conjugate shifts assuming complex
+       .    of complex_ conjugate shifts assuming complex_
        .    conjugate shifts are already adjacent to one
        .    another. ====
 */
@@ -39999,7 +39999,7 @@ L180:
             If w(j) is a real eigenvalue, the corresponding real
             eigenvector is computed if SELECT(j) is .TRUE..
             If w(j) and w(j+1) are the real and imaginary parts of a
-            complex eigenvalue, the corresponding complex eigenvector is
+            complex_ eigenvalue, the corresponding complex_ eigenvector is
             computed if either SELECT(j) or SELECT(j+1) is .TRUE., and
             on exit SELECT(j) is set to .TRUE. and SELECT(j+1) is set to
             .FALSE..
@@ -40025,7 +40025,7 @@ L180:
                              SELECT, stored consecutively in the columns
                              of VL, in the same order as their
                              eigenvalues.
-            A complex eigenvector corresponding to a complex eigenvalue
+            A complex_ eigenvector corresponding to a complex_ eigenvalue
             is stored in two consecutive columns, the first holding the
             real part, and the second the imaginary part.
             Not referenced if SIDE = 'R'.
@@ -40045,7 +40045,7 @@ L180:
                              SELECT, stored consecutively in the columns
                              of VR, in the same order as their
                              eigenvalues.
-            A complex eigenvector corresponding to a complex eigenvalue
+            A complex_ eigenvector corresponding to a complex_ eigenvalue
             is stored in two consecutive columns, the first holding the
             real part and the second the imaginary part.
             Not referenced if SIDE = 'L'.
@@ -40062,7 +40062,7 @@ L180:
             used to store the eigenvectors.
             If HOWMNY = 'A' or 'B', M is set to N.
             Each selected real eigenvector occupies one column and each
-            selected complex eigenvector occupies two columns.
+            selected complex_ eigenvector occupies two columns.
 
     WORK    (workspace) DOUBLE PRECISION array, dimension (3*N)
 
@@ -40078,7 +40078,7 @@ L180:
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
-    magnitude has magnitude 1; here the magnitude of a complex number
+    magnitude has magnitude 1; here the magnitude of a complex_ number
     (x,y) is taken to be |x| + |y|.
 
     =====================================================================
@@ -40206,10 +40206,10 @@ L180:
     }
 
 /*
-       Index IP is used to specify the real or complex eigenvalue:
+       Index IP is used to specify the real or complex_ eigenvalue:
          IP = 0, real eigenvalue,
-              1, first of conjugate complex pair: (wr,wi)
-             -1, second of conjugate complex pair: (wr,wi)
+              1, first of conjugate complex_ pair: (wr,wi)
+             -1, second of conjugate complex_ pair: (wr,wi)
 */
 
     n2 = *n << 1;
@@ -40881,7 +40881,7 @@ L170:
 		}
 
 /*
-                Solve complex quasi-triangular system:
+                Solve complex_ quasi-triangular system:
                 ( T(KI+2,N:KI+2,N) - (WR-i*WI) )*X = WORK1+i*WORK2
 */
 
@@ -40994,7 +40994,7 @@ L170:
 				 t_dim1], &c__1, &work[ki + 2 + n2], &c__1);
 
 /*
-                      Solve 2-by-2 complex linear equation
+                      Solve 2-by-2 complex_ linear equation
                         ([T(j,j)   T(j,j+1)  ]'-(wr-i*wi)*I)*X = SCALE*B
                         ([T(j+1,j) T(j+1,j+1)]             )
 */

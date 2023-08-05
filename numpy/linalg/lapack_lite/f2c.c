@@ -93,9 +93,9 @@ return(temp);
 
  VOID
 #ifdef KR_headers
-r_cnjg(r, z) complex *r, *z;
+r_cnjg(r, z) complex_ *r, *z;
 #else
-r_cnjg(complex *r, complex *z)
+r_cnjg(complex_ *r, complex_ *z)
 #endif
 {
 r->r = z->r;
@@ -115,9 +115,9 @@ r->i = - z->i;
 
 
 #ifdef KR_headers
-float r_imag(z) complex *z;
+float r_imag(z) complex_ *z;
 #else
-float r_imag(complex *z)
+float r_imag(complex_ *z)
 #endif
 {
 return(z->i);
@@ -343,10 +343,10 @@ void pow_zi(doublecomplex *p, doublecomplex *a, integer *b) 	/* p = a**b  */
 
 #ifdef KR_headers
 VOID pow_ci(p, a, b) 	/* p = a**b  */
- complex *p, *a; integer *b;
+ complex_ *p, *a; integer *b;
 #else
 extern void pow_zi(doublecomplex*, doublecomplex*, integer*);
-void pow_ci(complex *p, complex *a, integer *b) 	/* p = a**b  */
+void pow_ci(complex_ *p, complex_ *a, integer *b) 	/* p = a**b  */
 #endif
 {
 doublecomplex p1, a1;
@@ -536,10 +536,10 @@ int s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 
 #ifdef KR_headers
 double f__cabsf();
-double c_abs(z) complex *z;
+double c_abs(z) complex_ *z;
 #else
 double f__cabsf(float, float);
-double c_abs(complex *z)
+double c_abs(complex_ *z)
 #endif
 {
 return( f__cabsf( z->r, z->i ) );
@@ -559,10 +559,10 @@ return( f__cabs( z->r, z->i ) );
 
 #ifdef KR_headers
 extern void sig_die();
-VOID c_div(c, a, b) complex *a, *b, *c;
+VOID c_div(c, a, b) complex_ *a, *b, *c;
 #else
 extern void sig_die(char*, int);
-void c_div(complex *c, complex *a, complex *b)
+void c_div(complex_ *c, complex_ *a, complex_ *b)
 #endif
 {
 float ratio, den;
@@ -576,7 +576,7 @@ if( abr <= abi )
 	{
 	  /*Let IEEE Infinities handle this ;( */
 	  /*if(abi == 0)
-		sig_die("complex division by zero", 1);*/
+		sig_die("complex_ division by zero", 1);*/
 	ratio = b->r / b->i ;
 	den = b->i * (1 + ratio*ratio);
 	c->r = (a->r*ratio + a->i) / den;
@@ -612,7 +612,7 @@ if( abr <= abi )
 	{
 	  /*Let IEEE Infinities handle this ;( */
 	  /*if(abi == 0)
-		sig_die("complex division by zero", 1);*/
+		sig_die("complex_ division by zero", 1);*/
 	ratio = b->r / b->i ;
 	den = b->i * (1 + ratio*ratio);
 	c->r = (a->r*ratio + a->i) / den;
@@ -632,12 +632,12 @@ else
 
 #ifdef KR_headers
 float sqrtf(), f__cabsf();
-VOID c_sqrt(r, z) complex *r, *z;
+VOID c_sqrt(r, z) complex_ *r, *z;
 #else
 #undef abs
 
 extern double f__cabsf(float, float);
-void c_sqrt(complex *r, complex *z)
+void c_sqrt(complex_ *r, complex_ *z)
 #endif
 {
 float mag;

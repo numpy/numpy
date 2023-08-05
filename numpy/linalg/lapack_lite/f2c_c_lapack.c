@@ -30,8 +30,8 @@ them.
 /* Table of constant values */
 
 static integer c__1 = 1;
-static complex c_b56 = {0.f,0.f};
-static complex c_b57 = {1.f,0.f};
+static complex_ c_b56 = {0.f,0.f};
+static complex_ c_b57 = {1.f,0.f};
 static integer c_n1 = -1;
 static integer c__3 = 3;
 static integer c__2 = 2;
@@ -53,7 +53,7 @@ static logical c_true = TRUE_;
 static real c_b2435 = .5f;
 
 /* Subroutine */ int cgebak_(char *job, char *side, integer *n, integer *ilo,
-	integer *ihi, real *scale, integer *m, complex *v, integer *ldv,
+	integer *ihi, real *scale, integer *m, complex_ *v, integer *ldv,
 	integer *info)
 {
     /* System generated locals */
@@ -64,10 +64,10 @@ static real c_b2435 = .5f;
     static real s;
     static integer ii;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int cswap_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static logical leftv;
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
 	    *), xerbla_(char *, integer *);
     static logical rightv;
 
@@ -82,7 +82,7 @@ static real c_b2435 = .5f;
     Purpose
     =======
 
-    CGEBAK forms the right or left eigenvectors of a complex general
+    CGEBAK forms the right or left eigenvectors of a complex_ general
     matrix by backward transformation on the computed eigenvectors of the
     balanced matrix output by CGEBAL.
 
@@ -264,7 +264,7 @@ L50:
 
 } /* cgebak_ */
 
-/* Subroutine */ int cgebal_(char *job, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cgebal_(char *job, integer *n, complex_ *a, integer *lda,
 	integer *ilo, integer *ihi, real *scale, integer *info)
 {
     /* System generated locals */
@@ -277,12 +277,12 @@ L50:
     static real r__, s, ca, ra;
     static integer ica, ira, iexc;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int cswap_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static real sfmin1, sfmin2, sfmax1, sfmax2;
-    extern integer icamax_(integer *, complex *, integer *);
+    extern integer icamax_(integer *, complex_ *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
 	    *), xerbla_(char *, integer *);
     extern logical sisnan_(real *);
     static logical noconv;
@@ -298,7 +298,7 @@ L50:
     Purpose
     =======
 
-    CGEBAL balances a general complex matrix A.  This involves, first,
+    CGEBAL balances a general complex_ matrix A.  This involves, first,
     permuting A by a similarity transformation to isolate eigenvalues
     in the first 1 to ILO-1 and last IHI+1 to N elements on the
     diagonal; and second, applying a diagonal similarity transformation
@@ -654,21 +654,21 @@ L210:
 
 } /* cgebal_ */
 
-/* Subroutine */ int cgebd2_(integer *m, integer *n, complex *a, integer *lda,
-	 real *d__, real *e, complex *tauq, complex *taup, complex *work,
+/* Subroutine */ int cgebd2_(integer *m, integer *n, complex_ *a, integer *lda,
+	 real *d__, real *e, complex_ *tauq, complex_ *taup, complex_ *work,
 	integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
-    static complex alpha;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    clarfg_(integer *, complex *, complex *, integer *, complex *),
-	    clacgv_(integer *, complex *, integer *), xerbla_(char *, integer
+    static complex_ alpha;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clarfg_(integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clacgv_(integer *, complex_ *, integer *), xerbla_(char *, integer
 	    *);
 
 
@@ -682,7 +682,7 @@ L210:
     Purpose
     =======
 
-    CGEBD2 reduces a complex general m by n matrix A to upper or lower
+    CGEBD2 reduces a complex_ general m by n matrix A to upper or lower
     real bidiagonal form B by a unitary transformation: Q' * A * P = B.
 
     If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -755,7 +755,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in
     A(i+1:m,i); u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in
     A(i,i+2:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -768,7 +768,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, v and u are complex vectors;
+    where tauq and taup are complex_ scalars, v and u are complex_ vectors;
     v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in A(i+2:m,i);
     u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in A(i,i+1:n);
     tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -972,27 +972,27 @@ L210:
 
 } /* cgebd2_ */
 
-/* Subroutine */ int cgebrd_(integer *m, integer *n, complex *a, integer *lda,
-	 real *d__, real *e, complex *tauq, complex *taup, complex *work,
+/* Subroutine */ int cgebrd_(integer *m, integer *n, complex_ *a, integer *lda,
+	 real *d__, real *e, complex_ *tauq, complex_ *taup, complex_ *work,
 	integer *lwork, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, nb, nx;
     static real ws;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     static integer nbmin, iinfo, minmn;
-    extern /* Subroutine */ int cgebd2_(integer *, integer *, complex *,
-	    integer *, real *, real *, complex *, complex *, complex *,
-	    integer *), clabrd_(integer *, integer *, integer *, complex *,
-	    integer *, real *, real *, complex *, complex *, complex *,
-	    integer *, complex *, integer *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int cgebd2_(integer *, integer *, complex_ *,
+	    integer *, real *, real *, complex_ *, complex_ *, complex_ *,
+	    integer *), clabrd_(integer *, integer *, integer *, complex_ *,
+	    integer *, real *, real *, complex_ *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static integer ldwrkx, ldwrky, lwkopt;
@@ -1009,7 +1009,7 @@ L210:
     Purpose
     =======
 
-    CGEBRD reduces a general complex M-by-N matrix A to upper or lower
+    CGEBRD reduces a general complex_ M-by-N matrix A to upper or lower
     bidiagonal form B by a unitary transformation: Q**H * A * P = B.
 
     If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -1093,7 +1093,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in
     A(i+1:m,i); u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in
     A(i,i+2:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -1106,7 +1106,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in
     A(i+2:m,i); u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in
     A(i,i+1:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -1297,59 +1297,59 @@ L210:
 
 } /* cgebrd_ */
 
-/* Subroutine */ int cgeev_(char *jobvl, char *jobvr, integer *n, complex *a,
-	integer *lda, complex *w, complex *vl, integer *ldvl, complex *vr,
-	integer *ldvr, complex *work, integer *lwork, real *rwork, integer *
+/* Subroutine */ int cgeev_(char *jobvl, char *jobvr, integer *n, complex_ *a,
+	integer *lda, complex_ *w, complex_ *vl, integer *ldvl, complex_ *vr,
+	integer *ldvr, complex_ *work, integer *lwork, real *rwork, integer *
 	info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, vl_dim1, vl_offset, vr_dim1, vr_offset, i__1,
 	    i__2, i__3;
     real r__1, r__2;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, k, ihi;
     static real scl;
     static integer ilo;
     static real dum[1], eps;
-    static complex tmp;
+    static complex_ tmp;
     static integer ibal;
     static char side[1];
     static real anrm;
     static integer ierr, itau, iwrk, nout;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
 	    integer *);
     extern logical lsame_(char *, char *);
-    extern doublereal scnrm2_(integer *, complex *, integer *);
+    extern doublereal scnrm2_(integer *, complex_ *, integer *);
     extern /* Subroutine */ int cgebak_(char *, char *, integer *, integer *,
-	    integer *, real *, integer *, complex *, integer *, integer *), cgebal_(char *, integer *, complex *, integer *,
+	    integer *, real *, integer *, complex_ *, integer *, integer *), cgebal_(char *, integer *, complex_ *, integer *,
 	    integer *, integer *, real *, integer *), slabad_(real *,
 	    real *);
     static logical scalea;
-    extern doublereal clange_(char *, integer *, integer *, complex *,
+    extern doublereal clange_(char *, integer *, integer *, complex_ *,
 	    integer *, real *);
     static real cscale;
     extern /* Subroutine */ int cgehrd_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, integer *),
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, integer *),
 	     clascl_(char *, integer *, integer *, real *, real *, integer *,
-	    integer *, complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
-	    *), clacpy_(char *, integer *, integer *, complex *, integer *,
-	    complex *, integer *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
+	    *), clacpy_(char *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static logical select[1];
     static real bignum;
     extern integer isamax_(integer *, real *, integer *);
     extern /* Subroutine */ int chseqr_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *), ctrevc_(char *,
-	    char *, logical *, integer *, complex *, integer *, complex *,
-	    integer *, complex *, integer *, integer *, integer *, complex *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *), ctrevc_(char *,
+	    char *, logical *, integer *, complex_ *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, integer *, integer *, complex_ *,
 	    real *, integer *), cunghr_(integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
 	    integer *);
     static integer minwrk, maxwrk;
     static logical wantvl;
@@ -1368,7 +1368,7 @@ L210:
     Purpose
     =======
 
-    CGEEV computes for an N-by-N complex nonsymmetric matrix A, the
+    CGEEV computes for an N-by-N complex_ nonsymmetric matrix A, the
     eigenvalues and, optionally, the left and/or right eigenvectors.
 
     The right eigenvector v(j) of A satisfies
@@ -1493,7 +1493,7 @@ L210:
         (Note: Comments in the code beginning "Workspace:" describe the
          minimal amount of workspace needed at that point in the code,
          as well as the preferred amount for good performance.
-         CWorkspace refers to complex workspace, and RWorkspace to real
+         CWorkspace refers to complex_ workspace, and RWorkspace to real
          workspace. NB refers to the optimal block size for the
          immediately following subroutine, as returned by ILAENV.
          HSWORK refers to the workspace preferred by CHSEQR, as
@@ -1816,19 +1816,19 @@ L50:
 
 } /* cgeev_ */
 
-/* Subroutine */ int cgehd2_(integer *n, integer *ilo, integer *ihi, complex *
-	a, integer *lda, complex *tau, complex *work, integer *info)
+/* Subroutine */ int cgehd2_(integer *n, integer *ilo, integer *ihi, complex_ *
+	a, integer *lda, complex_ *tau, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
-    static complex alpha;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    clarfg_(integer *, complex *, complex *, integer *, complex *),
+    static complex_ alpha;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clarfg_(integer *, complex_ *, complex_ *, integer *, complex_ *),
 	    xerbla_(char *, integer *);
 
 
@@ -1842,7 +1842,7 @@ L50:
     Purpose
     =======
 
-    CGEHD2 reduces a complex general matrix A to upper Hessenberg form H
+    CGEHD2 reduces a complex_ general matrix A to upper Hessenberg form H
     by a unitary similarity transformation:  Q' * A * Q = H .
 
     Arguments
@@ -1892,7 +1892,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0, v(i+1) = 1 and v(ihi+1:n) = 0; v(i+2:ihi) is stored on
     exit in A(i+2:ihi,i), and tau in TAU(i).
 
@@ -1983,34 +1983,34 @@ L50:
 
 } /* cgehd2_ */
 
-/* Subroutine */ int cgehrd_(integer *n, integer *ilo, integer *ihi, complex *
-	a, integer *lda, complex *tau, complex *work, integer *lwork, integer
+/* Subroutine */ int cgehrd_(integer *n, integer *ilo, integer *ihi, complex_ *
+	a, integer *lda, complex_ *tau, complex_ *work, integer *lwork, integer
 	*info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j;
-    static complex t[4160]	/* was [65][64] */;
+    static complex_ t[4160]	/* was [65][64] */;
     static integer ib;
-    static complex ei;
+    static complex_ ei;
     static integer nb, nh, nx, iws;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     static integer nbmin, iinfo;
     extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), caxpy_(integer *,
-	    complex *, complex *, integer *, complex *, integer *), cgehd2_(
-	    integer *, integer *, integer *, complex *, integer *, complex *,
-	    complex *, integer *), clahr2_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, complex *,
+	    complex_ *, complex_ *, integer *, complex_ *, integer *), cgehd2_(
+	    integer *, integer *, integer *, complex_ *, integer *, complex_ *,
+	    complex_ *, integer *), clahr2_(integer *, integer *, integer *,
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), clarfb_(char *, char *, char *, char *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    complex *, integer *, complex *, integer *), xerbla_(char *, integer *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, integer *, complex_ *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static integer ldwork, lwkopt;
@@ -2027,7 +2027,7 @@ L50:
     Purpose
     =======
 
-    CGEHRD reduces a complex general matrix A to upper Hessenberg form H by
+    CGEHRD reduces a complex_ general matrix A to upper Hessenberg form H by
     an unitary similarity transformation:  Q' * A * Q = H .
 
     Arguments
@@ -2089,7 +2089,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0, v(i+1) = 1 and v(ihi+1:n) = 0; v(i+2:ihi) is stored on
     exit in A(i+2:ihi,i), and tau in TAU(i).
 
@@ -2313,19 +2313,19 @@ L50:
 
 } /* cgehrd_ */
 
-/* Subroutine */ int cgelq2_(integer *m, integer *n, complex *a, integer *lda,
-	 complex *tau, complex *work, integer *info)
+/* Subroutine */ int cgelq2_(integer *m, integer *n, complex_ *a, integer *lda,
+	 complex_ *tau, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
 
     /* Local variables */
     static integer i__, k;
-    static complex alpha;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    clarfg_(integer *, complex *, complex *, integer *, complex *),
-	    clacgv_(integer *, complex *, integer *), xerbla_(char *, integer
+    static complex_ alpha;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clarfg_(integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clacgv_(integer *, complex_ *, integer *), xerbla_(char *, integer
 	    *);
 
 
@@ -2339,7 +2339,7 @@ L50:
     Purpose
     =======
 
-    CGELQ2 computes an LQ factorization of a complex m by n matrix A:
+    CGELQ2 computes an LQ factorization of a complex_ m by n matrix A:
     A = L * Q.
 
     Arguments
@@ -2383,7 +2383,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; conjg(v(i+1:n)) is stored on exit in
     A(i,i+1:n), and tau in TAU(i).
 
@@ -2454,20 +2454,20 @@ L50:
 
 } /* cgelq2_ */
 
-/* Subroutine */ int cgelqf_(integer *m, integer *n, complex *a, integer *lda,
-	 complex *tau, complex *work, integer *lwork, integer *info)
+/* Subroutine */ int cgelqf_(integer *m, integer *n, complex_ *a, integer *lda,
+	 complex_ *tau, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
 
     /* Local variables */
     static integer i__, k, ib, nb, nx, iws, nbmin, iinfo;
-    extern /* Subroutine */ int cgelq2_(integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *), clarfb_(char *, char
-	    *, char *, char *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, complex *,
+    extern /* Subroutine */ int cgelq2_(integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *), clarfb_(char *, char
+	    *, char *, char *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, complex_ *,
 	    integer *), clarft_(char *, char *
-	    , integer *, integer *, complex *, integer *, complex *, complex *
+	    , integer *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -2485,7 +2485,7 @@ L50:
     Purpose
     =======
 
-    CGELQF computes an LQ factorization of a complex M-by-N matrix A:
+    CGELQF computes an LQ factorization of a complex_ M-by-N matrix A:
     A = L * Q.
 
     Arguments
@@ -2540,7 +2540,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; conjg(v(i+1:n)) is stored on exit in
     A(i,i+1:n), and tau in TAU(i).
 
@@ -2685,9 +2685,9 @@ L50:
 
 } /* cgelqf_ */
 
-/* Subroutine */ int cgelsd_(integer *m, integer *n, integer *nrhs, complex *
-	a, integer *lda, complex *b, integer *ldb, real *s, real *rcond,
-	integer *rank, complex *work, integer *lwork, real *rwork, integer *
+/* Subroutine */ int cgelsd_(integer *m, integer *n, integer *nrhs, complex_ *
+	a, integer *lda, complex_ *b, integer *ldb, real *s, real *rcond,
+	integer *rank, complex_ *work, integer *lwork, real *rwork, integer *
 	iwork, integer *info)
 {
     /* System generated locals */
@@ -2699,36 +2699,36 @@ L50:
     static integer itau, nlvl, iascl, ibscl;
     static real sfmin;
     static integer minmn, maxmn, itaup, itauq, mnthr, nwork;
-    extern /* Subroutine */ int cgebrd_(integer *, integer *, complex *,
-	    integer *, real *, real *, complex *, complex *, complex *,
+    extern /* Subroutine */ int cgebrd_(integer *, integer *, complex_ *,
+	    integer *, real *, real *, complex_ *, complex_ *, complex_ *,
 	    integer *, integer *), slabad_(real *, real *);
-    extern doublereal clange_(char *, integer *, integer *, complex *,
+    extern doublereal clange_(char *, integer *, integer *, complex_ *,
 	    integer *, real *);
-    extern /* Subroutine */ int cgelqf_(integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *, integer *), clalsd_(
-	    char *, integer *, integer *, integer *, real *, real *, complex *
-	    , integer *, real *, integer *, complex *, real *, integer *,
+    extern /* Subroutine */ int cgelqf_(integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *, integer *), clalsd_(
+	    char *, integer *, integer *, integer *, real *, real *, complex_ *
+	    , integer *, real *, integer *, complex_ *, real *, integer *,
 	    integer *), clascl_(char *, integer *, integer *, real *,
-	    real *, integer *, integer *, complex *, integer *, integer *), cgeqrf_(integer *, integer *, complex *, integer *,
-	    complex *, complex *, integer *, integer *);
+	    real *, integer *, integer *, complex_ *, integer *, integer *), cgeqrf_(integer *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
-	    *, integer *, complex *, integer *), claset_(char *,
-	    integer *, integer *, complex *, complex *, complex *, integer *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex_
+	    *, integer *, complex_ *, integer *), claset_(char *,
+	    integer *, integer *, complex_ *, complex_ *, complex_ *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static real bignum;
     extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
 	    real *, integer *, integer *, real *, integer *, integer *), cunmbr_(char *, char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *), slaset_(
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *), slaset_(
 	    char *, integer *, integer *, real *, real *, real *, integer *), cunmlq_(char *, char *, integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, complex *,
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *, integer *);
     static integer ldwork;
     extern /* Subroutine */ int cunmqr_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *);
     static integer liwork, minwrk, maxwrk;
     static real smlnum;
     static integer lrwork;
@@ -3416,19 +3416,19 @@ L10:
 
 } /* cgelsd_ */
 
-/* Subroutine */ int cgeqr2_(integer *m, integer *n, complex *a, integer *lda,
-	 complex *tau, complex *work, integer *info)
+/* Subroutine */ int cgeqr2_(integer *m, integer *n, complex_ *a, integer *lda,
+	 complex_ *tau, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, k;
-    static complex alpha;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    clarfg_(integer *, complex *, complex *, integer *, complex *),
+    static complex_ alpha;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clarfg_(integer *, complex_ *, complex_ *, integer *, complex_ *),
 	    xerbla_(char *, integer *);
 
 
@@ -3442,7 +3442,7 @@ L10:
     Purpose
     =======
 
-    CGEQR2 computes a QR factorization of a complex m by n matrix A:
+    CGEQR2 computes a QR factorization of a complex_ m by n matrix A:
     A = Q * R.
 
     Arguments
@@ -3486,7 +3486,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
     and tau in TAU(i).
 
@@ -3554,20 +3554,20 @@ L10:
 
 } /* cgeqr2_ */
 
-/* Subroutine */ int cgeqrf_(integer *m, integer *n, complex *a, integer *lda,
-	 complex *tau, complex *work, integer *lwork, integer *info)
+/* Subroutine */ int cgeqrf_(integer *m, integer *n, complex_ *a, integer *lda,
+	 complex_ *tau, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
 
     /* Local variables */
     static integer i__, k, ib, nb, nx, iws, nbmin, iinfo;
-    extern /* Subroutine */ int cgeqr2_(integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *), clarfb_(char *, char
-	    *, char *, char *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, complex *,
+    extern /* Subroutine */ int cgeqr2_(integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *), clarfb_(char *, char
+	    *, char *, char *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, complex_ *,
 	    integer *), clarft_(char *, char *
-	    , integer *, integer *, complex *, integer *, complex *, complex *
+	    , integer *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -3585,7 +3585,7 @@ L10:
     Purpose
     =======
 
-    CGEQRF computes a QR factorization of a complex M-by-N matrix A:
+    CGEQRF computes a QR factorization of a complex_ M-by-N matrix A:
     A = Q * R.
 
     Arguments
@@ -3641,7 +3641,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
     and tau in TAU(i).
 
@@ -3786,9 +3786,9 @@ L10:
 
 } /* cgeqrf_ */
 
-/* Subroutine */ int cgesdd_(char *jobz, integer *m, integer *n, complex *a,
-	integer *lda, real *s, complex *u, integer *ldu, complex *vt, integer
-	*ldvt, complex *work, integer *lwork, real *rwork, integer *iwork,
+/* Subroutine */ int cgesdd_(char *jobz, integer *m, integer *n, complex_ *a,
+	integer *lda, real *s, complex_ *u, integer *ldu, complex_ *vt, integer
+	*ldvt, complex_ *work, integer *lwork, real *rwork, integer *iwork,
 	integer *info)
 {
     /* System generated locals */
@@ -3802,50 +3802,50 @@ L10:
     static real anrm;
     static integer idum[1], ierr, itau, irvt;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
     static integer chunk, minmn, wrkbl, itaup, itauq;
     static logical wntqa;
     static integer nwork;
     extern /* Subroutine */ int clacp2_(char *, integer *, integer *, real *,
-	    integer *, complex *, integer *);
+	    integer *, complex_ *, integer *);
     static logical wntqn, wntqo, wntqs;
     static integer mnthr1, mnthr2;
-    extern /* Subroutine */ int cgebrd_(integer *, integer *, complex *,
-	    integer *, real *, real *, complex *, complex *, complex *,
+    extern /* Subroutine */ int cgebrd_(integer *, integer *, complex_ *,
+	    integer *, real *, real *, complex_ *, complex_ *, complex_ *,
 	    integer *, integer *);
-    extern doublereal clange_(char *, integer *, integer *, complex *,
+    extern doublereal clange_(char *, integer *, integer *, complex_ *,
 	    integer *, real *);
-    extern /* Subroutine */ int cgelqf_(integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *, integer *), clacrm_(
-	    integer *, integer *, complex *, integer *, real *, integer *,
-	    complex *, integer *, real *), clarcm_(integer *, integer *, real
-	    *, integer *, complex *, integer *, complex *, integer *, real *),
+    extern /* Subroutine */ int cgelqf_(integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *, integer *), clacrm_(
+	    integer *, integer *, complex_ *, integer *, real *, integer *,
+	    complex_ *, integer *, real *), clarcm_(integer *, integer *, real
+	    *, integer *, complex_ *, integer *, complex_ *, integer *, real *),
 	     clascl_(char *, integer *, integer *, real *, real *, integer *,
-	    integer *, complex *, integer *, integer *), sbdsdc_(char
+	    integer *, complex_ *, integer *, integer *), sbdsdc_(char
 	    *, char *, integer *, real *, real *, real *, integer *, real *,
-	    integer *, real *, integer *, real *, integer *, integer *), cgeqrf_(integer *, integer *, complex *, integer
-	    *, complex *, complex *, integer *, integer *);
+	    integer *, real *, integer *, real *, integer *, integer *), cgeqrf_(integer *, integer *, complex_ *, integer
+	    *, complex_ *, complex_ *, integer *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
-	    *, integer *, complex *, integer *), claset_(char *,
-	    integer *, integer *, complex *, complex *, complex *, integer *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex_
+	    *, integer *, complex_ *, integer *), claset_(char *,
+	    integer *, integer *, complex_ *, complex_ *, complex_ *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cungbr_(char *, integer *, integer *, integer
-	    *, complex *, integer *, complex *, complex *, integer *, integer
+	    *, complex_ *, integer *, complex_ *, complex_ *, integer *, integer
 	    *);
     static real bignum;
     extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
 	    real *, integer *, integer *, real *, integer *, integer *), cunmbr_(char *, char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *), cunglq_(
-	    integer *, integer *, integer *, complex *, integer *, complex *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *), cunglq_(
+	    integer *, integer *, integer *, complex_ *, integer *, complex_ *,
+	    complex_ *, integer *, integer *);
     static integer ldwrkl;
     extern /* Subroutine */ int cungqr_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, integer *);
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, integer *);
     static integer ldwrkr, minwrk, ldwrku, maxwrk, ldwkvt;
     static real smlnum;
     static logical wntqas;
@@ -3863,7 +3863,7 @@ L10:
     Purpose
     =======
 
-    CGESDD computes the singular value decomposition (SVD) of a complex
+    CGESDD computes the singular value decomposition (SVD) of a complex_
     M-by-N matrix A, optionally computing the left and/or right singular
     vectors, by using divide-and-conquer method. The SVD is written
 
@@ -4041,7 +4041,7 @@ L10:
         (Note: Comments in the code beginning "Workspace:" describe the
          minimal amount of workspace needed at that point in the code,
          as well as the preferred amount for good performance.
-         CWorkspace refers to complex workspace, and RWorkspace to
+         CWorkspace refers to complex_ workspace, and RWorkspace to
          real workspace. NB refers to the optimal block size for the
          immediately following subroutine, as returned by ILAENV.)
 */
@@ -4050,7 +4050,7 @@ L10:
 	if (*m >= *n) {
 
 /*
-             There is no complex work space needed for bidiagonal SVD
+             There is no complex_ work space needed for bidiagonal SVD
              The real work space needed for bidiagonal SVD is BDSPAC
              for computing singular values and singular vectors; BDSPAN
              for computing singular values only.
@@ -4243,7 +4243,7 @@ L10:
 	} else {
 
 /*
-             There is no complex work space needed for bidiagonal SVD
+             There is no complex_ work space needed for bidiagonal SVD
              The real work space needed for bidiagonal SVD is BDSPAC
              for computing singular values and singular vectors; BDSPAN
              for computing singular values only.
@@ -4621,7 +4621,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by the left singular vectors of R
                 (CWorkspace: need 2*N*N+3*N, prefer M*N+N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4634,7 +4634,7 @@ L10:
 			ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by the right singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4742,7 +4742,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4754,7 +4754,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4851,7 +4851,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by left singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4864,7 +4864,7 @@ L10:
 			ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of R
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5202,7 +5202,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (Cworkspace: need 2*N, prefer N+N*NB)
                 (Rworkspace: need 0)
@@ -5217,7 +5217,7 @@ L10:
 		if (*lwork >= *m * *n + *n * 3) {
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by left singular vectors of A, copying
                 to A
                 (Cworkspace: need M*N+2*N, prefer M*N+N+N*NB)
@@ -5284,7 +5284,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5297,7 +5297,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5336,7 +5336,7 @@ L10:
 		}
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 2*N+M, prefer 2*N+M*NB)
                 (RWorkspace: 0)
@@ -5348,7 +5348,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5512,7 +5512,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by the left singular vectors of L
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -5524,7 +5524,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by the right singular vectors of L
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -5632,7 +5632,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -5644,7 +5644,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by left singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -5741,7 +5741,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of L
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: 0)
@@ -5753,7 +5753,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by right singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -6095,7 +6095,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (Cworkspace: need 2*M, prefer M+M*NB)
                 (Rworkspace: need 0)
@@ -6109,7 +6109,7 @@ L10:
 		if (*lwork >= *m * *n + *m * 3) {
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by right singular vectors of A,
                 copying to A
                 (Cworkspace: need M*N+2*M, prefer M*N+M+M*NB)
@@ -6174,7 +6174,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6186,7 +6186,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6217,7 +6217,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6233,7 +6233,7 @@ L10:
 		claset_("F", n, n, &c_b56, &c_b57, &vt[vt_offset], ldvt);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 2*M+N, prefer 2*M+N*NB)
                 (RWorkspace: M*M)
@@ -6283,16 +6283,16 @@ L10:
 
 } /* cgesdd_ */
 
-/* Subroutine */ int cgesv_(integer *n, integer *nrhs, complex *a, integer *
-	lda, integer *ipiv, complex *b, integer *ldb, integer *info)
+/* Subroutine */ int cgesv_(integer *n, integer *nrhs, complex_ *a, integer *
+	lda, integer *ipiv, complex_ *b, integer *ldb, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1;
 
     /* Local variables */
-    extern /* Subroutine */ int cgetrf_(integer *, integer *, complex *,
-	    integer *, integer *, integer *), xerbla_(char *, integer *), cgetrs_(char *, integer *, integer *, complex *, integer
-	    *, integer *, complex *, integer *, integer *);
+    extern /* Subroutine */ int cgetrf_(integer *, integer *, complex_ *,
+	    integer *, integer *, integer *), xerbla_(char *, integer *), cgetrs_(char *, integer *, integer *, complex_ *, integer
+	    *, integer *, complex_ *, integer *, integer *);
 
 
 /*
@@ -6305,7 +6305,7 @@ L10:
     Purpose
     =======
 
-    CGESV computes the solution to a complex system of linear equations
+    CGESV computes the solution to a complex_ system of linear equations
        A * X = B,
     where A is an N-by-N matrix and X and B are N-by-NRHS matrices.
 
@@ -6401,22 +6401,22 @@ L10:
 
 } /* cgesv_ */
 
-/* Subroutine */ int cgetf2_(integer *m, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cgetf2_(integer *m, integer *n, complex_ *a, integer *lda,
 	 integer *ipiv, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, jp;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), cgeru_(integer *, integer *, complex *, complex *,
-	    integer *, complex *, integer *, complex *, integer *);
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
+	    integer *), cgeru_(integer *, integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *);
     static real sfmin;
-    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
-	    complex *, integer *);
-    extern integer icamax_(integer *, complex *, integer *);
+    extern /* Subroutine */ int cswap_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
+    extern integer icamax_(integer *, complex_ *, integer *);
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
@@ -6568,27 +6568,27 @@ L10:
 
 } /* cgetf2_ */
 
-/* Subroutine */ int cgetrf_(integer *m, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cgetrf_(integer *m, integer *n, complex_ *a, integer *lda,
 	 integer *ipiv, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, jb, nb;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     static integer iinfo;
     extern /* Subroutine */ int ctrsm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), cgetf2_(integer *,
-	    integer *, complex *, integer *, integer *, integer *), xerbla_(
+	    integer *, complex_ *, integer *, integer *, integer *), xerbla_(
 	    char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
-    extern /* Subroutine */ int claswp_(integer *, complex *, integer *,
+    extern /* Subroutine */ int claswp_(integer *, complex_ *, integer *,
 	    integer *, integer *, integer *, integer *);
 
 
@@ -6759,8 +6759,8 @@ L10:
 
 } /* cgetrf_ */
 
-/* Subroutine */ int cgetrs_(char *trans, integer *n, integer *nrhs, complex *
-	a, integer *lda, integer *ipiv, complex *b, integer *ldb, integer *
+/* Subroutine */ int cgetrs_(char *trans, integer *n, integer *nrhs, complex_ *
+	a, integer *lda, integer *ipiv, complex_ *b, integer *ldb, integer *
 	info)
 {
     /* System generated locals */
@@ -6769,9 +6769,9 @@ L10:
     /* Local variables */
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int ctrsm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), xerbla_(char *,
-	    integer *), claswp_(integer *, complex *, integer *,
+	    integer *), claswp_(integer *, complex_ *, integer *,
 	    integer *, integer *, integer *, integer *);
     static logical notran;
 
@@ -6917,8 +6917,8 @@ L10:
 
 } /* cgetrs_ */
 
-/* Subroutine */ int cheevd_(char *jobz, char *uplo, integer *n, complex *a,
-	integer *lda, real *w, complex *work, integer *lwork, real *rwork,
+/* Subroutine */ int cheevd_(char *jobz, char *uplo, integer *n, complex_ *a,
+	integer *lda, real *w, complex_ *work, integer *lwork, real *rwork,
 	integer *lrwork, integer *iwork, integer *liwork, integer *info)
 {
     /* System generated locals */
@@ -6941,17 +6941,17 @@ L10:
     static integer llrwk, lropt;
     static logical wantz;
     static integer indwk2, llwrk2;
-    extern doublereal clanhe_(char *, char *, integer *, complex *, integer *,
+    extern doublereal clanhe_(char *, char *, integer *, complex_ *, integer *,
 	     real *);
     static integer iscale;
     extern /* Subroutine */ int clascl_(char *, integer *, integer *, real *,
-	    real *, integer *, integer *, complex *, integer *, integer *), cstedc_(char *, integer *, real *, real *, complex *,
-	    integer *, complex *, integer *, real *, integer *, integer *,
+	    real *, integer *, integer *, complex_ *, integer *, integer *), cstedc_(char *, integer *, real *, real *, complex_ *,
+	    integer *, complex_ *, integer *, real *, integer *, integer *,
 	    integer *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int chetrd_(char *, integer *, complex *, integer
-	    *, real *, real *, complex *, complex *, integer *, integer *), clacpy_(char *, integer *, integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Subroutine */ int chetrd_(char *, integer *, complex_ *, integer
+	    *, real *, real *, complex_ *, complex_ *, integer *, integer *), clacpy_(char *, integer *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     static real safmin;
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -6961,8 +6961,8 @@ L10:
     extern /* Subroutine */ int ssterf_(integer *, real *, real *, integer *);
     static integer lrwmin;
     extern /* Subroutine */ int cunmtr_(char *, char *, char *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *);
     static integer llwork;
     static real smlnum;
     static logical lquery;
@@ -6979,7 +6979,7 @@ L10:
     =======
 
     CHEEVD computes all eigenvalues and, optionally, eigenvectors of a
-    complex Hermitian matrix A.  If eigenvectors are desired, it uses a
+    complex_ Hermitian matrix A.  If eigenvectors are desired, it uses a
     divide and conquer algorithm.
 
     The divide and conquer algorithm makes very mild assumptions about
@@ -7260,30 +7260,30 @@ L10:
 
 } /* cheevd_ */
 
-/* Subroutine */ int chetd2_(char *uplo, integer *n, complex *a, integer *lda,
-	 real *d__, real *e, complex *tau, integer *info)
+/* Subroutine */ int chetd2_(char *uplo, integer *n, complex_ *a, integer *lda,
+	 real *d__, real *e, complex_ *tau, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1;
-    complex q__1, q__2, q__3, q__4;
+    complex_ q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__;
-    static complex taui;
-    extern /* Subroutine */ int cher2_(char *, integer *, complex *, complex *
-	    , integer *, complex *, integer *, complex *, integer *);
-    static complex alpha;
-    extern /* Complex */ VOID cdotc_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
+    static complex_ taui;
+    extern /* Subroutine */ int cher2_(char *, integer *, complex_ *, complex_ *
+	    , integer *, complex_ *, integer *, complex_ *, integer *);
+    static complex_ alpha;
+    extern /* Complex */ VOID cdotc_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int chemv_(char *, integer *, complex *, complex *
-	    , integer *, complex *, integer *, complex *, complex *, integer *
-	    ), caxpy_(integer *, complex *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int chemv_(char *, integer *, complex_ *, complex_ *
+	    , integer *, complex_ *, integer *, complex_ *, complex_ *, integer *
+	    ), caxpy_(integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *);
     static logical upper;
-    extern /* Subroutine */ int clarfg_(integer *, complex *, complex *,
-	    integer *, complex *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int clarfg_(integer *, complex_ *, complex_ *,
+	    integer *, complex_ *), xerbla_(char *, integer *);
 
 
 /*
@@ -7296,7 +7296,7 @@ L10:
     Purpose
     =======
 
-    CHETD2 reduces a complex Hermitian matrix A to real symmetric
+    CHETD2 reduces a complex_ Hermitian matrix A to real symmetric
     tridiagonal form T by a unitary similarity transformation:
     Q' * A * Q = T.
 
@@ -7362,7 +7362,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i+1:n) = 0 and v(i) = 1; v(1:i-1) is stored on exit in
     A(1:i-1,i+1), and tau in TAU(i).
 
@@ -7375,7 +7375,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+2:n) is stored on exit in A(i+2:n,i),
     and tau in TAU(i).
 
@@ -7596,24 +7596,24 @@ L10:
 
 } /* chetd2_ */
 
-/* Subroutine */ int chetrd_(char *uplo, integer *n, complex *a, integer *lda,
-	 real *d__, real *e, complex *tau, complex *work, integer *lwork,
+/* Subroutine */ int chetrd_(char *uplo, integer *n, complex_ *a, integer *lda,
+	 real *d__, real *e, complex_ *tau, complex_ *work, integer *lwork,
 	integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, nb, kk, nx, iws;
     extern logical lsame_(char *, char *);
     static integer nbmin, iinfo;
     static logical upper;
-    extern /* Subroutine */ int chetd2_(char *, integer *, complex *, integer
-	    *, real *, real *, complex *, integer *), cher2k_(char *,
-	    char *, integer *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, real *, complex *, integer *), clatrd_(char *, integer *, integer *, complex *, integer
-	    *, real *, complex *, complex *, integer *), xerbla_(char
+    extern /* Subroutine */ int chetd2_(char *, integer *, complex_ *, integer
+	    *, real *, real *, complex_ *, integer *), cher2k_(char *,
+	    char *, integer *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, real *, complex_ *, integer *), clatrd_(char *, integer *, integer *, complex_ *, integer
+	    *, real *, complex_ *, complex_ *, integer *), xerbla_(char
 	    *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -7631,7 +7631,7 @@ L10:
     Purpose
     =======
 
-    CHETRD reduces a complex Hermitian matrix A to real symmetric
+    CHETRD reduces a complex_ Hermitian matrix A to real symmetric
     tridiagonal form T by a unitary similarity transformation:
     Q**H * A * Q = T.
 
@@ -7708,7 +7708,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i+1:n) = 0 and v(i) = 1; v(1:i-1) is stored on exit in
     A(1:i-1,i+1), and tau in TAU(i).
 
@@ -7721,7 +7721,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+2:n) is stored on exit in A(i+2:n,i),
     and tau in TAU(i).
 
@@ -7952,33 +7952,33 @@ L10:
 } /* chetrd_ */
 
 /* Subroutine */ int chseqr_(char *job, char *compz, integer *n, integer *ilo,
-	 integer *ihi, complex *h__, integer *ldh, complex *w, complex *z__,
-	integer *ldz, complex *work, integer *lwork, integer *info)
+	 integer *ihi, complex_ *h__, integer *ldh, complex_ *w, complex_ *z__,
+	integer *ldz, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     address a__1[2];
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3[2];
     real r__1, r__2, r__3;
-    complex q__1;
+    complex_ q__1;
     char ch__1[2];
 
     /* Local variables */
-    static complex hl[2401]	/* was [49][49] */;
+    static complex_ hl[2401]	/* was [49][49] */;
     static integer kbot, nmin;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static logical initz;
-    static complex workl[49];
+    static complex_ workl[49];
     static logical wantt, wantz;
     extern /* Subroutine */ int claqr0_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, complex *, integer *, integer *),
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, integer *),
 	     clahqr_(logical *, logical *, integer *, integer *, integer *,
-	    complex *, integer *, complex *, integer *, integer *, complex *,
+	    complex_ *, integer *, complex_ *, integer *, integer *, complex_ *,
 	    integer *, integer *), clacpy_(char *, integer *, integer *,
-	    complex *, integer *, complex *, integer *), claset_(char
-	    *, integer *, integer *, complex *, complex *, complex *, integer
+	    complex_ *, integer *, complex_ *, integer *), claset_(char
+	    *, integer *, integer *, complex_ *, complex_ *, complex_ *, integer
 	    *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -8404,23 +8404,23 @@ L10:
     return 0;
 } /* chseqr_ */
 
-/* Subroutine */ int clabrd_(integer *m, integer *n, integer *nb, complex *a,
-	integer *lda, real *d__, real *e, complex *tauq, complex *taup,
-	complex *x, integer *ldx, complex *y, integer *ldy)
+/* Subroutine */ int clabrd_(integer *m, integer *n, integer *nb, complex_ *a,
+	integer *lda, real *d__, real *e, complex_ *tauq, complex_ *taup,
+	complex_ *x, integer *ldx, complex_ *y, integer *ldy)
 {
     /* System generated locals */
     integer a_dim1, a_offset, x_dim1, x_offset, y_dim1, y_offset, i__1, i__2,
 	    i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
-    static complex alpha;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), cgemv_(char *, integer *, integer *, complex *,
-	    complex *, integer *, complex *, integer *, complex *, complex *,
-	    integer *), clarfg_(integer *, complex *, complex *,
-	    integer *, complex *), clacgv_(integer *, complex *, integer *);
+    static complex_ alpha;
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
+	    integer *), cgemv_(char *, integer *, integer *, complex_ *,
+	    complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *,
+	    integer *), clarfg_(integer *, complex_ *, complex_ *,
+	    integer *, complex_ *), clacgv_(integer *, complex_ *, integer *);
 
 
 /*
@@ -8433,7 +8433,7 @@ L10:
     Purpose
     =======
 
-    CLABRD reduces the first NB rows and columns of a complex general
+    CLABRD reduces the first NB rows and columns of a complex_ general
     m by n matrix A to upper or lower real bidiagonal form by a unitary
     transformation Q' * A * P, and returns the matrices X and Y which
     are needed to apply the transformation to the unreduced part of A.
@@ -8518,7 +8518,7 @@ L10:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors.
 
     If m >= n, v(1:i-1) = 0, v(i) = 1, and v(i:m) is stored on exit in
@@ -8875,11 +8875,11 @@ L10:
 
 } /* clabrd_ */
 
-/* Subroutine */ int clacgv_(integer *n, complex *x, integer *incx)
+/* Subroutine */ int clacgv_(integer *n, complex_ *x, integer *incx)
 {
     /* System generated locals */
     integer i__1, i__2;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, ioff;
@@ -8895,7 +8895,7 @@ L10:
     Purpose
     =======
 
-    CLACGV conjugates a complex vector of length N.
+    CLACGV conjugates a complex_ vector of length N.
 
     Arguments
     =========
@@ -8948,7 +8948,7 @@ L10:
 } /* clacgv_ */
 
 /* Subroutine */ int clacp2_(char *uplo, integer *m, integer *n, real *a,
-	integer *lda, complex *b, integer *ldb)
+	integer *lda, complex_ *b, integer *ldb)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
@@ -8969,7 +8969,7 @@ L10:
     =======
 
     CLACP2 copies all or part of a real two-dimensional matrix A to a
-    complex matrix B.
+    complex_ matrix B.
 
     Arguments
     =========
@@ -9059,8 +9059,8 @@ L10:
 
 } /* clacp2_ */
 
-/* Subroutine */ int clacpy_(char *uplo, integer *m, integer *n, complex *a,
-	integer *lda, complex *b, integer *ldb)
+/* Subroutine */ int clacpy_(char *uplo, integer *m, integer *n, complex_ *a,
+	integer *lda, complex_ *b, integer *ldb)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
@@ -9171,14 +9171,14 @@ L10:
 
 } /* clacpy_ */
 
-/* Subroutine */ int clacrm_(integer *m, integer *n, complex *a, integer *lda,
-	 real *b, integer *ldb, complex *c__, integer *ldc, real *rwork)
+/* Subroutine */ int clacrm_(integer *m, integer *n, complex_ *a, integer *lda,
+	 real *b, integer *ldb, complex_ *c__, integer *ldc, real *rwork)
 {
     /* System generated locals */
     integer b_dim1, b_offset, a_dim1, a_offset, c_dim1, c_offset, i__1, i__2,
 	    i__3, i__4, i__5;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, l;
@@ -9199,8 +9199,8 @@ L10:
 
     CLACRM performs a very simple matrix-matrix multiplication:
              C := A * B,
-    where A is M by N and complex; B is N by N and real;
-    C is M by N and complex.
+    where A is M by N and complex_; B is N by N and real;
+    C is M by N and complex_.
 
     Arguments
     =========
@@ -9315,11 +9315,11 @@ L10:
 
 } /* clacrm_ */
 
-/* Complex */ VOID cladiv_(complex * ret_val, complex *x, complex *y)
+/* Complex */ VOID cladiv_(complex_ * ret_val, complex_ *x, complex_ *y)
 {
     /* System generated locals */
     real r__1, r__2, r__3, r__4;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static real zi, zr;
@@ -9337,7 +9337,7 @@ L10:
     Purpose
     =======
 
-    CLADIV := X / Y, where X and Y are complex.  The computation of X / Y
+    CLADIV := X / Y, where X and Y are complex_.  The computation of X / Y
     will not overflow on an intermediary step unless the results
     overflows.
 
@@ -9346,7 +9346,7 @@ L10:
 
     X       (input) COMPLEX
     Y       (input) COMPLEX
-            The complex scalars X and Y.
+            The complex_ scalars X and Y.
 
     =====================================================================
 */
@@ -9367,7 +9367,7 @@ L10:
 } /* cladiv_ */
 
 /* Subroutine */ int claed0_(integer *qsiz, integer *n, real *d__, real *e,
-	complex *q, integer *ldq, complex *qstore, integer *ldqs, real *rwork,
+	complex_ *q, integer *ldq, complex_ *qstore, integer *ldqs, real *rwork,
 	 integer *iwork, integer *info)
 {
     /* System generated locals */
@@ -9378,20 +9378,20 @@ L10:
     static integer i__, j, k, ll, iq, lgn, msd2, smm1, spm1, spm2;
     static real temp;
     static integer curr, iperm;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static integer indxq, iwrem;
     extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
 	    integer *);
     static integer iqptr;
     extern /* Subroutine */ int claed7_(integer *, integer *, integer *,
-	    integer *, integer *, integer *, real *, complex *, integer *,
+	    integer *, integer *, integer *, real *, complex_ *, integer *,
 	    real *, integer *, real *, integer *, integer *, integer *,
-	    integer *, integer *, real *, complex *, real *, integer *,
+	    integer *, integer *, real *, complex_ *, real *, integer *,
 	    integer *);
     static integer tlvls;
-    extern /* Subroutine */ int clacrm_(integer *, integer *, complex *,
-	    integer *, real *, integer *, complex *, integer *, real *);
+    extern /* Subroutine */ int clacrm_(integer *, integer *, complex_ *,
+	    integer *, real *, integer *, complex_ *, integer *, real *);
     static integer igivcl;
     extern /* Subroutine */ int xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
@@ -9714,10 +9714,10 @@ L80:
 } /* claed0_ */
 
 /* Subroutine */ int claed7_(integer *n, integer *cutpnt, integer *qsiz,
-	integer *tlvls, integer *curlvl, integer *curpbm, real *d__, complex *
+	integer *tlvls, integer *curlvl, integer *curpbm, real *d__, complex_ *
 	q, integer *ldq, real *rho, integer *indxq, real *qstore, integer *
 	qptr, integer *prmptr, integer *perm, integer *givptr, integer *
-	givcol, real *givnum, complex *work, real *rwork, integer *iwork,
+	givcol, real *givnum, complex_ *work, real *rwork, integer *iwork,
 	integer *info)
 {
     /* System generated locals */
@@ -9726,8 +9726,8 @@ L80:
     /* Local variables */
     static integer i__, k, n1, n2, iq, iw, iz, ptr, indx, curr, indxc, indxp;
     extern /* Subroutine */ int claed8_(integer *, integer *, integer *,
-	    complex *, integer *, real *, real *, integer *, real *, real *,
-	    complex *, integer *, real *, integer *, integer *, integer *,
+	    complex_ *, integer *, real *, real *, integer *, real *, real *,
+	    complex_ *, integer *, real *, integer *, integer *, integer *,
 	    integer *, integer *, integer *, real *, integer *), slaed9_(
 	    integer *, integer *, integer *, integer *, real *, real *,
 	    integer *, real *, real *, real *, real *, integer *, integer *),
@@ -9735,8 +9735,8 @@ L80:
 	    integer *, integer *, integer *, real *, real *, integer *, real *
 	    , real *, integer *);
     static integer idlmda;
-    extern /* Subroutine */ int clacrm_(integer *, integer *, complex *,
-	    integer *, real *, integer *, complex *, integer *, real *),
+    extern /* Subroutine */ int clacrm_(integer *, integer *, complex_ *,
+	    integer *, real *, integer *, complex_ *, integer *, real *),
 	    xerbla_(char *, integer *), slamrg_(integer *, integer *,
 	    real *, integer *, integer *, integer *);
     static integer coltyp;
@@ -10015,9 +10015,9 @@ L80:
 
 } /* claed7_ */
 
-/* Subroutine */ int claed8_(integer *k, integer *n, integer *qsiz, complex *
+/* Subroutine */ int claed8_(integer *k, integer *n, integer *qsiz, complex_ *
 	q, integer *ldq, real *d__, real *rho, integer *cutpnt, real *z__,
-	real *dlamda, complex *q2, integer *ldq2, real *w, integer *indxp,
+	real *dlamda, complex_ *q2, integer *ldq2, real *w, integer *indxp,
 	integer *indx, integer *indxq, integer *perm, integer *givptr,
 	integer *givcol, real *givnum, integer *info)
 {
@@ -10033,13 +10033,13 @@ L80:
     static real eps, tau, tol;
     static integer jlam, imax, jmax;
     extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *),
-	    ccopy_(integer *, complex *, integer *, complex *, integer *),
-	    csrot_(integer *, complex *, integer *, complex *, integer *,
+	    ccopy_(integer *, complex_ *, integer *, complex_ *, integer *),
+	    csrot_(integer *, complex_ *, integer *, complex_ *, integer *,
 	    real *, real *), scopy_(integer *, real *, integer *, real *,
 	    integer *);
     extern doublereal slapy2_(real *, real *), slamch_(char *);
-    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
-	    *, integer *, complex *, integer *), xerbla_(char *,
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex_
+	    *, integer *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
     extern integer isamax_(integer *, real *, integer *);
     extern /* Subroutine */ int slamrg_(integer *, integer *, real *, integer
@@ -10436,43 +10436,43 @@ L100:
 } /* claed8_ */
 
 /* Subroutine */ int clahqr_(logical *wantt, logical *wantz, integer *n,
-	integer *ilo, integer *ihi, complex *h__, integer *ldh, complex *w,
-	integer *iloz, integer *ihiz, complex *z__, integer *ldz, integer *
+	integer *ilo, integer *ihi, complex_ *h__, integer *ldh, complex_ *w,
+	integer *iloz, integer *ihiz, complex_ *z__, integer *ldz, integer *
 	info)
 {
     /* System generated locals */
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
-    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7;
+    complex_ q__1, q__2, q__3, q__4, q__5, q__6, q__7;
 
     /* Local variables */
     static integer i__, j, k, l, m;
     static real s;
-    static complex t, u, v[2], x, y;
+    static complex_ t, u, v[2], x, y;
     static integer i1, i2;
-    static complex t1;
+    static complex_ t1;
     static real t2;
-    static complex v2;
+    static complex_ v2;
     static real aa, ab, ba, bb, h10;
-    static complex h11;
+    static complex_ h11;
     static real h21;
-    static complex h22, sc;
+    static complex_ h22, sc;
     static integer nh, nz;
     static real sx;
     static integer jhi;
-    static complex h11s;
+    static complex_ h11s;
     static integer jlo, its;
     static real ulp;
-    static complex sum;
+    static complex_ sum;
     static real tst;
-    static complex temp;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), ccopy_(integer *, complex *, integer *, complex *,
+    static complex_ temp;
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
+	    integer *), ccopy_(integer *, complex_ *, integer *, complex_ *,
 	    integer *);
     static real rtemp;
     extern /* Subroutine */ int slabad_(real *, real *), clarfg_(integer *,
-	    complex *, complex *, integer *, complex *);
-    extern /* Complex */ VOID cladiv_(complex *, complex *, complex *);
+	    complex_ *, complex_ *, integer *, complex_ *);
+    extern /* Complex */ VOID cladiv_(complex_ *, complex_ *, complex_ *);
     extern doublereal slamch_(char *);
     static real safmin, safmax, smlnum;
 
@@ -11166,33 +11166,33 @@ L150:
 
 } /* clahqr_ */
 
-/* Subroutine */ int clahr2_(integer *n, integer *k, integer *nb, complex *a,
-	integer *lda, complex *tau, complex *t, integer *ldt, complex *y,
+/* Subroutine */ int clahr2_(integer *n, integer *k, integer *nb, complex_ *a,
+	integer *lda, complex_ *tau, complex_ *t, integer *ldt, complex_ *y,
 	integer *ldy)
 {
     /* System generated locals */
     integer a_dim1, a_offset, t_dim1, t_offset, y_dim1, y_offset, i__1, i__2,
 	    i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
-    static complex ei;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
+    static complex_ ei;
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
 	    integer *), cgemm_(char *, char *, integer *, integer *, integer *
-	    , complex *, complex *, integer *, complex *, integer *, complex *
-	    , complex *, integer *), cgemv_(char *, integer *,
-	     integer *, complex *, complex *, integer *, complex *, integer *,
-	     complex *, complex *, integer *), ccopy_(integer *,
-	    complex *, integer *, complex *, integer *), ctrmm_(char *, char *
-	    , char *, char *, integer *, integer *, complex *, complex *,
-	    integer *, complex *, integer *),
-	    caxpy_(integer *, complex *, complex *, integer *, complex *,
-	    integer *), ctrmv_(char *, char *, char *, integer *, complex *,
-	    integer *, complex *, integer *), clarfg_(
-	    integer *, complex *, complex *, integer *, complex *), clacgv_(
-	    integer *, complex *, integer *), clacpy_(char *, integer *,
-	    integer *, complex *, integer *, complex *, integer *);
+	    , complex_ *, complex_ *, integer *, complex_ *, integer *, complex_ *
+	    , complex_ *, integer *), cgemv_(char *, integer *,
+	     integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	     complex_ *, complex_ *, integer *), ccopy_(integer *,
+	    complex_ *, integer *, complex_ *, integer *), ctrmm_(char *, char *
+	    , char *, char *, integer *, integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *),
+	    caxpy_(integer *, complex_ *, complex_ *, integer *, complex_ *,
+	    integer *), ctrmv_(char *, char *, char *, integer *, complex_ *,
+	    integer *, complex_ *, integer *), clarfg_(
+	    integer *, complex_ *, complex_ *, integer *, complex_ *), clacgv_(
+	    integer *, complex_ *, integer *), clacpy_(char *, integer *,
+	    integer *, complex_ *, integer *, complex_ *, integer *);
 
 
 /*  -- LAPACK auxiliary routine (version 3.2.1)                        -- */
@@ -11205,7 +11205,7 @@ L150:
     Purpose
     =======
 
-    CLAHR2 reduces the first NB columns of A complex general n-BY-(n-k+1)
+    CLAHR2 reduces the first NB columns of A complex_ general n-BY-(n-k+1)
     matrix A so that elements below the k-th subdiagonal are zero. The
     reduction is performed by an unitary similarity transformation
     Q' * A * Q. The routine returns the matrices V and T which determine
@@ -11266,7 +11266,7 @@ L150:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i+k-1) = 0, v(i+k) = 1; v(i+k+1:n) is stored on exit in
     A(i+k+1:n,i), and tau in TAU(i).
 
@@ -11479,7 +11479,7 @@ L150:
 } /* clahr2_ */
 
 /* Subroutine */ int clals0_(integer *icompq, integer *nl, integer *nr,
-	integer *sqre, integer *nrhs, complex *b, integer *ldb, complex *bx,
+	integer *sqre, integer *nrhs, complex_ *b, integer *ldb, complex_ *bx,
 	integer *ldbx, integer *perm, integer *givptr, integer *givcol,
 	integer *ldgcol, real *givnum, integer *ldgnum, real *poles, real *
 	difl, real *difr, real *z__, integer *k, real *c__, real *s, real *
@@ -11490,7 +11490,7 @@ L150:
 	    givnum_offset, poles_dim1, poles_offset, b_dim1, b_offset,
 	    bx_dim1, bx_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, m, n;
@@ -11500,15 +11500,15 @@ L150:
     static integer jrow;
     extern doublereal snrm2_(integer *, real *, integer *);
     static real diflj, difrj, dsigj;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *), sgemv_(char *, integer *, integer *, real *
-	    , real *, integer *, real *, integer *, real *, real *, integer *), csrot_(integer *, complex *, integer *, complex *,
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *), sgemv_(char *, integer *, integer *, real *
+	    , real *, integer *, real *, integer *, real *, real *, integer *), csrot_(integer *, complex_ *, integer *, complex_ *,
 	    integer *, real *, real *);
     extern doublereal slamc3_(real *, real *);
     extern /* Subroutine */ int clascl_(char *, integer *, integer *, real *,
-	    real *, integer *, integer *, complex *, integer *, integer *), csscal_(integer *, real *, complex *, integer *),
-	    clacpy_(char *, integer *, integer *, complex *, integer *,
-	    complex *, integer *), xerbla_(char *, integer *);
+	    real *, integer *, integer *, complex_ *, integer *, integer *), csscal_(integer *, real *, complex_ *, integer *),
+	    clacpy_(char *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, integer *), xerbla_(char *, integer *);
     static real dsigjp;
 
 
@@ -11813,7 +11813,7 @@ L150:
 		temp = snrm2_(k, &rwork[1], &c__1);
 
 /*
-                Since B and BX are complex, the following call to SGEMV
+                Since B and BX are complex_, the following call to SGEMV
                 is performed in two steps (real and imaginary parts).
 
                 CALL SGEMV( 'T', K, NRHS, ONE, BX, LDBX, WORK, 1, ZERO,
@@ -11917,7 +11917,7 @@ L150:
 		}
 
 /*
-                Since B and BX are complex, the following call to SGEMV
+                Since B and BX are complex_, the following call to SGEMV
                 is performed in two steps (real and imaginary parts).
 
                 CALL SGEMV( 'T', K, NRHS, ONE, B, LDB, WORK, 1, ZERO,
@@ -12012,7 +12012,7 @@ L150:
 } /* clals0_ */
 
 /* Subroutine */ int clalsa_(integer *icompq, integer *smlsiz, integer *n,
-	integer *nrhs, complex *b, integer *ldb, complex *bx, integer *ldbx,
+	integer *nrhs, complex_ *b, integer *ldb, complex_ *bx, integer *ldbx,
 	real *u, integer *ldu, real *vt, integer *k, real *difl, real *difr,
 	real *z__, real *poles, integer *givptr, integer *givcol, integer *
 	ldgcol, integer *perm, real *givnum, real *c__, real *s, real *rwork,
@@ -12024,7 +12024,7 @@ L150:
 	    poles_dim1, poles_offset, u_dim1, u_offset, vt_dim1, vt_offset,
 	    z_dim1, z_offset, b_dim1, b_offset, bx_dim1, bx_offset, i__1,
 	    i__2, i__3, i__4, i__5, i__6;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
@@ -12034,9 +12034,9 @@ L150:
 	    integer *, real *, real *, integer *, real *, integer *, real *,
 	    real *, integer *);
     static integer ndimr;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *), clals0_(integer *, integer *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *), clals0_(integer *, integer *, integer *,
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
 	    integer *, integer *, integer *, integer *, real *, integer *,
 	    real *, real *, real *, real *, integer *, real *, real *, real *,
 	     integer *), xerbla_(char *, integer *), slasdt_(integer *
@@ -12302,7 +12302,7 @@ L150:
 	nrf = ic + 1;
 
 /*
-          Since B and BX are complex, the following call to SGEMM
+          Since B and BX are complex_, the following call to SGEMM
           is performed in two steps (real and imaginary parts).
 
           CALL SGEMM( 'T', 'N', NL, NRHS, NL, ONE, U( NLF, 1 ), LDU,
@@ -12356,7 +12356,7 @@ L150:
 	}
 
 /*
-          Since B and BX are complex, the following call to SGEMM
+          Since B and BX are complex_, the following call to SGEMM
           is performed in two steps (real and imaginary parts).
 
           CALL SGEMM( 'T', 'N', NR, NRHS, NR, ONE, U( NRF, 1 ), LDU,
@@ -12546,7 +12546,7 @@ L170:
 	nrf = ic + 1;
 
 /*
-          Since B and BX are complex, the following call to SGEMM is
+          Since B and BX are complex_, the following call to SGEMM is
           performed in two steps (real and imaginary parts).
 
           CALL SGEMM( 'T', 'N', NLP1, NRHS, NLP1, ONE, VT( NLF, 1 ), LDU,
@@ -12601,7 +12601,7 @@ L170:
 	}
 
 /*
-          Since B and BX are complex, the following call to SGEMM is
+          Since B and BX are complex_, the following call to SGEMM is
           performed in two steps (real and imaginary parts).
 
           CALL SGEMM( 'T', 'N', NRP1, NRHS, NRP1, ONE, VT( NRF, 1 ), LDU,
@@ -12667,14 +12667,14 @@ L330:
 } /* clalsa_ */
 
 /* Subroutine */ int clalsd_(char *uplo, integer *smlsiz, integer *n, integer
-	*nrhs, real *d__, real *e, complex *b, integer *ldb, real *rcond,
-	integer *rank, complex *work, real *rwork, integer *iwork, integer *
+	*nrhs, real *d__, real *e, complex_ *b, integer *ldb, real *rcond,
+	integer *rank, complex_ *work, real *rwork, integer *iwork, integer *
 	info)
 {
     /* System generated locals */
     integer b_dim1, b_offset, i__1, i__2, i__3, i__4, i__5, i__6;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer c__, i__, j, k;
@@ -12695,27 +12695,27 @@ L330:
 	    integer *, real *, real *, integer *, real *, integer *, real *,
 	    real *, integer *);
     static integer irwib;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static integer poles, sizei, irwrb, nsize;
-    extern /* Subroutine */ int csrot_(integer *, complex *, integer *,
-	    complex *, integer *, real *, real *);
+    extern /* Subroutine */ int csrot_(integer *, complex_ *, integer *,
+	    complex_ *, integer *, real *, real *);
     static integer irwvt, icmpq1, icmpq2;
     extern /* Subroutine */ int clalsa_(integer *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, integer *, real *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, real *,
 	    integer *, real *, integer *, real *, real *, real *, real *,
 	    integer *, integer *, integer *, integer *, real *, real *, real *
 	    , real *, integer *, integer *), clascl_(char *, integer *,
-	    integer *, real *, real *, integer *, integer *, complex *,
+	    integer *, real *, real *, integer *, integer *, complex_ *,
 	    integer *, integer *);
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int slasda_(integer *, integer *, integer *,
 	    integer *, real *, real *, real *, integer *, real *, integer *,
 	    real *, real *, real *, real *, integer *, integer *, integer *,
 	    integer *, real *, real *, real *, real *, integer *, integer *),
-	    clacpy_(char *, integer *, integer *, complex *, integer *,
-	    complex *, integer *), claset_(char *, integer *, integer
-	    *, complex *, complex *, complex *, integer *), xerbla_(
+	    clacpy_(char *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, integer *), claset_(char *, integer *, integer
+	    *, complex_ *, complex_ *, complex_ *, integer *), xerbla_(
 	    char *, integer *), slascl_(char *, integer *, integer *,
 	    real *, real *, integer *, integer *, real *, integer *, integer *
 	    );
@@ -12963,7 +12963,7 @@ L330:
 
 /*
           In the real version, B is passed to SLASDQ and multiplied
-          internally by Q'. Here B is complex and that product is
+          internally by Q'. Here B is complex_ and that product is
           computed below in two steps (real and imaginary parts).
 */
 
@@ -13027,7 +13027,7 @@ L330:
 	}
 
 /*
-          Since B is complex, the following call to SGEMM is performed
+          Since B is complex_, the following call to SGEMM is performed
           in two steps (real and imaginary parts). That is for V * B
           (in the real version of the code V' is stored in WORK).
 
@@ -13199,7 +13199,7 @@ L330:
 
 /*
                 In the real version, B is passed to SLASDQ and multiplied
-                internally by Q'. Here B is complex and that product is
+                internally by Q'. Here B is complex_ and that product is
                 computed below in two steps (real and imaginary parts).
 */
 
@@ -13320,7 +13320,7 @@ L330:
 	} else if (nsize <= *smlsiz) {
 
 /*
-             Since B and BX are complex, the following call to SGEMM
+             Since B and BX are complex_, the following call to SGEMM
              is performed in two steps (real and imaginary parts).
 
              CALL SGEMM( 'T', 'N', NSIZE, NRHS, NSIZE, ONE,
@@ -13404,7 +13404,7 @@ L330:
 
 } /* clalsd_ */
 
-doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
+doublereal clange_(char *norm, integer *m, integer *n, complex_ *a, integer *
 	lda, real *work)
 {
     /* System generated locals */
@@ -13416,7 +13416,7 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
     static real sum, scale;
     extern logical lsame_(char *, char *);
     static real value;
-    extern /* Subroutine */ int classq_(integer *, complex *, integer *, real
+    extern /* Subroutine */ int classq_(integer *, complex_ *, integer *, real
 	    *, real *);
 
 
@@ -13432,7 +13432,7 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
 
     CLANGE  returns the value of the one norm,  or the Frobenius norm, or
     the  infinity norm,  or the  element of  largest absolute value  of a
-    complex matrix A.
+    complex_ matrix A.
 
     Description
     ===========
@@ -13570,7 +13570,7 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
 
 } /* clange_ */
 
-doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
+doublereal clanhe_(char *norm, char *uplo, integer *n, complex_ *a, integer *
 	lda, real *work)
 {
     /* System generated locals */
@@ -13582,7 +13582,7 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
     static real sum, absa, scale;
     extern logical lsame_(char *, char *);
     static real value;
-    extern /* Subroutine */ int classq_(integer *, complex *, integer *, real
+    extern /* Subroutine */ int classq_(integer *, complex_ *, integer *, real
 	    *, real *);
 
 
@@ -13598,7 +13598,7 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
 
     CLANHE  returns the value of the one norm,  or the Frobenius norm, or
     the  infinity norm,  or the  element of  largest absolute value  of a
-    complex hermitian matrix A.
+    complex_ hermitian matrix A.
 
     Description
     ===========
@@ -13803,48 +13803,48 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
 } /* clanhe_ */
 
 /* Subroutine */ int claqr0_(logical *wantt, logical *wantz, integer *n,
-	integer *ilo, integer *ihi, complex *h__, integer *ldh, complex *w,
-	integer *iloz, integer *ihiz, complex *z__, integer *ldz, complex *
+	integer *ilo, integer *ihi, complex_ *h__, integer *ldh, complex_ *w,
+	integer *iloz, integer *ihiz, complex_ *z__, integer *ldz, complex_ *
 	work, integer *lwork, integer *info)
 {
     /* System generated locals */
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
-    complex q__1, q__2, q__3, q__4, q__5;
+    complex_ q__1, q__2, q__3, q__4, q__5;
 
     /* Local variables */
     static integer i__, k;
     static real s;
-    static complex aa, bb, cc, dd;
+    static complex_ aa, bb, cc, dd;
     static integer ld, nh, it, ks, kt, ku, kv, ls, ns, nw;
-    static complex tr2, det;
+    static complex_ tr2, det;
     static integer inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl, kbot,
 	    nmin;
-    static complex swap;
+    static complex_ swap;
     static integer ktop;
-    static complex zdum[1]	/* was [1][1] */;
+    static complex_ zdum[1]	/* was [1][1] */;
     static integer kacc22, itmax, nsmax, nwmax, kwtop;
     extern /* Subroutine */ int claqr3_(logical *, logical *, integer *,
-	    integer *, integer *, integer *, complex *, integer *, integer *,
-	    integer *, complex *, integer *, integer *, integer *, complex *,
-	    complex *, integer *, integer *, complex *, integer *, integer *,
-	    complex *, integer *, complex *, integer *), claqr4_(logical *,
-	    logical *, integer *, integer *, integer *, complex *, integer *,
-	    complex *, integer *, integer *, complex *, integer *, complex *,
+	    integer *, integer *, integer *, complex_ *, integer *, integer *,
+	    integer *, complex_ *, integer *, integer *, integer *, complex_ *,
+	    complex_ *, integer *, integer *, complex_ *, integer *, integer *,
+	    complex_ *, integer *, complex_ *, integer *), claqr4_(logical *,
+	    logical *, integer *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, integer *, integer *, complex_ *, integer *, complex_ *,
 	    integer *, integer *), claqr5_(logical *, logical *, integer *,
-	    integer *, integer *, integer *, integer *, complex *, complex *,
-	    integer *, integer *, integer *, complex *, integer *, complex *,
-	    integer *, complex *, integer *, integer *, complex *, integer *,
-	    integer *, complex *, integer *);
+	    integer *, integer *, integer *, integer *, complex_ *, complex_ *,
+	    integer *, integer *, integer *, complex_ *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *);
     static integer nibble;
     extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, integer *), clacpy_(char *,
-	    integer *, integer *, complex *, integer *, complex *, integer *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static char jbcmpz[2];
-    static complex rtdisc;
+    static complex_ rtdisc;
     static integer nwupbd;
     static logical sorted;
     static integer lwkopt;
@@ -14585,17 +14585,17 @@ L80:
     return 0;
 } /* claqr0_ */
 
-/* Subroutine */ int claqr1_(integer *n, complex *h__, integer *ldh, complex *
-	s1, complex *s2, complex *v)
+/* Subroutine */ int claqr1_(integer *n, complex_ *h__, integer *ldh, complex_ *
+	s1, complex_ *s2, complex_ *v)
 {
     /* System generated locals */
     integer h_dim1, h_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
-    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
+    complex_ q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
 
     /* Local variables */
     static real s;
-    static complex h21s, h31s;
+    static complex_ h21s, h31s;
 
 
 /*
@@ -14753,52 +14753,52 @@ L80:
 } /* claqr1_ */
 
 /* Subroutine */ int claqr2_(logical *wantt, logical *wantz, integer *n,
-	integer *ktop, integer *kbot, integer *nw, complex *h__, integer *ldh,
-	 integer *iloz, integer *ihiz, complex *z__, integer *ldz, integer *
-	ns, integer *nd, complex *sh, complex *v, integer *ldv, integer *nh,
-	complex *t, integer *ldt, integer *nv, complex *wv, integer *ldwv,
-	complex *work, integer *lwork)
+	integer *ktop, integer *kbot, integer *nw, complex_ *h__, integer *ldh,
+	 integer *iloz, integer *ihiz, complex_ *z__, integer *ldz, integer *
+	ns, integer *nd, complex_ *sh, complex_ *v, integer *ldv, integer *nh,
+	complex_ *t, integer *ldt, integer *nv, complex_ *wv, integer *ldwv,
+	complex_ *work, integer *lwork)
 {
     /* System generated locals */
     integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, j;
-    static complex s;
+    static complex_ s;
     static integer jw;
     static real foo;
     static integer kln;
-    static complex tau;
+    static complex_ tau;
     static integer knt;
     static real ulp;
     static integer lwk1, lwk2;
-    static complex beta;
+    static complex_ beta;
     static integer kcol, info, ifst, ilst, ltop, krow;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    cgemm_(char *, char *, integer *, integer *, integer *, complex *,
-	     complex *, integer *, complex *, integer *, complex *, complex *,
-	     integer *), ccopy_(integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    cgemm_(char *, char *, integer *, integer *, integer *, complex_ *,
+	     complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *,
+	     integer *), ccopy_(integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     static integer infqr, kwtop;
     extern /* Subroutine */ int slabad_(real *, real *), cgehrd_(integer *,
-	    integer *, integer *, complex *, integer *, complex *, complex *,
-	    integer *, integer *), clarfg_(integer *, complex *, complex *,
-	    integer *, complex *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, complex_ *,
+	    integer *, integer *), clarfg_(integer *, complex_ *, complex_ *,
+	    integer *, complex_ *);
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, integer *), clacpy_(char *,
-	    integer *, integer *, complex *, integer *, complex *, integer *), claset_(char *, integer *, integer *, complex *, complex
-	    *, complex *, integer *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *), claset_(char *, integer *, integer *, complex_ *, complex_
+	    *, complex_ *, integer *);
     static real safmin, safmax;
-    extern /* Subroutine */ int ctrexc_(char *, integer *, complex *, integer
-	    *, complex *, integer *, integer *, integer *, integer *),
+    extern /* Subroutine */ int ctrexc_(char *, integer *, complex_ *, integer
+	    *, complex_ *, integer *, integer *, integer *, integer *),
 	     cunmhr_(char *, char *, integer *, integer *, integer *, integer
-	    *, complex *, integer *, complex *, complex *, integer *, complex
+	    *, complex_ *, integer *, complex_ *, complex_ *, integer *, complex_
 	    *, integer *, integer *);
     static real smlnum;
     static integer lwkopt;
@@ -15327,57 +15327,57 @@ L80:
 } /* claqr2_ */
 
 /* Subroutine */ int claqr3_(logical *wantt, logical *wantz, integer *n,
-	integer *ktop, integer *kbot, integer *nw, complex *h__, integer *ldh,
-	 integer *iloz, integer *ihiz, complex *z__, integer *ldz, integer *
-	ns, integer *nd, complex *sh, complex *v, integer *ldv, integer *nh,
-	complex *t, integer *ldt, integer *nv, complex *wv, integer *ldwv,
-	complex *work, integer *lwork)
+	integer *ktop, integer *kbot, integer *nw, complex_ *h__, integer *ldh,
+	 integer *iloz, integer *ihiz, complex_ *z__, integer *ldz, integer *
+	ns, integer *nd, complex_ *sh, complex_ *v, integer *ldv, integer *nh,
+	complex_ *t, integer *ldt, integer *nv, complex_ *wv, integer *ldwv,
+	complex_ *work, integer *lwork)
 {
     /* System generated locals */
     integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, j;
-    static complex s;
+    static complex_ s;
     static integer jw;
     static real foo;
     static integer kln;
-    static complex tau;
+    static complex_ tau;
     static integer knt;
     static real ulp;
     static integer lwk1, lwk2, lwk3;
-    static complex beta;
+    static complex_ beta;
     static integer kcol, info, nmin, ifst, ilst, ltop, krow;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *),
-	    cgemm_(char *, char *, integer *, integer *, integer *, complex *,
-	     complex *, integer *, complex *, integer *, complex *, complex *,
-	     integer *), ccopy_(integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    cgemm_(char *, char *, integer *, integer *, integer *, complex_ *,
+	     complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *,
+	     integer *), ccopy_(integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     static integer infqr, kwtop;
     extern /* Subroutine */ int claqr4_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, complex *, integer *, integer *),
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, integer *),
 	     slabad_(real *, real *), cgehrd_(integer *, integer *, integer *,
-	     complex *, integer *, complex *, complex *, integer *, integer *)
-	    , clarfg_(integer *, complex *, complex *, integer *, complex *);
+	     complex_ *, integer *, complex_ *, complex_ *, integer *, integer *)
+	    , clarfg_(integer *, complex_ *, complex_ *, integer *, complex_ *);
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, integer *), clacpy_(char *,
-	    integer *, integer *, complex *, integer *, complex *, integer *), claset_(char *, integer *, integer *, complex *, complex
-	    *, complex *, integer *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *), claset_(char *, integer *, integer *, complex_ *, complex_
+	    *, complex_ *, integer *);
     static real safmin;
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static real safmax;
-    extern /* Subroutine */ int ctrexc_(char *, integer *, complex *, integer
-	    *, complex *, integer *, integer *, integer *, integer *),
+    extern /* Subroutine */ int ctrexc_(char *, integer *, complex_ *, integer
+	    *, complex_ *, integer *, integer *, integer *, integer *),
 	     cunmhr_(char *, char *, integer *, integer *, integer *, integer
-	    *, complex *, integer *, complex *, complex *, integer *, complex
+	    *, complex_ *, integer *, complex_ *, complex_ *, integer *, complex_
 	    *, integer *, integer *);
     static real smlnum;
     static integer lwkopt;
@@ -15920,45 +15920,45 @@ L80:
 } /* claqr3_ */
 
 /* Subroutine */ int claqr4_(logical *wantt, logical *wantz, integer *n,
-	integer *ilo, integer *ihi, complex *h__, integer *ldh, complex *w,
-	integer *iloz, integer *ihiz, complex *z__, integer *ldz, complex *
+	integer *ilo, integer *ihi, complex_ *h__, integer *ldh, complex_ *w,
+	integer *iloz, integer *ihiz, complex_ *z__, integer *ldz, complex_ *
 	work, integer *lwork, integer *info)
 {
     /* System generated locals */
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
-    complex q__1, q__2, q__3, q__4, q__5;
+    complex_ q__1, q__2, q__3, q__4, q__5;
 
     /* Local variables */
     static integer i__, k;
     static real s;
-    static complex aa, bb, cc, dd;
+    static complex_ aa, bb, cc, dd;
     static integer ld, nh, it, ks, kt, ku, kv, ls, ns, nw;
-    static complex tr2, det;
+    static complex_ tr2, det;
     static integer inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl, kbot,
 	    nmin;
-    static complex swap;
+    static complex_ swap;
     static integer ktop;
-    static complex zdum[1]	/* was [1][1] */;
+    static complex_ zdum[1]	/* was [1][1] */;
     static integer kacc22, itmax, nsmax, nwmax, kwtop;
     extern /* Subroutine */ int claqr2_(logical *, logical *, integer *,
-	    integer *, integer *, integer *, complex *, integer *, integer *,
-	    integer *, complex *, integer *, integer *, integer *, complex *,
-	    complex *, integer *, integer *, complex *, integer *, integer *,
-	    complex *, integer *, complex *, integer *), claqr5_(logical *,
+	    integer *, integer *, integer *, complex_ *, integer *, integer *,
+	    integer *, complex_ *, integer *, integer *, integer *, complex_ *,
+	    complex_ *, integer *, integer *, complex_ *, integer *, integer *,
+	    complex_ *, integer *, complex_ *, integer *), claqr5_(logical *,
 	    logical *, integer *, integer *, integer *, integer *, integer *,
-	    complex *, complex *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, integer *,
-	    complex *, integer *, integer *, complex *, integer *);
+	    complex_ *, complex_ *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, integer *,
+	    complex_ *, integer *, integer *, complex_ *, integer *);
     static integer nibble;
     extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
-	    integer *, integer *, complex *, integer *, complex *, integer *,
-	    integer *, complex *, integer *, integer *), clacpy_(char *,
-	    integer *, integer *, complex *, integer *, complex *, integer *);
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    integer *, complex_ *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex_ *, integer *, complex_ *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static char jbcmpz[2];
-    static complex rtdisc;
+    static complex_ rtdisc;
     static integer nwupbd;
     static logical sorted;
     static integer lwkopt;
@@ -16701,10 +16701,10 @@ L80:
 } /* claqr4_ */
 
 /* Subroutine */ int claqr5_(logical *wantt, logical *wantz, integer *kacc22,
-	integer *n, integer *ktop, integer *kbot, integer *nshfts, complex *s,
-	 complex *h__, integer *ldh, integer *iloz, integer *ihiz, complex *
-	z__, integer *ldz, complex *v, integer *ldv, complex *u, integer *ldu,
-	 integer *nv, complex *wv, integer *ldwv, integer *nh, complex *wh,
+	integer *n, integer *ktop, integer *kbot, integer *nshfts, complex_ *s,
+	 complex_ *h__, integer *ldh, integer *iloz, integer *ihiz, complex_ *
+	z__, integer *ldz, complex_ *v, integer *ldv, complex_ *u, integer *ldu,
+	 integer *nv, complex_ *wv, integer *ldwv, integer *nh, complex_ *wh,
 	integer *ldwh)
 {
     /* System generated locals */
@@ -16712,39 +16712,39 @@ L80:
 	    wh_offset, wv_dim1, wv_offset, z_dim1, z_offset, i__1, i__2, i__3,
 	     i__4, i__5, i__6, i__7, i__8, i__9, i__10, i__11;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
-    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
+    complex_ q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
 
     /* Local variables */
     static integer j, k, m, i2, j2, i4, j4, k1;
     static real h11, h12, h21, h22;
     static integer m22, ns, nu;
-    static complex vt[3];
+    static complex_ vt[3];
     static real scl;
     static integer kdu, kms;
     static real ulp;
     static integer knz, kzs;
     static real tst1, tst2;
-    static complex beta;
+    static complex_ beta;
     static logical blk22, bmp22;
     static integer mend, jcol, jlen, jbot, mbot, jtop, jrow, mtop;
-    static complex alpha;
+    static complex_ alpha;
     static logical accum;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     static integer ndcol, incol, krcol, nbmps;
     extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), claqr1_(integer *,
-	    complex *, integer *, complex *, complex *, complex *), slabad_(
-	    real *, real *), clarfg_(integer *, complex *, complex *, integer
-	    *, complex *);
+	    complex_ *, integer *, complex_ *, complex_ *, complex_ *), slabad_(
+	    real *, real *), clarfg_(integer *, complex_ *, complex_ *, integer
+	    *, complex_ *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
-	    *, integer *, complex *, integer *), claset_(char *,
-	    integer *, integer *, complex *, complex *, complex *, integer *);
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex_
+	    *, integer *, complex_ *, integer *), claset_(char *,
+	    integer *, integer *, complex_ *, complex_ *, complex_ *, integer *);
     static real safmin, safmax;
-    static complex refsum;
+    static complex_ refsum;
     static integer mstart;
     static real smlnum;
 
@@ -18048,13 +18048,13 @@ L80:
 } /* claqr5_ */
 
 /* Subroutine */ int clarcm_(integer *m, integer *n, real *a, integer *lda,
-	complex *b, integer *ldb, complex *c__, integer *ldc, real *rwork)
+	complex_ *b, integer *ldb, complex_ *c__, integer *ldc, real *rwork)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, c_dim1, c_offset, i__1, i__2,
 	    i__3, i__4, i__5;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, l;
@@ -18075,8 +18075,8 @@ L80:
 
     CLARCM performs a very simple matrix-matrix multiplication:
              C := A * B,
-    where A is M by M and real; B is M by N and complex;
-    C is M by N and complex.
+    where A is M by M and real; B is M by N and complex_;
+    C is M by N and complex_.
 
     Arguments
     =========
@@ -18191,25 +18191,25 @@ L80:
 
 } /* clarcm_ */
 
-/* Subroutine */ int clarf_(char *side, integer *m, integer *n, complex *v,
-	integer *incv, complex *tau, complex *c__, integer *ldc, complex *
+/* Subroutine */ int clarf_(char *side, integer *m, integer *n, complex_ *v,
+	integer *incv, complex_ *tau, complex_ *c__, integer *ldc, complex_ *
 	work)
 {
     /* System generated locals */
     integer c_dim1, c_offset, i__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
     static logical applyleft;
-    extern /* Subroutine */ int cgerc_(integer *, integer *, complex *,
-	    complex *, integer *, complex *, integer *, complex *, integer *),
-	     cgemv_(char *, integer *, integer *, complex *, complex *,
-	    integer *, complex *, integer *, complex *, complex *, integer *);
+    extern /* Subroutine */ int cgerc_(integer *, integer *, complex_ *,
+	    complex_ *, integer *, complex_ *, integer *, complex_ *, integer *),
+	     cgemv_(char *, integer *, integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
     static integer lastc, lastv;
-    extern integer ilaclc_(integer *, integer *, complex *, integer *),
-	    ilaclr_(integer *, integer *, complex *, integer *);
+    extern integer ilaclc_(integer *, integer *, complex_ *, integer *),
+	    ilaclr_(integer *, integer *, complex_ *, integer *);
 
 
 /*
@@ -18222,13 +18222,13 @@ L80:
     Purpose
     =======
 
-    CLARF applies a complex elementary reflector H to a complex M-by-N
+    CLARF applies a complex_ elementary reflector H to a complex_ M-by-N
     matrix C, from either the left or the right. H is represented in the
     form
 
           H = I - tau * v * v'
 
-    where tau is a complex scalar and v is a complex vector.
+    where tau is a complex_ scalar and v is a complex_ vector.
 
     If tau = 0, then H is taken to be the unit matrix.
 
@@ -18364,30 +18364,30 @@ L80:
 } /* clarf_ */
 
 /* Subroutine */ int clarfb_(char *side, char *trans, char *direct, char *
-	storev, integer *m, integer *n, integer *k, complex *v, integer *ldv,
-	complex *t, integer *ldt, complex *c__, integer *ldc, complex *work,
+	storev, integer *m, integer *n, integer *k, complex_ *v, integer *ldv,
+	complex_ *t, integer *ldt, complex_ *c__, integer *ldc, complex_ *work,
 	integer *ldwork)
 {
     /* System generated locals */
     integer c_dim1, c_offset, t_dim1, t_offset, v_dim1, v_offset, work_dim1,
 	    work_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, j;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
     static integer lastc;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *), ctrmm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *), ctrmm_(char *, char *, char *, char *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *);
     static integer lastv;
-    extern integer ilaclc_(integer *, integer *, complex *, integer *);
-    extern /* Subroutine */ int clacgv_(integer *, complex *, integer *);
-    extern integer ilaclr_(integer *, integer *, complex *, integer *);
+    extern integer ilaclc_(integer *, integer *, complex_ *, integer *);
+    extern /* Subroutine */ int clacgv_(integer *, complex_ *, integer *);
+    extern integer ilaclr_(integer *, integer *, complex_ *, integer *);
     static char transt[1];
 
 
@@ -18401,8 +18401,8 @@ L80:
     Purpose
     =======
 
-    CLARFB applies a complex block reflector H or its transpose H' to a
-    complex M-by-N matrix C, from either the left or the right.
+    CLARFB applies a complex_ block reflector H or its transpose H' to a
+    complex_ M-by-N matrix C, from either the left or the right.
 
     Arguments
     =========
@@ -19205,25 +19205,25 @@ L80:
 
 } /* clarfb_ */
 
-/* Subroutine */ int clarfg_(integer *n, complex *alpha, complex *x, integer *
-	incx, complex *tau)
+/* Subroutine */ int clarfg_(integer *n, complex_ *alpha, complex_ *x, integer *
+	incx, complex_ *tau)
 {
     /* System generated locals */
     integer i__1;
     real r__1, r__2;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer j, knt;
     static real beta;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
 	    integer *);
     static real alphi, alphr, xnorm;
-    extern doublereal scnrm2_(integer *, complex *, integer *), slapy3_(real *
+    extern doublereal scnrm2_(integer *, complex_ *, integer *), slapy3_(real *
 	    , real *, real *);
-    extern /* Complex */ VOID cladiv_(complex *, complex *, complex *);
+    extern /* Complex */ VOID cladiv_(complex_ *, complex_ *, complex_ *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
 	    *);
     static real safmin, rsafmn;
 
@@ -19238,19 +19238,19 @@ L80:
     Purpose
     =======
 
-    CLARFG generates a complex elementary reflector H of order n, such
+    CLARFG generates a complex_ elementary reflector H of order n, such
     that
 
           H' * ( alpha ) = ( beta ),   H' * H = I.
                (   x   )   (   0  )
 
     where alpha and beta are scalars, with beta real, and x is an
-    (n-1)-element complex vector. H is represented in the form
+    (n-1)-element complex_ vector. H is represented in the form
 
           H = I - tau * ( 1 ) * ( 1 v' ) ,
                         ( v )
 
-    where tau is a complex scalar and v is a complex (n-1)-element
+    where tau is a complex_ scalar and v is a complex_ (n-1)-element
     vector. Note that H is not hermitian.
 
     If the elements of x are all zero and alpha is real, then tau = 0
@@ -19363,22 +19363,22 @@ L10:
 } /* clarfg_ */
 
 /* Subroutine */ int clarft_(char *direct, char *storev, integer *n, integer *
-	k, complex *v, integer *ldv, complex *tau, complex *t, integer *ldt)
+	k, complex_ *v, integer *ldv, complex_ *tau, complex_ *t, integer *ldt)
 {
     /* System generated locals */
     integer t_dim1, t_offset, v_dim1, v_offset, i__1, i__2, i__3, i__4;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, prevlastv;
-    static complex vii;
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
+    static complex_ vii;
+    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex_ *
+	    , complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *);
     extern logical lsame_(char *, char *);
     static integer lastv;
     extern /* Subroutine */ int ctrmv_(char *, char *, char *, integer *,
-	    complex *, integer *, complex *, integer *), clacgv_(integer *, complex *, integer *);
+	    complex_ *, integer *, complex_ *, integer *), clacgv_(integer *, complex_ *, integer *);
 
 
 /*
@@ -19391,7 +19391,7 @@ L10:
     Purpose
     =======
 
-    CLARFT forms the triangular factor T of a complex block reflector H
+    CLARFT forms the triangular factor T of a complex_ block reflector H
     of order n, which is defined as a product of k elementary reflectors.
 
     If DIRECT = 'F', H = H(1) H(2) . . . H(k) and T is upper triangular;
@@ -19703,21 +19703,21 @@ L36:
 
 } /* clarft_ */
 
-/* Subroutine */ int clartg_(complex *f, complex *g, real *cs, complex *sn,
-	complex *r__)
+/* Subroutine */ int clartg_(complex_ *f, complex_ *g, real *cs, complex_ *sn,
+	complex_ *r__)
 {
     /* System generated locals */
     integer i__1;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
-    complex q__1, q__2, q__3;
+    complex_ q__1, q__2, q__3;
 
     /* Local variables */
     static real d__;
     static integer i__;
     static real f2, g2;
-    static complex ff;
+    static complex_ ff;
     static real di, dr;
-    static complex fs, gs;
+    static complex_ fs, gs;
     static real f2s, g2s, eps, scale;
     static integer count;
     static real safmn2, safmx2;
@@ -19850,7 +19850,7 @@ L20:
 	    r__3 = r_imag(g);
 	    r__1 = slapy2_(&r__2, &r__3);
 	    r__->r = r__1, r__->i = 0.f;
-/*           Do complex/real division explicitly with two real divisions */
+/*           Do complex_/real division explicitly with two real divisions */
 	    r__1 = gs.r;
 	    r__2 = r_imag(&gs);
 	    d__ = slapy2_(&r__1, &r__2);
@@ -19880,7 +19880,7 @@ L20:
 	*cs = f2s / g2s;
 /*
           Make sure abs(FF) = 1
-          Do complex/real division explicitly with 2 real divisions
+          Do complex_/real division explicitly with 2 real divisions
    Computing MAX
 */
 	r__3 = (r__1 = f->r, dabs(r__1)), r__4 = (r__2 = r_imag(f), dabs(r__2)
@@ -19922,14 +19922,14 @@ L20:
 */
 
 	f2s = sqrt(g2 / f2 + 1.f);
-/*        Do the F2S(real)*FS(complex) multiply with two real multiplies */
+/*        Do the F2S(real)*FS(complex_) multiply with two real multiplies */
 	r__1 = f2s * fs.r;
 	r__2 = f2s * r_imag(&fs);
 	q__1.r = r__1, q__1.i = r__2;
 	r__->r = q__1.r, r__->i = q__1.i;
 	*cs = 1.f / f2s;
 	d__ = f2 + g2;
-/*        Do complex/real division explicitly with two real divisions */
+/*        Do complex_/real division explicitly with two real divisions */
 	r__1 = r__->r / d__;
 	r__2 = r_imag(r__) / d__;
 	q__1.r = r__1, q__1.i = r__2;
@@ -19963,12 +19963,12 @@ L20:
 } /* clartg_ */
 
 /* Subroutine */ int clascl_(char *type__, integer *kl, integer *ku, real *
-	cfrom, real *cto, integer *m, integer *n, complex *a, integer *lda,
+	cfrom, real *cto, integer *m, integer *n, complex_ *a, integer *lda,
 	integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, k1, k2, k3, k4;
@@ -19996,7 +19996,7 @@ L20:
     Purpose
     =======
 
-    CLASCL multiplies the M by N complex matrix A by the real scalar
+    CLASCL multiplies the M by N complex_ matrix A by the real scalar
     CTO/CFROM.  This is done without over/underflow as long as the final
     result CTO*A(I,J)/CFROM does not over/underflow. TYPE specifies that
     A may be full, upper triangular, lower triangular, upper Hessenberg,
@@ -20317,8 +20317,8 @@ L10:
 
 } /* clascl_ */
 
-/* Subroutine */ int claset_(char *uplo, integer *m, integer *n, complex *
-	alpha, complex *beta, complex *a, integer *lda)
+/* Subroutine */ int claset_(char *uplo, integer *m, integer *n, complex_ *
+	alpha, complex_ *beta, complex_ *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
@@ -20464,15 +20464,15 @@ L10:
 } /* claset_ */
 
 /* Subroutine */ int clasr_(char *side, char *pivot, char *direct, integer *m,
-	 integer *n, real *c__, real *s, complex *a, integer *lda)
+	 integer *n, real *c__, real *s, complex_ *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    complex q__1, q__2, q__3;
+    complex_ q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, info;
-    static complex temp;
+    static complex_ temp;
     extern logical lsame_(char *, char *);
     static real ctemp, stemp;
     extern /* Subroutine */ int xerbla_(char *, integer *);
@@ -20488,7 +20488,7 @@ L10:
     Purpose
     =======
 
-    CLASR applies a sequence of real plane rotations to a complex matrix
+    CLASR applies a sequence of real plane rotations to a complex_ matrix
     A, from either the left or the right.
 
     When SIDE = 'L', the transformation takes the form
@@ -21046,7 +21046,7 @@ L10:
 
 } /* clasr_ */
 
-/* Subroutine */ int classq_(integer *n, complex *x, integer *incx, real *
+/* Subroutine */ int classq_(integer *n, complex_ *x, integer *incx, real *
 	scale, real *sumsq)
 {
     /* System generated locals */
@@ -21159,7 +21159,7 @@ L10:
 
 } /* classq_ */
 
-/* Subroutine */ int claswp_(integer *n, complex *a, integer *lda, integer *
+/* Subroutine */ int claswp_(integer *n, complex_ *a, integer *lda, integer *
 	k1, integer *k2, integer *ipiv, integer *incx)
 {
     /* System generated locals */
@@ -21167,7 +21167,7 @@ L10:
 
     /* Local variables */
     static integer i__, j, k, i1, i2, n32, ip, ix, ix0, inc;
-    static complex temp;
+    static complex_ temp;
 
 
 /*
@@ -21307,30 +21307,30 @@ L10:
 
 } /* claswp_ */
 
-/* Subroutine */ int clatrd_(char *uplo, integer *n, integer *nb, complex *a,
-	integer *lda, real *e, complex *tau, complex *w, integer *ldw)
+/* Subroutine */ int clatrd_(char *uplo, integer *n, integer *nb, complex_ *a,
+	integer *lda, real *e, complex_ *tau, complex_ *w, integer *ldw)
 {
     /* System generated locals */
     integer a_dim1, a_offset, w_dim1, w_offset, i__1, i__2, i__3;
     real r__1;
-    complex q__1, q__2, q__3, q__4;
+    complex_ q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, iw;
-    static complex alpha;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
+    static complex_ alpha;
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
 	    integer *);
-    extern /* Complex */ VOID cdotc_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
-	    , integer *), chemv_(char *, integer *, complex *,
-	    complex *, integer *, complex *, integer *, complex *, complex *,
+    extern /* Complex */ VOID cdotc_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
+    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex_ *
+	    , complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *
+	    , integer *), chemv_(char *, integer *, complex_ *,
+	    complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *,
 	    integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int caxpy_(integer *, complex *, complex *,
-	    integer *, complex *, integer *), clarfg_(integer *, complex *,
-	    complex *, integer *, complex *), clacgv_(integer *, complex *,
+    extern /* Subroutine */ int caxpy_(integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *), clarfg_(integer *, complex_ *,
+	    complex_ *, integer *, complex_ *), clacgv_(integer *, complex_ *,
 	    integer *);
 
 
@@ -21344,7 +21344,7 @@ L10:
     Purpose
     =======
 
-    CLATRD reduces NB rows and columns of a complex Hermitian matrix A to
+    CLATRD reduces NB rows and columns of a complex_ Hermitian matrix A to
     Hermitian tridiagonal form by a unitary similarity
     transformation Q' * A * Q, and returns the matrices V and W which are
     needed to apply the transformation to the unreduced part of A.
@@ -21425,7 +21425,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i:n) = 0 and v(i-1) = 1; v(1:i-1) is stored on exit in A(1:i-1,i),
     and tau in TAU(i-1).
 
@@ -21438,7 +21438,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+1:n) is stored on exit in A(i+1:n,i),
     and tau in TAU(i).
 
@@ -21699,13 +21699,13 @@ L10:
 } /* clatrd_ */
 
 /* Subroutine */ int clatrs_(char *uplo, char *trans, char *diag, char *
-	normin, integer *n, complex *a, integer *lda, complex *x, real *scale,
+	normin, integer *n, complex_ *a, integer *lda, complex_ *x, real *scale,
 	 real *cnorm, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4;
-    complex q__1, q__2, q__3, q__4;
+    complex_ q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, j;
@@ -21714,31 +21714,31 @@ L10:
     static real xbnd;
     static integer imax;
     static real tmax;
-    static complex tjjs;
+    static complex_ tjjs;
     static real xmax, grow;
-    extern /* Complex */ VOID cdotc_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Complex */ VOID cdotc_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *);
     static real tscal;
-    static complex uscal;
+    static complex_ uscal;
     static integer jlast;
-    extern /* Complex */ VOID cdotu_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
-    static complex csumj;
-    extern /* Subroutine */ int caxpy_(integer *, complex *, complex *,
-	    integer *, complex *, integer *);
+    extern /* Complex */ VOID cdotu_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
+    static complex_ csumj;
+    extern /* Subroutine */ int caxpy_(integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *);
     static logical upper;
     extern /* Subroutine */ int ctrsv_(char *, char *, char *, integer *,
-	    complex *, integer *, complex *, integer *), slabad_(real *, real *);
-    extern integer icamax_(integer *, complex *, integer *);
-    extern /* Complex */ VOID cladiv_(complex *, complex *, complex *);
+	    complex_ *, integer *, complex_ *, integer *), slabad_(real *, real *);
+    extern integer icamax_(integer *, complex_ *, integer *);
+    extern /* Complex */ VOID cladiv_(complex_ *, complex_ *, complex_ *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
 	    *), xerbla_(char *, integer *);
     static real bignum;
     extern integer isamax_(integer *, real *, integer *);
-    extern doublereal scasum_(integer *, complex *, integer *);
+    extern doublereal scasum_(integer *, complex_ *, integer *);
     static logical notran;
     static integer jfirst;
     static real smlnum;
@@ -22860,26 +22860,26 @@ L185:
 
 } /* clatrs_ */
 
-/* Subroutine */ int clauu2_(char *uplo, integer *n, complex *a, integer *lda,
+/* Subroutine */ int clauu2_(char *uplo, integer *n, complex_ *a, integer *lda,
 	 integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__;
     static real aii;
-    extern /* Complex */ VOID cdotc_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Complex */ VOID cdotc_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
+    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex_ *
+	    , complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *);
     static logical upper;
-    extern /* Subroutine */ int clacgv_(integer *, complex *, integer *),
-	    csscal_(integer *, real *, complex *, integer *), xerbla_(char *,
+    extern /* Subroutine */ int clacgv_(integer *, complex_ *, integer *),
+	    csscal_(integer *, real *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
 
 
@@ -23032,7 +23032,7 @@ L185:
 
 } /* clauu2_ */
 
-/* Subroutine */ int clauum_(char *uplo, integer *n, complex *a, integer *lda,
+/* Subroutine */ int clauum_(char *uplo, integer *n, complex_ *a, integer *lda,
 	 integer *info)
 {
     /* System generated locals */
@@ -23041,16 +23041,16 @@ L185:
     /* Local variables */
     static integer i__, ib, nb;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *), cherk_(char *,
-	    char *, integer *, integer *, real *, complex *, integer *, real *
-	    , complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *), cherk_(char *,
+	    char *, integer *, integer *, real *, complex_ *, integer *, real *
+	    , complex_ *, integer *);
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *);
     static logical upper;
-    extern /* Subroutine */ int clauu2_(char *, integer *, complex *, integer
+    extern /* Subroutine */ int clauu2_(char *, integer *, complex_ *, integer
 	    *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -23217,26 +23217,26 @@ L185:
 
 } /* clauum_ */
 
-/* Subroutine */ int cpotf2_(char *uplo, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cpotf2_(char *uplo, integer *n, complex_ *a, integer *lda,
 	 integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer j;
     static real ajj;
-    extern /* Complex */ VOID cdotc_(complex *, integer *, complex *, integer
-	    *, complex *, integer *);
+    extern /* Complex */ VOID cdotc_(complex_ *, integer *, complex_ *, integer
+	    *, complex_ *, integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
+    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex_ *
+	    , complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *);
     static logical upper;
-    extern /* Subroutine */ int clacgv_(integer *, complex *, integer *),
-	    csscal_(integer *, real *, complex *, integer *), xerbla_(char *,
+    extern /* Subroutine */ int clacgv_(integer *, complex_ *, integer *),
+	    csscal_(integer *, real *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
     extern logical sisnan_(real *);
 
@@ -23251,7 +23251,7 @@ L185:
     Purpose
     =======
 
-    CPOTF2 computes the Cholesky factorization of a complex Hermitian
+    CPOTF2 computes the Cholesky factorization of a complex_ Hermitian
     positive definite matrix A.
 
     The factorization has the form
@@ -23428,26 +23428,26 @@ L40:
 
 } /* cpotf2_ */
 
-/* Subroutine */ int cpotrf_(char *uplo, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cpotrf_(char *uplo, integer *n, complex_ *a, integer *lda,
 	 integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer j, jb, nb;
     extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
-	    integer *, complex *, complex *, integer *, complex *, integer *,
-	    complex *, complex *, integer *), cherk_(char *,
-	    char *, integer *, integer *, real *, complex *, integer *, real *
-	    , complex *, integer *);
+	    integer *, complex_ *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *), cherk_(char *,
+	    char *, integer *, integer *, real *, complex_ *, integer *, real *
+	    , complex_ *, integer *);
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int ctrsm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *);
     static logical upper;
-    extern /* Subroutine */ int cpotf2_(char *, integer *, complex *, integer
+    extern /* Subroutine */ int cpotf2_(char *, integer *, complex_ *, integer
 	    *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -23463,7 +23463,7 @@ L40:
     Purpose
     =======
 
-    CPOTRF computes the Cholesky factorization of a complex Hermitian
+    CPOTRF computes the Cholesky factorization of a complex_ Hermitian
     positive definite matrix A.
 
     The factorization has the form
@@ -23649,7 +23649,7 @@ L40:
 
 } /* cpotrf_ */
 
-/* Subroutine */ int cpotri_(char *uplo, integer *n, complex *a, integer *lda,
+/* Subroutine */ int cpotri_(char *uplo, integer *n, complex_ *a, integer *lda,
 	 integer *info)
 {
     /* System generated locals */
@@ -23658,8 +23658,8 @@ L40:
     /* Local variables */
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *), clauum_(
-	    char *, integer *, complex *, integer *, integer *),
-	    ctrtri_(char *, char *, integer *, complex *, integer *, integer *
+	    char *, integer *, complex_ *, integer *, integer *),
+	    ctrtri_(char *, char *, integer *, complex_ *, integer *, integer *
 	    );
 
 
@@ -23673,7 +23673,7 @@ L40:
     Purpose
     =======
 
-    CPOTRI computes the inverse of a complex Hermitian positive definite
+    CPOTRI computes the inverse of a complex_ Hermitian positive definite
     matrix A using the Cholesky factorization A = U**H*U or A = L*L**H
     computed by CPOTRF.
 
@@ -23752,8 +23752,8 @@ L40:
 
 } /* cpotri_ */
 
-/* Subroutine */ int cpotrs_(char *uplo, integer *n, integer *nrhs, complex *
-	a, integer *lda, complex *b, integer *ldb, integer *info)
+/* Subroutine */ int cpotrs_(char *uplo, integer *n, integer *nrhs, complex_ *
+	a, integer *lda, complex_ *b, integer *ldb, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1;
@@ -23761,7 +23761,7 @@ L40:
     /* Local variables */
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int ctrsm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *);
     static logical upper;
     extern /* Subroutine */ int xerbla_(char *, integer *);
@@ -23891,16 +23891,16 @@ L40:
 
 } /* cpotrs_ */
 
-/* Subroutine */ int crot_(integer *n, complex *cx, integer *incx, complex *
-	cy, integer *incy, real *c__, complex *s)
+/* Subroutine */ int crot_(integer *n, complex_ *cx, integer *incx, complex_ *
+	cy, integer *incy, real *c__, complex_ *s)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    complex q__1, q__2, q__3, q__4;
+    complex_ q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex stemp;
+    static complex_ stemp;
 
 
 /*
@@ -23914,7 +23914,7 @@ L40:
     =======
 
     CROT   applies a plane rotation, where the cos (C) is real and the
-    sin (S) is complex, and the vectors CX and CY are complex.
+    sin (S) is complex_, and the vectors CX and CY are complex_.
 
     Arguments
     =========
@@ -24024,7 +24024,7 @@ L20:
 } /* crot_ */
 
 /* Subroutine */ int cstedc_(char *compz, integer *n, real *d__, real *e,
-	complex *z__, integer *ldz, complex *work, integer *lwork, real *
+	complex_ *z__, integer *ldz, complex_ *work, integer *lwork, real *
 	rwork, integer *lrwork, integer *iwork, integer *liwork, integer *
 	info)
 {
@@ -24038,18 +24038,18 @@ L20:
     static integer ii, ll, lgn;
     static real eps, tiny;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int cswap_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static integer lwmin;
     extern /* Subroutine */ int claed0_(integer *, integer *, real *, real *,
-	    complex *, integer *, complex *, integer *, real *, integer *,
+	    complex_ *, integer *, complex_ *, integer *, real *, integer *,
 	    integer *);
     static integer start;
-    extern /* Subroutine */ int clacrm_(integer *, integer *, complex *,
-	    integer *, real *, integer *, complex *, integer *, real *);
+    extern /* Subroutine */ int clacrm_(integer *, integer *, complex_ *,
+	    integer *, real *, integer *, complex_ *, integer *, real *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
-	    *, integer *, complex *, integer *), xerbla_(char *,
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex_
+	    *, integer *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -24060,7 +24060,7 @@ L20:
 	    real *, integer *);
     static integer liwmin, icompz;
     extern /* Subroutine */ int csteqr_(char *, integer *, real *, real *,
-	    complex *, integer *, real *, integer *);
+	    complex_ *, integer *, real *, integer *);
     static real orgnrm;
     extern doublereal slanst_(char *, integer *, real *, real *);
     extern /* Subroutine */ int ssterf_(integer *, real *, real *, integer *);
@@ -24083,7 +24083,7 @@ L20:
 
     CSTEDC computes all eigenvalues and, optionally, eigenvectors of a
     symmetric tridiagonal matrix using the divide and conquer method.
-    The eigenvectors of a full or band complex Hermitian matrix can also
+    The eigenvectors of a full or band complex_ Hermitian matrix can also
     be found if CHETRD or CHPTRD or CHBTRD has been used to reduce this
     matrix to tridiagonal form.
 
@@ -24491,7 +24491,7 @@ L70:
 } /* cstedc_ */
 
 /* Subroutine */ int csteqr_(char *compz, integer *n, real *d__, real *e,
-	complex *z__, integer *ldz, real *work, integer *info)
+	complex_ *z__, integer *ldz, real *work, integer *info)
 {
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2;
@@ -24510,18 +24510,18 @@ L70:
 	    ;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int clasr_(char *, char *, char *, integer *,
-	    integer *, real *, real *, complex *, integer *);
+	    integer *, real *, real *, complex_ *, integer *);
     static real anorm;
-    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int cswap_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static integer lendm1, lendp1;
     extern /* Subroutine */ int slaev2_(real *, real *, real *, real *, real *
 	    , real *, real *);
     extern doublereal slapy2_(real *, real *);
     static integer iscale;
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int claset_(char *, integer *, integer *, complex
-	    *, complex *, complex *, integer *);
+    extern /* Subroutine */ int claset_(char *, integer *, integer *, complex_
+	    *, complex_ *, complex_ *, integer *);
     static real safmin;
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static real safmax;
@@ -24549,7 +24549,7 @@ L70:
 
     CSTEQR computes all eigenvalues and, optionally, eigenvectors of a
     symmetric tridiagonal matrix using the implicit QL or QR method.
-    The eigenvectors of a full or band complex Hermitian matrix can also
+    The eigenvectors of a full or band complex_ Hermitian matrix can also
     be found if CHETRD or CHPTRD or CHBTRD has been used to reduce this
     matrix to tridiagonal form.
 
@@ -25087,15 +25087,15 @@ L160:
 } /* csteqr_ */
 
 /* Subroutine */ int ctrevc_(char *side, char *howmny, logical *select,
-	integer *n, complex *t, integer *ldt, complex *vl, integer *ldvl,
-	complex *vr, integer *ldvr, integer *mm, integer *m, complex *work,
+	integer *n, complex_ *t, integer *ldt, complex_ *vl, integer *ldvl,
+	complex_ *vr, integer *ldvr, integer *mm, integer *m, complex_ *work,
 	real *rwork, integer *info)
 {
     /* System generated locals */
     integer t_dim1, t_offset, vl_dim1, vl_offset, vr_dim1, vr_offset, i__1,
 	    i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, j, k, ii, ki, is;
@@ -25105,21 +25105,21 @@ L160:
     static logical over;
     static real scale;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
+    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex_ *
+	    , complex_ *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *);
     static real remax;
-    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
-	    complex *, integer *);
+    extern /* Subroutine */ int ccopy_(integer *, complex_ *, integer *,
+	    complex_ *, integer *);
     static logical leftv, bothv, somev;
     extern /* Subroutine */ int slabad_(real *, real *);
-    extern integer icamax_(integer *, complex *, integer *);
+    extern integer icamax_(integer *, complex_ *, integer *);
     extern doublereal slamch_(char *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
+    extern /* Subroutine */ int csscal_(integer *, real *, complex_ *, integer
 	    *), xerbla_(char *, integer *), clatrs_(char *, char *,
-	    char *, char *, integer *, complex *, integer *, complex *, real *
+	    char *, char *, integer *, complex_ *, integer *, complex_ *, real *
 	    , real *, integer *);
-    extern doublereal scasum_(integer *, complex *, integer *);
+    extern doublereal scasum_(integer *, complex_ *, integer *);
     static logical rightv;
     static real smlnum;
 
@@ -25135,9 +25135,9 @@ L160:
     =======
 
     CTREVC computes some or all of the right and/or left eigenvectors of
-    a complex upper triangular matrix T.
+    a complex_ upper triangular matrix T.
     Matrices of this type are produced by the Schur factorization of
-    a complex general matrix:  A = Q*T*Q**H, as computed by CHSEQR.
+    a complex_ general matrix:  A = Q*T*Q**H, as computed by CHSEQR.
 
     The right eigenvector x and the left eigenvector y of T corresponding
     to an eigenvalue w are defined by:
@@ -25246,7 +25246,7 @@ L160:
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
-    magnitude has magnitude 1; here the magnitude of a complex number
+    magnitude has magnitude 1; here the magnitude of a complex_ number
     (x,y) is taken to be |x| + |y|.
 
     =====================================================================
@@ -25587,24 +25587,24 @@ L130:
 
 } /* ctrevc_ */
 
-/* Subroutine */ int ctrexc_(char *compq, integer *n, complex *t, integer *
-	ldt, complex *q, integer *ldq, integer *ifst, integer *ilst, integer *
+/* Subroutine */ int ctrexc_(char *compq, integer *n, complex_ *t, integer *
+	ldt, complex_ *q, integer *ldq, integer *ifst, integer *ilst, integer *
 	info)
 {
     /* System generated locals */
     integer q_dim1, q_offset, t_dim1, t_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer k, m1, m2, m3;
     static real cs;
-    static complex t11, t22, sn, temp;
-    extern /* Subroutine */ int crot_(integer *, complex *, integer *,
-	    complex *, integer *, real *, complex *);
+    static complex_ t11, t22, sn, temp;
+    extern /* Subroutine */ int crot_(integer *, complex_ *, integer *,
+	    complex_ *, integer *, real *, complex_ *);
     extern logical lsame_(char *, char *);
     static logical wantq;
-    extern /* Subroutine */ int clartg_(complex *, complex *, real *, complex
-	    *, complex *), xerbla_(char *, integer *);
+    extern /* Subroutine */ int clartg_(complex_ *, complex_ *, real *, complex_
+	    *, complex_ *), xerbla_(char *, integer *);
 
 
 /*
@@ -25617,7 +25617,7 @@ L130:
     Purpose
     =======
 
-    CTREXC reorders the Schur factorization of a complex matrix
+    CTREXC reorders the Schur factorization of a complex_ matrix
     A = Q*T*Q**H, so that the diagonal element of T with row index IFST
     is moved to row ILST.
 
@@ -25771,22 +25771,22 @@ L130:
 
 } /* ctrexc_ */
 
-/* Subroutine */ int ctrti2_(char *uplo, char *diag, integer *n, complex *a,
+/* Subroutine */ int ctrti2_(char *uplo, char *diag, integer *n, complex_ *a,
 	integer *lda, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer j;
-    static complex ajj;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
+    static complex_ ajj;
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
 	    integer *);
     extern logical lsame_(char *, char *);
     static logical upper;
     extern /* Subroutine */ int ctrmv_(char *, char *, char *, integer *,
-	    complex *, integer *, complex *, integer *), xerbla_(char *, integer *);
+	    complex_ *, integer *, complex_ *, integer *), xerbla_(char *, integer *);
     static logical nounit;
 
 
@@ -25800,7 +25800,7 @@ L130:
     Purpose
     =======
 
-    CTRTI2 computes the inverse of a complex upper or lower triangular
+    CTRTI2 computes the inverse of a complex_ upper or lower triangular
     matrix.
 
     This is the Level 2 BLAS version of the algorithm.
@@ -25935,25 +25935,25 @@ L130:
 
 } /* ctrti2_ */
 
-/* Subroutine */ int ctrtri_(char *uplo, char *diag, integer *n, complex *a,
+/* Subroutine */ int ctrtri_(char *uplo, char *diag, integer *n, complex_ *a,
 	integer *lda, integer *info)
 {
     /* System generated locals */
     address a__1[2];
     integer a_dim1, a_offset, i__1, i__2, i__3[2], i__4, i__5;
-    complex q__1;
+    complex_ q__1;
     char ch__1[2];
 
     /* Local variables */
     static integer j, jb, nb, nn;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
-	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *, complex_ *, complex_ *, integer *, complex_ *,
 	    integer *), ctrsm_(char *, char *,
-	     char *, char *, integer *, integer *, complex *, complex *,
-	    integer *, complex *, integer *);
+	     char *, char *, integer *, integer *, complex_ *, complex_ *,
+	    integer *, complex_ *, integer *);
     static logical upper;
-    extern /* Subroutine */ int ctrti2_(char *, char *, integer *, complex *,
+    extern /* Subroutine */ int ctrti2_(char *, char *, integer *, complex_ *,
 	    integer *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -25970,7 +25970,7 @@ L130:
     Purpose
     =======
 
-    CTRTRI computes the inverse of a complex upper or lower triangular
+    CTRTRI computes the inverse of a complex_ upper or lower triangular
     matrix A.
 
     This is the Level 3 BLAS version of the algorithm.
@@ -26146,18 +26146,18 @@ L130:
 
 } /* ctrtri_ */
 
-/* Subroutine */ int cung2r_(integer *m, integer *n, integer *k, complex *a,
-	integer *lda, complex *tau, complex *work, integer *info)
+/* Subroutine */ int cung2r_(integer *m, integer *n, integer *k, complex_ *a,
+	integer *lda, complex_ *tau, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, j, l;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), clarf_(char *, integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *, complex *),
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
+	    integer *), clarf_(char *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *, complex_ *),
 	    xerbla_(char *, integer *);
 
 
@@ -26171,7 +26171,7 @@ L130:
     Purpose
     =======
 
-    CUNG2R generates an m by n complex matrix Q with orthonormal columns,
+    CUNG2R generates an m by n complex_ matrix Q with orthonormal columns,
     which is defined as the first n columns of a product of k elementary
     reflectors of order m
 
@@ -26303,7 +26303,7 @@ L130:
 } /* cung2r_ */
 
 /* Subroutine */ int cungbr_(char *vect, integer *m, integer *n, integer *k,
-	complex *a, integer *lda, complex *tau, complex *work, integer *lwork,
+	complex_ *a, integer *lda, complex_ *tau, complex_ *work, integer *lwork,
 	 integer *info)
 {
     /* System generated locals */
@@ -26318,9 +26318,9 @@ L130:
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cunglq_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, integer *),
-	     cungqr_(integer *, integer *, integer *, complex *, integer *,
-	    complex *, complex *, integer *, integer *);
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, integer *),
+	     cungqr_(integer *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *, integer *);
     static integer lwkopt;
     static logical lquery;
 
@@ -26335,8 +26335,8 @@ L130:
     Purpose
     =======
 
-    CUNGBR generates one of the complex unitary matrices Q or P**H
-    determined by CGEBRD when reducing a complex matrix A to bidiagonal
+    CUNGBR generates one of the complex_ unitary matrices Q or P**H
+    determined by CGEBRD when reducing a complex_ matrix A to bidiagonal
     form: A = Q * B * P**H.  Q and P**H are defined as products of
     elementary reflectors H(i) or G(i) respectively.
 
@@ -26590,8 +26590,8 @@ L130:
 
 } /* cungbr_ */
 
-/* Subroutine */ int cunghr_(integer *n, integer *ilo, integer *ihi, complex *
-	a, integer *lda, complex *tau, complex *work, integer *lwork, integer
+/* Subroutine */ int cunghr_(integer *n, integer *ilo, integer *ihi, complex_ *
+	a, integer *lda, complex_ *tau, complex_ *work, integer *lwork, integer
 	*info)
 {
     /* System generated locals */
@@ -26603,7 +26603,7 @@ L130:
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cungqr_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *, integer *);
+	    complex_ *, integer *, complex_ *, complex_ *, integer *, integer *);
     static integer lwkopt;
     static logical lquery;
 
@@ -26618,7 +26618,7 @@ L130:
     Purpose
     =======
 
-    CUNGHR generates a complex unitary matrix Q which is defined as the
+    CUNGHR generates a complex_ unitary matrix Q which is defined as the
     product of IHI-ILO elementary reflectors of order N, as returned by
     CGEHRD:
 
@@ -26785,19 +26785,19 @@ L130:
 
 } /* cunghr_ */
 
-/* Subroutine */ int cungl2_(integer *m, integer *n, integer *k, complex *a,
-	integer *lda, complex *tau, complex *work, integer *info)
+/* Subroutine */ int cungl2_(integer *m, integer *n, integer *k, complex_ *a,
+	integer *lda, complex_ *tau, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    complex q__1, q__2;
+    complex_ q__1, q__2;
 
     /* Local variables */
     static integer i__, j, l;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), clarf_(char *, integer *, integer *, complex *,
-	    integer *, complex *, complex *, integer *, complex *),
-	    clacgv_(integer *, complex *, integer *), xerbla_(char *, integer
+    extern /* Subroutine */ int cscal_(integer *, complex_ *, complex_ *,
+	    integer *), clarf_(char *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, complex_ *, integer *, complex_ *),
+	    clacgv_(integer *, complex_ *, integer *), xerbla_(char *, integer
 	    *);
 
 
@@ -26811,7 +26811,7 @@ L130:
     Purpose
     =======
 
-    CUNGL2 generates an m-by-n complex matrix Q with orthonormal rows,
+    CUNGL2 generates an m-by-n complex_ matrix Q with orthonormal rows,
     which is defined as the first m rows of a product of k elementary
     reflectors of order n
 
@@ -26951,8 +26951,8 @@ L130:
 
 } /* cungl2_ */
 
-/* Subroutine */ int cunglq_(integer *m, integer *n, integer *k, complex *a,
-	integer *lda, complex *tau, complex *work, integer *lwork, integer *
+/* Subroutine */ int cunglq_(integer *m, integer *n, integer *k, complex_ *a,
+	integer *lda, complex_ *tau, complex_ *work, integer *lwork, integer *
 	info)
 {
     /* System generated locals */
@@ -26961,12 +26961,12 @@ L130:
     /* Local variables */
     static integer i__, j, l, ib, nb, ki, kk, nx, iws, nbmin, iinfo;
     extern /* Subroutine */ int cungl2_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *), clarfb_(
+	    complex_ *, integer *, complex_ *, complex_ *, integer *), clarfb_(
 	    char *, char *, char *, char *, integer *, integer *, integer *,
-	    complex *, integer *, complex *, integer *, complex *, integer *,
-	    complex *, integer *), clarft_(
-	    char *, char *, integer *, integer *, complex *, integer *,
-	    complex *, complex *, integer *), xerbla_(char *,
+	    complex_ *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, integer *), clarft_(
+	    char *, char *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -26984,7 +26984,7 @@ L130:
     Purpose
     =======
 
-    CUNGLQ generates an M-by-N complex matrix Q with orthonormal rows,
+    CUNGLQ generates an M-by-N complex_ matrix Q with orthonormal rows,
     which is defined as the first M rows of a product of K elementary
     reflectors of order N
 
@@ -27212,8 +27212,8 @@ L130:
 
 } /* cunglq_ */
 
-/* Subroutine */ int cungqr_(integer *m, integer *n, integer *k, complex *a,
-	integer *lda, complex *tau, complex *work, integer *lwork, integer *
+/* Subroutine */ int cungqr_(integer *m, integer *n, integer *k, complex_ *a,
+	integer *lda, complex_ *tau, complex_ *work, integer *lwork, integer *
 	info)
 {
     /* System generated locals */
@@ -27222,12 +27222,12 @@ L130:
     /* Local variables */
     static integer i__, j, l, ib, nb, ki, kk, nx, iws, nbmin, iinfo;
     extern /* Subroutine */ int cung2r_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *), clarfb_(
+	    complex_ *, integer *, complex_ *, complex_ *, integer *), clarfb_(
 	    char *, char *, char *, char *, integer *, integer *, integer *,
-	    complex *, integer *, complex *, integer *, complex *, integer *,
-	    complex *, integer *), clarft_(
-	    char *, char *, integer *, integer *, complex *, integer *,
-	    complex *, complex *, integer *), xerbla_(char *,
+	    complex_ *, integer *, complex_ *, integer *, complex_ *, integer *,
+	    complex_ *, integer *), clarft_(
+	    char *, char *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *), xerbla_(char *,
 	    integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -27245,7 +27245,7 @@ L130:
     Purpose
     =======
 
-    CUNGQR generates an M-by-N complex matrix Q with orthonormal columns,
+    CUNGQR generates an M-by-N complex_ matrix Q with orthonormal columns,
     which is defined as the first N columns of a product of K elementary
     reflectors of order M
 
@@ -27475,20 +27475,20 @@ L130:
 } /* cungqr_ */
 
 /* Subroutine */ int cunm2l_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, i1, i2, i3, mi, ni, nq;
-    static complex aii;
+    static complex_ aii;
     static logical left;
-    static complex taui;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *);
+    static complex_ taui;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *);
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static logical notran;
@@ -27504,7 +27504,7 @@ L130:
     Purpose
     =======
 
-    CUNM2L overwrites the general complex m-by-n matrix C with
+    CUNM2L overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -27514,7 +27514,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k) . . . H(2) H(1)
@@ -27687,20 +27687,20 @@ L130:
 } /* cunm2l_ */
 
 /* Subroutine */ int cunm2r_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
-    static complex aii;
+    static complex_ aii;
     static logical left;
-    static complex taui;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *);
+    static complex_ taui;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *);
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static logical notran;
@@ -27716,7 +27716,7 @@ L130:
     Purpose
     =======
 
-    CUNM2R overwrites the general complex m-by-n matrix C with
+    CUNM2R overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -27726,7 +27726,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(1) H(2) . . . H(k)
@@ -27903,8 +27903,8 @@ L130:
 } /* cunm2r_ */
 
 /* Subroutine */ int cunmbr_(char *vect, char *side, char *trans, integer *m,
-	integer *n, integer *k, complex *a, integer *lda, complex *tau,
-	complex *c__, integer *ldc, complex *work, integer *lwork, integer *
+	integer *n, integer *k, complex_ *a, integer *lda, complex_ *tau,
+	complex_ *c__, integer *ldc, complex_ *work, integer *lwork, integer *
 	info)
 {
     /* System generated locals */
@@ -27921,12 +27921,12 @@ L130:
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cunmlq_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *);
     static logical notran;
     extern /* Subroutine */ int cunmqr_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *);
     static logical applyq;
     static char transt[1];
     static integer lwkopt;
@@ -27943,20 +27943,20 @@ L130:
     Purpose
     =======
 
-    If VECT = 'Q', CUNMBR overwrites the general complex M-by-N matrix C
+    If VECT = 'Q', CUNMBR overwrites the general complex_ M-by-N matrix C
     with
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    If VECT = 'P', CUNMBR overwrites the general complex M-by-N matrix C
+    If VECT = 'P', CUNMBR overwrites the general complex_ M-by-N matrix C
     with
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      P * C          C * P
     TRANS = 'C':      P**H * C       C * P**H
 
     Here Q and P**H are the unitary matrices determined by CGEBRD when
-    reducing a complex matrix A to bidiagonal form: A = Q * B * P**H. Q
+    reducing a complex_ matrix A to bidiagonal form: A = Q * B * P**H. Q
     and P**H are defined as products of elementary reflectors H(i) and
     G(i) respectively.
 
@@ -28243,8 +28243,8 @@ L130:
 } /* cunmbr_ */
 
 /* Subroutine */ int cunmhr_(char *side, char *trans, integer *m, integer *n,
-	integer *ilo, integer *ihi, complex *a, integer *lda, complex *tau,
-	complex *c__, integer *ldc, complex *work, integer *lwork, integer *
+	integer *ilo, integer *ihi, complex_ *a, integer *lda, complex_ *tau,
+	complex_ *c__, integer *ldc, complex_ *work, integer *lwork, integer *
 	info)
 {
     /* System generated locals */
@@ -28261,8 +28261,8 @@ L130:
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cunmqr_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *);
     static integer lwkopt;
     static logical lquery;
 
@@ -28277,13 +28277,13 @@ L130:
     Purpose
     =======
 
-    CUNMHR overwrites the general complex M-by-N matrix C with
+    CUNMHR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix of order nq, with nq = m if
+    where Q is a complex_ unitary matrix of order nq, with nq = m if
     SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
     IHI-ILO elementary reflectors, as returned by CGEHRD:
 
@@ -28469,22 +28469,22 @@ L130:
 } /* cunmhr_ */
 
 /* Subroutine */ int cunml2_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
-    complex q__1;
+    complex_ q__1;
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
-    static complex aii;
+    static complex_ aii;
     static logical left;
-    static complex taui;
-    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
-	    , integer *, complex *, complex *, integer *, complex *);
+    static complex_ taui;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex_ *
+	    , integer *, complex_ *, complex_ *, integer *, complex_ *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int clacgv_(integer *, complex *, integer *),
+    extern /* Subroutine */ int clacgv_(integer *, complex_ *, integer *),
 	    xerbla_(char *, integer *);
     static logical notran;
 
@@ -28499,7 +28499,7 @@ L130:
     Purpose
     =======
 
-    CUNML2 overwrites the general complex m-by-n matrix C with
+    CUNML2 overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -28509,7 +28509,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k)' . . . H(2)' H(1)'
@@ -28694,8 +28694,8 @@ L130:
 } /* cunml2_ */
 
 /* Subroutine */ int cunmlq_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *lwork, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     address a__1[2];
@@ -28705,18 +28705,18 @@ L130:
 
     /* Local variables */
     static integer i__;
-    static complex t[4160]	/* was [65][64] */;
+    static complex_ t[4160]	/* was [65][64] */;
     static integer i1, i2, i3, ib, ic, jc, nb, mi, ni, nq, nw, iws;
     static logical left;
     extern logical lsame_(char *, char *);
     static integer nbmin, iinfo;
     extern /* Subroutine */ int cunml2_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *), clarfb_(char *, char *,
-	    char *, char *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, complex *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *), clarfb_(char *, char *,
+	    char *, char *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, complex_ *,
 	    integer *), clarft_(char *, char *
-	    , integer *, integer *, complex *, integer *, complex *, complex *
+	    , integer *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -28737,13 +28737,13 @@ L130:
     Purpose
     =======
 
-    CUNMLQ overwrites the general complex M-by-N matrix C with
+    CUNMLQ overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k)' . . . H(2)' H(1)'
@@ -28999,8 +28999,8 @@ L130:
 } /* cunmlq_ */
 
 /* Subroutine */ int cunmql_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *lwork, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     address a__1[2];
@@ -29010,18 +29010,18 @@ L130:
 
     /* Local variables */
     static integer i__;
-    static complex t[4160]	/* was [65][64] */;
+    static complex_ t[4160]	/* was [65][64] */;
     static integer i1, i2, i3, ib, nb, mi, ni, nq, nw, iws;
     static logical left;
     extern logical lsame_(char *, char *);
     static integer nbmin, iinfo;
     extern /* Subroutine */ int cunm2l_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *), clarfb_(char *, char *,
-	    char *, char *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, complex *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *), clarfb_(char *, char *,
+	    char *, char *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, complex_ *,
 	    integer *), clarft_(char *, char *
-	    , integer *, integer *, complex *, integer *, complex *, complex *
+	    , integer *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -29040,13 +29040,13 @@ L130:
     Purpose
     =======
 
-    CUNMQL overwrites the general complex M-by-N matrix C with
+    CUNMQL overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k) . . . H(2) H(1)
@@ -29297,8 +29297,8 @@ L130:
 } /* cunmql_ */
 
 /* Subroutine */ int cunmqr_(char *side, char *trans, integer *m, integer *n,
-	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *lwork, integer *info)
+	integer *k, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     address a__1[2];
@@ -29308,18 +29308,18 @@ L130:
 
     /* Local variables */
     static integer i__;
-    static complex t[4160]	/* was [65][64] */;
+    static complex_ t[4160]	/* was [65][64] */;
     static integer i1, i2, i3, ib, ic, jc, nb, mi, ni, nq, nw, iws;
     static logical left;
     extern logical lsame_(char *, char *);
     static integer nbmin, iinfo;
     extern /* Subroutine */ int cunm2r_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *), clarfb_(char *, char *,
-	    char *, char *, integer *, integer *, integer *, complex *,
-	    integer *, complex *, integer *, complex *, integer *, complex *,
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *), clarfb_(char *, char *,
+	    char *, char *, integer *, integer *, integer *, complex_ *,
+	    integer *, complex_ *, integer *, complex_ *, integer *, complex_ *,
 	    integer *), clarft_(char *, char *
-	    , integer *, integer *, complex *, integer *, complex *, complex *
+	    , integer *, integer *, complex_ *, integer *, complex_ *, complex_ *
 	    , integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
@@ -29338,13 +29338,13 @@ L130:
     Purpose
     =======
 
-    CUNMQR overwrites the general complex M-by-N matrix C with
+    CUNMQR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(1) H(2) . . . H(k)
@@ -29595,8 +29595,8 @@ L130:
 } /* cunmqr_ */
 
 /* Subroutine */ int cunmtr_(char *side, char *uplo, char *trans, integer *m,
-	integer *n, complex *a, integer *lda, complex *tau, complex *c__,
-	integer *ldc, complex *work, integer *lwork, integer *info)
+	integer *n, complex_ *a, integer *lda, complex_ *tau, complex_ *c__,
+	integer *ldc, complex_ *work, integer *lwork, integer *info)
 {
     /* System generated locals */
     address a__1[2];
@@ -29613,10 +29613,10 @@ L130:
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int cunmql_(char *, char *, integer *, integer *,
-	    integer *, complex *, integer *, complex *, complex *, integer *,
-	    complex *, integer *, integer *), cunmqr_(char *,
-	    char *, integer *, integer *, integer *, complex *, integer *,
-	    complex *, complex *, integer *, complex *, integer *, integer *);
+	    integer *, complex_ *, integer *, complex_ *, complex_ *, integer *,
+	    complex_ *, integer *, integer *), cunmqr_(char *,
+	    char *, integer *, integer *, integer *, complex_ *, integer *,
+	    complex_ *, complex_ *, integer *, complex_ *, integer *, integer *);
     static integer lwkopt;
     static logical lquery;
 
@@ -29631,13 +29631,13 @@ L130:
     Purpose
     =======
 
-    CUNMTR overwrites the general complex M-by-N matrix C with
+    CUNMTR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix of order nq, with nq = m if
+    where Q is a complex_ unitary matrix of order nq, with nq = m if
     SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
     nq-1 elementary reflectors, as returned by CHETRD:
 

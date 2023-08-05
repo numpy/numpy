@@ -21,7 +21,7 @@ typedef char *address;
 typedef short int shortint;
 typedef float real;
 typedef double doublereal;
-typedef struct { real r, i; } complex;
+typedef struct { real r, i; } complex_;
 typedef struct { doublereal r, i; } doublecomplex;
 typedef CBLAS_INT logical;
 typedef short int shortlogical;
@@ -131,7 +131,7 @@ union Multitype {	/* for multiple entry points */
 	integer i;
 	real r;
 	doublereal d;
-	complex c;
+	complex_ c;
 	doublecomplex z;
 	};
 
@@ -196,9 +196,9 @@ typedef /* Character */ VOID (*H_fp)(void);
 typedef /* Subroutine */ int (*S_fp)(void);
 #endif
 /* E_fp is for real functions when -R is not specified */
-typedef VOID C_f;	/* complex function */
+typedef VOID C_f;	/* complex_ function */
 typedef VOID H_f;	/* character function */
-typedef VOID Z_f;	/* double complex function */
+typedef VOID Z_f;	/* double complex_ function */
 typedef doublereal E_f;	/* real function with -R not specified */
 
 /* undef any lower-case symbols that your C compiler predefines, e.g.: */
@@ -234,13 +234,13 @@ extern "C" {
 #endif
 
 extern int abort_(void);
-extern double c_abs(complex *);
-extern void c_cos(complex *, complex *);
-extern void c_div(complex *, complex *, complex *);
-extern void c_exp(complex *, complex *);
-extern void c_log(complex *, complex *);
-extern void c_sin(complex *, complex *);
-extern void c_sqrt(complex *, complex *);
+extern double c_abs(complex_ *);
+extern void c_cos(complex_ *, complex_ *);
+extern void c_div(complex_ *, complex_ *, complex_ *);
+extern void c_exp(complex_ *, complex_ *);
+extern void c_log(complex_ *, complex_ *);
+extern void c_sin(complex_ *, complex_ *);
+extern void c_sqrt(complex_ *, complex_ *);
 extern double d_abs(double *);
 extern double d_acos(double *);
 extern double d_asin(double *);
@@ -323,7 +323,7 @@ extern ftnlen l_ge(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_gt(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_le(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_lt(char *, char *, ftnlen, ftnlen);
-extern void pow_ci(complex *, complex *, integer *);
+extern void pow_ci(complex_ *, complex_ *, integer *);
 extern double pow_dd(double *, double *);
 extern double pow_di(double *, integer *);
 extern short pow_hh(short *, shortint *);
@@ -336,12 +336,12 @@ extern double r_acos(float *);
 extern double r_asin(float *);
 extern double r_atan(float *);
 extern double r_atn2(float *, float *);
-extern void r_cnjg(complex *, complex *);
+extern void r_cnjg(complex_ *, complex_ *);
 extern double r_cos(float *);
 extern double r_cosh(float *);
 extern double r_dim(float *, float *);
 extern double r_exp(float *);
-extern float r_imag(complex *);
+extern float r_imag(complex_ *);
 extern double r_int(float *);
 extern float r_lg10(real *);
 extern double r_log(float *);

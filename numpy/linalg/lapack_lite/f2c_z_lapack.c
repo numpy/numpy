@@ -81,7 +81,7 @@ static doublereal c_b2435 = .5;
     Purpose
     =======
 
-    ZGEBAK forms the right or left eigenvectors of a complex general
+    ZGEBAK forms the right or left eigenvectors of a complex_ general
     matrix by backward transformation on the computed eigenvectors of the
     balanced matrix output by ZGEBAL.
 
@@ -297,7 +297,7 @@ L50:
     Purpose
     =======
 
-    ZGEBAL balances a general complex matrix A.  This involves, first,
+    ZGEBAL balances a general complex_ matrix A.  This involves, first,
     permuting A by a similarity transformation to isolate eigenvalues
     in the first 1 to ILO-1 and last IHI+1 to N elements on the
     diagonal; and second, applying a diagonal similarity transformation
@@ -681,7 +681,7 @@ L210:
     Purpose
     =======
 
-    ZGEBD2 reduces a complex general m by n matrix A to upper or lower
+    ZGEBD2 reduces a complex_ general m by n matrix A to upper or lower
     real bidiagonal form B by a unitary transformation: Q' * A * P = B.
 
     If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -754,7 +754,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in
     A(i+1:m,i); u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in
     A(i,i+2:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -767,7 +767,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, v and u are complex vectors;
+    where tauq and taup are complex_ scalars, v and u are complex_ vectors;
     v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in A(i+2:m,i);
     u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in A(i,i+1:n);
     tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -1011,7 +1011,7 @@ L210:
     Purpose
     =======
 
-    ZGEBRD reduces a general complex M-by-N matrix A to upper or lower
+    ZGEBRD reduces a general complex_ M-by-N matrix A to upper or lower
     bidiagonal form B by a unitary transformation: Q**H * A * P = B.
 
     If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -1095,7 +1095,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in
     A(i+1:m,i); u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in
     A(i,i+2:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -1108,7 +1108,7 @@ L210:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors; v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in
     A(i+2:m,i); u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in
     A(i,i+1:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
@@ -1374,7 +1374,7 @@ L210:
     Purpose
     =======
 
-    ZGEEV computes for an N-by-N complex nonsymmetric matrix A, the
+    ZGEEV computes for an N-by-N complex_ nonsymmetric matrix A, the
     eigenvalues and, optionally, the left and/or right eigenvectors.
 
     The right eigenvector v(j) of A satisfies
@@ -1499,7 +1499,7 @@ L210:
         (Note: Comments in the code beginning "Workspace:" describe the
          minimal amount of workspace needed at that point in the code,
          as well as the preferred amount for good performance.
-         CWorkspace refers to complex workspace, and RWorkspace to real
+         CWorkspace refers to complex_ workspace, and RWorkspace to real
          workspace. NB refers to the optimal block size for the
          immediately following subroutine, as returned by ILAENV.
          HSWORK refers to the workspace preferred by ZHSEQR, as
@@ -1849,7 +1849,7 @@ L50:
     Purpose
     =======
 
-    ZGEHD2 reduces a complex general matrix A to upper Hessenberg form H
+    ZGEHD2 reduces a complex_ general matrix A to upper Hessenberg form H
     by a unitary similarity transformation:  Q' * A * Q = H .
 
     Arguments
@@ -1899,7 +1899,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0, v(i+1) = 1 and v(ihi+1:n) = 0; v(i+2:ihi) is stored on
     exit in A(i+2:ihi,i), and tau in TAU(i).
 
@@ -2037,7 +2037,7 @@ L50:
     Purpose
     =======
 
-    ZGEHRD reduces a complex general matrix A to upper Hessenberg form H by
+    ZGEHRD reduces a complex_ general matrix A to upper Hessenberg form H by
     an unitary similarity transformation:  Q' * A * Q = H .
 
     Arguments
@@ -2099,7 +2099,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0, v(i+1) = 1 and v(ihi+1:n) = 0; v(i+2:ihi) is stored on
     exit in A(i+2:ihi,i), and tau in TAU(i).
 
@@ -2349,7 +2349,7 @@ L50:
     Purpose
     =======
 
-    ZGELQ2 computes an LQ factorization of a complex m by n matrix A:
+    ZGELQ2 computes an LQ factorization of a complex_ m by n matrix A:
     A = L * Q.
 
     Arguments
@@ -2393,7 +2393,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; conjg(v(i+1:n)) is stored on exit in
     A(i,i+1:n), and tau in TAU(i).
 
@@ -2500,7 +2500,7 @@ L50:
     Purpose
     =======
 
-    ZGELQF computes an LQ factorization of a complex M-by-N matrix A:
+    ZGELQF computes an LQ factorization of a complex_ M-by-N matrix A:
     A = L * Q.
 
     Arguments
@@ -2555,7 +2555,7 @@ L50:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; conjg(v(i+1:n)) is stored on exit in
     A(i,i+1:n), and tau in TAU(i).
 
@@ -3464,7 +3464,7 @@ L10:
     Purpose
     =======
 
-    ZGEQR2 computes a QR factorization of a complex m by n matrix A:
+    ZGEQR2 computes a QR factorization of a complex_ m by n matrix A:
     A = Q * R.
 
     Arguments
@@ -3508,7 +3508,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
     and tau in TAU(i).
 
@@ -3612,7 +3612,7 @@ L10:
     Purpose
     =======
 
-    ZGEQRF computes a QR factorization of a complex M-by-N matrix A:
+    ZGEQRF computes a QR factorization of a complex_ M-by-N matrix A:
     A = Q * R.
 
     Arguments
@@ -3668,7 +3668,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
     and tau in TAU(i).
 
@@ -3902,7 +3902,7 @@ L10:
     Purpose
     =======
 
-    ZGESDD computes the singular value decomposition (SVD) of a complex
+    ZGESDD computes the singular value decomposition (SVD) of a complex_
     M-by-N matrix A, optionally computing the left and/or right singular
     vectors, by using divide-and-conquer method. The SVD is written
 
@@ -4080,7 +4080,7 @@ L10:
         (Note: Comments in the code beginning "Workspace:" describe the
          minimal amount of workspace needed at that point in the code,
          as well as the preferred amount for good performance.
-         CWorkspace refers to complex workspace, and RWorkspace to
+         CWorkspace refers to complex_ workspace, and RWorkspace to
          real workspace. NB refers to the optimal block size for the
          immediately following subroutine, as returned by ILAENV.)
 */
@@ -4089,7 +4089,7 @@ L10:
 	if (*m >= *n) {
 
 /*
-             There is no complex work space needed for bidiagonal SVD
+             There is no complex_ work space needed for bidiagonal SVD
              The real work space needed for bidiagonal SVD is BDSPAC
              for computing singular values and singular vectors; BDSPAN
              for computing singular values only.
@@ -4282,7 +4282,7 @@ L10:
 	} else {
 
 /*
-             There is no complex work space needed for bidiagonal SVD
+             There is no complex_ work space needed for bidiagonal SVD
              The real work space needed for bidiagonal SVD is BDSPAC
              for computing singular values and singular vectors; BDSPAN
              for computing singular values only.
@@ -4660,7 +4660,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by the left singular vectors of R
                 (CWorkspace: need 2*N*N+3*N, prefer M*N+N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4673,7 +4673,7 @@ L10:
 			ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by the right singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4781,7 +4781,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4793,7 +4793,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4890,7 +4890,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by left singular vectors of R
                 (CWorkspace: need N*N+3*N, prefer N*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -4903,7 +4903,7 @@ L10:
 			ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of R
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5241,7 +5241,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (Cworkspace: need 2*N, prefer N+N*NB)
                 (Rworkspace: need 0)
@@ -5256,7 +5256,7 @@ L10:
 		if (*lwork >= *m * *n + *n * 3) {
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by left singular vectors of A, copying
                 to A
                 (Cworkspace: need M*N+2*N, prefer M*N+N+N*NB)
@@ -5323,7 +5323,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5336,7 +5336,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5375,7 +5375,7 @@ L10:
 		}
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 2*N+M, prefer 2*N+M*NB)
                 (RWorkspace: 0)
@@ -5387,7 +5387,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*N, prefer 2*N+N*NB)
                 (RWorkspace: 0)
@@ -5551,7 +5551,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix WORK(IU)
+                Copy real matrix RWORK(IRU) to complex_ matrix WORK(IU)
                 Overwrite WORK(IU) by the left singular vectors of L
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -5563,7 +5563,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__2, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by the right singular vectors of L
                 (CWorkspace: need N*N+3*N, prefer M*N+2*N+N*NB)
                 (RWorkspace: 0)
@@ -5671,7 +5671,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -5683,7 +5683,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by left singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -5780,7 +5780,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of L
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: 0)
@@ -5792,7 +5792,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by right singular vectors of L
                 (CWorkspace: need M*M+3*M, prefer M*M+2*M+M*NB)
                 (RWorkspace: 0)
@@ -6134,7 +6134,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (Cworkspace: need 2*M, prefer M+M*NB)
                 (Rworkspace: need 0)
@@ -6148,7 +6148,7 @@ L10:
 		if (*lwork >= *m * *n + *m * 3) {
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix WORK(IVT)
+                Copy real matrix RWORK(IRVT) to complex_ matrix WORK(IVT)
                 Overwrite WORK(IVT) by right singular vectors of A,
                 copying to A
                 (Cworkspace: need M*N+2*M, prefer M*N+M+M*NB)
@@ -6213,7 +6213,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6225,7 +6225,7 @@ L10:
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6256,7 +6256,7 @@ L10:
 			info);
 
 /*
-                Copy real matrix RWORK(IRU) to complex matrix U
+                Copy real matrix RWORK(IRU) to complex_ matrix U
                 Overwrite U by left singular vectors of A
                 (CWorkspace: need 3*M, prefer 2*M+M*NB)
                 (RWorkspace: M*M)
@@ -6272,7 +6272,7 @@ L10:
 		zlaset_("F", n, n, &c_b56, &c_b57, &vt[vt_offset], ldvt);
 
 /*
-                Copy real matrix RWORK(IRVT) to complex matrix VT
+                Copy real matrix RWORK(IRVT) to complex_ matrix VT
                 Overwrite VT by right singular vectors of A
                 (CWorkspace: need 2*M+N, prefer 2*M+N*NB)
                 (RWorkspace: M*M)
@@ -6346,7 +6346,7 @@ L10:
     Purpose
     =======
 
-    ZGESV computes the solution to a complex system of linear equations
+    ZGESV computes the solution to a complex_ system of linear equations
        A * X = B,
     where A is an N-by-N matrix and X and B are N-by-NRHS matrices.
 
@@ -7025,7 +7025,7 @@ L10:
     =======
 
     ZHEEVD computes all eigenvalues and, optionally, eigenvectors of a
-    complex Hermitian matrix A.  If eigenvectors are desired, it uses a
+    complex_ Hermitian matrix A.  If eigenvectors are desired, it uses a
     divide and conquer algorithm.
 
     The divide and conquer algorithm makes very mild assumptions about
@@ -7345,7 +7345,7 @@ L10:
     Purpose
     =======
 
-    ZHETD2 reduces a complex Hermitian matrix A to real symmetric
+    ZHETD2 reduces a complex_ Hermitian matrix A to real symmetric
     tridiagonal form T by a unitary similarity transformation:
     Q' * A * Q = T.
 
@@ -7411,7 +7411,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i+1:n) = 0 and v(i) = 1; v(1:i-1) is stored on exit in
     A(1:i-1,i+1), and tau in TAU(i).
 
@@ -7424,7 +7424,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+2:n) is stored on exit in A(i+2:n,i),
     and tau in TAU(i).
 
@@ -7681,7 +7681,7 @@ L10:
     Purpose
     =======
 
-    ZHETRD reduces a complex Hermitian matrix A to real symmetric
+    ZHETRD reduces a complex_ Hermitian matrix A to real symmetric
     tridiagonal form T by a unitary similarity transformation:
     Q**H * A * Q = T.
 
@@ -7758,7 +7758,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i+1:n) = 0 and v(i) = 1; v(1:i-1) is stored on exit in
     A(1:i-1,i+1), and tau in TAU(i).
 
@@ -7771,7 +7771,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+2:n) is stored on exit in A(i+2:n,i),
     and tau in TAU(i).
 
@@ -8488,7 +8488,7 @@ L10:
     Purpose
     =======
 
-    ZLABRD reduces the first NB rows and columns of a complex general
+    ZLABRD reduces the first NB rows and columns of a complex_ general
     m by n matrix A to upper or lower real bidiagonal form by a unitary
     transformation Q' * A * P, and returns the matrices X and Y which
     are needed to apply the transformation to the unreduced part of A.
@@ -8573,7 +8573,7 @@ L10:
 
        H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
 
-    where tauq and taup are complex scalars, and v and u are complex
+    where tauq and taup are complex_ scalars, and v and u are complex_
     vectors.
 
     If m >= n, v(1:i-1) = 0, v(i) = 1, and v(i:m) is stored on exit in
@@ -8950,7 +8950,7 @@ L10:
     Purpose
     =======
 
-    ZLACGV conjugates a complex vector of length N.
+    ZLACGV conjugates a complex_ vector of length N.
 
     Arguments
     =========
@@ -9024,7 +9024,7 @@ L10:
     =======
 
     ZLACP2 copies all or part of a real two-dimensional matrix A to a
-    complex matrix B.
+    complex_ matrix B.
 
     Arguments
     =========
@@ -9255,8 +9255,8 @@ L10:
 
     ZLACRM performs a very simple matrix-matrix multiplication:
              C := A * B,
-    where A is M by N and complex; B is N by N and real;
-    C is M by N and complex.
+    where A is M by N and complex_; B is N by N and real;
+    C is M by N and complex_.
 
     Arguments
     =========
@@ -9394,7 +9394,7 @@ L10:
     Purpose
     =======
 
-    ZLADIV := X / Y, where X and Y are complex.  The computation of X / Y
+    ZLADIV := X / Y, where X and Y are complex_.  The computation of X / Y
     will not overflow on an intermediary step unless the results
     overflows.
 
@@ -9403,7 +9403,7 @@ L10:
 
     X       (input) COMPLEX*16
     Y       (input) COMPLEX*16
-            The complex scalars X and Y.
+            The complex_ scalars X and Y.
 
     =====================================================================
 */
@@ -11266,7 +11266,7 @@ L150:
     Purpose
     =======
 
-    ZLAHR2 reduces the first NB columns of A complex general n-BY-(n-k+1)
+    ZLAHR2 reduces the first NB columns of A complex_ general n-BY-(n-k+1)
     matrix A so that elements below the k-th subdiagonal are zero. The
     reduction is performed by an unitary similarity transformation
     Q' * A * Q. The routine returns the matrices V and T which determine
@@ -11327,7 +11327,7 @@ L150:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i+k-1) = 0, v(i+k) = 1; v(i+k+1:n) is stored on exit in
     A(i+k+1:n,i), and tau in TAU(i).
 
@@ -11879,7 +11879,7 @@ L150:
 		temp = dnrm2_(k, &rwork[1], &c__1);
 
 /*
-                Since B and BX are complex, the following call to DGEMV
+                Since B and BX are complex_, the following call to DGEMV
                 is performed in two steps (real and imaginary parts).
 
                 CALL DGEMV( 'T', K, NRHS, ONE, BX, LDBX, WORK, 1, ZERO,
@@ -11983,7 +11983,7 @@ L150:
 		}
 
 /*
-                Since B and BX are complex, the following call to DGEMV
+                Since B and BX are complex_, the following call to DGEMV
                 is performed in two steps (real and imaginary parts).
 
                 CALL DGEMV( 'T', K, NRHS, ONE, B, LDB, WORK, 1, ZERO,
@@ -12369,7 +12369,7 @@ L150:
 	nrf = ic + 1;
 
 /*
-          Since B and BX are complex, the following call to DGEMM
+          Since B and BX are complex_, the following call to DGEMM
           is performed in two steps (real and imaginary parts).
 
           CALL DGEMM( 'T', 'N', NL, NRHS, NL, ONE, U( NLF, 1 ), LDU,
@@ -12423,7 +12423,7 @@ L150:
 	}
 
 /*
-          Since B and BX are complex, the following call to DGEMM
+          Since B and BX are complex_, the following call to DGEMM
           is performed in two steps (real and imaginary parts).
 
           CALL DGEMM( 'T', 'N', NR, NRHS, NR, ONE, U( NRF, 1 ), LDU,
@@ -12613,7 +12613,7 @@ L170:
 	nrf = ic + 1;
 
 /*
-          Since B and BX are complex, the following call to DGEMM is
+          Since B and BX are complex_, the following call to DGEMM is
           performed in two steps (real and imaginary parts).
 
           CALL DGEMM( 'T', 'N', NLP1, NRHS, NLP1, ONE, VT( NLF, 1 ), LDU,
@@ -12668,7 +12668,7 @@ L170:
 	}
 
 /*
-          Since B and BX are complex, the following call to DGEMM is
+          Since B and BX are complex_, the following call to DGEMM is
           performed in two steps (real and imaginary parts).
 
           CALL DGEMM( 'T', 'N', NRP1, NRHS, NRP1, ONE, VT( NRF, 1 ), LDU,
@@ -13032,7 +13032,7 @@ L330:
 
 /*
           In the real version, B is passed to DLASDQ and multiplied
-          internally by Q'. Here B is complex and that product is
+          internally by Q'. Here B is complex_ and that product is
           computed below in two steps (real and imaginary parts).
 */
 
@@ -13096,7 +13096,7 @@ L330:
 	}
 
 /*
-          Since B is complex, the following call to DGEMM is performed
+          Since B is complex_, the following call to DGEMM is performed
           in two steps (real and imaginary parts). That is for V * B
           (in the real version of the code V' is stored in WORK).
 
@@ -13269,7 +13269,7 @@ L330:
 
 /*
                 In the real version, B is passed to DLASDQ and multiplied
-                internally by Q'. Here B is complex and that product is
+                internally by Q'. Here B is complex_ and that product is
                 computed below in two steps (real and imaginary parts).
 */
 
@@ -13390,7 +13390,7 @@ L330:
 	} else if (nsize <= *smlsiz) {
 
 /*
-             Since B and BX are complex, the following call to DGEMM
+             Since B and BX are complex_, the following call to DGEMM
              is performed in two steps (real and imaginary parts).
 
              CALL DGEMM( 'T', 'N', NSIZE, NRHS, NSIZE, ONE,
@@ -13502,7 +13502,7 @@ doublereal zlange_(char *norm, integer *m, integer *n, doublecomplex *a,
 
     ZLANGE  returns the value of the one norm,  or the Frobenius norm, or
     the  infinity norm,  or the  element of  largest absolute value  of a
-    complex matrix A.
+    complex_ matrix A.
 
     Description
     ===========
@@ -13668,7 +13668,7 @@ doublereal zlanhe_(char *norm, char *uplo, integer *n, doublecomplex *a,
 
     ZLANHE  returns the value of the one norm,  or the Frobenius norm, or
     the  infinity norm,  or the  element of  largest absolute value  of a
-    complex hermitian matrix A.
+    complex_ hermitian matrix A.
 
     Description
     ===========
@@ -18174,8 +18174,8 @@ L80:
 
     ZLARCM performs a very simple matrix-matrix multiplication:
              C := A * B,
-    where A is M by M and real; B is M by N and complex;
-    C is M by N and complex.
+    where A is M by M and real; B is M by N and complex_;
+    C is M by N and complex_.
 
     Arguments
     =========
@@ -18323,13 +18323,13 @@ L80:
     Purpose
     =======
 
-    ZLARF applies a complex elementary reflector H to a complex M-by-N
+    ZLARF applies a complex_ elementary reflector H to a complex_ M-by-N
     matrix C, from either the left or the right. H is represented in the
     form
 
           H = I - tau * v * v'
 
-    where tau is a complex scalar and v is a complex vector.
+    where tau is a complex_ scalar and v is a complex_ vector.
 
     If tau = 0, then H is taken to be the unit matrix.
 
@@ -18504,8 +18504,8 @@ L80:
     Purpose
     =======
 
-    ZLARFB applies a complex block reflector H or its transpose H' to a
-    complex M-by-N matrix C, from either the left or the right.
+    ZLARFB applies a complex_ block reflector H or its transpose H' to a
+    complex_ M-by-N matrix C, from either the left or the right.
 
     Arguments
     =========
@@ -19342,19 +19342,19 @@ L80:
     Purpose
     =======
 
-    ZLARFG generates a complex elementary reflector H of order n, such
+    ZLARFG generates a complex_ elementary reflector H of order n, such
     that
 
           H' * ( alpha ) = ( beta ),   H' * H = I.
                (   x   )   (   0  )
 
     where alpha and beta are scalars, with beta real, and x is an
-    (n-1)-element complex vector. H is represented in the form
+    (n-1)-element complex_ vector. H is represented in the form
 
           H = I - tau * ( 1 ) * ( 1 v' ) ,
                         ( v )
 
-    where tau is a complex scalar and v is a complex (n-1)-element
+    where tau is a complex_ scalar and v is a complex_ (n-1)-element
     vector. Note that H is not hermitian.
 
     If the elements of x are all zero and alpha is real, then tau = 0
@@ -19496,7 +19496,7 @@ L10:
     Purpose
     =======
 
-    ZLARFT forms the triangular factor T of a complex block reflector H
+    ZLARFT forms the triangular factor T of a complex_ block reflector H
     of order n, which is defined as a product of k elementary reflectors.
 
     If DIRECT = 'F', H = H(1) H(2) . . . H(k) and T is upper triangular;
@@ -19957,7 +19957,7 @@ L20:
 	    d__3 = d_imag(g);
 	    d__1 = dlapy2_(&d__2, &d__3);
 	    r__->r = d__1, r__->i = 0.;
-/*           Do complex/real division explicitly with two real divisions */
+/*           Do complex_/real division explicitly with two real divisions */
 	    d__1 = gs.r;
 	    d__2 = d_imag(&gs);
 	    d__ = dlapy2_(&d__1, &d__2);
@@ -19987,7 +19987,7 @@ L20:
 	*cs = f2s / g2s;
 /*
           Make sure abs(FF) = 1
-          Do complex/real division explicitly with 2 real divisions
+          Do complex_/real division explicitly with 2 real divisions
    Computing MAX
 */
 	d__3 = (d__1 = f->r, abs(d__1)), d__4 = (d__2 = d_imag(f), abs(d__2));
@@ -20028,14 +20028,14 @@ L20:
 */
 
 	f2s = sqrt(g2 / f2 + 1.);
-/*        Do the F2S(real)*FS(complex) multiply with two real multiplies */
+/*        Do the F2S(real)*FS(complex_) multiply with two real multiplies */
 	d__1 = f2s * fs.r;
 	d__2 = f2s * d_imag(&fs);
 	z__1.r = d__1, z__1.i = d__2;
 	r__->r = z__1.r, r__->i = z__1.i;
 	*cs = 1. / f2s;
 	d__ = f2 + g2;
-/*        Do complex/real division explicitly with two real divisions */
+/*        Do complex_/real division explicitly with two real divisions */
 	d__1 = r__->r / d__;
 	d__2 = d_imag(r__) / d__;
 	z__1.r = d__1, z__1.i = d__2;
@@ -20101,7 +20101,7 @@ L20:
     Purpose
     =======
 
-    ZLASCL multiplies the M by N complex matrix A by the real scalar
+    ZLASCL multiplies the M by N complex_ matrix A by the real scalar
     CTO/CFROM.  This is done without over/underflow as long as the final
     result CTO*A(I,J)/CFROM does not over/underflow. TYPE specifies that
     A may be full, upper triangular, lower triangular, upper Hessenberg,
@@ -20595,7 +20595,7 @@ L10:
     Purpose
     =======
 
-    ZLASR applies a sequence of real plane rotations to a complex matrix
+    ZLASR applies a sequence of real plane rotations to a complex_ matrix
     A, from either the left or the right.
 
     When SIDE = 'L', the transformation takes the form
@@ -21453,7 +21453,7 @@ L10:
     Purpose
     =======
 
-    ZLATRD reduces NB rows and columns of a complex Hermitian matrix A to
+    ZLATRD reduces NB rows and columns of a complex_ Hermitian matrix A to
     Hermitian tridiagonal form by a unitary similarity
     transformation Q' * A * Q, and returns the matrices V and W which are
     needed to apply the transformation to the unreduced part of A.
@@ -21534,7 +21534,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(i:n) = 0 and v(i-1) = 1; v(1:i-1) is stored on exit in A(1:i-1,i),
     and tau in TAU(i-1).
 
@@ -21547,7 +21547,7 @@ L10:
 
        H(i) = I - tau * v * v'
 
-    where tau is a complex scalar, and v is a complex vector with
+    where tau is a complex_ scalar, and v is a complex_ vector with
     v(1:i) = 0 and v(i+1) = 1; v(i+1:n) is stored on exit in A(i+1:n,i),
     and tau in TAU(i).
 
@@ -23363,7 +23363,7 @@ L210:
     Purpose
     =======
 
-    ZPOTF2 computes the Cholesky factorization of a complex Hermitian
+    ZPOTF2 computes the Cholesky factorization of a complex_ Hermitian
     positive definite matrix A.
 
     The factorization has the form
@@ -23575,7 +23575,7 @@ L40:
     Purpose
     =======
 
-    ZPOTRF computes the Cholesky factorization of a complex Hermitian
+    ZPOTRF computes the Cholesky factorization of a complex_ Hermitian
     positive definite matrix A.
 
     The factorization has the form
@@ -23785,7 +23785,7 @@ L40:
     Purpose
     =======
 
-    ZPOTRI computes the inverse of a complex Hermitian positive definite
+    ZPOTRI computes the inverse of a complex_ Hermitian positive definite
     matrix A using the Cholesky factorization A = U**H*U or A = L*L**H
     computed by ZPOTRF.
 
@@ -24027,7 +24027,7 @@ L40:
     =======
 
     ZROT   applies a plane rotation, where the cos (C) is real and the
-    sin (S) is complex, and the vectors CX and CY are complex.
+    sin (S) is complex_, and the vectors CX and CY are complex_.
 
     Arguments
     =========
@@ -24196,7 +24196,7 @@ L20:
 
     ZSTEDC computes all eigenvalues and, optionally, eigenvectors of a
     symmetric tridiagonal matrix using the divide and conquer method.
-    The eigenvectors of a full or band complex Hermitian matrix can also
+    The eigenvectors of a full or band complex_ Hermitian matrix can also
     be found if ZHETRD or ZHPTRD or ZHBTRD has been used to reduce this
     matrix to tridiagonal form.
 
@@ -24664,7 +24664,7 @@ L70:
 
     ZSTEQR computes all eigenvalues and, optionally, eigenvectors of a
     symmetric tridiagonal matrix using the implicit QL or QR method.
-    The eigenvectors of a full or band complex Hermitian matrix can also
+    The eigenvectors of a full or band complex_ Hermitian matrix can also
     be found if ZHETRD or ZHPTRD or ZHBTRD has been used to reduce this
     matrix to tridiagonal form.
 
@@ -25251,9 +25251,9 @@ L160:
     =======
 
     ZTREVC computes some or all of the right and/or left eigenvectors of
-    a complex upper triangular matrix T.
+    a complex_ upper triangular matrix T.
     Matrices of this type are produced by the Schur factorization of
-    a complex general matrix:  A = Q*T*Q**H, as computed by ZHSEQR.
+    a complex_ general matrix:  A = Q*T*Q**H, as computed by ZHSEQR.
 
     The right eigenvector x and the left eigenvector y of T corresponding
     to an eigenvalue w are defined by:
@@ -25362,7 +25362,7 @@ L160:
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
-    magnitude has magnitude 1; here the magnitude of a complex number
+    magnitude has magnitude 1; here the magnitude of a complex_ number
     (x,y) is taken to be |x| + |y|.
 
     =====================================================================
@@ -25734,7 +25734,7 @@ L130:
     Purpose
     =======
 
-    ZTREXC reorders the Schur factorization of a complex matrix
+    ZTREXC reorders the Schur factorization of a complex_ matrix
     A = Q*T*Q**H, so that the diagonal element of T with row index IFST
     is moved to row ILST.
 
@@ -25917,7 +25917,7 @@ L130:
     Purpose
     =======
 
-    ZTRTI2 computes the inverse of a complex upper or lower triangular
+    ZTRTI2 computes the inverse of a complex_ upper or lower triangular
     matrix.
 
     This is the Level 2 BLAS version of the algorithm.
@@ -26087,7 +26087,7 @@ L130:
     Purpose
     =======
 
-    ZTRTRI computes the inverse of a complex upper or lower triangular
+    ZTRTRI computes the inverse of a complex_ upper or lower triangular
     matrix A.
 
     This is the Level 3 BLAS version of the algorithm.
@@ -26289,7 +26289,7 @@ L130:
     Purpose
     =======
 
-    ZUNG2R generates an m by n complex matrix Q with orthonormal columns,
+    ZUNG2R generates an m by n complex_ matrix Q with orthonormal columns,
     which is defined as the first n columns of a product of k elementary
     reflectors of order m
 
@@ -26454,8 +26454,8 @@ L130:
     Purpose
     =======
 
-    ZUNGBR generates one of the complex unitary matrices Q or P**H
-    determined by ZGEBRD when reducing a complex matrix A to bidiagonal
+    ZUNGBR generates one of the complex_ unitary matrices Q or P**H
+    determined by ZGEBRD when reducing a complex_ matrix A to bidiagonal
     form: A = Q * B * P**H.  Q and P**H are defined as products of
     elementary reflectors H(i) or G(i) respectively.
 
@@ -26738,7 +26738,7 @@ L130:
     Purpose
     =======
 
-    ZUNGHR generates a complex unitary matrix Q which is defined as the
+    ZUNGHR generates a complex_ unitary matrix Q which is defined as the
     product of IHI-ILO elementary reflectors of order N, as returned by
     ZGEHRD:
 
@@ -26931,7 +26931,7 @@ L130:
     Purpose
     =======
 
-    ZUNGL2 generates an m-by-n complex matrix Q with orthonormal rows,
+    ZUNGL2 generates an m-by-n complex_ matrix Q with orthonormal rows,
     which is defined as the first m rows of a product of k elementary
     reflectors of order n
 
@@ -27107,7 +27107,7 @@ L130:
     Purpose
     =======
 
-    ZUNGLQ generates an M-by-N complex matrix Q with orthonormal rows,
+    ZUNGLQ generates an M-by-N complex_ matrix Q with orthonormal rows,
     which is defined as the first M rows of a product of K elementary
     reflectors of order N
 
@@ -27371,7 +27371,7 @@ L130:
     Purpose
     =======
 
-    ZUNGQR generates an M-by-N complex matrix Q with orthonormal columns,
+    ZUNGQR generates an M-by-N complex_ matrix Q with orthonormal columns,
     which is defined as the first N columns of a product of K elementary
     reflectors of order M
 
@@ -27630,7 +27630,7 @@ L130:
     Purpose
     =======
 
-    ZUNM2L overwrites the general complex m-by-n matrix C with
+    ZUNM2L overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -27640,7 +27640,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k) . . . H(2) H(1)
@@ -27842,7 +27842,7 @@ L130:
     Purpose
     =======
 
-    ZUNM2R overwrites the general complex m-by-n matrix C with
+    ZUNM2R overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -27852,7 +27852,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(1) H(2) . . . H(k)
@@ -28067,20 +28067,20 @@ L130:
     Purpose
     =======
 
-    If VECT = 'Q', ZUNMBR overwrites the general complex M-by-N matrix C
+    If VECT = 'Q', ZUNMBR overwrites the general complex_ M-by-N matrix C
     with
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    If VECT = 'P', ZUNMBR overwrites the general complex M-by-N matrix C
+    If VECT = 'P', ZUNMBR overwrites the general complex_ M-by-N matrix C
     with
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      P * C          C * P
     TRANS = 'C':      P**H * C       C * P**H
 
     Here Q and P**H are the unitary matrices determined by ZGEBRD when
-    reducing a complex matrix A to bidiagonal form: A = Q * B * P**H. Q
+    reducing a complex_ matrix A to bidiagonal form: A = Q * B * P**H. Q
     and P**H are defined as products of elementary reflectors H(i) and
     G(i) respectively.
 
@@ -28401,13 +28401,13 @@ L130:
     Purpose
     =======
 
-    ZUNMHR overwrites the general complex M-by-N matrix C with
+    ZUNMHR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix of order nq, with nq = m if
+    where Q is a complex_ unitary matrix of order nq, with nq = m if
     SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
     IHI-ILO elementary reflectors, as returned by ZGEHRD:
 
@@ -28622,7 +28622,7 @@ L130:
     Purpose
     =======
 
-    ZUNML2 overwrites the general complex m-by-n matrix C with
+    ZUNML2 overwrites the general complex_ m-by-n matrix C with
 
           Q * C  if SIDE = 'L' and TRANS = 'N', or
 
@@ -28632,7 +28632,7 @@ L130:
 
           C * Q' if SIDE = 'R' and TRANS = 'C',
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k)' . . . H(2)' H(1)'
@@ -28863,13 +28863,13 @@ L130:
     Purpose
     =======
 
-    ZUNMLQ overwrites the general complex M-by-N matrix C with
+    ZUNMLQ overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k)' . . . H(2)' H(1)'
@@ -29170,13 +29170,13 @@ L130:
     Purpose
     =======
 
-    ZUNMQL overwrites the general complex M-by-N matrix C with
+    ZUNMQL overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(k) . . . H(2) H(1)
@@ -29472,13 +29472,13 @@ L130:
     Purpose
     =======
 
-    ZUNMQR overwrites the general complex M-by-N matrix C with
+    ZUNMQR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix defined as the product of k
+    where Q is a complex_ unitary matrix defined as the product of k
     elementary reflectors
 
           Q = H(1) H(2) . . . H(k)
@@ -29766,13 +29766,13 @@ L130:
     Purpose
     =======
 
-    ZUNMTR overwrites the general complex M-by-N matrix C with
+    ZUNMTR overwrites the general complex_ M-by-N matrix C with
 
                     SIDE = 'L'     SIDE = 'R'
     TRANS = 'N':      Q * C          C * Q
     TRANS = 'C':      Q**H * C       C * Q**H
 
-    where Q is a complex unitary matrix of order nq, with nq = m if
+    where Q is a complex_ unitary matrix of order nq, with nq = m if
     SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
     nq-1 elementary reflectors, as returned by ZHETRD:
 
