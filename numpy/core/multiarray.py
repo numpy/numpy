@@ -220,7 +220,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     >>> np.concatenate((a, b), axis=None)
     array([1, 2, 3, 4, 5, 6])
 
-    This function will not preserve masking of MaskedArray inputs.
+    This function preserves the masks of MaskedArray inputs.
 
     >>> a = np.ma.arange(3)
     >>> a[1] = np.ma.masked
@@ -232,10 +232,6 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     >>> b
     array([2, 3, 4])
     >>> np.concatenate([a, b])
-    masked_array(data=[0, 1, 2, 2, 3, 4],
-                 mask=False,
-           fill_value=999999)
-    >>> np.ma.concatenate([a, b])
     masked_array(data=[0, --, 2, 2, 3, 4],
                  mask=[False,  True, False, False, False, False],
            fill_value=999999)
