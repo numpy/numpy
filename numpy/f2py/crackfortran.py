@@ -1746,6 +1746,13 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                     if d1['len'] == '':
                         d1['len'] = d1['array']
                         del d1['array']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
                     else:
                         d1['array'] = d1['array'] + ',' + d1['len']
                         del d1['len']
