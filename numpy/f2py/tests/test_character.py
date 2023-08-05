@@ -591,3 +591,10 @@ class TestStringScalarArr(util.F2PyTest):
             assert out.shape == expected
             expected = '|S12'
             assert out.dtype == expected
+
+class TestStringAssumedLength(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24008.f")]
+
+    @pytest.mark.slow
+    def test_gh24008(self):
+        self.module.greet("joe", "bob")
