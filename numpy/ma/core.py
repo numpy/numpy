@@ -7496,13 +7496,6 @@ def resize(x, new_shape):
       mask=[[False,  True],
             [False, False]],
       fill_value=999999)
-    >>> np.resize(a, (3, 3))
-    masked_array(
-      data=[[1, 2, 3],
-            [4, 1, 2],
-            [3, 4, 1]],
-      mask=False,
-      fill_value=999999)
     >>> ma.resize(a, (3, 3))
     masked_array(
       data=[[1, --, 3],
