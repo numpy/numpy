@@ -58,10 +58,8 @@ jobs:
           command: |
             . venv/bin/activate
             pip install --progress-bar=off -r test_requirements.txt
-            # first install newer versions
-            pip install --progress-bar=off -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib scipy pandas
-            # then install the standard versions of the other requirements
-            pip install --progress-bar=off -r doc_requirements.txt
+            # get newer versions of critical packages
+            pip install --progress-bar=off --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
             pip install . --config-settings=setup-args="-Dallow-noblas=true"
 
