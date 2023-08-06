@@ -2010,7 +2010,7 @@ def disp(mesg, device=None, linefeed=True):
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2
-    )    
+    )
 
     if device is None:
         device = sys.stdout
@@ -3929,9 +3929,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     return rout
 
 
-def _percentile_dispatcher(a, q, axis=None, weights=None, out=None,
+def _percentile_dispatcher(a, q, axis=None, out=None,
                            overwrite_input=None, method=None, keepdims=None, *,
-                           interpolation=None):
+                           weights=None, interpolation=None):
     return (a, q, out)
 
 
@@ -3939,12 +3939,12 @@ def _percentile_dispatcher(a, q, axis=None, weights=None, out=None,
 def percentile(a,
                q,
                axis=None,
-               weights=None,
                out=None,
                overwrite_input=False,
                method="linear",
                keepdims=False,
                *,
+               weights=None,
                interpolation=None):
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -4266,9 +4266,9 @@ def percentile(a,
         a, q, axis, weights, out, overwrite_input, method, keepdims)
 
 
-def _quantile_dispatcher(a, q, axis=None, weights=None, out=None,
+def _quantile_dispatcher(a, q, axis=None, out=None,
                          overwrite_input=None, method=None, keepdims=None, *,
-                         interpolation=None):
+                         weights=None, interpolation=None):
     return (a, q, out)
 
 
@@ -4276,12 +4276,12 @@ def _quantile_dispatcher(a, q, axis=None, weights=None, out=None,
 def quantile(a,
              q,
              axis=None,
-             weights=None,
              out=None,
              overwrite_input=False,
              method="linear",
              keepdims=False,
              *,
+             weights=None,
              interpolation=None):
     """
     Compute the q-th quantile of the data along the specified axis.
@@ -4599,11 +4599,10 @@ def _validate_and_ureduce_weights(a, axis, wgts):
 
     Weights cannot:
         * be negative
+        * be (0, 1)
         * sum to 0
     However, they can be
         * 0, as long as they do not sum to 0
-        * less than 1.  In this case, all weights are re-normalized by
-            the lowest non-zero weight prior to computation.
 
     Weights will be broadcasted to the shape of a, then reduced as done
     via _ureduce().
@@ -4629,6 +4628,9 @@ def _validate_and_ureduce_weights(a, axis, wgts):
 
     if (wgts < 0).any():
         raise ValueError("Negative weight not allowed.")
+
+    if ((0 < wgts) & (wgts < 1)).any():
+        raise ValueError("Partial weight (0, 1) not allowed.")
 
     # dims to reshape to, before broadcast
     if axis is None:
@@ -4665,22 +4667,6 @@ def _validate_and_ureduce_weights(a, axis, wgts):
 
     # Obtain a weights array of the same shape as ureduced a
     wgts = _ureduce(wgts, func=lambda x, **kwargs: x, axis=dims)
-
-    # Now check/renormalize weights if any is (0, 1)
-    def _normalize(v):
-        inds = v > 0
-        if (v[inds] < 1).any():
-            vec = v.copy()
-            vec[inds] = vec[inds] / vec[inds].min()  # renormalization
-            return vec
-        else:
-            return v
-
-    # perform normalization along reduced axis
-    if len(dims) > 1:
-        wgts = np.apply_along_axis(_normalize, -1, wgts)
-    else:
-        wgts = np.apply_along_axis(_normalize, dims[0], wgts)
 
     return wgts
 
@@ -4976,11 +4962,14 @@ def _quantile(
 
             # each weight occupies a range in weight space w/ left/right bounds
             left_weight_bound = np.roll(wgts1d_cumsum, 1)
-            left_weight_bound[0] = 0  # left-most weight bound fixed at 0
-            right_weight_bound = wgts1d_cumsum - 1
+            # value i left weight index bound = sum(weights before i) + 1 - 1,
+            # the +1 due to neighboring values having an index distance of 1,
+            # the -1 due to 0-indexing in Python
+            left_weight_bound[0] = 0  # left-most weight bound defined to be 0
+            right_weight_bound = wgts1d_cumsum - 1  # -1 due to 0-indexing
 
             # now construct a mapping from weight bounds to real indexes
-            # for example, arr1d=[1, 2] & wgts1d=[2, 3] ->
+            # arr1d=[7, 8] & wgts1d=[2, 3] == [7, 7, 8, 8, 8]
             # -> real_indexes=[0, 0, 1, 1] & w_index_bounds=[0, 1, 2, 4]
             indexes = np.arange(arr1d.size)
             real_indexes = np.zeros(2 * indexes.size)
@@ -4993,7 +4982,9 @@ def _quantile(
             # first define previous_w_indexes/next_w_indexes as the indexes
             # within w_index_bounds whose values sandwich weight_space_indexes.
             # so if w_index_bounds=[0, 1, 2, 4] and weight_space_index=3.5,
-            # then previous_w_indexes = 2 and next_w_indexes = 3
+            # then previous_w_indexes = 2 and next_w_indexes = 3,
+            # meaning weight_space_indexed is sandwiched by w_index_bounds[2]
+            # and w_index_bounds[3].
             previous_w_indexes = np.searchsorted(w_index_bounds,
                                                  weight_space_indexes,
                                                  side="right") - 1
@@ -5001,21 +4992,25 @@ def _quantile(
             previous_w_indexes, next_w_indexes =\
                 _get_indexes(w_index_bounds, previous_w_indexes,
                              len(w_index_bounds))
-            # now redefine previous_w_indexes/next_w_indexes as the weight
-            # space indexes that neighbor weight_space_indexes.
+            # following earlier example, we now know weight_space_indexed is
+            # sandwiched by w_index_bounds[2] and w_index_bounds[3], which are
+            # 2 and 4.  We want the 2 and 4.
+            # so redefine previous_w_indexes/next_w_indexes as the
+            # w_index_bounds that neighbor weight_space_indexes.
             previous_w_indexes = w_index_bounds[previous_w_indexes]
             next_w_indexes = w_index_bounds[next_w_indexes]
-
-            # map all weight space indexes to real indexes, then compute gamma
-            previous_indexes =\
-                np.interp(previous_w_indexes, w_index_bounds, real_indexes)
-            next_indexes =\
-                np.interp(next_w_indexes, w_index_bounds, real_indexes)
 
             # method-dependent gammas determine interpolation scheme between
             # neighboring values, and are computed in weight space.
             gamma =\
                 _get_gamma(weight_space_indexes, previous_w_indexes, method)
+
+            # map all weight space indexes to real indexes
+            previous_indexes =\
+                np.interp(previous_w_indexes, w_index_bounds, real_indexes)
+            next_indexes =\
+                np.interp(next_w_indexes, w_index_bounds, real_indexes)
+
             previous = take(arr1d, previous_indexes.astype(int))
             next = take(arr1d, next_indexes.astype(int))
             return _lerp(previous, next, gamma, out=out)
@@ -5029,7 +5024,8 @@ def _quantile(
         result = get_weighted_quantile_values(arr, weights)
 
         # now move data to DATA_AXIS to be consistent with no-weights case
-        result = np.moveaxis(result, -1, destination=0)
+        if axis != -1 and quantiles.ndim:
+            result = np.moveaxis(result, -1, destination=0)
 
     else:
         values_count = arr.shape[axis]

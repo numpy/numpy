@@ -3023,10 +3023,10 @@ class TestPercentile:
 
     def test_api(self):
         d = np.ones(5)
-        np.percentile(d, 5, None, None, None, False)
-        np.percentile(d, 5, None, None, None, False, 'linear')
+        np.percentile(d, 5, None, None, False)
+        np.percentile(d, 5, None, None, False, 'linear')
         o = np.ones((1,))
-        np.percentile(d, 5, None, None, o, False, 'linear')
+        np.percentile(d, 5, None, o, False, 'linear')
 
     def test_complex(self):
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
@@ -3861,15 +3861,8 @@ class TestQuantile:
         assert_almost_equal(actual, expected)
 
         # mix of numeric types
-        # due to renormalization triggered by weight < 1,
         # this is expected to be the same as weights = [1, 2, 3]
-        weights = [decimal.Decimal(0.5), 1, 1.5]
-        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
-                             method=method)
-        assert_almost_equal(actual, expected)
-
-        # show that normalization means sum of weights is irrelavant
-        weights = [0.1, 0.2, 0.3]
+        weights = [decimal.Decimal(1.0), 2, 3.0]
         actual = np.quantile(ar, q=q, axis=axis, weights=weights,
                              method=method)
         assert_almost_equal(actual, expected)
@@ -3880,12 +3873,6 @@ class TestQuantile:
                              method=method)
         ar_012 = np.stack((ar[1, :], ar[2, :], ar[2, :]), axis=axis)
         expected = np.quantile(ar_012, q=q, axis=axis, method=method)
-        assert_almost_equal(actual, expected)
-
-        # weight entries < 1
-        weights = [0.0, 0.001, 0.002]
-        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
-                             method=method)
         assert_almost_equal(actual, expected)
 
     def test_weights_flags(self):
@@ -3902,6 +3889,8 @@ class TestQuantile:
             np.quantile(ar, q=q, axis=axis, weights=[1, np.nan])
         with assert_raises_regex(ValueError, "Negative weight not allowed"):
             np.quantile(ar, q=q, axis=axis, weights=[1, -1])
+        with assert_raises_regex(ValueError, "Partial weight"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 0.1])
         with assert_raises_regex(ZeroDivisionError, "Weights sum to zero"):
             np.quantile(ar, q=q, axis=axis, weights=[0, 0])
 

@@ -1219,8 +1219,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 
 def _nanpercentile_dispatcher(
-        a, q, axis=None, weights=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, interpolation=None):
+        a, q, axis=None, out=None, overwrite_input=None,
+        method=None, keepdims=None, *, weights=None, interpolation=None):
     return (a, q, out)
 
 
@@ -1229,12 +1229,12 @@ def nanpercentile(
         a,
         q,
         axis=None,
-        weights=None,
         out=None,
         overwrite_input=False,
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1385,9 +1385,9 @@ def nanpercentile(
         a, q, axis, weights, out, overwrite_input, method, keepdims)
 
 
-def _nanquantile_dispatcher(a, q, axis=None, weights=None, out=None,
+def _nanquantile_dispatcher(a, q, axis=None, out=None,
                             overwrite_input=None, method=None, keepdims=None,
-                            *, interpolation=None):
+                            *, weights=None, interpolation=None):
     return (a, q, out)
 
 
@@ -1396,12 +1396,12 @@ def nanquantile(
         a,
         q,
         axis=None,
-        weights=None,
         out=None,
         overwrite_input=False,
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1570,12 +1570,7 @@ def _nanquantile_unchecked(
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
     if weights is not None:
-<<<<<<< HEAD
         weights = fnb._validate_and_ureduce_weights(a, axis, weights)
-        weights[np.isnan(a)] = np.nan  # for _nanquantile_1d
-=======
-        weights = function_base._validate_and_ureduce_weights(a, axis, weights)
->>>>>>> ENH: Tests and documentation for weights arg to quantile/percentile in lib.function_base and nanquantile/nanpercentile in lib.nanfunctions (#9211).
 
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
@@ -1657,8 +1652,9 @@ def _nanquantile_1d(arr1d, q, wgt1d=None, overwrite_input=False,
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
-    return function_base._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, method=method)
+    return fnb._quantile_unchecked(
+        arr1d, q, weights=wgt1d, overwrite_input=overwrite_input,
+        method=method)
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,

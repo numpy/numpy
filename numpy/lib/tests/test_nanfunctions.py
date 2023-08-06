@@ -4,7 +4,7 @@ import pytest
 import inspect
 
 import numpy as np
-import numpy.lib.function_base as nfb
+from numpy.lib import _function_base_impl as fnb
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
@@ -1278,7 +1278,7 @@ class TestNanFunctions_Quantile:
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
 
-    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
+    @pytest.mark.parametrize("method", list(fnb._QuantileMethods.keys()))
     def test_weights_all_ones(self, method):
         """Test that all weights == 1 gives same results as no weights."""
         ar = np.arange(24).reshape(2, 3, 4).astype(float)
@@ -1317,7 +1317,7 @@ class TestNanFunctions_Quantile:
         actual = np.nanquantile(ar, q=q, weights=weights, method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
+    @pytest.mark.parametrize("method", list(fnb._QuantileMethods.keys()))
     def test_multiple_axes(self, method):
         """Test that weights work on multiple axes."""
         ar = np.arange(12).reshape(3, 4).astype(float)
@@ -1331,7 +1331,7 @@ class TestNanFunctions_Quantile:
                                 method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
+    @pytest.mark.parametrize("method", list(fnb._QuantileMethods.keys()))
     def test_various_weights(self, method):
         """Test various weights arg scenarios."""
         ar = np.arange(12).reshape(3, 4).astype(float)
@@ -1357,15 +1357,8 @@ class TestNanFunctions_Quantile:
         assert_almost_equal(actual, expected)
 
         # mix of numeric types
-        # due to renormalization triggered by weight < 1,
         # this is expected to be the same as weights = [1, 2, 3]
-        weights = [decimal.Decimal(0.5), 1, 1.5]
-        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
-                                method=method)
-        assert_almost_equal(actual, expected)
-
-        # show that normalization means sum of weights is irrelavant
-        weights = [0.2, 0.4, 0.6]
+        weights = [decimal.Decimal(1.0), 2, 3.0]
         actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
                                 method=method)
         assert_almost_equal(actual, expected)
@@ -1376,12 +1369,6 @@ class TestNanFunctions_Quantile:
                                 method=method)
         ar_012 = np.stack((ar[1, :], ar[2, :], ar[2, :]), axis=axis)
         expected = np.nanquantile(ar_012, q=q, axis=axis, method=method)
-        assert_almost_equal(actual, expected)
-
-        # weight entries < 1
-        weights = [0.0, 0.001, 0.002]
-        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
-                                method=method)
         assert_almost_equal(actual, expected)
 
     def test_weights_flags(self):
@@ -1399,6 +1386,8 @@ class TestNanFunctions_Quantile:
             np.quantile(ar, q=q, axis=axis, weights=[1, np.nan])
         with assert_raises_regex(ValueError, "Negative weight not allowed"):
             np.quantile(ar, q=q, axis=axis, weights=[1, -1])
+        with assert_raises_regex(ValueError, "Partial weight"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 0.1])
         with assert_raises_regex(ZeroDivisionError, "Weights sum to zero"):
             np.quantile(ar, q=q, axis=axis, weights=[0, 0])
 
