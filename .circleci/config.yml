@@ -58,8 +58,8 @@ jobs:
           command: |
             . venv/bin/activate
             pip install --progress-bar=off -r test_requirements.txt
-            # get newer versions of critical packages
-            pip install --progress-bar=off --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r doc_requirements.txt
+            # get newer, pre-release versions of critical packages
+            pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
             pip install . --config-settings=setup-args="-Dallow-noblas=true"
 
