@@ -120,13 +120,90 @@ else:
     __all__ = ['exceptions']
 
     from . import core
-    from .core import *
+    from .core import (
+        _no_nep50_warning, memmap,
+        iinfo, finfo,  # getlimits submodule exports
+        False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
+        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
+        arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
+        around, array, array2string, array_equal, array_equiv, array_repr,
+        array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
+        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr, 
+        bitwise_and, bitwise_not, bitwise_or, bitwise_xor, block, bool_,
+        broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
+        can_cast, cbrt, cdouble, ceil, cfloat, char, character, chararray,
+        choose, clip, clongdouble, clongfloat, compare_chararrays, complex_,
+        complexfloating, compress, concatenate, conj, conjugate, convolve,
+        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
+        cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
+        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
+        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
+        errstate, euler_gamma, exp, exp2, expm1, fabs, find_common_type, 
+        flatiter, flatnonzero, flexible, float128, float16, float32, float64, 
+        float_, float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
+        format_float_positional, format_float_scientific, format_parser, 
+        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
+        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
+        get_printoptions, getbufsize, geterr, geterrcall, greater, 
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
+        indices, inexact, inf, infty, inner, int16, int32, int64, int8, int_,
+        intc, integer, intp, invert, is_busday, isclose, isfinite, isfortran,
+        isinf, isnan, isnat, isscalar, issctype, issubdtype, lcm, ldexp,
+        left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
+        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not, 
+        logical_or, logical_xor, logspace, longcomplex, longdouble, 
+        longfloat, longlong, matmul, max, maximum, maximum_sctype, 
+        may_share_memory, mean, min, min_scalar_type, minimum, mod, 
+        modf, moveaxis, multiply, nan, nbytes, ndarray, ndim, nditer, 
+        negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
+        number, obj2sctype, object_, ones, ones_like, outer, partition,
+        pi, positive, power, printoptions, prod, product, promote_types, 
+        ptp, put, putmask, rad2deg, radians, ravel, rec, recarray, reciprocal,
+        record, remainder, repeat, require, reshape, resize, result_type, 
+        right_shift, rint, roll, rollaxis, round, round_, sctype2char, 
+        sctypeDict, sctypes, searchsorted, set_printoptions,
+        set_string_function, setbufsize, seterr, seterrcall, shape,
+        shares_memory, short, sign, signbit, signedinteger, sin, single, 
+        singlecomplex, sinh, size, sometrue, sort, spacing, sqrt, square, 
+        squeeze, stack, std, str_, string_, subtract, sum, swapaxes, take,
+        tan, tanh, tensordot, test, timedelta64, trace, transpose, 
+        true_divide, trunc, typecodes, ubyte, ufunc, uint, uint16, uint32, 
+        uint64, uint8, uintc, uintp, ulonglong, unicode_, unsignedinteger, 
+        ushort, var, vdot, void, vstack, warnings, where, zeros, zeros_like
+    )
+
     from . import exceptions
     from . import dtypes
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
-    from .lib import *
+    from .lib import (
+        DataSource, angle, append, apply_along_axis, apply_over_axes,
+        array_split, asarray_chkfinite, asfarray, average, bartlett,
+        bincount, blackman, broadcast_arrays, broadcast_shapes,
+        broadcast_to, byte_bounds, c_, column_stack, common_type,
+        copy, corrcoef, cov, delete, diag, diag_indices,
+        diag_indices_from, diagflat, diff, digitize, dsplit, dstack,
+        ediff1d, emath, expand_dims, extract, eye, fill_diagonal, fix,
+        flip, fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
+        get_include, gradient, hamming, hanning, histogram, histogram2d,
+        histogram_bin_edges, histogramdd, hsplit, i0, imag, in1d,
+        index_exp, info, insert, interp, intersect1d, iscomplex,
+        iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
+        issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
+        median, meshgrid, mgrid, mintypecode, msort, nan_to_num, 
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
+        nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
+        nansum, nanvar, ndenumerate, ndindex, ogrid, packbits, pad,
+        percentile, piecewise, place, poly, poly1d, polyadd, polyder,
+        polydiv, polyfit, polyint, polymul, polynomial, polysub, polyval,
+        put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
+        roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
+        select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
+        take_along_axis, test, tile, tracemalloc_domain, trapz, tri, tril,
+        tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
+        unravel_index, unwrap, vander, vectorize, vsplit
+    )
 
     from . import linalg
     from . import fft
@@ -135,7 +212,9 @@ else:
     from . import ctypeslib
     from . import ma
     from . import matrixlib as _mat
-    from .matrixlib import *
+    from .matrixlib import (
+        asmatrix, bmat, defmatrix, mat, matrix, test
+    )
 
     # We build warning messages for former attributes
     _msg = (
@@ -177,7 +256,6 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
 
-    from .core import abs
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
 
@@ -194,7 +272,6 @@ else:
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
     # which would be a breaking change.
-    del long, unicode
     __all__.remove('long')
     __all__.remove('unicode')
 
@@ -205,7 +282,6 @@ else:
     # The list below will grow until the `from .lib import *` fixme above is
     # taken care of
     __all__.remove('Arrayterator')
-    del Arrayterator
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")

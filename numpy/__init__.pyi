@@ -305,14 +305,6 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
-    ALLOW_THREADS as ALLOW_THREADS,
-    BUFSIZE as BUFSIZE,
-    CLIP as CLIP,
-    MAXDIMS as MAXDIMS,
-    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
-    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
-    RAISE as RAISE,
-    WRAP as WRAP,
     tracemalloc_domain as tracemalloc_domain,
     array as array,
     empty_like as empty_like,
@@ -3161,7 +3153,6 @@ FPE_UNDERFLOW: L[4]
 FPE_INVALID: L[8]
 
 FLOATING_POINT_SUPPORT: L[1]
-UFUNC_BUFSIZE_DEFAULT = BUFSIZE
 
 little_endian: Final[bool]
 True_: Final[bool_]

@@ -15,8 +15,6 @@ reveal_type(np.infty)  # E: float
 reveal_type(np.nan)  # E: float
 reveal_type(np.pi)  # E: float
 
-reveal_type(np.ALLOW_THREADS)  # E: int
-reveal_type(np.BUFSIZE)  # E: Literal[8192]
 reveal_type(np.CLIP)  # E: Literal[0]
 reveal_type(np.FLOATING_POINT_SUPPORT)  # E: Literal[1]
 reveal_type(np.FPE_DIVIDEBYZERO)  # E: Literal[1]
@@ -27,7 +25,6 @@ reveal_type(np.MAXDIMS)  # E: Literal[32]
 reveal_type(np.MAY_SHARE_BOUNDS)  # E: Literal[0]
 reveal_type(np.MAY_SHARE_EXACT)  # E: Literal[-1]
 reveal_type(np.RAISE)  # E: Literal[2]
-reveal_type(np.UFUNC_BUFSIZE_DEFAULT)  # E: Literal[8192]
 reveal_type(np.WRAP)  # E: Literal[1]
 reveal_type(np.tracemalloc_domain)  # E: Literal[389047]
 
