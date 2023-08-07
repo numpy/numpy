@@ -902,7 +902,7 @@ class TestMedian:
                 for axis, over in args:
                     try:
                         np.ma.median(x, axis=axis, overwrite_input=over)
-                    except np.AxisError:
+                    except np.exceptions.AxisError:
                         pass
                     else:
                         raise AssertionError(msg % (mask, ndmin, axis, over))

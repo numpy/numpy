@@ -135,7 +135,7 @@ int(td)
 int(U)
 int(S)
 int(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     int(c16)
 
 float(i8)
@@ -146,7 +146,7 @@ float(td)
 float(U)
 float(S)
 float(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     float(c16)
 
 complex(i8)

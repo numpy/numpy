@@ -21,6 +21,7 @@ import numpy as np
 import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings, IS_WASM
     )
@@ -1200,7 +1201,7 @@ class TestMaskedArrayArithmetic:
         res = count(ott, 0)
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
-        assert_raises(np.AxisError, ott.count, axis=1)
+        assert_raises(AxisError, ott.count, axis=1)
 
     def test_count_on_python_builtins(self):
         # Tests count works on python builtins (issue#8019)
@@ -5255,7 +5256,7 @@ class TestOptionalArgs:
         assert_equal(count(a, axis=(0,1), keepdims=True), 4*ones((1,1,4)))
         assert_equal(count(a, axis=-2), 2*ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
-        assert_raises(np.AxisError, count, a, axis=3)
+        assert_raises(AxisError, count, a, axis=3)
 
         # check the 'nomask' path
         a = np.ma.array(d, mask=nomask)
@@ -5269,13 +5270,13 @@ class TestOptionalArgs:
         assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
         assert_equal(count(a, axis=-2), 3*ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
-        assert_raises(np.AxisError, count, a, axis=3)
+        assert_raises(AxisError, count, a, axis=3)
 
         # check the 'masked' singleton
         assert_equal(count(np.ma.masked), 0)
 
         # check 0-d arrays do not allow axis > 0
-        assert_raises(np.AxisError, count, np.ma.array(1), axis=1)
+        assert_raises(AxisError, count, np.ma.array(1), axis=1)
 
 
 class TestMaskedConstant:
@@ -5539,7 +5540,7 @@ def test_astype_mask_ordering():
 
 @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
 @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
-@pytest.mark.filterwarnings('ignore::numpy.ComplexWarning')
+@pytest.mark.filterwarnings('ignore::numpy.exceptions.ComplexWarning')
 def test_astype_basic(dt1, dt2):
     # See gh-12070
     src = np.ma.array(ones(3, dt1), fill_value=1)

@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy.core import swapaxes
+from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -1517,8 +1518,8 @@ class _TestNorm2D(_TestNormBase):
             assert_raises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
-        assert_raises(np.AxisError, norm, B, None, 3)
-        assert_raises(np.AxisError, norm, B, None, (2, 3))
+        assert_raises(AxisError, norm, B, None, 3)
+        assert_raises(AxisError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
 
