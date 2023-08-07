@@ -16,8 +16,8 @@ from numpy.distutils import _shell_utils
 
 try:
     if importlib.metadata.version('setuptools') >= '60':
-        # pkg-resources gives deprecation warnings, and there may be more issues.
-        # we only support setuptools <60
+        # pkg-resources gives deprecation warnings, and there may be more
+        # issues. We only support setuptools <60
         pytest.skip("setuptools is too new", allow_module_level=True)
 except importlib.metadata.PackageNotFoundError:
     # we don't require `setuptools`; if it is not found, continue
