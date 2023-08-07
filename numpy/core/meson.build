@@ -706,7 +706,7 @@ test_modules_src = [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    _umath_tests_mtargets
+    _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
   ],
   ['_rational_tests', 'src/umath/_rational_tests.c', []],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
@@ -730,7 +730,6 @@ multiarray_gen_headers = [
   src_file.process('src/multiarray/arraytypes.h.src'),
   src_file.process('src/common/npy_sort.h.src'),
 ]
-multiarray_umath_dispatch_link = []
 foreach gen_mtargets : [
   [
     'argfunc.dispatch.h',
@@ -743,22 +742,27 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-multiarray_umath_dispatch_link += mod_features.multi_targets(
-  gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
-  dispatch: gen_mtargets[2],
-  baseline: CPU_BASELINE,
-  prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common + max_opt,
-  cpp_args: cpp_args_common + max_opt,
-  include_directories: [
-    'include',
-    'src/common',
-    'src/multiarray',
-    'src/npymath',
-    'src/umath'
-  ]
-)
+  mtargets = mod_features.multi_targets(
+    gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
+    dispatch: gen_mtargets[2],
+    baseline: CPU_BASELINE,
+    prefix: 'NPY_',
+    dependencies: [py_dep, np_core_dep],
+    c_args: c_args_common + max_opt,
+    cpp_args: cpp_args_common + max_opt,
+    include_directories: [
+      'include',
+      'src/common',
+      'src/multiarray',
+      'src/npymath',
+      'src/umath'
+    ]
+  )
+  if not is_variable('multiarray_umath_mtargets')
+    multiarray_umath_mtargets = mtargets
+  else
+    multiarray_umath_mtargets.extend(mtargets)
+  endif
 endforeach
 
 # Build npysort dispatch-able sources
@@ -775,22 +779,27 @@ foreach gen_mtargets : [
     [AVX512_SPR, AVX512_ICL]
   ],
 ]
-multiarray_umath_dispatch_link += mod_features.multi_targets(
-  gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
-  dispatch: gen_mtargets[2],
-  # baseline: CPU_BASELINE, it doesn't provide baseline fallback
-  prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common + max_opt,
-  cpp_args: cpp_args_common + max_opt,
-  include_directories: [
-    'include',
-    'src/common',
-    'src/multiarray',
-    'src/npymath',
-    'src/umath'
-  ]
-)
+  mtargets = mod_features.multi_targets(
+    gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
+    dispatch: gen_mtargets[2],
+    # baseline: CPU_BASELINE, it doesn't provide baseline fallback
+    prefix: 'NPY_',
+    dependencies: [py_dep, np_core_dep],
+    c_args: c_args_common + max_opt,
+    cpp_args: cpp_args_common + max_opt,
+    include_directories: [
+      'include',
+      'src/common',
+      'src/multiarray',
+      'src/npymath',
+      'src/umath'
+    ]
+  )
+  if not is_variable('multiarray_umath_mtargets')
+    multiarray_umath_mtargets = mtargets
+  else
+    multiarray_umath_mtargets.extend(mtargets)
+  endif
 endforeach
 
 # Build umath dispatch-able sources
@@ -945,22 +954,27 @@ foreach gen_mtargets : [
     ]
   ],
 ]
-multiarray_umath_dispatch_link += mod_features.multi_targets(
-  gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
-  dispatch: gen_mtargets[2],
-  baseline: CPU_BASELINE,
-  prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep],
-  c_args: c_args_common + max_opt,
-  cpp_args: cpp_args_common + max_opt,
-  include_directories: [
-    'include',
-    'src/common',
-    'src/multiarray',
-    'src/npymath',
-    'src/umath'
-  ]
-)
+  mtargets = mod_features.multi_targets(
+    gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
+    dispatch: gen_mtargets[2],
+    baseline: CPU_BASELINE,
+    prefix: 'NPY_',
+    dependencies: [py_dep, np_core_dep],
+    c_args: c_args_common + max_opt,
+    cpp_args: cpp_args_common + max_opt,
+    include_directories: [
+      'include',
+      'src/common',
+      'src/multiarray',
+      'src/npymath',
+      'src/umath'
+    ]
+  )
+  if not is_variable('multiarray_umath_mtargets')
+    multiarray_umath_mtargets = mtargets
+  else
+    multiarray_umath_mtargets.extend(mtargets)
+  endif
 endforeach
 
 # Build _multiarray_umath module
@@ -1135,7 +1149,7 @@ py.extension_module('_multiarray_umath',
     'src/umath',
   ],
   dependencies: blas_dep,
-  link_with: multiarray_umath_dispatch_link + npymath_lib,
+  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')],
   install: true,
   subdir: 'numpy/core',
 )
@@ -1188,7 +1202,7 @@ py.extension_module('_simd',
   c_args: c_args_common,
   include_directories: ['src/_simd', 'src/npymath'],
   dependencies: np_core_dep,
-  link_with: [_simd_mtargets] + npymath_lib,
+  link_with: [npymath_lib, _simd_mtargets.static_lib('_simd_mtargets')],
   install: true,
   subdir: 'numpy/core',
 )
