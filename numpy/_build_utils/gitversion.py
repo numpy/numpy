@@ -50,6 +50,8 @@ def git_version(version):
                      if not tag.startswith('git')]
                 )
                 version += f'+git{git_date}.{git_hash_short}'
+            else:
+                git_hash = ''
 
         return version, git_hash
 
