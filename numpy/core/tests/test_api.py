@@ -304,7 +304,7 @@ def test_object_array_astype_to_void():
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
     a = np.array(10, dtype=np.complex_)
-    assert_warns(np.ComplexWarning, a.astype, t)
+    assert_warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),

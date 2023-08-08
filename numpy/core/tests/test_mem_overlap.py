@@ -385,7 +385,9 @@ def test_shares_memory_api():
     b = x[:,::3,::2]
     assert_equal(np.shares_memory(a, b), True)
     assert_equal(np.shares_memory(a, b, max_work=None), True)
-    assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
+    assert_raises(
+        np.exceptions.TooHardError, np.shares_memory, a, b, max_work=1
+    )
 
 
 def test_may_share_memory_bad_max_work():

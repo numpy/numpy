@@ -533,17 +533,3 @@ def test_array_api_entry_point():
         "does not point to our Array API implementation"
     )
     assert xp is numpy.array_api, msg
-
-
-@pytest.mark.parametrize("name", [
-        'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-        'ComplexWarning', 'TooHardError', 'AxisError'])
-def test_moved_exceptions(name):
-    # These were moved to the exceptions namespace, but currently still
-    # available
-    assert name in np.__all__
-    assert name not in np.__dir__()
-    # Fetching works, but __module__ is set correctly:
-    assert getattr(np, name).__module__ == "numpy.exceptions"
-    assert name in np.exceptions.__all__
-    getattr(np.exceptions, name)

@@ -4,6 +4,7 @@ from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
     )
+from numpy.exceptions import AxisError
 from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
@@ -237,8 +238,8 @@ class TestConcatenate:
         for ndim in [1, 2, 3]:
             a = np.ones((1,)*ndim)
             np.concatenate((a, a), axis=0)  # OK
-            assert_raises(np.AxisError, np.concatenate, (a, a), axis=ndim)
-            assert_raises(np.AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
+            assert_raises(AxisError, np.concatenate, (a, a), axis=ndim)
+            assert_raises(AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
 
         # Scalars cannot be concatenated
         assert_raises(ValueError, concatenate, (0,))
@@ -444,8 +445,8 @@ def test_stack():
     expected_shapes = [(10, 3), (3, 10), (3, 10), (10, 3)]
     for axis, expected_shape in zip(axes, expected_shapes):
         assert_equal(np.stack(arrays, axis).shape, expected_shape)
-    assert_raises_regex(np.AxisError, 'out of bounds', stack, arrays, axis=2)
-    assert_raises_regex(np.AxisError, 'out of bounds', stack, arrays, axis=-3)
+    assert_raises_regex(AxisError, 'out of bounds', stack, arrays, axis=2)
+    assert_raises_regex(AxisError, 'out of bounds', stack, arrays, axis=-3)
     # all shapes for 2d input
     arrays = [np.random.randn(3, 4) for _ in range(10)]
     axes = [0, 1, 2, -1, -2, -3]

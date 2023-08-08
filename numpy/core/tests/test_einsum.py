@@ -400,7 +400,7 @@ class TestEinsum:
 
         # Suppress the complex warnings for the 'as f8' tests
         with suppress_warnings() as sup:
-            sup.filter(np.ComplexWarning)
+            sup.filter(np.exceptions.ComplexWarning)
 
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
             for n in range(1, 17):

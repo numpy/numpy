@@ -4601,7 +4601,7 @@ class MaskedArray(ndarray):
 
             if self.shape == ():
                 if axis not in (None, 0):
-                    raise np.AxisError(axis=axis, ndim=self.ndim)
+                    raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
