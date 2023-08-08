@@ -2,7 +2,8 @@ project(
   'NumPy',
   'c', 'cpp', 'cython',
   version: run_command(
-    ['python', 'numpy/_build_utils/gitversion.py', '--write', 'numpy/_version.py'],
+    # This should become `numpy/_version.py` in NumPy 2.0
+    ['python', 'numpy/_build_utils/gitversion.py', '--write', 'numpy/version.py'],
     check: true).stdout().strip(),
   license: 'BSD-3',
   meson_version: '>= 1.1.0',

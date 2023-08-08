@@ -155,7 +155,8 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing",
     "testing.overrides",
     "typing",
-    "typing.mypy_plugin"
+    "typing.mypy_plugin",
+    "version"  # Should be removed for NumPy 2.0
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [

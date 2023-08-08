@@ -1,1 +1,1 @@
-from numpy._version import version
+from numpy.version import version

@@ -97,13 +97,9 @@ import warnings
 from ._globals import _NoValue, _CopyMode
 
 
-__version__ = "2.0.0dev0"
-
 # If a version with git hash was stored, use that instead
-try:
-    from ._version import version as __version__
-except ImportError:
-    pass
+from . import version
+from .version import __version__
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.

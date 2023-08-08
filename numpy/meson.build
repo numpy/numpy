@@ -200,7 +200,6 @@ python_sources = [
   '__init__.py',
   '__init__.pyi',
   '_distributor_init.py',
-  '_version.py',
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
@@ -212,7 +211,8 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed'
+  'py.typed',
+  'version.py'
 ]
 
 py.install_sources(

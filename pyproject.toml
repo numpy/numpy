@@ -17,6 +17,7 @@ requires = [
 
 [project]
 name = "numpy"
+version = "2.0.0dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -49,7 +50,6 @@ classifiers = [
     'Operating System :: Unix',
     'Operating System :: MacOS',
 ]
-dynamic = ["version"]
 
 [project.scripts]
 f2py = 'numpy.f2py.f2py2e:main'

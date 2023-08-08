@@ -1,12 +1,13 @@
 import os
+import textwrap
 
 
 def init_version():
-    init = os.path.join(os.path.dirname(__file__), '../__init__.py')
+    init = os.path.join(os.path.dirname(__file__), '../../pyproject.toml')
     data = open(init).readlines()
 
     version_line = next(
-        line for line in data if line.startswith('__version__ =')
+        line for line in data if line.startswith('version =')
     )
 
     version = version_line.strip().split(' = ')[1]
@@ -25,7 +26,7 @@ def git_version(version):
 
         try:
             p = subprocess.Popen(
-                ['git', 'log', '-1', '--format="%h %aI"'],
+                ['git', 'log', '-1', '--format="%H %h %aI"'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=os.path.dirname(__file__),
@@ -35,7 +36,7 @@ def git_version(version):
         else:
             out, err = p.communicate()
             if p.returncode == 0:
-                git_hash, git_date = (
+                git_hash, git_hash_short, git_date = (
                     out.decode('utf-8')
                     .strip()
                     .replace('"', '')
@@ -48,9 +49,10 @@ def git_version(version):
                     [tag for tag in version.split('+')
                      if not tag.startswith('git')]
                 )
-                version += f'+git{git_date}.{git_hash}'
+                version += f'+git{git_date}.{git_hash_short}'
 
-        return version
+        return version, git_hash
+
 
 
 if __name__ == "__main__":
@@ -60,10 +62,21 @@ if __name__ == "__main__":
     parser.add_argument('--write', help="Save version to this file")
     args = parser.parse_args()
 
-    version = git_version(init_version())
+    version, git_hash = git_version(init_version())
+
+    # For NumPy 2.0, this should only have one field: `version`
+    template = textwrap.dedent(f'''
+        version = "{version}"
+        __version__ = version
+        full_version = version
+
+        git_revision = "{git_hash}"
+        release = 'dev' not in version and '+' not in version
+        short_version = version.split("+")[0]
+    ''')
 
     if args.write:
         with open(args.write, 'w') as f:
-            f.write(f'version = "{version}"\n')
+            f.write(template)
 
     print(version)
