@@ -68,6 +68,9 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 __version__ = '0.14.0.dev0'
 
+# The numpy-vendored version of Meson
+meson_cli = str(pathlib.Path(__file__).resolve().parent.parent.parent / 'meson' / 'meson.py')
+
 
 # XXX: Once Python 3.8 is our minimum supported version, get rid of
 #      meson_args_keys and use typing.get_args(MesonArgsKeys) instead.
@@ -759,7 +762,7 @@ class Project():
         if reconfigure:
             setup_args.insert(0, '--reconfigure')
 
-        self._run(['meson', 'setup', *setup_args])
+        self._run([meson_cli, 'setup', *setup_args])
 
     def _validate_metadata(self) -> None:
         """Check the pyproject.toml metadata and see if there are any issues."""
@@ -800,7 +803,7 @@ class Project():
             # environment. Using the --ninja-args option allows to
             # provide the exact same semantics for the compile arguments
             # provided by the users.
-            cmd = ['meson', 'compile']
+            cmd = [meson_cli, 'compile']
             args = list(self._meson_args['compile'])
             if args:
                 cmd.append(f'--ninja-args={args!r}')
@@ -815,7 +818,7 @@ class Project():
     def install(self) -> None:
         """Install the Meson project."""
         destdir = os.fspath(self._install_dir)
-        self._run(['meson', 'install', '--quiet', '--no-rebuild', '--destdir', destdir, *self._meson_args['install']])
+        self._run([meson_cli, 'install', '--quiet', '--no-rebuild', '--destdir', destdir, *self._meson_args['install']])
 
     @classmethod
     @contextlib.contextmanager
@@ -911,7 +914,7 @@ class Project():
     def sdist(self, directory: Path) -> pathlib.Path:
         """Generates a sdist (source distribution) in the specified directory."""
         # generate meson dist file
-        self._run(['meson', 'dist', '--allow-dirty', '--no-tests', '--formats', 'gztar', *self._meson_args['dist']])
+        self._run([meson_cli, 'dist', '--allow-dirty', '--no-tests', '--formats', 'gztar', *self._meson_args['dist']])
 
         # move meson dist file to output path
         dist_name = f'{self.name}-{self.version}'
@@ -1028,7 +1031,7 @@ def _check_meson_version(*, version: str = _MESON_REQUIRED_VERSION) -> None:
 
     """
     required_version = _parse_version_string(version)
-    meson_version = subprocess.run(['meson', '--version'], check=False, text=True, capture_output=True).stdout
+    meson_version = subprocess.run([meson_cli, '--version'], check=False, text=True, capture_output=True).stdout
     if _parse_version_string(meson_version) < required_version:
         raise ConfigError(f'Could not find meson version {version} or newer, found {meson_version}.')
 
