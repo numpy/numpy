@@ -2568,3 +2568,12 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool_)
         assert_array_equal(np.logical_and(a, b), expected)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
+    def test_gh_23737(self):
+        with pytest.raises(TypeError, match="not an acceptable base type"):
+            class Y(np.flexible):
+                pass
+
+        with pytest.raises(TypeError, match="not an acceptable base type"):
+            class X(np.flexible, np.ma.core.MaskedArray):
+                pass
