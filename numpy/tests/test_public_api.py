@@ -34,10 +34,6 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
-        'add_newdoc': 'numpy.core.function_base.add_newdoc',
-        'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',

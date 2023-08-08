@@ -431,10 +431,6 @@ from numpy.lib.arraysetops import (
     isin as isin,
 )
 
-from numpy.lib.arrayterator import (
-    Arrayterator as Arrayterator,
-)
-
 from numpy.lib.function_base import (
     select as select,
     piecewise as piecewise,
@@ -3151,8 +3147,6 @@ FPE_DIVIDEBYZERO: L[1]
 FPE_OVERFLOW: L[2]
 FPE_UNDERFLOW: L[4]
 FPE_INVALID: L[8]
-
-FLOATING_POINT_SUPPORT: L[1]
 
 little_endian: Final[bool]
 True_: Final[bool_]

@@ -44,8 +44,8 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'blackman', 'kaiser', 'trapz', 'i0',
+    'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
 

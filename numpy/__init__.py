@@ -116,13 +116,10 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
         raise ImportError(msg) from e
-    
-    __all__ = ['exceptions']
 
     from . import core
     from .core import (
-        _no_nep50_warning, memmap,
-        iinfo, finfo,  # getlimits submodule exports
+        _no_nep50_warning, memmap, Inf, Infinity, NaN, iinfo, finfo,
         False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
@@ -139,15 +136,15 @@ else:
         datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
         double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
         errstate, euler_gamma, exp, exp2, expm1, fabs, find_common_type, 
-        flatiter, flatnonzero, flexible, float128, float16, float32, float64, 
+        flatiter, flatnonzero, flexible, 
         float_, float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
         format_float_positional, format_float_scientific, format_parser, 
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
         get_printoptions, getbufsize, geterr, geterrcall, greater, 
         greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
-        indices, inexact, inf, infty, inner, int16, int32, int64, int8, int_,
-        intc, integer, intp, invert, is_busday, isclose, isfinite, isfortran,
+        indices, inexact, inf, infty, inner, int_,
+        intc, integer, invert, is_busday, isclose, isfinite, isfortran,
         isinf, isnan, isnat, isscalar, issctype, issubdtype, lcm, ldexp,
         left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
         log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not, 
@@ -166,14 +163,24 @@ else:
         shares_memory, short, sign, signbit, signedinteger, sin, single, 
         singlecomplex, sinh, size, sometrue, sort, spacing, sqrt, square, 
         squeeze, stack, std, str_, string_, subtract, sum, swapaxes, take,
-        tan, tanh, tensordot, test, timedelta64, trace, transpose, 
-        true_divide, trunc, typecodes, ubyte, ufunc, uint, uint16, uint32, 
-        uint64, uint8, uintc, uintp, ulonglong, unicode_, unsignedinteger, 
-        ushort, var, vdot, void, vstack, warnings, where, zeros, zeros_like
+        tan, tanh, tensordot, timedelta64, trace, transpose, 
+        true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
+        unicode_, unsignedinteger, ushort, var, vdot, void, vstack, where, 
+        zeros, zeros_like, _get_promotion_state, _set_promotion_state
     )
 
-    from . import exceptions
-    from . import dtypes
+    sized_aliases = ["int8", "int16", "int32", "int64", "intp", 
+                     "uint8", "uint16", "uint32", "uint64", "uintp",
+                     "float16", "float32", "float64", "float96", "float128",
+                     "complex64", "complex128", "complex192", "complex256"]
+    
+    for sa in sized_aliases:
+        try:
+            globals()[sa] = getattr(core, sa)
+        except AttributeError:
+            pass
+    del sa, sized_aliases
+
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
@@ -200,17 +207,12 @@ else:
         put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
         roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
         select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
-        take_along_axis, test, tile, tracemalloc_domain, trapz, tri, tril,
+        take_along_axis, tile, tracemalloc_domain, trapz, tri, tril,
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
-        unravel_index, unwrap, vander, vectorize, vsplit
+        unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
+        triu, triu_indices, triu_indices_from, isposinf, RankWarning, disp,
+        deprecate, deprecate_with_doc, who, safe_eval, recfromtxt, recfromcsv
     )
-
-    from . import linalg
-    from . import fft
-    from . import polynomial
-    from . import random
-    from . import ctypeslib
-    from . import ma
     from . import matrixlib as _mat
     from .matrixlib import (
         asmatrix, bmat, defmatrix, mat, matrix, test
@@ -259,29 +261,12 @@ else:
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
 
+    __all__ = ['exceptions']
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
-
-    # Remove one of the two occurrences of `issubdtype`, which is exposed as
-    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
-    __all__.remove('issubdtype')
-
-    # These are exported by np.core, but are replaced by the builtins below
-    # remove them to ensure that we don't end up with `np.long == np.int_`,
-    # which would be a breaking change.
-    __all__.remove('long')
-    __all__.remove('unicode')
-
-    # Remove things that are in the numpy.lib but not in the numpy namespace
-    # Note that there is a test under path: 
-    # `numpy/tests/test_public_api.py:test_numpy_namespace`
-    # that prevents adding more things to the main namespace by accident.
-    # The list below will grow until the `from .lib import *` fixme above is
-    # taken care of
-    __all__.remove('Arrayterator')
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -292,6 +277,37 @@ else:
         # Warn for expired attributes
         import warnings
 
+        if attr == "linalg":
+            import numpy.linalg as linalg
+            return linalg
+        elif attr == "fft":
+            import numpy.fft as fft
+            return fft
+        elif attr == "dtypes":
+            import numpy.dtypes as dtypes
+            return dtypes
+        elif attr == "random":
+            import numpy.random as random
+            return random
+        elif attr == "polynomial":
+            import numpy.polynomial as polynomial
+            return polynomial
+        elif attr == "ma":
+            import numpy.ma as ma
+            return ma
+        elif attr == "ctypeslib":
+            import numpy.ctypeslib as ctypeslib
+            return ctypeslib
+        elif attr == "exceptions":
+            import numpy.exceptions as exceptions
+            return exceptions
+        elif attr == 'testing':
+            import numpy.testing as testing
+            return testing
+        elif attr == "matlib":
+            import numpy.matlib as matlib
+            return matlib
+
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
             # the AttributeError
@@ -301,10 +317,6 @@ else:
 
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr])
-
-        if attr == 'testing':
-            import numpy.testing as testing
-            return testing
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
