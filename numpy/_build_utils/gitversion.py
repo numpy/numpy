@@ -54,7 +54,6 @@ def git_version(version):
         return version, git_hash
 
 
-
 if __name__ == "__main__":
     import argparse
 
