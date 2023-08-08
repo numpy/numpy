@@ -160,21 +160,6 @@ def test_array_impossible_casts(array):
         np.array(rt, dtype="M8")
 
 
-# TODO: remove when fastCopyAndTranspose deprecation expires
-@pytest.mark.parametrize("a",
-    (
-        np.array(2),  # 0D array
-        np.array([3, 2, 7, 0]),  # 1D array
-        np.arange(6).reshape(2, 3)  # 2D array
-    ),
-)
-def test_fastCopyAndTranspose(a):
-    with pytest.deprecated_call():
-        b = np.fastCopyAndTranspose(a)
-        assert_equal(b, a.T)
-        assert b.flags.owndata
-
-
 def test_array_astype():
     a = np.arange(6, dtype='f4').reshape(2, 3)
     # Default behavior: allows unsafe casts, keeps memory layout,

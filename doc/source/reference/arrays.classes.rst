@@ -511,8 +511,8 @@ on item retrieval and comparison operations.
 
 .. _arrays.classes.rec:
 
-Record arrays (:mod:`numpy.rec`)
-================================
+Record arrays
+=============
 
 .. seealso:: :ref:`routines.array-creation.rec`, :ref:`routines.dtype`,
              :ref:`arrays.dtypes`.
@@ -528,6 +528,11 @@ scalar data type object :class:`record`.
 
    recarray
    record
+
+.. note::
+
+   The pandas DataFrame is more powerful than record array. If possible,
+   please use pandas DataFrame instead.
 
 Masked arrays (:mod:`numpy.ma`)
 ===============================

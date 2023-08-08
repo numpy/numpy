@@ -576,7 +576,7 @@ So the following is also valid (note the ``'f4'`` dtype for the ``'a'`` field):
  array([True, False])
 
 To compare two structured arrays, it must be possible to promote them to a
-common dtype as returned by `numpy.result_type` and `np.promote_types`.
+common dtype as returned by `numpy.result_type` and `numpy.promote_types`.
 This enforces that the number of fields, the field names, and the field titles
 must match precisely.
 When promotion is not possible, for example due to mismatching field names,

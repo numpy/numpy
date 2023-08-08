@@ -98,7 +98,8 @@ multiarray_types_api = {
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
-    '__unused_indices__': [40, 41, 67, 68, 163, 164, 201, 202, 278, 291],
+    '__unused_indices__': [
+        40, 41, 65, 67, 68, 163, 164, 171, 201, 202, 278, 291],
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
     # Unused slot 41, was `PyArray_GetNumericOps`,
@@ -125,7 +126,7 @@ multiarray_funcs_api = {
     'PyArray_ScalarAsCtype':                (62,),
     'PyArray_CastScalarToCtype':            (63,),
     'PyArray_CastScalarDirect':             (64,),
-    'PyArray_ScalarFromObject':             (65,),
+    # Unused slot 65, was `PyArray_ScalarFromObject`
     'PyArray_GetCastFunc':                  (66,),
     # Unused slot 67, was `PyArray_FromDims`
     # Unused slot 68, was `PyArray_FromDimsAndDataAndDescr`
@@ -231,7 +232,7 @@ multiarray_funcs_api = {
     'PyArray_Concatenate':                  (168,),
     'PyArray_InnerProduct':                 (169,),
     'PyArray_MatrixProduct':                (170,),
-    'PyArray_CopyAndTranspose':             (171,),
+    # Unused slot 171, was `PyArray_CopyAndTranspose`
     'PyArray_Correlate':                    (172,),
     'PyArray_TypestrConvert':               (173,),
     'PyArray_DescrConverter':               (174,),
