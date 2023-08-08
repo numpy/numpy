@@ -1,0 +1,72 @@
+Complex types - Underlying type changes
+---------------------------------------
+
+The underlying C types for all of numpy's complex types have been changed to
+use C99 complex types. Up until now the following was being used to represent
+complex types:
+
+.. code-block:: c
+
+    typedef struct { double real, imag; } npy_cdouble;
+    typedef struct { float real, imag; } npy_cfloat;
+    typedef struct {npy_longdouble real, imag;} npy_clongdouble;
+
+Using the ``struct`` representation ensured that complex numbers could be used
+on all platforms, even the ones without support for built-in complex types. It
+also meant that a static library had to be shipped together with NumPy to
+provide a C99 compatibility layer for downstream packages to use. In recent
+years however, support for native complex types has been improved immensely,
+with MSVC adding built-in support for the ``complex.h`` header in 2019. This
+led to the decision to use native complex types, remove the compatibility layer
+and stop shipping a static library which created a lot of build headaches for
+downstream packages that wanted to use this.
+
+Thus, starting with NumPy 2.0, the following types will be used instead:
+
+.. code-block:: c
+
+    typedef double _Complex npy_cdouble;
+    typedef float _Complex npy_cfloat;
+    typedef long double _Complex npy_clongdouble;
+
+Under MSVC, the equivalent MSVC types will be used.
+
+While this change does not affect the memory layout of complex types, it
+changes the API to be used, in order to directly retrieve or write the real or
+complex part of the complex number, since direct field access (as in ``c.real``
+or ``c.imag``) is no longer an option. You can now use utilities provided in
+``numpy/npy_math.h`` to do these operations, like this:
+
+.. code-block:: c
+
+    npy_cdouble c;
+    npy_csetreal(&c, 1.0);
+    npy_csetimag(&c, 0.0);
+    printf("%d + %di\n", npy_creal(c), npy_cimag(c));
+
+To ease cross-version compatibility, equivalent macros have been added that
+use these APIs.
+
+.. code-block:: c
+
+    #define NPY_CSETREAL(z, r) npy_csetreal(z, r)
+    #define NPY_CSETIMAG(z, i) npy_csetimag(z, i)
+
+A compatibility layer is also provided in ``numpy/npy_2_complexcompat.h``. It
+checks whether the macros exist, and falls back to the 1.x syntax in case they
+don't.
+
+.. code-block:: c
+
+    #include <numpy/npy_math.h>
+
+    #ifndef NPY_CSETREALF
+    #define NPY_CSETREALF(c, r) (c)->real = (r)
+    #endif
+    #ifndef NPY_CSETIMAGF
+    #define NPY_CSETIMAGF(c, i) (c)->imag = (i)
+    #endif
+
+We suggest all downstream packages that need this functionality to copy-paste
+the compatibility layer code into their own sources and use that, so that
+they can continue to support both NumPy 1.x and 2.x without issues.
