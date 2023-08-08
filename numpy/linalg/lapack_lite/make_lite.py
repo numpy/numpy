@@ -369,7 +369,7 @@ def main():
         scrubF2CSource(c_file)
 
         # patch any changes needed to the C file
-        c_patch_file = c_file + '.patch'
+        c_patch_file = os.path.basename(c_file) + '.patch'
         if os.path.exists(c_patch_file):
             subprocess.check_call(['patch', '-u', c_file, c_patch_file])
 

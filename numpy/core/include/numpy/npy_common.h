@@ -408,7 +408,6 @@ extern "C++" {
 #ifdef __cplusplus
 }
 #endif
-#undef complex
 typedef double _Complex npy_cdouble;
 typedef float _Complex npy_cfloat;
 typedef longdouble_t _Complex npy_clongdouble;
