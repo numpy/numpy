@@ -82,7 +82,7 @@ gitwash-update:
 
 #SPHINXBUILD="LANG=C sphinx-build"
 NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
-GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
+GITVER ?= $(shell cd ..; git rev-parse --short HEAD || echo Unknown)
 
 version-check:
 ifeq "$(GITVER)" "Unknown"
