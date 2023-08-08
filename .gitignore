@@ -119,7 +119,8 @@ doc/source/savefig/
 
 # Things specific to this project #
 ###################################
-numpy/_version.py
+# The line below should change to numpy/_version.py for NumPy 2.0
+numpy/version.py
 numpy/core/__svn_version__.py
 doc/numpy.scipy.org/_build
 numpy/__config__.py
