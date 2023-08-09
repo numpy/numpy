@@ -683,9 +683,9 @@ cdef class RandomState:
                 randoms_data[i] = random_positive_int(&self._bitgen)
         return randoms
 
-    def randint(self, low, high=None, size=None, dtype=np.long):
+    def randint(self, low, high=None, size=None, dtype=int):
         """
-        randint(low, high=None, size=None, dtype=np.long)
+        randint(low, high=None, size=None, dtype=int)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -723,6 +723,7 @@ cdef class RandomState:
               and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
               Since NumPy 2.0, NumPy's default integer is 32bit on 32bit platforms
               and 64bit on 64bit platforms.  Which corresponds to `np.intp`.
+              (`dtype=int` is not the same as in most NumPy functions.)
 
         Returns
         -------
@@ -771,7 +772,7 @@ cdef class RandomState:
             high = low
             low = 0
 
-        _dtype = np.dtype(dtype)
+        _dtype = np.dtype(dtype) if dtype is not int else np.dtype("long")
 
         if not _dtype.isnative:
             # numpy 1.17.0, 2019-05-28
