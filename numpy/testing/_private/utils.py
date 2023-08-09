@@ -744,6 +744,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return
 
         val = comparison(x, y)
+        invalids = np.logical_not(val)
 
         if isinstance(val, bool):
             cond = val
@@ -771,27 +772,38 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     if np.issubdtype(x.dtype, np.unsignedinteger):
                         error2 = abs(y - x)
                         np.minimum(error, error2, out=error)
-                    max_abs_error = max(error)
+
+                    reduced_error = error[invalids]
+                    max_abs_error = max(reduced_error)
                     if getattr(error, 'dtype', object_) == object_:
-                        remarks.append('Max absolute difference: '
+                        remarks.append('Max absolute difference among violations: '
                                        + str(max_abs_error))
                     else:
-                        remarks.append('Max absolute difference: '
+                        remarks.append('Max absolute difference among violations: '
                                        + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
                     nonzero = bool_(y != 0)
-                    if all(~nonzero):
+                    nonzero_and_invalid = np.logical_and(invalids, nonzero)
+                    
+                    if all(~nonzero_and_invalid):
                         max_rel_error = array(inf)
                     else:
-                        max_rel_error = max(error[nonzero] / abs(y[nonzero]))
-                    if getattr(error, 'dtype', object_) == object_:
-                        remarks.append('Max relative difference: '
+                        nonzero_invalid_error = error[nonzero_and_invalid]
+
+                        broadcasted_y = np.broadcast_to(y, error.shape)
+                        nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
+
+                        max_rel_error = max(nonzero_invalid_error 
+                                            / abs(nonzero_invalid_y))
+                        
+                    if getattr(error, 'dtype', object_) == object_: 
+                        remarks.append('Max relative difference among violations: '
                                        + str(max_rel_error))
-                    else:
-                        remarks.append('Max relative difference: '
+                    else:               
+                        remarks.append('Max relative difference among violations: '
                                        + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
