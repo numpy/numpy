@@ -463,14 +463,11 @@ from numpy.lib.function_base import (
     kaiser as kaiser,
     trapz as trapz,
     i0 as i0,
-    add_newdoc as add_newdoc,
-    add_docstring as add_docstring,
     meshgrid as meshgrid,
     delete as delete,
     insert as insert,
     append as append,
     interp as interp,
-    add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
 )
 

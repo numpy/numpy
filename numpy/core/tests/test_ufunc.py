@@ -8,6 +8,7 @@ import pytest
 from pytest import param
 
 import numpy as np
+import numpy.core.umath as ncu
 import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
 import numpy.core._operand_flag_tests as opflag_tests
@@ -2699,9 +2700,9 @@ def test_ufunc_out_casterrors():
     # The following array can be added to itself as an object array, but
     # the result cannot be cast to an integer output:
     value = 123  # relies on python cache (leak-check will still find it)
-    arr = np.array([value] * int(np.BUFSIZE * 1.5) +
+    arr = np.array([value] * int(ncu.BUFSIZE * 1.5) +
                    ["string"] +
-                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+                   [value] * int(1.5 * ncu.BUFSIZE), dtype=object)
     out = np.ones(len(arr), dtype=np.intp)
 
     count = sys.getrefcount(value)
@@ -2724,24 +2725,24 @@ def test_ufunc_out_casterrors():
     assert out[-1] == 1
 
 
-@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+@pytest.mark.parametrize("bad_offset", [0, int(ncu.BUFSIZE * 1.5)])
 def test_ufunc_input_casterrors(bad_offset):
     value = 123
     arr = np.array([value] * bad_offset +
                    ["string"] +
-                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+                   [value] * int(1.5 * ncu.BUFSIZE), dtype=object)
     with pytest.raises(ValueError):
         # Force cast inputs, but the buffered cast of `arr` to intp fails:
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
 @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+@pytest.mark.parametrize("bad_offset", [0, int(ncu.BUFSIZE * 1.5)])
 def test_ufunc_input_floatingpoint_error(bad_offset):
     value = 123
     arr = np.array([value] * bad_offset +
                    [np.nan] +
-                   [value] * int(1.5 * np.BUFSIZE))
+                   [value] * int(1.5 * ncu.BUFSIZE))
     with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
         # Force cast inputs, but the buffered cast of `arr` to intp fails:
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
@@ -2757,7 +2758,7 @@ def test_trivial_loop_invalid_cast():
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize("offset",
-        [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
+        [0, ncu.BUFSIZE//2, int(1.5*ncu.BUFSIZE)])
 def test_reduce_casterrors(offset):
     # Test reporting of casting errors in reductions, we test various
     # offsets to where the casting error will occur, since these may occur
@@ -2766,7 +2767,7 @@ def test_reduce_casterrors(offset):
     value = 123  # relies on python cache (leak-check will still find it)
     arr = np.array([value] * offset +
                    ["string"] +
-                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+                   [value] * int(1.5 * ncu.BUFSIZE), dtype=object)
     out = np.array(-1, dtype=np.intp)
 
     count = sys.getrefcount(value)

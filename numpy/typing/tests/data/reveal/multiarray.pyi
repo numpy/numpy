@@ -132,8 +132,6 @@ reveal_type(np.busdaycalendar(holidays=[M]))  # E: busdaycalendar
 reveal_type(np.compare_chararrays("a", "b", "!=", rstrip=False))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.compare_chararrays(b"a", b"a", "==", True))  # E: ndarray[Any, dtype[bool_]]
 
-reveal_type(np.add_docstring(func, "test"))  # E: None
-
 reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], flags=["c_index"]))  # E: tuple[nditer, ...]
 reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_flags=[["readonly", "readonly"]]))  # E: tuple[nditer, ...]
 reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_dtypes=np.int_))  # E: tuple[nditer, ...]

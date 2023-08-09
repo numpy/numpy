@@ -203,7 +203,7 @@ else:
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar, ndenumerate, ndindex, ogrid, packbits, pad,
         percentile, piecewise, place, poly, poly1d, polyadd, polyder,
-        polydiv, polyfit, polyint, polymul, polynomial, polysub, polyval,
+        polydiv, polyfit, polyint, polymul, polysub, polyval,
         put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
         roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
         select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
