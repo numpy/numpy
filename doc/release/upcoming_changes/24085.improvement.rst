@@ -20,4 +20,6 @@ Complex types - Underlying type changes
 * To ease cross-version compatibility, equivalent macros and a compatibility
   layer have been added which can be used by downstream packages to continue
   to support both NumPy 1.x and 2.x. See :ref:`complex-numbers` for more info.
-  
+
+* ``numpy/npy_common.h`` now includes ``complex.h``, which means that ``complex``
+  is now a reserved keyword.

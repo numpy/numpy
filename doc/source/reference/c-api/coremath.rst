@@ -277,10 +277,7 @@ part of a complex number:
     also meant that a static library had to be shipped together with NumPy to
     provide a C99 compatibility layer for downstream packages to use. In recent
     years however, support for native complex types has been improved immensely,
-    with MSVC adding built-in support for the ``complex.h`` header in 2019. This
-    led to the decision to use native complex types, remove the compatibility layer
-    and stop shipping a static library which created a lot of build headaches for
-    downstream packages that wanted to use this.
+    with MSVC adding built-in support for the ``complex.h`` header in 2019.
 
     To ease cross-version compatibility, macros that use the new set APIs have
     been added.
@@ -307,7 +304,9 @@ part of a complex number:
 
     We suggest all downstream packages that need this functionality to copy-paste
     the compatibility layer code into their own sources and use that, so that
-    they can continue to support both NumPy 1.x and 2.x without issues.
+    they can continue to support both NumPy 1.x and 2.x without issues. Note also
+    that the ``complex.h`` header is included in ``numpy/npy_common.h``, which
+    makes ``complex`` a reserved keyword.
 
 .. _linking-npymath:
 
