@@ -81,7 +81,7 @@ gitwash-update:
 #
 
 #SPHINXBUILD="LANG=C sphinx-build"
-NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:9])" 2>/dev/null)
 GITVER ?= $(shell cd ..; git rev-parse --short HEAD || echo Unknown)
 
 version-check:
