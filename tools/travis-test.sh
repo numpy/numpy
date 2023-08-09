@@ -16,7 +16,7 @@ fi
 
 source builds/venv/bin/activate
 
-pip install --upgrade pip 'setuptools<49.2.0'
+pip install --upgrade pip 'setuptools<49.2.0' build
 
 pip install -r build_requirements.txt
 
@@ -223,7 +223,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
-  $PYTHON setup.py sdist
+  $PYTHON -m build --sdist
   # Make another virtualenv to install into
   $PYTHON -m venv venv-for-wheel
   . venv-for-wheel/bin/activate
