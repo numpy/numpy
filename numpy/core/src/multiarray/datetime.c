@@ -269,7 +269,8 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata. The date is assumed to be valid.
  *
@@ -278,7 +279,7 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out)
 {
@@ -442,13 +443,14 @@ PyArray_TimedeltaStructToTimedelta(
     return -1;
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int
-convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
-                                    npy_datetime dt,
-                                    npy_datetimestruct *out)
+NpyDatetime_ConvertDatetime64ToDatetimeStruct(
+        PyArray_DatetimeMetaData *meta, npy_datetime dt,
+        npy_datetimestruct *out)
 {
     npy_int64 days;
 
@@ -2090,7 +2092,8 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
  *
@@ -2109,9 +2112,9 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
-                                     NPY_DATETIMEUNIT *out_bestunit,
-                                     int apply_tzinfo)
+NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
+        PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
+        int apply_tzinfo)
 {
     PyObject *tmp;
     int isleap;
@@ -2343,7 +2346,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the local datetime into a datetimestruct */
-    if (convert_pydatetime_to_datetimestruct(loc_dt, &loc_dts, NULL, 0) < 0) {
+    if (NpyDatetime_ConvertPyDateTimeToDatetimeStruct(loc_dt, &loc_dts, NULL, 0) < 0) {
         Py_DECREF(loc_dt);
         return -1;
     }
@@ -2399,8 +2402,9 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         /* Parse the ISO date */
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = NPY_FR_ERROR;
-        if (parse_iso_8601_datetime(str, len, meta->base, casting,
-                                &dts, &bestunit, NULL) < 0) {
+        if (NpyDatetime_ParseISO8601Datetime(
+                str, len, meta->base, casting,
+                &dts, &bestunit, NULL) < 0) {
             Py_DECREF(utf8);
             return -1;
         }
@@ -2411,7 +2415,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
 
-        if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
+        if (NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out) < 0) {
             Py_DECREF(utf8);
             return -1;
         }
@@ -2503,7 +2507,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = NPY_FR_ERROR;
 
-        code = convert_pydatetime_to_datetimestruct(obj, &dts, &bestunit, 1);
+        code = NpyDatetime_ConvertPyDateTimeToDatetimeStruct(obj, &dts, &bestunit, 1);
         if (code == -1) {
             return -1;
         }
@@ -2526,7 +2530,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 }
             }
 
-            return convert_datetimestruct_to_datetime(meta, &dts, out);
+            return NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out);
         }
     }
 
@@ -2860,7 +2864,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     }
 
     /* Convert to a datetimestruct */
-    if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
         return NULL;
     }
 
@@ -3025,11 +3029,11 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* Otherwise convert through a datetimestruct */
-    if (convert_datetime_to_datetimestruct(src_meta, src_dt, &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(src_meta, src_dt, &dts) < 0) {
             *dst_dt = NPY_DATETIME_NAT;
             return -1;
     }
-    if (convert_datetimestruct_to_datetime(dst_meta, &dts, dst_dt) < 0) {
+    if (NpyDatetime_ConvertDatetimeStructToDatetime64(dst_meta, &dts, dst_dt) < 0) {
         *dst_dt = NPY_DATETIME_NAT;
         return -1;
     }
@@ -3531,18 +3535,20 @@ find_string_array_datetime64_type(PyArrayObject *arr,
                 tmp_buffer[maxlen] = '\0';
 
                 tmp_meta.base = NPY_FR_ERROR;
-                if (parse_iso_8601_datetime(tmp_buffer, maxlen, -1,
-                                    NPY_UNSAFE_CASTING, &dts,
-                                    &tmp_meta.base, NULL) < 0) {
+                if (NpyDatetime_ParseISO8601Datetime(
+                        tmp_buffer, maxlen, -1,
+                        NPY_UNSAFE_CASTING, &dts,
+                        &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }
             }
             /* Otherwise parse the data in place */
             else {
                 tmp_meta.base = NPY_FR_ERROR;
-                if (parse_iso_8601_datetime(data, tmp - data, -1,
-                                    NPY_UNSAFE_CASTING, &dts,
-                                    &tmp_meta.base, NULL) < 0) {
+                if (NpyDatetime_ParseISO8601Datetime(
+                        data, tmp - data, -1,
+                        NPY_UNSAFE_CASTING, &dts,
+                        &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }
             }
@@ -3961,7 +3967,7 @@ time_to_string_resolve_descriptors(
         if (given_descrs[0]->type_num == NPY_DATETIME) {
             PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
             assert(meta != NULL);
-            size = get_datetime_iso_8601_strlen(0, meta->base);
+            size = NpyDatetime_GetDatetimeISO8601StrLen(0, meta->base);
         }
         else {
             /*

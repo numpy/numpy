@@ -52,7 +52,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
 
     See Also
     --------
-    dtype, sctype2char, maximum_sctype
+    dtype, sctype2char
 
     Examples
     --------

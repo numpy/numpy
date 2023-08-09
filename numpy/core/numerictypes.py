@@ -90,7 +90,7 @@ from .._utils import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypes',
-           'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
+           'ScalarType', 'obj2sctype', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
@@ -134,6 +134,9 @@ def maximum_sctype(t):
     """
     Return the scalar type of highest precision of the same kind as the input.
 
+    .. deprecated:: 2.0
+        Use an explicit dtype like int64 or float64 instead.
+
     Parameters
     ----------
     t : dtype or dtype specifier
@@ -168,6 +171,15 @@ def maximum_sctype(t):
     <class 'numpy.float128'> # may vary
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`maximum_sctype` is deprecated. Use an explicit dtype like int64 "
+        "or float64 instead. (deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     g = obj2sctype(t)
     if g is None:
         return t
@@ -245,7 +257,7 @@ def obj2sctype(rep, default=None):
 
     See Also
     --------
-    sctype2char, issctype, issubsctype, issubdtype, maximum_sctype
+    sctype2char, issctype, issubsctype, issubdtype
 
     Examples
     --------
@@ -434,14 +446,12 @@ class _typedict(dict):
         return dict.__getitem__(self, obj2sctype(obj))
 
 nbytes = _typedict()
-_alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
     for name, info in _concrete_typeinfo.items():
         obj = info.type
         nbytes[obj] = info.bits // 8
-        _alignment[obj] = info.alignment
         if len(info) > 5:
             _maxvals[obj] = info.max
             _minvals[obj] = info.min
@@ -502,12 +512,6 @@ def sctype2char(sctype):
         # for compatibility
         raise KeyError(sctype)
     return dtype(sctype).char
-
-# Create dictionary of casting functions that wrap sequences
-# indexed by type or type character
-cast = _typedict()
-for key in _concrete_types:
-    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
 
 def _scalar_type_key(typ):

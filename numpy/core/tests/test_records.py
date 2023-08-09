@@ -132,7 +132,9 @@ class TestFromrecords:
                       dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))
 
         record = arr_0d[()]
-        assert_equal(repr(record), "(1, 2., '2003')")
+        assert_equal(repr(record), 
+            "np.record((1, 2.0, '2003'), "
+            "dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])")
         # 1.13 converted to python scalars before the repr
         try:
             np.set_printoptions(legacy='1.13')
@@ -147,9 +149,10 @@ class TestFromrecords:
         recarr = a.view(np.recarray)
         recordview = a.view(np.dtype((np.record, a.dtype)))
 
-        recordarr_r = eval("numpy." + repr(recordarr), {'numpy': np})
-        recarr_r = eval("numpy." + repr(recarr), {'numpy': np})
-        recordview_r = eval("numpy." + repr(recordview), {'numpy': np})
+        recordarr_r = eval("np." + repr(recordarr), {'np': np})
+        recarr_r = eval("np." + repr(recarr), {'np': np})
+        # Prints the type `numpy.record` as part of the dtype:
+        recordview_r = eval("np." + repr(recordview), {'np': np, 'numpy': np})
 
         assert_equal(type(recordarr_r), np.recarray)
         assert_equal(recordarr_r.dtype.type, np.record)

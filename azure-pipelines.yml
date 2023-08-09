@@ -32,42 +32,6 @@ stages:
       - bash: echo "##vso[task.setvariable variable=start_main;isOutput=true]$RET"
         name: result
 
-- stage: InitialTests
-  condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
-  dependsOn: Check
-  jobs:
-
-  # Native build is based on gcc flag `-march=native`
-  - job: Linux_baseline_native
-    pool:
-      vmImage: 'ubuntu-20.04'
-    steps:
-    - script: |
-        git submodule update --init
-      displayName: 'Fetch submodules'
-    - script: |
-            if ! `gcc 2>/dev/null`; then
-                sudo apt install gcc
-            fi
-            sudo add-apt-repository ppa:deadsnakes/ppa -y
-            sudo apt install python3.9
-            sudo apt install python3.9-dev
-            sudo apt install python3.9-distutils
-            # python3 has no setuptools, so install one to get us going
-            python3.9 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            python3.9 -m pip install --user -r test_requirements.txt
-      displayName: 'install python/requirements'
-    - script: |
-            python3.9 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
-            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      displayName: 'Run native baseline Build / Tests'
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFiles: '**/test-*.xml'
-        failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for baseline/native'
-
 - stage: ComprehensiveTests
   condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
   dependsOn: Check
@@ -101,6 +65,7 @@ stages:
         git submodule update --init
       displayName: 'Fetch submodules'
     - script: |
+            # yum does not have a ninja package, so use the PyPI one
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc " \
@@ -111,6 +76,7 @@ stages:
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
+            python3 -m pip install ninja && \
             python3 -m pip install -r test_requirements.txt && \
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
@@ -175,7 +141,7 @@ stages:
     - script: |
         python -m pip install -r test_requirements.txt
         # Don't use doc_requirements.txt since that messes up tests
-        python -m pip install vulture sphinx==4.3.0 numpydoc==1.4.0
+        python -m pip install vulture sphinx==4.3.0 numpydoc==1.4.0 ninja
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
@@ -254,15 +220,15 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
-            # NPY_USE_BLAS_ILP64: '1'
-            # TODO: failing because of an issue with ILP64 BLAS being downloaded,
-            #       and that not being handled automatically yet
-            # PyPy39-64bit-fast:
-              # PYTHON_VERSION: 'pypy3.9'
-              # PYTHON_ARCH: 'x64'
-              # TEST_MODE: fast
-              # BITS: 64
-              # NPY_USE_BLAS_ILP64: '1'
+            NPY_USE_BLAS_ILP64: '1'
+          PyPy39-64bit-fast:
+            PYTHON_VERSION: 'pypy3.9'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            # Broken - it builds but _multiarray_umath doesn't import - needs investigating
+            DISABLE_BLAS: '1'
 
     steps:
     - template: azure-steps-windows.yml

@@ -243,11 +243,11 @@ add_newdoc_for_scalar_type('void', [],
        This can be an array-like, in which case an array may
        be returned.
     dtype : dtype, optional
-        If provided the dtype of the new scalar.  This dtype must
-        be "void" dtype (i.e. a structured or unstructured void,
-        see also :ref:`defining-structured-types`).
+       If provided the dtype of the new scalar.  This dtype must
+       be "void" dtype (i.e. a structured or unstructured void,
+       see also :ref:`defining-structured-types`).
 
-       ..versionadded:: 1.24
+       .. versionadded:: 1.24
 
     Notes
     -----
@@ -267,13 +267,13 @@ add_newdoc_for_scalar_type('void', [],
     Examples
     --------
     >>> np.void(5)
-    void(b'\x00\x00\x00\x00\x00')
+    np.void(b'\x00\x00\x00\x00\x00')
     >>> np.void(b'abcd')
-    void(b'\x61\x62\x63\x64')
-    >>> np.void((5, 3.2, "eggs"), dtype="i,d,S5")
-    (5, 3.2, b'eggs')  # looks like a tuple, but is `np.void`
+    np.void(b'\x61\x62\x63\x64')
+    >>> np.void((3.2, b'eggs'), dtype="d,S5")
+    np.void((3.2, b'eggs'), dtype=[('f0', '<f8'), ('f1', 'S5')])
     >>> np.void(3, dtype=[('x', np.int8), ('y', np.int8)])
-    (3, 3)  # looks like a tuple, but is `np.void`
+    np.void((3, 3), dtype=[('x', 'i1'), ('y', 'i1')])
 
     """)
 

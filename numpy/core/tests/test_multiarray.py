@@ -24,6 +24,7 @@ import mmap
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.core._rational_tests import rational
+from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
@@ -566,6 +567,9 @@ class TestAssignment:
         assert_raises((AttributeError, TypeError), assign, C())
         assert_raises(ValueError, assign, [1])
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*set_string_function.*:DeprecationWarning"
+    )
     def test_unicode_assignment(self):
         # gh-5049
         from numpy.core.numeric import set_string_function
@@ -1479,7 +1483,7 @@ class TestStructured:
         assert_equal(xx, [[b'', b''], [b'', b'']])
         # check for no uninitialized memory due to viewing S0 array
         assert_equal(xx[:].dtype, xx.dtype)
-        assert_array_equal(eval(repr(xx), dict(array=np.array)), xx)
+        assert_array_equal(eval(repr(xx), dict(np=np, array=np.array)), xx)
 
         b = io.BytesIO()
         np.save(b, xx)
@@ -2909,13 +2913,13 @@ class TestMethods:
             d = np.array([2, 1])
             d.partition(0, kind=k)
             assert_raises(ValueError, d.partition, 2)
-            assert_raises(np.AxisError, d.partition, 3, axis=1)
+            assert_raises(AxisError, d.partition, 3, axis=1)
             assert_raises(ValueError, np.partition, d, 2)
-            assert_raises(np.AxisError, np.partition, d, 2, axis=1)
+            assert_raises(AxisError, np.partition, d, 2, axis=1)
             assert_raises(ValueError, d.argpartition, 2)
-            assert_raises(np.AxisError, d.argpartition, 3, axis=1)
+            assert_raises(AxisError, d.argpartition, 3, axis=1)
             assert_raises(ValueError, np.argpartition, d, 2)
-            assert_raises(np.AxisError, np.argpartition, d, 2, axis=1)
+            assert_raises(AxisError, np.argpartition, d, 2, axis=1)
             d = np.arange(10).reshape((2, 5))
             d.partition(1, axis=0, kind=k)
             d.partition(4, axis=1, kind=k)
@@ -3329,9 +3333,9 @@ class TestMethods:
         assert_equal(a.diagonal(0), [0, 5, 10])
         assert_equal(a.diagonal(1), [1, 6, 11])
         assert_equal(a.diagonal(-1), [4, 9])
-        assert_raises(np.AxisError, a.diagonal, axis1=0, axis2=5)
-        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=0)
-        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=5)
+        assert_raises(AxisError, a.diagonal, axis1=0, axis2=5)
+        assert_raises(AxisError, a.diagonal, axis1=5, axis2=0)
+        assert_raises(AxisError, a.diagonal, axis1=5, axis2=5)
         assert_raises(ValueError, a.diagonal, axis1=1, axis2=1)
 
         b = np.arange(8).reshape((2, 2, 2))
@@ -3564,10 +3568,10 @@ class TestMethods:
         assert_(a.flags['OWNDATA'])
         b = a.copy()
         # check exceptions
-        assert_raises(np.AxisError, a.swapaxes, -5, 0)
-        assert_raises(np.AxisError, a.swapaxes, 4, 0)
-        assert_raises(np.AxisError, a.swapaxes, 0, -5)
-        assert_raises(np.AxisError, a.swapaxes, 0, 4)
+        assert_raises(AxisError, a.swapaxes, -5, 0)
+        assert_raises(AxisError, a.swapaxes, 4, 0)
+        assert_raises(AxisError, a.swapaxes, 0, -5)
+        assert_raises(AxisError, a.swapaxes, 0, 4)
 
         for i in range(-4, 4):
             for j in range(-4, 4):
@@ -4922,8 +4926,8 @@ class TestArgmin:
 class TestMinMax:
 
     def test_scalar(self):
-        assert_raises(np.AxisError, np.amax, 1, 1)
-        assert_raises(np.AxisError, np.amin, 1, 1)
+        assert_raises(AxisError, np.amax, 1, 1)
+        assert_raises(AxisError, np.amin, 1, 1)
 
         assert_equal(np.amax(1, axis=0), 1)
         assert_equal(np.amin(1, axis=0), 1)
@@ -4931,7 +4935,7 @@ class TestMinMax:
         assert_equal(np.amin(1, axis=None), 1)
 
     def test_axis(self):
-        assert_raises(np.AxisError, np.amax, [1, 2, 3], 1000)
+        assert_raises(AxisError, np.amax, [1, 2, 3], 1000)
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
@@ -5251,7 +5255,7 @@ class TestLexsort:
 
     def test_invalid_axis(self): # gh-7528
         x = np.linspace(0., 1., 42*3).reshape(42, 3)
-        assert_raises(np.AxisError, np.lexsort, x, axis=2)
+        assert_raises(AxisError, np.lexsort, x, axis=2)
 
 class TestIO:
     """Test tofile, fromfile, tobytes, and fromstring"""
@@ -5347,14 +5351,13 @@ class TestIO:
         x = x.real.ravel()
         s = "@".join(map(str, x))
         y = np.fromstring(s, sep="@")
-        # NB. str imbues less precision
         nan_mask = ~np.isfinite(x)
         assert_array_equal(x[nan_mask], y[nan_mask])
-        assert_array_almost_equal(x[~nan_mask], y[~nan_mask], decimal=5)
+        assert_array_equal(x[~nan_mask], y[~nan_mask])
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join(map(repr, x))
+        s = "@".join(map(lambda x: repr(x)[11:-1], x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
@@ -6067,7 +6070,7 @@ class TestStats:
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
-        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
+        self.omat = np.array([Decimal(str(r)) for r in self.rmat.flat])
         self.omat = self.omat.reshape(4, 5)
 
     def test_python_type(self):
@@ -7045,7 +7048,7 @@ class TestMatmul(MatmulCommon):
         c = self.matmul(a, b, out=out)
         assert_(c is out)
         with suppress_warnings() as sup:
-            sup.filter(np.ComplexWarning, '')
+            sup.filter(ComplexWarning, '')
             c = c.astype(tgt.dtype)
         assert_array_equal(c, tgt)
 
@@ -7676,8 +7679,8 @@ class TestWarnings:
         y = np.array([1-2j, 1+2j])
 
         with warnings.catch_warnings():
-            warnings.simplefilter("error", np.ComplexWarning)
-            assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
+            warnings.simplefilter("error", ComplexWarning)
+            assert_raises(ComplexWarning, x.__setitem__, slice(None), y)
             assert_equal(x, [1, 2])
 
 
@@ -9832,7 +9835,7 @@ class TestAlignment:
 
             # test casting, both to and from misaligned
             with suppress_warnings() as sup:
-                sup.filter(np.ComplexWarning, "Casting complex values")
+                sup.filter(ComplexWarning, "Casting complex values")
                 xc64.astype('f8')
             xf64.astype(np.complex64)
             test = xc64 + xf64
@@ -10029,3 +10032,14 @@ def test_argsort_int(N, dtype):
     arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
     arr[N-1] = maxv
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_gh_22683():
+    b = 777.68760986
+    a = np.array([b] * 10000, dtype=object)
+    refc_start = sys.getrefcount(b)
+    np.choose(np.zeros(10000, dtype=int), [a], out=a)
+    np.choose(np.zeros(10000, dtype=int), [a], out=a)
+    refc_end = sys.getrefcount(b)
+    assert refc_end - refc_start < 10

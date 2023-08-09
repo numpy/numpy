@@ -19,6 +19,7 @@ steps:
     choco install --confirm --no-progress --allow-downgrade rtools --version=4.3.5550
     choco install unzip -y
     choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+    choco install ninja
     echo "##vso[task.setvariable variable=RTOOLS43_HOME]c:\rtools43"
   displayName: 'Install utilities'
 
@@ -27,7 +28,6 @@ steps:
     mkdir  C:/opt/openblas/openblas_dll
     mkdir  C:/opt/32/lib/pkgconfig
     mkdir  C:/opt/64/lib/pkgconfig
-    # TBD: support 32 bit testing
     $target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); ilp64=obs.get_ilp64(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, ilp64);print(target)")
     unzip -o -d c:/opt/ $target
     echo "##vso[task.setvariable variable=PKG_CONFIG_PATH]c:/opt/64/lib/pkgconfig"
@@ -35,21 +35,26 @@ steps:
   displayName: 'Download / Install OpenBLAS'
 
 - powershell: |
-    If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
-        $env:OPENBLAS64_="openblas"
-        # This does not work, the flags are passed together and not separately
-        $env:CFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
-        $env:CXXFLAGS="-DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64"
-    } else {
-        $env:OPENBLAS = "openblas"
-    }
+    # Note: ensure the `pip install .` command remains the last one here, to
+    # avoid "green on failure" issues
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    python -m pip install . --config-settings=setup-args="--vsenv"
-    # copy from c:/opt/openblas/openblas_dll to numpy/.libs
+    If ( Test-Path env:DISABLE_BLAS ) {
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
+    }
+    elseif ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Duse-ilp64=true" -Csetup-args="-Dblas-symbol-suffix=64_"
+    } else {
+        python -m pip install . -v -Csetup-args="--vsenv"
+    }
+  displayName: 'Build NumPy'
+
+- powershell: |
+    # copy from c:/opt/openblas/openblas_dll to numpy/.libs to ensure it can
+    # get loaded when numpy is imported (no RPATH on Windows)
     $target = $(python -c "import sysconfig; print(sysconfig.get_path('platlib'))")
     mkdir $target/numpy/.libs
     copy C:/opt/openblas/openblas_dll/*.dll $target/numpy/.libs
-  displayName: 'Build NumPy'
+  displayName: 'Copy OpenBLAS DLL to site-packages'
 
 - script: |
     python -m pip install threadpoolctl

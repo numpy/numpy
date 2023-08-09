@@ -9,6 +9,7 @@
 #define _MULTIARRAYMODULE
 #include "lowlevel_strided_loops.h"
 
+#include "numpy/npy_math.h"
 #include "conversions.h"
 #include "str_to_int.h"
 
@@ -242,7 +243,9 @@ npy_to_cfloat(PyArray_Descr *descr,
     if (!success) {
         return -1;
     }
-    npy_complex64 val = {(float)real, (float)imag};
+    npy_complex64 val;
+    npy_csetrealf(&val, (float) real);
+    npy_csetimagf(&val, (float) imag);
     memcpy(dataptr, &val, sizeof(npy_complex64));
     if (!PyArray_ISNBO(descr->byteorder)) {
         npy_bswap4_unaligned(dataptr);
@@ -266,7 +269,9 @@ npy_to_cdouble(PyArray_Descr *descr,
     if (!success) {
         return -1;
     }
-    npy_complex128 val = {real, imag};
+    npy_complex128 val;
+    npy_csetreal(&val, real);
+    npy_csetimag(&val, imag);
     memcpy(dataptr, &val, sizeof(npy_complex128));
     if (!PyArray_ISNBO(descr->byteorder)) {
         npy_bswap8_unaligned(dataptr);

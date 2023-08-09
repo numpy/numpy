@@ -8,12 +8,8 @@ version: 2.1
 _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
-    # documented at https://circleci.com/docs/2.1/circleci-images/
-    # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
-    # therefore a new base image chose instead to guarantee to
-    # have a newer version >= 1.8.10 to avoid warnings
-    # that related to the default behaviors or non-exist config options
-    - image: cimg/python:3.9
+    # documented at https://circleci.com/developer/images/image/cimg/python
+    - image: cimg/python:3.11.4
   working_directory: ~/repo
 
 
@@ -54,7 +50,7 @@ jobs:
             #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
               texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
-            python3.9 -m venv venv
+            python3.11 -m venv venv
             . venv/bin/activate
 
       - run:
@@ -62,8 +58,10 @@ jobs:
           command: |
             . venv/bin/activate
             pip install --progress-bar=off -r test_requirements.txt
-            pip install --progress-bar=off -r doc_requirements.txt
-            pip install .
+            # get newer, pre-release versions of critical packages
+            pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r doc_requirements.txt
+            # then install numpy HEAD, which will override the version installed above
+            pip install . --config-settings=setup-args="-Dallow-noblas=true"
 
       - run:
           name: create release notes

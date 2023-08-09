@@ -12,6 +12,7 @@ import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
 import numpy.core._operand_flag_tests as opflag_tests
 import numpy.core._rational_tests as _rational_tests
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
@@ -982,10 +983,10 @@ class TestUfunc:
         assert_raises(TypeError, inner1d, a, b, axes=[None, 1])
         # cannot pass an index unless there is only one dimension
         # (output is wrong in this case)
-        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, -1])
+        assert_raises(AxisError, inner1d, a, b, axes=[-1, -1, -1])
         # or pass in generally the wrong number of axes
-        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, (-1,)])
-        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, (-2, -1), ()])
+        assert_raises(AxisError, inner1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(AxisError, inner1d, a, b, axes=[-1, (-2, -1), ()])
         # axes need to have same length.
         assert_raises(ValueError, inner1d, a, b, axes=[0, 1])
 
@@ -1033,8 +1034,8 @@ class TestUfunc:
                       mm, a, b, axes=[(-2, -1), (-2, -1), [-2, -1]])
         assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
         # single integers are AxisErrors if more are required
-        assert_raises(np.AxisError, mm, a, b, axes=[-1, -1, -1])
-        assert_raises(np.AxisError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
+        assert_raises(AxisError, mm, a, b, axes=[-1, -1, -1])
+        assert_raises(AxisError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
         # tuples should not have duplicated values
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
         # arrays should have enough axes.
@@ -1480,14 +1481,14 @@ class TestUfunc:
 
     def test_axis_out_of_bounds(self):
         a = np.array([False, False])
-        assert_raises(np.AxisError, a.all, axis=1)
+        assert_raises(AxisError, a.all, axis=1)
         a = np.array([False, False])
-        assert_raises(np.AxisError, a.all, axis=-2)
+        assert_raises(AxisError, a.all, axis=-2)
 
         a = np.array([False, False])
-        assert_raises(np.AxisError, a.any, axis=1)
+        assert_raises(AxisError, a.any, axis=1)
         a = np.array([False, False])
-        assert_raises(np.AxisError, a.any, axis=-2)
+        assert_raises(AxisError, a.any, axis=-2)
 
     def test_scalar_reduction(self):
         # The functions 'sum', 'prod', etc allow specifying axis=0
@@ -1705,11 +1706,11 @@ class TestUfunc:
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
 
-    def test_empty_reduction_and_idenity(self):
+    def test_empty_reduction_and_identity(self):
         arr = np.zeros((0, 5))
         # OK, since the reduction itself is *not* empty, the result is
         assert np.true_divide.reduce(arr, axis=1).shape == (0,)
-        # Not OK, the reduction itself is empty and we have no idenity
+        # Not OK, the reduction itself is empty and we have no identity
         with pytest.raises(ValueError):
             np.true_divide.reduce(arr, axis=0)
 
@@ -2223,6 +2224,23 @@ class TestUfunc:
         a = np.array([1, 2, 3])
         np.maximum.at(a, [0], 0)
         assert_equal(a, np.array([1, 2, 3]))
+
+    @pytest.mark.parametrize("dtype",
+            np.typecodes['AllInteger'] + np.typecodes['Float'])
+    @pytest.mark.parametrize("ufunc",
+            [np.add, np.subtract, np.divide, np.minimum, np.maximum])
+    def test_at_negative_indexes(self, dtype, ufunc):
+        a = np.arange(0, 10).astype(dtype)
+        indxs = np.array([-1, 1, -1, 2]).astype(np.intp)
+        vals = np.array([1, 5, 2, 10], dtype=a.dtype)
+
+        expected = a.copy()
+        for i, v in zip(indxs, vals):
+            expected[i] = ufunc(expected[i], v)
+
+        ufunc.at(a, indxs, vals)
+        assert_array_equal(a, expected)
+        assert np.all(indxs == [-1, 1, -1, 2])
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError

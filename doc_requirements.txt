@@ -11,3 +11,4 @@ breathe>4.33.0
 
 # needed to build release notes
 towncrier
+toml

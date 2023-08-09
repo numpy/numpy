@@ -1700,8 +1700,10 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     /* Decrease the number of dimensions to the detected ones */
     int out_ndim = PyArray_NDIM(ret);
     PyArray_Descr *out_descr = PyArray_DESCR(ret);
-    ((PyArrayObject_fields *)ret)->nd = ndim;
-    ((PyArrayObject_fields *)ret)->descr = dtype;
+    if (out_ndim != ndim) {
+        ((PyArrayObject_fields *)ret)->nd = ndim;
+        ((PyArrayObject_fields *)ret)->descr = dtype;
+    }
 
     int success = PyArray_AssignFromCache(ret, cache);
 
@@ -1934,8 +1936,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         int actual_ndim = PyArray_NDIM(ret);
         PyArray_Descr *actual_dtype = PyArray_DESCR(ret);
-        ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(arr);
-        ((PyArrayObject_fields *)ret)->descr = newtype;
+        if (actual_ndim != PyArray_NDIM(arr)) {
+            ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(arr);
+            ((PyArrayObject_fields *)ret)->descr = newtype;
+        }
 
         int success = PyArray_CopyInto(ret, arr);
 
@@ -2265,7 +2269,11 @@ PyArray_FromInterface(PyObject *origin)
                     "must be an integer.");
             goto fail;
         }
-        if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
+        int istrue = PyObject_IsTrue(PyTuple_GET_ITEM(attr,1));
+        if (istrue == -1) {
+            goto fail;
+        }
+        if (istrue) {
             dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
         base = origin;

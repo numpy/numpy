@@ -14,7 +14,7 @@
 #include "array_coercion.h"
 #include "convert_datatype.h"
 #include "common_dtype.h"
-
+#include "umathmodule.h"
 
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
@@ -450,7 +450,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
             &PyArray_PromoteDTypeSequence,
             &_PyArray_GetDefaultDescr,
             &PyUFunc_AddWrappingLoop,
-            NULL,
+            &PyUFunc_GiveFloatingpointErrors,
             NULL,
             /* NumPy's builtin DTypes (starting at offset 10 going to 41) */
     };

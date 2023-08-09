@@ -1,6 +1,6 @@
 /**
  * This header is used internally by all current supported SIMD extensions,
- * execpt for AVX512.
+ * except for AVX512.
  */
 #ifndef NPY_SIMD
     #error "Not a standalone header, use simd/simd.h instead"

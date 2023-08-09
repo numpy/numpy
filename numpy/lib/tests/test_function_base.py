@@ -12,6 +12,7 @@ from functools import partial
 
 import numpy as np
 from numpy import ma
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
@@ -116,10 +117,10 @@ class TestRot90:
 class TestFlip:
 
     def test_axes(self):
-        assert_raises(np.AxisError, np.flip, np.ones(4), axis=1)
-        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=2)
-        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=-3)
-        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=(0, 3))
+        assert_raises(AxisError, np.flip, np.ones(4), axis=1)
+        assert_raises(AxisError, np.flip, np.ones((4, 4)), axis=2)
+        assert_raises(AxisError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(AxisError, np.flip, np.ones((4, 4)), axis=(0, 3))
 
     def test_basic_lr(self):
         a = get_mat(4)
@@ -543,8 +544,8 @@ class TestInsert:
                      insert(a, 1, a[:, 2,:], axis=1))
 
         # invalid axis value
-        assert_raises(np.AxisError, insert, a, 1, a[:, 2, :], axis=3)
-        assert_raises(np.AxisError, insert, a, 1, a[:, 2, :], axis=-4)
+        assert_raises(AxisError, insert, a, 1, a[:, 2, :], axis=3)
+        assert_raises(AxisError, insert, a, 1, a[:, 2, :], axis=-4)
 
         # negative axis value
         a = np.arange(24).reshape((2, 3, 4))
@@ -555,7 +556,7 @@ class TestInsert:
 
     def test_0d(self):
         a = np.array(1)
-        with pytest.raises(np.AxisError):
+        with pytest.raises(AxisError):
             insert(a, [], 2, axis=0)
         with pytest.raises(TypeError):
             insert(a, [], 2, axis="nonsense")
@@ -740,8 +741,8 @@ class TestDiff:
         assert_array_equal(diff(x, axis=0), np.zeros((9, 20, 30)))
         assert_array_equal(diff(x, axis=1), exp)
         assert_array_equal(diff(x, axis=-2), exp)
-        assert_raises(np.AxisError, diff, x, axis=3)
-        assert_raises(np.AxisError, diff, x, axis=-4)
+        assert_raises(AxisError, diff, x, axis=3)
+        assert_raises(AxisError, diff, x, axis=-4)
 
         x = np.array(1.11111111111, np.float64)
         assert_raises(ValueError, diff, x)
@@ -818,7 +819,7 @@ class TestDiff:
 
         assert_raises(ValueError, np.diff, x, prepend=np.zeros((3,3)))
 
-        assert_raises(np.AxisError, diff, x, prepend=0, axis=3)
+        assert_raises(AxisError, diff, x, prepend=0, axis=3)
 
     def test_append(self):
         x = np.arange(5)
@@ -846,7 +847,7 @@ class TestDiff:
 
         assert_raises(ValueError, np.diff, x, append=np.zeros((3,3)))
 
-        assert_raises(np.AxisError, diff, x, append=0, axis=3)
+        assert_raises(AxisError, diff, x, append=0, axis=3)
 
 
 class TestDelete:
@@ -900,7 +901,7 @@ class TestDelete:
 
     def test_0d(self):
         a = np.array(1)
-        with pytest.raises(np.AxisError):
+        with pytest.raises(AxisError):
             delete(a, [], axis=0)
         with pytest.raises(TypeError):
             delete(a, [], axis="nonsense")
@@ -1150,8 +1151,8 @@ class TestGradient:
         # test maximal number of varargs
         assert_raises(TypeError, gradient, x, 1, 2, axis=1)
 
-        assert_raises(np.AxisError, gradient, x, axis=3)
-        assert_raises(np.AxisError, gradient, x, axis=-3)
+        assert_raises(AxisError, gradient, x, axis=3)
+        assert_raises(AxisError, gradient, x, axis=-3)
         # assert_raises(TypeError, gradient, x, axis=[1,])
 
     def test_timedelta64(self):
@@ -3376,10 +3377,10 @@ class TestPercentile:
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(np.AxisError, np.percentile, d, axis=-5, q=25)
-        assert_raises(np.AxisError, np.percentile, d, axis=(0, -5), q=25)
-        assert_raises(np.AxisError, np.percentile, d, axis=4, q=25)
-        assert_raises(np.AxisError, np.percentile, d, axis=(0, 4), q=25)
+        assert_raises(AxisError, np.percentile, d, axis=-5, q=25)
+        assert_raises(AxisError, np.percentile, d, axis=(0, -5), q=25)
+        assert_raises(AxisError, np.percentile, d, axis=4, q=25)
+        assert_raises(AxisError, np.percentile, d, axis=(0, 4), q=25)
         # each of these refers to the same axis twice
         assert_raises(ValueError, np.percentile, d, axis=(1, 1), q=25)
         assert_raises(ValueError, np.percentile, d, axis=(-1, -1), q=25)
@@ -4044,10 +4045,10 @@ class TestMedian:
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(np.AxisError, np.median, d, axis=-5)
-        assert_raises(np.AxisError, np.median, d, axis=(0, -5))
-        assert_raises(np.AxisError, np.median, d, axis=4)
-        assert_raises(np.AxisError, np.median, d, axis=(0, 4))
+        assert_raises(AxisError, np.median, d, axis=-5)
+        assert_raises(AxisError, np.median, d, axis=(0, -5))
+        assert_raises(AxisError, np.median, d, axis=4)
+        assert_raises(AxisError, np.median, d, axis=(0, 4))
         assert_raises(ValueError, np.median, d, axis=(1, 1))
 
     def test_keepdims(self):

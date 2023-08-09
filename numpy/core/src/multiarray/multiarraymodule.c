@@ -1118,63 +1118,6 @@ fail:
 }
 
 
-/*NUMPY_API
- * Copy and Transpose
- *
- * Could deprecate this function, as there isn't a speed benefit over
- * calling Transpose and then Copy.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_CopyAndTranspose(PyObject *op)
-{
-    /* DEPRECATED 2022-09-30, NumPy 1.24 - see gh-22313 */
-    if (DEPRECATE(
-            "fastCopyAndTranspose and the underlying C function "
-            "PyArray_CopyAndTranspose have been deprecated.\n\n"
-            "Use the transpose method followed by a C-order copy instead, "
-            "e.g. ``arr.T.copy()``") < 0) {
-        return NULL;
-    }
-
-    PyArrayObject *arr, *tmp, *ret;
-    int i;
-    npy_intp new_axes_values[NPY_MAXDIMS];
-    PyArray_Dims new_axes;
-
-    /* Make sure we have an array */
-    arr = (PyArrayObject *)PyArray_FROM_O(op);
-    if (arr == NULL) {
-        return NULL;
-    }
-
-    if (PyArray_NDIM(arr) > 1) {
-        /* Set up the transpose operation */
-        new_axes.len = PyArray_NDIM(arr);
-        for (i = 0; i < new_axes.len; ++i) {
-            new_axes_values[i] = new_axes.len - i - 1;
-        }
-        new_axes.ptr = new_axes_values;
-
-        /* Do the transpose (always returns a view) */
-        tmp = (PyArrayObject *)PyArray_Transpose(arr, &new_axes);
-        if (tmp == NULL) {
-            Py_DECREF(arr);
-            return NULL;
-        }
-    }
-    else {
-        tmp = arr;
-        arr = NULL;
-    }
-
-    /* TODO: Change this to NPY_KEEPORDER for NumPy 2.0 */
-    ret = (PyArrayObject *)PyArray_NewCopy(tmp, NPY_CORDER);
-
-    Py_XDECREF(arr);
-    Py_DECREF(tmp);
-    return (PyObject *)ret;
-}
-
 /*
  * Implementation which is common between PyArray_Correlate
  * and PyArray_Correlate2.
@@ -3073,16 +3016,6 @@ finish:
     return ret;
 }
 
-static PyObject *
-array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    PyObject *a0;
-
-    if (!PyArg_ParseTuple(args, "O:fastCopyAndTranspose", &a0)) {
-        return NULL;
-    }
-    return PyArray_Return((PyArrayObject *)PyArray_CopyAndTranspose(a0));
-}
 
 static PyObject *
 array_correlate(PyObject *NPY_UNUSED(dummy),
@@ -4379,6 +4312,24 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
+{
+    int res = PyObject_IsTrue(arg);
+    if (res < 0) {
+        return NULL;
+    }
+    int old_value = numpy_warn_if_no_mem_policy;
+    numpy_warn_if_no_mem_policy = res;
+    if (old_value) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
     static int initialized = 0;
 
@@ -4502,9 +4453,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
-    {"fastCopyAndTranspose",
-        (PyCFunction)array_fastCopyAndTranspose,
-        METH_VARARGS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -4625,6 +4573,9 @@ static struct PyMethodDef array_module_methods[] = {
          METH_O, "Set the NEP 50 promotion state.  This is not thread-safe.\n"
                  "The optional warnings can be safely silenced using the \n"
                  "`np._no_nep50_warning()` context manager."},
+    {"_set_numpy_warn_if_no_mem_policy",
+         (PyCFunction)_set_numpy_warn_if_no_mem_policy,
+         METH_O, "Change the warn if no mem policy flag for testing."},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
@@ -4911,6 +4862,14 @@ initialize_static_globals(void)
             &npy_UFuncNoLoopError);
     if (npy_UFuncNoLoopError == NULL) {
         return -1;
+    }
+
+    char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
+    if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
+        numpy_warn_if_no_mem_policy = 1;
+    }
+    else {
+        numpy_warn_if_no_mem_policy = 0;
     }
 
     return 0;

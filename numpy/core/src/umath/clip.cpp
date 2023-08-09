@@ -55,22 +55,64 @@ _NPY_MAX(T a, T b, npy::floating_point_tag const &)
     return npy_isnan(a) ? (a) : PyArray_MAX(a, b);
 }
 
-template <class T>
-T
-_NPY_MIN(T a, T b, npy::complex_tag const &)
+#define PyArray_CLT(p,q,suffix) (((npy_creal##suffix(p)==npy_creal##suffix(q)) ? (npy_cimag##suffix(p) < npy_cimag##suffix(q)) : \
+                               (npy_creal##suffix(p) < npy_creal##suffix(q))))
+#define PyArray_CGT(p,q,suffix) (((npy_creal##suffix(p)==npy_creal##suffix(q)) ? (npy_cimag##suffix(p) > npy_cimag##suffix(q)) : \
+                               (npy_creal##suffix(p) > npy_creal##suffix(q))))
+
+npy_cdouble
+_NPY_MIN(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
 {
-    return npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CLT(a, b)
-                   ? (a)
-                   : (b);
+    return npy_isnan(npy_creal(a)) || npy_isnan(npy_cimag(a)) || PyArray_CLT(a, b,)
+                ? (a)
+                : (b);
 }
-template <class T>
-T
-_NPY_MAX(T a, T b, npy::complex_tag const &)
+
+npy_cfloat
+_NPY_MIN(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
 {
-    return npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CGT(a, b)
-                   ? (a)
-                   : (b);
+    return npy_isnan(npy_crealf(a)) || npy_isnan(npy_cimagf(a)) || PyArray_CLT(a, b, f)
+                ? (a)
+                : (b);
 }
+
+#if (defined(_MSC_VER) && !defined(__INTEL_COMPILER)) || NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+npy_clongdouble
+_NPY_MIN(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
+{
+    return npy_isnan(npy_creall(a)) || npy_isnan(npy_cimagl(a)) || PyArray_CLT(a, b, l)
+                ? (a)
+                : (b);
+}
+#endif
+
+npy_cdouble
+_NPY_MAX(npy_cdouble a, npy_cdouble b, npy::complex_tag const &)
+{
+    return npy_isnan(npy_creal(a)) || npy_isnan(npy_cimag(a)) || PyArray_CGT(a, b,)
+                ? (a)
+                : (b);
+}
+
+npy_cfloat
+_NPY_MAX(npy_cfloat a, npy_cfloat b, npy::complex_tag const &)
+{
+    return npy_isnan(npy_crealf(a)) || npy_isnan(npy_cimagf(a)) || PyArray_CGT(a, b, f)
+                ? (a)
+                : (b);
+}
+
+#if (defined(_MSC_VER) && !defined(__INTEL_COMPILER)) || NPY_SIZEOF_COMPLEX_LONGDOUBLE != NPY_SIZEOF_COMPLEX_DOUBLE
+npy_clongdouble
+_NPY_MAX(npy_clongdouble a, npy_clongdouble b, npy::complex_tag const &)
+{
+    return npy_isnan(npy_creall(a)) || npy_isnan(npy_cimagl(a)) || PyArray_CGT(a, b, l)
+                ? (a)
+                : (b);
+}
+#endif
+#undef PyArray_CLT
+#undef PyArray_CGT
 
 template <class T>
 T

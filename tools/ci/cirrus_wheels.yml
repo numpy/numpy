@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel==2.13.1
+    - python -m pip install cibuildwheel==2.14.0
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
@@ -38,6 +38,7 @@ linux_aarch64_task:
         CIBW_BUILD: cp312-*
 
   build_script: |
+    apt update
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
     git fetch origin
     ./tools/travis-before-install.sh

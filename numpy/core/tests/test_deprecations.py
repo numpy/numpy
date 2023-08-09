@@ -135,7 +135,7 @@ class _DeprecationTestCase:
 
 
 class _VisibleDeprecationTestCase(_DeprecationTestCase):
-    warning_cls = np.VisibleDeprecationWarning
+    warning_cls = np.exceptions.VisibleDeprecationWarning
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -697,18 +697,6 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-class TestDeprecatedGlobals(_DeprecationTestCase):
-    # Deprecated 2022-11-17, NumPy 1.24
-    def test_type_aliases(self):
-        # from builtins
-        self.assert_deprecated(lambda: np.bool8)
-        self.assert_deprecated(lambda: np.int0)
-        self.assert_deprecated(lambda: np.uint0)
-        self.assert_deprecated(lambda: np.bytes0)
-        self.assert_deprecated(lambda: np.str0)
-        self.assert_deprecated(lambda: np.object0)
-
-
 @pytest.mark.parametrize("name",
         ["bool", "long", "ulong", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
@@ -766,10 +754,6 @@ class TestFromnumeric(_DeprecationTestCase):
 
 
 class TestMathAlias(_DeprecationTestCase):
-    # Deprecated in Numpy 1.25, 2023-04-06
-    def test_deprecated_np_math(self):
-        self.assert_deprecated(lambda: np.math)
-
     def test_deprecated_np_lib_math(self):
         self.assert_deprecated(lambda: np.lib.math)
 
@@ -777,7 +761,20 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy.lib import byte_bounds, safe_eval, who
-        self.assert_deprecated(lambda: byte_bounds(np.array([1])))
+        from numpy import (
+            byte_bounds, safe_eval, who, recfromcsv, recfromtxt,
+            disp, get_array_wrap, maximum_sctype
+        )
+        from numpy.lib.tests.test_io import TextIO
+        
         self.assert_deprecated(lambda: safe_eval("None"))
         self.assert_deprecated(lambda: who())
+
+        data_gen = lambda: TextIO('A,B\n0,1\n2,3')
+        kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+        self.assert_deprecated(lambda: recfromcsv(data_gen()))
+        self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
+
+        self.assert_deprecated(lambda: disp("test"))
+        self.assert_deprecated(lambda: get_array_wrap())
+        self.assert_deprecated(lambda: maximum_sctype(int))

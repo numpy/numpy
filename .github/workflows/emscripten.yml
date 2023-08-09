@@ -42,7 +42,7 @@ jobs:
 
       - name: set up python
         id: setup-python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -52,7 +52,7 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
 
       - name: Build
         run: |
@@ -62,7 +62,7 @@ jobs:
           CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3.7.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -71,6 +71,7 @@ jobs:
           pyodide venv .venv-pyodide
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          python -c "import sys; print(sys.platform)"
           pip install -r test_requirements.txt
       - name: Test
         run: |

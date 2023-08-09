@@ -66,7 +66,7 @@ The *compile-time* environment variable::
 
     NPY_RELAXED_STRIDES_DEBUG=0
 
-can be set to help debug code written in C which iteraters through arrays
+can be set to help debug code written in C which iterators through arrays
 manually.  When an array is contiguous and iterated in a contiguous manner,
 its ``strides`` should not be queried.  This option can help find errors where
 the ``strides`` are incorrectly used.
@@ -82,3 +82,6 @@ memory allocation policy, the default will be to call ``free``. If
 ``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``"1"``, a ``RuntimeWarning`` will
 be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
 and set the ``ndarray.base``.
+
+.. versionchanged:: 1.25.2
+    This variable is only checked on the first import.

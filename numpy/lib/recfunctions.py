@@ -1183,7 +1183,7 @@ def apply_along_fields(func, arr):
     """
     Apply function 'func' as a reduction across fields of a structured array.
 
-    This is similar to `apply_along_axis`, but treats the fields of a
+    This is similar to `numpy.apply_along_axis`, but treats the fields of a
     structured array as an extra axis. The fields are all first cast to a
     common type following the type-promotion rules from `numpy.result_type`
     applied to the field's dtypes.
@@ -1192,7 +1192,7 @@ def apply_along_fields(func, arr):
     ----------
     func : function
        Function to apply on the "field" dimension. This function must
-       support an `axis` argument, like np.mean, np.sum, etc.
+       support an `axis` argument, like `numpy.mean`, `numpy.sum`, etc.
     arr : ndarray
        Structured array for which to apply func.
 
@@ -1351,7 +1351,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                  mask=[(False, False,  True), (False, False,  True),
                        (False, False, False), (False, False, False),
                        (False, False, False)],
-           fill_value=(b'N/A', 1.e+20, 1.e+20),
+           fill_value=(b'N/A', 1e+20, 1e+20),
                 dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """

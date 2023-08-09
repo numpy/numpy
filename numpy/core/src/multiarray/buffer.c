@@ -903,7 +903,7 @@ static int
 _descriptor_from_pep3118_format_fast(char const *s, PyObject **result);
 
 static int
-_pep3118_letter_to_type(char letter, int native, int complex);
+_pep3118_letter_to_type(char letter, int native, int is_complex);
 
 NPY_NO_EXPORT PyArray_Descr*
 _descriptor_from_pep3118_format(char const *s)
@@ -1066,7 +1066,7 @@ _descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
 }
 
 static int
-_pep3118_letter_to_type(char letter, int native, int complex)
+_pep3118_letter_to_type(char letter, int native, int is_complex)
 {
     switch (letter)
     {
@@ -1082,9 +1082,9 @@ _pep3118_letter_to_type(char letter, int native, int complex)
     case 'q': return native ? NPY_LONGLONG : NPY_INT64;
     case 'Q': return native ? NPY_ULONGLONG : NPY_UINT64;
     case 'e': return NPY_HALF;
-    case 'f': return complex ? NPY_CFLOAT : NPY_FLOAT;
-    case 'd': return complex ? NPY_CDOUBLE : NPY_DOUBLE;
-    case 'g': return native ? (complex ? NPY_CLONGDOUBLE : NPY_LONGDOUBLE) : -1;
+    case 'f': return is_complex ? NPY_CFLOAT : NPY_FLOAT;
+    case 'd': return is_complex ? NPY_CDOUBLE : NPY_DOUBLE;
+    case 'g': return native ? (is_complex ? NPY_CLONGDOUBLE : NPY_LONGDOUBLE) : -1;
     default:
         /* Other unhandled cases */
         return -1;

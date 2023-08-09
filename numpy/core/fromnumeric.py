@@ -240,7 +240,7 @@ def reshape(a, newshape, order='C'):
     -----
     It is not always possible to change the shape of an array without copying
     the data.
-    
+
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
     For example, let's say you have an array:
@@ -2741,7 +2741,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     max : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -2786,7 +2786,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.max(b)
-    nan
+    np.float64(nan)
     >>> np.max(b, where=~np.isnan(b), initial=-1)
     4.0
     >>> np.nanmax(b)
@@ -2884,7 +2884,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     min : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -2930,7 +2930,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.min(b)
-    nan
+    np.float64(nan)
     >>> np.min(b, where=~np.isnan(b), initial=10)
     0.0
     >>> np.nanmin(b)
@@ -3072,7 +3072,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     array([  2.,  12.])
     >>> np.prod(a, axis=0)
     array([3., 8.])
-    
+
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
@@ -3506,13 +3506,13 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
 
 
 def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None):
-    return (a, where, out)
+                    keepdims=None, *, where=None, mean=None):
+    return (a, where, out, mean)
 
 
 @array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+        where=np._NoValue, mean=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
 
@@ -3554,12 +3554,19 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
-
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
 
         .. versionadded:: 1.20.0
+
+    mean : array like, optional
+        Provide the mean to prevent its recalculation. The mean should have
+        a shape as if it was calculated with ``keepdims=True``.
+        The axis for the calculation of the mean should be the same as used in
+        the call to this std function.
+
+        .. versionadded:: 1.26.0
 
     Returns
     -------
@@ -3628,12 +3635,29 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> np.std(a, where=[[True], [True], [False]])
     2.0
 
+    Using the mean keyword to save computation time:
+    >>> import numpy as np
+    >>> from timeit import timeit
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> mean = np.mean(a, axis=1, keepdims=True)
+    >>>
+    >>> g = globals()
+    >>> n = 10000
+    >>> t1 = timeit("std = np.std(a, axis=1, mean=mean)", globals=g, number=n)
+    >>> t2 = timeit("std = np.std(a, axis=1)", globals=g, number=n)
+    >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    #doctest: +SKIP
+    Percentage execution time saved 30%
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
+    if mean is not np._NoValue:
+        kwargs['mean'] = mean
+
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3647,13 +3671,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
 
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                    keepdims=None, *, where=None):
-    return (a, where, out)
+                    keepdims=None, *, where=None, mean=None):
+    return (a, where, out, mean)
 
 
 @array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
-        where=np._NoValue):
+        where=np._NoValue, mean=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3696,12 +3720,19 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
-
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
 
         .. versionadded:: 1.20.0
+
+    mean : array like, optional
+        Provide the mean to prevent its recalculation. The mean should have
+        a shape as if it was calculated with ``keepdims=True``.
+        The axis for the calculation of the mean should be the same as used in
+        the call to this var function.
+
+        .. versionadded:: 1.26.0
 
     Returns
     -------
@@ -3768,12 +3799,29 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     >>> np.var(a, where=[[True], [True], [False]])
     4.0
 
+    Using the mean keyword to save computation time:
+    >>> import numpy as np
+    >>> from timeit import timeit
+    >>>
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> mean = np.mean(a, axis=1, keepdims=True)
+    >>>
+    >>> g = globals()
+    >>> n = 10000
+    >>> t1 = timeit("var = np.var(a, axis=1, mean=mean)", globals=g, number=n)
+    >>> t2 = timeit("var = np.var(a, axis=1)", globals=g, number=n)
+    >>> print(f'Percentage execution time saved {100*(t2-t1)/t2:.0f}%')
+    #doctest: +SKIP
+    Percentage execution time saved 32%
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
     if where is not np._NoValue:
         kwargs['where'] = where
+    if mean is not np._NoValue:
+        kwargs['mean'] = mean
 
     if type(a) is not mu.ndarray:
         try:
@@ -3788,7 +3836,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
-# Aliases of other functions. Provided unique docstrings 
+# Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
 
