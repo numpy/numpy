@@ -182,8 +182,6 @@ else:
     del sa, sized_aliases
 
     from . import lib
-    # NOTE: to be revisited following future namespace cleanup.
-    # See gh-14454 and gh-15672 for discussion.
     from .lib import (
         DataSource, angle, append, apply_along_axis, apply_over_axes,
         array_split, asarray_chkfinite, asfarray, average, bartlett,
