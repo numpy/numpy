@@ -228,9 +228,9 @@ the underlying type:
     typedef float _Complex npy_cfloat;
     typedef long double _Complex npy_clongdouble;
 
-MSVC does not support the `_Complex` type itself, but has added support for the
-C99 `complex.h` header by providing its own implementation. Thus, under MSVC,
-the equivalent MSVC types will be used:
+MSVC does not support the ``_Complex`` type itself, but has added support for
+the C99 ``complex.h`` header by providing its own implementation. Thus, under
+MSVC, the equivalent MSVC types will be used:
 
 .. code-block:: c
 
@@ -260,7 +260,7 @@ part of a complex number:
     npy_csetimag(&c, 0.0);
     printf("%d + %di\n", npy_creal(c), npy_cimag(c));
 
-.. version-changed:: 2.0.0
+.. versionchanged:: 2.0.0
 
     The underlying C types for all of numpy's complex types have been changed to
     use C99 complex types. Up until now the following was being used to represent
