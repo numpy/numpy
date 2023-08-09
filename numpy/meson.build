@@ -211,8 +211,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -249,6 +248,17 @@ if py.version().version_compare('<3.12')
 endif
 
 np_dir = py.get_install_dir() / 'numpy'
+
+generate_version = custom_target(
+  'generate-version',
+  install: true,
+  build_always_stale: true,
+  build_by_default: true,
+  output: 'version.py',
+  input: '_build_utils/gitversion.py',
+  command: [py, '@INPUT@', '--write', '@OUTPUT@'],
+  install_dir: np_dir
+)
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
