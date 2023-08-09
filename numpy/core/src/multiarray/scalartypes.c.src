@@ -3079,6 +3079,9 @@ static PyObject *
         if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) {
             return NULL;
         }
+        if (PyErr_ExceptionMatches(PyExc_DeprecationWarning)) {
+            return NULL;
+        }
         PyErr_Clear();
     }
     else {
