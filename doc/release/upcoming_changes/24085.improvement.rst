@@ -1,0 +1,25 @@
+Complex types - Underlying type changes
+---------------------------------------
+
+* The underlying C types for all of numpy's complex types have been changed to
+  use C99 complex types.
+
+* While this change does not affect the memory layout of complex types, it
+  changes the API to be used, in order to directly retrieve or write the real or
+  complex part of the complex number, since direct field access (as in ``c.real``
+  or ``c.imag``) is no longer an option. You can now use utilities provided in
+  ``numpy/npy_math.h`` to do these operations, like this:
+
+  .. code-block:: c
+
+      npy_cdouble c;
+      npy_csetreal(&c, 1.0);
+      npy_csetimag(&c, 0.0);
+      printf("%d + %di\n", npy_creal(c), npy_cimag(c));
+
+* To ease cross-version compatibility, equivalent macros and a compatibility
+  layer have been added which can be used by downstream packages to continue
+  to support both NumPy 1.x and 2.x. See :ref:`complex-numbers` for more info.
+
+* ``numpy/npy_common.h`` now includes ``complex.h``, which means that ``complex``
+  is now a reserved keyword.
