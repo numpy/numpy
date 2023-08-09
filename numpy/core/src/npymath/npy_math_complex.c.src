@@ -40,7 +40,15 @@
  * flag in an efficient way. The flag is IEEE specific. See
  * https://github.com/freebsd/freebsd/blob/4c6378299/lib/msun/src/catrig.c#L42
  */
-#if !defined(HAVE_CACOSF) || !defined(HAVE_CACOSL) || !defined(HAVE_CASINHF) || !defined(HAVE_CASINHL)
+#if !defined(HAVE_CACOSF)           \
+        || !defined(HAVE_CACOS)     \
+        || !defined(HAVE_CACOSL)    \
+        || !defined(HAVE_CATANHF)   \
+        || !defined(HAVE_CATANH)    \
+        || !defined(HAVE_CATANHL)   \
+        || !defined(HAVE_CASINHF)   \
+        || !defined(HAVE_CASINH)    \
+        || !defined(HAVE_CASINHL)
 #define raise_inexact() do {                        \
     volatile npy_float NPY_UNUSED(junk) = 1 + tiny; \
 } while (0)
@@ -123,22 +131,6 @@ cdiv@c@(@ctype@ a, @ctype@ b)
  * Custom implementation of missing complex C99 functions
  *=========================================================*/
 
-#ifndef HAVE_CABS@C@
-@type@
-npy_cabs@c@(@ctype@ z)
-{
-    return npy_hypot@c@(npy_creal@c@(z), npy_cimag@c@(z));
-}
-#endif
-
-#ifndef HAVE_CARG@C@
-@type@
-npy_carg@c@(@ctype@ z)
-{
-    return npy_atan2@c@(npy_cimag@c@(z), npy_creal@c@(z));
-}
-#endif
-
 /*
  * cexp and (ccos, csin)h functions need to calculate exp scaled by another
  * number.  This can be difficult if exp(x) overflows.  By doing this way, we
@@ -163,7 +155,7 @@ npy_carg@c@(@ctype@ z)
 #define SCALED_CEXP_LOWERL 11357.216553474703895L
 #define SCALED_CEXP_UPPERL 22756.021937783004509L
 
-#if !defined(HAVE_CEXP@C@)
+#ifndef HAVE_CEXP@C@
 
 static
 @ctype@
@@ -190,10 +182,6 @@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
     return npy_cpack@c@( npy_ldexp@c@(mant * mantcos, expt + excos),
                          npy_ldexp@c@(mant * mantsin, expt + exsin));
 }
-
-#endif
-
-#ifndef HAVE_CEXP@C@
 
 @ctype@
 npy_cexp@c@(@ctype@ z)
@@ -1751,13 +1739,11 @@ npy_catanh@c@(@ctype@ z)
  * #kind = cabs,carg#
  * #KIND = CABS,CARG#
  */
-#ifdef HAVE_@KIND@@C@
 @type@
 npy_@kind@@c@(@ctype@ z)
 {
     return @kind@@c@(z);
 }
-#endif
 /**end repeat1**/
 
 /**begin repeat1

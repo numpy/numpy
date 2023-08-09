@@ -31,6 +31,8 @@ cfloat ctanhf(cfloat);
 float crealf(cfloat);
 float cimagf(cfloat);
 cfloat conjf(cfloat);
+float cabsf(cfloat);
+float cargf(cfloat);
 
 cdouble csin(cdouble);
 cdouble ccos(cdouble);
@@ -41,6 +43,8 @@ cdouble ctanh(cdouble);
 double creal(cdouble);
 double cimag(cdouble);
 cdouble conj(cdouble);
+double cabs(cdouble);
+double carg(cdouble);
 
 cldouble csinl(cldouble);
 cldouble ccosl(cldouble);
@@ -51,3 +55,5 @@ cldouble ctanhl(cldouble);
 long double creall(cldouble);
 long double cimagl(cldouble);
 cldouble conjl(cldouble);
+long double cabsl(cldouble);
+long double cargl(cldouble);
