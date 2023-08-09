@@ -20,3 +20,12 @@ Name: libdivide
 Files: numpy/core/include/numpy/libdivide/*
 License: Zlib
   For license text, see numpy/core/include/numpy/libdivide/LICENSE.txt
+
+
+Note that the following files are vendored in the repository and sdist but not
+installed in built numpy packages:
+
+Name: Meson
+Files: vendored-meson/meson/*
+License: Apache 2.0
+  For license text, see vendored-meson/meson/COPYING
