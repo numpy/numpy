@@ -471,7 +471,7 @@ class TestArrayAlmostEqual(_GenericTest):
                 self._assert_func(a, b, decimal=7)
         msg = str(exc_info.value)
         assert_('Mismatched elements: 1 / 2 (50%)\n'
-            'Max absolute difference among violations: 3e-5\n'
+            'Max absolute difference among violations: 3.e-05\n'
             'Max relative difference among violations: inf'
             in msg)
         
@@ -479,8 +479,8 @@ class TestArrayAlmostEqual(_GenericTest):
                 self._assert_func(b, a, decimal=7)
         msg = str(exc_info.value)
         assert_('Mismatched elements: 1 / 2 (50%)\n'
-            'Max absolute difference among violations: 3e-5\n'
-            'Max relative difference among violations: 0.'
+            'Max absolute difference among violations: 3.e-05\n'
+            'Max relative difference among violations: 1.'
             in msg)
 
     def test_simple(self):
@@ -597,17 +597,19 @@ class TestArrayAlmostEqual(_GenericTest):
                 return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
-                raise super().all(args, kwargs)
+                return all(self)
 
         a = np.array([1., 2.]).view(MyArray)
         self._assert_func(a, a)
 
+        z = np.array([True, True]).view(MyArray)
+        all(z)
         b = np.array([1., 202]).view(MyArray)
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(a, b)
         msg = str(exc_info.value)
         assert_('Mismatched elements: 1 / 2 (50%)\n'
-                'Max absolute difference among violations: 200\n'
+                'Max absolute difference among violations: 200.\n'
                 'Max relative difference among violations: 0.99009'
                 in msg)
         
@@ -629,7 +631,6 @@ class TestArrayAlmostEqual(_GenericTest):
 
         a = np.array([1., 2.]).view(MyArray)
         self._assert_func(a, a)
-        
 
 class TestAlmostEqual(_GenericTest):
 
