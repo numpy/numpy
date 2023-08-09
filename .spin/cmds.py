@@ -80,7 +80,7 @@ def build(ctx, meson_args, jobs=None, clean=False, verbose=False):
 )
 @click.option(
     "--install-deps/--no-install-deps",
-    default=True,
+    default=False,
     help="Install dependencies before building"
 )
 @click.pass_context
