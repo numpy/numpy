@@ -194,6 +194,12 @@ sfloat_get_scaling(PyArray_SFloatDescr *self, PyObject *NPY_UNUSED(args))
 }
 
 
+static PyObject *
+sfloat___reduce__(PyArray_SFloatDescr *self)
+{
+    return Py_BuildValue("(O(d))", Py_TYPE(self), self->scaling);
+}
+
 PyMethodDef sfloat_methods[] = {
     {"scaled_by",
          (PyCFunction)python_sfloat_scaled_copy, METH_O,
@@ -201,6 +207,8 @@ PyMethodDef sfloat_methods[] = {
         "avoid having to implement many ways to create new instances."},
     {"get_scaling",
         (PyCFunction)sfloat_get_scaling, METH_NOARGS, NULL},
+    {"__reduce__",
+       (PyCFunction)sfloat___reduce__, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
 

@@ -43,13 +43,6 @@ To search for documents containing a keyword, do::
   >>> np.lookfor('keyword')
   ... # doctest: +SKIP
 
-General-purpose documents like a glossary and help on the basic concepts
-of numpy are available under the ``doc`` sub-module::
-
-  >>> from numpy import doc
-  >>> help(doc)
-  ... # doctest: +SKIP
-
 Available subpackages
 ---------------------
 lib
@@ -74,8 +67,6 @@ test
     Run numpy unittests
 show_config
     Show numpy build configuration
-matlib
-    Make everything matrices.
 __version__
     NumPy version string
 
@@ -99,14 +90,11 @@ available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
 """
+import os
 import sys
 import warnings
 
 from ._globals import _NoValue, _CopyMode
-# These exceptions were moved in 1.25 and are hidden from __dir__()
-from .exceptions import (
-    ComplexWarning, ModuleDeprecationWarning, VisibleDeprecationWarning,
-    TooHardError, AxisError)
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -128,14 +116,8 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
         raise ImportError(msg) from e
-
-    __all__ = [
-        'exceptions', 'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-        'ComplexWarning', 'TooHardError', 'AxisError']
-
-    # mapping of {name: (value, deprecation_msg)}
-    __deprecated_attrs__ = {}
-    __expired_functions__ = {}
+    
+    __all__ = ['exceptions']
 
     from . import core
     from .core import *
@@ -155,9 +137,7 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
 
-    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
-    import builtins as _builtins
-
+    # We build warning messages for former attributes
     _msg = (
         "module 'numpy' has no attribute '{n}'.\n"
         "`np.{n}` was a deprecated alias for the builtin `{n}`. "
@@ -189,22 +169,6 @@ else:
          for n, extended_msg in _type_info
      }
 
-    # Future warning introduced in NumPy 1.24.0, 2022-11-17
-    _msg = (
-        "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
-
-    # Some of these are awkward (since `np.str` may be preferable in the long
-    # term), but overall the names ending in 0 seem undesirable
-    _type_info = [
-        ("bool8", bool_, "np.bool_"),
-        ("int0", intp, "np.intp"),
-        ("uint0", uintp, "np.uintp"),
-        ("str0", str_, "np.str_"),
-        ("bytes0", bytes_, "np.bytes_"),
-        ("void0", void, "np.void"),
-        ("object0", object_,
-            "`np.object0` is a deprecated alias for `np.object_`. "
-            "`object` can be used instead.  (Deprecated NumPy 1.24)")]
 
     # Some of these could be defined right away, but most were aliases to
     # the Python objects and only removed in NumPy 1.24.  Defining them should
@@ -213,20 +177,8 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
 
-    __deprecated_attrs__.update({
-        n: (alias, _msg.format(n=n, an=an)) for n, alias, an in _type_info})
-
-    import math
-
-    __deprecated_attrs__['math'] = (math,
-        "`np.math` is a deprecated alias for the standard library `math` "
-        "module (Deprecated Numpy 1.25). Replace usages of `np.math` with "
-        "`math`")
-
-    del math, _msg, _type_info
-
     from .core import abs
-    # now that numpy modules are imported, can initialize limits
+    # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
 
     __all__.extend(['__version__', 'show_config'])
@@ -247,61 +199,22 @@ else:
     __all__.remove('unicode')
 
     # Remove things that are in the numpy.lib but not in the numpy namespace
-    # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
+    # Note that there is a test under path: 
+    # `numpy/tests/test_public_api.py:test_numpy_namespace`
     # that prevents adding more things to the main namespace by accident.
     # The list below will grow until the `from .lib import *` fixme above is
     # taken care of
     __all__.remove('Arrayterator')
     del Arrayterator
 
-    # These names were removed in NumPy 1.20.  For at least one release,
-    # attempts to access these names in the numpy namespace will trigger
-    # a warning, and calling the function will raise an exception.
-    _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
-                        'ppmt', 'pv', 'rate']
-    for name in _financial_names:
-        __expired_functions__[name] = (
-            f'In accordance with NEP 32, the function {name} was removed '
-            'from NumPy version 1.20.  A replacement for this function '
-            'is available in the numpy_financial library: '
-            'https://pypi.org/project/numpy-financial'
-        )
-
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
 
-    # oldnumeric and numarray were removed in 1.9. In case some packages import
-    # but do not use them, we define them here for backward compatibility.
-    oldnumeric = 'removed'
-    numarray = 'removed'
-
     def __getattr__(attr):
-        # Warn for expired attributes, and return a dummy function
-        # that always raises an exception.
+        # Warn for expired attributes
         import warnings
-        import math
-        try:
-            msg = __expired_functions__[attr]
-        except KeyError:
-            pass
-        else:
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
-            def _expired(*args, **kwds):
-                raise RuntimeError(msg)
-
-            return _expired
-
-        # Emit warnings for deprecated attributes
-        try:
-            val, msg = __deprecated_attrs__[attr]
-        except KeyError:
-            pass
-        else:
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            return val
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -316,24 +229,13 @@ else:
         if attr == 'testing':
             import numpy.testing as testing
             return testing
-        elif attr == 'Tester':
-            "Removed in NumPy 1.25.0"
-            raise RuntimeError("Tester was removed in NumPy 1.25.")
-        elif attr == "compat":
-            import numpy.compat as compat
-            return compat
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
 
     def __dir__():
         public_symbols = globals().keys() | {'testing'}
-        public_symbols -= {
-            "core", "matrixlib",
-            # These were moved in 1.25 and may be deprecated eventually:
-            "ModuleDeprecationWarning", "VisibleDeprecationWarning",
-            "ComplexWarning", "TooHardError", "AxisError"
-        }
+        public_symbols -= {"core", "matrixlib"}
         return list(public_symbols)
 
     # Pytest testing
@@ -384,7 +286,6 @@ else:
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed Check for warning and error_message
-            error_message = ""
             if len(w) > 0:
                 error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
                 msg = (
@@ -395,36 +296,42 @@ else:
                     "\nOtherwise report this to the vendor "
                     "that provided NumPy.\n{}\n".format(error_message))
                 raise RuntimeError(msg)
+        del w
     del _mac_os_check
 
-    # We usually use madvise hugepages support, but on some old kernels it
-    # is slow and thus better avoided.
-    # Specifically kernel version 4.6 had a bug fix which probably fixed this:
-    # https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
-    import os
-    use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
-    if sys.platform == "linux" and use_hugepage is None:
-        # If there is an issue with parsing the kernel version,
-        # set use_hugepages to 0. Usage of LooseVersion will handle
-        # the kernel version parsing better, but avoided since it
-        # will increase the import time. See: #16679 for related discussion.
-        try:
-            use_hugepage = 1
-            kernel_version = os.uname().release.split(".")[:2]
-            kernel_version = tuple(int(v) for v in kernel_version)
-            if kernel_version < (4, 6):
+    def hugepage_setup():
+        """
+        We usually use madvise hugepages support, but on some old kernels it
+        is slow and thus better avoided. Specifically kernel version 4.6 
+        had a bug fix which probably fixed this:
+        https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
+        """
+        use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
+        if sys.platform == "linux" and use_hugepage is None:
+            # If there is an issue with parsing the kernel version,
+            # set use_hugepage to 0. Usage of LooseVersion will handle
+            # the kernel version parsing better, but avoided since it
+            # will increase the import time. 
+            # See: #16679 for related discussion.
+            try:
+                use_hugepage = 1
+                kernel_version = os.uname().release.split(".")[:2]
+                kernel_version = tuple(int(v) for v in kernel_version)
+                if kernel_version < (4, 6):
+                    use_hugepage = 0
+            except ValueError:
                 use_hugepage = 0
-        except ValueError:
-            use_hugepages = 0
-    elif use_hugepage is None:
-        # This is not Linux, so it should not matter, just enable anyway
-        use_hugepage = 1
-    else:
-        use_hugepage = int(use_hugepage)
+            finally:
+                del kernel_version
+        elif use_hugepage is None:
+            # This is not Linux, so it should not matter, just enable anyway
+            use_hugepage = 1
+        else:
+            use_hugepage = int(use_hugepage)
 
     # Note that this will currently only make a difference on Linux
-    core.multiarray._set_madvise_hugepage(use_hugepage)
-    del use_hugepage
+    core.multiarray._set_madvise_hugepage(hugepage_setup())
+    del hugepage_setup
 
     # Give a warning if NumPy is reloaded or imported on a sub-interpreter
     # We do this from python, since the C-module may not be reloaded and
@@ -440,12 +347,9 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
-    # Remove symbols imported for internal use
-    del os
-
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
 
 # Remove symbols imported for internal use
-del sys, warnings
+del os, sys, warnings

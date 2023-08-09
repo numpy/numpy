@@ -1,8 +1,7 @@
 """
 Utilities that manipulate strides to achieve desirable effects.
 
-An explanation of strides can be found in the "ndarray.rst" file in the
-NumPy reference guide.
+An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
 """
 import numpy as np

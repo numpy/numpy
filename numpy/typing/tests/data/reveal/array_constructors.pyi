@@ -1,5 +1,6 @@
 from typing import Any, TypeVar
 from pathlib import Path
+from collections import deque
 
 import numpy as np
 import numpy.typing as npt
@@ -26,6 +27,7 @@ reveal_type(np.array(A))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.array(B))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.array(B, subok=True))  # E: SubClass[{float64}]
 reveal_type(np.array([1, 1.0]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.array(deque([1, 2, 3])))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.array(A, dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(np.array(A, dtype='c16'))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.array(A, like=A))  # E: ndarray[Any, dtype[{float64}]]

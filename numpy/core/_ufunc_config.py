@@ -379,7 +379,7 @@ class errstate:
     array([nan, inf, inf])
 
     >>> np.sqrt(-1)
-    nan
+    np.float64(nan)
     >>> with np.errstate(invalid='raise'):
     ...     np.sqrt(-1)
     Traceback (most recent call last):

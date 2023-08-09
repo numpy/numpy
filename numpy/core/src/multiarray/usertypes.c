@@ -133,48 +133,11 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->scalarkind = NULL;
     f->cancastscalarkindto = NULL;
     f->cancastto = NULL;
-    f->fastclip = NULL;
-    f->fastputmask = NULL;
-    f->fasttake = NULL;
+    f->_unused1 = NULL;
+    f->_unused2 = NULL;
+    f->_unused3 = NULL;
 }
 
-
-static int
-test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f) {
-    /* NumPy 1.19, 2020-01-15 */
-    if (f->fastputmask != NULL) {
-        if (DEPRECATE(
-                "The ->f->fastputmask member of custom dtypes is ignored; "
-                "setting it may be an error in the future.\n"
-                "The custom dtype you are using must be revised, but "
-                "results will not be affected.") < 0) {
-            return -1;
-        }
-    }
-    /* NumPy 1.19, 2020-01-15 */
-    if (f->fasttake != NULL) {
-        if (DEPRECATE(
-                "The ->f->fastputmask member of custom dtypes is ignored; "
-                "setting it may be an error in the future.\n"
-                "The custom dtype you are using must be revised, but "
-                "results will not be affected.") < 0) {
-            return -1;
-        }
-    }
-    /* NumPy 1.19, 2020-01-15 */
-    if (f->fastclip != NULL) {
-        /* fastclip was already deprecated at execution time in 1.17. */
-        if (DEPRECATE(
-                "The ->f->fastclip member of custom dtypes is deprecated; "
-                "setting it will be an error in the future.\n"
-                "The custom dtype you are using must be changed to use "
-                "PyUFunc_RegisterLoopForDescr to attach a custom loop to "
-                "np.core.umath.clip, np.minimum, and np.maximum") < 0) {
-            return -1;
-        }
-    }
-    return 0;
-}
 
 /*
   returns typenum to associate with this type >=NPY_USERDEF.
@@ -248,10 +211,6 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                     "but now fails.", descr->typeobj);
             return -1;
         }
-    }
-
-    if (test_deprecated_arrfuncs_members(f) < 0) {
-        return -1;
     }
 
     userdescrs = realloc(userdescrs,

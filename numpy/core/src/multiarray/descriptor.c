@@ -8,6 +8,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_ctypes.h"
@@ -425,7 +426,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
-    int maxalign = 0;
+    int maxalign = 1;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
@@ -642,7 +643,7 @@ _convert_from_list(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
-    int maxalign = 0;
+    int maxalign = 1;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
@@ -1107,7 +1108,7 @@ _convert_from_dict(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
     int totalsize = 0;
-    int maxalign = 0;
+    int maxalign = 1;
     int has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
         /* Build item to insert (descr, offset, [title])*/
@@ -2630,6 +2631,13 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
                     && self->typeobj != &PyVoidArrType_Type))) {
         obj = (PyObject *)self->typeobj;
         Py_INCREF(obj);
+    }
+    else if (!NPY_DT_is_legacy(NPY_DTYPE(self))) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Custom dtypes cannot use the default pickle implementation "
+                "for NumPy dtypes. Add a custom pickle implementation to the "
+                "DType to avoid this error");
+        return NULL;
     }
     else {
         elsize = self->elsize;

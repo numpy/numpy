@@ -3,6 +3,7 @@ import functools
 import sys
 import pytest
 
+from numpy.exceptions import AxisError
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
@@ -61,7 +62,7 @@ class TestTakeAlongAxis:
         # float arrays not allowed
         assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
         # invalid axis
-        assert_raises(np.AxisError, take_along_axis, a, ai, axis=10)
+        assert_raises(AxisError, take_along_axis, a, ai, axis=10)
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
@@ -296,12 +297,12 @@ class TestExpandDims:
     def test_axis_out_of_range(self):
         s = (2, 3, 4, 5)
         a = np.empty(s)
-        assert_raises(np.AxisError, expand_dims, a, -6)
-        assert_raises(np.AxisError, expand_dims, a, 5)
+        assert_raises(AxisError, expand_dims, a, -6)
+        assert_raises(AxisError, expand_dims, a, 5)
 
         a = np.empty((3, 3, 3))
-        assert_raises(np.AxisError, expand_dims, a, (0, -6))
-        assert_raises(np.AxisError, expand_dims, a, (0, 5))
+        assert_raises(AxisError, expand_dims, a, (0, -6))
+        assert_raises(AxisError, expand_dims, a, (0, 5))
 
     def test_repeated_axis(self):
         a = np.empty((3, 3, 3))

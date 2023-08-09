@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy.core import swapaxes
+from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -21,6 +22,13 @@ from numpy.testing import (
     assert_almost_equal, assert_allclose, suppress_warnings,
     assert_raises_regex, HAS_LAPACK64, IS_WASM
     )
+try:
+    import numpy.linalg.lapack_lite
+except ImportError:
+    # May be broken when numpy was built without BLAS/LAPACK present
+    # If so, ensure we don't break the whole test suite - the `lapack_lite`
+    # submodule should be removed, it's only used in two tests in this file.
+    pass
 
 
 def consistent_subclass(out, in_):
@@ -1510,8 +1518,8 @@ class _TestNorm2D(_TestNormBase):
             assert_raises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
-        assert_raises(np.AxisError, norm, B, None, 3)
-        assert_raises(np.AxisError, norm, B, None, (2, 3))
+        assert_raises(AxisError, norm, B, None, 3)
+        assert_raises(AxisError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
 

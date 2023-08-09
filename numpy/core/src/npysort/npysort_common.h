@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
+#include <numpy/npy_math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -197,17 +198,17 @@ CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_crealf(a) < npy_crealf(b)) {
+        ret = npy_cimagf(a) == npy_cimagf(a) || npy_cimagf(b) != npy_cimagf(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_crealf(a) > npy_crealf(b)) {
+        ret = npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_crealf(a) == npy_crealf(b) || (npy_crealf(a) != npy_crealf(a) && npy_crealf(b) != npy_crealf(b))) {
+        ret =  npy_cimagf(a) < npy_cimagf(b) || (npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_crealf(b) != npy_crealf(b);
     }
 
     return ret;
@@ -219,17 +220,17 @@ CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_creal(a) < npy_creal(b)) {
+        ret = npy_cimag(a) == npy_cimag(a) || npy_cimag(b) != npy_cimag(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_creal(a) > npy_creal(b)) {
+        ret = npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_creal(a) == npy_creal(b) || (npy_creal(a) != npy_creal(a) && npy_creal(b) != npy_creal(b))) {
+        ret =  npy_cimag(a) < npy_cimag(b) || (npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_creal(b) != npy_creal(b);
     }
 
     return ret;
@@ -241,17 +242,17 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_creall(a) < npy_creall(b)) {
+        ret = npy_cimagl(a) == npy_cimagl(a) || npy_cimagl(b) != npy_cimagl(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_creall(a) > npy_creall(b)) {
+        ret = npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_creall(a) == npy_creall(b) || (npy_creall(a) != npy_creall(a) && npy_creall(b) != npy_creall(b))) {
+        ret =  npy_cimagl(a) < npy_cimagl(b) || (npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_creall(b) != npy_creall(b);
     }
 
     return ret;

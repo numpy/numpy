@@ -1391,7 +1391,7 @@ def test_iter_copy():
 
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
-@pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+@pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:
     if loop_dtype.lower() == "m":
@@ -1886,7 +1886,7 @@ def test_iter_buffered_cast_byteswapped():
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
     with suppress_warnings() as sup:
-        sup.filter(np.ComplexWarning)
+        sup.filter(np.exceptions.ComplexWarning)
 
         a = np.arange(10, dtype='f8').newbyteorder().byteswap()
         i = nditer(a, ['buffered', 'external_loop'],

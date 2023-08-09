@@ -51,15 +51,6 @@ NPY_NO_EXPORT PyArray_Descr *
 datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
 
 /*
- * Converts a datetime from a datetimestruct to a datetime based
- * on some metadata.
- */
-NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
-                                    const npy_datetimestruct *dts,
-                                    npy_datetime *out);
-
-/*
  * Extracts the month number, within the current year,
  * from a 'datetime64[D]' value. January is 1, etc.
  */
@@ -211,24 +202,6 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
 
 
 /*
- * Tests for and converts a Python datetime.datetime or datetime.date
- * object into a NumPy npy_datetimestruct.
- *
- * 'out_bestunit' gives a suggested unit based on whether the object
- *      was a datetime.date or datetime.datetime object.
- *
- * If 'apply_tzinfo' is 1, this function uses the tzinfo to convert
- * to UTC time, otherwise it returns the struct with the local time.
- *
- * Returns -1 on error, 0 on success, and 1 (with no error set)
- * if obj doesn't have the needed date or datetime attributes.
- */
-NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
-                                     NPY_DATETIMEUNIT *out_bestunit,
-                                     int apply_tzinfo);
-
-/*
  * Converts a PyObject * into a datetime, in any of the forms supported.
  *
  * If the units metadata isn't known ahead of time, set meta->base
@@ -285,27 +258,6 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
-
-/*
- * Converts a datetime based on the given metadata into a datetimestruct
- */
-NPY_NO_EXPORT int
-convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
-                                    npy_datetime dt,
-                                    npy_datetimestruct *out);
-
-/*
- * Converts a datetime from a datetimestruct to a datetime based
- * on some metadata. The date is assumed to be valid.
- *
- * TODO: If meta->num is really big, there could be overflow
- *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
-                                    const npy_datetimestruct *dts,
-                                    npy_datetime *out);
 
 /*
  * Adjusts a datetimestruct based on a seconds offset. Assumes

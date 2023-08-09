@@ -435,45 +435,37 @@ From other objects
     have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context*
     argument is unused.
 
-    .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_C_CONTIGUOUS`
         Make sure the returned array is C-style contiguous
 
-    .. c:macro:: NPY_ARRAY_F_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_F_CONTIGUOUS`
         Make sure the returned array is Fortran-style contiguous.
 
-    .. c:macro:: NPY_ARRAY_ALIGNED
-
+    :c:macro:`NPY_ARRAY_ALIGNED`
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
 
-    .. c:macro:: NPY_ARRAY_WRITEABLE
-
+    :c:macro:`NPY_ARRAY_WRITEABLE`
         Make sure the returned array can be written to.
 
-    .. c:macro:: NPY_ARRAY_ENSURECOPY
-
+    :c:macro:`NPY_ARRAY_ENSURECOPY`
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
 
-    .. c:macro:: NPY_ARRAY_ENSUREARRAY
-
+    :c:macro:`NPY_ARRAY_ENSUREARRAY`
         Make sure the result is a base-class ndarray. By
         default, if *op* is an instance of a subclass of
         ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
-    .. c:macro:: NPY_ARRAY_FORCECAST
-
+    :c:macro:`NPY_ARRAY_FORCECAST`
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is raised.
 
-    .. c:macro:: NPY_ARRAY_WRITEBACKIFCOPY
-
+    :c:macro:`NPY_ARRAY_WRITEBACKIFCOPY`
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
         requirements). If this flag is present and a copy (of an object
@@ -485,68 +477,7 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
 
-    .. c:macro:: NPY_ARRAY_BEHAVED
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_CARRAY
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_CARRAY_RO
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY_RO
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_DEFAULT
-
-        :c:data:`NPY_ARRAY_CARRAY`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_IN_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_IN_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_ARRAY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
-    :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_OUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_INOUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-
-    .. c:macro:: NPY_ARRAY_INOUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+    `Combinations of array flags`_ can also be added.
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -557,37 +488,6 @@ From other objects
     specification in *dtype*) and :c:data:`NPY_ARRAY_ELEMENTSTRIDES` which
     indicates that the array should be aligned in the sense that the
     strides are multiples of the element size.
-
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the _ARRAY_ macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_NOTSWAPPED
-
-    Make sure the returned array has a data-type descriptor that is in
-    machine byte-order, over-riding any specification in the *dtype*
-    argument. Normally, the byte-order requirement is determined by
-    the *dtype* argument. If this flag is set and the dtype argument
-    does not indicate a machine byte-order descriptor (or is NULL and
-    the object is already an array with a data-type descriptor that is
-    not in machine byte- order), then a new data-type descriptor is
-    created and used with its byte-order field set to native.
-
-    .. c:macro:: NPY_ARRAY_BEHAVED_NS
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_NOTSWAPPED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
-
-    Make sure the returned array has strides that are multiples of the
-    element size.
 
 .. c:function:: PyObject* PyArray_FromArray( \
         PyArrayObject* op, PyArray_Descr* newtype, int requirements)
@@ -1377,6 +1277,10 @@ a certain kind of array (like :c:data:`NPY_ARRAY_C_CONTIGUOUS` and
 :c:data:`NPY_ARRAY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
+In versions 1.6 and earlier of NumPy, the following flags
+did not have the _ARRAY_ macro namespace in them. That form
+of the constant names is deprecated in 1.7.
+
 
 Basic Array Flags
 ~~~~~~~~~~~~~~~~~
@@ -1388,10 +1292,6 @@ its data in a different byte-order than the machine recognizes. It
 might not be writeable. It might be in Fortran-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
-
-In versions 1.6 and earlier of NumPy, the following flags
-did not have the _ARRAY_ macro namespace in them. That form
-of the constant names is deprecated in 1.7.
 
 .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -1488,6 +1388,34 @@ Combinations of array flags
 
     :c:data:`NPY_ARRAY_CARRAY`
 
+.. c:macro:: NPY_ARRAY_IN_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_IN_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_INOUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
+.. c:macro:: NPY_ARRAY_INOUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
 .. c:macro:: NPY_ARRAY_UPDATE_ALL
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
@@ -1511,6 +1439,30 @@ specify desired properties of the new array.
 .. c:macro:: NPY_ARRAY_ENSUREARRAY
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
+
+These constants are used in :c:func:`PyArray_CheckFromAny` (and its macro forms)
+to specify desired properties of the new array.
+
+.. c:macro:: NPY_ARRAY_NOTSWAPPED
+
+    Make sure the returned array has a data-type descriptor that is in
+    machine byte-order, over-riding any specification in the *dtype*
+    argument. Normally, the byte-order requirement is determined by
+    the *dtype* argument. If this flag is set and the dtype argument
+    does not indicate a machine byte-order descriptor (or is NULL and
+    the object is already an array with a data-type descriptor that is
+    not in machine byte- order), then a new data-type descriptor is
+    created and used with its byte-order field set to native.
+
+.. c:macro:: NPY_ARRAY_BEHAVED_NS
+
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_NOTSWAPPED`
+
+.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
+
+    Make sure the returned array has strides that are multiples of the
+    element size.
 
 
 Flag checking
@@ -1630,8 +1582,8 @@ Conversion
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
     to `PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
-    `offset` plus the itemsize of the new array type must be less than ``self
-    ->descr->elsize`` or an error is raised. The same shape and strides
+    `offset` plus the itemsize of the new array type must be less than
+    ``self->descr->elsize`` or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
     effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
@@ -2250,11 +2202,6 @@ Array Functions
     *casting* indicates how permissive the data conversion should be.
 
     See the :func:`~numpy.einsum` function for more details.
-
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
-
-    A specialized copy and transpose function that works only for 2-d
-    arrays. The returned array is a transposed copy of *op*.
 
 .. c:function:: PyObject* PyArray_Correlate( \
         PyObject* op1, PyObject* op2, int mode)
@@ -3502,23 +3449,6 @@ Miscellaneous Macros
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
-
-.. c:macro:: PyArray_CLT(a,b)
-
-.. c:macro:: PyArray_CGT(a,b)
-
-.. c:macro:: PyArray_CLE(a,b)
-
-.. c:macro:: PyArray_CGE(a,b)
-
-.. c:macro:: PyArray_CEQ(a,b)
-
-.. c:macro:: PyArray_CNE(a,b)
-
-    Implements the complex comparisons between two complex numbers
-    (structures with a real and imag member) using NumPy's definition
-    of the ordering which is lexicographic: comparing the real parts
-    first and then the complex parts if the real parts are equal.
 
 .. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
 

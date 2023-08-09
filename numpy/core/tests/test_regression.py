@@ -9,6 +9,7 @@ from itertools import chain
 import pickle
 
 import numpy as np
+from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
@@ -16,7 +17,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy._utils._convertions import asbytes, asunicode
+from numpy._utils import asbytes, asunicode
 
 
 class TestRegression:
@@ -440,9 +441,9 @@ class TestRegression:
         assert np.lexsort((xs,), axis=0).shape[0] == 2
 
     def test_lexsort_invalid_axis(self):
-        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
-        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
-        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
+        assert_raises(AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(AxisError, np.lexsort, (np.array(1),), axis=10)
 
     def test_lexsort_zerolen_element(self):
         dt = np.dtype([])  # a void dtype with no fields
@@ -1628,9 +1629,9 @@ class TestRegression:
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
-            assert_warns(np.ComplexWarning, float, x)
+            assert_warns(ComplexWarning, float, x)
             with suppress_warnings() as sup:
-                sup.filter(np.ComplexWarning)
+                sup.filter(ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):
@@ -2567,3 +2568,12 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool_)
         assert_array_equal(np.logical_and(a, b), expected)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
+    def test_gh_23737(self):
+        with pytest.raises(TypeError, match="not an acceptable base type"):
+            class Y(np.flexible):
+                pass
+
+        with pytest.raises(TypeError, match="not an acceptable base type"):
+            class X(np.flexible, np.ma.core.MaskedArray):
+                pass

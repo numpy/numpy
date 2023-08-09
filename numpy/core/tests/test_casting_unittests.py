@@ -287,8 +287,7 @@ class TestCasting:
                         assert(from_dt is from_res)
                         assert(to_dt is to_res)
 
-
-    @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("from_dt", simple_dtype_instances())
     def test_simple_direct_casts(self, from_dt):
         """

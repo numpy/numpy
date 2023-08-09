@@ -22,7 +22,7 @@ from ._iotools import (
     ConverterLockError, ConversionWarning, _is_string_like,
     has_nested_fields, flatten_dtype, easy_dtype, _decode_line
     )
-from numpy._utils._convertions import asunicode, asbytes
+from numpy._utils import asunicode, asbytes
 
 
 __all__ = [
@@ -647,10 +647,10 @@ def savez_compressed(file, *args, **kwds):
     Save several arrays into a single file in compressed ``.npz`` format.
 
     Provide arrays as keyword arguments to store them under the
-    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+    corresponding name in the output file: ``savez_compressed(fn, x=x, y=y)``.
 
-    If arrays are specified as positional arguments, i.e., ``savez(fn,
-    x, y)``, their names will be `arr_0`, `arr_1`, etc.
+    If arrays are specified as positional arguments, i.e.,
+    ``savez_compressed(fn, x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -2315,7 +2315,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 "Reading unicode strings without specifying the encoding "
                 "argument is deprecated. Set the encoding, use None for the "
                 "system default.",
-                np.VisibleDeprecationWarning, stacklevel=2)
+                np.exceptions.VisibleDeprecationWarning, stacklevel=2)
             def encode_unicode_cols(row_tup):
                 row = list(row_tup)
                 for i in strcolidx:
@@ -2453,6 +2453,9 @@ def recfromtxt(fname, **kwargs):
     If ``usemask=False`` a standard `recarray` is returned,
     if ``usemask=True`` a MaskedRecords array is returned.
 
+    .. deprecated:: 2.0
+        Use `numpy.genfromtxt` instead.
+
     Parameters
     ----------
     fname, kwargs : For a description of input parameters, see `genfromtxt`.
@@ -2467,6 +2470,16 @@ def recfromtxt(fname, **kwargs):
     array will be determined from the data.
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`recfromtxt` is deprecated, "
+        "use `numpy.genfromtxt` instead."
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
@@ -2486,6 +2499,9 @@ def recfromcsv(fname, **kwargs):
     `recarray`) or a masked record array (if ``usemask=True``,
     see `ma.mrecords.MaskedRecords`).
 
+    .. deprecated:: 2.0
+        Use `numpy.genfromtxt` with comma as `delimiter` instead.
+
     Parameters
     ----------
     fname, kwargs : For a description of input parameters, see `genfromtxt`.
@@ -2500,6 +2516,16 @@ def recfromcsv(fname, **kwargs):
     array will be determined from the data.
 
     """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`recfromcsv` is deprecated, "
+        "use `numpy.genfromtxt` with comma as `delimiter` instead. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     # Set default kwargs for genfromtxt as relevant to csv import.
     kwargs.setdefault("case_sensitive", "lower")
     kwargs.setdefault("names", True)

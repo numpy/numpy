@@ -1,3 +1,5 @@
+#cython: binding=True
+
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
