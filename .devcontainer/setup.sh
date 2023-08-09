@@ -2,7 +2,7 @@
 
 set -e
 
-curl micro.mamba.pm/install.sh | bash
+"${SHELL}" <(curl -Ls micro.mamba.pm/install.sh) < /dev/null
 
 conda init --all
 micromamba shell init -s bash
