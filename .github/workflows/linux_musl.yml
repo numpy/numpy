@@ -44,6 +44,7 @@ jobs:
             git checkout $GITHUB_BASE_REF
             git -c user.email="you@example.com" merge --no-commit my_ref_name
         fi
+        git submodule update --init
 
         ln -s /usr/local/bin/python3.10 /usr/local/bin/python
 
