@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import re
+import sys
+import pathlib
+
+
+# The numpy-vendored version of Meson
+meson_dir = str(pathlib.Path(__file__).resolve().parent.parent / 'meson')
+sys.path.insert(0, meson_dir)
+
+from mesonbuild.mesonmain import main
+import mesonbuild
+if not 'vendored-meson' in mesonbuild.__path__[0]:
+    # Note: only the print statement will show most likely, not the exception.
+    # If this goes wrong, it first fails inside meson-python on the `meson
+    # --version` check.
+    print(f'picking up the wrong `meson`: {mesonbuild.__path__}')
+    raise RuntimeError('incorrect mesonbuild module, exiting')
+
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())

@@ -11,6 +11,54 @@ from spin.cmds import meson
 from spin import util
 
 
+# The numpy-vendored version of Meson. Put the directory that the executable
+# `meson` is in at the front of the PATH.
+curdir = pathlib.Path(__file__).parent.resolve()
+meson_executable_dir = str(curdir.parent / 'vendored-meson' / 'entrypoint')
+os.environ['PATH'] = meson_executable_dir + os.pathsep + os.environ['PATH']
+
+# Check that the meson git submodule is present
+meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
+if not meson_import_dir.exists():
+    raise RuntimeError(
+        'The `vendored-meson/meson` git submodule does not exist! ' +
+        'Run `git submodule update --init` to fix this problem.'
+    )
+
+
+@click.command()
+@click.option(
+    "-j", "--jobs",
+    help="Number of parallel tasks to launch",
+    type=int
+)
+@click.option(
+    "--clean", is_flag=True,
+    help="Clean build directory before build"
+)
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Print all build output, even installation"
+)
+@click.argument("meson_args", nargs=-1)
+@click.pass_context
+def build(ctx, meson_args, jobs=None, clean=False, verbose=False):
+    """🔧 Build package with Meson/ninja and install
+
+    MESON_ARGS are passed through e.g.:
+
+    spin build -- -Dpkg_config_path=/lib64/pkgconfig
+
+    The package is installed to build-install
+
+    By default builds for release, to be able to use a debugger set CFLAGS
+    appropriately. For example, for linux use
+
+    CFLAGS="-O0 -g" spin build
+    """
+    ctx.forward(meson.build)
+
+
 @click.command()
 @click.argument("sphinx_target", default="html")
 @click.option(
@@ -32,7 +80,7 @@ from spin import util
 )
 @click.option(
     "--install-deps/--no-install-deps",
-    default=True,
+    default=False,
     help="Install dependencies before building"
 )
 @click.pass_context
