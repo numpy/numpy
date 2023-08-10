@@ -4,7 +4,6 @@ backend-path = ['./vendored-meson/build-backend-wrapper']
 requires = [
     "Cython>=3.0",
     "meson-python>=0.13.1",
-    "meson @ git+https://github.com/seiko2plus/meson@module_feature",
 ]
 
 [project]
