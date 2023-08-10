@@ -532,10 +532,6 @@ NPY_INPLACE @type@
 npy_floor_divide@c@(@type@ a, @type@ b) {
     @type@ mod;
     if (NPY_UNLIKELY(!b)) {
-        if(npy_isinf(a)) {
-            return NPY_NAN;
-        }
-
         /*
          * in2 == 0 (and not NaN): normal division will give the correct
          * result (Inf or NaN). `divmod` may set additional FPE for the modulo
