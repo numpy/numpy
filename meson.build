@@ -6,7 +6,7 @@ project(
   # See `numpy/__init__.py`
   version: '2.0.0.dev0',
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>=1.2.99',  # version in vendored-meson is 1.2.99
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
