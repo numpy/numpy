@@ -26,7 +26,7 @@ def git_version(version):
 
         try:
             p = subprocess.Popen(
-                ['git', 'log', '-1', '--format="%H %h %aI"'],
+                ['git', 'log', '-1', '--format="%H %aI"'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=os.path.dirname(__file__),
@@ -36,7 +36,7 @@ def git_version(version):
         else:
             out, err = p.communicate()
             if p.returncode == 0:
-                git_hash, git_hash_short, git_date = (
+                git_hash, git_date = (
                     out.decode('utf-8')
                     .strip()
                     .replace('"', '')
@@ -49,7 +49,7 @@ def git_version(version):
                     [tag for tag in version.split('+')
                      if not tag.startswith('git')]
                 )
-                version += f'+git{git_date}.{git_hash_short}'
+                version += f'+git{git_date}.{git_hash[:7]}'
             else:
                 git_hash = ''
 
