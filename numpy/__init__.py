@@ -166,20 +166,19 @@ else:
         tan, tanh, tensordot, timedelta64, trace, transpose, 
         true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
         unicode_, unsignedinteger, ushort, var, vdot, void, vstack, where, 
-        zeros, zeros_like, _get_promotion_state, _set_promotion_state
+        zeros, zeros_like, _get_promotion_state, _set_promotion_state,
+        int8, int16, int32, int64, intp, uint8, uint16, uint32, uint64, uintp,
+        float16, float32, float64, complex64, complex128
     )
 
-    sized_aliases = ["int8", "int16", "int32", "int64", "intp", 
-                     "uint8", "uint16", "uint32", "uint64", "uintp",
-                     "float16", "float32", "float64", "float96", "float128",
-                     "complex64", "complex128", "complex192", "complex256"]
-    
-    for sa in sized_aliases:
+    # NOTE: It's still under discussion whether these aliases 
+    # should be removed.
+    for ta in ["float96", "float128", "complex192", "complex256"]:
         try:
-            globals()[sa] = getattr(core, sa)
+            globals()[ta] = getattr(core, ta)
         except AttributeError:
             pass
-    del sa, sized_aliases
+    del ta
 
     from . import lib
     from .lib import (
@@ -213,8 +212,15 @@ else:
     )
     from . import matrixlib as _mat
     from .matrixlib import (
-        asmatrix, bmat, defmatrix, mat, matrix, test
+        asmatrix, bmat, mat, matrix
     )
+
+    # public submodules are imported lazily, 
+    # therefore are accessible from __getattr__
+    __numpy_submodules__ = {
+        "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
+        "exceptions", "lib", "ctypeslib", "testing"
+    }
 
     # We build warning messages for former attributes
     _msg = (
@@ -259,12 +265,10 @@ else:
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
 
-    __all__ = ['exceptions']
-    __all__.extend(['__version__', 'show_config'])
-    __all__.extend(core.__all__)
-    __all__.extend(_mat.__all__)
-    __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+    __all__ = list(
+        __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
+        set(_mat.__all__) | {"show_config", "__version__"}
+    )
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -299,7 +303,7 @@ else:
         elif attr == "exceptions":
             import numpy.exceptions as exceptions
             return exceptions
-        elif attr == 'testing':
+        elif attr == "testing":
             import numpy.testing as testing
             return testing
         elif attr == "matlib":
@@ -320,8 +324,17 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        public_symbols = globals().keys() | {'testing'}
-        public_symbols -= {"core", "matrixlib"}
+        # TODO: move away from using `globals` to a statically defined 
+        # list. With `globals`, when running in a testing context 
+        # a bunch of random names fall into global scope, such as
+        # `conftest` or `distutils`.
+        public_symbols = (
+            globals().keys() | __numpy_submodules__
+        )
+        public_symbols -= {
+            "core", "matrixlib", "matlib", "test", "tests", "conftest", 
+            "version", "typing", "f2py", "compat", "array_api", "distutils"
+            }
         return list(public_symbols)
 
     # Pytest testing
