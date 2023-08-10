@@ -29,8 +29,8 @@ class TestInf:
             + [np.inf, -np.inf] * 2, dtype=float64)
         
         expected = np.array(
-            [np.nan, np.nan, np.inf, -np.inf, np.nan,
-             np.nan, np.nan, -np.inf, np.inf, np.nan,
+            [np.nan, np.nan, np.inf, -np.inf, np.inf,
+             np.nan, np.nan, -np.inf, np.inf, -np.inf,
              0., -0., -0., 0.])
         
         with np.errstate(invalid='ignore'):
