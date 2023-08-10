@@ -3,16 +3,16 @@ Using the Convenience Classes
 
 The convenience classes provided by the polynomial package are:
 
-         ============    ================
-         Name            Provides
-         ============    ================
-         Polynomial      Power series
-         Chebyshev       Chebyshev series
-         Legendre        Legendre series
-         Laguerre        Laguerre series
-         Hermite         Hermite series
-         HermiteE        HermiteE series
-         ============    ================
+============    ================
+Name            Provides
+============    ================
+Polynomial      Power series
+Chebyshev       Chebyshev series
+Legendre        Legendre series
+Laguerre        Laguerre series
+Hermite         Hermite series
+HermiteE        HermiteE series
+============    ================
 
 The series in this context are finite sums of the corresponding polynomial
 basis functions multiplied by coefficients. For instance, a power series
