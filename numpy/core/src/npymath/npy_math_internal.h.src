@@ -546,12 +546,14 @@ npy_floor_divide@c@(@type@ a, @type@ b) {
 
     int is_inf_a = npy_isinf(a), is_inf_b = npy_isinf(b);
 
-    if(is_inf_a && !is_inf_b) {
-        return npy_copysign(NPY_INFINITY, a/b);
-
-    } else if(!is_inf_a && is_inf_b) {
-        return npy_copysign(0, a/b);
-        
+    /*
+     * According to the IEEE 754 standard,
+     * when either the divisor or dividend is negative, 
+     * -np.inf or -0.0 should be returned
+     * instead of -1.0
+    */
+    if(is_inf_a || is_inf_b) {
+       return a / b;
     } else {
         return npy_divmod@c@(a, b, &mod);
         
