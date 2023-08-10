@@ -55,6 +55,9 @@ def git_version(version):
 
         return version, git_hash
 
+    # Not a dev release
+    return version, ''
+
 
 if __name__ == "__main__":
     import argparse
