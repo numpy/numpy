@@ -515,7 +515,7 @@ and other Python sequences.
     >>> a[::-1]  # reversed a
     array([ 729,  512,  343,  216,  125, 1000,   27, 1000,    1, 1000])
     >>> for i in a:
-    ...     print(i**(1 / 3.))
+    ...     print(i**(1 / 3.))  # may vary
     ...
     9.999999999999998
     1.0
