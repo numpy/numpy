@@ -189,7 +189,7 @@ class TestClassGetItem:
 class TestBitCount:
     # derived in part from the cpython test "test_bit_count"
 
-    @pytest.mark.parametrize("itype", np.sctypes['int']+np.sctypes['uint'])
+    @pytest.mark.parametrize("itype", np.core.sctypes['int']+np.core.sctypes['uint'])
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"

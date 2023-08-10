@@ -188,10 +188,10 @@ class TestAverage:
         # More tests of average.
         w1 = [0, 1, 1, 1, 1, 0]
         w2 = [[0, 1, 1, 1, 1, 0], [1, 0, 0, 0, 0, 1]]
-        x = arange(6, dtype=np.float_)
+        x = arange(6, dtype=np.double)
         assert_equal(average(x, axis=0), 2.5)
         assert_equal(average(x, axis=0, weights=w1), 2.5)
-        y = array([arange(6, dtype=np.float_), 2.0 * arange(6)])
+        y = array([arange(6, dtype=np.double), 2.0 * arange(6)])
         assert_equal(average(y, None), np.add.reduce(np.arange(6)) * 3. / 12.)
         assert_equal(average(y, axis=0), np.arange(6) * 3. / 2.)
         assert_equal(average(y, axis=1),

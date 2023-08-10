@@ -788,7 +788,7 @@ class TestCond(CondCases):
         A[0,1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
-            assert_(isinstance(c, np.float_))
+            assert_(isinstance(c, np.double))
             assert_(np.isnan(c))
 
         A = np.ones((3, 2, 2))

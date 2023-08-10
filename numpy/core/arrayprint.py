@@ -3,7 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-__all__ = ["array2string", "array_str", "array_repr", "set_string_function",
+__all__ = ["array2string", "array_str", "array_repr",
            "set_printoptions", "get_printoptions", "printoptions",
            "format_float_positional", "format_float_scientific"]
 __docformat__ = 'restructuredtext'
@@ -39,7 +39,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          set_legacy_print_mode)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
+from .numerictypes import (longlong, intc, int_, double, cdouble, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
 import operator
@@ -479,12 +479,12 @@ def _get_format_function(data, **options):
         else:
             return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
-        if issubclass(dtypeobj, _nt.longfloat):
+        if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()
         else:
             return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
-        if issubclass(dtypeobj, _nt.clongfloat):
+        if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
@@ -1446,7 +1446,7 @@ def _void_scalar_to_string(x, is_repr=True):
     return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
-_typelessdata = [int_, float_, complex_, bool_]
+_typelessdata = [int_, double, cdouble, bool_]
 
 
 def dtype_is_implied(dtype):

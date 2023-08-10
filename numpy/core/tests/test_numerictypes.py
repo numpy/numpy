@@ -440,14 +440,14 @@ class TestIsSubDType:
 
 class TestSctypeDict:
     def test_longdouble(self):
-        assert_(np.sctypeDict['f8'] is not np.longdouble)
-        assert_(np.sctypeDict['c16'] is not np.clongdouble)
+        assert_(np.core.sctypeDict['f8'] is not np.longdouble)
+        assert_(np.core.sctypeDict['c16'] is not np.clongdouble)
 
     def test_ulong(self):
-        # Test that 'ulong' behaves like 'long'. np.sctypeDict['long'] is an
-        # alias for np.int_, but np.long is not supported for historical
+        # Test that 'ulong' behaves like 'long'. np.core.sctypeDict['long'] 
+        # is an alias for np.int_, but np.long is not supported for historical
         # reasons (gh-21063)
-        assert_(np.sctypeDict['ulong'] is np.uint)
+        assert_(np.core.sctypeDict['ulong'] is np.uint)
         with pytest.warns(FutureWarning):
             # We will probably allow this in the future:
             assert not hasattr(np, 'ulong')
@@ -466,19 +466,19 @@ class TestMaximumSctype:
 
     @pytest.mark.parametrize('t', [np.byte, np.short, np.intc, np.int_, np.longlong])
     def test_int(self, t):
-        assert_equal(np.maximum_sctype(t), np.sctypes['int'][-1])
+        assert_equal(np.maximum_sctype(t), np.core.sctypes['int'][-1])
 
     @pytest.mark.parametrize('t', [np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong])
     def test_uint(self, t):
-        assert_equal(np.maximum_sctype(t), np.sctypes['uint'][-1])
+        assert_equal(np.maximum_sctype(t), np.core.sctypes['uint'][-1])
 
     @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
     def test_float(self, t):
-        assert_equal(np.maximum_sctype(t), np.sctypes['float'][-1])
+        assert_equal(np.maximum_sctype(t), np.core.sctypes['float'][-1])
 
     @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
     def test_complex(self, t):
-        assert_equal(np.maximum_sctype(t), np.sctypes['complex'][-1])
+        assert_equal(np.maximum_sctype(t), np.core.sctypes['complex'][-1])
 
     @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
                                    np.void])

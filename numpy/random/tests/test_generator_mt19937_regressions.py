@@ -153,7 +153,7 @@ class TestRegression:
         assert self.mt19937.standard_gamma(0.0) == 0.0
         assert_array_equal(self.mt19937.standard_gamma([0.0]), 0.0)
 
-        actual = self.mt19937.standard_gamma([0.0], dtype='float')
+        actual = self.mt19937.standard_gamma([0.0], dtype='double')
         expected = np.array([0.], dtype=np.float32)
         assert_array_equal(actual, expected)
 

@@ -16,5 +16,5 @@ reveal_type(np.little_endian)  # E: bool
 reveal_type(np.True_)  # E: bool_
 reveal_type(np.False_)  # E: bool_
 
-reveal_type(np.sctypeDict)  # E: dict
-reveal_type(np.sctypes)  # E: TypedDict
+reveal_type(np.core.sctypeDict)  # E: dict
+reveal_type(np.core.sctypes)  # E: TypedDict

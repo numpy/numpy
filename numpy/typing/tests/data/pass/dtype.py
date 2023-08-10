@@ -28,7 +28,7 @@ np.dtype(
     }
 )
 
-np.dtype((np.float_, float))
+np.dtype((np.double, float))
 
 
 class Test:

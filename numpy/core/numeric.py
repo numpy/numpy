@@ -26,7 +26,7 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import longlong, intc, int_, float_, complex_, bool_
+from .numerictypes import longlong, intc, double, cdouble, int_, bool_
 from ..exceptions import ComplexWarning, TooHardError, AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 

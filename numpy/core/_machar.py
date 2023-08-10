@@ -11,7 +11,7 @@ from .fromnumeric import any
 from ._ufunc_config import errstate
 from .._utils import set_module
 
-# Need to speed this up...especially for longfloat
+# Need to speed this up...especially for longdouble
 
 # Deprecated 2021-10-20, NumPy 1.22
 class MachAr:

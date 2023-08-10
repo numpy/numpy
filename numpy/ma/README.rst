@@ -167,8 +167,8 @@ For example, consider the division of two masked arrays::
 
   import numpy
   import maskedarray as ma
-  x = ma.array([1,2,3,4],mask=[1,0,0,0], dtype=numpy.float_)
-  y = ma.array([-1,0,1,2], mask=[0,0,0,1], dtype=numpy.float_)
+  x = ma.array([1,2,3,4],mask=[1,0,0,0], dtype=numpy.double)
+  y = ma.array([-1,0,1,2], mask=[0,0,0,1], dtype=numpy.double)
 
 The division of x by y is then computed as::
 

@@ -686,7 +686,7 @@ class TestKron:
         assert_equal(type(kron(ma, a)), myarray)
 
     @pytest.mark.parametrize(
-        "array_class", [np.asarray, np.mat]
+        "array_class", [np.asarray, np.asmatrix]
     )
     def test_kron_smoke(self, array_class):
         a = array_class(np.ones([3, 3]))

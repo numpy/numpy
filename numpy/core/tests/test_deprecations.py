@@ -409,7 +409,7 @@ class TestDTypeCoercion(_DeprecationTestCase):
 
     def test_not_deprecated(self):
         # All specific types are not deprecated:
-        for group in np.sctypes.values():
+        for group in np.core.sctypes.values():
             for scalar_type in group:
                 self.assert_not_deprecated(np.dtype, args=(scalar_type,))
 
@@ -700,7 +700,7 @@ def test_future_scalar_attributes(name):
 
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
-    name in np.sctypeDict
+    name in np.core.sctypeDict
 
 
 # Ignore the above future attribute warning for this test.

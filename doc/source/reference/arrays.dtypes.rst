@@ -131,7 +131,7 @@ None
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`float_`.
+   The default data type: :class:`double`.
 
 .. index::
    triple: dtype; construction; from type

@@ -1657,12 +1657,12 @@ M   33  21.99
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
         dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+        test = np.lib.npyio.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              names=None, converters=conv)
         control = np.rec.array([(1,5,-1,0), (2,8,-1,1), (3,3,-2,3)], dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+        test = np.lib.npyio.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              usecols=(0,1,3), names=None, converters=conv)
         control = np.rec.array([(1,5,0), (2,8,1), (3,3,3)], dtype=dtyp)
         assert_equal(test, control)
@@ -2297,14 +2297,14 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-        test = np.recfromtxt(data, **kwargs)
+        test = np.lib.npyio.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
+        test = np.lib.npyio.recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2317,14 +2317,14 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-        test = np.recfromcsv(data, dtype=None, **kwargs)
+        test = np.lib.npyio.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
+        test = np.lib.npyio.recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2333,7 +2333,7 @@ M   33  21.99
         assert_equal(test.A, [0, 2])
         #
         data = TextIO('A,B\n0,1\n2,3')
-        test = np.recfromcsv(data, missing_values='N/A',)
+        test = np.lib.npyio.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', int), ('b', int)])
         assert_(isinstance(test, np.recarray))
@@ -2341,7 +2341,7 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         dtype = [('a', int), ('b', float)]
-        test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
+        test = np.lib.npyio.recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
         assert_(isinstance(test, np.recarray))
@@ -2349,7 +2349,7 @@ M   33  21.99
 
         #gh-10394
         data = TextIO('color\n"red"\n"blue"')
-        test = np.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
+        test = np.lib.npyio.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
         control = np.array([('red',), ('blue',)], dtype=[('color', (bytes, 4))])
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
@@ -2621,7 +2621,7 @@ class TestPathUsage:
                 f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-            test = np.recfromtxt(path, **kwargs)
+            test = np.lib.npyio.recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
@@ -2636,7 +2636,7 @@ class TestPathUsage:
                 f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-            test = np.recfromcsv(path, dtype=None, **kwargs)
+            test = np.lib.npyio.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))

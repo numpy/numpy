@@ -152,7 +152,7 @@ the type itself as a function. For example: ::
 
 Note that, above, we use the *Python* float object as a dtype.  NumPy knows
 that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool_``,
-that ``float`` is ``np.float_`` and ``complex`` is ``np.complex_``.
+that ``float`` is ``np.double`` and ``complex`` is ``np.cdouble``.
 The other data-types do not have Python equivalents.
 
 To determine the type of an array, look at the dtype attribute::

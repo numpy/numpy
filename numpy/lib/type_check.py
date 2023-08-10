@@ -5,7 +5,7 @@ import functools
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
-           'typename', 'asfarray', 'mintypecode',
+           'typename', 'mintypecode',
            'common_type']
 
 from .._utils import set_module
@@ -81,7 +81,7 @@ def _asfarray_dispatcher(a, dtype=None):
 
 
 @array_function_dispatch(_asfarray_dispatcher)
-def asfarray(a, dtype=_nx.float_):
+def asfarray(a, dtype=_nx.double):
     """
     Return an array converted to a float type.
 
@@ -100,16 +100,16 @@ def asfarray(a, dtype=_nx.float_):
 
     Examples
     --------
-    >>> np.asfarray([2, 3])
+    >>> np.lib.type_check.asfarray([2, 3])
     array([2.,  3.])
-    >>> np.asfarray([2, 3], dtype='float')
+    >>> np.lib.type_check.asfarray([2, 3], dtype='float')
     array([2.,  3.])
-    >>> np.asfarray([2, 3], dtype='int8')
+    >>> np.lib.type_check.asfarray([2, 3], dtype='int8')
     array([2.,  3.])
 
     """
     if not _nx.issubdtype(dtype, _nx.inexact):
-        dtype = _nx.float_
+        dtype = _nx.double
     return asarray(a, dtype=dtype)
 
 

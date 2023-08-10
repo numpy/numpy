@@ -1311,7 +1311,7 @@ class TestMaskedArrayArithmetic:
         xm = masked_array(x, mask=m1)
         xm.set_fill_value(1e+20)
         float_dtypes = [np.half, np.single, np.double,
-                        np.longdouble, np.cfloat, np.cdouble, np.clongdouble]
+                        np.longdouble, np.csingle, np.cdouble, np.clongdouble]
         for float_dtype in float_dtypes:
             assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
                          float_dtype(a10))

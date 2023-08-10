@@ -39,7 +39,7 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
+    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',

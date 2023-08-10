@@ -1,4 +1,4 @@
-__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
+__all__ = ['matrix', 'bmat', 'asmatrix']
 
 import sys
 import warnings
@@ -1110,5 +1110,3 @@ def bmat(obj, ldict=None, gdict=None):
         return matrix(concatenate(arr_rows, axis=0))
     if isinstance(obj, N.ndarray):
         return matrix(obj)
-
-mat = asmatrix

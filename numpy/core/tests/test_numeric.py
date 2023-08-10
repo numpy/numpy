@@ -1421,14 +1421,14 @@ class TestTypes:
 
     def test_can_cast_values(self):
         # gh-5917
-        for dt in np.sctypes['int'] + np.sctypes['uint']:
+        for dt in np.core.sctypes['int'] + np.core.sctypes['uint']:
             ii = np.iinfo(dt)
             assert_(np.can_cast(ii.min, dt))
             assert_(np.can_cast(ii.max, dt))
             assert_(not np.can_cast(ii.min - 1, dt))
             assert_(not np.can_cast(ii.max + 1, dt))
 
-        for dt in np.sctypes['float']:
+        for dt in np.core.sctypes['float']:
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
@@ -2972,7 +2972,7 @@ class TestCreationFuncs:
     # Test ones, zeros, empty and full.
 
     def setup_method(self):
-        dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
+        dtypes = {np.dtype(tp) for tp in itertools.chain(*np.core.sctypes.values())}
         # void, bytes, str
         variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
         keyfunc = lambda dtype: dtype.str

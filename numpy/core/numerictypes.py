@@ -24,7 +24,7 @@ Exported symbols include:
 
     object_
 
-    void, str_, unicode_
+    void, str_
 
     byte, ubyte,
     short, ushort
@@ -34,8 +34,8 @@ Exported symbols include:
     longlong, ulonglong,
 
     single, csingle,
-    float_, complex_,
-    longfloat, clongfloat,
+    double, cdouble,
+    longdouble, clongdouble,
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -61,19 +61,16 @@ Exported symbols include:
      |       +-> floating          (floatxx)    (kind=f)
      |       |     half
      |       |     single
-     |       |     float_          (double)
-     |       |     longfloat
+     |       |     double
+     |       |     longdouble
      |       \\-> complexfloating  (complexxx)  (kind=c)
-     |             csingle         (singlecomplex)
-     |             complex_        (cfloat, cdouble)
-     |             clongfloat      (longcomplex)
+     |             csingle
+     |             cdouble
+     |             clongdouble
      +-> flexible
      |   +-> character
-     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
-     |   |     unicode_                         (kind=U)    [Python 2]
-     |   |
-     |   |     bytes_   (string_)               (kind=S)    [Python 3]
-     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |     bytes_                           (kind=S)
+     |   |     str_                             (kind=U)
      |   |
      |   \\-> void                              (kind=V)
      \\-> object_ (not used much)               (kind=O)
@@ -89,9 +86,8 @@ from .multiarray import (
 from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypes',
-           'ScalarType', 'obj2sctype', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
+__all__ = ['ScalarType', 'nbytes',
+           'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
@@ -418,7 +414,7 @@ def issubdtype(arg1, arg2):
 
     For convenience, dtype-like objects are allowed too:
 
-    >>> np.issubdtype('S1', np.string_)
+    >>> np.issubdtype('S1', np.bytes_)
     True
     >>> np.issubdtype('i4', np.signedinteger)
     True
@@ -490,7 +486,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, np.complex_, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, np.double, np.cdouble, np.bytes_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l # may vary
     d

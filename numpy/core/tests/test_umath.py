@@ -267,8 +267,8 @@ class TestOut:
 class TestComparisons:
     import operator
 
-    @pytest.mark.parametrize('dtype', np.sctypes['uint'] + np.sctypes['int'] +
-                             np.sctypes['float'] + [np.bool_])
+    @pytest.mark.parametrize('dtype', np.core.sctypes['uint'] + np.core.sctypes['int'] +
+                             np.core.sctypes['float'] + [np.bool_])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -454,7 +454,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.sctypes['int'] + np.sctypes['uint'], (
+        np.core.sctypes['int'] + np.core.sctypes['uint'], (
             (
                 # dividend
                 "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
@@ -540,7 +540,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.sctypes['int'] + np.sctypes['uint'], (
+        np.core.sctypes['int'] + np.core.sctypes['uint'], (
             "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
             "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
             "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
@@ -987,9 +987,9 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dividend_dtype",
-            np.sctypes['int'])
+            np.core.sctypes['int'])
     @pytest.mark.parametrize("divisor_dtype",
-            np.sctypes['int'])
+            np.core.sctypes['int'])
     @pytest.mark.parametrize("operation",
             [np.remainder, np.fmod, np.divmod, np.floor_divide,
              operator.mod, operator.floordiv])
@@ -1115,7 +1115,7 @@ class TestPower:
             assert_array_equal(x.imag, y.imag)
 
         for z in [complex(0, np.inf), complex(1, np.inf)]:
-            z = np.array([z], dtype=np.complex_)
+            z = np.array([z], dtype=np.cdouble)
             with np.errstate(invalid="ignore"):
                 assert_complex_equal(z**1, z)
                 assert_complex_equal(z**2, z*z)
@@ -4170,7 +4170,7 @@ class TestComplexFunctions:
             except AttributeError:
                 continue
             for p in points:
-                a = complex(func(np.complex_(p)))
+                a = complex(func(np.cdouble(p)))
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
@@ -4181,7 +4181,7 @@ class TestComplexFunctions:
     )
     @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
-    @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
+    @pytest.mark.parametrize('dtype', [np.complex64, np.cdouble, np.clongdouble])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
 
@@ -4220,9 +4220,9 @@ class TestComplexFunctions:
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        if dtype is np.longcomplex:
+        if dtype is np.clongdouble:
             if bad_arcsinh():
-                pytest.skip("Trig functions of np.longcomplex values known "
+                pytest.skip("Trig functions of np.clongdouble values known "
                             "to be inaccurate on aarch64 and PPC for some "
                             "compilation configurations.")
             # It's not guaranteed that the system-provided arc functions
@@ -4435,7 +4435,7 @@ def test_nextafterl():
 
 
 def test_nextafter_0():
-    for t, direction in itertools.product(np.sctypes['float'], (1, -1)):
+    for t, direction in itertools.product(np.core.sctypes['float'], (1, -1)):
         # The value of tiny for double double is NaN, so we need to pass the
         # assert
         with suppress_warnings() as sup:

@@ -90,7 +90,7 @@ def test_fromstring():
 
 
 def test_fromstring_complex():
-    for ctype in ["complex", "cdouble", "cfloat"]:
+    for ctype in ["complex", "cdouble"]:
         # Check spacing between separator
         assert_equal(np.fromstring("1, 2 ,  3  ,4", sep=",", dtype=ctype),
                      np.array([1., 2., 3., 4.]))
@@ -155,7 +155,7 @@ class TestFileBased:
         assert_equal(res, np.array([1., 2., 3.]))
 
     def test_fromfile_complex(self):
-        for ctype in ["complex", "cdouble", "cfloat"]:
+        for ctype in ["complex", "cdouble", "csingle"]:
             # Check spacing between separator and only real component specified
             with temppath() as path:
                 with open(path, 'w') as f:
