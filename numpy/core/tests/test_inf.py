@@ -9,7 +9,7 @@ class TestInf:
 
         if not is_same_sign and are_zeroes:
             raise AssertionError("Arrays are not equal {} vs {}",
-                                 repr(expected), repr(actua;l))
+                                 repr(expected), repr(actual))
 
     
     def assert_equal_zeroes(self, expected_list, actual_list):
