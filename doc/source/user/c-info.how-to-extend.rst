@@ -327,12 +327,12 @@ The method is to
    byte-order and single-segment) of the correct type and number of
    dimensions.
 
-    1. By converting it from some Python object using
-       :c:func:`PyArray_FromAny` or a macro built on it.
+   1. By converting it from some Python object using
+      :c:func:`PyArray_FromAny` or a macro built on it.
 
-    2. By constructing a new ndarray of your desired shape and type
-       using :c:func:`PyArray_NewFromDescr` or a simpler macro or function
-       based on it.
+   2. By constructing a new ndarray of your desired shape and type
+      using :c:func:`PyArray_NewFromDescr` or a simpler macro or function
+      based on it.
 
 
 2. Get the shape of the array and a pointer to its actual data.

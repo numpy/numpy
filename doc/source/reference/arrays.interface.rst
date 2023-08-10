@@ -237,7 +237,7 @@ interpreted.  The data-bits are :c:macro:`NPY_ARRAY_C_CONTIGUOUS` (0x1),
 has the arrdescr field.  The field should not be accessed unless this
 flag is present.
 
-   .. c:macro:: NPY_ARR_HAS_DESCR
+.. c:macro:: NPY_ARR_HAS_DESCR
 
 .. admonition:: New since June 16, 2006:
 
