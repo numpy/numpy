@@ -10,3 +10,6 @@
 [submodule "vendored-meson/meson"]
 	path = vendored-meson/meson
 	url = https://github.com/numpy/meson.git
+[submodule "vendored-meson/meson-python"]
+	path = vendored-meson/meson-python
+	url = https://github.com/numpy/meson-python.git

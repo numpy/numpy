@@ -1,9 +1,18 @@
 [build-system]
-build-backend = "npbuild"
-backend-path = ['./vendored-meson/build-backend-wrapper']
+build-backend = "mesonpy"
+backend-path = ['./vendored-meson/meson-python']
 requires = [
     "Cython>=3.0",
-    "meson-python>=0.13.1",
+    # All dependencies of the vendored meson-python (except for meson, because
+    # we've got that vendored too - that's the point of this exercise).
+    'pyproject-metadata >= 0.7.1',
+    'tomli >= 1.0.0; python_version < "3.11"',
+    'setuptools >= 60.0; python_version >= "3.12"',
+    'colorama; os_name == "nt"',
+    # Note that `ninja` and (on Linux) `patchelf` are added dynamically by
+    # meson-python if those tools are not already present on the system. No
+    # need to worry about those unless one does a non-isolated build - in that
+    # case they must already be installed on the system.
 ]
 
 [project]
