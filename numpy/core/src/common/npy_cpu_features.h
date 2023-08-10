@@ -192,30 +192,6 @@ npy_cpu_baseline_list(void);
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_dispatch_list(void);
 
-/*
-Init Highway
-*/
-NPY_VISIBILITY_HIDDEN int
-npy_hwy_init(void);
-
-/*
-Get features list from highway
-*/
-NPY_VISIBILITY_HIDDEN PyObject *
-npy_hwy_features_dict(void);
-
-/*
-Get dispatch list from highway
-*/
-NPY_VISIBILITY_HIDDEN PyObject *
-npy_hwy_dispatch_list(void);
-
-/*
-Get baseline list from highway
-*/
-NPY_VISIBILITY_HIDDEN PyObject *
-npy_hwy_baseline_list(void);
-
 #ifdef __cplusplus
 }
 #endif

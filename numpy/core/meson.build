@@ -706,7 +706,6 @@ test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
-      'src/common/npy_hwy_features.cpp',
     ],
     _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
   ],
@@ -988,7 +987,6 @@ src_multiarray_umath_common = [
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
-  'src/common/npy_hwy_features.cpp',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
@@ -1055,6 +1053,10 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
+  src_file.process('src/common/npy_sort.h.src'),
+  
+  'src/npysort/simd_qsort.dispatch.cpp',
+  'src/npysort/simd_qsort_16bit.dispatch.cpp',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',
@@ -1083,7 +1085,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
   'src/umath/ufunc_type_resolution.c',
-  'src/umath/absolute.cpp',
+  'src/umath/absolute.dispatch.cpp',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
   'src/umath/dispatching.c',
@@ -1205,7 +1207,6 @@ _simd_mtargets = mod_features.multi_targets(
 py.extension_module('_simd',
   [
     'src/common/npy_cpu_features.c',
-    'src/common/npy_hwy_features.cpp',
     'src/_simd/_simd.c',
   ],
   c_args: c_args_common,

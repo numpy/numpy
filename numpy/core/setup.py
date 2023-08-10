@@ -636,6 +636,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
     config.add_include_dirs(join('src', '_simd'))
+    config.add_include_dirs(join('src', 'highway'))
 
     config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
@@ -748,7 +749,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             join('src', 'common', 'npy_cpu_features.c'),
             join('src', 'common', 'npy_cpu_dispatch.c'),
-            join('src', 'common', 'npy_hwy_features.cpp'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
@@ -980,7 +980,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
             join('src', 'umath', 'clip.cpp'),
-            join('src', 'umath', 'absolute.cpp'),
+            join('src', 'umath', 'absolute.dispatch.cpp'),
             join('src', 'umath', 'dispatching.c'),
             join('src', 'umath', 'legacy_array_method.c'),
             join('src', 'umath', 'wrapping_array_method.c'),
@@ -1025,6 +1025,7 @@ def configuration(parent_package='',top_path=None):
         if not can_link_svml_fp16():
             svml_objs = [o for o in svml_objs if not o.endswith('_h_la.s')]
 
+    hwy_path = join('numpy', 'core', 'src', 'highway')
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
                                  common_src +
@@ -1039,6 +1040,7 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
+                         include_dirs=[hwy_path],
                          libraries=['npymath'],
                          extra_objects=svml_objs,
                          extra_info=extra_info)
@@ -1051,7 +1053,6 @@ def configuration(parent_package='',top_path=None):
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
         join('src', 'common', 'npy_cpu_features.c'),
-        join('src', 'common', 'npy_hwy_features.cpp'),
     ])
 
     #######################################################################
@@ -1083,7 +1084,6 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_simd',
         sources=[
             join('src', 'common', 'npy_cpu_features.c'),
-            join('src', 'common', 'npy_hwy_features.cpp'),
             join('src', '_simd', '_simd.c'),
             join('src', '_simd', '_simd_inc.h.src'),
             join('src', '_simd', '_simd_data.inc.src'),

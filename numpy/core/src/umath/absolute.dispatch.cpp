@@ -1,3 +1,7 @@
+/*@targets
+ * $maxopt $keep_baseline avx512_skx asimd
+ */
+
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -6,7 +10,7 @@
 #include <Python.h>
 
 #undef HWY_TARGET_INCLUDE
-#define HWY_TARGET_INCLUDE "absolute.cpp"  // this file
+#define HWY_TARGET_INCLUDE "absolute.dispatch.cpp"  // this file
 #include <hwy/foreach_target.h>  // must come before highway.h
 #include <hwy/highway.h>
 
@@ -63,21 +67,21 @@ extern "C" {
 NPY_NO_EXPORT void
 INT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_DYNAMIC_DISPATCH(INT_SuperAbsolute);
+  static auto dispatcher = HWY_STATIC_DISPATCH(INT_SuperAbsolute);
   return dispatcher(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
 DOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_DYNAMIC_DISPATCH(DOUBLE_SuperAbsolute);
+  static auto dispatcher = HWY_STATIC_DISPATCH(DOUBLE_SuperAbsolute);
   return dispatcher(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
 FLOAT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_DYNAMIC_DISPATCH(FLOAT_SuperAbsolute);
+  static auto dispatcher = HWY_STATIC_DISPATCH(FLOAT_SuperAbsolute);
   return dispatcher(args, dimensions, steps);
 }
 
