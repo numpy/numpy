@@ -11,7 +11,6 @@ class TestInf:
             raise AssertionError("Arrays are not equal {} vs {}",
                                  repr(expected), repr(actual))
 
-    
     def assert_equal_zeroes(self, expected_list, actual_list):
         for expected, actual in zip(expected_list, actual_list):
             self.assert_equal_zero(expected, actual)
