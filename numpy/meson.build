@@ -188,6 +188,14 @@ if not have_lapack and not allow_noblas
         'for some linear algebra operations).')
 endif
 
+# Generate version.py for sdist
+source = meson.project_source_root()
+python_bin = py.path()
+meson.add_dist_script(
+  'sh',
+  ['-c', f'@python_bin@ @source@/numpy/_build_utils/gitversion.py --write ${MESON_DIST_ROOT}/numpy/version.py']
+)
+
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
 __init__pxd = fs.copyfile('__init__.pxd')

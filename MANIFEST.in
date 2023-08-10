@@ -16,7 +16,7 @@ exclude azure-*.yml
 include .coveragerc
 
 # Sub-directories. Included are: numpy/, doc/, benchmarks/, tools/
-include numpy/_version.py
+include numpy/version.py
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
 include numpy/py.typed
 include numpy/random/include/*
