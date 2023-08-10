@@ -128,7 +128,7 @@ necessary distinction between 0D and >0D arrays. While thus not strictly
 correct, all operations are that can potentially perform a 0D-array -> scalar
 cast are currently annotated as exclusively returning an `~numpy.ndarray`.
 
-If it is known in advance that an operation _will_ perform a
+If it is known in advance that an operation *will* perform a
 0D-array -> scalar cast, then one can consider manually remedying the
 situation with either `typing.cast` or a ``# type: ignore`` comment.
 

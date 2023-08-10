@@ -135,7 +135,7 @@ memory block can be accessed by some combination of the indices.
 
 .. note::
 
-    `Contiguous arrays` and `single-segment arrays` are synonymous
+    *Contiguous arrays* and *single-segment arrays* are synonymous
     and are used interchangeably throughout the documentation.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
@@ -159,7 +159,7 @@ contiguous at the same time.
 
 An array is considered aligned if the memory offsets for all elements and the
 base offset itself is a multiple of `self.itemsize`. Understanding
-`memory-alignment` leads to better performance on most hardware.
+*memory-alignment* leads to better performance on most hardware.
 
 .. warning::
 

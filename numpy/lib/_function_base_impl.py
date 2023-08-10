@@ -5616,7 +5616,7 @@ def digitize(x, bins, right=False):
     much better for larger number of bins than the previous linear search.
     It also removes the requirement for the input array to be 1-dimensional.
 
-    For monotonically _increasing_ `bins`, the following are equivalent::
+    For monotonically *increasing* `bins`, the following are equivalent::
 
         np.digitize(x, bins, right=True)
         np.searchsorted(bins, x, side='left')

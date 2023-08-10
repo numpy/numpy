@@ -775,7 +775,7 @@ def block(arrays):
         AAAbb
         cDDDD
 
-    Since concatenation happens along the last axis first, `block` is _not_
+    Since concatenation happens along the last axis first, `block` is *not*
     capable of producing the following directly::
 
         AAAbb
