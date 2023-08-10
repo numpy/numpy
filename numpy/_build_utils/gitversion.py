@@ -61,6 +61,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--write', help="Save version to this file")
+    parser.add_argument(
+        '--meson-dist',
+        help='Output path is relative to MESON_DIST_ROOT',
+        action='store_true'
+    )
     args = parser.parse_args()
 
     version, git_hash = git_version(init_version())
@@ -77,7 +82,20 @@ if __name__ == "__main__":
     ''')
 
     if args.write:
-        with open(args.write, 'w') as f:
-            f.write(template)
+        outfile = args.write
+        if args.meson_dist:
+            outfile = os.path.join(
+                os.environ.get('MESON_DIST_ROOT', ''),
+                outfile
+            )
 
-    print(version)
+        # Print human readable output path
+        relpath = os.path.relpath(outfile)
+        if relpath.startswith('.'):
+            relpath = outfile
+
+        with open(outfile, 'w') as f:
+            print(f'Saving version to {relpath}')
+            f.write(template)
+    else:
+        print(version)
