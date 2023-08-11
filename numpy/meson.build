@@ -219,8 +219,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -268,6 +267,12 @@ if not fs.exists('version.py')
     input: '_build_utils/gitversion.py',
     command: [py, '@INPUT@', '--write', '@OUTPUT@'],
     install_dir: np_dir
+  )
+else
+  # When building from sdist, version.py exists and should be included
+  py.install_sources(
+    ['version.py'],
+    subdir : 'numpy'
   )
 endif
 
