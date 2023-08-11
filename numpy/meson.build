@@ -188,6 +188,14 @@ if not have_lapack and not allow_noblas
         'for some linear algebra operations).')
 endif
 
+# Generate version.py for sdist
+gitversion = files('_build_utils/gitversion.py')[0]
+python_bin = py.full_path()
+meson.add_dist_script(
+  py,
+  [gitversion, '--meson-dist', '--write', 'numpy/version.py']
+)
+
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
 __init__pxd = fs.copyfile('__init__.pxd')
@@ -203,7 +211,6 @@ python_sources = [
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
-  '_version.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
@@ -212,8 +219,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -243,13 +249,32 @@ pure_subdirs = [
   'polynomial',
   'testing',
   'tests',
-  'typing',
+  'typing'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'
 endif
 
 np_dir = py.get_install_dir() / 'numpy'
+
+if not fs.exists('version.py')
+  generate_version = custom_target(
+    'generate-version',
+    install: true,
+    build_always_stale: true,
+    build_by_default: true,
+    output: 'version.py',
+    input: '_build_utils/gitversion.py',
+    command: [py, '@INPUT@', '--write', '@OUTPUT@'],
+    install_dir: np_dir
+  )
+else
+  # When building from sdist, version.py exists and should be included
+  py.install_sources(
+    ['version.py'],
+    subdir : 'numpy'
+  )
+endif
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
