@@ -1,5 +1,7 @@
 /*@targets
- * $maxopt $keep_baseline avx512_skx asimd
+ * $maxopt baseline
+ * avx512_skx
+ * asimd
  */
 
 #define _UMATHMODULE
@@ -104,19 +106,19 @@ namespace numpy {
 extern "C" {
 
 NPY_NO_EXPORT void
-INT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+NPY_CPU_DISPATCH_CURFX(INT_absolute)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
   HWY_STATIC_DISPATCH(INT_SuperAbsolute)(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
-DOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+NPY_CPU_DISPATCH_CURFX(DOUBLE_absolute)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
   HWY_STATIC_DISPATCH(DOUBLE_SuperAbsolute)(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
-FLOAT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+NPY_CPU_DISPATCH_CURFX(FLOAT_absolute)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
   HWY_STATIC_DISPATCH(FLOAT_SuperAbsolute)(args, dimensions, steps);
 }
