@@ -6,7 +6,7 @@ project(
     ['python', 'numpy/_build_utils/gitversion.py'],
     check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>=1.2.99',  # version in vendored-meson is 1.2.99
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
@@ -62,4 +62,5 @@ if cc.get_id() == 'clang'
   )
 endif
 
+subdir('meson_cpu')
 subdir('numpy')
