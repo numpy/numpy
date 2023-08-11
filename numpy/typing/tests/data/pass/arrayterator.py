@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 AR_i8: np.ndarray[Any, np.dtype[np.int_]] = np.arange(10)
-ar_iter = np.lib.arrayterator.Arrayterator(AR_i8)
+ar_iter = np.lib.Arrayterator(AR_i8)
 
 ar_iter.var
 ar_iter.buf_size

@@ -66,7 +66,7 @@ class Arrayterator:
     Examples
     --------
     >>> a = np.arange(3 * 4 * 5 * 6).reshape(3, 4, 5, 6)
-    >>> a_itor = np.lib.arrayterator.Arrayterator(a, 2)
+    >>> a_itor = np.lib.Arrayterator(a, 2)
     >>> a_itor.shape
     (3, 4, 5, 6)
 
@@ -139,18 +139,18 @@ class Arrayterator:
         A 1-D flat iterator for Arrayterator objects.
 
         This iterator returns elements of the array to be iterated over in
-        `~lib.arrayterator.Arrayterator` one by one. 
+        `~lib.Arrayterator` one by one. 
         It is similar to `flatiter`.
 
         See Also
         --------
-        lib.arrayterator.Arrayterator
+        lib.Arrayterator
         flatiter
 
         Examples
         --------
         >>> a = np.arange(3 * 4 * 5 * 6).reshape(3, 4, 5, 6)
-        >>> a_itor = np.lib.arrayterator.Arrayterator(a, 2)
+        >>> a_itor = np.lib.Arrayterator(a, 2)
 
         >>> for subarr in a_itor.flat:
         ...     if not subarr:

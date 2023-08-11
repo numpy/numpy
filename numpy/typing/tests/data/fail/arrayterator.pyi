@@ -2,9 +2,9 @@ from typing import Any
 import numpy as np
 
 AR_i8: np.ndarray[Any, np.dtype[np.int64]]
-ar_iter = np.lib.arrayterator.Arrayterator(AR_i8)
+ar_iter = np.lib.Arrayterator(AR_i8)
 
-np.lib.arrayterator.Arrayterator(np.int64())  # E: incompatible type
+np.lib.Arrayterator(np.int64())  # E: incompatible type
 ar_iter.shape = (10, 5)  # E: is read-only
 ar_iter[None]  # E: Invalid index type
 ar_iter[None, 1]  # E: Invalid index type
