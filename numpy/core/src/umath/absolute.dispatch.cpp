@@ -9,15 +9,16 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#undef HWY_TARGET_INCLUDE
-#define HWY_TARGET_INCLUDE "absolute.dispatch.cpp"  // this file
-#include <hwy/foreach_target.h>  // must come before highway.h
 #include <hwy/highway.h>
+#include "hwy/aligned_allocator.h"
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
 #include "numpy/utils.h"
+
+#include "loops_utils.h"
+#include "fast_loop_macros.h"
 
 namespace numpy {
 namespace HWY_NAMESPACE {  // required: unique per target
@@ -33,11 +34,54 @@ HWY_ATTR void SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp co
   const size_t size = dimensions[0];
   const hn::ScalableTag<T> d;
   
-  for (size_t i = 0; i < size; i += hn::Lanes(d)) {
-    const auto in = hn::Load(d, input_array + i);
-    auto x = hn::Abs(in);
-    hn::Store(x, d, output_array + i);
-  }
+    if (is_mem_overlap(input_array, steps[0], output_array, steps[1], size)) {
+      for (size_t i = 0; i < size; i++) {
+        const auto in = hn::LoadN(d, input_array + i, 1);
+        auto x = hn::Abs(in);
+        hn::StoreN(x, d, output_array + i, 1);
+      }
+    } else if (IS_UNARY_CONT(input_array, output_array)) {
+      size_t full = size & -hn::Lanes(d);
+      size_t remainder = size - full;
+      for (size_t i = 0; i < full; i += hn::Lanes(d)) {
+        const auto in = hn::LoadU(d, input_array + i);
+        auto x = hn::Abs(in);
+        hn::StoreU(x, d, output_array + i);
+      }
+      if (remainder) {
+        const auto in = hn::LoadN(d, input_array + full, remainder);
+        auto x = hn::Abs(in);
+        hn::StoreN(x, d, output_array + full, remainder);
+      }
+    } else {
+      using TI = hwy::MakeSigned<T>;
+      const hn::Rebind<TI, hn::ScalableTag<T>> di;
+
+      const int lsize = sizeof(input_array[0]);
+      const npy_intp ssrc = steps[0] / lsize;
+      const npy_intp sdst = steps[1] / lsize;
+      auto load_index = hwy::AllocateAligned<TI>(hn::Lanes(d));
+      for (size_t i = 0; i < hn::Lanes(d); ++i) {
+        load_index[i] = i * ssrc;
+      }
+      auto store_index = hwy::AllocateAligned<TI>(hn::Lanes(d));
+      for (size_t i = 0; i < hn::Lanes(d); ++i) {
+        store_index[i] = i * sdst;
+      }
+
+      size_t full = size & -hn::Lanes(d);
+      size_t remainder = size - full;
+      for (size_t i = 0; i < full; i += hn::Lanes(d)) {
+        const auto in = hn::GatherIndex(d, input_array + i * ssrc, Load(di, load_index.get()));
+        auto x = hn::Abs(in);
+        hn::ScatterIndex(x, d, output_array + i * sdst, Load(di, store_index.get()));
+      }
+      if (remainder) {
+        const auto in = hn::GatherIndexN(d, input_array + full * ssrc, Load(di, load_index.get()), remainder);
+        auto x = hn::Abs(in);
+        hn::ScatterIndexN(x, d, output_array + full * sdst, Load(di, store_index.get()), remainder);
+      }
+    }
 }
 
 HWY_ATTR void INT_SuperAbsolute(char **args, npy_intp const *dimensions, npy_intp const *steps) {
@@ -55,12 +99,7 @@ HWY_ATTR void FLOAT_SuperAbsolute(char **args, npy_intp const *dimensions, npy_i
 }
 }
 
-#if HWY_ONCE
 namespace numpy {
-
-HWY_EXPORT(INT_SuperAbsolute);
-HWY_EXPORT(FLOAT_SuperAbsolute);
-HWY_EXPORT(DOUBLE_SuperAbsolute);
 
 extern "C" {
 
@@ -87,6 +126,5 @@ FLOAT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 
 } // extern "C"
 } // numpy
-#endif
 
 
