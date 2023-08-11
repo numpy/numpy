@@ -177,9 +177,9 @@ def sliding_window_view(x, window_shape, axis=None, *,
     For many applications using a sliding window view can be convenient, but
     potentially very slow. Often specialized solutions exist, for example:
 
-    - `scipy.signal.fftconvolve`
+    - :func:`scipy.signal.fftconvolve`
 
-    - filtering functions in `scipy.ndimage`
+    - filtering functions in :mod:`scipy.ndimage`
 
     - moving window functions provided by
       `bottleneck <https://github.com/pydata/bottleneck>`_.

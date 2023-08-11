@@ -4480,7 +4480,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     A compatibility alias for `~ndarray.tobytes`, with exactly the same
     behavior.
 
-    Despite its name, it returns `bytes` not `str`\ s.
+    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
 
     .. deprecated:: 1.19.0
     """))

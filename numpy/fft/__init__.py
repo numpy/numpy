@@ -4,7 +4,7 @@ Discrete Fourier Transform (:mod:`numpy.fft`)
 
 .. currentmodule:: numpy.fft
 
-The SciPy module `scipy.fft` is a more comprehensive superset
+The SciPy module :mod:`scipy.fft` is a more comprehensive superset
 of ``numpy.fft``, which includes only a basic set of routines.
 
 Standard FFTs
@@ -126,7 +126,7 @@ Type Promotion
 
 `numpy.fft` promotes ``float32`` and ``complex64`` arrays to ``float64`` and
 ``complex128`` arrays respectively. For an FFT implementation that does not
-promote input arrays, see `scipy.fftpack`.
+promote input arrays, see :mod:`scipy.fftpack`.
 
 Normalization
 -------------

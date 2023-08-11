@@ -1249,7 +1249,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    `Py_DECREF` in order copy any changes back to ``base`` and
+    :c:func:`Py_DECREF` in order copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
@@ -1580,7 +1580,7 @@ Conversion
     Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>`
     (*self*, *dtype*, *offset*). This function `steals a reference
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
-    to `PyArray_Descr` and returns a new array of the given `dtype` using
+    to :c:func:`PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
     `offset` plus the itemsize of the new array type must be less than
     ``self->descr->elsize`` or an error is raised. The same shape and strides
@@ -2575,7 +2575,7 @@ cost of a slight overhead.
             was repeated. For example, for the array [1, 2, 3, 4], x[-2] will
             be 3, x[-2] will be 4, x[4] will be 1, x[5] will be 2, etc...
 
-    If the mode is constant filling (`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
+    If the mode is constant filling (:c:macro:`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
     fill_value should point to an array object which holds the filling value
     (the first item will be the filling value if the array contains more than
     one item). For other cases, fill_value may be NULL.
