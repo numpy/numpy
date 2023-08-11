@@ -17,46 +17,40 @@ def init_version():
 
 
 def git_version(version):
-    if 'dev' in version:
-        # Append last commit date and hash to dev version information,
-        # if available
+    # Append last commit date and hash to dev version information,
+    # if available
 
-        import subprocess
-        import os.path
+    import subprocess
+    import os.path
 
-        try:
-            p = subprocess.Popen(
-                ['git', 'log', '-1', '--format="%H %aI"'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=os.path.dirname(__file__),
+    try:
+        p = subprocess.Popen(
+            ['git', 'log', '-1', '--format="%H %aI"'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=os.path.dirname(__file__),
+        )
+    except FileNotFoundError:
+        pass
+    else:
+        out, err = p.communicate()
+        if p.returncode == 0:
+            git_hash, git_date = (
+                out.decode('utf-8')
+                .strip()
+                .replace('"', '')
+                .split('T')[0]
+                .replace('-', '')
+                .split()
             )
-        except FileNotFoundError:
-            pass
-        else:
-            out, err = p.communicate()
-            if p.returncode == 0:
-                git_hash, git_date = (
-                    out.decode('utf-8')
-                    .strip()
-                    .replace('"', '')
-                    .split('T')[0]
-                    .replace('-', '')
-                    .split()
-                )
 
-                version__ = '+'.join(
-                    [tag for tag in version.split('+')
-                     if not tag.startswith('git')]
-                )
+            # Only attach git tag to development versions
+            if 'dev' in version:
                 version += f'+git{git_date}.{git_hash[:7]}'
-            else:
-                git_hash = ''
+        else:
+            git_hash = ''
 
-        return version, git_hash
-
-    # Not a dev release
-    return version, ''
+    return version, git_hash
 
 
 if __name__ == "__main__":
