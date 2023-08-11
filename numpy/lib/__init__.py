@@ -56,6 +56,8 @@ from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
+from .function_base import add_newdoc, add_docstring
+
 
 __all__ = ['emath', 'tracemalloc_domain']
 __all__ += type_check.__all__
