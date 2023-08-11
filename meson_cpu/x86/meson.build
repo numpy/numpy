@@ -1,5 +1,6 @@
 source_root = meson.project_source_root()
 mod_features = import('features')
+
 SSE = mod_features.new(
   'SSE', 1,  args: '-msse',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sse.c')[0]
@@ -9,8 +10,7 @@ SSE2 = mod_features.new(
   args: '-msse2',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sse2.c')[0]
 )
-# enabling SSE without SSE2 is useless also
-# it's non-optional for x86_64
+# enabling SSE without SSE2 is useless also it's non-optional for x86_64
 SSE.update(implies: SSE2)
 SSE3 = mod_features.new(
   'SSE3', 3, implies: SSE2,
@@ -66,9 +66,9 @@ AVX2 = mod_features.new(
 # 25-40 left as margin for any extra features
 AVX512F = mod_features.new(
   'AVX512F', 40, implies: [FMA3, AVX2],
-  # Disables mmx due to cause stack corruption
-  # that may happens during mask converstions.
-  # TODO(seiko2plus): provides more clarification
+  # Disables mmx because of stack corruption that may happen during mask
+  # conversions.
+  # TODO (seiko2plus): provide more clarification
   args: ['-mno-mmx', '-mavx512f'],
   detect: {'val': 'AVX512F', 'match': '.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512f.c')[0],
@@ -125,17 +125,19 @@ AVX512_SPR = mod_features.new(
   group: ['AVX512FP16'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512_spr.c')[0]
 )
+
 # Specializations for non unix-like compilers
-# ---------------------------------------------
+# -------------------------------------------
 cpu_family = host_machine.cpu_family()
 compiler_id = meson.get_compiler('c').get_id()
 if compiler_id not in ['gcc', 'clang']
   AVX512_SPR.update(disable: compiler_id + ' compiler does not support it')
 endif
-# Common specializations bettween both Intel compilers (unix-like and msvc-like)
+
+# Common specializations between both Intel compilers (unix-like and msvc-like)
 if compiler_id in ['intel', 'intel-cl']
-  # POPCNT, and F16C don't own private FLAGS still
-  # the compiler provides ISA capability for them.
+  # POPCNT, and F16C don't own private FLAGS however the compiler still
+  # provides ISA capability for them.
   POPCNT.update(args: '')
   F16C.update(args: '')
   # Intel compilers don't support the following features independently
@@ -146,6 +148,7 @@ if compiler_id in ['intel', 'intel-cl']
   XOP.update(disable: 'Intel Compiler does not support it')
   FMA4.update(disable: 'Intel Compiler does not support it')
 endif
+
 if compiler_id == 'intel-cl'
   foreach fet : [SSE, SSE2, SSE3, SSSE3, AVX]
     fet.update(args: {'val': '/arch:' + fet.get('name'), 'match': '/arch:.*'})
@@ -163,6 +166,7 @@ if compiler_id == 'intel-cl'
   AVX512_CNL.update(args: {'val': '/Qx:CANNONLAKE', 'match': '/[arch|Qx]:.*'})
   AVX512_ICL.update(args: {'val': '/Qx:ICELAKE-CLIENT', 'match': '/[arch|Qx]:.*'})
 endif
+
 if compiler_id == 'intel'
   clear_m = '^(-mcpu=|-march=)'
   clear_any = '^(-mcpu=|-march=|-x[A-Z0-9\-])'
@@ -177,13 +181,14 @@ if compiler_id == 'intel'
   AVX512_CNL.update(args: {'val': '-xCANNONLAKE', 'match': clear_any})
   AVX512_ICL.update(args: {'val': '-xICELAKE-CLIENT', 'match': clear_any})
 endif
+
 if compiler_id == 'msvc'
-  # MSVC Compiler doesn't support the following features
+  # MSVC compiler doesn't support the following features
   foreach fet : [AVX512_KNL, AVX512_KNM]
     fet.update(disable: compiler_id + ' compiler does not support it')
   endforeach
-  # The following features don't own private FLAGS still
-  # the compiler provides ISA capability for them.
+  # The following features don't own private FLAGS, however the compiler still
+  # provides ISA capability for them.
   foreach fet : [
     SSE3, SSSE3, SSE41, POPCNT, SSE42, AVX, F16C, XOP, FMA4,
     AVX512F, AVX512CD, AVX512_CLX, AVX512_CNL,

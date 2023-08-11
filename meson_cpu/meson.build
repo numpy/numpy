@@ -1,33 +1,40 @@
 # The CPU Dispatcher implementation.
 #
-# This script handles the CPU dispatcher and requires the Meson module 'features'.
+# This script handles the CPU dispatcher and requires the Meson module
+# 'features'.
 #
 # The CPU dispatcher script is responsible for three main tasks:
 #
-# 1. Defining the enabled baseline and dispatched features by parsing build options
-#    or compiler arguments, including detection of native flags.
+# 1. Defining the enabled baseline and dispatched features by parsing build
+#    options or compiler arguments, including detection of native flags.
 #
 # 2. Specifying the baseline arguments and definitions across all sources.
 #
-# 3. Generating the main configuration file, which contains information about the enabled features,
-#    along with a collection of C macros necessary for runtime dispatching.
-#    For more details, see the template file `main_config.h.in`.
+# 3. Generating the main configuration file, which contains information about
+#    the enabled features, along with a collection of C macros necessary for
+#    runtime dispatching. For more details, see the template file
+#    `main_config.h.in`.
 #
 # This script exposes the following variables:
 #
-# - `CPU_BASELINE`: A set of CPU feature objects obtained from `mod_features.new()`,
-#                   representing the minimum CPU features specified by the build option `-Dcpu-baseline`.
+# - `CPU_BASELINE`: A set of CPU feature objects obtained from
+#                   `mod_features.new()`, representing the minimum CPU features
+#                   specified by the build option `-Dcpu-baseline`.
 #
-# - `CPU_BASELINE_NAMES`: A set of enabled CPU feature names, representing the minimum CPU features
-#                         specified by the build option `-Dcpu-baseline`.
+# - `CPU_BASELINE_NAMES`: A set of enabled CPU feature names, representing the
+#                         minimum CPU features specified by the build option
+#                         `-Dcpu-baseline`.
 #
-# - `CPU_DISPATCH_NAMES`: A set of enabled CPU feature names, representing the additional CPU features
-#                         that can be dispatched at runtime, specified by the build option `-Dcpu-dispatch`.
+# - `CPU_DISPATCH_NAMES`: A set of enabled CPU feature names, representing the
+#                         additional CPU features that can be dispatched at
+#                         runtime, specified by the build option
+#                         `-Dcpu-dispatch`.
 #
 # - `CPU_FEATURES`: A dictionary containing all supported CPU feature objects.
 #
-# Additionally, this script exposes a set of variables that represent each supported feature
-# to be used within the Meson function `mod_features.multi_targets()`.
+# Additionally, this script exposes a set of variables that represent each
+# supported feature to be used within the Meson function
+# `mod_features.multi_targets()`.
 
 # Prefix used by all macros and features definitions
 CPU_CONF_PREFIX = 'NPY_'
@@ -35,7 +42,7 @@ CPU_CONF_PREFIX = 'NPY_'
 CPU_CONF_CONFIG = 'npy_cpu_dispatch_config.h'
 
 if get_option('disable-optimization')
-  add_project_arguments('-D'+CPU_CONF_PREFIX+'DISABLE_OPTIMIZATION', language: ['c', 'cpp'])
+  add_project_arguments('-D' + CPU_CONF_PREFIX + 'DISABLE_OPTIMIZATION', language: ['c', 'cpp'])
   CPU_CONF_BASELINE = 'none'
   CPU_CONF_DISPATCH = 'none'
 else
@@ -62,10 +69,8 @@ else
   CPU_CONF_DISPATCH = get_option('cpu-dispatch')
 endif
 
-# Initialize the CPU features
-# Export the X86 features objects 'SSE', 'AVX', etc
-# and a dictionary "X86_FEATURES" which maps to each
-# object by its name
+# Initialize the CPU features Export the X86 features objects 'SSE', 'AVX',
+# etc. plus a dictionary "X86_FEATURES" which maps to each object by its name
 subdir('x86')
 subdir('ppc64')
 subdir('s390x')
@@ -77,8 +82,8 @@ CPU_FEATURES += X86_FEATURES
 CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
 
-# Parse the requsted baseline(CPU_CONF_BASELINE)
-# and dispatch features(CPU_CONF_DISPATCH).
+# Parse the requsted baseline (CPU_CONF_BASELINE) and dispatch features
+# (CPU_CONF_DISPATCH).
 cpu_family = host_machine.cpu_family()
 # Used by build option 'min'
 min_features = {
@@ -207,14 +212,16 @@ foreach opt_name, conf : parse_options
   endif
 endforeach # opt_name, conf : parse_options
 
-# Test the baseline and dispatch features and set their flags and #definitions across all sources.
+# Test the baseline and dispatch features and set their flags and #definitions
+# across all sources.
 #
-# It is important to know that this test enables the maximum supported features by the platform
-# depending on the required features.
+# It is important to know that this test enables the maximum supported features
+# by the platform depending on the required features.
 #
-# For example, if the user specified `--cpu-baseline=avx512_skx`, and the compiler doesn't support it,
-# but still supports any of the implied features, then we enable the maximum supported implied features, e.g., AVX2,
-# which can be done by specifying `anyfet: true` to the test function.
+# For example, if the user specified `--cpu-baseline=avx512_skx`, and the
+# compiler doesn't support it, but still supports any of the implied features,
+# then we enable the maximum supported implied features, e.g., AVX2, which can
+# be done by specifying `anyfet: true` to the test function.
 if parse_result['cpu-baseline'].length() > 0
     baseline = mod_features.test(parse_result['cpu-baseline'], anyfet: true)[1]
     baseline_args = baseline['args']
@@ -225,16 +232,15 @@ if parse_result['cpu-baseline'].length() > 0
 else
     baseline = {}
 endif
-# The name of the baseline features including
-# its implied features.
+# The name of the baseline features including its implied features.
 CPU_BASELINE_NAMES = baseline.get('features', [])
 CPU_BASELINE = []
 foreach fet_name : CPU_BASELINE_NAMES
   CPU_BASELINE += [CPU_FEATURES[fet_name]]
 endforeach
-# Loop all initlized features and disable any
-# feature not part of requsted baseline and dispatch features
-# to avoid been enabled by import('feature').multi_targets
+# Loop over all initialized features and disable any feature that is not part
+# of the requested baseline and dispatch features to avoid it enabled by
+# import('feature').multi_targets
 foreach fet_name, fet_obj : CPU_FEATURES
   if fet_obj in parse_result['cpu-dispatch'] or fet_name in CPU_BASELINE_NAMES
     continue
@@ -254,8 +260,8 @@ foreach fet_obj : parse_result['cpu-dispatch']
   endif
   CPU_DISPATCH_NAMES += [fet_obj.get('name')]
 endforeach
-# Generate main configuration header
-# see 'main_config.h.in' for more clearfiction
+# Generate main configuration header see 'main_config.h.in' for more
+# clarification.
 main_config = {
   'P': CPU_CONF_PREFIX,
   'WITH_CPU_BASELINE': ' '.join(CPU_BASELINE_NAMES),
@@ -287,7 +293,7 @@ add_project_arguments(
 
 message(
 '''
-CPU Optimiztion Options
+CPU Optimization Options
   baseline:
     Requested : @0@
     Enabled   : @1@

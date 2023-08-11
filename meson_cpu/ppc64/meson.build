@@ -17,8 +17,8 @@ VSX2 = mod_features.new(
   detect: {'val': 'VSX2', 'match': 'VSX'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vsx2.c')[0],
 )
-# VSX2 is hardware baseline feature on ppc64le
-# since the first little-endian support was part of Power8
+# VSX2 is hardware baseline feature on ppc64le since the first little-endian
+# support was part of Power8
 if host_machine.endian() == 'little'
   VSX.update(implies: VSX2)
 endif

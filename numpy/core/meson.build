@@ -87,8 +87,7 @@ cdata.set('NPY_API_VERSION', C_API_VERSION)
 use_svml = (
   host_machine.system() == 'linux' and
   host_machine.cpu_family() == 'x86_64' and
-  ('AVX512_SKX' in CPU_DISPATCH_NAMES or
-   'AVX512_SKX' in CPU_BASELINE_NAMES) and
+  ('AVX512_SKX' in CPU_DISPATCH_NAMES or 'AVX512_SKX' in CPU_BASELINE_NAMES) and
   not get_option('disable-svml')
 )
 if use_svml
@@ -324,16 +323,14 @@ optional_function_attributes = [
 #  endif
 #endforeach
 
-# Max possible optimiztion flags
-# We pass this flags to all our dispatch-able
+# Max possible optimization flags. We pass this flags to all our dispatch-able
 # (multi_targets) sources.
-compiler = meson.get_compiler('c')
-compiler_id = compiler.get_id()
+compiler_id = cc.get_id()
 max_opt = {
   'msvc': ['/O2'],
   'intel-cl': ['/O3'],
 }.get(compiler_id, ['-O3'])
-max_opt = compiler.has_multi_arguments(max_opt) ? max_opt : []
+max_opt = cc.has_multi_arguments(max_opt) ? max_opt : []
 
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
@@ -844,8 +841,8 @@ foreach gen_mtargets : [
   [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
-    # Enables SIMD on clang-cl raises spurious FP exceptions
-    # TODO(seiko2plus): Debug spurious FP exceptions for single-precision log/exp
+    # Enabling SIMD on clang-cl raises spurious FP exceptions
+    # TODO (seiko2plus): debug spurious FP exceptions for single-precision log/exp
     compiler_id == 'clang-cl' ? [] : [
       AVX512_SKX, AVX512F, [AVX2, FMA3]
     ]
@@ -890,8 +887,8 @@ foreach gen_mtargets : [
   [
     'loops_trigonometric.dispatch.h',
     src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
-    # Enables SIMD on clang-cl raises spurious FP exceptions
-    # TODO(seiko2plus): Debug spurious FP exceptions for single-precision sin/cos
+    # Enabling SIMD on clang-cl raises spurious FP exceptions
+    # TODO (seiko2plus): debug spurious FP exceptions for single-precision sin/cos
     compiler_id == 'clang-cl' ? [] : [
       AVX512F, [AVX2, FMA3],
       VSX4, VSX3, VSX2,
@@ -1181,9 +1178,9 @@ _simd_mtargets = mod_features.multi_targets(
     src_file.process('src/_simd/_simd_data.inc.src'),
     src_file.process('src/_simd/_simd.dispatch.c.src'),
   ],
-  # Skip validating the sort of `_simd_dispatch` because we execute all these features,
-  # not just the highest interest one. The sorting doesn't matter here,
-  # given the nature of this testing unit.
+  # Skip validating the order of `_simd_dispatch` because we execute all these
+  # features, not just the highest interest one. The sorting doesn't matter
+  # here, given the nature of this testing unit.
   keep_sort: true,
   dispatch: _simd_dispatch,
   baseline: _simd_baseline,
