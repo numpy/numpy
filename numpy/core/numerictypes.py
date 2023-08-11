@@ -55,7 +55,7 @@ Exported symbols include:
      |   |         ushort
      |   |         uintc
      |   |         uintp
-     |   |         uint_
+     |   |         uint
      |   |         ulonglong
      |   +-> inexact
      |       +-> floating          (floatxx)    (kind=f)
@@ -151,19 +151,20 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(int)
+    >>> from numpy.core.numerictypes import maximum_sctype
+    >>> maximum_sctype(int)
     <class 'numpy.int64'>
-    >>> np.maximum_sctype(np.uint8)
+    >>> maximum_sctype(np.uint8)
     <class 'numpy.uint64'>
-    >>> np.maximum_sctype(complex)
+    >>> maximum_sctype(complex)
     <class 'numpy.complex256'> # may vary
 
-    >>> np.maximum_sctype(str)
+    >>> maximum_sctype(str)
     <class 'numpy.str_'>
 
-    >>> np.maximum_sctype('i2')
+    >>> maximum_sctype('i2')
     <class 'numpy.int64'>
-    >>> np.maximum_sctype('f4')
+    >>> maximum_sctype('f4')
     <class 'numpy.float128'> # may vary
 
     """
@@ -209,16 +210,17 @@ def issctype(rep):
 
     Examples
     --------
-    >>> np.issctype(np.int32)
+    >>> from numpy.core.numerictypes import issctype
+    >>> issctype(np.int32)
     True
-    >>> np.issctype(list)
+    >>> issctype(list)
     False
-    >>> np.issctype(1.1)
+    >>> issctype(1.1)
     False
 
     Strings are also a scalar type:
 
-    >>> np.issctype(np.dtype('str'))
+    >>> issctype(np.dtype('str'))
     True
 
     """
@@ -257,18 +259,19 @@ def obj2sctype(rep, default=None):
 
     Examples
     --------
-    >>> np.obj2sctype(np.int32)
+    >>> from numpy.core.numerictypes import obj2sctype
+    >>> obj2sctype(np.int32)
     <class 'numpy.int32'>
-    >>> np.obj2sctype(np.array([1., 2.]))
+    >>> obj2sctype(np.array([1., 2.]))
     <class 'numpy.float64'>
-    >>> np.obj2sctype(np.array([1.j]))
+    >>> obj2sctype(np.array([1.j]))
     <class 'numpy.complex128'>
 
-    >>> np.obj2sctype(dict)
+    >>> obj2sctype(dict)
     <class 'numpy.object_'>
-    >>> np.obj2sctype('string')
+    >>> obj2sctype('string')
 
-    >>> np.obj2sctype(1, default=list)
+    >>> obj2sctype(1, default=list)
     <class 'list'>
 
     """
@@ -486,8 +489,9 @@ def sctype2char(sctype):
 
     Examples
     --------
+    >>> from numpy.core.numerictypes import sctype2char
     >>> for sctype in [np.int32, np.double, np.cdouble, np.bytes_, np.ndarray]:
-    ...     print(np.sctype2char(sctype))
+    ...     print(sctype2char(sctype))
     l # may vary
     d
     D
@@ -495,9 +499,9 @@ def sctype2char(sctype):
     O
 
     >>> x = np.array([1., 2-1.j])
-    >>> np.sctype2char(x)
+    >>> sctype2char(x)
     'D'
-    >>> np.sctype2char(list)
+    >>> sctype2char(list)
     'O'
 
     """

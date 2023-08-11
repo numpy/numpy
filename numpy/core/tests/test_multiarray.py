@@ -572,7 +572,7 @@ class TestAssignment:
     )
     def test_unicode_assignment(self):
         # gh-5049
-        from numpy.core.numeric import set_string_function
+        from numpy.core.arrayprint import set_string_function
 
         @contextmanager
         def inject_str(s):

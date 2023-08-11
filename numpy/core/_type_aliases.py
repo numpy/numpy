@@ -157,7 +157,8 @@ def _set_up_aliases():
                   ('bool_', 'bool'),
                   ('bytes_', 'string'),
                   ('str_', 'unicode'),
-                  ('object_', 'object')]
+                  ('object_', 'object'),
+                  ('cfloat', 'cdouble')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
@@ -222,7 +223,8 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
-_toadd = ['int', 'bool', 'object',
+_toadd = ['int', ('float', 'double'), ('complex', 'cdouble'), 
+          'bool', 'object',
           'str', 'bytes', ('a', 'bytes_'),
           ('int0', 'intp'), ('uint0', 'uintp')]
 

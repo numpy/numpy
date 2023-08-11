@@ -1728,10 +1728,11 @@ def set_string_function(f, repr=True):
 
     Examples
     --------
+    >>> from numpy.core.arrayprint import set_string_function
     >>> def pprint(arr):
     ...     return 'HA! - What are you going to do now?'
     ...
-    >>> np.set_string_function(pprint)
+    >>> set_string_function(pprint)
     >>> a = np.arange(10)
     >>> a
     HA! - What are you going to do now?
@@ -1740,7 +1741,7 @@ def set_string_function(f, repr=True):
 
     We can reset the function to the default:
 
-    >>> np.set_string_function(None)
+    >>> set_string_function(None)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -1750,7 +1751,7 @@ def set_string_function(f, repr=True):
     equal to the length of the result of ``__str__()``.
 
     >>> x = np.arange(4)
-    >>> np.set_string_function(lambda x:'random', repr=False)
+    >>> set_string_function(lambda x:'random', repr=False)
     >>> x.__str__()
     'random'
     >>> x.__repr__()
