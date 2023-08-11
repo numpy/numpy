@@ -1,2 +1,2 @@
-* The deprecated method ``numpy.who`` has been removed. As an alternative for the removed functionality, one
+* ``numpy.who`` has been removed. As an alternative for the removed functionality, one
 can use a variable explorer that is available in IDEs such as Spyder or Jupyter Notebook.
