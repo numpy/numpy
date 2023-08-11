@@ -1652,7 +1652,7 @@ class HermiteE(ABCPolyBase):
 
     The HermiteE class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    attributes and methods listed in the `ABCPolyBase` documentation.
+    attributes and methods listed below.
 
     Parameters
     ----------

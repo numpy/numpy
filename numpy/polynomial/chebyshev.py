@@ -1997,7 +1997,7 @@ class Chebyshev(ABCPolyBase):
 
     The Chebyshev class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    methods listed below.
+    attributes and methods listed below.
 
     Parameters
     ----------
