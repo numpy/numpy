@@ -219,7 +219,8 @@ else:
     # therefore are accessible from __getattr__
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
-        "exceptions", "lib", "ctypeslib", "testing"
+        "exceptions", "lib", "ctypeslib", "testing", "typing",
+        "array_api", "f2py", "distutils", "test"
     }
 
     # We build warning messages for former attributes
@@ -309,6 +310,18 @@ else:
         elif attr == "matlib":
             import numpy.matlib as matlib
             return matlib
+        elif attr == "f2py":
+            import numpy.f2py as f2py
+            return f2py
+        elif attr == "typing":
+            import numpy.typing as typing
+            return typing
+        elif attr == "array_api":
+            import numpy.array_api as array_api
+            return array_api
+        elif attr == "distutils":
+            import numpy.distutils as distutils
+            return distutils
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -332,8 +345,8 @@ else:
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
-            "core", "matrixlib", "matlib", "test", "tests", "conftest", 
-            "version", "typing", "f2py", "compat", "array_api", "distutils"
+            "core", "matrixlib", "matlib", "tests", "conftest", "version", 
+            "compat"
             }
         return list(public_symbols)
 
