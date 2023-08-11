@@ -106,22 +106,19 @@ extern "C" {
 NPY_NO_EXPORT void
 INT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_STATIC_DISPATCH(INT_SuperAbsolute);
-  return dispatcher(args, dimensions, steps);
+  HWY_STATIC_DISPATCH(INT_SuperAbsolute)(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
 DOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_STATIC_DISPATCH(DOUBLE_SuperAbsolute);
-  return dispatcher(args, dimensions, steps);
+  HWY_STATIC_DISPATCH(DOUBLE_SuperAbsolute)(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void
 FLOAT_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-  static auto dispatcher = HWY_STATIC_DISPATCH(FLOAT_SuperAbsolute);
-  return dispatcher(args, dimensions, steps);
+  HWY_STATIC_DISPATCH(FLOAT_SuperAbsolute)(args, dimensions, steps);
 }
 
 } // extern "C"
