@@ -294,7 +294,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     /*
      * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
      * The longest "reasonable" index that produces a result of <= 32 dimensions
-     * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
+     * is `(0,)*ncu.MAXDIMS + (None,)*ncu.MAXDIMS`. Longer indices can exist, but
      * are uncommon.
      */
     PyObject *raw_indices[NPY_MAXDIMS*2];

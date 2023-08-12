@@ -45,8 +45,6 @@ np.datetime_as_string("2012")  # E: No overload variant
 
 np.compare_chararrays("a", b"a", "==", False)  # E: No overload variant
 
-np.add_docstring(func, None)  # E: incompatible type
-
 np.nested_iters([AR_i8, AR_i8])  # E: Missing positional argument
 np.nested_iters([AR_i8, AR_i8], 0)  # E: incompatible type
 np.nested_iters([AR_i8, AR_i8], [0])  # E: incompatible type

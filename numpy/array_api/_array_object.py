@@ -39,8 +39,6 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-from numpy import array_api
-
 
 class Array:
     """
@@ -458,6 +456,7 @@ class Array:
     ) -> types.ModuleType:
         if api_version is not None and not api_version.startswith("2021."):
             raise ValueError(f"Unrecognized array API version: {api_version!r}")
+        from numpy import array_api
         return array_api
 
     def __bool__(self: Array, /) -> bool:

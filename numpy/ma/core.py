@@ -2344,8 +2344,8 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy.ma as ma
     >>> a = np.arange(5, dtype=float)
-    >>> a[2] = np.NaN
-    >>> a[3] = np.PINF
+    >>> a[2] = np.nan
+    >>> a[3] = np.inf
     >>> a
     array([ 0.,  1., nan, inf,  4.])
     >>> ma.masked_invalid(a)

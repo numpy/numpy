@@ -4580,8 +4580,8 @@ class TestMaskedArrayFunctions:
 
     def test_masked_invalid_error(self):
         a = np.arange(5, dtype=object)
-        a[3] = np.PINF
-        a[2] = np.NaN
+        a[3] = np.inf
+        a[2] = np.nan
         with pytest.raises(TypeError,
                            match="not supported for the input types"):
             np.ma.masked_invalid(a)

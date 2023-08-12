@@ -16,10 +16,7 @@ from ._multiarray_umath import (
     _extobj_contextvar)
 
 __all__ = [
-    '_UFUNC_API', 'FLOATING_POINT_SUPPORT',
-    'FPE_DIVIDEBYZERO', 'FPE_INVALID', 'FPE_OVERFLOW', 'FPE_UNDERFLOW',
-    'NAN', 'NINF', 'NZERO', 'PINF', 'PZERO', 'UFUNC_BUFSIZE_DEFAULT',
-    'UFUNC_PYVALS_NAME', '_add_newdoc_ufunc', 'absolute', 'add',
+    'absolute', 'add',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj',
     'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide',

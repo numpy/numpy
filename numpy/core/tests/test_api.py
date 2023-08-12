@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import numpy.core.umath as ncu
 from numpy.core._rational_tests import rational
 import pytest
 from numpy.testing import (
@@ -92,7 +93,7 @@ def test_array_array():
 
     # test recursion
     nested = 1.5
-    for i in range(np.MAXDIMS):
+    for i in range(ncu.MAXDIMS):
         nested = [nested]
 
     # no error

@@ -305,14 +305,6 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
-    ALLOW_THREADS as ALLOW_THREADS,
-    BUFSIZE as BUFSIZE,
-    CLIP as CLIP,
-    MAXDIMS as MAXDIMS,
-    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
-    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
-    RAISE as RAISE,
-    WRAP as WRAP,
     tracemalloc_domain as tracemalloc_domain,
     array as array,
     empty_like as empty_like,
@@ -439,10 +431,6 @@ from numpy.lib.arraysetops import (
     isin as isin,
 )
 
-from numpy.lib.arrayterator import (
-    Arrayterator as Arrayterator,
-)
-
 from numpy.lib.function_base import (
     select as select,
     piecewise as piecewise,
@@ -475,14 +463,11 @@ from numpy.lib.function_base import (
     kaiser as kaiser,
     trapz as trapz,
     i0 as i0,
-    add_newdoc as add_newdoc,
-    add_docstring as add_docstring,
     meshgrid as meshgrid,
     delete as delete,
     insert as insert,
     append as append,
     interp as interp,
-    add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
 )
 
@@ -3158,9 +3143,6 @@ FPE_DIVIDEBYZERO: L[1]
 FPE_OVERFLOW: L[2]
 FPE_UNDERFLOW: L[4]
 FPE_INVALID: L[8]
-
-FLOATING_POINT_SUPPORT: L[1]
-UFUNC_BUFSIZE_DEFAULT = BUFSIZE
 
 little_endian: Final[bool]
 True_: Final[bool_]
