@@ -2,7 +2,7 @@
 build-backend = "mesonpy"
 backend-path = ['./vendored-meson/meson-python']
 requires = [
-    "Cython>=3.0",
+    "Cython>=0.29.34,<3.1",
     # All dependencies of the vendored meson-python (except for meson, because
     # we've got that vendored too - that's the point of this exercise).
     'pyproject-metadata >= 0.7.1',
@@ -17,7 +17,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.0.0.dev0"
+version = "1.26.0b1"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -26,7 +26,7 @@ authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.13"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
