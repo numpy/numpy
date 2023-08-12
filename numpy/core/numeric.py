@@ -51,9 +51,8 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
-    'False_', 'True_', 'bitwise_not', 'full', 'full_like',
-    'matmul', 'shares_memory', 'may_share_memory',
+    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
+    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']
 
 

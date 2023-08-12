@@ -125,7 +125,7 @@ else:
 
     from . import core
     from .core import (
-        _no_nep50_warning, memmap, Inf, Infinity, NaN, iinfo, finfo,
+        _no_nep50_warning, memmap, iinfo, finfo,
         False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
@@ -143,35 +143,35 @@ else:
         double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
         errstate, euler_gamma, exp, exp2, expm1, fabs, find_common_type, 
         flatiter, flatnonzero, flexible, 
-        float_, float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
+        float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
         format_float_positional, format_float_scientific, format_parser, 
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
         get_printoptions, getbufsize, geterr, geterrcall, greater, 
         greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
-        indices, inexact, inf, infty, inner, int_,
+        indices, inexact, inf, inner, int_,
         intc, integer, invert, is_busday, isclose, isfinite, isfortran,
-        isinf, isnan, isnat, isscalar, issctype, issubdtype, lcm, ldexp,
+        isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
         left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
         log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not, 
-        logical_or, logical_xor, logspace, longcomplex, longdouble, 
-        longfloat, longlong, matmul, max, maximum, maximum_sctype, 
+        logical_or, logical_xor, logspace, longdouble, 
+        longlong, matmul, max, maximum, 
         may_share_memory, mean, min, min_scalar_type, minimum, mod, 
         modf, moveaxis, multiply, nan, nbytes, ndarray, ndim, nditer, 
         negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
-        number, obj2sctype, object_, ones, ones_like, outer, partition,
+        number, object_, ones, ones_like, outer, partition,
         pi, positive, power, printoptions, prod, product, promote_types, 
         ptp, put, putmask, rad2deg, radians, ravel, rec, recarray, reciprocal,
         record, remainder, repeat, require, reshape, resize, result_type, 
-        right_shift, rint, roll, rollaxis, round, round_, sctype2char, 
-        sctypeDict, sctypes, searchsorted, set_printoptions,
-        set_string_function, setbufsize, seterr, seterrcall, shape,
+        right_shift, rint, roll, rollaxis, round, round_, 
+        searchsorted, set_printoptions,
+        setbufsize, seterr, seterrcall, shape,
         shares_memory, short, sign, signbit, signedinteger, sin, single, 
-        singlecomplex, sinh, size, sometrue, sort, spacing, sqrt, square, 
-        squeeze, stack, std, str_, string_, subtract, sum, swapaxes, take,
+        sinh, size, sometrue, sort, spacing, sqrt, square, 
+        squeeze, stack, std, str_, subtract, sum, swapaxes, take,
         tan, tanh, tensordot, timedelta64, trace, transpose, 
         true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
-        unicode_, unsignedinteger, ushort, var, vdot, void, vstack, where, 
+        unsignedinteger, ushort, var, vdot, void, vstack, where, 
         zeros, zeros_like, _get_promotion_state, _set_promotion_state,
         int8, int16, int32, int64, intp, uint8, uint16, uint32, uint64, uintp,
         float16, float32, float64, complex64, complex128
@@ -189,7 +189,7 @@ else:
     from . import lib
     from .lib import (
         DataSource, angle, append, apply_along_axis, apply_over_axes,
-        array_split, asarray_chkfinite, asfarray, average, bartlett,
+        array_split, asarray_chkfinite, average, bartlett,
         bincount, blackman, broadcast_arrays, broadcast_shapes,
         broadcast_to, byte_bounds, c_, column_stack, common_type,
         copy, corrcoef, cov, delete, diag, diag_indices,
@@ -199,8 +199,8 @@ else:
         get_include, gradient, hamming, hanning, histogram2d,
         hsplit, i0, imag, in1d,
         index_exp, info, insert, interp, intersect1d, iscomplex,
-        iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
-        issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
+        iscomplexobj, isin, isneginf, isreal, isrealobj,
+        iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
         median, meshgrid, mgrid, mintypecode, nan_to_num, 
         nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
@@ -210,18 +210,17 @@ else:
         put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
         roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
         select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
-        take_along_axis, tile, tracemalloc_domain, trapz, tri, tril,
+        take_along_axis, tile, trapz, tri, tril,
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
         unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
-        triu, triu_indices, triu_indices_from, isposinf, disp,
-        deprecate, deprecate_with_doc, safe_eval, recfromtxt, recfromcsv
+        triu, triu_indices, triu_indices_from, isposinf
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
     )
     from . import matrixlib as _mat
     from .matrixlib import (
-        asmatrix, bmat, mat, matrix
+        asmatrix, bmat, matrix
     )
 
     # public submodules are imported lazily, therefore are accessible from
@@ -231,7 +230,11 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
+<<<<<<< HEAD
         "f2py", "test"
+=======
+        "array_api", "f2py", "distutils", "test"
+>>>>>>> c9f287f61 ([skip ci])
     }
 
     # We build warning messages for former attributes
@@ -332,12 +335,8 @@ else:
             import numpy.array_api as array_api
             return array_api
         elif attr == "distutils":
-            if 'distutils' in __numpy_submodules__:
-                import numpy.distutils as distutils
-                return distutils
-            else:
-                raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards")
+            import numpy.distutils as distutils
+            return distutils
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give

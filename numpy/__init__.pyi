@@ -305,7 +305,6 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
-    tracemalloc_domain as tracemalloc_domain,
     array as array,
     empty_like as empty_like,
     empty as empty,
@@ -647,7 +646,7 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
 __all__: list[str]
 __path__: list[str]
 __version__: str
-test: PytestTester
+__git_version__: str
 
 # TODO: Move placeholders to their respective module once
 # their annotations are properly implemented
@@ -3132,11 +3131,6 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-
-FPE_DIVIDEBYZERO: L[1]
-FPE_OVERFLOW: L[2]
-FPE_UNDERFLOW: L[4]
-FPE_INVALID: L[8]
 
 little_endian: Final[bool]
 True_: Final[bool_]
