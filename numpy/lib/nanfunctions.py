@@ -325,7 +325,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     >>> np.nanmin([1, 2, np.nan, np.inf])
     1.0
-    >>> np.nanmin([1, 2, np.nan, np.NINF])
+    >>> np.nanmin([1, 2, np.nan, -np.inf])
     -inf
 
     """
@@ -456,7 +456,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     When positive infinity and negative infinity are present:
 
-    >>> np.nanmax([1, 2, np.nan, np.NINF])
+    >>> np.nanmax([1, 2, np.nan, -np.inf])
     2.0
     >>> np.nanmax([1, 2, np.nan, np.inf])
     inf
@@ -710,7 +710,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     array([2.,  1.])
     >>> np.nansum([1, np.nan, np.inf])
     inf
-    >>> np.nansum([1, np.nan, np.NINF])
+    >>> np.nansum([1, np.nan, -np.inf])
     -inf
     >>> from numpy.testing import suppress_warnings
     >>> with np.errstate(invalid="ignore"):

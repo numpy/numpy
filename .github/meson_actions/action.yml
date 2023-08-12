@@ -1,0 +1,29 @@
+name: MesonBuildTest
+description: "checkout repo, build, and test numpy"
+runs:
+  using: composite
+  steps:
+  - name: Install dependencies
+    shell: bash
+    run: pip install -r build_requirements.txt
+  - name: Build
+    shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+    env:
+      TERM: xterm-256color
+    run:
+      spin build -- ${MESON_ARGS[@]}
+  - name: Check build-internal dependencies
+    shell: bash
+    run:
+      ninja -C build -t missingdeps
+  - name: Check installed test and stub files
+    shell: bash
+    run:
+      python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+  - name: Test
+    shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+    env:
+      TERM: xterm-256color
+    run: |
+      pip install pytest pytest-xdist hypothesis typing_extensions
+      spin test -j auto

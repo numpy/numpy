@@ -508,8 +508,7 @@ class ABCPolyBase(abc.ABC):
     # Call
 
     def __call__(self, arg):
-        off, scl = pu.mapparms(self.domain, self.window)
-        arg = off + scl*arg
+        arg = pu.mapdomain(arg, self.domain, self.window)
         return self._val(arg, self.coef)
 
     def __iter__(self):

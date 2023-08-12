@@ -523,6 +523,13 @@ def test_call(Poly):
     assert_almost_equal(res, tgt)
 
 
+def test_call_with_list(Poly):
+    p = Poly([1, 2, 3])
+    x = [-1, 0, 2]
+    res = p(x)
+    assert_equal(res, p(np.array(x)))
+
+
 def test_cutdeg(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.cutdeg, .5)

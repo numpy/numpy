@@ -57,8 +57,6 @@ from numpy.core.multiarray import (
     bincount as bincount,
 )
 
-from numpy.core.umath import _add_newdoc_ufunc
-
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
@@ -76,9 +74,6 @@ class _SupportsWriteFlush(Protocol):
     def flush(self) -> object: ...
 
 __all__: list[str]
-
-# NOTE: This is in reality a re-export of `np.core.umath._add_newdoc_ufunc`
-def add_newdoc_ufunc(ufunc: ufunc, new_docstring: str, /) -> None: ...
 
 @overload
 def rot90(

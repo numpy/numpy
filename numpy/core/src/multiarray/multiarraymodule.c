@@ -1118,63 +1118,6 @@ fail:
 }
 
 
-/*NUMPY_API
- * Copy and Transpose
- *
- * Could deprecate this function, as there isn't a speed benefit over
- * calling Transpose and then Copy.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_CopyAndTranspose(PyObject *op)
-{
-    /* DEPRECATED 2022-09-30, NumPy 1.24 - see gh-22313 */
-    if (DEPRECATE(
-            "fastCopyAndTranspose and the underlying C function "
-            "PyArray_CopyAndTranspose have been deprecated.\n\n"
-            "Use the transpose method followed by a C-order copy instead, "
-            "e.g. ``arr.T.copy()``") < 0) {
-        return NULL;
-    }
-
-    PyArrayObject *arr, *tmp, *ret;
-    int i;
-    npy_intp new_axes_values[NPY_MAXDIMS];
-    PyArray_Dims new_axes;
-
-    /* Make sure we have an array */
-    arr = (PyArrayObject *)PyArray_FROM_O(op);
-    if (arr == NULL) {
-        return NULL;
-    }
-
-    if (PyArray_NDIM(arr) > 1) {
-        /* Set up the transpose operation */
-        new_axes.len = PyArray_NDIM(arr);
-        for (i = 0; i < new_axes.len; ++i) {
-            new_axes_values[i] = new_axes.len - i - 1;
-        }
-        new_axes.ptr = new_axes_values;
-
-        /* Do the transpose (always returns a view) */
-        tmp = (PyArrayObject *)PyArray_Transpose(arr, &new_axes);
-        if (tmp == NULL) {
-            Py_DECREF(arr);
-            return NULL;
-        }
-    }
-    else {
-        tmp = arr;
-        arr = NULL;
-    }
-
-    /* TODO: Change this to NPY_KEEPORDER for NumPy 2.0 */
-    ret = (PyArrayObject *)PyArray_NewCopy(tmp, NPY_CORDER);
-
-    Py_XDECREF(arr);
-    Py_DECREF(tmp);
-    return (PyObject *)ret;
-}
-
 /*
  * Implementation which is common between PyArray_Correlate
  * and PyArray_Correlate2.
@@ -3073,16 +3016,6 @@ finish:
     return ret;
 }
 
-static PyObject *
-array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    PyObject *a0;
-
-    if (!PyArg_ParseTuple(args, "O:fastCopyAndTranspose", &a0)) {
-        return NULL;
-    }
-    return PyArray_Return((PyArrayObject *)PyArray_CopyAndTranspose(a0));
-}
 
 static PyObject *
 array_correlate(PyObject *NPY_UNUSED(dummy),
@@ -4520,9 +4453,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
-    {"fastCopyAndTranspose",
-        (PyCFunction)array_fastCopyAndTranspose,
-        METH_VARARGS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
         METH_FASTCALL | METH_KEYWORDS, NULL},

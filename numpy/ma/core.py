@@ -2344,8 +2344,8 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy.ma as ma
     >>> a = np.arange(5, dtype=float)
-    >>> a[2] = np.NaN
-    >>> a[3] = np.PINF
+    >>> a[2] = np.nan
+    >>> a[3] = np.inf
     >>> a
     array([ 0.,  1., nan, inf,  4.])
     >>> ma.masked_invalid(a)
@@ -4601,7 +4601,7 @@ class MaskedArray(ndarray):
 
             if self.shape == ():
                 if axis not in (None, 0):
-                    raise np.AxisError(axis=axis, ndim=self.ndim)
+                    raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):

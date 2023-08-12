@@ -102,7 +102,7 @@ class LinalgSmallArrays(Benchmark):
     """ Test overhead of linalg methods for small arrays """
     def setup(self):
         self.array_5 = np.arange(5.)
-        self.array_5_5 = np.arange(5.)
+        self.array_5_5 = np.reshape(np.arange(25.), (5., 5.))
 
     def time_norm_small_array(self):
         np.linalg.norm(self.array_5)

@@ -390,7 +390,8 @@ add_newdoc('numpy.core', 'nditer',
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before
     using the result. The temporary data will be written back to the
-    original data when the `__exit__` function is called but not before:
+    original data when the :meth:`~object.__exit__` function is called
+    but not before:
 
     >>> a = np.arange(6, dtype='i4')[::-2]
     >>> with np.nditer(a, [],
@@ -1671,16 +1672,6 @@ add_newdoc('numpy.core.multiarray', 'from_dlpack',
     >>> x = torch.arange(10)
     >>> # create a view of the torch tensor "x" in NumPy
     >>> y = np.from_dlpack(x)
-    """)
-
-add_newdoc('numpy.core', 'fastCopyAndTranspose',
-    """
-    fastCopyAndTranspose(a)
-
-    .. deprecated:: 1.24
-
-       fastCopyAndTranspose is deprecated and will be removed. Use the copy and
-       transpose methods instead, e.g. ``arr.T.copy()``
     """)
 
 add_newdoc('numpy.core.multiarray', 'correlate',
@@ -3146,12 +3137,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -4486,7 +4477,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     a.tostring(order='C')
 
-    A compatibility alias for `tobytes`, with exactly the same behavior.
+    A compatibility alias for `~ndarray.tobytes`, with exactly the same
+    behavior.
 
     Despite its name, it returns `bytes` not `str`\ s.
 
@@ -5619,7 +5611,7 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
     >>> int32 = np.dtype("int32")
     >>> float32 = np.dtype("float32")
 
-    The typical ufunc call does not pass an output dtype.  `np.add` has two
+    The typical ufunc call does not pass an output dtype.  `numpy.add` has two
     inputs and one output, so leave the output as ``None`` (not provided):
 
     >>> np.add.resolve_dtypes((int32, float32, None))
@@ -5909,7 +5901,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     `__array_interface__` attribute.
 
     Warning: This attribute exists specifically for `__array_interface__`,
-    and passing it directly to `np.dtype` will not accurately reconstruct
+    and passing it directly to `numpy.dtype` will not accurately reconstruct
     some dtypes (e.g., scalar and subarray dtypes).
 
     Examples
@@ -6934,7 +6926,7 @@ add_newdoc('numpy.core.numerictypes', 'complexfloating',
 add_newdoc('numpy.core.numerictypes', 'flexible',
     """
     Abstract base class of all scalar types without predefined length.
-    The actual size of these types depends on the specific `np.dtype`
+    The actual size of these types depends on the specific `numpy.dtype`
     instantiation.
 
     """)

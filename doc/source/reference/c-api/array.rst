@@ -435,45 +435,37 @@ From other objects
     have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context*
     argument is unused.
 
-    .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_C_CONTIGUOUS`
         Make sure the returned array is C-style contiguous
 
-    .. c:macro:: NPY_ARRAY_F_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_F_CONTIGUOUS`
         Make sure the returned array is Fortran-style contiguous.
 
-    .. c:macro:: NPY_ARRAY_ALIGNED
-
+    :c:macro:`NPY_ARRAY_ALIGNED`
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
 
-    .. c:macro:: NPY_ARRAY_WRITEABLE
-
+    :c:macro:`NPY_ARRAY_WRITEABLE`
         Make sure the returned array can be written to.
 
-    .. c:macro:: NPY_ARRAY_ENSURECOPY
-
+    :c:macro:`NPY_ARRAY_ENSURECOPY`
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
 
-    .. c:macro:: NPY_ARRAY_ENSUREARRAY
-
+    :c:macro:`NPY_ARRAY_ENSUREARRAY`
         Make sure the result is a base-class ndarray. By
         default, if *op* is an instance of a subclass of
         ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
-    .. c:macro:: NPY_ARRAY_FORCECAST
-
+    :c:macro:`NPY_ARRAY_FORCECAST`
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is raised.
 
-    .. c:macro:: NPY_ARRAY_WRITEBACKIFCOPY
-
+    :c:macro:`NPY_ARRAY_WRITEBACKIFCOPY`
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
         requirements). If this flag is present and a copy (of an object
@@ -485,68 +477,7 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
 
-    .. c:macro:: NPY_ARRAY_BEHAVED
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_CARRAY
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_CARRAY_RO
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY_RO
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_DEFAULT
-
-        :c:data:`NPY_ARRAY_CARRAY`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_IN_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_IN_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_ARRAY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
-    :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_OUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_INOUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-
-    .. c:macro:: NPY_ARRAY_INOUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+    `Combinations of array flags`_ can also be added.
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -557,37 +488,6 @@ From other objects
     specification in *dtype*) and :c:data:`NPY_ARRAY_ELEMENTSTRIDES` which
     indicates that the array should be aligned in the sense that the
     strides are multiples of the element size.
-
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the _ARRAY_ macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_NOTSWAPPED
-
-    Make sure the returned array has a data-type descriptor that is in
-    machine byte-order, over-riding any specification in the *dtype*
-    argument. Normally, the byte-order requirement is determined by
-    the *dtype* argument. If this flag is set and the dtype argument
-    does not indicate a machine byte-order descriptor (or is NULL and
-    the object is already an array with a data-type descriptor that is
-    not in machine byte- order), then a new data-type descriptor is
-    created and used with its byte-order field set to native.
-
-    .. c:macro:: NPY_ARRAY_BEHAVED_NS
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_NOTSWAPPED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
-
-    Make sure the returned array has strides that are multiples of the
-    element size.
 
 .. c:function:: PyObject* PyArray_FromArray( \
         PyArrayObject* op, PyArray_Descr* newtype, int requirements)
@@ -1377,6 +1277,10 @@ a certain kind of array (like :c:data:`NPY_ARRAY_C_CONTIGUOUS` and
 :c:data:`NPY_ARRAY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
+In versions 1.6 and earlier of NumPy, the following flags
+did not have the _ARRAY_ macro namespace in them. That form
+of the constant names is deprecated in 1.7.
+
 
 Basic Array Flags
 ~~~~~~~~~~~~~~~~~
@@ -1388,10 +1292,6 @@ its data in a different byte-order than the machine recognizes. It
 might not be writeable. It might be in Fortran-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
-
-In versions 1.6 and earlier of NumPy, the following flags
-did not have the _ARRAY_ macro namespace in them. That form
-of the constant names is deprecated in 1.7.
 
 .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -1488,6 +1388,34 @@ Combinations of array flags
 
     :c:data:`NPY_ARRAY_CARRAY`
 
+.. c:macro:: NPY_ARRAY_IN_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_IN_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_INOUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
+.. c:macro:: NPY_ARRAY_INOUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
 .. c:macro:: NPY_ARRAY_UPDATE_ALL
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
@@ -1511,6 +1439,30 @@ specify desired properties of the new array.
 .. c:macro:: NPY_ARRAY_ENSUREARRAY
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
+
+These constants are used in :c:func:`PyArray_CheckFromAny` (and its macro forms)
+to specify desired properties of the new array.
+
+.. c:macro:: NPY_ARRAY_NOTSWAPPED
+
+    Make sure the returned array has a data-type descriptor that is in
+    machine byte-order, over-riding any specification in the *dtype*
+    argument. Normally, the byte-order requirement is determined by
+    the *dtype* argument. If this flag is set and the dtype argument
+    does not indicate a machine byte-order descriptor (or is NULL and
+    the object is already an array with a data-type descriptor that is
+    not in machine byte- order), then a new data-type descriptor is
+    created and used with its byte-order field set to native.
+
+.. c:macro:: NPY_ARRAY_BEHAVED_NS
+
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_NOTSWAPPED`
+
+.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
+
+    Make sure the returned array has strides that are multiples of the
+    element size.
 
 
 Flag checking
@@ -2250,11 +2202,6 @@ Array Functions
     *casting* indicates how permissive the data conversion should be.
 
     See the :func:`~numpy.einsum` function for more details.
-
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
-
-    A specialized copy and transpose function that works only for 2-d
-    arrays. The returned array is a transposed copy of *op*.
 
 .. c:function:: PyObject* PyArray_Correlate( \
         PyObject* op1, PyObject* op2, int mode)
@@ -3172,21 +3119,21 @@ the C-API is needed then some additional steps must be taken.
 
     Internally, these #defines work as follows:
 
-        * If neither is defined, the C-API is declared to be
-          ``static void**``, so it is only visible within the
-          compilation unit that #includes numpy/arrayobject.h.
-        * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
-          :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be ``void**``, so that it will also be visible to other
-          compilation units.
-        * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
-          whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be ``extern void**``, so it is expected to
-          be defined in another compilation unit.
-        * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
-          also changes the name of the variable holding the C-API, which
-          defaults to ``PyArray_API``, to whatever the macro is
-          #defined to.
+    * If neither is defined, the C-API is declared to be
+      ``static void**``, so it is only visible within the
+      compilation unit that #includes numpy/arrayobject.h.
+    * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
+      :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
+      be ``void**``, so that it will also be visible to other
+      compilation units.
+    * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
+      whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
+      declared to be ``extern void**``, so it is expected to
+      be defined in another compilation unit.
+    * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
+      also changes the name of the variable holding the C-API, which
+      defaults to ``PyArray_API``, to whatever the macro is
+      #defined to.
 
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3205,11 +3152,11 @@ corresponds to the runtime numpy's version.
 
 The rules for ABI and API compatibilities can be summarized as follows:
 
-    * Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-      extension has to be recompiled (ABI incompatibility).
-    * :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-      :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-      backward compatible changes.
+* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
+  extension has to be recompiled (ABI incompatibility).
+* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
+  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
+  backward compatible changes.
 
 ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
@@ -3332,81 +3279,81 @@ variable ``NPY_NOSMP`` is set in which case
 Group 1
 """""""
 
-    This group is used to call code that may take some time but does not
-    use any Python C-API calls. Thus, the GIL should be released during
-    its calculation.
+This group is used to call code that may take some time but does not
+use any Python C-API calls. Thus, the GIL should be released during
+its calculation.
 
-    .. c:macro:: NPY_BEGIN_ALLOW_THREADS
+.. c:macro:: NPY_BEGIN_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_END_ALLOW_THREADS
+.. c:macro:: NPY_END_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_BEGIN_THREADS_DEF
+.. c:macro:: NPY_BEGIN_THREADS_DEF
 
-        Place in the variable declaration area. This macro sets up the
-        variable needed for storing the Python state.
+    Place in the variable declaration area. This macro sets up the
+    variable needed for storing the Python state.
 
-    .. c:macro:: NPY_BEGIN_THREADS
+.. c:macro:: NPY_BEGIN_THREADS
 
-        Place right before code that does not need the Python
-        interpreter (no Python C-API calls). This macro saves the
-        Python state and releases the GIL.
+    Place right before code that does not need the Python
+    interpreter (no Python C-API calls). This macro saves the
+    Python state and releases the GIL.
 
-    .. c:macro:: NPY_END_THREADS
+.. c:macro:: NPY_END_THREADS
 
-        Place right after code that does not need the Python
-        interpreter. This macro acquires the GIL and restores the
-        Python state from the saved variable.
+    Place right after code that does not need the Python
+    interpreter. This macro acquires the GIL and restores the
+    Python state from the saved variable.
 
-    .. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to release the GIL only if *dtype* does not contain
-        arbitrary Python objects which may need the Python interpreter
-        during execution of the loop.
+    Useful to release the GIL only if *dtype* does not contain
+    arbitrary Python objects which may need the Python interpreter
+    during execution of the loop.
 
-    .. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to regain the GIL in situations where it was released
-        using the BEGIN form of this macro.
+    Useful to regain the GIL in situations where it was released
+    using the BEGIN form of this macro.
 
-    .. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
+.. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
 
-        Useful to release the GIL only if *loop_size* exceeds a
-        minimum threshold, currently set to 500. Should be matched
-        with a :c:macro:`NPY_END_THREADS` to regain the GIL.
+    Useful to release the GIL only if *loop_size* exceeds a
+    minimum threshold, currently set to 500. Should be matched
+    with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
 """""""
 
-    This group is used to re-acquire the Python GIL after it has been
-    released. For example, suppose the GIL has been released (using the
-    previous calls), and then some path in the code (perhaps in a
-    different subroutine) requires use of the Python C-API, then these
-    macros are useful to acquire the GIL. These macros accomplish
-    essentially a reverse of the previous three (acquire the LOCK saving
-    what state it had) and then re-release it with the saved state.
+This group is used to re-acquire the Python GIL after it has been
+released. For example, suppose the GIL has been released (using the
+previous calls), and then some path in the code (perhaps in a
+different subroutine) requires use of the Python C-API, then these
+macros are useful to acquire the GIL. These macros accomplish
+essentially a reverse of the previous three (acquire the LOCK saving
+what state it had) and then re-release it with the saved state.
 
-    .. c:macro:: NPY_ALLOW_C_API_DEF
+.. c:macro:: NPY_ALLOW_C_API_DEF
 
-        Place in the variable declaration area to set up the necessary
-        variable.
+    Place in the variable declaration area to set up the necessary
+    variable.
 
-    .. c:macro:: NPY_ALLOW_C_API
+.. c:macro:: NPY_ALLOW_C_API
 
-        Place before code that needs to call the Python C-API (when it is
-        known that the GIL has already been released).
+    Place before code that needs to call the Python C-API (when it is
+    known that the GIL has already been released).
 
-    .. c:macro:: NPY_DISABLE_C_API
+.. c:macro:: NPY_DISABLE_C_API
 
-        Place after code that needs to call the Python C-API (to re-release
-        the GIL).
+    Place after code that needs to call the Python C-API (to re-release
+    the GIL).
 
 .. tip::
 

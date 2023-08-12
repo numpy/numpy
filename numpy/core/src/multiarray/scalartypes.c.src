@@ -4122,7 +4122,7 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
-     *        Floating, ComplexFloating, Flexible, Character#
+     *        Floating, ComplexFloating, Character#
      */
 
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
