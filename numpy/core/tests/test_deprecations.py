@@ -135,7 +135,7 @@ class _DeprecationTestCase:
 
 
 class _VisibleDeprecationTestCase(_DeprecationTestCase):
-    warning_cls = np.VisibleDeprecationWarning
+    warning_cls = np.exceptions.VisibleDeprecationWarning
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -617,14 +617,6 @@ class TestArrayFinalizeNone(_DeprecationTestCase):
 
         self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
 
-class TestAxisNotMAXDIMS(_DeprecationTestCase):
-    # Deprecated 2022-01-08, NumPy 1.23
-    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
-
-    def test_deprecated(self):
-        a = np.zeros((1,)*32)
-        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
-
 
 class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
     # Deprecated 2022-07-03, NumPy 1.23
@@ -697,18 +689,6 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-class TestDeprecatedGlobals(_DeprecationTestCase):
-    # Deprecated 2022-11-17, NumPy 1.24
-    def test_type_aliases(self):
-        # from builtins
-        self.assert_deprecated(lambda: np.bool8)
-        self.assert_deprecated(lambda: np.int0)
-        self.assert_deprecated(lambda: np.uint0)
-        self.assert_deprecated(lambda: np.bytes0)
-        self.assert_deprecated(lambda: np.str0)
-        self.assert_deprecated(lambda: np.object0)
-
-
 @pytest.mark.parametrize("name",
         ["bool", "long", "ulong", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
@@ -766,10 +746,6 @@ class TestFromnumeric(_DeprecationTestCase):
 
 
 class TestMathAlias(_DeprecationTestCase):
-    # Deprecated in Numpy 1.25, 2023-04-06
-    def test_deprecated_np_math(self):
-        self.assert_deprecated(lambda: np.math)
-
     def test_deprecated_np_lib_math(self):
         self.assert_deprecated(lambda: np.lib.math)
 

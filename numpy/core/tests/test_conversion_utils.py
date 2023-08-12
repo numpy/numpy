@@ -8,6 +8,7 @@ import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
+from numpy.core.multiarray import CLIP, WRAP, RAISE
 from numpy.testing import assert_warns, IS_PYPY
 
 
@@ -156,9 +157,9 @@ class TestClipmodeConverter(StringConverterTestCase):
         self._check('raise', 'NPY_RAISE')
 
         # integer values allowed here
-        assert self.conv(np.CLIP) == 'NPY_CLIP'
-        assert self.conv(np.WRAP) == 'NPY_WRAP'
-        assert self.conv(np.RAISE) == 'NPY_RAISE'
+        assert self.conv(CLIP) == 'NPY_CLIP'
+        assert self.conv(WRAP) == 'NPY_WRAP'
+        assert self.conv(RAISE) == 'NPY_RAISE'
 
 
 class TestCastingConverter(StringConverterTestCase):

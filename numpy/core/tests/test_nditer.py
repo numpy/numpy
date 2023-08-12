@@ -5,6 +5,7 @@ import textwrap
 import subprocess
 
 import numpy as np
+import numpy.core.umath as ncu
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
@@ -1391,7 +1392,7 @@ def test_iter_copy():
 
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
-@pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+@pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:
     if loop_dtype.lower() == "m":
@@ -1886,7 +1887,7 @@ def test_iter_buffered_cast_byteswapped():
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
     with suppress_warnings() as sup:
-        sup.filter(np.ComplexWarning)
+        sup.filter(np.exceptions.ComplexWarning)
 
         a = np.arange(10, dtype='f8').newbyteorder().byteswap()
         i = nditer(a, ['buffered', 'external_loop'],
@@ -3007,7 +3008,7 @@ def test_object_iter_cleanup():
     assert_raises(TypeError, lambda: np.zeros((17000, 2), dtype='f4') * None)
 
     # this more explicit code also triggers the invalid access
-    arr = np.arange(np.BUFSIZE * 10).reshape(10, -1).astype(str)
+    arr = np.arange(ncu.BUFSIZE * 10).reshape(10, -1).astype(str)
     oarr = arr.astype(object)
     oarr[:, -1] = None
     assert_raises(TypeError, lambda: np.add(oarr[:, ::-1], arr[:, ::-1]))
@@ -3216,7 +3217,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
     run e.g. with pytest-valgrind or pytest-leaks
     """
     value = 2**30 + 1  # just a random value that Python won't intern
-    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    arr = np.full(int(ncu.BUFSIZE * 2.5), value).astype(in_dtype)
 
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
             flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
@@ -3241,11 +3242,11 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
           ])
 def test_partial_iteration_error(in_dtype, buf_dtype):
     value = 123  # relies on python cache (leak-check will still find it)
-    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    arr = np.full(int(ncu.BUFSIZE * 2.5), value).astype(in_dtype)
     if in_dtype == "O":
-        arr[int(np.BUFSIZE * 1.5)] = None
+        arr[int(ncu.BUFSIZE * 1.5)] = None
     else:
-        arr[int(np.BUFSIZE * 1.5)]["f0"] = None
+        arr[int(ncu.BUFSIZE * 1.5)]["f0"] = None
 
     count = sys.getrefcount(value)
 

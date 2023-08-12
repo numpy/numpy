@@ -17,10 +17,9 @@ numpy/core/src/common/dlpack/dlpack.h linguist-vendored
 # Mark some files as generated
 numpy/linalg/lapack_lite/f2c_*.c linguist-generated
 numpy/linalg/lapack_lite/lapack_lite_names.h linguist-generated
-numpy/_version.py linguist-generated
 
-# versioneer config
-numpy/_version.py export-subst
+# version generated from pyproject.toml during build
+numpy/version.py linguist-generated
 
 # Configuration files
 *.ini text

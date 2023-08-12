@@ -101,10 +101,10 @@ because  the nditer must copy this buffer data back to the original array once
 iteration is finished, you must signal when the iteration is ended, by one of two
 methods. You may either:
 
- - used the nditer as a context manager using the `with` statement, and
-   the temporary data will be written back when the context is exited.
- - call the iterator's `close` method once finished iterating, which will trigger
-   the write-back.
+- used the nditer as a context manager using the `with` statement, and
+  the temporary data will be written back when the context is exited.
+- call the iterator's `close` method once finished iterating, which will trigger
+  the write-back.
 
 The nditer can no longer be iterated once either `close` is called or its
 context is exited.

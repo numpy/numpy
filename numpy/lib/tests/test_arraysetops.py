@@ -8,6 +8,7 @@ from numpy.testing import (assert_array_equal, assert_equal,
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
+from numpy.exceptions import AxisError
 import pytest
 
 
@@ -795,8 +796,8 @@ class TestUnique:
         assert_raises(TypeError, self._run_axis_tests,
                       [('a', int), ('b', object)])
 
-        assert_raises(np.AxisError, unique, np.arange(10), axis=2)
-        assert_raises(np.AxisError, unique, np.arange(10), axis=-2)
+        assert_raises(AxisError, unique, np.arange(10), axis=2)
+        assert_raises(AxisError, unique, np.arange(10), axis=-2)
 
     def test_unique_axis_list(self):
         msg = "Unique failed on list of lists"

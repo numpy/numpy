@@ -4,6 +4,7 @@ import hashlib
 import pytest
 
 import numpy as np
+from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_allclose,
@@ -34,6 +35,7 @@ JUMP_TEST_DATA = [
         "jumped": {"key_sha256": "0e00ab449f01a5195a83b4aee0dfbc2ce8d46466a640b92e33977d2e42f777f8", "pos": 475},
     },
 ]
+
 
 @pytest.fixture(scope='module', params=[True, False])
 def endpoint(request):
@@ -144,6 +146,7 @@ class TestMultinomial:
         match = r"[\w\s]*pvals array is cast to 64-bit floating"
         with pytest.raises(ValueError, match=match):
             random.multinomial(1, pvals)
+
 
 class TestMultivariateHypergeometric:
 
@@ -1010,9 +1013,9 @@ class TestRandomDist:
     def test_shuffle_exceptions(self):
         random = Generator(MT19937(self.seed))
         arr = np.arange(10)
-        assert_raises(np.AxisError, random.shuffle, arr, 1)
+        assert_raises(AxisError, random.shuffle, arr, 1)
         arr = np.arange(9).reshape((3, 3))
-        assert_raises(np.AxisError, random.shuffle, arr, 3)
+        assert_raises(AxisError, random.shuffle, arr, 3)
         assert_raises(TypeError, random.shuffle, arr, slice(1, 2, None))
         arr = [[1, 2, 3], [4, 5, 6]]
         assert_raises(NotImplementedError, random.shuffle, arr, 1)
@@ -1020,7 +1023,7 @@ class TestRandomDist:
         arr = np.array(3)
         assert_raises(TypeError, random.shuffle, arr)
         arr = np.ones((3, 2))
-        assert_raises(np.AxisError, random.shuffle, arr, 2)
+        assert_raises(AxisError, random.shuffle, arr, 2)
 
     def test_shuffle_not_writeable(self):
         random = Generator(MT19937(self.seed))
@@ -1042,10 +1045,10 @@ class TestRandomDist:
         assert_array_equal(actual, np.atleast_2d(desired).T)
 
         bad_x_str = "abcd"
-        assert_raises(np.AxisError, random.permutation, bad_x_str)
+        assert_raises(AxisError, random.permutation, bad_x_str)
 
         bad_x_float = 1.2
-        assert_raises(np.AxisError, random.permutation, bad_x_float)
+        assert_raises(AxisError, random.permutation, bad_x_float)
 
         random = Generator(MT19937(self.seed))
         integer_val = 10
@@ -1070,9 +1073,9 @@ class TestRandomDist:
     def test_permutation_exceptions(self):
         random = Generator(MT19937(self.seed))
         arr = np.arange(10)
-        assert_raises(np.AxisError, random.permutation, arr, 1)
+        assert_raises(AxisError, random.permutation, arr, 1)
         arr = np.arange(9).reshape((3, 3))
-        assert_raises(np.AxisError, random.permutation, arr, 3)
+        assert_raises(AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
 
     @pytest.mark.parametrize("dtype", [int, object])
@@ -1237,6 +1240,25 @@ class TestRandomDist:
         sample = random.dirichlet(alpha, size=20000000)
         sample_mean = sample.mean(axis=0)
         assert_allclose(sample_mean, exact_mean, rtol=1e-3)
+
+    # This set of parameters includes inputs with alpha.max() >= 0.1 and
+    # alpha.max() < 0.1 to exercise both generation methods within the
+    # dirichlet code.
+    @pytest.mark.parametrize(
+        'alpha',
+        [[5, 9, 0, 8],
+         [0.5, 0, 0, 0],
+         [1, 5, 0, 0, 1.5, 0, 0, 0],
+         [0.01, 0.03, 0, 0.005],
+         [1e-5, 0, 0, 0],
+         [0.002, 0.015, 0, 0, 0.04, 0, 0, 0],
+         [0.0],
+         [0, 0, 0]],
+    )
+    def test_dirichlet_multiple_zeros_in_alpha(self, alpha):
+        alpha = np.array(alpha)
+        y = random.dirichlet(alpha)
+        assert_equal(y[alpha == 0], 0.0)
 
     def test_exponential(self):
         random = Generator(MT19937(self.seed))
@@ -1467,7 +1489,7 @@ class TestRandomDist:
                       mu, np.empty((3, 2)))
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
-        
+
     @pytest.mark.parametrize('mean, cov', [([0], [[1+1j]]), ([0j], [[1]])])
     def test_multivariate_normal_disallow_complex(self, mean, cov):
         random = Generator(MT19937(self.seed))
@@ -1846,7 +1868,6 @@ class TestBroadcast:
     # correctly when presented with non-scalar arguments
     def setup_method(self):
         self.seed = 123456789
-
 
     def test_uniform(self):
         random = Generator(MT19937(self.seed))

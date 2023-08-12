@@ -15,16 +15,16 @@ information can be found in the docstring for the module of interest.
 This package provides *convenience classes* for each of six different kinds
 of polynomials:
 
-         ========================    ================
-         **Name**                    **Provides**
-         ========================    ================
-         `~polynomial.Polynomial`    Power series
-         `~chebyshev.Chebyshev`      Chebyshev series
-         `~legendre.Legendre`        Legendre series
-         `~laguerre.Laguerre`        Laguerre series
-         `~hermite.Hermite`          Hermite series
-         `~hermite_e.HermiteE`       HermiteE series
-         ========================    ================
+========================    ================
+**Name**                    **Provides**
+========================    ================
+`~polynomial.Polynomial`    Power series
+`~chebyshev.Chebyshev`      Chebyshev series
+`~legendre.Legendre`        Legendre series
+`~laguerre.Laguerre`        Laguerre series
+`~hermite.Hermite`          Hermite series
+`~hermite_e.HermiteE`       HermiteE series
+========================    ================
 
 These *convenience classes* provide a consistent interface for creating,
 manipulating, and fitting data with polynomials of different bases.

@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
+from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
@@ -748,12 +749,12 @@ class TestFancyIndexingCast:
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
@@ -1199,7 +1200,7 @@ class TestMultiIndexingAutomated:
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
-            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('error', '', VisibleDeprecationWarning)
 
             def isskip(idx):
                 return isinstance(idx, str) and idx == "skip"

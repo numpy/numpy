@@ -11,6 +11,7 @@ from hypothesis.strategies import sampled_from
 from hypothesis.extra import numpy as hynp
 
 import numpy as np
+from numpy.exceptions import ComplexWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
@@ -511,7 +512,7 @@ class TestConversion:
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
         with suppress_warnings() as sup:
-            sup.record(np.ComplexWarning)
+            sup.record(ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
@@ -521,7 +522,7 @@ class TestConversion:
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
-            sup.record(np.ComplexWarning)
+            sup.record(ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)

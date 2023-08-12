@@ -12,14 +12,14 @@ mathematical, logical, shape manipulation, sorting, selecting, I/O,
 discrete Fourier transforms, basic linear algebra, basic statistical
 operations, random simulation and much more.
 
-At the core of the NumPy package, is the `ndarray` object.  This
+At the core of the NumPy package, is the `~numpy.ndarray` object.  This
 encapsulates *n*-dimensional arrays of homogeneous data types, with
 many operations being performed in compiled code for performance.
 There are several important differences between NumPy arrays and the
 standard Python sequences:
 
 - NumPy arrays have a fixed size at creation, unlike Python lists
-  (which can grow dynamically). Changing the size of an `ndarray` will
+  (which can grow dynamically). Changing the size of an `~numpy.ndarray` will
   create a new array and delete the original.
 
 - The elements in a NumPy array are all required to be of the same
@@ -79,7 +79,7 @@ array, for example, the C code (abridged as before) expands to
   }
 
 NumPy gives us the best of both worlds: element-by-element operations
-are the "default mode" when an `ndarray` is involved, but the
+are the "default mode" when an `~numpy.ndarray` is involved, but the
 element-by-element operation is speedily executed by pre-compiled C
 code.  In NumPy
 
@@ -131,9 +131,9 @@ Who Else Uses NumPy?
 --------------------
 
 NumPy fully supports an object-oriented approach, starting, once
-again, with `ndarray`.  For example, `ndarray` is a class, possessing
+again, with `~numpy.ndarray`.  For example, `~numpy.ndarray` is a class, possessing
 numerous methods and attributes.  Many of its methods are mirrored by
 functions in the outer-most NumPy namespace, allowing the programmer
 to code in whichever paradigm they prefer. This flexibility has allowed the
-NumPy array dialect and NumPy `ndarray` class to become the *de-facto* language
+NumPy array dialect and NumPy `~numpy.ndarray` class to become the *de-facto* language
 of multi-dimensional data interchange used in Python.

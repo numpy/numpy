@@ -43,6 +43,7 @@
         #endif
     #endif
 #endif // !NPY_DISABLE_OPTIMIZATION
+#ifndef NPY__CPU_MESON_BUILD
 /**
  * Macro NPY_CPU_DISPATCH_CURFX(NAME)
  *
@@ -261,5 +262,5 @@
     ((TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) : (void) 0),
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
     ( LEFT __VA_ARGS__ )
-
+#endif // NPY__CPU_MESON_BUILD
 #endif  // NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_

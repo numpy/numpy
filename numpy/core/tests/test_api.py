@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import numpy.core.umath as ncu
 from numpy.core._rational_tests import rational
 import pytest
 from numpy.testing import (
@@ -92,7 +93,7 @@ def test_array_array():
 
     # test recursion
     nested = 1.5
-    for i in range(np.MAXDIMS):
+    for i in range(ncu.MAXDIMS):
         nested = [nested]
 
     # no error
@@ -158,21 +159,6 @@ def test_array_impossible_casts(array):
         rt = np.array(rt)
     with assert_raises(TypeError):
         np.array(rt, dtype="M8")
-
-
-# TODO: remove when fastCopyAndTranspose deprecation expires
-@pytest.mark.parametrize("a",
-    (
-        np.array(2),  # 0D array
-        np.array([3, 2, 7, 0]),  # 1D array
-        np.arange(6).reshape(2, 3)  # 2D array
-    ),
-)
-def test_fastCopyAndTranspose(a):
-    with pytest.deprecated_call():
-        b = np.fastCopyAndTranspose(a)
-        assert_equal(b, a.T)
-        assert b.flags.owndata
 
 
 def test_array_astype():
@@ -319,7 +305,7 @@ def test_object_array_astype_to_void():
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
     a = np.array(10, dtype=np.complex_)
-    assert_warns(np.ComplexWarning, a.astype, t)
+    assert_warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),

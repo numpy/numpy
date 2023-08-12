@@ -486,9 +486,9 @@ PyArrayDescr_Type and PyArray_Descr
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
            int *cancastto;
-           PyArray_FastClipFunc *fastclip;  /* deprecated */
-           PyArray_FastPutmaskFunc *fastputmask;  /* deprecated */
-           PyArray_FastTakeFunc *fasttake;  /* deprecated */
+           void *_unused1;
+           void *_unused2;
+           void *_unused3;
            PyArray_ArgFunc *argmin;
        } PyArray_ArrFuncs;
 
@@ -672,62 +672,6 @@ PyArrayDescr_Type and PyArray_Descr
         :c:data:`NPY_NOTYPE` ) indicated data-types that this data-type
         can be cast to safely (this usually means without losing
         precision).
-
-    .. c:member:: void fastclip( \
-            void *in, npy_intp n_in, void *min, void *max, void *out)
-
-        .. deprecated:: 1.17
-            The use of this function will give a deprecation warning when
-            ``np.clip``. Instead of this function, the datatype must
-            instead use ``PyUFunc_RegisterLoopForDescr`` to attach a custom
-            loop to ``np.core.umath.clip``, ``np.minimum``, and ``np.maximum``.
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that reads ``n_in`` items from ``in``, and writes to
-        ``out`` the read value if it is within the limits pointed to by
-        ``min`` and ``max``, or the corresponding limit if outside. The
-        memory segments must be contiguous and behaved, and either
-        ``min`` or ``max`` may be ``NULL``, but not both.
-
-    .. c:member:: void fastputmask( \
-            void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that takes a pointer ``in`` to an array of ``n_in``
-        items, a pointer ``mask`` to an array of ``n_in`` boolean
-        values, and a pointer ``vals`` to an array of ``nv`` items.
-        Items from ``vals`` are copied into ``in`` wherever the value
-        in ``mask`` is non-zero, tiling ``vals`` as needed if
-        ``nv < n_in``. All arrays must be contiguous and behaved.
-
-    .. c:member:: void fasttake( \
-            void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
-            npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
-            NPY_CLIPMODE clipmode)
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that takes a pointer ``src`` to a C contiguous,
-        behaved segment, interpreted as a 3-dimensional array of shape
-        ``(n_outer, nindarray, nelem)``, a pointer ``indarray`` to a
-        contiguous, behaved segment of ``m_middle`` integer indices,
-        and a pointer ``dest`` to a C contiguous, behaved segment,
-        interpreted as a 3-dimensional array of shape
-        ``(n_outer, m_middle, nelem)``. The indices in ``indarray`` are
-        used to index ``src`` along the second dimension, and copy the
-        corresponding chunks of ``nelem`` items into ``dest``.
-        ``clipmode`` (which can take on the values :c:data:`NPY_RAISE`,
-        :c:data:`NPY_WRAP` or :c:data:`NPY_CLIP`) determines how will
-        indices smaller than 0 or larger than ``nindarray`` will be
-        handled.
 
     .. c:member:: int argmin( \
             void* data, npy_intp n, npy_intp* min_ind, void* arr)

@@ -7,3 +7,9 @@
 [submodule "numpy/core/src/npysort/x86-simd-sort"]
 	path = numpy/core/src/npysort/x86-simd-sort
 	url = https://github.com/intel/x86-simd-sort
+[submodule "vendored-meson/meson"]
+	path = vendored-meson/meson
+	url = https://github.com/numpy/meson.git
+[submodule "vendored-meson/meson-python"]
+	path = vendored-meson/meson-python
+	url = https://github.com/numpy/meson-python.git

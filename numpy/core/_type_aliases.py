@@ -183,7 +183,7 @@ def _set_up_aliases():
             pass
 
     # Additional aliases in sctypeDict that should not be exposed as attributes
-    attrs_to_remove = ['ulong']
+    attrs_to_remove = ['ulong', 'long', 'unicode']
 
     for t in attrs_to_remove:
         try:

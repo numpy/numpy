@@ -1,9 +1,9 @@
 Const correctness for the generalized ufunc C API
 -------------------------------------------------
-The Numpy C API's functions for constructing generalized ufuncs
+The NumPy C API's functions for constructing generalized ufuncs
 (``PyUFunc_FromFuncAndData``, ``PyUFunc_FromFuncAndDataAndSignature``,
 ``PyUFunc_FromFuncAndDataAndSignatureAndIdentity``) take ``types`` and ``data``
-arguments that are not modified by Numpy's internals. Like the ``name`` and
+arguments that are not modified by NumPy's internals. Like the ``name`` and
 ``doc`` arguments, third-party Python extension modules are likely to supply
 these arguments from static constants. The ``types`` and ``data`` arguments are
 now const-correct: they are declared as ``const char *types`` and

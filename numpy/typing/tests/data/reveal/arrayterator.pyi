@@ -17,8 +17,8 @@ reveal_type(ar_iter.__array__())  # E: ndarray[Any, dtype[{int64}]]
 for i in ar_iter:
     reveal_type(i)  # E: ndarray[Any, dtype[{int64}]]
 
-reveal_type(ar_iter[0])  # E: lib.arrayterator.Arrayterator[Any, dtype[{int64}]]
-reveal_type(ar_iter[...])  # E: lib.arrayterator.Arrayterator[Any, dtype[{int64}]]
-reveal_type(ar_iter[:])  # E: lib.arrayterator.Arrayterator[Any, dtype[{int64}]]
-reveal_type(ar_iter[0, 0, 0])  # E: lib.arrayterator.Arrayterator[Any, dtype[{int64}]]
-reveal_type(ar_iter[..., 0, :])  # E: lib.arrayterator.Arrayterator[Any, dtype[{int64}]]
+reveal_type(ar_iter[0])  # E: lib.Arrayterator[Any, dtype[{int64}]]
+reveal_type(ar_iter[...])  # E: lib.Arrayterator[Any, dtype[{int64}]]
+reveal_type(ar_iter[:])  # E: lib.Arrayterator[Any, dtype[{int64}]]
+reveal_type(ar_iter[0, 0, 0])  # E: lib.Arrayterator[Any, dtype[{int64}]]
+reveal_type(ar_iter[..., 0, :])  # E: lib.Arrayterator[Any, dtype[{int64}]]

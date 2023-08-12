@@ -80,7 +80,6 @@ from numpy.lib.function_base import (
     insert as insert,
     append as append,
     interp as interp,
-    add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
 )
 
@@ -220,7 +219,6 @@ from numpy.lib.ufunclike import (
 from numpy.lib.utils import (
     issubclass_ as issubclass_,
     issubsctype as issubsctype,
-    issubdtype as issubdtype,
     deprecate as deprecate,
     deprecate_with_doc as deprecate_with_doc,
     get_include as get_include,

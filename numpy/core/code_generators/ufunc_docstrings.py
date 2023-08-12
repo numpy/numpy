@@ -1713,7 +1713,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     False
     >>> np.isfinite(np.inf)
     False
-    >>> np.isfinite(np.NINF)
+    >>> np.isfinite(-np.inf)
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
     array([False,  True, False])
@@ -1765,7 +1765,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     True
     >>> np.isinf(np.nan)
     False
-    >>> np.isinf(np.NINF)
+    >>> np.isinf(-np.inf)
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
     array([ True,  True, False, False])
