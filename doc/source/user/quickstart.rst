@@ -517,7 +517,7 @@ and other Python sequences.
     >>> for i in a:
     ...     print(i**(1 / 3.))
     ...
-    9.999999999999998
+    9.999999999999998  # may vary
     1.0
     9.999999999999998
     3.0
