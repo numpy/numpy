@@ -666,7 +666,6 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
 __all__: list[str]
 __path__: list[str]
 __version__: str
-__git_version__: str
 test: PytestTester
 
 # TODO: Move placeholders to their respective module once
