@@ -2229,8 +2229,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     used exclusively for determining whether a non-zero value in `a` is close
     to a zero value in `b`. If the expected input values are significantly
     smaller than one, it can result in false positives. `atol` should be
-    carefully selected for the use case at hand. `atol=0` will result in `False`
-    if either `a` or `b` contains a zero.
+    carefully selected for the use case at hand. `atol=0` will result in
+    `False` if either `a` or `b` contains a zero.
 
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
@@ -2318,8 +2318,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     used exclusively for determining whether a non-zero value in `a` is close
     to a zero value in `b`. If the expected input values are significantly
     smaller than one, it can result in false positives. `atol` should be
-    carefully selected for the use case at hand. `atol=0` will result in `False`
-    if either `a` or `b` contains a zero.
+    carefully selected for the use case at hand. `atol=0` will result in
+    `False` if either `a` or `b` contains a zero.
 
     `isclose` is not defined for non-numeric data types.
     `bool` is considered a numeric data-type for this purpose.
