@@ -454,11 +454,6 @@ class TestSctypeDict:
             assert not hasattr(np, 'ulong')
 
 
-class TestBitName:
-    def test_abstract(self):
-        assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
-
-
 @pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
 class TestMaximumSctype:
 
@@ -571,3 +566,15 @@ class TestScalarTypeNames:
     def test_names_are_undersood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
+
+
+def test_new_vs_expired_type_aliases():
+    from numpy.core._type_aliases import sctypes, sctypeDict, allTypes
+    from numpy.core._expired_type_aliases import (
+        sctypes as expired_sctypes, sctypeDict as expired_sctypeDict,
+        allTypes as expired_allTypes
+    )
+
+    assert(sctypes == expired_sctypes)
+    assert(allTypes == expired_allTypes)
+    assert(sctypeDict == expired_sctypeDict)
