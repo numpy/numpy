@@ -1,0 +1,41 @@
+
+Contributors
+============
+
+A total of 11 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Matti Picus
+* Melissa Weber Mendonça
+* Ralf Gommers
+* Sayed Adel
+* Sebastian Berg
+* Stefan van der Walt
+* Tyler Reddy
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 18 pull requests were merged for this release.
+
+* `#24305 <https://github.com/numpy/numpy/pull/24305>`__: MAINT: Prepare 1.26.x branch for development
+* `#24308 <https://github.com/numpy/numpy/pull/24308>`__: MAINT: Massive update of files from main for numpy 1.26
+* `#24322 <https://github.com/numpy/numpy/pull/24322>`__: CI: fix wheel builds on the 1.26.x branch
+* `#24326 <https://github.com/numpy/numpy/pull/24326>`__: BLD: update openblas to newer version
+* `#24327 <https://github.com/numpy/numpy/pull/24327>`__: TYP: Trim down the ``_NestedSequence.__getitem__`` signature
+* `#24328 <https://github.com/numpy/numpy/pull/24328>`__: BUG: fix choose refcount leak
+* `#24337 <https://github.com/numpy/numpy/pull/24337>`__: TST: fix running the test suite in builds without BLAS/LAPACK
+* `#24338 <https://github.com/numpy/numpy/pull/24338>`__: BUG: random: Fix generation of nan by dirichlet.
+* `#24340 <https://github.com/numpy/numpy/pull/24340>`__: MAINT: Dependabot updates from main
+* `#24342 <https://github.com/numpy/numpy/pull/24342>`__: MAINT: Add back NPY_RUN_MYPY_IN_TESTSUITE=1
+* `#24353 <https://github.com/numpy/numpy/pull/24353>`__: MAINT: Update ``extbuild.py`` from main.
+* `#24356 <https://github.com/numpy/numpy/pull/24356>`__: TST: fix distutils tests for deprecations in recent setuptools...
+* `#24375 <https://github.com/numpy/numpy/pull/24375>`__: MAINT: Update cibuildwheel to version 2.15.0
+* `#24381 <https://github.com/numpy/numpy/pull/24381>`__: MAINT: Fix codespaces setup.sh script
+* `#24403 <https://github.com/numpy/numpy/pull/24403>`__: ENH: Vendor meson for multi-target build support
+* `#24404 <https://github.com/numpy/numpy/pull/24404>`__: BLD: vendor meson-python to make the Windows builds with SIMD...
+* `#24405 <https://github.com/numpy/numpy/pull/24405>`__: BLD, SIMD: The meson CPU dispatcher implementation
+* `#24406 <https://github.com/numpy/numpy/pull/24406>`__: MAINT: Remove versioneer

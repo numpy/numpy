@@ -4,9 +4,114 @@
 NumPy 1.26.0 Release Notes
 ==========================
 
-The NumPy 1.26.0 release is a continuation of the 1.25.x release cycle, but
-with the distutils based build replaced by meson in order to work with Python
-3.12.
+The NumPy 1.26.0 release is a continuation of the 1.25.x release cycle with the
+addition of Python 3.12.0 support. Python 3.12 dropped distutils, consequently
+supporting it required finding a replacement for the setup.py/distutils based
+build system NumPy was using. We have chosen to use the Meson build system
+instead, and this is the first NumPy release supporting it. This is also the
+first release that supports Cython 3.0 in addition to retaining 0.29.X
+compatibility. Supporting those two upgrades was a large project, over 100
+files have been touched in this release. The changelog doesn't capture the full
+extent of the work, special thanks to Ralf Gommers, Sayed Adel, Stéfan van der
+Walt, and Matti Picus who did much of the work in the main development branch.
+
+The highlights of this release are:
+
+- Python 3.12.0 support.
+- Cython 3.0.0 compatibility.
+- Use of the Meson build system
+- Updated SIMD support
 
 The Python versions supported in this release are 3.9-3.12.
 
+Build system changes
+====================
+
+In this release, NumPy has switched to Meson as the build system and
+meson-python as the build backend. Installing NumPy or building a wheel can be
+done with standard tools like ``pip`` and ``pypa/build``. The following are
+supported:
+
+- Regular installs: ``pip install numpy`` or (in a cloned repo)
+  ``pip install .``
+- Building a wheel: ``python -m build`` (preferred), or ``pip wheel .``
+- Editable installs: ``pip install -e . --no-build-isolation``
+- Development builds through the custom CLI implemented with
+  `spin <https://github.com/scientific-python/spin>`__: ``spin build``.
+
+All the regular ``pip`` and ``pypa/build`` flags (e.g.,
+``--no-build-isolation``) should work as expected.
+
+NumPy-specific build customization
+----------------------------------
+
+Many of the NumPy-specific ways of customizing builds have changed.
+The ``NPY_*`` environment variables which control BLAS/LAPACK, SIMD, threading,
+and other such options are no longer supported, nor is a ``site.cfg`` file to
+select BLAS and LAPACK. Instead, there are command-line flags that can be
+passed to the build via ``pip``/``build``'s config-settings interface. These
+flags are all listed in the ``meson_options.txt`` file in the root of the repo.
+Detailed documented will be available before the final 1.26.0 release; for now
+please see `the SciPy "building from source" docs
+<http://scipy.github.io/devdocs/building/index.html>`__ since most build
+customization works in an almost identical way in SciPy as it does in NumPy.
+
+Build dependencies
+------------------
+
+While the runtime dependencies of NumPy have not changed, the build
+dependencies have. Because we temporarily vendor Meson and meson-python,
+there are several new dependencies - please see the ``[build-system]`` section
+of ``pyproject.toml`` for details.
+
+Troubleshooting
+---------------
+
+This build system change is quite large. In case of unexpected issues, it is
+still possible to use a ``setup.py``-based build as a temporary workaround (on
+Python 3.9-3.11, not 3.12), by copying ``pyproject.toml.setuppy`` to
+``pyproject.toml``. However, please open an issue with details on the NumPy
+issue tracker. We aim to phase out ``setup.py`` builds as soon as possible, and
+therefore would like to see all potential blockers surfaced early on in the
+1.26.0 release cycle.
+
+Contributors
+============
+
+A total of 11 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Matti Picus
+* Melissa Weber Mendonça
+* Ralf Gommers
+* Sayed Adel
+* Sebastian Berg
+* Stefan van der Walt
+* Tyler Reddy
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 18 pull requests were merged for this release.
+
+* `#24305 <https://github.com/numpy/numpy/pull/24305>`__: MAINT: Prepare 1.26.x branch for development
+* `#24308 <https://github.com/numpy/numpy/pull/24308>`__: MAINT: Massive update of files from main for numpy 1.26
+* `#24322 <https://github.com/numpy/numpy/pull/24322>`__: CI: fix wheel builds on the 1.26.x branch
+* `#24326 <https://github.com/numpy/numpy/pull/24326>`__: BLD: update openblas to newer version
+* `#24327 <https://github.com/numpy/numpy/pull/24327>`__: TYP: Trim down the ``_NestedSequence.__getitem__`` signature
+* `#24328 <https://github.com/numpy/numpy/pull/24328>`__: BUG: fix choose refcount leak
+* `#24337 <https://github.com/numpy/numpy/pull/24337>`__: TST: fix running the test suite in builds without BLAS/LAPACK
+* `#24338 <https://github.com/numpy/numpy/pull/24338>`__: BUG: random: Fix generation of nan by dirichlet.
+* `#24340 <https://github.com/numpy/numpy/pull/24340>`__: MAINT: Dependabot updates from main
+* `#24342 <https://github.com/numpy/numpy/pull/24342>`__: MAINT: Add back NPY_RUN_MYPY_IN_TESTSUITE=1
+* `#24353 <https://github.com/numpy/numpy/pull/24353>`__: MAINT: Update ``extbuild.py`` from main.
+* `#24356 <https://github.com/numpy/numpy/pull/24356>`__: TST: fix distutils tests for deprecations in recent setuptools...
+* `#24375 <https://github.com/numpy/numpy/pull/24375>`__: MAINT: Update cibuildwheel to version 2.15.0
+* `#24381 <https://github.com/numpy/numpy/pull/24381>`__: MAINT: Fix codespaces setup.sh script
+* `#24403 <https://github.com/numpy/numpy/pull/24403>`__: ENH: Vendor meson for multi-target build support
+* `#24404 <https://github.com/numpy/numpy/pull/24404>`__: BLD: vendor meson-python to make the Windows builds with SIMD...
+* `#24405 <https://github.com/numpy/numpy/pull/24405>`__: BLD, SIMD: The meson CPU dispatcher implementation
+* `#24406 <https://github.com/numpy/numpy/pull/24406>`__: MAINT: Remove versioneer
