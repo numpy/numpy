@@ -16,7 +16,6 @@ defaults:
 
 env:
   DOWNLOAD_OPENBLAS: 1
-  PYTHON_VERSION: 3.9
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -37,7 +36,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - name: Install linter requirements
       run:
         python -m pip install -r linter_requirements.txt
@@ -57,7 +56,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - uses: ./.github/meson_actions
 
   basic:
@@ -66,7 +65,7 @@ jobs:
     if: github.event_name != 'push'
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.12"]
+        python-version: ["3.9", "pypy3.9-v7.3.12"]
     env:
       EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
@@ -81,7 +80,7 @@ jobs:
 
   old_gcc:
     needs: [smoke_test]
-    # provides GCC  7, 8
+    # provides GCC 8
     runs-on: ubuntu-20.04
     if: github.event_name != 'push'
     steps:
@@ -89,7 +88,6 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    # comes with python3.6
     - name: Install Python3.9
       run: |
         sudo apt update
@@ -100,21 +98,14 @@ jobs:
         sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
-    - name: Install Compilers
-      run: sudo apt install g++-7 g++-8 -y
-    - name: Build gcc-7
-      run: |
-        export CC=/usr/bin/gcc-7
-        export CXX=/usr/bin/g++-7
-        rm -rf build && pythonx setup.py install --user
-    - name: Runtests gcc-7
-      run: pythonx runtests.py -n
+    - name: Install GCC 8
+      run: sudo apt install g++-8 -y
     - name: Build gcc-8
       run: |
         export CC=/usr/bin/gcc-8
         export CXX=/usr/bin/g++-8
         rm -rf build && pythonx setup.py install --user
-    - name: Runtests gcc-8
+    - name: Run test suite
       run: pythonx runtests.py -n
 
   without_optimizations:
@@ -146,7 +137,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   without_avx512:
@@ -162,7 +153,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   without_avx512_avx2_fma3:
@@ -178,7 +169,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   debug:
@@ -194,7 +185,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
 
     - uses: ./.github/actions
 
@@ -211,17 +202,13 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     - uses: ./.github/actions
 
   full:
+    # Build a wheel, install it, then run the full test suite with code coverage
     needs: [smoke_test]
     runs-on: ubuntu-22.04
-    env:
-      USE_WHEEL: 1
-      RUN_FULL_TESTS: 1
-      RUN_COVERAGE: 1
-      INSTALL_PICKLE5: 1
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -229,8 +216,27 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+        python-version: '3.9'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r build_requirements.txt
+        pip install -r test_requirements.txt
+    - name: Install gfortran and OpenBLAS (MacPython build)
+      run: |
+        set -xe
+        sudo apt install gfortran libgfortran5
+        target=$(python tools/openblas_support.py)
+        sudo cp -r $target/lib/* /usr/lib
+        sudo cp $target/include/* /usr/include
+    - name: Build a wheel
+      run: |
+        python -m build --wheel --no-isolation --skip-dependency-checks
+    - name: Run full test suite
+      run: |
+        cd doc
+        pytest --pyargs numpy --cov-report=html:build/coverage
+        # TODO: gcov
+
 
   benchmark:
     needs: [smoke_test]
@@ -251,7 +257,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - uses: ./.github/actions
 
   relaxed_strides_debug:
@@ -269,50 +275,13 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  use_wheel:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      USE_WHEEL: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  no_openblas:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      BLAS: None
-      LAPACK: None
-      ATLAS: None
-      DOWNLOAD_OPENBLAS: ''
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     - uses: ./.github/actions
 
   sdist:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    env:
-      USE_SDIST: 1
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
@@ -320,8 +289,26 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
+        python-version: '3.12'
+    - name: Install gfortran and OpenBLAS (MacPython build)
+      run: |
+        set -xe
+        sudo apt install gfortran libgfortran5
+        target=$(python tools/openblas_support.py)
+        sudo cp -r $target/lib/* /usr/lib
+        sudo cp $target/include/* /usr/include
+    - name: Build a wheel via an sdist
+      run: |
+        python -m build
+        pip install dist/numpy*.whl
+    - name: Install test dependencies
+      run: |
+        pip install -r test_requirements.txt
+    - name: Run test suite
+      run: |
+        cd doc
+        pytest --pyargs numpy -m "not slow"
+
 
   armv7_simd_test:
     needs: [smoke_test]
@@ -391,7 +378,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - name: Install Intel SDE
       run: |
         curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
@@ -420,7 +407,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     - name: Install Intel SDE
       run: |
         curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz

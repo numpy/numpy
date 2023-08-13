@@ -10,9 +10,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  PYTHON_VERSION: 3.11
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -37,7 +34,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
