@@ -2568,3 +2568,20 @@ def test_comparisons_return_not_implemented():
         assert item.__lt__(obj) is NotImplemented
         assert item.__ge__(obj) is NotImplemented
         assert item.__gt__(obj) is NotImplemented
+
+
+
+@pytest.mark.parametrize("unit", [
+        "s", "ms", "us", "ns", "ps", "fs", "as"])
+def test_hash(unit):
+    d = datetime.datetime(1970, 1, 1)
+    dt = np.datetime64(d, unit)
+
+    if isinstance(dt.item(), datetime.datetime):
+        assert d == dt
+        assert hash(d) == hash(dt)
+    else:
+        # compare with nanosecods instead of Python datetime:
+        d = np.datetime64(d, "ns")
+        assert d == dt
+        assert hash(d) == hash(dt)

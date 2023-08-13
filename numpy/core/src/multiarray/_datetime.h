@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
 #define NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
 
+#include "numpy/arrayscalars.h"
+
 extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
 
@@ -18,6 +20,12 @@ is_leapyear(npy_int64 year);
  */
 NPY_NO_EXPORT npy_int64
 get_datetimestruct_days(const npy_datetimestruct *dts);
+
+NPY_NO_EXPORT Py_hash_t
+datetime_arrtype_hash(PyDatetimeScalarObject* key);
+
+NPY_NO_EXPORT Py_hash_t
+timedelta_arrtype_hash(PyTimedeltaScalarObject* key);
 
 /*
  * Creates a datetime or timedelta dtype using a copy of the provided metadata.

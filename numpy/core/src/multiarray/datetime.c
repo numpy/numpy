@@ -604,6 +604,142 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
 }
 
 
+
+/*
+ * Implementing hashing for datetimes/datetimestructs.  The below is based on
+ * the tuple hasing algorithm in Python (the constants come from there).
+ */
+#if SIZEOF_PY_UHASH_T > 4
+#define _NpyHASH_XXPRIME_1 ((Py_uhash_t)11400714785074694791ULL)
+#define _NpyHASH_XXPRIME_2 ((Py_uhash_t)14029467366897019727ULL)
+#define _NpyHASH_XXPRIME_5 ((Py_uhash_t)2870177450012600261ULL)
+#define _NpyHASH_XXROTATE(x) ((x << 31) | (x >> 33))  /* Rotate left 31 bits */
+#else
+#define _NpyHASH_XXPRIME_1 ((Py_uhash_t)2654435761UL)
+#define _NpyHASH_XXPRIME_2 ((Py_uhash_t)2246822519UL)
+#define _NpyHASH_XXPRIME_5 ((Py_uhash_t)374761393UL)
+#define _NpyHASH_XXROTATE(x) ((x << 13) | (x >> 19))  /* Rotate left 13 bits */
+#endif
+
+
+static inline Py_uhash_t
+tuple_update_uhash(Py_uhash_t acc, Py_uhash_t lane) {
+    acc += lane * _NpyHASH_XXPRIME_2;
+    acc = _NpyHASH_XXROTATE(acc);
+    acc *= _NpyHASH_XXPRIME_1;
+    return acc;
+}
+
+
+static inline Py_hash_t
+hash_datetime_from_struct(npy_datetimestruct* dts) {
+    /*
+     * If we cannot cast to datetime, use the datetime struct values directly
+     * and mix them similar to a tuple.
+     * This hashing is not directly public and may be adapted e.g. to improve
+     * speed.
+     */
+    Py_uhash_t acc = _NpyHASH_XXPRIME_5;
+#if SIZEOF_PY_UHASH_T >= 8
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->year);
+#else
+    /* Mix lower and uper bits of the year if int64 is larger */
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->year);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)(dts->year >> SIZEOF_PY_UHASH_T));
+#endif
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->month);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->day);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->min);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->sec);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->us);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->ps);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)dts->as);
+    /* should be a need to mix length, as it is fixed anyway? */
+    if (acc == (Py_uhash_t)-1) {
+        acc = (Py_uhash_t)-2;
+    }
+    return acc;
+}
+
+
+NPY_NO_EXPORT Py_hash_t
+datetime_arrtype_hash(PyDatetimeScalarObject* key) {
+    PyArray_DatetimeMetaData *meta = &key->obmeta;
+    npy_datetime value = key->obval;
+    npy_datetimestruct dts;
+
+    if (value == NPY_DATETIME_NAT) {
+        /* use the object identity as hash */
+        Py_uintptr_t hash = (Py_uintptr_t)key;
+        hash = (hash >> 4) | (hash << (8 * SIZEOF_VOID_P - 4));
+        if ((Py_hash_t)hash == -1) {
+            return -2;
+        }
+        return (Py_hash_t)hash;
+    }
+    if (meta->base == NPY_FR_GENERIC) {
+        return (Py_hash_t)value;
+    }
+
+    NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, value, &dts);
+
+    if ((dts.year > 0) && (dts.year <= 9999) && (dts.ps == 0) && (dts.as == 0)) {
+        /*
+         * Time can be represented in a Python datetime, so we must use its
+         * hashing method.
+         */
+        PyObject* dt;
+        Py_hash_t hash;
+
+        dt = PyDateTime_FromDateAndTime(
+                (int)dts.year, dts.month, dts.day,
+                dts.hour, dts.min, dts.sec, dts.us);
+        if (dt == NULL) {
+            return -1;
+        }
+        hash = PyObject_Hash(dt);
+        Py_DECREF(dt);
+        return hash;
+    }
+
+    return hash_datetime_from_struct(&dts);
+}
+
+
+NPY_NO_EXPORT Py_hash_t
+timedelta_arrtype_hash(PyTimedeltaScalarObject* key) {
+    /* This is rather terrible! :) */
+    PyArray_DatetimeMetaData *meta = &key->obmeta;
+    npy_datetime value = key->obval;
+    Py_uhash_t acc;
+
+    if (value == NPY_DATETIME_NAT) {
+        /* use the object identity as hash */
+        Py_uintptr_t hash = (Py_uintptr_t)key;
+        hash = (hash >> 4) | (hash << (8 * SIZEOF_VOID_P - 4));
+        if ((Py_hash_t)hash == -1) {
+            return -2;
+        }
+        return (Py_hash_t)hash;
+    }
+    if (meta->base == NPY_FR_GENERIC) {
+        return (Py_hash_t)value;
+    }
+#if SIZEOF_PY_UHASH_T >= 8
+    acc = (Py_uhash_t)value;
+#else
+    /* Mix lower and uper bits of the timedelta if int64 is larger */
+    Py_uhash_t acc = _NpyHASH_XXPRIME_5;
+    acc = tuple_update_uhash(acc, (Py_uhash_t)value);
+    acc = tuple_update_uhash(acc, (Py_uhash_t)(value >> SIZEOF_PY_UHASH_T));
+#endif
+    if (acc == (Py_uhash_t)-1) {
+        return -2;
+    }
+    return (Py_hash_t)acc;
+}
+
+
 /*NUMPY_API
  * Fill the datetime struct from the value and resolution unit.
  *
