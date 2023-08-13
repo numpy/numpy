@@ -1,215 +1,246 @@
 """
-Due to compatibility, numpy has a very large number of different naming
-conventions for the scalar types (those subclassing from `numpy.generic`).
-This file produces a convoluted set of dictionaries mapping names to types,
-and sometimes other mappings too.
+This file builds `allTypes`, `sctypeDict` and `sctypes`.
+Pre-refactor version can be found in `_expired_type_aliases.py` file.
 
-.. data:: allTypes
-    A dictionary of names to types that will be exposed as attributes through
-    ``np.core.numerictypes.*``
+Types of types & aliases:
 
-.. data:: sctypeDict
-    Similar to `allTypes`, but maps a broader set of aliases to their types.
+1. `words` (e.g. "float", "cdouble", "int_")
+2. `words+bits` (e.g. "int16", "complex64")
+3. `symbols` (e.g. "p", "L")
+4. `symbols+bytes` (e.g. "c8", "b1")
+5. `abstracts` (e.g. "inexact", "integer")
+6. `numbers` (e.g. 1, 2, 3)
+7. `aliases` (e.g. "complex_", "longfloat")
 
-.. data:: sctypes
-    A dictionary keyed by a "type group" string, providing a list of types
-    under that group.
+`allTypes` - contains `words`, `words+bits`, `abstracts`
+
+`sctypeDict` - contains `words`, `words+bits`, `numbers`, 
+                        `symbols`, `symbols+bytes`, `aliases`
+
+`sctypes` - A map from generic types, "int", "float", 
+            to available sizes (e.g. "int32")
 
 """
+from typing import Dict, List
 
 from numpy.core._string_helpers import english_lower
-from numpy.core.multiarray import typeinfo, dtype
+from numpy.core.multiarray import typeinfo, dtype, typeinforanged
 from numpy.core._dtype import _kind_name
-
-
-sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-allTypes = {}            # Collect the types we will add to the module
 
 
 # separate the actual type info from the abstract base classes
 _abstract_types = {}
 _concrete_typeinfo = {}
 for k, v in typeinfo.items():
-    # make all the keys lowercase too
+    # make all the keys lowercase
     k = english_lower(k)
     if isinstance(v, type):
         _abstract_types[k] = v
     else:
         _concrete_typeinfo[k] = v
-
 _concrete_types = {v.type for k, v in _concrete_typeinfo.items()}
 
 
-def _bits_of(obj):
-    try:
-        info = next(v for v in _concrete_typeinfo.values() if v.type is obj)
-    except StopIteration:
-        if obj in _abstract_types.values():
-            msg = "Cannot count the bits of an abstract type"
-            raise ValueError(msg) from None
-
-        # some third-party type - make a best-guess
-        return dtype(obj).itemsize * 8
-    else:
-        return info.bits
-
-
-def bitname(obj):
-    """Return a bit-width name for a given type object"""
-    bits = _bits_of(obj)
-    dt = dtype(obj)
-    char = dt.kind
-    base = _kind_name(dt)
-
-    if base == 'object':
-        bits = 0
-
-    if bits != 0:
-        char = "%s%d" % (char, bits // 8)
-
-    return base, bits, char
+# 1. `words`
+word_dict = {}
+# 2. `words+bits`
+word_bits_dict = {}
+# 3. `symbols`
+symbol_dict = {}
+# 4. `symbols+bytes`
+symbol_bytes_dict = {}
+# 5. `abstracts`
+abstract_types_dict = _abstract_types
+# 6. `numbers`
+numbers_dict = {}
+# 7. `aliases`
+extra_aliases_dict = {}
 
 
-def _add_types():
+# Build dictionaries following C naming
+def _build_dicts() -> None:
+    # For int and uint types each bits size is inserted only once. 
+    # If two types have the same size we select one with a lower priority.
+    _int_ctypes_prio = {
+        "long": 0, "longlong": 1, "int": 2, "short": 3, "byte": 4
+    }
+    _uint_ctypes_prio = {
+        "ulong": 0, "ulonglong": 1, "uint": 2, "ushort": 3, "ubyte": 4
+    }
+
+    _floating_ctypes = ["half", "float", "double", "longdouble"]
+    _complex_ctypes = ["cfloat", "cdouble", "clongdouble"]
+    _other_types = [
+        "object", "string", "unicode", "void", "datetime", "timedelta", "bool"
+    ]
+
+    STATUS: type = bool
+    PROCESSED: bool = True
+    REJECTED: bool = False
+
+    # this function populates word+bits and symbol+bytes for integer types
+    def _process_integer_type(
+        name: str, 
+        info: typeinforanged, 
+        priority_dict: Dict[str, int], 
+        seen_bits_dict: Dict[int, str],
+        long_name: str, 
+        short_name: str
+    ) -> STATUS:
+        bits: int = info.bits 
+        if name in priority_dict and (
+            bits not in seen_bits_dict or 
+            priority_dict[seen_bits_dict[bits]] > priority_dict[name]
+        ):
+            word_bits_dict[f"{long_name}{bits}"] = info.type
+            symbol_bytes_dict[f"{short_name}{bits//8}"] = info.type
+            seen_bits_dict[bits] = name
+            return PROCESSED
+        else:
+            return REJECTED
+
+    # We will track which sizes we have already seen for ints and uints
+    _seen_int_bits = {}
+    _seen_uint_bits = {}
+
+    # MAIN LOOP: Traversing all contrete types that come from 
+    # the compiled multiarray module
     for name, info in _concrete_typeinfo.items():
-        # define C-name and insert typenum and typechar references also
-        allTypes[name] = info.type
-        sctypeDict[name] = info.type
-        sctypeDict[info.char] = info.type
-        sctypeDict[info.num] = info.type
+        
+        bits: int = info.bits
+        symbol: str = info.char
+        
+        # Adding type to non-bit dictionaries
+        word_dict[name] = info.type
+        symbol_dict[symbol] = info.type
+        numbers_dict[info.num] = info.type
 
-    for name, cls in _abstract_types.items():
-        allTypes[name] = cls
-_add_types()
-
-# This is the priority order used to assign the bit-sized NPY_INTxx names, which
-# must match the order in npy_common.h in order for NPY_INTxx and np.intxx to be
-# consistent.
-# If two C types have the same size, then the earliest one in this list is used
-# as the sized name.
-_int_ctypes = ['long', 'longlong', 'int', 'short', 'byte']
-_uint_ctypes = list('u' + t for t in _int_ctypes)
-
-def _add_aliases():
-    for name, info in _concrete_typeinfo.items():
-        # these are handled by _add_integer_aliases
-        if name in _int_ctypes or name in _uint_ctypes:
+        # Adding type to bit-aware dictionaries
+        # 1. Checking if the type is a signed integer
+        result = _process_integer_type(
+            name, info, _int_ctypes_prio, _seen_int_bits, "int", "i"
+        )
+        if result is PROCESSED:
             continue
-
-        # insert bit-width version for this class (if relevant)
-        base, bit, char = bitname(info.type)
-
-        myname = "%s%d" % (base, bit)
-
-        # ensure that (c)longdouble does not overwrite the aliases assigned to
-        # (c)double
-        if name in ('longdouble', 'clongdouble') and myname in allTypes:
+        # 2. If not, then we check if it's an unsigned integer
+        result = _process_integer_type(
+            name, info, _uint_ctypes_prio, _seen_uint_bits, "uint", "u"
+        )
+        if result is PROCESSED:
             continue
-
-        # Add to the main namespace if desired:
-        if bit != 0 and base != "bool":
-            allTypes[myname] = info.type
-
-        # add forward, reverse, and string mapping to numarray
-        sctypeDict[char] = info.type
-
-        # add mapping for both the bit name
-        sctypeDict[myname] = info.type
+        if name in _complex_ctypes + _floating_ctypes + _other_types:
+            # 3. Otherwise it can be float/complex or other type
+            dt = dtype(info.type)
+            word_bits_dict[f"{_kind_name(dt)}{bits}"] = info.type
+            symbol_bytes_dict[f"{dt.kind}{bits//8}"] = info.type
 
 
-_add_aliases()
+_build_dicts()
 
-def _add_integer_aliases():
-    seen_bits = set()
-    for i_ctype, u_ctype in zip(_int_ctypes, _uint_ctypes):
-        i_info = _concrete_typeinfo[i_ctype]
-        u_info = _concrete_typeinfo[u_ctype]
-        bits = i_info.bits  # same for both
 
-        for info, charname, intname in [
-                (i_info,'i%d' % (bits//8,), 'int%d' % bits),
-                (u_info,'u%d' % (bits//8,), 'uint%d' % bits)]:
-            if bits not in seen_bits:
-                # sometimes two different types have the same number of bits
-                # if so, the one iterated over first takes precedence
-                allTypes[intname] = info.type
-                sctypeDict[intname] = info.type
-                sctypeDict[charname] = info.type
+# Rename types to Python conventions and introduce aliases
+def _renaming_and_aliases() -> None:
+    renaming_dict = [
+        # In Python `float` is `double`
+        ("single", "float"),
+        ("float", "double"),
 
-        seen_bits.add(bits)
+        # In Python `cfloat` is `cdouble`
+        ("csingle", "cfloat"),
+        ("cfloat", "cdouble"),
 
-_add_integer_aliases()
+        ("intc", "int"),
+        ("uintc", "uint"),
 
-# We use these later
-void = allTypes['void']
+        # In Python `int` is `long`
+        ("int", "long"),
+        ("int_", "long"),
+        ("uint", "ulong"),
 
-#
-# Rework the Python names (so that float and complex and int are consistent
-#                            with Python usage)
-#
-def _set_up_aliases():
-    type_pairs = [('single', 'float'),
-                  ('csingle', 'cfloat'),
-                  ('intc', 'int'),
-                  ('uintc', 'uint'),
-                  ('int_', 'long'),
-                  ('uint', 'ulong'),
-                  ('bool_', 'bool'),
-                  ('bytes_', 'string'),
-                  ('str_', 'unicode'),
-                  ('object_', 'object'),
-                  ('cfloat', 'cdouble')]
-    for alias, t in type_pairs:
-        allTypes[alias] = allTypes[t]
-        sctypeDict[alias] = sctypeDict[t]
-    # Remove aliases overriding python types and modules
-    to_remove = ['object', 'int', 'float', 'complex', 'bool', 
-                 'string', 'datetime', 'timedelta', 'bytes', 'str']
+        ("bool_", "bool"),
+        ("bytes_", "string"),
+        ("str_", "unicode"),
+        ("object_", "object"),
+        ("object0", "object"),
 
-    for t in to_remove:
+        # aliases to be removed
+        ("float_", "double"),
+        ("complex_", "cdouble"),
+        ("longfloat", "longdouble"),
+        ("clongfloat", "clongdouble"),
+        ("longcomplex", "clongdouble"),
+        ("singlecomplex", "csingle"),
+        ("string_", "string"),
+        ("unicode_", "unicode")
+    ]
+
+    for alias, t in renaming_dict:
+        word_dict[alias] = word_dict[t]
+
+    extra_aliases = [
+        ("complex", "cdouble"),
+        ("float", "double"),
+        ("str", "unicode"),
+        ("bytes", "string"),
+        ("a", "string"),
+        ("int0", "intp"),
+        ("uint0", "uintp")
+    ]
+
+    for k, v in extra_aliases:
+        extra_aliases_dict[k] = word_dict[v]
+
+
+_renaming_and_aliases()
+
+
+# Let's build final dictionaries according to our recipes!
+# First we build `allTypes` and `sctypeDict`
+allTypes = word_dict | word_bits_dict | abstract_types_dict
+# delete C names in `allTypes` and exceptions
+for s in ["ulong", "long", "unicode", "object", "bool", "datetime",
+          "string", "timedelta", "float", "int", "bool8", "bytes0", 
+          "object64", "str0", "void0", "object0"]:
+    del allTypes[s]
+
+sctypeDict = numbers_dict | symbol_dict | symbol_bytes_dict | \
+    word_dict | word_bits_dict | extra_aliases_dict
+# delete exceptions
+for s in ["O8", "S0", "U0", "V0", "datetime", 
+          "object64", "string", "timedelta"]:
+    del sctypeDict[s]
+
+
+# Finally, we build `sctypes`` mapping
+def _build_sctypes() -> Dict[str, List[type]]:
+    def _add_array_type(typename, bits, sctypes):
         try:
-            del allTypes[t]
-            del sctypeDict[t]
+            t = sctypeDict[f"{typename}{bits}"]
         except KeyError:
             pass
+        else:
+            sctypes[typename].append(t)
 
-    # Additional aliases in sctypeDict that should not be exposed as attributes
-    attrs_to_remove = ['ulong', 'long', 'unicode', 'cfloat']
-
-    for t in attrs_to_remove:
-        try:
-            del allTypes[t]
-        except KeyError:
-            pass
-_set_up_aliases()
-
-
-sctypes = {'int': [],
-           'uint': [],
-           'float': [],
-           'complex': [],
-           'others': [bool, object, bytes, str, void]}
-
-
-def _add_array_type(typename, bits):
-    try:
-        t = allTypes['%s%d' % (typename, bits)]
-    except KeyError:
-        pass
-    else:
-        sctypes[typename].append(t)
-
-def _set_array_types():
+    sctypes = {
+        'int': [],
+        'uint': [],
+        'float': [],
+        'complex': [],
+        'others': [bool, object, bytes, str, allTypes['void']]
+    }
+    
     ibytes = [1, 2, 4, 8, 16, 32, 64]
     fbytes = [2, 4, 8, 10, 12, 16, 32, 64]
-    for bytes in ibytes:
-        bits = 8*bytes
-        _add_array_type('int', bits)
-        _add_array_type('uint', bits)
-    for bytes in fbytes:
-        bits = 8*bytes
-        _add_array_type('float', bits)
-        _add_array_type('complex', 2*bits)
+    for b in ibytes:
+        bits = 8*b
+        _add_array_type('int', bits, sctypes)
+        _add_array_type('uint', bits, sctypes)
+    for b in fbytes:
+        bits = 8*b
+        _add_array_type('float', bits, sctypes)
+        _add_array_type('complex', 2*bits, sctypes)
+    
+    # include c pointer sized integer
     _gi = dtype('p')
     if _gi.type not in sctypes['int']:
         indx = 0
@@ -219,19 +250,7 @@ def _set_array_types():
             indx += 1
         sctypes['int'].insert(indx, _gi.type)
         sctypes['uint'].insert(indx, dtype('P').type)
-_set_array_types()
+    return sctypes
 
 
-# Add additional strings to the sctypeDict
-_toadd = ['int', ('float', 'double'), ('complex', 'cdouble'), 
-          'bool', 'object',
-          'str', 'bytes', ('a', 'bytes_'),
-          ('int0', 'intp'), ('uint0', 'uintp')]
-
-for name in _toadd:
-    if isinstance(name, tuple):
-        sctypeDict[name[0]] = allTypes[name[1]]
-    else:
-        sctypeDict[name] = allTypes['%s_' % name]
-
-del _toadd, name
+sctypes = _build_sctypes()

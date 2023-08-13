@@ -1218,6 +1218,7 @@ python_sources = [
   '_string_helpers.py',
   '_type_aliases.py',
   '_type_aliases.pyi',
+  '_expired_type_aliases.py',
   '_ufunc_config.py',
   '_ufunc_config.pyi',
   'arrayprint.py',

@@ -101,11 +101,9 @@ from ._string_helpers import (
 from ._type_aliases import (
     sctypeDict,
     allTypes,
-    bitname,
     sctypes,
     _concrete_types,
     _concrete_typeinfo,
-    _bits_of,
 )
 from ._dtype import _kind_name
 
