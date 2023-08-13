@@ -701,7 +701,7 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
     References
     ----------
     .. [1] Wikipedia, "Cross-correlation",
@@ -1587,7 +1587,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     if (a.ndim < 1) or (b.ndim < 1):
         raise ValueError("At least one array has zero dimension")
-    
+
     # Check axisa and axisb are within bounds
     axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
@@ -2186,6 +2186,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ``equal_nan=True``.  Infs are treated as equal if they are in the same
     place and of the same sign in both arrays.
 
+    .. warning:: The default `atol` is not appropriate for comparing numbers
+                 that are much smaller than one (see Notes).
+
     Parameters
     ----------
     a, b : array_like
@@ -2220,6 +2223,14 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     The above equation is not symmetric in `a` and `b`, so that
     ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
     some rare cases.
+
+    The default value of `atol` is not appropriate unless all input values
+    are on order of unity. E.g., `allclose(1e-9, 2e-9)` is `True`. `atol` is
+    used exclusively for determining whether a non-zero value in `a` is close
+    to a zero value in `b`. If the expected input values are significantly
+    smaller than one, it can result in false positives. `atol` should be
+    carefully selected for the use case at hand. `atol=0` will result in `False`
+    if either `a` or `b` contains a zero.
 
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
@@ -2300,13 +2311,15 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
     in `a` and `b` -- it assumes `b` is the reference value -- so that
-    `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
-    the default value of atol is not zero, and is used to determine what
-    small values should be considered close to zero. The default value is
-    appropriate for expected values of order unity: if the expected values
-    are significantly smaller than one, it can result in false positives.
-    `atol` should be carefully selected for the use case at hand. A zero value
-    for `atol` will result in `False` if either `a` or `b` is zero.
+    `isclose(a, b)` might be different from `isclose(b, a)`.
+
+    The default value of `atol` is not appropriate unless all input values
+    are on order of unity. E.g., `allclose(1e-9, 2e-9)` is `True`. `atol` is
+    used exclusively for determining whether a non-zero value in `a` is close
+    to a zero value in `b`. If the expected input values are significantly
+    smaller than one, it can result in false positives. `atol` should be
+    carefully selected for the use case at hand. `atol=0` will result in `False`
+    if either `a` or `b` contains a zero.
 
     `isclose` is not defined for non-numeric data types.
     `bool` is considered a numeric data-type for this purpose.
