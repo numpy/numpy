@@ -292,6 +292,42 @@
     ((void) 0 /* discarded expression value */)
 
 /**
+ * @def @P@CPU_DISPATCH_INFO(...)
+ *
+ * Returns an array of two strings containing the enabled target names
+ * in each multi-target source.
+ *
+ * The first item represents the currently dispatched target,
+ * while the second item contains the available targets that
+ * can potentially be dispatched based on CPU capabilities.
+ *
+ * @code
+ * #include "arithmetic.dispatch.h" // generated config file
+ * const char *enabled_targets[] = @P@CPU_DISPATCH_INFO();
+ *
+ * printf("Current dispatched target: %s\n", enabled_targets[0]);
+ * printf("Available targets: %s\n", enabled_targets[1]);
+ * @endcode
+ */
+#define @P@CPU_DISPATCH_INFO() \
+    { \
+        @P@MTARGETS_CONF_DISPATCH(@P@CPU_HAVE, @P@CPU_DISPATCH_INFO_HIGH_CB_, DUMMY) \
+        @P@MTARGETS_CONF_BASELINE(@P@CPU_DISPATCH_INFO_BASE_HIGH_CB_, DUMMY) \
+        "", \
+        @P@MTARGETS_CONF_DISPATCH(@P@CPU_HAVE, @P@CPU_DISPATCH_INFO_CB_, DUMMY) \
+        @P@MTARGETS_CONF_BASELINE(@P@CPU_DISPATCH_INFO_BASE_CB_, DUMMY) \
+        ""\
+    }
+#define @P@CPU_DISPATCH_INFO_HIGH_CB_(TESTED_FEATURES, TARGET_NAME, ...) \
+    (TESTED_FEATURES) ? @P@_CPU_TOSTRING(TARGET_NAME) :
+#define @P@CPU_DISPATCH_INFO_BASE_HIGH_CB_(...) \
+    (1) ? "baseline(" @P@WITH_CPU_BASELINE ")" :
+// Preprocessor callbacks
+#define @P@CPU_DISPATCH_INFO_CB_(TESTED_FEATURES, TARGET_NAME, ...) \
+    @P@_CPU_TOSTRING(TARGET_NAME) " "
+#define @P@CPU_DISPATCH_INFO_BASE_CB_(...) \
+    "baseline(" @P@WITH_CPU_BASELINE ")"
+/**
  * Macro @P@CPU_DISPATCH_CALL_ALL(...)
  *
  * Same as `@P@CPU_DISPATCH_CALL` but dispatching all the required optimizations for
