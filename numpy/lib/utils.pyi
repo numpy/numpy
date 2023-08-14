@@ -73,14 +73,6 @@ def source(
     output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
 
-def lookfor(
-    what: str,
-    module: None | str | Sequence[str] = ...,
-    import_modules: bool = ...,
-    regenerate: bool = ...,
-    output: None | _SupportsWrite[str] =...,
-) -> None: ...
-
 def safe_eval(source: str | AST) -> Any: ...
 
 def show_runtime() -> None: ...

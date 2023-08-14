@@ -217,7 +217,7 @@ def deprecate(*args, **kwargs):
     Note that ``olduint`` returns a value after printing Deprecation
     Warning:
 
-    >>> olduint = np.lib.deprecate(np.uint)
+    >>> olduint = np.lib.utils.deprecate(np.uint)
     DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
     6
@@ -341,6 +341,116 @@ def byte_bounds(a):
         a_high += bytes_a
     return a_low, a_high
 
+
+#-----------------------------------------------------------------------------
+# Function for output and information on the variables used.
+#-----------------------------------------------------------------------------
+
+
+def who(vardict=None):
+    """
+    Print the NumPy arrays in the given dictionary.
+
+    .. deprecated:: 2.0
+
+    If there is no dictionary passed in or `vardict` is None then returns
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
+    namespace).
+
+    Parameters
+    ----------
+    vardict : dict, optional
+        A dictionary possibly containing ndarrays.  Default is globals().
+
+    Returns
+    -------
+    out : None
+        Returns 'None'.
+
+    Notes
+    -----
+    Prints out the name, shape, bytes and type of all of the ndarrays
+    present in `vardict`.
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> b = np.ones(20)
+    >>> np.lib.utils.who()
+    Name            Shape            Bytes            Type
+    ===========================================================
+    a               10               80               int64
+    b               20               160              float64
+    Upper bound on total bytes  =       240
+
+    >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
+    ... 'idx':5}
+    >>> np.who(d)
+    Name            Shape            Bytes            Type
+    ===========================================================
+    x               2                16               float64
+    y               3                24               float64
+    Upper bound on total bytes  =       40
+
+    """
+
+    # Deprecated in NumPy 2.0, 2023-07-11
+    warnings.warn(
+        "`who` is deprecated. "
+        "(deprecated in NumPy 2.0)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    if vardict is None:
+        frame = sys._getframe().f_back
+        vardict = frame.f_globals
+    sta = []
+    cache = {}
+    for name in vardict.keys():
+        if isinstance(vardict[name], ndarray):
+            var = vardict[name]
+            idv = id(var)
+            if idv in cache.keys():
+                namestr = name + " (%s)" % cache[idv]
+                original = 0
+            else:
+                cache[idv] = name
+                namestr = name
+                original = 1
+            shapestr = " x ".join(map(str, var.shape))
+            bytestr = str(var.nbytes)
+            sta.append([namestr, shapestr, bytestr, var.dtype.name,
+                        original])
+
+    maxname = 0
+    maxshape = 0
+    maxbyte = 0
+    totalbytes = 0
+    for val in sta:
+        if maxname < len(val[0]):
+            maxname = len(val[0])
+        if maxshape < len(val[1]):
+            maxshape = len(val[1])
+        if maxbyte < len(val[2]):
+            maxbyte = len(val[2])
+        if val[4]:
+            totalbytes += int(val[2])
+
+    if len(sta) > 0:
+        sp1 = max(10, maxname)
+        sp2 = max(10, maxshape)
+        sp3 = max(10, maxbyte)
+        prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
+        print(prval + "\n" + "="*(len(prval)+5) + "\n")
+
+    for val in sta:
+        print("%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
+                                        val[1], ' '*(sp2-len(val[1])+5),
+                                        val[2], ' '*(sp3-len(val[2])+5),
+                                        val[3]))
+    print("\nUpper bound on total bytes  =       %d" % totalbytes)
+    return
 
 #-----------------------------------------------------------------------------
 

@@ -1027,7 +1027,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
-            z = z.astype(np.double)  # handle object arrays
+            z = z.astype(double)  # handle object arrays
 
         return z < 1.5 * 10.0**(-decimal)
 

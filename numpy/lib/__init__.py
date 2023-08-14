@@ -54,6 +54,7 @@ from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
 from .function_base import add_newdoc, add_docstring
+from .type_check import asfarray
 
 __all__ = ['emath']
 __all__ += type_check.__all__

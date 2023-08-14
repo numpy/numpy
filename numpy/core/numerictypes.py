@@ -86,8 +86,7 @@ from .multiarray import (
 from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['ScalarType', 'nbytes',
-           'typecodes', 'find_common_type',
+__all__ = ['ScalarType', 'nbytes', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]

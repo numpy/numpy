@@ -100,11 +100,11 @@ def asfarray(a, dtype=_nx.double):
 
     Examples
     --------
-    >>> np.lib.type_check.asfarray([2, 3])
+    >>> np.lib.asfarray([2, 3])
     array([2.,  3.])
-    >>> np.lib.type_check.asfarray([2, 3], dtype='float')
+    >>> np.lib.asfarray([2, 3], dtype='float')
     array([2.,  3.])
-    >>> np.lib.type_check.asfarray([2, 3], dtype='int8')
+    >>> np.lib.asfarray([2, 3], dtype='int8')
     array([2.,  3.])
 
     """

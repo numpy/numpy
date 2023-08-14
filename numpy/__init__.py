@@ -38,11 +38,6 @@ of the help() page.  Ufuncs are implemented in C, not Python, for speed.
 The native Python help() does not know how to view their help, but our
 np.info() function does.
 
-To search for documents containing a keyword, do::
-
-  >>> np.lookfor('keyword')
-  ... # doctest: +SKIP
-
 Available subpackages
 ---------------------
 lib

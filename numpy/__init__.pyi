@@ -295,7 +295,6 @@ from numpy.core.arrayprint import (
     format_float_positional as format_float_positional,
     array_repr as array_repr,
     array_str as array_str,
-    set_string_function as set_string_function,
     printoptions as printoptions,
 )
 
@@ -579,7 +578,6 @@ from numpy.lib.twodim_base import (
 
 from numpy.lib.type_check import (
     mintypecode as mintypecode,
-    asfarray as asfarray,
     real as real,
     imag as imag,
     iscomplex as iscomplex,
@@ -615,7 +613,6 @@ from numpy.lib.utils import (
 
 from numpy.matrixlib import (
     asmatrix as asmatrix,
-    mat as mat,
     bmat as bmat,
 )
 
@@ -647,6 +644,7 @@ __all__: list[str]
 __path__: list[str]
 __version__: str
 __git_version__: str
+test: PytestTester
 
 # TODO: Move placeholders to their respective module once
 # their annotations are properly implemented
@@ -3136,8 +3134,6 @@ little_endian: Final[bool]
 True_: Final[bool_]
 False_: Final[bool_]
 
-UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
-
 newaxis: None
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
@@ -3424,7 +3420,7 @@ class finfo(Generic[_FloatType]):
     @overload
     def __new__(
         cls, dtype: complex | float | type[complex] | type[float]
-    ) -> finfo[float_]: ...
+    ) -> finfo[double]: ...
     @overload
     def __new__(
         cls, dtype: str

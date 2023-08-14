@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _128Bit
-from numpy.lib.type_check import asfarray
+from numpy.lib import asfarray
 
 f8: np.float64
 f: float
