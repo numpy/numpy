@@ -457,6 +457,9 @@ static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 double npy_cabs(npy_cdouble z);
 double npy_carg(npy_cdouble z);
 
+npy_cdouble npy_cmul(npy_cdouble z, npy_cdouble w);
+npy_cdouble npy_cdiv(npy_cdouble z, npy_cdouble w);
+
 npy_cdouble npy_cexp(npy_cdouble z);
 npy_cdouble npy_clog(npy_cdouble z);
 npy_cdouble npy_cpow(npy_cdouble x, npy_cdouble y);
@@ -484,6 +487,9 @@ npy_cdouble npy_catanh(npy_cdouble z);
  */
 float npy_cabsf(npy_cfloat z);
 float npy_cargf(npy_cfloat z);
+
+npy_cfloat npy_cmulf(npy_cfloat z, npy_cfloat w);
+npy_cfloat npy_cdivf(npy_cfloat z, npy_cfloat w);
 
 npy_cfloat npy_cexpf(npy_cfloat z);
 npy_cfloat npy_clogf(npy_cfloat z);
@@ -513,6 +519,9 @@ npy_cfloat npy_catanhf(npy_cfloat z);
  */
 npy_longdouble npy_cabsl(npy_clongdouble z);
 npy_longdouble npy_cargl(npy_clongdouble z);
+
+npy_clongdouble npy_cmull(npy_clongdouble z, npy_clongdouble w);
+npy_clongdouble npy_cdivl(npy_clongdouble z, npy_clongdouble w);
 
 npy_clongdouble npy_cexpl(npy_clongdouble z);
 npy_clongdouble npy_clogl(npy_clongdouble z);

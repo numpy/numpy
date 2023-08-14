@@ -347,7 +347,10 @@ nc_log1p@c@(@ctype@ *x, @ctype@ *r)
          *  every computer scientist should know about floating-point
          *  arithmetic".
          */
-        @ctype@ u = *x + 1.0;
+
+        /*  u = 1 + *x  */
+        @ctype@ u = npy_cpack@c@(1 + x_re, x_im);
+
         if (npy_creal@c@(u) - 1.0 == x_re) {
             /*
              *  Don't bother multiplying by *x / (u - 1), because that quotient
@@ -356,7 +359,10 @@ nc_log1p@c@(@ctype@ *x, @ctype@ *r)
             *r = npy_clog@c@(u);
         }
         else {
-            *r = npy_clog@c@(u) * (*x / (u - 1.0));
+            /*  um1 = u - 1 = (1 + *x) - 1  */
+            @ctype@ um1 = npy_cpack@c@(npy_creal@c@(u) - 1.0, x_im);
+            /*  *r = log(u) * (*x / (u - 1))  */
+            *r = npy_cmul@c@(npy_clog@c@(u), npy_cdiv@c@(*x, um1));
         }
     }
     return;

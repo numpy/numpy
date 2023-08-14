@@ -123,6 +123,18 @@ cdiv@c@(@ctype@ a, @ctype@ b)
  * Custom implementation of missing complex C99 functions
  *=========================================================*/
 
+@ctype@
+npy_cmul@c@(@ctype@ z, @ctype@ w)
+{
+    return cmul@c@(z, w);
+}
+
+@ctype@
+npy_cdiv@c@(@ctype@ z, @ctype@ w)
+{
+    return cdiv@c@(z, w);
+}
+
 #ifndef HAVE_CABS@C@
 @type@
 npy_cabs@c@(@ctype@ z)
