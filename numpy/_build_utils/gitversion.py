@@ -4,7 +4,8 @@ import textwrap
 
 def init_version():
     init = os.path.join(os.path.dirname(__file__), '../../pyproject.toml')
-    data = open(init).readlines()
+    with open(init) as fid:
+        data = fid.readlines()
 
     version_line = next(
         line for line in data if line.startswith('version =')
