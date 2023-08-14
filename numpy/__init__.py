@@ -438,13 +438,12 @@ else:
                     use_hugepage = 0
             except ValueError:
                 use_hugepage = 0
-            finally:
-                del kernel_version
         elif use_hugepage is None:
             # This is not Linux, so it should not matter, just enable anyway
             use_hugepage = 1
         else:
             use_hugepage = int(use_hugepage)
+        return use_hugepage
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(hugepage_setup())
