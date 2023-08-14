@@ -131,8 +131,19 @@ def _build_dicts() -> None:
         if name in _complex_ctypes + _floating_ctypes + _other_types:
             # 3. Otherwise it can be float/complex or other type
             dt = dtype(info.type)
-            word_bits_dict[f"{_kind_name(dt)}{bits}"] = info.type
-            symbol_bytes_dict[f"{dt.kind}{bits//8}"] = info.type
+            word_bits_name = f"{_kind_name(dt)}{bits}"
+            symbol_bytes_name = f"{dt.kind}{bits//8}"
+
+            # ensure that (c)longdouble does not overwrite the aliases 
+            # assigned to (c)double, when both have same number of bits
+            if (
+                name in ('longdouble', 'clongdouble') and
+                word_bits_name in word_bits_dict
+            ):
+                continue
+
+            word_bits_dict[word_bits_name] = info.type
+            symbol_bytes_dict[symbol_bytes_name] = info.type
 
 
 _build_dicts()
@@ -200,15 +211,21 @@ allTypes = word_dict | word_bits_dict | abstract_types_dict
 # delete C names in `allTypes` and exceptions
 for s in ["ulong", "long", "unicode", "object", "bool", "datetime",
           "string", "timedelta", "float", "int", "bool8", "bytes0", 
-          "object64", "str0", "void0", "object0"]:
-    del allTypes[s]
+          "object32", "object64", "str0", "void0", "object0"]:
+    try:
+        del allTypes[s]
+    except KeyError:
+        pass
 
 sctypeDict = numbers_dict | symbol_dict | symbol_bytes_dict | \
     word_dict | word_bits_dict | extra_aliases_dict
 # delete exceptions
-for s in ["O8", "S0", "U0", "V0", "datetime", 
+for s in ["O8", "O4", "S0", "U0", "V0", "datetime", "object32",
           "object64", "string", "timedelta"]:
-    del sctypeDict[s]
+    try:
+        del sctypeDict[s]
+    except KeyError:
+        pass
 
 
 # Finally, we build `sctypes`` mapping
