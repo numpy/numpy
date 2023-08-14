@@ -2055,8 +2055,9 @@ def slogdet(a):
     logabsdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
-    If the determinant is zero, then `sign` will be 0 and `logabsdet` will be
-    -inf. In all cases, the determinant is equal to ``sign * np.exp(logabsdet)``.
+    If the determinant is zero, then `sign` will be 0 and `logabsdet` 
+    will be -inf. In all cases, the determinant is equal to 
+    ``sign * np.exp(logabsdet)``.
 
     See Also
     --------

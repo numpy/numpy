@@ -2036,7 +2036,7 @@ add_newdoc('numpy.core.umath', 'log',
     Examples
     --------
     >>> np.log([1, np.e, np.e**2, 0])
-    array([  0.,   1.,   2., -Inf])
+    array([  0.,   1.,   2., -inf])
 
     """)
 
@@ -2139,7 +2139,7 @@ add_newdoc('numpy.core.umath', 'log2',
     --------
     >>> x = np.array([0, 1, 2, 2**4])
     >>> np.log2(x)
-    array([-Inf,   0.,   1.,   4.])
+    array([-inf,   0.,   1.,   4.])
 
     >>> xi = np.array([0+1.j, 1, 2+0.j, 4.j])
     >>> np.log2(xi)

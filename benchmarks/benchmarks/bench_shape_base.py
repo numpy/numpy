@@ -141,7 +141,7 @@ class Kron(Benchmark):
 
     def setup(self):
         self.large_arr = np.random.random((10,) * 4)
-        self.large_mat = np.mat(np.random.random((100, 100)))
+        self.large_mat = np.asmatrix(np.random.random((100, 100)))
         self.scalar = 7
 
     def time_arr_kron(self):

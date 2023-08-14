@@ -11,7 +11,7 @@ from functools import reduce
 from collections import namedtuple
 
 import numpy.core.umath as ncu
-from numpy.core import _umath_tests as ncu_tests
+from numpy.core import _umath_tests as ncu_tests, sctypes
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
@@ -267,8 +267,8 @@ class TestOut:
 class TestComparisons:
     import operator
 
-    @pytest.mark.parametrize('dtype', np.core.sctypes['uint'] + np.core.sctypes['int'] +
-                             np.core.sctypes['float'] + [np.bool_])
+    @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
+                             sctypes['float'] + [np.bool_])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -454,7 +454,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.core.sctypes['int'] + np.core.sctypes['uint'], (
+        sctypes['int'] + sctypes['uint'], (
             (
                 # dividend
                 "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
@@ -540,7 +540,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.core.sctypes['int'] + np.core.sctypes['uint'], (
+        sctypes['int'] + sctypes['uint'], (
             "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
             "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
             "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
@@ -986,10 +986,8 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res2) == 0
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize("dividend_dtype",
-            np.core.sctypes['int'])
-    @pytest.mark.parametrize("divisor_dtype",
-            np.core.sctypes['int'])
+    @pytest.mark.parametrize("dividend_dtype", sctypes['int'])
+    @pytest.mark.parametrize("divisor_dtype", sctypes['int'])
     @pytest.mark.parametrize("operation",
             [np.remainder, np.fmod, np.divmod, np.floor_divide,
              operator.mod, operator.floordiv])
@@ -4172,7 +4170,10 @@ class TestComplexFunctions:
             for p in points:
                 a = complex(func(np.cdouble(p)))
                 b = cfunc(p)
-                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
+                assert_(
+                    abs(a - b) < atol, 
+                    "%s %s: %s; cmath: %s" % (fname, p, a, b)
+                )
 
     @pytest.mark.xfail(
         # manylinux2014 uses glibc2.17
@@ -4181,7 +4182,9 @@ class TestComplexFunctions:
     )
     @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
-    @pytest.mark.parametrize('dtype', [np.complex64, np.cdouble, np.clongdouble])
+    @pytest.mark.parametrize('dtype', [
+        np.complex64, np.cdouble, np.clongdouble
+    ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
 

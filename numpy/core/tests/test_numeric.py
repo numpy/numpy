@@ -7,7 +7,7 @@ import math
 from decimal import Decimal
 
 import numpy as np
-from numpy.core import umath
+from numpy.core import umath, sctypes
 from numpy.core.numerictypes import obj2sctype
 from numpy.core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
@@ -1423,14 +1423,14 @@ class TestTypes:
 
     def test_can_cast_values(self):
         # gh-5917
-        for dt in np.core.sctypes['int'] + np.core.sctypes['uint']:
+        for dt in sctypes['int'] + sctypes['uint']:
             ii = np.iinfo(dt)
             assert_(np.can_cast(ii.min, dt))
             assert_(np.can_cast(ii.max, dt))
             assert_(not np.can_cast(ii.min - 1, dt))
             assert_(not np.can_cast(ii.max + 1, dt))
 
-        for dt in np.core.sctypes['float']:
+        for dt in sctypes['float']:
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
@@ -2974,7 +2974,7 @@ class TestCreationFuncs:
     # Test ones, zeros, empty and full.
 
     def setup_method(self):
-        dtypes = {np.dtype(tp) for tp in itertools.chain(*np.core.sctypes.values())}
+        dtypes = {np.dtype(tp) for tp in itertools.chain(*sctypes.values())}
         # void, bytes, str
         variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
         keyfunc = lambda dtype: dtype.str

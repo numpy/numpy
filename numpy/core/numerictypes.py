@@ -352,11 +352,12 @@ def issubsctype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubsctype('S8', str)
+    >>> from numpy.core import issubsctype
+    >>> issubsctype('S8', str)
     False
-    >>> np.issubsctype(np.array([1]), int)
+    >>> issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), float)
+    >>> issubsctype(np.array([1]), float)
     False
 
     """

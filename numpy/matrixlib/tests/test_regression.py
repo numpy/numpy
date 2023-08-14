@@ -20,7 +20,7 @@ class TestRegression:
     def test_matrix_multiply_by_1d_vector(self):
         # Ticket #473
         def mul():
-            np.mat(np.eye(2))*np.ones(2)
+            np.asmatrix(np.eye(2))*np.ones(2)
 
         assert_raises(ValueError, mul)
 

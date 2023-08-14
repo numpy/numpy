@@ -898,11 +898,11 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Creating an array from sub-classes:
 
-    >>> np.array(np.mat('1 2; 3 4'))
+    >>> np.array(np.asmatrix('1 2; 3 4'))
     array([[1, 2],
            [3, 4]])
 
-    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
 

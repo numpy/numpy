@@ -1063,10 +1063,10 @@ def bmat(obj, ldict=None, gdict=None):
 
     Examples
     --------
-    >>> A = np.mat('1 1; 1 1')
-    >>> B = np.mat('2 2; 2 2')
-    >>> C = np.mat('3 4; 5 6')
-    >>> D = np.mat('7 8; 9 0')
+    >>> A = np.asmatrix('1 1; 1 1')
+    >>> B = np.asmatrix('2 2; 2 2')
+    >>> C = np.asmatrix('3 4; 5 6')
+    >>> D = np.asmatrix('7 8; 9 0')
 
     All the following expressions construct the same block matrix:
 
