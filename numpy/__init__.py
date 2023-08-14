@@ -438,8 +438,6 @@ else:
                     use_hugepage = 0
             except ValueError:
                 use_hugepage = 0
-            finally:
-                del kernel_version
         elif use_hugepage is None:
             # This is not Linux, so it should not matter, just enable anyway
             use_hugepage = 1
