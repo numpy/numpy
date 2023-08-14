@@ -2102,6 +2102,7 @@ class TestAVXFloat32Transcendental:
                 assert_array_almost_equal_nulp(np.sin(x_f32_large[::jj]), sin_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.cos(x_f32_large[::jj]), cos_true[::jj], nulp=2)
 
+
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
@@ -2152,13 +2153,104 @@ class TestLog1p:
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
 
-    def test_special(self):
+    # Special cases that we test for equality.  The floating point warnings
+    # triggered by some of these values are ignored.
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.nan, np.nan),
+         (np.inf, np.inf),
+         (-1.0, -np.inf),
+         (-2.0, np.nan),
+         (-np.inf, np.nan),
+         (complex(np.nan, 0.0), complex(np.nan, np.nan)),
+         (complex(np.nan, 1), complex(np.nan, np.nan)),
+         (complex(1, np.nan), complex(np.nan, np.nan)),
+         (complex(np.inf, 1), complex(np.inf, 0.0)),
+         (complex(np.inf, -1), complex(np.inf, -0.0)),
+         (complex(-np.inf, 1), complex(np.inf, np.pi)),
+         (complex(-np.inf, -1), complex(np.inf, -np.pi)),
+         (complex(-np.inf, 0.0), complex(np.inf, np.pi)),
+         (complex(-np.inf, -0.0), complex(np.inf, -np.pi)),
+         (complex(0, np.inf), complex(np.inf, np.pi/2)),
+         (complex(0, -np.inf), complex(np.inf, -np.pi/2)),
+         (complex(-1, 0), complex(-np.inf, 0))]
+    )
+    def test_special(self, z, wref):
         with np.errstate(invalid="ignore", divide="ignore"):
-            assert_equal(ncu.log1p(np.nan), np.nan)
-            assert_equal(ncu.log1p(np.inf), np.inf)
-            assert_equal(ncu.log1p(-1.), -np.inf)
-            assert_equal(ncu.log1p(-2.), np.nan)
-            assert_equal(ncu.log1p(-np.inf), np.nan)
+            w = np.log1p(z)
+            assert_equal(w, wref)
+
+    # Test w = log1p(z) for complex z (np.complex128).
+    # Reference values were computed with mpmath, e.g.
+    #    from mpmath import mp
+    #    mp.dps = 200
+    #    wref = complex(mp.log1p(z))
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(1e-280 + 0j, 1e-280 + 0j),
+         (1e-18 + 0j, 1e-18 + 0j),
+         (1e-18 + 1e-12j, 1.0000005e-18 + 1e-12j),
+         (1e-18 + 0.1j, 0.0049751654265840425 + 0.09966865249116204j),
+         (-1e-15 + 3e-8j, -5.5e-16 + 3.000000000000002e-08j),
+         (1e-15 + 3e-8j, 1.4499999999999983e-15 + 2.999999999999996e-08j),
+         (1e-50 + 1e-200j, 1e-50 + 1e-200j),
+         (1e-200 - 1e-200j, 1e-200 - 1e-200j),
+         (1e-18j, 5.0000000000000005e-37 + 1e-18j),
+         (-4.999958e-05 - 0.009999833j,
+          -7.0554155328678184e-15 - 0.009999999665816696j),
+         (3.4259e-13 + 6.71894e-08j,
+          3.448472077361198e-13 + 6.718939999997688e-08j),
+         (0.1 + 1e-18j, 0.09531017980432487+9.090909090909091e-19j),
+         (-0.57113 - 0.90337j, 3.4168883248419116e-06 - 1.1275564209486122j),
+         (0.2 + 0.3j, 0.21263386770217205 + 0.24497866312686414j),
+         (1e200 + 1e200j, 460.8635921890891 + 0.7853981633974483j),
+         (-1 + 1e250j, 575.6462732485114 + 1.5707963267948966j),
+         (1e250 + 1j, 575.6462732485114 + 1e-250j),
+         (1e275 + 1e-225j, 633.2109005733626 + 0j),
+         (-0.75 + 0j, -1.3862943611198906 + 0j)],
+    )
+    def test_complex_double(self, z, wref):
+        w = np.log1p(z)
+        assert_allclose(w, wref, rtol=1e-15)
+
+    # Test w = log1p(z) for complex z (np.complex64).
+    # Reference values were computed with mpmath, e.g.
+    #    from mpmath import mp
+    #    mp.dps = 200
+    #    wref = np.complex64(mp.log1p(z))
+    @pytest.mark.parametrize(
+        'z, wref',
+        [(np.complex64(1e-10 + 3e-6j), np.complex64(1.045e-10 + 3e-06j)),
+         (np.complex64(-1e-8 - 2e-5j), np.complex64(-9.8e-09 - 2e-05j)),
+         (np.complex64(-2e-32 + 3e-32j), np.complex64(-2e-32 + 3e-32j)),
+         (np.complex64(-0.57113 - 0.90337j),
+          np.complex64(3.4470238e-06 - 1.1275564j)),
+         (np.complex64(3e31 - 4e31j), np.complex64(72.98958 - 0.9272952j))]
+    )
+    def test_complex_single(self, z, wref):
+        w = np.log1p(z)
+        assert_allclose(w, wref, rtol=1e-6)
+
+    def test_branch_cut(self):
+        x = -1.5
+        zpos = complex(x, 0.0)
+        wpos = np.log1p(zpos)
+        assert wpos.imag == np.pi
+        zneg = complex(x, -0.0)
+        wneg = np.log1p(zneg)
+        assert wneg.imag == -np.pi
+        assert wpos.real == wneg.real
+
+    @pytest.mark.parametrize('x', [-0.5, -1e-12, -1e-18, 0.0, 1e-18, 1e-12])
+    def test_imag_zero(self, x):
+        # Test real inputs with x > -1 and the imaginary part +/- 0.0.
+        zpos = complex(x, 0.0)
+        wpos = np.log1p(zpos)
+        assert_equal(wpos.imag, 0.0)
+        zneg = complex(x, -0.0)
+        wneg = np.log1p(zneg)
+        assert_equal(wneg.imag, -0.0)
+        assert wpos.real == wneg.real
 
 
 class TestExpm1:

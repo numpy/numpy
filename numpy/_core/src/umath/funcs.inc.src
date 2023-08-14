@@ -310,9 +310,55 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ l = npy_hypot@c@(npy_creal@c@(*x) + 1,npy_cimag@c@(*x));
-    npy_csetimag@c@(r, npy_atan2@c@(npy_cimag@c@(*x), npy_creal@c@(*x) + 1));
-    npy_csetreal@c@(r, npy_log@c@(l));
+    @ftype@ x_re = npy_creal@c@(*x);
+    @ftype@ x_im = npy_cimag@c@(*x);
+
+    if (x_im == 0.0) {
+        /*
+         *  Imaginary part of *x is +/- 0.0. Use the real-valued function
+         *  log1p or log to compute the real part of the result.  If the
+         *  input is on the branch cut, the imaginary part of the result is
+         *  +/- pi, otherwise it is +/- 0.0 (i.e. same as x_im).
+         */
+        if (npy_isnan(x_re)) {
+            npy_csetreal@c@(r, NAN);
+            npy_csetimag@c@(r, NAN);
+        }
+        else if (x_re >= -1) {
+            /*
+             *  Note that if x_re == -1, this will generate a "divide by zero"
+             *  RuntimeWarning and set the real part of the result to -inf
+             *  (consistent with log(0.0 +/- 0.0j)).
+             */
+            npy_csetreal@c@(r, npy_log1p@c@(x_re));
+            npy_csetimag@c@(r, x_im);
+        }
+        else {
+            /*
+             *  On the branch cut.
+             */
+            npy_csetreal@c@(r, npy_log@c@(-(1 + x_re)));
+            npy_csetimag@c@(r, npy_copysign@c@(NPY_PI@c@, x_im));
+        }
+    }
+    else {
+        /*
+         *  Use the log1p trick given as Theorem 4 of Goldberg's paper "What
+         *  every computer scientist should know about floating-point
+         *  arithmetic".
+         */
+        @ctype@ u = *x + 1.0;
+        if (npy_creal@c@(u) - 1.0 == x_re) {
+            /*
+             *  Don't bother multiplying by *x / (u - 1), because that quotient
+             *  is 1, and the complex division might introduce a (small) error.
+             */
+            *r = npy_clog@c@(u);
+        }
+        else {
+            *r = npy_clog@c@(u) * (*x / (u - 1.0));
+        }
+    }
     return;
 }
 
