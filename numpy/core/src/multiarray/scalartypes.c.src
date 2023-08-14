@@ -4121,7 +4121,7 @@ initialize_numeric_types(void)
      *         Datetime, Timedelta#
      */
 
-    Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
+    Py@NAME@ArrType_Type.tp_hash = (hashfunc)@name@_arrtype_hash;
 
     /**end repeat**/
 
