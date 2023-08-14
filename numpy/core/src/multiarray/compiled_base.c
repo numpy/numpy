@@ -1412,7 +1412,18 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     static char *msg = "already has a different docstring";
 
     /* Don't add docstrings */
+#if PY_VERSION_HEX > 0x030b0000
+    static long optimize = -1000;
+    if (optimize < 0) {
+        PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
+        PyObject *level = PyObject_GetAttrString(flags, "optimize");
+        optimize = PyLong_AsLong(level);
+        Py_DECREF(level);
+    }
+    if (optimize > 1) {
+#else
     if (Py_OptimizeFlag > 1) {
+#endif
         Py_RETURN_NONE;
     }
 
