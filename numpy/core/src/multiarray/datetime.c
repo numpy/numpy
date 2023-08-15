@@ -729,7 +729,7 @@ timedelta_arrtype_hash(PyTimedeltaScalarObject* key) {
     acc = (Py_uhash_t)value;
 #else
     /* Mix lower and uper bits of the timedelta if int64 is larger */
-    Py_uhash_t acc = _NpyHASH_XXPRIME_5;
+    acc = _NpyHASH_XXPRIME_5;
     acc = tuple_update_uhash(acc, (Py_uhash_t)value);
     acc = tuple_update_uhash(acc, (Py_uhash_t)(value >> SIZEOF_PY_UHASH_T));
 #endif
