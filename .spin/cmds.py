@@ -925,3 +925,16 @@ def run(ctx, args):
     """
     ctx.invoke(build)
     ctx.forward(meson_run)
+ 
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.pass_context
+def mypy(ctx):
+    """Run Mypy tests for NumPy
+    """
+    env = os.environ
+    env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
+    ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
+    ctx.params['markexpr'] = 'full'
+    ctx.forward(test)
+

@@ -194,7 +194,11 @@ repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}
 package = 'numpy'
 
 [tool.spin.commands]
-"Build" = [".spin/cmds.py:build", ".spin/cmds.py:test"]
+"Build" = [
+  ".spin/cmds.py:build",
+  ".spin/cmds.py:test",
+  ".spin/cmds.py:mypy",
+]
 "Environments" = [
   ".spin/cmds.py:run", ".spin/cmds.py:ipython",
   ".spin/cmds.py:python", ".spin/cmds.py:gdb"
