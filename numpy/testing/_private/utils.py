@@ -1094,8 +1094,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Arrays are not less-ordered
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Max absolute difference among violations: 1.
-    Max relative difference among violations: 0.5
+    Max absolute difference among violations: 0.
+    Max relative difference among violations: 0.
      x: array([ 1.,  1., nan])
      y: array([ 1.,  2., nan])
 
@@ -1106,8 +1106,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Arrays are not less-ordered
     <BLANKLINE>
     Mismatched elements: 1 / 2 (50%)
-    Max absolute difference among violations: 2.
-    Max relative difference among violations: 0.66666667
+    Max absolute difference among violations: 1.
+    Max relative difference among violations: 0.33333333
      x: array([1., 4.])
      y: array(3)
 
