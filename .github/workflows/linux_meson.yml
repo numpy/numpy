@@ -68,6 +68,5 @@ jobs:
         TERM: xterm-256color
         LD_LIBRARY_PATH: "/usr/local/lib/"  # to find libopenblas.so.0
       run: |
-        export NPY_RUN_MYPY_IN_TESTSUITE=1
         pip install pytest pytest-xdist hypothesis typing_extensions
         spin test -j auto
