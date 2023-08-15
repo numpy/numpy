@@ -85,7 +85,7 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
    dtype('<U16')
    >>> dt['grades']
@@ -179,18 +179,13 @@ Built-in Python types
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
-    :class:`float`           :class:`float\_`
-    :class:`complex`         :class:`cfloat`
+    :class:`float`           :class:`double`
+    :class:`complex`         :class:`cdouble`
     :class:`bytes`           :class:`bytes\_`
     :class:`str`             :class:`str\_`
     :class:`memoryview`      :class:`void`
     (all others)             :class:`object_`
     ===================      ===============
-
-    Note that ``str_`` corresponds to UCS4 encoded unicode strings, while
-    ``string_`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
-    available as an alias to ``np.str_``, see :ref:`Note on string
-    types<string-dtype-note>`.
 
     .. admonition:: Example
 
@@ -263,9 +258,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes and
-    `numpy.string_` continues to alias `numpy.bytes_`. For unicode strings,
-    use ``U``, `numpy.str_`, or `numpy.unicode_`.  For signed bytes that do not
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
