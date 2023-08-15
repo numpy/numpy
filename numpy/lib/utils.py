@@ -7,13 +7,13 @@ import warnings
 import functools
 import platform
 
-from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
+from numpy.core.numerictypes import issubclass_, issubsctype
 from numpy.core import ndarray, ufunc, asarray
 from numpy._utils import set_module
 import numpy as np
 
 __all__ = [
-    'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
+    'issubclass_', 'issubsctype', 'deprecate',
     'deprecate_with_doc', 'get_include', 'info', 'who',
     'byte_bounds', 'safe_eval', 'show_runtime'
     ]

@@ -32,10 +32,6 @@ reveal_type(np.vectorize(  # E: vectorize
     int, otypes="i", doc="doc", excluded=(), cache=True, signature=None
 ))
 
-reveal_type(np.add_newdoc("__main__", "blabla", doc="test doc"))  # E: None
-reveal_type(np.add_newdoc("__main__", "blabla", doc=("meth", "test doc")))  # E: None
-reveal_type(np.add_newdoc("__main__", "blabla", doc=[("meth", "test doc")]))  # E: None
-
 reveal_type(np.rot90(AR_f8, k=2))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.rot90(AR_LIKE_f8, axes=(0, 1)))  # E: ndarray[Any, dtype[Any]]
 
@@ -126,8 +122,6 @@ reveal_type(np.median(AR_O))  # E: Any
 reveal_type(np.median(AR_f8, keepdims=True))  # E: Any
 reveal_type(np.median(AR_c16, axis=0))  # E: Any
 reveal_type(np.median(AR_LIKE_f8, out=AR_c16))  # E: ndarray[Any, dtype[{complex128}]]
-
-reveal_type(np.add_newdoc_ufunc(np.add, "docstring"))  # E: None
 
 reveal_type(np.percentile(AR_f8, 50))  # E: floating[Any]
 reveal_type(np.percentile(AR_c16, 50))  # E: complexfloating[Any, Any]

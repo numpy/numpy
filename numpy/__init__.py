@@ -96,6 +96,11 @@ import warnings
 
 from ._globals import _NoValue, _CopyMode
 
+
+# If a version with git hash was stored, use that instead
+from . import version
+from .version import __version__
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -116,26 +121,114 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
         raise ImportError(msg) from e
-    
-    __all__ = ['exceptions']
 
     from . import core
-    from .core import *
-    from . import exceptions
-    from . import dtypes
-    from . import lib
-    # NOTE: to be revisited following future namespace cleanup.
-    # See gh-14454 and gh-15672 for discussion.
-    from .lib import *
+    from .core import (
+        _no_nep50_warning, memmap, Inf, Infinity, NaN, iinfo, finfo,
+        False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
+        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
+        arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
+        around, array, array2string, array_equal, array_equiv, array_repr,
+        array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
+        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr, 
+        bitwise_and, bitwise_not, bitwise_or, bitwise_xor, block, bool_,
+        broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
+        can_cast, cbrt, cdouble, ceil, cfloat, char, character, chararray,
+        choose, clip, clongdouble, clongfloat, compare_chararrays, complex_,
+        complexfloating, compress, concatenate, conj, conjugate, convolve,
+        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
+        cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
+        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
+        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
+        errstate, euler_gamma, exp, exp2, expm1, fabs, find_common_type, 
+        flatiter, flatnonzero, flexible, 
+        float_, float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
+        format_float_positional, format_float_scientific, format_parser, 
+        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
+        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
+        get_printoptions, getbufsize, geterr, geterrcall, greater, 
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
+        indices, inexact, inf, infty, inner, int_,
+        intc, integer, invert, is_busday, isclose, isfinite, isfortran,
+        isinf, isnan, isnat, isscalar, issctype, issubdtype, lcm, ldexp,
+        left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
+        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not, 
+        logical_or, logical_xor, logspace, longcomplex, longdouble, 
+        longfloat, longlong, matmul, max, maximum, maximum_sctype, 
+        may_share_memory, mean, min, min_scalar_type, minimum, mod, 
+        modf, moveaxis, multiply, nan, nbytes, ndarray, ndim, nditer, 
+        negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
+        number, obj2sctype, object_, ones, ones_like, outer, partition,
+        pi, positive, power, printoptions, prod, product, promote_types, 
+        ptp, put, putmask, rad2deg, radians, ravel, rec, recarray, reciprocal,
+        record, remainder, repeat, require, reshape, resize, result_type, 
+        right_shift, rint, roll, rollaxis, round, round_, sctype2char, 
+        sctypeDict, sctypes, searchsorted, set_printoptions,
+        set_string_function, setbufsize, seterr, seterrcall, shape,
+        shares_memory, short, sign, signbit, signedinteger, sin, single, 
+        singlecomplex, sinh, size, sometrue, sort, spacing, sqrt, square, 
+        squeeze, stack, std, str_, string_, subtract, sum, swapaxes, take,
+        tan, tanh, tensordot, timedelta64, trace, transpose, 
+        true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
+        unicode_, unsignedinteger, ushort, var, vdot, void, vstack, where, 
+        zeros, zeros_like, _get_promotion_state, _set_promotion_state,
+        int8, int16, int32, int64, intp, uint8, uint16, uint32, uint64, uintp,
+        float16, float32, float64, complex64, complex128
+    )
 
-    from . import linalg
-    from . import fft
-    from . import polynomial
-    from . import random
-    from . import ctypeslib
-    from . import ma
+    # NOTE: It's still under discussion whether these aliases 
+    # should be removed.
+    for ta in ["float96", "float128", "complex192", "complex256"]:
+        try:
+            globals()[ta] = getattr(core, ta)
+        except AttributeError:
+            pass
+    del ta
+
+    from . import lib
+    from .lib import (
+        DataSource, angle, append, apply_along_axis, apply_over_axes,
+        array_split, asarray_chkfinite, asfarray, average, bartlett,
+        bincount, blackman, broadcast_arrays, broadcast_shapes,
+        broadcast_to, byte_bounds, c_, column_stack, common_type,
+        copy, corrcoef, cov, delete, diag, diag_indices,
+        diag_indices_from, diagflat, diff, digitize, dsplit, dstack,
+        ediff1d, emath, expand_dims, extract, eye, fill_diagonal, fix,
+        flip, fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
+        get_include, gradient, hamming, hanning, histogram, histogram2d,
+        histogram_bin_edges, histogramdd, hsplit, i0, imag, in1d,
+        index_exp, info, insert, interp, intersect1d, iscomplex,
+        iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
+        issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
+        median, meshgrid, mgrid, mintypecode, msort, nan_to_num, 
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
+        nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
+        nansum, nanvar, ndenumerate, ndindex, ogrid, packbits, pad,
+        percentile, piecewise, place, poly, poly1d, polyadd, polyder,
+        polydiv, polyfit, polyint, polymul, polysub, polyval,
+        put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
+        roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
+        select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
+        take_along_axis, tile, tracemalloc_domain, trapz, tri, tril,
+        tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
+        unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
+        triu, triu_indices, triu_indices_from, isposinf, RankWarning, disp,
+        deprecate, deprecate_with_doc, who, safe_eval, recfromtxt, recfromcsv
+    )
     from . import matrixlib as _mat
-    from .matrixlib import *
+    from .matrixlib import (
+        asmatrix, bmat, mat, matrix
+    )
+
+    # public submodules are imported lazily, 
+    # therefore are accessible from __getattr__
+    __numpy_submodules__ = {
+        "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
+        "exceptions", "lib", "ctypeslib", "testing", "typing",
+        "array_api", "f2py", "test"
+    }
+    if sys.version_info < (3, 12):
+        __numpy_submodules__.add('distutils')
 
     # We build warning messages for former attributes
     _msg = (
@@ -177,35 +270,13 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
 
-    from .core import abs
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
 
-    __all__.extend(['__version__', 'show_config'])
-    __all__.extend(core.__all__)
-    __all__.extend(_mat.__all__)
-    __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
-
-    # Remove one of the two occurrences of `issubdtype`, which is exposed as
-    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
-    __all__.remove('issubdtype')
-
-    # These are exported by np.core, but are replaced by the builtins below
-    # remove them to ensure that we don't end up with `np.long == np.int_`,
-    # which would be a breaking change.
-    del long, unicode
-    __all__.remove('long')
-    __all__.remove('unicode')
-
-    # Remove things that are in the numpy.lib but not in the numpy namespace
-    # Note that there is a test under path: 
-    # `numpy/tests/test_public_api.py:test_numpy_namespace`
-    # that prevents adding more things to the main namespace by accident.
-    # The list below will grow until the `from .lib import *` fixme above is
-    # taken care of
-    __all__.remove('Arrayterator')
-    del Arrayterator
+    __all__ = list(
+        __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
+        set(_mat.__all__) | {"show_config", "__version__"}
+    )
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -215,6 +286,53 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes
         import warnings
+
+        if attr == "linalg":
+            import numpy.linalg as linalg
+            return linalg
+        elif attr == "fft":
+            import numpy.fft as fft
+            return fft
+        elif attr == "dtypes":
+            import numpy.dtypes as dtypes
+            return dtypes
+        elif attr == "random":
+            import numpy.random as random
+            return random
+        elif attr == "polynomial":
+            import numpy.polynomial as polynomial
+            return polynomial
+        elif attr == "ma":
+            import numpy.ma as ma
+            return ma
+        elif attr == "ctypeslib":
+            import numpy.ctypeslib as ctypeslib
+            return ctypeslib
+        elif attr == "exceptions":
+            import numpy.exceptions as exceptions
+            return exceptions
+        elif attr == "testing":
+            import numpy.testing as testing
+            return testing
+        elif attr == "matlib":
+            import numpy.matlib as matlib
+            return matlib
+        elif attr == "f2py":
+            import numpy.f2py as f2py
+            return f2py
+        elif attr == "typing":
+            import numpy.typing as typing
+            return typing
+        elif attr == "array_api":
+            import numpy.array_api as array_api
+            return array_api
+        elif attr == "distutils":
+            if 'distutils' in __numpy_submodules__:
+                import numpy.distutils as distutils
+                return distutils
+            else:
+                raise AttributeError("`numpy.distutils` is not available from "
+                                     "Python 3.12 onwards")
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -226,16 +344,21 @@ else:
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr])
 
-        if attr == 'testing':
-            import numpy.testing as testing
-            return testing
-
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        public_symbols = globals().keys() | {'testing'}
-        public_symbols -= {"core", "matrixlib"}
+        # TODO: move away from using `globals` to a statically defined 
+        # list. With `globals`, when running in a testing context 
+        # a bunch of random names fall into global scope, such as
+        # `conftest` or `distutils`.
+        public_symbols = (
+            globals().keys() | __numpy_submodules__
+        )
+        public_symbols -= {
+            "core", "matrixlib", "matlib", "tests", "conftest", "version", 
+            "compat"
+            }
         return list(public_symbols)
 
     # Pytest testing
@@ -321,13 +444,12 @@ else:
                     use_hugepage = 0
             except ValueError:
                 use_hugepage = 0
-            finally:
-                del kernel_version
         elif use_hugepage is None:
             # This is not Linux, so it should not matter, just enable anyway
             use_hugepage = 1
         else:
             use_hugepage = int(use_hugepage)
+        return use_hugepage
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(hugepage_setup())
@@ -347,9 +469,6 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
-
-# get the version using versioneer
-from .version import __version__, git_revision as __git_version__
 
 # Remove symbols imported for internal use
 del os, sys, warnings

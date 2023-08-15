@@ -27,7 +27,6 @@ from numpy.core.multiarray import (
     _place, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
-from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy._utils import set_module
 
 # needed in this module for compatibility
@@ -44,8 +43,8 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'blackman', 'kaiser', 'trapz', 'i0',
+    'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
 

@@ -34,10 +34,6 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
-        'add_newdoc': 'numpy.core.function_base.add_newdoc',
-        'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
@@ -126,9 +122,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "array_api",
     "array_api.linalg",
     "ctypeslib",
-    "doc",
-    "doc.constants",
-    "doc.ufuncs",
     "dtypes",
     "exceptions",
     "f2py",
@@ -143,7 +136,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "ma",
     "ma.extras",
     "ma.mrecords",
-    "matlib",
     "polynomial",
     "polynomial.chebyshev",
     "polynomial.hermite",
@@ -156,7 +148,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version",
+    "version"  # Should be removed for NumPy 2.0
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -232,6 +224,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
+    "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
     "polynomial.polyutils",
@@ -363,8 +356,6 @@ def test_all_modules_are_expected():
 # below
 SKIP_LIST_2 = [
     'numpy.math',
-    'numpy.doc.constants.re',
-    'numpy.doc.constants.textwrap',
     'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
@@ -533,3 +524,20 @@ def test_array_api_entry_point():
         "does not point to our Array API implementation"
     )
     assert xp is numpy.array_api, msg
+
+
+def test_main_namespace_all_dir_coherence():
+    """
+    Checks if `dir(np)` and `np.__all__` are consistent
+    and return same content, excluding private members.
+    """
+    def _remove_private_members(member_set):
+        return {m for m in member_set if not m.startswith('_')}
+    
+    all_members = _remove_private_members(np.__all__)
+    dir_members = _remove_private_members(np.__dir__())
+
+    assert all_members == dir_members, (
+        "Members that break symmetry: "
+        f"{all_members.symmetric_difference(dir_members)}"
+    )

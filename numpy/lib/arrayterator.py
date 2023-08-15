@@ -139,7 +139,8 @@ class Arrayterator:
         A 1-D flat iterator for Arrayterator objects.
 
         This iterator returns elements of the array to be iterated over in
-        `~lib.Arrayterator` one by one. It is similar to `flatiter`.
+        `~lib.Arrayterator` one by one. 
+        It is similar to `flatiter`.
 
         See Also
         --------

@@ -12,8 +12,6 @@ useful to have in the main name-space.
 
 """
 
-from numpy.version import version as __version__
-
 # Public submodules
 # Note: recfunctions and (maybe) format are public too, but not imported
 from . import mixins
@@ -56,8 +54,10 @@ from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
+from .function_base import add_newdoc, add_docstring
 
-__all__ = ['emath', 'tracemalloc_domain', 'Arrayterator']
+
+__all__ = ['emath', 'tracemalloc_domain']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
