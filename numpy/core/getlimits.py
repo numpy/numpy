@@ -121,7 +121,7 @@ class MachArLike:
 
 _convert_to_float = {
     ntypes.csingle: ntypes.single,
-    ntypes.cdouble: ntypes.double,
+    ntypes.complex128: ntypes.float64,
     ntypes.clongdouble: ntypes.longdouble
     }
 

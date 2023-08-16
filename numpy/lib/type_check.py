@@ -81,7 +81,7 @@ def _asfarray_dispatcher(a, dtype=None):
 
 
 @array_function_dispatch(_asfarray_dispatcher)
-def asfarray(a, dtype=_nx.double):
+def asfarray(a, dtype=_nx.float64):
     """
     Return an array converted to a float type.
 
@@ -109,7 +109,7 @@ def asfarray(a, dtype=_nx.double):
 
     """
     if not _nx.issubdtype(dtype, _nx.inexact):
-        dtype = _nx.double
+        dtype = _nx.float64
     return asarray(a, dtype=dtype)
 
 
@@ -663,15 +663,16 @@ def typename(char):
 
 #-----------------------------------------------------------------------------
 
+
 #determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
-              [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.half: 0,
-                   _nx.single: 1,
-                   _nx.double: 2,
+array_type = [[_nx.float16, _nx.float32, _nx.float64, _nx.longdouble],
+              [None, _nx.complex64, _nx.complex128, _nx.clongdouble]]
+array_precision = {_nx.float16: 0,
+                   _nx.float32: 1,
+                   _nx.float64: 2,
                    _nx.longdouble: 3,
-                   _nx.csingle: 1,
-                   _nx.cdouble: 2,
+                   _nx.complex64: 1,
+                   _nx.complex128: 2,
                    _nx.clongdouble: 3}
 
 

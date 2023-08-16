@@ -275,7 +275,7 @@ In particular ``np.gradient`` can now take:
 
 This means that, e.g., it is now possible to do the following::
 
-    >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.double)
+    >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float_)
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
     >>> np.gradient(f, dx, y)

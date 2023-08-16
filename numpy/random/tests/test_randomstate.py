@@ -1212,8 +1212,8 @@ class TestRandomDist:
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_uniform_range_bounds(self):
-        fmin = np.finfo('double').min
-        fmax = np.finfo('double').max
+        fmin = np.finfo('float').min
+        fmax = np.finfo('float').max
 
         func = random.uniform
         assert_raises(OverflowError, func, -np.inf, 0)

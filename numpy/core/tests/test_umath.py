@@ -1113,7 +1113,7 @@ class TestPower:
             assert_array_equal(x.imag, y.imag)
 
         for z in [complex(0, np.inf), complex(1, np.inf)]:
-            z = np.array([z], dtype=np.cdouble)
+            z = np.array([z], dtype=np.complex128)
             with np.errstate(invalid="ignore"):
                 assert_complex_equal(z**1, z)
                 assert_complex_equal(z**2, z*z)
@@ -4168,7 +4168,7 @@ class TestComplexFunctions:
             except AttributeError:
                 continue
             for p in points:
-                a = complex(func(np.cdouble(p)))
+                a = complex(func(np.complex128(p)))
                 b = cfunc(p)
                 assert_(
                     abs(a - b) < atol, 
@@ -4183,7 +4183,7 @@ class TestComplexFunctions:
     @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [
-        np.complex64, np.cdouble, np.clongdouble
+        np.complex64, np.complex128, np.clongdouble
     ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""

@@ -232,9 +232,9 @@ class TestGeomspace:
 
         # Native types
         y = geomspace(1, 1e6, dtype=float)
-        assert_equal(y.dtype, dtype('double'))
+        assert_equal(y.dtype, dtype('float64'))
         y = geomspace(1, 1e6, dtype=complex)
-        assert_equal(y.dtype, dtype('cdouble'))
+        assert_equal(y.dtype, dtype('complex128'))
 
     def test_start_stop_array_scalar(self):
         lim1 = array([120, 100], dtype="int8")

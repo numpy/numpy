@@ -131,7 +131,7 @@ None
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`double`.
+   The default data type: :class:`float64`.
 
 .. index::
    triple: dtype; construction; from type
@@ -155,13 +155,13 @@ Generic types
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
-    =====================================================  ===============
-    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float`
-    :class:`complexfloating`                               :class:`cfloat`
+    =====================================================  ===================
+    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float64`
+    :class:`complexfloating`                               :class:`complex128`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
     :class:`generic`, :class:`flexible`                    :class:`void`
-    =====================================================  ===============
+    =====================================================  ===================
 
     .. deprecated:: 1.19
 
@@ -179,13 +179,15 @@ Built-in Python types
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
-    :class:`float`           :class:`double`
-    :class:`complex`         :class:`cdouble`
+    :class:`float`           :class:`float64`
+    :class:`complex`         :class:`complex128`
     :class:`bytes`           :class:`bytes\_`
     :class:`str`             :class:`str\_`
     :class:`memoryview`      :class:`void`
     (all others)             :class:`object_`
     ===================      ===============
+
+   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 

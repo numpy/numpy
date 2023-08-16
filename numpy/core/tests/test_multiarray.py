@@ -312,7 +312,7 @@ class TestAttributes:
 
     def test_dtypeattr(self):
         assert_equal(self.one.dtype, np.dtype(np.int_))
-        assert_equal(self.three.dtype, np.dtype(np.double))
+        assert_equal(self.three.dtype, np.dtype(np.float64))
         assert_equal(self.one.dtype.char, 'l')
         assert_equal(self.three.dtype.char, 'd')
         assert_(self.three.dtype.str[0] in '<>')

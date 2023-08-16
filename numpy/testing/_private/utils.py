@@ -1001,7 +1001,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, double, result_type
+    from numpy.core import number, result_type
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 
@@ -1027,7 +1027,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
-            z = z.astype(double)  # handle object arrays
+            z = z.astype(np.float64)  # handle object arrays
 
         return z < 1.5 * 10.0**(-decimal)
 

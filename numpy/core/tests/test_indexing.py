@@ -424,12 +424,12 @@ class TestIndexing:
                 return np.array(0)
 
         a = np.zeros(())
-        assert_(isinstance(a[()], np.double))
+        assert_(isinstance(a[()], np.float64))
         a = np.zeros(1)
-        assert_(isinstance(a[z], np.double))
+        assert_(isinstance(a[z], np.float64))
         a = np.zeros((1, 1))
-        assert_(isinstance(a[z, np.array(0)], np.double))
-        assert_(isinstance(a[z, ArrayLike()], np.double))
+        assert_(isinstance(a[z, np.array(0)], np.float64))
+        assert_(isinstance(a[z, ArrayLike()], np.float64))
 
         # And object arrays do not call it too often:
         b = np.array(0)
@@ -1271,7 +1271,7 @@ class TestFloatNonIntegerArgument:
         def mult(a, b):
             return a * b
 
-        assert_raises(TypeError, mult, [1], np.double(3))
+        assert_raises(TypeError, mult, [1], np.float64(3))
         # following should be OK
         mult([1], np.int_(3))
 

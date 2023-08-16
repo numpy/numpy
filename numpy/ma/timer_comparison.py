@@ -57,13 +57,13 @@ class ModuleTester:
         x = self.filled(self.masked_array(xf, mask=m), fill_value)
         y = self.filled(self.masked_array(yf, mask=m), fill_value)
         if (x.dtype.char != "O"):
-            x = x.astype(np.double)
+            x = x.astype(np.float64)
             if isinstance(x, np.ndarray) and x.size > 1:
                 x[np.isnan(x)] = 0
             elif np.isnan(x):
                 x = 0
         if (y.dtype.char != "O"):
-            y = y.astype(np.double)
+            y = y.astype(np.float64)
             if isinstance(y, np.ndarray) and y.size > 1:
                 y[np.isnan(y)] = 0
             elif np.isnan(y):
@@ -280,7 +280,7 @@ class ModuleTester:
         xm /= self.arange(10)
         self.assert_array_equal(xm, self.ones((10,)))
 
-        x = self.arange(10).astype(np.double)
+        x = self.arange(10).astype(np.float64)
         xm = self.arange(10)
         xm[2] = self.masked
         x += 1.
@@ -292,12 +292,12 @@ class ModuleTester:
         Tests inplace w/ array
 
         """
-        x = self.arange(10, dtype=np.double)
+        x = self.arange(10, dtype=np.float64)
         y = self.arange(10)
-        xm = self.arange(10, dtype=np.double)
+        xm = self.arange(10, dtype=np.float64)
         xm[2] = self.masked
         m = xm.mask
-        a = self.arange(10, dtype=np.double)
+        a = self.arange(10, dtype=np.float64)
         a[-1] = self.masked
         x += a
         xm += a
@@ -305,11 +305,11 @@ class ModuleTester:
         assert self.allequal(xm, y+a)
         assert self.allequal(xm.mask, self.mask_or(m, a.mask))
 
-        x = self.arange(10, dtype=np.double)
-        xm = self.arange(10, dtype=np.double)
+        x = self.arange(10, dtype=np.float64)
+        xm = self.arange(10, dtype=np.float64)
         xm[2] = self.masked
         m = xm.mask
-        a = self.arange(10, dtype=np.double)
+        a = self.arange(10, dtype=np.float64)
         a[-1] = self.masked
         x -= a
         xm -= a
@@ -317,11 +317,11 @@ class ModuleTester:
         assert self.allequal(xm, y-a)
         assert self.allequal(xm.mask, self.mask_or(m, a.mask))
 
-        x = self.arange(10, dtype=np.double)
-        xm = self.arange(10, dtype=np.double)
+        x = self.arange(10, dtype=np.float64)
+        xm = self.arange(10, dtype=np.float64)
         xm[2] = self.masked
         m = xm.mask
-        a = self.arange(10, dtype=np.double)
+        a = self.arange(10, dtype=np.float64)
         a[-1] = self.masked
         x *= a
         xm *= a
@@ -329,11 +329,11 @@ class ModuleTester:
         assert self.allequal(xm, y*a)
         assert self.allequal(xm.mask, self.mask_or(m, a.mask))
 
-        x = self.arange(10, dtype=np.double)
-        xm = self.arange(10, dtype=np.double)
+        x = self.arange(10, dtype=np.float64)
+        xm = self.arange(10, dtype=np.float64)
         xm[2] = self.masked
         m = xm.mask
-        a = self.arange(10, dtype=np.double)
+        a = self.arange(10, dtype=np.float64)
         a[-1] = self.masked
         x /= a
         xm /= a

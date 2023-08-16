@@ -90,7 +90,7 @@ def test_fromstring():
 
 
 def test_fromstring_complex():
-    for ctype in ["complex", "cdouble"]:
+    for ctype in ["complex", "cdouble", "csingle"]:
         # Check spacing between separator
         assert_equal(np.fromstring("1, 2 ,  3  ,4", sep=",", dtype=ctype),
                      np.array([1., 2., 3., 4.]))

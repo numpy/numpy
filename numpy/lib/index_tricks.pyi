@@ -20,8 +20,8 @@ from numpy import (
     bytes_,
     bool_,
     int_,
-    double,
-    cdouble,
+    float64,
+    complex128,
     intp,
     _OrderCF,
     _ModeKind,
@@ -66,9 +66,9 @@ def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
 @overload
 def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload
-def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[double], ...]: ...
+def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[float64], ...]: ...
 @overload
-def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[cdouble], ...]: ...
+def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[complex128], ...]: ...
 
 class nd_grid(Generic[_BoolType]):
     sparse: _BoolType

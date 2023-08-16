@@ -277,7 +277,7 @@ class TestRegression:
 
     def test_numpy_float_python_long_addition(self):
         # Check that numpy float and python longs can be added correctly.
-        a = np.double(23.) + 2**135
+        a = np.float64(23.) + 2**135
         assert_equal(a, 23. + 2**135)
 
     def test_binary_repr_0(self):
