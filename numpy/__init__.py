@@ -220,15 +220,15 @@ else:
         asmatrix, bmat, mat, matrix
     )
 
-    # public submodules are imported lazily, 
-    # therefore are accessible from __getattr__
+    # public submodules are imported lazily, therefore are accessible from
+    # __getattr__. Note that `distutils` (deprecated) and `array_api`
+    # (experimental label) are not added here, because `from numpy import *`
+    # must not raise any warnings - that's too disruptive.
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "array_api", "f2py", "test"
+        "f2py", "test"
     }
-    if sys.version_info < (3, 12):
-        __numpy_submodules__.add('distutils')
 
     # We build warning messages for former attributes
     _msg = (
@@ -357,7 +357,7 @@ else:
         )
         public_symbols -= {
             "core", "matrixlib", "matlib", "tests", "conftest", "version", 
-            "compat"
+            "compat", "distutils", "array_api"
             }
         return list(public_symbols)
 
