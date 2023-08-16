@@ -2784,7 +2784,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.max(b)
     np.float64(nan)
     >>> np.max(b, where=~np.isnan(b), initial=-1)
@@ -2928,7 +2928,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     array([10,  1])
 
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.min(b)
     np.float64(nan)
     >>> np.min(b, where=~np.isnan(b), initial=10)

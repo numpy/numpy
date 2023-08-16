@@ -376,13 +376,7 @@ from numpy.core.numeric import (
 )
 
 from numpy.core.numerictypes import (
-    maximum_sctype as maximum_sctype,
-    issctype as issctype,
-    obj2sctype as obj2sctype,
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
     issubdtype as issubdtype,
-    sctype2char as sctype2char,
     nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
@@ -397,15 +391,6 @@ from numpy.core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
-)
-
-from numpy.exceptions import (
-    ComplexWarning as ComplexWarning,
-    ModuleDeprecationWarning as ModuleDeprecationWarning,
-    VisibleDeprecationWarning as VisibleDeprecationWarning,
-    TooHardError as TooHardError,
-    DTypePromotionError as DTypePromotionError,
-    AxisError as AxisError,
 )
 
 from numpy.lib import (
@@ -597,17 +582,11 @@ from numpy.lib.ufunclike import (
 )
 
 from numpy.lib.utils import (
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
     issubdtype as issubdtype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
     get_include as get_include,
     info as info,
     source as source,
-    lookfor as lookfor,
     byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
     show_runtime as show_runtime,
 )
 
@@ -641,6 +620,7 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __all__: list[str]
+__dir__: list[str]
 __path__: list[str]
 __version__: str
 __git_version__: str
@@ -3008,7 +2988,6 @@ half = floating[_NBitHalf]
 single = floating[_NBitSingle]
 double = floating[_NBitDouble]
 longdouble = floating[_NBitLongDouble]
-longfloat = floating[_NBitLongDouble]
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
@@ -3043,11 +3022,8 @@ complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
 
 csingle = complexfloating[_NBitSingle, _NBitSingle]
-singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
 cdouble = complexfloating[_NBitDouble, _NBitDouble]
 clongdouble = complexfloating[_NBitLongDouble, _NBitLongDouble]
-clongfloat = complexfloating[_NBitLongDouble, _NBitLongDouble]
-longcomplex = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
@@ -3095,8 +3071,6 @@ class bytes_(character, bytes):
     ) -> bytes: ...
     def tolist(self) -> bytes: ...
 
-string_ = bytes_
-
 class str_(character, str):
     @overload
     def __init__(self, value: object = ..., /) -> None: ...
@@ -3109,24 +3083,13 @@ class str_(character, str):
     ) -> str: ...
     def tolist(self) -> str: ...
 
-unicode_ = str_
-
 #
 # Constants
 #
 
-Inf: Final[float]
-Infinity: Final[float]
-NAN: Final[float]
-NINF: Final[float]
-NZERO: Final[float]
-NaN: Final[float]
-PINF: Final[float]
-PZERO: Final[float]
 e: Final[float]
 euler_gamma: Final[float]
 inf: Final[float]
-infty: Final[float]
 nan: Final[float]
 pi: Final[float]
 

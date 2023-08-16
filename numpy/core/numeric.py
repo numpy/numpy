@@ -2503,8 +2503,8 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-Inf = inf = infty = Infinity = PINF
-nan = NaN = NAN
+inf = PINF
+nan = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 

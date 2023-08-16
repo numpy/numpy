@@ -788,7 +788,7 @@ class TestCond(CondCases):
         A[0,1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
-            assert_(isinstance(c, np.double))
+            assert_(isinstance(c, np.float64))
             assert_(np.isnan(c))
 
         A = np.ones((3, 2, 2))
@@ -1328,7 +1328,7 @@ class _TestNormGeneral(_TestNormBase):
         # Compare the use of `axis` with computing the norm of each row
         # or column separately.
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.inf, -np.inf]:
             expected0 = [norm(A[:, k], ord=order) for k in range(A.shape[1])]
             assert_almost_equal(norm(A, ord=order, axis=0), expected0)
             expected1 = [norm(A[k, :], ord=order) for k in range(A.shape[0])]
@@ -1337,7 +1337,7 @@ class _TestNormGeneral(_TestNormBase):
         # Matrix norms.
         B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
         nd = B.ndim
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+        for order in [None, -2, 2, -1, 1, np.inf, -np.inf, 'fro']:
             for axis in itertools.combinations(range(-nd, nd), 2):
                 row_axis, col_axis = axis
                 if row_axis < 0:
@@ -1376,7 +1376,7 @@ class _TestNormGeneral(_TestNormBase):
                 shape_err.format(found.shape, expected_shape, None, None))
 
         # Vector norms.
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.inf, -np.inf]:
             for k in range(A.ndim):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
@@ -1389,7 +1389,7 @@ class _TestNormGeneral(_TestNormBase):
                         shape_err.format(found.shape, expected_shape, order, k))
 
         # Matrix norms.
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
+        for order in [None, -2, 2, -1, 1, np.inf, -np.inf, 'fro', 'nuc']:
             for k in itertools.permutations(range(A.ndim), 2):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)

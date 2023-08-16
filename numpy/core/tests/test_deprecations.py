@@ -753,7 +753,7 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy.lib.utils import safe_eval, who
+        from numpy.lib.utils import safe_eval
         from numpy.lib.npyio import recfromcsv, recfromtxt
         from numpy.lib.function_base import disp
         from numpy.lib.shape_base import get_array_wrap

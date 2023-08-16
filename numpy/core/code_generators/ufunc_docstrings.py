@@ -2507,7 +2507,7 @@ add_newdoc('numpy.core.umath', 'maximum',
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.maximum(np.Inf, 1)
+    >>> np.maximum(np.inf, 1)
     inf
 
     """)
@@ -2566,7 +2566,7 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.minimum(-np.Inf, 1)
+    >>> np.minimum(-np.inf, 1)
     -inf
 
     """)

@@ -225,11 +225,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-<<<<<<< HEAD
         "f2py", "test"
-=======
-        "array_api", "f2py", "distutils", "test"
->>>>>>> c9f287f61 ([skip ci])
     }
 
     # We build warning messages for former attributes
@@ -330,8 +326,12 @@ else:
             import numpy.array_api as array_api
             return array_api
         elif attr == "distutils":
-            import numpy.distutils as distutils
-            return distutils
+            if 'distutils' in __numpy_submodules__:
+                import numpy.distutils as distutils
+                return distutils
+            else:
+                raise AttributeError("`numpy.distutils` is not available from "
+                                     "Python 3.12 onwards")
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give

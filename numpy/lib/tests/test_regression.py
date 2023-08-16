@@ -154,23 +154,6 @@ class TestRegression:
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
-    @pytest.mark.filterwarnings("ignore:.*who.*:DeprecationWarning")
-    def test_who_with_0dim_array(self):
-        # ticket #1243
-        import os
-        import sys
-
-        oldstdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        try:
-            try:
-                np.lib.utils.who({'foo': np.array(1)})
-            except Exception:
-                raise AssertionError("ticket #1243")
-        finally:
-            sys.stdout.close()
-            sys.stdout = oldstdout
-
     def test_include_dirs(self):
         # As a sanity check, just test that get_include
         # includes something reasonable.  Somewhat
