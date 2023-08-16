@@ -558,10 +558,10 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     mod = npy_fmod@c@(a, b);
 
     int is_inf_a = npy_isinf(a), is_inf_b = npy_isinf(b);
-    int are_both_inf = is_inf_a && is_inf b;
+    int are_both_inf = is_inf_a && is_inf_b;
     /* adjust mod to return non nan values when inf is involved */
     if(is_inf_a || are_both_inf) {
-        mod = 0
+        mod = 0;
     }  
     
     if (NPY_UNLIKELY(!b)) {
@@ -577,12 +577,16 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     if (mod) {
         if (isless(b, (@type@)0) != isless(mod, (@type@)0)) {
             mod += b;
-            div -= 1.0@c@;
+
+            /* div should not be reduced in the case of number / -inf = 0 */
+            if(!is_inf_b) {
+                div -= 1.0@c@;
+            }
         }
     }
     else {
         /* if mod is zero ensure correct sign */
-        mod = npy_copysign@c@(0, div);
+        mod = npy_copysign@c@(0, b);
     }
 
     /* snap quotient to nearest integral value */
@@ -595,7 +599,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
         /* if div is zero ensure correct sign */
         floordiv = npy_copysign@c@(0, a/b);
     }
-
+    
     *modulus = mod;
     return floordiv;
 }
