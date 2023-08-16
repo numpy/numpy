@@ -528,12 +528,12 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
     ...   dtype=[('a', np.int64), ('b', [('ba', np.double), ('bb', np.int64)])])
-    >>> rfn.drop_fields(a, 'a')
+    >>> rfn.drop_fields(a, 'a', usemask=False)
     array([((2., 3),), ((5., 6),)],
           dtype=[('b', [('ba', '<f8'), ('bb', '<i8')])])
-    >>> rfn.drop_fields(a, 'ba')
+    >>> rfn.drop_fields(a, 'ba', usemask=False)
     array([(1, (3,)), (4, (6,))], dtype=[('a', '<i8'), ('b', [('bb', '<i8')])])
-    >>> rfn.drop_fields(a, ['ba', 'bb'])
+    >>> rfn.drop_fields(a, ['ba', 'bb'], usemask=False)
     array([(1,), (4,)], dtype=[('a', '<i8')])
     """
     if _is_string_like(drop_names):
@@ -558,7 +558,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     newdtype = _drop_descr(base.dtype, drop_names)
 
-    output = np.empty(base.shape, dtype=newdtype)
+    output = ma.masked_all(base.shape, dtype=newdtype)
     output = recursive_fill_fields(base, output)
     return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
 
