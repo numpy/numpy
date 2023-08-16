@@ -530,30 +530,19 @@ npy_remainder@c@(@type@ a, @type@ b)
 
 NPY_INPLACE @type@
 npy_floor_divide@c@(@type@ a, @type@ b) {
-    @type@ mod;
+    @type@ div, mod;
     if (NPY_UNLIKELY(!b)) {
         /*
          * in2 == 0 (and not NaN): normal division will give the correct
          * result (Inf or NaN). `divmod` may set additional FPE for the modulo
          * evaluating to NaN.
          */
-        return a / b;
+        div = a / b;
     }
-
-    int is_inf_a = npy_isinf(a), is_inf_b = npy_isinf(b);
-
-    /*
-     * According to the IEEE 754 standard,
-     * when either the divisor or dividend is negative, 
-     * -np.inf or -0.0 should be returned
-     * instead of -1.0
-    */
-    if(is_inf_a || is_inf_b) {
-       return a / b;
-    } else {
-        return npy_divmod@c@(a, b, &mod);
-        
+    else {
+        div = npy_divmod@c@(a, b, &mod);
     }
+    return div;
 }
 
 /*
@@ -567,6 +556,14 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     @type@ div, mod, floordiv;
 
     mod = npy_fmod@c@(a, b);
+
+    int is_inf_a = npy_isinf(a), is_inf_b = npy_isinf(b);
+    int are_both_inf = is_inf_a && is_inf b;
+    /* adjust mod to return non nan values when inf is involved */
+    if(is_inf_a || are_both_inf) {
+        mod = 0
+    }  
+    
     if (NPY_UNLIKELY(!b)) {
         /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
         *modulus = mod;
@@ -585,7 +582,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     }
     else {
         /* if mod is zero ensure correct sign */
-        mod = npy_copysign@c@(0, b);
+        mod = npy_copysign@c@(0, div);
     }
 
     /* snap quotient to nearest integral value */
