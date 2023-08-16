@@ -213,7 +213,7 @@ else:
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
         unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
         triu, triu_indices, triu_indices_from, isposinf, RankWarning, disp,
-        deprecate, deprecate_with_doc, who, safe_eval, recfromtxt, recfromcsv
+        deprecate, deprecate_with_doc, safe_eval, recfromtxt, recfromcsv
     )
     from . import matrixlib as _mat
     from .matrixlib import (
