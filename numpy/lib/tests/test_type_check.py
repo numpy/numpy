@@ -4,7 +4,7 @@ from numpy.testing import (
     )
 from numpy.lib.type_check import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, asfarray, real_if_close
+    nan_to_num, isrealobj, iscomplexobj, real_if_close
     )
 
 
@@ -463,16 +463,3 @@ class TestRealIfClose:
         assert_all(iscomplexobj(b))
         b = real_if_close(a+1e-7j, tol=1e-6)
         assert_all(isrealobj(b))
-
-
-class TestArrayConversion:
-
-    def test_asfarray(self):
-        a = asfarray(np.array([1, 2, 3]))
-        assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, np.floating))
-
-        # previously this would infer dtypes from arrays, unlike every single
-        # other numpy function
-        assert_raises(TypeError,
-            asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))

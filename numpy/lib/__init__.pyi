@@ -190,7 +190,6 @@ from numpy.lib.twodim_base import (
 
 from numpy.lib.type_check import (
     mintypecode as mintypecode,
-    asfarray as asfarray,
     real as real,
     imag as imag,
     iscomplex as iscomplex,

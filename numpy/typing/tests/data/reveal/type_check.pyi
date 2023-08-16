@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _128Bit
-from numpy.lib import asfarray
 
 f8: np.float64
 f: float
@@ -24,11 +23,6 @@ class ImagObj:
     imag: slice
 
 reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
-
-reveal_type(asfarray(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(asfarray(AR_LIKE_f))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(asfarray(AR_f8, dtype="c16"))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
-reveal_type(asfarray(AR_f8, dtype="i8"))  # E: ndarray[Any, dtype[floating[Any]]]
 
 reveal_type(np.real(RealObj()))  # E: slice
 reveal_type(np.real(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
