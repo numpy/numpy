@@ -21,7 +21,55 @@ modified_clone: &MODIFIED_CLONE
     fi
 
 
+linux_aarch64_test_task:
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 1
+    memory: 4G
+
+  <<: *MODIFIED_CLONE
+
+  ccache_cache:
+    folder: .ccache
+    populate_script:
+      - mkdir -p .ccache
+    fingerprint_key: ccache-linux_aarch64
+
+  prepare_env_script: |
+    apt-get update
+    apt-get install -y --no-install-recommends software-properties-common gcc g++ gfortran pkg-config ccache
+    apt-get install -y --no-install-recommends python3.10 python3.10-venv
+
+    # python3.10 -m ensurepip --default-pip --user
+    ln -s $(which python3.10) python
+
+    # required for figuring out the system tags in openblas_support
+    pip install packaging
+
+    # install openblas by co-opting the CIBW setup script
+    RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
+
+    pip install -r build_requirements.txt
+    pip install -r test_requirements.txt
+
+    export PATH=/usr/lib/ccache:$PWD:$PATH
+    echo "PATH=$PATH" >> $CIRRUS_ENV
+    echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
+
+  build_script: |
+    spin build
+
+  test_script: |
+    spin test -j 1
+    ccache -s
+
+
 macos_arm64_test_task:
+  depends_on:
+    - linux_aarch64_test
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-xcode:14
 
