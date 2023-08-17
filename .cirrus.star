@@ -13,7 +13,7 @@ def main(ctx):
     # Only test on the numpy/numpy repository
     ######################################################################
 
-    if env.get("CIRRUS_REPO_FULL_NAME") != "andyfaff/numpy":
+    if env.get("CIRRUS_REPO_FULL_NAME") != "numpy/numpy":
         return []
 
     # only run the wheels entry on a cron job
