@@ -563,9 +563,15 @@ def pad(array, pad_width, mode='constant', **kwargs):
         'mean'
             Pads with the mean value of all or part of the
             vector along each axis.
+        'nanmean'
+            Pads with the mean value of all or part of the
+            vector along each axis, ignoring NaN values.
         'median'
             Pads with the median value of all or part of the
             vector along each axis.
+        'nanmedian'
+            Pads with the median value of all or part of the
+            vector along each axis, ignoring NaN values.
         'minimum'
             Pads with the minimum value of all or part of the
             vector along each axis.
@@ -588,8 +594,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         <function>
             Padding function, see Notes.
     stat_length : sequence or int, optional
-        Used in 'maximum', 'mean', 'median', and 'minimum'.  Number of
-        values at edge of each axis used to calculate the statistic value.
+        Used in 'maximum', 'mean', 'nanmean', 'median', 'nanmedian', and
+        'minimum'.  Number of values at edge of each axis used to calculate
+        the statistic value.
 
         ``((before_1, after_1), ... (before_N, after_N))`` unique statistic
         lengths for each axis.
@@ -691,6 +698,13 @@ def pad(array, pad_width, mode='constant', **kwargs):
     >>> np.pad(a, (2,), 'median')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
+    >>> a = [1, 2, np.nan, 4, 5]
+    >>> np.pad(a, (2,), 'nanmean')
+    array([3., 3., 1., 2., nan, 4., 5., 3., 3.])
+
+    >>> np.pad(a, (2,), 'nanmedian')
+    array([3., 3., 1., 2., nan, 4., 5., 3., 3.])
+
     >>> a = [[1, 2], [3, 4]]
     >>> np.pad(a, ((3, 2), (2, 3)), 'minimum')
     array([[1, 1, 1, 2, 1, 1, 1],
@@ -777,7 +791,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         'linear_ramp': ['end_values'],
         'maximum': ['stat_length'],
         'mean': ['stat_length'],
+        'nanmean': ['stat_length'],
         'median': ['stat_length'],
+        'nanmedian': ['stat_length'],
         'minimum': ['stat_length'],
         'reflect': ['reflect_type'],
         'symmetric': ['reflect_type'],
@@ -791,7 +807,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
                          .format(mode, unsupported_kwargs))
 
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
-                      "mean": np.mean, "median": np.median}
+                      "mean": np.mean, "nanmean": np.nanmean,
+                      "median": np.median, "nanmedian": np.nanmedian}
 
     # Create array with final shape and original values
     # (padded area is undefined)
