@@ -13,7 +13,7 @@ def main(ctx):
     # Only test on the numpy/numpy repository
     ######################################################################
 
-    if env.get("CIRRUS_REPO_FULL_NAME") != "numpy/numpy":
+    if env.get("CIRRUS_REPO_FULL_NAME") != "andyfaff/numpy":
         return []
 
     # only run the wheels entry on a cron job
@@ -51,4 +51,4 @@ def main(ctx):
     if int(pr_number) < 0:
         return []
 
-    return fs.read("tools/ci/cirrus_macosx_arm64.yml")
+    return fs.read("tools/ci/cirrus_arm.yml")
