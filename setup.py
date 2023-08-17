@@ -16,7 +16,7 @@ import tempfile
 
 from distutils.errors import CompileError
 
-# Python supported version checks. Keep right after stdlib imports to ensure we
+# Checks if the correct version of Python is installed. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
 if sys.version_info[:2] < (3, 9):
     raise RuntimeError("Python version >= 3.9 required.")
@@ -213,9 +213,9 @@ def get_build_overrides():
             tmp_file = os.path.join(temp_dir, "test" + suf)
             with open(tmp_file, "w+") as f:
                 f.write(code)
-            # without specify any flags in case of the required
-            # standard already supported by default, then there's
-            # no need for passing the flags
+            # If the required standard is already supported
+            # by default, then there's no need for passing
+            # the flags
             comp = try_compile(compiler, tmp_file)
             if not comp[0]:
                 comp = try_compile(compiler, tmp_file, flags)
@@ -254,7 +254,7 @@ def get_build_overrides():
             msvc = ['/Zc:__cplusplus']
         ).get(compiler.compiler_type, [
             # The following flag is used to avoid emit any extra code
-            # from STL since extensions are build by C linker and
+            # from STL since extensions are build by C Linker and
             # without C++ runtime dependencies.
             '-fno-threadsafe-statics',
             '-D__STDC_VERSION__=0',  # for compatibility with C headers
@@ -321,8 +321,8 @@ def generate_cython():
         import Cython
         from Cython.Compiler.Version import version as cython_version
     except ImportError as e:
-        # The `cython` command need not point to the version installed in the
-        # Python running this script, so raise an error to avoid the chance of
+        # The `cython` command does not point to the version installed in the
+        # Python running this script, so it raises an error to avoid the chance of
         # using the wrong version of Cython.
         msg = 'Cython needs to be installed in Python as a module'
         raise OSError(msg) from e
@@ -358,7 +358,7 @@ def parse_setuppy_commands():
     args = sys.argv[1:]
 
     if not args:
-        # User forgot to give an argument probably, let setuptools handle that.
+        # User will probably forget to give an argument, let's use some setuptools to handle that.
         return True
 
     info_commands = ['--help-commands', '--name', '--version', '-V',
@@ -373,9 +373,9 @@ def parse_setuppy_commands():
         if command in args:
             return False
 
-    # Note that 'alias', 'saveopts' and 'setopt' commands also seem to work
+    # Note that 'alias,' 'saveopts,' and 'setopt' commands also seem to work
     # fine as they are, but are usually used together with one of the commands
-    # below and not standalone.  Hence they're not added to good_commands.
+    # below and not standalone. Hence, they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
                      'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src',
@@ -466,7 +466,7 @@ def parse_setuppy_commands():
         if command in args:
             return False
 
-    # If we got here, we didn't detect what setup.py command was given
+    # If we got here, then we didn't detect what setup.py command was given
     raise RuntimeError("Unrecognized setuptools command: {}".format(args))
 
 
