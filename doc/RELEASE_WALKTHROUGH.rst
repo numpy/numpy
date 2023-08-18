@@ -11,7 +11,7 @@ Facility preparation
 Before beginning to make a release, use the ``*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
-software. You will also need a GitHub personal access token (PAT) to push the
+the software. You will also need a GitHub personal access token (PAT) to push the
 documentation. There are a few ways to streamline things:
 
 - Git can be set up to use a keyring to store your GitHub personal access token.
@@ -32,7 +32,7 @@ When adding or dropping Python versions, three files need to be edited:
 - .travis.yml  # for cibuildwheel aarch64 builds
 - setup.py  # for classifier and minimum version check.
 
-Make these changes in an ordinary PR against main and backport if necessary.
+Make these changes in an ordinary PR against the main and backport if necessary.
 Using the `BLD:` prefix (build label) for the commit summary will cause the
 wheel builds to be run so that the changes will be tested, We currently release
 wheels for new Python versions after the first Python rc once manylinux and
@@ -159,7 +159,7 @@ If a wheel build fails for unrelated reasons, you can rerun it individually:
 
 - On github actions select `Wheel builder`_ click on the commit that contains
   the build you want to rerun. On the left there is a list of wheel builds,
-  select the one you want to rerun and on the resulting page hit the
+  select the one you want to rerun, and on the resulting page hit the
   counterclockwise arrows button.
 - On travis_ select the failing build, which will take you to the travis job for
   that build. Hit the restart job button.
@@ -196,7 +196,7 @@ file is updated for continued development::
 5. Reset the maintenance branch into a development state (skip for prereleases)
 -------------------------------------------------------------------------------
 
-Create release notes for next release and edit them to set the version. These
+Create release notes for the next release and edit them to set the version. These
 notes will be a skeleton and have little content::
 
     $ cp doc/source/release/template.rst doc/source/release/1.21.1-notes.rst
@@ -228,7 +228,7 @@ If one of the commands breaks in the middle, you may need to selectively upload
 the remaining files because PyPI does not allow the same file to be uploaded
 twice. The source file should be uploaded last to avoid synchronization
 problems that might occur if pip users access the files while this is in
-process, causing pip to build from source rather than downloading a binary
+process, causing pip to build from the source rather than downloading a binary
 wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
@@ -237,13 +237,13 @@ chosen the zip archive.
 -------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
-tag``, click on it and hit the edit button for that tag. There are two ways to
-add files, using an editable text window and as binary uploads. Start by
+tag``, click on it, and hit the edit button for that tag. There are two ways to
+add files, using an editable text window and binary uploads. Start by
 editing the ``release/README.md`` that is translated from the rst version using
 pandoc. Things that will need fixing: PR lines from the changelog, if included,
 are wrapped and need unwrapping, links should be changed to monospaced text.
 Then copy the contents to the clipboard and paste them into the text window. It
-may take several tries to get it look right. Then
+may take several tries to get it to look right. Then
 
 - Upload ``release/installers/numpy-1.21.0.tar.gz`` as a binary file.
 - Upload ``release/README.rst`` as a binary file.
