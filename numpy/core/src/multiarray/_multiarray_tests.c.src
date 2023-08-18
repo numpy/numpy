@@ -2026,7 +2026,7 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
 /**begin repeat
  * #N = 1,2,3#
  */
-    alignment = PyLong_FromLong(_ALIGN(struct TestStruct@N@));
+    alignment = PyLong_FromLong(NPY_ALIGNOF(struct TestStruct@N@));
     size = PyLong_FromLong(sizeof(struct TestStruct@N@));
     val = PyTuple_Pack(2, alignment, size);
     Py_DECREF(alignment);
