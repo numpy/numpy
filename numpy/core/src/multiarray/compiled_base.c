@@ -30,46 +30,47 @@ typedef enum {
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic(const double *a, npy_intp lena)
+check_array_monotonic(const char *data, npy_intp size, npy_intp stride, PyArrayObject *arr)
 {
-    npy_intp i;
-    double next;
-    double last;
+    npy_intp count = size;
+    PyArray_CompareFunc *compare = PyArray_DESCR(arr)->f->compare;
+    const char *elem_ptr = data;
 
-    if (lena == 0) {
+    if (count == 0) {
         /* all bin edges hold the same value */
         return 1;
     }
-    last = a[0];
 
     /* Skip repeated values at the beginning of the array */
-    for (i = 1; (i < lena) && (a[i] == last); i++);
+    do {
+        elem_ptr += stride;
+        count--;
+    } while (count > 0 && compare(elem_ptr, data, arr) == 0);
 
-    if (i == lena) {
+    if (count == 0) {
         /* all bin edges hold the same value */
         return 1;
     }
 
-    next = a[i];
-    if (last < next) {
+    if (compare(elem_ptr, data, arr) > 0) {
         /* Possibly monotonic increasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last > next) {
+        while (count--) {
+            const char *prev_elem_ptr = elem_ptr - stride;
+            if (compare(prev_elem_ptr, elem_ptr, arr) > 0) {
                 return 0;
             }
+            elem_ptr += stride;
         }
         return 1;
     }
     else {
         /* last > next, possibly monotonic decreasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last < next) {
+        while (count--) {
+            const char *prev_elem_ptr = elem_ptr - stride;
+            if (compare(prev_elem_ptr, elem_ptr, arr) < 0) {
                 return 0;
             }
+            elem_ptr += stride;
         }
         return -1;
     }
@@ -233,34 +234,38 @@ NPY_NO_EXPORT PyObject *
 arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"x", NULL};
-    PyObject *obj_x = NULL;
-    PyArrayObject *arr_x = NULL;
+    PyObject *array0 = NULL;
+    PyArrayObject *array = NULL;
     long monotonic;
-    npy_intp len_x;
     NPY_BEGIN_THREADS_DEF;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:_monotonicity", kwlist,
-                                     &obj_x)) {
+                                     &array0)) {
         return NULL;
     }
 
-    /*
-     * TODO:
-     *  `x` could be strided, needs change to check_array_monotonic
-     *  `x` is forced to double for this check
-     */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(
-        obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
-    if (arr_x == NULL) {
+    array = (PyArrayObject *)PyArray_FromArray((PyArrayObject *)array0, NULL,
+                                    NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED);
+    if (array == NULL) {
         return NULL;
     }
 
-    len_x = PyArray_SIZE(arr_x);
-    NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-    monotonic = check_array_monotonic(
-        (const double *)PyArray_DATA(arr_x), len_x);
+    if (PyArray_DESCR(array)->f->compare == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "type does not have compare function");
+        Py_DECREF(array);
+        return -1;
+    }
+
+    assert(PyArray_TRIVIALLY_ITERABLE(array));
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+    monotonic = check_array_monotonic((const char *)PyArray_DATA(array),
+                                      PyArray_SIZE(array),
+                                      PyArray_STRIDE(array, 0),
+                                      array);
     NPY_END_THREADS
-    Py_DECREF(arr_x);
+    Py_DECREF(array);
 
     return PyLong_FromLong(monotonic);
 }
