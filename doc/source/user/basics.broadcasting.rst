@@ -85,7 +85,7 @@ that missing dimensions are assumed to have size one.
 For example, if you have a ``256x256x3`` array of RGB values, and you want
 to scale each color in the image by a different value, you can multiply the
 image by a one-dimensional array with 3 values. Lining up the sizes of the
-trailing axes of these arrays according to the broadcast rules, shows that
+trailing axes of these arrays according to the broadcast rules shows that
 they are compatible::
 
   Image  (3d array): 256 x 256 x 3
@@ -97,7 +97,7 @@ used.  In other words, dimensions with size 1 are stretched or "copied"
 to match the other.
 
 In the following example, both the ``A`` and ``B`` arrays have axes with
-length one that are expanded to a larger size during the broadcast
+length one that is expanded to a larger size during the broadcast
 operation::
 
   A      (4d array):  8 x 1 x 6 x 1
@@ -189,13 +189,13 @@ incompatible shapes.
 
     *Figure 2*
 
-    *A one dimensional array added to a two dimensional array results in
-    broadcasting if number of 1-d array elements matches the number of 2-d
+    *A one dimensional array added to a two-dimensional array results in
+    broadcasting if a number of 1-d array elements matches the number of 2-d
     array columns.*
 
 .. figure:: broadcasting_3.png
     :alt: A huge cross over the 2-d array of shape (4, 3) and the 1-d array
-          of shape (4) shows that they can not be broadcast due to mismatch
+          of shape (4) shows that they can not be broadcast due to a mismatch
           of shapes and thus produce no result.
     :name: broadcasting.figure-3
 
@@ -203,7 +203,7 @@ incompatible shapes.
 
     *When the trailing dimensions of the arrays are unequal, broadcasting fails
     because it is impossible to align the values in the rows of the 1st array
-    with the elements of the 2nd arrays for element-by-element addition.*
+    with the elements of the 2nd array for element-by-element addition.*
 
 Broadcasting provides a convenient way of taking the outer product (or
 any other outer operation) of two arrays. The following example shows an
@@ -235,7 +235,7 @@ with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
 A Practical Example: Vector Quantization
 ========================================
 
-Broadcasting comes up quite often in real world problems. A typical example
+Broadcasting comes up quite often in real-world problems. A typical example
 occurs in the vector quantization (VQ) algorithm used in information theory,
 classification, and other related areas. The basic operation in VQ finds
 the closest point in a set of points, called ``codes`` in VQ jargon, to a given
@@ -243,7 +243,7 @@ point, called the ``observation``. In the very simple, two-dimensional case
 shown below, the values in ``observation`` describe the weight and height of an
 athlete to be classified. The ``codes`` represent different classes of
 athletes. [#f1]_ Finding the closest point requires calculating the distance
-between observation and each of the codes. The shortest distance provides the
+between the observation and each of the codes. The shortest distance provides the
 best match. In this example, ``codes[0]`` is the closest class indicating that
 the athlete is likely a basketball player.
 
@@ -268,7 +268,7 @@ the shape of the ``codes`` array::
 .. figure:: broadcasting_5.png
     :alt: A height versus weight graph that shows data of a female
           gymnast, marathon runner, basketball player, football
-          lineman and the athlete to be classified. Shortest distance
+          lineman and the athlete to be classified. The shortest distance
           is found between the basketball player and the athlete
           to be classified.
     :name: broadcasting.figure-5
