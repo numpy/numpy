@@ -1975,6 +1975,18 @@ class TestDigitize:
         x = 2**54  # loses precision in a float
         assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
 
+    def test_endpoint(self):
+        x = np.arange(-3, 4)
+        bins = [-2, 0, 2]
+        assert_array_equal(digitize(x, bins, False, True), [0, 1, 1, 2, 2, 2, 3])
+        assert_array_equal(digitize(x, bins, True, True), [0, 1, 1, 1, 2, 2, 3])
+
+    def test_endpoint_decreasing(self):
+        x = np.arange(3, -4, -1)
+        bins = [2, 0, -2]
+        assert_array_equal(digitize(x, bins, False, True), [0, 0, 1, 2, 2, 2, 3])
+        assert_array_equal(digitize(x, bins, True, True), [0, 1, 1, 1, 2, 3, 3])
+
 
 class TestUnwrap:
 
