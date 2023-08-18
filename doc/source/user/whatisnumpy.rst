@@ -10,7 +10,7 @@ various derived objects (such as masked arrays and matrices), and an
 assortment of routines for fast operations on arrays, including
 mathematical, logical, shape manipulation, sorting, selecting, I/O,
 discrete Fourier transforms, basic linear algebra, basic statistical
-operations, random simulation and much more.
+operations, random simulation, and much more.
 
 At the core of the NumPy package, is the `~numpy.ndarray` object.  This
 encapsulates *n*-dimensional arrays of homogeneous data types, with
@@ -23,9 +23,9 @@ standard Python sequences:
   create a new array and delete the original.
 
 - The elements in a NumPy array are all required to be of the same
-  data type, and thus will be the same size in memory.  The exception:
+  data type and thus will be the same size in memory.  The exception:
   one can have arrays of (Python, including NumPy) objects, thereby
-  allowing for arrays of different sized elements.
+  allowing for arrays of different-sized elements.
 
 - NumPy arrays facilitate advanced mathematical and other types of
   operations on large numbers of data.  Typically, such operations are
@@ -65,7 +65,7 @@ and initializations, memory allocation, etc.)
   }
 
 This saves all the overhead involved in interpreting the Python code
-and manipulating Python objects, but at the expense of the benefits
+and manipulating Python objects but at the expense of the benefits
 gained from coding in Python.  Furthermore, the coding work required
 increases with the dimensionality of our data. In the case of a 2-D
 array, for example, the C code (abridged as before) expands to
@@ -122,7 +122,7 @@ logical, bit-wise, functional, etc., behave in this implicit
 element-by-element fashion, i.e., they broadcast.  Moreover, in the
 example above, ``a`` and ``b`` could be multidimensional arrays of the
 same shape, or a scalar and an array, or even two arrays of with
-different shapes, provided that the smaller array is "expandable" to
+different shapes provided that the smaller array is "expandable" to
 the shape of the larger in such a way that the resulting broadcast is
 unambiguous. For detailed "rules" of broadcasting see
 :ref:`Broadcasting <basics.broadcasting>`.
@@ -133,7 +133,7 @@ Who Else Uses NumPy?
 NumPy fully supports an object-oriented approach, starting, once
 again, with `~numpy.ndarray`.  For example, `~numpy.ndarray` is a class, possessing
 numerous methods and attributes.  Many of its methods are mirrored by
-functions in the outer-most NumPy namespace, allowing the programmer
+functions in the outermost NumPy namespace, allowing the programmer
 to code in whichever paradigm they prefer. This flexibility has allowed the
 NumPy array dialect and NumPy `~numpy.ndarray` class to become the *de-facto* language
 of multi-dimensional data interchange used in Python.
