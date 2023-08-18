@@ -604,7 +604,19 @@ def expand_dims(a, axis):
     return a.reshape(shape)
 
 
-row_stack = vstack
+# TODO: Remove once deprecation period passes
+def row_stack(tup, *, dtype=None, casting="same_kind"):
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`row_stack` alias is deprecated. "
+        "Use `np.vstack` directly.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return vstack(tup, dtype=dtype, casting=casting)
+
+
+row_stack.__doc__ = vstack.__doc__
 
 
 def _column_stack_dispatcher(tup):

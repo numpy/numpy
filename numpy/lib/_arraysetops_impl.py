@@ -15,6 +15,7 @@ Original author: Robert Cimrman
 
 """
 import functools
+import warnings
 
 import numpy as np
 from numpy.core import overrides
@@ -518,10 +519,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
+    .. deprecated:: 2.0
+        Use :func:`isin` instead of `in1d` for new code.
+
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
-
-    We recommend using :func:`isin` instead of `in1d` for new code.
 
     Parameters
     ----------
@@ -604,6 +606,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     >>> test[mask]
     array([1, 5])
     """
+
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`in1d` is deprecated. Use `np.isin` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
@@ -805,10 +815,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
         Has the same shape as `element`. The values `element[isin]`
         are in `test_elements`.
 
-    See Also
-    --------
-    in1d                  : Flattened version of this function.
-
     Notes
     -----
 
@@ -876,8 +882,14 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
            [ True, False]])
     """
     element = np.asarray(element)
-    return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert, kind=kind).reshape(element.shape)
+    
+    # TODO: remove warning catch once `in1d` deprecation period passes
+    #       and import it as a private method.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        result = in1d(element, test_elements, assume_unique=assume_unique,
+                      invert=invert, kind=kind).reshape(element.shape)
+    return result
 
 
 def _union1d_dispatcher(ar1, ar2):
@@ -957,4 +969,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+    # TODO: remove warning catch once `in1d` deprecation period passes
+    #       and import it as a private method.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        result = ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+    return result

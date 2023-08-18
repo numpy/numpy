@@ -4783,6 +4783,9 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
+    .. deprecated:: 2.0
+        Use `scipy.integrate.trapezoid` instead.
+
     If `x` is provided, the integration happens in sequence along its
     elements - they are not sorted.
 
@@ -4880,6 +4883,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
     """
+
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`trapz` is deprecated. Use `scipy.integrate.trapezoid` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     y = asanyarray(y)
     if x is None:
         d = dx
