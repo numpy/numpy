@@ -399,21 +399,13 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
 NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
-    char *ip1 = args[0];
-    char *indxp = args[1];
-    char *value = args[2];
-    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
-    npy_intp shape = steps[3];
+    @type@ **indexed = (@type@ **)args[0];
+    char *value = args[1];
+    npy_intp isv = steps[1];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    @type@ *indexed;
-    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
-        npy_intp indx = *(npy_intp *)indxp;
-        if (indx < 0) {
-            indx += shape;
-        }
-        indexed = (@type@ *)(ip1 + is1 * indx);
-        *indexed = floor_div_@TYPE@(*indexed, *(@type@ *)value);
+
+    for (npy_intp i = 0; i < n; i++, indexed++, value += isv) {
+        **indexed = floor_div_@TYPE@(**indexed, *(@type@ *)value);
     }
     return 0;
 }
@@ -490,26 +482,18 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
 NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
-    char *ip1 = args[0];
-    char *indxp = args[1];
-    char *value = args[2];
-    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
-    npy_intp shape = steps[3];
+    @type@ **indexed = (@type@ **)args[0];
+    char *value = args[1];
+    npy_intp isv = steps[1];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    @type@ *indexed;
-    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
-        npy_intp indx = *(npy_intp *)indxp;
-        if (indx < 0) {
-            indx += shape;
-        }
-        indexed = (@type@ *)(ip1 + is1 * indx);
+
+    for (npy_intp i = 0; i < n; i++, indexed++, value += isv) {
         @type@ in2 = *(@type@ *)value;
         if (NPY_UNLIKELY(in2 == 0)) {
             npy_set_floatstatus_divbyzero();
-            *indexed = 0;
+            **indexed = 0;
         } else {
-            *indexed = *indexed / in2;
+            **indexed = **indexed / in2;
         }
     }
     return 0;

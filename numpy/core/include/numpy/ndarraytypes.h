@@ -1287,7 +1287,11 @@ typedef struct {
  * fields are slightly unordered to keep consec, dataptr and subspace
  * where they were originally.
  */
-typedef struct {
+struct PyArrayMapIterObject_tag;
+typedef int (_mapiter_update_pointers_func)(
+    struct PyArrayMapIterObject_tag *mit, npy_intp count, PyThreadState *_save);
+
+typedef struct PyArrayMapIterObject_tag {
         PyObject_HEAD
         /*
          * Multi-iterator portion --- needs to be present in this
@@ -1357,17 +1361,20 @@ typedef struct {
         NpyIter_IterNextFunc  *outer_next;
         char                  **outer_ptrs;
         npy_intp              *outer_strides;
+        npy_intp              outer_count;
 
         /*
          * Information about the subspace iterator.
          */
         NpyIter               *subspace_iter;
+        npy_intp              subspace_count;
         NpyIter_IterNextFunc  *subspace_next;
         char                  **subspace_ptrs;
         npy_intp              *subspace_strides;
 
         /* Count for the external loop (which ever it is) for API iteration */
-        npy_intp              iter_count;
+        _mapiter_update_pointers_func *update_pointers;
+        char                  **array_pointers;
 
 } PyArrayMapIterObject;
 

@@ -64,17 +64,44 @@ class Broadcast(Benchmark):
 
 
 class At(Benchmark):
-    def setup(self):
+    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+              np.uint32, np.uint64, np.float32, np.float64)
+    param_names = ['dtype']
+
+    def setup(self, dtype):
         rng = np.random.default_rng(1)
         self.vals = rng.random(10_000_000, dtype=np.float64)
-        self.idx = rng.integers(1000, size=10_000_000).astype(np.intp)
-        self.res = np.zeros(1000, dtype=self.vals.dtype)
+        if isinstance(dtype, np.integer):
+            self.vals *= np.iinfo(dtype).max
+        self.vals = self.vals.astype(dtype)
+        self.idx = rng.integers(100000, size=10_000_000).astype(np.intp)
+        self.idx_shuffled = self.idx.copy()
+        rng.shuffle(self.idx_shuffled)
+        self.res = np.zeros(100000, dtype=dtype)
 
-    def time_sum_at(self):
+    def time_sum_at(self, dtype):
         np.add.at(self.res, self.idx, self.vals)
 
-    def time_maximum_at(self):
+    def time_sum_at_random(self, dtype):
+        np.add.at(self.res, self.idx_shuffled, self.vals)
+
+    def time_maximum_at(self, dtype):
         np.maximum.at(self.res, self.idx, self.vals)
+
+class At2D(Benchmark):
+    def setup(self):
+        rng = np.random.default_rng(1)
+        self.vals = rng.random(10_000)
+        self.idx = rng.integers(1000, size=10_000).astype(np.intp)
+        self.res = np.zeros((1000, 1000))
+
+    def time_add_at_sliced(self):
+        # Only one index to a 2-D array:
+        np.add.at(self.res, self.idx, self.vals[:, None])
+
+    def time_add_at_2d(self):
+        # Both dimension of the result are indexed:
+        np.add.at(self.res, (self.idx, self.idx), self.vals)
 
 
 class UFunc(Benchmark):
