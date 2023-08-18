@@ -13,16 +13,16 @@ suggestions, please don’t hesitate to `reach out
 Welcome to NumPy!
 -----------------
 
-NumPy (**Numerical Python**) is an open source Python library that's used in
+NumPy (**Numerical Python**) is an open-source Python library that's used in
 almost every field of science and engineering. It's the universal standard for
 working with numerical data in Python, and it's at the core of the scientific
 Python and PyData ecosystems. NumPy users include everyone from beginning coders
 to experienced researchers doing state-of-the-art scientific and industrial
 research and development. The NumPy API is used extensively in Pandas, SciPy,
-Matplotlib, scikit-learn, scikit-image and most other data science and
+Matplotlib, scikit-learn, scikit-image, and most other data science and
 scientific Python packages.
 
-The NumPy library contains multidimensional array and matrix data structures
+The NumPy library contains a multidimensional array and matrix data structures
 (you'll find more information about this in later sections). It provides
 **ndarray**, a homogeneous n-dimensional array object, with methods to
 efficiently operate on it. NumPy can be used to perform a wide variety of
@@ -52,7 +52,7 @@ or ::
 
 If you don't have Python yet, you might want to consider using `Anaconda
 <https://www.anaconda.com/>`_. It's the easiest way to get started. The good
-thing about getting this distribution is the fact that you don’t need to worry
+the thing about getting this distribution is the fact that you don’t need to worry
 too much about separately installing NumPy or any of the major packages that
 you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
 
@@ -65,7 +65,7 @@ To access NumPy and its functions import it in your Python code like this::
 
 We shorten the imported name to ``np`` for better readability of code using
 NumPy. This is a widely adopted convention that makes your code more readable
-for everyone working on it. We recommend to always use import numpy as ``np``.
+for everyone working on it. We recommend always using import numpy as ``np``.
 
 Reading the example code
 ------------------------
@@ -409,9 +409,9 @@ doesn't need to be specified.)
 If you want to learn more about C and Fortran order, you can
 :ref:`read more about the internal organization of NumPy arrays here <numpy-internals>`.
 Essentially, C and Fortran orders have to do with how indices correspond
-to the order the array is stored in memory. In Fortran, when moving through
+to the order in the array stored in memory. In Fortran, when moving through
 the elements of a two-dimensional array as it is stored in memory, the **first**
-index is the most rapidly varying index. As the first index moves to the next
+an index is the most rapidly varying index. As the first index moves to the next
 row as it changes, the matrix is stored one column at a time.
 This is why Fortran is thought of as a **Column-major language**.
 In C on the other hand, the **last** index changes
@@ -570,8 +570,8 @@ example, less than 5::
   (array([0, 0, 0, 0]), array([0, 1, 2, 3]))
 
 In this example, a tuple of arrays was returned: one for each dimension. The
-first array represents the row indices where these values are found, and the
-second array represents the column indices where the values are found.
+the first array represents the row indices where these values are found and the
+the second array represents the column indices where the values are found.
 
 If you want to generate a list of coordinates where the elements exist, you can
 zip the arrays, iterate over the list of coordinates, and print them. For
@@ -622,7 +622,7 @@ Let's say you have this array:
 
   >>> a = np.array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 
-You can create a new array from a section of your array any time by specifying
+You can create a new array from a section of your array at any time by specifying
 where you want to slice your array. ::
 
   >>> arr1 = a[3:8]
@@ -690,7 +690,7 @@ same data as the original array (a *shallow copy*).
 
 Views are an important NumPy concept! NumPy functions, as well as operations
 like indexing and slicing, will return views whenever possible. This saves
-memory and is faster (no copy of the data has to be made). However it's
+memory and is faster (no copy of the data has to be made). However, it's
 important to be aware of this - modifying data in a view also modifies the
 original array!
 
@@ -728,7 +728,7 @@ Basic array operations
 -----
 
 Once you've created your arrays, you can start to work with them.  Let's say,
-for example, that you've created two arrays, one called "data" and one called
+for example, you've created two arrays, one called "data" and one called
 "ones"
 
 .. image:: images/np_array_dataones.png
@@ -800,9 +800,9 @@ convert the information to kilometers. You can perform this operation with::
 
 .. image:: images/np_multiply_broadcasting.png
 
-NumPy understands that the multiplication should happen with each cell. That
+NumPy understands that multiplication should happen with each cell. That
 concept is called **broadcasting**. Broadcasting is a mechanism that allows
-NumPy to perform operations on arrays of different shapes. The dimensions of
+NumPy performs operations on arrays of different shapes. The dimensions of
 your array must be compatible, for example, when the dimensions of both arrays
 are equal or when one of them is 1. If the dimensions are not compatible, you
 will get a ``ValueError``.
@@ -1037,7 +1037,7 @@ you can use ``np.unique`` to print the unique values in your array::
   >>> print(unique_values)
   [11 12 13 14 15 16 17 18 19 20]
 
-To get the indices of unique values in a NumPy array (an array of first index
+To get the indices of unique values in a NumPy array (an array of the first index
 positions of unique values in the array), just pass the ``return_index``
 argument in ``np.unique()`` as well as your array. ::
 
@@ -1369,7 +1369,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   (for the __new__ method; see Notes below)
 
   shape : tuple of ints
-          Shape of created array.
+          The shape of the created array.
   ...
 
 This also works for functions and other objects that **you** create. Just
@@ -1455,7 +1455,7 @@ You can visualize it this way:
 
 .. image:: images/np_mse_viz1.png
 
-In this example, both the predictions and labels vectors contain three values,
+In this example, both the predictions and label vectors contain three values,
 meaning ``n`` has a value of three. After we carry out subtractions the values
 in the vector are squared. Then NumPy sums the values, and your result is the
 error value for that prediction and a score for the quality of the model.
