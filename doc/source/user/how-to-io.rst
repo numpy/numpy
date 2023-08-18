@@ -99,7 +99,7 @@ that have missing values if
 * **Each field has a fixed width**: Use the width as the `delimiter` argument.::
 
     # File with width=4. The data does not have to be justified (for example,
-    # the 2 in row 1), the last column can be less than width (for example, the 6
+    # the 2 in row 1), the last column can be less than the width (for example, the 6
     # in row 2), and no delimiting character is required (for instance 8888 and 9
     # in row 3)
 
@@ -145,7 +145,7 @@ that have missing values if
     7 888 9
 
     >>> np.genfromtxt("skip.txt", invalid_raise=False)  # doctest: +SKIP
-    __main__:1: ConversionWarning: Some errors were detected !
+    __main__:1: ConversionWarning: Some errors were detected!
         Line #2 (got 2 columns instead of 3)
     array([[  1.,   2.,   3.],
            [  7., 888.,   9.]])
@@ -279,7 +279,7 @@ arrays using memory mapping.
 
       array = numpy.memmap("mydata/myarray.arr", mode="r", dtype=np.int16, shape=(1024, 1024))
 
-- Files output by :func:`numpy.save` (that is, using the numpy format) can be read
+- Files output by :func:`numpy.save` (that is, using the NumPy format) can be read
   using :func:`numpy.load` with the ``mmap_mode`` keyword argument::
 
       large_array[some_slice] = np.load("path/to/small_array", mmap_mode="r")
@@ -337,7 +337,7 @@ storage.
 .. testcleanup::
 
    >>> import os
-   >>> # list all files created in testsetup. If needed there are
+   >>> # List all files created in the test setup. If needed there are
    >>> # convenienes in e.g. astroquery to do this more automatically
    >>> for filename in ['csv.txt', 'fixedwidth.txt', 'nan.txt', 'skip.txt', 'tabs.txt']:
    ...     os.remove(filename)
