@@ -252,9 +252,9 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     if (PyArray_DESCR(array)->f->compare == NULL) {
         PyErr_SetString(PyExc_TypeError,
-                        "type does not have compare function");
+                        "dtype %S does not have compare function", array);
         Py_DECREF(array);
-        return -1;
+        return NULL;
     }
 
     assert(PyArray_TRIVIALLY_ITERABLE(array));
