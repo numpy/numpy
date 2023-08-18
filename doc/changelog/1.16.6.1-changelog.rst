@@ -1,0 +1,17 @@
+
+Contributors
+============
+
+A total of 3 people contributed to this release.
+
+* Charles Harris
+* Matti Picus
+* Sebastian Berg
+
+
+Pull requests merged
+====================
+
+A total of 1 pull requests were merged for this release.
+
+* `#20984 <https://github.com/numpy/numpy/pull/20984>`__: ENH: review return values for PyArray_DescrNew

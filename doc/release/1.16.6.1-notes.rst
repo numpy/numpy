@@ -1,0 +1,45 @@
+==========================
+NumPy 1.16.6.1 Release Notes
+==========================
+
+The NumPy 1.16.6.1 release backports a CVE fix from 1.22.2.
+
+Downstream developers building this release should use Cython >= 0.29.2 and, if
+using OpenBLAS, OpenBLAS >= v0.3.7. The supported Python versions are 2.7 and
+3.5-3.7.
+
+- Deal with CVE-2021-41495 CVE
+
+Highlights
+==========
+
+- Fix for CVE-2021-41495
+
+
+New functions
+=============
+
+
+Compatibility notes
+===================
+
+
+Improvements
+============
+
+
+Contributors
+============
+
+A total of 3 people contributed to this release.
+
+* Charles Harris
+* Matti Picus
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 1 pull requests were merged for this release.
+
+* `#20984 <https://github.com/numpy/numpy/pull/20984>`__: ENH: review return values for PyArray_DescrNew
