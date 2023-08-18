@@ -392,7 +392,7 @@ NPY_NO_EXPORT int
         return -1;
     }
     if (ap == NULL || PyArray_ISBEHAVED(ap)) {
-        assert(npy_is_aligned(ov, _ALIGN(@type@)));
+        assert(npy_is_aligned(ov, NPY_ALIGNOF(@type@)));
         *((@type@ *)ov)=temp;
     }
     else {
@@ -809,7 +809,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
 
 /* OBJECT */
 
-#define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
+#define NPY__ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 
 static PyObject *
 OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
@@ -2426,10 +2426,10 @@ OBJECT_copyswapn(PyObject **dst, npy_intp dstride, PyObject **src,
 {
     npy_intp i;
     if (src != NULL) {
-        if (__ALIGNED(dst, sizeof(PyObject **))
-                && __ALIGNED(src, sizeof(PyObject **))
-                && __ALIGNED(dstride, sizeof(PyObject **))
-                && __ALIGNED(sstride, sizeof(PyObject **))) {
+        if (NPY__ALIGNED(dst, sizeof(PyObject **))
+                && NPY__ALIGNED(src, sizeof(PyObject **))
+                && NPY__ALIGNED(dstride, sizeof(PyObject **))
+                && NPY__ALIGNED(sstride, sizeof(PyObject **))) {
             dstride /= sizeof(PyObject **);
             sstride /= sizeof(PyObject **);
             for (i = 0; i < n; i++) {
@@ -2466,8 +2466,8 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap),
 {
 
     if (src != NULL) {
-        if (__ALIGNED(dst,sizeof(PyObject **)) &&
-                __ALIGNED(src,sizeof(PyObject **))) {
+        if (NPY__ALIGNED(dst,sizeof(PyObject **)) &&
+                NPY__ALIGNED(src,sizeof(PyObject **))) {
             Py_XINCREF(*src);
             Py_XDECREF(*dst);
             *dst = *src;
@@ -2927,7 +2927,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             }
 
             dummy_fields.descr = new;
-            if ((new->alignment > 1) && !__ALIGNED(ip + offset,
+            if ((new->alignment > 1) && !NPY__ALIGNED(ip + offset,
                         new->alignment)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
@@ -2952,7 +2952,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
     return nonz;
 }
 
-#undef __ALIGNED
+#undef NPY__ALIGNED
 
 
 /*
@@ -4326,7 +4326,7 @@ static PyArray_Descr @from@_Descr = {
     /* elsize */
     0,
     /* alignment */
-    _ALIGN(@align@),
+    NPY_ALIGNOF(@align@),
     /* subarray */
     NULL,
     /* fields */
@@ -4476,7 +4476,7 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* elsize */
     sizeof(@fromtype@),
     /* alignment */
-    _ALIGN(@fromtype@),
+    NPY_ALIGNOF(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4815,7 +4815,7 @@ set_typeinfo(PyObject *dict)
      */
 
     s = PyArray_typeinforanged(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, _ALIGN(@type@),
+        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, NPY_ALIGNOF(@type@),
         Py_BuildValue("@cx@", @max@),
         Py_BuildValue("@cn@", @min@),
         &Py@Name@ArrType_Type
@@ -4846,7 +4846,7 @@ set_typeinfo(PyObject *dict)
      */
     s = PyArray_typeinfo(
         NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        _ALIGN(@type@), &Py@Name@ArrType_Type
+        NPY_ALIGNOF(@type@), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
         Py_DECREF(infodict);
@@ -4863,7 +4863,7 @@ set_typeinfo(PyObject *dict)
 
     s = PyArray_typeinfo(
         NPY_OBJECTLTR, NPY_OBJECT, sizeof(PyObject *) * CHAR_BIT,
-        _ALIGN(PyObject *),
+        NPY_ALIGNOF(PyObject *),
         &PyObjectArrType_Type
     );
     if (s == NULL) {
@@ -4877,7 +4877,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
+        NPY_STRINGLTR, NPY_STRING, 0, NPY_ALIGNOF(char),
         &PyStringArrType_Type
     );
     if (s == NULL) {
@@ -4891,7 +4891,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
+        NPY_UNICODELTR, NPY_UNICODE, 0, NPY_ALIGNOF(npy_ucs4),
         &PyUnicodeArrType_Type
     );
     if (s == NULL) {
@@ -4905,7 +4905,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
+        NPY_VOIDLTR, NPY_VOID, 0, NPY_ALIGNOF(char),
         &PyVoidArrType_Type
     );
     if (s == NULL) {
@@ -4920,7 +4920,7 @@ set_typeinfo(PyObject *dict)
     }
     s = PyArray_typeinforanged(
         NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
-        _ALIGN(npy_datetime),
+        NPY_ALIGNOF(npy_datetime),
         MyPyLong_FromInt64(NPY_MAX_DATETIME),
         MyPyLong_FromInt64(NPY_MIN_DATETIME),
         &PyDatetimeArrType_Type
@@ -4937,7 +4937,7 @@ set_typeinfo(PyObject *dict)
     }
     s = PyArray_typeinforanged(
         NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
-        _ALIGN(npy_timedelta),
+        NPY_ALIGNOF(npy_timedelta),
         MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
         MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
         &PyTimedeltaArrType_Type
