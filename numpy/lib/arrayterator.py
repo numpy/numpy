@@ -48,9 +48,10 @@ class Arrayterator:
 
     See Also
     --------
-    ndenumerate : Multidimensional array iterator.
-    flatiter : Flat array iterator.
-    memmap : Create a memory-map to an array stored in a binary file on disk.
+    numpy.ndenumerate : Multidimensional array iterator.
+    numpy.flatiter : Flat array iterator.
+    numpy.memmap : Create a memory-map to an array stored
+                   in a binary file on disk.
 
     Notes
     -----
