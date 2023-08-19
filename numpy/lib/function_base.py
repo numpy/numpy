@@ -5714,16 +5714,16 @@ def digitize(x, bins, right=False, endpoint=False):
         if right:
             if mono > 0:
                 # include the left edge in the first bin.
-                indices[(indices == 0) & (x == bins[0])] += 1
+                indices[x == bins[0]] = 1
             else:
                 # include the right edge in the first bin.
-                indices[(indices == 2) & (x == bins[1])] -= 1
+                indices[x == bins[1]] = 1
         else:
             if mono > 0:
                 # include the right edge in the last bin.
-                indices[(indices == n_bins) & (x == bins[-1])] -= 1
+                indices[x == bins[-1]] = n_bins - 1
             else:
                 # include the left edge in the last bin.
-                indices[(indices == n_bins - 2) & (x == bins[-2])] += 1
+                indices[x == bins[-2]] = n_bins - 1
 
     return indices
