@@ -377,7 +377,7 @@ class TestModulus:
                 rem = operator.mod(fone, fnan)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
-                assert_(np.isnan(rem), 'dt: %s' % dt)
+                assert_equal(rem, 0, 'dt: %s' % dt)
                 for op in [floordiv_and_mod, divmod]:
                     div, mod = op(fone, fzer)
                     assert_(np.isinf(div)) and assert_(np.isnan(mod))
