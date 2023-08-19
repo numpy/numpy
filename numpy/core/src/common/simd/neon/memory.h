@@ -187,19 +187,28 @@ NPY_FINLINE void npyv_storen2_f64(double *ptr, npy_intp stride, npyv_f64 a)
 NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, npy_int32 fill)
 {
     assert(nlane > 0);
+    npyv_s32 a;
     switch(nlane) {
     case 1:
-        return vld1q_lane_s32((const int32_t*)ptr, vdupq_n_s32(fill), 0);
+        a = vld1q_lane_s32((const int32_t*)ptr, vdupq_n_s32(fill), 0);
+        break;
     case 2:
-        return vcombine_s32(vld1_s32((const int32_t*)ptr), vdup_n_s32(fill));
+        a = vcombine_s32(vld1_s32((const int32_t*)ptr), vdup_n_s32(fill));
+        break;
     case 3:
-        return vcombine_s32(
+        a = vcombine_s32(
             vld1_s32((const int32_t*)ptr),
             vld1_lane_s32((const int32_t*)ptr + 2, vdup_n_s32(fill), 0)
         );
+        break;
     default:
         return npyv_load_s32(ptr);
     }
+#if NPY_SIMD_GUARD_PARTIAL_LOAD
+    volatile npyv_s32 workaround = a;
+    a = vorrq_s32(workaround, a);
+#endif
+    return a;
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
@@ -209,7 +218,12 @@ NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, n
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return vcombine_s64(vld1_s64((const int64_t*)ptr), vdup_n_s64(fill));
+        npyv_s64 a = vcombine_s64(vld1_s64((const int64_t*)ptr), vdup_n_s64(fill));
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s64 workaround = a;
+        a = vorrq_s64(workaround, a);
+    #endif
+        return a;
     }
     return npyv_load_s64(ptr);
 }
@@ -224,7 +238,12 @@ NPY_FINLINE npyv_s32 npyv_load2_till_s32(const npy_int32 *ptr, npy_uintp nlane,
     assert(nlane > 0);
     if (nlane == 1) {
         const int32_t NPY_DECL_ALIGNED(16) fill[2] = {fill_lo, fill_hi};
-        return vcombine_s32(vld1_s32((const int32_t*)ptr), vld1_s32(fill));
+        npyv_s32 a = vcombine_s32(vld1_s32((const int32_t*)ptr), vld1_s32(fill));
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = a;
+        a = vorrq_s32(workaround, a);
+    #endif
+        return a;
     }
     return npyv_load_s32(ptr);
 }
@@ -256,10 +275,15 @@ npyv_loadn_till_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane, npy_
         vfill = vld1q_lane_s32((const int32_t*)ptr + stride, vfill, 1);
     case 1:
         vfill = vld1q_lane_s32((const int32_t*)ptr, vfill, 0);
-        return vfill;
+        break;
     default:
         return npyv_loadn_s32(ptr, stride);
     }
+#if NPY_SIMD_GUARD_PARTIAL_LOAD
+    volatile npyv_s32 workaround = vfill;
+    vfill = vorrq_s32(workaround, vfill);
+#endif
+    return vfill;
 }
 NPY_FINLINE npyv_s32
 npyv_loadn_tillz_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane)
@@ -270,7 +294,7 @@ npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return vcombine_s64(vld1_s64((const int64_t*)ptr), vdup_n_s64(fill));
+        return npyv_load_till_s64(ptr, 1, fill);
     }
     return npyv_loadn_s64(ptr, stride);
 }
@@ -285,7 +309,12 @@ NPY_FINLINE npyv_s32 npyv_loadn2_till_s32(const npy_int32 *ptr, npy_intp stride,
     assert(nlane > 0);
     if (nlane == 1) {
         const int32_t NPY_DECL_ALIGNED(16) fill[2] = {fill_lo, fill_hi};
-        return vcombine_s32(vld1_s32((const int32_t*)ptr), vld1_s32(fill));
+        npyv_s32 a = vcombine_s32(vld1_s32((const int32_t*)ptr), vld1_s32(fill));
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = a;
+        a = vorrq_s32(workaround, a);
+    #endif
+        return a;
     }
     return npyv_loadn2_s32(ptr, stride);
 }
@@ -293,7 +322,12 @@ NPY_FINLINE npyv_s32 npyv_loadn2_tillz_s32(const npy_int32 *ptr, npy_intp stride
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return vcombine_s32(vld1_s32((const int32_t*)ptr), vdup_n_s32(0));
+        npyv_s32 a = vcombine_s32(vld1_s32((const int32_t*)ptr), vdup_n_s32(0));
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = a;
+        a = vorrq_s32(workaround, a);
+    #endif
+        return a;
     }
     return npyv_loadn2_s32(ptr, stride);
 }
