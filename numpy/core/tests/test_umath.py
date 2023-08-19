@@ -859,6 +859,46 @@ class TestRemainder:
                 assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
                 assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
 
+    def test_float_divmod_inf(self):
+        # check nan cases
+        for dt in np.typecodes['Float']:
+            fnan = np.array(np.nan, dtype=dt)
+            fone = np.array(1.0, dtype=dt)
+            fzer = np.array(0.0, dtype=dt)
+            finf = np.array(np.inf, dtype=dt)
+
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "invalid value encountered in divmod")
+                sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+                
+                div, rem = np.divmod(finf, fzer)
+                assert_(np.isinf(div), 'dt: %s, div: %s' % (dt, rem))
+                assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
+
+                div, rem = np.divmod(-finf, fone)
+                assert_equal(div, -finf, 'dt: %s, rem: %s' % (dt, rem))
+                assert_equal(rem, 0.0, 'dt: %s, rem: %s' % (dt, rem))
+
+                div, rem = np.divmod(finf, fnan)
+                assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))
+                assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
+                
+                div, rem = np.divmod(-finf, -finf)
+                assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))
+                assert_equal(rem, -0.0, 'dt: %s, rem: %s' % (dt, rem))
+                
+                div, rem = np.divmod(fzer, finf)
+                assert_equal(div, 0, "dt: %s, rem: %s" % (dt, rem))
+                assert_equal(rem, 0, "dt: %s, rem: %s" % (dt, rem))
+                
+                div, rem = np.divmod(fone, finf)
+                assert_equal(div, 0, "dt: %s, rem: %s" % (dt, rem))
+                assert_equal(rem, fone, "dt: %s, rem: %s" % (dt, rem))
+                
+                div, rem = np.divmod(fnan, finf)
+                assert_(np.isnan(div), "dt: %s, rem: %s" % (dt, rem))
+                assert_(np.isnan(rem), "dt: %s, rem: %s" % (dt, rem))
+
     def test_float_remainder_corner_cases(self):
         # Check remainder magnitude.
         for dt in np.typecodes['Float']:

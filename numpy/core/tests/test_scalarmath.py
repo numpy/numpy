@@ -384,11 +384,16 @@ class TestModulus:
 
     def test_float_modulus_inf(self):
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
-            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
-            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
+            sup.filter(RuntimeWarning, 
+                       "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, 
+                       "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, 
+                       "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, 
+                       "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, 
+                       "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
             fzer = np.array(0.0, dtype=dt)
@@ -417,6 +422,17 @@ class TestModulus:
 
             rem = operator.mod(finf, -finf)
             assert_equal(rem, -0.0, 'dt: %s' % dt)
+
+            rem = operator.mod(fzer, finf)
+            assert_equal(rem, 0, "dt: %s" % dt)
+                
+            rem = operator.mod(fone, finf)
+            assert_equal(rem, fone, "dt: %s" % dt)
+                
+            rem = operator.mod(fnan, finf)
+            assert(np.isnan(rem), "dt: %s" % dt)
+
+        
             
             
 
