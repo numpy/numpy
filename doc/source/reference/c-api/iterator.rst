@@ -557,7 +557,7 @@ Construction and Destruction
     Indicate how the user of the iterator will read or write
     to ``op[i]``.  Exactly one of these flags must be specified
     per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
-    for a user-provided operand may trigger `WRITEBACKIFCOPY``
+    for a user-provided operand may trigger ``WRITEBACKIFCOPY``
     semantics. The data will be written back to the original array
     when ``NpyIter_Deallocate`` is called.
 

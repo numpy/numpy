@@ -3229,7 +3229,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     array([b'ceg', b'fac'], dtype='|S3')
 
     ``A.newbyteorder().byteswap()`` produces an array with the same values
-      but different representation in memory
+    but different representation in memory
 
     >>> A = np.array([1, 2, 3])
     >>> A.view(np.uint8)
@@ -6476,10 +6476,13 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Attributes
     ----------
-    Note: once a busdaycalendar object is created, you cannot modify the
-    weekmask or holidays.  The attributes return copies of internal data.
     weekmask : (copy) seven-element array of bool
     holidays : (copy) sorted array of datetime64[D]
+
+    Notes
+    -----
+    once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
 
     Examples
     --------
