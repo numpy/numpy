@@ -193,6 +193,9 @@ repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}
 [tool.spin]
 package = 'numpy'
 
+[tool.spin.meson]
+cli = 'vendored-meson/meson/meson.py'
+
 [tool.spin.commands]
 "Build" = [
   ".spin/cmds.py:build",
