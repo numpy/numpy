@@ -396,45 +396,44 @@ class TestModulus:
                        "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
-            fzer = np.array(0.0, dtype=dt)
-            fval = np.array(5435.985943, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                fval = np.array(5435.985943, dtype=dt)
             
-            finf = np.array(np.inf, dtype=dt)
-            fnan = np.array(np.nan, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
 
-            rem = operator.mod(finf, fone)
-            assert_equal(rem, 0, 'dt: %s' % dt)
+                rem = operator.mod(finf, fone)
+                assert_equal(rem, 0.0, 'dt: %s' % dt)
 
-            rem = operator.mod(-finf, fone)
-            assert_equal(rem, 0.0, 'dt: %s' % dt)
+                rem = operator.mod(-finf, fone)
+                assert_equal(rem, 0.0, 'dt: %s' % dt)
 
-            rem = operator.mod(finf, fzer)
-            assert_(np.isnan(rem), 'dt: %s' % dt)
+                rem = operator.mod(finf, fone)
+                assert_equal(rem, 0, 'dt: %s' % dt)
 
-            rem = operator.mod(finf, -fval)
-            assert_equal(rem, -0.0, 'dt: %s' % dt)
+                rem = operator.mod(finf, fzer)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
 
-            rem = operator.mod(finf, fnan)
-            assert_equal(rem, 0, 'dt: %s' % dt)
+                rem = operator.mod(finf, -fval)
+                assert_equal(rem, -0.0, 'dt: %s' % dt)
 
-            rem = operator.mod(finf, finf)
-            assert_equal(rem, 0, 'dt: %s' % dt)
+                rem = operator.mod(finf, finf)
+                assert_equal(rem, 0, 'dt: %s' % dt)
 
-            rem = operator.mod(finf, -finf)
-            assert_equal(rem, -0.0, 'dt: %s' % dt)
+                rem = operator.mod(finf, -finf)
+                assert_equal(rem, -0.0, 'dt: %s' % dt)
 
-            rem = operator.mod(fzer, finf)
-            assert_equal(rem, 0, "dt: %s" % dt)
+                rem = operator.mod(finf, fnan)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+
+                rem = operator.mod(fzer, finf)
+                assert_equal(rem, 0, "dt: %s" % dt)
                 
-            rem = operator.mod(fone, finf)
-            assert_equal(rem, fone, "dt: %s" % dt)
+                rem = operator.mod(fone, finf)
+                assert_equal(rem, fone, "dt: %s" % dt)
                 
-            rem = operator.mod(fnan, finf)
-            assert(np.isnan(rem), "dt: %s" % dt)
-
-        
-            
-            
+                rem = operator.mod(fnan, finf)
+                assert_(np.isnan(rem), "dt: %s" % dt)
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927

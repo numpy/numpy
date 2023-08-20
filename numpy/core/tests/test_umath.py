@@ -848,7 +848,7 @@ class TestRemainder:
                 assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
                 div, rem = np.divmod(finf, fzer)
                 assert(np.isinf(div)), 'dt: %s, rem: %s' % (dt, rem)
-                assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
+                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
                 div, rem = np.divmod(fnan, fone)
                 assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
                 assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
@@ -872,16 +872,16 @@ class TestRemainder:
                 sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
                 
                 div, rem = np.divmod(finf, fzer)
-                assert_(np.isinf(div), 'dt: %s, div: %s' % (dt, rem))
-                assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
+                assert(np.isinf(div)), 'dt: %s, div: %s' % (dt, rem)
+                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
 
                 div, rem = np.divmod(-finf, fone)
                 assert_equal(div, -finf, 'dt: %s, rem: %s' % (dt, rem))
                 assert_equal(rem, 0.0, 'dt: %s, rem: %s' % (dt, rem))
 
                 div, rem = np.divmod(finf, fnan)
-                assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))
-                assert_equal(rem, 0, 'dt: %s, rem: %s' % (dt, rem))
+                assert(np.isnan(div)), 'dt: %s, rem: %s' % (dt, rem)
+                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
                 
                 div, rem = np.divmod(-finf, -finf)
                 assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))

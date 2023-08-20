@@ -566,8 +566,10 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     
     if (NPY_UNLIKELY(!b)) {
         /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
-        *modulus = mod;
+        *modulus = NPY_NAN;
         return a / b;
+    } else if (npy_isnan(b)) {
+        mod = NPY_NAN;
     }
 
     /* a - mod should be very nearly an integer multiple of b */
