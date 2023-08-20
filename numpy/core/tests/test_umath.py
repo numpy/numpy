@@ -868,8 +868,10 @@ class TestRemainder:
             finf = np.array(np.inf, dtype=dt)
 
             with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning, "invalid value encountered in divmod")
-                sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+                sup.filter(RuntimeWarning,
+                        "invalid value encountered in divmod")
+                sup.filter(RuntimeWarning,
+                           "divide by zero encountered in divmod")
                 
                 div, rem = np.divmod(finf, fzer)
                 assert(np.isinf(div)), 'dt: %s, div: %s' % (dt, rem)
