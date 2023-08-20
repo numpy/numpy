@@ -308,8 +308,7 @@ class TestIntegral:
         assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
         assert_raises(ValueError, poly.polyint, [0], scl=[0])
         assert_raises(TypeError, poly.polyint, [0], axis=.5)
-        with assert_warns(DeprecationWarning):
-            poly.polyint([1, 1], 1.)
+        assert_raises(TypeError, poly.polyint, [1, 1], 1.)
 
         # test integration of zero polynomial
         for i in range(2, 5):

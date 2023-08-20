@@ -717,41 +717,26 @@ def _pow(mul_f, c, pow, maxpower):
         return prd
 
 
-def _deprecate_as_int(x, desc):
+def _as_int(x, desc):
     """
-    Like `operator.index`, but emits a deprecation warning when passed a float
+    Like `operator.index`, but emits a custom exception when passed an 
+    incorrect type
 
     Parameters
     ----------
-    x : int-like, or float with integral value
+    x : int-like
         Value to interpret as an integer
     desc : str
         description to include in any error message
 
     Raises
     ------
-    TypeError : if x is a non-integral float or non-numeric
-    DeprecationWarning : if x is an integral float
+    TypeError : if x is a float or non-numeric
     """
     try:
         return operator.index(x)
     except TypeError as e:
-        # Numpy 1.17.0, 2019-03-11
-        try:
-            ix = int(x)
-        except TypeError:
-            pass
-        else:
-            if ix == x:
-                warnings.warn(
-                    f"In future, this will raise TypeError, as {desc} will "
-                    "need to be an integer not just an integral float.",
-                    DeprecationWarning,
-                    stacklevel=3
-                )
-                return ix
-
-        raise TypeError(f"{desc} must be an integer") from e
+        raise TypeError(f"{desc} must be an integer, received {x}") from e
 
 
 def format_float(x, parens=False):
