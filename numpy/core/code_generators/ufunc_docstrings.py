@@ -1018,7 +1018,7 @@ add_newdoc('numpy.core.umath', 'heaviside',
     """
     Compute the Heaviside step function.
 
-    The Heaviside step function is defined as::
+    The Heaviside step function [1]_ is defined as::
 
                               0   if x1 < 0
         heaviside(x1, x2) =  x2   if x1 == 0
