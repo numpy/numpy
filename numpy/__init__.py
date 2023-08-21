@@ -212,7 +212,7 @@ else:
         take_along_axis, tile, tracemalloc_domain, trapz, tri, tril,
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
         unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
-        triu, triu_indices, triu_indices_from, isposinf, RankWarning, disp,
+        triu, triu_indices, triu_indices_from, isposinf, disp,
         deprecate, deprecate_with_doc, safe_eval, recfromtxt, recfromcsv
     )
     from . import matrixlib as _mat

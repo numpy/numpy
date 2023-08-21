@@ -3295,9 +3295,6 @@ class _CopyMode(enum.Enum):
     IF_NEEDED: L[False]
     NEVER: L[2]
 
-# Warnings
-class RankWarning(UserWarning): ...
-
 _CallType = TypeVar("_CallType", bound=Callable[..., Any])
 
 class errstate:

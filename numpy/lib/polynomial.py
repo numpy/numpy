@@ -4,7 +4,7 @@ Functions to operate on polynomials.
 """
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
-           'polyfit', 'RankWarning']
+           'polyfit']
 
 import functools
 import re
@@ -16,6 +16,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.core import overrides
+from numpy.exceptions import RankWarning
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
@@ -24,18 +25,6 @@ from numpy.linalg import eigvals, lstsq, inv
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
-
-
-@set_module('numpy')
-class RankWarning(UserWarning):
-    """
-    Issued by `polyfit` when the Vandermonde matrix is rank deficient.
-
-    For more information, a way to suppress the warning, and an example of
-    `RankWarning` being issued, see `polyfit`.
-
-    """
-    pass
 
 
 def _poly_dispatcher(seq_of_zeros):
@@ -539,7 +528,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         The warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -606,7 +595,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     High-order polynomials may oscillate wildly:
 
     >>> with warnings.catch_warnings():
-    ...     warnings.simplefilter('ignore', np.RankWarning)
+    ...     warnings.simplefilter('ignore', np.exceptions.RankWarning)
     ...     p30 = np.poly1d(np.polyfit(x, y, 30))
     ...
     >>> p30(4)

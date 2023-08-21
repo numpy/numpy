@@ -19,6 +19,7 @@ Warnings
 
    ComplexWarning             Given when converting complex to real.
    VisibleDeprecationWarning  Same as a DeprecationWarning, but more visible.
+   RankWarning                Issued when the design matrix is rank deficient.
 
 Exceptions
 ----------
@@ -69,6 +70,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
+    pass
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -79,6 +81,16 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
+    pass
+
+
+class RankWarning(RuntimeWarning):
+    """Martrix rank warning.
+    
+    Issued by polynomial functions when the design matrix is rank deficient.
+    
+    """
+    pass
 
 
 # Exception used in shares_memory()
@@ -91,7 +103,6 @@ class TooHardError(RuntimeError):
     to fail.
 
     """
-
     pass
 
 
