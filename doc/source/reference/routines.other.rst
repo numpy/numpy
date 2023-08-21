@@ -55,7 +55,6 @@ Matlab-like Functions
 .. autosummary::
    :toctree: generated/
 
-   who
    disp
 
 .. automodule:: numpy.exceptions
