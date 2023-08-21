@@ -6481,7 +6481,7 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Notes
     -----
-    once a busdaycalendar object is created, you cannot modify the
+    Once a busdaycalendar object is created, you cannot modify the
     weekmask or holidays.  The attributes return copies of internal data.
 
     Examples
