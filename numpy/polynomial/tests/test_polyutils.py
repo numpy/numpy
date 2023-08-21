@@ -16,6 +16,10 @@ class TestMisc:
             res = pu.trimseq([1] + [0]*5)
             assert_equal(res, tgt)
 
+    def test_trimseq_empty_input(self):
+        for empty_seq in [[], np.array([], dtype=np.int32)]:
+            assert_equal(pu.trimseq(empty_seq), empty_seq)
+
     def test_as_series(self):
         # check exceptions
         assert_raises(ValueError, pu.as_series, [[]])

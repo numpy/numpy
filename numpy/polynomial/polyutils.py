@@ -57,8 +57,7 @@ def trimseq(seq):
     Parameters
     ----------
     seq : sequence
-        Sequence of Poly series coefficients. This routine fails for
-        empty sequences.
+        Sequence of Poly series coefficients.
 
     Returns
     -------
@@ -72,7 +71,7 @@ def trimseq(seq):
     Do not lose the type info if the sequence contains unknown objects.
 
     """
-    if len(seq) == 0:
+    if len(seq) == 0 or seq[-1] != 0:
         return seq
     else:
         for i in range(len(seq) - 1, -1, -1):
