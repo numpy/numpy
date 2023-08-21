@@ -968,6 +968,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     npy_intp mi;
+    NPY_cast_info cast_info = {.func = NULL};
     ap = NULL;
 
     /*
@@ -1045,7 +1046,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
-    NPY_cast_info cast_info = {.func = NULL};
     if (PyDataType_REFCHK(dtype)) {
         int is_aligned = IsUintAligned(obj);
         PyArray_GetDTypeTransferFunction(

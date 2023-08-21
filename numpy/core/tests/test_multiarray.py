@@ -10042,3 +10042,9 @@ def test_gh_22683():
     np.choose(np.zeros(10000, dtype=int), [a], out=a)
     refc_end = sys.getrefcount(b)
     assert refc_end - refc_start < 10
+
+
+def test_gh_24459():
+    a = np.zeros((50, 3), dtype=np.float64)
+    with pytest.raises(TypeError):
+        np.choose(a, [3, -1])
