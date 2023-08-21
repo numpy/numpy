@@ -2310,7 +2310,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     for `atol` will result in `False` if either `a` or `b` is zero.
 
     `isclose` is not defined for non-numeric data types.
-    `bool` is considered a numeric data-type for this purpose.
+    :class:`bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------

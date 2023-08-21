@@ -256,7 +256,7 @@ def lagfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Laguerre form, where the `r_n` are the roots specified in `roots`.
+    in Laguerre form, where the :math:`r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The

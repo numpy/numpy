@@ -1080,7 +1080,7 @@ Converting data types
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
-    in the same way as `PyArray_ResultType`. The length of the sequence is
+    in the same way as :c:func:`PyArray_ResultType`. The length of the sequence is
     returned in *n*, and an *n* -length array of :c:type:`PyArrayObject`
     pointers is the return value (or ``NULL`` if an error occurs).
     The returned array must be freed by the caller of this routine
