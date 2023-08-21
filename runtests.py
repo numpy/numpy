@@ -26,7 +26,7 @@ Disable pytest capturing of output by using its '-s' option:
     $ python runtests.py -- -s
 
 Generate C code coverage listing under build/lcov/:
-(requires http://ltp.sourceforge.net/coverage/lcov.php)
+(requires https://github.com/linux-test-project/lcov)
 
     $ python runtests.py --gcov [...other args...]
     $ python runtests.py --lcov-html
