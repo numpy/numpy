@@ -211,10 +211,10 @@ class TestArrayEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._test_equal(b, c)
         msg = str(exc_info.value)
-        # assert_('Mismatched elements: 2 / 2 (100%)\n'
-        #         'Max absolute difference among violations: 2.\n'
-        #         'Max relative difference among violations: inf'
-        #         in msg)
+        assert_('Mismatched elements: 2 / 2 (100%)\n'
+                'Max absolute difference among violations: 2.\n'
+                'Max relative difference among violations: inf'
+                in msg)
 
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
