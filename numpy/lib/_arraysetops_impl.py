@@ -614,6 +614,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         stacklevel=2
     )
 
+    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)
+
+
+def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
@@ -882,13 +886,8 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
            [ True, False]])
     """
     element = np.asarray(element)
-    
-    # TODO: remove warning catch once `in1d` deprecation period passes
-    #       and import it as a private method.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = in1d(element, test_elements, assume_unique=assume_unique,
-                      invert=invert, kind=kind).reshape(element.shape)
+    result = _in1d(element, test_elements, assume_unique=assume_unique,
+                    invert=invert, kind=kind).reshape(element.shape)
     return result
 
 
@@ -969,9 +968,5 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    # TODO: remove warning catch once `in1d` deprecation period passes
-    #       and import it as a private method.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+    result = ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
     return result
