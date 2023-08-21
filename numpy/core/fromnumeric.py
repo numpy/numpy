@@ -23,7 +23,7 @@ __all__ = [
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'max', 'min',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -3841,33 +3841,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 # Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
-
-
-def _round__dispatcher(a, decimals=None, out=None):
-    # 2023-02-28, 1.25.0
-    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `round` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_round__dispatcher)
-def round_(a, decimals=0, out=None):
-    """
-    Round an array to the given number of decimals.
-
-    `~numpy.round_` is a disrecommended backwards-compatibility
-    alias of `~numpy.around` and `~numpy.round`.
-
-    .. deprecated:: 1.25.0
-        ``round_`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `round` instead.
-
-    See Also
-    --------
-    around : equivalent function; see for details.
-    """
-    return around(a, decimals=decimals, out=out)
 
 
 def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

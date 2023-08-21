@@ -724,10 +724,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
         self.assert_deprecated(np.finfo, args=(None,))
 
 class TestFromnumeric(_DeprecationTestCase):
-    # 2023-02-28, 1.25.0
-    def test_round_(self):
-        self.assert_deprecated(lambda: np.round_(np.array([1.5, 2.5, 3.5])))
-
     # 2023-03-02, 1.25.0
     def test_cumproduct(self):
         self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))

@@ -119,7 +119,6 @@ def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 def sctype2char(sctype: DTypeLike) -> str: ...
 
 cast: _typedict[_CastFunc]
-nbytes: _typedict[int]
 typecodes: _TypeCodes
 ScalarType: tuple[
     type[int],
