@@ -301,8 +301,8 @@ def descr_to_dtype(descr):
     """
     Returns a dtype based off the given description.
 
-    This is essentially the reverse of `dtype_to_descr()`. It will remove
-    the valueless padding fields created by, i.e. simple fields like
+    This is essentially the reverse of `~lib.format.dtype_to_descr`. It will
+    remove the valueless padding fields created by, i.e. simple fields like
     dtype('float32'), and then convert the description to its corresponding
     dtype.
 
@@ -310,7 +310,7 @@ def descr_to_dtype(descr):
     ----------
     descr : object
         The object retrieved by dtype.descr. Can be passed to
-        `numpy.dtype()` in order to replicate the input dtype.
+        `numpy.dtype` in order to replicate the input dtype.
 
     Returns
     -------

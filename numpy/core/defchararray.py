@@ -1935,7 +1935,7 @@ class chararray(ndarray):
        `dtype` `object_`, `bytes_` or `str_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
-    Versus a regular NumPy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str_` or `unicode_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2741,7 +2741,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
-    Versus a regular NumPy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str_` or `unicode_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2751,7 +2751,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `str.endswith`) and infix operators (e.g. ``+, *, %``)
+         (e.g. `~chararray.endswith`) and infix operators (e.g. ``+, *, %``)
 
     Parameters
     ----------
@@ -2777,7 +2777,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         None and `obj` is one of the following:
 
           - a `chararray`,
-          - an ndarray of type `str` or `unicode`
+          - an ndarray of type `str_` or `unicode_`
           - a Python str or unicode object,
 
         then the unicode setting of the output array will be
@@ -2869,7 +2869,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Convert the input to a `chararray`, copying the data only if
     necessary.
 
-    Versus a regular NumPy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str_` or `unicode_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2879,7 +2879,8 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `str.endswith`) and infix operators (e.g. ``+``, ``*``,``%``)
+         (e.g. `~chararray.endswith`) and infix operators
+         (e.g. ``+``, ``*``, ``%``)
 
     Parameters
     ----------
@@ -2899,7 +2900,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         None and `obj` is one of the following:
 
           - a `chararray`,
-          - an ndarray of type `str` or 'unicode`
+          - an ndarray of type `str_` or `unicode_`
           - a Python str or unicode object,
 
         then the unicode setting of the output array will be

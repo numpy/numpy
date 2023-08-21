@@ -226,7 +226,7 @@ class MGridClass(nd_grid):
     Returns
     -------
     mesh-grid
-        `ndarrays` all of the same dimensions
+        `ndarray`\\ s all of the same dimensions
 
     See Also
     --------
@@ -278,7 +278,7 @@ class OGridClass(nd_grid):
     Returns
     -------
     mesh-grid
-        `ndarrays` with only one dimension not equal to 1
+        `ndarray`\\ s with only one dimension not equal to 1
 
     See Also
     --------

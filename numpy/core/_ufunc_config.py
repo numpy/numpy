@@ -159,8 +159,8 @@ def setbufsize(size):
     Set the size of the buffer used in ufuncs.
 
     .. versionchanged:: 2.0
-        The scope of setting the buffer is tied to the `np.errstate` context.
-        Exiting a ``with errstate():`` will also restore the bufsize.
+        The scope of setting the buffer is tied to the `numpy.errstate`
+        context.  Exiting a ``with errstate():`` will also restore the bufsize.
 
     Parameters
     ----------

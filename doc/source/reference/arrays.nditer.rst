@@ -103,10 +103,10 @@ methods. You may either:
 
 - used the nditer as a context manager using the :keyword:`with` statement, and
   the temporary data will be written back when the context is exited.
-- call the iterator's `close` method once finished iterating, which will trigger
+- call the iterator's `~nditer.close` method once finished iterating, which will trigger
   the write-back.
 
-The nditer can no longer be iterated once either `close` is called or its
+The nditer can no longer be iterated once either `~nditer.close` is called or its
 context is exited.
 
 .. admonition:: Example
@@ -125,7 +125,7 @@ context is exited.
 
 If you are writing code that needs to support older versions of numpy,
 note that prior to 1.15, :class:`nditer` was not a context manager and
-did not have a `close` method. Instead it relied on the destructor to
+did not have a `~nditer.close` method. Instead it relied on the destructor to
 initiate the writeback of the buffer.
 
 Using an external loop

@@ -5651,10 +5651,10 @@ def digitize(x, bins, right=False):
 
     .. versionadded:: 1.10.0
 
-    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
-    that a binary search is used to bin the values, which scales much better
-    for larger number of bins than the previous linear search. It also removes
-    the requirement for the input array to be 1-dimensional.
+    `numpy.digitize` is  implemented in terms of `numpy.searchsorted`.
+    This means that a binary search is used to bin the values, which scales
+    much better for larger number of bins than the previous linear search.
+    It also removes the requirement for the input array to be 1-dimensional.
 
     For monotonically _increasing_ `bins`, the following are equivalent::
 
