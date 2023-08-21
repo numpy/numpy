@@ -3636,6 +3636,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     2.0
 
     Using the mean keyword to save computation time:
+
     >>> import numpy as np
     >>> from timeit import timeit
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
@@ -3800,6 +3801,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     4.0
 
     Using the mean keyword to save computation time:
+
     >>> import numpy as np
     >>> from timeit import timeit
     >>>

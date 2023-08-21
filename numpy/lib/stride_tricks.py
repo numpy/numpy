@@ -440,7 +440,7 @@ def broadcast_shapes(*args):
 
     Parameters
     ----------
-    `*args` : tuples of ints, or ints
+    *args : tuples of ints, or ints
         The shapes to be broadcast against each other.
 
     Returns
@@ -483,7 +483,7 @@ def broadcast_arrays(*args, subok=False):
 
     Parameters
     ----------
-    `*args` : array_likes
+    *args : array_likes
         The arrays to broadcast.
 
     subok : bool, optional

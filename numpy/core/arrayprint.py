@@ -1113,7 +1113,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         `unique=True`. In that case more digits than necessary to uniquely
         identify the value may be printed and rounded unbiased.
 
-        -- versionadded:: 1.21.0
+        .. versionadded:: 1.21.0
 
     Returns
     -------
@@ -1200,7 +1200,7 @@ def format_float_positional(x, precision=None, unique=True,
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
 
-        -- versionadded:: 1.21.0
+        .. versionadded:: 1.21.0
 
     Returns
     -------

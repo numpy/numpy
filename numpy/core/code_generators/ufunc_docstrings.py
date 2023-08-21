@@ -1018,7 +1018,7 @@ add_newdoc('numpy.core.umath', 'heaviside',
     """
     Compute the Heaviside step function.
 
-    The Heaviside step function is defined as::
+    The Heaviside step function [1]_ is defined as::
 
                               0   if x1 < 0
         heaviside(x1, x2) =  x2   if x1 == 0
@@ -1047,8 +1047,8 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     References
     ----------
-    .. Wikipedia, "Heaviside step function",
-       https://en.wikipedia.org/wiki/Heaviside_step_function
+    .. [1] Wikipedia, "Heaviside step function",
+           https://en.wikipedia.org/wiki/Heaviside_step_function
 
     Examples
     --------
@@ -3341,7 +3341,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
-    equivalent to the Python modulus operator``x1 % x2`` and has the same sign
+    equivalent to the Python modulus operator ``x1 % x2`` and has the same sign
     as the divisor `x2`. The MATLAB function equivalent to ``np.remainder``
     is ``mod``.
 

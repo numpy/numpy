@@ -242,12 +242,12 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-    .. versionadded:: 1.24
+        .. versionadded:: 1.24
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
 
-    .. versionadded:: 1.24
+        .. versionadded:: 1.24
 
     Returns
     -------
@@ -313,12 +313,12 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-    .. versionadded:: 1.24
+        .. versionadded:: 1.24
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
 
-    .. versionadded:: 1.24
+        .. versionadded:: 1.24
 
     Returns
     -------
@@ -736,6 +736,7 @@ def block(arrays):
         The array assembled from the given blocks.
 
         The dimensionality of the output is equal to the greatest of:
+
         * the dimensionality of all the inputs
         * the depth to which the input list is nested
 
