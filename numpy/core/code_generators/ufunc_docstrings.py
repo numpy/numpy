@@ -1047,8 +1047,8 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     References
     ----------
-    Wikipedia, "Heaviside step function",
-    https://en.wikipedia.org/wiki/Heaviside_step_function
+    .. [1] Wikipedia, "Heaviside step function",
+           https://en.wikipedia.org/wiki/Heaviside_step_function
 
     Examples
     --------
