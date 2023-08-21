@@ -45,8 +45,34 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+#undef HAVE_CSQRT
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRTL
+#undef HAVE_CLOG
+#undef HAVE_CLOGF
+#undef HAVE_CLOGL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
 
 #endif
+
+/* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
+#if defined(_MSC_VER) && !defined(_WIN64)
+
+#undef HAVE_CABS
+#undef HAVE_CABSF
+#undef HAVE_CABSL
+
+#define NPY_BLOCK_HYPOT
+#define NPY_BLOCK_HYPOTF
+#define NPY_BLOCK_HYPOTL
+
+#endif
+
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)

@@ -146,7 +146,7 @@ MANDATORY_FUNCS = [
     "rint", "trunc", "exp2",
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
-    "creal", "cimag", "conj", "cabs", "carg",
+    "creal", "cimag", "conj"
 ]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
@@ -165,7 +165,7 @@ C99_COMPLEX_TYPES = [
     'complex double', 'complex float', 'complex long double'
     ]
 C99_COMPLEX_FUNCS = [
-    "cacos", "cacosh", "casin", "casinh", "catan",
+    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
     "catanh", "cexp", "clog", "cpow", "csqrt",
     # The long double variants (like csinl)  should be mandatory on C11,
     # but are missing in FreeBSD. Issue gh-22850

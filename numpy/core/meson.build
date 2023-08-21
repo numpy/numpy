@@ -159,7 +159,7 @@ mandatory_funcs = [
   'copysign', 'nextafter', 'strtoll', 'strtoull', 'cbrt',
   'log2', 'pow', 'hypot', 'atan2',
   'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh',
-  'creal', 'cimag', 'conj', 'cabs', 'carg',
+  'creal', 'cimag', 'conj'
 ]
 foreach func: mandatory_funcs
   if not cc.has_function(func)
@@ -168,7 +168,7 @@ foreach func: mandatory_funcs
 endforeach
 
 c99_complex_funcs = [
-  'cacos', 'cacosh', 'casin', 'casinh', 'catan',
+  'cabs', 'cacos', 'cacosh', 'carg', 'casin', 'casinh', 'catan',
   'catanh', 'cexp', 'clog', 'cpow', 'csqrt',
   # The long double variants (like csinl)  should be mandatory on C11,
   # but are missing in FreeBSD. Issue gh-22850
