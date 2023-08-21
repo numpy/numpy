@@ -101,9 +101,10 @@ class AxisError(ValueError, IndexError):
     This is raised whenever an ``axis`` parameter is specified that is larger
     than the number of array dimensions.
     For compatibility with code written against older numpy versions, which
-    raised a mixture of `ValueError` and `IndexError` for this situation, this
-    exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch ``AxisError``.
+    raised a mixture of :exc:`ValueError` and :exc:`IndexError` for this
+    situation, this exception subclasses both to ensure that
+    ``except ValueError`` and ``except IndexError`` statements continue
+    to catch ``AxisError``.
 
     .. versionadded:: 1.13
 

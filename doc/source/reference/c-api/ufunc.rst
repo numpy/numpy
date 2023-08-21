@@ -217,7 +217,7 @@ Functions
         int nin, int nout, int identity, char *name, char *doc, int unused, \
         char *signature, PyObject *identity_value)
 
-   This function is very similar to `PyUFunc_FromFuncAndDataAndSignature` above,
+   This function is very similar to :c:func:`PyUFunc_FromFuncAndDataAndSignature` above,
    but has an extra *identity_value* argument, to define an arbitrary identity
    for the ufunc when ``identity`` is passed as ``PyUFunc_IdentityValue``.
 

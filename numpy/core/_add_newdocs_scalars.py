@@ -122,7 +122,7 @@ add_newdoc_for_scalar_type('intc', [],
 
 add_newdoc_for_scalar_type('int_', [],
     """
-    Signed integer type, compatible with Python `int` and C ``long``.
+    Signed integer type, compatible with Python :class:`int` and C ``long``.
     """)
 
 add_newdoc_for_scalar_type('longlong', [],
@@ -167,8 +167,8 @@ add_newdoc_for_scalar_type('single', [],
 
 add_newdoc_for_scalar_type('double', ['float_'],
     """
-    Double-precision floating-point number type, compatible with Python `float`
-    and C ``double``.
+    Double-precision floating-point number type, compatible with Python
+    :class:`float` and C ``double``.
     """)
 
 add_newdoc_for_scalar_type('longdouble', ['longfloat'],
@@ -186,7 +186,7 @@ add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
 add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
     """
     Complex number type composed of two double-precision floating-point
-    numbers, compatible with Python `complex`.
+    numbers, compatible with Python :class:`complex`.
     """)
 
 add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
@@ -210,8 +210,8 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
     >>> s
     'abc'
 
-    Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
-    contents as UCS4:
+    Unlike the builtin :class:`str`, this supports the
+    :ref:`python:bufferobjects`, exposing its contents as UCS4:
 
     >>> m = memoryview(np.str_("abc"))
     >>> m.format

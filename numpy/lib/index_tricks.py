@@ -743,7 +743,7 @@ class IndexExpression:
 
     Notes
     -----
-    You can do all this with `slice()` plus a few special objects,
+    You can do all this with :class:`slice` plus a few special objects,
     but there's a lot to remember and this version is simpler because
     it uses the standard array indexing syntax.
 
