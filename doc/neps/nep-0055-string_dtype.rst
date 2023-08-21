@@ -799,8 +799,8 @@ support for string data in NumPy has improved after adding ``StringDType``.
 Discussion
 ----------
 
-- I will add a link to the github pull request and mailing list thread as soon
-  as they are created.
+- https://github.com/numpy/numpy/pull/24483
+- https://mail.python.org/archives/list/numpy-discussion@python.org/thread/IHSVBZ7DWGMTOD6IEMURN23XM2BYM3RG/
 
 
 References and Footnotes
