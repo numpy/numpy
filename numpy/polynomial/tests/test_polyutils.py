@@ -11,9 +11,9 @@ from numpy.testing import (
 class TestMisc:
 
     def test_trimseq(self):
-        for i in range(5):
-            tgt = [1]
-            res = pu.trimseq([1] + [0]*5)
+        tgt = [1]
+        for num_trailing_zeros in range(5):
+            res = pu.trimseq([1] + [0] * num_trailing_zeros)
             assert_equal(res, tgt)
 
     def test_trimseq_empty_input(self):
