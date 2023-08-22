@@ -298,7 +298,7 @@ class ABCPolyBase(abc.ABC):
                 raise ValueError("Polynomial symbols differ")
             return other.coef
         elif isinstance(other, ABCPolyBase):
-                raise TypeError("Polynomial types differ")
+            raise TypeError("Polynomial types differ")
         return other
 
     def __init__(self, coef, domain=None, window=None, symbol='x'):
