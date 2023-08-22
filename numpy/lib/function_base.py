@@ -42,7 +42,7 @@ __all__ = [
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
@@ -3683,56 +3683,6 @@ def sinc(x):
     x = np.asanyarray(x)
     y = pi * where(x == 0, 1.0e-20, x)
     return sin(y)/y
-
-
-def _msort_dispatcher(a):
-    return (a,)
-
-
-@array_function_dispatch(_msort_dispatcher)
-def msort(a):
-    """
-    Return a copy of an array sorted along the first axis.
-
-    .. deprecated:: 1.24
-
-       msort is deprecated, use ``np.sort(a, axis=0)`` instead.
-
-    Parameters
-    ----------
-    a : array_like
-        Array to be sorted.
-
-    Returns
-    -------
-    sorted_array : ndarray
-        Array of the same type and shape as `a`.
-
-    See Also
-    --------
-    sort
-
-    Notes
-    -----
-    ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
-
-    Examples
-    --------
-    >>> a = np.array([[1, 4], [3, 1]])
-    >>> np.msort(a)  # sort along the first axis
-    array([[1, 1],
-           [3, 4]])
-
-    """
-    # 2022-10-20 1.24
-    warnings.warn(
-        "msort is deprecated, use np.sort(a, axis=0) instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    b = array(a, subok=True, copy=True)
-    b.sort(0)
-    return b
 
 
 def _ureduce(a, func, keepdims=False, **kwargs):

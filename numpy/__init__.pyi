@@ -341,8 +341,6 @@ from numpy.core.multiarray import (
     fromiter as fromiter,
     is_busday as is_busday,
     promote_types as promote_types,
-    seterrobj as seterrobj,
-    geterrobj as geterrobj,
     fromstring as fromstring,
     frompyfunc as frompyfunc,
     nested_iters as nested_iters,

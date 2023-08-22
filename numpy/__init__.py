@@ -200,7 +200,7 @@ else:
         index_exp, info, insert, interp, intersect1d, iscomplex,
         iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
         issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
-        median, meshgrid, mgrid, mintypecode, msort, nan_to_num, 
+        median, meshgrid, mgrid, mintypecode, nan_to_num, 
         nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar, ndenumerate, ndindex, ogrid, packbits, pad,
