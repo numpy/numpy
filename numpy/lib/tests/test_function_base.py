@@ -23,7 +23,7 @@ from numpy.random import rand
 from numpy.lib import (
     angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
+    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
     select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
     )
 from numpy.core.numeric import normalize_axis_tuple
@@ -2489,20 +2489,6 @@ class TestKaiser:
 
     def test_int_beta(self):
         kaiser(3, 4)
-
-
-class TestMsort:
-
-    def test_simple(self):
-        A = np.array([[0.44567325, 0.79115165, 0.54900530],
-                      [0.36844147, 0.37325583, 0.96098397],
-                      [0.64864341, 0.52929049, 0.39172155]])
-        with pytest.warns(DeprecationWarning, match="msort is deprecated"):
-            assert_almost_equal(
-                msort(A),
-                np.array([[0.36844147, 0.37325583, 0.39172155],
-                          [0.44567325, 0.52929049, 0.54900530],
-                          [0.64864341, 0.79115165, 0.96098397]]))
 
 
 class TestMeshgrid:

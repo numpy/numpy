@@ -436,9 +436,6 @@ def sinc(x: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
 @overload
 def sinc(x: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
 
-# NOTE: Deprecated
-# def msort(a: ArrayLike) -> NDArray[Any]: ...
-
 @overload
 def median(
     a: _ArrayLikeFloat_co,
