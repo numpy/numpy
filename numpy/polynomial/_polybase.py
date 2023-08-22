@@ -286,7 +286,7 @@ class ABCPolyBase(abc.ABC):
         Raises
         ------
         TypeError
-            When `other` is an incompatible instance of ABCPolyBase.
+            When `other` is an incompatible instance of :class:`ABCPolyBase`.
 
         """
         if isinstance(other, self.__class__):
