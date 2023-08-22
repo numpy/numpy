@@ -1,5 +1,23 @@
 name: BLAS tests (Linux)
 
+# This file is meant for testing different BLAS/LAPACK flavors and build
+# options on Linux. All other yml files for Linux will only test without BLAS
+# (mostly because that's easier and faster to build) or with the same 64-bit
+# OpenBLAS build that is used in the wheel jobs.
+#
+# Jobs and their purpose:
+#
+#   - openblas64_setuppy:
+#         This job uses the default 64-bit build of OpenBLAS with the
+#         `numpy.distutils`-based build. It can be removed once we remove
+#         support for those builds.
+#   - openblas32_stable_nightly:
+#         Uses the 32-bit OpenBLAS builds, both the latest stable release and a
+#         nightly build.
+#
+# TODO: coverage here is limited, we should add non-OpenBLAS libraries and
+#       exercise the BLAS-related build options (see `meson_options.txt`).
+
 on:
   pull_request:
     branches:
@@ -18,9 +36,9 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  openblas64:
+  openblas64_setuppy:
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
+    if: "github.repository == 'numpy/numpy'"
     env:
       DOWNLOAD_OPENBLAS: 1
       NPY_USE_BLAS_ILP64: 1
@@ -34,3 +52,58 @@ jobs:
         python-version: '3.11'
     - uses: ./.github/actions
 
+  openblas32_stable_nightly:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        USE_NIGHTLY_OPENBLAS: [false, true]
+    env:
+      USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
+    name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
+    steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        # Install OpenBLAS
+        set -xe
+        if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
+          target=$(python tools/openblas_support.py --nightly)
+        else
+          target=$(python tools/openblas_support.py)
+        fi
+        sudo cp -r $target/lib/* /usr/lib
+        sudo cp $target/include/* /usr/include
+
+    - name: Build
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+      run:
+        spin build -- --werror
+
+    - name: Check build-internal dependencies
+      run:
+        ninja -C build -t missingdeps
+
+    - name: Check installed test and stub files
+      run:
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+
+    - name: Test
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+        LD_LIBRARY_PATH: "/usr/local/lib/"  # to find libopenblas.so.0
+
+      run: |
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        spin test -j auto
