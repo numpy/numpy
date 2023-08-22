@@ -208,11 +208,6 @@ tools/swig/test/Array.py
 
 # SIMD generated files #
 ###################################
-# config headers of dispatchable sources
-*.dispatch.h
-# wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
-*.dispatch.*.c
-*.dispatch.*.cpp
 # _simd module
 numpy/core/src/_simd/_simd.dispatch.c
 numpy/core/src/_simd/_simd_data.inc
