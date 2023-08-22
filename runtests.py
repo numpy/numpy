@@ -292,6 +292,17 @@ def main(argv):
         if args.submodule:
             cmd += [args.submodule]
         os.execv(sys.executable, [sys.executable] + cmd)
+
+    if args.doctests:
+        # XXX: copy-paste the reguide-checking
+        cmd = [os.path.join(ROOT_DIR, 'tools', 'doctest_public_modules.py'),
+               '--rst']
+        if args.verbose:
+            cmd += ['-' + 'v'*args.verbose]
+        if args.submodule:
+            cmd += ['-s' + args.submodule]
+
+        os.execv(sys.executable, [sys.executable] + cmd)
         sys.exit(0)
 
     if args.bench:
