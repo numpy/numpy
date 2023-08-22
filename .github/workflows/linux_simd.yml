@@ -1,10 +1,38 @@
-name: Build_Test
+name: SIMD tests (Linux)
+
+# This file is meant for testing different SIMD-related build options and
+# optimization levels. See `meson_options.txt` for the available build options.
+#
+# Jobs and their purpose:
+#
+#   - smoke_test:
+#         Meant to complete as quickly as possible, and acts as a filter for
+#         the other, more expensive jobs (those only start once `smoke_test`
+#         passes).
+#   - old_gcc:
+#         Tests the oldest supported GCC version with the default build
+#         settings.
+#   - without_optimizations:
+#         Completely disables both all SIMD optimizations and other compiler
+#         optimizations like loop unrolling.
+#   - with_baseline_only:
+#         Only uses the baseline SIMD settings, but no runtime dispatch based
+#         on compiler features detected at runtime.
+#   - without_avx512_avx2_fma3:
+#         Uses runtime SIMD dispatching, with AVX2, FMA3 and AVX512 disabled.
+#   - without_avx512:
+#         Uses runtime SIMD dispatching, with AVX512 disabled.
+#   - armv7_simd_test:
+#         Cross-compiles from x86-64 to armv7, and then runs only the
+#         SIMD-specific tests under QEMU.
+#   - sde_simd_avx512_test:
+#         Runs only the SIMD tests for several AVX512-xxx instruction sets
+#         under the Intel Software Development Emulator (SDE).
+#   - intel_spr_sde_test:
+#         Similar to the SDE test above, but for AVX512-SPR which requires some
+#         special-casing.
 
 on:
-  push:
-    branches:
-      # coverage comparison in the "full" step needs to run on main after merges
-      - main
   pull_request:
     branches:
       - main
@@ -16,7 +44,6 @@ defaults:
 
 env:
   DOWNLOAD_OPENBLAS: 1
-  PYTHON_VERSION: 3.9
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -26,25 +53,6 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  lint:
-    if: github.repository == 'numpy/numpy' && github.event_name != 'push'
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - name: Install linter requirements
-      run:
-        python -m pip install -r linter_requirements.txt
-    - name: Run linter on PR diff
-      run:
-        python tools/linter.py --branch origin/${{ github.base_ref }}
-
   smoke_test:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
@@ -57,31 +65,12 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - uses: ./.github/meson_actions
-
-  basic:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "pypy3.9-v7.3.12"]
-    env:
-      EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: ./.github/actions
 
   old_gcc:
     needs: [smoke_test]
-    # provides GCC  7, 8
+    # provides GCC 8
     runs-on: ubuntu-20.04
     if: github.event_name != 'push'
     steps:
@@ -89,7 +78,6 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    # comes with python3.6
     - name: Install Python3.9
       run: |
         sudo apt update
@@ -100,21 +88,14 @@ jobs:
         sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
-    - name: Install Compilers
-      run: sudo apt install g++-7 g++-8 -y
-    - name: Build gcc-7
-      run: |
-        export CC=/usr/bin/gcc-7
-        export CXX=/usr/bin/g++-7
-        rm -rf build && pythonx setup.py install --user
-    - name: Runtests gcc-7
-      run: pythonx runtests.py -n
+    - name: Install GCC 8
+      run: sudo apt install g++-8 -y
     - name: Build gcc-8
       run: |
         export CC=/usr/bin/gcc-8
         export CXX=/usr/bin/g++-8
         rm -rf build && pythonx setup.py install --user
-    - name: Runtests gcc-8
+    - name: Run test suite
       run: pythonx runtests.py -n
 
   without_optimizations:
@@ -146,7 +127,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   without_avx512:
@@ -162,7 +143,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
 
   without_avx512_avx2_fma3:
@@ -178,150 +159,8 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.10'
     - uses: ./.github/meson_actions
-
-  debug:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      USE_DEBUG: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - uses: ./.github/actions
-
-  blas64:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      NPY_USE_BLAS_ILP64: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  full:
-    needs: [smoke_test]
-    runs-on: ubuntu-22.04
-    env:
-      USE_WHEEL: 1
-      RUN_FULL_TESTS: 1
-      RUN_COVERAGE: 1
-      INSTALL_PICKLE5: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  benchmark:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      PYTHONOPTIMIZE: 2
-      BLAS: None
-      LAPACK: None
-      ATLAS: None
-      NPY_BLAS_ORDER: mkl,blis,openblas,atlas,blas
-      NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
-      USE_ASV: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  relaxed_strides_debug:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      CHECK_BLAS: 1
-      NPY_USE_BLAS_ILP64: 1
-      NPY_RELAXED_STRIDES_DEBUG: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  use_wheel:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      USE_WHEEL: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  no_openblas:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      BLAS: None
-      LAPACK: None
-      ATLAS: None
-      DOWNLOAD_OPENBLAS: ''
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  sdist:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      USE_SDIST: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
 
   armv7_simd_test:
     needs: [smoke_test]
@@ -391,7 +230,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.9'
     - name: Install Intel SDE
       run: |
         curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
@@ -420,7 +259,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     - name: Install Intel SDE
       run: |
         curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz

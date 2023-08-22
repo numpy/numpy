@@ -3,3 +3,4 @@ Cython>=3.0
 wheel==0.38.1
 ninja
 spin==0.5
+build
