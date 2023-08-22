@@ -36,8 +36,8 @@ standard output instead of a file.
 
 Among other options (see below), the following can be used in this mode:
 
-  ``--overwrite-signature``
-    Overwrites an existing signature file.
+``--overwrite-signature``
+  Overwrites an existing signature file.
 
 2. Extension module construction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,43 +57,43 @@ current directory.
 Here ``<fortran files>`` may also contain signature files. Among other options
 (see below), the following options can be used in this mode:
 
-  ``--debug-capi``
-    Adds debugging hooks to the extension module. When using this extension
-    module, various diagnostic information about the wrapper is written to the
-    standard output, for example, the values of variables, the steps taken, etc.
+``--debug-capi``
+  Adds debugging hooks to the extension module. When using this extension
+  module, various diagnostic information about the wrapper is written to the
+  standard output, for example, the values of variables, the steps taken, etc.
 
-  ``-include'<includefile>'``
-    Add a CPP ``#include`` statement to the extension module source.
-    ``<includefile>`` should be given in one of the following forms
+``-include'<includefile>'``
+  Add a CPP ``#include`` statement to the extension module source.
+  ``<includefile>`` should be given in one of the following forms
 
-    .. code-block:: cpp
+  .. code-block:: cpp
 
-      "filename.ext"
-      <filename.ext>
+    "filename.ext"
+    <filename.ext>
 
-    The include statement is inserted just before the wrapper functions. This
-    feature enables using arbitrary C functions (defined in ``<includefile>``)
-    in F2PY generated wrappers.
+  The include statement is inserted just before the wrapper functions. This
+  feature enables using arbitrary C functions (defined in ``<includefile>``)
+  in F2PY generated wrappers.
 
-    .. note:: This option is deprecated. Use ``usercode`` statement to specify
-      C code snippets directly in signature files.
+  .. note:: This option is deprecated. Use ``usercode`` statement to specify
+    C code snippets directly in signature files.
 
-  ``--[no-]wrap-functions``
-    Create Fortran subroutine wrappers to Fortran functions.
-    ``--wrap-functions`` is default because it ensures maximum portability and
-    compiler independence.
+``--[no-]wrap-functions``
+  Create Fortran subroutine wrappers to Fortran functions.
+  ``--wrap-functions`` is default because it ensures maximum portability and
+  compiler independence.
 
-  ``--include-paths "<path1>:<path2>..."``
-    Search include files from given directories.
+``--include-paths "<path1>:<path2>..."``
+  Search include files from given directories.
 
-    .. note:: The paths are to be separated by the correct operating system
-              separator :py:data:`~os.pathsep`, that is ``:`` on Linux / MacOS
-              and ``;`` on Windows. In ``CMake`` this corresponds to using
-              ``$<SEMICOLON>``.
+  .. note:: The paths are to be separated by the correct operating system
+            separator :py:data:`~os.pathsep`, that is ``:`` on Linux / MacOS
+            and ``;`` on Windows. In ``CMake`` this corresponds to using
+            ``$<SEMICOLON>``.
 
-  ``--help-link [<list of resources names>]``
-    List system resources found by ``numpy_distutils/system_info.py``. For
-    example, try ``f2py --help-link lapack_opt``.
+``--help-link [<list of resources names>]``
+  List system resources found by ``numpy_distutils/system_info.py``. For
+  example, try ``f2py --help-link lapack_opt``.
 
 3. Building a module
 ~~~~~~~~~~~~~~~~~~~~
@@ -119,51 +119,51 @@ signatures, before proceeding to build the extension module.
 Among other options (see below) and options described for previous modes, the
 following options can be used in this mode:
  
-  ``--help-fcompiler``
-    List the available Fortran compilers.
-  ``--help-compiler`` **[depreciated]**
-    List the available Fortran compilers.
-  ``--fcompiler=<Vendor>``
-    Specify a Fortran compiler type by vendor.
-  ``--f77exec=<path>``
-    Specify the path to a F77 compiler
-  ``--fcompiler-exec=<path>`` **[depreciated]**
-    Specify the path to a F77 compiler
-  ``--f90exec=<path>``
-    Specify the path to a F90 compiler
-  ``--f90compiler-exec=<path>`` **[depreciated]**
-    Specify the path to a F90 compiler
-  ``--f77flags=<string>``
-    Specify F77 compiler flags
-  ``--f90flags=<string>``
-    Specify F90 compiler flags
-  ``--opt=<string>``
-    Specify optimization flags
-  ``--arch=<string>``
-    Specify architecture specific optimization flags
-  ``--noopt``
-    Compile without optimization flags
-  ``--noarch``
-    Compile without arch-dependent optimization flags
-  ``--debug``
-    Compile with debugging information
-  ``-l<libname>``
-    Use the library ``<libname>`` when linking.
-  ``-D<macro>[=<defn=1>]``
-    Define macro ``<macro>`` as ``<defn>``.
-  ``-U<macro>``
-    Define macro ``<macro>``
-  ``-I<dir>``
-    Append directory ``<dir>`` to the list of directories searched for include
-    files.
-  ``-L<dir>``
-    Add directory ``<dir>`` to the list of directories to be searched for
-    ``-l``.
-  ``link-<resource>``
-    Link the extension module with <resource> as defined by
-    ``numpy_distutils/system_info.py``. E.g. to link with optimized LAPACK
-    libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
-    See also ``--help-link`` switch.
+``--help-fcompiler``
+  List the available Fortran compilers.
+``--help-compiler`` **[depreciated]**
+  List the available Fortran compilers.
+``--fcompiler=<Vendor>``
+  Specify a Fortran compiler type by vendor.
+``--f77exec=<path>``
+  Specify the path to a F77 compiler
+``--fcompiler-exec=<path>`` **[depreciated]**
+  Specify the path to a F77 compiler
+``--f90exec=<path>``
+  Specify the path to a F90 compiler
+``--f90compiler-exec=<path>`` **[depreciated]**
+  Specify the path to a F90 compiler
+``--f77flags=<string>``
+  Specify F77 compiler flags
+``--f90flags=<string>``
+  Specify F90 compiler flags
+``--opt=<string>``
+  Specify optimization flags
+``--arch=<string>``
+  Specify architecture specific optimization flags
+``--noopt``
+  Compile without optimization flags
+``--noarch``
+  Compile without arch-dependent optimization flags
+``--debug``
+  Compile with debugging information
+``-l<libname>``
+  Use the library ``<libname>`` when linking.
+``-D<macro>[=<defn=1>]``
+  Define macro ``<macro>`` as ``<defn>``.
+``-U<macro>``
+  Define macro ``<macro>``
+``-I<dir>``
+  Append directory ``<dir>`` to the list of directories searched for include
+  files.
+``-L<dir>``
+  Add directory ``<dir>`` to the list of directories to be searched for
+  ``-l``.
+``link-<resource>``
+  Link the extension module with <resource> as defined by
+  ``numpy_distutils/system_info.py``. E.g. to link with optimized LAPACK
+  libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
+  See also ``--help-link`` switch.
 
 .. note:: 
   
@@ -186,7 +186,7 @@ following options can be used in this mode:
   For more information, see the `Building C and C++ Extensions`__ Python
   documentation for details.
 
-   __ https://docs.python.org/3/extending/building.html
+  __ https://docs.python.org/3/extending/building.html
 
 
 When building an extension module, a combination of the following macros may be
@@ -210,32 +210,32 @@ larger than ``<int>``, a message about the copying is sent to ``stderr``.
 Other options
 ~~~~~~~~~~~~~
 
-  ``-m <modulename>``
-    Name of an extension module. Default is ``untitled``.
+``-m <modulename>``
+  Name of an extension module. Default is ``untitled``.
 
-  .. warning:: Don't use this option if a signature file (``*.pyf``) is used.
+.. warning:: Don't use this option if a signature file (``*.pyf``) is used.
 
-  ``--[no-]lower``
-    Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
-    assumed with ``-h`` switch, and ``--no-lower`` without the ``-h`` switch.
-  ``-include<header>``
-    Writes additional headers in the C wrapper, can be passed multiple times,
-    generates #include <header> each time. Note that this is meant to be passed
-    in single quotes and without spaces, for example ``'-include<stdbool.h>'``
-  ``--build-dir <dirname>``
-    All F2PY generated files are created in ``<dirname>``. Default is
-    ``tempfile.mkdtemp()``.
-  ``--f2cmap <filename>``
-    Load Fortran-to-C ``KIND`` specifications from the given file.
-  ``--quiet``
-    Run quietly.
-  ``--verbose``
-    Run with extra verbosity.
-  ``--skip-empty-wrappers``
-    Do not generate wrapper files unless required by the inputs.
-    This is a backwards compatibility flag to restore pre 1.22.4 behavior.
-  ``-v``
-    Print the F2PY version and exit.
+``--[no-]lower``
+  Do [not] lower the cases in ``<fortran files>``. By default, ``--lower`` is
+  assumed with ``-h`` switch, and ``--no-lower`` without the ``-h`` switch.
+``-include<header>``
+  Writes additional headers in the C wrapper, can be passed multiple times,
+  generates #include <header> each time. Note that this is meant to be passed
+  in single quotes and without spaces, for example ``'-include<stdbool.h>'``
+``--build-dir <dirname>``
+  All F2PY generated files are created in ``<dirname>``. Default is
+  ``tempfile.mkdtemp()``.
+``--f2cmap <filename>``
+  Load Fortran-to-C ``KIND`` specifications from the given file.
+``--quiet``
+  Run quietly.
+``--verbose``
+  Run with extra verbosity.
+``--skip-empty-wrappers``
+  Do not generate wrapper files unless required by the inputs.
+  This is a backwards compatibility flag to restore pre 1.22.4 behavior.
+``-v``
+  Print the F2PY version and exit.
 
 Execute ``f2py`` without any options to get an up-to-date list of available
 options.

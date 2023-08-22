@@ -215,16 +215,16 @@ Behaviors
 - ``--cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
 
-   .. note::
+  .. note::
 
-        Since ``--cpu-baseline`` combines all implied features, the maximum
-        supported of implied features will be enabled rather than escape all of them.
-        For example::
+       Since ``--cpu-baseline`` combines all implied features, the maximum
+       supported of implied features will be enabled rather than escape all of them.
+       For example::
 
-           # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-           python setup.py build --cpu-baseline="avx2 fma3"
-           # is equivalent to
-           python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+          # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
+          python setup.py build --cpu-baseline="avx2 fma3"
+          # is equivalent to
+          python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - ``--cpu-dispatch`` does not combain any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
