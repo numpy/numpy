@@ -1935,7 +1935,7 @@ class chararray(ndarray):
        `dtype` `object_`, `bytes_` or `str_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
-    Versus a regular NumPy array of type `str_` or `unicode_`, this
+    Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2741,7 +2741,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
-    Versus a regular NumPy array of type `str_` or `unicode_`, this
+    Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2869,7 +2869,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Convert the input to a `chararray`, copying the data only if
     necessary.
 
-    Versus a regular NumPy array of type `str_` or `unicode_`, this
+    Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
