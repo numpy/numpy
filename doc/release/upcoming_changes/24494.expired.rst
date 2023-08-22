@@ -1,0 +1,2 @@
+* ``np.msort`` has been removed. For a replacement, ``np.sort(a, axis=0)`` 
+should be used instead.
