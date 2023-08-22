@@ -198,9 +198,6 @@ class TestSetOps:
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin(self, kind):
-        # the tests for isin cover most of isin's behavior
-        # if isin is removed, would need to change those tests to test
-        # isin instead.
         def _isin_slow(a, b):
             b = np.asarray(b).flatten().tolist()
             return a in b
