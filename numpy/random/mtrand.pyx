@@ -1289,11 +1289,11 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type `np.int_` between `low` and `high`, inclusive.
+        Random integers of type `numpy.int_` between `low` and `high`, inclusive.
 
-        Return random integers of type `np.int_` from the "discrete uniform"
+        Return random integers of type `numpy.int_` from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The `np.int_`
+        None (the default), then results are from [1, `low`]. The `numpy.int_`
         type translates to the C long integer type and its precision
         is platform dependent.
 

@@ -192,7 +192,7 @@ def deprecate(*args, **kwargs):
     This function may also be used as a decorator.
 
     .. deprecated:: 2.0
-        Use `warn` with :exc:`DeprecationWarning` instead.
+        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
 
     Parameters
     ----------
@@ -253,7 +253,7 @@ def deprecate_with_doc(msg):
     Deprecates a function and includes the deprecation in its docstring.
 
     .. deprecated:: 2.0
-        Use `warn` with :exc:`DeprecationWarning` instead.
+        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
 
     This function is used as a decorator. It returns an object that can be
     used to issue a DeprecationWarning, by passing the to-be decorated
