@@ -1938,14 +1938,14 @@ class chararray(ndarray):
     Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
-      1) values automatically have whitespace removed from the end
-         when indexed
+    1) values automatically have whitespace removed from the end
+       when indexed
 
-      2) comparison operators automatically remove whitespace from the
-         end when comparing values
+    2) comparison operators automatically remove whitespace from the
+       end when comparing values
 
-      3) vectorized string operations are provided as methods
-         (e.g. `.endswith`) and infix operators (e.g. ``"+", "*", "%"``)
+    3) vectorized string operations are provided as methods
+       (e.g. `.endswith`) and infix operators (e.g. ``"+", "*", "%"``)
 
     chararrays should be created using `numpy.char.array` or
     `numpy.char.asarray`, rather than this constructor directly.
@@ -2744,14 +2744,14 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
-      1) values automatically have whitespace removed from the end
-         when indexed
+    1) values automatically have whitespace removed from the end
+       when indexed
 
-      2) comparison operators automatically remove whitespace from the
-         end when comparing values
+    2) comparison operators automatically remove whitespace from the
+       end when comparing values
 
-      3) vectorized string operations are provided as methods
-         (e.g. `~chararray.endswith`) and infix operators (e.g. ``+, *, %``)
+    3) vectorized string operations are provided as methods
+       (e.g. `~chararray.endswith`) and infix operators (e.g. ``+, *, %``)
 
     Parameters
     ----------
@@ -2776,9 +2776,9 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         characters, when false only 8-bit characters.  If unicode is
         None and `obj` is one of the following:
 
-          - a `chararray`,
-          - an ndarray of type `str_` or `unicode_`
-          - a Python str or unicode object,
+        - a `chararray`,
+        - an ndarray of type `str_` or `unicode_`
+        - a Python str or unicode object,
 
         then the unicode setting of the output array will be
         automatically determined.
@@ -2872,15 +2872,15 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:
 
-      1) values automatically have whitespace removed from the end
-         when indexed
+    1) values automatically have whitespace removed from the end
+       when indexed
 
-      2) comparison operators automatically remove whitespace from the
-         end when comparing values
+    2) comparison operators automatically remove whitespace from the
+       end when comparing values
 
-      3) vectorized string operations are provided as methods
-         (e.g. `~chararray.endswith`) and infix operators
-         (e.g. ``+``, ``*``, ``%``)
+    3) vectorized string operations are provided as methods
+       (e.g. `~chararray.endswith`) and infix operators
+       (e.g. ``+``, ``*``, ``%``)
 
     Parameters
     ----------
@@ -2899,9 +2899,9 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         characters, when false only 8-bit characters.  If unicode is
         None and `obj` is one of the following:
 
-          - a `chararray`,
-          - an ndarray of type `str_` or `unicode_`
-          - a Python str or unicode object,
+        - a `chararray`,
+        - an ndarray of type `str_` or `unicode_`
+        - a Python str or unicode object,
 
         then the unicode setting of the output array will be
         automatically determined.

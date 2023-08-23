@@ -516,12 +516,12 @@ def can_cast(from_, to, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -1095,12 +1095,12 @@ def copyto(dst, src, casting=None, where=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur when copying.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
@@ -1504,18 +1504,18 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
-          * 'raise' means to raise an exception for an invalid day.
-          * 'nat' means to return a NaT (not-a-time) for an invalid day.
-          * 'forward' and 'following' mean to take the first valid day
-            later in time.
-          * 'backward' and 'preceding' mean to take the first valid day
-            earlier in time.
-          * 'modifiedfollowing' means to take the first valid day
-            later in time unless it is across a Month boundary, in which
-            case to take the first valid day earlier in time.
-          * 'modifiedpreceding' means to take the first valid day
-            earlier in time unless it is across a Month boundary, in which
-            case to take the first valid day later in time.
+        * 'raise' means to raise an exception for an invalid day.
+        * 'nat' means to return a NaT (not-a-time) for an invalid day.
+        * 'forward' and 'following' mean to take the first valid day
+          later in time.
+        * 'backward' and 'preceding' mean to take the first valid day
+          earlier in time.
+        * 'modifiedfollowing' means to take the first valid day
+          later in time unless it is across a Month boundary, in which
+          case to take the first valid day earlier in time.
+        * 'modifiedpreceding' means to take the first valid day
+          earlier in time unless it is across a Month boundary, in which
+          case to take the first valid day later in time.
     weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday are
         valid days. May be specified as a length-seven list or array, like

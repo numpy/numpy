@@ -657,18 +657,18 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     where
 
-        vector : ndarray
-            A rank 1 array already padded with zeros.  Padded values are
-            vector[:iaxis_pad_width[0]] and vector[-iaxis_pad_width[1]:].
-        iaxis_pad_width : tuple
-            A 2-tuple of ints, iaxis_pad_width[0] represents the number of
-            values padded at the beginning of vector where
-            iaxis_pad_width[1] represents the number of values padded at
-            the end of vector.
-        iaxis : int
-            The axis currently being calculated.
-        kwargs : dict
-            Any keyword arguments the function requires.
+    vector : ndarray
+        A rank 1 array already padded with zeros.  Padded values are
+        vector[:iaxis_pad_width[0]] and vector[-iaxis_pad_width[1]:].
+    iaxis_pad_width : tuple
+        A 2-tuple of ints, iaxis_pad_width[0] represents the number of
+        values padded at the beginning of vector where
+        iaxis_pad_width[1] represents the number of values padded at
+        the end of vector.
+    iaxis : int
+        The axis currently being calculated.
+    kwargs : dict
+        Any keyword arguments the function requires.
 
     Examples
     --------
