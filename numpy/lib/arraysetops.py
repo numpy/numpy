@@ -794,15 +794,15 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
         * If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
-          `ar1` and `ar2`, not accounting for size of dtypes.
+          `element` and `test_elements`, not accounting for size of dtypes.
         * If 'table', will use a lookup table approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
-          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
-          has no effect when the 'table' option is used.
+          size of `element` plus the max-min value of `test_elements`.
+          `assume_unique` has no effect when the 'table' option is used.
         * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
-          6 times the sum of the sizes of `ar1` and `ar2`,
+          6 times the sum of the sizes of `element` and `test_elements`,
           otherwise will use 'sort'. This is done to not use
           a large amount of memory by default, even though
           'table' may be faster in most cases. If 'table' is chosen,
@@ -837,7 +837,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Using ``kind='table'`` tends to be faster than `kind='sort'` if the
     following relationship is true:
-    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    ``log10(len(test_elements)) > (log10(max(test_elements)-min(test_elements)) - 2.27) / 0.927``,
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
