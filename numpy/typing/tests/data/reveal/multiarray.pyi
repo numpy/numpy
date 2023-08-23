@@ -103,9 +103,9 @@ reveal_type(np.promote_types("f4", float))  # E: dtype[Any]
 
 reveal_type(np.frompyfunc(func, 1, 1, identity=None))  # ufunc
 
-reveal_type(np.datetime_data("m8[D]"))  # E: Tuple[builtins.str, builtins.int]
-reveal_type(np.datetime_data(np.datetime64))  # E: Tuple[builtins.str, builtins.int]
-reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: Tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data("m8[D]"))  # E: tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.datetime64))  # E: tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: tuple[builtins.str, builtins.int]
 
 reveal_type(np.busday_count("2011-01", "2011-02"))  # E: {int_}
 reveal_type(np.busday_count(["2011-01"], "2011-02"))  # E: ndarray[Any, dtype[{int_}]]

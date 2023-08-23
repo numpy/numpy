@@ -9,8 +9,8 @@ FILE: StringIO
 
 def func(a: int) -> bool: ...
 
-reveal_type(np.byte_bounds(AR))  # E: Tuple[builtins.int, builtins.int]
-reveal_type(np.byte_bounds(np.float64()))  # E: Tuple[builtins.int, builtins.int]
+reveal_type(np.byte_bounds(AR))  # E: tuple[builtins.int, builtins.int]
+reveal_type(np.byte_bounds(np.float64()))  # E: tuple[builtins.int, builtins.int]
 
 reveal_type(np.info(1, output=FILE))  # E: None
 
