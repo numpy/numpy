@@ -39,6 +39,38 @@ can use a variable explorer that is available in IDEs such as Spyder or Jupyter 
 
   (`gh-24321 <https://github.com/numpy/numpy/pull/24321>`__)
 
+* Multiple niche enums, expired members and functions have been removed from 
+  the main namespace, such as: ``ERR_*``, ``SHIFT_*``, ``np.fastCopyAndTranspose``, 
+  ``np.kernel_version``, ``np.numarray``, ``np.oldnumeric`` and ``np.set_numeric_ops``.
+
+  (`gh-24316 <https://github.com/numpy/numpy/pull/24316>`__)
+
+* Replaced ``from ... import *`` in the ``numpy/__init__.py`` with explicit imports. 
+  As a result, these main namespace members got removed: ``np.FLOATING_POINT_SUPPORT``,
+  ``np.FPE_*``, ``np.NINF``, ``np.PINF``, ``np.NZERO``, ``np.PZERO``, ``np.CLIP``, 
+  ``np.WRAP``, ``np.WRAP``, ``np.RAISE``, ``np.BUFSIZE``, ``np.UFUNC_BUFSIZE_DEFAULT``, 
+  ``np.UFUNC_PYVALS_NAME``, ``np.ALLOW_THREADS``, ``np.MAXDIMS``, ``np.MAY_SHARE_EXACT``,
+  ``np.MAY_SHARE_BOUNDS``, ``add_newdoc``, ``np.add_docstring`` and 
+  ``np.add_newdoc_ufunc``.
+
+  (`gh-24357 <https://github.com/numpy/numpy/pull/24357>`__)
+
+
+Deprecations
+============
+
+* ``np.compat`` has been deprecated, as Python 2 is no longer supported.
+
+* ``np.safe_eval`` has been deprecated. ``ast.literal_eval`` should be used instead.
+
+  (`gh-23830 <https://github.com/numpy/numpy/pull/23830>`__)
+
+* ``np.recfromcsv``, ``np.recfromtxt``, ``np.disp``, ``np.get_array_wrap``, 
+  ``np.maximum_sctype``, ``np.deprecate`` and ``np.deprecate_with_doc`` 
+  have been deprecated.
+
+  (`gh-24154 <https://github.com/numpy/numpy/pull/24154>`__)
+
 
 Expired deprecations
 ====================
