@@ -1074,6 +1074,28 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
+    >>> x = np.array([1 + 2j, 2 + 4j, 3 + 6j, 4 + 8j])
+    >>> np.gradient(complex_array.real)
+    >>> np.gradient(complex_array.imag)
+    array([2., 2., 2., 2.])
+
+    >>> x = np.linspace(-1, 1, 5)
+    >>> y = np.linspace(-1, 1, 4)
+    >>> X, Y = np.meshgrid(x, y, indexing='ij')
+    >>> vector_field_x = -Y
+    >>> vector_field_y = X
+    >>> np.gradient(vector_field_x, x, y)
+    >>> np.gradient(vector_field_y, x, y)
+    [array([[1., 1., 1., 1.],
+        [1., 1., 1., 1.],
+        [1., 1., 1., 1.],
+        [1., 1., 1., 1.],
+        [1., 1., 1., 1.]]),
+     array([[0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.]])]
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
