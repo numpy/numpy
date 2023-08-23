@@ -24,6 +24,7 @@ def git_version(version):
     import subprocess
     import os.path
 
+    git_hash = ''
     try:
         p = subprocess.Popen(
             ['git', 'log', '-1', '--format="%H %aI"'],
@@ -48,8 +49,6 @@ def git_version(version):
             # Only attach git tag to development versions
             if 'dev' in version:
                 version += f'+git{git_date}.{git_hash[:7]}'
-        else:
-            git_hash = ''
 
     return version, git_hash
 
