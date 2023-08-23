@@ -1,5 +1,0 @@
-Integer sequences as the ``shape`` argument for `np.memmap`
------------------------------------------------------------
-`np.memmap` can now be created with any integer sequence as the ``shape`` 
-argument, such as a list or numpy array of integers. Previously, only the 
-types of tuple and int could be used without raising an error. 

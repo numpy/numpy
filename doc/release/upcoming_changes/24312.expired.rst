@@ -1,5 +1,0 @@
-* The ``fasttake``, ``fastclip``, and ``fastputmask``  ``ArrFuncs``
-  deprecation is now finalized.
-* The deprecated function ``fastCopyAndTranspose`` and its C counterpart
-  is now removed.
-* The deprecation of ``PyArray_ScalarFromObject`` is now finalized.
