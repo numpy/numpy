@@ -24,7 +24,7 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=1.3.0
+  - mypy=1.5.1
   # For building docs
   - sphinx>=4.5.0
   - sphinx-design
