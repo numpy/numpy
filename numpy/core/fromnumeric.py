@@ -345,9 +345,9 @@ def choose(a, choices, out=None, mode='raise'):
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside ``[0, n-1]`` will be treated:
 
-          * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod ``n``
-          * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
+        * 'raise' : an exception is raised
+        * 'wrap' : value becomes value mod ``n``
+        * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
     -------

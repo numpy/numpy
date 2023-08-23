@@ -311,15 +311,15 @@ def get_printoptions():
     print_opts : dict
         Dictionary of current print options with keys
 
-          - precision : int
-          - threshold : int
-          - edgeitems : int
-          - linewidth : int
-          - suppress : bool
-          - nanstr : str
-          - infstr : str
-          - formatter : dict of callables
-          - sign : str
+        - precision : int
+        - threshold : int
+        - edgeitems : int
+        - linewidth : int
+        - suppress : bool
+        - nanstr : str
+        - infstr : str
+        - formatter : dict of callables
+        - sign : str
 
         For a full description of these options, see `set_printoptions`.
 

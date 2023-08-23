@@ -98,7 +98,7 @@ def poly(seq_of_zeros):
     The characteristic polynomial, :math:`p_a(t)`, of an `n`-by-`n`
     matrix **A** is given by
 
-        :math:`p_a(t) = \\mathrm{det}(t\\, \\mathbf{I} - \\mathbf{A})`,
+    :math:`p_a(t) = \\mathrm{det}(t\\, \\mathbf{I} - \\mathbf{A})`,
 
     where **I** is the `n`-by-`n` identity matrix. [2]_
 
