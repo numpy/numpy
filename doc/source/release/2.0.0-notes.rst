@@ -1,3 +1,5 @@
+.. currentmodule:: numpy
+
 =========================
 NumPy 2.0.0 Release Notes
 =========================
@@ -35,7 +37,7 @@ NumPy 2.0 Python API removals
   (`gh-24144 <https://github.com/numpy/numpy/pull/24144>`__)
 
 * ``numpy.who`` has been removed. As an alternative for the removed functionality, one
-can use a variable explorer that is available in IDEs such as Spyder or Jupyter Notebook.
+  can use a variable explorer that is available in IDEs such as Spyder or Jupyter Notebook.
 
   (`gh-24321 <https://github.com/numpy/numpy/pull/24321>`__)
 
@@ -101,7 +103,7 @@ Expired deprecations
   (`gh-24312 <https://github.com/numpy/numpy/pull/24312>`__)
 
 * ``np.msort`` has been removed. For a replacement, ``np.sort(a, axis=0)`` 
-should be used instead.
+  should be used instead.
 
   (`gh-24494 <https://github.com/numpy/numpy/pull/24494>`__)
 
