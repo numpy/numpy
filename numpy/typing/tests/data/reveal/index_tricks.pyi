@@ -16,9 +16,9 @@ reveal_type(np.ndenumerate(AR_i8).iter)  # E: flatiter[ndarray[Any, dtype[{int64
 reveal_type(np.ndenumerate(AR_LIKE_f).iter)  # E: flatiter[ndarray[Any, dtype[{double}]]]
 reveal_type(np.ndenumerate(AR_LIKE_U).iter)  # E: flatiter[ndarray[Any, dtype[str_]]]
 
-reveal_type(next(np.ndenumerate(AR_i8)))  # E: Tuple[builtins.tuple[builtins.int, ...], {int64}]
-reveal_type(next(np.ndenumerate(AR_LIKE_f)))  # E: Tuple[builtins.tuple[builtins.int, ...], {double}]
-reveal_type(next(np.ndenumerate(AR_LIKE_U)))  # E: Tuple[builtins.tuple[builtins.int, ...], str_]
+reveal_type(next(np.ndenumerate(AR_i8)))  # E: tuple[builtins.tuple[builtins.int, ...], {int64}]
+reveal_type(next(np.ndenumerate(AR_LIKE_f)))  # E: tuple[builtins.tuple[builtins.int, ...], {double}]
+reveal_type(next(np.ndenumerate(AR_LIKE_U)))  # E: tuple[builtins.tuple[builtins.int, ...], str_]
 
 reveal_type(iter(np.ndenumerate(AR_i8)))  # E: ndenumerate[{int64}]
 reveal_type(iter(np.ndenumerate(AR_LIKE_f)))  # E: ndenumerate[{double}]
@@ -46,13 +46,13 @@ reveal_type(np.mgrid[1:1:2, None:10])  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.ogrid[1:1:2])  # E: list[ndarray[Any, dtype[Any]]]
 reveal_type(np.ogrid[1:1:2, None:10])  # E: list[ndarray[Any, dtype[Any]]]
 
-reveal_type(np.index_exp[0:1])  # E: Tuple[builtins.slice]
-reveal_type(np.index_exp[0:1, None:3])  # E: Tuple[builtins.slice, builtins.slice]
-reveal_type(np.index_exp[0, 0:1, ..., [0, 1, 3]])  # E: Tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
+reveal_type(np.index_exp[0:1])  # E: tuple[builtins.slice]
+reveal_type(np.index_exp[0:1, None:3])  # E: tuple[builtins.slice, builtins.slice]
+reveal_type(np.index_exp[0, 0:1, ..., [0, 1, 3]])  # E: tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
 
 reveal_type(np.s_[0:1])  # E: builtins.slice
-reveal_type(np.s_[0:1, None:3])  # E: Tuple[builtins.slice, builtins.slice]
-reveal_type(np.s_[0, 0:1, ..., [0, 1, 3]])  # E: Tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
+reveal_type(np.s_[0:1, None:3])  # E: tuple[builtins.slice, builtins.slice]
+reveal_type(np.s_[0, 0:1, ..., [0, 1, 3]])  # E: tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
 
 reveal_type(np.ix_(AR_LIKE_b))  # E: tuple[ndarray[Any, dtype[bool_]], ...]
 reveal_type(np.ix_(AR_LIKE_i, AR_LIKE_f))  # E: tuple[ndarray[Any, dtype[{double}]], ...]

@@ -29,7 +29,7 @@ reveal_type(np.nbytes[int])  # E: int
 reveal_type(np.nbytes["i8"])  # E: int
 reveal_type(np.nbytes[np.int64])  # E: int
 
-reveal_type(np.ScalarType)  # E: Tuple
+reveal_type(np.ScalarType)  # E: tuple
 reveal_type(np.ScalarType[0])  # E: Type[builtins.int]
 reveal_type(np.ScalarType[3])  # E: Type[builtins.bool]
 reveal_type(np.ScalarType[8])  # E: Type[{csingle}]

@@ -15,8 +15,8 @@ reveal_type(np.deprecate())  # E: _Deprecate
 reveal_type(np.deprecate_with_doc("test"))  # E: _Deprecate
 reveal_type(np.deprecate_with_doc(None))  # E: _Deprecate
 
-reveal_type(np.byte_bounds(AR))  # E: Tuple[builtins.int, builtins.int]
-reveal_type(np.byte_bounds(np.float64()))  # E: Tuple[builtins.int, builtins.int]
+reveal_type(np.byte_bounds(AR))  # E: tuple[builtins.int, builtins.int]
+reveal_type(np.byte_bounds(np.float64()))  # E: tuple[builtins.int, builtins.int]
 
 reveal_type(np.who(None))  # E: None
 reveal_type(np.who(AR_DICT))  # E: None
