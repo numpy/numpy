@@ -27,7 +27,7 @@ from . import shape_base
 from . import stride_tricks
 from . import twodim_base
 from . import ufunclike
-from . import histograms
+from . import _histograms_impl
 from . import polynomial
 from . import utils
 from . import arraysetops
@@ -44,7 +44,6 @@ from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
 from .ufunclike import *
-from .histograms import *
 
 from .polynomial import *
 from .utils import *
@@ -71,7 +70,6 @@ __all__ += utils.__all__
 __all__ += arraysetops.__all__
 __all__ += npyio.__all__
 __all__ += nanfunctions.__all__
-__all__ += histograms.__all__
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

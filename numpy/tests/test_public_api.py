@@ -207,7 +207,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.arraysetops",
     "lib.arrayterator",
     "lib.function_base",
-    "lib.histograms",
     "lib.index_tricks",
     "lib.nanfunctions",
     "lib.npyio",
