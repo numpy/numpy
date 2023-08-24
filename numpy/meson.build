@@ -203,6 +203,7 @@ python_sources = [
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
+  '_expired_attrs_2_0.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
