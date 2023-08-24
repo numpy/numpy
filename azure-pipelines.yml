@@ -89,15 +89,13 @@ stages:
     pool:
       vmImage: 'macOS-11'
     strategy:
-      maxParallel: 3
+      maxParallel: 2
       matrix:
           Python39:
             PYTHON_VERSION: '3.9'
-            USE_OPENBLAS: '1'
           Python39-ILP64:
             PYTHON_VERSION: '3.9'
             NPY_USE_BLAS_ILP64: '1'
-            USE_OPENBLAS: '1'
     steps:
     - script: |
         git submodule update --init
@@ -123,9 +121,8 @@ stages:
         source tools/wheels/gfortran_utils.sh
         install_gfortran
       displayName: 'install gfortran'
-    # use the pre-built openblas binary that most closely
-    # matches our MacOS wheel builds -- currently based
-    # primarily on file size / name details
+    # use the pre-built openblas binary that most closely matches our MacOS
+    # wheel builds -- currently based primarily on file size / name details
     - script: |
         set -xe
         target=$(python tools/openblas_support.py)
@@ -135,8 +132,7 @@ stages:
         cp $target/include/* /usr/local/include/
         otool -L /usr/local/lib/libopenblas*
       displayName: 'install pre-built openblas'
-      condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python -m pip install --upgrade pip 'setuptools<49.2.0' wheel
+    - script: python -m pip install --upgrade pip
       displayName: 'Install tools'
     - script: |
         python -m pip install -r test_requirements.txt
@@ -149,60 +145,28 @@ stages:
     - script: git submodule update --init
       displayName: 'Fetch submodules'
 
-    # prefer usage of clang over gcc proper
-    # to match likely scenario on many user mac machines
-    - script: python setup.py build -j 4 build_src --verbose-cfg install
+    # TODO: pick up the correct OpenBLAS libraries once we can install those through wheels
+    - script: python -m pip install . -Ccompile-args="-j4" -Csetup-args="-Dallow-noblas=true"
       displayName: 'Build NumPy'
-      env:
-        BLAS: None
-        LAPACK: None
-        ATLAS: None
-        CC: /usr/bin/clang
 
-    # wait until after dev build of NumPy to pip
-    # install matplotlib to avoid pip install of older numpy
+    # only install matplotlib here, to avoid pulling in an older numpy
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
 
-    - script: python runtests.py -g --refguide-check
+    - script: |
+        set -xe
+        cd tools
+        python refguide_check.py --doctests
       displayName: 'Run Refguide Check'
-      condition: eq(variables['USE_OPENBLAS'], '1')
 
     - script: |
+        cd tools
         echo LIBRARY_PATH ${LIBRARY_PATH}
-        python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+        pytest --pyargs numpy
       displayName: 'Run Full NumPy Test Suite'
-      condition: eq(variables['USE_OPENBLAS'], '1')
       env:
         # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
         LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
-
-    - bash: |
-        python -m pip install threadpoolctl
-        python tools/openblas_support.py --check_version
-      displayName: 'Verify OpenBLAS version'
-      condition: eq(variables['USE_OPENBLAS'], '1')
-
-    # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test
-    - script: |
-        #!/bin/bash -v
-        set +e
-        python -c "import numpy as np" > test_output.log 2>&1
-        check_output_code=$?
-        cat test_output.log
-        grep "buggy Accelerate backend"  test_output.log
-        check_message=$?
-        if [ $check_output_code == 1 ] && [ $check_message == 0 ]; then exit 0; else exit 1;fi
-      displayName: "Check if numpy import fails with accelerate"
-      condition: eq(variables['USE_OPENBLAS'], '0')
-
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFiles: '**/test-*.xml'
-        failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.9 64-bit full Mac OS'
-
 
   - job: Windows
     pool:
@@ -242,25 +206,19 @@ stages:
         git submodule update --init
       displayName: 'Fetch submodules'
     - script: |
-            # create and activate conda environment
-            conda env create -f environment.yml
+        conda env create -f environment.yml
       displayName: 'Create conda environment.'
     - script: |
-            # >>> conda initialize >>>
-            # !! Contents within this block are 'conda init' !!
-            # see https://github.com/conda/conda/issues/7980
-            __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
-            eval "$__conda_setup"
-            unset __conda_setup
-            # <<< conda initialize <<<
-            conda activate numpy-dev
-            # Run native baseline Build / Tests
-            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
-            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      displayName: 'Run native baseline Build / Tests in conda.'
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFiles: '**/test-*.xml'
-        failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for conda installation'
+        # >>> conda initialize >>>
+        # !! Contents within this block are 'conda init' !!
+        # see https://github.com/conda/conda/issues/7980
+        __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
+        eval "$__conda_setup"
+        unset __conda_setup
+        # <<< conda initialize <<<
+        conda activate numpy-dev
+        # Note: conda env activation doesn't carry over between steps, so
+        # build/test are both in this step
+        spin build -- -Dcpu-baseline=native -Dcpu-dispatch=none
+        spin test -m full
+      displayName: 'Build with native baseline, run full test suite'

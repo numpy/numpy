@@ -18,6 +18,7 @@ dependencies:
   - meson-python
   - pip
   - spin
+  - ccache
   # For testing
   - pytest
   - pytest-cov
