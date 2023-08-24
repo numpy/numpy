@@ -26,5 +26,38 @@ __expired_attributes__ = {
     "add_newdoc_ufunc": 
         "It's an internal function and doesn't have a replacement.",
     "compat": "There's no replacement, as Python 2 is no longer supported.",
-    "safe_eval": "Use `ast.literal_eval` instead."
+    "safe_eval": "Use `ast.literal_eval` instead.",
+
+    "float_": "Use `np.float64` instead.",
+    "complex_": "Use `np.complex128` instead.",
+    "longfloat": "Use `np.longdouble` instead.",
+    "singlecomplex": "Use `np.complex64` instead.",
+    "cfloat": "Use `np.complex128` instead.",
+    "longcomplex": "Use `np.clongdouble` instead.",
+    "clongfloat": "Use `np.clongdouble` instead.",
+    "string_": "Use `np.bytes_` instead.",
+    "unicode_": "Use `np.str_` instead.",
+    "Inf": "Use `np.inf` instead.",
+    "Infinity": "Use `np.inf` instead.",
+    "NaN": "Use `np.nan` instead.",
+    "infty": "Use `np.inf` instead.",
+
+    "issctype": "",
+    "maximum_sctype": "",
+    "obj2sctype": "",
+    "sctype2char": "",
+    "sctypeDict": "",
+    "sctypes": "",
+    "issubsctype": "Use `np.issubdtype` instead.",
+    "set_string_function": 
+        "Use `np.set_printoptions` instead with a formatter for "
+        "custom printing of NumPy objects.",
+    "asfarray": "Use `np.asarray` with a proper dtype instead.",
+    "issubclass_": "Use `issubclass` builtin instead.",
+    "tracemalloc_domain": "It's now available from `np.lib`.",
+    "mat": "Use `np.asmatrix` instead.",
+    "recfromcsv": "It's now available from `np.lib.npyio`.",
+    "recfromtxt": "It's now available from `np.lib.npyio`.",
+    "deprecate": "Raise `DeprecationWarning` instead.",
+    "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
 }
