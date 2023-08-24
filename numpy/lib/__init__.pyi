@@ -148,7 +148,6 @@ from numpy.lib.polynomial import (
     polydiv as polydiv,
     polyval as polyval,
     polyfit as polyfit,
-    RankWarning as RankWarning,
     poly1d as poly1d,
 )
 

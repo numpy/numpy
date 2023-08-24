@@ -4,14 +4,6 @@ Utility classes and functions for the polynomial modules.
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
-Warning objects
----------------
-
-.. autosummary::
-   :toctree: generated/
-
-   RankWarning  raised in least-squares fit for rank-deficient matrix.
-
 Functions
 ---------
 
@@ -34,19 +26,11 @@ import numpy as np
 
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.core.umath import absolute
+from numpy.exceptions import RankWarning
 
 __all__ = [
-    'RankWarning', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
+    'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
     'format_float']
-
-#
-# Warnings and Exceptions
-#
-
-class RankWarning(UserWarning):
-    """Issued by chebfit when the design matrix is rank deficient."""
-    pass
 
 #
 # Helper functions to convert inputs to 1-D arrays
