@@ -3,7 +3,7 @@ project(
   'c', 'cpp', 'cython',
   version: run_command(
     # This should become `numpy/_version.py` in NumPy 2.0
-    ['python', 'numpy/_build_utils/gitversion.py'],
+    ['numpy/_build_utils/gitversion.py'],
     check: true).stdout().strip(),
   license: 'BSD-3',
   meson_version: '>=1.2.99',  # version in vendored-meson is 1.2.99
