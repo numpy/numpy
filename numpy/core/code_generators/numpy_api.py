@@ -5,7 +5,7 @@ Each dictionary contains name -> index pair.
 
 Whenever you change one index, you break the ABI (and the ABI version number
 should be incremented). Whenever you add an item to one of the dict, the API
-needs to be updated in both setup_common.py and by adding an appropriate
+needs to be updated in both numpy/core/meson.build and by adding an appropriate
 entry to cversion.txt (generate the hash via "python cversions.py").
 
 When adding a function, make sure to use the next integer not used as an index

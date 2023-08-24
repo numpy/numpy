@@ -1,5 +1,3 @@
-# This file should contain what setup.py + setup_common.py do (WIP)
-#
 # Potential issues to address or keep track of:
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
