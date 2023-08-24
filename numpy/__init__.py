@@ -95,6 +95,7 @@ import sys
 import warnings
 
 from ._globals import _NoValue, _CopyMode
+from ._expired_attrs_2_0 import __expired_attributes__
 
 
 # If a version with git hash was stored, use that instead
@@ -343,6 +344,12 @@ else:
 
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr])
+        
+        if attr in __expired_attributes__:
+            raise AttributeError(
+                f"`np.{attr}` was removed in NumPy 2.0 release. "
+                f"{__expired_attributes__[attr]}"
+            )
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
