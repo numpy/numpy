@@ -218,7 +218,7 @@ if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
-mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
+mathjax_path = "scipy-mathjax/MathJax.js"
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
