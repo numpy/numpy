@@ -837,7 +837,8 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Using ``kind='table'`` tends to be faster than `kind='sort'` if the
     following relationship is true:
-    ``log10(len(test_elements)) > (log10(max(test_elements)-min(test_elements)) - 2.27) / 0.927``,
+    ``log10(len(test_elements)) >
+    (log10(max(test_elements)-min(test_elements)) - 2.27) / 0.927``,
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
