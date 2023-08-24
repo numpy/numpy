@@ -469,7 +469,7 @@ from numpy.lib.function_base import (
     quantile as quantile,
 )
 
-from numpy.lib.histograms import (
+from numpy.lib._histograms_impl import (
     histogram_bin_edges as histogram_bin_edges,
     histogram as histogram,
     histogramdd as histogramdd,

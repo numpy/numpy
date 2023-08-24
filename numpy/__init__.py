@@ -195,8 +195,8 @@ else:
         diag_indices_from, diagflat, diff, digitize, dsplit, dstack,
         ediff1d, emath, expand_dims, extract, eye, fill_diagonal, fix,
         flip, fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
-        get_include, gradient, hamming, hanning, histogram, histogram2d,
-        histogram_bin_edges, histogramdd, hsplit, i0, imag, in1d,
+        get_include, gradient, hamming, hanning, histogram2d,
+        hsplit, i0, imag, in1d,
         index_exp, info, insert, interp, intersect1d, iscomplex,
         iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
         issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
@@ -214,6 +214,9 @@ else:
         unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
         triu, triu_indices, triu_indices_from, isposinf, disp,
         deprecate, deprecate_with_doc, safe_eval, recfromtxt, recfromcsv
+    )
+    from .lib._histograms_impl import (
+        histogram, histogram_bin_edges, histogramdd
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -275,7 +278,8 @@ else:
 
     __all__ = list(
         __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
-        set(_mat.__all__) | {"show_config", "__version__"}
+        set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
+        {"show_config", "__version__"}
     )
 
     # Filter out Cython harmless warnings
