@@ -615,7 +615,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self.__class__(coef, self.domain, self.window, self.symbol, _validate_input=False)
 
     def __rdiv__(self, other):
         # set to __floordiv__ /.
