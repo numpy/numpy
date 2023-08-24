@@ -11,7 +11,12 @@
 #if PY_VERSION_HEX > 0x030a00a6
 #define Npy_HashDouble _Py_HashDouble
 #else
-static NPY_INLINE Py_hash_t
+static NPY_INLINE
+#if PY_VERSION_HEX < 0x03020000
+long
+#else
+Py_hash_t
+#endif
 Npy_HashDouble(PyObject *NPY_UNUSED(identity), double val)
 {
     return _Py_HashDouble(val);
