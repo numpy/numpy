@@ -43,7 +43,7 @@ jobs:
       DOWNLOAD_OPENBLAS: 1
       NPY_USE_BLAS_ILP64: 1
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
         submodules: recursive
         fetch-depth: 0
@@ -62,7 +62,7 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
         submodules: recursive
         fetch-depth: 0
