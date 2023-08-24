@@ -196,6 +196,14 @@ PyArray_Type and PyArrayObject
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
 
+PyGenericArrType_Type
+---------------------
+
+.. c:var:: PyTypeObject PyGenericArrType_Type
+
+   The :c:data:`PyGenericArrType_Type` is the PyTypeObject definition which
+   create the `numpy.generic` python type.
+
 
 PyArrayDescr_Type and PyArray_Descr
 -----------------------------------
