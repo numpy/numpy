@@ -610,6 +610,7 @@ def run_compile():
             del sys.argv[i + 1], sys.argv[i]
             sources = sys.argv[1:]
 
+    pyf_files = []
     if '-m' in sys.argv:
         i = sys.argv.index('-m')
         modulename = sys.argv[i + 1]
