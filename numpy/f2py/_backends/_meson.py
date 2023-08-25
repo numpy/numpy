@@ -136,4 +136,7 @@ def _prepare_sources(mname, sources, bdir):
             shutil.copy(generated_source, bdir / generated_source.name)
             extended_sources.append(Path(bdir / generated_source.name).absolute())
             generated_source.unlink()
+    extended_sources = [
+        source for source in extended_sources if not Path(source).suffix == ".pyf"
+    ]
     return extended_sources

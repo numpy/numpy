@@ -616,8 +616,8 @@ def run_compile():
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
     else:
-        pyf_files, sources = filter_files('', '[.]pyf([.]src|)', sources)
-        sources = pyf_files + sources
+        pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
+        sources = pyf_files + _sources
         for f in pyf_files:
             modulename = auxfuncs.get_f2py_modulename(f)
             if modulename:
@@ -642,7 +642,10 @@ def run_compile():
     if backend_key == 'meson':
         outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html')
         f2py_flags.append('--lower')
-    run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
+        if pyf_files:
+            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
+        else:
+            run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
 
     # Now use the builder
     builder = build_backend(
