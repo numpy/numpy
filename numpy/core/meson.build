@@ -488,7 +488,7 @@ if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
 endif
 
 visibility_hidden = ''
-if cc.has_function_attribute('visibility:hidden')
+if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'
   visibility_hidden = '__attribute__((visibility("hidden")))'
 endif
 cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
