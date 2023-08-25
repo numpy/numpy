@@ -37,6 +37,7 @@ py3.extension_module('${modulename}',
                       fortranobject_c,
                       include_directories: [inc_np, ${include_directories_list}],
                       dependencies : [py3_dep, ${dependencies_list}],
+                      objects : ${objects_list},
                       link_args : '${linker_args}',
                       c_args : [${macros}],
                       install : true)
