@@ -19,7 +19,7 @@ from numpy.core import overrides
 from numpy.exceptions import RankWarning
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib._function_base_impl import trim_zeros
-from numpy.lib.type_check import iscomplex, real, imag, mintypecode
+from numpy.lib._type_check_impl import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
 

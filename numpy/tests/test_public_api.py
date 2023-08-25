@@ -204,7 +204,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.polynomial",
     "lib.shape_base",
     "lib.twodim_base",
-    "lib.type_check",
     "lib.ufunclike",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "lib.utils",
