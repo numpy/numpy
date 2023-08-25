@@ -898,11 +898,11 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Creating an array from sub-classes:
 
-    >>> np.array(np.mat('1 2; 3 4'))
+    >>> np.array(np.asmatrix('1 2; 3 4'))
     array([[1, 2],
            [3, 4]])
 
-    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
 
@@ -947,7 +947,6 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
@@ -1027,7 +1026,6 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and
@@ -4581,7 +4579,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float_')``.
+        ``dtype('float64')``.
 
     Parameters
     ----------

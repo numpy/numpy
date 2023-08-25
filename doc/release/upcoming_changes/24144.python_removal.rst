@@ -1,7 +1,0 @@
-* ``np.cast`` has been removed. The literal replacement for
-  ``np.cast[dtype](arg)`` is ``np.asarray(arg, dtype=dtype)``.
-
-* ``np.source`` has been removed. The preferred replacement is 
-  ``inspect.getsource``.
-
-* ``np.lookfor`` has been removed.

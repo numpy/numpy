@@ -9,7 +9,6 @@ from typing import (
 )
 
 from numpy import (
-    RankWarning as RankWarning,
     poly1d as poly1d,
     unsignedinteger,
     signedinteger,

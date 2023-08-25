@@ -1521,7 +1521,7 @@ reveal_type(random_st.seed([0, 1]))  # E: None
 random_st_get_state = random_st.get_state()
 reveal_type(random_st_state)  # E: builtins.dict[builtins.str, Any]
 random_st_get_state_legacy = random_st.get_state(legacy=True)
-reveal_type(random_st_get_state_legacy)  # E: Union[builtins.dict[builtins.str, Any], Tuple[builtins.str, ndarray[Any, dtype[unsignedinteger[typing._32Bit]]], builtins.int, builtins.int, builtins.float]]
+reveal_type(random_st_get_state_legacy)  # E: Union[builtins.dict[builtins.str, Any], tuple[builtins.str, ndarray[Any, dtype[unsignedinteger[typing._32Bit]]], builtins.int, builtins.int, builtins.float]]
 reveal_type(random_st.set_state(random_st_get_state))  # E: None
 
 reveal_type(random_st.rand())  # E: float

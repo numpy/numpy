@@ -16,6 +16,6 @@ f8: np.float64
 f4: np.float32
 
 reveal_type(add(f8, i8))  # E: {float64}
-reveal_type(add(f4, i8))  # E: {float64}
-reveal_type(add(f8, i4))  # E: {float64}
+reveal_type(add(f4, i8))  # E: floating[Union[_32Bit, _64Bit]]
+reveal_type(add(f8, i4))  # E: floating[Union[_64Bit, _32Bit]]
 reveal_type(add(f4, i4))  # E: {float32}

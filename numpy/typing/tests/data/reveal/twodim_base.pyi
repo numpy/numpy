@@ -56,17 +56,17 @@ reveal_type(np.vander(AR_f, increasing=True))  # E: ndarray[Any, dtype[floating[
 reveal_type(np.vander(AR_c))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.vander(AR_O))  # E: ndarray[Any, dtype[object_]]
 
-reveal_type(np.histogram2d(AR_i, AR_b))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.histogram2d(AR_f, AR_f))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.histogram2d(AR_f, AR_c, weights=AR_LIKE_b))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[complexfloating[Any, Any]]]]
+reveal_type(np.histogram2d(AR_i, AR_b))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.histogram2d(AR_f, AR_f))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.histogram2d(AR_f, AR_c, weights=AR_LIKE_b))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[complexfloating[Any, Any]]]]
 
-reveal_type(np.mask_indices(10, func1))  # E: Tuple[ndarray[Any, dtype[{intp}]], ndarray[Any, dtype[{intp}]]]
-reveal_type(np.mask_indices(8, func2, "0"))  # E: Tuple[ndarray[Any, dtype[{intp}]], ndarray[Any, dtype[{intp}]]]
+reveal_type(np.mask_indices(10, func1))  # E: tuple[ndarray[Any, dtype[{intp}]], ndarray[Any, dtype[{intp}]]]
+reveal_type(np.mask_indices(8, func2, "0"))  # E: tuple[ndarray[Any, dtype[{intp}]], ndarray[Any, dtype[{intp}]]]
 
-reveal_type(np.tril_indices(10))  # E: Tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
+reveal_type(np.tril_indices(10))  # E: tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
 
-reveal_type(np.tril_indices_from(AR_b))  # E: Tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
+reveal_type(np.tril_indices_from(AR_b))  # E: tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
 
-reveal_type(np.triu_indices(10))  # E: Tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
+reveal_type(np.triu_indices(10))  # E: tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
 
-reveal_type(np.triu_indices_from(AR_b))  # E: Tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]
+reveal_type(np.triu_indices_from(AR_b))  # E: tuple[ndarray[Any, dtype[{int_}]], ndarray[Any, dtype[{int_}]]]

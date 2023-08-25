@@ -3,6 +3,7 @@
 
 """
 import numpy as np
+from numpy.core.numerictypes import obj2sctype
 from collections import namedtuple
 
 # Generic object that can be added, but doesn't do anything else
@@ -48,14 +49,14 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
         if row == 'O':
             rowtype = GenericObject
         else:
-            rowtype = np.obj2sctype(row)
+            rowtype = obj2sctype(row)
 
         print(row, end=' ')
         for col in ntypes:
             if col == 'O':
                 coltype = GenericObject
             else:
-                coltype = np.obj2sctype(col)
+                coltype = obj2sctype(col)
             try:
                 if firstarray:
                     rowvalue = np.array([rowtype(inputfirstvalue)], dtype=rowtype)

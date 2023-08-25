@@ -9,9 +9,7 @@ from typing import (
 
 from numpy import ndarray, generic
 from numpy.core.numerictypes import (
-    issubclass_ as issubclass_,
     issubdtype as issubdtype,
-    issubsctype as issubsctype,
 )
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -73,14 +71,6 @@ def info(
 def source(
     object: object,
     output: None | _SupportsWrite[str] = ...,
-) -> None: ...
-
-def lookfor(
-    what: str,
-    module: None | str | Sequence[str] = ...,
-    import_modules: bool = ...,
-    regenerate: bool = ...,
-    output: None | _SupportsWrite[str] =...,
 ) -> None: ...
 
 def safe_eval(source: str | AST) -> Any: ...

@@ -30,7 +30,7 @@ from numpy.core.multiarray import (
 from numpy._utils import set_module
 
 # needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
+from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
 
 
 array_function_dispatch = functools.partial(
@@ -39,7 +39,7 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
+    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
@@ -596,7 +596,6 @@ def asarray_chkfinite(a, dtype=None, order=None):
     asarray : Create and array.
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     fromiter : Create an array from an iterator.

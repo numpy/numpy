@@ -391,11 +391,12 @@ class CustomComparison(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [8, -8, 43, -43])
+    params = (np.core.sctypes['int'] + 
+              np.core.sctypes['uint'], [8, -8, 43, -43])
     param_names = ['dtype', 'divisors']
 
     def setup(self, dtype, divisor):
-        if dtype in np.sctypes['uint'] and divisor < 0:
+        if dtype in np.core.sctypes['uint'] and divisor < 0:
             raise NotImplementedError(
                     "Skipping test for negative divisor with unsigned type")
 
@@ -407,7 +408,8 @@ class CustomScalarFloorDivideInt(Benchmark):
         self.x // divisor
 
 class CustomArrayFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [100, 10000, 1000000])
+    params = (np.core.sctypes['int'] + 
+              np.core.sctypes['uint'], [100, 10000, 1000000])
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):

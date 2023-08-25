@@ -1,7 +1,0 @@
-Add mean keyword to var and std function
-----------------------------------------
-Often when the standard deviation is needed the mean is also needed. The same
-holds for the variance and the mean. Until now the mean is then calculated twice,
-the change introduced here for the var and std functions allows for passing in a
-precalculated mean as an keyword argument. See the doc-strings for details and an
-example illustrating the speed-up.

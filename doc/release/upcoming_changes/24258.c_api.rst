@@ -1,4 +1,0 @@
-* The ``PyArray_CGT``, ``PyArray_CLT``, ``PyArray_CGE``, ``PyArray_CLE``,
-  ``PyArray_CEQ``, ``PyArray_CNE`` macros have been removed.
-* ``PyArray_MIN`` and ``PyArray_MAX`` have been moved from ``ndarraytypes.h``
-  to ``npy_math.h``.

@@ -148,32 +148,23 @@ void = allTypes['void']
 #                            with Python usage)
 #
 def _set_up_aliases():
-    type_pairs = [('complex_', 'cdouble'),
-                  ('single', 'float'),
+    type_pairs = [('single', 'float'),
                   ('csingle', 'cfloat'),
-                  ('singlecomplex', 'cfloat'),
-                  ('float_', 'double'),
                   ('intc', 'int'),
                   ('uintc', 'uint'),
                   ('int_', 'long'),
                   ('uint', 'ulong'),
-                  ('cfloat', 'cdouble'),
-                  ('longfloat', 'longdouble'),
-                  ('clongfloat', 'clongdouble'),
-                  ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('bytes_', 'string'),
-                  ('string_', 'string'),
                   ('str_', 'unicode'),
-                  ('unicode_', 'unicode'),
-                  ('object_', 'object')]
+                  ('object_', 'object'),
+                  ('cfloat', 'cdouble')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['object', 'int', 'float',
-                 'complex', 'bool', 'string', 'datetime', 'timedelta',
-                 'bytes', 'str']
+    to_remove = ['object', 'int', 'float', 'complex', 'bool', 
+                 'string', 'datetime', 'timedelta', 'bytes', 'str']
 
     for t in to_remove:
         try:
@@ -183,7 +174,7 @@ def _set_up_aliases():
             pass
 
     # Additional aliases in sctypeDict that should not be exposed as attributes
-    attrs_to_remove = ['ulong', 'long', 'unicode']
+    attrs_to_remove = ['ulong', 'long', 'unicode', 'cfloat']
 
     for t in attrs_to_remove:
         try:
@@ -232,7 +223,8 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
-_toadd = ['int', 'float', 'complex', 'bool', 'object',
+_toadd = ['int', ('float', 'double'), ('complex', 'cdouble'), 
+          'bool', 'object',
           'str', 'bytes', ('a', 'bytes_'),
           ('int0', 'intp'), ('uint0', 'uintp')]
 

@@ -129,10 +129,6 @@ class TestRegression:
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
-    def test_asfarray_none(self):
-        # Test for changeset r5065
-        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
-
     def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8

@@ -1,5 +1,0 @@
-* ``PyUFunc_GetPyVals``, ``PyUFunc_handlefperr``, and ``PyUFunc_checkfperr``
-  have been removed.
-  If needed, a new backwards compatible function to raise floating point errors
-  could be restored.  (There are no known users and the functions would have made
-  ``with np.errstate()`` fixes much more difficult.)

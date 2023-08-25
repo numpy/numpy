@@ -83,12 +83,6 @@ from numpy.lib.function_base import (
     quantile as quantile,
 )
 
-from numpy.lib.histograms import (
-    histogram_bin_edges as histogram_bin_edges,
-    histogram as histogram,
-    histogramdd as histogramdd,
-)
-
 from numpy.lib.index_tricks import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
@@ -102,23 +96,6 @@ from numpy.lib.index_tricks import (
     fill_diagonal as fill_diagonal,
     diag_indices as diag_indices,
     diag_indices_from as diag_indices_from,
-)
-
-from numpy.lib.nanfunctions import (
-    nansum as nansum,
-    nanmax as nanmax,
-    nanmin as nanmin,
-    nanargmax as nanargmax,
-    nanargmin as nanargmin,
-    nanmean as nanmean,
-    nanmedian as nanmedian,
-    nanpercentile as nanpercentile,
-    nanvar as nanvar,
-    nanstd as nanstd,
-    nanprod as nanprod,
-    nancumsum as nancumsum,
-    nancumprod as nancumprod,
-    nanquantile as nanquantile,
 )
 
 from numpy.lib.npyio import (
@@ -148,7 +125,6 @@ from numpy.lib.polynomial import (
     polydiv as polydiv,
     polyval as polyval,
     polyfit as polyfit,
-    RankWarning as RankWarning,
     poly1d as poly1d,
 )
 
@@ -197,7 +173,6 @@ from numpy.lib.twodim_base import (
 
 from numpy.lib.type_check import (
     mintypecode as mintypecode,
-    asfarray as asfarray,
     real as real,
     imag as imag,
     iscomplex as iscomplex,
@@ -217,16 +192,9 @@ from numpy.lib.ufunclike import (
 )
 
 from numpy.lib.utils import (
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
     get_include as get_include,
     info as info,
-    source as source,
-    lookfor as lookfor,
     byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
     show_runtime as show_runtime,
 )
 

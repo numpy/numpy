@@ -188,14 +188,6 @@ if not have_lapack and not allow_noblas
         'for some linear algebra operations).')
 endif
 
-# Generate version.py for sdist
-gitversion = files('_build_utils/gitversion.py')[0]
-python_bin = py.full_path()
-meson.add_dist_script(
-  py,
-  [gitversion, '--meson-dist', '--write', 'numpy/version.py']
-)
-
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
 __init__pxd = fs.copyfile('__init__.pxd')
@@ -211,6 +203,7 @@ python_sources = [
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
+  '_expired_attrs_2_0.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
@@ -257,6 +250,11 @@ endif
 
 np_dir = py.get_install_dir() / 'numpy'
 
+# Generate version.py for sdist
+meson.add_dist_script(
+   ['_build_utils/gitversion.py', '--meson-dist', '--write',
+     'numpy/version.py']
+)
 if not fs.exists('version.py')
   generate_version = custom_target(
     'generate-version',

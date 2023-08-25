@@ -51,24 +51,6 @@ def mintypecode(
     default: str = ...,
 ) -> str: ...
 
-# `asfarray` ignores dtypes if they're not inexact
-
-@overload
-def asfarray(
-    a: object,
-    dtype: None | type[float] = ...,
-) -> NDArray[float64]: ...
-@overload
-def asfarray(  # type: ignore[misc]
-    a: Any,
-    dtype: _DTypeLikeComplex,
-) -> NDArray[complexfloating[Any, Any]]: ...
-@overload
-def asfarray(
-    a: Any,
-    dtype: DTypeLike,
-) -> NDArray[floating[Any]]: ...
-
 @overload
 def real(val: _SupportsReal[_T]) -> _T: ...
 @overload

@@ -409,7 +409,7 @@ class TestDTypeCoercion(_DeprecationTestCase):
 
     def test_not_deprecated(self):
         # All specific types are not deprecated:
-        for group in np.sctypes.values():
+        for group in np.core.sctypes.values():
             for scalar_type in group:
                 self.assert_not_deprecated(np.dtype, args=(scalar_type,))
 
@@ -700,7 +700,7 @@ def test_future_scalar_attributes(name):
 
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
-    name in np.sctypeDict
+    name in np.core.sctypeDict
 
 
 # Ignore the above future attribute warning for this test.
@@ -753,10 +753,11 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy import (
-            byte_bounds, safe_eval, recfromcsv, recfromtxt,
-            disp, get_array_wrap, maximum_sctype
-        )
+        from numpy.lib.utils import safe_eval
+        from numpy.lib.npyio import recfromcsv, recfromtxt
+        from numpy.lib.function_base import disp
+        from numpy.lib.shape_base import get_array_wrap
+        from numpy.core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
         
         self.assert_deprecated(lambda: safe_eval("None"))

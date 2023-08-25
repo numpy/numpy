@@ -407,7 +407,7 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a = np.mat('1 2 3; 4 5 3')
+>>> a = np.asmatrix('1 2 3; 4 5 3')
 >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
      [-0.13450292  0.08187135]]
@@ -415,13 +415,13 @@ Example 1: Matrix creation from a string
 
 Example 2: Matrix creation from nested sequence
 
->>> np.mat([[1,5,10],[1.0,3,4j]])
+>>> np.asmatrix([[1,5,10],[1.0,3,4j]])
 matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
         [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> np.mat(np.random.rand(3,3)).T
+>>> np.asmatrix(np.random.rand(3,3)).T
 matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
         [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
         [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
