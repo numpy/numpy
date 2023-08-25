@@ -1,4 +1,4 @@
-from numpy.f2py.backends.backend import Backend
+from ._backend import Backend
 
 from numpy.distutils.core import setup, Extension
 from numpy.distutils.system_info import get_info

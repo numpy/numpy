@@ -1,11 +1,9 @@
-def get_backend(name):
+def f2py_build_generator(name):
     if name == "meson":
-        from .meson_backend import MesonBackend
-
+        from ._meson import MesonBackend
         return MesonBackend
     elif name == "distutils":
-        from .distutils_backend import DistutilsBackend
-
+        from ._distutils import DistutilsBackend
         return DistutilsBackend
     else:
         raise ValueError(f"Unknown backend: {name}")

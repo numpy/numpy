@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .backend import Backend
+from ._backend import Backend
 from string import Template
 
 import warnings
@@ -134,6 +134,6 @@ def _prepare_sources(mname, sources, bdir):
     for generated_source in generated_sources:
         if generated_source.exists():
             shutil.copy(generated_source, bdir / generated_source.name)
-            extended_sources.append(bdir / generated_source.name)
+            extended_sources.append(Path(bdir / generated_source.name).absolute())
             generated_source.unlink()
     return extended_sources
