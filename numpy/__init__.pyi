@@ -490,7 +490,7 @@ from numpy.lib.index_tricks import (
     diag_indices_from as diag_indices_from,
 )
 
-from numpy.lib.nanfunctions import (
+from numpy.lib._nanfunctions_impl import (
     nansum as nansum,
     nanmax as nanmax,
     nanmin as nanmin,

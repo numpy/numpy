@@ -202,9 +202,7 @@ else:
         iscomplexobj, isin, isneginf, isreal, isrealobj, issubclass_,
         issubsctype, iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
         median, meshgrid, mgrid, mintypecode, nan_to_num, 
-        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
-        nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
-        nansum, nanvar, ndenumerate, ndindex, ogrid, packbits, pad,
+        ndenumerate, ndindex, ogrid, packbits, pad,
         percentile, piecewise, place, poly, poly1d, polyadd, polyder,
         polydiv, polyfit, polyint, polymul, polysub, polyval,
         put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
@@ -218,6 +216,11 @@ else:
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
+    )
+    from .lib._nanfunctions_impl import (
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean, 
+        nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
+        nansum, nanvar
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -280,6 +283,7 @@ else:
     __all__ = list(
         __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
         set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
+        set(lib._nanfunctions_impl.__all__) |
         {"show_config", "__version__"}
     )
 

@@ -22,7 +22,7 @@ from . import scimath as emath
 from . import type_check
 from . import index_tricks
 from . import function_base
-from . import nanfunctions
+from . import _nanfunctions_impl
 from . import shape_base
 from . import stride_tricks
 from . import twodim_base
@@ -39,7 +39,6 @@ from . import _version
 from .type_check import *
 from .index_tricks import *
 from .function_base import *
-from .nanfunctions import *
 from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
@@ -69,7 +68,6 @@ __all__ += polynomial.__all__
 __all__ += utils.__all__
 __all__ += arraysetops.__all__
 __all__ += npyio.__all__
-__all__ += nanfunctions.__all__
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

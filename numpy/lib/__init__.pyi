@@ -98,23 +98,6 @@ from numpy.lib.index_tricks import (
     diag_indices_from as diag_indices_from,
 )
 
-from numpy.lib.nanfunctions import (
-    nansum as nansum,
-    nanmax as nanmax,
-    nanmin as nanmin,
-    nanargmax as nanargmax,
-    nanargmin as nanargmin,
-    nanmean as nanmean,
-    nanmedian as nanmedian,
-    nanpercentile as nanpercentile,
-    nanvar as nanvar,
-    nanstd as nanstd,
-    nanprod as nanprod,
-    nancumsum as nancumsum,
-    nancumprod as nancumprod,
-    nanquantile as nanquantile,
-)
-
 from numpy.lib.npyio import (
     savetxt as savetxt,
     loadtxt as loadtxt,
