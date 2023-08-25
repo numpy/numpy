@@ -56,8 +56,8 @@ __expired_attributes__ = {
     "issubclass_": "Use `issubclass` builtin instead.",
     "tracemalloc_domain": "It's now available from `np.lib`.",
     "mat": "Use `np.asmatrix` instead.",
-    "recfromcsv": "It's now available from `np.lib.npyio`.",
-    "recfromtxt": "It's now available from `np.lib.npyio`.",
+    "recfromcsv": "Use `np.genfromtxt` with comma delimiter instead.",
+    "recfromtxt": "Use `np.genfromtxt` instead.",
     "deprecate": "Raise `DeprecationWarning` instead.",
     "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
 }
