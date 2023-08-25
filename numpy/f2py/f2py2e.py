@@ -28,7 +28,7 @@ from . import cfuncs
 from . import f90mod_rules
 from . import __version__
 from . import capi_maps
-from . import _backends
+from numpy.f2py._backends import f2py_build_generator
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -598,7 +598,7 @@ def run_compile():
         sys.argv.pop(backend_index)
     else:
         backend_key = 'distutils'
-    build_backend = _backends.f2py_build_generator(backend_key)
+    build_backend = f2py_build_generator(backend_key)
 
     modulename = 'untitled'
     sources = sys.argv[1:]
