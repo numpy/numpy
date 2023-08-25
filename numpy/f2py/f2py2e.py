@@ -19,6 +19,7 @@ import os
 import pprint
 import re
 from pathlib import Path
+from itertools import dropwhile
 
 from . import crackfortran
 from . import rules
@@ -549,7 +550,18 @@ def run_compile():
     if f2py_flags2 and f2py_flags2[-1] != ':':
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
-
+    # Find the start and end indices of the "deps:" section
+    start_idx = next((i for i, a in enumerate(sys.argv) if a == "deps:"), None)
+    end_idx = next((i for i, a in enumerate(sys.argv) if a == ":" and i > start_idx), None) if start_idx is not None else None
+    # Extract dependencies and remove them from sys.argv
+    if start_idx is not None and end_idx is not None:
+        dependencies = sys.argv[start_idx + 1:end_idx]
+        del sys.argv[start_idx:end_idx + 1]
+    elif start_idx is not None:
+        dependencies = list(dropwhile(lambda x: x != ":", sys.argv[start_idx + 1:]))
+        del sys.argv[start_idx:]
+    else:
+        dependencies = []
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
         r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
@@ -669,6 +681,7 @@ def run_compile():
         flib_flags,
         setup_flags,
         remove_build_dir,
+        {"dependencies": dependencies},
     )
 
     builder.compile()

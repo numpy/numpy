@@ -33,5 +33,8 @@ ${source_list},
                      fortranobject_c
                      ],
                      include_directories: [inc_np],
-                     dependencies : [py_dep],
+                     dependencies : [
+                     py_dep,
+${dep_list}
+                     ],
                      install : true)

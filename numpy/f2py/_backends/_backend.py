@@ -21,6 +21,7 @@ class Backend(ABC):
         flib_flags,
         setup_flags,
         remove_build_dir,
+        extra_dat,
     ):
         self.modulename = modulename
         self.sources = sources
@@ -37,6 +38,7 @@ class Backend(ABC):
         self.flib_flags = flib_flags
         self.setup_flags = setup_flags
         self.remove_build_dir = remove_build_dir
+        self.extra_dat = extra_dat
 
     @abstractmethod
     def compile(self) -> None:

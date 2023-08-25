@@ -18,6 +18,7 @@ class MesonTemplate:
         self,
         modulename: str,
         sources: list[Path],
+        deps: list[str],
         object_files: list[Path],
         linker_args: list[str],
         c_args: list[str],
@@ -27,11 +28,13 @@ class MesonTemplate:
             Path(__file__).parent.absolute() / "src" / "meson.build.src"
         )
         self.sources = sources
+        self.deps = deps
         self.substitutions = {}
         self.objects = object_files
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
+            self.deps_substitution,
         ]
 
     def meson_build_template(self) -> str:
@@ -49,8 +52,15 @@ class MesonTemplate:
         self.substitutions["modulename"] = self.modulename
 
     def sources_substitution(self) -> None:
-        self.substitutions["source_list"] = ",\n".join(
-            [f"                     '{source}'" for source in self.sources]
+        indent = " " * 21
+        self.substitutions["source_list"] = f",\n{indent}".join(
+            [f"'{source}'" for source in self.sources]
+        )
+
+    def deps_substitution(self) -> None:
+        indent = " " * 21
+        self.substitutions["dep_list"] = f",\n{indent}".join(
+            [f"dependency('{dep}')" for dep in self.deps]
         )
 
     def generate_meson_build(self):
@@ -68,6 +78,7 @@ class MesonBackend(Backend):
             stacklevel=2,
         )
         super().__init__(*args, **kwargs)
+        self.dependencies = self.extra_dat.get("dependencies", [])
         self.meson_build_dir = "bbdir"
 
     def _move_exec_to_root(self, build_dir: Path):
@@ -88,6 +99,7 @@ class MesonBackend(Backend):
         meson_template = MesonTemplate(
             self.modulename,
             self.sources,
+            self.dependencies,
             self.extra_objects,
             self.flib_flags,
             self.fc_flags,
