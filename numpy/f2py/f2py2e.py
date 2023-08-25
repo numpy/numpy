@@ -616,11 +616,10 @@ def run_compile():
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
     else:
-        from numpy.distutils.command.build_src import get_f2py_modulename
         pyf_files, sources = filter_files('', '[.]pyf([.]src|)', sources)
         sources = pyf_files + sources
         for f in pyf_files:
-            modulename = get_f2py_modulename(f)
+            modulename = auxfuncs.get_f2py_modulename(f)
             if modulename:
                 break
 
