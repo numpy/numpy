@@ -639,11 +639,11 @@ def run_compile():
         else:
             print('Invalid use of -D:', name_value)
 
-    from numpy.distutils.system_info import get_info
-
-    num_info = {}
-    if num_info:
-        include_dirs.extend(num_info.get('include_dirs', []))
+    # Construct wrappers / signatures / things
+    if backend_key == 'meson':
+        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html')
+        f2py_flags.append('--lower')
+    run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
 
     # Now use the builder
     builder = build_backend(
