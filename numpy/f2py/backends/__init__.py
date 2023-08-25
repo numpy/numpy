@@ -1,4 +1,11 @@
-from .backend import Backend
-from .meson_backend import MesonBackend
+def get_backend(name):
+    if name == "meson":
+        from .meson_backend import MesonBackend
 
-backends = {"meson": MesonBackend}
+        return MesonBackend
+    elif name == "distutils":
+        from .distutils_backend import DistutilsBackend
+
+        return DistutilsBackend
+    else:
+        raise ValueError(f"Unknown backend: {name}")
