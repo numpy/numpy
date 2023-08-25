@@ -206,3 +206,34 @@ jobs:
         cd tools
         pytest --pyargs numpy -m "not slow"
 
+  custom_checks:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r build_requirements.txt
+        pip install -r test_requirements.txt
+        pip install vulture
+    - name: Build and install NumPy
+      run: |
+        # Install using the fastests way to build (no BLAS, no SIMD)
+        spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
+    - name: Check build-internal dependencies
+      run: |
+        ninja -C build -t missingdeps
+    - name: Check installed test and stub files
+      run: |
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+    - name: Check for unreachable code paths in Python modules
+      run: |
+        # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
+        bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
