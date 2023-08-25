@@ -5,7 +5,7 @@ import functools
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
-           'typename', 'asfarray', 'mintypecode',
+           'typename', 'mintypecode',
            'common_type']
 
 from .._utils import set_module
@@ -74,43 +74,6 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     if 'F' in intersection and 'd' in intersection:
         return 'D'
     return min(intersection, key=_typecodes_by_elsize.index)
-
-
-def _asfarray_dispatcher(a, dtype=None):
-    return (a,)
-
-
-@array_function_dispatch(_asfarray_dispatcher)
-def asfarray(a, dtype=_nx.float_):
-    """
-    Return an array converted to a float type.
-
-    Parameters
-    ----------
-    a : array_like
-        The input array.
-    dtype : str or dtype object, optional
-        Float type code to coerce input array `a`.  If `dtype` is one of the
-        'int' dtypes, it is replaced with float64.
-
-    Returns
-    -------
-    out : ndarray
-        The input `a` as a float ndarray.
-
-    Examples
-    --------
-    >>> np.asfarray([2, 3])
-    array([2.,  3.])
-    >>> np.asfarray([2, 3], dtype='float')
-    array([2.,  3.])
-    >>> np.asfarray([2, 3], dtype='int8')
-    array([2.,  3.])
-
-    """
-    if not _nx.issubdtype(dtype, _nx.inexact):
-        dtype = _nx.float_
-    return asarray(a, dtype=dtype)
 
 
 def _real_dispatcher(val):
@@ -663,15 +626,16 @@ def typename(char):
 
 #-----------------------------------------------------------------------------
 
+
 #determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
-              [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.half: 0,
-                   _nx.single: 1,
-                   _nx.double: 2,
+array_type = [[_nx.float16, _nx.float32, _nx.float64, _nx.longdouble],
+              [None, _nx.complex64, _nx.complex128, _nx.clongdouble]]
+array_precision = {_nx.float16: 0,
+                   _nx.float32: 1,
+                   _nx.float64: 2,
                    _nx.longdouble: 3,
-                   _nx.csingle: 1,
-                   _nx.cdouble: 2,
+                   _nx.complex64: 1,
+                   _nx.complex128: 2,
                    _nx.clongdouble: 3}
 
 

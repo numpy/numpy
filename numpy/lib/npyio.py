@@ -26,9 +26,8 @@ from numpy._utils import asunicode, asbytes
 
 
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez', 'DataSource',
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex'
     ]
 
 

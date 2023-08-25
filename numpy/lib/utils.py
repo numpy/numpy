@@ -7,16 +7,13 @@ import warnings
 import functools
 import platform
 
-from numpy.core.numerictypes import issubclass_, issubsctype
-from numpy.core import ndarray, ufunc, asarray
+from numpy.core import ndarray, asarray
 from numpy._utils import set_module
 import numpy as np
 
 __all__ = [
-    'issubclass_', 'issubsctype', 'deprecate',
-    'deprecate_with_doc', 'get_include', 'info',
-    'byte_bounds', 'safe_eval', 'show_runtime'
-    ]
+    'get_include', 'info', 'byte_bounds', 'show_runtime'
+]
 
 
 def show_runtime():
@@ -220,7 +217,7 @@ def deprecate(*args, **kwargs):
     Note that ``olduint`` returns a value after printing Deprecation
     Warning:
 
-    >>> olduint = np.deprecate(np.uint)
+    >>> olduint = np.lib.utils.deprecate(np.uint)
     DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
     6

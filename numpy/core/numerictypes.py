@@ -24,7 +24,7 @@ Exported symbols include:
 
     object_
 
-    void, str_, unicode_
+    void, str_
 
     byte, ubyte,
     short, ushort
@@ -34,8 +34,8 @@ Exported symbols include:
     longlong, ulonglong,
 
     single, csingle,
-    float_, complex_,
-    longfloat, clongfloat,
+    double, cdouble,
+    longdouble, clongdouble,
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -55,25 +55,22 @@ Exported symbols include:
      |   |         ushort
      |   |         uintc
      |   |         uintp
-     |   |         uint_
+     |   |         uint
      |   |         ulonglong
      |   +-> inexact
      |       +-> floating          (floatxx)    (kind=f)
      |       |     half
      |       |     single
-     |       |     float_          (double)
-     |       |     longfloat
+     |       |     double
+     |       |     longdouble
      |       \\-> complexfloating  (complexxx)  (kind=c)
-     |             csingle         (singlecomplex)
-     |             complex_        (cfloat, cdouble)
-     |             clongfloat      (longcomplex)
+     |             csingle
+     |             cdouble
+     |             clongdouble
      +-> flexible
      |   +-> character
-     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
-     |   |     unicode_                         (kind=U)    [Python 2]
-     |   |
-     |   |     bytes_   (string_)               (kind=S)    [Python 3]
-     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |     bytes_                           (kind=S)
+     |   |     str_                             (kind=U)
      |   |
      |   \\-> void                              (kind=V)
      \\-> object_ (not used much)               (kind=O)
@@ -89,9 +86,7 @@ from .multiarray import (
 from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypes',
-           'ScalarType', 'obj2sctype', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
+__all__ = ['ScalarType', 'nbytes', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
@@ -155,19 +150,20 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(int)
+    >>> from numpy.core.numerictypes import maximum_sctype
+    >>> maximum_sctype(int)
     <class 'numpy.int64'>
-    >>> np.maximum_sctype(np.uint8)
+    >>> maximum_sctype(np.uint8)
     <class 'numpy.uint64'>
-    >>> np.maximum_sctype(complex)
+    >>> maximum_sctype(complex)
     <class 'numpy.complex256'> # may vary
 
-    >>> np.maximum_sctype(str)
+    >>> maximum_sctype(str)
     <class 'numpy.str_'>
 
-    >>> np.maximum_sctype('i2')
+    >>> maximum_sctype('i2')
     <class 'numpy.int64'>
-    >>> np.maximum_sctype('f4')
+    >>> maximum_sctype('f4')
     <class 'numpy.float128'> # may vary
 
     """
@@ -213,16 +209,17 @@ def issctype(rep):
 
     Examples
     --------
-    >>> np.issctype(np.int32)
+    >>> from numpy.core.numerictypes import issctype
+    >>> issctype(np.int32)
     True
-    >>> np.issctype(list)
+    >>> issctype(list)
     False
-    >>> np.issctype(1.1)
+    >>> issctype(1.1)
     False
 
     Strings are also a scalar type:
 
-    >>> np.issctype(np.dtype('str'))
+    >>> issctype(np.dtype('str'))
     True
 
     """
@@ -261,18 +258,19 @@ def obj2sctype(rep, default=None):
 
     Examples
     --------
-    >>> np.obj2sctype(np.int32)
+    >>> from numpy.core.numerictypes import obj2sctype
+    >>> obj2sctype(np.int32)
     <class 'numpy.int32'>
-    >>> np.obj2sctype(np.array([1., 2.]))
+    >>> obj2sctype(np.array([1., 2.]))
     <class 'numpy.float64'>
-    >>> np.obj2sctype(np.array([1.j]))
+    >>> obj2sctype(np.array([1.j]))
     <class 'numpy.complex128'>
 
-    >>> np.obj2sctype(dict)
+    >>> obj2sctype(dict)
     <class 'numpy.object_'>
-    >>> np.obj2sctype('string')
+    >>> obj2sctype('string')
 
-    >>> np.obj2sctype(1, default=list)
+    >>> obj2sctype(1, default=list)
     <class 'list'>
 
     """
@@ -354,11 +352,12 @@ def issubsctype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubsctype('S8', str)
+    >>> from numpy.core import issubsctype
+    >>> issubsctype('S8', str)
     False
-    >>> np.issubsctype(np.array([1]), int)
+    >>> issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), float)
+    >>> issubsctype(np.array([1]), float)
     False
 
     """
@@ -418,7 +417,7 @@ def issubdtype(arg1, arg2):
 
     For convenience, dtype-like objects are allowed too:
 
-    >>> np.issubdtype('S1', np.string_)
+    >>> np.issubdtype('S1', np.bytes_)
     True
     >>> np.issubdtype('i4', np.signedinteger)
     True
@@ -490,8 +489,9 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, np.complex_, np.string_, np.ndarray]:
-    ...     print(np.sctype2char(sctype))
+    >>> from numpy.core.numerictypes import sctype2char
+    >>> for sctype in [np.int32, np.double, np.cdouble, np.bytes_, np.ndarray]:
+    ...     print(sctype2char(sctype))
     l # may vary
     d
     D
@@ -499,9 +499,9 @@ def sctype2char(sctype):
     O
 
     >>> x = np.array([1., 2-1.j])
-    >>> np.sctype2char(x)
+    >>> sctype2char(x)
     'D'
-    >>> np.sctype2char(list)
+    >>> sctype2char(list)
     'O'
 
     """

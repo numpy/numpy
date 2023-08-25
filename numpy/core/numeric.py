@@ -26,8 +26,8 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ..exceptions import ComplexWarning, TooHardError, AxisError
+from .numerictypes import bool_
+from ..exceptions import AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
 bitwise_not = invert
@@ -51,9 +51,8 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
-    'False_', 'True_', 'bitwise_not', 'full', 'full_like',
-    'matmul', 'shares_memory', 'may_share_memory',
+    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
+    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']
 
 
@@ -2504,8 +2503,8 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-Inf = inf = infty = Infinity = PINF
-nan = NaN = NAN
+inf = PINF
+nan = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 

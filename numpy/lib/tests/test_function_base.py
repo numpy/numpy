@@ -40,7 +40,7 @@ def _make_complex(real, imag):
     Like real + 1j * imag, but behaves as expected when imag contains non-finite
     values
     """
-    ret = np.zeros(np.broadcast(real, imag).shape, np.complex_)
+    ret = np.zeros(np.broadcast(real, imag).shape, np.complex128)
     ret.real = real
     ret.imag = imag
     return ret
@@ -460,7 +460,7 @@ class TestSelect:
 
     def test_return_dtype(self):
         assert_equal(select(self.conditions, self.choices, 1j).dtype,
-                     np.complex_)
+                     np.complex128)
         # But the conditions need to be stronger then the scalar default
         # if it is scalar.
         choices = [choice.astype(np.int8) for choice in self.choices]
@@ -2873,7 +2873,7 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
 
     @pytest.fixture(params=[
-        lambda x: np.float_(x),
+        lambda x: np.float64(x),
         lambda x: _make_complex(x, 0),
         lambda x: _make_complex(0, x),
         lambda x: _make_complex(x, np.multiply(x, -2))

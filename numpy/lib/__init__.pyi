@@ -173,7 +173,6 @@ from numpy.lib.twodim_base import (
 
 from numpy.lib.type_check import (
     mintypecode as mintypecode,
-    asfarray as asfarray,
     real as real,
     imag as imag,
     iscomplex as iscomplex,
@@ -193,16 +192,9 @@ from numpy.lib.ufunclike import (
 )
 
 from numpy.lib.utils import (
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
     get_include as get_include,
     info as info,
-    source as source,
-    lookfor as lookfor,
     byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
     show_runtime as show_runtime,
 )
 

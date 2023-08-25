@@ -614,9 +614,7 @@ CHECK_NAMESPACE = {
       'float64': np.float64,
       'dtype': np.dtype,
       'nan': np.nan,
-      'NaN': np.nan,
       'inf': np.inf,
-      'Inf': np.inf,
       'StringIO': io.StringIO,
 }
 

@@ -3,7 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-__all__ = ["array2string", "array_str", "array_repr", "set_string_function",
+__all__ = ["array2string", "array_str", "array_repr",
            "set_printoptions", "get_printoptions", "printoptions",
            "format_float_positional", "format_float_scientific"]
 __docformat__ = 'restructuredtext'
@@ -39,7 +39,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          set_legacy_print_mode)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
+from .numerictypes import (longlong, intc, int_, float64, complex128, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
 import operator
@@ -479,12 +479,12 @@ def _get_format_function(data, **options):
         else:
             return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
-        if issubclass(dtypeobj, _nt.longfloat):
+        if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()
         else:
             return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
-        if issubclass(dtypeobj, _nt.clongfloat):
+        if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
@@ -1446,7 +1446,7 @@ def _void_scalar_to_string(x, is_repr=True):
     return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
-_typelessdata = [int_, float_, complex_, bool_]
+_typelessdata = [int_, float64, complex128, bool_]
 
 
 def dtype_is_implied(dtype):
@@ -1728,10 +1728,11 @@ def set_string_function(f, repr=True):
 
     Examples
     --------
+    >>> from numpy.core.arrayprint import set_string_function
     >>> def pprint(arr):
     ...     return 'HA! - What are you going to do now?'
     ...
-    >>> np.set_string_function(pprint)
+    >>> set_string_function(pprint)
     >>> a = np.arange(10)
     >>> a
     HA! - What are you going to do now?
@@ -1740,7 +1741,7 @@ def set_string_function(f, repr=True):
 
     We can reset the function to the default:
 
-    >>> np.set_string_function(None)
+    >>> set_string_function(None)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -1750,7 +1751,7 @@ def set_string_function(f, repr=True):
     equal to the length of the result of ``__str__()``.
 
     >>> x = np.arange(4)
-    >>> np.set_string_function(lambda x:'random', repr=False)
+    >>> set_string_function(lambda x:'random', repr=False)
     >>> x.__str__()
     'random'
     >>> x.__repr__()
