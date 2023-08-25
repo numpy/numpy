@@ -1,0 +1,5 @@
+``meson`` backend for ``f2py``
+------------------------------
+``f2py`` now accepts the ``--backend meson`` option. This is the default option
+for Python ``3.12`` on-wards. Older versions will still default to ``--backend
+distutils``.
