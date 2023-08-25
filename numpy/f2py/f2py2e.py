@@ -128,7 +128,7 @@ Options:
   -v               Print f2py version ID and exit.
 
 
-numpy.distutils options (only effective with -c):
+build backend options (only effective with -c):
 
   --fcompiler=         Specify Fortran compiler type by vendor
   --compiler=          Specify C compiler type (as defined by distutils)
@@ -143,6 +143,19 @@ numpy.distutils options (only effective with -c):
   --noopt              Compile without optimization
   --noarch             Compile without arch-dependent optimization
   --debug              Compile with debugging information
+  deps:                <dependency1> <dependency2> ... :
+                       Specify additional dependencies that the module relies on.
+                       List dependencies separated by spaces, and use `:' to
+                       signify the end of the dependency list. Dependencies are
+                       stored in a list for further processing.
+
+                       Example: deps: lapack scalapack :
+                       This will identify "lapack" and "scalapack" as dependencies
+                       and remove them from argv, leaving a dependencies list
+                       containing ["lapack", "scalapack"].
+
+                       Note: The trailing `:' is required to signify the end of
+                       the dependency list. This is only relevant for the meson backend.
 
 Extra options (only effective with -c):
 
