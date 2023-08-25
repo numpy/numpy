@@ -252,6 +252,8 @@ def scaninputline(inputline):
                 'f2py option --include_paths is deprecated, use --include-paths instead.\n')
             f7 = 1
         elif l[:15] in '--include-paths':
+            # Similar to using -I with -c, however this is
+            # also used during generation of wrappers
             f7 = 1
         elif l == '--skip-empty-wrappers':
             emptygen = False
@@ -675,6 +677,12 @@ def main():
         pass
 
     if '-c' in sys.argv[1:]:
+        import warnings
+        warnings.warn('Using f2py to compile code without generating files '
+                      'first was largely handled by distutils which has been removed in Python 3.12.'
+                      'The meson replacement is a work in progress, consider running without -c.'
+                      'Recall that the build can be customized with --build-dir',
+                      stacklevel=2)
         run_compile()
     else:
         run_main(sys.argv[1:])
