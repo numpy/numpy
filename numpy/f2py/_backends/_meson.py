@@ -49,8 +49,8 @@ class MesonTemplate:
         self.substitutions["modulename"] = self.modulename
 
     def sources_substitution(self) -> None:
-        self.substitutions["source_list"] = ", ".join(
-            [f"'{source}'" for source in self.sources]
+        self.substitutions["source_list"] = ",\n".join(
+            [f"                     '{source}'" for source in self.sources]
         )
 
     def generate_meson_build(self):

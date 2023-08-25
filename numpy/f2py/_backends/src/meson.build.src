@@ -28,7 +28,10 @@ fortranobject_c = incdir_f2py / 'fortranobject.c'
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
 py.extension_module('${modulename}',
-                     [${source_list}, fortranobject_c],
+                     [
+${source_list},
+                     fortranobject_c
+                     ],
                      include_directories: [inc_np],
                      dependencies : [py_dep],
                      install : true)
