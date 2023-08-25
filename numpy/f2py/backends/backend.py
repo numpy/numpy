@@ -7,6 +7,9 @@ class Backend(ABC):
     def __init__(
         self,
         modulename,
+        sources,
+        extra_objects,
+        build_dir,
         include_dirs,
         library_dirs,
         libraries,
@@ -20,6 +23,9 @@ class Backend(ABC):
         remove_build_dir,
     ):
         self.modulename = modulename
+        self.sources = sources
+        self.extra_objects = extra_objects
+        self.build_dir = build_dir
         self.include_dirs = include_dirs
         self.library_dirs = library_dirs
         self.libraries = libraries
@@ -33,6 +39,6 @@ class Backend(ABC):
         self.remove_build_dir = remove_build_dir
 
     @abstractmethod
-    def compile(self, sources, extra_objects, build_dir) -> None:
+    def compile(self) -> None:
         """Compile the wrapper."""
         pass

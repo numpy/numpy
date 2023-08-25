@@ -21,19 +21,20 @@ class DistutilsBackend(Backend):
         )
         super().__init__(*args, **kwargs)
 
-    def compile(self, sources, extra_objects, build_dir):
+    def compile(self):
         num_info = {}
         if num_info:
             self.include_dirs.extend(num_info.get("include_dirs", []))
         ext_args = {
             "name": self.modulename,
-            "sources": sources,
+            "sources": self.sources,
             "include_dirs": self.include_dirs,
             "library_dirs": self.library_dirs,
             "libraries": self.libraries,
             "define_macros": self.define_macros,
             "undef_macros": self.undef_macros,
-            "extra_objects": extra_objects,
+            # TODO: Handle extra_objects in meson
+            "extra_objects": self.extra_objects,
             "f2py_options": self.f2py_flags,
         }
 
@@ -53,9 +54,9 @@ class DistutilsBackend(Backend):
             [
                 "build",
                 "--build-temp",
-                build_dir,
+                self.build_dir,
                 "--build-base",
-                build_dir,
+                self.build_dir,
                 "--build-platlib",
                 ".",
                 "--disable-optimization",
@@ -69,6 +70,6 @@ class DistutilsBackend(Backend):
 
         setup(ext_modules=[ext])
 
-        if self.remove_build_dir and os.path.exists(build_dir):
-            print(f"Removing build directory {build_dir}")
-            shutil.rmtree(build_dir)
+        if self.remove_build_dir and os.path.exists(self.build_dir):
+            print(f"Removing build directory {self.build_dir}")
+            shutil.rmtree(self.build_dir)

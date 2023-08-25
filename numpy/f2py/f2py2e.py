@@ -646,11 +646,25 @@ def run_compile():
         include_dirs.extend(num_info.get('include_dirs', []))
 
     # Now use the builder
-    builder = build_backend(modulename, include_dirs, library_dirs, libraries,
-                            define_macros, undef_macros, f2py_flags,
-                            sysinfo_flags, fc_flags, flib_flags, setup_flags, remove_build_dir)
+    builder = build_backend(
+        modulename,
+        sources,
+        extra_objects,
+        build_dir,
+        include_dirs,
+        library_dirs,
+        libraries,
+        define_macros,
+        undef_macros,
+        f2py_flags,
+        sysinfo_flags,
+        fc_flags,
+        flib_flags,
+        setup_flags,
+        remove_build_dir,
+    )
 
-    builder.compile(sources, extra_objects, build_dir)
+    builder.compile()
 
 def main():
     if '--help-link' in sys.argv[1:]:
