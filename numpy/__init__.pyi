@@ -577,7 +577,6 @@ from numpy.lib._ufunclike_impl import (
 from numpy.lib._utils_impl import (
     get_include as get_include,
     info as info,
-    byte_bounds as byte_bounds,
     show_runtime as show_runtime,
 )
 
