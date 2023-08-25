@@ -183,30 +183,27 @@ else:
 
     from . import lib
     from .lib import (
-        DataSource, angle, append, apply_along_axis, apply_over_axes,
-        array_split, asarray_chkfinite, average, bartlett,
-        bincount, blackman, broadcast_arrays, broadcast_shapes,
+        DataSource, apply_along_axis, apply_over_axes,
+        array_split, broadcast_arrays, broadcast_shapes,
         broadcast_to, byte_bounds, c_, column_stack, common_type,
-        copy, corrcoef, cov, delete, diag, diag_indices,
-        diag_indices_from, diagflat, diff, digitize, dsplit, dstack,
-        ediff1d, emath, expand_dims, extract, eye, fill_diagonal, fix,
-        flip, fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
-        get_include, gradient, hamming, hanning, histogram2d,
-        hsplit, i0, imag, in1d,
-        index_exp, info, insert, interp, intersect1d, iscomplex,
+        diag, diag_indices,
+        diag_indices_from, diagflat, dsplit, dstack,
+        ediff1d, emath, expand_dims, eye, fill_diagonal, fix,
+        fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
+        get_include, histogram2d,
+        hsplit, imag, in1d, index_exp, info, intersect1d, iscomplex,
         iscomplexobj, isin, isneginf, isreal, isrealobj,
-        iterable, ix_, kaiser, kron, load, loadtxt, mask_indices,
-        median, meshgrid, mgrid, mintypecode, nan_to_num, 
-        ndenumerate, ndindex, ogrid, packbits, pad,
-        percentile, piecewise, place, poly, poly1d, polyadd, polyder,
+        ix_, kron, load, loadtxt, mask_indices,
+        mgrid, mintypecode, nan_to_num, ndenumerate, ndindex, ogrid, 
+        packbits, pad, poly, poly1d, polyadd, polyder,
         polydiv, polyfit, polyint, polymul, polysub, polyval,
-        put_along_axis, quantile, r_, ravel_multi_index, real, real_if_close,
-        roots, rot90, row_stack, s_, save, savetxt, savez, savez_compressed,
-        select, setdiff1d, setxor1d, show_runtime, sinc, sort_complex, split,
-        take_along_axis, tile, trapz, tri, tril,
+        put_along_axis, r_, ravel_multi_index, real, real_if_close,
+        roots, row_stack, s_, save, savetxt, savez, savez_compressed,
+        setdiff1d, setxor1d, show_runtime, split,
+        take_along_axis, tile, tracemalloc_domain, tri, tril,
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
-        unravel_index, unwrap, vander, vectorize, vsplit, trim_zeros,
-        triu, triu_indices, triu_indices_from, isposinf
+        unravel_index, vander, vsplit, triu, triu_indices, triu_indices_from, 
+        isposinf, recfromtxt, recfromcsv
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -215,6 +212,14 @@ else:
         nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean, 
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar
+    )
+    from .lib._function_base_impl import (
+        select, piecewise, trim_zeros, copy, iterable, percentile, diff, 
+        gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
+        vectorize, asarray_chkfinite, average, bincount, digitize, cov,
+        corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
+        kaiser, trapz, i0, meshgrid, delete, insert, append, interp,
+        quantile, disp
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -278,6 +283,7 @@ else:
         __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
         set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
         set(lib._nanfunctions_impl.__all__) |
+        set(lib._function_base_impl.__all__) |
         {"show_config", "__version__"}
     )
 
