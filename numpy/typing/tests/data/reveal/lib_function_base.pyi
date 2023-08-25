@@ -50,11 +50,11 @@ reveal_type(np.iterable([1]))  # E: bool
 reveal_type(np.average(AR_f8))  # E: floating[Any]
 reveal_type(np.average(AR_f8, weights=AR_c16))  # E: complexfloating[Any, Any]
 reveal_type(np.average(AR_O))  # E: Any
-reveal_type(np.average(AR_f8, returned=True))  # E: Tuple[floating[Any], floating[Any]]
-reveal_type(np.average(AR_f8, weights=AR_c16, returned=True))  # E: Tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
-reveal_type(np.average(AR_O, returned=True))  # E: Tuple[Any, Any]
+reveal_type(np.average(AR_f8, returned=True))  # E: tuple[floating[Any], floating[Any]]
+reveal_type(np.average(AR_f8, weights=AR_c16, returned=True))  # E: tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
+reveal_type(np.average(AR_O, returned=True))  # E: tuple[Any, Any]
 reveal_type(np.average(AR_f8, axis=0))  # E: Any
-reveal_type(np.average(AR_f8, axis=0, returned=True))  # E: Tuple[Any, Any]
+reveal_type(np.average(AR_f8, axis=0, returned=True))  # E: tuple[Any, Any]
 
 reveal_type(np.asarray_chkfinite(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.asarray_chkfinite(AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]

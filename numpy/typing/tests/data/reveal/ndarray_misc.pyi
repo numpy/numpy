@@ -25,7 +25,7 @@ AR_V: NDArray[np.void]
 ctypes_obj = AR_f8.ctypes
 
 reveal_type(AR_f8.__dlpack__())  # E: Any
-reveal_type(AR_f8.__dlpack_device__())  # E: Tuple[int, Literal[0]]
+reveal_type(AR_f8.__dlpack_device__())  # E: tuple[int, Literal[0]]
 
 reveal_type(ctypes_obj.data)  # E: int
 reveal_type(ctypes_obj.shape)  # E: ctypes.Array[{c_intp}]

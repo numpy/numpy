@@ -18,8 +18,8 @@ reveal_type(c8.real.real)  # E: {float32}
 reveal_type(c8.real.imag)  # E: {float32}
 
 reveal_type(c8.itemsize)  # E: int
-reveal_type(c8.shape)  # E: Tuple[]
-reveal_type(c8.strides)  # E: Tuple[]
+reveal_type(c8.shape)  # E: tuple[]
+reveal_type(c8.strides)  # E: tuple[]
 
 reveal_type(c8.ndim)  # E: Literal[0]
 reveal_type(c8.size)  # E: Literal[1]
@@ -126,15 +126,15 @@ reveal_type(i8.getfield(float))  # E: Any
 reveal_type(i8.getfield(np.float64))  # E: {float64}
 reveal_type(i8.getfield(np.float64, 8))  # E: {float64}
 
-reveal_type(f8.as_integer_ratio())  # E: Tuple[builtins.int, builtins.int]
+reveal_type(f8.as_integer_ratio())  # E: tuple[builtins.int, builtins.int]
 reveal_type(f8.is_integer())  # E: bool
 reveal_type(f8.__trunc__())  # E: int
 reveal_type(f8.__getformat__("float"))  # E: str
 reveal_type(f8.hex())  # E: str
 reveal_type(np.float64.fromhex("0x0.0p+0"))  # E: {float64}
 
-reveal_type(f8.__getnewargs__())  # E: Tuple[builtins.float]
-reveal_type(c16.__getnewargs__())  # E: Tuple[builtins.float, builtins.float]
+reveal_type(f8.__getnewargs__())  # E: tuple[builtins.float]
+reveal_type(c16.__getnewargs__())  # E: tuple[builtins.float, builtins.float]
 
 reveal_type(i8.numerator)  # E: {int64}
 reveal_type(i8.denominator)  # E: Literal[1]
