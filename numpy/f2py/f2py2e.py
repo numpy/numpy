@@ -598,6 +598,10 @@ def run_compile():
         sys.argv.pop(backend_index)
     else:
         backend_key = 'distutils'
+
+    if sys.version_info >= (3, 12) and backend_key == 'distutils':
+        outmess('Cannot use distutils backend with Python 3.12, using meson backend instead.')
+        backend_key = 'meson'
     build_backend = f2py_build_generator(backend_key)
 
     modulename = 'untitled'
