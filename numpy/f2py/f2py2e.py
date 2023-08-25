@@ -28,6 +28,7 @@ from . import cfuncs
 from . import f90mod_rules
 from . import __version__
 from . import capi_maps
+from . import backends
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -588,6 +589,15 @@ def run_compile():
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 
+    # Check for and remove --backend first
+    if '--backend' in sys.argv:
+        backend_index = sys.argv.index('--backend')
+        backend_key = sys.argv.pop(backend_index + 1)
+        sys.argv.pop(backend_index)
+    else:
+        backend_key = 'distutils'
+    build_backend = backends.get_backend(backend_key)
+
     modulename = 'untitled'
     sources = sys.argv[1:]
 
@@ -633,46 +643,12 @@ def run_compile():
     if num_info:
         include_dirs.extend(num_info.get('include_dirs', []))
 
-    from numpy.distutils.core import setup, Extension
-    ext_args = {'name': modulename, 'sources': sources,
-                'include_dirs': include_dirs,
-                'library_dirs': library_dirs,
-                'libraries': libraries,
-                'define_macros': define_macros,
-                'undef_macros': undef_macros,
-                'extra_objects': extra_objects,
-                'f2py_options': f2py_flags,
-                }
+    # Now use the builder
+    builder = build_backend(modulename, include_dirs, library_dirs, libraries,
+                            define_macros, undef_macros, f2py_flags,
+                            sysinfo_flags, fc_flags, flib_flags, setup_flags, remove_build_dir)
 
-    if sysinfo_flags:
-        from numpy.distutils.misc_util import dict_append
-        for n in sysinfo_flags:
-            i = get_info(n)
-            if not i:
-                outmess('No %s resources found in system'
-                        ' (try `f2py --help-link`)\n' % (repr(n)))
-            dict_append(ext_args, **i)
-
-    ext = Extension(**ext_args)
-    sys.argv = [sys.argv[0]] + setup_flags
-    sys.argv.extend(['build',
-                     '--build-temp', build_dir,
-                     '--build-base', build_dir,
-                     '--build-platlib', '.',
-                     # disable CCompilerOpt
-                     '--disable-optimization'])
-    if fc_flags:
-        sys.argv.extend(['config_fc'] + fc_flags)
-    if flib_flags:
-        sys.argv.extend(['build_ext'] + flib_flags)
-
-    setup(ext_modules=[ext])
-
-    if remove_build_dir and os.path.exists(build_dir):
-        import shutil
-        outmess('Removing build directory %s\n' % (build_dir))
-        shutil.rmtree(build_dir)
-
+    builder.compile(sources, extra_objects, build_dir)
 
 def main():
     if '--help-link' in sys.argv[1:]:
