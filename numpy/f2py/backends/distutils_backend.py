@@ -3,6 +3,7 @@ from numpy.f2py.backends.backend import Backend
 from numpy.distutils.core import setup, Extension
 from numpy.distutils.system_info import get_info
 from numpy.distutils.misc_util import dict_append
+from numpy.exceptions import VisibleDeprecationWarning
 import os
 import sys
 import shutil
@@ -15,7 +16,9 @@ class DistutilsBackend(Backend):
             "distutils has been deprecated since NumPy 2.16."
             "Use the MesonBackend instead, or generate wrappers"
             "without -c and use a custom build script",
-            np.VisibleDeprecationWarning, stacklevel=2)
+            VisibleDeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(*args, **kwargs)
 
     def compile(self, sources, extra_objects, build_dir):
