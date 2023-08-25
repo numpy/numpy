@@ -200,10 +200,10 @@ else:
         put_along_axis, r_, ravel_multi_index, real, real_if_close,
         roots, row_stack, s_, save, savetxt, savez, savez_compressed,
         setdiff1d, setxor1d, show_runtime, split,
-        take_along_axis, tile, tracemalloc_domain, tri, tril,
+        take_along_axis, tile, tri, tril,
         tril_indices, tril_indices_from, typename, union1d, unique, unpackbits,
         unravel_index, vander, vsplit, triu, triu_indices, triu_indices_from, 
-        isposinf, recfromtxt, recfromcsv
+        isposinf
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -218,8 +218,7 @@ else:
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
-        kaiser, trapz, i0, meshgrid, delete, insert, append, interp,
-        quantile, disp
+        kaiser, trapz, i0, meshgrid, delete, insert, append, interp, quantile
     )
     from . import matrixlib as _mat
     from .matrixlib import (
