@@ -343,184 +343,168 @@ reveal_type(c8 / b_)  # E: {complex64}
 
 # Complex
 
-reveal_type(c16 + f16)  # E: {complex256}
+reveal_type(c16 + f16)  # E: complexfloating[Union[_64Bit, _128Bit], Union[_64Bit, _128Bit]]
 reveal_type(c16 + c16)  # E: {complex128}
 reveal_type(c16 + f8)  # E: {complex128}
 reveal_type(c16 + i8)  # E: {complex128}
-reveal_type(c16 + c8)  # E: {complex128}
-reveal_type(c16 + f4)  # E: {complex128}
-reveal_type(c16 + i4)  # E: {complex128}
+reveal_type(c16 + c8)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
+reveal_type(c16 + f4)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
+reveal_type(c16 + i4)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
 reveal_type(c16 + b_)  # E: {complex128}
 reveal_type(c16 + b)  # E: {complex128}
 reveal_type(c16 + c)  # E: {complex128}
 reveal_type(c16 + f)  # E: {complex128}
-reveal_type(c16 + i)  # E: {complex128}
 reveal_type(c16 + AR_f)  # E: Any
 
-reveal_type(f16 + c16)  # E: {complex256}
+reveal_type(f16 + c16)  # E: complexfloating[Union[_64Bit, _128Bit], Union[_64Bit, _128Bit]]
 reveal_type(c16 + c16)  # E: {complex128}
 reveal_type(f8 + c16)  # E: {complex128}
 reveal_type(i8 + c16)  # E: {complex128}
-reveal_type(c8 + c16)  # E: {complex128}
-reveal_type(f4 + c16)  # E: {complex128}
-reveal_type(i4 + c16)  # E: {complex128}
+reveal_type(c8 + c16)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(f4 + c16)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
+reveal_type(i4 + c16)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
 reveal_type(b_ + c16)  # E: {complex128}
 reveal_type(b + c16)  # E: {complex128}
 reveal_type(c + c16)  # E: {complex128}
 reveal_type(f + c16)  # E: {complex128}
-reveal_type(i + c16)  # E: {complex128}
 reveal_type(AR_f + c16)  # E: Any
 
-reveal_type(c8 + f16)  # E: {complex256}
-reveal_type(c8 + c16)  # E: {complex128}
-reveal_type(c8 + f8)  # E: {complex128}
-reveal_type(c8 + i8)  # E: {complex128}
+reveal_type(c8 + f16)  # E: complexfloating[Union[_32Bit, _128Bit], Union[_32Bit, _128Bit]]
+reveal_type(c8 + c16)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(c8 + f8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(c8 + i8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
 reveal_type(c8 + c8)  # E: {complex64}
 reveal_type(c8 + f4)  # E: {complex64}
 reveal_type(c8 + i4)  # E: {complex64}
 reveal_type(c8 + b_)  # E: {complex64}
 reveal_type(c8 + b)  # E: {complex64}
-reveal_type(c8 + c)  # E: {complex128}
-reveal_type(c8 + f)  # E: {complex128}
-reveal_type(c8 + i)  # E: complexfloating[{_NBitInt}, {_NBitInt}]
+reveal_type(c8 + c)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(c8 + f)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
 reveal_type(c8 + AR_f)  # E: Any
 
-reveal_type(f16 + c8)  # E: {complex256}
-reveal_type(c16 + c8)  # E: {complex128}
-reveal_type(f8 + c8)  # E: {complex128}
-reveal_type(i8 + c8)  # E: {complex128}
+reveal_type(f16 + c8)  # E: complexfloating[Union[_32Bit, _128Bit], Union[_32Bit, _128Bit]]
+reveal_type(c16 + c8)  # E: complexfloating[Union[_64Bit, _32Bit], Union[_64Bit, _32Bit]]
+reveal_type(f8 + c8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(i8 + c8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
 reveal_type(c8 + c8)  # E: {complex64}
 reveal_type(f4 + c8)  # E: {complex64}
 reveal_type(i4 + c8)  # E: {complex64}
 reveal_type(b_ + c8)  # E: {complex64}
 reveal_type(b + c8)  # E: {complex64}
-reveal_type(c + c8)  # E: {complex128}
-reveal_type(f + c8)  # E: {complex128}
-reveal_type(i + c8)  # E: complexfloating[{_NBitInt}, {_NBitInt}]
+reveal_type(c + c8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(f + c8)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
 reveal_type(AR_f + c8)  # E: Any
 
 # Float
 
-reveal_type(f8 + f16)  # E: {float128}
+reveal_type(f8 + f16)  # E: floating[Union[_64Bit, _128Bit]]
 reveal_type(f8 + f8)  # E: {float64}
 reveal_type(f8 + i8)  # E: {float64}
-reveal_type(f8 + f4)  # E: {float64}
-reveal_type(f8 + i4)  # E: {float64}
+reveal_type(f8 + f4)  # E: floating[Union[_64Bit, _32Bit]]
+reveal_type(f8 + i4)  # E: floating[Union[_64Bit, _32Bit]]
 reveal_type(f8 + b_)  # E: {float64}
 reveal_type(f8 + b)  # E: {float64}
 reveal_type(f8 + c)  # E: {complex128}
 reveal_type(f8 + f)  # E: {float64}
-reveal_type(f8 + i)  # E: {float64}
 reveal_type(f8 + AR_f)  # E: Any
 
-reveal_type(f16 + f8)  # E: {float128}
+reveal_type(f16 + f8)  # E: floating[Union[_128Bit, _64Bit]]
 reveal_type(f8 + f8)  # E: {float64}
 reveal_type(i8 + f8)  # E: {float64}
-reveal_type(f4 + f8)  # E: {float64}
-reveal_type(i4 + f8)  # E: {float64}
+reveal_type(f4 + f8)  # E: floating[Union[_32Bit, _64Bit]]
+reveal_type(i4 + f8)  # E: floating[Union[_64Bit, _32Bit]]
 reveal_type(b_ + f8)  # E: {float64}
 reveal_type(b + f8)  # E: {float64}
 reveal_type(c + f8)  # E: {complex128}
 reveal_type(f + f8)  # E: {float64}
-reveal_type(i + f8)  # E: {float64}
 reveal_type(AR_f + f8)  # E: Any
 
-reveal_type(f4 + f16)  # E: {float128}
-reveal_type(f4 + f8)  # E: {float64}
-reveal_type(f4 + i8)  # E: {float64}
+reveal_type(f4 + f16)  # E: floating[Union[_32Bit, _128Bit]]
+reveal_type(f4 + f8)  # E: floating[Union[_32Bit, _64Bit]]
+reveal_type(f4 + i8)  # E: floating[Union[_32Bit, _64Bit]]
 reveal_type(f4 + f4)  # E: {float32}
 reveal_type(f4 + i4)  # E: {float32}
 reveal_type(f4 + b_)  # E: {float32}
 reveal_type(f4 + b)  # E: {float32}
-reveal_type(f4 + c)  # E: {complex128}
-reveal_type(f4 + f)  # E: {float64}
-reveal_type(f4 + i)  # E: floating[{_NBitInt}]
+reveal_type(f4 + c)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(f4 + f)  # E: floating[Union[_32Bit, _64Bit]]
 reveal_type(f4 + AR_f)  # E: Any
 
-reveal_type(f16 + f4)  # E: {float128}
-reveal_type(f8 + f4)  # E: {float64}
-reveal_type(i8 + f4)  # E: {float64}
+reveal_type(f16 + f4)  # E: floating[Union[_128Bit, _32Bit]]
+reveal_type(f8 + f4)  # E: floating[Union[_64Bit, _32Bit]]
+reveal_type(i8 + f4)  # E: floating[Union[_32Bit, _64Bit]]
 reveal_type(f4 + f4)  # E: {float32}
 reveal_type(i4 + f4)  # E: {float32}
 reveal_type(b_ + f4)  # E: {float32}
 reveal_type(b + f4)  # E: {float32}
-reveal_type(c + f4)  # E: {complex128}
-reveal_type(f + f4)  # E: {float64}
-reveal_type(i + f4)  # E: floating[{_NBitInt}]
+reveal_type(c + f4)  # E: complexfloating[Union[_32Bit, _64Bit], Union[_32Bit, _64Bit]]
+reveal_type(f + f4)  # E: floating[Union[_32Bit, _64Bit]]
 reveal_type(AR_f + f4)  # E: Any
 
 # Int
 
 reveal_type(i8 + i8)  # E: {int64}
 reveal_type(i8 + u8)  # E: Any
-reveal_type(i8 + i4)  # E: {int64}
+reveal_type(i8 + i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
 reveal_type(i8 + u4)  # E: Any
 reveal_type(i8 + b_)  # E: {int64}
 reveal_type(i8 + b)  # E: {int64}
 reveal_type(i8 + c)  # E: {complex128}
 reveal_type(i8 + f)  # E: {float64}
-reveal_type(i8 + i)  # E: {int64}
 reveal_type(i8 + AR_f)  # E: Any
 
 reveal_type(u8 + u8)  # E: {uint64}
 reveal_type(u8 + i4)  # E: Any
-reveal_type(u8 + u4)  # E: {uint64}
+reveal_type(u8 + u4)  # E: signedinteger[Union[_64Bit, _32Bit]]
 reveal_type(u8 + b_)  # E: {uint64}
 reveal_type(u8 + b)  # E: {uint64}
 reveal_type(u8 + c)  # E: {complex128}
 reveal_type(u8 + f)  # E: {float64}
-reveal_type(u8 + i)  # E: Any
 reveal_type(u8 + AR_f)  # E: Any
 
 reveal_type(i8 + i8)  # E: {int64}
 reveal_type(u8 + i8)  # E: Any
-reveal_type(i4 + i8)  # E: {int64}
+reveal_type(i4 + i8)  # E: signedinteger[Union[_32Bit, _64Bit]]
 reveal_type(u4 + i8)  # E: Any
 reveal_type(b_ + i8)  # E: {int64}
 reveal_type(b + i8)  # E: {int64}
 reveal_type(c + i8)  # E: {complex128}
 reveal_type(f + i8)  # E: {float64}
-reveal_type(i + i8)  # E: {int64}
 reveal_type(AR_f + i8)  # E: Any
 
 reveal_type(u8 + u8)  # E: {uint64}
 reveal_type(i4 + u8)  # E: Any
-reveal_type(u4 + u8)  # E: {uint64}
+reveal_type(u4 + u8)  # E: unsignedinteger[Union[_32Bit, _64Bit]]
 reveal_type(b_ + u8)  # E: {uint64}
 reveal_type(b + u8)  # E: {uint64}
 reveal_type(c + u8)  # E: {complex128}
 reveal_type(f + u8)  # E: {float64}
-reveal_type(i + u8)  # E: Any
 reveal_type(AR_f + u8)  # E: Any
 
-reveal_type(i4 + i8)  # E: {int64}
+reveal_type(i4 + i8)  # E: signedinteger[Union[_32Bit, _64Bit]]
 reveal_type(i4 + i4)  # E: {int32}
-reveal_type(i4 + i)  # E: {int_}
 reveal_type(i4 + b_)  # E: {int32}
 reveal_type(i4 + b)  # E: {int32}
 reveal_type(i4 + AR_f)  # E: Any
 
 reveal_type(u4 + i8)  # E: Any
 reveal_type(u4 + i4)  # E: Any
-reveal_type(u4 + u8)  # E: {uint64}
+reveal_type(u4 + u8)  # E: unsignedinteger[Union[_32Bit, _64Bit]]
 reveal_type(u4 + u4)  # E: {uint32}
-reveal_type(u4 + i)  # E: Any
 reveal_type(u4 + b_)  # E: {uint32}
 reveal_type(u4 + b)  # E: {uint32}
 reveal_type(u4 + AR_f)  # E: Any
 
-reveal_type(i8 + i4)  # E: {int64}
+reveal_type(i8 + i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
 reveal_type(i4 + i4)  # E: {int32}
-reveal_type(i + i4)  # E: {int_}
 reveal_type(b_ + i4)  # E: {int32}
 reveal_type(b + i4)  # E: {int32}
 reveal_type(AR_f + i4)  # E: Any
 
 reveal_type(i8 + u4)  # E: Any
 reveal_type(i4 + u4)  # E: Any
-reveal_type(u8 + u4)  # E: {uint64}
+reveal_type(u8 + u4)  # E: unsignedinteger[Union[_64Bit, _32Bit]]
 reveal_type(u4 + u4)  # E: {uint32}
 reveal_type(b_ + u4)  # E: {uint32}
 reveal_type(b + u4)  # E: {uint32}
-reveal_type(i + u4)  # E: Any
 reveal_type(AR_f + u4)  # E: Any
