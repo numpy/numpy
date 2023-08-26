@@ -680,10 +680,12 @@ def digitize(
     x: _FloatLike_co,
     bins: _ArrayLikeFloat_co,
     right: bool = ...,
+    endpoint: bool = ...,
 ) -> intp: ...
 @overload
 def digitize(
     x: _ArrayLikeFloat_co,
     bins: _ArrayLikeFloat_co,
     right: bool = ...,
+    endpoint: bool = ...,
 ) -> NDArray[intp]: ...

@@ -5541,12 +5541,12 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None):
+def _digitize_dispatcher(x, bins, right=None, endpoint=None):
     return (x, bins)
 
 
 @array_function_dispatch(_digitize_dispatcher)
-def digitize(x, bins, right=False):
+def digitize(x, bins, right=False, endpoint=False):
     """
     Return the indices of the bins to which each value in input array belongs.
 
@@ -5575,6 +5575,9 @@ def digitize(x, bins, right=False):
         does not include the right edge. The left bin end is open in this
         case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
+    endpoint : bool, optional
+        Indicating whether the last bin (if right==False) or the first one
+        (if right==True) include both edges.
 
     Returns
     -------
@@ -5638,6 +5641,7 @@ def digitize(x, bins, right=False):
     """
     x = _nx.asarray(x)
     bins = _nx.asarray(bins)
+    n_bins = len(bins)
 
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
@@ -5651,6 +5655,24 @@ def digitize(x, bins, right=False):
     side = 'left' if right else 'right'
     if mono == -1:
         # reverse the bins, and invert the results
-        return len(bins) - _nx.searchsorted(bins[::-1], x, side=side)
+        indices = n_bins - _nx.searchsorted(bins[::-1], x, side=side)
     else:
-        return _nx.searchsorted(bins, x, side=side)
+        indices = _nx.searchsorted(bins, x, side=side)
+
+    if endpoint:
+        if right:
+            if mono > 0:
+                # include the left edge in the first bin.
+                indices[x == bins[0]] = 1
+            else:
+                # include the right edge in the first bin.
+                indices[x == bins[1]] = 1
+        else:
+            if mono > 0:
+                # include the right edge in the last bin.
+                indices[x == bins[-1]] = n_bins - 1
+            else:
+                # include the left edge in the last bin.
+                indices[x == bins[-2]] = n_bins - 1
+
+    return indices
