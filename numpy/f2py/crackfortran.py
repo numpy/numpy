@@ -1152,12 +1152,13 @@ def analyzeline(m, case, line):
                 pass
         if block in ['function', 'subroutine']:  # set global attributes
             # name is fortran name
-            bindcdat = re.search(crackline_bindlang, bindcline)
-            if bindcdat:
-                groupcache[groupcounter]['bindlang'] = {name : {}}
-                groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
-                if bindcdat.group('lang_name'):
-                    groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')
+            if bindcline:
+                bindcdat = re.search(crackline_bindlang, bindcline)
+                if bindcdat:
+                    groupcache[groupcounter]['bindlang'] = {name : {}}
+                    groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
+                    if bindcdat.group('lang_name'):
+                        groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')
             try:
                 groupcache[groupcounter]['vars'][name] = appenddecl(
                     groupcache[groupcounter]['vars'][name], groupcache[groupcounter - 2]['vars'][''])
