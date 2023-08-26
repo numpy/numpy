@@ -104,5 +104,4 @@ The Matrix class
 .. autosummary::
    :toctree: generated/
 
-   mat
    bmat

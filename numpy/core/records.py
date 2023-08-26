@@ -124,7 +124,7 @@ class format_parser:
 
     See Also
     --------
-    dtype, typename, sctype2char
+    dtype, typename
 
     Examples
     --------
