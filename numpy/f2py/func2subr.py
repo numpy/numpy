@@ -21,6 +21,7 @@ from .auxfuncs import (
     issubroutine, issubroutine_wrap, outmess, show
 )
 
+from ._isocbind import isoc_kindmap
 
 def var2fixfortran(vars, a, fa=None, f90mode=None):
     if fa is None:
@@ -72,10 +73,10 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
 
 def useiso_c_binding(rout):
     useisoc = False
-    fortranname = getfortranname(rout)
-    if 'bindlang' in rout:
-        if rout['bindlang'][fortranname]:
-            useisoc = True
+    for key, value in rout['vars'].items():
+        kind_value = value.get('kindselector', {}).get('kind')
+        if kind_value in isoc_kindmap:
+            return True
     return useisoc
 
 def createfuncwrapper(rout, signature=0):
