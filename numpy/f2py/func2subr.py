@@ -70,6 +70,13 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
         vardef = '%s(%s)' % (vardef, ','.join(vars[a]['dimension']))
     return vardef
 
+def useiso_c_binding(rout):
+    useisoc = False
+    fortranname = getfortranname(rout)
+    if 'bindlang' in rout:
+        if rout['bindlang'][fortranname]:
+            useisoc = True
+    return useisoc
 
 def createfuncwrapper(rout, signature=0):
     assert isfunction(rout)
@@ -117,6 +124,7 @@ def createfuncwrapper(rout, signature=0):
     l1 = l_tmpl.replace('@@@NAME@@@', newname)
     rl = None
 
+    useisoc = useiso_c_binding(rout)
     sargs = ', '.join(args)
     if f90mode:
         # gh-23598 fix warning
@@ -129,11 +137,11 @@ def createfuncwrapper(rout, signature=0):
             (rout['modulename'], name, sargs))
         if not signature:
             add('use %s, only : %s' % (rout['modulename'], fortranname))
-        if 'bindlang' in rout:
+        if useisoc:
             add('use iso_c_binding')
     else:
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
-        if 'bindlang' in rout:
+        if useisoc:
             add('use iso_c_binding')
         if not need_interface:
             add('external %s' % (fortranname))
@@ -222,17 +230,18 @@ def createsubrwrapper(rout, signature=0):
 
     args = rout['args']
 
+    useisoc = useiso_c_binding(rout)
     sargs = ', '.join(args)
     if f90mode:
         add('subroutine f2pywrap_%s_%s (%s)' %
             (rout['modulename'], name, sargs))
-        if 'bindlang' in rout:
+        if useisoc:
             add('use iso_c_binding')
         if not signature:
             add('use %s, only : %s' % (rout['modulename'], fortranname))
     else:
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
-        if 'bindlang' in rout:
+        if useisoc:
             add('use iso_c_binding')
         if not need_interface:
             add('external %s' % (fortranname))
