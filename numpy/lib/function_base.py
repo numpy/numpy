@@ -4048,14 +4048,14 @@ def percentile(a,
 
     averaged_inverted_cdf:
         method 2 of H&F [1]_.
-        This method give discontinuous results:
+        This method gives discontinuous results:
 
         * if g > 0 ; then take j
         * if g = 0 ; then average between bounds
 
     closest_observation:
         method 3 of H&F [1]_.
-        This method give discontinuous results:
+        This method gives discontinuous results:
 
         * if g > 0 ; then take j
         * if g = 0 and index is odd ; then take j
@@ -4063,28 +4063,28 @@ def percentile(a,
 
     interpolated_inverted_cdf:
         method 4 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 0
         * beta = 1
 
     hazen:
         method 5 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 1/2
         * beta = 1/2
 
     weibull:
         method 6 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 0
         * beta = 0
 
     linear:
         method 7 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 1
         * beta = 1
@@ -4093,7 +4093,7 @@ def percentile(a,
         method 8 of H&F [1]_.
         This method is probably the best method if the sample
         distribution function is unknown (see reference).
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 1/3
         * beta = 1/3
@@ -4102,7 +4102,7 @@ def percentile(a,
         method 9 of H&F [1]_.
         This method is probably the best method if the sample
         distribution function is known to be normal.
-        This method give continuous results using:
+        This method gives continuous results using:
 
         * alpha = 3/8
         * beta = 3/8
