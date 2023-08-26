@@ -20,6 +20,7 @@ import pprint
 import re
 from pathlib import Path
 from itertools import dropwhile
+import argparse
 
 from . import crackfortran
 from . import rules
@@ -143,19 +144,15 @@ build backend options (only effective with -c):
   --noopt              Compile without optimization
   --noarch             Compile without arch-dependent optimization
   --debug              Compile with debugging information
-  deps:                <dependency1> <dependency2> ... :
-                       Specify additional dependencies that the module relies on.
-                       List dependencies separated by spaces, and use `:' to
-                       signify the end of the dependency list. Dependencies are
-                       stored in a list for further processing.
+  --dep                <dependency>
+                       Specify a meson dependencies for the module. This may
+                       be passed multiple times for multiple dependencies.
+                       Dependencies are stored in a list for further processing.
 
-                       Example: deps: lapack scalapack :
+                       Example: --dep lapack --dep scalapack
                        This will identify "lapack" and "scalapack" as dependencies
                        and remove them from argv, leaving a dependencies list
                        containing ["lapack", "scalapack"].
-
-                       Note: The trailing `:' is required to signify the end of
-                       the dependency list. This is only relevant for the meson backend.
 
 Extra options (only effective with -c):
 
@@ -518,12 +515,27 @@ def get_prefix(module):
     p = os.path.dirname(os.path.dirname(module.__file__))
     return p
 
+def preparse_sysargv():
+    # To keep backwards bug compatibility, newer flags are handled by argparse,
+    # and `sys.argv` is passed to the rest of `f2py` as is.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--dep", action="append", dest="dependencies")
+    args, remaining_argv = parser.parse_known_args()
+    sys.argv = [sys.argv[0]] + remaining_argv
+    return {
+        "dependencies": args.dependencies or [],
+    }
+
 
 def run_compile():
     """
     Do it all in one call!
     """
     import tempfile
+
+    # Collect dependency flags, preprocess sys.argv
+    argparse_res = preparse_sysargv()
+    dependencies = argparse_res["dependencies"]
 
     i = sys.argv.index('-c')
     del sys.argv[i]
@@ -563,18 +575,6 @@ def run_compile():
     if f2py_flags2 and f2py_flags2[-1] != ':':
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
-    # Find the start and end indices of the "deps:" section
-    start_idx = next((i for i, a in enumerate(sys.argv) if a == "deps:"), None)
-    end_idx = next((i for i, a in enumerate(sys.argv) if a == ":" and i > start_idx), None) if start_idx is not None else None
-    # Extract dependencies and remove them from sys.argv
-    if start_idx is not None and end_idx is not None:
-        dependencies = sys.argv[start_idx + 1:end_idx]
-        del sys.argv[start_idx:end_idx + 1]
-    elif start_idx is not None:
-        dependencies = list(dropwhile(lambda x: x != ":", sys.argv[start_idx + 1:]))
-        del sys.argv[start_idx:]
-    else:
-        dependencies = []
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
         r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
