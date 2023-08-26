@@ -226,10 +226,14 @@ def createsubrwrapper(rout, signature=0):
     if f90mode:
         add('subroutine f2pywrap_%s_%s (%s)' %
             (rout['modulename'], name, sargs))
+        if 'bindlang' in rout:
+            add('use iso_c_binding')
         if not signature:
             add('use %s, only : %s' % (rout['modulename'], fortranname))
     else:
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
+        if 'bindlang' in rout:
+            add('use iso_c_binding')
         if not need_interface:
             add('external %s' % (fortranname))
 
