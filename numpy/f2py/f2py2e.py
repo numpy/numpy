@@ -144,8 +144,9 @@ build backend options (only effective with -c):
   --noopt              Compile without optimization
   --noarch             Compile without arch-dependent optimization
   --debug              Compile with debugging information
+
   --dep                <dependency>
-                       Specify a meson dependencies for the module. This may
+                       Specify a meson dependency for the module. This may
                        be passed multiple times for multiple dependencies.
                        Dependencies are stored in a list for further processing.
 
@@ -153,6 +154,12 @@ build backend options (only effective with -c):
                        This will identify "lapack" and "scalapack" as dependencies
                        and remove them from argv, leaving a dependencies list
                        containing ["lapack", "scalapack"].
+
+  --backend            <backend_type>
+                       Specify the build backend for the compilation process.
+                       The supported backends are 'meson' and 'distutils'.
+                       If not specified, defaults to 'distutils'. On
+                       Python 3.12 or higher, the default is 'meson'.
 
 Extra options (only effective with -c):
 
@@ -520,12 +527,20 @@ def preparse_sysargv():
     # and `sys.argv` is passed to the rest of `f2py` as is.
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dep", action="append", dest="dependencies")
+    parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
+
     args, remaining_argv = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining_argv
+
+    backend_key = args.backend
+    if sys.version_info >= (3, 12) and backend_key == 'distutils':
+        outmess('Cannot use distutils backend with Python 3.12, using meson backend instead.')
+        backend_key = 'meson'
+
     return {
         "dependencies": args.dependencies or [],
+        "backend": backend_key
     }
-
 
 def run_compile():
     """
@@ -534,8 +549,11 @@ def run_compile():
     import tempfile
 
     # Collect dependency flags, preprocess sys.argv
-    argparse_res = preparse_sysargv()
-    dependencies = argparse_res["dependencies"]
+    argy = preparse_sysargv()
+    dependencies = argy["dependencies"]
+    backend_key = argy["backend"]
+    build_backend = f2py_build_generator(backend_key)
+
 
     i = sys.argv.index('-c')
     del sys.argv[i]
@@ -615,19 +633,6 @@ def run_compile():
 
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
-
-    # Check for and remove --backend first
-    if '--backend' in sys.argv:
-        backend_index = sys.argv.index('--backend')
-        backend_key = sys.argv.pop(backend_index + 1)
-        sys.argv.pop(backend_index)
-    else:
-        backend_key = 'distutils'
-
-    if sys.version_info >= (3, 12) and backend_key == 'distutils':
-        outmess('Cannot use distutils backend with Python 3.12, using meson backend instead.')
-        backend_key = 'meson'
-    build_backend = f2py_build_generator(backend_key)
 
     modulename = 'untitled'
     sources = sys.argv[1:]
