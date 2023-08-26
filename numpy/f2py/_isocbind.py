@@ -39,3 +39,8 @@ iso_c_binding_map = {
         'c_char': 'char'
     }
 }
+
+isoc_kindmap = {}
+for fortran_type, c_type_dict in iso_c_binding_map.items():
+    for c_type in c_type_dict.keys():
+        isoc_kindmap[c_type] = fortran_type
