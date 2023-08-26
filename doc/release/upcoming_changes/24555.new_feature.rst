@@ -1,0 +1,10 @@
+``bind(c)`` support for ``f2py``
+--------------------------------
+Both functions and subroutines can be annotated with ``bind(c)``. ``f2py`` will
+handle both the correct type mapping, and preserve the unique label for other
+``C`` interfaces.
+
+**Note:** ``bind(c, name = 'routine_name_other_than_fortran_routine')`` is not
+ honored by the ``f2py`` bindings by design, since ``bind(c)`` with the ``name``
+ is meant to guarantee only the same name in ``C`` and ``Fortran``, not in
+ ``Python`` and ``Fortran``.
