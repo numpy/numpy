@@ -4159,10 +4159,11 @@ class MaskedArray(ndarray):
             # Note that this works automatically for structured arrays too.
             # Ignore this for operations other than `==` and `!=`
             check = np.where(mask, compare(smask, omask), check)
-            if mask.shape != check.shape:
-                # Guarantee consistency of the shape, making a copy since the
-                # the mask may need to get written to later.
-                mask = np.broadcast_to(mask, check.shape).copy()
+
+        if mask.shape != check.shape:
+            # Guarantee consistency of the shape, making a copy since the
+            # the mask may need to get written to later.
+            mask = np.broadcast_to(mask, check.shape).copy()
 
         check = check.view(type(self))
         check._update_from(self)
