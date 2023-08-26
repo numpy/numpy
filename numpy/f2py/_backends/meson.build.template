@@ -2,10 +2,12 @@ project('${modulename}',
         ['c', 'fortran'],
         version : '0.1',
         meson_version: '>= 1.1.0',
-        default_options : ['warning_level=2'])
+        default_options : [
+                            'warning_level=1',
+                            'buildtype=${buildtype}'
+                          ])
 
-py_mod = import('python')
-py = py_mod.find_installation(pure: false)
+py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,

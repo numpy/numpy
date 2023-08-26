@@ -22,6 +22,7 @@ class MesonTemplate:
         object_files: list[Path],
         linker_args: list[str],
         c_args: list[str],
+        build_type: str,
     ):
         self.modulename = modulename
         self.build_template_path = (
@@ -36,6 +37,7 @@ class MesonTemplate:
             self.sources_substitution,
             self.deps_substitution,
         ]
+        self.build_type = build_type
 
     def meson_build_template(self) -> str:
         if not self.build_template_path.is_file():
@@ -48,8 +50,8 @@ class MesonTemplate:
         return self.build_template_path.read_text()
 
     def initialize_template(self) -> None:
-        """Initialize with module name."""
         self.substitutions["modulename"] = self.modulename
+        self.substitutions["buildtype"] = self.build_type
 
     def sources_substitution(self) -> None:
         indent = " " * 21
@@ -80,6 +82,9 @@ class MesonBackend(Backend):
         super().__init__(*args, **kwargs)
         self.dependencies = self.extra_dat.get("dependencies", [])
         self.meson_build_dir = "bbdir"
+        self.build_type = (
+            "debug" if any("debug" in flag for flag in self.fc_flags) else "release"
+        )
 
     def _move_exec_to_root(self, build_dir: Path):
         walk_dir = Path(build_dir) / self.meson_build_dir
@@ -103,6 +108,7 @@ class MesonBackend(Backend):
             self.extra_objects,
             self.flib_flags,
             self.fc_flags,
+            self.build_type,
         )
         src = meson_template.generate_meson_build()
         Path(build_dir).mkdir(parents=True, exist_ok=True)
