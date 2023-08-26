@@ -1762,6 +1762,14 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
+    @pytest.mark.parametrize("op", [operator.eq, operator.lt])
+    def test_eq_broadcast_with_unmasked(self, op):
+        a = array([0, 1], mask=[0, 1])
+        b = np.arange(10).reshape(5, 2)
+        result = op(a, b)
+        assert_(result.mask.shape == b.shape)
+        assert_equal(result.mask, np.zeros(b.shape, bool) | a.mask)
+
     @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
     @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
     @pytest.mark.parametrize('fill', [None, 1])
