@@ -172,7 +172,8 @@ iso_c_binding_map = {
     }
 }
 
-f2cmap_default = deep_merge(f2cmap_all, iso_c_binding_map)
+f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
+f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []
 
