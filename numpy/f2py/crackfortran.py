@@ -969,7 +969,7 @@ def _resolvetypedefpattern(line):
     return None, [], None
 
 def parse_name_for_bind(line):
-    pattern = re.compile(r'bind\(\s*(?P<lang>[^,]+)\s*,\s*name\s*=\s*"(?P<name>[^"]+)"\s*\)', re.I)
+    pattern = re.compile(r'bind\(\s*(?P<lang>[^,]+)(?:\s*,\s*name\s*=\s*["\'](?P<name>[^"\']+)["\']\s*)?\)', re.I)
     match = pattern.search(line)
     bind_statement = None
     if match:
