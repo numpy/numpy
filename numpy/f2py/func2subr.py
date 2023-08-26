@@ -118,6 +118,13 @@ def createfuncwrapper(rout, signature=0):
     rl = None
 
     sargs = ', '.join(args)
+    bindline = ""
+    if 'bindlang' in rout and not signature:
+        if rout['bindlang'][fortranname]:
+            bindline = f"bind({rout['bindlang'][fortranname]['lang']}"
+            if rout['bindlang'][fortranname]['name']:
+                bindline += f", name='f2py_{rout['bindlang'][fortranname]['name']}'"
+            bindline += ")"
     if f90mode:
         # gh-23598 fix warning
         # Essentially, this gets called again with modules where the name of the
@@ -125,12 +132,16 @@ def createfuncwrapper(rout, signature=0):
         sargs = sargs.replace(f"{name}, ", '')
         args = [arg for arg in args if arg != name]
         rout['args'] = args
-        add('subroutine f2pywrap_%s_%s (%s)' %
-            (rout['modulename'], name, sargs))
+        add('subroutine f2pywrap_%s_%s (%s) %s' %
+            (rout['modulename'], name, sargs, bindline))
         if not signature:
             add('use %s, only : %s' % (rout['modulename'], fortranname))
+        if 'bindlang' in rout:
+            add('use iso_c_binding')
     else:
-        add('subroutine f2pywrap%s (%s)' % (name, sargs))
+        add('subroutine f2pywrap%s (%s) %s' % (name, sargs, bindline))
+        if 'bindlang' in rout:
+            add('use iso_c_binding')
         if not need_interface:
             add('external %s' % (fortranname))
             rl = l_tmpl.replace('@@@NAME@@@', '') + ' ' + fortranname
