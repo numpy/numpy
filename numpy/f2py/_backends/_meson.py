@@ -25,7 +25,7 @@ class MesonTemplate:
     ):
         self.modulename = modulename
         self.build_template_path = (
-            Path(__file__).parent.absolute() / "src" / "meson.build.src"
+            Path(__file__).parent.absolute() / "meson.build.template"
         )
         self.sources = sources
         self.deps = deps
