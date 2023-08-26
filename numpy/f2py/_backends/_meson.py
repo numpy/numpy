@@ -74,11 +74,6 @@ class MesonTemplate:
 
 class MesonBackend(Backend):
     def __init__(self, *args, **kwargs):
-        warnings.warn(
-            "The MesonBackend is experimental and may change in the future."
-            "--build-dir should be used to customize the generated skeleton.",
-            stacklevel=2,
-        )
         super().__init__(*args, **kwargs)
         self.dependencies = self.extra_dat.get("dependencies", [])
         self.meson_build_dir = "bbdir"

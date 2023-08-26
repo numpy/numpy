@@ -724,12 +724,6 @@ def main():
         pass
 
     if '-c' in sys.argv[1:]:
-        import warnings
-        warnings.warn('Using f2py to compile code without generating files '
-                      'first was largely handled by distutils which has been removed in Python 3.12.'
-                      'The meson replacement is a work in progress, consider running without -c.'
-                      'Recall that the build can be customized with --build-dir',
-                      stacklevel=2)
         run_compile()
     else:
         run_main(sys.argv[1:])

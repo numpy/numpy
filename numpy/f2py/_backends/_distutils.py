@@ -13,8 +13,8 @@ import warnings
 class DistutilsBackend(Backend):
     def __init__(sef, *args, **kwargs):
         warnings.warn(
-            "distutils has been deprecated since NumPy 2.16."
-            "Use the MesonBackend instead, or generate wrappers"
+            "distutils has been deprecated since NumPy 1.26."
+            "Use the Meson backend instead, or generate wrappers"
             "without -c and use a custom build script",
             VisibleDeprecationWarning,
             stacklevel=2,
@@ -33,7 +33,6 @@ class DistutilsBackend(Backend):
             "libraries": self.libraries,
             "define_macros": self.define_macros,
             "undef_macros": self.undef_macros,
-            # TODO: Handle extra_objects in meson
             "extra_objects": self.extra_objects,
             "f2py_options": self.f2py_flags,
         }
