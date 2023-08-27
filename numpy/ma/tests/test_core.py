@@ -1770,6 +1770,15 @@ class TestMaskedArrayArithmetic:
         assert_(result.mask.shape == b.shape)
         assert_equal(result.mask, np.zeros(b.shape, bool) | a.mask)
 
+    @pytest.mark.parametrize("op", [operator.eq, operator.gt])
+    def test_comp_no_mask_not_broadcast(self, op):
+        # Regression test for failing doctest in MaskedArray.nonzero
+        # after gh-24556.
+        a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        result = op(a, 3)
+        assert_(not result.mask.shape)
+        assert_(result.mask is nomask)
+
     @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
     @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
     @pytest.mark.parametrize('fill', [None, 1])

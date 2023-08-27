@@ -4140,17 +4140,18 @@ class MaskedArray(ndarray):
         if isinstance(check, (np.bool_, bool)):
             return masked if mask else check
 
-        if mask is not nomask and compare in (operator.eq, operator.ne):
-            # Adjust elements that were masked, which should be treated
-            # as equal if masked in both, unequal if masked in one.
-            # Note that this works automatically for structured arrays too.
-            # Ignore this for operations other than `==` and `!=`
-            check = np.where(mask, compare(smask, omask), check)
+        if mask is not nomask:
+            if compare in (operator.eq, operator.ne):
+                # Adjust elements that were masked, which should be treated
+                # as equal if masked in both, unequal if masked in one.
+                # Note that this works automatically for structured arrays too.
+                # Ignore this for operations other than `==` and `!=`
+                check = np.where(mask, compare(smask, omask), check)
 
-        if mask.shape != check.shape:
-            # Guarantee consistency of the shape, making a copy since the
-            # the mask may need to get written to later.
-            mask = np.broadcast_to(mask, check.shape).copy()
+            if mask.shape != check.shape:
+                # Guarantee consistency of the shape, making a copy since the
+                # the mask may need to get written to later.
+                mask = np.broadcast_to(mask, check.shape).copy()
 
         check = check.view(type(self))
         check._update_from(self)
