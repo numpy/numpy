@@ -148,14 +148,6 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    env:
-      PYTHONOPTIMIZE: 2
-      BLAS: None
-      LAPACK: None
-      ATLAS: None
-      NPY_BLAS_ORDER: mkl,blis,openblas,atlas,blas
-      NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
-      USE_ASV: 1
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
@@ -164,7 +156,23 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: '3.9'
-    - uses: ./.github/actions
+    - name: Install build and benchmarking dependencies
+      run: |
+        sudo apt-get install libopenblas-dev ninja-build
+        pip install spin cython asv virtualenv packaging
+    - name: Install NumPy
+      run: |
+        spin build -- -Dcpu-dispatch=none
+    # Ensure to keep the below steps as single-line bash commands (it's a
+    # workaround for asv#1333, and it may have side-effects on multi-line commands)
+    - name: Appease asv's need for machine info
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        asv machine --yes --config benchmarks/asv.conf.json
+    - name: Run benchmarks
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        spin bench --quick
 
   relaxed_strides_debug:
     needs: [smoke_test]
