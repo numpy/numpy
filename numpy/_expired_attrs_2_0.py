@@ -60,4 +60,5 @@ __expired_attributes__ = {
     "recfromtxt": "Use `np.genfromtxt` instead.",
     "deprecate": "Raise `DeprecationWarning` instead.",
     "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
+    "disp": "Use your own printing function instead.",
 }

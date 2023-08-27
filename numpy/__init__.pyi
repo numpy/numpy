@@ -412,7 +412,7 @@ from numpy.lib.arraysetops import (
     isin as isin,
 )
 
-from numpy.lib.function_base import (
+from numpy.lib._function_base_impl import (
     select as select,
     piecewise as piecewise,
     trim_zeros as trim_zeros,

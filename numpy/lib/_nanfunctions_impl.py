@@ -23,7 +23,7 @@ Functions
 import functools
 import warnings
 import numpy as np
-from numpy.lib import function_base
+from numpy.lib import _function_base_impl as fnb
 from numpy.core import overrides
 
 
@@ -1213,9 +1213,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    return function_base._ureduce(a, func=_nanmedian, keepdims=keepdims,
-                                  axis=axis, out=out,
-                                  overwrite_input=overwrite_input)
+    return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+                        axis=axis, out=out,
+                        overwrite_input=overwrite_input)
 
 
 def _nanpercentile_dispatcher(
@@ -1368,7 +1368,7 @@ def nanpercentile(
 
     """
     if interpolation is not None:
-        method = function_base._check_interpolation_as_method(
+        method = fnb._check_interpolation_as_method(
             method, interpolation, "nanpercentile")
 
     a = np.asanyarray(a)
@@ -1378,7 +1378,7 @@ def nanpercentile(
     q = np.true_divide(q, 100.0)
     # undo any decay that the ufunc performed (see gh-13105)
     q = np.asanyarray(q)
-    if not function_base._quantile_is_valid(q):
+    if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims)
@@ -1531,7 +1531,7 @@ def nanquantile(
     """
 
     if interpolation is not None:
-        method = function_base._check_interpolation_as_method(
+        method = fnb._check_interpolation_as_method(
             method, interpolation, "nanquantile")
 
     a = np.asanyarray(a)
@@ -1539,7 +1539,7 @@ def nanquantile(
         raise TypeError("a must be an array of real numbers")
 
     q = np.asanyarray(q)
-    if not function_base._quantile_is_valid(q):
+    if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims)
@@ -1559,14 +1559,14 @@ def _nanquantile_unchecked(
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-    return function_base._ureduce(a,
-                                  func=_nanquantile_ureduce_func,
-                                  q=q,
-                                  keepdims=keepdims,
-                                  axis=axis,
-                                  out=out,
-                                  overwrite_input=overwrite_input,
-                                  method=method)
+    return fnb._ureduce(a,
+                        func=_nanquantile_ureduce_func,
+                        q=q,
+                        keepdims=keepdims,
+                        axis=axis,
+                        out=out,
+                        overwrite_input=overwrite_input,
+                        method=method)
 
 
 def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
@@ -1604,7 +1604,7 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
-    return function_base._quantile_unchecked(
+    return fnb._quantile_unchecked(
         arr1d, q, overwrite_input=overwrite_input, method=method)
 
 

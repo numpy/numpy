@@ -32,10 +32,8 @@ import numpy as np
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
 from numpy.core import multiarray as mu
-from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
-from numpy import array as narray
-from numpy.lib.function_base import angle
-from numpy import expand_dims
+from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
+from numpy import array as narray, expand_dims
 from numpy.core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 
@@ -1206,7 +1204,7 @@ sinh = _MaskedUnaryOperation(umath.sinh)
 cosh = _MaskedUnaryOperation(umath.cosh)
 tanh = _MaskedUnaryOperation(umath.tanh)
 abs = absolute = _MaskedUnaryOperation(umath.absolute)
-angle = _MaskedUnaryOperation(angle)  # from numpy.lib.function_base
+angle = _MaskedUnaryOperation(angle)
 fabs = _MaskedUnaryOperation(umath.fabs)
 negative = _MaskedUnaryOperation(umath.negative)
 floor = _MaskedUnaryOperation(umath.floor)

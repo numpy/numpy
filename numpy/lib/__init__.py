@@ -21,8 +21,8 @@ from . import scimath as emath
 # load module names. See https://github.com/networkx/networkx/issues/5838
 from . import type_check
 from . import index_tricks
-from . import function_base
 from . import _nanfunctions_impl
+from . import _function_base_impl
 from . import shape_base
 from . import stride_tricks
 from . import twodim_base
@@ -38,7 +38,6 @@ from . import _version
 
 from .type_check import *
 from .index_tricks import *
-from .function_base import *
 from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
@@ -52,12 +51,10 @@ from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
-from .function_base import add_newdoc, add_docstring
 
 __all__ = ['emath']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
-__all__ += function_base.__all__
 __all__ += shape_base.__all__
 __all__ += stride_tricks.__all__
 __all__ += twodim_base.__all__

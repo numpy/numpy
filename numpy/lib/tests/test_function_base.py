@@ -11,21 +11,20 @@ import hypothesis.strategies as st
 from functools import partial
 
 import numpy as np
-from numpy import ma
+from numpy import (
+    ma, angle, average, bartlett, blackman, corrcoef, cov,
+    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
+    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
+    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    )
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
     assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT, IS_WASM
     )
-import numpy.lib.function_base as nfb
+import numpy.lib._function_base_impl as nfb
 from numpy.random import rand
-from numpy.lib import (
-    angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
-    )
 from numpy.core.numeric import normalize_axis_tuple
 
 
@@ -2212,14 +2211,14 @@ class TestCheckFinite:
         a = [1, 2, 3]
         b = [1, 2, np.inf]
         c = [1, 2, np.nan]
-        np.lib.asarray_chkfinite(a)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, b)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, c)
+        np.asarray_chkfinite(a)
+        assert_raises(ValueError, np.asarray_chkfinite, b)
+        assert_raises(ValueError, np.asarray_chkfinite, c)
 
     def test_dtype_order(self):
         # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
-        a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
+        a = np.asarray_chkfinite(a, order='F', dtype=np.float64)
         assert_(a.dtype == np.float64)
 
 

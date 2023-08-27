@@ -755,7 +755,7 @@ class TestLibImports(_DeprecationTestCase):
     def test_lib_functions_deprecation_call(self):
         from numpy.lib.utils import safe_eval
         from numpy.lib.npyio import recfromcsv, recfromtxt
-        from numpy.lib.function_base import disp
+        from numpy.lib._function_base_impl import disp
         from numpy.lib.shape_base import get_array_wrap
         from numpy.core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO

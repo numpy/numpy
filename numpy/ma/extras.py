@@ -34,7 +34,7 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.lib.function_base import _ureduce
+from numpy.lib._function_base_impl import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
 
