@@ -4140,6 +4140,9 @@ class MaskedArray(ndarray):
             # Now take care of the mask; the merged mask should have an item
             # masked if all fields were masked (in one and/or other).
             mask = (mask == np.ones((), mask.dtype))
+            # Ensure we can compare masks below if other was not masked.
+            if omask is np.False_:
+                omask = np.zeros((), smask.dtype)
 
         else:
             # For regular arrays, just use the data as they come.
@@ -4156,10 +4159,11 @@ class MaskedArray(ndarray):
             # Note that this works automatically for structured arrays too.
             # Ignore this for operations other than `==` and `!=`
             check = np.where(mask, compare(smask, omask), check)
-            if mask.shape != check.shape:
-                # Guarantee consistency of the shape, making a copy since the
-                # the mask may need to get written to later.
-                mask = np.broadcast_to(mask, check.shape).copy()
+
+        if mask.shape != check.shape:
+            # Guarantee consistency of the shape, making a copy since the
+            # the mask may need to get written to later.
+            mask = np.broadcast_to(mask, check.shape).copy()
 
         check = check.view(type(self))
         check._update_from(self)
