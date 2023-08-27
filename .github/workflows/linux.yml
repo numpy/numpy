@@ -87,18 +87,29 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    env:
-      USE_DEBUG: 1
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: '3.11'
-
-    - uses: ./.github/actions
+    - name: Install debug Python
+      run: |
+        sudo apt-get install python3-dbg ninja-build
+    - name: Build NumPy and install into venv
+      run: |
+        python3-dbg -m venv venv
+        source venv/bin/activate
+        pip install -U pip
+        pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
+    - name: Install test dependencies
+      run: |
+        source venv/bin/activate
+        pip install -r test_requirements.txt
+    - name: Run test suite
+      run: |
+        source venv/bin/activate
+        cd tools
+        pytest --pyargs numpy -m "not slow"
 
   full:
     # Build a wheel, install it, then run the full test suite with code coverage
