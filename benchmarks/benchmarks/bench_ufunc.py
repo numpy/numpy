@@ -155,8 +155,7 @@ class Methods0DFloatInt(Benchmark):
     """Zero dimension array methods
     """
     params = [['__int__', '__float__'],
-              [dt for dt in TYPES1 if not dt.startswith('complex')]
-             ]
+              [dt for dt in TYPES1 if not dt.startswith('complex')]]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
@@ -166,7 +165,6 @@ class Methods0DFloatInt(Benchmark):
     def time_ndarray__0d__(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
         meth()
-
 
 
 class Methods0DInvert(Benchmark):
@@ -444,15 +442,11 @@ class CustomComparison(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = (np.core.sctypes['int'] + 
-              np.core.sctypes['uint'], [8, -8, 43, -43])
+    params = (np.core.sctypes['int'],
+              [8, -8, 43, -43])
     param_names = ['dtype', 'divisors']
 
     def setup(self, dtype, divisor):
-        if dtype in np.core.sctypes['uint'] and divisor < 0:
-            raise NotImplementedError(
-                    "Skipping test for negative divisor with unsigned type")
-
         iinfo = np.iinfo(dtype)
         self.x = np.random.randint(
                     iinfo.min, iinfo.max, size=10000, dtype=dtype)
@@ -460,9 +454,24 @@ class CustomScalarFloorDivideInt(Benchmark):
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
 
+
+class CustomScalarFloorDivideUInt(Benchmark):
+    params = (np.core.sctypes['uint'],
+              [8, 43])
+    param_names = ['dtype', 'divisors']
+
+    def setup(self, dtype, divisor):
+        iinfo = np.iinfo(dtype)
+        self.x = np.random.randint(
+                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+
+    def time_floor_divide_uint(self, dtype, divisor):
+        self.x // divisor
+
+
 class CustomArrayFloorDivideInt(Benchmark):
-    params = (np.core.sctypes['int'] + 
-              np.core.sctypes['uint'], [100, 10000, 1000000])
+    params = (np.core.sctypes['int'] + np.core.sctypes['uint'],
+              [100, 10000, 1000000])
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
