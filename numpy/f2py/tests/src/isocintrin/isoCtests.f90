@@ -8,7 +8,7 @@
         c = a + b
       end subroutine c_add
       ! gh-9693
-      function wat(x, y) result(z) bind(c, name='wat')
+      function wat(x, y) result(z) bind(c)
           integer(c_int), intent(in) :: x, y
           integer(c_int) :: z
 

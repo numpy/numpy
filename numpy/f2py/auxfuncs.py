@@ -892,7 +892,7 @@ def applyrules(rules, d, var={}):
     return ret
 
 def deep_merge(dict1, dict2):
-    """Deep merge two dictionaries and return a new dictionary.
+    """Recursively merge two dictionaries into a new dictionary.
 
     Parameters:
     - dict1: The base dictionary.
