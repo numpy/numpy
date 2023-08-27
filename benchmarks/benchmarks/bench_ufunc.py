@@ -135,25 +135,52 @@ class NDArrayLRShifts(Benchmark):
         getattr(operator, methname)(*[self.vals, 2])
 
 
-class Methods0D(Benchmark):
+class Methods0DBoolComplex(Benchmark):
     """Zero dimension array methods
     """
-    params = [['__bool__', '__complex__', '__invert__',
-               '__float__', '__int__'], TYPES1]
+    params = [['__bool__', '__complex__'],
+              TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
     def setup(self, methname, npdtypes):
         self.xarg = np.array(3, dtype=npdtypes)
-        if (npdtypes.startswith('complex') and
-           methname in ['__float__', '__int__']) or \
-           (npdtypes.startswith('int') and methname == '__invert__'):
-            # Skip
-            raise NotImplementedError
 
     def time_ndarray__0d__(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
         meth()
+
+
+class Methods0DFloatInt(Benchmark):
+    """Zero dimension array methods
+    """
+    params = [['__int__', '__float__'],
+              [dt for dt in TYPES1 if not dt.startswith('complex')]
+             ]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+
+    def time_ndarray__0d__(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
+
+
+class Methods0DInvert(Benchmark):
+    """Zero dimension array methods
+    """
+    params = ['int16', 'int32', 'int64']
+    param_names = ['npdtypes']
+    timeout = 10
+
+    def setup(self, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+
+    def time_ndarray__0d__(self, npdtypes):
+        self.xarg.__invert__()
 
 
 class MethodsV1(Benchmark):
