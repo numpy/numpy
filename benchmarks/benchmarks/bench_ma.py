@@ -128,10 +128,10 @@ class MAFunctions1v(Benchmark):
               ['small', 'big']]
 
     def setup(self, mtype, func, msize):
-        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        maskx = xl > 0.8
+        xl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 2.8
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmxl = np.ma.array(xl, mask=maskx)
 
@@ -173,17 +173,17 @@ class MAFunctions2v(Benchmark):
 
     def setup(self, mtype, func, msize):
         # Small arrays
-        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        ys = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
+        ys = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
         m2 = [[True, False, True], [False, False, True]]
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmys = np.ma.array(ys, mask=m2)
         # Big arrays
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        yl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        maskx = xl > 0.8
-        masky = yl < -0.8
+        xl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        yl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 2.8
+        masky = yl < 1.8
         self.nmxl = np.ma.array(xl, mask=maskx)
         self.nmyl = np.ma.array(yl, mask=masky)
 
