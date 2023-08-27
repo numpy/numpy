@@ -303,19 +303,7 @@ def _run_asv(cmd):
     except (ImportError, RuntimeError):
         pass
 
-    try:
-        util.run(cmd, cwd='benchmarks', env=env, sys_exit=False)
-    except FileNotFoundError:
-        click.secho((
-            "Cannot find `asv`. "
-            "Please install Airspeed Velocity:\n\n"
-            "  https://asv.readthedocs.io/en/latest/installing.html\n"
-            "\n"
-            "Depending on your system, one of the following should work:\n\n"
-            "  pip install asv\n"
-            "  conda install asv\n"
-        ), fg="red")
-        sys.exit(1)
+    util.run(cmd, cwd='benchmarks', env=env)
 
 
 @click.command()
@@ -336,13 +324,17 @@ def _run_asv(cmd):
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@click.option(
+    '--quick', '-q', is_flag=True, default=False,
+    help="Run each benchmark only once (timings won't be accurate)"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
     nargs=-1
 )
 @click.pass_context
-def bench(ctx, tests, compare, verbose, commits):
+def bench(ctx, tests, compare, verbose, quick, commits):
     """🏋 Run benchmarks.
 
     \b
@@ -382,6 +374,9 @@ def bench(ctx, tests, compare, verbose, commits):
     if verbose:
         bench_args = ['-v'] + bench_args
 
+    if quick:
+        bench_args = ['--quick'] + bench_args
+
     if not compare:
         # No comparison requested; we build and benchmark the current version
 
@@ -409,27 +404,21 @@ def bench(ctx, tests, compare, verbose, commits):
         cmd = [
             'asv', 'run', '--dry-run', '--show-stderr', '--python=same'
         ] + bench_args
-
         _run_asv(cmd)
-
     else:
-        # Benchmark comparison
-
         # Ensure that we don't have uncommited changes
         commit_a, commit_b = [_commit_to_sha(c) for c in commits]
 
-        if commit_b == 'HEAD':
-            if _dirty_git_working_dir():
-                click.secho(
-                    "WARNING: you have uncommitted changes --- "
-                    "these will NOT be benchmarked!",
-                    fg="red"
-                )
+        if commit_b == 'HEAD' and _dirty_git_working_dir():
+            click.secho(
+                "WARNING: you have uncommitted changes --- "
+                "these will NOT be benchmarked!",
+                fg="red"
+            )
 
         cmd_compare = [
             'asv', 'continuous', '--factor', '1.05',
         ] + bench_args + [commit_a, commit_b]
-
         _run_asv(cmd_compare)
 
 
