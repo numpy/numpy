@@ -2,7 +2,7 @@
 
 """
 from functools import reduce
-
+import fractions
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import pickle
@@ -122,6 +122,19 @@ class TestArithmetic:
                 res = poly.polypow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+class TestFraction:
+
+    def test_Fraction(self):
+        f = fractions.Fraction(2,3)
+        one = fractions.Fraction(1,1)
+        zero = fractions.Fraction(0,1)
+        p = poly.Polynomial([f, f], domain=[zero, one], window=[zero, one])
+        assert_equal(p.domain, [zero, one])
+
+        self.assertIsInstance(p(f), fractions.Fraction)
+        assert_equal(p(f), fractions.Fraction(10, 9))
+        p_deriv = poly.Polynomial([fractions.Fraction(2,3)], domain=[zero, one], window=[zero, one])
+        assert_equal(p.deriv(), p_deriv )
 
 class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
