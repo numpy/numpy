@@ -39,6 +39,10 @@ def install_temp(tmp_path):
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
     build_dir = tmp_path / "build"
     os.makedirs(build_dir, exist_ok=True)
+    try:
+        subprocess.check_call(["meson", "--version"])
+    except FileNotFoundError:
+        pytest.skip("No usable 'meson' found")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--buildtype=release",
