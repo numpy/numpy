@@ -561,7 +561,7 @@ from numpy.lib.twodim_base import (
     triu_indices_from as triu_indices_from,
 )
 
-from numpy.lib.type_check import (
+from numpy.lib._type_check_impl import (
     mintypecode as mintypecode,
     real as real,
     imag as imag,

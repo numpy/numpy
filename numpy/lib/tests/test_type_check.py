@@ -1,10 +1,10 @@
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
-    )
-from numpy.lib.type_check import (
+from numpy import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
     nan_to_num, isrealobj, iscomplexobj, real_if_close
+    )
+from numpy.testing import (
+    assert_, assert_equal, assert_array_equal, assert_raises
     )
 
 

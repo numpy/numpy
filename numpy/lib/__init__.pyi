@@ -128,20 +128,6 @@ from numpy.lib.twodim_base import (
     triu_indices_from as triu_indices_from,
 )
 
-from numpy.lib.type_check import (
-    mintypecode as mintypecode,
-    real as real,
-    imag as imag,
-    iscomplex as iscomplex,
-    isreal as isreal,
-    iscomplexobj as iscomplexobj,
-    isrealobj as isrealobj,
-    nan_to_num as nan_to_num,
-    real_if_close as real_if_close,
-    typename as typename,
-    common_type as common_type,
-)
-
 from numpy.lib.ufunclike import (
     fix as fix,
     isposinf as isposinf,

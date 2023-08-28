@@ -19,7 +19,7 @@ from . import scimath as emath
 
 # Private submodules
 # load module names. See https://github.com/networkx/networkx/issues/5838
-from . import type_check
+from . import _type_check_impl
 from . import index_tricks
 from . import _nanfunctions_impl
 from . import _function_base_impl
@@ -36,7 +36,6 @@ from . import arrayterator
 from . import arraypad
 from . import _version
 
-from .type_check import *
 from .index_tricks import *
 from .shape_base import *
 from .stride_tricks import *
@@ -53,8 +52,8 @@ from ._version import *
 from numpy.core._multiarray_umath import add_docstring, tracemalloc_domain
 from numpy.core.function_base import add_newdoc
 
+
 __all__ = ['emath']
-__all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += shape_base.__all__
 __all__ += stride_tricks.__all__
