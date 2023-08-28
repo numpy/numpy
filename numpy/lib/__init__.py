@@ -63,13 +63,23 @@ def __getattr__(attr):
     import math
     import warnings
 
+    def _private_module_msg(module_name: str) -> str:
+        return (
+            f"`np.lib.{module_name}` is now private. Function that you're "
+            "looking for should be available from the main namespace `np.*`"
+        )
+
     if attr == 'math':
         warnings.warn(
             "`np.lib.math` is a deprecated alias for the standard library "
             "`math` module (Deprecated Numpy 1.25). Replace usages of "
             "`numpy.lib.math` with `math`", DeprecationWarning, stacklevel=2)
         return math
+    elif attr in (
+        "histograms", "type_check", "nanfunctions", "function_base", 
+        "arraypad", "arraysetops", "ufunclike", "utils"
+    ):
+        raise AttributeError(_private_module_msg(attr))
     else:
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))
-        

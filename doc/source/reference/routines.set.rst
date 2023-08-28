@@ -15,7 +15,6 @@ Boolean operations
 .. autosummary::
    :toctree: generated/
 
-   ediff1d
    in1d
    intersect1d
    isin
