@@ -517,7 +517,7 @@ from numpy.lib.polynomial import (
     polyfit as polyfit,
 )
 
-from numpy.lib.shape_base import (
+from numpy.lib._shape_base_impl import (
     column_stack as column_stack,
     row_stack as row_stack,
     dstack as dstack,
@@ -531,7 +531,6 @@ from numpy.lib.shape_base import (
     apply_along_axis as apply_along_axis,
     kron as kron,
     tile as tile,
-    get_array_wrap as get_array_wrap,
     take_along_axis as take_along_axis,
     put_along_axis as put_along_axis,
 )

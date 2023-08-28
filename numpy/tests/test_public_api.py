@@ -35,7 +35,6 @@ def test_numpy_namespace():
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
-        'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'show_config': 'numpy.__config__.show',
     }
     # We override dir to not show these members
@@ -197,7 +196,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.index_tricks",
     "lib.npyio",
     "lib.polynomial",
-    "lib.shape_base",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "linalg.lapack_lite",
     "linalg.linalg",

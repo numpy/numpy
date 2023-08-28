@@ -65,5 +65,6 @@ __expired_attributes__ = {
         "`scalar_types` argument, use `numpy.result_type` and pass the "
         "Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
-    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead."   
+    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
+    "get_array_wrap": "",
 }
