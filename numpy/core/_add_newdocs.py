@@ -5,7 +5,7 @@ requiring a re-compile.
 
 NOTE: Many of the methods of ndarray have corresponding functions.
       If you update these docstrings, please keep also the ones in
-      core/fromnumeric.py, core/defmatrix.py up-to-date.
+      core/fromnumeric.py, matrixlib/defmatrix.py up-to-date.
 
 """
 
@@ -1392,7 +1392,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
-    comparison operator specified by `cmp_op`.
+    comparison operator specified by `cmp`.
 
     Parameters
     ----------
@@ -1411,7 +1411,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If `cmp_op` is not valid.
+        If `cmp` is not valid.
     TypeError
         If at least one of `a` or `b` is a non-string array
 
