@@ -68,7 +68,7 @@ class Block(Benchmark):
 
 
 class Block2D(Benchmark):
-    params = [[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+    params = [[(16, 16), (64, 64), (256, 256), (1024, 1024)],
               ['uint8', 'uint16', 'uint32', 'uint64'],
               [(2, 2), (4, 4)]]
     param_names = ['shape', 'dtype', 'n_chunks']

@@ -64,15 +64,10 @@ jobs:
         python-version: '3.9'
     - uses: ./.github/meson_actions
 
-  basic:
+  pypy:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    strategy:
-      matrix:
-        python-version: ["3.9", "pypy3.9-v7.3.12"]
-    env:
-      EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
@@ -80,25 +75,39 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
-        python-version: ${{ matrix.python-version }}
-    - uses: ./.github/actions
+        python-version: 'pypy3.9-v7.3.12'
+    - name: Install system dependencies
+      run: |
+        sudo apt-get install libopenblas-dev ninja-build
+    - uses: ./.github/meson_actions
 
   debug:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    env:
-      USE_DEBUG: 1
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: '3.11'
-
-    - uses: ./.github/actions
+    - name: Install debug Python
+      run: |
+        sudo apt-get install python3-dbg ninja-build
+    - name: Build NumPy and install into venv
+      run: |
+        python3-dbg -m venv venv
+        source venv/bin/activate
+        pip install -U pip
+        pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
+    - name: Install test dependencies
+      run: |
+        source venv/bin/activate
+        pip install -r test_requirements.txt
+    - name: Run test suite
+      run: |
+        source venv/bin/activate
+        cd tools
+        pytest --pyargs numpy -m "not slow"
 
   full:
     # Build a wheel, install it, then run the full test suite with code coverage
@@ -137,14 +146,6 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
-    env:
-      PYTHONOPTIMIZE: 2
-      BLAS: None
-      LAPACK: None
-      ATLAS: None
-      NPY_BLAS_ORDER: mkl,blis,openblas,atlas,blas
-      NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
-      USE_ASV: 1
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
@@ -153,7 +154,23 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: '3.9'
-    - uses: ./.github/actions
+    - name: Install build and benchmarking dependencies
+      run: |
+        sudo apt-get install libopenblas-dev ninja-build
+        pip install spin cython asv virtualenv packaging
+    - name: Install NumPy
+      run: |
+        spin build -- -Dcpu-dispatch=none
+    # Ensure to keep the below steps as single-line bash commands (it's a
+    # workaround for asv#1333, and it may have side-effects on multi-line commands)
+    - name: Appease asv's need for machine info
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        asv machine --yes --config benchmarks/asv.conf.json
+    - name: Run benchmarks
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        spin bench --quick
 
   relaxed_strides_debug:
     needs: [smoke_test]
