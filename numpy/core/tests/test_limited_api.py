@@ -7,11 +7,6 @@ import pytest
 
 from numpy.testing import IS_WASM
 
-try:
-    import setuptools
-except ModuleNotFoundError:
-    pytest.skip("setuptools required", allow_module_level=True)
-
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),
