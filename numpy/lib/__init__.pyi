@@ -156,7 +156,12 @@ from numpy.lib.utils import (
 )
 
 from numpy.core.multiarray import (
+    add_docstring as add_docstring,
     tracemalloc_domain as tracemalloc_domain,
+)
+
+from numpy.core.function_base import (
+    add_newdoc as add_newdoc,
 )
 
 __all__: list[str]
