@@ -136,7 +136,7 @@ class TestFraction:
                                        Fraction(4, 9)], dtype=object))
         assert_equal(p.domain, [zero, one])
         assert_equal(p.coef.dtype, np.dtypes.ObjectDType())
-        self.assertIsInstance(p(f), Fraction)
+        assert_(isinstance(p(f), Fraction))
         assert_equal(p(f), Fraction(10, 9))
         p_deriv = poly.Polynomial([Fraction(2, 3)], domain=[zero, one],
                                   window=[zero, one])
