@@ -93,6 +93,10 @@ control compilation and runtime CPU feature selection should remain, although
 there may be some changes due to moving to Meson and C++ without regards to the
 Highway/Universal Intrinsics choice.
 
+The naming of the CPU features in Highway is different from that of the
+Universal Intrinsics. Highway uses clusters of features based on physical CPU
+releases, where Universal Intrinsics uses feature names.
+
 On Windows, MSVC may have to be avoided, as a result of Highway's use of
 pragmas which are less well supported by MSVC. This means that we likely have
 to build our wheels with clang-cl or Mingw-w64. Both of those should work - we
@@ -100,9 +104,7 @@ merged clang-cl support a while back (see `gh-20866`_), and SciPy builds with
 Mingw-w64. It may however impact other redistributors or end users who build
 from source on Windows.
 
-The potential impact on licensing because of Highway's use of the Apache 2.0
-license needs discussing before Highway can be accepted. Or Highway would have
-to have to dual-license under Apache 2.0 and an MIT/BSD type license.
+Highway is dual-licensed as Apache 2 / BSD-3.
 
 
 High-level considerations
@@ -139,34 +141,10 @@ needs the instruction. This will be a little more clumsy if the instruction
 lives in Highway which is a git submodule inside the NumPy repo - there will be
 a need to implement a temporary/generic version first, and then update the
 submodule after upstreaming the new intrinsic.
-https://numpy.org/doc/1.25/reference/simd/
 
 Documentation-wise, Highway would be a clear win. NumPy's
 `CPU/SIMD Optimizations`_ docs are fairly sparse compared to
 `the Highway docs`_.
-
-
-Licensing
-~~~~~~~~~
-
-Highway is licensed under Apache 2.0, which is incompatible with NumPy's BSD-3
-license. Apache 2.0 is not a copyleft license, hence if we'd use Highway as a
-build-time dependency only, that would have no impact on NumPy's licensing situation.
-However, we don't want to add a new build-time dependency - at least certainly
-not before we have removed all traces of the ``setup.py``-based build (it's a lot
-easier with Meson). Pulling in Highway as a git submodule and shipping it in sdist's
-would change NumPy's license status.
-
-That license status change would still be manageable perhaps, if it'd be contained to
-one git submodule that redistributors can swap out for an external dependency though.
-However, there is a second issue: reusing code snippets and potentially larger chunks
-of code from Highway itself, its docs, or other Highway-using projects would not work
-without changing NumPy's licensing status to a mix of BSD-3/MIT and Apache 2.0.
-
-As of now (July 2023), the only Apache 2.0 usages inside the NumPy repository are
-the vendored ``mathjax`` code to build the docs, and the code for the PCG64
-random number generator which was relicensed as MIT for NumPy's use.
-
 
 Migration strategy - can it be gradual?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -310,7 +288,10 @@ the universal intrinsics that are the main focus of this NEP. Highway has only
 a limited number of math routines, and they are not precise enough for NumPy's
 needs. So either way, NumPy's existing routines (which use universal
 intrinsics) will stay, and if we go the Highway route they'll simply have to
-use Highway primitives internally.
+use Highway primitives internally. We could still use Highway sorting routines.
+If we do accept lower-precision routines (via a user-supplied choice, i.e.
+extending ``errstate`` to allow a precision option), we could use
+Highway-native routines.
 
 There may be other libraries that have numerical routines that can be reused in
 NumPy (e.g., from SLEEF, or perhaps from JPEG XL or some other Highway-using
