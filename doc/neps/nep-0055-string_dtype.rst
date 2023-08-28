@@ -405,34 +405,63 @@ layout:
    };
 
 Where ``len`` is the length, in bytes, of the string and ``buf`` is a pointer to
-the beginning of a null-terminated UTF-8 encoded bytestream.
+the beginning of a UTF-8 encoded bytestream containing the string data. We do
+not append a trailing null character to the byte stream, so users attempting to
+pass the ``buf`` field to an API expecting a C string must must create a copy
+with a trailing null. This choice also means that unlike the fixed-width strings
+in NumPy, ``StringDType`` array entries can contain arbitrary embedded or
+trailing null characters.
 
 We propose storing the string data for this data type in an external
 heap-allocated arena buffer whose bookkeeping is managed by the ``StringDType``
 instance associated with the array. Using a per-array arena allocator ensures
-that the string buffers for nearby array elements are nearby on the heap. We
-do allow ``NULL`` ``npy_static_string`` entries in the array buffer,
-representing either an empty string or a missing data sentinel, depending on the
-parameters of the ``StringDType`` instance associated with the array, so string
-data for array entries are not necessarily always adjacent on the heap.
+that the string buffers for nearby array elements are usually nearby on the
+heap. We do not guarantee that neighboring array elements are contiguous on the
+heap to support missing data and allow mutation of array entries, see below for
+more discussion on how these topics affect the memory layout.
 
-In addition to making a typedef for this struct public, we also plan to add an
-interface for allocating, copying, and freeing strings with this layout via the
-arena allocator to the public numpy C API to ease downstream integration.
+In addition to making a typedef for ``npy_static_string`` public, we also plan
+to add an interface for allocating, copying, and freeing strings with this
+layout via the arena allocator to the public numpy C API to ease downstream
+integration.
 
-Each array element has an overhead of 17 bytes on a 64 bit architecture,
-including one byte for a NULL-terminating character in the string buffer. We
-could reduce the memory overhead by using an unsigned 32 bit int as the length
-instead of ``size_t``, since real-world downstream usages of object string
-arrays that need to support individual array elements longer than the maximum 32
-bit unsigned int are likely rare.
-
-Finally, in the future we may decide to exploit the small string optimization
-[6]_ to encode strings smaller than the size of the ``npy_static_string`` struct
+In the future we may decide to exploit the small string optimization [6]_ to
+encode strings smaller than the size of the ``npy_static_string`` struct
 directly in the array buffer, bypassing the need for a heap allocation for that
-entry. For arrays consisting entirely of small strings this bypasses the need to
-do any sidecar heap allocations. This should be relatively straightforward to
-add but has not been completed yet to focus on other aspects of the proposal.
+entry. If this is implemented, we will reserve the most significant byte in the
+``len`` for flags, including a flag to indicate the array element is stored in
+the array buffer. For arrays consisting entirely of small strings this will
+bypass the need to do any sidecar heap allocations. This should be relatively
+straightforward to add but has not been completed yet to focus on other aspects
+of the proposal. While reserving a whole byte for flags may be unnecessary, we
+will still have 12 bits of space in the ``len`` field, which is much more than
+is likely to be necessary to store the length of a single array element in
+real-world use, and having 256 possibilities for flags gives us flexibility for
+the future.
+
+Besides the string data itself, each array element requires 16 bytes of storage
+for the ``npy_static_string`` instance in the array buffer. In principle we
+could use a 32 bit integer to store the ``len`` field, saving 4 bytes per array
+element, but if we only use a single bit for the small string optimization
+that will still leave us with an uncomfortably small 7 bits of space in the
+``len`` field. In addition, making use of the small string optimization will
+somewhat offset the memory cost of a 64 bit ``len`` field, since many real-world
+use-cases employ small strings.
+
+Missing Data
+++++++++++++
+
+By default, zeroed out entries in the array buffer represent empty
+strings. However, if the DType instance was created with an ``na_object`` field,
+zeroed-out entries represent missing data. By making this choice, a zero-filled
+newly allocated buffer returned by ``calloc`` does not need any additional
+post-processing to produce an empty array. This choice also means casts between
+different missing data representations are views.
+
+Whether or not the ``na_object`` is set, empty strings are not stored in the
+sidecar buffer since they require no additional storage besides the entry in the
+array buffer itself. This means that adjacent entries in the sidecar buffer are
+not necessarily adjacent entries in the array buffer.
 
 Mutation and Thread Safety
 ++++++++++++++++++++++++++
