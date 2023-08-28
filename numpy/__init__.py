@@ -185,20 +185,18 @@ else:
     from .lib import (
         DataSource, apply_along_axis, apply_over_axes,
         array_split, broadcast_arrays, broadcast_shapes,
-        broadcast_to, byte_bounds, c_, column_stack, diag_indices,
+        broadcast_to, c_, column_stack, diag_indices,
         diag_indices_from, dsplit, dstack,
-        ediff1d, emath, expand_dims, fill_diagonal, fix,
+        emath, expand_dims, fill_diagonal,
         fromregex, get_array_wrap, genfromtxt,
-        get_include, hsplit, in1d, index_exp, info, intersect1d,
-        isin, isneginf, ix_, kron, load, loadtxt,
+        hsplit, index_exp, ix_, kron, load, loadtxt,
         mgrid, ndenumerate, ndindex, ogrid, 
-        packbits, pad, poly, poly1d, polyadd, polyder,
+        packbits, poly, poly1d, polyadd, polyder,
         polydiv, polyfit, polyint, polymul, polysub, polyval,
         put_along_axis, r_, ravel_multi_index,
-        roots, row_stack, s_, save, savetxt, savez, savez_compressed,
-        setdiff1d, setxor1d, show_runtime, split,
-        take_along_axis, tile, union1d, unique, unpackbits,
-        unravel_index, vsplit, isposinf
+        roots, row_stack, s_, save, savetxt, savez, 
+        savez_compressed, split, take_along_axis, tile, 
+        unpackbits, unravel_index, vsplit
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -223,6 +221,14 @@ else:
     from .lib._type_check_impl import (
         iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
         real_if_close, typename, mintypecode, common_type
+    )
+    from .lib._arraysetops_impl import (
+        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+    )
+    from .lib._ufunclike_impl import fix, isneginf, isposinf
+    from .lib._arraypad_impl import pad
+    from .lib._utils_impl import (
+        byte_bounds, show_runtime, get_include, info
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -289,6 +295,10 @@ else:
         set(lib._function_base_impl.__all__) |
         set(lib._twodim_base_impl.__all__) |
         set(lib._type_check_impl.__all__) |
+        set(lib._arraysetops_impl.__all__) |
+        set(lib._ufunclike_impl.__all__) |
+        set(lib._arraypad_impl.__all__) |
+        set(lib._utils_impl.__all__) |
         {"show_config", "__version__"}
     )
 

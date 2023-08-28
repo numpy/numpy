@@ -397,11 +397,11 @@ from numpy.lib import (
     emath as emath,
 )
 
-from numpy.lib.arraypad import (
+from numpy.lib._arraypad_impl import (
     pad as pad,
 )
 
-from numpy.lib.arraysetops import (
+from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
     intersect1d as intersect1d,
     setxor1d as setxor1d,
@@ -575,17 +575,15 @@ from numpy.lib._type_check_impl import (
     common_type as common_type,
 )
 
-from numpy.lib.ufunclike import (
+from numpy.lib._ufunclike_impl import (
     fix as fix,
     isposinf as isposinf,
     isneginf as isneginf,
 )
 
-from numpy.lib.utils import (
-    issubdtype as issubdtype,
+from numpy.lib._utils_impl import (
     get_include as get_include,
     info as info,
-    source as source,
     byte_bounds as byte_bounds,
     show_runtime as show_runtime,
 )

@@ -3901,7 +3901,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     rout = mean(part[indexer], axis=axis, out=out)
     if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
-        rout = np.lib.utils._median_nancheck(part, rout, axis)
+        rout = np.lib._utils_impl._median_nancheck(part, rout, axis)
 
     return rout
 
