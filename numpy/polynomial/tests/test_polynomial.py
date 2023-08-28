@@ -2,14 +2,14 @@
 
 """
 from functools import reduce
-import fractions
+from fractions import Fraction
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import pickle
 from copy import deepcopy
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_warns, assert_array_equal, assert_raises_regex)
+    assert_array_equal, assert_raises_regex)
 
 
 def trim(x):
@@ -125,16 +125,22 @@ class TestArithmetic:
 class TestFraction:
 
     def test_Fraction(self):
-        f = fractions.Fraction(2,3)
-        one = fractions.Fraction(1,1)
-        zero = fractions.Fraction(0,1)
+        # assert we can use Polynomials with coefficients of object dtype
+        f = Fraction(2, 3)
+        one = Fraction(1, 1)
+        zero = Fraction(0, 1)
         p = poly.Polynomial([f, f], domain=[zero, one], window=[zero, one])
+        
+        x = 2 * p + p ** 2
+        assert_equal(x.coef, np.array([Fraction(16, 9), Fraction(20, 9),
+                                       Fraction(4, 9)], dtype=object))
         assert_equal(p.domain, [zero, one])
-
-        self.assertIsInstance(p(f), fractions.Fraction)
-        assert_equal(p(f), fractions.Fraction(10, 9))
-        p_deriv = poly.Polynomial([fractions.Fraction(2,3)], domain=[zero, one], window=[zero, one])
-        assert_equal(p.deriv(), p_deriv )
+        assert_equal(p.coef.dtype, np.dtypes.ObjectDType())
+        self.assertIsInstance(p(f), Fraction)
+        assert_equal(p(f), Fraction(10, 9))
+        p_deriv = poly.Polynomial([Fraction(2, 3)], domain=[zero, one],
+                                  window=[zero, one])
+        assert_equal(p.deriv(), p_deriv)
 
 class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
