@@ -20,9 +20,9 @@ __expired_attributes__ = {
     "NZERO": "Use `-0.0` instead.",
     "PZERO": "Use `0.0` instead.",
     "add_newdoc": 
-        "It's an internal function and doesn't have a replacement.",
+        "It's still available as `np.lib.add_newdoc`.",
     "add_docstring": 
-        "It's an internal function and doesn't have a replacement.",
+        "It's still available as `np.lib.add_docstring`.",
     "add_newdoc_ufunc": 
         "It's an internal function and doesn't have a replacement.",
     "compat": "There's no replacement, as Python 2 is no longer supported.",

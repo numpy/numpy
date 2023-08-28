@@ -48,12 +48,7 @@ from numpy._typing import (
     _ComplexLike_co,
 )
 
-from numpy.core.function_base import (
-    add_newdoc as add_newdoc,
-)
-
 from numpy.core.multiarray import (
-    add_docstring as add_docstring,
     bincount as bincount,
 )
 

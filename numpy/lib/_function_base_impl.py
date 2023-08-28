@@ -21,10 +21,9 @@ from numpy.core.fromnumeric import (
     )
 from numpy.core.numerictypes import typecodes
 from numpy.core import overrides
-from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from numpy.core.multiarray import (
-    _place, add_docstring, bincount, normalize_axis_index, _monotonicity,
+    _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy._utils import set_module

@@ -50,7 +50,8 @@ from .npyio import *
 from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
-from numpy.core._multiarray_umath import tracemalloc_domain
+from numpy.core._multiarray_umath import add_docstring, tracemalloc_domain
+from numpy.core.function_base import add_newdoc
 
 __all__ = ['emath']
 __all__ += type_check.__all__
