@@ -71,12 +71,12 @@ def __getattr__(attr):
         return math
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base", 
-        "arraypad", "arraysetops", "ufunclike", "utils"
+        "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base"
     ):
         raise AttributeError(
-            "If you are using a public function, it should be available "
-            "in the main numpy namespace, otherwise check the NumPy 2.0 "
-            "migration guide."
+            f"`np.lib.{attr}` is now private. If you are using a public "
+            "function, it should be available in the main numpy namespace, "
+            "otherwise check the NumPy 2.0 migration guide."
         )
     else:
         raise AttributeError("module {!r} has no attribute "
