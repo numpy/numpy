@@ -480,7 +480,7 @@ class ABCPolyBase(abc.ABC):
                 coef_str = f"{self._repr_latex_scalar(c)}"
             elif not isinstance(c, numbers.Real):
                 coef_str = f" + ({self._repr_latex_scalar(c)})"
-            elif not np.signbit(c):
+            elif c >= 0:
                 coef_str = f" + {self._repr_latex_scalar(c, parens=True)}"
             else:
                 coef_str = f" - {self._repr_latex_scalar(-c, parens=True)}"

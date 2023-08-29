@@ -387,7 +387,8 @@ class TestRepr:
 class TestLatexRepr:
     """Test the latex repr used by Jupyter"""
 
-    def as_latex(self, obj):
+    @staticmethod
+    def as_latex(obj):
         # right now we ignore the formatting of scalars in our tests, since
         # it makes them too verbose. Ideally, the formatting of scalars will
         # be fixed such that tests below continue to pass
@@ -468,6 +469,10 @@ class TestLatexRepr:
             ),
         )
 
+    def test_numeric_object_coefficients(self):
+        coefs = array([Fraction(1, 2), Fraction(1)])
+        p = poly.Polynomial(coefs)
+        assert_equal(self.as_latex(p), '$x \\mapsto 1/2$')
 
 SWITCH_TO_EXP = (
     '1.0 + (1.0e-01) x + (1.0e-02) x**2',
