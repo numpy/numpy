@@ -15,6 +15,7 @@ from numpy.lib import (
     mixins as mixins,
     scimath as scimath,
     stride_tricks as stride_tricks,
+    npyio as npyio,
 )
 
 from numpy.lib._version import (
@@ -38,36 +39,6 @@ from numpy.lib.index_tricks import (
     fill_diagonal as fill_diagonal,
     diag_indices as diag_indices,
     diag_indices_from as diag_indices_from,
-)
-
-from numpy.lib.npyio import (
-    savetxt as savetxt,
-    loadtxt as loadtxt,
-    genfromtxt as genfromtxt,
-    recfromtxt as recfromtxt,
-    recfromcsv as recfromcsv,
-    load as load,
-    save as save,
-    savez as savez,
-    savez_compressed as savez_compressed,
-    packbits as packbits,
-    unpackbits as unpackbits,
-    fromregex as fromregex,
-    DataSource as DataSource,
-)
-
-from numpy.lib.polynomial import (
-    poly as poly,
-    roots as roots,
-    polyint as polyint,
-    polyder as polyder,
-    polyadd as polyadd,
-    polysub as polysub,
-    polymul as polymul,
-    polydiv as polydiv,
-    polyval as polyval,
-    polyfit as polyfit,
-    poly1d as poly1d,
 )
 
 from numpy.core.multiarray import (

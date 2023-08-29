@@ -489,7 +489,7 @@ from numpy.lib._nanfunctions_impl import (
     nanquantile as nanquantile,
 )
 
-from numpy.lib.npyio import (
+from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
@@ -504,7 +504,7 @@ from numpy.lib.npyio import (
     fromregex as fromregex,
 )
 
-from numpy.lib.polynomial import (
+from numpy.lib._polynomial_impl import (
     poly as poly,
     roots as roots,
     polyint as polyint,
