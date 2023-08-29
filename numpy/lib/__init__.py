@@ -24,6 +24,7 @@ from . import index_tricks
 from . import _nanfunctions_impl
 from . import _function_base_impl
 from . import shape_base
+from . import _stride_tricks_impl
 from . import stride_tricks
 from . import _twodim_base_impl
 from . import _ufunclike_impl
@@ -38,7 +39,6 @@ from . import _version
 
 from .index_tricks import *
 from .shape_base import *
-from .stride_tricks import *
 from .polynomial import *
 from .npyio import *
 from .arrayterator import Arrayterator
@@ -50,7 +50,6 @@ from numpy.core.function_base import add_newdoc
 __all__ = ['emath']
 __all__ += index_tricks.__all__
 __all__ += shape_base.__all__
-__all__ += stride_tricks.__all__
 __all__ += polynomial.__all__
 __all__ += npyio.__all__
 

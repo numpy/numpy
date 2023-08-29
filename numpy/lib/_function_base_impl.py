@@ -2093,7 +2093,9 @@ def _parse_input_dimensions(args, input_core_dims):
         ndim = arg.ndim - len(core_dims)
         dummy_array = np.lib.stride_tricks.as_strided(0, arg.shape[:ndim])
         broadcast_args.append(dummy_array)
-    broadcast_shape = np.lib.stride_tricks._broadcast_shape(*broadcast_args)
+    broadcast_shape = np.lib._stride_tricks_impl._broadcast_shape(
+        *broadcast_args
+    )
     return broadcast_shape, dim_sizes
 
 

@@ -184,8 +184,7 @@ else:
     from . import lib
     from .lib import (
         DataSource, apply_along_axis, apply_over_axes,
-        array_split, broadcast_arrays, broadcast_shapes,
-        broadcast_to, c_, column_stack, diag_indices,
+        array_split, c_, column_stack, diag_indices,
         diag_indices_from, dsplit, dstack,
         emath, expand_dims, fill_diagonal,
         fromregex, get_array_wrap, genfromtxt,
@@ -229,6 +228,9 @@ else:
     from .lib._arraypad_impl import pad
     from .lib._utils_impl import (
         byte_bounds, show_runtime, get_include, info
+    )
+    from .lib._stride_tricks_impl import (
+        broadcast_arrays, broadcast_shapes, broadcast_to
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -299,6 +301,7 @@ else:
         set(lib._ufunclike_impl.__all__) |
         set(lib._arraypad_impl.__all__) |
         set(lib._utils_impl.__all__) |
+        set(lib._stride_tricks_impl.__all__) |
         {"show_config", "__version__"}
     )
 
