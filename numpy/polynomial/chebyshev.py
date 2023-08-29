@@ -1777,27 +1777,165 @@ def chebroots(c):
     return r
 
 
-def chebinterpolate(func, deg, args=()):
+def __dct(x, n=None):
+    """
+    Discrete Cosine Transform type II
+                      N-1
+           y[k] = 2 * sum x[n]*cos(pi*k*(2n+1)/(2*N)), 0 <= k < N.
+                      n=0
+    Examples
+    --------
+    >>> x = np.arange(5)
+    >>> x1 = np.arange(6)
+    >>> y = x + 1j*x
+    >>> y1 = x1 + 1j*x1
+
+    >>> np.allclose(__dct(x), [20. , -9.95959314,  0. , -0.89805595,  0. ])
+    True
+
+    >>> np.allclose(__dct(x1),
+    ...             [30. , -14.41953704, 0. , -1.41421356, 0. , -0.27740142])
+    True
+
+    >>> np.allclose(__dct(y), [20.   +20.j, -9.95959314 -9.95959314j,
+    ...                         0.    +0.j, -0.89805595 -0.89805595j,
+    ...                         0.    +0.j        ])
+    True
+
+    >>> np.allclose(__dct(y1), [ 30. +30.j , -14.41953704-14.41953704j,
+    ...                           0.  +0.j ,  -1.41421356 -1.41421356j,
+    ...                           0.  +0.j ,  -0.27740142 -0.27740142j])
+    True
+
+    >>> np.allclose(x, __idct(__dct(x)))
+    True
+
+    >>> np.allclose(x, __dct(__idct(x)))
+    True
+
+    References
+    ----------
+    .. [1] 'A Fast Cosine Transform in One and Two Dimensions', by J.
+           Makhoul, `IEEE Transactions on acoustics, speech and signal
+           processing` vol. 28(1), pp. 27-34,
+           :doi:`10.1109/TASSP.1980.1163351` (1980).
+    .. [2] Wikipedia, "Discrete cosine transform",
+           https://en.wikipedia.org/wiki/Discrete_cosine_transform
+    """
+    fft = np.fft.fft
+    x = np.atleast_1d(x)
+
+    if n is None:
+        n = x.shape[-1]
+
+    if x.shape[-1] < n:
+        n_shape = x.shape[:-1] + (n - x.shape[-1],)
+        xx = np.hstack((x, np.zeros(n_shape)))
+    else:
+        xx = x[..., :n]
+
+    real_x = np.all(np.isreal(xx))
+    if (real_x and (np.remainder(n, 2) == 0)):
+        xp = 2 * fft(np.hstack((xx[..., ::2], xx[..., ::-2])))
+    else:
+        xp = fft(np.hstack((xx, xx[..., ::-1])))[..., :n]
+
+    w = np.exp(-1j * np.arange(n) * np.pi / (2 * n))
+
+    y = xp * w
+
+    if real_x:
+        return y.real
+    return y
+
+
+def __idct(x, n=None):
+    """
+    Inverse Discrete Cosine Transform type II
+                N-1
+    y[k] = 1/N sum w[n]*x[n]*cos(pi*k*(2n+1)/(2*N)), 0 <= k < N.
+               n=0
+    w[0] = 1/2
+    w[n] = 1 for n>0
+
+    Examples
+    --------
+    >>> x = np.arange(5)
+    >>> np.allclose(x, __idct(__dct(x)))
+    True
+
+    >>> np.allclose(x, __dct(__idct(x)))
+    True
+
+    References
+    ----------
+    .. [1] 'A Fast Cosine Transform in One and Two Dimensions', by J.
+           Makhoul, `IEEE Transactions on acoustics, speech and signal
+           processing` vol. 28(1), pp. 27-34,
+           :doi:`10.1109/TASSP.1980.1163351` (1980).
+    .. [2] Wikipedia, "Discrete cosine transform",
+           https://en.wikipedia.org/wiki/Discrete_cosine_transform
+    """
+
+    ifft = np.fft.ifft
+    x = np.atleast_1d(x)
+
+    if n is None:
+        n = x.shape[-1]
+
+    w = np.exp(1j * np.arange(n) * np.pi / (2 * n))
+
+    if x.shape[-1] < n:
+        n_shape = x.shape[:-1] + (n - x.shape[-1],)
+        xx = np.hstack((x, np.zeros(n_shape))) * w
+    else:
+        xx = x[..., :n] * w
+
+    real_x = np.all(np.isreal(x))
+    if (real_x and (np.remainder(n, 2) == 0)):
+        xx[..., 0] = xx[..., 0] * 0.5
+        yp = ifft(xx)
+        y = np.zeros(xx.shape, dtype=complex)
+        y[..., ::2] = yp[..., :n // 2]
+        y[..., ::-2] = yp[..., n // 2::]
+    else:
+        yp = ifft(np.hstack((xx,
+                             np.zeros_like(xx[..., 0]),
+                             np.conj(xx[..., :0:-1]))))
+        y = yp[..., :n]
+
+    if real_x:
+        return y.real
+    return y
+
+
+def chebinterpolate(func, deg, args=(), domain=None):
     """Interpolate a function at the Chebyshev points of the first kind.
 
-    Returns the Chebyshev series that interpolates `func` at the Chebyshev
-    points of the first kind in the interval [-1, 1]. The interpolating
-    series tends to a minmax approximation to `func` with increasing `deg`
-    if the function is continuous in the interval.
+    Returns the Chebyshev series that interpolates the multi-dimensional
+    function `func` at the Chebyshev points of the first kind scaled and
+    shifted to the `domain`. The interpolating series tends to a minmax
+    approximation of `func` with increasing `deg` if the function is
+    continuous in the input domain.
 
     .. versionadded:: 1.14.0
 
     Parameters
     ----------
     func : function
-        The function to be approximated. It must be a function of a single
-        variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
-        extra arguments passed in the `args` parameter.
-    deg : int
-        Degree of the interpolating polynomial
+        The function to be approximated. It must be a function of the form
+        ``f(x1, x2,..., xn, a, b, c...)``, where ``x1, x2,..., xn`` are the
+        n-dimensional coordinates and ``a, b, c...`` are extra arguments
+        passed in the `args` parameter.
+    deg : list of int, size ndim
+        Degree of the interpolating polynomial used for each dimension.
     args : tuple, optional
         Extra arguments to be used in the function call. Default is no extra
         arguments.
+    domain : array-like, shape ndim x 2, optional
+        defines the domain ``[a1, b1] x [a2, b2] x ... x [an, bn]`` over
+        which `func` is interpolated. The default is None, in which case
+        the domain is [-1,1] * len(deg))
 
     Returns
     -------
@@ -1808,10 +1946,17 @@ def chebinterpolate(func, deg, args=()):
     Examples
     --------
     >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
-    array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
-            -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
-             2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
+    >>> c1 = C.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
+    >>> x = C.chebpts1(9)
+    >>> np.allclose(C.chebval(x, c1), np.tanh(x)+0.5))
+    True
+
+    Two-dimensional interpolation to machine accuracy
+    >>> x1,x2 = np.meshgrid(x,x)
+    >>> c2 = C.chebinterpolate(lambda x,y: np.tanh(x+y) + 0.5, deg=(8, 8))
+    >>> np.allclose(C.chebval2d(x1, x2, c2), np.tanh(x1+x2)+0.5))
+    True
+
 
     Notes
     -----
@@ -1824,24 +1969,41 @@ def chebinterpolate(func, deg, args=()):
     zero. For instance, if the function is even then the coefficients of the
     terms of odd degree in the result can be set to zero.
 
+    References
+    ----------
+    .. [1] 'A Survey of Methods of Computing Minimax and Near-Minimax
+           Polynomial Approximations for Functions of a Single Independent
+           Variable' by W. Fraser, `Journal of the ACM` (JACM),
+           vol. 12(3), pp. 295-314, (1965)
+    .. [2] MathWorld, 'Chebyshev Approximation Formula',
+           https://mathworld.wolfram.com/ChebyshevApproximationFormula.html
+    .. [3] Wikipedia, 'Chebyshev nodes',
+           http://en.wikipedia.org/wiki/Chebyshev_nodes
+
     """
-    deg = np.asarray(deg)
+    deg = np.atleast_1d(deg)
 
     # check arguments.
-    if deg.ndim > 0 or deg.dtype.kind not in 'iu' or deg.size == 0:
+    if deg.ndim != 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
         raise TypeError("deg must be an int")
-    if deg < 0:
+    if np.any(deg < 0):
         raise ValueError("expected deg >= 0")
-
     order = deg + 1
-    xcheb = chebpts1(order)
-    yfunc = func(xcheb, *args)
-    m = chebvander(xcheb, deg)
-    c = np.dot(m.T, yfunc)
-    c[0] /= order
-    c[1:] /= 0.5*order
+    ndim = len(order)
 
-    return c
+    if domain is None:
+        domain = chebdomain.tolist() * ndim
+    domain = np.atleast_2d(domain).reshape((-1, 2))
+    x_i = [pu.mapdomain(chebpts1(o), chebdomain, d)
+           for o, d in zip(order, domain)]
+    c = func(*np.meshgrid(*x_i), *args)
+
+    for i in range(ndim):
+        c = __dct(c[..., ::-1])
+        c[..., 0] /= 2.
+        if i < ndim - 1:
+            c = np.moveaxis(c, source=-1, destination=0)
+    return c / np.product(order)
 
 
 def chebgauss(deg):
@@ -2067,13 +2229,12 @@ class Chebyshev(ABCPolyBase):
 
         Notes
         -----
-        See `numpy.polynomial.chebfromfunction` for more details.
+        See `numpy.polynomial.chebyshev.chebinterpolate` for more details.
 
         """
         if domain is None:
             domain = cls.domain
-        xfunc = lambda x: func(pu.mapdomain(x, cls.window, domain), *args)
-        coef = chebinterpolate(xfunc, deg)
+        coef = chebinterpolate(func, deg, args=args, domain=domain)
         return cls(coef, domain=domain)
 
     # Virtual properties
