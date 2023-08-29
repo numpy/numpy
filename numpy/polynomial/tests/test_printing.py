@@ -472,7 +472,7 @@ class TestLatexRepr:
     def test_numeric_object_coefficients(self):
         coefs = array([Fraction(1, 2), Fraction(1)])
         p = poly.Polynomial(coefs)
-        assert_equal(self.as_latex(p), '$x \\mapsto 1/2$')
+        assert_equal(self.as_latex(p), '$x \\mapsto 1/2 + 1\\,x$')
 
 SWITCH_TO_EXP = (
     '1.0 + (1.0e-01) x + (1.0e-02) x**2',
