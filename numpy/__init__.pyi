@@ -457,7 +457,7 @@ from numpy.lib._histograms_impl import (
     histogramdd as histogramdd,
 )
 
-from numpy.lib.index_tricks import (
+from numpy.lib._index_tricks_impl import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
     mgrid as mgrid,
