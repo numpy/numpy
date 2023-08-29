@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 
+@set_module('numpy')
 def show_runtime():
     """
     Print information about various resources in the system
@@ -69,6 +70,7 @@ def show_runtime():
     pprint(config_found)
 
 
+@set_module('numpy')
 def get_include():
     """
     Return the directory that contains the NumPy \\*.h header files.
@@ -290,6 +292,7 @@ def deprecate_with_doc(msg):
 #--------------------------------------------
 
 
+@set_module('numpy')
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.

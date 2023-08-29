@@ -21,21 +21,6 @@ from numpy.lib._version import (
     NumpyVersion as NumpyVersion,
 )
 
-from numpy.lib.arraypad import (
-    pad as pad,
-)
-
-from numpy.lib.arraysetops import (
-    ediff1d as ediff1d,
-    intersect1d as intersect1d,
-    setxor1d as setxor1d,
-    union1d as union1d,
-    setdiff1d as setdiff1d,
-    unique as unique,
-    in1d as in1d,
-    isin as isin,
-)
-
 from numpy.lib.arrayterator import (
     Arrayterator as Arrayterator,
 )
@@ -108,19 +93,6 @@ from numpy.lib.stride_tricks import (
     broadcast_to as broadcast_to,
     broadcast_arrays as broadcast_arrays,
     broadcast_shapes as broadcast_shapes,
-)
-
-from numpy.lib.ufunclike import (
-    fix as fix,
-    isposinf as isposinf,
-    isneginf as isneginf,
-)
-
-from numpy.lib.utils import (
-    get_include as get_include,
-    info as info,
-    byte_bounds as byte_bounds,
-    show_runtime as show_runtime,
 )
 
 from numpy.core.multiarray import (

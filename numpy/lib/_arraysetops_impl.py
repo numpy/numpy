@@ -195,8 +195,6 @@ def unique(ar, return_index=False, return_inverse=False,
 
     See Also
     --------
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
     repeat : Repeat elements of an array.
 
     Notes
@@ -404,12 +402,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         The indices of the first occurrences of the common values in `ar2`.
         Only provided if `return_indices` is True.
 
-
-    See Also
-    --------
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
-
     Examples
     --------
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
@@ -577,8 +569,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     --------
     isin                  : Version of this function that preserves the
                             shape of ar1.
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
 
     Notes
     -----
@@ -818,8 +808,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     See Also
     --------
     in1d                  : Flattened version of this function.
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
 
     Notes
     -----
@@ -914,11 +902,6 @@ def union1d(ar1, ar2):
     union1d : ndarray
         Unique, sorted union of the input arrays.
 
-    See Also
-    --------
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
-
     Examples
     --------
     >>> np.union1d([-1, 0, 1], [-2, 0, 2])
@@ -960,11 +943,6 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         1D array of values in `ar1` that are not in `ar2`. The result
         is sorted when `assume_unique=False`, but otherwise only sorted
         if the input is sorted.
-
-    See Also
-    --------
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
 
     Examples
     --------

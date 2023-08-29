@@ -3,12 +3,12 @@
 """
 import numpy as np
 
-from numpy.testing import (assert_array_equal, assert_equal,
-                           assert_raises, assert_raises_regex)
-from numpy.lib.arraysetops import (
+from numpy import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
 from numpy.exceptions import AxisError
+from numpy.testing import (assert_array_equal, assert_equal,
+                           assert_raises, assert_raises_regex)
 import pytest
 
 
