@@ -31,7 +31,7 @@ from numpy.core import (
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
-from numpy.lib.twodim_base import triu, eye
+from numpy.lib._twodim_base_impl import triu, eye
 from numpy.linalg import _umath_linalg
 
 from numpy._typing import NDArray

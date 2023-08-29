@@ -25,7 +25,7 @@ from . import _nanfunctions_impl
 from . import _function_base_impl
 from . import shape_base
 from . import stride_tricks
-from . import twodim_base
+from . import _twodim_base_impl
 from . import ufunclike
 from . import _histograms_impl
 from . import polynomial
@@ -39,7 +39,6 @@ from . import _version
 from .index_tricks import *
 from .shape_base import *
 from .stride_tricks import *
-from .twodim_base import *
 from .ufunclike import *
 
 from .polynomial import *
@@ -57,7 +56,6 @@ __all__ = ['emath']
 __all__ += index_tricks.__all__
 __all__ += shape_base.__all__
 __all__ += stride_tricks.__all__
-__all__ += twodim_base.__all__
 __all__ += ufunclike.__all__
 __all__ += arraypad.__all__
 __all__ += polynomial.__all__
