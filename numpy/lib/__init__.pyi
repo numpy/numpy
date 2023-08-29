@@ -110,24 +110,6 @@ from numpy.lib.stride_tricks import (
     broadcast_shapes as broadcast_shapes,
 )
 
-from numpy.lib.twodim_base import (
-    diag as diag,
-    diagflat as diagflat,
-    eye as eye,
-    fliplr as fliplr,
-    flipud as flipud,
-    tri as tri,
-    triu as triu,
-    tril as tril,
-    vander as vander,
-    histogram2d as histogram2d,
-    mask_indices as mask_indices,
-    tril_indices as tril_indices,
-    tril_indices_from as tril_indices_from,
-    triu_indices as triu_indices,
-    triu_indices_from as triu_indices_from,
-)
-
 from numpy.lib.ufunclike import (
     fix as fix,
     isposinf as isposinf,

@@ -185,22 +185,20 @@ else:
     from .lib import (
         DataSource, apply_along_axis, apply_over_axes,
         array_split, broadcast_arrays, broadcast_shapes,
-        broadcast_to, byte_bounds, c_, column_stack, diag, diag_indices,
-        diag_indices_from, diagflat, dsplit, dstack,
-        ediff1d, emath, expand_dims, eye, fill_diagonal, fix,
-        fliplr, flipud, fromregex, get_array_wrap, genfromtxt,
-        get_include, histogram2d, hsplit, in1d, index_exp, info, intersect1d,
-        isin, isneginf, ix_, kron, load, loadtxt, mask_indices,
+        broadcast_to, byte_bounds, c_, column_stack, diag_indices,
+        diag_indices_from, dsplit, dstack,
+        ediff1d, emath, expand_dims, fill_diagonal, fix,
+        fromregex, get_array_wrap, genfromtxt,
+        get_include, hsplit, in1d, index_exp, info, intersect1d,
+        isin, isneginf, ix_, kron, load, loadtxt,
         mgrid, ndenumerate, ndindex, ogrid, 
         packbits, pad, poly, poly1d, polyadd, polyder,
         polydiv, polyfit, polyint, polymul, polysub, polyval,
         put_along_axis, r_, ravel_multi_index,
         roots, row_stack, s_, save, savetxt, savez, savez_compressed,
         setdiff1d, setxor1d, show_runtime, split,
-        take_along_axis, tile, tri, tril,
-        tril_indices, tril_indices_from, union1d, unique, unpackbits,
-        unravel_index, vander, vsplit, triu, triu_indices, triu_indices_from, 
-        isposinf
+        take_along_axis, tile, union1d, unique, unpackbits,
+        unravel_index, vsplit, isposinf
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -216,6 +214,11 @@ else:
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
         kaiser, trapz, i0, meshgrid, delete, insert, append, interp, quantile
+    )
+    from .lib._twodim_base_impl import (
+        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
+        histogram2d, mask_indices, tril_indices, tril_indices_from, 
+        triu_indices, triu_indices_from
     )
     from .lib._type_check_impl import (
         iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
@@ -284,6 +287,7 @@ else:
         set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
         set(lib._nanfunctions_impl.__all__) |
         set(lib._function_base_impl.__all__) |
+        set(lib._twodim_base_impl.__all__) |
         set(lib._type_check_impl.__all__) |
         {"show_config", "__version__"}
     )

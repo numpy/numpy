@@ -543,7 +543,7 @@ from numpy.lib.stride_tricks import (
     broadcast_shapes as broadcast_shapes,
 )
 
-from numpy.lib.twodim_base import (
+from numpy.lib._twodim_base_impl import (
     diag as diag,
     diagflat as diagflat,
     eye as eye,

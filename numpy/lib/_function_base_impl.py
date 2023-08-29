@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import transpose
+from numpy.core import transpose, overrides
 from numpy.core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, take, dot, where, intp, integer, isscalar, absolute
@@ -20,8 +20,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
-from numpy.core import overrides
-from numpy.lib.twodim_base import diag
+from numpy.lib._twodim_base_impl import diag
 from numpy.core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
