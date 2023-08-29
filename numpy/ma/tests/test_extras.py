@@ -29,7 +29,7 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, ndenumerate, stack, vstack
+    diagflat, ndenumerate
     )
 
 
@@ -1790,7 +1790,10 @@ class TestNDEnumerate:
 
 class TestStack:
 
-    def test_stack_1d(self):
+    @pytest.mark.parametrize("stack,vstack",
+        [pytest.param(np.stack, np.vstack, id="np-version"),
+         pytest.param(np.ma.stack, np.ma.vstack, id="ma-version")])
+    def test_stack_1d(self, stack, vstack):
         a = masked_array([0, 1, 2], mask=[0, 1, 0])
         b = masked_array([9, 8, 7], mask=[1, 0, 0])
 
@@ -1808,7 +1811,9 @@ class TestStack:
         assert_array_equal(a.mask, c[:, 0].mask)
         assert_array_equal(b.mask, c[:, 1].mask)
 
-    def test_stack_masks(self):
+    @pytest.mark.parametrize("stack,vstack",
+        [(np.stack, np.vstack), (np.ma.stack, np.ma.vstack)])
+    def test_stack_masks(self, stack, vstack):
         a = masked_array([0, 1, 2], mask=True)
         b = masked_array([9, 8, 7], mask=False)
 
@@ -1826,7 +1831,8 @@ class TestStack:
         assert_array_equal(a.mask, c[:, 0].mask)
         assert_array_equal(b.mask, c[:, 1].mask)
 
-    def test_stack_nd(self):
+    @pytest.mark.parametrize("stack", [np.stack, np.ma.stack])
+    def test_stack_nd(self, stack):
         # 2D
         shp = (3, 2)
         d1 = np.random.randint(0, 10, shp)

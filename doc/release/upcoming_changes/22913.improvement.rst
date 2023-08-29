@@ -1,0 +1,7 @@
+MaskedArrays gain a ``__array_function__`` method
+-------------------------------------------------
+
+The MaskedArray class now has an implementation of `__array_function__` that
+dispatches to a masked version of the function when one is available.
+This means that code called with MaskedArray ma as ``np.func(ma)`` will
+behave the same as ``np.ma.func(ma)`` when possible.

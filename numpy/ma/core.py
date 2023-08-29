@@ -3120,6 +3120,46 @@ class MaskedArray(ndarray):
 
         return result
 
+    def __array_function__(self, function, types, args, kwargs):
+        """
+        Wrap numpy functions that have a masked implementation.
+
+        Parameters
+        ----------
+        function : callable
+            Numpy function being called
+        types : iterable of classes
+            Classes that provide an ``__array_function__`` override. Can
+            in principle be used to interact with other classes. Below,
+            mostly passed on to `~numpy.ndarray`, which can only interact
+            with subclasses.
+        args : tuple
+            Positional arguments provided in the function call.
+        kwargs : dict
+            Keyword arguments provided in the function call.
+        """
+        ma_func = np.ma.__dict__.get(function.__name__, function)
+        # Known incompatible functions
+        #   copy: np.copy() has subok semantics, which we can't pass through
+        #   unique: using ma.view(ndarray) internally doesn't work
+        incompatible_functions = {"copy", "unique"}
+        # The masked functions know how to work with ndarray and
+        # MaskedArrays, but can't guarantee anything about other types
+        handled_types = {np.ndarray, MaskedArray}
+        # _convert2ma functions simply guarantee that a MaskedArray
+        # is returned, which is important when the function is called as
+        # ``np.ma.function(arr)``, but not necessary when we get there
+        # through the ``np.function(marr)`` path. This prevents infinite
+        # recursion of this implementation calling the ndarray method.
+        if (ma_func is function
+                or function.__name__ in incompatible_functions
+                or not all([t in handled_types for t in types])
+                or isinstance(ma_func, _convert2ma)):
+            # We don't have a Masked-compatible version of the function,
+            # so just default to the super() ndarray version
+            return super().__array_function__(function, types, args, kwargs)
+        return ma_func(*args, **kwargs)
+
     def view(self, dtype=None, type=None, fill_value=None):
         """
         Return a view of the MaskedArray data.
@@ -6957,6 +6997,8 @@ nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
 ravel = _frommethod('ravel')
+round = _frommethod('round')
+round_ = round
 repeat = _frommethod('repeat')
 shrink_mask = _frommethod('shrink_mask')
 soften_mask = _frommethod('soften_mask')
@@ -7254,7 +7296,7 @@ def diag(v, k=0):
            fill_value=1e+20)
 
     """
-    output = np.diag(v, k).view(MaskedArray)
+    output = np.diag(v.view(np.ndarray), k).view(MaskedArray)
     if getmask(v) is not nomask:
         output._mask = np.diag(v._mask, k)
     return output
@@ -7457,13 +7499,6 @@ def resize(x, new_shape):
       mask=[[False,  True],
             [False, False]],
       fill_value=999999)
-    >>> np.resize(a, (3, 3))
-    masked_array(
-      data=[[1, 2, 3],
-            [4, 1, 2],
-            [3, 4, 1]],
-      mask=False,
-      fill_value=999999)
     >>> ma.resize(a, (3, 3))
     masked_array(
       data=[[1, --, 3],
@@ -7490,7 +7525,8 @@ def resize(x, new_shape):
     m = getmask(x)
     if m is not nomask:
         m = np.resize(m, new_shape)
-    result = np.resize(x, new_shape).view(get_masked_subclass(x))
+    result = np.resize(x.view(np.ndarray),
+                       new_shape).view(get_masked_subclass(x))
     if result.ndim:
         result._mask = m
     return result
@@ -7516,141 +7552,6 @@ def size(obj, axis=None):
     "maskedarray version of the numpy function."
     return np.size(getdata(obj), axis)
 size.__doc__ = np.size.__doc__
-
-
-def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
-    """
-    Calculate the n-th discrete difference along the given axis.
-    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
-    the given axis, higher differences are calculated by using `diff`
-    recursively.
-    Preserves the input mask.
-
-    Parameters
-    ----------
-    a : array_like
-        Input array
-    n : int, optional
-        The number of times values are differenced. If zero, the input
-        is returned as-is.
-    axis : int, optional
-        The axis along which the difference is taken, default is the
-        last axis.
-    prepend, append : array_like, optional
-        Values to prepend or append to `a` along axis prior to
-        performing the difference.  Scalar values are expanded to
-        arrays with length 1 in the direction of axis and the shape
-        of the input array in along all other axes.  Otherwise the
-        dimension and shape must match `a` except along axis.
-
-    Returns
-    -------
-    diff : MaskedArray
-        The n-th differences. The shape of the output is the same as `a`
-        except along `axis` where the dimension is smaller by `n`. The
-        type of the output is the same as the type of the difference
-        between any two elements of `a`. This is the same as the type of
-        `a` in most cases. A notable exception is `datetime64`, which
-        results in a `timedelta64` output array.
-
-    See Also
-    --------
-    numpy.diff : Equivalent function in the top-level NumPy module.
-
-    Notes
-    -----
-    Type is preserved for boolean arrays, so the result will contain
-    `False` when consecutive elements are the same and `True` when they
-    differ.
-
-    For unsigned integer arrays, the results will also be unsigned. This
-    should not be surprising, as the result is consistent with
-    calculating the difference directly:
-
-    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
-    >>> np.ma.diff(u8_arr)
-    masked_array(data=[255],
-                 mask=False,
-           fill_value=np.int64(999999),
-                dtype=uint8)
-    >>> u8_arr[1,...] - u8_arr[0,...]
-    255
-
-    If this is not desirable, then the array should be cast to a larger
-    integer type first:
-
-    >>> i16_arr = u8_arr.astype(np.int16)
-    >>> np.ma.diff(i16_arr)
-    masked_array(data=[-1],
-                 mask=False,
-           fill_value=np.int64(999999),
-                dtype=int16)
-
-    Examples
-    --------
-    >>> a = np.array([1, 2, 3, 4, 7, 0, 2, 3])
-    >>> x = np.ma.masked_where(a < 2, a)
-    >>> np.ma.diff(x)
-    masked_array(data=[--, 1, 1, 3, --, --, 1],
-            mask=[ True, False, False, False,  True,  True, False],
-        fill_value=999999)
-
-    >>> np.ma.diff(x, n=2)
-    masked_array(data=[--, 0, 2, --, --, --],
-                mask=[ True, False, False,  True,  True,  True],
-        fill_value=999999)
-
-    >>> a = np.array([[1, 3, 1, 5, 10], [0, 1, 5, 6, 8]])
-    >>> x = np.ma.masked_equal(a, value=1)
-    >>> np.ma.diff(x)
-    masked_array(
-        data=[[--, --, --, 5],
-                [--, --, 1, 2]],
-        mask=[[ True,  True,  True, False],
-                [ True,  True, False, False]],
-        fill_value=1)
-
-    >>> np.ma.diff(x, axis=0)
-    masked_array(data=[[--, --, --, 1, -2]],
-            mask=[[ True,  True,  True, False, False]],
-        fill_value=1)
-
-    """
-    if n == 0:
-        return a
-    if n < 0:
-        raise ValueError("order must be non-negative but got " + repr(n))
-
-    a = np.ma.asanyarray(a)
-    if a.ndim == 0:
-        raise ValueError(
-            "diff requires input that is at least one dimensional"
-            )
-
-    combined = []
-    if prepend is not np._NoValue:
-        prepend = np.ma.asanyarray(prepend)
-        if prepend.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            prepend = np.broadcast_to(prepend, tuple(shape))
-        combined.append(prepend)
-
-    combined.append(a)
-
-    if append is not np._NoValue:
-        append = np.ma.asanyarray(append)
-        if append.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            append = np.broadcast_to(append, tuple(shape))
-        combined.append(append)
-
-    if len(combined) > 1:
-        a = np.ma.concatenate(combined, axis)
-
-    # GH 22465 np.diff without prepend/append preserves the mask
-    return np.diff(a, n, axis)
 
 
 ##############################################################################
@@ -7798,7 +7699,7 @@ def choose(indices, choices, out=None, mode='raise'):
         "Returns the filled array, or True if masked."
         if x is masked:
             return True
-        return filled(x)
+        return filled(x).view(np.ndarray)
 
     def nmask(x):
         "Returns the mask, True if ``masked``, False if ``nomask``."
@@ -7811,73 +7712,20 @@ def choose(indices, choices, out=None, mode='raise'):
     masks = [nmask(x) for x in choices]
     data = [fmask(x) for x in choices]
     # Construct the mask
-    outputmask = np.choose(c, masks, mode=mode)
+    outputmask = np.choose(c.view(np.ndarray), masks, mode=mode)
     outputmask = make_mask(mask_or(outputmask, getmask(indices)),
                            copy=False, shrink=True)
     # Get the choices.
-    d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
+    outview = out.view(np.ndarray) if isinstance(out, MaskedArray) else out
+
+    d = np.choose(c.view(np.ndarray), data,
+                  mode=mode, out=outview).view(MaskedArray)
     if out is not None:
         if isinstance(out, MaskedArray):
             out.__setmask__(outputmask)
         return out
     d.__setmask__(outputmask)
     return d
-
-
-def round_(a, decimals=0, out=None):
-    """
-    Return a copy of a, rounded to 'decimals' places.
-
-    When 'decimals' is negative, it specifies the number of positions
-    to the left of the decimal point.  The real and imaginary parts of
-    complex numbers are rounded separately. Nothing is done if the
-    array is not of float type and 'decimals' is greater than or equal
-    to 0.
-
-    Parameters
-    ----------
-    decimals : int
-        Number of decimals to round to. May be negative.
-    out : array_like
-        Existing array to use for output.
-        If not given, returns a default copy of a.
-
-    Notes
-    -----
-    If out is given and does not have a mask attribute, the mask of a
-    is lost!
-
-    Examples
-    --------
-    >>> import numpy.ma as ma
-    >>> x = [11.2, -3.973, 0.801, -1.41]
-    >>> mask = [0, 0, 0, 1]
-    >>> masked_x = ma.masked_array(x, mask)
-    >>> masked_x
-    masked_array(data=[11.2, -3.973, 0.801, --],
-                 mask=[False, False, False, True],
-        fill_value=1e+20)
-    >>> ma.round_(masked_x)
-    masked_array(data=[11.0, -4.0, 1.0, --],
-                 mask=[False, False, False, True],
-        fill_value=1e+20)
-    >>> ma.round(masked_x, decimals=1)
-    masked_array(data=[11.2, -4.0, 0.8, --],
-                 mask=[False, False, False, True],
-        fill_value=1e+20)
-    >>> ma.round_(masked_x, decimals=-1)
-    masked_array(data=[10.0, -0.0, 0.0, --],
-                 mask=[False, False, False, True],
-        fill_value=1e+20)
-    """
-    if out is None:
-        return np.round_(a, decimals, out)
-    else:
-        np.round_(getdata(a), decimals, out)
-        if hasattr(out, '_mask'):
-            out._mask = getmask(a)
-        return out
-round = round_
 
 
 def _mask_propagate(a, axis):
@@ -8516,6 +8364,12 @@ clip = _convert2ma(
     params=dict(fill_value=None, hardmask=False),
     np_ret='clipped_array : ndarray',
     np_ma_ret='clipped_array : MaskedArray',
+)
+diff = _convert2ma(
+    'diff',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='diff : ndarray',
+    np_ma_ret='diff : MaskedArray',
 )
 empty = _convert2ma(
     'empty',
