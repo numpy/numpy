@@ -38,7 +38,7 @@ for k, v in typeinfo.items():
         _abstract_types[k] = v
     else:
         _concrete_typeinfo[k] = v
-_concrete_types = {v.type for k, v in _concrete_typeinfo.items()}
+_concrete_types = {v.type for v in _concrete_typeinfo.values()}
 
 
 # 1. `words`
@@ -149,8 +149,10 @@ def _build_dicts() -> None:
 _build_dicts()
 
 
-# Rename types to Python conventions and introduce aliases
 def _renaming_and_aliases() -> None:
+    """
+    Rename types to Python conventions and introduce aliases
+    """
     renaming_dict = [
         # In Python `float` is `double`
         ("single", "float"),
@@ -173,16 +175,6 @@ def _renaming_and_aliases() -> None:
         ("str_", "unicode"),
         ("object_", "object"),
         ("object0", "object"),
-
-        # aliases to be removed
-        ("float_", "double"),
-        ("complex_", "cdouble"),
-        ("longfloat", "longdouble"),
-        ("clongfloat", "clongdouble"),
-        ("longcomplex", "clongdouble"),
-        ("singlecomplex", "csingle"),
-        ("string_", "string"),
-        ("unicode_", "unicode")
     ]
 
     for alias, t in renaming_dict:
@@ -211,7 +203,7 @@ allTypes = word_dict | word_bits_dict | abstract_types_dict
 # delete C names in `allTypes` and exceptions
 for s in ["ulong", "long", "unicode", "object", "bool", "datetime",
           "string", "timedelta", "float", "int", "bool8", "bytes0", 
-          "object32", "object64", "str0", "void0", "object0"]:
+          "object32", "object64", "str0", "void0", "object0", "cfloat"]:
     try:
         del allTypes[s]
     except KeyError:
@@ -249,11 +241,11 @@ def _build_sctypes() -> Dict[str, List[type]]:
     ibytes = [1, 2, 4, 8, 16, 32, 64]
     fbytes = [2, 4, 8, 10, 12, 16, 32, 64]
     for b in ibytes:
-        bits = 8*b
+        bits = 8 * b
         _add_array_type('int', bits, sctypes)
         _add_array_type('uint', bits, sctypes)
     for b in fbytes:
-        bits = 8*b
+        bits = 8 * b
         _add_array_type('float', bits, sctypes)
         _add_array_type('complex', 2*bits, sctypes)
     
