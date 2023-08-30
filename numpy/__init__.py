@@ -218,7 +218,7 @@ else:
     from .lib._ufunclike_impl import fix, isneginf, isposinf
     from .lib._arraypad_impl import pad
     from .lib._utils_impl import (
-        byte_bounds, show_runtime, get_include, info
+        show_runtime, get_include, info
     )
     from .lib._stride_tricks_impl import (
         broadcast_arrays, broadcast_shapes, broadcast_to

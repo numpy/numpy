@@ -7,12 +7,6 @@ import numpy.lib._utils_impl as _utils_impl
 from io import StringIO
 
 
-@pytest.mark.filterwarnings("ignore:.*safe_eval.*:DeprecationWarning")
-def test_safe_eval_nameconstant():
-    # Test if safe_eval supports Python 3.4 _ast.NameConstant
-    utils.safe_eval('None')
-
-
 def test_assert_raises_regex_context_manager():
     with assert_raises_regex(ValueError, 'no deprecation warning'):
         raise ValueError('no deprecation warning')
