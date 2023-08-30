@@ -14,17 +14,16 @@ AR_i8: npt.NDArray[np.int64]
 REC_AR_V: np.rec.recarray[Any, np.dtype[np.record]]
 AR_LIST: list[npt.NDArray[np.int64]]
 
-format_parser: np.rec.format_parser
 record: np.record
 file_obj: io.BufferedIOBase
 
-assert_type(format_parser(
+assert_type(np.rec.format_parser(
     formats=[np.float64, np.int64, np.bool_],
     names=["f8", "i8", "?"],
     titles=None,
     aligned=True,
-), np.format_parser)
-assert_type(format_parser.dtype, np.dtype[np.void])
+), np.rec.format_parser)
+assert_type(np.rec.format_parser.dtype, np.dtype[np.void])
 
 assert_type(record.field_a, Any)
 assert_type(record.field_b, Any)
