@@ -15,7 +15,6 @@ from typing import (
 )
 
 from numpy import (
-    DataSource as DataSource,
     ndarray,
     recarray,
     dtype,
@@ -100,6 +99,25 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     def __getitem__(self, key: str) -> NDArray[Any]: ...
     def __contains__(self, key: str) -> bool: ...
     def __repr__(self) -> str: ...
+
+class DataSource:
+    def __init__(
+        self,
+        destpath: None | str | os.PathLike[str] = ...,
+    ) -> None: ...
+    def __del__(self) -> None: ...
+    def abspath(self, path: str) -> str: ...
+    def exists(self, path: str) -> bool: ...
+
+    # Whether the file-object is opened in string or bytes mode (by default)
+    # depends on the file-extension of `path`
+    def open(
+        self,
+        path: str,
+        mode: str = ...,
+        encoding: None | str = ...,
+        newline: None | str = ...,
+    ) -> IO[Any]: ...
 
 # NOTE: Returns a `NpzFile` if file is a zip file;
 # returns an `ndarray`/`memmap` otherwise

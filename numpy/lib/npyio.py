@@ -1,1 +1,1 @@
-from ._npyio_impl import BagObj, NpzFile
+from ._npyio_impl import BagObj, DataSource, NpzFile

@@ -66,7 +66,7 @@ def __getattr__(attr):
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base", 
         "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
-        "shape_base"
+        "shape_base", "polynomial"
     ):
         raise AttributeError(
             f"`np.lib.{attr}` is now private. If you are using a public "

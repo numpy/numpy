@@ -232,7 +232,7 @@ else:
         polyfit, poly1d, roots
     )
     from .lib._npyio_impl import (
-        DataSource, savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
+        savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
         savez_compressed, unpackbits, fromregex
     )
     from . import matrixlib as _mat

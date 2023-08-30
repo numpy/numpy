@@ -26,7 +26,7 @@ from numpy._utils import asunicode, asbytes
 
 
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez', 'DataSource',
+    'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex'
     ]
 
@@ -35,6 +35,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
+@set_module('numpy.lib.npyio')
 class BagObj:
     """
     BagObj(obj)
@@ -99,6 +100,7 @@ def zipfile_factory(file, *args, **kwargs):
     return zipfile.ZipFile(file, *args, **kwargs)
 
 
+@set_module('numpy.lib.npyio')
 class NpzFile(Mapping):
     """
     NpzFile(fid)
