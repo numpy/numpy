@@ -568,7 +568,7 @@ def test_non_ndarray_inputs():
 
 def view_element_first_byte(x):
     """Construct an array viewing the first byte of each element of `x`"""
-    from numpy.lib.stride_tricks import DummyArray
+    from numpy.lib._stride_tricks_impl import DummyArray
     interface = dict(x.__array_interface__)
     interface['typestr'] = '|b1'
     interface['descr'] = [('', '|b1')]

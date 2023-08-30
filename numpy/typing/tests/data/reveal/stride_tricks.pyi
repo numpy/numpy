@@ -6,8 +6,6 @@ AR_f8: npt.NDArray[np.float64]
 AR_LIKE_f: list[float]
 interface_dict: dict[str, Any]
 
-reveal_type(np.lib.stride_tricks.DummyArray(interface_dict))  # E: lib.stride_tricks.DummyArray
-
 reveal_type(np.lib.stride_tricks.as_strided(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.lib.stride_tricks.as_strided(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.lib.stride_tricks.as_strided(AR_f8, strides=(1, 5)))  # E: ndarray[Any, dtype[{float64}]]
