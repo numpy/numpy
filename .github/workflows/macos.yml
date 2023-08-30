@@ -98,3 +98,38 @@ jobs:
       run: |
         conda activate numpy-dev
         ccache -s
+
+  accelerate:
+    name: Accelerate ILP64
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      with:
+        python-version: '3.10'
+
+    - uses: maxim-lobanov/setup-xcode@9a697e2b393340c3cacd97468baa318e4c883d98 # v1.5.1
+      with:
+        xcode-version: '14.3'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis
+
+    - name: Build NumPy against Accelerate (ILP64)
+      run: |
+        spin build -- -Dblas=accelerate -Dlapack=accelerate -Duse-ilp64=true
+
+    - name: Show meson-log.txt
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Test
+      run: |
+        spin test -j2
