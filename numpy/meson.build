@@ -88,18 +88,6 @@ endif
 # https://github.com/mesonbuild/meson/issues/2835
 blas_name = get_option('blas')
 lapack_name = get_option('lapack')
-use_ilp64 = get_option('use-ilp64')
-if not use_ilp64
-  # For now, keep supporting this environment variable too (same as in setup.py)
-  # `false is the default for the CLI flag, so check if env var was set
-  use_ilp64 = run_command(py,
-    [
-      '-c',
-      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
-    ],
-    check: true
-  ).stdout().strip() == '1'
-endif
 
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
