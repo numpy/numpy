@@ -68,5 +68,4 @@ __expired_attributes__ = {
     "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
     "get_array_wrap": "",
     "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
-    "row_stack": "Use `np.vstack` instead.",
 }

@@ -36,6 +36,7 @@ def test_numpy_namespace():
     undocumented = {
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'show_config': 'numpy.__config__.show',
+        'row_stack': 'numpy.lib._shape_base_impl.row_stack'
     }
     # We override dir to not show these members
     allowlist = undocumented
