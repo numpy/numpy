@@ -11,13 +11,14 @@ from functools import reduce
 from collections import namedtuple
 
 import numpy.core.umath as ncu
-from numpy.core import _umath_tests as ncu_tests
+from numpy.core import _umath_tests as ncu_tests, sctypes
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL, 
+    IS_PYPY
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -266,8 +267,8 @@ class TestOut:
 class TestComparisons:
     import operator
 
-    @pytest.mark.parametrize('dtype', np.sctypes['uint'] + np.sctypes['int'] +
-                             np.sctypes['float'] + [np.bool_])
+    @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
+                             sctypes['float'] + [np.bool_])
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, np.less),
         (operator.le, np.less_equal),
@@ -453,7 +454,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.sctypes['int'] + np.sctypes['uint'], (
+        sctypes['int'] + sctypes['uint'], (
             (
                 # dividend
                 "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
@@ -539,7 +540,7 @@ class TestDivision:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        np.sctypes['int'] + np.sctypes['uint'], (
+        sctypes['int'] + sctypes['uint'], (
             "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
             "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
             "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
@@ -985,10 +986,8 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res2) == 0
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize("dividend_dtype",
-            np.sctypes['int'])
-    @pytest.mark.parametrize("divisor_dtype",
-            np.sctypes['int'])
+    @pytest.mark.parametrize("dividend_dtype", sctypes['int'])
+    @pytest.mark.parametrize("divisor_dtype", sctypes['int'])
     @pytest.mark.parametrize("operation",
             [np.remainder, np.fmod, np.divmod, np.floor_divide,
              operator.mod, operator.floordiv])
@@ -1114,7 +1113,7 @@ class TestPower:
             assert_array_equal(x.imag, y.imag)
 
         for z in [complex(0, np.inf), complex(1, np.inf)]:
-            z = np.array([z], dtype=np.complex_)
+            z = np.array([z], dtype=np.complex128)
             with np.errstate(invalid="ignore"):
                 assert_complex_equal(z**1, z)
                 assert_complex_equal(z**2, z*z)
@@ -1764,8 +1763,6 @@ class TestSpecialFloats:
         np.log, np.log2, np.log10, np.reciprocal, np.arccosh
     ]
 
-    @pytest.mark.skipif(sys.platform == "win32" and sys.maxsize < 2**31 + 1,
-                        reason='failures on 32-bit Python, see FIXME below')
     @pytest.mark.parametrize("ufunc", UFUNCS_UNARY_FP)
     @pytest.mark.parametrize("dtype", ('e', 'f', 'd'))
     @pytest.mark.parametrize("data, escape", (
@@ -1812,8 +1809,6 @@ class TestSpecialFloats:
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
-        # FIXME: skipped on MSVC:32-bit during switch to Meson, 10 cases fail
-        #        when SIMD support not present / disabled
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
         array = np.array(data, dtype=dtype)
@@ -2152,38 +2147,38 @@ class TestArctan2SpecialValues:
 
     def test_zero_nzero(self):
         # atan2(+-0, -0) returns +-pi.
-        assert_almost_equal(ncu.arctan2(np.PZERO, np.NZERO), np.pi)
-        assert_almost_equal(ncu.arctan2(np.NZERO, np.NZERO), -np.pi)
+        assert_almost_equal(ncu.arctan2(ncu.PZERO, ncu.NZERO), np.pi)
+        assert_almost_equal(ncu.arctan2(ncu.NZERO, ncu.NZERO), -np.pi)
 
     def test_zero_pzero(self):
         # atan2(+-0, +0) returns +-0.
-        assert_arctan2_ispzero(np.PZERO, np.PZERO)
-        assert_arctan2_isnzero(np.NZERO, np.PZERO)
+        assert_arctan2_ispzero(ncu.PZERO, ncu.PZERO)
+        assert_arctan2_isnzero(ncu.NZERO, ncu.PZERO)
 
     def test_zero_negative(self):
         # atan2(+-0, x) returns +-pi for x < 0.
-        assert_almost_equal(ncu.arctan2(np.PZERO, -1), np.pi)
-        assert_almost_equal(ncu.arctan2(np.NZERO, -1), -np.pi)
+        assert_almost_equal(ncu.arctan2(ncu.PZERO, -1), np.pi)
+        assert_almost_equal(ncu.arctan2(ncu.NZERO, -1), -np.pi)
 
     def test_zero_positive(self):
         # atan2(+-0, x) returns +-0 for x > 0.
-        assert_arctan2_ispzero(np.PZERO, 1)
-        assert_arctan2_isnzero(np.NZERO, 1)
+        assert_arctan2_ispzero(ncu.PZERO, 1)
+        assert_arctan2_isnzero(ncu.NZERO, 1)
 
     def test_positive_zero(self):
         # atan2(y, +-0) returns +pi/2 for y > 0.
-        assert_almost_equal(ncu.arctan2(1, np.PZERO), 0.5 * np.pi)
-        assert_almost_equal(ncu.arctan2(1, np.NZERO), 0.5 * np.pi)
+        assert_almost_equal(ncu.arctan2(1, ncu.PZERO), 0.5 * np.pi)
+        assert_almost_equal(ncu.arctan2(1, ncu.NZERO), 0.5 * np.pi)
 
     def test_negative_zero(self):
         # atan2(y, +-0) returns -pi/2 for y < 0.
-        assert_almost_equal(ncu.arctan2(-1, np.PZERO), -0.5 * np.pi)
-        assert_almost_equal(ncu.arctan2(-1, np.NZERO), -0.5 * np.pi)
+        assert_almost_equal(ncu.arctan2(-1, ncu.PZERO), -0.5 * np.pi)
+        assert_almost_equal(ncu.arctan2(-1, ncu.NZERO), -0.5 * np.pi)
 
     def test_any_ninf(self):
         # atan2(+-y, -infinity) returns +-pi for finite y > 0.
-        assert_almost_equal(ncu.arctan2(1, np.NINF),  np.pi)
-        assert_almost_equal(ncu.arctan2(-1, np.NINF), -np.pi)
+        assert_almost_equal(ncu.arctan2(1, -np.inf),  np.pi)
+        assert_almost_equal(ncu.arctan2(-1, -np.inf), -np.pi)
 
     def test_any_pinf(self):
         # atan2(+-y, +infinity) returns +-0 for finite y > 0.
@@ -4173,9 +4168,12 @@ class TestComplexFunctions:
             except AttributeError:
                 continue
             for p in points:
-                a = complex(func(np.complex_(p)))
+                a = complex(func(np.complex128(p)))
                 b = cfunc(p)
-                assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
+                assert_(
+                    abs(a - b) < atol, 
+                    "%s %s: %s; cmath: %s" % (fname, p, a, b)
+                )
 
     @pytest.mark.xfail(
         # manylinux2014 uses glibc2.17
@@ -4184,7 +4182,9 @@ class TestComplexFunctions:
     )
     @pytest.mark.xfail(IS_MUSL, reason="gh23049")
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
-    @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
+    @pytest.mark.parametrize('dtype', [
+        np.complex64, np.complex128, np.clongdouble
+    ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
 
@@ -4223,9 +4223,9 @@ class TestComplexFunctions:
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        if dtype is np.longcomplex:
+        if dtype is np.clongdouble:
             if bad_arcsinh():
-                pytest.skip("Trig functions of np.longcomplex values known "
+                pytest.skip("Trig functions of np.clongdouble values known "
                             "to be inaccurate on aarch64 and PPC for some "
                             "compilation configurations.")
             # It's not guaranteed that the system-provided arc functions
@@ -4390,14 +4390,14 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
         ji = (x0.imag == 0) & (dx.imag != 0)
         if np.any(jr):
             x = x0[jr]
-            x.real = np.NZERO
+            x.real = ncu.NZERO
             ym = f(x)
             assert_(np.all(np.absolute(y0[jr].real - ym.real*re_sign) < atol), (y0[jr], ym))
             assert_(np.all(np.absolute(y0[jr].imag - ym.imag*im_sign) < atol), (y0[jr], ym))
 
         if np.any(ji):
             x = x0[ji]
-            x.imag = np.NZERO
+            x.imag = ncu.NZERO
             ym = f(x)
             assert_(np.all(np.absolute(y0[ji].real - ym.real*re_sign) < atol), (y0[ji], ym))
             assert_(np.all(np.absolute(y0[ji].imag - ym.imag*im_sign) < atol), (y0[ji], ym))
@@ -4438,7 +4438,7 @@ def test_nextafterl():
 
 
 def test_nextafter_0():
-    for t, direction in itertools.product(np.sctypes['float'], (1, -1)):
+    for t, direction in itertools.product(np.core.sctypes['float'], (1, -1)):
         # The value of tiny for double double is NaN, so we need to pass the
         # assert
         with suppress_warnings() as sup:
@@ -4542,7 +4542,7 @@ def test_reduceat():
     # test no buffer
     np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
-    np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)
+    np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
 
 def test_reduceat_empty():
@@ -4720,3 +4720,41 @@ def test_bad_legacy_gufunc_silent_errors(x1):
     # The signature of always_error_gufunc is '(i),()->()'.
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error_gufunc(x1, 0.0)
+
+
+class TestAddDocstring:
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_same_docstring(self):
+        # test for attributes (which are C-level defined)
+        ncu.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
+
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        ncu.add_docstring(func, func.__doc__)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_different_docstring_fails(self):
+        # test for attributes (which are C-level defined)
+        with assert_raises(RuntimeError):
+            ncu.add_docstring(np.ndarray.flat, "different docstring")
+            
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        with assert_raises(RuntimeError):
+            ncu.add_docstring(func, "different docstring")
+
+
+class TestAdd_newdoc_ufunc:
+    def test_ufunc_arg(self):
+        assert_raises(TypeError, ncu._add_newdoc_ufunc, 2, "blah")
+        assert_raises(ValueError, ncu._add_newdoc_ufunc, np.add, "blah")
+
+    def test_string_arg(self):
+        assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)

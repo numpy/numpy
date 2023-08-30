@@ -242,30 +242,30 @@ def check_complex(config, mathlibs):
 
     # Check for complex support
     st = config.check_header('complex.h')
-    if st:
-        priv.append(('HAVE_COMPLEX_H', 1))
-        pub.append(('NPY_USE_C99_COMPLEX', 1))
+    if not st:
+        raise SystemError("'complex.h' header is not available")
 
-        for t in C99_COMPLEX_TYPES:
-            st = config.check_type(t, headers=["complex.h"])
-            if st:
-                pub.append(('NPY_HAVE_%s' % type2def(t), 1))
+    for t in C99_COMPLEX_TYPES:
+        st = config.check_type(t, headers=["complex.h"])
+        if not st:
+            raise SystemError(
+                    f"'complex.h' header does include complex type {t}")
 
-        def check_prec(prec):
-            flist = [f + prec for f in C99_COMPLEX_FUNCS]
-            decl = dict([(f, True) for f in flist])
-            if not config.check_funcs_once(flist, call=decl, decl=decl,
-                                           libraries=mathlibs):
-                for f in flist:
-                    if config.check_func(f, call=True, decl=True,
-                                         libraries=mathlibs):
-                        priv.append((fname2def(f), 1))
-            else:
-                priv.extend([(fname2def(f), 1) for f in flist])
+    def check_prec(prec):
+        flist = [f + prec for f in C99_COMPLEX_FUNCS]
+        decl = dict([(f, True) for f in flist])
+        if not config.check_funcs_once(flist, call=decl, decl=decl,
+                                        libraries=mathlibs):
+            for f in flist:
+                if config.check_func(f, call=True, decl=True,
+                                        libraries=mathlibs):
+                    priv.append((fname2def(f), 1))
+        else:
+            priv.extend([(fname2def(f), 1) for f in flist])
 
-        check_prec('')
-        check_prec('f')
-        check_prec('l')
+    check_prec('')
+    check_prec('f')
+    check_prec('l')
 
     return priv, pub
 
@@ -411,7 +411,6 @@ def configuration(parent_package='',top_path=None):
                                            exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
-    from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path

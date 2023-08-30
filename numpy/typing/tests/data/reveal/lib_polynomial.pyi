@@ -61,11 +61,11 @@ reveal_type(np.polyder(AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, An
 reveal_type(np.polyder(AR_O, m=2))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.polyfit(AR_f8, AR_f8, 2))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.polyfit(AR_f8, AR_i8, 1, full=True))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
-reveal_type(np.polyfit(AR_u4, AR_f8, 1.0, cov="unscaled"))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
+reveal_type(np.polyfit(AR_f8, AR_i8, 1, full=True))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
+reveal_type(np.polyfit(AR_u4, AR_f8, 1.0, cov="unscaled"))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
 reveal_type(np.polyfit(AR_c16, AR_f8, 2))  # E: ndarray[Any, dtype[{complex128}]]
-reveal_type(np.polyfit(AR_f8, AR_c16, 1, full=True))  # E: Tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
-reveal_type(np.polyfit(AR_u4, AR_c16, 1.0, cov=True))  # E: Tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{complex128}]]]
+reveal_type(np.polyfit(AR_f8, AR_c16, 1, full=True))  # E: tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
+reveal_type(np.polyfit(AR_u4, AR_c16, 1.0, cov=True))  # E: tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{complex128}]]]
 
 reveal_type(np.polyval(AR_b, AR_b))  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(np.polyval(AR_u4, AR_b))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
@@ -103,9 +103,9 @@ reveal_type(np.polymul(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.polydiv(poly_obj, AR_i8))  # E: poly1d
 reveal_type(np.polydiv(AR_f8, poly_obj))  # E: poly1d
-reveal_type(np.polydiv(AR_b, AR_b))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.polydiv(AR_u4, AR_b))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.polydiv(AR_i8, AR_i8))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.polydiv(AR_f8, AR_i8))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.polydiv(AR_i8, AR_c16))  # E: Tuple[ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[complexfloating[Any, Any]]]]
-reveal_type(np.polydiv(AR_O, AR_O))  # E: Tuple[ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]]]
+reveal_type(np.polydiv(AR_b, AR_b))  # E: tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.polydiv(AR_u4, AR_b))  # E: tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.polydiv(AR_i8, AR_i8))  # E: tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.polydiv(AR_f8, AR_i8))  # E: tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.polydiv(AR_i8, AR_c16))  # E: tuple[ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[complexfloating[Any, Any]]]]
+reveal_type(np.polydiv(AR_O, AR_O))  # E: tuple[ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]]]

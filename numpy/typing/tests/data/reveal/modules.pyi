@@ -33,7 +33,6 @@ reveal_type(np.polynomial.polynomial)  # E: ModuleType
 
 reveal_type(np.__path__)  # E: list[builtins.str]
 reveal_type(np.__version__)  # E: str
-reveal_type(np.__git_version__)  # E: str
 reveal_type(np.test)  # E: _pytesttester.PytestTester
 reveal_type(np.test.module_name)  # E: str
 

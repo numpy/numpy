@@ -217,19 +217,13 @@ class Indices(Benchmark):
 
 
 class StatsMethods(Benchmark):
-    # Not testing, but in array_api (redundant)
-    # 8, 16, 32 bit variants, and 128 complexes
-    params = [['int64', 'uint64', 'float64', 'intp',
-               'complex64', 'bool', 'float', 'int',
-               'complex', 'complex256'],
-              [100**n for n in range(0, 2)]]
+    params = [['int64', 'uint64', 'float32', 'float64',
+               'complex64', 'bool_'],
+              [100, 10000]]
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
-        try:
-            self.data = np.ones(size, dtype=getattr(np, dtype))
-        except AttributeError:  # builtins throw AttributeError after 1.20
-            self.data = np.ones(size, dtype=dtype)
+        self.data = np.ones(size, dtype=dtype)
         if dtype.startswith('complex'):
             self.data = np.random.randn(size) + 1j * np.random.randn(size)
 

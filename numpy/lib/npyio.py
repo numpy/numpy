@@ -26,9 +26,8 @@ from numpy._utils import asunicode, asbytes
 
 
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez', 'DataSource',
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex'
     ]
 
 
@@ -2315,7 +2314,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 "Reading unicode strings without specifying the encoding "
                 "argument is deprecated. Set the encoding, use None for the "
                 "system default.",
-                np.VisibleDeprecationWarning, stacklevel=2)
+                np.exceptions.VisibleDeprecationWarning, stacklevel=2)
             def encode_unicode_cols(row_tup):
                 row = list(row_tup)
                 for i in strcolidx:

@@ -14,10 +14,6 @@
 #mesondefine NPY_SIZEOF_PY_LONG_LONG
 #mesondefine NPY_SIZEOF_LONGLONG
 
-#mesondefine NPY_USE_C99_COMPLEX
-#mesondefine NPY_HAVE_COMPLEX_DOUBLE
-#mesondefine NPY_HAVE_COMPLEX_FLOAT
-#mesondefine NPY_HAVE_COMPLEX_LONG_DOUBLE
 #mesondefine NPY_USE_C99_FORMATS
 
 #mesondefine NPY_NO_SIGNAL

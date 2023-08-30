@@ -267,7 +267,7 @@ python_sources = [
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
-  '_version.py',
+  '_expired_attrs_2_0.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
@@ -276,8 +276,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -307,13 +306,37 @@ pure_subdirs = [
   'polynomial',
   'testing',
   'tests',
-  'typing',
+  'typing'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'
 endif
 
 np_dir = py.get_install_dir() / 'numpy'
+
+# Generate version.py for sdist
+meson.add_dist_script(
+   ['_build_utils/gitversion.py', '--meson-dist', '--write',
+     'numpy/version.py']
+)
+if not fs.exists('version.py')
+  generate_version = custom_target(
+    'generate-version',
+    install: true,
+    build_always_stale: true,
+    build_by_default: true,
+    output: 'version.py',
+    input: '_build_utils/gitversion.py',
+    command: [py, '@INPUT@', '--write', '@OUTPUT@'],
+    install_dir: np_dir
+  )
+else
+  # When building from sdist, version.py exists and should be included
+  py.install_sources(
+    ['version.py'],
+    subdir : 'numpy'
+  )
+endif
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)

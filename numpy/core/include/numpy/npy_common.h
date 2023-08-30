@@ -363,22 +363,13 @@ typedef double npy_double;
 typedef Py_hash_t npy_hash_t;
 #define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
 
-#if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
-#error npy_cdouble definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
+#ifdef __cplusplus
+extern "C++" {
 #endif
-#if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
-#error npy_cfloat definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
+#include <complex.h>
+#ifdef __cplusplus
+}
 #endif
-#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
-#error npy_clongdouble definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
-#endif
-
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && defined(__cplusplus)
 typedef struct 
@@ -396,19 +387,10 @@ typedef struct
     long double _Val[2];
 } npy_clongdouble;
 #elif defined(_MSC_VER) && !defined(__INTEL_COMPILER) /* && !defined(__cplusplus) */
-#include <complex.h>
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
 #else /* !defined(_MSC_VER) || defined(__INTEL_COMPILER) */
-#ifdef __cplusplus
-extern "C++" {
-#endif
-#include <complex.h>
-#ifdef __cplusplus
-}
-#endif
-#undef complex
 typedef double _Complex npy_cdouble;
 typedef float _Complex npy_cfloat;
 typedef longdouble_t _Complex npy_clongdouble;

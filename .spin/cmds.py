@@ -5,10 +5,55 @@ import argparse
 import tempfile
 import pathlib
 import shutil
+import json
+import pathlib
 
 import click
-from spin.cmds import meson
 from spin import util
+from spin.cmds import meson
+
+
+# Check that the meson git submodule is present
+curdir = pathlib.Path(__file__).parent
+meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
+if not meson_import_dir.exists():
+    raise RuntimeError(
+        'The `vendored-meson/meson` git submodule does not exist! ' +
+        'Run `git submodule update --init` to fix this problem.'
+    )
+
+
+@click.command()
+@click.option(
+    "-j", "--jobs",
+    help="Number of parallel tasks to launch",
+    type=int
+)
+@click.option(
+    "--clean", is_flag=True,
+    help="Clean build directory before build"
+)
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Print all build output, even installation"
+)
+@click.argument("meson_args", nargs=-1)
+@click.pass_context
+def build(ctx, meson_args, jobs=None, clean=False, verbose=False):
+    """🔧 Build package with Meson/ninja and install
+
+    MESON_ARGS are passed through e.g.:
+
+    spin build -- -Dpkg_config_path=/lib64/pkgconfig
+
+    The package is installed to build-install
+
+    By default builds for release, to be able to use a debugger set CFLAGS
+    appropriately. For example, for linux use
+
+    CFLAGS="-O0 -g" spin build
+    """
+    ctx.forward(meson.build)
 
 
 @click.command()
@@ -32,7 +77,7 @@ from spin import util
 )
 @click.option(
     "--install-deps/--no-install-deps",
-    default=True,
+    default=False,
     help="Install dependencies before building"
 )
 @click.pass_context
@@ -258,19 +303,7 @@ def _run_asv(cmd):
     except (ImportError, RuntimeError):
         pass
 
-    try:
-        util.run(cmd, cwd='benchmarks', env=env, sys_exit=False)
-    except FileNotFoundError:
-        click.secho((
-            "Cannot find `asv`. "
-            "Please install Airspeed Velocity:\n\n"
-            "  https://asv.readthedocs.io/en/latest/installing.html\n"
-            "\n"
-            "Depending on your system, one of the following should work:\n\n"
-            "  pip install asv\n"
-            "  conda install asv\n"
-        ), fg="red")
-        sys.exit(1)
+    util.run(cmd, cwd='benchmarks', env=env)
 
 
 @click.command()
@@ -291,13 +324,17 @@ def _run_asv(cmd):
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@click.option(
+    '--quick', '-q', is_flag=True, default=False,
+    help="Run each benchmark only once (timings won't be accurate)"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
     nargs=-1
 )
 @click.pass_context
-def bench(ctx, tests, compare, verbose, commits):
+def bench(ctx, tests, compare, verbose, quick, commits):
     """🏋 Run benchmarks.
 
     \b
@@ -337,6 +374,9 @@ def bench(ctx, tests, compare, verbose, commits):
     if verbose:
         bench_args = ['-v'] + bench_args
 
+    if quick:
+        bench_args = ['--quick'] + bench_args
+
     if not compare:
         # No comparison requested; we build and benchmark the current version
 
@@ -344,7 +384,7 @@ def bench(ctx, tests, compare, verbose, commits):
             "Invoking `build` prior to running benchmarks:",
             bold=True, fg="bright_green"
         )
-        ctx.invoke(meson.build)
+        ctx.invoke(build)
 
         meson._set_pythonpath()
 
@@ -364,27 +404,21 @@ def bench(ctx, tests, compare, verbose, commits):
         cmd = [
             'asv', 'run', '--dry-run', '--show-stderr', '--python=same'
         ] + bench_args
-
         _run_asv(cmd)
-
     else:
-        # Benchmark comparison
-
         # Ensure that we don't have uncommited changes
         commit_a, commit_b = [_commit_to_sha(c) for c in commits]
 
-        if commit_b == 'HEAD':
-            if _dirty_git_working_dir():
-                click.secho(
-                    "WARNING: you have uncommitted changes --- "
-                    "these will NOT be benchmarked!",
-                    fg="red"
-                )
+        if commit_b == 'HEAD' and _dirty_git_working_dir():
+            click.secho(
+                "WARNING: you have uncommitted changes --- "
+                "these will NOT be benchmarked!",
+                fg="red"
+            )
 
         cmd_compare = [
             'asv', 'continuous', '--factor', '1.05',
         ] + bench_args + [commit_a, commit_b]
-
         _run_asv(cmd_compare)
 
 
@@ -402,7 +436,7 @@ def python(ctx, python_args):
     """
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
-    ctx.invoke(meson.build)
+    ctx.invoke(build)
     ctx.forward(meson.python)
 
 
@@ -421,7 +455,7 @@ def ipython(ctx, ipython_args):
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
 
-    ctx.invoke(meson.build)
+    ctx.invoke(build)
 
     ppath = meson._set_pythonpath()
 
@@ -452,5 +486,17 @@ def run(ctx, args):
     On Windows, all shell commands are run via Bash.
     Install Git for Windows if you don't have Bash already.
     """
-    ctx.invoke(meson.build)
+    ctx.invoke(build)
     ctx.forward(meson.run)
+ 
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.pass_context
+def mypy(ctx):
+    """🦆 Run Mypy tests for NumPy
+    """
+    env = os.environ
+    env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
+    ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
+    ctx.params['markexpr'] = 'full'
+    ctx.forward(test)

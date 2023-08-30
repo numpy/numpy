@@ -16,7 +16,7 @@ fi
 
 source builds/venv/bin/activate
 
-pip install --upgrade pip 'setuptools<49.2.0'
+pip install --upgrade pip 'setuptools<49.2.0' build
 
 pip install -r build_requirements.txt
 
@@ -93,7 +93,6 @@ run_test()
 
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
-    export MYPYPATH=$PWD
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -183,7 +182,7 @@ EOF
     pushd ../benchmarks
     $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
-    $PYTHON `which asv` dev -q 2>&1| tee asv-output.log
+    $PYTHON `which asv` run -q 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then
       echo "Some benchmarks have errors!"
       exit 1
@@ -223,7 +222,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result -Wno-error=undef"
-  $PYTHON setup.py sdist
+  $PYTHON -m build --sdist
   # Make another virtualenv to install into
   $PYTHON -m venv venv-for-wheel
   . venv-for-wheel/bin/activate

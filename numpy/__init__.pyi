@@ -295,7 +295,6 @@ from numpy.core.arrayprint import (
     format_float_positional as format_float_positional,
     array_repr as array_repr,
     array_str as array_str,
-    set_string_function as set_string_function,
     printoptions as printoptions,
 )
 
@@ -305,15 +304,6 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
-    ALLOW_THREADS as ALLOW_THREADS,
-    BUFSIZE as BUFSIZE,
-    CLIP as CLIP,
-    MAXDIMS as MAXDIMS,
-    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
-    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
-    RAISE as RAISE,
-    WRAP as WRAP,
-    tracemalloc_domain as tracemalloc_domain,
     array as array,
     empty_like as empty_like,
     empty as empty,
@@ -349,8 +339,6 @@ from numpy.core.multiarray import (
     fromiter as fromiter,
     is_busday as is_busday,
     promote_types as promote_types,
-    seterrobj as seterrobj,
-    geterrobj as geterrobj,
     fromstring as fromstring,
     frompyfunc as frompyfunc,
     nested_iters as nested_iters,
@@ -388,14 +376,7 @@ from numpy.core.numeric import (
 )
 
 from numpy.core.numerictypes import (
-    maximum_sctype as maximum_sctype,
-    issctype as issctype,
-    obj2sctype as obj2sctype,
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
     issubdtype as issubdtype,
-    sctype2char as sctype2char,
-    nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
     typecodes as typecodes,
@@ -411,24 +392,15 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
-from numpy.exceptions import (
-    ComplexWarning as ComplexWarning,
-    ModuleDeprecationWarning as ModuleDeprecationWarning,
-    VisibleDeprecationWarning as VisibleDeprecationWarning,
-    TooHardError as TooHardError,
-    DTypePromotionError as DTypePromotionError,
-    AxisError as AxisError,
-)
-
 from numpy.lib import (
     emath as emath,
 )
 
-from numpy.lib.arraypad import (
+from numpy.lib._arraypad_impl import (
     pad as pad,
 )
 
-from numpy.lib.arraysetops import (
+from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
     intersect1d as intersect1d,
     setxor1d as setxor1d,
@@ -439,11 +411,7 @@ from numpy.lib.arraysetops import (
     isin as isin,
 )
 
-from numpy.lib.arrayterator import (
-    Arrayterator as Arrayterator,
-)
-
-from numpy.lib.function_base import (
+from numpy.lib._function_base_impl import (
     select as select,
     piecewise as piecewise,
     trim_zeros as trim_zeros,
@@ -475,18 +443,15 @@ from numpy.lib.function_base import (
     kaiser as kaiser,
     trapz as trapz,
     i0 as i0,
-    add_newdoc as add_newdoc,
-    add_docstring as add_docstring,
     meshgrid as meshgrid,
     delete as delete,
     insert as insert,
     append as append,
     interp as interp,
-    add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
 )
 
-from numpy.lib.histograms import (
+from numpy.lib._histograms_impl import (
     histogram_bin_edges as histogram_bin_edges,
     histogram as histogram,
     histogramdd as histogramdd,
@@ -507,7 +472,7 @@ from numpy.lib.index_tricks import (
     diag_indices_from as diag_indices_from,
 )
 
-from numpy.lib.nanfunctions import (
+from numpy.lib._nanfunctions_impl import (
     nansum as nansum,
     nanmax as nanmax,
     nanmin as nanmin,
@@ -571,13 +536,13 @@ from numpy.lib.shape_base import (
     put_along_axis as put_along_axis,
 )
 
-from numpy.lib.stride_tricks import (
+from numpy.lib._stride_tricks_impl import (
     broadcast_to as broadcast_to,
     broadcast_arrays as broadcast_arrays,
     broadcast_shapes as broadcast_shapes,
 )
 
-from numpy.lib.twodim_base import (
+from numpy.lib._twodim_base_impl import (
     diag as diag,
     diagflat as diagflat,
     eye as eye,
@@ -595,9 +560,8 @@ from numpy.lib.twodim_base import (
     triu_indices_from as triu_indices_from,
 )
 
-from numpy.lib.type_check import (
+from numpy.lib._type_check_impl import (
     mintypecode as mintypecode,
-    asfarray as asfarray,
     real as real,
     imag as imag,
     iscomplex as iscomplex,
@@ -610,31 +574,21 @@ from numpy.lib.type_check import (
     common_type as common_type,
 )
 
-from numpy.lib.ufunclike import (
+from numpy.lib._ufunclike_impl import (
     fix as fix,
     isposinf as isposinf,
     isneginf as isneginf,
 )
 
-from numpy.lib.utils import (
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
-    issubdtype as issubdtype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
+from numpy.lib._utils_impl import (
     get_include as get_include,
     info as info,
-    source as source,
-    who as who,
-    lookfor as lookfor,
     byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
     show_runtime as show_runtime,
 )
 
 from numpy.matrixlib import (
     asmatrix as asmatrix,
-    mat as mat,
     bmat as bmat,
 )
 
@@ -663,6 +617,7 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __all__: list[str]
+__dir__: list[str]
 __path__: list[str]
 __version__: str
 __git_version__: str
@@ -705,9 +660,9 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: type[int], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[int_]: ...
     @overload
-    def __new__(cls, dtype: None | type[float], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[float_]: ...
+    def __new__(cls, dtype: None | type[float], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[float64]: ...
     @overload
-    def __new__(cls, dtype: type[complex], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[complex_]: ...
+    def __new__(cls, dtype: type[complex], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[complex128]: ...
     @overload
     def __new__(cls, dtype: type[builtins.str], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[str_]: ...
     @overload
@@ -3029,9 +2984,7 @@ float64 = floating[_64Bit]
 half = floating[_NBitHalf]
 single = floating[_NBitSingle]
 double = floating[_NBitDouble]
-float_ = floating[_NBitDouble]
 longdouble = floating[_NBitLongDouble]
-longfloat = floating[_NBitLongDouble]
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
@@ -3066,13 +3019,8 @@ complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
 
 csingle = complexfloating[_NBitSingle, _NBitSingle]
-singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
 cdouble = complexfloating[_NBitDouble, _NBitDouble]
-complex_ = complexfloating[_NBitDouble, _NBitDouble]
-cfloat = complexfloating[_NBitDouble, _NBitDouble]
 clongdouble = complexfloating[_NBitLongDouble, _NBitLongDouble]
-clongfloat = complexfloating[_NBitLongDouble, _NBitLongDouble]
-longcomplex = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
@@ -3120,8 +3068,6 @@ class bytes_(character, bytes):
     ) -> bytes: ...
     def tolist(self) -> bytes: ...
 
-string_ = bytes_
-
 class str_(character, str):
     @overload
     def __init__(self, value: object = ..., /) -> None: ...
@@ -3134,40 +3080,19 @@ class str_(character, str):
     ) -> str: ...
     def tolist(self) -> str: ...
 
-unicode_ = str_
-
 #
 # Constants
 #
 
-Inf: Final[float]
-Infinity: Final[float]
-NAN: Final[float]
-NINF: Final[float]
-NZERO: Final[float]
-NaN: Final[float]
-PINF: Final[float]
-PZERO: Final[float]
 e: Final[float]
 euler_gamma: Final[float]
 inf: Final[float]
-infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-
-FPE_DIVIDEBYZERO: L[1]
-FPE_OVERFLOW: L[2]
-FPE_UNDERFLOW: L[4]
-FPE_INVALID: L[8]
-
-FLOATING_POINT_SUPPORT: L[1]
-UFUNC_BUFSIZE_DEFAULT = BUFSIZE
 
 little_endian: Final[bool]
 True_: Final[bool_]
 False_: Final[bool_]
-
-UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
 
 newaxis: None
 
@@ -3315,9 +3240,6 @@ class _CopyMode(enum.Enum):
     IF_NEEDED: L[False]
     NEVER: L[2]
 
-# Warnings
-class RankWarning(UserWarning): ...
-
 _CallType = TypeVar("_CallType", bound=Callable[..., Any])
 
 class errstate:
@@ -3361,9 +3283,9 @@ class ndenumerate(Generic[_ScalarType]):
     @overload
     def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[int_]: ...
     @overload
-    def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float_]: ...
+    def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float64]: ...
     @overload
-    def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[complex_]: ...
+    def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[complex128]: ...
     def __next__(self: ndenumerate[_ScalarType]) -> tuple[_Shape, _ScalarType]: ...
     def __iter__(self: _T) -> _T: ...
 
@@ -3458,7 +3380,7 @@ class finfo(Generic[_FloatType]):
     @overload
     def __new__(
         cls, dtype: complex | float | type[complex] | type[float]
-    ) -> finfo[float_]: ...
+    ) -> finfo[float64]: ...
     @overload
     def __new__(
         cls, dtype: str

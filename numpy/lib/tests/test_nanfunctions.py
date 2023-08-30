@@ -4,7 +4,8 @@ import inspect
 
 import numpy as np
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.lib.nanfunctions import _nan_mask, _replace_nan
+from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
     assert_raises_regex, assert_array_equal, suppress_warnings
@@ -80,7 +81,7 @@ class TestSignatureMatch:
     def test_exhaustiveness(self):
         """Validate that all nan functions are actually tested."""
         np.testing.assert_equal(
-            set(self.IDS), set(np.lib.nanfunctions.__all__)
+            set(self.IDS), set(np.lib._nanfunctions_impl.__all__)
         )
 
 
@@ -472,7 +473,7 @@ class SharedNanFunctionsTestsMixin:
                 with suppress_warnings() as sup:
                     if nf in {np.nanstd, np.nanvar} and c in 'FDG':
                         # Giving the warning is a small bug, see gh-8000
-                        sup.filter(np.ComplexWarning)
+                        sup.filter(ComplexWarning)
                     tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     assert_(res is tgt)
@@ -489,7 +490,7 @@ class SharedNanFunctionsTestsMixin:
                 with suppress_warnings() as sup:
                     if nf in {np.nanstd, np.nanvar} and c in 'FDG':
                         # Giving the warning is a small bug, see gh-8000
-                        sup.filter(np.ComplexWarning)
+                        sup.filter(ComplexWarning)
                     tgt = rf(mat, dtype=c, axis=1).dtype.type
                     res = nf(mat, dtype=c, axis=1).dtype.type
                     assert_(res is tgt)
@@ -709,7 +710,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
             for ddof in range(5):
                 with suppress_warnings() as sup:
                     sup.record(RuntimeWarning)
-                    sup.filter(np.ComplexWarning)
+                    sup.filter(ComplexWarning)
                     tgt = [ddof >= d for d in dsize]
                     res = nf(_ndat, axis=1, ddof=ddof)
                     assert_equal(np.isnan(res), tgt)
@@ -965,10 +966,10 @@ class TestNanFunctions_Median:
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(np.AxisError, np.nanmedian, d, axis=-5)
-        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, -5))
-        assert_raises(np.AxisError, np.nanmedian, d, axis=4)
-        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, 4))
+        assert_raises(AxisError, np.nanmedian, d, axis=-5)
+        assert_raises(AxisError, np.nanmedian, d, axis=(0, -5))
+        assert_raises(AxisError, np.nanmedian, d, axis=4)
+        assert_raises(AxisError, np.nanmedian, d, axis=(0, 4))
         assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
 
     def test_float_special(self):
@@ -1160,10 +1161,10 @@ class TestNanFunctions_Percentile:
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=-5)
-        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, -5))
-        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=4)
-        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, 4))
+        assert_raises(AxisError, np.nanpercentile, d, q=5, axis=-5)
+        assert_raises(AxisError, np.nanpercentile, d, q=5, axis=(0, -5))
+        assert_raises(AxisError, np.nanpercentile, d, q=5, axis=4)
+        assert_raises(AxisError, np.nanpercentile, d, q=5, axis=(0, 4))
         assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
 
     def test_multiple_percentiles(self):

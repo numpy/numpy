@@ -7,7 +7,10 @@ import math
 from decimal import Decimal
 
 import numpy as np
-from numpy.core import umath
+from numpy.core import umath, sctypes
+from numpy.core.numerictypes import obj2sctype
+from numpy.core.arrayprint import set_string_function
+from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
@@ -915,7 +918,7 @@ class TestFloatExceptions:
     def test_floating_exceptions(self, typecode):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
-            ftype = np.obj2sctype(typecode)
+            ftype = obj2sctype(typecode)
             if np.dtype(ftype).kind == 'f':
                 # Get some extreme values for the type
                 fi = np.finfo(ftype)
@@ -1420,14 +1423,14 @@ class TestTypes:
 
     def test_can_cast_values(self):
         # gh-5917
-        for dt in np.sctypes['int'] + np.sctypes['uint']:
+        for dt in sctypes['int'] + sctypes['uint']:
             ii = np.iinfo(dt)
             assert_(np.can_cast(ii.min, dt))
             assert_(np.can_cast(ii.max, dt))
             assert_(not np.can_cast(ii.min - 1, dt))
             assert_(not np.can_cast(ii.max + 1, dt))
 
-        for dt in np.sctypes['float']:
+        for dt in sctypes['float']:
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
@@ -1654,7 +1657,7 @@ class TestNonzero:
 
         assert_raises(ValueError, np.count_nonzero, m, axis=(1, 1))
         assert_raises(TypeError, np.count_nonzero, m, axis='foo')
-        assert_raises(np.AxisError, np.count_nonzero, m, axis=3)
+        assert_raises(AxisError, np.count_nonzero, m, axis=3)
         assert_raises(TypeError, np.count_nonzero,
                       m, axis=np.array([[1], [2]]))
 
@@ -2971,7 +2974,7 @@ class TestCreationFuncs:
     # Test ones, zeros, empty and full.
 
     def setup_method(self):
-        dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
+        dtypes = {np.dtype(tp) for tp in itertools.chain(*sctypes.values())}
         # void, bytes, str
         variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
         keyfunc = lambda dtype: dtype.str
@@ -3361,14 +3364,14 @@ class TestStringFunction:
 
     def test_set_string_function(self):
         a = np.array([1])
-        np.set_string_function(lambda x: "FOO", repr=True)
+        set_string_function(lambda x: "FOO", repr=True)
         assert_equal(repr(a), "FOO")
-        np.set_string_function(None, repr=True)
+        set_string_function(None, repr=True)
         assert_equal(repr(a), "array([1])")
 
-        np.set_string_function(lambda x: "FOO", repr=False)
+        set_string_function(lambda x: "FOO", repr=False)
         assert_equal(str(a), "FOO")
-        np.set_string_function(None, repr=False)
+        set_string_function(None, repr=False)
         assert_equal(str(a), "[1]")
 
 
@@ -3449,10 +3452,10 @@ class TestRollaxis:
 
     def test_exceptions(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4)
-        assert_raises(np.AxisError, np.rollaxis, a, -5, 0)
-        assert_raises(np.AxisError, np.rollaxis, a, 0, -5)
-        assert_raises(np.AxisError, np.rollaxis, a, 4, 0)
-        assert_raises(np.AxisError, np.rollaxis, a, 0, 5)
+        assert_raises(AxisError, np.rollaxis, a, -5, 0)
+        assert_raises(AxisError, np.rollaxis, a, 0, -5)
+        assert_raises(AxisError, np.rollaxis, a, 4, 0)
+        assert_raises(AxisError, np.rollaxis, a, 0, 5)
 
     def test_results(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
@@ -3539,11 +3542,11 @@ class TestMoveaxis:
 
     def test_errors(self):
         x = np.random.randn(1, 2, 3)
-        assert_raises_regex(np.AxisError, 'source.*out of bounds',
+        assert_raises_regex(AxisError, 'source.*out of bounds',
                             np.moveaxis, x, 3, 0)
-        assert_raises_regex(np.AxisError, 'source.*out of bounds',
+        assert_raises_regex(AxisError, 'source.*out of bounds',
                             np.moveaxis, x, -4, 0)
-        assert_raises_regex(np.AxisError, 'destination.*out of bounds',
+        assert_raises_regex(AxisError, 'destination.*out of bounds',
                             np.moveaxis, x, 0, 5)
         assert_raises_regex(ValueError, 'repeated axis in `source`',
                             np.moveaxis, x, [0, 0], [0, 1])
@@ -3631,13 +3634,13 @@ class TestCross:
         u = np.ones((10, 3, 5))
         v = np.ones((2, 5))
         assert_equal(np.cross(u, v, axisa=1, axisb=0).shape, (10, 5, 3))
-        assert_raises(np.AxisError, np.cross, u, v, axisa=1, axisb=2)
-        assert_raises(np.AxisError, np.cross, u, v, axisa=3, axisb=0)
+        assert_raises(AxisError, np.cross, u, v, axisa=1, axisb=2)
+        assert_raises(AxisError, np.cross, u, v, axisa=3, axisb=0)
         u = np.ones((10, 3, 5, 7))
         v = np.ones((5, 7, 2))
         assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
-        assert_raises(np.AxisError, np.cross, u, v, axisa=-5, axisb=2)
-        assert_raises(np.AxisError, np.cross, u, v, axisa=1, axisb=-4)
+        assert_raises(AxisError, np.cross, u, v, axisa=-5, axisb=2)
+        assert_raises(AxisError, np.cross, u, v, axisa=1, axisb=-4)
         # gh-5885
         u = np.ones((3, 4, 2))
         for axisc in range(-2, 2):

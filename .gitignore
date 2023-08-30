@@ -119,6 +119,8 @@ doc/source/savefig/
 
 # Things specific to this project #
 ###################################
+# The line below should change to numpy/_version.py for NumPy 2.0
+numpy/version.py
 numpy/core/__svn_version__.py
 doc/numpy.scipy.org/_build
 numpy/__config__.py
@@ -206,11 +208,6 @@ tools/swig/test/Array.py
 
 # SIMD generated files #
 ###################################
-# config headers of dispatchable sources
-*.dispatch.h
-# wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
-*.dispatch.*.c
-*.dispatch.*.cpp
 # _simd module
 numpy/core/src/_simd/_simd.dispatch.c
 numpy/core/src/_simd/_simd_data.inc

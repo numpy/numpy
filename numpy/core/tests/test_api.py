@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import numpy.core.umath as ncu
 from numpy.core._rational_tests import rational
 import pytest
 from numpy.testing import (
@@ -92,7 +93,7 @@ def test_array_array():
 
     # test recursion
     nested = 1.5
-    for i in range(np.MAXDIMS):
+    for i in range(ncu.MAXDIMS):
         nested = [nested]
 
     # no error
@@ -299,12 +300,12 @@ def test_object_array_astype_to_void():
     assert arr.dtype == "V8"
 
 @pytest.mark.parametrize("t",
-    np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
+    np.core.sctypes['uint'] + np.core.sctypes['int'] + np.core.sctypes['float']
 )
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
-    a = np.array(10, dtype=np.complex_)
-    assert_warns(np.ComplexWarning, a.astype, t)
+    a = np.array(10, dtype=np.complex128)
+    assert_warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
@@ -325,7 +326,7 @@ def test_string_to_boolean_cast(dtype, out_dtype):
     # nonzero if all entries are)
     assert_array_equal(np.nonzero(arr), np.nonzero(expected))
 
-@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_])
 @pytest.mark.parametrize("scalar_type",
         [np.complex64, np.complex128, np.clongdouble])
 def test_string_to_complex_cast(str_type, scalar_type):

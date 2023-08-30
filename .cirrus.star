@@ -48,4 +48,7 @@ def main(ctx):
     if wheel:
         return fs.read("tools/ci/cirrus_wheels.yml")
 
-    return fs.read("tools/ci/cirrus_macosx_arm64.yml")
+    if int(pr_number) < 0:
+        return []
+
+    return fs.read("tools/ci/cirrus_arm.yml")

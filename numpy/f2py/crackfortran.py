@@ -614,7 +614,8 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
-endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
+# block, the Fortran 2008 construct needs special handling in the rest of the file
+endifs = r'end\s*(if|do|where|select|while|forall|associate|' + \
          r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
@@ -1741,6 +1742,23 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                     else:
                         del d1[k]
 
+                if 'len' in d1 and 'array' in d1:
+                    if d1['len'] == '':
+                        d1['len'] = d1['array']
+                        del d1['array']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
+                    else:
+                        d1['array'] = d1['array'] + ',' + d1['len']
+                        del d1['len']
+                        errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
+                            typespec, e, typespec, ename, d1['array']))
+
                 if 'len' in d1:
                     if typespec in ['complex', 'integer', 'logical', 'real']:
                         if ('kindselector' not in edecl) or (not edecl['kindselector']):
@@ -1761,16 +1779,6 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                             ename, edecl['='], d1['init']))
                     else:
                         edecl['='] = d1['init']
-
-                if 'len' in d1 and 'array' in d1:
-                    if d1['len'] == '':
-                        d1['len'] = d1['array']
-                        del d1['array']
-                    else:
-                        d1['array'] = d1['array'] + ',' + d1['len']
-                        del d1['len']
-                        errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
-                            typespec, e, typespec, ename, d1['array']))
 
                 if 'array' in d1:
                     dm = 'dimension(%s)' % d1['array']

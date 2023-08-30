@@ -10,10 +10,10 @@ from numpy.core.numeric import ScalarType, array
 from numpy.core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
-from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
+from numpy.lib._function_base_impl import diff
 
 
 array_function_dispatch = functools.partial(
@@ -226,7 +226,7 @@ class MGridClass(nd_grid):
     Returns
     -------
     mesh-grid
-        `ndarrays` all of the same dimensions
+        `ndarray`\\ s all of the same dimensions
 
     See Also
     --------
@@ -278,7 +278,7 @@ class OGridClass(nd_grid):
     Returns
     -------
     mesh-grid
-        `ndarrays` with only one dimension not equal to 1
+        `ndarray`\\ s with only one dimension not equal to 1
 
     See Also
     --------
@@ -743,7 +743,7 @@ class IndexExpression:
 
     Notes
     -----
-    You can do all this with `slice()` plus a few special objects,
+    You can do all this with :class:`slice` plus a few special objects,
     but there's a lot to remember and this version is simpler because
     it uses the standard array indexing syntax.
 

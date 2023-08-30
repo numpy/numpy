@@ -822,8 +822,8 @@ class TestArrayMethods:
         (x, X, XX, m, mx, mX, mXX,) = self.d
         (n, m) = X.shape
         assert_equal(mx.ptp(), mx.compressed().ptp())
-        rows = np.zeros(n, np.float_)
-        cols = np.zeros(m, np.float_)
+        rows = np.zeros(n, np.float64)
+        cols = np.zeros(m, np.float64)
         for k in range(m):
             cols[k] = mX[:, k].compressed().ptp()
         for k in range(n):

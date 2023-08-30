@@ -103,9 +103,9 @@ reveal_type(np.promote_types("f4", float))  # E: dtype[Any]
 
 reveal_type(np.frompyfunc(func, 1, 1, identity=None))  # ufunc
 
-reveal_type(np.datetime_data("m8[D]"))  # E: Tuple[builtins.str, builtins.int]
-reveal_type(np.datetime_data(np.datetime64))  # E: Tuple[builtins.str, builtins.int]
-reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: Tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data("m8[D]"))  # E: tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.datetime64))  # E: tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: tuple[builtins.str, builtins.int]
 
 reveal_type(np.busday_count("2011-01", "2011-02"))  # E: {int_}
 reveal_type(np.busday_count(["2011-01"], "2011-02"))  # E: ndarray[Any, dtype[{int_}]]
@@ -131,8 +131,6 @@ reveal_type(np.busdaycalendar(holidays=[M]))  # E: busdaycalendar
 
 reveal_type(np.compare_chararrays("a", "b", "!=", rstrip=False))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.compare_chararrays(b"a", b"a", "==", True))  # E: ndarray[Any, dtype[bool_]]
-
-reveal_type(np.add_docstring(func, "test"))  # E: None
 
 reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], flags=["c_index"]))  # E: tuple[nditer, ...]
 reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_flags=[["readonly", "readonly"]]))  # E: tuple[nditer, ...]

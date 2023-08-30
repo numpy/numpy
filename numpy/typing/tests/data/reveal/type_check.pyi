@@ -24,11 +24,6 @@ class ImagObj:
 
 reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
 
-reveal_type(np.asfarray(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.asfarray(AR_LIKE_f))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
-reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: ndarray[Any, dtype[floating[Any]]]
-
 reveal_type(np.real(RealObj()))  # E: slice
 reveal_type(np.real(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.real(AR_c16))  # E: ndarray[Any, dtype[{float64}]]
@@ -67,7 +62,7 @@ reveal_type(np.typename("S1"))  # E: Literal['character']
 
 reveal_type(np.common_type(AR_i4))  # E: Type[{float64}]
 reveal_type(np.common_type(AR_f2))  # E: Type[{float16}]
-reveal_type(np.common_type(AR_f2, AR_i4))  # E: Type[{float64}]
-reveal_type(np.common_type(AR_f16, AR_i4))  # E: Type[{float128}]
-reveal_type(np.common_type(AR_c8, AR_f2))  # E: Type[{complex64}]
-reveal_type(np.common_type(AR_f2, AR_c8, AR_i4))  # E: Type[{complex128}]
+reveal_type(np.common_type(AR_f2, AR_i4))  # E: Type[floating[Union[_16Bit, _64Bit]]]
+reveal_type(np.common_type(AR_f16, AR_i4))  # E: Type[floating[Union[_128Bit, _64Bit]]]
+reveal_type(np.common_type(AR_c8, AR_f2))  # E: Type[complexfloating[Union[_16Bit, _32Bit], Union[_16Bit, _32Bit]]]
+reveal_type(np.common_type(AR_f2, AR_c8, AR_i4))  # E: Type[complexfloating[Union[_64Bit, _16Bit, _32Bit], Union[_64Bit, _16Bit, _32Bit]]]

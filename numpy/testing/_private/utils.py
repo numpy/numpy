@@ -277,7 +277,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
                          verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
@@ -482,7 +482,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import ndarray
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -1001,7 +1001,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, float_, result_type
+    from numpy.core import number, result_type
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 
@@ -1027,7 +1027,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
-            z = z.astype(float_)  # handle object arrays
+            z = z.astype(np.float64)  # handle object arrays
 
         return z < 1.5 * 10.0**(-decimal)
 

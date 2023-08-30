@@ -26,8 +26,8 @@ from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ..exceptions import ComplexWarning, TooHardError, AxisError
+from .numerictypes import bool_
+from ..exceptions import AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
 bitwise_not = invert
@@ -51,11 +51,9 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
-    'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
-    'BUFSIZE', 'ALLOW_THREADS', 'full', 'full_like',
-    'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state']
+    'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
+    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
+    '_get_promotion_state', '_set_promotion_state']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -968,9 +966,10 @@ def tensordot(a, b, axes=2):
     Notes
     -----
     Three common use cases are:
-        * ``axes = 0`` : tensor product :math:`a\\otimes b`
-        * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
-        * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
+
+    * ``axes = 0`` : tensor product :math:`a\\otimes b`
+    * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
+    * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
     When `axes` is integer_like, the sequence for evaluation will be: first
     the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
@@ -2310,7 +2309,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     for `atol` will result in `False` if either `a` or `b` is zero.
 
     `isclose` is not defined for non-numeric data types.
-    `bool` is considered a numeric data-type for this purpose.
+    :class:`bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
@@ -2504,8 +2503,8 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-Inf = inf = infty = Infinity = PINF
-nan = NaN = NAN
+inf = PINF
+nan = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 

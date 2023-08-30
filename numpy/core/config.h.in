@@ -37,7 +37,6 @@
 #mesondefine HAVE_ATTRIBUTE_NONNULL
 
 /* C99 complex support and complex.h are not universal */
-#mesondefine HAVE_COMPLEX_H
 #mesondefine HAVE_CABS
 #mesondefine HAVE_CACOS
 #mesondefine HAVE_CACOSH

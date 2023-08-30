@@ -122,7 +122,7 @@ add_newdoc_for_scalar_type('intc', [],
 
 add_newdoc_for_scalar_type('int_', [],
     """
-    Signed integer type, compatible with Python `int` and C ``long``.
+    Signed integer type, compatible with Python :class:`int` and C ``long``.
     """)
 
 add_newdoc_for_scalar_type('longlong', [],
@@ -165,31 +165,31 @@ add_newdoc_for_scalar_type('single', [],
     Single-precision floating-point number type, compatible with C ``float``.
     """)
 
-add_newdoc_for_scalar_type('double', ['float_'],
+add_newdoc_for_scalar_type('double', [],
     """
-    Double-precision floating-point number type, compatible with Python `float`
-    and C ``double``.
+    Double-precision floating-point number type, compatible with Python
+    :class:`float` and C ``double``.
     """)
 
-add_newdoc_for_scalar_type('longdouble', ['longfloat'],
+add_newdoc_for_scalar_type('longdouble', [],
     """
     Extended-precision floating-point number type, compatible with C
     ``long double`` but not necessarily with IEEE 754 quadruple-precision.
     """)
 
-add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
+add_newdoc_for_scalar_type('csingle', [],
     """
     Complex number type composed of two single-precision floating-point
     numbers.
     """)
 
-add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
+add_newdoc_for_scalar_type('cdouble', [],
     """
     Complex number type composed of two double-precision floating-point
-    numbers, compatible with Python `complex`.
+    numbers, compatible with Python :class:`complex`.
     """)
 
-add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
+add_newdoc_for_scalar_type('clongdouble', [],
     """
     Complex number type composed of two extended-precision floating-point
     numbers.
@@ -200,7 +200,7 @@ add_newdoc_for_scalar_type('object_', [],
     Any Python object.
     """)
 
-add_newdoc_for_scalar_type('str_', ['unicode_'],
+add_newdoc_for_scalar_type('str_', [],
     r"""
     A unicode string.
 
@@ -210,8 +210,8 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
     >>> s
     'abc'
 
-    Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
-    contents as UCS4:
+    Unlike the builtin :class:`str`, this supports the
+    :ref:`python:bufferobjects`, exposing its contents as UCS4:
 
     >>> m = memoryview(np.str_("abc"))
     >>> m.format
@@ -220,7 +220,7 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
     b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00'
     """)
 
-add_newdoc_for_scalar_type('bytes_', ['string_'],
+add_newdoc_for_scalar_type('bytes_', [],
     r"""
     A byte string.
 

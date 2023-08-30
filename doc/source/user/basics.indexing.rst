@@ -785,7 +785,7 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1] = 1.2
  >>> x[1]
  1
- >>> x[1] = 1.2j
+ >>> x[1] = 1.2j  # doctest: +IGNORE_EXCEPTION_DETAIL
  Traceback (most recent call last):
    ...
  TypeError: can't convert complex to int

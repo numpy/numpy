@@ -4,6 +4,7 @@ import hashlib
 import pytest
 
 import numpy as np
+from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_allclose,
@@ -1012,9 +1013,9 @@ class TestRandomDist:
     def test_shuffle_exceptions(self):
         random = Generator(MT19937(self.seed))
         arr = np.arange(10)
-        assert_raises(np.AxisError, random.shuffle, arr, 1)
+        assert_raises(AxisError, random.shuffle, arr, 1)
         arr = np.arange(9).reshape((3, 3))
-        assert_raises(np.AxisError, random.shuffle, arr, 3)
+        assert_raises(AxisError, random.shuffle, arr, 3)
         assert_raises(TypeError, random.shuffle, arr, slice(1, 2, None))
         arr = [[1, 2, 3], [4, 5, 6]]
         assert_raises(NotImplementedError, random.shuffle, arr, 1)
@@ -1022,7 +1023,7 @@ class TestRandomDist:
         arr = np.array(3)
         assert_raises(TypeError, random.shuffle, arr)
         arr = np.ones((3, 2))
-        assert_raises(np.AxisError, random.shuffle, arr, 2)
+        assert_raises(AxisError, random.shuffle, arr, 2)
 
     def test_shuffle_not_writeable(self):
         random = Generator(MT19937(self.seed))
@@ -1044,10 +1045,10 @@ class TestRandomDist:
         assert_array_equal(actual, np.atleast_2d(desired).T)
 
         bad_x_str = "abcd"
-        assert_raises(np.AxisError, random.permutation, bad_x_str)
+        assert_raises(AxisError, random.permutation, bad_x_str)
 
         bad_x_float = 1.2
-        assert_raises(np.AxisError, random.permutation, bad_x_float)
+        assert_raises(AxisError, random.permutation, bad_x_float)
 
         random = Generator(MT19937(self.seed))
         integer_val = 10
@@ -1072,9 +1073,9 @@ class TestRandomDist:
     def test_permutation_exceptions(self):
         random = Generator(MT19937(self.seed))
         arr = np.arange(10)
-        assert_raises(np.AxisError, random.permutation, arr, 1)
+        assert_raises(AxisError, random.permutation, arr, 1)
         arr = np.arange(9).reshape((3, 3))
-        assert_raises(np.AxisError, random.permutation, arr, 3)
+        assert_raises(AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
 
     @pytest.mark.parametrize("dtype", [int, object])

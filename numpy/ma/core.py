@@ -32,10 +32,8 @@ import numpy as np
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
 from numpy.core import multiarray as mu
-from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
-from numpy import array as narray
-from numpy.lib.function_base import angle
-from numpy import expand_dims
+from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
+from numpy import array as narray, expand_dims
 from numpy.core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 
@@ -1206,12 +1204,12 @@ sinh = _MaskedUnaryOperation(umath.sinh)
 cosh = _MaskedUnaryOperation(umath.cosh)
 tanh = _MaskedUnaryOperation(umath.tanh)
 abs = absolute = _MaskedUnaryOperation(umath.absolute)
-angle = _MaskedUnaryOperation(angle)  # from numpy.lib.function_base
+angle = _MaskedUnaryOperation(angle)
 fabs = _MaskedUnaryOperation(umath.fabs)
 negative = _MaskedUnaryOperation(umath.negative)
 floor = _MaskedUnaryOperation(umath.floor)
 ceil = _MaskedUnaryOperation(umath.ceil)
-around = _MaskedUnaryOperation(np.round_)
+around = _MaskedUnaryOperation(np.around)
 logical_not = _MaskedUnaryOperation(umath.logical_not)
 
 # Domained unary ufuncs
@@ -2344,8 +2342,8 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy.ma as ma
     >>> a = np.arange(5, dtype=float)
-    >>> a[2] = np.NaN
-    >>> a[3] = np.PINF
+    >>> a[2] = np.nan
+    >>> a[3] = np.inf
     >>> a
     array([ 0.,  1., nan, inf,  4.])
     >>> ma.masked_invalid(a)
@@ -4140,6 +4138,9 @@ class MaskedArray(ndarray):
             # Now take care of the mask; the merged mask should have an item
             # masked if all fields were masked (in one and/or other).
             mask = (mask == np.ones((), mask.dtype))
+            # Ensure we can compare masks below if other was not masked.
+            if omask is np.False_:
+                omask = np.zeros((), smask.dtype)
 
         else:
             # For regular arrays, just use the data as they come.
@@ -4150,12 +4151,14 @@ class MaskedArray(ndarray):
         if isinstance(check, (np.bool_, bool)):
             return masked if mask else check
 
-        if mask is not nomask and compare in (operator.eq, operator.ne):
-            # Adjust elements that were masked, which should be treated
-            # as equal if masked in both, unequal if masked in one.
-            # Note that this works automatically for structured arrays too.
-            # Ignore this for operations other than `==` and `!=`
-            check = np.where(mask, compare(smask, omask), check)
+        if mask is not nomask:
+            if compare in (operator.eq, operator.ne):
+                # Adjust elements that were masked, which should be treated
+                # as equal if masked in both, unequal if masked in one.
+                # Note that this works automatically for structured arrays too.
+                # Ignore this for operations other than `==` and `!=`
+                check = np.where(mask, compare(smask, omask), check)
+
             if mask.shape != check.shape:
                 # Guarantee consistency of the shape, making a copy since the
                 # the mask may need to get written to later.
@@ -4601,7 +4604,7 @@ class MaskedArray(ndarray):
 
             if self.shape == ():
                 if axis not in (None, 0):
-                    raise np.AxisError(axis=axis, ndim=self.ndim)
+                    raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
@@ -7011,7 +7014,7 @@ def power(a, b, third=None):
              mask=[False, False, False,  True],
        fill_value=1e+20)
     >>> ma.power(masked_x, masked_y)
-    masked_array(data=[0.29880715233359845, 15.784728999999999, 1.0, --],
+    masked_array(data=[0.2988071523335984, 15.784728999999999, 1.0, --],
              mask=[False, False, False,  True],
        fill_value=1e+20)
 
@@ -7868,9 +7871,9 @@ def round_(a, decimals=0, out=None):
         fill_value=1e+20)
     """
     if out is None:
-        return np.round_(a, decimals, out)
+        return np.round(a, decimals, out)
     else:
-        np.round_(getdata(a), decimals, out)
+        np.round(getdata(a), decimals, out)
         if hasattr(out, '_mask'):
             out._mask = getmask(a)
         return out

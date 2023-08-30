@@ -808,9 +808,9 @@ def split(ary, indices_or_sections, axis=0):
         indicate where along `axis` the array is split.  For example,
         ``[2, 3]`` would, for ``axis=0``, result in
 
-          - ary[:2]
-          - ary[2:3]
-          - ary[3:]
+        - ary[:2]
+        - ary[2:3]
+        - ary[3:]
 
         If an index exceeds the dimension of the array along `axis`,
         an empty sub-array is returned correspondingly.

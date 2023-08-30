@@ -1,5 +1,0 @@
-Matrix transpose support for ndarrays
--------------------------------------
-NumPy now offers support for calculating the matrix transpose of an array. The
-matrix transpose is equivalent to swapping the last two axes of an array.
-`np.ndarray` and `np.ma.MaskedArray` now exposes a `.mT` attribute.
