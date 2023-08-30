@@ -24,7 +24,7 @@
 /* Use this to tag a variable as not used. It will remove unused variable
  * warning on support platforms (see __COM_NPY_UNUSED) and mangle the variable
  * to avoid accidental use */
-#define NPY_UNUSED(x) (__NPY_UNUSED_TAGGED ## x) __COMP_NPY_UNUSED
+#define NPY_UNUSED(x) __NPY_UNUSED_TAGGED ## x __COMP_NPY_UNUSED
 #define NPY_EXPAND(x) x
 
 #define NPY_STRINGIFY(x) #x

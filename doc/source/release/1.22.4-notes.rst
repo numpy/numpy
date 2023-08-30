@@ -1,0 +1,62 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.22.4 Release Notes
+==========================
+
+NumPy 1.22.4 is a maintenance release that fixes bugs discovered after the
+1.22.3 release. In addition, the wheels for this release are built using the
+recently released Cython 0.29.30, which should fix the reported problems with
+`debugging <https://github.com/numpy/numpy/issues/21008>`_.
+
+The Python versions supported for this release are 3.8-3.10. Note that the Mac
+wheels are based on OS X 10.15 rather than 10.9 that was used in previous
+NumPy release cycles.
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alexander Shadchin
+* Bas van Beek
+* Charles Harris
+* Hood Chatham
+* Jarrod Millman
+* John-Mark Gurney +
+* Junyan Ou +
+* Mariusz Felisiak +
+* Ross Barnowski
+* Sebastian Berg
+* Serge Guelton
+* Stefan van der Walt
+
+Pull requests merged
+====================
+
+A total of 22 pull requests were merged for this release.
+
+* `#21191 <https://github.com/numpy/numpy/pull/21191>`__: TYP, BUG: Fix ``np.lib.stride_tricks`` re-exported under the...
+* `#21192 <https://github.com/numpy/numpy/pull/21192>`__: TST: Bump mypy from 0.931 to 0.940
+* `#21243 <https://github.com/numpy/numpy/pull/21243>`__: MAINT: Explicitly re-export the types in ``numpy._typing``
+* `#21245 <https://github.com/numpy/numpy/pull/21245>`__: MAINT: Specify sphinx, numpydoc versions for CI doc builds
+* `#21275 <https://github.com/numpy/numpy/pull/21275>`__: BUG: Fix typos
+* `#21277 <https://github.com/numpy/numpy/pull/21277>`__: ENH, BLD: Fix math feature detection for wasm
+* `#21350 <https://github.com/numpy/numpy/pull/21350>`__: MAINT: Fix failing simd and cygwin tests.
+* `#21438 <https://github.com/numpy/numpy/pull/21438>`__: MAINT: Fix failing Python 3.8 32-bit Windows test.
+* `#21444 <https://github.com/numpy/numpy/pull/21444>`__: BUG: add linux guard per #21386
+* `#21445 <https://github.com/numpy/numpy/pull/21445>`__: BUG: Allow legacy dtypes to cast to datetime again
+* `#21446 <https://github.com/numpy/numpy/pull/21446>`__: BUG: Make mmap handling safer in frombuffer
+* `#21447 <https://github.com/numpy/numpy/pull/21447>`__: BUG: Stop using PyBytesObject.ob_shash deprecated in Python 3.11.
+* `#21448 <https://github.com/numpy/numpy/pull/21448>`__: ENH: Introduce numpy.core.setup_common.NPY_CXX_FLAGS
+* `#21472 <https://github.com/numpy/numpy/pull/21472>`__: BUG: Ensure compile errors are raised correclty
+* `#21473 <https://github.com/numpy/numpy/pull/21473>`__: BUG: Fix segmentation fault
+* `#21474 <https://github.com/numpy/numpy/pull/21474>`__: MAINT: Update doc requirements
+* `#21475 <https://github.com/numpy/numpy/pull/21475>`__: MAINT: Mark ``npy_memchr`` with ``no_sanitize("alignment")`` on clang
+* `#21512 <https://github.com/numpy/numpy/pull/21512>`__: DOC: Proposal - make the doc landing page cards more similar...
+* `#21525 <https://github.com/numpy/numpy/pull/21525>`__: MAINT: Update Cython version to 0.29.30.
+* `#21536 <https://github.com/numpy/numpy/pull/21536>`__: BUG: Fix GCC error during build configuration
+* `#21541 <https://github.com/numpy/numpy/pull/21541>`__: REL: Prepare for the NumPy 1.22.4 release.
+* `#21547 <https://github.com/numpy/numpy/pull/21547>`__: MAINT: Skip tests that fail on PyPy.
+

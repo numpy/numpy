@@ -4,6 +4,10 @@
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
+
 #include "npy_import.h"
 #include <limits.h>
 
@@ -43,9 +47,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
-NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_status);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -53,15 +54,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
  */
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *str);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i);
-
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret);
 
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
@@ -108,7 +100,7 @@ _may_have_objects(PyArray_Descr *dtype);
  * If _save is not NULL it is assumed the GIL is not taken and it
  * is acquired in the case of an error
  */
-static NPY_INLINE int
+static inline int
 check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
                        PyThreadState * _save)
 {
@@ -142,7 +134,7 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
  *
  * msg_prefix: borrowed reference, a string to prepend to the message
  */
-static NPY_INLINE int
+static inline int
 check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
 {
     /* Check that index is valid, taking into account negative indices */
@@ -154,7 +146,7 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
-        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
+        npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
         if (AxisError_cls == NULL) {
             return -1;
         }
@@ -176,15 +168,27 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     }
     return 0;
 }
-static NPY_INLINE int
+static inline int
 check_and_adjust_axis(int *axis, int ndim)
 {
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
 }
 
 /* used for some alignment checks */
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
-#define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
+/*
+ * GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
+ * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
+ * clang versions < 8.0.0 have the same bug.
+ */
+#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
+  && !defined __clang__) \
+     || (defined __clang__ && __clang_major__ < 8))
+# define NPY_ALIGNOF(type) offsetof(struct {char c; type v;}, v)
+#else
+# define NPY_ALIGNOF(type) _Alignof(type)
+#endif
+#define  NPY_ALIGNOF_UINT(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
@@ -196,7 +200,7 @@ check_and_adjust_axis(int *axis, int ndim)
 /*
  * return true if pointer is aligned to 'alignment'
  */
-static NPY_INLINE int
+static inline int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
     /*
@@ -210,7 +214,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE npy_uintp
+static inline npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -219,20 +223,20 @@ npy_uint_alignment(int itemsize)
         case 1:
             return 1;
         case 2:
-            alignment = _ALIGN(npy_uint16);
+            alignment = NPY_ALIGNOF(npy_uint16);
             break;
         case 4:
-            alignment = _ALIGN(npy_uint32);
+            alignment = NPY_ALIGNOF(npy_uint32);
             break;
         case 8:
-            alignment = _ALIGN(npy_uint64);
+            alignment = NPY_ALIGNOF(npy_uint64);
             break;
         case 16:
             /*
              * 16 byte types are copied using 2 uint64 assignments.
              * See the strided copy function in lowlevel_strided_loops.c.
              */
-            alignment = _ALIGN(npy_uint64);
+            alignment = NPY_ALIGNOF(npy_uint64);
             break;
         default:
             break;
@@ -248,7 +252,16 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
-static NPY_INLINE char *
+#ifdef __clang__
+    /*
+     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
+     * should be OK but causes the clang sanitizer to warn.  It may make
+     * sense to modify the code to avoid this "unaligned" access but
+     * it would be good to carefully check the performance changes.
+     */
+    __attribute__((no_sanitize("alignment")))
+#endif
+static inline char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
 {
@@ -292,42 +305,13 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-/*
- * Helper to work around issues with the allocation strategy currently
- * allocating not 1 byte for empty arrays, but enough for an array where
- * all 0 dimensions are replaced with size 1 (if the itemsize is not 0).
- *
- * This means that we can fill in nice (nonzero) strides and still handle
- * slicing direct math without being in danger of leaving the allocated byte
- * bounds.
- * In practice, that probably does not matter, but in principle this would be
- * undefined behaviour in C.  Another solution may be to force the strides
- * to 0 in these cases.  See also gh-15788.
- *
- * Unlike the code in `PyArray_NewFromDescr` does no overflow checks.
- */
-static NPY_INLINE npy_intp
-PyArray_NBYTES_ALLOCATED(PyArrayObject *arr)
-{
-    if (PyArray_ITEMSIZE(arr) == 0) {
-        return 1;
-    }
-    npy_intp nbytes = PyArray_ITEMSIZE(arr);
-    for (int i = 0; i < PyArray_NDIM(arr); i++) {
-        if (PyArray_DIMS(arr)[i] != 0) {
-            nbytes *= PyArray_DIMS(arr)[i];
-        }
-    }
-    return nbytes;
-}
-
 
 /*
  * Simple helper to create a tuple from an array of items. The `make_null_none`
  * flag means that NULL entries are replaced with None, which is occasionally
  * useful.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
 {
     PyObject *tuple = PyTuple_New(n);
@@ -347,6 +331,13 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
     }
     return tuple;
 }
+
+/*
+ * Returns 0 if the array has rank 0, -1 otherwise. Prints a deprecation
+ * warning for arrays of _size_ 1.
+ */
+NPY_NO_EXPORT int
+check_is_convertible_to_scalar(PyArrayObject *v);
 
 
 #include "ucsnarrow.h"

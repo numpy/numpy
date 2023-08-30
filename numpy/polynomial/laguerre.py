@@ -256,7 +256,7 @@ def lagfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Laguerre form, where the `r_n` are the roots specified in `roots`.
+    in Laguerre form, where the :math:`r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -647,8 +647,8 @@ def lagder(c, m=1, scl=1, axis=0):
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
 
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -763,8 +763,8 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -1073,7 +1073,7 @@ def laggrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1146,7 +1146,7 @@ def lagvander(x, deg):
            [ 1.        , -1.        , -1.        , -0.33333333]])
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1282,7 +1282,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
 
-    where `n` is `deg`.
+    where ``n`` is `deg`.
 
     Parameters
     ----------
@@ -1317,8 +1317,8 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     -------
     coef : ndarray, shape (M,) or (M, K)
         Laguerre coefficients ordered from low to high. If `y` was 2-D,
-        the coefficients for the data in column k  of `y` are in column
-        `k`.
+        the coefficients for the data in column *k*  of `y` are in column
+        *k*.
 
     [residuals, rank, singular_values, rcond] : list
         These values are only returned if ``full == True``
@@ -1338,7 +1338,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1355,7 +1355,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Notes
     -----
-    The solution is the coefficients of the Laguerre series `p` that
+    The solution is the coefficients of the Laguerre series ``p`` that
     minimizes the sum of the weighted squared errors
 
     .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
@@ -1365,10 +1365,10 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     .. math:: V(x) * c = w * y,
 
-    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    where ``V`` is the weighted pseudo Vandermonde matrix of `x`, ``c`` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
-    decomposition of `V`.
+    decomposition of ``V``.
 
     If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
@@ -1378,7 +1378,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     spurious and have large contributions from roundoff error.
 
     Fits using Laguerre series are probably most useful when the data can
-    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Laguerre
+    be approximated by ``sqrt(w(x)) * p(x)``, where ``w(x)`` is the Laguerre
     weight. In that case the weight ``sqrt(w(x[i]))`` should be used
     together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `lagweight`.
@@ -1545,7 +1545,7 @@ def laggauss(deg):
     the right value when integrating 1.
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 
@@ -1608,7 +1608,7 @@ class Laguerre(ABCPolyBase):
 
     The Laguerre class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    attributes and methods listed in the `ABCPolyBase` documentation.
+    attributes and methods listed below.
 
     Parameters
     ----------
@@ -1623,6 +1623,12 @@ class Laguerre(ABCPolyBase):
         Window, see `domain` for its use. The default value is [0, 1].
 
         .. versionadded:: 1.6.0
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     """
     # Virtual Functions

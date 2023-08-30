@@ -22,6 +22,7 @@
 #include "mem_overlap.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "shape.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -384,7 +385,10 @@ array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
     }
     if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
         PyArray_XDECREF(self);
-        size_t nbytes = PyArray_NBYTES_ALLOCATED(self);
+        size_t nbytes = PyArray_NBYTES(self);
+        if (nbytes == 0) {
+            nbytes = 1;
+        }
         PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {
             /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
@@ -513,6 +517,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         /* resize on last axis only */
         int axis = PyArray_NDIM(self) - 1;
         if (PyArray_DIMS(self)[axis] != 1 &&
+                PyArray_SIZE(self) != 0 &&
                 PyArray_STRIDES(self)[axis] != PyArray_DESCR(self)->elsize) {
             PyErr_SetString(PyExc_ValueError,
                     "To change to a dtype of a different size, the last axis "
@@ -698,15 +703,18 @@ _get_part(PyArrayObject *self, int imag)
 
     }
     type = PyArray_DescrFromType(float_type_num);
+    if (type == NULL) {
+        return NULL;
+    }
 
     offset = (imag ? type->elsize : 0);
 
     if (!PyArray_ISNBO(PyArray_DESCR(self)->byteorder)) {
-        PyArray_Descr *new;
-        new = PyArray_DescrNew(type);
-        new->byteorder = PyArray_DESCR(self)->byteorder;
-        Py_DECREF(type);
-        type = new;
+        Py_SETREF(type, PyArray_DescrNew(type));
+        if (type == NULL) {
+            return NULL;
+        }
+        type->byteorder = PyArray_DESCR(self)->byteorder;
     }
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(self),
@@ -790,17 +798,15 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
     else {
         Py_INCREF(PyArray_DESCR(self));
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                                    PyArray_DESCR(self),
-                                                    PyArray_NDIM(self),
-                                                    PyArray_DIMS(self),
-                                                    NULL, NULL,
-                                                    PyArray_ISFORTRAN(self),
-                                                    (PyObject *)self);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                Py_TYPE(self),
+                PyArray_DESCR(self),
+                PyArray_NDIM(self),
+                PyArray_DIMS(self),
+                NULL, NULL,
+                PyArray_ISFORTRAN(self),
+                (PyObject *)self, NULL, _NPY_ARRAY_ZEROED);
         if (ret == NULL) {
-            return NULL;
-        }
-        if (_zerofill(ret) < 0) {
             return NULL;
         }
         PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
@@ -926,6 +932,12 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_Transpose(self, NULL);
 }
 
+static PyObject *
+array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyArray_MatrixTranspose(self);
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -985,6 +997,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"T",
         (getter)array_transpose_get,
+        NULL,
+        NULL, NULL},
+    {"mT",
+        (getter)array_matrix_transpose_get,
         NULL,
         NULL, NULL},
     {"__array_interface__",

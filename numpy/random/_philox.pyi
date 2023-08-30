@@ -2,7 +2,7 @@ from typing import Any, TypedDict
 
 from numpy import dtype, ndarray, uint64
 from numpy.random.bit_generator import BitGenerator, SeedSequence
-from numpy.typing import _ArrayLikeInt_co
+from numpy._typing import _ArrayLikeInt_co
 
 class _PhiloxInternal(TypedDict):
     counter: ndarray[Any, dtype[uint64]]

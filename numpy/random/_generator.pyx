@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
 from collections.abc import Sequence
@@ -15,6 +15,7 @@ from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
+from libc.math cimport sqrt
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
@@ -24,7 +25,7 @@ from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -219,8 +220,11 @@ cdef class Generator:
         self.bit_generator.state = state
 
     def __reduce__(self):
+        ctor, name_tpl, state = self._bit_generator.__reduce__()
+
         from ._pickle import __generator_ctor
-        return __generator_ctor, (self.bit_generator.state['bit_generator'],), self.bit_generator.state
+        # Requirements of __generator_ctor are (name, ctor)
+        return __generator_ctor, (name_tpl[0], ctor), state
 
     @property
     def bit_generator(self):
@@ -234,6 +238,64 @@ cdef class Generator:
         """
         return self._bit_generator
 
+    def spawn(self, int n_children):
+        """
+        spawn(n_children)
+
+        Create new independent child generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
+        .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.BitGenerator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the bit generator and seed sequence.
+        bit_generator :
+            The bit generator instance used by the generator.
+
+        Examples
+        --------
+        Starting from a seeded default generator:
+
+        >>> # High quality entropy created with: f"0x{secrets.randbits(128):x}"
+        >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
+        >>> rng = np.random.default_rng(entropy)
+
+        Create two new generators for example for parallel execution:
+
+        >>> child_rng1, child_rng2 = rng.spawn(2)
+
+        Drawn numbers from each are independent but derived from the initial
+        seeding entropy:
+
+        >>> rng.uniform(), child_rng1.uniform(), child_rng2.uniform()
+        (0.19029263503854454, 0.9475673279178444, 0.4702687338396767)
+
+        It is safe to spawn additional children from the original ``rng`` or
+        the children:
+
+        >>> more_child_rngs = rng.spawn(20)
+        >>> nested_spawn = child_rng1.spawn(20)
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
+
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype=np.float64, out=None)
@@ -241,10 +303,10 @@ cdef class Generator:
         Return random floats in the half-open interval [0.0, 1.0).
 
         Results are from the "continuous uniform" distribution over the
-        stated interval.  To sample :math:`Unif[a, b), b > a` multiply
-        the output of `random` by `(b-a)` and add `a`::
+        stated interval.  To sample :math:`Unif[a, b), b > a` use `uniform`
+        or multiply the output of `random` by ``(b - a)`` and add ``a``::
 
-          (b - a) * random() + a
+            (b - a) * random() + a
 
         Parameters
         ----------
@@ -265,6 +327,10 @@ cdef class Generator:
         out : float or ndarray of floats
             Array of random floats of shape `size` (unless ``size=None``, in which
             case a single float is returned).
+
+        See Also
+        --------
+        uniform : Draw samples from the parameterized uniform distribution.
 
         Examples
         --------
@@ -371,6 +437,22 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
+
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
 
         References
         ----------
@@ -1000,7 +1082,8 @@ cdef class Generator:
 
         Notes
         -----
-        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+        For random samples from the normal distribution with mean ``mu`` and
+        standard deviation ``sigma``, use one of::
 
             mu + sigma * rng.standard_normal(size=...)
             rng.normal(mu, sigma, size=...)
@@ -1021,7 +1104,8 @@ cdef class Generator:
         >>> s.shape
         (3, 4, 2)
 
-        Two-by-four array of samples from :math:`N(3, 6.25)`:
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> 3 + 2.5 * rng.standard_normal(size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1125,7 +1209,8 @@ cdef class Generator:
         ...          linewidth=2, color='r')
         >>> plt.show()
 
-        Two-by-four array of samples from N(3, 6.25):
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -2549,7 +2634,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -2989,13 +3074,29 @@ cdef class Generator:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
         appear before the third "1" is a negative binomial distribution.
+
+        Because this method internally calls ``Generator.poisson`` with an
+        intermediate random value, a ValueError is raised when the choice of 
+        :math:`n` and :math:`p` would result in the mean + 10 sigma of the sampled
+        intermediate distribution exceeding the max acceptable value of the 
+        ``Generator.poisson`` method. This happens when :math:`p` is too low 
+        (a lot of failures happen for every success) and :math:`n` is too big (
+        a lot of successes are allowed).
+        Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
+
+        .. math:: n\\frac{1-p}{p}+10n\\sqrt{n}\\frac{1-p}{p}<2^{63}-1-10\\sqrt{2^{63}-1},
+
+        Where the left side of the equation is the derived mean + 10 sigma of
+        a sample from the gamma distribution internally used as the :math:`lam`
+        parameter of a poisson sample, and the right side of the equation is
+        the constraint for maximum value of :math:`lam` in ``Generator.poisson``.
 
         References
         ----------
@@ -3021,9 +3122,41 @@ cdef class Generator:
         ...    print(i, "wells drilled, probability of one success =", probability)
 
         """
+
+        cdef bint is_scalar = True
+        cdef double *_dn
+        cdef double *_dp
+        cdef double _dmax_lam
+
+        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
+
+        if not is_scalar:
+            check_array_constraint(n_arr, 'n', CONS_POSITIVE_NOT_NAN)
+            check_array_constraint(p_arr, 'p', CONS_BOUNDED_GT_0_1)
+            # Check that the choice of negative_binomial parameters won't result in a
+            # call to the poisson distribution function with a value of lam too large.
+            max_lam_arr = (1 - p_arr) / p_arr * (n_arr + 10 * np.sqrt(n_arr))
+            if np.any(np.greater(max_lam_arr, POISSON_LAM_MAX)):
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
+
+        else:
+            _dn = <double*>np.PyArray_DATA(n_arr)
+            _dp = <double*>np.PyArray_DATA(p_arr)
+
+            check_constraint(_dn[0], 'n', CONS_POSITIVE_NOT_NAN)
+            check_constraint(_dp[0], 'p', CONS_BOUNDED_GT_0_1)
+            # Check that the choice of negative_binomial parameters won't result in a
+            # call to the poisson distribution function with a value of lam too large.
+            _dmax_lam = (1 - _dp[0]) / _dp[0] * (_dn[0] + 10 * sqrt(_dn[0]))
+            if _dmax_lam > POISSON_LAM_MAX:
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
+
         return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
-                    n, 'n', CONS_POSITIVE_NOT_NAN,
-                    p, 'p', CONS_BOUNDED_GT_0_1,
+                    n_arr, 'n', CONS_NONE,
+                    p_arr, 'p', CONS_NONE,
                     0.0, '', CONS_NONE)
 
     def poisson(self, lam=1.0, size=None):
@@ -3344,7 +3477,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        DEF HYPERGEOM_MAX = 10**9
+        cdef double HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
@@ -3388,12 +3521,12 @@ cdef class Generator:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3457,7 +3590,7 @@ cdef class Generator:
 
         """
         return disc(&random_logseries, &self._bitgen, size, self.lock, 1, 0,
-                 p, 'p', CONS_BOUNDED_0_1,
+                 p, 'p', CONS_BOUNDED_LT_0_1,
                  0.0, '', CONS_NONE,
                  0.0, '', CONS_NONE)
 
@@ -3474,8 +3607,8 @@ cdef class Generator:
         generalization of the one-dimensional normal distribution to higher
         dimensions.  Such a distribution is specified by its mean and
         covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
+        (average or "center") and variance (the squared standard deviation,
+        or "width") of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -3530,9 +3663,9 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
-            the diagonal)
+        - Spherical covariance (`cov` is a multiple of the identity matrix)
+        - Diagonal covariance (`cov` has non-negative elements, and only on
+          the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
@@ -3551,6 +3684,12 @@ cdef class Generator:
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed.
+
+        This function internally uses linear algebra routines, and thus results
+        may not be identical (even up to precision) across architectures, OSes,
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
 
         References
         ----------
@@ -3611,6 +3750,11 @@ cdef class Generator:
         # Check preconditions on arguments
         mean = np.array(mean)
         cov = np.array(cov)
+
+        if (np.issubdtype(mean.dtype, np.complexfloating) or
+                np.issubdtype(cov.dtype, np.complexfloating)):
+            raise TypeError("mean and cov must not be complex")
+
         if size is None:
             shape = []
         elif isinstance(size, (int, long, np.integer)):
@@ -3672,10 +3816,10 @@ cdef class Generator:
                 psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
+                    warnings.warn("covariance is not symmetric positive-semidefinite.",
                                   RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError("covariance is not symmetric positive-semidefinite.")
 
         if method == 'cholesky':
             _factor = l
@@ -3738,6 +3882,9 @@ cdef class Generator:
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
+
+            .. versionchanged:: 1.22.0
+                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
@@ -4180,7 +4327,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If any value in ``alpha`` is less than or equal to zero
+            If any value in ``alpha`` is less than zero
 
         Notes
         -----
@@ -4259,8 +4406,9 @@ cdef class Generator:
         alpha_arr = <np.ndarray>np.PyArray_FROMANY(
             alpha, np.NPY_DOUBLE, 1, 1,
             np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        if np.any(np.less_equal(alpha_arr, 0)):
-            raise ValueError('alpha <= 0')
+        if np.any(np.less(alpha_arr, 0)):
+            raise ValueError('alpha < 0')
+
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         if size is None:
@@ -4320,17 +4468,23 @@ cdef class Generator:
                 csum += alpha_data[j]
                 alpha_csum_data[j] = csum
 
-            with self.lock, nogil:
-                while i < totsize:
-                    acc = 1.
-                    for j in range(k - 1):
-                        v = random_beta(&self._bitgen, alpha_data[j],
-                                        alpha_csum_data[j + 1])
-                        val_data[i + j] = acc * v
-                        acc *= (1. - v)
-                    val_data[i + k - 1] = acc
-                    i = i + k
-
+            # If csum == 0, then all the values in alpha are 0, and there is
+            # nothing to do, because diric was created with np.zeros().
+            if csum > 0:
+                with self.lock, nogil:
+                    while i < totsize:
+                        acc = 1.
+                        for j in range(k - 1):
+                            v = random_beta(&self._bitgen, alpha_data[j],
+                                            alpha_csum_data[j + 1])
+                            val_data[i + j] = acc * v
+                            acc *= (1. - v)
+                            if alpha_csum_data[j + 1] == 0:
+                                # v must be 1, so acc is now 0. All
+                                # remaining elements will be left at 0.
+                                break
+                        val_data[i + k - 1] = acc
+                        i = i + k
         else:
             # Standard case: Unit normalisation of a vector of gamma random
             # variates
@@ -4366,7 +4520,7 @@ cdef class Generator:
             is shuffled independently of the others.  If `axis` is
             None, the flattened array is shuffled.
         out : ndarray, optional
-            If given, this is the destinaton of the shuffled array.
+            If given, this is the destination of the shuffled array.
             If `out` is None, a shuffled copy of the array is returned.
 
         Returns
@@ -4380,6 +4534,12 @@ cdef class Generator:
         --------
         shuffle
         permutation
+        
+        Notes
+        -----
+        An important distinction between methods ``shuffle``  and ``permuted`` is 
+        how they both treat the ``axis`` parameter which can be found at 
+        :ref:`generator-handling-axis-parameter`.
 
         Examples
         --------
@@ -4522,15 +4682,32 @@ cdef class Generator:
         -------
         None
 
+        See Also
+        --------
+        permuted
+        permutation
+
+        Notes
+        -----
+        An important distinction between methods ``shuffle``  and ``permuted`` is 
+        how they both treat the ``axis`` parameter which can be found at 
+        :ref:`generator-handling-axis-parameter`.
+
         Examples
         --------
         >>> rng = np.random.default_rng()
         >>> arr = np.arange(10)
+        >>> arr
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> rng.shuffle(arr)
         >>> arr
-        [1 7 5 2 9 4 3 6 0 8] # random
+        array([2, 0, 7, 5, 1, 4, 8, 9, 3, 6]) # random
 
         >>> arr = np.arange(9).reshape((3, 3))
+        >>> arr
+        array([[0, 1, 2],
+               [3, 4, 5],
+               [6, 7, 8]])
         >>> rng.shuffle(arr)
         >>> arr
         array([[3, 4, 5], # random
@@ -4538,6 +4715,10 @@ cdef class Generator:
                [0, 1, 2]])
 
         >>> arr = np.arange(9).reshape((3, 3))
+        >>> arr
+        array([[0, 1, 2],
+               [3, 4, 5],
+               [6, 7, 8]])
         >>> rng.shuffle(arr, axis=1)
         >>> arr
         array([[2, 0, 1], # random
@@ -4651,7 +4832,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)
@@ -4685,6 +4866,7 @@ cdef class Generator:
         return arr[tuple(slices)]
 
 
+@cython.embedsignature(True)
 def default_rng(seed=None):
     """Construct a new Generator with the default BitGenerator (PCG64).
 
@@ -4708,6 +4890,8 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+
+    See :ref:`seeding_and_entropy` for more information about seeding.
     
     Examples
     --------

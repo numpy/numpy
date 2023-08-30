@@ -133,6 +133,7 @@ class NDArrayOperatorsMixin:
 
     .. versionadded:: 1.13
     """
+    __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
 

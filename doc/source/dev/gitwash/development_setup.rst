@@ -103,6 +103,14 @@ Make the local copy
     git config branch.main.remote upstream
     git config branch.main.merge refs/heads/main
 
+#. Initialize the required git submodules: ::
+
+    git submodule update --init
+
+#. Pull from upstream to get latest tag information: ::
+
+    git pull
+
 ******************************************************************************
 Look it over
 ******************************************************************************

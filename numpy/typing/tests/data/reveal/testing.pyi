@@ -30,7 +30,7 @@ reveal_type(np.testing.clear_and_catch_warnings(modules=[np.testing]))  # E: _cl
 reveal_type(np.testing.clear_and_catch_warnings(True))  # E: _clear_and_catch_warnings_with_records
 reveal_type(np.testing.clear_and_catch_warnings(False))  # E: _clear_and_catch_warnings_without_records
 reveal_type(np.testing.clear_and_catch_warnings(bool_obj))  # E: clear_and_catch_warnings
-reveal_type(np.testing.clear_and_catch_warnings.class_modules)  # E: tuple[types.ModuleType]
+reveal_type(np.testing.clear_and_catch_warnings.class_modules)  # E: tuple[types.ModuleType, ...]
 reveal_type(np.testing.clear_and_catch_warnings.modules)  # E: set[types.ModuleType]
 
 with np.testing.clear_and_catch_warnings(True) as c1:
@@ -113,7 +113,6 @@ reveal_type(np.testing.rundocs())  # E: None
 reveal_type(np.testing.rundocs("test.py"))  # E: None
 reveal_type(np.testing.rundocs(Path("test.py"), raise_on_error=True))  # E: None
 
-@np.testing.raises(RuntimeError, RuntimeWarning)
 def func3(a: int) -> bool: ...
 
 reveal_type(func3)  # E: def (a: builtins.int) -> builtins.bool
@@ -154,8 +153,12 @@ reveal_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32))  # 
 reveal_type(np.testing.assert_warns(RuntimeWarning))  # E: _GeneratorContextManager[None]
 reveal_type(np.testing.assert_warns(RuntimeWarning, func3, 5))  # E: bool
 
+def func4(a: int, b: str) -> bool: ...
+
 reveal_type(np.testing.assert_no_warnings())  # E: _GeneratorContextManager[None]
 reveal_type(np.testing.assert_no_warnings(func3, 5))  # E: bool
+reveal_type(np.testing.assert_no_warnings(func4, a=1, b="test"))  # E: bool
+reveal_type(np.testing.assert_no_warnings(func4, 1, "test"))  # E: bool
 
 reveal_type(np.testing.tempdir("test_dir"))  # E: _GeneratorContextManager[builtins.str]
 reveal_type(np.testing.tempdir(prefix=b"test"))  # E: _GeneratorContextManager[builtins.bytes]
@@ -171,4 +174,3 @@ reveal_type(np.testing.assert_no_gc_cycles(func3, 5))  # E: None
 reveal_type(np.testing.break_cycles())  # E: None
 
 reveal_type(np.testing.TestCase())  # E: unittest.case.TestCase
-reveal_type(np.testing.run_module_suite(file_to_run="numpy/tests/test_matlib.py"))  # E: None

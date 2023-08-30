@@ -1,7 +1,17 @@
 from __future__ import annotations
 
 from ._array_object import Array
-from ._dtypes import _all_dtypes, _result_type
+from ._dtypes import (
+    _all_dtypes,
+    _boolean_dtypes,
+    _signed_integer_dtypes,
+    _unsigned_integer_dtypes,
+    _integer_dtypes,
+    _real_floating_dtypes,
+    _complex_floating_dtypes,
+    _numeric_dtypes,
+    _result_type,
+)
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Tuple, Union
@@ -50,11 +60,23 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
 
     See its docstring for more information.
     """
-    from ._array_object import Array
-
     if isinstance(from_, Array):
-        from_ = from_._array
-    return np.can_cast(from_, to)
+        from_ = from_.dtype
+    elif from_ not in _all_dtypes:
+        raise TypeError(f"{from_=}, but should be an array_api array or dtype")
+    if to not in _all_dtypes:
+        raise TypeError(f"{to=}, but should be a dtype")
+    # Note: We avoid np.can_cast() as it has discrepancies with the array API,
+    # since NumPy allows cross-kind casting (e.g., NumPy allows bool -> int8).
+    # See https://github.com/numpy/numpy/issues/20870
+    try:
+        # We promote `from_` and `to` together. We then check if the promoted
+        # dtype is `to`, which indicates if `from_` can (up)cast to `to`.
+        dtype = _result_type(from_, to)
+        return to == dtype
+    except TypeError:
+        # _result_type() raises if the dtypes don't promote together
+        return False
 
 
 # These are internal objects for the return types of finfo and iinfo, since
@@ -68,6 +90,7 @@ class finfo_object:
     max: float
     min: float
     smallest_normal: float
+    dtype: Dtype
 
 
 @dataclass
@@ -75,6 +98,7 @@ class iinfo_object:
     bits: int
     max: int
     min: int
+    dtype: Dtype
 
 
 def finfo(type: Union[Dtype, Array], /) -> finfo_object:
@@ -92,6 +116,7 @@ def finfo(type: Union[Dtype, Array], /) -> finfo_object:
         float(fi.max),
         float(fi.min),
         float(fi.smallest_normal),
+        fi.dtype,
     )
 
 
@@ -102,8 +127,46 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     See its docstring for more information.
     """
     ii = np.iinfo(type)
-    return iinfo_object(ii.bits, ii.max, ii.min)
+    return iinfo_object(ii.bits, ii.max, ii.min, ii.dtype)
 
+
+# Note: isdtype is a new function from the 2022.12 array API specification.
+def isdtype(
+    dtype: Dtype, kind: Union[Dtype, str, Tuple[Union[Dtype, str], ...]]
+) -> bool:
+    """
+    Returns a boolean indicating whether a provided dtype is of a specified data type ``kind``.
+
+    See
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
+    for more details
+    """
+    if isinstance(kind, tuple):
+        # Disallow nested tuples
+        if any(isinstance(k, tuple) for k in kind):
+            raise TypeError("'kind' must be a dtype, str, or tuple of dtypes and strs")
+        return any(isdtype(dtype, k) for k in kind)
+    elif isinstance(kind, str):
+        if kind == 'bool':
+            return dtype in _boolean_dtypes
+        elif kind == 'signed integer':
+            return dtype in _signed_integer_dtypes
+        elif kind == 'unsigned integer':
+            return dtype in _unsigned_integer_dtypes
+        elif kind == 'integral':
+            return dtype in _integer_dtypes
+        elif kind == 'real floating':
+            return dtype in _real_floating_dtypes
+        elif kind == 'complex floating':
+            return dtype in _complex_floating_dtypes
+        elif kind == 'numeric':
+            return dtype in _numeric_dtypes
+        else:
+            raise ValueError(f"Unrecognized data type kind: {kind!r}")
+    elif kind in _all_dtypes:
+        return dtype == kind
+    else:
+        raise TypeError(f"'kind' must be a dtype, str, or tuple of dtypes and strs, not {type(kind).__name__}")
 
 def result_type(*arrays_and_dtypes: Union[Array, Dtype]) -> Dtype:
     """

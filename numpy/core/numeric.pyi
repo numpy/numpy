@@ -1,7 +1,6 @@
 from collections.abc import Callable, Sequence
 from typing import (
     Any,
-    Union,
     overload,
     TypeVar,
     Literal,
@@ -9,11 +8,13 @@ from typing import (
     SupportsIndex,
     NoReturn,
 )
-from typing_extensions import TypeGuard
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 from numpy import (
     ComplexWarning as ComplexWarning,
-    dtype,
     generic,
     unsignedinteger,
     signedinteger,
@@ -29,14 +30,13 @@ from numpy import (
     _OrderCF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     DTypeLike,
     _ShapeLike,
-    _SupportsDType,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _DTypeLike,
+    _ArrayLike,
     _SupportsArrayFunc,
     _ScalarLike_co,
     _ArrayLikeBool_co,
@@ -46,18 +46,13 @@ from numpy.typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUnknown,
 )
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _CorrelateMode = Literal["valid", "same", "full"]
 
 __all__: list[str]
@@ -266,6 +261,12 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 
 @overload
 def correlate(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -309,6 +310,12 @@ def correlate(
 
 @overload
 def convolve(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -350,6 +357,12 @@ def convolve(
     mode: _CorrelateMode = ...,
 ) -> NDArray[object_]: ...
 
+@overload
+def outer(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    out: None = ...,
+) -> NDArray[Any]: ...
 @overload
 def outer(
     a: _ArrayLikeBool_co,
@@ -399,6 +412,12 @@ def outer(
     out: _ArrayType,
 ) -> _ArrayType: ...
 
+@overload
+def tensordot(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> NDArray[Any]: ...
 @overload
 def tensordot(
     a: _ArrayLikeBool_co,
@@ -467,6 +486,15 @@ def moveaxis(
     destination: _ShapeLike,
 ) -> NDArray[_SCT]: ...
 
+@overload
+def cross(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axisa: int = ...,
+    axisb: int = ...,
+    axisc: int = ...,
+    axis: None | int = ...,
+) -> NDArray[Any]: ...
 @overload
 def cross(
     a: _ArrayLikeBool_co,

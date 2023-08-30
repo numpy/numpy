@@ -1,7 +1,9 @@
 .. currentmodule:: numpy.random
 
+.. _random-bit-generators:
+
 Bit Generators
---------------
+==============
 
 The random values produced by :class:`~Generator`
 originate in a BitGenerator.  The BitGenerators do not directly provide
@@ -11,7 +13,7 @@ low-level wrappers for consumption by code that can efficiently
 access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
 Supported BitGenerators
-=======================
+-----------------------
 
 The included BitGenerators are:
 
@@ -50,8 +52,10 @@ The included BitGenerators are:
     Philox <philox>
     SFC64 <sfc64>
 
+.. _seeding_and_entropy:
+
 Seeding and Entropy
--------------------
+===================
 
 A BitGenerator provides a stream of random values. In order to generate
 reproducible streams, BitGenerators support setting their initial state via a
@@ -127,6 +131,16 @@ of 12 instances:
 
 .. end_block
 
+If you already have an initial random generator instance, you can shorten
+the above by using the `~BitGenerator.spawn` method:
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491
+    base_bitgen = PCG64(entropy)
+    generators = base_bitgen.spawn(12)
 
 An alternative way is to use the fact that a `~SeedSequence` can be initialized
 by a tuple of elements. Here we use a base entropy value and an integer

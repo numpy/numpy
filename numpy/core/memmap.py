@@ -1,9 +1,8 @@
 from contextlib import nullcontext
-
+import operator
 import numpy as np
+from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
-from numpy.compat import os_fspath, is_pathlib_path
-from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
@@ -59,6 +58,7 @@ class memmap(ndarray):
         | 'r+' | Open existing file for reading and writing.                 |
         +------+-------------------------------------------------------------+
         | 'w+' | Create or overwrite existing file for reading and writing.  |
+        |      | If ``mode == 'w+'`` then `shape` must also be specified.    |
         +------+-------------------------------------------------------------+
         | 'c'  | Copy-on-write: assignments affect data in memory, but       |
         |      | changes are not saved to disk.  The file on disk is         |
@@ -74,12 +74,17 @@ class memmap(ndarray):
         additional data. By default, ``memmap`` will start at the beginning of
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
-    shape : tuple, optional
+    shape : int or sequence of ints, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
         and data-type.
+
+        .. versionchanged:: 2.0
+         The shape parameter can now be any integer sequence type, previously
+         types were limited to tuple and int.
+    
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -220,12 +225,15 @@ class memmap(ndarray):
                 ) from None
 
         if mode == 'w+' and shape is None:
-            raise ValueError("shape must be given")
+            raise ValueError("shape must be given if mode == 'w+'")
 
         if hasattr(filename, 'read'):
             f_ctx = nullcontext(filename)
         else:
-            f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
+            f_ctx = open(
+                os.fspath(filename),
+                ('r' if mode == 'c' else mode)+'b'
+            )
 
         with f_ctx as fid:
             fid.seek(0, 2)
@@ -241,8 +249,12 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if not isinstance(shape, tuple):
-                    shape = (shape,)
+                if type(shape) not in (tuple, list):
+                    try:
+                        shape = [operator.index(shape)]
+                    except TypeError:
+                        pass
+                shape = tuple(shape)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
                     size *= k
@@ -272,7 +284,7 @@ class memmap(ndarray):
             self.offset = offset
             self.mode = mode
 
-            if is_pathlib_path(filename):
+            if isinstance(filename, os.PathLike):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()

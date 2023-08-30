@@ -505,20 +505,3 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 
 
 .. unpack=None, loose=True, invalid_raise=True)
-
-
-Shortcut functions
-==================
-
-In addition to :func:`~numpy.genfromtxt`, the ``numpy.lib.npyio`` module
-provides several convenience functions derived from
-:func:`~numpy.genfromtxt`.  These functions work the same way as the
-original, but they have different default values.
-
-``numpy.lib.npyio.recfromtxt``
-   Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   ``numpy.ma.mrecords.MaskedRecords`` array (if ``usemaske=True``).  The
-   default dtype is ``dtype=None``, meaning that the types of each column
-   will be automatically determined.
-``numpy.lib.npyio.recfromcsv``
-   Like ``numpy.lib.npyio.recfromtxt``, but with a default ``delimiter=","``.

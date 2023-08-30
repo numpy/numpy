@@ -1,0 +1,11 @@
+Meta-NEPs (NEPs about NEPs or Processes)
+----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Active' %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+   nep-template

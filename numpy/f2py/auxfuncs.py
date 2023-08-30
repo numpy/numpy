@@ -28,10 +28,12 @@ __all__ = [
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
     'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
-    'isallocatable', 'isarray', 'isarrayofstrings', 'iscomplex',
+    'isallocatable', 'isarray', 'isarrayofstrings',
+    'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
+    'iscomplex',
     'iscomplexarray', 'iscomplexfunction', 'iscomplexfunction_warn',
     'isdouble', 'isdummyroutine', 'isexternal', 'isfunction',
-    'isfunction_wrap', 'isint1array', 'isinteger', 'isintent_aux',
+    'isfunction_wrap', 'isint1', 'isint1array', 'isinteger', 'isintent_aux',
     'isintent_c', 'isintent_callback', 'isintent_copy', 'isintent_dict',
     'isintent_hide', 'isintent_in', 'isintent_inout', 'isintent_inplace',
     'isintent_nothide', 'isintent_out', 'isintent_overwrite', 'islogical',
@@ -39,12 +41,13 @@ __all__ = [
     'islong_doublefunction', 'islong_long', 'islong_longfunction',
     'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
     'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
-    'isstringarray', 'isstringfunction', 'issubroutine',
+    'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
+    'issubroutine',
     'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
     'isunsigned_chararray', 'isunsigned_long_long',
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error',
+    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value'
 ]
 
 
@@ -68,24 +71,41 @@ def debugcapi(var):
     return 'capi' in debugoptions
 
 
+def _ischaracter(var):
+    return 'typespec' in var and var['typespec'] == 'character' and \
+           not isexternal(var)
+
+
 def _isstring(var):
     return 'typespec' in var and var['typespec'] == 'character' and \
            not isexternal(var)
 
 
-def isstring(var):
-    return _isstring(var) and not isarray(var)
+def ischaracter_or_characterarray(var):
+    return _ischaracter(var) and 'charselector' not in var
 
 
 def ischaracter(var):
-    return isstring(var) and 'charselector' not in var
+    return ischaracter_or_characterarray(var) and not isarray(var)
+
+
+def ischaracterarray(var):
+    return ischaracter_or_characterarray(var) and isarray(var)
+
+
+def isstring_or_stringarray(var):
+    return _ischaracter(var) and 'charselector' in var
+
+
+def isstring(var):
+    return isstring_or_stringarray(var) and not isarray(var)
 
 
 def isstringarray(var):
-    return isarray(var) and _isstring(var)
+    return isstring_or_stringarray(var) and isarray(var)
 
 
-def isarrayofstrings(var):
+def isarrayofstrings(var):  # obsolete?
     # leaving out '*' for now so that `character*(*) a(m)` and `character
     # a(m,*)` are treated differently. Luckily `character**` is illegal.
     return isstringarray(var) and var['dimension'][-1] == '(*)'
@@ -124,6 +144,11 @@ def get_kind(var):
             return var['kindselector']['kind']
         except KeyError:
             pass
+
+
+def isint1(var):
+    return var.get('typespec') == 'integer' \
+        and get_kind(var) == '1' and not isarray(var)
 
 
 def islong_long(var):
@@ -272,6 +297,9 @@ def issubroutine_wrap(rout):
     if isintent_c(rout):
         return 0
     return issubroutine(rout) and hasassumedshape(rout)
+
+def isattr_value(var):
+    return 'value' in var.get('attrspec', [])
 
 
 def hasassumedshape(rout):
@@ -426,6 +454,7 @@ def isintent_hide(var):
             ('out' in var['intent'] and 'in' not in var['intent'] and
                 (not l_or(isintent_inout, isintent_inplace)(var)))))
 
+
 def isintent_nothide(var):
     return not isintent_hide(var)
 
@@ -468,6 +497,7 @@ def isintent_aligned8(var):
 
 def isintent_aligned16(var):
     return 'aligned16' in var.get('intent', [])
+
 
 isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
                  isintent_out: 'INTENT_OUT', isintent_hide: 'INTENT_HIDE',
@@ -566,19 +596,19 @@ class throw_error:
 
 
 def l_and(*f):
-    l, l2 = 'lambda v', []
+    l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l = '%s,f%d=f[%d]' % (l, i, i)
+        l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l, ' and '.join(l2)))
+    return eval('%s:%s' % (l1, ' and '.join(l2)))
 
 
 def l_or(*f):
-    l, l2 = 'lambda v', []
+    l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l = '%s,f%d=f[%d]' % (l, i, i)
+        l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l, ' or '.join(l2)))
+    return eval('%s:%s' % (l1, ' or '.join(l2)))
 
 
 def l_not(f):
@@ -665,8 +695,11 @@ def getcallprotoargument(rout, cb_map={}):
             elif isstring(var):
                 pass
             else:
-                ctype = ctype + '*'
-            if isstring(var) or isarrayofstrings(var):
+                if not isattr_value(var):
+                    ctype = ctype + '*'
+            if ((isstring(var)
+                 or isarrayofstrings(var)  # obsolete?
+                 or isstringarray(var))):
                 arg_types2.append('size_t')
         arg_types.append(ctype)
 
@@ -731,14 +764,14 @@ def getrestdoc(rout):
 
 
 def gentitle(name):
-    l = (80 - len(name) - 6) // 2
-    return '/*%s %s %s*/' % (l * '*', name, l * '*')
+    ln = (80 - len(name) - 6) // 2
+    return '/*%s %s %s*/' % (ln * '*', name, ln * '*')
 
 
-def flatlist(l):
-    if isinstance(l, list):
-        return reduce(lambda x, y, f=flatlist: x + f(y), l, [])
-    return [l]
+def flatlist(lst):
+    if isinstance(lst, list):
+        return reduce(lambda x, y, f=flatlist: x + f(y), lst, [])
+    return [lst]
 
 
 def stripcomma(s):

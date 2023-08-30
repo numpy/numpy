@@ -3,22 +3,33 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <dlpack/dlpack.h>
 
+#include "dlpack/dlpack.h"
 #include "numpy/arrayobject.h"
-#include "common/npy_argparse.h"
-
-#include "common/dlpack/dlpack.h"
-#include "common/npy_dlpack.h"
+#include "npy_argparse.h"
+#include "npy_dlpack.h"
 
 static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
+    /*
+     * Leak the pyobj if not initialized.  This can happen if we are running
+     * exit handlers that are destructing c++ objects with residual (owned)
+     * PyObjects stored in them after the Python runtime has already been
+     * terminated.
+     */
+    if (!Py_IsInitialized()) {
+        return;
+    }
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
-    // This will also free the strides as it's one allocation.
-    PyMem_Free(self->dl_tensor.shape);
+    // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
+
+    PyGILState_Release(state);
 }
 
 /* This is exactly as mandated by dlpack */
@@ -88,6 +99,12 @@ array_get_dl_device(PyArrayObject *self) {
     ret.device_type = kDLCPU;
     ret.device_id = 0;
     PyObject *base = PyArray_BASE(self);
+
+    // walk the bases (see gh-20340)
+    while (base != NULL && PyArray_Check(base)) {
+        base = PyArray_BASE((PyArrayObject *)base);
+    }
+
     // The outer if is due to the fact that NumPy arrays are on the CPU
     // by default (if not created from DLPack).
     if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
@@ -114,14 +131,15 @@ array_dlpack(PyArrayObject *self,
     }
 
     if (stream != Py_None) {
-        PyErr_SetString(PyExc_RuntimeError, "NumPy only supports "
-                "stream=None.");
+        PyErr_SetString(PyExc_RuntimeError,
+                "NumPy only supports stream=None.");
         return NULL;
     }
 
     if ( !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
-        PyErr_SetString(PyExc_TypeError, "NumPy currently only supports "
-                "dlpack for writeable arrays");
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export readonly array since signalling readonly "
+            "is unsupported by DLPack.");
         return NULL;
     }
 
@@ -132,8 +150,8 @@ array_dlpack(PyArrayObject *self,
 
     if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
         for (int i = 0; i < ndim; ++i) {
-            if (strides[i] % itemsize != 0) {
-                PyErr_SetString(PyExc_RuntimeError,
+            if (shape[i] != 1 && strides[i] % itemsize != 0) {
+                PyErr_SetString(PyExc_BufferError,
                         "DLPack only supports strides which are a multiple of "
                         "itemsize.");
                 return NULL;
@@ -145,15 +163,18 @@ array_dlpack(PyArrayObject *self,
     PyArray_Descr *dtype = PyArray_DESCR(self);
 
     if (PyDataType_ISBYTESWAPPED(dtype)) {
-        PyErr_SetString(PyExc_TypeError, "DLPack only supports native "
-                    "byte swapping.");
+        PyErr_SetString(PyExc_BufferError,
+                "DLPack only supports native byte order.");
             return NULL;
     }
 
     managed_dtype.bits = 8 * itemsize;
     managed_dtype.lanes = 1;
 
-    if (PyDataType_ISSIGNED(dtype)) {
+    if (PyDataType_ISBOOL(dtype)) {
+        managed_dtype.code = kDLBool;
+    }
+    else if (PyDataType_ISSIGNED(dtype)) {
         managed_dtype.code = kDLInt;
     }
     else if (PyDataType_ISUNSIGNED(dtype)) {
@@ -163,8 +184,9 @@ array_dlpack(PyArrayObject *self,
         // We can't be sure that the dtype is
         // IEEE or padded.
         if (itemsize > 8) {
-            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
-                    "floating point types without padding.");
+            PyErr_SetString(PyExc_BufferError,
+                    "DLPack only supports IEEE floating point types "
+                    "without padding (longdouble typically is not IEEE).");
             return NULL;
         }
         managed_dtype.code = kDLFloat;
@@ -173,16 +195,17 @@ array_dlpack(PyArrayObject *self,
         // We can't be sure that the dtype is
         // IEEE or padded.
         if (itemsize > 16) {
-            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
-                    "complex point types without padding.");
+            PyErr_SetString(PyExc_BufferError,
+                    "DLPack only supports IEEE floating point types "
+                    "without padding (longdouble typically is not IEEE).");
             return NULL;
         }
         managed_dtype.code = kDLComplex;
     }
     else {
-        PyErr_SetString(PyExc_TypeError,
-                        "DLPack only supports signed/unsigned integers, float "
-                        "and complex dtypes.");
+        PyErr_SetString(PyExc_BufferError,
+                "DLPack only supports signed/unsigned integers, float "
+                "and complex dtypes.");
         return NULL;
     }
 
@@ -191,11 +214,16 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
-    DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
-    if (managed == NULL) {
+    // ensure alignment
+    int offset = sizeof(DLManagedTensor) % sizeof(void *);
+    void *ptr = PyMem_Malloc(sizeof(DLManagedTensor) + offset +
+        (sizeof(int64_t) * ndim * 2));
+    if (ptr == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+
+    DLManagedTensor *managed = ptr;
 
     /*
      * Note: the `dlpack.h` header suggests/standardizes that `data` must be
@@ -215,12 +243,8 @@ array_dlpack(PyArrayObject *self,
     managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
-    int64_t *managed_shape_strides = PyMem_Malloc(sizeof(int64_t) * ndim * 2);
-    if (managed_shape_strides == NULL) {
-        PyErr_NoMemory();
-        PyMem_Free(managed);
-        return NULL;
-    }
+    int64_t *managed_shape_strides = (int64_t *)((char *)ptr +
+        sizeof(DLManagedTensor) + offset);
 
     int64_t *managed_shape = managed_shape_strides;
     int64_t *managed_strides = managed_shape_strides + ndim;
@@ -243,8 +267,7 @@ array_dlpack(PyArrayObject *self,
     PyObject *capsule = PyCapsule_New(managed, NPY_DLPACK_CAPSULE_NAME,
             dlpack_capsule_deleter);
     if (capsule == NULL) {
-        PyMem_Free(managed);
-        PyMem_Free(managed_shape_strides);
+        PyMem_Free(ptr);
         return NULL;
     }
 
@@ -264,7 +287,7 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
+from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
             "__dlpack__", "O", obj);
     if (capsule == NULL) {
@@ -311,6 +334,11 @@ _from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     const uint8_t bits = managed->dl_tensor.dtype.bits;
     const npy_intp itemsize = bits / 8;
     switch (managed->dl_tensor.dtype.code) {
+    case kDLBool:
+        if (bits == 8) {
+            typenum = NPY_BOOL;
+        }
+        break;
     case kDLInt:
         switch (bits)
         {

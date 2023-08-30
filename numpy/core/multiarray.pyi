@@ -8,11 +8,11 @@ from typing import (
     Any,
     overload,
     TypeVar,
-    Union,
     SupportsIndex,
     final,
     Final,
     Protocol,
+    ClassVar,
 )
 
 from numpy import (
@@ -49,21 +49,20 @@ from numpy import (
     _NDIterOpFlagsKind,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     # Shapes
     _ShapeLike,
 
     # DTypes
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
 
     # Arrays
     NDArray,
     ArrayLike,
-    _SupportsArray,
+    _ArrayLike,
     _SupportsArrayFunc,
     _NestedSequence,
-    _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -80,16 +79,10 @@ from numpy.typing import (
     _TD64Like_co,
 )
 
+_T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-
-# Subscriptable subsets of `npt.DTypeLike` and `npt.ArrayLike`
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # Valid time units
 _UnitKind = L[
@@ -115,6 +108,10 @@ _RollKind = L[  # `raise` is deliberately excluded
     "modifiedfollowing",
     "modifiedpreceding",
 ]
+
+class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
+    def __len__(self) -> int: ...
+    def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
 __all__: list[str]
 
@@ -178,7 +175,7 @@ def array(
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
 def array(
@@ -189,7 +186,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def array(
@@ -200,7 +197,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def array(
@@ -211,7 +208,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def array(
@@ -222,7 +219,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -231,7 +228,7 @@ def zeros(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def zeros(
@@ -239,7 +236,7 @@ def zeros(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def zeros(
@@ -247,7 +244,7 @@ def zeros(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -256,7 +253,7 @@ def empty(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def empty(
@@ -264,7 +261,7 @@ def empty(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty(
@@ -272,7 +269,7 @@ def empty(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -303,6 +300,7 @@ def ravel_multi_index(
     order: _OrderCF = ...,
 ) -> NDArray[intp]: ...
 
+# NOTE: Allow any sequence of array-like objects
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: _ArrayLike[_SCT],
@@ -315,7 +313,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -325,7 +323,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -335,7 +333,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -345,7 +343,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: _ArrayType = ...,
@@ -430,6 +428,7 @@ def copyto(
 
 def putmask(
     a: NDArray[Any],
+    /,
     mask: _ArrayLikeBool_co,
     values: ArrayLike,
 ) -> None: ...
@@ -469,7 +468,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asarray(
@@ -477,7 +476,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asarray(
@@ -485,7 +484,7 @@ def asarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asarray(
@@ -493,7 +492,7 @@ def asarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -502,7 +501,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
 def asanyarray(
@@ -510,7 +509,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asanyarray(
@@ -518,7 +517,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asanyarray(
@@ -526,7 +525,7 @@ def asanyarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asanyarray(
@@ -534,7 +533,7 @@ def asanyarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -542,28 +541,28 @@ def ascontiguousarray(
     a: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ascontiguousarray(
     a: object,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def ascontiguousarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ascontiguousarray(
     a: Any,
     dtype: DTypeLike,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -571,34 +570,29 @@ def asfortranarray(
     a: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asfortranarray(
     a: object,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asfortranarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asfortranarray(
     a: Any,
     dtype: DTypeLike,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
-
-# In practice `list[Any]` is list with an int, int and a valid
-# `np.seterrcall()` object
-def geterrobj() -> list[Any]: ...
-def seterrobj(errobj: list[Any], /) -> None: ...
 
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype[Any]: ...
 
@@ -610,7 +604,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def fromstring(
@@ -619,7 +613,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromstring(
@@ -628,7 +622,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def frompyfunc(
@@ -647,7 +641,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
@@ -657,7 +651,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
@@ -667,7 +661,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -676,7 +670,7 @@ def fromiter(
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromiter(
@@ -684,7 +678,7 @@ def fromiter(
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -694,7 +688,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def frombuffer(
@@ -703,7 +697,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def frombuffer(
@@ -712,7 +706,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -720,7 +714,7 @@ def arange(  # type: ignore[misc]
     stop: _IntLike_co,
     /, *,
     dtype: None = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
@@ -729,14 +723,14 @@ def arange(  # type: ignore[misc]
     step: _IntLike_co = ...,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
     /, *,
     dtype: None = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
@@ -745,14 +739,14 @@ def arange(  # type: ignore[misc]
     step: _FloatLike_co = ...,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def arange(
     stop: _TD64Like_co,
     /, *,
     dtype: None = ...,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def arange(
@@ -761,7 +755,7 @@ def arange(
     step: _TD64Like_co = ...,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def arange(  # both start and stop must always be specified for datetime64
@@ -770,14 +764,14 @@ def arange(  # both start and stop must always be specified for datetime64
     step: datetime64 = ...,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def arange(
     stop: Any,
     /, *,
     dtype: _DTypeLike[_SCT],
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def arange(
@@ -786,14 +780,14 @@ def arange(
     step: Any = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def arange(
     stop: Any, /,
     *,
     dtype: DTypeLike,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def arange(
@@ -802,7 +796,7 @@ def arange(
     step: Any = ...,
     dtype: DTypeLike = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def datetime_data(
@@ -974,13 +968,13 @@ _GetItemKeys = L[
 ]
 _SetItemKeys = L[
     "A", "ALIGNED",
-    "W", "WRITABLE",
+    "W", "WRITEABLE",
     "X", "WRITEBACKIFCOPY",
 ]
 
 @final
 class flagsobj:
-    __hash__: None  # type: ignore[assignment]
+    __hash__: ClassVar[None]  # type: ignore[assignment]
     aligned: bool
     # NOTE: deprecated
     # updateifcopy: bool

@@ -1,10 +1,12 @@
 import os
 import re
 import sys
+import platform
 import shlex
 import time
 import subprocess
 from copy import copy
+from pathlib import Path
 from distutils import ccompiler
 from distutils.ccompiler import (
     compiler_class, gen_lib_options, get_default_compiler, new_compiler,
@@ -57,7 +59,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments
-    with open(dep_file, "r") as f:
+    with open(dep_file) as f:
         lines = f.readlines()
 
     cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
@@ -120,7 +122,7 @@ def CCompiler_spawn(self, cmd, display=None, env=None):
     display : str or sequence of str, optional
         The text to add to the log file kept by `numpy.distutils`.
         If not given, `display` is equal to `cmd`.
-    env: a dictionary for environment variables, optional
+    env : a dictionary for environment variables, optional
 
     Returns
     -------
@@ -279,7 +281,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+    from numpy.distutils.fcompiler import (FCompiler,
+                                           FORTRAN_COMMON_FIXED_EXTENSIONS,
                                            has_f90_header)
     if isinstance(self, FCompiler):
         display = []
@@ -338,7 +341,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
                 if self.compiler_type=='absoft':
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
-                if is_f_file(src) and not has_f90_header(src):
+                if Path(src).suffix.lower() in FORTRAN_COMMON_FIXED_EXTENSIONS \
+                   and not has_f90_header(src):
                     f77_objects.append((obj, (src, ext)))
                 else:
                     other_objects.append((obj, (src, ext)))
@@ -355,10 +359,10 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if len(build) > 1 and jobs > 1:
         # build parallel
-        import multiprocessing.pool
-        pool = multiprocessing.pool.ThreadPool(jobs)
-        pool.map(single_compile, build_items)
-        pool.close()
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(jobs) as pool:
+            res = pool.map(single_compile, build_items)
+        list(res)  # access result to raise errors
     else:
         # build serial
         for o in build_items:
@@ -391,8 +395,14 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
 
-    if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
+    if (
+        hasattr(self, 'compiler') and
+        'clang' in self.compiler[0] and
+        not (platform.machine() == 'arm64' and sys.platform == 'darwin')
+    ):
         # clang defaults to a non-strict floating error point model.
+        # However, '-ftrapping-math' is not currently supported (2023-04-08)
+        # for macosx_arm64.
         # Since NumPy and most Python libs give warnings for these, override:
         self.compiler.append('-ftrapping-math')
         self.compiler_so.append('-ftrapping-math')
@@ -686,10 +696,17 @@ def CCompiler_cxx_compiler(self):
     cxx.compiler_cxx = cxx.compiler_cxx
     cxx.compiler_so = [cxx.compiler_cxx[0]] + \
                       sanitize_cxx_flags(cxx.compiler_so[1:])
-    if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
+    if (sys.platform.startswith(('aix', 'os400')) and
+            'ld_so_aix' in cxx.linker_so[0]):
         # AIX needs the ld_so_aix script included with Python
         cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \
                         + cxx.linker_so[2:]
+    if sys.platform.startswith('os400'):
+        #This is required by i 7.4 and prievous for PRId64 in printf() call.
+        cxx.compiler_so.append('-D__STDC_FORMAT_MACROS')
+        #This a bug of gcc10.3, which failed to handle the TLS init.
+        cxx.compiler_so.append('-fno-extern-tls-init')
+        cxx.linker_so.append('-fno-extern-tls-init')
     else:
         cxx.linker_so = [cxx.compiler_cxx[0]] + cxx.linker_so[1:]
     return cxx
@@ -710,6 +727,8 @@ compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
                             "Arm C Compiler")
+compiler_class['fujitsu'] = ('fujitsuccompiler', 'FujitsuCCompiler',
+                            "Fujitsu C Compiler")
 
 ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intele'),

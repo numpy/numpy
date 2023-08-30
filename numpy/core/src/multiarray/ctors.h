@@ -13,17 +13,35 @@ PyArray_NewFromDescrAndBase(
         npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base);
 
+
+/* Private options for NewFromDescriptor */
+typedef enum {
+    /*
+     * Indicate the the array should be zeroed, we may use calloc to do so
+     * (otherwise much like ).
+     */
+    _NPY_ARRAY_ZEROED = 1 << 0,
+    /* Whether to allow empty strings (implied by ensure dtype identity) */
+    _NPY_ARRAY_ALLOW_EMPTY_STRING = 1 << 1,
+    /*
+     * If we take a view into an existing array and use its dtype, then that
+     * dtype must be preserved (for example for subarray and S0, but also
+     * possibly for future dtypes that store more metadata).
+     */
+    _NPY_ARRAY_ENSURE_DTYPE_IDENTITY = 1 << 2,
+} _NPY_CREATION_FLAGS;
+
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(
         PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base, int zeroed,
-        int allow_emptystring);
+        int flags, PyObject *obj, PyObject *base, _NPY_CREATION_FLAGS cflags);
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(
         PyArrayObject *prototype, NPY_ORDER order,
-        PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok);
+        PyArray_Descr *descr, PyArray_DTypeMeta *dtype,
+        int ndim, npy_intp const *dims, int subok);
 
 NPY_NO_EXPORT PyObject *
 PyArray_New(
@@ -36,8 +54,18 @@ _array_from_array_like(PyObject *op,
         int never_copy);
 
 NPY_NO_EXPORT PyObject *
+PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
+                    PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
+                    int flags, PyObject *context);
+
+NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context);
+
+NPY_NO_EXPORT PyObject *
+PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
+                         PyArray_DTypeMeta *in_DType, int min_depth,
+                         int max_depth, int requires, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
@@ -106,5 +134,12 @@ byte_swap_vector(void *p, npy_intp n, int size);
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
+NPY_NO_EXPORT PyObject *
+PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order);
+
+NPY_NO_EXPORT PyObject *
+PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
+                  PyArray_DTypeMeta *dtype, int is_f_order);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

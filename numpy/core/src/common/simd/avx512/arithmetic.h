@@ -349,6 +349,10 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
 // negate multiply and subtract, -(a*b) - c
 #define npyv_nmulsub_f32 _mm512_fnmsub_ps
 #define npyv_nmulsub_f64 _mm512_fnmsub_pd
+// multiply, add for odd elements and subtract even elements.
+// (a * b) -+ c
+#define npyv_muladdsub_f32 _mm512_fmaddsub_ps
+#define npyv_muladdsub_f64 _mm512_fmaddsub_pd
 
 /***************************
  * Summation: Calculates the sum of all vector elements.
@@ -411,6 +415,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         __m512d sum8  = _mm512_add_pd(sum16, h16);
         return _mm_cvtsd_f64(_mm512_castpd512_pd128(sum8));
     }
+
 #endif
 
 // expand the source vector and performs sum reduce

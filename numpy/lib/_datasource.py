@@ -35,9 +35,8 @@ Example::
 
 """
 import os
-import io
 
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 
 _open = open
@@ -98,7 +97,7 @@ class _FileOpeners:
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: io.open}
+        self._file_openers = {None: open}
 
     def _load(self):
         if self._loaded:
@@ -161,7 +160,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
@@ -173,7 +172,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         The default path is the current directory.
     encoding : {None, str}, optional
         Open text file with given encoding. The default encoding will be
-        what `io.open` uses.
+        what `open` uses.
     newline : {None, str}, optional
         Newline to use when reading text file.
 
@@ -280,8 +279,9 @@ class DataSource:
     def _splitzipext(self, filename):
         """Split zip extension from filename and return filename.
 
-        *Returns*:
-            base, zip_ext : {tuple}
+        Returns
+        -------
+        base, zip_ext : {tuple}
 
         """
 
@@ -381,7 +381,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -441,7 +441,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -492,7 +492,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -500,7 +500,7 @@ class DataSource:
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -603,7 +603,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -630,7 +630,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -659,7 +659,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -669,7 +669,7 @@ class Repository (DataSource):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -688,7 +688,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str
+        files : list of str or pathlib.Path
             List of file names (not containing a directory part).
 
         Notes

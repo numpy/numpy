@@ -22,7 +22,7 @@
  * which is explicitly disabling the module ccompiler_opt.
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
-    #if defined(__powerpc64__) && !defined(__cplusplus) && defined(bool)
+    #if (defined(__s390x__) || defined(__powerpc64__)) && !defined(__cplusplus) && defined(bool)
         /**
          * "altivec.h" header contains the definitions(bool, vector, pixel),
          * usually in c++ we undefine them after including the header.
@@ -34,7 +34,7 @@
         typedef bool npy__dispatch_bkbool;
     #endif
     #include "npy_cpu_dispatch_config.h"
-    #ifdef NPY_HAVE_VSX
+    #if defined(NPY_HAVE_VSX) || defined(NPY_HAVE_VX)
         #undef bool
         #undef vector
         #undef pixel
@@ -43,6 +43,7 @@
         #endif
     #endif
 #endif // !NPY_DISABLE_OPTIMIZATION
+#ifndef NPY__CPU_MESON_BUILD
 /**
  * Macro NPY_CPU_DISPATCH_CURFX(NAME)
  *
@@ -187,7 +188,7 @@
 /**
  * Macro NPY_CPU_DISPATCH_CALL(LEFT, ...) is used for runtime dispatching
  * of the exported functions and variables within the dispatch-able sources
- * according to the highested interesed CPU features that supported by the
+ * according to the highest interested CPU features that are supported by the
  * running machine depending on the required optimizations.
  *
  * The first argument should ends with the exported function or variable name,
@@ -261,5 +262,5 @@
     ((TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) : (void) 0),
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
     ( LEFT __VA_ARGS__ )
-
+#endif // NPY__CPU_MESON_BUILD
 #endif  // NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_

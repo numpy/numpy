@@ -129,6 +129,18 @@ NPY_FINLINE __m128d npyv__setr_pd(double i0, double i1)
 #define npyv_select_u64 npyv_select_u8
 #define npyv_select_s64 npyv_select_u8
 
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)_mm_cvtsi128_si32(A))
+#define npyv_extract0_s8(A) ((npy_int8)_mm_cvtsi128_si32(A))
+#define npyv_extract0_u16(A) ((npy_uint16)_mm_cvtsi128_si32(A))
+#define npyv_extract0_s16(A) ((npy_int16)_mm_cvtsi128_si32(A))
+#define npyv_extract0_u32(A) ((npy_uint32)_mm_cvtsi128_si32(A))
+#define npyv_extract0_s32(A) ((npy_int32)_mm_cvtsi128_si32(A))
+#define npyv_extract0_u64(A) ((npy_uint64)npyv128_cvtsi128_si64(A))
+#define npyv_extract0_s64(A) ((npy_int64)npyv128_cvtsi128_si64(A))
+#define npyv_extract0_f32 _mm_cvtss_f32
+#define npyv_extract0_f64 _mm_cvtsd_f64
+
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X)  X
 #define npyv_reinterpret_u8_s8(X)  X

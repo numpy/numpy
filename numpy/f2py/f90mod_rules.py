@@ -147,17 +147,9 @@ def buildhooks(pymod):
             if not dms:
                 dms = '-1'
             use_fgetdims2 = fgetdims2
-            if isstringarray(var):
-                if 'charselector' in var and 'len' in var['charselector']:
-                    cadd('\t{"%s",%s,{{%s,%s}},%s},'
-                         % (undo_rmbadname1(n), dm['rank'], dms, var['charselector']['len'], at))
-                    use_fgetdims2 = fgetdims2_sa
-                else:
-                    cadd('\t{"%s",%s,{{%s}},%s},' %
-                         (undo_rmbadname1(n), dm['rank'], dms, at))
-            else:
-                cadd('\t{"%s",%s,{{%s}},%s},' %
-                     (undo_rmbadname1(n), dm['rank'], dms, at))
+            cadd('\t{"%s",%s,{{%s}},%s, %s},' %
+                 (undo_rmbadname1(n), dm['rank'], dms, at,
+                  capi_maps.get_elsize(var)))
             dadd('\\item[]{{}\\verb@%s@{}}' %
                  (capi_maps.getarrdocsign(n, var)))
             if hasnote(var):
@@ -169,8 +161,8 @@ def buildhooks(pymod):
                 fargs.append('f2py_%s_getdims_%s' % (m['name'], n))
                 efargs.append(fargs[-1])
                 sargs.append(
-                    'void (*%s)(int*,int*,void(*)(char*,int*),int*)' % (n))
-                sargsp.append('void (*)(int*,int*,void(*)(char*,int*),int*)')
+                    'void (*%s)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)' % (n))
+                sargsp.append('void (*)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
                 iadd('\tf2py_%s_def[i_f2py++].func = %s;' % (m['name'], n))
                 fadd('subroutine %s(r,s,f2pysetdata,flag)' % (fargs[-1]))
                 fadd('use %s, only: d => %s\n' %
@@ -216,8 +208,10 @@ def buildhooks(pymod):
                 ar['docs'] = []
                 ar['docshort'] = []
                 ret = dictappend(ret, ar)
-                cadd('\t{"%s",-1,{{-1}},0,NULL,(void *)f2py_rout_#modulename#_%s_%s,doc_f2py_rout_#modulename#_%s_%s},' %
-                     (b['name'], m['name'], b['name'], m['name'], b['name']))
+                cadd(('\t{"%s",-1,{{-1}},0,0,NULL,(void *)'
+                      'f2py_rout_#modulename#_%s_%s,'
+                      'doc_f2py_rout_#modulename#_%s_%s},')
+                     % (b['name'], m['name'], b['name'], m['name'], b['name']))
                 sargs.append('char *%s' % (b['name']))
                 sargsp.append('char *')
                 iadd('\tf2py_%s_def[i_f2py++].data = %s;' %

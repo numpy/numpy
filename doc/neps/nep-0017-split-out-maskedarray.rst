@@ -69,7 +69,7 @@ how to modify code to use `maskedarray`.
 After two releases, `np.ma` will be removed entirely. In order to obtain
 `np.ma`, a user will install it via `pip install` or via their package
 manager. Subsequently, `importing maskedarray` on a version of NumPy that
-includes it intgrally will raise an `ImportError`.
+includes it integrally will raise an `ImportError`.
 
 Documentation
 `````````````

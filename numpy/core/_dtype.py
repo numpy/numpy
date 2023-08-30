@@ -114,13 +114,13 @@ def _scalar_str(dtype, short):
         # platforms, so it should never include the itemsize here.
         return "'O'"
 
-    elif dtype.type == np.string_:
+    elif dtype.type == np.bytes_:
         if _isunsized(dtype):
             return "'S'"
         else:
             return "'S%d'" % dtype.itemsize
 
-    elif dtype.type == np.unicode_:
+    elif dtype.type == np.str_:
         if _isunsized(dtype):
             return "'%sU'" % byteorder
         else:
@@ -237,6 +237,11 @@ def _struct_dict_str(dtype, includealignedflag):
     return ret
 
 
+def _aligned_offset(offset, alignment):
+    # round up offset:
+    return - (-offset // alignment) * alignment
+
+
 def _is_packed(dtype):
     """
     Checks whether the structured data type in 'dtype'
@@ -249,12 +254,23 @@ def _is_packed(dtype):
 
     Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
+    align = dtype.isalignedstruct
+    max_alignment = 1
     total_offset = 0
     for name in dtype.names:
         fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
+
+        if align:
+            total_offset = _aligned_offset(total_offset, fld_dtype.alignment)
+            max_alignment = max(max_alignment, fld_dtype.alignment)
+
         if fld_offset != total_offset:
             return False
         total_offset += fld_dtype.itemsize
+
+    if align:
+        total_offset = _aligned_offset(total_offset, max_alignment)
+
     if total_offset != dtype.itemsize:
         return False
     return True
@@ -318,6 +334,8 @@ def _name_includes_bit_suffix(dtype):
     elif dtype.type == np.bool_:
         # implied
         return False
+    elif dtype.type is None:
+        return True
     elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
         # unspecified
         return False
@@ -332,7 +350,9 @@ def _name_get(dtype):
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    if issubclass(dtype.type, np.void):
+    if dtype.kind == '\x00':
+        name = type(dtype).__name__
+    elif issubclass(dtype.type, np.void):
         # historically, void subclasses preserve their name, eg `record64`
         name = dtype.type.__name__
     else:

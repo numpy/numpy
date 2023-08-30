@@ -40,8 +40,10 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <convert_datatype.h>
 
 #include "numpy/ndarraytypes.h"
+#include "numpy/npy_3kcompat.h"
 #include "common.h"
 
 #include "dispatching.h"
@@ -57,7 +59,7 @@
 
 
 /* forward declaration */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
@@ -142,6 +144,38 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         return -1;
     }
     return 0;
+}
+
+
+/*
+ * Add loop directly to a ufunc from a given ArrayMethod spec.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    PyBoundArrayMethodObject *bmeth =
+            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec(spec);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    int nargs = bmeth->method->nin + bmeth->method->nout;
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)bmeth->dtypes, 1);
+    if (dtypes == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
+    Py_DECREF(bmeth);
+    Py_DECREF(dtypes);
+    if (info == NULL) {
+        return -1;
+    }
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
 
 
@@ -563,7 +597,8 @@ _make_new_typetup(
 static int
 legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
         PyArrayObject *const *ops, PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *operation_DTypes[], int *out_cacheable)
+        PyArray_DTypeMeta *operation_DTypes[], int *out_cacheable,
+        npy_bool check_only)
 {
     int nargs = ufunc->nargs;
     PyArray_Descr *out_descrs[NPY_MAXARGS] = {NULL};
@@ -591,18 +626,51 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
     }
     Py_XDECREF(type_tuple);
 
+    if (NPY_UNLIKELY(check_only)) {
+        /*
+         * When warnings are enabled, we don't replace the DTypes, but only
+         * check whether the old result is the same as the new one.
+         * For noise reason, we do this only on the *output* dtypes which
+         * ignores floating point precision changes for comparisons such as
+         * `np.float32(3.1) < 3.1`.
+         */
+        for (int i = ufunc->nin; i < ufunc->nargs; i++) {
+            /*
+             * If an output was provided and the new dtype matches, we
+             * should (at best) lose a tiny bit of precision, e.g.:
+             * `np.true_divide(float32_arr0d, 1, out=float32_arr0d)`
+             * (which operated on float64 before, although it is probably rare)
+             */
+            if (ops[i] != NULL
+                    && PyArray_EquivTypenums(
+                            operation_DTypes[i]->type_num,
+                            PyArray_DESCR(ops[i])->type_num)) {
+                continue;
+            }
+            /* Otherwise, warn if the dtype doesn't match */
+            if (!PyArray_EquivTypenums(
+                    operation_DTypes[i]->type_num, out_descrs[i]->type_num)) {
+                if (PyErr_WarnFormat(PyExc_UserWarning, 1,
+                        "result dtype changed due to the removal of value-based "
+                        "promotion from NumPy. Changed from %S to %S.",
+                        out_descrs[i], operation_DTypes[i]->singleton) < 0) {
+                    return -1;
+                }
+                return 0;
+            }
+        }
+        return 0;
+    }
+
     for (int i = 0; i < nargs; i++) {
         Py_XSETREF(operation_DTypes[i], NPY_DTYPE(out_descrs[i]));
         Py_INCREF(operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
     }
     /*
-     * The PyUFunc_SimpleBinaryComparisonTypeResolver has a deprecation
-     * warning (ignoring `dtype=`) and cannot be cached.
-     * All datetime ones *should* have a warning, but currently don't,
-     * but ignore all signature passing also.  So they can also
-     * not be cached, and they mutate the signature which of course is wrong,
-     * but not doing it would confuse the code later.
+     * datetime legacy resolvers ignore the signature, which should be
+     * warn/raise (when used).  In such cases, the signature is (incorrectly)
+     * mutated, and caching is not possible.
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
@@ -658,7 +726,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  * If value-based promotion is necessary, this is handled ahead of time by
  * `promote_and_get_ufuncimpl`.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
@@ -741,11 +809,45 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS] = {NULL};
     int cacheable = 1;  /* TODO: only the comparison deprecation needs this */
     if (legacy_promote_using_legacy_type_resolver(ufunc,
-            ops, signature, new_op_dtypes, &cacheable) < 0) {
+            ops, signature, new_op_dtypes, &cacheable, NPY_FALSE) < 0) {
         return NULL;
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, NPY_FALSE);
+    if (info == NULL) {
+        /*
+         * NOTE: This block exists solely to support numba's DUFuncs which add
+         * new loops dynamically, so our list may get outdated.  Thus, we
+         * have to make sure that the loop exists.
+         *
+         * Before adding a new loop, ensure that it actually exists. There
+         * is a tiny chance that this would not work, but it would require an
+         * extension additionally have a custom loop getter.
+         * This check should ensure a the right error message, but in principle
+         * we could try to call the loop getter here.
+         */
+        const char *types = ufunc->types;
+        npy_bool loop_exists = NPY_FALSE;
+        for (int i = 0; i < ufunc->ntypes; ++i) {
+            loop_exists = NPY_TRUE;  /* assume it exists, break if not */
+            for (int j = 0; j < ufunc->nargs; ++j) {
+                if (types[j] != new_op_dtypes[j]->type_num) {
+                    loop_exists = NPY_FALSE;
+                    break;
+                }
+            }
+            if (loop_exists) {
+                break;
+            }
+            types += ufunc->nargs;
+        }
+
+        if (loop_exists) {
+            info = add_and_return_legacy_wrapping_ufunc_loop(
+                    ufunc, new_op_dtypes, 0);
+        }
+    }
+
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(new_op_dtypes[i]);
     }
@@ -786,6 +888,11 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  *        these including clearing the output.
  * @param force_legacy_promotion If set, we have to use the old type resolution
  *        to implement value-based promotion/casting.
+ * @param promoting_pyscalars Indication that some of the initial inputs were
+ *        int, float, or complex.  In this case weak-scalar promotion is used
+ *        which can lead to a lower result precision even when legacy promotion
+ *        does not kick in: `np.int8(1) + 1` is the example.
+ *        (Legacy promotion is skipped because `np.int8(1)` is also scalar)
  * @param ensure_reduce_compatible Must be set for reductions, in which case
  *        the found implementation is checked for reduce-like compatibility.
  *        If it is *not* compatible and `signature[2] != NULL`, we assume its
@@ -801,13 +908,14 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool force_legacy_promotion,
         npy_bool allow_legacy_promotion,
+        npy_bool promoting_pyscalars,
         npy_bool ensure_reduce_compatible)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
 
     /*
-     * Get the actual DTypes we operate with by mixing the operand array
-     * ones with the passed signature.
+     * Get the actual DTypes we operate with by setting op_dtypes[i] from
+     * signature[i].
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL) {
@@ -830,7 +938,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    if (force_legacy_promotion) {
+    if (force_legacy_promotion
+            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
         /*
          * We must use legacy promotion for value-based logic. Call the old
          * resolver once up-front to get the "actual" loop dtypes.
@@ -838,22 +947,44 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
          */
         int cacheable = 1;  /* unused, as we modify the original `op_dtypes` */
         if (legacy_promote_using_legacy_type_resolver(ufunc,
-                ops, signature, op_dtypes, &cacheable) < 0) {
-            return NULL;
+                ops, signature, op_dtypes, &cacheable, NPY_FALSE) < 0) {
+            goto handle_error;
         }
     }
 
+    /* Pause warnings and always use "new" path */
+    int old_promotion_state = npy_promotion_state;
+    npy_promotion_state = NPY_USE_WEAK_PROMOTION;
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, allow_legacy_promotion);
+    npy_promotion_state = old_promotion_state;
 
     if (info == NULL) {
-        if (!PyErr_Occurred()) {
-            raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
-        }
-        return NULL;
+        goto handle_error;
     }
 
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
+
+    /* If necessary, check if the old result would have been different */
+    if (NPY_UNLIKELY(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN)
+            && (force_legacy_promotion || promoting_pyscalars)
+            && npy_give_promotion_warnings()) {
+        PyArray_DTypeMeta *check_dtypes[NPY_MAXARGS];
+        for (int i = 0; i < nargs; i++) {
+            check_dtypes[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(
+                    all_dtypes, i);
+        }
+        /* Before calling to the legacy promotion, pretend that is the state: */
+        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+        int res = legacy_promote_using_legacy_type_resolver(ufunc,
+                ops, signature, check_dtypes, NULL, NPY_TRUE);
+        /* Reset the promotion state: */
+        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+        if (res < 0) {
+            goto handle_error;
+        }
+    }
 
     /*
      * In certain cases (only the logical ufuncs really), the loop we found may
@@ -865,14 +996,14 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
      *       comment.  That could be relaxed, in which case we may need to
      *       cache if a call was for a reduction.
      */
-    PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
     if (ensure_reduce_compatible && signature[0] == NULL &&
             PyTuple_GET_ITEM(all_dtypes, 0) != PyTuple_GET_ITEM(all_dtypes, 2)) {
         signature[0] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, 2);
         Py_INCREF(signature[0]);
         return promote_and_get_ufuncimpl(ufunc,
                 ops, signature, op_dtypes,
-                force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
+                force_legacy_promotion, allow_legacy_promotion,
+                promoting_pyscalars, NPY_FALSE);
     }
 
     for (int i = 0; i < nargs; i++) {
@@ -880,12 +1011,34 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
             signature[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, i);
             Py_INCREF(signature[i]);
         }
-        else {
-            assert((PyObject *)signature[i] == PyTuple_GET_ITEM(all_dtypes, i));
+        else if ((PyObject *)signature[i] != PyTuple_GET_ITEM(all_dtypes, i)) {
+            /*
+             * If signature is forced the cache may contain an incompatible
+             * loop found via promotion (signature not enforced).  Reject it.
+             */
+            goto handle_error;
         }
     }
 
     return method;
+
+  handle_error:
+    /* We only set the "no loop found error here" */
+    if (!PyErr_Occurred()) {
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+    }
+    /*
+     * Otherwise an error occurred, but if the error was DTypePromotionError
+     * then we chain it, because DTypePromotionError effectively means that there
+     * is no loop available.  (We failed finding a loop by using promotion.)
+     */
+    else if (PyErr_ExceptionMatches(npy_DTypePromotionError)) {
+        PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+        npy_PyErr_ChainExceptionsCause(err_type, err_value, err_traceback);
+    }
+    return NULL;
 }
 
 
@@ -901,13 +1054,6 @@ default_ufunc_promoter(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    if (ufunc->type_resolver == &PyUFunc_SimpleBinaryComparisonTypeResolver
-            && signature[0] == NULL && signature[1] == NULL
-            && signature[2] != NULL && signature[2]->type_num != NPY_BOOL) {
-        /* bail out, this is _only_ to give future/deprecation warning! */
-        return -1;
-    }
-
     /* If nin < 2 promotion is a no-op, so it should not be registered */
     assert(ufunc->nin > 1);
     if (op_dtypes[0] == NULL) {
@@ -1018,6 +1164,11 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         /* bail out, this is _only_ to give future/deprecation warning! */
         return -1;
     }
+    if ((op_dtypes[0] != NULL && PyTypeNum_ISSTRING(op_dtypes[0]->type_num))
+            || PyTypeNum_ISSTRING(op_dtypes[1]->type_num)) {
+        /* bail out on strings: currently casting them to bool is too weird */
+        return -1;
+    }
 
     for (int i = 0; i < 3; i++) {
         PyArray_DTypeMeta *item;
@@ -1088,4 +1239,41 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     }
 
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+/*
+ * Return the PyArrayMethodObject or PyCapsule that matches a registered
+ * tuple of identical dtypes. Return a borrowed ref of the first match.
+ */
+NPY_NO_EXPORT PyObject *
+get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                 int ndtypes)
+{
+    PyObject *t_dtypes = PyTuple_New(ndtypes);
+    if (t_dtypes == NULL) {
+        return NULL;
+    }
+    for (int i=0; i < ndtypes; i++) {
+        PyTuple_SetItem(t_dtypes, i, (PyObject *)op_dtype);
+    }
+    PyObject *loops = ufunc->_loops;
+    Py_ssize_t length = PyList_Size(loops);
+    for (Py_ssize_t i = 0; i < length; i++) {
+        PyObject *item = PyList_GetItem(loops, i);
+        PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
+        int cmp = PyObject_RichCompareBool(cur_DType_tuple,
+                                           t_dtypes, Py_EQ);
+        if (cmp < 0) {
+            Py_DECREF(t_dtypes);
+            return NULL;
+        }
+        if (cmp == 0) {
+            continue;
+        }
+        /* Got the match */
+        Py_DECREF(t_dtypes);
+        return PyTuple_GetItem(item, 1);
+    }
+    Py_DECREF(t_dtypes);
+    Py_RETURN_NONE;
 }

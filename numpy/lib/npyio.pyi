@@ -9,7 +9,6 @@ from typing import (
     Any,
     TypeVar,
     Generic,
-    Union,
     IO,
     overload,
     Protocol,
@@ -27,11 +26,11 @@ from numpy import (
 )
 
 from numpy.ma.mrecords import MaskedRecords
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
-    _SupportsDType,
+    _DTypeLike,
     _SupportsArrayFunc,
 )
 
@@ -46,12 +45,6 @@ _T_co = TypeVar("_T_co", covariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _CharType_co = TypeVar("_CharType_co", str, bytes, covariant=True)
 _CharType_contra = TypeVar("_CharType_contra", str, bytes, contravariant=True)
-
-_DTypeLike = Union[
-    type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _SupportsGetItem(Protocol[_T_contra, _T_co]):
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
@@ -79,6 +72,7 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     files: list[str]
     allow_pickle: bool
     pickle_kwargs: None | Mapping[str, Any]
+    _MAX_REPR_ARRAY_COUNT: int
     # Represent `f` as a mutable property so we can access the type of `self`
     @property
     def f(self: _T) -> BagObj[_T]: ...
@@ -104,6 +98,8 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     def __iter__(self) -> Iterator[str]: ...
     def __len__(self) -> int: ...
     def __getitem__(self, key: str) -> NDArray[Any]: ...
+    def __contains__(self, key: str) -> bool: ...
+    def __repr__(self) -> str: ...
 
 # NOTE: Returns a `NpzFile` if file is a zip file;
 # returns an `ndarray`/`memmap` otherwise
@@ -150,6 +146,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[float64]: ...
 @overload
@@ -166,6 +163,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[_SCT]: ...
 @overload
@@ -182,6 +180,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[Any]: ...
 
@@ -240,7 +239,7 @@ def genfromtxt(
     *,
     ndmin: L[0, 1, 2] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[float64]: ...
+) -> NDArray[Any]: ...
 @overload
 def genfromtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],

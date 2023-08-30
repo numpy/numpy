@@ -358,7 +358,7 @@ if terminal_has_colors():
             fgcode = 30 + _colour_codes.get(fg.lower(), 0)
             seq.append(str(fgcode))
         if bg:
-            bgcode = 40 + _colour_codes.get(fg.lower(), 7)
+            bgcode = 40 + _colour_codes.get(bg.lower(), 7)
             seq.append(str(bgcode))
         if seq:
             return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)
@@ -416,7 +416,7 @@ def cyg2win32(path: str) -> str:
     if sys.platform != "cygwin":
         return path
     return subprocess.check_output(
-        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+        ["/usr/bin/cygpath", "--windows", path], text=True
     )
 
 
@@ -475,7 +475,7 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    with open(source, 'r') as f:
+    with open(source) as f:
         for line in f:
             m = f90_module_name_match(line)
             if m:
@@ -694,15 +694,11 @@ def get_shared_lib_extension(is_python_ext=False):
     -----
     For Python shared libs, `so_ext` will typically be '.so' on Linux and OS X,
     and '.pyd' on Windows.  For Python >= 3.2 `so_ext` has a tag prepended on
-    POSIX systems according to PEP 3149.  For Python 3.2 this is implemented on
-    Linux, but not on OS X.
+    POSIX systems according to PEP 3149.
 
     """
     confvars = distutils.sysconfig.get_config_vars()
-    # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
-    so_ext = confvars.get('EXT_SUFFIX', None)
-    if so_ext is None:
-        so_ext = confvars.get('SO', '')
+    so_ext = confvars.get('EXT_SUFFIX', '')
 
     if not is_python_ext:
         # hardcode known values, config vars (including SHLIB_SUFFIX) are
@@ -1936,7 +1932,7 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            with open(branch_cache_fn, 'r') as f:
+            with open(branch_cache_fn) as f:
                 for line in f:
                     branch1, revision1  = line.split()[:2]
                     if revision1==revision0:
@@ -2352,11 +2348,7 @@ def generate_config_py(target):
             extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
             if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(extra_dll_dir)
-                else:
-                    os.environ.setdefault('PATH', '')
-                    os.environ['PATH'] += os.pathsep + extra_dll_dir
+                os.add_dll_directory(extra_dll_dir)
 
             """))
 
@@ -2499,4 +2491,3 @@ def exec_mod_from_location(modname, modfile):
     foo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(foo)
     return foo
-

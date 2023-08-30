@@ -31,86 +31,94 @@
 
 // vector with specific values set to each lane and
 // set a specific value to all remained lanes
-NPY_FINLINE uint8x16_t npyv__set_u8(npy_uint8 i0, npy_uint8 i1, npy_uint8 i2, npy_uint8 i3,
-    npy_uint8 i4, npy_uint8 i5, npy_uint8 i6, npy_uint8 i7, npy_uint8 i8, npy_uint8 i9,
-    npy_uint8 i10, npy_uint8 i11, npy_uint8 i12, npy_uint8 i13, npy_uint8 i14, npy_uint8 i15)
-{
-    const uint8_t NPY_DECL_ALIGNED(16) data[16] = {
-        i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-    };
-    return vld1q_u8(data);
-}
-#define npyv_setf_u8(FILL, ...)  npyv__set_u8(NPYV__SET_FILL_16(npy_uint8, FILL, __VA_ARGS__))
-
-NPY_FINLINE int8x16_t npyv__set_s8(npy_int8 i0, npy_int8 i1, npy_int8 i2, npy_int8 i3,
-    npy_int8 i4, npy_int8 i5, npy_int8 i6, npy_int8 i7, npy_int8 i8, npy_int8 i9,
-    npy_int8 i10, npy_int8 i11, npy_int8 i12, npy_int8 i13, npy_int8 i14, npy_int8 i15)
-{
-    const int8_t NPY_DECL_ALIGNED(16) data[16] = {
-        i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-    };
-    return vld1q_s8(data);
-}
-#define npyv_setf_s8(FILL, ...)  npyv__set_s8(NPYV__SET_FILL_16(npy_int8, FILL, __VA_ARGS__))
-
-NPY_FINLINE uint16x8_t npyv__set_u16(npy_uint16 i0, npy_uint16 i1, npy_uint16 i2, npy_uint16 i3,
-    npy_uint16 i4, npy_uint16 i5, npy_uint16 i6, npy_uint16 i7)
-{
-    const uint16_t NPY_DECL_ALIGNED(16) data[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
-    return vld1q_u16(data);
-}
-#define npyv_setf_u16(FILL, ...) npyv__set_u16(NPYV__SET_FILL_8(npy_uint16, FILL, __VA_ARGS__))
-
-NPY_FINLINE int16x8_t npyv__set_s16(npy_int16 i0, npy_int16 i1, npy_int16 i2, npy_int16 i3,
-    npy_int16 i4, npy_int16 i5, npy_int16 i6, npy_int16 i7)
-{
-    const int16_t NPY_DECL_ALIGNED(16) data[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
-    return vld1q_s16(data);
-}
-#define npyv_setf_s16(FILL, ...) npyv__set_s16(NPYV__SET_FILL_8(npy_int16, FILL, __VA_ARGS__))
-
-NPY_FINLINE uint32x4_t npyv__set_u32(npy_uint32 i0, npy_uint32 i1, npy_uint32 i2, npy_uint32 i3)
-{
-    const uint32_t NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
-    return vld1q_u32(data);
-}
-#define npyv_setf_u32(FILL, ...) npyv__set_u32(NPYV__SET_FILL_4(npy_uint32, FILL, __VA_ARGS__))
-
-NPY_FINLINE int32x4_t npyv__set_s32(npy_int32 i0, npy_int32 i1, npy_int32 i2, npy_int32 i3)
-{
-    const int32_t NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
-    return vld1q_s32(data);
-}
-#define npyv_setf_s32(FILL, ...) npyv__set_s32(NPYV__SET_FILL_4(npy_int32, FILL, __VA_ARGS__))
-
-NPY_FINLINE uint64x2_t npyv__set_u64(npy_uint64 i0, npy_uint64 i1)
-{
-    const uint64_t NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
-    return vld1q_u64(data);
-}
-#define npyv_setf_u64(FILL, ...) npyv__set_u64(NPYV__SET_FILL_2(npy_int64, FILL, __VA_ARGS__))
-
-NPY_FINLINE int64x2_t npyv__set_s64(npy_int64 i0, npy_int64 i1)
-{
-    const int64_t NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
-    return vld1q_s64(data);
-}
-#define npyv_setf_s64(FILL, ...) npyv__set_s64(NPYV__SET_FILL_2(npy_int64, FILL, __VA_ARGS__))
-
-NPY_FINLINE float32x4_t npyv__set_f32(float i0, float i1, float i2, float i3)
-{
-    const float NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
-    return vld1q_f32(data);
-}
-#define npyv_setf_f32(FILL, ...) npyv__set_f32(NPYV__SET_FILL_4(float, FILL, __VA_ARGS__))
-
-#ifdef __aarch64__
-NPY_FINLINE float64x2_t npyv__set_f64(double i0, double i1)
-{
-    const double NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
-    return vld1q_f64(data);
-}
-#define npyv_setf_f64(FILL, ...) npyv__set_f64(NPYV__SET_FILL_2(double, FILL, __VA_ARGS__))
+#if defined(__clang__) || defined(__GNUC__)
+    #define npyv_setf_u8(FILL, ...)  ((uint8x16_t){NPYV__SET_FILL_16(uint8_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_s8(FILL, ...)  ((int8x16_t){NPYV__SET_FILL_16(int8_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_u16(FILL, ...) ((uint16x8_t){NPYV__SET_FILL_8(uint16_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_s16(FILL, ...) ((int16x8_t){NPYV__SET_FILL_8(int16_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_u32(FILL, ...) ((uint32x4_t){NPYV__SET_FILL_4(uint32_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_s32(FILL, ...) ((int32x4_t){NPYV__SET_FILL_4(int32_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_u64(FILL, ...) ((uint64x2_t){NPYV__SET_FILL_2(uint64_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_s64(FILL, ...) ((int64x2_t){NPYV__SET_FILL_2(int64_t, FILL, __VA_ARGS__)})
+    #define npyv_setf_f32(FILL, ...) ((float32x4_t){NPYV__SET_FILL_4(float, FILL, __VA_ARGS__)})
+    #if NPY_SIMD_F64
+        #define npyv_setf_f64(FILL, ...) ((float64x2_t){NPYV__SET_FILL_2(double, FILL, __VA_ARGS__)})
+    #endif
+#else
+    NPY_FINLINE uint8x16_t npyv__set_u8(npy_uint8 i0, npy_uint8 i1, npy_uint8 i2, npy_uint8 i3,
+        npy_uint8 i4, npy_uint8 i5, npy_uint8 i6, npy_uint8 i7, npy_uint8 i8, npy_uint8 i9,
+        npy_uint8 i10, npy_uint8 i11, npy_uint8 i12, npy_uint8 i13, npy_uint8 i14, npy_uint8 i15)
+    {
+        const uint8_t NPY_DECL_ALIGNED(16) data[16] = {
+            i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
+        };
+        return vld1q_u8(data);
+    }
+    NPY_FINLINE int8x16_t npyv__set_s8(npy_int8 i0, npy_int8 i1, npy_int8 i2, npy_int8 i3,
+        npy_int8 i4, npy_int8 i5, npy_int8 i6, npy_int8 i7, npy_int8 i8, npy_int8 i9,
+        npy_int8 i10, npy_int8 i11, npy_int8 i12, npy_int8 i13, npy_int8 i14, npy_int8 i15)
+    {
+        const int8_t NPY_DECL_ALIGNED(16) data[16] = {
+            i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
+        };
+        return vld1q_s8(data);
+    }
+    NPY_FINLINE uint16x8_t npyv__set_u16(npy_uint16 i0, npy_uint16 i1, npy_uint16 i2, npy_uint16 i3,
+        npy_uint16 i4, npy_uint16 i5, npy_uint16 i6, npy_uint16 i7)
+    {
+        const uint16_t NPY_DECL_ALIGNED(16) data[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
+        return vld1q_u16(data);
+    }
+    NPY_FINLINE int16x8_t npyv__set_s16(npy_int16 i0, npy_int16 i1, npy_int16 i2, npy_int16 i3,
+        npy_int16 i4, npy_int16 i5, npy_int16 i6, npy_int16 i7)
+    {
+        const int16_t NPY_DECL_ALIGNED(16) data[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
+        return vld1q_s16(data);
+    }
+    NPY_FINLINE uint32x4_t npyv__set_u32(npy_uint32 i0, npy_uint32 i1, npy_uint32 i2, npy_uint32 i3)
+    {
+        const uint32_t NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
+        return vld1q_u32(data);
+    }
+    NPY_FINLINE int32x4_t npyv__set_s32(npy_int32 i0, npy_int32 i1, npy_int32 i2, npy_int32 i3)
+    {
+        const int32_t NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
+        return vld1q_s32(data);
+    }
+    NPY_FINLINE uint64x2_t npyv__set_u64(npy_uint64 i0, npy_uint64 i1)
+    {
+        const uint64_t NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
+        return vld1q_u64(data);
+    }
+    NPY_FINLINE int64x2_t npyv__set_s64(npy_int64 i0, npy_int64 i1)
+    {
+        const int64_t NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
+        return vld1q_s64(data);
+    }
+    NPY_FINLINE float32x4_t npyv__set_f32(float i0, float i1, float i2, float i3)
+    {
+        const float NPY_DECL_ALIGNED(16) data[4] = {i0, i1, i2, i3};
+        return vld1q_f32(data);
+    }
+    #if NPY_SIMD_F64
+        NPY_FINLINE float64x2_t npyv__set_f64(double i0, double i1)
+        {
+            const double NPY_DECL_ALIGNED(16) data[2] = {i0, i1};
+            return vld1q_f64(data);
+        }
+    #endif
+    #define npyv_setf_u8(FILL, ...)  npyv__set_u8(NPYV__SET_FILL_16(npy_uint8, FILL, __VA_ARGS__))
+    #define npyv_setf_s8(FILL, ...)  npyv__set_s8(NPYV__SET_FILL_16(npy_int8, FILL, __VA_ARGS__))
+    #define npyv_setf_u16(FILL, ...) npyv__set_u16(NPYV__SET_FILL_8(npy_uint16, FILL, __VA_ARGS__))
+    #define npyv_setf_s16(FILL, ...) npyv__set_s16(NPYV__SET_FILL_8(npy_int16, FILL, __VA_ARGS__))
+    #define npyv_setf_u32(FILL, ...) npyv__set_u32(NPYV__SET_FILL_4(npy_uint32, FILL, __VA_ARGS__))
+    #define npyv_setf_s32(FILL, ...) npyv__set_s32(NPYV__SET_FILL_4(npy_int32, FILL, __VA_ARGS__))
+    #define npyv_setf_u64(FILL, ...) npyv__set_u64(NPYV__SET_FILL_2(npy_uint64, FILL, __VA_ARGS__))
+    #define npyv_setf_s64(FILL, ...) npyv__set_s64(NPYV__SET_FILL_2(npy_int64, FILL, __VA_ARGS__))
+    #define npyv_setf_f32(FILL, ...) npyv__set_f32(NPYV__SET_FILL_4(float, FILL, __VA_ARGS__))
+    #if NPY_SIMD_F64
+        #define npyv_setf_f64(FILL, ...) npyv__set_f64(NPYV__SET_FILL_2(double, FILL, __VA_ARGS__))
+    #endif
 #endif
 
 // vector with specific values set to each lane and
@@ -137,6 +145,18 @@ NPY_FINLINE float64x2_t npyv__set_f64(double i0, double i1)
 #define npyv_select_s64 vbslq_s64
 #define npyv_select_f32 vbslq_f32
 #define npyv_select_f64 vbslq_f64
+
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)vgetq_lane_u8(A, 0))
+#define npyv_extract0_s8(A) ((npy_int8)vgetq_lane_s8(A, 0))
+#define npyv_extract0_u16(A) ((npy_uint16)vgetq_lane_u16(A, 0))
+#define npyv_extract0_s16(A) ((npy_int16)vgetq_lane_s16(A, 0))
+#define npyv_extract0_u32(A) ((npy_uint32)vgetq_lane_u32(A, 0))
+#define npyv_extract0_s32(A) ((npy_int32)vgetq_lane_s32(A, 0))
+#define npyv_extract0_u64(A) ((npy_uint64)vgetq_lane_u64(A, 0))
+#define npyv_extract0_s64(A) ((npy_int64)vgetq_lane_s64(A, 0))
+#define npyv_extract0_f32(A) vgetq_lane_f32(A, 0)
+#define npyv_extract0_f64(A) vgetq_lane_f64(A, 0)
 
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X) X

@@ -1,7 +1,7 @@
 .. _structured_arrays:
 
 *****************
-Structured arrays 
+Structured arrays
 *****************
 
 Introduction
@@ -24,7 +24,7 @@ a 32-bit integer named 'age', and 3. a 32-bit float named 'weight'.
 If you index ``x`` at position 1 you get a structure::
 
  >>> x[1]
- ('Fido', 3, 27.)
+ np.void(('Fido', 3, 27.0), dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 You can access and modify individual fields of a structured array by indexing
 with the field name::
@@ -146,16 +146,14 @@ summary they are:
 
 4.   A dictionary of field names
 
-     The use of this form of specification is discouraged, but documented here
-     because older numpy code may use it. The keys of the dictionary are the
-     field names and the values are tuples specifying type and offset::
+     The keys of the dictionary are the field names and the values are tuples
+     specifying type and offset::
 
       >>> np.dtype({'col1': ('i1', 0), 'col2': ('f4', 1)})
       dtype([('col1', 'i1'), ('col2', '<f4')])
 
-     This form is discouraged because Python dictionaries do not preserve order
-     in Python versions before Python 3.6, and the order of the fields in a
-     structured dtype has meaning. :ref:`Field Titles <titles>` may be
+     This form was discouraged because Python dictionaries did not preserve order
+     in Python versions before Python 3.6. :ref:`Field Titles <titles>` may be
      specified by using a 3-tuple, see below.
 
 Manipulating and Displaying Structured Datatypes
@@ -167,6 +165,11 @@ attribute of the dtype object::
  >>> d = np.dtype([('x', 'i8'), ('y', 'f4')])
  >>> d.names
  ('x', 'y')
+
+The dtype of each individual field can be looked up by name::
+
+ >>> d['x']
+ dtype('int64')
 
 The field names may be modified by assigning to the ``names`` attribute using a
 sequence of strings of the same length.
@@ -302,7 +305,7 @@ There are a number of ways to assign values to a structured array: Using python
 tuples, using scalar values, or using other structured arrays.
 
 Assignment from Python Native Types (Tuples)
-````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The simplest way to assign values to a structured array is using python tuples.
 Each assigned value should be a tuple of length equal to the number of fields
@@ -317,7 +320,7 @@ of the array, from left to right::
       dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '<f8')])
 
 Assignment from Scalars
-```````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A scalar assigned to a structured element will be assigned to all fields. This
 happens when a scalar is assigned to a structured array, or when an
@@ -345,7 +348,7 @@ structured datatype has just a single field::
  TypeError: Cannot cast array data from dtype([('A', '<i4'), ('B', '<i4')]) to dtype('int32') according to the rule 'unsafe'
 
 Assignment from other Structured Arrays
-```````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Assignment between two structured arrays occurs as if the source elements had
 been converted to tuples and then assigned to the destination elements. That
@@ -364,7 +367,7 @@ included in any of the fields are unaffected. ::
 
 
 Assignment involving subarrays
-``````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When assigning to fields which are subarrays, the assigned value will first be
 broadcast to the shape of the subarray.
@@ -373,7 +376,7 @@ Indexing Structured Arrays
 --------------------------
 
 Accessing Individual Fields
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Individual fields of a structured array may be accessed and modified by indexing
 the array with the field name. ::
@@ -411,7 +414,7 @@ are appended to the shape of the result::
    (2, 2, 3, 3)
 
 Accessing Multiple Fields
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One can index and assign to a structured array with a multi-field index, where
 the index is a list of field names.
@@ -472,7 +475,7 @@ missing.
     Furthermore, numpy now provides a new function
     :func:`numpy.lib.recfunctions.structured_to_unstructured` which is a safer
     and more efficient alternative for users who wish to convert structured
-    arrays to unstructured arrays, as the view above is often indeded to do.
+    arrays to unstructured arrays, as the view above is often intended to do.
     This function allows safe conversion to an unstructured type taking into
     account padding, often avoids a copy, and also casts the datatypes
     as needed, unlike the view. Code such as:
@@ -504,7 +507,7 @@ multi-field indexes::
  >>> a[['a', 'c']] = a[['c', 'a']]
 
 Indexing with an Integer to get a Structured Scalar
-```````````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Indexing a single element of a structured array (with an integer index) returns
 a structured scalar::
@@ -512,7 +515,7 @@ a structured scalar::
  >>> x = np.array([(1, 2., 3.)], dtype='i, f, f')
  >>> scalar = x[0]
  >>> scalar
- (1, 2., 3.)
+ np.void((1, 2.0, 3.0), dtype=[('f0', '<i4'), ('f1', '<f4'), ('f2', '<f4')])
  >>> type(scalar)
  <class 'numpy.void'>
 
@@ -550,28 +553,78 @@ In order to prevent clobbering object pointers in fields of
 :class:`object` type, numpy currently does not allow views of structured
 arrays containing objects.
 
-Structure Comparison
---------------------
+.. _structured_dtype_comparison_and_promotion:
+
+Structure Comparison and Promotion
+----------------------------------
 
 If the dtypes of two void structured arrays are equal, testing the equality of
 the arrays will result in a boolean array with the dimensions of the original
 arrays, with elements set to ``True`` where all fields of the corresponding
-structures are equal. Structured dtypes are equal if the field names,
-dtypes and titles are the same, ignoring endianness, and the fields are in
-the same order::
+structures are equal::
 
- >>> a = np.zeros(2, dtype=[('a', 'i4'), ('b', 'i4')])
- >>> b = np.ones(2, dtype=[('a', 'i4'), ('b', 'i4')])
+ >>> a = np.array([(1, 1), (2, 2)], dtype=[('a', 'i4'), ('b', 'i4')])
+ >>> b = np.array([(1, 1), (2, 3)], dtype=[('a', 'i4'), ('b', 'i4')])
  >>> a == b
- array([False, False])
+ array([True, False])
 
-Currently, if the dtypes of two void structured arrays are not equivalent the
-comparison fails, returning the scalar value ``False``. This behavior is
-deprecated as of numpy 1.10 and will raise an error or perform elementwise
-comparison in the future.
+NumPy will promote individual field datatypes to perform the comparison.
+So the following is also valid (note the ``'f4'`` dtype for the ``'a'`` field):
+
+ >>> b = np.array([(1.0, 1), (2.5, 2)], dtype=[("a", "f4"), ("b", "i4")])
+ >>> a == b
+ array([True, False])
+
+To compare two structured arrays, it must be possible to promote them to a
+common dtype as returned by `numpy.result_type` and `numpy.promote_types`.
+This enforces that the number of fields, the field names, and the field titles
+must match precisely.
+When promotion is not possible, for example due to mismatching field names,
+NumPy will raise an error.
+Promotion between two structured dtypes results in a canonical dtype that
+ensures native byte-order for all fields::
+
+    >>> np.result_type(np.dtype("i,>i"))
+    dtype([('f0', '<i4'), ('f1', '<i4')])
+    >>> np.result_type(np.dtype("i,>i"), np.dtype("i,i"))
+    dtype([('f0', '<i4'), ('f1', '<i4')])
+
+The resulting dtype from promotion is also guaranteed to be packed, meaning
+that all fields are ordered contiguously and any unnecessary padding is
+removed::
+
+    >>> dt = np.dtype("i1,V3,i4,V1")[["f0", "f2"]]
+    >>> dt
+    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':9})
+    >>> np.result_type(dt)
+    dtype([('f0', 'i1'), ('f2', '<i4')])
+
+Note that the result prints without ``offsets`` or ``itemsize`` indicating no
+additional padding.
+If a structured dtype is created with ``align=True`` ensuring that
+``dtype.isalignedstruct`` is true, this property is preserved::
+
+    >>> dt = np.dtype("i1,V3,i4,V1", align=True)[["f0", "f2"]]
+    >>> dt
+    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':12}, align=True)
+    >>> np.result_type(dt)
+    dtype([('f0', 'i1'), ('f2', '<i4')], align=True)
+    >>> np.result_type(dt).isalignedstruct
+    True
+
+When promoting multiple dtypes, the result is aligned if any of the inputs is::
+
+    >>> np.result_type(np.dtype("i,i"), np.dtype("i,i", align=True))
+    dtype([('f0', '<i4'), ('f1', '<i4')], align=True)
 
 The ``<`` and ``>`` operators always return ``False`` when comparing void
 structured arrays, and arithmetic and bitwise operations are not supported.
+
+.. versionchanged:: 1.23
+    Before NumPy 1.23, a warning was given and ``False`` returned when
+    promotion to a common dtype failed.
+    Further, promotion was much more restrictive: It would reject the mixed
+    float/integer comparison example above.
 
 Record Arrays
 =============

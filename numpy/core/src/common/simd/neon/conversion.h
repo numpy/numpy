@@ -34,10 +34,10 @@ NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
 {
     const npyv_u8 scale = npyv_set_u8(1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128);
     npyv_u8 seq_scale = vandq_u8(a, scale);
-#if NPY_SIMD_F64
-    npy_uint8 sumlo = vaddv_u8(vget_low_u8(seq_scale));
-    npy_uint8 sumhi = vaddv_u8(vget_high_u8(seq_scale));
-    return sumlo + ((int)sumhi << 8);
+#if defined(__aarch64__)
+    const npyv_u8 byteOrder = {0,8,1,9,2,10,3,11,4,12,5,13,6,14,7,15};
+    npyv_u8 v0 = vqtbl1q_u8(seq_scale, byteOrder);
+    return vaddlvq_u16(vreinterpretq_u16_u8(v0));
 #else
     npyv_u64 sumh = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(seq_scale)));
     return vgetq_lane_u64(sumh, 0) + ((int)vgetq_lane_u64(sumh, 1) << 8);
@@ -67,8 +67,9 @@ NPY_FINLINE npy_uint64 npyv_tobits_b32(npyv_b32 a)
 }
 NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
 {
-    npyv_u64 bit = vshrq_n_u64(a, 63);
-    return vgetq_lane_u64(bit, 0) | ((int)vgetq_lane_u64(bit, 1) << 1);
+    uint64_t lo = vgetq_lane_u64(a, 0);
+    uint64_t hi = vgetq_lane_u64(a, 1);
+    return ((hi & 0x2) | (lo & 0x1));
 }
 
 //expand
@@ -84,6 +85,46 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     r.val[0] = vmovl_u16(vget_low_u16(data));
     r.val[1] = vmovl_u16(vget_high_u16(data));
     return r;
+}
+
+// pack two 16-bit boolean into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
+#if defined(__aarch64__)
+    return vuzp1q_u8((uint8x16_t)a, (uint8x16_t)b);
+#else
+    return vcombine_u8(vmovn_u16(a), vmovn_u16(b));
+#endif
+}
+
+// pack four 32-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
+#if defined(__aarch64__)
+    npyv_b16 ab = vuzp1q_u16((uint16x8_t)a, (uint16x8_t)b);
+    npyv_b16 cd = vuzp1q_u16((uint16x8_t)c, (uint16x8_t)d);
+#else
+    npyv_b16 ab = vcombine_u16(vmovn_u32(a), vmovn_u32(b));
+    npyv_b16 cd = vcombine_u16(vmovn_u32(c), vmovn_u32(d));
+#endif
+    return npyv_pack_b8_b16(ab, cd);
+}
+
+// pack eight 64-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
+                 npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
+#if defined(__aarch64__)
+    npyv_b32 ab = vuzp1q_u32((uint32x4_t)a, (uint32x4_t)b);
+    npyv_b32 cd = vuzp1q_u32((uint32x4_t)c, (uint32x4_t)d);
+    npyv_b32 ef = vuzp1q_u32((uint32x4_t)e, (uint32x4_t)f);
+    npyv_u32 gh = vuzp1q_u32((uint32x4_t)g, (uint32x4_t)h);
+#else
+    npyv_b32 ab = vcombine_u32(vmovn_u64(a), vmovn_u64(b));
+    npyv_b32 cd = vcombine_u32(vmovn_u64(c), vmovn_u64(d));
+    npyv_b32 ef = vcombine_u32(vmovn_u64(e), vmovn_u64(f));
+    npyv_b32 gh = vcombine_u32(vmovn_u64(g), vmovn_u64(h));
+#endif
+    return npyv_pack_b8_b32(ab, cd, ef, gh);
 }
 
 // round to nearest integer

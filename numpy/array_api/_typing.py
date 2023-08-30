@@ -17,14 +17,12 @@ __all__ = [
     "PyCapsule",
 ]
 
-import sys
 from typing import (
     Any,
     Literal,
     Sequence,
     Type,
     Union,
-    TYPE_CHECKING,
     TypeVar,
     Protocol,
 )
@@ -51,21 +49,20 @@ class NestedSequence(Protocol[_T_co]):
     def __len__(self, /) -> int: ...
 
 Device = Literal["cpu"]
-if TYPE_CHECKING or sys.version_info >= (3, 9):
-    Dtype = dtype[Union[
-        int8,
-        int16,
-        int32,
-        int64,
-        uint8,
-        uint16,
-        uint32,
-        uint64,
-        float32,
-        float64,
-    ]]
-else:
-    Dtype = dtype
+
+Dtype = dtype[Union[
+    int8,
+    int16,
+    int32,
+    int64,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    float32,
+    float64,
+]]
+
 
 SupportsBufferProtocol = Any
 PyCapsule = Any

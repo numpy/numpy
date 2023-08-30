@@ -1,0 +1,115 @@
+modified_clone: &MODIFIED_CLONE
+  # makes sure that for a PR the CI runs against a merged main
+  clone_script: |
+    if [ -z "$CIRRUS_PR" ]; then
+      # if you're not in a PR then clone against the branch name that was pushed to.
+      git clone --recursive --branch=$CIRRUS_BRANCH https://x-access-token:${CIRRUS_REPO_CLONE_TOKEN}@github.com/${CIRRUS_REPO_FULL_NAME}.git $CIRRUS_WORKING_DIR
+      git reset --hard $CIRRUS_CHANGE_IN_REPO
+    else
+      # it's a PR so clone the main branch then merge the changes from the PR
+      git clone https://x-access-token:${CIRRUS_REPO_CLONE_TOKEN}@github.com/${CIRRUS_REPO_FULL_NAME}.git $CIRRUS_WORKING_DIR
+      git fetch origin pull/$CIRRUS_PR/head:pull/$CIRRUS_PR
+    
+      # CIRRUS_BASE_BRANCH will probably be `main` for the majority of the time
+      # However, if you do a PR against a maintenance branch we will want to
+      # merge the PR into the maintenance branch, not main
+      git checkout $CIRRUS_BASE_BRANCH
+
+      # alpine git package needs default user.name and user.email to be set before a merge
+      git -c user.email="you@example.com" merge --no-commit pull/$CIRRUS_PR
+      git submodule update --init --recursive
+    fi
+
+
+linux_aarch64_test_task:
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 1
+    memory: 4G
+
+  <<: *MODIFIED_CLONE
+
+  ccache_cache:
+    folder: .ccache
+    populate_script:
+      - mkdir -p .ccache
+    fingerprint_key: ccache-linux_aarch64
+
+  prepare_env_script: |
+    apt-get update
+    apt-get install -y --no-install-recommends software-properties-common gcc g++ gfortran pkg-config ccache
+    apt-get install -y --no-install-recommends python3.10 python3.10-venv libopenblas-dev libatlas-base-dev liblapack-dev
+
+    # python3.10 -m ensurepip --default-pip --user
+    ln -s $(which python3.10) python
+
+    # put ccache and python on PATH
+    export PATH=/usr/lib/ccache:$PWD:$PATH
+    echo "PATH=$PATH" >> $CIRRUS_ENV
+    echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
+
+    # required for figuring out the system tags in openblas_support
+    pip install packaging
+
+    pip install -r build_requirements.txt
+    pip install -r test_requirements.txt
+
+  build_script: |
+    spin build -- -Dallow-noblas=true
+
+  test_script: |
+    spin test -j 1
+    ccache -s
+
+
+macos_arm64_test_task:
+  depends_on:
+    - linux_aarch64_test
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
+
+  <<: *MODIFIED_CLONE
+
+  ccache_cache:
+    folder: .ccache
+    populate_script:
+      - mkdir -p .ccache
+    fingerprint_key: ccache-macosx_arm64
+
+  pip_cache:
+    folder: ~/.cache/pip
+
+  test_script: |
+    brew install python@3.10 ccache
+
+    export PATH=/opt/homebrew/opt/python@3.10/libexec/bin:$PATH
+    export PATH=/opt/homebrew/opt/ccache/libexec:$PATH
+    export CCACHE_DIR=$PWD/.ccache
+    echo "PATH=$PATH" >> $CIRRUS_ENV
+
+    python --version
+
+    RUNNER_OS="macOS"
+    SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
+    
+    # NOTE: OpenBLAS is not used in this job; if that's done in the future, ensure
+    # PKG_CONFIG_PATH points to the directory containing the openblas.pc file
+    # that's installed with the cibw_before_build.sh command.
+    # used for installing OpenBLAS/gfortran
+    bash tools/wheels/cibw_before_build.sh $PWD
+
+    pushd ~/
+    python -m venv numpy-dev
+    source numpy-dev/bin/activate
+    popd
+
+    pip install -r build_requirements.txt
+    pip install pytest pytest-xdist hypothesis typing_extensions
+    
+    spin build -- -Dallow-noblas=true
+    spin test -j auto
+
+    ccache -s

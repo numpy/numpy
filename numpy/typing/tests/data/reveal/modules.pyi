@@ -16,6 +16,8 @@ reveal_type(np.random)  # E: ModuleType
 reveal_type(np.rec)  # E: ModuleType
 reveal_type(np.testing)  # E: ModuleType
 reveal_type(np.version)  # E: ModuleType
+reveal_type(np.exceptions)  # E: ModuleType
+reveal_type(np.dtypes)  # E: ModuleType
 
 reveal_type(np.lib.format)  # E: ModuleType
 reveal_type(np.lib.mixins)  # E: ModuleType
@@ -31,7 +33,6 @@ reveal_type(np.polynomial.polynomial)  # E: ModuleType
 
 reveal_type(np.__path__)  # E: list[builtins.str]
 reveal_type(np.__version__)  # E: str
-reveal_type(np.__git_version__)  # E: str
 reveal_type(np.test)  # E: _pytesttester.PytestTester
 reveal_type(np.test.module_name)  # E: str
 

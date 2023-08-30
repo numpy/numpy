@@ -1,8 +1,7 @@
 """
 Utilities that manipulate strides to achieve desirable effects.
 
-An explanation of strides can be found in the "ndarray.rst" file in the
-NumPy reference guide.
+An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
 """
 import numpy as np
@@ -441,7 +440,7 @@ def broadcast_shapes(*args):
 
     Parameters
     ----------
-    `*args` : tuples of ints, or ints
+    *args : tuples of ints, or ints
         The shapes to be broadcast against each other.
 
     Returns
@@ -484,7 +483,7 @@ def broadcast_arrays(*args, subok=False):
 
     Parameters
     ----------
-    `*args` : array_likes
+    *args : array_likes
         The arrays to broadcast.
 
     subok : bool, optional

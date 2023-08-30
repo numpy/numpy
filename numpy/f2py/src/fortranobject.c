@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -101,6 +102,20 @@ F2PyGetThreadLocalCallbackPtr(char *key)
     return prev;
 }
 
+static PyArray_Descr *
+get_descr_from_type_and_elsize(const int type_num, const int elsize)  {
+  PyArray_Descr * descr = PyArray_DescrFromType(type_num);
+  if (type_num == NPY_STRING) {
+    // PyArray_DescrFromType returns descr with elsize = 0.
+    PyArray_DESCR_REPLACE(descr);
+    if (descr == NULL) {
+      return NULL;
+    }
+    descr->elsize = elsize;
+  }
+  return descr;
+}
+
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *, PyObject *, PyObject *, void *);
@@ -141,18 +156,17 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
         }
         else if ((fp->defs[i].data) !=
                  NULL) { /* Is Fortran variable or array (not allocatable) */
-            if (fp->defs[i].type == NPY_STRING) {
-                npy_intp n = fp->defs[i].rank - 1;
-                v = PyArray_New(&PyArray_Type, n, fp->defs[i].dims.d,
-                                NPY_STRING, NULL, fp->defs[i].data,
-                                fp->defs[i].dims.d[n], NPY_ARRAY_FARRAY, NULL);
+            PyArray_Descr *
+            descr = get_descr_from_type_and_elsize(fp->defs[i].type,
+                                                   fp->defs[i].elsize);
+            if (descr == NULL) {
+                goto fail;
             }
-            else {
-                v = PyArray_New(&PyArray_Type, fp->defs[i].rank,
-                                fp->defs[i].dims.d, fp->defs[i].type, NULL,
-                                fp->defs[i].data, 0, NPY_ARRAY_FARRAY, NULL);
-            }
+            v = PyArray_NewFromDescr(&PyArray_Type, descr, fp->defs[i].rank,
+                                     fp->defs[i].dims.d, NULL, fp->defs[i].data,
+                                     NPY_ARRAY_FARRAY, NULL);
             if (v == NULL) {
+                Py_DECREF(descr);
                 goto fail;
             }
             PyDict_SetItemString(fp->dict, fp->defs[i].name, v);
@@ -178,6 +192,13 @@ PyFortranObject_NewAsAttr(FortranDataDef *defs)
     }
     fp->len = 1;
     fp->defs = defs;
+    if (defs->rank == -1) {
+      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("function %s", defs->name));
+    } else if (defs->rank == 0) {
+      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("scalar %s", defs->name));
+    } else {
+      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("array %s", defs->name));
+    }
     return (PyObject *)fp;
 }
 
@@ -697,14 +718,16 @@ f2py_report_on_array_copy_fromany(void)
  * $Id: fortranobject.c,v 1.52 2005/07/11 07:44:20 pearu Exp $
  */
 
-static int
-check_and_fix_dimensions(const PyArrayObject *arr, const int rank,
-                         npy_intp *dims);
+static int check_and_fix_dimensions(const PyArrayObject* arr,
+                                    const int rank,
+                                    npy_intp *dims,
+                                    const char *errmess);
 
 static int
 find_first_negative_dimension(const int rank, const npy_intp *dims)
 {
-    for (int i = 0; i < rank; ++i) {
+    int i;
+    for (i = 0; i < rank; ++i) {
         if (dims[i] < 0) {
             return i;
         }
@@ -762,80 +785,176 @@ swap_arrays(PyArrayObject *obj1, PyArrayObject *obj2)
     return 0;
 }
 
-#define ARRAY_ISCOMPATIBLE(arr, type_num)                         \
-    ((PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num)) || \
-     (PyArray_ISFLOAT(arr) && PyTypeNum_ISFLOAT(type_num)) ||     \
-     (PyArray_ISCOMPLEX(arr) && PyTypeNum_ISCOMPLEX(type_num)) || \
-     (PyArray_ISBOOL(arr) && PyTypeNum_ISBOOL(type_num)))
+#define ARRAY_ISCOMPATIBLE(arr,type_num)                                \
+    ((PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num)) ||     \
+     (PyArray_ISFLOAT(arr) && PyTypeNum_ISFLOAT(type_num)) ||         \
+     (PyArray_ISCOMPLEX(arr) && PyTypeNum_ISCOMPLEX(type_num)) ||     \
+     (PyArray_ISBOOL(arr) && PyTypeNum_ISBOOL(type_num)) ||           \
+     (PyArray_ISSTRING(arr) && PyTypeNum_ISSTRING(type_num)))
+
+static int
+get_elsize(PyObject *obj) {
+  /*
+    get_elsize determines array itemsize from a Python object.  Returns
+    elsize if successful, -1 otherwise.
+
+    Supported types of the input are: numpy.ndarray, bytes, str, tuple,
+    list.
+  */
+
+  if (PyArray_Check(obj)) {
+    return PyArray_DESCR((PyArrayObject *)obj)->elsize;
+  } else if (PyBytes_Check(obj)) {
+    return PyBytes_GET_SIZE(obj);
+  } else if (PyUnicode_Check(obj)) {
+    return PyUnicode_GET_LENGTH(obj);
+  } else if (PySequence_Check(obj)) {
+    PyObject* fast = PySequence_Fast(obj, "f2py:fortranobject.c:get_elsize");
+    if (fast != NULL) {
+      Py_ssize_t i, n = PySequence_Fast_GET_SIZE(fast);
+      int sz, elsize = 0;
+      for (i=0; i<n; i++) {
+        sz = get_elsize(PySequence_Fast_GET_ITEM(fast, i) /* borrowed */);
+        if (sz > elsize) {
+          elsize = sz;
+        }
+      }
+      Py_DECREF(fast);
+      return elsize;
+    }
+  }
+  return -1;
+}
 
 extern PyArrayObject *
-array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
-                 const int intent, PyObject *obj)
-{
+ndarray_from_pyobj(const int type_num,
+                   const int elsize_,
+                   npy_intp *dims,
+                   const int rank,
+                   const int intent,
+                   PyObject *obj,
+                   const char *errmess) {
     /*
+     * Return an array with given element type and shape from a Python
+     * object while taking into account the usage intent of the array.
+     *
+     * - element type is defined by type_num and elsize
+     * - shape is defined by dims and rank
+     *
+     * ndarray_from_pyobj is used to convert Python object arguments
+     * to numpy ndarrays with given type and shape that data is passed
+     * to interfaced Fortran or C functions.
+     *
+     * errmess (if not NULL), contains a prefix of an error message
+     * for an exception to be triggered within this function.
+     *
+     * Negative elsize value means that elsize is to be determined
+     * from the Python object in runtime.
+     *
+     * Note on strings
+     * ---------------
+     *
+     * String type (type_num == NPY_STRING) does not have fixed
+     * element size and, by default, the type object sets it to
+     * 0. Therefore, for string types, one has to use elsize
+     * argument. For other types, elsize value is ignored.
+     *
+     * NumPy defines the type of a fixed-width string as
+     * dtype('S<width>'). In addition, there is also dtype('c'), that
+     * appears as dtype('S1') (these have the same type_num value),
+     * but is actually different (.char attribute is either 'S' or
+     * 'c', respecitely).
+     *
+     * In Fortran, character arrays and strings are different
+     * concepts.  The relation between Fortran types, NumPy dtypes,
+     * and type_num-elsize pairs, is defined as follows:
+     *
+     * character*5 foo     | dtype('S5')  | elsize=5, shape=()
+     * character(5) foo    | dtype('S1')  | elsize=1, shape=(5)
+     * character*5 foo(n)  | dtype('S5')  | elsize=5, shape=(n,)
+     * character(5) foo(n) | dtype('S1')  | elsize=1, shape=(5, n)
+     * character*(*) foo   | dtype('S')   | elsize=-1, shape=()
+     *
      * Note about reference counting
-     *  -----------------------------
+     * -----------------------------
+     *
      * If the caller returns the array to Python, it must be done with
-     * Py_BuildValue("N",arr).
-     * Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
+     * Py_BuildValue("N",arr).  Otherwise, if obj!=arr then the caller
+     * must call Py_DECREF(arr).
      *
      * Note on intent(cache,out,..)
-     * ---------------------
+     * ----------------------------
      * Don't expect correct data when returning intent(cache) array.
      *
      */
-    char mess[200];
+    char mess[F2PY_MESSAGE_BUFFER_SIZE];
     PyArrayObject *arr = NULL;
-    PyArray_Descr *descr;
-    char typechar;
-    int elsize;
-
-    if ((intent & F2PY_INTENT_HIDE) ||
-        ((intent & F2PY_INTENT_CACHE) && (obj == Py_None)) ||
-        ((intent & F2PY_OPTIONAL) && (obj == Py_None))) {
+    int elsize = (elsize_ < 0 ? get_elsize(obj) : elsize_);
+    if (elsize < 0) {
+      if (errmess != NULL) {
+        strcpy(mess, errmess);
+      }
+      sprintf(mess + strlen(mess),
+              " -- failed to determine element size from %s",
+              Py_TYPE(obj)->tp_name);
+      PyErr_SetString(PyExc_SystemError, mess);
+      return NULL;
+    }
+    PyArray_Descr * descr = get_descr_from_type_and_elsize(type_num, elsize);  // new reference
+    if (descr == NULL) {
+      return NULL;
+    }
+    elsize = descr->elsize;
+    if ((intent & F2PY_INTENT_HIDE)
+        || ((intent & F2PY_INTENT_CACHE) && (obj == Py_None))
+        || ((intent & F2PY_OPTIONAL) && (obj == Py_None))
+        ) {
         /* intent(cache), optional, intent(hide) */
-        int i = find_first_negative_dimension(rank, dims);
-        if (i >= 0) {
-            PyErr_Format(PyExc_ValueError,
-                         "failed to create intent(cache|hide)|optional array"
-                         " -- must have defined dimensions, but dims[%d] = %"
-                         NPY_INTP_FMT, i, dims[i]);
+        int ineg = find_first_negative_dimension(rank, dims);
+        if (ineg >= 0) {
+            int i;
+            strcpy(mess, "failed to create intent(cache|hide)|optional array"
+                   "-- must have defined dimensions but got (");
+            for(i = 0; i < rank; ++i)
+                sprintf(mess + strlen(mess), "%" NPY_INTP_FMT ",", dims[i]);
+            strcat(mess, ")");
+            PyErr_SetString(PyExc_ValueError, mess);
+            Py_DECREF(descr);
             return NULL;
         }
-        arr = (PyArrayObject *)PyArray_New(&PyArray_Type, rank, dims, type_num,
-                                           NULL, NULL, 1,
-                                           !(intent & F2PY_INTENT_C), NULL);
-        if (arr == NULL)
-            return NULL;
-        if (!(intent & F2PY_INTENT_CACHE))
-            PyArray_FILLWBYTE(arr, 0);
+        arr = (PyArrayObject *)                                      \
+          PyArray_NewFromDescr(&PyArray_Type, descr, rank, dims,
+                               NULL, NULL, !(intent & F2PY_INTENT_C), NULL);
+        if (arr == NULL) {
+          Py_DECREF(descr);
+          return NULL;
+        }
+        if (PyArray_ITEMSIZE(arr) != elsize) {
+          strcpy(mess, "failed to create intent(cache|hide)|optional array");
+          sprintf(mess+strlen(mess)," -- expected elsize=%d got %" NPY_INTP_FMT, elsize, (npy_intp)PyArray_ITEMSIZE(arr));
+          PyErr_SetString(PyExc_ValueError,mess);
+          Py_DECREF(arr);
+          return NULL;
+        }
+        if (!(intent & F2PY_INTENT_CACHE)) {
+          PyArray_FILLWBYTE(arr, 0);
+        }
         return arr;
     }
 
-    descr = PyArray_DescrFromType(type_num);
-    /* compatibility with NPY_CHAR */
-    if (type_num == NPY_STRING) {
-        PyArray_DESCR_REPLACE(descr);
-        if (descr == NULL) {
-            return NULL;
-        }
-        descr->elsize = 1;
-        descr->type = NPY_CHARLTR;
-    }
-    elsize = descr->elsize;
-    typechar = descr->type;
-    Py_DECREF(descr);
     if (PyArray_Check(obj)) {
         arr = (PyArrayObject *)obj;
-
         if (intent & F2PY_INTENT_CACHE) {
             /* intent(cache) */
-            if (PyArray_ISONESEGMENT(arr) && PyArray_ITEMSIZE(arr) >= elsize) {
-                if (check_and_fix_dimensions(arr, rank, dims)) {
-                    return NULL;
+            if (PyArray_ISONESEGMENT(arr)
+                && PyArray_ITEMSIZE(arr) >= elsize) {
+                if (check_and_fix_dimensions(arr, rank, dims, errmess)) {
+                  Py_DECREF(descr);
+                  return NULL;
                 }
                 if (intent & F2PY_INTENT_OUT)
-                    Py_INCREF(arr);
+                  Py_INCREF(arr);
+                Py_DECREF(descr);
                 return arr;
             }
             strcpy(mess, "failed to initialize intent(cache) array");
@@ -847,14 +966,16 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
                         "%" NPY_INTP_FMT,
                         elsize, (npy_intp)PyArray_ITEMSIZE(arr));
             PyErr_SetString(PyExc_ValueError, mess);
+            Py_DECREF(descr);
             return NULL;
         }
 
         /* here we have always intent(in) or intent(inout) or intent(inplace)
          */
 
-        if (check_and_fix_dimensions(arr, rank, dims)) {
-            return NULL;
+        if (check_and_fix_dimensions(arr, rank, dims, errmess)) {
+          Py_DECREF(descr);
+          return NULL;
         }
         /*
         printf("intent alignment=%d\n", F2PY_GET_ALIGNMENT(intent));
@@ -863,16 +984,18 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
         for (i=1;i<=16;i++)
           printf("i=%d isaligned=%d\n", i, ARRAY_ISALIGNED(arr, i));
         */
-        if ((!(intent & F2PY_INTENT_COPY)) &&
+        if ((! (intent & F2PY_INTENT_COPY)) &&
             PyArray_ITEMSIZE(arr) == elsize &&
-            ARRAY_ISCOMPATIBLE(arr, type_num) &&
+            ARRAY_ISCOMPATIBLE(arr,type_num) &&
             F2PY_CHECK_ALIGNMENT(arr, intent)) {
-            if ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY_RO(arr)
-                                         : PyArray_ISFARRAY_RO(arr)) {
+            if ((intent & F2PY_INTENT_INOUT || intent & F2PY_INTENT_INPLACE)
+              ? ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY(arr) : PyArray_ISFARRAY(arr))
+              : ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY_RO(arr) : PyArray_ISFARRAY_RO(arr))) {
                 if ((intent & F2PY_INTENT_OUT)) {
                     Py_INCREF(arr);
                 }
                 /* Returning input array */
+                Py_DECREF(descr);
                 return arr;
             }
         }
@@ -887,42 +1010,48 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
             if (PyArray_ITEMSIZE(arr) != elsize)
                 sprintf(mess + strlen(mess),
                         " -- expected elsize=%d but got %" NPY_INTP_FMT,
-                        elsize, (npy_intp)PyArray_ITEMSIZE(arr));
-            if (!(ARRAY_ISCOMPATIBLE(arr, type_num)))
+                        elsize,
+                        (npy_intp)PyArray_ITEMSIZE(arr)
+                        );
+            if (!(ARRAY_ISCOMPATIBLE(arr, type_num))) {
                 sprintf(mess + strlen(mess),
                         " -- input '%c' not compatible to '%c'",
-                        PyArray_DESCR(arr)->type, typechar);
+                        PyArray_DESCR(arr)->type, descr->type);
+            }
             if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
                 sprintf(mess + strlen(mess), " -- input not %d-aligned",
                         F2PY_GET_ALIGNMENT(intent));
             PyErr_SetString(PyExc_ValueError, mess);
+            Py_DECREF(descr);
             return NULL;
         }
 
         /* here we have always intent(in) or intent(inplace) */
 
         {
-            PyArrayObject *retarr;
-            retarr = (PyArrayObject *)PyArray_New(
-                    &PyArray_Type, PyArray_NDIM(arr), PyArray_DIMS(arr),
-                    type_num, NULL, NULL, 1, !(intent & F2PY_INTENT_C), NULL);
-            if (retarr == NULL)
-                return NULL;
-            F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
-            if (PyArray_CopyInto(retarr, arr)) {
-                Py_DECREF(retarr);
-                return NULL;
+          PyArrayObject * retarr = (PyArrayObject *)                    \
+            PyArray_NewFromDescr(&PyArray_Type, descr, PyArray_NDIM(arr), PyArray_DIMS(arr),
+                                 NULL, NULL, !(intent & F2PY_INTENT_C), NULL);
+          if (retarr==NULL) {
+            Py_DECREF(descr);
+            return NULL;
+          }
+          F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
+          if (PyArray_CopyInto(retarr, arr)) {
+            Py_DECREF(retarr);
+            return NULL;
+          }
+          if (intent & F2PY_INTENT_INPLACE) {
+            if (swap_arrays(arr,retarr)) {
+              Py_DECREF(retarr);
+              return NULL; /* XXX: set exception */
             }
-            if (intent & F2PY_INTENT_INPLACE) {
-                if (swap_arrays(arr, retarr))
-                    return NULL; /* XXX: set exception */
-                Py_XDECREF(retarr);
-                if (intent & F2PY_INTENT_OUT)
-                    Py_INCREF(arr);
-            }
-            else {
-                arr = retarr;
-            }
+            Py_XDECREF(retarr);
+            if (intent & F2PY_INTENT_OUT)
+              Py_INCREF(arr);
+          } else {
+            arr = retarr;
+          }
         }
         return arr;
     }
@@ -933,20 +1062,11 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
                      "failed to initialize intent(inout|inplace|cache) "
                      "array, input '%s' object is not an array",
                      Py_TYPE(obj)->tp_name);
+        Py_DECREF(descr);
         return NULL;
     }
 
     {
-        PyArray_Descr *descr = PyArray_DescrFromType(type_num);
-        /* compatibility with NPY_CHAR */
-        if (type_num == NPY_STRING) {
-            PyArray_DESCR_REPLACE(descr);
-            if (descr == NULL) {
-                return NULL;
-            }
-            descr->elsize = 1;
-            descr->type = NPY_CHARLTR;
-        }
         F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
         arr = (PyArrayObject *)PyArray_FromAny(
                 obj, descr, 0, 0,
@@ -954,13 +1074,45 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
                                           : NPY_ARRAY_FARRAY) |
                         NPY_ARRAY_FORCECAST,
                 NULL);
-        if (arr == NULL)
-            return NULL;
-        if (check_and_fix_dimensions(arr, rank, dims)) {
-            return NULL;
+        // Warning: in the case of NPY_STRING, PyArray_FromAny may
+        // reset descr->elsize, e.g. dtype('S0') becomes dtype('S1').
+        if (arr == NULL) {
+          Py_DECREF(descr);
+          return NULL;
+        }
+        if (type_num != NPY_STRING && PyArray_ITEMSIZE(arr) != elsize) {
+          // This is internal sanity tests: elsize has been set to
+          // descr->elsize in the beginning of this function.
+          strcpy(mess, "failed to initialize intent(in) array");
+          sprintf(mess + strlen(mess),
+                  " -- expected elsize=%d got %" NPY_INTP_FMT, elsize,
+                  (npy_intp)PyArray_ITEMSIZE(arr));
+          PyErr_SetString(PyExc_ValueError, mess);
+          Py_DECREF(arr);
+          return NULL;
+        }
+        if (check_and_fix_dimensions(arr, rank, dims, errmess)) {
+          Py_DECREF(arr);
+          return NULL;
         }
         return arr;
     }
+}
+
+extern PyArrayObject *
+array_from_pyobj(const int type_num,
+                                npy_intp *dims,
+                                const int rank,
+                                const int intent,
+                                PyObject *obj) {
+  /*
+    Same as ndarray_from_pyobj but with elsize determined from type,
+    if possible. Provided for backward compatibility.
+   */
+  PyArray_Descr* descr = PyArray_DescrFromType(type_num);
+  int elsize = descr->elsize;
+  Py_DECREF(descr);
+  return ndarray_from_pyobj(type_num, elsize, dims, rank, intent, obj, NULL);
 }
 
 /*****************************************/
@@ -968,8 +1120,8 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
 /*****************************************/
 
 static int
-check_and_fix_dimensions(const PyArrayObject *arr, const int rank,
-                         npy_intp *dims)
+check_and_fix_dimensions(const PyArrayObject* arr, const int rank,
+                         npy_intp *dims, const char *errmess)
 {
     /*
      * This function fills in blanks (that are -1's) in dims list using
@@ -981,6 +1133,7 @@ check_and_fix_dimensions(const PyArrayObject *arr, const int rank,
      * If an error condition is detected, an exception is set and 1 is
      * returned.
      */
+    char mess[F2PY_MESSAGE_BUFFER_SIZE];
     const npy_intp arr_size =
             (PyArray_NDIM(arr)) ? PyArray_Size((PyObject *)arr) : 1;
 #ifdef DEBUG_COPY_ND_ARRAY
@@ -1046,11 +1199,14 @@ check_and_fix_dimensions(const PyArrayObject *arr, const int rank,
             d = PyArray_DIM(arr, i);
             if (dims[i] >= 0) {
                 if (d > 1 && d != dims[i]) {
-                    PyErr_Format(
-                            PyExc_ValueError,
-                            "%d-th dimension must be fixed to %" NPY_INTP_FMT
-                            " but got %" NPY_INTP_FMT "\n",
+                    if (errmess != NULL) {
+                        strcpy(mess, errmess);
+                    }
+                    sprintf(mess + strlen(mess),
+                            " -- %d-th dimension must be fixed to %"
+                            NPY_INTP_FMT " but got %" NPY_INTP_FMT,
                             i, dims[i], d);
+                    PyErr_SetString(PyExc_ValueError, mess);
                     return 1;
                 }
                 if (!dims[i])
@@ -1093,11 +1249,15 @@ check_and_fix_dimensions(const PyArrayObject *arr, const int rank,
                 d = PyArray_DIM(arr, j++);
             if (dims[i] >= 0) {
                 if (d > 1 && d != dims[i]) {
-                    PyErr_Format(
-                            PyExc_ValueError,
-                            "%d-th dimension must be fixed to %" NPY_INTP_FMT
-                            " but got %" NPY_INTP_FMT " (real index=%d)\n",
-                            i, dims[i], d, j - 1);
+                    if (errmess != NULL) {
+                        strcpy(mess, errmess);
+                    }
+                    sprintf(mess + strlen(mess),
+                            " -- %d-th dimension must be fixed to %"
+                            NPY_INTP_FMT " but got %" NPY_INTP_FMT
+                            " (real index=%d)\n",
+                            i, dims[i], d, j-1);
+                    PyErr_SetString(PyExc_ValueError, mess);
                     return 1;
                 }
                 if (!dims[i])
@@ -1159,6 +1319,72 @@ copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
 {
     F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
     return PyArray_CopyInto(out, (PyArrayObject *)arr);
+}
+
+/********************* Various utility functions ***********************/
+
+extern int
+f2py_describe(PyObject *obj, char *buf) {
+  /*
+    Write the description of a Python object to buf. The caller must
+    provide buffer with size sufficient to write the description.
+
+    Return 1 on success.
+  */
+  char localbuf[F2PY_MESSAGE_BUFFER_SIZE];
+  if (PyBytes_Check(obj)) {
+    sprintf(localbuf, "%d-%s", (npy_int)PyBytes_GET_SIZE(obj), Py_TYPE(obj)->tp_name);
+  } else if (PyUnicode_Check(obj)) {
+    sprintf(localbuf, "%d-%s", (npy_int)PyUnicode_GET_LENGTH(obj), Py_TYPE(obj)->tp_name);
+  } else if (PyArray_CheckScalar(obj)) {
+    PyArrayObject* arr = (PyArrayObject*)obj;
+    sprintf(localbuf, "%c%" NPY_INTP_FMT "-%s-scalar", PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
+  } else if (PyArray_Check(obj)) {
+    int i;
+    PyArrayObject* arr = (PyArrayObject*)obj;
+    strcpy(localbuf, "(");
+    for (i=0; i<PyArray_NDIM(arr); i++) {
+      if (i) {
+        strcat(localbuf, " ");
+      }
+      sprintf(localbuf + strlen(localbuf), "%" NPY_INTP_FMT ",", PyArray_DIM(arr, i));
+    }
+    sprintf(localbuf + strlen(localbuf), ")-%c%" NPY_INTP_FMT "-%s", PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
+  } else if (PySequence_Check(obj)) {
+    sprintf(localbuf, "%d-%s", (npy_int)PySequence_Length(obj), Py_TYPE(obj)->tp_name);
+  } else {
+    sprintf(localbuf, "%s instance", Py_TYPE(obj)->tp_name);
+  }
+  // TODO: detect the size of buf and make sure that size(buf) >= size(localbuf).
+  strcpy(buf, localbuf);
+  return 1;
+}
+
+extern npy_intp
+f2py_size_impl(PyArrayObject* var, ...)
+{
+  npy_intp sz = 0;
+  npy_intp dim;
+  npy_intp rank;
+  va_list argp;
+  va_start(argp, var);
+  dim = va_arg(argp, npy_int);
+  if (dim==-1)
+    {
+      sz = PyArray_SIZE(var);
+    }
+  else
+    {
+      rank = PyArray_NDIM(var);
+      if (dim>=1 && dim<=rank)
+        sz = PyArray_DIM(var, dim-1);
+      else
+        fprintf(stderr, "f2py_size: 2nd argument value=%" NPY_INTP_FMT
+                " fails to satisfy 1<=value<=%" NPY_INTP_FMT
+                ". Result will be 0.\n", dim, rank);
+    }
+  va_end(argp);
+  return sz;
 }
 
 /*********************************************/

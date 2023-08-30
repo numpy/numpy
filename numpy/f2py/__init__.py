@@ -47,11 +47,11 @@ def compile(source,
     source_fn : str, optional
         Name of the file where the fortran source is written.
         The default is to use a temporary file with the extension
-        provided by the `extension` parameter
-    extension : {'.f', '.f90'}, optional
+        provided by the ``extension`` parameter
+    extension : ``{'.f', '.f90'}``, optional
         Filename extension if `source_fn` is not provided.
         The extension tells which fortran standard is used.
-        The default is `.f`, which implies F77 standard.
+        The default is ``.f``, which implies F77 standard.
 
         .. versionadded:: 1.11.0
 
@@ -104,8 +104,7 @@ def compile(source,
              '-c',
              'import numpy.f2py as f2py2e;f2py2e.main()'] + args
         try:
-            cp = subprocess.run(c, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+            cp = subprocess.run(c, capture_output=True)
         except OSError:
             # preserve historic status code used by exec_command()
             cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')
@@ -124,7 +123,7 @@ def compile(source,
 
 def get_include():
     """
-    Return the directory that contains the fortranobject.c and .h files.
+    Return the directory that contains the ``fortranobject.c`` and ``.h`` files.
 
     .. note::
 
@@ -151,15 +150,15 @@ def get_include():
     building a Python extension using a ``.pyf`` signature file is a two-step
     process. For a module ``mymod``:
 
-        - Step 1: run ``python -m numpy.f2py mymod.pyf --quiet``. This
-          generates ``_mymodmodule.c`` and (if needed)
-          ``_fblas-f2pywrappers.f`` files next to ``mymod.pyf``.
-        - Step 2: build your Python extension module. This requires the
-          following source files:
+    * Step 1: run ``python -m numpy.f2py mymod.pyf --quiet``. This
+      generates ``_mymodmodule.c`` and (if needed)
+      ``_fblas-f2pywrappers.f`` files next to ``mymod.pyf``.
+    * Step 2: build your Python extension module. This requires the
+      following source files:
 
-              - ``_mymodmodule.c``
-              - ``_mymod-f2pywrappers.f`` (if it was generated in step 1)
-              - ``fortranobject.c``
+      * ``_mymodmodule.c``
+      * ``_mymod-f2pywrappers.f`` (if it was generated in Step 1)
+      * ``fortranobject.c``
 
     See Also
     --------
@@ -169,32 +168,19 @@ def get_include():
     return os.path.join(os.path.dirname(__file__), 'src')
 
 
-if sys.version_info[:2] >= (3, 7):
-    # module level getattr is only supported in 3.7 onwards
-    # https://www.python.org/dev/peps/pep-0562/
-    def __getattr__(attr):
+def __getattr__(attr):
 
-        # Avoid importing things that aren't needed for building
-        # which might import the main numpy module
-        if attr == "f2py_testing":
-            import numpy.f2py.f2py_testing as f2py_testing
-            return f2py_testing
+    # Avoid importing things that aren't needed for building
+    # which might import the main numpy module
+    if attr == "test":
+        from numpy._pytesttester import PytestTester
+        test = PytestTester(__name__)
+        return test
 
-        elif attr == "test":
-            from numpy._pytesttester import PytestTester
-            test = PytestTester(__name__)
-            return test
+    else:
+        raise AttributeError("module {!r} has no attribute "
+                              "{!r}".format(__name__, attr))
 
-        else:
-            raise AttributeError("module {!r} has no attribute "
-                                 "{!r}".format(__name__, attr))
 
-    def __dir__():
-        return list(globals().keys() | {"f2py_testing", "test"})
-
-else:
-    from . import f2py_testing
-
-    from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__)
-    del PytestTester
+def __dir__():
+    return list(globals().keys() | {"test"})

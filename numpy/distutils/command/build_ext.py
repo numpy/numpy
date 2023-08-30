@@ -231,20 +231,36 @@ class build_ext (old_build_ext):
             l = ext.language or self.compiler.detect_language(ext.sources)
             if l:
                 ext_languages.add(l)
+
             # reset language attribute for choosing proper linker
+            #
+            # When we build extensions with multiple languages, we have to
+            # choose a linker. The rules here are:
+            #   1. if there is Fortran code, always prefer the Fortran linker,
+            #   2. otherwise prefer C++ over C,
+            #   3. Users can force a particular linker by using
+            #          `language='c'`  # or 'c++', 'f90', 'f77'
+            #      in their config.add_extension() calls.
             if 'c++' in ext_languages:
                 ext_language = 'c++'
-            elif 'f90' in ext_languages:
-                ext_language = 'f90'
-            elif 'f77' in ext_languages:
-                ext_language = 'f77'
             else:
                 ext_language = 'c'  # default
-            if l and l != ext_language and ext.language:
-                log.warn('resetting extension %r language from %r to %r.' %
-                         (ext.name, l, ext_language))
-            if not ext.language:
-                ext.language = ext_language
+
+            has_fortran = False
+            if 'f90' in ext_languages:
+                ext_language = 'f90'
+                has_fortran = True
+            elif 'f77' in ext_languages:
+                ext_language = 'f77'
+                has_fortran = True
+
+            if not ext.language or has_fortran:
+                if l and l != ext_language and ext.language:
+                    log.warn('resetting extension %r language from %r to %r.' %
+                             (ext.name, l, ext_language))
+
+            ext.language = ext_language
+
             # global language
             all_languages.update(ext_languages)
 
@@ -377,8 +393,8 @@ class build_ext (old_build_ext):
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
-        extra_cflags = ext.extra_c_compile_args or []
-        extra_cxxflags = ext.extra_cxx_compile_args or []
+        extra_cflags = getattr(ext, 'extra_c_compile_args', None) or []
+        extra_cxxflags = getattr(ext, 'extra_cxx_compile_args', None) or []
 
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:
@@ -391,6 +407,7 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # Needed to compile kiva.agg._agg extension.
                 extra_args.append('/Zm1000')
+                extra_cflags += extra_cxxflags
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
@@ -441,7 +458,18 @@ class build_ext (old_build_ext):
             dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
             include_dirs.append(dispatch_hpath)
 
-            copt_build_src = None if self.inplace else bsrc_dir
+            # copt_build_src = None if self.inplace else bsrc_dir
+            # Always generate the generated config files and
+            # dispatch-able sources inside the build directory,
+            # even if the build option `inplace` is enabled.
+            # This approach prevents conflicts with Meson-generated
+            # config headers. Since `spin build --clean` will not remove
+            # these headers, they might overwrite the generated Meson headers,
+            # causing compatibility issues. Maintaining separate directories
+            # ensures compatibility between distutils dispatch config headers
+            # and Meson headers, avoiding build disruptions.
+            # See gh-24450 for more details.
+            copt_build_src = bsrc_dir
             for _srcs, _dst, _ext in (
                 ((c_sources,), copt_c_sources, ('.dispatch.c',)),
                 ((c_sources, cxx_sources), copt_cxx_sources,
@@ -570,6 +598,13 @@ class build_ext (old_build_ext):
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(
                 fcompiler, libraries, library_dirs)
+            if ext.runtime_library_dirs:
+                # gcc adds RPATH to the link. On windows, copy the dll into
+                # self.extra_dll_dir instead.
+                for d in ext.runtime_library_dirs:
+                    for f in glob(d + '/*.dll'):
+                        copy_file(f, self.extra_dll_dir)
+                ext.runtime_library_dirs = []
 
         elif ext.language in ['f77', 'f90'] and fcompiler is not None:
             linker = fcompiler.link_shared_object
@@ -618,12 +653,12 @@ class build_ext (old_build_ext):
                 if os.path.isfile(fake_lib):
                     # Replace fake static library
                     libraries.remove(lib)
-                    with open(fake_lib, 'r') as f:
+                    with open(fake_lib) as f:
                         unlinkable_fobjects.extend(f.read().splitlines())
 
                     # Expand C objects
                     c_lib = os.path.join(libdir, lib + '.cobjects')
-                    with open(c_lib, 'r') as f:
+                    with open(c_lib) as f:
                         objects.extend(f.read().splitlines())
 
         # Wrap unlinkable objects to a linkable one

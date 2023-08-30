@@ -350,7 +350,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     For each value that cannot be expressed as a real number or infinity, it
     returns ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arccos` is a complex analytical function that
+    For complex-valued input, `arcsinh` is a complex analytical function that
     has branch cuts `[1j, infj]` and `[-1j, -infj]` and is continuous from
     the right on the former and from the left on the latter.
 
@@ -512,7 +512,7 @@ add_newdoc('numpy.core.umath', 'arctan2',
     >>> np.arctan2([1., -1.], [0., 0.])
     array([ 1.57079633, -1.57079633])
     >>> np.arctan2([0., 0., np.inf], [+0., -0., np.inf])
-    array([ 0.        ,  3.14159265,  0.78539816])
+    array([0.        , 3.14159265, 0.78539816])
 
     """)
 
@@ -667,7 +667,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     --------
     The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
-    then ``000111011``, or 29:
+    then ``00011101``, or 29:
 
     >>> np.bitwise_or(13, 16)
     29
@@ -1018,7 +1018,7 @@ add_newdoc('numpy.core.umath', 'heaviside',
     """
     Compute the Heaviside step function.
 
-    The Heaviside step function is defined as::
+    The Heaviside step function [1]_ is defined as::
 
                               0   if x1 < 0
         heaviside(x1, x2) =  x2   if x1 == 0
@@ -1047,8 +1047,8 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     References
     ----------
-    .. Wikipedia, "Heaviside step function",
-       https://en.wikipedia.org/wiki/Heaviside_step_function
+    .. [1] Wikipedia, "Heaviside step function",
+           https://en.wikipedia.org/wiki/Heaviside_step_function
 
     Examples
     --------
@@ -1713,7 +1713,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     False
     >>> np.isfinite(np.inf)
     False
-    >>> np.isfinite(np.NINF)
+    >>> np.isfinite(-np.inf)
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
     array([False,  True, False])
@@ -1765,7 +1765,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     True
     >>> np.isinf(np.nan)
     False
-    >>> np.isinf(np.NINF)
+    >>> np.isinf(-np.inf)
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
     array([ True,  True, False, False])
@@ -2011,7 +2011,7 @@ add_newdoc('numpy.core.umath', 'log',
     -----
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `exp(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]`.
+    `z` whose imaginary part lies in `(-pi, pi]`.
 
     For real-valued input data types, `log` always returns real output. For
     each value that cannot be expressed as a real number or infinity, it
@@ -2021,6 +2021,10 @@ add_newdoc('numpy.core.umath', 'log',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
+
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), the result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
 
     References
     ----------
@@ -2032,7 +2036,7 @@ add_newdoc('numpy.core.umath', 'log',
     Examples
     --------
     >>> np.log([1, np.e, np.e**2, 0])
-    array([  0.,   1.,   2., -Inf])
+    array([  0.,   1.,   2., -inf])
 
     """)
 
@@ -2061,7 +2065,7 @@ add_newdoc('numpy.core.umath', 'log10',
     -----
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `10**z = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]`.
+    `z` whose imaginary part lies in `(-pi, pi]`.
 
     For real-valued input data types, `log10` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
@@ -2071,6 +2075,10 @@ add_newdoc('numpy.core.umath', 'log10',
     has a branch cut `[-inf, 0]` and is continuous from above on it.
     `log10` handles the floating-point negative zero as an infinitesimal
     negative number, conforming to the C99 standard.
+
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), the result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
 
     References
     ----------
@@ -2112,7 +2120,7 @@ add_newdoc('numpy.core.umath', 'log2',
 
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `2**z = x`. The convention is to return the `z`
-    whose imaginary part lies in `[-pi, pi]`.
+    whose imaginary part lies in `(-pi, pi]`.
 
     For real-valued input data types, `log2` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
@@ -2123,11 +2131,15 @@ add_newdoc('numpy.core.umath', 'log2',
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
 
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), the result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
+
     Examples
     --------
     >>> x = np.array([0, 1, 2, 2**4])
     >>> np.log2(x)
-    array([-Inf,   0.,   1.,   4.])
+    array([-inf,   0.,   1.,   4.])
 
     >>> xi = np.array([0+1.j, 1, 2+0.j, 4.j])
     >>> np.log2(xi)
@@ -2445,7 +2457,7 @@ add_newdoc('numpy.core.umath', 'maximum',
     """
     Element-wise maximum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     maxima. If one of the elements being compared is a NaN, then that
     element is returned. If both elements are NaNs then the first is
     returned. The latter distinction is important for complex NaNs, which
@@ -2495,7 +2507,7 @@ add_newdoc('numpy.core.umath', 'maximum',
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.maximum(np.Inf, 1)
+    >>> np.maximum(np.inf, 1)
     inf
 
     """)
@@ -2504,7 +2516,7 @@ add_newdoc('numpy.core.umath', 'minimum',
     """
     Element-wise minimum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     minima. If one of the elements being compared is a NaN, then that
     element is returned. If both elements are NaNs then the first is
     returned. The latter distinction is important for complex NaNs, which
@@ -2554,7 +2566,7 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.minimum(-np.Inf, 1)
+    >>> np.minimum(-np.inf, 1)
     -inf
 
     """)
@@ -2563,7 +2575,7 @@ add_newdoc('numpy.core.umath', 'fmax',
     """
     Element-wise maximum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     maxima. If one of the elements being compared is a NaN, then the
     non-nan element is returned. If both elements are NaNs then the first
     is returned.  The latter distinction is important for complex NaNs,
@@ -2621,7 +2633,7 @@ add_newdoc('numpy.core.umath', 'fmin',
     """
     Element-wise minimum of array elements.
 
-    Compare two arrays and returns a new array containing the element-wise
+    Compare two arrays and return a new array containing the element-wise
     minima. If one of the elements being compared is a NaN, then the
     non-nan element is returned. If both elements are NaNs then the first
     is returned.  The latter distinction is important for complex NaNs,
@@ -2785,8 +2797,10 @@ add_newdoc('numpy.core.umath', 'matmul',
       (9, 5, 7, 3)
       >>> # n is 7, k is 4, m is 3
 
-    The matmul function implements the semantics of the ``@`` operator introduced
-    in Python 3.5 following :pep:`465`.
+    The matmul function implements the semantics of the ``@`` operator
+    introduced in Python 3.5 following :pep:`465`.
+
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Examples
     --------
@@ -3327,7 +3341,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
-    equivalent to the Python modulus operator``x1 % x2`` and has the same sign
+    equivalent to the Python modulus operator ``x1 % x2`` and has the same sign
     as the divisor `x2`. The MATLAB function equivalent to ``np.remainder``
     is ``mod``.
 
@@ -3817,9 +3831,9 @@ add_newdoc('numpy.core.umath', 'sqrt',
 
     See Also
     --------
-    lib.scimath.sqrt
+    emath.sqrt
         A version which returns complex numbers when given negative reals.
-        Note: 0.0 and -0.0 are handled differently for complex inputs.
+        Note that 0.0 and -0.0 are handled differently for complex inputs.
 
     Notes
     -----
@@ -4048,7 +4062,7 @@ add_newdoc('numpy.core.umath', 'frexp',
     """
     Decompose the elements of x into mantissa and twos exponent.
 
-    Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
+    Returns (`mantissa`, `exponent`), where ``x = mantissa * 2**exponent``.
     The mantissa lies in the open interval(-1, 1), while the twos
     exponent is a signed integer.
 

@@ -26,7 +26,7 @@ changes made in one :class:`ndarray` may be visible in another. That
 is, an ndarray can be a *"view"* to another ndarray, and the data it
 is referring to is taken care of by the *"base"* ndarray. ndarrays can
 also be views to memory owned by Python :class:`strings <str>` or
-objects implementing the :class:`buffer` or :ref:`array
+objects implementing the :class:`memoryview` or :ref:`array
 <arrays.interface>` interfaces.
 
 
@@ -142,13 +142,13 @@ While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
 
-    1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
-       This means that in the formula for the offset :math:`n_k = 0` and thus
-       :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
-       arbitrary.
-    2. If an array has no elements (``self.size == 0``) there is no legal
-       index and the strides are never used. Any array with no elements may be
-       considered C-style and Fortran-style contiguous.
+1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+   This means that in the formula for the offset :math:`n_k = 0` and thus
+   :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
+   arbitrary.
+2. If an array has no elements (``self.size == 0``) there is no legal
+   index and the strides are never used. Any array with no elements may be
+   considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and ``aligned`` flags value. This also means
@@ -161,28 +161,17 @@ An array is considered aligned if the memory offsets for all elements and the
 base offset itself is a multiple of `self.itemsize`. Understanding
 `memory-alignment` leads to better performance on most hardware.
 
-.. note::
-
-    Points (1) and (2) can currently be disabled by the compile time
-    environmental variable ``NPY_RELAXED_STRIDES_CHECKING=0``,
-    which was the default before NumPy 1.10.
-    No users should have to do this. ``NPY_RELAXED_STRIDES_DEBUG=1``
-    can be used to help find errors when incorrectly relying on the strides
-    in C-extension code (see below warning).
-
-    You can check whether this option was enabled when your NumPy was
-    built by looking at the value of ``np.ones((10,1),
-    order='C').flags.f_contiguous``. If this is ``True``, then your
-    NumPy has relaxed strides checking enabled.
-
 .. warning::
 
     It does *not* generally hold that ``self.strides[-1] == self.itemsize``
     for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
     Fortran-style contiguous arrays is true.
 
-Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major`
-(C) order, unless otherwise specified, but, for example, :ref:`basic
+    ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
+    incorrectly relying on the strides in C-extension code (see below warning).
+
+Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major` (C)
+order, unless otherwise specified, but, for example, :ref:`basic
 array slicing <arrays.indexing>` often produces :term:`views <view>`
 in a different scheme.
 

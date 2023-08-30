@@ -23,18 +23,19 @@
  * Returns -1 on failure.
  */
 static int
-get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args,
+get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
                           PyObject **with_override, PyObject **methods)
 {
     int i;
     int num_override_args = 0;
-    int narg, nout;
+    int narg, nout, nwhere;
 
     narg = (int)PyTuple_GET_SIZE(in_args);
     /* It is valid for out_args to be NULL: */
     nout = (out_args != NULL) ? (int)PyTuple_GET_SIZE(out_args) : 0;
+    nwhere = (wheremask_obj != NULL) ? 1: 0;
 
-    for (i = 0; i < narg + nout; ++i) {
+    for (i = 0; i < narg + nout + nwhere; ++i) {
         PyObject *obj;
         int j;
         int new_class = 1;
@@ -42,8 +43,11 @@ get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args,
         if (i < narg) {
             obj = PyTuple_GET_ITEM(in_args, i);
         }
-        else {
+        else if (i < narg + nout){
             obj = PyTuple_GET_ITEM(out_args, i - narg);
+        }
+        else {
+            obj = wheremask_obj;
         }
         /*
          * Have we seen this class before?  If so, ignore.
@@ -208,7 +212,7 @@ copy_positional_args_to_kwargs(const char **keywords,
  */
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-        PyObject *in_args, PyObject *out_args,
+        PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
@@ -227,7 +231,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Check inputs for overrides
      */
     num_override_args = get_array_ufunc_overrides(
-           in_args, out_args, with_override, array_ufunc_methods);
+           in_args, out_args, wheremask_obj, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -311,10 +315,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
-        PyObject *override_obj;
-        PyObject *override_array_ufunc;
+        PyObject *override_obj = NULL;
+        PyObject *override_array_ufunc = NULL;
 
-        override_obj = NULL;
         *result = NULL;
 
         /* Choose an overriding argument */

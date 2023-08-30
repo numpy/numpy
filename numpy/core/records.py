@@ -33,14 +33,14 @@ Record arrays allow us to access fields as properties::
   array([2., 2.])
 
 """
+import os
 import warnings
 from collections import Counter
 from contextlib import nullcontext
 
+from .._utils import set_module
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import os_fspath
-from numpy.core.overrides import set_module
 from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
@@ -124,7 +124,7 @@ class format_parser:
 
     See Also
     --------
-    dtype, typename, sctype2char
+    dtype, typename
 
     Examples
     --------
@@ -913,7 +913,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         ctx = nullcontext(fd)
     else:
         # open file
-        ctx = open(os_fspath(fd), 'rb')
+        ctx = open(os.fspath(fd), 'rb')
 
     with ctx as fd:
         if offset > 0:

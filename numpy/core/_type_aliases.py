@@ -17,7 +17,6 @@ and sometimes other mappings too.
 
 """
 
-from numpy.compat import unicode
 from numpy.core._string_helpers import english_lower
 from numpy.core.multiarray import typeinfo, dtype
 from numpy.core._dtype import _kind_name
@@ -107,13 +106,15 @@ def _add_aliases():
         if name in ('longdouble', 'clongdouble') and myname in allTypes:
             continue
 
-        allTypes[myname] = info.type
-
-        # add mapping for both the bit name and the numarray name
-        sctypeDict[myname] = info.type
+        # Add to the main namespace if desired:
+        if bit != 0 and base != "bool":
+            allTypes[myname] = info.type
 
         # add forward, reverse, and string mapping to numarray
         sctypeDict[char] = info.type
+
+        # add mapping for both the bit name
+        sctypeDict[myname] = info.type
 
 
 _add_aliases()
@@ -147,34 +148,23 @@ void = allTypes['void']
 #                            with Python usage)
 #
 def _set_up_aliases():
-    type_pairs = [('complex_', 'cdouble'),
-                  ('int0', 'intp'),
-                  ('uint0', 'uintp'),
-                  ('single', 'float'),
+    type_pairs = [('single', 'float'),
                   ('csingle', 'cfloat'),
-                  ('singlecomplex', 'cfloat'),
-                  ('float_', 'double'),
                   ('intc', 'int'),
                   ('uintc', 'uint'),
                   ('int_', 'long'),
                   ('uint', 'ulong'),
-                  ('cfloat', 'cdouble'),
-                  ('longfloat', 'longdouble'),
-                  ('clongfloat', 'clongdouble'),
-                  ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('bytes_', 'string'),
-                  ('string_', 'string'),
                   ('str_', 'unicode'),
-                  ('unicode_', 'unicode'),
-                  ('object_', 'object')]
+                  ('object_', 'object'),
+                  ('cfloat', 'cdouble')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'int', 'float',
-                 'complex', 'bool', 'string', 'datetime', 'timedelta',
-                 'bytes', 'str']
+    to_remove = ['object', 'int', 'float', 'complex', 'bool', 
+                 'string', 'datetime', 'timedelta', 'bytes', 'str']
 
     for t in to_remove:
         try:
@@ -182,14 +172,24 @@ def _set_up_aliases():
             del sctypeDict[t]
         except KeyError:
             pass
+
+    # Additional aliases in sctypeDict that should not be exposed as attributes
+    attrs_to_remove = ['ulong', 'long', 'unicode', 'cfloat']
+
+    for t in attrs_to_remove:
+        try:
+            del allTypes[t]
+        except KeyError:
+            pass
 _set_up_aliases()
 
 
 sctypes = {'int': [],
-           'uint':[],
-           'float':[],
-           'complex':[],
-           'others':[bool, object, bytes, unicode, void]}
+           'uint': [],
+           'float': [],
+           'complex': [],
+           'others': [bool, object, bytes, str, void]}
+
 
 def _add_array_type(typename, bits):
     try:
@@ -223,8 +223,10 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
-_toadd = ['int', 'float', 'complex', 'bool', 'object',
-          'str', 'bytes', ('a', 'bytes_')]
+_toadd = ['int', ('float', 'double'), ('complex', 'cdouble'), 
+          'bool', 'object',
+          'str', 'bytes', ('a', 'bytes_'),
+          ('int0', 'intp'), ('uint0', 'uintp')]
 
 for name in _toadd:
     if isinstance(name, tuple):

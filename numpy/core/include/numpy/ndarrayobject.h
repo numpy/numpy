@@ -152,7 +152,7 @@ extern "C" {
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-static NPY_INLINE void
+static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
@@ -201,12 +201,6 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 #define PyArray_Put(ap, items, values)                                        \
         PyArray_PutTo(ap, items, values, NPY_RAISE)
 
-/* Compatibility with old Numeric stuff -- don't use in new code */
-
-#define PyArray_FromDimsAndData(nd, d, type, data)                            \
-        PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type),   \
-                                        data)
-
 
 /*
    Check to see if this key in the dictionary is the "title"
@@ -214,7 +208,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
    dict).
 */
 
-static NPY_INLINE int
+static inline int
 NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 {
     PyObject *title;

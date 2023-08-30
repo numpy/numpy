@@ -20,9 +20,13 @@ from typing import (
     Final,
     SupportsIndex,
 )
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
 
 from numpy import generic, dtype, number, object_, bool_, _FloatValue
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,
@@ -36,6 +40,7 @@ from unittest.case import (
     SkipTest as SkipTest,
 )
 
+_P = ParamSpec("_P")
 _T = TypeVar("_T")
 _ET = TypeVar("_ET", bound=BaseException)
 _FT = TypeVar("_FT", bound=Callable[..., Any])
@@ -198,6 +203,8 @@ def assert_array_compare(
     precision: SupportsIndex = ...,
     equal_nan: bool = ...,
     equal_inf: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_equal(
@@ -205,6 +212,8 @@ def assert_array_equal(
     y: ArrayLike,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal(
@@ -254,10 +263,10 @@ def raises(*args: type[BaseException]) -> Callable[[_FT], _FT]: ...
 @overload
 def assert_raises(  # type: ignore
     expected_exception: type[BaseException] | tuple[type[BaseException], ...],
-    callable: Callable[..., Any],
+    callable: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 @overload
 def assert_raises(
@@ -270,10 +279,10 @@ def assert_raises(
 def assert_raises_regex(
     expected_exception: type[BaseException] | tuple[type[BaseException], ...],
     expected_regex: str | bytes | Pattern[Any],
-    callable: Callable[..., Any],
+    callable: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 @overload
 def assert_raises_regex(
@@ -336,20 +345,20 @@ def assert_warns(
 @overload
 def assert_warns(
     warning_class: type[Warning],
-    func: Callable[..., _T],
+    func: Callable[_P, _T],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> _T: ...
 
 @overload
 def assert_no_warnings() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_warnings(
-    func: Callable[..., _T],
+    func: Callable[_P, _T],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> _T: ...
 
 @overload
@@ -384,10 +393,10 @@ def temppath(
 def assert_no_gc_cycles() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_gc_cycles(
-    func: Callable[..., Any],
+    func: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 
 def break_cycles() -> None: ...

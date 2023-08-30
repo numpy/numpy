@@ -21,7 +21,7 @@ from numpy import (
     longdouble,
     clongdouble,
 )
-from numpy.typing import ArrayLike, _CharLike_co, _FloatLike_co
+from numpy._typing import ArrayLike, _CharLike_co, _FloatLike_co
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 

@@ -23,7 +23,7 @@ class TestReturnComplex(util.F2PyTest):
         assert abs(t(array(23 + 4j, "F")) - (23 + 4j)) <= err
         assert abs(t(array([234])) - 234.0) <= err
         assert abs(t(array([[234]])) - 234.0) <= err
-        assert abs(t(array([234], "b")) + 22.0) <= err
+        assert abs(t(array([234]).astype("b")) + 22.0) <= err
         assert abs(t(array([234], "h")) - 234.0) <= err
         assert abs(t(array([234], "i")) - 234.0) <= err
         assert abs(t(array([234], "l")) - 234.0) <= err

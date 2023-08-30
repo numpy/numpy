@@ -428,7 +428,7 @@ New functions added to the ndarray are::
     arr.copy(..., replacena=np.NA)
         Modification to the copy function which replaces NA values,
         either masked or with the NA bitpattern, with the 'replacena='
-        parameter suppled. When 'replacena' isn't NA, the copied
+        parameter supplied. When 'replacena' isn't NA, the copied
         array is unmasked and has the 'NA' part stripped from the
         parameterized dtype ('NA[f8]' becomes just 'f8').
 

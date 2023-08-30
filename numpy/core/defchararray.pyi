@@ -16,7 +16,7 @@ from numpy import (
     _OrderKACF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     _ArrayLikeStr_co as U_co,
     _ArrayLikeBytes_co as S_co,

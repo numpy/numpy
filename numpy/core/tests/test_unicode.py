@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_array_equal
 
@@ -20,12 +22,13 @@ def buffer_length(arr):
     else:
         return np.prod(v.shape) * v.itemsize
 
+
 # In both cases below we need to make sure that the byte swapped value (as
 # UCS4) is still a valid unicode:
 # Value that can be represented in UCS2 interpreters
-ucs2_value = u'\u0900'
+ucs2_value = '\u0900'
 # Value that cannot be represented in UCS2 interpreters (but can in UCS4)
-ucs4_value = u'\U00100900'
+ucs4_value = '\U00100900'
 
 
 def test_string_cast():
@@ -33,8 +36,11 @@ def test_string_cast():
     uni_arr1 = str_arr.astype('>U')
     uni_arr2 = str_arr.astype('<U')
 
-    assert_(str_arr != uni_arr1)
-    assert_(str_arr != uni_arr2)
+    assert_array_equal(str_arr != uni_arr1, np.ones(2, dtype=bool))
+    assert_array_equal(uni_arr1 != str_arr, np.ones(2, dtype=bool))
+    assert_array_equal(str_arr == uni_arr1, np.zeros(2, dtype=bool))
+    assert_array_equal(uni_arr1 == str_arr, np.zeros(2, dtype=bool))
+
     assert_array_equal(uni_arr1, uni_arr2)
 
 
@@ -52,7 +58,7 @@ class CreateZeros:
         # Check the length of the data buffer
         assert_(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        assert_(ua_scalar == u'')
+        assert_(ua_scalar == '')
         # Encode to ascii and double check
         assert_(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars

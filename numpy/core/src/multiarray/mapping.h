@@ -51,7 +51,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
  * Prototypes for Mapping calls --- not part of the C-API
  * because only useful as part of a getitem call.
  */
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 PyArray_MapIterReset(PyArrayMapIterObject *mit);
 
 NPY_NO_EXPORT void

@@ -20,6 +20,10 @@ simd_scalar_from_number(PyObject *obj, simd_data_type dtype)
         }
     } else {
         data.u64 = PyLong_AsUnsignedLongLongMask(obj);
+    #if NPY_SIMD_BIGENDIAN
+        int leftb = (sizeof(npyv_lanetype_u64) - info->lane_size) * 8;
+        data.u64 <<= leftb;
+    #endif
     }
     return data;
 }
@@ -36,7 +40,9 @@ simd_scalar_to_number(simd_data data, simd_data_type dtype)
         return PyFloat_FromDouble(data.f64);
     }
     int leftb = (sizeof(npyv_lanetype_u64) - info->lane_size) * 8;
+#if !NPY_SIMD_BIGENDIAN
     data.u64 <<= leftb;
+#endif
     if (info->is_signed) {
         return PyLong_FromLongLong(data.s64 >> leftb);
     }

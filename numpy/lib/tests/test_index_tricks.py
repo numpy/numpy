@@ -254,6 +254,28 @@ class TestGrid:
         assert_(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
 
+    def test_accepts_longdouble(self):
+        # regression tests for #16945
+        grid64 = mgrid[0.1:0.33:0.1, ]
+        grid128 = mgrid[
+            np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1),
+        ]
+        assert_(grid128.dtype == np.longdouble)
+        assert_array_almost_equal(grid64, grid128)
+
+        grid128c_a = mgrid[0:np.longdouble(1):3.4j]
+        grid128c_b = mgrid[0:np.longdouble(1):3.4j, ]
+        assert_(grid128c_a.dtype == grid128c_b.dtype == np.longdouble)
+        assert_array_equal(grid128c_a, grid128c_b[0])
+
+        # different code path for single slice
+        grid64 = mgrid[0.1:0.33:0.1]
+        grid128 = mgrid[
+            np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1)
+        ]
+        assert_(grid128.dtype == np.longdouble)
+        assert_array_almost_equal(grid64, grid128)
+
     def test_accepts_npcomplexfloating(self):
         # Related to #16466
         assert_array_almost_equal(
@@ -264,6 +286,18 @@ class TestGrid:
         assert_array_almost_equal(
             mgrid[0.1:0.3:3j], mgrid[0.1:0.3:np.complex64(3j)]
         )
+
+        # Related to #16945
+        grid64_a = mgrid[0.1:0.3:3.3j]
+        grid64_b = mgrid[0.1:0.3:3.3j, ][0]
+        assert_(grid64_a.dtype == grid64_b.dtype == np.float64)
+        assert_array_equal(grid64_a, grid64_b)
+
+        grid128_a = mgrid[0.1:0.3:np.clongdouble(3.3j)]
+        grid128_b = mgrid[0.1:0.3:np.clongdouble(3.3j), ][0]
+        assert_(grid128_a.dtype == grid128_b.dtype == np.longdouble)
+        assert_array_equal(grid64_a, grid64_b)
+
 
 class TestConcatenator:
     def test_1d(self):

@@ -56,10 +56,14 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
 #include "array_coercion.h"
+
+
+NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy = 0;
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -394,7 +398,7 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
    to stderr and clear the error
 */
 
-static NPY_INLINE void
+static inline void
 WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
         PyObject * s;
@@ -452,14 +456,15 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free internal references if an Object array */
-        if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            PyArray_XDECREF(self);
+        /* Free any internal references */
+        if (PyDataType_REFCHK(fa->descr)) {
+            if (PyArray_ClearArray(self) < 0) {
+                PyErr_WriteUnraisable(NULL);
+            }
         }
         if (fa->mem_handler == NULL) {
-            char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
-            if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-                char const * msg = "Trying to dealloc data, but a memory policy "
+            if (numpy_warn_if_no_mem_policy) {
+                char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
                 WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
@@ -468,10 +473,6 @@ array_dealloc(PyArrayObject *self)
             free(fa->data);
         }
         else {
-            /*
-             * In theory `PyArray_NBYTES_ALLOCATED`, but differs somewhere?
-             * So instead just use the knowledge that 0 is impossible.
-             */
             size_t nbytes = PyArray_NBYTES(self);
             if (nbytes == 0) {
                 nbytes = 1;
@@ -645,372 +646,11 @@ PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
     return 0;
 }
 
-/* This also handles possibly mis-aligned data */
-/* Compare s1 and s2 which are not necessarily NULL-terminated.
-   s1 is of length len1
-   s2 is of length len2
-   If they are NULL terminated, then stop comparison.
-*/
-static int
-_myunincmp(npy_ucs4 const *s1, npy_ucs4 const *s2, int len1, int len2)
-{
-    npy_ucs4 const *sptr;
-    npy_ucs4 *s1t = NULL;
-    npy_ucs4 *s2t = NULL;
-    int val;
-    npy_intp size;
-    int diff;
 
-    /* Replace `s1` and `s2` with aligned copies if needed */
-    if ((npy_intp)s1 % sizeof(npy_ucs4) != 0) {
-        size = len1*sizeof(npy_ucs4);
-        s1t = malloc(size);
-        memcpy(s1t, s1, size);
-        s1 = s1t;
-    }
-    if ((npy_intp)s2 % sizeof(npy_ucs4) != 0) {
-        size = len2*sizeof(npy_ucs4);
-        s2t = malloc(size);
-        memcpy(s2t, s2, size);
-        s2 = s1t;
-    }
-
-    val = PyArray_CompareUCS4(s1, s2, PyArray_MIN(len1,len2));
-    if ((val != 0) || (len1 == len2)) {
-        goto finish;
-    }
-    if (len2 > len1) {
-        sptr = s2+len1;
-        val = -1;
-        diff = len2-len1;
-    }
-    else {
-        sptr = s1+len2;
-        val = 1;
-        diff=len1-len2;
-    }
-    while (diff--) {
-        if (*sptr != 0) {
-            goto finish;
-        }
-        sptr++;
-    }
-    val = 0;
-
- finish:
-    /* Cleanup the aligned copies */
-    if (s1t) {
-        free(s1t);
-    }
-    if (s2t) {
-        free(s2t);
-    }
-    return val;
-}
-
-
-
-
-/*
- * Compare s1 and s2 which are not necessarily NULL-terminated.
- * s1 is of length len1
- * s2 is of length len2
- * If they are NULL terminated, then stop comparison.
- */
-static int
-_mystrncmp(char const *s1, char const *s2, int len1, int len2)
-{
-    char const *sptr;
-    int val;
-    int diff;
-
-    val = memcmp(s1, s2, PyArray_MIN(len1, len2));
-    if ((val != 0) || (len1 == len2)) {
-        return val;
-    }
-    if (len2 > len1) {
-        sptr = s2 + len1;
-        val = -1;
-        diff = len2 - len1;
-    }
-    else {
-        sptr = s1 + len2;
-        val = 1;
-        diff = len1 - len2;
-    }
-    while (diff--) {
-        if (*sptr != 0) {
-            return val;
-        }
-        sptr++;
-    }
-    return 0; /* Only happens if NULLs are everywhere */
-}
-
-/* Borrowed from Numarray */
-
-#define SMALL_STRING 2048
-
-static void _rstripw(char *s, int n)
-{
-    int i;
-    for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
-        int c = s[i];
-
-        if (!c || NumPyOS_ascii_isspace((int)c)) {
-            s[i] = 0;
-        }
-        else {
-            break;
-        }
-    }
-}
-
-static void _unistripw(npy_ucs4 *s, int n)
-{
-    int i;
-    for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
-        npy_ucs4 c = s[i];
-        if (!c || NumPyOS_ascii_isspace((int)c)) {
-            s[i] = 0;
-        }
-        else {
-            break;
-        }
-    }
-}
-
-
-static char *
-_char_copy_n_strip(char const *original, char *temp, int nc)
-{
-    if (nc > SMALL_STRING) {
-        temp = malloc(nc);
-        if (!temp) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-    }
-    memcpy(temp, original, nc);
-    _rstripw(temp, nc);
-    return temp;
-}
-
-static void
-_char_release(char *ptr, int nc)
-{
-    if (nc > SMALL_STRING) {
-        free(ptr);
-    }
-}
-
-static char *
-_uni_copy_n_strip(char const *original, char *temp, int nc)
-{
-    if (nc*sizeof(npy_ucs4) > SMALL_STRING) {
-        temp = malloc(nc*sizeof(npy_ucs4));
-        if (!temp) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-    }
-    memcpy(temp, original, nc*sizeof(npy_ucs4));
-    _unistripw((npy_ucs4 *)temp, nc);
-    return temp;
-}
-
-static void
-_uni_release(char *ptr, int nc)
-{
-    if (nc*sizeof(npy_ucs4) > SMALL_STRING) {
-        free(ptr);
-    }
-}
-
-
-/* End borrowed from numarray */
-
-#define _rstrip_loop(CMP) {                                     \
-        void *aptr, *bptr;                                      \
-        char atemp[SMALL_STRING], btemp[SMALL_STRING];          \
-        while(size--) {                                         \
-            aptr = stripfunc(iself->dataptr, atemp, N1);        \
-            if (!aptr) return -1;                               \
-            bptr = stripfunc(iother->dataptr, btemp, N2);       \
-            if (!bptr) {                                        \
-                relfunc(aptr, N1);                              \
-                return -1;                                      \
-            }                                                   \
-            val = compfunc(aptr, bptr, N1, N2);                 \
-            *dptr = (val CMP 0);                                \
-            PyArray_ITER_NEXT(iself);                           \
-            PyArray_ITER_NEXT(iother);                          \
-            dptr += 1;                                          \
-            relfunc(aptr, N1);                                  \
-            relfunc(bptr, N2);                                  \
-        }                                                       \
-    }
-
-#define _reg_loop(CMP) {                                \
-        while(size--) {                                 \
-            val = compfunc((void *)iself->dataptr,      \
-                          (void *)iother->dataptr,      \
-                          N1, N2);                      \
-            *dptr = (val CMP 0);                        \
-            PyArray_ITER_NEXT(iself);                   \
-            PyArray_ITER_NEXT(iother);                  \
-            dptr += 1;                                  \
-        }                                               \
-    }
-
-static int
-_compare_strings(PyArrayObject *result, PyArrayMultiIterObject *multi,
-                 int cmp_op, void *func, int rstrip)
-{
-    PyArrayIterObject *iself, *iother;
-    npy_bool *dptr;
-    npy_intp size;
-    int val;
-    int N1, N2;
-    int (*compfunc)(void *, void *, int, int);
-    void (*relfunc)(char *, int);
-    char* (*stripfunc)(char const *, char *, int);
-
-    compfunc = func;
-    dptr = (npy_bool *)PyArray_DATA(result);
-    iself = multi->iters[0];
-    iother = multi->iters[1];
-    size = multi->size;
-    N1 = PyArray_DESCR(iself->ao)->elsize;
-    N2 = PyArray_DESCR(iother->ao)->elsize;
-    if ((void *)compfunc == (void *)_myunincmp) {
-        N1 >>= 2;
-        N2 >>= 2;
-        stripfunc = _uni_copy_n_strip;
-        relfunc = _uni_release;
-    }
-    else {
-        stripfunc = _char_copy_n_strip;
-        relfunc = _char_release;
-    }
-    switch (cmp_op) {
-    case Py_EQ:
-        if (rstrip) {
-            _rstrip_loop(==);
-        } else {
-            _reg_loop(==);
-        }
-        break;
-    case Py_NE:
-        if (rstrip) {
-            _rstrip_loop(!=);
-        } else {
-            _reg_loop(!=);
-        }
-        break;
-    case Py_LT:
-        if (rstrip) {
-            _rstrip_loop(<);
-        } else {
-            _reg_loop(<);
-        }
-        break;
-    case Py_LE:
-        if (rstrip) {
-            _rstrip_loop(<=);
-        } else {
-            _reg_loop(<=);
-        }
-        break;
-    case Py_GT:
-        if (rstrip) {
-            _rstrip_loop(>);
-        } else {
-            _reg_loop(>);
-        }
-        break;
-    case Py_GE:
-        if (rstrip) {
-            _rstrip_loop(>=);
-        } else {
-            _reg_loop(>=);
-        }
-        break;
-    default:
-        PyErr_SetString(PyExc_RuntimeError, "bad comparison operator");
-        return -1;
-    }
-    return 0;
-}
-
-#undef _reg_loop
-#undef _rstrip_loop
-#undef SMALL_STRING
-
+/* From umath/string_ufuncs.cpp/h */
 NPY_NO_EXPORT PyObject *
-_strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
-                     int rstrip)
-{
-    PyArrayObject *result;
-    PyArrayMultiIterObject *mit;
-    int val;
-
-    if (PyArray_TYPE(self) != PyArray_TYPE(other)) {
-        /*
-         * Comparison between Bytes and Unicode is not defined in Py3K;
-         * we follow.
-         */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-    if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
-        /* Cast `other` to the same byte order as `self` (both unicode here) */
-        PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-        unicode->elsize = PyArray_DESCR(other)->elsize;
-        PyObject *new = PyArray_FromAny((PyObject *)other,
-                unicode, 0, 0, 0, NULL);
-        if (new == NULL) {
-            return NULL;
-        }
-        other = (PyArrayObject *)new;
-    }
-    else {
-        Py_INCREF(other);
-    }
-
-    /* Broad-cast the arrays to a common shape */
-    mit = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, self, other);
-    Py_DECREF(other);
-    if (mit == NULL) {
-        return NULL;
-    }
-
-    result = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                  PyArray_DescrFromType(NPY_BOOL),
-                                  mit->nd,
-                                  mit->dimensions,
-                                  NULL, NULL, 0,
-                                  NULL);
-    if (result == NULL) {
-        goto finish;
-    }
-
-    if (PyArray_TYPE(self) == NPY_UNICODE) {
-        val = _compare_strings(result, mit, cmp_op, _myunincmp, rstrip);
-    }
-    else {
-        val = _compare_strings(result, mit, cmp_op, _mystrncmp, rstrip);
-    }
-
-    if (val < 0) {
-        Py_DECREF(result);
-        result = NULL;
-    }
-
- finish:
-    Py_DECREF(mit);
-    return (PyObject *)result;
-}
+_umath_strings_richcompare(
+        PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
 
 /*
  * VOID-type arrays can only be compared equal and not-equal
@@ -1026,35 +666,85 @@ static PyObject *
 _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 {
     if (!(cmp_op == Py_EQ || cmp_op == Py_NE)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "Void-arrays can only be compared for equality.");
         return NULL;
     }
-    if (PyArray_HASFIELDS(self)) {
-        PyObject *res = NULL, *temp, *a, *b;
-        PyObject *key, *value, *temp2;
-        PyObject *op;
-        Py_ssize_t pos = 0;
+    if (PyArray_TYPE(other) != NPY_VOID) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot compare structured or void to non-void arrays.");
+        return NULL;
+    }
+    if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
+        PyArray_Descr *self_descr = PyArray_DESCR(self);
+        PyArray_Descr *other_descr = PyArray_DESCR(other);
+
+        /* Use promotion to decide whether the comparison is valid */
+        PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);
+        if (promoted == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot compare structured arrays unless they have a "
+                    "common dtype.  I.e. `np.result_type(arr1, arr2)` must "
+                    "be defined.");
+            return NULL;
+        }
+        Py_DECREF(promoted);
+
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
-        op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
-        while (PyDict_Next(PyArray_DESCR(self)->fields, &pos, &key, &value)) {
-            if (NPY_TITLE_KEY(key, value)) {
-                continue;
-            }
-            a = array_subscript_asarray(self, key);
+        int field_count = PyTuple_GET_SIZE(self_descr->names);
+        if (field_count != PyTuple_GET_SIZE(other_descr->names)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot compare structured dtypes with different number of "
+                    "fields.  (unreachable error please report to NumPy devs)");
+            return NULL;
+        }
+
+        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *res = NULL;
+        for (int i = 0; i < field_count; ++i) {
+            PyObject *fieldname, *temp, *temp2;
+
+            fieldname = PyTuple_GET_ITEM(self_descr->names, i);
+            PyArrayObject *a = (PyArrayObject *)array_subscript_asarray(
+                    self, fieldname);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
-            b = array_subscript_asarray(other, key);
+            fieldname = PyTuple_GET_ITEM(other_descr->names, i);
+            PyArrayObject *b = (PyArrayObject *)array_subscript_asarray(
+                    other, fieldname);
             if (b == NULL) {
                 Py_XDECREF(res);
                 Py_DECREF(a);
                 return NULL;
             }
-            temp = array_richcompare((PyArrayObject *)a,b,cmp_op);
+            /*
+             * If the fields were subarrays, the dimensions may have changed.
+             * In that case, the new shape (subarray part) must match exactly.
+             * (If this is 0, there is no subarray.)
+             */
+            int field_dims_a = PyArray_NDIM(a) - PyArray_NDIM(self);
+            int field_dims_b = PyArray_NDIM(b) - PyArray_NDIM(other);
+            if (field_dims_a != field_dims_b || (
+                    field_dims_a != 0 &&  /* neither is subarray */
+                    /* Compare only the added (subarray) dimensions: */
+                    !PyArray_CompareLists(
+                            PyArray_DIMS(a) + PyArray_NDIM(self),
+                            PyArray_DIMS(b) + PyArray_NDIM(other),
+                            field_dims_a))) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Cannot compare subarrays with different shapes. "
+                        "(unreachable error, please report to NumPy devs.)");
+                Py_DECREF(a);
+                Py_DECREF(b);
+                Py_XDECREF(res);
+                return NULL;
+            }
+
+            temp = array_richcompare(a, (PyObject *)b, cmp_op);
             Py_DECREF(a);
             Py_DECREF(b);
             if (temp == NULL) {
@@ -1081,7 +771,15 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                         memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
                                sizeof(npy_intp)*result_ndim);
                     }
-                    dimensions[result_ndim] = -1;
+
+                    /*
+                     * Compute the new dimension size manually, as reshaping
+                     * with -1 does not work on empty arrays.
+                     */
+                    dimensions[result_ndim] = PyArray_MultiplyList(
+                        PyArray_DIMS((PyArrayObject *)temp) + result_ndim,
+                        PyArray_NDIM((PyArrayObject *)temp) - result_ndim);
+
                     temp2 = PyArray_Newshape((PyArrayObject *)temp,
                                              &newdims, NPY_ANYORDER);
                     if (temp2 == NULL) {
@@ -1139,9 +837,26 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         }
         return res;
     }
+    else if (PyArray_HASFIELDS(self) || PyArray_HASFIELDS(other)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot compare structured with unstructured void arrays. "
+                "(unreachable error, please report to NumPy devs.)");
+        return NULL;
+    }
     else {
+        /*
+         * Since arrays absorb subarray descriptors, this path can only be
+         * reached when both arrays have unstructured voids "V<len>" dtypes.
+         */
+        if (PyArray_ITEMSIZE(self) != PyArray_ITEMSIZE(other)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "cannot compare unstructured voids of different length. "
+                    "Use bytes to compare. "
+                    "(This may return array of False in the future.)");
+            return NULL;
+        }
         /* compare as a string. Assumes self and other have same descr->type */
-        return _strings_richcompare(self, other, cmp_op, 0);
+        return _umath_strings_richcompare(self, other, cmp_op, 0);
     }
 }
 
@@ -1165,108 +880,6 @@ DEPRECATE_silence_error(const char *msg) {
     return 0;
 }
 
-/*
- * Comparisons can fail, but we do not always want to pass on the exception
- * (see comment in array_richcompare below), but rather return NotImplemented.
- * Here, an exception should be set on entrance.
- * Returns either NotImplemented with the exception cleared, or NULL
- * with the exception set.
- * Raises deprecation warnings for cases where behaviour is meant to change
- * (2015-05-14, 1.10)
- */
-
-NPY_NO_EXPORT PyObject *
-_failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
-{
-    PyObject *exc, *val, *tb;
-    PyArrayObject *array_other;
-    int other_is_flexible, ndim_other;
-    int self_is_flexible = PyTypeNum_ISFLEXIBLE(PyArray_DESCR(self)->type_num);
-
-    PyErr_Fetch(&exc, &val, &tb);
-    /*
-     * Determine whether other has a flexible dtype; here, inconvertible
-     * is counted as inflexible.  (This repeats work done in the ufunc,
-     * but OK to waste some time in an unlikely path.)
-     */
-    array_other = (PyArrayObject *)PyArray_FROM_O(other);
-    if (array_other) {
-        other_is_flexible = PyTypeNum_ISFLEXIBLE(
-            PyArray_DESCR(array_other)->type_num);
-        ndim_other = PyArray_NDIM(array_other);
-        Py_DECREF(array_other);
-    }
-    else {
-        PyErr_Clear(); /* we restore the original error if needed */
-        other_is_flexible = 0;
-        ndim_other = 0;
-    }
-    if (cmp_op == Py_EQ || cmp_op == Py_NE) {
-        /*
-         * note: for == and !=, a structured dtype self cannot get here,
-         * but a string can. Other can be string or structured.
-         */
-        if (other_is_flexible || self_is_flexible) {
-            /*
-             * For scalars, returning NotImplemented is correct.
-             * For arrays, we emit a future deprecation warning.
-             * When this warning is removed, a correctly shaped
-             * array of bool should be returned.
-             */
-            if (ndim_other != 0 || PyArray_NDIM(self) != 0) {
-                /* 2015-05-14, 1.10 */
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise comparison failed; returning scalar "
-                        "instead, but in the future will perform "
-                        "elementwise comparison") < 0) {
-                    goto fail;
-                }
-            }
-        }
-        else {
-            /*
-             * If neither self nor other had a flexible dtype, the error cannot
-             * have been caused by a lack of implementation in the ufunc.
-             *
-             * 2015-05-14, 1.10
-             */
-            if (DEPRECATE(
-                    "elementwise comparison failed; "
-                    "this will raise an error in the future.") < 0) {
-                goto fail;
-            }
-        }
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-    else if (other_is_flexible || self_is_flexible) {
-        /*
-         * For LE, LT, GT, GE and a flexible self or other, we return
-         * NotImplemented, which is the correct answer since the ufuncs do
-         * not in fact implement loops for those.  This will get us the
-         * desired TypeError.
-         */
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-    else {
-        /* LE, LT, GT, or GE with non-flexible other; just pass on error */
-        goto fail;
-    }
-
-fail:
-    /*
-     * Reraise the original exception, possibly chaining with a new one.
-     */
-    npy_PyErr_ChainExceptionsCause(exc, val, tb);
-    return NULL;
-}
 
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
@@ -1274,36 +887,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     PyArrayObject *array_other;
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;
-
-    /* Special case for string arrays (which don't and currently can't have
-     * ufunc loops defined, so there's no point in trying).
-     */
-    if (PyArray_ISSTRING(self)) {
-        array_other = (PyArrayObject *)PyArray_FromObject(other,
-                                                          NPY_NOTYPE, 0, 0);
-        if (array_other == NULL) {
-            PyErr_Clear();
-            /* Never mind, carry on, see what happens */
-        }
-        else if (!PyArray_ISSTRING(array_other)) {
-            Py_DECREF(array_other);
-            /* Never mind, carry on, see what happens */
-        }
-        else {
-            result = _strings_richcompare(self, array_other, cmp_op, 0);
-            Py_DECREF(array_other);
-            return result;
-        }
-        /* If we reach this point, it means that we are not comparing
-         * string-to-string. It's possible that this will still work out,
-         * e.g. if the other array is an object array, then both will be cast
-         * to object or something? I don't know how that works actually, but
-         * it does, b/c this works:
-         *   l = ["a", "b"]
-         *   assert np.array(l, dtype="S1") == np.array(l, dtype="O")
-         * So we fall through and see what happens.
-         */
-    }
 
     switch (cmp_op) {
     case Py_LT:
@@ -1324,8 +907,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
-            int _res;
-
             array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
@@ -1342,28 +923,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CheckCastSafety(
-                    NPY_EQUIV_CASTING,
-                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
-            if (_res < 0) {
-                PyErr_Clear();
-                _res = 0;
-            }
-            if (_res == 0) {
-                /* 2015-05-07, 1.10 */
-                Py_DECREF(array_other);
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise == comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
-                    return NULL;
-                }
-                Py_INCREF(Py_False);
-                return Py_False;
-            }
-            else {
-                result = _void_compare(self, array_other, cmp_op);
-            }
+            result = _void_compare(self, array_other, cmp_op);
             Py_DECREF(array_other);
             return result;
         }
@@ -1379,8 +939,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
-            int _res;
-
             array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
@@ -1397,29 +955,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CheckCastSafety(
-                    NPY_EQUIV_CASTING,
-                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
-            if (_res < 0) {
-                PyErr_Clear();
-                _res = 0;
-            }
-            if (_res == 0) {
-                /* 2015-05-07, 1.10 */
-                Py_DECREF(array_other);
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise != comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
-                    return NULL;
-                }
-                Py_INCREF(Py_True);
-                return Py_True;
-            }
-            else {
-                result = _void_compare(self, array_other, cmp_op);
-                Py_DECREF(array_other);
-            }
+            result = _void_compare(self, array_other, cmp_op);
+            Py_DECREF(array_other);
             return result;
         }
 
@@ -1440,33 +977,99 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    if (result == NULL) {
+
+    /*
+     * At this point `self` can take control of the operation by converting
+     * `other` to an array (it would have a chance to take control).
+     * If we are not in `==` and `!=`, this is an error and we hope that
+     * the existing error makes sense and derives from `TypeError` (which
+     * python would raise for `NotImplemented`) when it should.
+     *
+     * However, if the issue is no matching loop for the given dtypes and
+     * we are inside == and !=, then returning an array of True or False
+     * makes sense (following Python behavior for `==` and `!=`).
+     * Effectively: Both *dtypes* told us that they cannot be compared.
+     *
+     * In theory, the error could be raised from within an object loop, the
+     * solution to that could be pushing this into the ufunc (where we can
+     * distinguish the two easily).  In practice, it seems like it should not
+     * but a huge problem:  The ufunc loop will itself call `==` which should
+     * probably never raise a UFuncNoLoopError.
+     *
+     * TODO: If/once we correctly push structured comparisons into the ufunc
+     *       we could consider pushing this path into the ufunc itself as a
+     *       fallback loop (which ignores the input arrays).
+     *       This would have the advantage that subclasses implementing
+     *       `__array_ufunc__` do not explicitly need `__eq__` and `__ne__`.
+     */
+    if (result == NULL
+            && (cmp_op == Py_EQ || cmp_op == Py_NE)
+            && PyErr_ExceptionMatches(npy_UFuncNoLoopError)) {
+        PyErr_Clear();
+
+        PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (PyArray_TYPE(array_other) == NPY_VOID) {
+            /*
+            * Void arrays are currently not handled by ufuncs, so if the other
+            * is a void array, we defer to it (will raise a TypeError).
+            */
+            Py_DECREF(array_other);
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        if (PyArray_NDIM(self) == 0 && PyArray_NDIM(array_other) == 0) {
+            /*
+             * (seberg) not sure that this is best, but we preserve Python
+             * bool result for "scalar" inputs for now by returning
+             * `NotImplemented`.
+             */
+            Py_DECREF(array_other);
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        /* Hack warning: using NpyIter to allocate broadcasted result. */
+        PyArrayObject *ops[3] = {self, array_other, NULL};
+        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK;
+        npy_uint32 op_flags[3] = {
+            NPY_ITER_READONLY, NPY_ITER_READONLY,
+            NPY_ITER_ALLOCATE | NPY_ITER_WRITEONLY};
+
+        PyArray_Descr *bool_descr = PyArray_DescrFromType(NPY_BOOL);
+        PyArray_Descr *op_descrs[3] = {
+            PyArray_DESCR(self), PyArray_DESCR(array_other), bool_descr};
+
+        NpyIter *iter = NpyIter_MultiNew(
+                    3, ops, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+                    op_flags, op_descrs);
+
+        Py_CLEAR(bool_descr);
+        Py_CLEAR(array_other);
+        if (iter == NULL) {
+            return NULL;
+        }
+        PyArrayObject *res = NpyIter_GetOperandArray(iter)[2];
+        Py_INCREF(res);
+        if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+            Py_DECREF(res);
+            return NULL;
+        }
+
         /*
-         * 2015-05-14, 1.10; updated 2018-06-18, 1.16.
-         *
-         * Comparisons can raise errors when element-wise comparison is not
-         * possible. Some of these, though, should not be passed on.
-         * In particular, the ufuncs do not have loops for flexible dtype,
-         * so those should be treated separately.  Furthermore, for EQ and NE,
-         * we should never fail.
-         *
-         * Our ideal behaviour would be:
-         *
-         * 1. For EQ and NE:
-         *   - If self and other are scalars, return NotImplemented,
-         *     so that python can assign True of False as appropriate.
-         *   - If either is an array, return an array of False or True.
-         *
-         * 2. For LT, LE, GE, GT:
-         *   - If self or other was flexible, return NotImplemented
-         *     (as is in fact the case), so python can raise a TypeError.
-         *   - If other is not convertible to an array, pass on the error
-         *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
-         *
-         * However, for backwards compatibility, we cannot yet return arrays,
-         * so we raise warnings instead.
+         * The array is guaranteed to be newly allocated and thus contiguous,
+         * so simply fill it with 0 or 1.
          */
-        result = _failed_comparison_workaround(self, other, cmp_op);
+        memset(PyArray_BYTES(res), cmp_op == Py_EQ ? 0 : 1, PyArray_NBYTES(res));
+
+        /* Ensure basic subclass support by wrapping: */
+        if (!PyArray_CheckExact(self)) {
+            /*
+             * If other is also a subclass (with higher priority) we would
+             * already have deferred.  So use `self` for wrapping.  If users
+             * need more, they need to override `==` and `!=`.
+             */
+            Py_SETREF(res, PyArray_SubclassWrap(self, res));
+        }
+        return (PyObject *)res;
     }
     return result;
 }
@@ -1622,12 +1225,13 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      (int)dims.len,
                                      dims.ptr,
                                      strides.ptr, NULL, is_f_order, NULL, NULL,
-                                     0, 1);
+                                     _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
         }
-        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
+        /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
+        if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
             PyArray_FillObjectArray(ret, Py_None);
             if (PyErr_Occurred()) {
@@ -1658,7 +1262,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 subtype, descr,
                 dims.len, dims.ptr, strides.ptr, offset + (char *)buffer.ptr,
                 buffer.flags, NULL, buffer.base,
-                0, 1);
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (ret == NULL) {
             descr = NULL;
             goto fail;

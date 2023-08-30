@@ -33,17 +33,11 @@ reveal_type(i4 | i4)  # E: {int32}
 reveal_type(i4 ^ i4)  # E: {int32}
 reveal_type(i4 & i4)  # E: {int32}
 
-reveal_type(i8 << i4)  # E: {int64}
-reveal_type(i8 >> i4)  # E: {int64}
-reveal_type(i8 | i4)  # E: {int64}
-reveal_type(i8 ^ i4)  # E: {int64}
-reveal_type(i8 & i4)  # E: {int64}
-
-reveal_type(i8 << i)  # E: {int64}
-reveal_type(i8 >> i)  # E: {int64}
-reveal_type(i8 | i)  # E: {int64}
-reveal_type(i8 ^ i)  # E: {int64}
-reveal_type(i8 & i)  # E: {int64}
+reveal_type(i8 << i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
+reveal_type(i8 >> i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
+reveal_type(i8 | i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
+reveal_type(i8 ^ i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
+reveal_type(i8 & i4)  # E: signedinteger[Union[_64Bit, _32Bit]]
 
 reveal_type(i8 << b_)  # E: {int64}
 reveal_type(i8 >> b_)  # E: {int64}

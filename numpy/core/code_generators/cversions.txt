@@ -60,6 +60,17 @@
 # Version 14 (NumPy 1.21) No change.
 0x0000000e = 17a0f366e55ec05e5c5c149123478452
 
-# Version 15 (NumPy 1.22) Configurable memory allocations
-# Version 14 (NumPy 1.23) No change.
+# Version 15 (NumPy 1.22)
+# Configurable memory allocations
 0x0000000f = b8783365b873681cd204be50cdfb448d
+
+# Version 16 (NumPy 1.23)
+# NonNull attributes removed from numpy_api.py
+# Version 16 (NumPy 1.24) No change.
+0x00000010 = 04a7bf1e65350926a0e528798da263c0
+
+# Version 17 (NumPy 1.25) No actual change.
+0x00000011 = ca1aebdad799358149567d9d93cbca09
+
+# Version 18 (NumPy 2.0.0)
+0x00000012 = c48425db43c108beeb57eb7ef155d38e

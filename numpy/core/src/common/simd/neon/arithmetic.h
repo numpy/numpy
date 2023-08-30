@@ -265,6 +265,14 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     NPY_FINLINE npyv_f32 npyv_nmulsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
     { return vmlsq_f32(vnegq_f32(c), a, b); }
 #endif
+// multiply, add for odd elements and subtract even elements.
+// (a * b) -+ c
+NPY_FINLINE npyv_f32 npyv_muladdsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+{
+    const npyv_f32 msign = npyv_set_f32(-0.0f, 0.0f, -0.0f, 0.0f);
+    return npyv_muladd_f32(a, b, npyv_xor_f32(msign, c));
+}
+
 /***************************
  * FUSED F64
  ***************************/
@@ -277,6 +285,11 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     { return vfmsq_f64(c, a, b); }
     NPY_FINLINE npyv_f64 npyv_nmulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
     { return vfmsq_f64(vnegq_f64(c), a, b); }
+    NPY_FINLINE npyv_f64 npyv_muladdsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    {
+        const npyv_f64 msign = npyv_set_f64(-0.0, 0.0);
+        return npyv_muladd_f64(a, b, npyv_xor_f64(msign, c));
+    }
 #endif // NPY_SIMD_F64
 
 /***************************

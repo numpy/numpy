@@ -21,5 +21,5 @@ reveal_type(np.seterrcall(func))  # E: Union[None, def (builtins.str, builtins.i
 reveal_type(np.seterrcall(Write()))  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
 reveal_type(np.geterrcall())  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
 
-reveal_type(np.errstate(call=func, all="call"))  # E: errstate[def (a: builtins.str, b: builtins.int)]
-reveal_type(np.errstate(call=Write(), divide="log", over="log"))  # E: errstate[ufunc_config.Write]
+reveal_type(np.errstate(call=func, all="call"))  # E: errstate
+reveal_type(np.errstate(call=Write(), divide="log", over="log"))  # E: errstate

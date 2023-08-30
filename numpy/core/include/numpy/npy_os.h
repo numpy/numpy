@@ -21,8 +21,14 @@
     #define NPY_OS_CYGWIN
 #elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
     #define NPY_OS_WIN32
+#elif defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
+    #define NPY_OS_WIN64
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    #define NPY_OS_MINGW
 #elif defined(__APPLE__)
     #define NPY_OS_DARWIN
+#elif defined(__HAIKU__)
+    #define NPY_OS_HAIKU
 #else
     #define NPY_OS_UNKNOWN
 #endif

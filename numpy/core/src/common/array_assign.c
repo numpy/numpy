@@ -110,7 +110,6 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
         int i;
 
         for (i = 0; i < ndim; i++) {
-#if NPY_RELAXED_STRIDES_CHECKING
             /* skip dim == 1 as it is not required to have stride 0 */
             if (shape[i] > 1) {
                 /* if shape[i] == 1, the stride is never used */
@@ -120,9 +119,6 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
                 /* an array with zero elements is always aligned */
                 return 1;
             }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-            align_check |= (npy_uintp)strides[i];
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
         }
 
         return npy_is_aligned((void *)align_check, alignment);

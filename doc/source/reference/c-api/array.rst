@@ -152,7 +152,7 @@ and its sub-types).
 
 .. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
 
-    The function pointed to by the CObject
+    The function pointed to by the :c:type:`PyCapsule`
     :obj:`~numpy.class.__array_finalize__`.
     The first argument is the newly created sub-type. The second argument
     (if not NULL) is the "parent" array (if the array was created using
@@ -162,7 +162,7 @@ and its sub-types).
 
 
 Data access
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 These functions and macros provide easy access to elements of the
 ndarray from C. These work for all arrays. You may need to take care
@@ -208,7 +208,7 @@ Creating arrays
 
 
 From scratch
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_NewFromDescr( \
         PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp const* dims, \
@@ -404,7 +404,7 @@ From scratch
     to another value.
 
 From other objects
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_FromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -423,7 +423,7 @@ From other objects
     :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
     this call will generate an error if the data
     type cannot be safely obtained from the object. If you want to use
-    ``NULL`` for the *dtype* and ensure the array is notswapped then
+    ``NULL`` for the *dtype* and ensure the array is not swapped then
     use :c:func:`PyArray_CheckFromAny`. A value of 0 for either of the
     depth parameters causes the parameter to be ignored. Any of the
     following array flags can be added (*e.g.* using \|) to get the
@@ -435,45 +435,37 @@ From other objects
     have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context*
     argument is unused.
 
-    .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_C_CONTIGUOUS`
         Make sure the returned array is C-style contiguous
 
-    .. c:macro:: NPY_ARRAY_F_CONTIGUOUS
-
+    :c:macro:`NPY_ARRAY_F_CONTIGUOUS`
         Make sure the returned array is Fortran-style contiguous.
 
-    .. c:macro:: NPY_ARRAY_ALIGNED
-
+    :c:macro:`NPY_ARRAY_ALIGNED`
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
 
-    .. c:macro:: NPY_ARRAY_WRITEABLE
-
+    :c:macro:`NPY_ARRAY_WRITEABLE`
         Make sure the returned array can be written to.
 
-    .. c:macro:: NPY_ARRAY_ENSURECOPY
-
+    :c:macro:`NPY_ARRAY_ENSURECOPY`
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
 
-    .. c:macro:: NPY_ARRAY_ENSUREARRAY
-
+    :c:macro:`NPY_ARRAY_ENSUREARRAY`
         Make sure the result is a base-class ndarray. By
         default, if *op* is an instance of a subclass of
         ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
-    .. c:macro:: NPY_ARRAY_FORCECAST
-
+    :c:macro:`NPY_ARRAY_FORCECAST`
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is raised.
 
-    .. c:macro:: NPY_ARRAY_WRITEBACKIFCOPY
-
+    :c:macro:`NPY_ARRAY_WRITEBACKIFCOPY`
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
         requirements). If this flag is present and a copy (of an object
@@ -485,84 +477,7 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
 
-    .. c:macro:: NPY_ARRAY_BEHAVED
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_CARRAY
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_CARRAY_RO
-
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
-
-    .. c:macro:: NPY_ARRAY_FARRAY_RO
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_DEFAULT
-
-        :c:data:`NPY_ARRAY_CARRAY`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_IN_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-    .. c:macro:: NPY_ARRAY_IN_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED`
-
-.. c:macro:: NPY_ARRAY_OUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
-    :c:data:`NPY_ARRAY_WRITEABLE`
-
-    .. c:macro:: NPY_ARRAY_OUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_INOUT_ARRAY
-
-    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-
-    .. c:macro:: NPY_ARRAY_INOUT_FARRAY
-
-        :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-
-.. c:function:: int PyArray_GetArrayParamsFromObject( \
-        PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
-        PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, \
-        PyArrayObject** out_arr, PyObject* context)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    .. versionchanged:: NumPy 1.19
-
-        `context` is never used. Its use results in an error.
-
-    .. versionadded:: 1.6
+    `Combinations of array flags`_ can also be added.
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -573,37 +488,6 @@ From other objects
     specification in *dtype*) and :c:data:`NPY_ARRAY_ELEMENTSTRIDES` which
     indicates that the array should be aligned in the sense that the
     strides are multiples of the element size.
-
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the _ARRAY_ macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_NOTSWAPPED
-
-    Make sure the returned array has a data-type descriptor that is in
-    machine byte-order, over-riding any specification in the *dtype*
-    argument. Normally, the byte-order requirement is determined by
-    the *dtype* argument. If this flag is set and the dtype argument
-    does not indicate a machine byte-order descriptor (or is NULL and
-    the object is already an array with a data-type descriptor that is
-    not in machine byte- order), then a new data-type descriptor is
-    created and used with its byte-order field set to native.
-
-    .. c:macro:: NPY_ARRAY_BEHAVED_NS
-
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_NOTSWAPPED`
-
-..
-  dedented to allow internal linking, pending a refactoring
-
-.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
-
-    Make sure the returned array has strides that are multiples of the
-    element size.
 
 .. c:function:: PyObject* PyArray_FromArray( \
         PyArrayObject* op, PyArray_Descr* newtype, int requirements)
@@ -805,7 +689,7 @@ Dealing with types
 
 
 General check of Python Type
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_Check(PyObject *op)
 
@@ -877,7 +761,7 @@ General check of Python Type
 
 
 Data-type checking
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 For the typenum macros, the argument is an integer representing an
 enumerated array data type. For the array type checking macros the
@@ -1048,7 +932,7 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
 
 
 Converting data types
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_Cast(PyArrayObject* arr, int typenum)
 
@@ -1165,29 +1049,13 @@ Converting data types
 
     .. versionadded:: 1.6
 
-    This applies type promotion to all the inputs,
-    using the NumPy rules for combining scalars and arrays, to
-    determine the output type of a set of operands.  This is the
-    same result type that ufuncs produce. The specific algorithm
-    used is as follows.
+    This applies type promotion to all the input arrays and dtype
+    objects, using the NumPy rules for combining scalars and arrays, to
+    determine the output type for an operation with the given set of
+    operands. This is the same result type that ufuncs produce.
 
-    Categories are determined by first checking which of boolean,
-    integer (int/uint), or floating point (float/complex) the maximum
-    kind of all the arrays and the scalars are.
-
-    If there are only scalars or the maximum category of the scalars
-    is higher than the maximum category of the arrays,
-    the data types are combined with :c:func:`PyArray_PromoteTypes`
-    to produce the return value.
-
-    Otherwise, PyArray_MinScalarType is called on each array, and
-    the resulting data types are all combined with
-    :c:func:`PyArray_PromoteTypes` to produce the return value.
-
-    The set of int values is not a subset of the uint values for types
-    with the same number of bits, something not reflected in
-    :c:func:`PyArray_MinScalarType`, but handled as a special case in
-    PyArray_ResultType.
+    See the documentation of :func:`numpy.result_type` for more
+    detail about the type promotion algorithm.
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
@@ -1202,17 +1070,6 @@ Converting data types
     return value is the enumerated typenumber that represents the
     data-type that *op* should have.
 
-.. c:function:: void PyArray_ArrayType( \
-        PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
-
-    This function is superseded by :c:func:`PyArray_ResultType`.
-
-    This function works similarly to :c:func:`PyArray_ObjectType` (...)
-    except it handles flexible arrays. The *mintype* argument can have
-    an itemsize member and the *outtype* argument will have an
-    itemsize member at least as big but perhaps bigger depending on
-    the object *op*.
-
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
 
@@ -1223,7 +1080,7 @@ Converting data types
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
-    in the same way as `PyArray_ResultType`. The length of the sequence is
+    in the same way as :c:func:`PyArray_ResultType`. The length of the sequence is
     returned in *n*, and an *n* -length array of :c:type:`PyArrayObject`
     pointers is the return value (or ``NULL`` if an error occurs).
     The returned array must be freed by the caller of this routine
@@ -1268,7 +1125,7 @@ Converting data types
 
 
 User-defined data types
-^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: void PyArray_InitArrFuncs(PyArray_ArrFuncs* f)
 
@@ -1321,7 +1178,30 @@ User-defined data types
    Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+    When working with arrays or buffers filled with objects NumPy tries to
+    ensure such buffers are filled with ``None`` before any data may be read.
+    However, code paths may existed where an array is only initialized to
+    ``NULL``.
+    NumPy itself accepts ``NULL`` as an alias for ``None``, but may ``assert``
+    non-``NULL`` when compiled in debug mode.
+
+    Because NumPy is not yet consistent about initialization with None,
+    users **must** expect a value of ``NULL`` when working with buffers created
+    by NumPy.  Users **should** also ensure to pass fully initialized buffers
+    to NumPy, since NumPy may make this a strong requirement in the future.
+
+    There is currently an intention to ensure that NumPy always initializes
+    object arrays before they may be read.  Any failure to do so will be
+    regarded as a bug.
+    In the future, users may be able to rely on non-NULL values when reading
+    from any array, although exceptions for writing to freshly created arrays
+    may remain (e.g. for output arrays in ufunc code).  As of NumPy 1.23
+    known code paths exists where proper filling is not done.
+
 
 .. c:function:: int PyArray_INCREF(PyArrayObject* op)
 
@@ -1369,7 +1249,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    `Py_DECREF` in order copy any changes back to ``base`` and
+    :c:func:`Py_DECREF` in order copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
@@ -1397,9 +1277,13 @@ a certain kind of array (like :c:data:`NPY_ARRAY_C_CONTIGUOUS` and
 :c:data:`NPY_ARRAY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
+In versions 1.6 and earlier of NumPy, the following flags
+did not have the _ARRAY_ macro namespace in them. That form
+of the constant names is deprecated in 1.7.
+
 
 Basic Array Flags
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 An ndarray can have a data segment that is not a simple contiguous
 chunk of well-behaved memory you can manipulate. It may not be aligned
@@ -1408,10 +1292,6 @@ its data in a different byte-order than the machine recognizes. It
 might not be writeable. It might be in Fortran-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
-
-In versions 1.6 and earlier of NumPy, the following flags
-did not have the _ARRAY_ macro namespace in them. That form
-of the constant names is deprecated in 1.7.
 
 .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -1467,7 +1347,7 @@ of the constant names is deprecated in 1.7.
     :c:func:`PyArray_FromAny` and a copy had to be made of some other
     array (and the user asked for this flag to be set in such a
     situation). The base attribute then points to the "misbehaved"
-    array (which is set read_only). :c:func`PyArray_ResolveWritebackIfCopy`
+    array (which is set read_only). :c:func:`PyArray_ResolveWritebackIfCopy`
     will copy its contents back to the "misbehaved"
     array (casting if necessary) and will reset the "misbehaved" array
     to :c:data:`NPY_ARRAY_WRITEABLE`. If the "misbehaved" array was not
@@ -1482,7 +1362,7 @@ for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
 
 
 Combinations of array flags
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:macro:: NPY_ARRAY_BEHAVED
 
@@ -1508,13 +1388,41 @@ Combinations of array flags
 
     :c:data:`NPY_ARRAY_CARRAY`
 
+.. c:macro:: NPY_ARRAY_IN_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_IN_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_OUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
+
+.. c:macro:: NPY_ARRAY_INOUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
+.. c:macro:: NPY_ARRAY_INOUT_FARRAY
+
+    :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+
 .. c:macro:: NPY_ARRAY_UPDATE_ALL
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
 
 Flag-like constants
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 These constants are used in :c:func:`PyArray_FromAny` (and its macro forms) to
 specify desired properties of the new array.
@@ -1532,9 +1440,33 @@ specify desired properties of the new array.
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
 
+These constants are used in :c:func:`PyArray_CheckFromAny` (and its macro forms)
+to specify desired properties of the new array.
+
+.. c:macro:: NPY_ARRAY_NOTSWAPPED
+
+    Make sure the returned array has a data-type descriptor that is in
+    machine byte-order, over-riding any specification in the *dtype*
+    argument. Normally, the byte-order requirement is determined by
+    the *dtype* argument. If this flag is set and the dtype argument
+    does not indicate a machine byte-order descriptor (or is NULL and
+    the object is already an array with a data-type descriptor that is
+    not in machine byte- order), then a new data-type descriptor is
+    created and used with its byte-order field set to native.
+
+.. c:macro:: NPY_ARRAY_BEHAVED_NS
+
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_NOTSWAPPED`
+
+.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
+
+    Make sure the returned array has strides that are multiples of the
+    element size.
+
 
 Flag checking
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
@@ -1640,7 +1572,7 @@ Array method alternative API
 
 
 Conversion
-^^^^^^^^^^
+~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_GetField( \
         PyArrayObject* self, PyArray_Descr* dtype, int offset)
@@ -1648,10 +1580,10 @@ Conversion
     Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>`
     (*self*, *dtype*, *offset*). This function `steals a reference
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
-    to `PyArray_Descr` and returns a new array of the given `dtype` using
+    to :c:func:`PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
-    `offset` plus the itemsize of the new array type must be less than ``self
-    ->descr->elsize`` or an error is raised. The same shape and strides
+    `offset` plus the itemsize of the new array type must be less than
+    ``self->descr->elsize`` or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
     effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
@@ -1749,7 +1681,7 @@ Conversion
 
 
 Shape Manipulation
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_Newshape( \
         PyArrayObject* self, PyArray_Dims* newshape, NPY_ORDER order)
@@ -1833,7 +1765,7 @@ Shape Manipulation
 
 
 Item selection and manipulation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_TakeFrom( \
         PyArrayObject* self, PyObject* indices, int axis, PyArrayObject* ret, \
@@ -2013,7 +1945,7 @@ Item selection and manipulation
 
 
 Calculation
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 .. tip::
 
@@ -2173,11 +2105,11 @@ Functions
 
 
 Array Functions
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_AsCArray( \
-        PyObject** op, void* ptr, npy_intp* dims, int nd, int typenum, \
-        int itemsize)
+        PyObject** op, void* ptr, npy_intp* dims, int nd, \
+        PyArray_Descr* typedescr)
 
     Sometimes it is useful to access a multidimensional array as a
     C-style multi-dimensional array so that algorithms can be
@@ -2207,14 +2139,11 @@ Array Functions
 
         The dimensionality of the array (1, 2, or 3).
 
-    :param typenum:
+    :param typedescr:
 
-        The expected data type of the array.
-
-    :param itemsize:
-
-        This argument is only needed when *typenum* represents a
-        flexible array. Otherwise it should be 0.
+        A :c:type:`PyArray_Descr` structure indicating the desired data-type
+        (including required byteorder). The call will steal a reference to
+        the parameter.
 
 .. note::
 
@@ -2256,7 +2185,7 @@ Array Functions
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
 
-.. c:function:: PyObject* PyArray_EinsteinSum( \
+.. c:function:: PyArrayObject* PyArray_EinsteinSum( \
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
         PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, \
         PyArrayObject* out)
@@ -2273,11 +2202,6 @@ Array Functions
     *casting* indicates how permissive the data conversion should be.
 
     See the :func:`~numpy.einsum` function for more details.
-
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
-
-    A specialized copy and transpose function that works only for 2-d
-    arrays. The returned array is a transposed copy of *op*.
 
 .. c:function:: PyObject* PyArray_Correlate( \
         PyObject* op1, PyObject* op2, int mode)
@@ -2327,7 +2251,7 @@ Array Functions
 
 
 Other functions
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:function:: npy_bool PyArray_CheckStrides( \
         int elsize, int nd, npy_intp numbytes, npy_intp const* dims, \
@@ -2455,9 +2379,9 @@ As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
-N-dimensional array quickly and efficiently. Section `2
-<#sec-array-iterator>`__ provides more description and examples of
-this useful approach to looping over an array.
+N-dimensional array quickly and efficiently, as seen in :ref:`the
+example <iteration-example>` which provides more description
+of this useful approach to looping over an array from C. 
 
 .. c:function:: PyObject* PyArray_IterNew(PyObject* arr)
 
@@ -2651,7 +2575,7 @@ cost of a slight overhead.
             was repeated. For example, for the array [1, 2, 3, 4], x[-2] will
             be 3, x[-2] will be 4, x[4] will be 1, x[5] will be 2, etc...
 
-    If the mode is constant filling (`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
+    If the mode is constant filling (:c:macro:`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
     fill_value should point to an array object which holds the filling value
     (the first item will be the filling value if the array contains more than
     one item). For other cases, fill_value may be NULL.
@@ -2972,7 +2896,7 @@ Conversion Utilities
 
 
 For use with :c:func:`PyArg_ParseTuple`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All of these functions can be used in :c:func:`PyArg_ParseTuple` (...) with
 the "O&" format specifier to automatically convert any Python object
@@ -3027,14 +2951,14 @@ to.
     structure with base, ptr, len, and flags members. The
     :c:type:`PyArray_Chunk` structure is binary compatible with the
     Python's buffer object (through its len member on 32-bit platforms
-    and its ptr member on 64-bit platforms or in Python 2.5). On
-    return, the base member is set to *obj* (or its base if *obj* is
-    already a buffer object pointing to another object). If you need
-    to hold on to the memory be sure to INCREF the base member. The
-    chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
-    with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
-    a writeable buffer interface.
+    and its ptr member on 64-bit platforms). On return, the base member
+    is set to *obj* (or its base if *obj* is already a buffer object
+    pointing to another object). If you need to hold on to the memory
+    be sure to INCREF the base member. The chunk of memory is pointed
+    to by *buf* ->ptr member and has length *buf* ->len. The flags
+    member of *buf* is :c:data:`NPY_ARRAY_ALIGNED` with the
+    :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable
+    buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
@@ -3100,7 +3024,7 @@ to.
    to help functions allow a different clipmode for each dimension.
 
 Other conversions
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_PyIntAsInt(PyObject* op)
 
@@ -3141,7 +3065,7 @@ Miscellaneous
 
 
 Importing the API
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 In order to make use of the C-API from another extension module, the
 :c:func:`import_array` function must be called. If the extension module is
@@ -3195,24 +3119,24 @@ the C-API is needed then some additional steps must be taken.
 
     Internally, these #defines work as follows:
 
-        * If neither is defined, the C-API is declared to be
-          ``static void**``, so it is only visible within the
-          compilation unit that #includes numpy/arrayobject.h.
-        * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
-          :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be ``void**``, so that it will also be visible to other
-          compilation units.
-        * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
-          whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be ``extern void**``, so it is expected to
-          be defined in another compilation unit.
-        * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
-          also changes the name of the variable holding the C-API, which
-          defaults to ``PyArray_API``, to whatever the macro is
-          #defined to.
+    * If neither is defined, the C-API is declared to be
+      ``static void**``, so it is only visible within the
+      compilation unit that #includes numpy/arrayobject.h.
+    * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
+      :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
+      be ``void**``, so that it will also be visible to other
+      compilation units.
+    * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
+      whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
+      declared to be ``extern void**``, so it is expected to
+      be defined in another compilation unit.
+    * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
+      also changes the name of the variable holding the C-API, which
+      defaults to ``PyArray_API``, to whatever the macro is
+      #defined to.
 
 Checking the API Version
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Because python extensions are not used in the same way as usual libraries on
 most platforms, some errors cannot be automatically detected at build time or
@@ -3228,11 +3152,11 @@ corresponds to the runtime numpy's version.
 
 The rules for ABI and API compatibilities can be summarized as follows:
 
-    * Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-      extension has to be recompiled (ABI incompatibility).
-    * :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-      :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-      backward compatible changes.
+* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
+  extension has to be recompiled (ABI incompatibility).
+* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
+  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
+  backward compatible changes.
 
 ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
@@ -3267,48 +3191,7 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
     function is added). A changed value does not always require a recompile.
 
 Internal Flexibility
-^^^^^^^^^^^^^^^^^^^^
-
-.. c:function:: int PyArray_SetNumericOps(PyObject* dict)
-
-    NumPy stores an internal table of Python callable objects that are
-    used to implement arithmetic operations for arrays as well as
-    certain array calculation methods. This function allows the user
-    to replace any or all of these Python objects with their own
-    versions. The keys of the dictionary, *dict*, are the named
-    functions to replace and the paired value is the Python callable
-    object to use. Care should be taken that the function used to
-    replace an internal array operation does not itself call back to
-    that internal array operation (unless you have designed the
-    function to handle that), or an unchecked infinite recursion can
-    result (possibly causing program crash). The key names that
-    represent operations that can be replaced are:
-
-        **add**, **subtract**, **multiply**, **divide**,
-        **remainder**, **power**, **square**, **reciprocal**,
-        **ones_like**, **sqrt**, **negative**, **positive**,
-        **absolute**, **invert**, **left_shift**, **right_shift**,
-        **bitwise_and**, **bitwise_xor**, **bitwise_or**,
-        **less**, **less_equal**, **equal**, **not_equal**,
-        **greater**, **greater_equal**, **floor_divide**,
-        **true_divide**, **logical_or**, **logical_and**,
-        **floor**, **ceil**, **maximum**, **minimum**, **rint**.
-
-
-    These functions are included here because they are used at least once
-    in the array object's methods. The function returns -1 (without
-    setting a Python Error) if one of the objects being assigned is not
-    callable.
-
-    .. deprecated:: 1.16
-
-.. c:function:: PyObject* PyArray_GetNumericOps(void)
-
-    Return a Python dictionary containing the callable Python objects
-    stored in the internal arithmetic operation table. The keys of
-    this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
-
-    .. deprecated:: 1.16
+~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 
@@ -3324,7 +3207,7 @@ Internal Flexibility
 
 
 Memory management
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 .. c:function:: char* PyDataMem_NEW(size_t nbytes)
 
@@ -3358,7 +3241,7 @@ Memory management
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
     copies ``obj->data`` to `obj->base->data`, and returns the error state of
@@ -3371,7 +3254,7 @@ Memory management
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
 Threading support
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 These macros are only meaningful if :c:data:`NPY_ALLOW_THREADS`
 evaluates True during compilation of the extension module. Otherwise,
@@ -3396,81 +3279,81 @@ variable ``NPY_NOSMP`` is set in which case
 Group 1
 """""""
 
-    This group is used to call code that may take some time but does not
-    use any Python C-API calls. Thus, the GIL should be released during
-    its calculation.
+This group is used to call code that may take some time but does not
+use any Python C-API calls. Thus, the GIL should be released during
+its calculation.
 
-    .. c:macro:: NPY_BEGIN_ALLOW_THREADS
+.. c:macro:: NPY_BEGIN_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_END_ALLOW_THREADS
+.. c:macro:: NPY_END_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_BEGIN_THREADS_DEF
+.. c:macro:: NPY_BEGIN_THREADS_DEF
 
-        Place in the variable declaration area. This macro sets up the
-        variable needed for storing the Python state.
+    Place in the variable declaration area. This macro sets up the
+    variable needed for storing the Python state.
 
-    .. c:macro:: NPY_BEGIN_THREADS
+.. c:macro:: NPY_BEGIN_THREADS
 
-        Place right before code that does not need the Python
-        interpreter (no Python C-API calls). This macro saves the
-        Python state and releases the GIL.
+    Place right before code that does not need the Python
+    interpreter (no Python C-API calls). This macro saves the
+    Python state and releases the GIL.
 
-    .. c:macro:: NPY_END_THREADS
+.. c:macro:: NPY_END_THREADS
 
-        Place right after code that does not need the Python
-        interpreter. This macro acquires the GIL and restores the
-        Python state from the saved variable.
+    Place right after code that does not need the Python
+    interpreter. This macro acquires the GIL and restores the
+    Python state from the saved variable.
 
-    .. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to release the GIL only if *dtype* does not contain
-        arbitrary Python objects which may need the Python interpreter
-        during execution of the loop.
+    Useful to release the GIL only if *dtype* does not contain
+    arbitrary Python objects which may need the Python interpreter
+    during execution of the loop.
 
-    .. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to regain the GIL in situations where it was released
-        using the BEGIN form of this macro.
+    Useful to regain the GIL in situations where it was released
+    using the BEGIN form of this macro.
 
-    .. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
+.. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
 
-        Useful to release the GIL only if *loop_size* exceeds a
-        minimum threshold, currently set to 500. Should be matched
-        with a :c:macro:`NPY_END_THREADS` to regain the GIL.
+    Useful to release the GIL only if *loop_size* exceeds a
+    minimum threshold, currently set to 500. Should be matched
+    with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
 """""""
 
-    This group is used to re-acquire the Python GIL after it has been
-    released. For example, suppose the GIL has been released (using the
-    previous calls), and then some path in the code (perhaps in a
-    different subroutine) requires use of the Python C-API, then these
-    macros are useful to acquire the GIL. These macros accomplish
-    essentially a reverse of the previous three (acquire the LOCK saving
-    what state it had) and then re-release it with the saved state.
+This group is used to re-acquire the Python GIL after it has been
+released. For example, suppose the GIL has been released (using the
+previous calls), and then some path in the code (perhaps in a
+different subroutine) requires use of the Python C-API, then these
+macros are useful to acquire the GIL. These macros accomplish
+essentially a reverse of the previous three (acquire the LOCK saving
+what state it had) and then re-release it with the saved state.
 
-    .. c:macro:: NPY_ALLOW_C_API_DEF
+.. c:macro:: NPY_ALLOW_C_API_DEF
 
-        Place in the variable declaration area to set up the necessary
-        variable.
+    Place in the variable declaration area to set up the necessary
+    variable.
 
-    .. c:macro:: NPY_ALLOW_C_API
+.. c:macro:: NPY_ALLOW_C_API
 
-        Place before code that needs to call the Python C-API (when it is
-        known that the GIL has already been released).
+    Place before code that needs to call the Python C-API (when it is
+    known that the GIL has already been released).
 
-    .. c:macro:: NPY_DISABLE_C_API
+.. c:macro:: NPY_DISABLE_C_API
 
-        Place after code that needs to call the Python C-API (to re-release
-        the GIL).
+    Place after code that needs to call the Python C-API (to re-release
+    the GIL).
 
 .. tip::
 
@@ -3478,7 +3361,7 @@ Group 2
 
 
 Priority
-^^^^^^^^
+~~~~~~~~
 
 .. c:macro:: NPY_PRIORITY
 
@@ -3501,7 +3384,7 @@ Priority
 
 
 Default buffers
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:macro:: NPY_BUFSIZE
 
@@ -3517,7 +3400,7 @@ Default buffers
 
 
 Other constants
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:macro:: NPY_NUM_FLOATTYPE
 
@@ -3551,7 +3434,7 @@ Other constants
 
 
 Miscellaneous Macros
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_SAMESHAPE(PyArrayObject *a1, PyArrayObject *a2)
 
@@ -3567,53 +3450,24 @@ Miscellaneous Macros
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:macro:: PyArray_CLT(a,b)
-
-.. c:macro:: PyArray_CGT(a,b)
-
-.. c:macro:: PyArray_CLE(a,b)
-
-.. c:macro:: PyArray_CGE(a,b)
-
-.. c:macro:: PyArray_CEQ(a,b)
-
-.. c:macro:: PyArray_CNE(a,b)
-
-    Implements the complex comparisons between two complex numbers
-    (structures with a real and imag member) using NumPy's definition
-    of the ordering which is lexicographic: comparing the real parts
-    first and then the complex parts if the real parts are equal.
-
 .. c:function:: npy_intp PyArray_REFCOUNT(PyObject* op)
 
     Returns the reference count of any Python object.
 
-.. c:function:: void PyArray_DiscardWritebackIfCopy(PyObject* obj)
+.. c:function:: void PyArray_DiscardWritebackIfCopy(PyArrayObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
-    contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
-    to copy the data from `obj->base` This undoes
+    contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
+    to copy the data from `obj->base`. This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.
 
-.. c:function:: void PyArray_XDECREF_ERR(PyObject* obj)
-
-    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
-    followed by ``Py_XDECREF``
-
-    DECREF's an array object which may have the
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
-    flag set without causing the contents to be copied back into the
-    original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
-    object. This is useful for recovering from an error condition when
-    writeback semantics are used, but will lead to wrong results.
-
 
 Enumerated Types
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 .. c:enum:: NPY_SORTKIND
 

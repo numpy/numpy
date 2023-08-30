@@ -1,6 +1,7 @@
 import sys
 import os
 import textwrap
+import argparse
 
 sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
@@ -28,3 +29,21 @@ def write_code(target):
             cdef_str = normalize_doc(string)
             fid.write(f"#define {cdef_name} \"{cdef_str}\"\n")
         fid.write("#endif //NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H\n")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
+    args = parser.parse_args()
+
+    outfile = os.path.join(os.getcwd(), args.outfile)
+    write_code(outfile)
+
+
+if __name__ == '__main__':
+    main()

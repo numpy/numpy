@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from numpy.typing import ArrayLike, _SupportsArray
+from numpy._typing import ArrayLike, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5

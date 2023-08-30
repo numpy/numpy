@@ -10,6 +10,7 @@ import pytest
 import textwrap
 import enum
 import random
+import ctypes
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
@@ -168,6 +169,9 @@ class TestCasting:
 
         for i, value in enumerate(values):
             # Use item assignment to ensure this is not using casting:
+            if value < 0 and dtype1.kind == "u":
+                # Manually rollover unsigned integers (-1 -> int.max)
+                value = value + np.iinfo(dtype1).max + 1
             arr1[i] = value
 
         if dtype2 is None:
@@ -184,6 +188,9 @@ class TestCasting:
 
         for i, value in enumerate(values):
             # Use item assignment to ensure this is not using casting:
+            if value < 0 and dtype2.kind == "u":
+                # Manually rollover unsigned integers (-1 -> int.max)
+                value = value + np.iinfo(dtype2).max + 1
             arr2[i] = value
 
         return arr1, arr2, values
@@ -280,8 +287,7 @@ class TestCasting:
                         assert(from_dt is from_res)
                         assert(to_dt is to_res)
 
-
-    @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("from_dt", simple_dtype_instances())
     def test_simple_direct_casts(self, from_dt):
         """
@@ -715,23 +721,25 @@ class TestCasting:
     @pytest.mark.parametrize(["to_dt", "expected_off"],
             [  # Same as `from_dt` but with both fields shifted:
              (np.dtype({"names": ["a", "b"], "formats": ["i4", "f4"],
-                        "offsets": [2, 6]}), -2),
+                        "offsets": [0, 4]}), 2),
              # Additional change of the names
-             # TODO: Tests will need changing for order vs. name based casting:
-             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
-                        "offsets": [6, 2]}), -2),
-             # Incompatible field offset change (offsets -2 and 0)
-             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
-                        "offsets": [6, 0]}), None)])
+             (np.dtype({"names": ["b", "a"], "formats": ["i4", "f4"],
+                        "offsets": [0, 4]}), 2),
+             # Incompatible field offset change
+             (np.dtype({"names": ["b", "a"], "formats": ["i4", "f4"],
+                        "offsets": [0, 6]}), None)])
     def test_structured_field_offsets(self, to_dt, expected_off):
         # This checks the cast-safety and view offset for swapped and "shifted"
         # fields which are viewable
         from_dt = np.dtype({"names": ["a", "b"],
                             "formats": ["i4", "f4"],
-                            "offsets": [0, 4]})
+                            "offsets": [2, 6]})
         cast = get_castingimpl(type(from_dt), type(to_dt))
         safety, _, view_off = cast._resolve_descriptors((from_dt, to_dt))
-        assert safety == Casting.equiv
+        if from_dt.names == to_dt.names:
+            assert safety == Casting.equiv
+        else:
+            assert safety == Casting.safe
         # Shifting the original data pointer by -2 will align both by
         # effectively adding 2 bytes of spacing before `from_dt`.
         assert view_off == expected_off
@@ -742,7 +750,9 @@ class TestCasting:
             ("(1,1)i", "i", 0),
             ("(2,1)i", "(2,1)i", 0),
             # field cases (field to field is tested explicitly also):
-            ("i", dict(names=["a"], formats=["i"], offsets=[2]), -2),
+            # Not considered viewable, because a negative offset would allow
+            # may structured dtype to indirectly access invalid memory.
+            ("i", dict(names=["a"], formats=["i"], offsets=[2]), None),
             (dict(names=["a"], formats=["i"], offsets=[2]), "i", 2),
             # Currently considered not viewable, due to multiple fields
             # even though they overlap (maybe we should not allow that?)
@@ -782,7 +792,8 @@ class TestCasting:
         # None to <other> casts may succeed or fail, but a NULL'ed array must
         # behave the same as one filled with None's.
         arr_normal = np.array([None] * 5)
-        arr_NULLs = np.empty_like([None] * 5)
+        arr_NULLs = np.empty_like(arr_normal)
+        ctypes.memset(arr_NULLs.ctypes.data, 0, arr_NULLs.nbytes)
         # If the check fails (maybe it should) the test would lose its purpose:
         assert arr_NULLs.tobytes() == b"\x00" * arr_NULLs.nbytes
 

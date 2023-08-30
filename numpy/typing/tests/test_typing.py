@@ -18,6 +18,21 @@ from numpy.typing.mypy_plugin import (
     _C_INTP,
 )
 
+
+# Only trigger a full `mypy` run if this environment variable is set
+# Note that these tests tend to take over a minute even on a macOS M1 CPU,
+# and more than that in CI.
+RUN_MYPY = "NPY_RUN_MYPY_IN_TESTSUITE" in os.environ
+if RUN_MYPY and RUN_MYPY not in ('0', '', 'false'):
+    RUN_MYPY = True
+
+# Skips all functions in this file
+pytestmark = pytest.mark.skipif(
+    not RUN_MYPY,
+    reason="`NPY_RUN_MYPY_IN_TESTSUITE` not set"
+)
+
+
 try:
     from mypy import api
 except ImportError:
@@ -228,41 +243,41 @@ def _construct_ctypes_dict() -> dict[str, str]:
 
 
 def _construct_format_dict() -> dict[str, str]:
-    dct = {k.split(".")[-1]: v.replace("numpy", "numpy.typing") for
+    dct = {k.split(".")[-1]: v.replace("numpy", "numpy._typing") for
            k, v in _PRECISION_DICT.items()}
 
     return {
-        "uint8": "numpy.unsignedinteger[numpy.typing._8Bit]",
-        "uint16": "numpy.unsignedinteger[numpy.typing._16Bit]",
-        "uint32": "numpy.unsignedinteger[numpy.typing._32Bit]",
-        "uint64": "numpy.unsignedinteger[numpy.typing._64Bit]",
-        "uint128": "numpy.unsignedinteger[numpy.typing._128Bit]",
-        "uint256": "numpy.unsignedinteger[numpy.typing._256Bit]",
-        "int8": "numpy.signedinteger[numpy.typing._8Bit]",
-        "int16": "numpy.signedinteger[numpy.typing._16Bit]",
-        "int32": "numpy.signedinteger[numpy.typing._32Bit]",
-        "int64": "numpy.signedinteger[numpy.typing._64Bit]",
-        "int128": "numpy.signedinteger[numpy.typing._128Bit]",
-        "int256": "numpy.signedinteger[numpy.typing._256Bit]",
-        "float16": "numpy.floating[numpy.typing._16Bit]",
-        "float32": "numpy.floating[numpy.typing._32Bit]",
-        "float64": "numpy.floating[numpy.typing._64Bit]",
-        "float80": "numpy.floating[numpy.typing._80Bit]",
-        "float96": "numpy.floating[numpy.typing._96Bit]",
-        "float128": "numpy.floating[numpy.typing._128Bit]",
-        "float256": "numpy.floating[numpy.typing._256Bit]",
+        "uint8": "numpy.unsignedinteger[numpy._typing._8Bit]",
+        "uint16": "numpy.unsignedinteger[numpy._typing._16Bit]",
+        "uint32": "numpy.unsignedinteger[numpy._typing._32Bit]",
+        "uint64": "numpy.unsignedinteger[numpy._typing._64Bit]",
+        "uint128": "numpy.unsignedinteger[numpy._typing._128Bit]",
+        "uint256": "numpy.unsignedinteger[numpy._typing._256Bit]",
+        "int8": "numpy.signedinteger[numpy._typing._8Bit]",
+        "int16": "numpy.signedinteger[numpy._typing._16Bit]",
+        "int32": "numpy.signedinteger[numpy._typing._32Bit]",
+        "int64": "numpy.signedinteger[numpy._typing._64Bit]",
+        "int128": "numpy.signedinteger[numpy._typing._128Bit]",
+        "int256": "numpy.signedinteger[numpy._typing._256Bit]",
+        "float16": "numpy.floating[numpy._typing._16Bit]",
+        "float32": "numpy.floating[numpy._typing._32Bit]",
+        "float64": "numpy.floating[numpy._typing._64Bit]",
+        "float80": "numpy.floating[numpy._typing._80Bit]",
+        "float96": "numpy.floating[numpy._typing._96Bit]",
+        "float128": "numpy.floating[numpy._typing._128Bit]",
+        "float256": "numpy.floating[numpy._typing._256Bit]",
         "complex64": ("numpy.complexfloating"
-                      "[numpy.typing._32Bit, numpy.typing._32Bit]"),
+                      "[numpy._typing._32Bit, numpy._typing._32Bit]"),
         "complex128": ("numpy.complexfloating"
-                       "[numpy.typing._64Bit, numpy.typing._64Bit]"),
+                       "[numpy._typing._64Bit, numpy._typing._64Bit]"),
         "complex160": ("numpy.complexfloating"
-                       "[numpy.typing._80Bit, numpy.typing._80Bit]"),
+                       "[numpy._typing._80Bit, numpy._typing._80Bit]"),
         "complex192": ("numpy.complexfloating"
-                       "[numpy.typing._96Bit, numpy.typing._96Bit]"),
+                       "[numpy._typing._96Bit, numpy._typing._96Bit]"),
         "complex256": ("numpy.complexfloating"
-                       "[numpy.typing._128Bit, numpy.typing._128Bit]"),
+                       "[numpy._typing._128Bit, numpy._typing._128Bit]"),
         "complex512": ("numpy.complexfloating"
-                       "[numpy.typing._256Bit, numpy.typing._256Bit]"),
+                       "[numpy._typing._256Bit, numpy._typing._256Bit]"),
 
         "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
         "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
@@ -310,7 +325,7 @@ def _parse_reveals(file: IO[str]) -> tuple[npt.NDArray[np.str_], list[str]]:
 
     All format keys will be substituted for their respective value
     from `FORMAT_DICT`, *e.g.* ``"{float64}"`` becomes
-    ``"numpy.floating[numpy.typing._64Bit]"``.
+    ``"numpy.floating[numpy._typing._64Bit]"``.
     """
     string = file.read().replace("*", "")
 
@@ -431,7 +446,7 @@ def test_extended_precision() -> None:
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
 
-    with open(path, "r") as f:
+    with open(path) as f:
         expression_list = f.readlines()
 
     for _msg in output_mypy[path]:

@@ -5,12 +5,13 @@ requiring a re-compile.
 
 NOTE: Many of the methods of ndarray have corresponding functions.
       If you update these docstrings, please keep also the ones in
-      core/fromnumeric.py, core/defmatrix.py up-to-date.
+      core/fromnumeric.py, matrixlib/defmatrix.py up-to-date.
 
 """
 
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
+
 
 ###############################################################################
 #
@@ -384,12 +385,13 @@ add_newdoc('numpy.core', 'nditer',
     >>> luf(lambda i,j:i*i + j/2, a, b)
     array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
-    If operand flags `"writeonly"` or `"readwrite"` are used the
+    If operand flags ``"writeonly"`` or ``"readwrite"`` are used the
     operands may be views into the original data with the
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before
     using the result. The temporary data will be written back to the
-    original data when the `__exit__` function is called but not before:
+    original data when the :meth:`~object.__exit__` function is called
+    but not before:
 
     >>> a = np.arange(6, dtype='i4')[::-2]
     >>> with np.nditer(a, [],
@@ -798,18 +800,18 @@ add_newdoc('numpy.core.multiarray', 'array',
     ----------
     object : array_like
         An array, any object exposing the array interface, an object whose
-        __array__ method returns an array, or any (nested) sequence.
+        ``__array__`` method returns an array, or any (nested) sequence.
         If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
-        The desired data-type for the array.  If not given, then the type will
-        be determined as the minimum type required to hold the objects in the
-        sequence.
+        The desired data-type for the array. If not given, NumPy will try to use
+        a default ``dtype`` that can represent the values (by applying promotion
+        rules when necessary.)
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy will
-        only be made if __array__ returns a copy, if obj is a nested sequence,
-        or if a copy is needed to satisfy any of the other requirements
-        (`dtype`, `order`, etc.).
+        only be made if ``__array__`` returns a copy, if obj is a nested
+        sequence, or if a copy is needed to satisfy any of the other
+        requirements (``dtype``, ``order``, etc.).
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -858,7 +860,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Notes
     -----
-    When order is 'A' and `object` is an array in neither 'C' nor 'F' order,
+    When order is 'A' and ``object`` is an array in neither 'C' nor 'F' order,
     and a copy is forced by a change in dtype, then the order of the result is
     not necessarily 'C' as expected. This is likely a bug.
 
@@ -896,11 +898,11 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Creating an array from sub-classes:
 
-    >>> np.array(np.mat('1 2; 3 4'))
+    >>> np.array(np.asmatrix('1 2; 3 4'))
     array([[1, 2],
            [3, 4]])
 
-    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
 
@@ -945,7 +947,6 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
@@ -1025,7 +1026,6 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and
@@ -1084,11 +1084,30 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2,3)
-    >>> np.ascontiguousarray(x, dtype=np.float32)
-    array([[0., 1., 2.],
-           [3., 4., 5.]], dtype=float32)
+    Starting with a Fortran-contiguous array:
+
+    >>> x = np.ones((2, 3), order='F')
+    >>> x.flags['F_CONTIGUOUS']
+    True
+
+    Calling ``ascontiguousarray`` makes a C-contiguous copy:
+
+    >>> y = np.ascontiguousarray(x)
+    >>> y.flags['C_CONTIGUOUS']
+    True
+    >>> np.may_share_memory(x, y)
+    False
+
+    Now, starting with a C-contiguous array:
+
+    >>> x = np.ones((2, 3), order='C')
     >>> x.flags['C_CONTIGUOUS']
+    True
+
+    Then, calling ``ascontiguousarray`` returns the same object:
+
+    >>> y = np.ascontiguousarray(x)
+    >>> x is y
     True
 
     Note: This function returns an array with at least one-dimension (1-d)
@@ -1130,11 +1149,30 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2,3)
+    Starting with a C-contiguous array:
+
+    >>> x = np.ones((2, 3), order='C')
+    >>> x.flags['C_CONTIGUOUS']
+    True
+
+    Calling ``asfortranarray`` makes a Fortran-contiguous copy:
+
     >>> y = np.asfortranarray(x)
-    >>> x.flags['F_CONTIGUOUS']
-    False
     >>> y.flags['F_CONTIGUOUS']
+    True
+    >>> np.may_share_memory(x, y)
+    False
+
+    Now, starting with a Fortran-contiguous array:
+
+    >>> x = np.ones((2, 3), order='F')
+    >>> x.flags['F_CONTIGUOUS']
+    True
+
+    Then, calling ``asfortranarray`` returns the same object:
+
+    >>> y = np.asfortranarray(x)
+    >>> x is y
     True
 
     Note: This function returns an array with at least one-dimension (1-d)
@@ -1316,8 +1354,8 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             decimal numbers, an operation which is better spelt
             ``frombuffer(string, dtype, count)``. If `string` contains unicode
             text, the binary mode of `fromstring` will first encode it into
-            bytes using either utf-8 (python 3) or the default encoding
-            (python 2), neither of which produce sane results.
+            bytes using utf-8, which will not produce sane results.
+
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1354,7 +1392,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
-    comparison operator specified by `cmp_op`.
+    comparison operator specified by `cmp`.
 
     Parameters
     ----------
@@ -1373,7 +1411,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If `cmp_op` is not valid.
+        If `cmp` is not valid.
     TypeError
         If at least one of `a` or `b` is a non-string array
 
@@ -1398,6 +1436,11 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
+
+        .. versionchanged:: 1.23
+            Object and subarray dtypes are now supported (note that the final
+            result is not 1-D for a subarray dtype).
+
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
@@ -1420,6 +1463,18 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     >>> iterable = (x*x for x in range(5))
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
+
+    A carefully constructed subarray dtype will lead to higher dimensional
+    results:
+
+    >>> iterable = ((x+1, x+2) for x in range(5))
+    >>> np.fromiter(iterable, dtype=np.dtype((int, 2)))
+    array([[1, 2],
+           [2, 3],
+           [3, 4],
+           [4, 5],
+           [5, 6]])
+
 
     """.replace(
         "${ARRAY_FUNCTION_LIKE}",
@@ -1545,6 +1600,12 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     -------
     out : ndarray
 
+    See also
+    --------
+    ndarray.tobytes
+        Inverse of this operation, construct Python bytes from the raw data
+        bytes in the array.
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, this should
@@ -1556,6 +1617,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
     The data of the resulting array will not be byteswapped, but will be
     interpreted correctly.
+
+    This function creates a view into the original object.  This should be safe
+    in general, but it may make sense to copy the result when the original
+    object is mutable or untrusted.
 
     Examples
     --------
@@ -1573,21 +1638,39 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         array_function_like_doc,
     ))
 
-add_newdoc('numpy.core.multiarray', '_from_dlpack',
+add_newdoc('numpy.core.multiarray', 'from_dlpack',
     """
-    _from_dlpack(x, /)
+    from_dlpack(x, /)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
-    protocol.
+    protocol. Generally, the returned NumPy array is a read-only view
+    of the input object. See [1]_ and [2]_ for more details.
 
-    See Also
+    Parameters
+    ----------
+    x : object
+        A Python object that implements the ``__dlpack__`` and
+        ``__dlpack_device__`` methods.
+
+    Returns
+    -------
+    out : ndarray
+
+    References
+    ----------
+    .. [1] Array API documentation,
+       https://data-apis.org/array-api/latest/design_topics/data_interchange.html#syntax-for-data-interchange-with-dlpack
+
+    .. [2] Python specification for DLPack,
+       https://dmlc.github.io/dlpack/latest/python_spec.html
+
+    Examples
     --------
-    `Array API documentation
-    <https://data-apis.org/array-api/latest/design_topics/data_interchange.html#syntax-for-data-interchange-with-dlpack>`_
+    >>> import torch
+    >>> x = torch.arange(10)
+    >>> # create a view of the torch tensor "x" in NumPy
+    >>> y = np.from_dlpack(x)
     """)
-
-add_newdoc('numpy.core', 'fastCopyAndTranspose',
-    """_fastCopyAndTranspose(a)""")
 
 add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
@@ -1598,13 +1681,25 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     Return evenly spaced values within a given interval.
 
-    Values are generated within the half-open interval ``[start, stop)``
-    (in other words, the interval including `start` but excluding `stop`).
-    For integer arguments the function is equivalent to the Python built-in
-    `range` function, but returns an ndarray rather than a list.
+    ``arange`` can be called with a varying number of positional arguments:
+
+    * ``arange(stop)``: Values are generated within the half-open interval
+      ``[0, stop)`` (in other words, the interval including `start` but
+      excluding `stop`).
+    * ``arange(start, stop)``: Values are generated within the half-open
+      interval ``[start, stop)``.
+    * ``arange(start, stop, step)`` Values are generated within the half-open
+      interval ``[start, stop)``, with spacing between values given by
+      ``step``.
+
+    For integer arguments the function is roughly equivalent to the Python
+    built-in :py:class:`range`, but returns an ndarray rather than a ``range``
+    instance.
 
     When using a non-integer step, such as 0.1, it is often better to use
-    `numpy.linspace`. See the warnings section below for more information.
+    `numpy.linspace`.
+
+    See the Warning sections below for more information.
 
     Parameters
     ----------
@@ -1620,7 +1715,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
         between two adjacent values, ``out[i+1] - out[i]``.  The default
         step size is 1.  If `step` is specified as a position argument,
         `start` must also be given.
-    dtype : dtype
+    dtype : dtype, optional
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
     ${ARRAY_FUNCTION_LIKE}
@@ -1656,11 +1751,26 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     In such cases, the use of `numpy.linspace` should be preferred.
 
+    The built-in :py:class:`range` generates :std:doc:`Python built-in integers
+    that have arbitrary size <python:c-api/long>`, while `numpy.arange`
+    produces `numpy.int32` or `numpy.int64` numbers. This may result in
+    incorrect results for large integer values::
+
+      >>> power = 40
+      >>> modulo = 10000
+      >>> x1 = [(n ** power) % modulo for n in range(8)]
+      >>> x2 = [(n ** power) % modulo for n in np.arange(8)]
+      >>> print(x1)
+      [0, 1, 7776, 8801, 6176, 625, 6576, 4001]  # correct
+      >>> print(x2)
+      [0, 1, 7776, 7185, 0, 5969, 4816, 3361]  # incorrect
+
     See Also
     --------
     numpy.linspace : Evenly spaced numbers with careful handling of endpoints.
     numpy.ogrid: Arrays of evenly spaced numbers in N-dimensions.
     numpy.mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -1701,63 +1811,14 @@ add_newdoc('numpy.core.multiarray', 'set_string_function',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'set_numeric_ops',
-    """
-    set_numeric_ops(op1=func1, op2=func2, ...)
-
-    Set numerical operators for array objects.
-
-    .. deprecated:: 1.16
-
-        For the general case, use :c:func:`PyUFunc_ReplaceLoopBySignature`.
-        For ndarray subclasses, define the ``__array_ufunc__`` method and
-        override the relevant ufunc.
-
-    Parameters
-    ----------
-    op1, op2, ... : callable
-        Each ``op = func`` pair describes an operator to be replaced.
-        For example, ``add = lambda x, y: np.add(x, y) % 5`` would replace
-        addition by modulus 5 addition.
-
-    Returns
-    -------
-    saved_ops : list of callables
-        A list of all operators, stored before making replacements.
-
-    Notes
-    -----
-    .. WARNING::
-       Use with care!  Incorrect usage may lead to memory errors.
-
-    A function replacing an operator cannot make use of that operator.
-    For example, when replacing add, you may not use ``+``.  Instead,
-    directly call ufuncs.
-
-    Examples
-    --------
-    >>> def add_mod5(x, y):
-    ...     return np.add(x, y) % 5
-    ...
-    >>> old_funcs = np.set_numeric_ops(add=add_mod5)
-
-    >>> x = np.arange(12).reshape((3, 4))
-    >>> x + x
-    array([[0, 2, 4, 1],
-           [3, 0, 2, 4],
-           [1, 3, 0, 2]])
-
-    >>> ignore = np.set_numeric_ops(**old_funcs) # restore operators
-
-    """)
-
 add_newdoc('numpy.core.multiarray', 'promote_types',
     """
     promote_types(type1, type2)
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
-    The returned data type is always in native byte order.
+    The returned data type is always considered "canonical", this mainly
+    means that the promoted dtype will always be in native byte order.
 
     This function is symmetric, but rarely associative.
 
@@ -1775,6 +1836,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Notes
     -----
+    Please see `numpy.result_type` for additional information about promotion.
+
     .. versionadded:: 1.6.0
 
     Starting in NumPy 1.9, promote_types function now returns a valid string
@@ -1782,6 +1845,12 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype as another argument. Previously it always returned the input string
     dtype, even if it wasn't long enough to store the max integer/float value
     converted to a string.
+
+    .. versionchanged:: 1.23.0
+
+    NumPy now supports promotion for more structured dtypes.  It will now
+    remove unnecessary padding from a structure dtype and promote included
+    fields individually.
 
     See Also
     --------
@@ -2574,6 +2643,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
     Does not include memory consumed by non-element attributes of the
     array object.
 
+    See Also
+    --------
+    sys.getsizeof
+        Memory consumed by the object itself without parents in case view.
+        This does include memory consumed by non-element attributes.
+
     Examples
     --------
     >>> x = np.zeros((3,5,2), dtype=np.complex128)
@@ -2703,8 +2778,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
         offset = sum(np.array(i) * a.strides)
 
-    A more detailed explanation of strides can be found in the
-    "ndarray.rst" file in the NumPy reference guide.
+    A more detailed explanation of strides can be found in
+    :ref:`arrays.ndarray`.
 
     .. warning::
 
@@ -2764,24 +2839,25 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
     """
-    The transposed array.
+    View of the transposed array.
 
     Same as ``self.transpose()``.
 
     Examples
     --------
-    >>> x = np.array([[1.,2.],[3.,4.]])
-    >>> x
-    array([[ 1.,  2.],
-           [ 3.,  4.]])
-    >>> x.T
-    array([[ 1.,  3.],
-           [ 2.,  4.]])
-    >>> x = np.array([1.,2.,3.,4.])
-    >>> x
-    array([ 1.,  2.,  3.,  4.])
-    >>> x.T
-    array([ 1.,  2.,  3.,  4.])
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> a
+    array([[1, 2],
+           [3, 4]])
+    >>> a.T
+    array([[1, 3],
+           [2, 4]])
+
+    >>> a = np.array([1, 2, 3, 4])
+    >>> a
+    array([1, 2, 3, 4])
+    >>> a.T
+    array([1, 2, 3, 4])
 
     See Also
     --------
@@ -2790,6 +2866,45 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('mT',
+    """
+    View of the matrix transposed array.
+    
+    The matrix transpose is the transpose of the last two dimensions, even
+    if the array is of higher dimension.
+
+    .. versionadded:: 2.0
+
+    Raises
+    ------
+    ValueError
+        If the array is of dimension less than 2.
+        
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> a
+    array([[1, 2],
+           [3, 4]])
+    >>> a.mT
+    array([[1, 3],
+           [2, 4]])
+           
+    >>> a = np.arange(8).reshape((2, 2, 2))
+    >>> a
+    array([[[0, 1],
+            [2, 3]],
+    <BLANKLINE>
+           [[4, 5],
+            [6, 7]]])
+    >>> a.mT
+    array([[[0, 2],
+            [1, 3]],
+    <BLANKLINE>
+           [[4, 6],
+            [5, 7]]])
+    
+    """))
 ##############################################################################
 #
 # ndarray methods
@@ -2798,7 +2913,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
-    """ a.__array__([dtype], /) -> reference if type unchanged, copy otherwise.
+    """ a.__array__([dtype], /)
 
     Returns either a new reference to self if dtype is not given or a new array
     of provided data type if dtype is different from the current dtype of the
@@ -2861,10 +2976,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> np.ndarray[Any, np.dtype[Any]]
     numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
 
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
-
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
@@ -2875,7 +2986,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__(memo, /) -> Deep copy of array.
+    """a.__deepcopy__(memo, /)
 
     Used if :func:`copy.deepcopy` is called on an array.
 
@@ -3024,12 +3135,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3116,7 +3227,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     array([b'ceg', b'fac'], dtype='|S3')
 
     ``A.newbyteorder().byteswap()`` produces an array with the same values
-      but different representation in memory
+    but different representation in memory
 
     >>> A = np.array([1, 2, 3])
     >>> A.view(np.uint8)
@@ -3358,6 +3469,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     >>> a.fill(1)
     >>> a
     array([1.,  1.])
+
+    Fill expects a scalar value and always behaves the same as assigning
+    to a single array element.  The following is a rare example where this
+    distinction is important:
+
+    >>> a = np.array([None, None], dtype=object)
+    >>> a[0] = np.array(3)
+    >>> a
+    array([array(3), None], dtype=object)
+    >>> a.fill(np.array(3))
+    >>> a
+    array([array(3), array(3)], dtype=object)
+
+    Where other forms of assignments will unpack the array being assigned:
+
+    >>> a[...] = np.array(3)
+    >>> a
+    array([3, 3], dtype=object)
 
     """))
 
@@ -3930,7 +4059,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The WRITEBACKIFCOPY and flag can never be set
+    The WRITEBACKIFCOPY flag can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that
@@ -3949,7 +4078,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     -----
     Array flags provide information about how the memory area used
     for the array is to be interpreted. There are 7 Boolean flags
-    in use, only four of which can be changed by the user:
+    in use, only three of which can be changed by the user:
     WRITEBACKIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
@@ -4324,6 +4453,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     s : bytes
         Python bytes exhibiting a copy of `a`'s raw data.
 
+    See also
+    --------
+    frombuffer
+        Inverse of this operation, construct a 1-dimensional array from Python
+        bytes.
+
     Examples
     --------
     >>> x = np.array([[0, 1], [2, 3]], dtype='<u2')
@@ -4340,9 +4475,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     a.tostring(order='C')
 
-    A compatibility alias for `tobytes`, with exactly the same behavior.
+    A compatibility alias for `~ndarray.tobytes`, with exactly the same
+    behavior.
 
-    Despite its name, it returns `bytes` not `str`\ s.
+    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
 
     .. deprecated:: 1.19.0
     """))
@@ -4369,15 +4505,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     Returns a view of the array with axes transposed.
 
-    For a 1-D array this has no effect, as a transposed vector is simply the
-    same vector. To convert a 1-D array into a 2D column vector, an additional
-    dimension must be added. `np.atleast2d(a).T` achieves this, as does
-    `a[:, np.newaxis]`.
-    For a 2-D array, this is a standard matrix transpose.
-    For an n-D array, if axes are given, their order indicates how the
-    axes are permuted (see Examples). If axes are not provided and
-    ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
-    ``a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])``.
+    Refer to `numpy.transpose` for full documentation.
 
     Parameters
     ----------
@@ -4385,20 +4513,20 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
      * None or no argument: reverses the order of the axes.
 
-     * tuple of ints: `i` in the `j`-th place in the tuple means `a`'s
-       `i`-th axis becomes `a.transpose()`'s `j`-th axis.
+     * tuple of ints: `i` in the `j`-th place in the tuple means that the
+       array's `i`-th axis becomes the transposed array's `j`-th axis.
 
      * `n` ints: same as an n-tuple of the same ints (this form is
-       intended simply as a "convenience" alternative to the tuple form)
+       intended simply as a "convenience" alternative to the tuple form).
 
     Returns
     -------
-    out : ndarray
-        View of `a`, with axes suitably permuted.
+    p : ndarray
+        View of the array with its axes suitably permuted.
 
     See Also
     --------
-    transpose : Equivalent function
+    transpose : Equivalent function.
     ndarray.T : Array property returning the array transposed.
     ndarray.reshape : Give a new shape to an array without changing its data.
 
@@ -4417,6 +4545,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     >>> a.transpose(1, 0)
     array([[1, 3],
            [2, 4]])
+
+    >>> a = np.array([1, 2, 3, 4])
+    >>> a
+    array([1, 2, 3, 4])
+    >>> a.transpose()
+    array([1, 2, 3, 4])
 
     """))
 
@@ -4445,7 +4579,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float_')``.
+        ``dtype('float64')``.
 
     Parameters
     ----------
@@ -4519,7 +4653,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     >>> x[0] = (9, 10)
     >>> z[0]
-    (9, 10)
+    np.record((9, 10), dtype=[('a', 'i1'), ('b', 'i1')])
 
     Views that change the dtype size (bytes per entry) should normally be
     avoided on arrays defined by slices, transposes, fortran-ordering, etc.:
@@ -4611,129 +4745,6 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
 
     """)
 
-add_newdoc('numpy.core.umath', 'geterrobj',
-    """
-    geterrobj()
-
-    Return the current object that defines floating-point error handling.
-
-    The error object contains all information that defines the error handling
-    behavior in NumPy. `geterrobj` is used internally by the other
-    functions that get and set error handling behavior (`geterr`, `seterr`,
-    `geterrcall`, `seterrcall`).
-
-    Returns
-    -------
-    errobj : list
-        The error object, a list containing three elements:
-        [internal numpy buffer size, error mask, error callback function].
-
-        The error mask is a single integer that holds the treatment information
-        on all four floating point errors. The information for each error type
-        is contained in three bits of the integer. If we print it in base 8, we
-        can see what treatment is set for "invalid", "under", "over", and
-        "divide" (in that order). The printed string can be interpreted with
-
-        * 0 : 'ignore'
-        * 1 : 'warn'
-        * 2 : 'raise'
-        * 3 : 'call'
-        * 4 : 'print'
-        * 5 : 'log'
-
-    See Also
-    --------
-    seterrobj, seterr, geterr, seterrcall, geterrcall
-    getbufsize, setbufsize
-
-    Notes
-    -----
-    For complete documentation of the types of floating-point exceptions and
-    treatment options, see `seterr`.
-
-    Examples
-    --------
-    >>> np.geterrobj()  # first get the defaults
-    [8192, 521, None]
-
-    >>> def err_handler(type, flag):
-    ...     print("Floating point error (%s), with flag %s" % (type, flag))
-    ...
-    >>> old_bufsize = np.setbufsize(20000)
-    >>> old_err = np.seterr(divide='raise')
-    >>> old_handler = np.seterrcall(err_handler)
-    >>> np.geterrobj()
-    [8192, 521, <function err_handler at 0x91dcaac>]
-
-    >>> old_err = np.seterr(all='ignore')
-    >>> np.base_repr(np.geterrobj()[1], 8)
-    '0'
-    >>> old_err = np.seterr(divide='warn', over='log', under='call',
-    ...                     invalid='print')
-    >>> np.base_repr(np.geterrobj()[1], 8)
-    '4351'
-
-    """)
-
-add_newdoc('numpy.core.umath', 'seterrobj',
-    """
-    seterrobj(errobj, /)
-
-    Set the object that defines floating-point error handling.
-
-    The error object contains all information that defines the error handling
-    behavior in NumPy. `seterrobj` is used internally by the other
-    functions that set error handling behavior (`seterr`, `seterrcall`).
-
-    Parameters
-    ----------
-    errobj : list
-        The error object, a list containing three elements:
-        [internal numpy buffer size, error mask, error callback function].
-
-        The error mask is a single integer that holds the treatment information
-        on all four floating point errors. The information for each error type
-        is contained in three bits of the integer. If we print it in base 8, we
-        can see what treatment is set for "invalid", "under", "over", and
-        "divide" (in that order). The printed string can be interpreted with
-
-        * 0 : 'ignore'
-        * 1 : 'warn'
-        * 2 : 'raise'
-        * 3 : 'call'
-        * 4 : 'print'
-        * 5 : 'log'
-
-    See Also
-    --------
-    geterrobj, seterr, geterr, seterrcall, geterrcall
-    getbufsize, setbufsize
-
-    Notes
-    -----
-    For complete documentation of the types of floating-point exceptions and
-    treatment options, see `seterr`.
-
-    Examples
-    --------
-    >>> old_errobj = np.geterrobj()  # first get the defaults
-    >>> old_errobj
-    [8192, 521, None]
-
-    >>> def err_handler(type, flag):
-    ...     print("Floating point error (%s), with flag %s" % (type, flag))
-    ...
-    >>> new_errobj = [20000, 12, err_handler]
-    >>> np.seterrobj(new_errobj)
-    >>> np.base_repr(12, 8)  # int for divide=4 ('print') and over=1 ('warn')
-    '14'
-    >>> np.geterr()
-    {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> np.geterrcall() is err_handler
-    True
-
-    """)
-
 
 ##############################################################################
 #
@@ -4795,6 +4806,15 @@ add_newdoc('numpy.core.multiarray', 'get_handler_version',
     return the version of the memory handler that will be used to allocate data
     for the next `ndarray` in this context. May return None if `a` does not own
     its memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
+add_newdoc('numpy.core.multiarray', '_get_madvise_hugepage',
+    """
+    _get_madvise_hugepage() -> bool
+
+    Get use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the currently set value.
+    See `global_state` for more information.
     """)
 
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
@@ -5079,10 +5099,10 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
     Examples
     --------
-    >>> np.core.umath_tests.matrix_multiply.signature
-    '(m,n),(n,p)->(m,p)'
     >>> np.linalg._umath_linalg.det.signature
     '(m,m)->()'
+    >>> np.matmul.signature
+    '(n?,k),(k,m?)->(n?,m?)'
     >>> np.add.signature is None
     True  # equivalent to '(),()->()'
     """))
@@ -5533,6 +5553,165 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
+    """
+    resolve_dtypes(dtypes, *, signature=None, casting=None, reduction=False)
+
+    Find the dtypes NumPy will use for the operation.  Both input and
+    output dtypes are returned and may differ from those provided.
+
+    .. note::
+
+        This function always applies NEP 50 rules since it is not provided
+        any actual values.  The Python types ``int``, ``float``, and
+        ``complex`` thus behave weak and should be passed for "untyped"
+        Python input.
+
+    Parameters
+    ----------
+    dtypes : tuple of dtypes, None, or literal int, float, complex
+        The input dtypes for each operand.  Output operands can be
+        None, indicating that the dtype must be found.
+    signature : tuple of DTypes or None, optional
+        If given, enforces exact DType (classes) of the specific operand.
+        The ufunc ``dtype`` argument is equivalent to passing a tuple with
+        only output dtypes set.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        The casting mode when casting is necessary.  This is identical to
+        the ufunc call casting modes.
+    reduction : boolean
+        If given, the resolution assumes a reduce operation is happening
+        which slightly changes the promotion and type resolution rules.
+        `dtypes` is usually something like ``(None, np.dtype("i2"), None)``
+        for reductions (first input is also the output).
+
+        .. note::
+
+            The default casting mode is "same_kind", however, as of
+            NumPy 1.24, NumPy uses "unsafe" for reductions.
+
+    Returns
+    -------
+    dtypes : tuple of dtypes
+        The dtypes which NumPy would use for the calculation.  Note that
+        dtypes may not match the passed in ones (casting is necessary).
+
+    See Also
+    --------
+    numpy.ufunc._resolve_dtypes_and_context :
+        Similar function to this, but returns additional information which
+        give access to the core C functionality of NumPy.
+
+    Examples
+    --------
+    This API requires passing dtypes, define them for convenience:
+
+    >>> int32 = np.dtype("int32")
+    >>> float32 = np.dtype("float32")
+
+    The typical ufunc call does not pass an output dtype.  `numpy.add` has two
+    inputs and one output, so leave the output as ``None`` (not provided):
+
+    >>> np.add.resolve_dtypes((int32, float32, None))
+    (dtype('float64'), dtype('float64'), dtype('float64'))
+
+    The loop found uses "float64" for all operands (including the output), the
+    first input would be cast.
+
+    ``resolve_dtypes`` supports "weak" handling for Python scalars by passing
+    ``int``, ``float``, or ``complex``:
+
+    >>> np.add.resolve_dtypes((float32, float, None))
+    (dtype('float32'), dtype('float32'), dtype('float32'))
+
+    Where the Python ``float`` behaves samilar to a Python value ``0.0``
+    in a ufunc call.  (See :ref:`NEP 50 <NEP50>` for details.)
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('_resolve_dtypes_and_context',
+    """
+    _resolve_dtypes_and_context(dtypes, *, signature=None, casting=None, reduction=False)
+
+    See `numpy.ufunc.resolve_dtypes` for parameter information.  This
+    function is considered *unstable*.  You may use it, but the returned
+    information is NumPy version specific and expected to change.
+    Large API/ABI changes are not expected, but a new NumPy version is
+    expected to require updating code using this functionality.
+
+    This function is designed to be used in conjunction with
+    `numpy.ufunc._get_strided_loop`.  The calls are split to mirror the C API
+    and allow future improvements.
+
+    Returns
+    -------
+    dtypes : tuple of dtypes
+    call_info :
+        PyCapsule with all necessary information to get access to low level
+        C calls.  See `numpy.ufunc._get_strided_loop` for more information.
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('_get_strided_loop',
+    """
+    _get_strided_loop(call_info, /, *, fixed_strides=None)
+
+    This function fills in the ``call_info`` capsule to include all
+    information necessary to call the low-level strided loop from NumPy.
+
+    See notes for more information.
+
+    Parameters
+    ----------
+    call_info : PyCapsule
+        The PyCapsule returned by `numpy.ufunc._resolve_dtypes_and_context`.
+    fixed_strides : tuple of int or None, optional
+        A tuple with fixed byte strides of all input arrays.  NumPy may use
+        this information to find specialized loops, so any call must follow
+        the given stride.  Use ``None`` to indicate that the stride is not
+        known (or not fixed) for all calls.
+
+    Notes
+    -----
+    Together with `numpy.ufunc._resolve_dtypes_and_context` this function
+    gives low-level access to the NumPy ufunc loops.
+    The first function does general preparation and returns the required
+    information. It returns this as a C capsule with the version specific
+    name ``numpy_1.24_ufunc_call_info``.
+    The NumPy 1.24 ufunc call info capsule has the following layout::
+
+        typedef struct {
+            PyArrayMethod_StridedLoop *strided_loop;
+            PyArrayMethod_Context *context;
+            NpyAuxData *auxdata;
+
+            /* Flag information (expected to change) */
+            npy_bool requires_pyapi;  /* GIL is required by loop */
+
+            /* Loop doesn't set FPE flags; if not set check FPE flags */
+            npy_bool no_floatingpoint_errors;
+        } ufunc_call_info;
+
+    Note that the first call only fills in the ``context``.  The call to
+    ``_get_strided_loop`` fills in all other data.
+    Please see the ``numpy/experimental_dtype_api.h`` header for exact
+    call information; the main thing to note is that the new-style loops
+    return 0 on success, -1 on failure.  They are passed context as new
+    first input and ``auxdata`` as (replaced) last.
+
+    Only the ``strided_loop``signature is considered guaranteed stable
+    for NumPy bug-fix releases.  All other API is tied to the experimental
+    API versioning.
+
+    The reason for the split call is that cast information is required to
+    decide what the fixed-strides will be.
+
+    NumPy ties the lifetime of the ``auxdata`` information to the capsule.
+
+    """))
+
+
+
 ##############################################################################
 #
 # Documentation for dtype attributes and methods
@@ -5547,7 +5726,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
 add_newdoc('numpy.core.multiarray', 'dtype',
     """
-    dtype(dtype, align=False, copy=False)
+    dtype(dtype, align=False, copy=False, [metadata])
 
     Create a data type object.
 
@@ -5567,6 +5746,8 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     copy : bool, optional
         Make a new copy of the data-type object. If ``False``, the result
         may just be a reference to a built-in data-type object.
+    metadata : dict, optional
+        An optional dictionary with dtype metadata.
 
     See also
     --------
@@ -5686,8 +5867,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     >>> # '=' is the byteorder
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> dt = np.dtype(native_code + 'i2')
     >>> dt.byteorder
     '='
@@ -5718,7 +5899,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     `__array_interface__` attribute.
 
     Warning: This attribute exists specifically for `__array_interface__`,
-    and passing it directly to `np.dtype` will not accurately reconstruct
+    and passing it directly to `numpy.dtype` will not accurately reconstruct
     some dtypes (e.g., scalar and subarray dtypes).
 
     Examples
@@ -6126,8 +6307,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     --------
     >>> import sys
     >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_code = '<' if sys_is_le else '>'
+    >>> swapped_code = '>' if sys_is_le else '<'
     >>> native_dt = np.dtype(native_code+'i2')
     >>> swapped_dt = np.dtype(swapped_code+'i2')
     >>> native_dt.newbyteorder('S') == swapped_dt
@@ -6172,10 +6353,6 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
 
     >>> np.dtype[np.int64]
     numpy.dtype[numpy.int64]
-
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
 
     See Also
     --------
@@ -6297,10 +6474,13 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Attributes
     ----------
-    Note: once a busdaycalendar object is created, you cannot modify the
-    weekmask or holidays.  The attributes return copies of internal data.
     weekmask : (copy) seven-element array of bool
     holidays : (copy) sorted array of datetime64[D]
+
+    Notes
+    -----
+    Once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
 
     Examples
     --------
@@ -6686,10 +6866,6 @@ add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
     >>> np.signedinteger[Any]
     numpy.signedinteger[typing.Any]
 
-    Notes
-    -----
-    This method is only available for python 3.9 and later.
-
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
@@ -6751,7 +6927,7 @@ add_newdoc('numpy.core.numerictypes', 'complexfloating',
 add_newdoc('numpy.core.numerictypes', 'flexible',
     """
     Abstract base class of all scalar types without predefined length.
-    The actual size of these types depends on the specific `np.dtype`
+    The actual size of these types depends on the specific `numpy.dtype`
     instantiation.
 
     """)

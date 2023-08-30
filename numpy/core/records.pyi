@@ -18,7 +18,7 @@ from numpy import (
     _SupportsBuffer,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,

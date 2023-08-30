@@ -3,30 +3,13 @@
 Building from source
 ====================
 
-There are two options for building NumPy- building with Gitpod or locally from
-source. Your choice depends on your operating system and familiarity with the
-command line.
-
-Gitpod
-------------
-
-Gitpod is an open-source platform that automatically creates
-the correct development environment right in your browser, reducing the need to
-install local development environments and deal with incompatible dependencies.
-
-If you are a Windows user, unfamiliar with using the command line or building
-NumPy for the first time, it is often faster to build with Gitpod. Here are the
-in-depth instructions for building NumPy with `building NumPy with Gitpod`_.
-
-.. _building NumPy with Gitpod: https://numpy.org/devdocs/dev/development_gitpod.html
-
-Building locally
-------------------
-
-Building locally on your machine gives you
-more granular control. If you are a MacOS or Linux user familiar with using the
+Building locally on your machine gives you complete control over build options.
+If you are a MacOS or Linux user familiar with using the
 command line, you can continue with building NumPy locally by following the
 instructions below.
+
+.. note:: If you want to build NumPy for development purposes, please refer to 
+   :ref:`development-environment` for additional information.
 
 ..
   This page is referenced from numpy/numpy/__init__.py. Please keep its
@@ -37,7 +20,7 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 3.6.x or newer
+1) Python 3.9.x or newer
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and
@@ -45,8 +28,9 @@ Building NumPy requires the following software installed:
 
 2) Compilers
 
-   Much of NumPy is written in C.  You will need a C compiler that complies
-   with the C99 standard.
+   Much of NumPy is written in C and C++.  You will need a C compiler that
+   complies with the C99 standard, and a C++ compiler that complies with the
+   C++17 standard.
 
    While a FORTRAN 77 compiler is not necessary for building NumPy, it is
    needed to run the ``numpy.f2py`` tests. These tests are skipped if the
@@ -56,7 +40,7 @@ Building NumPy requires the following software installed:
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
    Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only
    supported in the form of community feedback, and may not work out of the
-   box.  GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64)
+   box.  GCC 6.5 (and later) compilers are recommended. On ARM64 (aarch64)
    GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries
@@ -76,6 +60,10 @@ Building NumPy requires the following software installed:
 
    For building NumPy, you'll need a recent version of Cython.
 
+5) The NumPy source code
+
+   Clone the repository following the instructions in :doc:`/dev/index`.
+
 Basic Installation
 ------------------
 
@@ -94,7 +82,14 @@ Testing
 -------
 
 Make sure to test your builds. To ensure everything stays in shape, see if
-all tests pass::
+all tests pass.
+
+The test suite requires additional dependencies, which can easily be 
+installed with::
+
+    $ python -m pip install -r test_requirements.txt
+
+Run tests::
 
     $ python runtests.py -v -m full
 

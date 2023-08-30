@@ -19,7 +19,7 @@ from numpy import (
     uint64,
 )
 from numpy.random.bit_generator import BitGenerator
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
@@ -562,3 +562,9 @@ zipf = _rand.zipf
 # Two legacy that are trivial wrappers around random_sample
 sample = _rand.random_sample
 ranf = _rand.random_sample
+
+def set_bit_generator(bitgen: BitGenerator) -> None:
+    ...
+
+def get_bit_generator() -> BitGenerator:
+    ...

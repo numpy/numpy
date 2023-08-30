@@ -46,17 +46,10 @@ from numpy.core._type_aliases import (
     sctypes as sctypes,
 )
 
-from numpy.typing import DTypeLike, ArrayLike, _SupportsDType
+from numpy._typing import DTypeLike, ArrayLike, _DTypeLike
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
-
-# A paramtrizable subset of `npt.DTypeLike`
-_DTypeLike = Union[
-    type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _CastFunc(Protocol):
     def __call__(
@@ -124,11 +117,6 @@ def issubsctype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 
 def sctype2char(sctype: DTypeLike) -> str: ...
-
-def find_common_type(
-    array_types: Iterable[DTypeLike],
-    scalar_types: Iterable[DTypeLike],
-) -> dtype[Any]: ...
 
 cast: _typedict[_CastFunc]
 nbytes: _typedict[int]

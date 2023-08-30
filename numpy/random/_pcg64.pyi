@@ -1,7 +1,7 @@
 from typing import TypedDict
 
 from numpy.random.bit_generator import BitGenerator, SeedSequence
-from numpy.typing import _ArrayLikeInt_co
+from numpy._typing import _ArrayLikeInt_co
 
 class _PCG64Internal(TypedDict):
     state: int

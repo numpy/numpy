@@ -1,0 +1,67 @@
+name: Test musllinux_x86_64
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+
+jobs:
+  musllinux_x86_64:
+    runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy'"
+    container:
+      # Use container used for building musllinux wheels
+      # it has git installed, all the pythons, etc
+      image: quay.io/pypa/musllinux_1_1_x86_64
+
+    steps:
+    - name: setup
+      run: |
+        apk update --quiet
+
+        # using git commands to clone because versioneer doesn't work when
+        # actions/checkout is used for the clone step in a container
+
+        git config --global --add safe.directory $PWD 
+        
+        if [ $GITHUB_EVENT_NAME != pull_request ]; then
+            git clone --recursive --branch=$GITHUB_REF_NAME https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git reset --hard $GITHUB_SHA
+        else        
+            git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git fetch origin $GITHUB_REF:my_ref_name
+            git checkout $GITHUB_BASE_REF
+            git -c user.email="you@example.com" merge --no-commit my_ref_name
+        fi
+        git submodule update --init
+
+        ln -s /usr/local/bin/python3.10 /usr/local/bin/python
+
+    - name: test musllinux_x86_64
+      run: |
+        python -m venv test_env
+        source test_env/bin/activate
+
+        # required for figuring out the system tags in openblas_support
+        pip install packaging       
+        
+        # install openblas by co-opting the CIBW setup script
+        RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
+
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis typing_extensions
+
+        # use meson to build and test 
+        spin build
+        spin test -j auto

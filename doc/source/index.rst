@@ -11,12 +11,12 @@ NumPy documentation
    User Guide <user/index>
    API reference <reference/index>
    Development <dev/index>
+   release
 
 
 **Version**: |version|
 
 **Download documentation**:
-`PDF Version <https://numpy.org/doc/stable/numpy-user.pdf>`_ |
 `Historical versions of documentation <https://numpy.org/doc/>`_
    
 **Useful links**:
@@ -33,68 +33,84 @@ fast operations on arrays, including mathematical, logical, shape manipulation,
 sorting, selecting, I/O, discrete Fourier transforms, basic linear algebra,
 basic statistical operations, random simulation and much more.
 
-.. panels::
-    :card: + intro-card text-center
-    :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 p-2
 
-    ---
-    :img-top: ../source/_static/index-images/getting_started.svg
 
-    Getting Started
-    ^^^^^^^^^^^^^^^
+.. grid:: 2
 
-    New to NumPy? Check out the Absolute Beginner's Guide. It contains an
-    introduction to NumPy's main concepts and links to additional tutorials.
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/getting_started.svg
 
-    .. link-button:: user/absolute_beginners
-        :type: ref
-        :text: 
-        :classes: stretched-link
-    
-    ---
-    :img-top: ../source/_static/index-images/user_guide.svg
+        Getting Started
+        ^^^^^^^^^^^^^^^
 
-    User Guide
-    ^^^^^^^^^^
+        New to NumPy? Check out the Absolute Beginner's Guide. It contains an
+        introduction to NumPy's main concepts and links to additional tutorials.
 
-    The user guide provides in-depth information on the
-    key concepts of NumPy with useful background information and explanation.
+        +++
 
-    .. link-button:: user
-        :type: ref
-        :text: 
-        :classes: stretched-link
+        .. button-ref:: user/absolute_beginners
+            :expand:
+            :color: secondary
+            :click-parent:
 
-    ---
-    :img-top: ../source/_static/index-images/api.svg
+            To the absolute beginner's guide
 
-    API Reference
-    ^^^^^^^^^^^^^
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/user_guide.svg
 
-    The reference guide contains a detailed description of the functions,
-    modules, and objects included in NumPy. The reference describes how the
-    methods work and which parameters can be used. It assumes that you have an
-    understanding of the key concepts.
+        User Guide
+        ^^^^^^^^^^
 
-    .. link-button:: reference
-        :type: ref
-        :text: 
-        :classes: stretched-link 
+        The user guide provides in-depth information on the
+        key concepts of NumPy with useful background information and explanation.
 
-    ---
-    :img-top: ../source/_static/index-images/contributor.svg
+        +++
 
-    Contributor's Guide
-    ^^^^^^^^^^^^^^^
+        .. button-ref:: user
+            :expand:
+            :color: secondary
+            :click-parent:
 
-    Want to add to the codebase? Can help add translation or a flowchart to the
-    documentation? The contributing guidelines will guide you through the
-    process of improving NumPy.
+            To the user guide
 
-    .. link-button:: devindex
-        :type: ref
-        :text: 
-        :classes: stretched-link
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/api.svg
+
+        API Reference
+        ^^^^^^^^^^^^^
+
+        The reference guide contains a detailed description of the functions,
+        modules, and objects included in NumPy. The reference describes how the
+        methods work and which parameters can be used. It assumes that you have an
+        understanding of the key concepts.
+
+        +++
+
+        .. button-ref:: reference
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the reference guide
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/contributor.svg
+
+        Contributor's Guide
+        ^^^^^^^^^^^^^^^^^^^
+
+        Want to add to the codebase? Can help add translation or a flowchart to the
+        documentation? The contributing guidelines will guide you through the
+        process of improving NumPy.
+
+        +++
+
+        .. button-ref:: devindex
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the contributor's guide
 
 .. This is not really the index page, that is found in
    _templates/indexcontent.html The toctree content here will be added to the

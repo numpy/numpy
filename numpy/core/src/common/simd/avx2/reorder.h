@@ -94,6 +94,75 @@ NPY_FINLINE npyv_f64x2 npyv_zip_f64(__m256d a, __m256d b)
     return npyv_combine_f64(ab0, ab1);
 }
 
+// deinterleave two vectors
+NPY_FINLINE npyv_u8x2 npyv_unzip_u8(npyv_u8 ab0, npyv_u8 ab1)
+{
+    const __m256i idx = _mm256_setr_epi8(
+        0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+        0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+    );
+    __m256i ab_03 = _mm256_shuffle_epi8(ab0, idx);
+    __m256i ab_12 = _mm256_shuffle_epi8(ab1, idx);
+    npyv_u8x2 ab_lh = npyv_combine_u8(ab_03, ab_12);
+    npyv_u8x2 r;
+    r.val[0] = _mm256_unpacklo_epi64(ab_lh.val[0], ab_lh.val[1]);
+    r.val[1] = _mm256_unpackhi_epi64(ab_lh.val[0], ab_lh.val[1]);
+    return r;
+}
+#define npyv_unzip_s8 npyv_unzip_u8
+
+NPY_FINLINE npyv_u16x2 npyv_unzip_u16(npyv_u16 ab0, npyv_u16 ab1)
+{
+    const __m256i idx = _mm256_setr_epi8(
+        0,1, 4,5, 8,9, 12,13, 2,3, 6,7, 10,11, 14,15,
+        0,1, 4,5, 8,9, 12,13, 2,3, 6,7, 10,11, 14,15
+    );
+    __m256i ab_03 = _mm256_shuffle_epi8(ab0, idx);
+    __m256i ab_12 = _mm256_shuffle_epi8(ab1, idx);
+    npyv_u16x2 ab_lh = npyv_combine_u16(ab_03, ab_12);
+    npyv_u16x2 r;
+    r.val[0] = _mm256_unpacklo_epi64(ab_lh.val[0], ab_lh.val[1]);
+    r.val[1] = _mm256_unpackhi_epi64(ab_lh.val[0], ab_lh.val[1]);
+    return r;
+}
+#define npyv_unzip_s16 npyv_unzip_u16
+
+NPY_FINLINE npyv_u32x2 npyv_unzip_u32(npyv_u32 ab0, npyv_u32 ab1)
+{
+    const __m256i idx = npyv_set_u32(0, 2, 4, 6, 1, 3, 5, 7);
+    __m256i abl = _mm256_permutevar8x32_epi32(ab0, idx);
+    __m256i abh = _mm256_permutevar8x32_epi32(ab1, idx);
+    return npyv_combine_u32(abl, abh);
+}
+#define npyv_unzip_s32 npyv_unzip_u32
+
+NPY_FINLINE npyv_u64x2 npyv_unzip_u64(npyv_u64 ab0, npyv_u64 ab1)
+{
+    npyv_u64x2 ab_lh = npyv_combine_u64(ab0, ab1);
+    npyv_u64x2 r;
+    r.val[0] = _mm256_unpacklo_epi64(ab_lh.val[0], ab_lh.val[1]);
+    r.val[1] = _mm256_unpackhi_epi64(ab_lh.val[0], ab_lh.val[1]);
+    return r;
+}
+#define npyv_unzip_s64 npyv_unzip_u64
+
+NPY_FINLINE npyv_f32x2 npyv_unzip_f32(npyv_f32 ab0, npyv_f32 ab1)
+{
+    const __m256i idx = npyv_set_u32(0, 2, 4, 6, 1, 3, 5, 7);
+    __m256 abl = _mm256_permutevar8x32_ps(ab0, idx);
+    __m256 abh = _mm256_permutevar8x32_ps(ab1, idx);
+    return npyv_combine_f32(abl, abh);
+}
+
+NPY_FINLINE npyv_f64x2 npyv_unzip_f64(npyv_f64 ab0, npyv_f64 ab1)
+{
+    npyv_f64x2 ab_lh = npyv_combine_f64(ab0, ab1);
+    npyv_f64x2 r;
+    r.val[0] = _mm256_unpacklo_pd(ab_lh.val[0], ab_lh.val[1]);
+    r.val[1] = _mm256_unpackhi_pd(ab_lh.val[0], ab_lh.val[1]);
+    return r;
+}
+
 // Reverse elements of each 64-bit lane
 NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
 {
@@ -125,5 +194,23 @@ NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
 {
     return _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1));
 }
+
+// Permuting the elements of each 128-bit lane by immediate index for
+// each element.
+#define npyv_permi128_u32(A, E0, E1, E2, E3) \
+    _mm256_shuffle_epi32(A, _MM_SHUFFLE(E3, E2, E1, E0))
+
+#define npyv_permi128_s32 npyv_permi128_u32
+
+#define npyv_permi128_u64(A, E0, E1) \
+    _mm256_shuffle_epi32(A, _MM_SHUFFLE(((E1)<<1)+1, ((E1)<<1), ((E0)<<1)+1, ((E0)<<1)))
+
+#define npyv_permi128_s64 npyv_permi128_u64
+
+#define npyv_permi128_f32(A, E0, E1, E2, E3) \
+    _mm256_permute_ps(A, _MM_SHUFFLE(E3, E2, E1, E0))
+
+#define npyv_permi128_f64(A, E0, E1) \
+    _mm256_permute_pd(A, ((E1)<<3) | ((E0)<<2) | ((E1)<<1) | (E0))
 
 #endif // _NPY_SIMD_AVX2_REORDER_H

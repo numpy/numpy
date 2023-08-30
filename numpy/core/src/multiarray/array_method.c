@@ -27,15 +27,18 @@
  *    weak reference to the input DTypes.
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 
 /*
@@ -68,7 +71,7 @@ default_resolve_descriptors(
     for (int i = 0; i < nin + nout; i++) {
         PyArray_DTypeMeta *dtype = dtypes[i];
         if (input_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(input_descrs[i]);
         }
         else {
             output_descrs[i] = NPY_DT_CALL_default_descr(dtype);
@@ -99,7 +102,7 @@ default_resolve_descriptors(
 }
 
 
-NPY_INLINE static int
+static inline int
 is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {
@@ -133,7 +136,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -248,6 +251,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_reduction_initial = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -260,13 +264,18 @@ fill_arraymethod_from_slots(
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
-            case NPY_METH_get_loop:
-                if (private) {
-                    /* Only allow override for private functions initially */
-                    meth->get_strided_loop = slot->pfunc;
-                    continue;
-                }
-                break;
+            case _NPY_METH_get_loop:
+                /*
+                 * NOTE: get_loop is considered "unstable" in the public API,
+                 *       I do not like the signature, and the `move_references`
+                 *       parameter must NOT be used.
+                 *       (as in: we should not worry about changing it, but of
+                 *       course that would not break it immediately.)
+                 */
+                /* Only allow override for private functions initially */
+                meth->get_strided_loop = slot->pfunc;
+                continue;
+            /* "Typical" loops, supported used by the default `get_loop` */
             case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
@@ -278,6 +287,12 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_reduction_initial:
+                meth->get_reduction_initial = slot->pfunc;
+                continue;
+            case NPY_METH_contiguous_indexed_loop:
+                meth->contiguous_indexed_loop = slot->pfunc;
                 continue;
             default:
                 break;
@@ -329,27 +344,39 @@ fill_arraymethod_from_slots(
     }
 
     /* Check whether the provided loops make sense. */
+    if (meth->flags & NPY_METH_SUPPORTS_UNALIGNED) {
+        if (meth->unaligned_strided_loop == NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must provide unaligned strided inner loop when using "
+                    "NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    else {
+        if (meth->unaligned_strided_loop != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must not provide unaligned strided inner loop when not "
+                    "using NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    /* Fill in the blanks: */
+    if (meth->unaligned_contiguous_loop == NULL) {
+        meth->unaligned_contiguous_loop = meth->unaligned_strided_loop;
+    }
     if (meth->strided_loop == NULL) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide a strided inner loop function. (method: %s)",
-                spec->name);
-        return -1;
+        meth->strided_loop = meth->unaligned_strided_loop;
     }
     if (meth->contiguous_loop == NULL) {
         meth->contiguous_loop = meth->strided_loop;
     }
-    if (meth->unaligned_contiguous_loop != NULL &&
-            meth->unaligned_strided_loop == NULL) {
+
+    if (meth->strided_loop == NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
-        return -1;
-    }
-    if ((meth->unaligned_strided_loop == NULL) !=
-            !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
+                "Must provide a strided inner loop function. (method: %s)",
+                spec->name);
         return -1;
     }
 
@@ -460,6 +487,15 @@ arraymethod_dealloc(PyObject *self)
 
     PyMem_Free(meth->name);
 
+    if (meth->wrapped_meth != NULL) {
+        /* Cleanup for wrapping array method (defined in umath) */
+        Py_DECREF(meth->wrapped_meth);
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
+            Py_XDECREF(meth->wrapped_dtypes[i]);
+        }
+        PyMem_Free(meth->wrapped_dtypes);
+    }
+
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -468,8 +504,8 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._ArrayMethod",
     .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = arraymethod_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 
 
@@ -574,7 +610,7 @@ boundarraymethod__resolve_descripors(
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None, Py_None);
+        return Py_BuildValue("iOO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -849,15 +885,17 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 
         /* Process unmasked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
-        int res = strided_loop(context,
-                dataptrs, &subloopsize, strides, strided_loop_auxdata);
-        if (res != 0) {
-            return res;
+        if (subloopsize > 0) {
+            int res = strided_loop(context,
+                    dataptrs, &subloopsize, strides, strided_loop_auxdata);
+            if (res != 0) {
+                return res;
+            }
+            for (int i = 0; i < nargs; i++) {
+                dataptrs[i] += subloopsize * strides[i];
+            }
+            N -= subloopsize;
         }
-        for (int i = 0; i < nargs; i++) {
-            dataptrs[i] += subloopsize * strides[i];
-        }
-        N -= subloopsize;
     } while (N > 0);
 
     return 0;
@@ -867,7 +905,7 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 /*
  * Fetches a strided-loop function that supports a boolean mask as additional
  * (last) operand to the strided-loop.  It is otherwise largely identical to
- * the `get_loop` method which it wraps.
+ * the `get_strided_loop` method which it wraps.
  * This is the core implementation for the ufunc `where=...` keyword argument.
  *
  * NOTE: This function does not support `move_references` or inner dimensions.
@@ -935,9 +973,9 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._BoundArrayMethod",
     .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
     .tp_dealloc = boundarraymethod_dealloc,
+    .tp_repr = (reprfunc)boundarraymethod_repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };

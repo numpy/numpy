@@ -33,16 +33,14 @@ import os
 __all__ = ['PytestTester']
 
 
-
 def _show_numpy_info():
     import numpy as np
 
     print("NumPy version %s" % np.__version__)
     relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
     print("NumPy relaxed strides checking option:", relaxed_strides)
-    info = np.lib.utils._opt_info()
+    info = np.lib._utils_impl._opt_info()
     print("NumPy CPU features: ", (info if info else 'nothing enabled'))
-
 
 
 class PytestTester:
@@ -137,12 +135,13 @@ class PytestTester:
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            # Filter out distutils cpu warnings (could be localized to
-            # distutils tests). ASV has problems with top level import,
-            # so fetch module for suppression here.
-            from numpy.distutils import cpuinfo
+        if sys.version_info < (3, 12):
+            with warnings.catch_warnings():
+                warnings.simplefilter("always")
+                # Filter out distutils cpu warnings (could be localized to
+                # distutils tests). ASV has problems with top level import,
+                # so fetch module for suppression here.
+                from numpy.distutils import cpuinfo
 
         with warnings.catch_warnings(record=True):
             # Ignore the warning from importing the array_api submodule. This
@@ -167,7 +166,7 @@ class PytestTester:
             ]
 
         if doctests:
-            raise ValueError("Doctests not supported")
+            pytest_args += ["--doctest-modules"]
 
         if extra_argv:
             pytest_args += list(extra_argv)

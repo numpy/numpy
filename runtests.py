@@ -26,7 +26,7 @@ Disable pytest capturing of output by using its '-s' option:
     $ python runtests.py -- -s
 
 Generate C code coverage listing under build/lcov/:
-(requires http://ltp.sourceforge.net/coverage/lcov.php)
+(requires https://github.com/linux-test-project/lcov)
 
     $ python runtests.py --gcov [...other args...]
     $ python runtests.py --lcov-html
@@ -194,13 +194,14 @@ def main(argv):
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = \
             os.pathsep.join((
-                site_dir, 
-                site_dir_noarch, 
+                site_dir,
+                site_dir_noarch,
                 os.environ.get('PYTHONPATH', '')
             ))
     else:
-        _temp = __import__(PROJECT_MODULE)
-        site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
+        if not args.bench_compare:
+            _temp = __import__(PROJECT_MODULE)
+            site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
     if not args.bench:
@@ -219,7 +220,7 @@ def main(argv):
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
             sys.argv = extra_argv
-            with open(extra_argv[0], 'r') as f:
+            with open(extra_argv[0]) as f:
                 script = f.read()
             sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
@@ -255,7 +256,6 @@ def main(argv):
                 "pip install -r test_requirements.txt from the repo root"
             )
 
-        os.environ['MYPYPATH'] = site_dir
         # By default mypy won't color the output since it isn't being
         # invoked from a tty.
         os.environ['MYPY_FORCE_COLOR'] = '1'
@@ -286,6 +286,8 @@ def main(argv):
     if args.refguide_check:
         cmd = [os.path.join(ROOT_DIR, 'tools', 'refguide_check.py'),
                '--doctests']
+        if args.verbose:
+            cmd += ['-' + 'v'*args.verbose]
         if args.submodule:
             cmd += [args.submodule]
         os.execv(sys.executable, [sys.executable] + cmd)
@@ -537,10 +539,21 @@ def build_project(args):
         print("Build OK")
     else:
         if not args.show_build_log:
-            with open(log_filename, 'r') as f:
+            with open(log_filename) as f:
                 print(f.read())
             print("Build failed!")
         sys.exit(1)
+
+    # Rebase
+    if sys.platform == "cygwin":
+        from pathlib import path
+        testenv_root = Path(config_vars["platbase"])
+        dll_list = testenv_root.glob("**/*.dll")
+        rebase_cmd = ["/usr/bin/rebase", "--database", "--oblivious"]
+        rebase_cmd.extend(dll_list)
+        if subprocess.run(rebase_cmd):
+            print("Rebase failed")
+            sys.exit(1)
 
     return site_dir, site_dir_noarch
 
@@ -621,7 +634,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
 
     vars_hash = sdbm_hash(custom_vars, os.path.getmtime(in_config))
     try:
-        with open(out_config, "r") as wfd:
+        with open(out_config) as wfd:
             hash_line = wfd.readline().split('hash:')
             if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
                 return True

@@ -801,7 +801,7 @@ def normalize(obj):
             else:
                 _pairs_add(d, t, c)
         if len(d) == 0:
-            # TODO: deterimine correct kind
+            # TODO: determine correct kind
             return as_number(0)
         elif len(d) == 1:
             (t, c), = d.items()
@@ -836,7 +836,7 @@ def normalize(obj):
             else:
                 _pairs_add(d, b, e)
         if len(d) == 0 or coeff == 0:
-            # TODO: deterimine correct kind
+            # TODO: determine correct kind
             assert isinstance(coeff, number_types)
             return as_number(coeff)
         elif len(d) == 1:

@@ -4,7 +4,7 @@ PyInstaller typically goes wrong by forgetting to package modules, extension
 modules or shared libraries. This script should aim to touch as many of those
 as possible in an attempt to trip a ModuleNotFoundError or a DLL load failure
 due to an uncollected resource. Missing resources are unlikely to lead to
-arithmitic errors so there's generally no need to verify any calculation's
+arithmetic errors so there's generally no need to verify any calculation's
 output - merely that it made it to the end OK. This script should not
 explicitly import any of numpy's submodules as that gives PyInstaller undue
 hints that those submodules exist and should be collected (accessing implicitly

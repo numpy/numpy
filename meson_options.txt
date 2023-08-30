@@ -1,0 +1,33 @@
+option('blas', type: 'string', value: 'openblas',
+        description: 'Option for BLAS library switching')
+option('lapack', type: 'string', value: 'openblas',
+        description: 'Option for LAPACK library switching')
+option('allow-noblas', type: 'boolean', value: false,
+        description: 'If set to true, allow building with (slow!) internal fallback routines')
+option('use-ilp64', type: 'boolean', value: false,
+       description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
+option('blas-symbol-suffix', type: 'string', value: '',
+        description: 'BLAS and LAPACK symbol suffix to use, if any (often `64_` for ILP64)')
+option('disable-svml', type: 'boolean', value: false,
+        description: 'Disable building against SVML')
+option('disable-threading', type: 'boolean', value: false,
+        description: 'Disable threading support (see `NPY_ALLOW_THREADS` docs)')
+option('disable-optimization', type: 'boolean', value: false,
+        description: 'Disable CPU optimized code (dispatch,simd,unroll...)')
+option('cpu-baseline', type: 'string', value: 'min',
+        description: 'Minimal set of required CPU features')
+option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
+        description: 'Dispatched set of additional CPU features')
+option('test-simd', type: 'array',
+        value: [
+          'BASELINE', 'SSE2', 'SSE42', 'XOP', 'FMA4',
+          'AVX2', 'FMA3', 'AVX2,FMA3', 'AVX512F', 'AVX512_SKX',
+          'VSX', 'VSX2', 'VSX3', 'VSX4',
+          'NEON', 'ASIMD',
+          'VX', 'VXE', 'VXE2',
+        ],
+        description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
+option('test-simd-args', type: 'string', value: '',
+        description: 'Extra args to be passed to the `_simd` module that is used for testing the NumPy SIMD interface')
+option('relaxed-strides-debug', type: 'boolean', value: false,
+        description: 'Enable relaxed strides debug mode (see `NPY_RELAXED_STRIDES_DEBUG` docs)')

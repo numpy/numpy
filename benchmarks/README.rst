@@ -22,8 +22,8 @@ By default, `asv` ships with support for anaconda and virtualenv::
     pip install asv
     pip install virtualenv
 
-After contributing new benchmarks, you should test them locally
-before submitting a pull request.
+After contributing new benchmarks, you should test them locally before
+submitting a pull request.
 
 To run all benchmarks, navigate to the root NumPy directory at
 the command line and execute::
@@ -31,10 +31,20 @@ the command line and execute::
     python runtests.py --bench
 
 where ``--bench`` activates the benchmark suite instead of the
-test suite. This builds NumPy and runs  all available benchmarks
+test suite. This builds NumPy and runs all available benchmarks
 defined in ``benchmarks/``. (Note: this could take a while. Each
 benchmark is run multiple times to measure the distribution in
 execution times.)
+
+For **testing** benchmarks locally, it may be better to run these without
+replications::
+
+    cd benchmarks/
+    export REGEXP="bench.*Ufunc"
+    asv run --dry-run --show-stderr --python=same --quick -b $REGEXP
+
+Where the regular expression used to match benchmarks is stored in ``$REGEXP``,
+and `--quick` is used to avoid repetitions.
 
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
@@ -69,6 +79,27 @@ Command-line help is available as usual via ``asv --help`` and
 
 .. _ASV documentation: https://asv.readthedocs.io/
 
+Benchmarking versions
+---------------------
+
+To benchmark or visualize only releases on different machines locally, the tags with their commits can be generated, before being run with ``asv``, that is::
+
+    cd benchmarks
+    # Get commits for tags
+    # delete tag_commits.txt before re-runs
+    for gtag in $(git tag --list --sort taggerdate | grep "^v"); do
+    git log $gtag --oneline -n1 --decorate=no | awk '{print $1;}' >> tag_commits.txt
+    done
+    # Use the last 20
+    tail --lines=20 tag_commits.txt > 20_vers.txt
+    asv run HASHFILE:20_vers.txt
+    # Publish and view
+    asv publish
+    asv preview
+
+For details on contributing these, see the `benchmark results repository`_.
+
+.. _benchmark results repository: https://github.com/HaoZeke/asv-numpy
 
 Writing benchmarks
 ------------------

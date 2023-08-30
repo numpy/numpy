@@ -1521,7 +1521,7 @@ reveal_type(random_st.seed([0, 1]))  # E: None
 random_st_get_state = random_st.get_state()
 reveal_type(random_st_state)  # E: builtins.dict[builtins.str, Any]
 random_st_get_state_legacy = random_st.get_state(legacy=True)
-reveal_type(random_st_get_state_legacy)  # E: Union[builtins.dict[builtins.str, Any], Tuple[builtins.str, ndarray[Any, dtype[unsignedinteger[typing._32Bit]]], builtins.int, builtins.int, builtins.float]]
+reveal_type(random_st_get_state_legacy)  # E: Union[builtins.dict[builtins.str, Any], tuple[builtins.str, ndarray[Any, dtype[unsignedinteger[typing._32Bit]]], builtins.int, builtins.int, builtins.float]]
 reveal_type(random_st.set_state(random_st_get_state))  # E: None
 
 reveal_type(random_st.rand())  # E: float
@@ -1537,3 +1537,6 @@ reveal_type(random_st.random_sample(size=(1, 2)))  # E: ndarray[Any, dtype[float
 reveal_type(random_st.tomaxint())  # E: int
 reveal_type(random_st.tomaxint(1))  # E: ndarray[Any, dtype[{int_}]]
 reveal_type(random_st.tomaxint((1,)))  # E: ndarray[Any, dtype[{int_}]]
+
+reveal_type(np.random.set_bit_generator(pcg64))  # E: None
+reveal_type(np.random.get_bit_generator())  # E: BitGenerator

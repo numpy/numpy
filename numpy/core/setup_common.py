@@ -1,7 +1,7 @@
 # Code common to build tools
-import sys
-import warnings
 import copy
+import pathlib
+import sys
 import textwrap
 
 from numpy.distutils.misc_util import mingw32
@@ -21,7 +21,10 @@ from numpy.distutils.misc_util import mingw32
 # Binary compatibility version number. This number is increased whenever the
 # C-API is changed such that binary compatibility is broken, i.e. whenever a
 # recompile of extension modules is needed.
-C_ABI_VERSION = 0x01000009
+# NOTE: This is the version against which an extension module was compiled.
+#       As of now compiling against version 2 (0x02000000) yields version 1
+#       compatible binaries (subset).  See also NEP 53.
+C_ABI_VERSION = 0x02000000
 
 # Minor API version.  This number is increased whenever a change is made to the
 # C-API -- whether it breaks binary compatibility or not.  Some changes, such
@@ -29,6 +32,8 @@ C_ABI_VERSION = 0x01000009
 # without breaking binary compatibility.  In this case, only the C_API_VERSION
 # (*not* C_ABI_VERSION) would be increased.  Whenever binary compatibility is
 # broken, both C_API_VERSION and C_ABI_VERSION should be increased.
+#
+# The version needs to be kept in sync with that in cversions.txt.
 #
 # 0x00000008 - 1.7.x
 # 0x00000009 - 1.8.x
@@ -44,23 +49,20 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000e - 1.20.x
 # 0x0000000e - 1.21.x
 # 0x0000000f - 1.22.x
-# 0x0000000f - 1.23.x
-C_API_VERSION = 0x0000000f
+# 0x00000010 - 1.23.x
+# 0x00000010 - 1.24.x
+# 0x00000011 - 1.25.x
+# 0x00000012 - 2.0.x
+C_API_VERSION = 0x00000012
 
-class MismatchCAPIWarning(Warning):
+# By default, when compiling downstream libraries against NumPy,
+# pick an older feature version.  For example, for 1.25.x we default to the
+# 1.19 API and support going back all the way to 1.15.x (if so desired).
+# This is set up in `numpyconfig.h`.
+
+class MismatchCAPIError(ValueError):
     pass
 
-def is_released(config):
-    """Return True if a released version of numpy is detected."""
-    from distutils.version import LooseVersion
-
-    v = config.get_version('../_version.py')
-    if v is None:
-        raise ValueError("Could not get version")
-    pv = LooseVersion(vstring=v).version
-    if len(pv) > 3:
-        return False
-    return True
 
 def get_api_versions(apiversion, codegen_dir):
     """
@@ -94,27 +96,81 @@ def check_api_version(apiversion, codegen_dir):
     # To compute the checksum of the current API, use numpy/core/cversions.py
     if not curapi_hash == api_hash:
         msg = ("API mismatch detected, the C API version "
-               "numbers have to be updated. Current C api version is %d, "
-               "with checksum %s, but recorded checksum for C API version %d "
-               "in core/codegen_dir/cversions.txt is %s. If functions were "
-               "added in the C API, you have to update C_API_VERSION in %s."
+               "numbers have to be updated. Current C api version is "
+               f"{apiversion}, with checksum {curapi_hash}, but recorded "
+               f"checksum in core/codegen_dir/cversions.txt is {api_hash}. If "
+               "functions were added in the C API, you have to update "
+               f"C_API_VERSION in {__file__}."
+               "\n"
+               "Please make sure that new additions are guarded with "
+               "MinVersion() to make them unavailable when wishing support "
+               "for older NumPy versions."
                )
-        warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
-                             __file__),
-                      MismatchCAPIWarning, stacklevel=2)
+        raise MismatchCAPIError(msg)
+
+
+FUNC_CALL_ARGS = {}
+
+def set_sig(sig):
+    prefix, _, args = sig.partition("(")
+    args = args.rpartition(")")[0]
+    funcname = prefix.rpartition(" ")[-1]
+    args = [arg.strip() for arg in args.split(",")]
+    # We use {0} because 0 alone cannot be cast to complex on MSVC in C:
+    FUNC_CALL_ARGS[funcname] = ", ".join("(%s){0}" % arg for arg in args)
+
+
+for file in [
+    "feature_detection_locale.h",
+    "feature_detection_math.h",
+    "feature_detection_cmath.h",
+    "feature_detection_misc.h",
+    "feature_detection_stdio.h",
+]:
+    with open(pathlib.Path(__file__).parent / file) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            if not line.strip():
+                continue
+            set_sig(line)
+
 # Mandatory functions: if not found, fail the build
-MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+# Some of these can still be blocklisted if the C99 implementation
+# is buggy, see numpy/core/src/common/npy_config.h
+MANDATORY_FUNCS = [
+    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+    "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+    "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
+    "expm1", "log1p", "acosh", "asinh", "atanh",
+    "rint", "trunc", "exp2",
+    "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
+    "log2", "pow", "hypot", "atan2",
+    "creal", "cimag", "conj"
+]
 
-# Standard functions which may not be available and for which we have a
-# replacement implementation. Note that some of these are C99 functions.
-OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace", "madvise"]
+OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
+OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]
+OPTIONAL_MISC_FUNCS = ["backtrace", "madvise"]
 
+# variable attributes tested via "int %s a" % attribute
+OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
+
+# Subset of OPTIONAL_*_FUNCS which may already have HAVE_* defined by Python.h
+OPTIONAL_FUNCS_MAYBE = [
+    "ftello", "fseeko"
+    ]
+
+C99_COMPLEX_TYPES = [
+    'complex double', 'complex float', 'complex long double'
+    ]
+C99_COMPLEX_FUNCS = [
+    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
+    "catanh", "cexp", "clog", "cpow", "csqrt",
+    # The long double variants (like csinl)  should be mandatory on C11,
+    # but are missing in FreeBSD. Issue gh-22850
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
+    ]
 
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
@@ -123,7 +179,9 @@ OPTIONAL_HEADERS = [
                 "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
-                "dlfcn.h", # dladdr
+                "dlfcn.h",  # dladdr
+                "execinfo.h",  # backtrace
+                "libunwind.h",  # backtrace for LLVM/Clang using libunwind
                 "sys/mman.h", #madvise
 ]
 
@@ -136,26 +194,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
-                       ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # MMX only needed for icc, but some clangs don't have it
-                       ("_m_from_int64", '0', "emmintrin.h"),
-                       ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
-                       ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
-                        "xmmintrin.h"),  # SSE
-                       ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
+                       # Test `long long` for arm+clang 13 (gh-22811,
+                       # but we use all versions of __builtin_mul_overflow):
+                       ("__builtin_mul_overflow", '(long long)5, 5, (int*)5'),
                        ("__builtin_prefetch", "(float*)0, 0, 3"),
-                       # check that the linker can handle avx
-                       ("__asm__ volatile", '"vpand %xmm1, %xmm2, %xmm3"',
-                        "stdio.h", "LINK_AVX"),
-                       ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
-                        "stdio.h", "LINK_AVX2"),
-                       ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
-                        "stdio.h", "LINK_AVX512F"),
-                       ("__asm__ volatile", '"vfpclasspd $0x40, %zmm15, %k6\\n"\
-                                             "vmovdqu8 %xmm0, %xmm1\\n"\
-                                             "vpbroadcastmb2q %k0, %xmm0\\n"',
-                        "stdio.h", "LINK_AVX512_SKX"),
-                       ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
 # function attributes
@@ -165,72 +207,11 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                 'attribute_optimize_unroll_loops'),
                                 ('__attribute__((optimize("O3")))',
                                  'attribute_optimize_opt_3'),
+                                ('__attribute__((optimize("O2")))',
+                                 'attribute_optimize_opt_2'),
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
-                                ('__attribute__((target ("avx")))',
-                                 'attribute_target_avx'),
-                                ('__attribute__((target ("avx2")))',
-                                 'attribute_target_avx2'),
-                                ('__attribute__((target ("avx512f")))',
-                                 'attribute_target_avx512f'),
-                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
-                                 'attribute_target_avx512_skx'),
                                 ]
-
-# function attributes with intrinsics
-# To ensure your compiler can compile avx intrinsics with just the attributes
-# gcc 4.8.4 support attributes but not with intrisics
-# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
-# function name will be converted to HAVE_<upper-case-name> preprocessor macro
-# The _mm512_castps_si512 instruction is specific check for AVX-512F support
-# in gcc-4.9 which is missing a subset of intrinsics. See
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
-OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
-                                'attribute_target_avx2_with_intrinsics',
-                                '__m256 temp = _mm256_set1_ps(1.0); temp = \
-                                _mm256_fmadd_ps(temp, temp, temp)',
-                                'immintrin.h'),
-                                ('__attribute__((target("avx512f")))',
-                                'attribute_target_avx512f_with_intrinsics',
-                                '__m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0))',
-                                'immintrin.h'),
-                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
-                                'attribute_target_avx512_skx_with_intrinsics',
-                                '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
-                                __m512i unused_temp = \
-                                    _mm512_castps_si512(_mm512_set1_ps(1.0));\
-                                _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
-                                'immintrin.h'),
-                                ]
-
-# variable attributes tested via "int %s a" % attribute
-OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
-
-# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = [
-    "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
-    "ftello", "fseeko"
-    ]
-
-# C99 functions: float and long double versions
-C99_FUNCS = [
-    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
-    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
-    "asin", "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2",
-    "pow", "fmod", "modf", 'frexp', 'ldexp', "exp2", "log2", "copysign",
-    "nextafter", "cbrt"
-    ]
-C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
-C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
-C99_COMPLEX_TYPES = [
-    'complex double', 'complex float', 'complex long double'
-    ]
-C99_COMPLEX_FUNCS = [
-    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
-    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
-    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
-    ]
-
 def fname2def(name):
     return "HAVE_%s" % name.upper()
 

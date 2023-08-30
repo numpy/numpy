@@ -16,7 +16,7 @@
  * @param attr module attribute to cache.
  * @param cache Storage location for imported function.
  */
-NPY_INLINE static void
+static inline void
 npy_cache_import(const char *module, const char *attr, PyObject **cache)
 {
     if (NPY_UNLIKELY(*cache == NULL)) {

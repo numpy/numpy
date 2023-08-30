@@ -9,7 +9,7 @@
 #define NPY_ENOMEM 1
 #define NPY_ECOMP 2
 
-static NPY_INLINE int npy_get_msb(npy_uintp unum)
+static inline int npy_get_msb(npy_uintp unum)
 {
     int depth_limit = 0;
     while (unum >>= 1)  {

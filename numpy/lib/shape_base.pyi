@@ -1,10 +1,15 @@
+import sys
 from collections.abc import Callable, Sequence
 from typing import TypeVar, Any, overload, SupportsIndex, Protocol
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec, Concatenate
+else:
+    from typing_extensions import ParamSpec, Concatenate
 
 from numpy import (
     generic,
     integer,
-    dtype,
     ufunc,
     bool_,
     unsignedinteger,
@@ -14,25 +19,23 @@ from numpy import (
     object_,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     _ShapeLike,
-     _FiniteNestedSequence,
-     _SupportsArray,
-     _ArrayLikeBool_co,
-     _ArrayLikeUInt_co,
-     _ArrayLikeInt_co,
-     _ArrayLikeFloat_co,
-     _ArrayLikeComplex_co,
-     _ArrayLikeObject_co,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeUInt_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeObject_co,
 )
 
 from numpy.core.shape_base import vstack
 
+_P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # The signatures of `__array_wrap__` and `__array_prepare__` are the same;
 # give them unique names for the sake of clarity
@@ -79,19 +82,19 @@ def put_along_axis(
 
 @overload
 def apply_along_axis(
-    func1d: Callable[..., _ArrayLike[_SCT]],
+    func1d: Callable[Concatenate[NDArray[Any], _P], _ArrayLike[_SCT]],
     axis: SupportsIndex,
     arr: ArrayLike,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> NDArray[_SCT]: ...
 @overload
 def apply_along_axis(
-    func1d: Callable[..., ArrayLike],
+    func1d: Callable[Concatenate[NDArray[Any], _P], ArrayLike],
     axis: SupportsIndex,
     arr: ArrayLike,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> NDArray[Any]: ...
 
 def apply_over_axes(

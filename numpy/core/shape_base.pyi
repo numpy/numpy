@@ -1,13 +1,17 @@
 from collections.abc import Sequence
 from typing import TypeVar, overload, Any, SupportsIndex
 
-from numpy import generic, dtype
-from numpy.typing import ArrayLike, NDArray, _FiniteNestedSequence, _SupportsArray
+from numpy import generic, _CastingKind
+from numpy._typing import (
+    NDArray,
+    ArrayLike,
+    DTypeLike,
+    _ArrayLike,
+    _DTypeLike,
+)
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 
@@ -33,32 +37,84 @@ def atleast_3d(arys: ArrayLike, /) -> NDArray[Any]: ...
 def atleast_3d(*arys: ArrayLike) -> list[NDArray[Any]]: ...
 
 @overload
-def vstack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
+def vstack(
+    tup: Sequence[_ArrayLike[_SCT]],
+    *,
+    dtype: None = ...,
+    casting: _CastingKind = ...
+) -> NDArray[_SCT]: ...
 @overload
-def vstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
+def vstack(
+    tup: Sequence[ArrayLike],
+    *,
+    dtype: _DTypeLike[_SCT],
+    casting: _CastingKind = ...
+) -> NDArray[_SCT]: ...
+@overload
+def vstack(
+    tup: Sequence[ArrayLike],
+    *,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind = ...
+) -> NDArray[Any]: ...
 
 @overload
-def hstack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
+def hstack(
+    tup: Sequence[_ArrayLike[_SCT]],
+    *,
+    dtype: None = ...,
+    casting: _CastingKind = ...
+) -> NDArray[_SCT]: ...
 @overload
-def hstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
+def hstack(
+    tup: Sequence[ArrayLike],
+    *,
+    dtype: _DTypeLike[_SCT],
+    casting: _CastingKind = ...
+) -> NDArray[_SCT]: ...
+@overload
+def hstack(
+    tup: Sequence[ArrayLike],
+    *,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind = ...
+) -> NDArray[Any]: ...
 
 @overload
 def stack(
     arrays: Sequence[_ArrayLike[_SCT]],
     axis: SupportsIndex = ...,
     out: None = ...,
+    *,
+    dtype: None = ...,
+    casting: _CastingKind = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
     out: None = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    casting: _CastingKind = ...
+) -> NDArray[_SCT]: ...
+@overload
+def stack(
+    arrays: Sequence[ArrayLike],
+    axis: SupportsIndex = ...,
+    out: None = ...,
+    *,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind = ...
 ) -> NDArray[Any]: ...
 @overload
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
     out: _ArrayType = ...,
+    *,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind = ...
 ) -> _ArrayType: ...
 
 @overload

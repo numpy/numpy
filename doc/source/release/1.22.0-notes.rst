@@ -27,11 +27,13 @@ These are in addition to the ongoing work to provide SIMD support for commonly
 used functions, improvements to F2PY, and better documentation.
 
 The Python versions supported in this release are 3.8-3.10, Python 3.7 has been
-dropped. Note that 32 bit wheels are only provided for Python 3.8 and 3.9 on
-Windows, all other wheels are 64 bits on account of Ubuntu, Fedora, and other
-Linux distributions dropping 32 bit support. All 64 bit wheels are also linked
-with 64 bit integer OpenBLAS, which should fix the occasional problems
-encountered by folks using truly huge arrays.
+dropped. Note that the Mac wheels are now based on OS X 10.14 rather than 10.9
+that was used in previous NumPy release cycles. 10.14 is the oldest release
+supported by Apple. Also note that 32 bit wheels are only provided for Python
+3.8 and 3.9 on Windows, all other wheels are 64 bits on account of Ubuntu,
+Fedora, and other Linux distributions dropping 32 bit support. All 64 bit
+wheels are also linked with 64 bit integer OpenBLAS, which should fix the
+occasional problems encountered by folks using truly huge arrays.
 
 
 Expired deprecations

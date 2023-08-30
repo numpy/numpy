@@ -83,7 +83,7 @@ Permutations
    ~RandomState.permutation
 
 Distributions
-=============
+==============
 .. autosummary::
    :toctree: generated/
 
@@ -123,6 +123,8 @@ Distributions
    ~RandomState.weibull
    ~RandomState.zipf
 
+.. _functions-in-numpy-random:
+
 Functions in `numpy.random`
 ===========================
 Many of the RandomState methods above are exported as functions in
@@ -133,8 +135,7 @@ Many of the RandomState methods above are exported as functions in
 
 - It uses a `RandomState` rather than the more modern `Generator`.
 
-For backward compatible legacy reasons, we cannot change this. See
-:ref:`random-quick-start`.
+For backward compatible legacy reasons, we will not change this.
 
 .. autosummary::
    :toctree: generated/

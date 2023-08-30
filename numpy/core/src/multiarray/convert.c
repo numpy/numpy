@@ -20,6 +20,8 @@
 #include "array_assign.h"
 
 #include "convert.h"
+#include "array_coercion.h"
+#include "refcount.h"
 
 int
 fallocate(int fd, int mode, off_t offset, off_t len);
@@ -155,11 +157,35 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Ticket #1660 */
+#if defined(_WIN64)
+            /*
+             * Workaround Win64 fwrite() bug. Issue gh-2256
+             * The native 64 windows runtime has this issue, the above will
+             * also trigger UCRT (which doesn't), so it could be more precise.
+             *
+             * If you touch this code, please run this test which is so slow
+             * it was removed from the test suite. Note that the original
+             * failure mode involves an infinite loop during tofile()
+             *
+             * import tempfile, numpy as np
+             * from numpy.testing import (assert_)
+             * fourgbplus = 2**32 + 2**16
+             * testbytes = np.arange(8, dtype=np.int8)
+             * n = len(testbytes)
+             * flike = tempfile.NamedTemporaryFile()
+             * f = flike.file
+             * np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
+             * flike.seek(0)
+             * a = np.fromfile(f, dtype=np.int8)
+             * flike.close()
+             * assert_(len(a) == fourgbplus)
+             * # check only start and end for speed:
+             * assert_((a[:n] == testbytes).all())
+             * assert_((a[-n:] == testbytes).all())
+             */
             {
-                npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
-                npy_intp chunksize;
+                size_t maxsize = 2147483648 / (size_t)PyArray_DESCR(self)->elsize;
+                size_t chunksize;
 
                 n = 0;
                 while (size > 0) {
@@ -167,7 +193,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     n2 = fwrite((const void *)
                              ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
                              (size_t) PyArray_DESCR(self)->elsize,
-                             (size_t) chunksize, fp);
+                             chunksize, fp);
                     if (n2 < chunksize) {
                         break;
                     }
@@ -220,6 +246,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
+            /*
+             * This is as documented.  If we have a low precision float value
+             * then it may convert to float64 and store unnecessary digits.
+             * TODO: This could be fixed, by not using `arr.item()` or using
+             *       the array printing/formatting functionality.
+             */
             obj = PyArray_GETITEM(self, it->dataptr);
             if (obj == NULL) {
                 Py_DECREF(it);
@@ -229,7 +261,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 /*
                  * standard writing
                  */
-                strobj = PyObject_Repr(obj);
+                strobj = PyObject_Str(obj);
                 Py_DECREF(obj);
                 if (strobj == NULL) {
                     Py_DECREF(it);
@@ -304,7 +336,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
 
     /*        if (PyArray_TYPE(self) == NPY_OBJECT) {
               PyErr_SetString(PyExc_ValueError, "a string for the data" \
@@ -358,155 +390,56 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
-    PyArray_Descr *dtype = NULL;
-    npy_longlong value_buffer[4];
-    char *value = NULL;
-    int retcode = 0;
+
+    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
+        return -1;
+    }
 
     /*
-     * If 'arr' is an object array, copy the object as is unless
-     * 'obj' is a zero-dimensional array, in which case we copy
-     * the element in that array instead.
+     * If we knew that the output array has at least one element, we would
+     * not actually need a helping buffer, we always null it, just in case.
+     *
+     * (The longlong here should help with alignment.)
      */
-    if (PyArray_DESCR(arr)->type_num == NPY_OBJECT &&
-                        !(PyArray_Check(obj) &&
-                          PyArray_NDIM((PyArrayObject *)obj) == 0)) {
-        value = (char *)&obj;
+    npy_longlong value_buffer_stack[4] = {0};
+    char *value_buffer_heap = NULL;
+    char *value = (char *)value_buffer_stack;
+    PyArray_Descr *descr = PyArray_DESCR(arr);
 
-        dtype = PyArray_DescrFromType(NPY_OBJECT);
-        if (dtype == NULL) {
+    if ((size_t)descr->elsize > sizeof(value_buffer_stack)) {
+        /* We need a large temporary buffer... */
+        value_buffer_heap = PyObject_Calloc(1, descr->elsize);
+        if (value_buffer_heap == NULL) {
+            PyErr_NoMemory();
             return -1;
         }
+        value = value_buffer_heap;
     }
-    /* NumPy scalar */
-    else if (PyArray_IsScalar(obj, Generic)) {
-        dtype = PyArray_DescrFromScalar(obj);
-        if (dtype == NULL) {
-            return -1;
-        }
-        value = scalar_value(obj, dtype);
-        if (value == NULL) {
-            Py_DECREF(dtype);
-            return -1;
-        }
-    }
-    /* Python boolean */
-    else if (PyBool_Check(obj)) {
-        value = (char *)value_buffer;
-        *value = (obj == Py_True);
-
-        dtype = PyArray_DescrFromType(NPY_BOOL);
-        if (dtype == NULL) {
-            return -1;
-        }
-    }
-    /* Python integer */
-    else if (PyLong_Check(obj)) {
-        /* Try long long before unsigned long long */
-        npy_longlong ll_v = PyLong_AsLongLong(obj);
-        if (error_converting(ll_v)) {
-            /* Long long failed, try unsigned long long */
-            npy_ulonglong ull_v;
-            PyErr_Clear();
-            ull_v = PyLong_AsUnsignedLongLong(obj);
-            if (ull_v == (unsigned long long)-1 && PyErr_Occurred()) {
-                return -1;
-            }
-            value = (char *)value_buffer;
-            *(npy_ulonglong *)value = ull_v;
-
-            dtype = PyArray_DescrFromType(NPY_ULONGLONG);
-            if (dtype == NULL) {
-                return -1;
-            }
-        }
-        else {
-            /* Long long succeeded */
-            value = (char *)value_buffer;
-            *(npy_longlong *)value = ll_v;
-
-            dtype = PyArray_DescrFromType(NPY_LONGLONG);
-            if (dtype == NULL) {
-                return -1;
-            }
-        }
-    }
-    /* Python float */
-    else if (PyFloat_Check(obj)) {
-        npy_double v = PyFloat_AsDouble(obj);
-        if (error_converting(v)) {
-            return -1;
-        }
-        value = (char *)value_buffer;
-        *(npy_double *)value = v;
-
-        dtype = PyArray_DescrFromType(NPY_DOUBLE);
-        if (dtype == NULL) {
-            return -1;
-        }
-    }
-    /* Python complex */
-    else if (PyComplex_Check(obj)) {
-        npy_double re, im;
-
-        re = PyComplex_RealAsDouble(obj);
-        if (error_converting(re)) {
-            return -1;
-        }
-        im = PyComplex_ImagAsDouble(obj);
-        if (error_converting(im)) {
-            return -1;
-        }
-        value = (char *)value_buffer;
-        ((npy_double *)value)[0] = re;
-        ((npy_double *)value)[1] = im;
-
-        dtype = PyArray_DescrFromType(NPY_CDOUBLE);
-        if (dtype == NULL) {
-            return -1;
-        }
+    if (PyArray_Pack(descr, value, obj) < 0) {
+        PyMem_FREE(value_buffer_heap);
+        return -1;
     }
 
-    /* Use the value pointer we got if possible */
-    if (value != NULL) {
-        /* TODO: switch to SAME_KIND casting */
-        retcode = PyArray_AssignRawScalar(arr, dtype, value,
-                                NULL, NPY_UNSAFE_CASTING);
-        Py_DECREF(dtype);
-        return retcode;
+    /*
+     * There is no cast anymore, the above already coerced using scalar
+     * coercion rules
+     */
+    int retcode = raw_array_assign_scalar(
+            PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
+            PyArray_BYTES(arr), PyArray_STRIDES(arr),
+            descr, value);
+
+    if (PyDataType_REFCHK(descr)) {
+        PyArray_ClearBuffer(descr, value, 0, 1, 1);
     }
-    /* Otherwise convert to an array to do the assignment */
-    else {
-        PyArrayObject *src_arr;
-
-        /**
-         * The dtype of the destination is used when converting
-         * from the pyobject, so that for example a tuple gets
-         * recognized as a struct scalar of the required type.
-         */
-        Py_INCREF(PyArray_DTYPE(arr));
-        src_arr = (PyArrayObject *)PyArray_FromAny(obj,
-                        PyArray_DTYPE(arr), 0, 0, 0, NULL);
-        if (src_arr == NULL) {
-            return -1;
-        }
-
-        if (PyArray_NDIM(src_arr) != 0) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Input object to FillWithScalar is not a scalar");
-            Py_DECREF(src_arr);
-            return -1;
-        }
-
-        retcode = PyArray_CopyInto(arr, src_arr);
-
-        Py_DECREF(src_arr);
-        return retcode;
-    }
+    PyMem_FREE(value_buffer_heap);
+    return retcode;
 }
 
 /*
- * Fills an array with zeros.
+ * Internal function to fill an array with zeros.
+ * Used in einsum and dot, which ensures the dtype is, in some sense, numerical
+ * and not a str or struct
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
@@ -517,21 +450,26 @@ NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
                    PyArrayObject *wheremask)
 {
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value False */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
+    int retcode = 0;
+    if (PyArray_ISOBJECT(dst)) {
+        PyObject * pZero = PyLong_FromLong(0);
+        retcode = PyArray_AssignRawScalar(dst, PyArray_DESCR(dst),
+                                     (char *)&pZero, wheremask, NPY_SAFE_CASTING);
+        Py_DECREF(pZero);
     }
-    value = 0;
+    else {
+        /* Create a raw bool scalar with the value False */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return -1;
+        }
+        npy_bool value = 0;
 
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
+        retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                          wheremask, NPY_SAFE_CASTING);
 
-    Py_DECREF(bool_dtype);
+        Py_DECREF(bool_dtype);
+    }
     return retcode;
 }
 
@@ -543,6 +481,12 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_NewCopy");
+        return NULL;
+    }
 
     ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {
@@ -585,7 +529,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
             PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

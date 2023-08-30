@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
-import numpy.typing as npt
+
+from numpy._typing import _NestedSequence
 
 a: Sequence[int]
 b: Sequence[Sequence[int]]
@@ -11,7 +12,7 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: npt._NestedSequence[int]) -> None:
+def func(a: _NestedSequence[int]) -> None:
     ...
 
 reveal_type(func(a))  # E: None

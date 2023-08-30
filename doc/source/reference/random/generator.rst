@@ -1,7 +1,7 @@
 .. currentmodule:: numpy.random
 
 Random Generator
-----------------
+================
 The `~Generator` provides access to
 a wide range of distributions, and served as a replacement for
 :class:`~numpy.random.RandomState`.  The main difference between
@@ -18,15 +18,16 @@ can be changed by passing an instantized BitGenerator to ``Generator``.
     :members: __init__
     :exclude-members: __init__
 
-Accessing the BitGenerator
-==========================
+Accessing the BitGenerator and Spawning
+---------------------------------------
 .. autosummary::
    :toctree: generated/
 
    ~numpy.random.Generator.bit_generator
+   ~numpy.random.Generator.spawn
 
 Simple random data
-==================
+------------------
 .. autosummary::
    :toctree: generated/
 
@@ -36,7 +37,7 @@ Simple random data
    ~numpy.random.Generator.bytes
 
 Permutations
-============
+------------
 The methods for randomly permuting a sequence are
 
 .. autosummary::
@@ -88,6 +89,8 @@ Note that when ``out`` is given, the return value is ``out``:
     >>> y is x
     True
 
+.. _generator-handling-axis-parameter:    
+
 Handling the ``axis`` parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 An important distinction for these methods is how they handle the ``axis``
@@ -138,7 +141,7 @@ For example,
     ['B', 'D', 'A', 'E', 'C']  # random
 
 Distributions
-=============
+-------------
 .. autosummary::
    :toctree: generated/
 

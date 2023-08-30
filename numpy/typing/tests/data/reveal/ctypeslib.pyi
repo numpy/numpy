@@ -20,7 +20,7 @@ AR_double: npt.NDArray[np.double]
 AR_longdouble: npt.NDArray[np.longdouble]
 AR_void: npt.NDArray[np.void]
 
-pointer: ctypes.pointer[Any]
+pointer: ctypes._Pointer[Any]
 
 reveal_type(np.ctypeslib.c_intp())  # E: {c_intp}
 

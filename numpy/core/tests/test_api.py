@@ -1,15 +1,13 @@
 import sys
 
 import numpy as np
+import numpy.core.umath as ncu
 from numpy.core._rational_tests import rational
 import pytest
 from numpy.testing import (
      assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
      HAS_REFCOUNT
     )
-
-# Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
-NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
 
 
 def test_array_array():
@@ -95,7 +93,7 @@ def test_array_array():
 
     # test recursion
     nested = 1.5
-    for i in range(np.MAXDIMS):
+    for i in range(ncu.MAXDIMS):
         nested = [nested]
 
     # no error
@@ -105,6 +103,16 @@ def test_array_array():
     assert_raises(ValueError, np.array, [nested], dtype=np.float64)
 
     # Try with lists...
+    # float32
+    assert_equal(np.array([None] * 10, dtype=np.float32),
+                 np.full((10,), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None]] * 10, dtype=np.float32),
+                 np.full((10, 1), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10], dtype=np.float32),
+                 np.full((1, 10), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10] * 10, dtype=np.float32),
+                 np.full((10, 10), np.nan, dtype=np.float32))
+    # float64
     assert_equal(np.array([None] * 10, dtype=np.float64),
                  np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([[None]] * 10, dtype=np.float64),
@@ -152,25 +160,6 @@ def test_array_impossible_casts(array):
     with assert_raises(TypeError):
         np.array(rt, dtype="M8")
 
-
-def test_fastCopyAndTranspose():
-    # 0D array
-    a = np.array(2)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
-
-    # 1D array
-    a = np.array([3, 2, 7, 0])
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
-
-    # 2D array
-    a = np.arange(6).reshape(2, 3)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
 
 def test_array_astype():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -241,7 +230,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array([u'a'*100], dtype='O')
+    a = np.array(['a'*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
@@ -251,7 +240,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array([u'a'*10], dtype='O')
+    a = np.array(['a'*10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -259,19 +248,19 @@ def test_array_astype():
     a = np.array(123456789012345678901234567890, dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='O').astype('U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
     a = np.array([123456789012345678901234567890], dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array([123456789012345678901234567890], dtype='O').astype('U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
     a = np.array(123456789012345678901234567890, dtype='S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='U')
-    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
+    assert_array_equal(a, np.array('1234567890' * 3, dtype='U30'))
 
-    a = np.array(u'a\u0140', dtype='U')
+    a = np.array('a\u0140', dtype='U')
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
     assert_(b.size == 2)
 
@@ -280,6 +269,9 @@ def test_array_astype():
 
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
+
+    # gh-24023
+    assert_raises(TypeError, a.astype)
 
 @pytest.mark.parametrize("dt", ["S", "U"])
 def test_array_astype_to_string_discovery_empty(dt):
@@ -308,42 +300,33 @@ def test_object_array_astype_to_void():
     assert arr.dtype == "V8"
 
 @pytest.mark.parametrize("t",
-    np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
+    np.core.sctypes['uint'] + np.core.sctypes['int'] + np.core.sctypes['float']
 )
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
-    a = np.array(10, dtype=np.complex_)
-    assert_warns(np.ComplexWarning, a.astype, t)
+    a = np.array(10, dtype=np.complex128)
+    assert_warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
-         (np.unicode_, np.bool_),
-         (np.dtype("S10,S9"), np.dtype("?,?"))])
+         (np.str_, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?")),
+         # The following also checks unaligned unicode access:
+         (np.dtype("S7,U9"), np.dtype("?,?"))])
 def test_string_to_boolean_cast(dtype, out_dtype):
-    """
-    Currently, for `astype` strings are cast to booleans effectively by
-    calling `bool(int(string)`. This is not consistent (see gh-9875) and
-    will eventually be deprecated.
-    """
-    arr = np.array(["10", "10\0\0\0", "0\0\0", "0"], dtype=dtype)
-    expected = np.array([True, True, False, False], dtype=out_dtype)
+    # Only the last two (empty) strings are falsy (the `\0` is stripped):
+    arr = np.array(
+            ["10", "10\0\0\0", "0\0\0", "0", "False", " ", "", "\0"],
+            dtype=dtype)
+    expected = np.array(
+            [True, True, True, True, True, True, False, False],
+            dtype=out_dtype)
     assert_array_equal(arr.astype(out_dtype), expected)
+    # As it's similar, check that nonzero behaves the same (structs are
+    # nonzero if all entries are)
+    assert_array_equal(np.nonzero(arr), np.nonzero(expected))
 
-@pytest.mark.parametrize(["dtype", "out_dtype"],
-        [(np.bytes_, np.bool_),
-         (np.unicode_, np.bool_),
-         (np.dtype("S10,S9"), np.dtype("?,?"))])
-def test_string_to_boolean_cast_errors(dtype, out_dtype):
-    """
-    These currently error out, since cast to integers fails, but should not
-    error out in the future.
-    """
-    for invalid in ["False", "True", "", "\0", "non-empty"]:
-        arr = np.array([invalid], dtype=dtype)
-        with assert_raises(ValueError):
-            arr.astype(out_dtype)
-
-@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_])
 @pytest.mark.parametrize("scalar_type",
         [np.complex64, np.complex128, np.clongdouble])
 def test_string_to_complex_cast(str_type, scalar_type):
@@ -482,13 +465,6 @@ def test_copy_order():
         assert_equal(x, y)
         assert_equal(res.flags.c_contiguous, ccontig)
         assert_equal(res.flags.f_contiguous, fcontig)
-        # This check is impossible only because
-        # NPY_RELAXED_STRIDES_CHECKING changes the strides actively
-        if not NPY_RELAXED_STRIDES_CHECKING:
-            if strides:
-                assert_equal(x.strides, y.strides)
-            else:
-                assert_(x.strides != y.strides)
 
     # Validate the initial state of a, b, and c
     assert_(a.flags.c_contiguous)
@@ -542,8 +518,7 @@ def test_copy_order():
 
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2,:,:]
-    if NPY_RELAXED_STRIDES_CHECKING:
-        a.strides = a.strides[:2] + (-123,)
+    a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
@@ -553,12 +528,8 @@ def test_contiguous_flags():
     # Check if new arrays are correct:
     check_contig(a, False, False)
     check_contig(b, False, False)
-    if NPY_RELAXED_STRIDES_CHECKING:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
-        check_contig(np.array([[[1], [2]]], order='F'), True, True)
-    else:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, False)
-        check_contig(np.array([[[1], [2]]], order='F'), False, True)
+    check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
+    check_contig(np.array([[[1], [2]]], order='F'), True, True)
     check_contig(np.empty((2, 2)), True, False)
     check_contig(np.empty((2, 2), order='F'), False, True)
 
@@ -567,18 +538,11 @@ def test_contiguous_flags():
     check_contig(np.array(a, copy=False, order='C'), True, False)
     check_contig(np.array(a, ndmin=4, copy=False, order='F'), False, True)
 
-    if NPY_RELAXED_STRIDES_CHECKING:
-        # Check slicing update of flags and :
-        check_contig(a[0], True, True)
-        check_contig(a[None, ::4, ..., None], True, True)
-        check_contig(b[0, 0, ...], False, True)
-        check_contig(b[:,:, 0:0,:,:], True, True)
-    else:
-        # Check slicing update of flags:
-        check_contig(a[0], True, False)
-        # Would be nice if this was C-Contiguous:
-        check_contig(a[None, 0, ..., None], False, False)
-        check_contig(b[0, 0, 0, ...], False, True)
+    # Check slicing update of flags and :
+    check_contig(a[0], True, True)
+    check_contig(a[None, ::4, ..., None], True, True)
+    check_contig(b[0, 0, ...], False, True)
+    check_contig(b[:, :, 0:0, :, :], True, True)
 
     # Test ravel and squeeze.
     check_contig(a.ravel(), True, True)

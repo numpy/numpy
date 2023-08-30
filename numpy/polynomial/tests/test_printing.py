@@ -1,3 +1,4 @@
+from math import nan, inf
 import pytest
 from numpy.core import array, arange, printoptions
 import numpy.polynomial as poly
@@ -15,9 +16,9 @@ class TestStrUnicodeSuperSubscripts:
         poly.set_default_printstyle('unicode')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
-        ([1, 2, 3], "1.0 + 2.0·x¹ + 3.0·x²"),
-        ([-1, 0, 3, -1], "-1.0 + 0.0·x¹ + 3.0·x² - 1.0·x³"),
-        (arange(12), ("0.0 + 1.0·x¹ + 2.0·x² + 3.0·x³ + 4.0·x⁴ + 5.0·x⁵ + "
+        ([1, 2, 3], "1.0 + 2.0·x + 3.0·x²"),
+        ([-1, 0, 3, -1], "-1.0 + 0.0·x + 3.0·x² - 1.0·x³"),
+        (arange(12), ("0.0 + 1.0·x + 2.0·x² + 3.0·x³ + 4.0·x⁴ + 5.0·x⁵ + "
                       "6.0·x⁶ + 7.0·x⁷ +\n8.0·x⁸ + 9.0·x⁹ + 10.0·x¹⁰ + "
                       "11.0·x¹¹")),
     ))
@@ -89,9 +90,9 @@ class TestStrAscii:
         poly.set_default_printstyle('ascii')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
-        ([1, 2, 3], "1.0 + 2.0 x**1 + 3.0 x**2"),
-        ([-1, 0, 3, -1], "-1.0 + 0.0 x**1 + 3.0 x**2 - 1.0 x**3"),
-        (arange(12), ("0.0 + 1.0 x**1 + 2.0 x**2 + 3.0 x**3 + 4.0 x**4 + "
+        ([1, 2, 3], "1.0 + 2.0 x + 3.0 x**2"),
+        ([-1, 0, 3, -1], "-1.0 + 0.0 x + 3.0 x**2 - 1.0 x**3"),
+        (arange(12), ("0.0 + 1.0 x + 2.0 x**2 + 3.0 x**3 + 4.0 x**4 + "
                       "5.0 x**5 + 6.0 x**6 +\n7.0 x**7 + 8.0 x**8 + "
                       "9.0 x**9 + 10.0 x**10 + 11.0 x**11")),
     ))
@@ -168,51 +169,51 @@ class TestLinebreaking:
 
     def test_single_line_one_less(self):
         # With 'ascii' style, len(str(p)) is default linewidth - 1 (i.e. 74)
-        p = poly.Polynomial([123456789, 123456789, 123456789, 1234, 1])
+        p = poly.Polynomial([12345678, 12345678, 12345678, 12345678, 123])
         assert_equal(len(str(p)), 74)
         assert_equal(str(p), (
-            '123456789.0 + 123456789.0 x**1 + 123456789.0 x**2 + '
-            '1234.0 x**3 + 1.0 x**4'
+            '12345678.0 + 12345678.0 x + 12345678.0 x**2 + '
+            '12345678.0 x**3 + 123.0 x**4'
         ))
 
     def test_num_chars_is_linewidth(self):
         # len(str(p)) == default linewidth == 75
-        p = poly.Polynomial([123456789, 123456789, 123456789, 1234, 10])
+        p = poly.Polynomial([12345678, 12345678, 12345678, 12345678, 1234])
         assert_equal(len(str(p)), 75)
         assert_equal(str(p), (
-            '123456789.0 + 123456789.0 x**1 + 123456789.0 x**2 + '
-            '1234.0 x**3 +\n10.0 x**4'
+            '12345678.0 + 12345678.0 x + 12345678.0 x**2 + '
+            '12345678.0 x**3 +\n1234.0 x**4'
         ))
 
     def test_first_linebreak_multiline_one_less_than_linewidth(self):
         # Multiline str where len(first_line) + len(next_term) == lw - 1 == 74
         p = poly.Polynomial(
-                [123456789, 123456789, 123456789, 12, 1, 123456789]
+                [12345678, 12345678, 12345678, 12345678, 1, 12345678]
             )
         assert_equal(len(str(p).split('\n')[0]), 74)
         assert_equal(str(p), (
-            '123456789.0 + 123456789.0 x**1 + 123456789.0 x**2 + '
-            '12.0 x**3 + 1.0 x**4 +\n123456789.0 x**5'
+            '12345678.0 + 12345678.0 x + 12345678.0 x**2 + '
+            '12345678.0 x**3 + 1.0 x**4 +\n12345678.0 x**5'
         ))
 
     def test_first_linebreak_multiline_on_linewidth(self):
         # First line is one character longer than previous test
         p = poly.Polynomial(
-                [123456789, 123456789, 123456789, 123, 1, 123456789]
+                [12345678, 12345678, 12345678, 12345678.12, 1, 12345678]
             )
         assert_equal(str(p), (
-            '123456789.0 + 123456789.0 x**1 + 123456789.0 x**2 + '
-            '123.0 x**3 +\n1.0 x**4 + 123456789.0 x**5'
+            '12345678.0 + 12345678.0 x + 12345678.0 x**2 + '
+            '12345678.12 x**3 +\n1.0 x**4 + 12345678.0 x**5'
         ))
 
     @pytest.mark.parametrize(('lw', 'tgt'), (
-        (75, ('0.0 + 10.0 x**1 + 200.0 x**2 + 3000.0 x**3 + 40000.0 x**4 +\n'
-              '500000.0 x**5 + 600000.0 x**6 + 70000.0 x**7 + 8000.0 x**8 + '
+        (75, ('0.0 + 10.0 x + 200.0 x**2 + 3000.0 x**3 + 40000.0 x**4 + '
+              '500000.0 x**5 +\n600000.0 x**6 + 70000.0 x**7 + 8000.0 x**8 + '
               '900.0 x**9')),
-        (45, ('0.0 + 10.0 x**1 + 200.0 x**2 + 3000.0 x**3 +\n40000.0 x**4 + '
+        (45, ('0.0 + 10.0 x + 200.0 x**2 + 3000.0 x**3 +\n40000.0 x**4 + '
               '500000.0 x**5 +\n600000.0 x**6 + 70000.0 x**7 + 8000.0 x**8 +\n'
               '900.0 x**9')),
-        (132, ('0.0 + 10.0 x**1 + 200.0 x**2 + 3000.0 x**3 + 40000.0 x**4 + '
+        (132, ('0.0 + 10.0 x + 200.0 x**2 + 3000.0 x**3 + 40000.0 x**4 + '
                '500000.0 x**5 + 600000.0 x**6 + 70000.0 x**7 + 8000.0 x**8 + '
                '900.0 x**9')),
     ))
@@ -230,10 +231,10 @@ def test_set_default_printoptions():
     p = poly.Polynomial([1, 2, 3])
     c = poly.Chebyshev([1, 2, 3])
     poly.set_default_printstyle('ascii')
-    assert_equal(str(p), "1.0 + 2.0 x**1 + 3.0 x**2")
+    assert_equal(str(p), "1.0 + 2.0 x + 3.0 x**2")
     assert_equal(str(c), "1.0 + 2.0 T_1(x) + 3.0 T_2(x)")
     poly.set_default_printstyle('unicode')
-    assert_equal(str(p), "1.0 + 2.0·x¹ + 3.0·x²")
+    assert_equal(str(p), "1.0 + 2.0·x + 3.0·x²")
     assert_equal(str(c), "1.0 + 2.0·T₁(x) + 3.0·T₂(x)")
     with pytest.raises(ValueError):
         poly.set_default_printstyle('invalid_input')
@@ -247,22 +248,22 @@ def test_complex_coefficients():
     # Python complex
     p2 = poly.Polynomial(array(coefs, dtype=object))
     poly.set_default_printstyle('unicode')
-    assert_equal(str(p1), "1j + (1+1j)·x¹ - (2-2j)·x² + (3+0j)·x³")
-    assert_equal(str(p2), "1j + (1+1j)·x¹ + (-2+2j)·x² + (3+0j)·x³")
+    assert_equal(str(p1), "1j + (1+1j)·x - (2-2j)·x² + (3+0j)·x³")
+    assert_equal(str(p2), "1j + (1+1j)·x + (-2+2j)·x² + (3+0j)·x³")
     poly.set_default_printstyle('ascii')
-    assert_equal(str(p1), "1j + (1+1j) x**1 - (2-2j) x**2 + (3+0j) x**3")
-    assert_equal(str(p2), "1j + (1+1j) x**1 + (-2+2j) x**2 + (3+0j) x**3")
+    assert_equal(str(p1), "1j + (1+1j) x - (2-2j) x**2 + (3+0j) x**3")
+    assert_equal(str(p2), "1j + (1+1j) x + (-2+2j) x**2 + (3+0j) x**3")
 
 
 @pytest.mark.parametrize(('coefs', 'tgt'), (
     (array([Fraction(1, 2), Fraction(3, 4)], dtype=object), (
-        "1/2 + 3/4·x¹"
+        "1/2 + 3/4·x"
     )),
     (array([1, 2, Fraction(5, 7)], dtype=object), (
-        "1 + 2·x¹ + 5/7·x²"
+        "1 + 2·x + 5/7·x²"
     )),
     (array([Decimal('1.00'), Decimal('2.2'), 3], dtype=object), (
-        "1.00 + 2.2·x¹ + 3·x²"
+        "1.00 + 2.2·x + 3·x²"
     )),
 ))
 def test_numeric_object_coefficients(coefs, tgt):
@@ -272,8 +273,8 @@ def test_numeric_object_coefficients(coefs, tgt):
 
 
 @pytest.mark.parametrize(('coefs', 'tgt'), (
-    (array([1, 2, 'f'], dtype=object), '1 + 2·x¹ + f·x²'),
-    (array([1, 2, [3, 4]], dtype=object), '1 + 2·x¹ + [3, 4]·x²'),
+    (array([1, 2, 'f'], dtype=object), '1 + 2·x + f·x²'),
+    (array([1, 2, [3, 4]], dtype=object), '1 + 2·x + [3, 4]·x²'),
 ))
 def test_nonnumeric_object_coefficients(coefs, tgt):
     """
@@ -288,20 +289,20 @@ class TestFormat:
     def test_format_unicode(self):
         poly.set_default_printstyle('ascii')
         p = poly.Polynomial([1, 2, 0, -1])
-        assert_equal(format(p, 'unicode'), "1.0 + 2.0·x¹ + 0.0·x² - 1.0·x³")
+        assert_equal(format(p, 'unicode'), "1.0 + 2.0·x + 0.0·x² - 1.0·x³")
 
     def test_format_ascii(self):
         poly.set_default_printstyle('unicode')
         p = poly.Polynomial([1, 2, 0, -1])
         assert_equal(
-            format(p, 'ascii'), "1.0 + 2.0 x**1 + 0.0 x**2 - 1.0 x**3"
+            format(p, 'ascii'), "1.0 + 2.0 x + 0.0 x**2 - 1.0 x**3"
         )
 
     def test_empty_formatstr(self):
         poly.set_default_printstyle('ascii')
         p = poly.Polynomial([1, 2, 3])
-        assert_equal(format(p), "1.0 + 2.0 x**1 + 3.0 x**2")
-        assert_equal(f"{p}", "1.0 + 2.0 x**1 + 3.0 x**2")
+        assert_equal(format(p), "1.0 + 2.0 x + 3.0 x**2")
+        assert_equal(f"{p}", "1.0 + 2.0 x + 3.0 x**2")
 
     def test_bad_formatstr(self):
         p = poly.Polynomial([1, 2, 0, -1])
@@ -309,35 +310,66 @@ class TestFormat:
             format(p, '.2f')
 
 
+@pytest.mark.parametrize(('poly', 'tgt'), (
+    (poly.Polynomial, '1.0 + 2.0·z + 3.0·z²'),
+    (poly.Chebyshev, '1.0 + 2.0·T₁(z) + 3.0·T₂(z)'),
+    (poly.Hermite, '1.0 + 2.0·H₁(z) + 3.0·H₂(z)'),
+    (poly.HermiteE, '1.0 + 2.0·He₁(z) + 3.0·He₂(z)'),
+    (poly.Laguerre, '1.0 + 2.0·L₁(z) + 3.0·L₂(z)'),
+    (poly.Legendre, '1.0 + 2.0·P₁(z) + 3.0·P₂(z)'),
+))
+def test_symbol(poly, tgt):
+    p = poly([1, 2, 3], symbol='z')
+    assert_equal(f"{p:unicode}", tgt)
+
+
 class TestRepr:
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
-        tgt = 'Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_chebyshev_str(self):
         res = repr(poly.Chebyshev([0, 1]))
-        tgt = 'Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_legendre_repr(self):
         res = repr(poly.Legendre([0, 1]))
-        tgt = 'Legendre([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Legendre([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermite_repr(self):
         res = repr(poly.Hermite([0, 1]))
-        tgt = 'Hermite([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Hermite([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermiteE_repr(self):
         res = repr(poly.HermiteE([0, 1]))
-        tgt = 'HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_laguerre_repr(self):
         res = repr(poly.Laguerre([0, 1]))
-        tgt = 'Laguerre([0., 1.], domain=[0, 1], window=[0, 1])'
+        tgt = (
+            "Laguerre([0., 1.], domain=[0, 1], window=[0, 1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
 
@@ -348,7 +380,7 @@ class TestLatexRepr:
         # right now we ignore the formatting of scalars in our tests, since
         # it makes them too verbose. Ideally, the formatting of scalars will
         # be fixed such that tests below continue to pass
-        obj._repr_latex_scalar = lambda x: str(x)
+        obj._repr_latex_scalar = lambda x, parens=False: str(x)
         try:
             return obj._repr_latex_()
         finally:
@@ -388,3 +420,111 @@ class TestLatexRepr:
         p = poly.HermiteE([1, 2, 3])
         assert_equal(self.as_latex(p),
             r'$x \mapsto 1.0\,{He}_{0}(x) + 2.0\,{He}_{1}(x) + 3.0\,{He}_{2}(x)$')
+
+    def test_symbol_basic(self):
+        # default input
+        p = poly.Polynomial([1, 2, 3], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,z + 3.0\,z^{2}$')
+
+        # translated input
+        p = poly.Polynomial([1, 2, 3], domain=[-2, 0], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + z\right) + 3.0\,'
+                r'\left(1.0 + z\right)^{2}$'
+            ),
+        )
+
+        # scaled input
+        p = poly.Polynomial([1, 2, 3], domain=[-0.5, 0.5], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,'
+                r'\left(2.0z\right)^{2}$'
+            ),
+        )
+
+        # affine input
+        p = poly.Polynomial([1, 2, 3], domain=[-1, 0], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,'
+                r'\left(1.0 + 2.0z\right)^{2}$'
+            ),
+        )
+
+
+SWITCH_TO_EXP = (
+    '1.0 + (1.0e-01) x + (1.0e-02) x**2',
+    '1.2 + (1.2e-01) x + (1.2e-02) x**2',
+    '1.23 + 0.12 x + (1.23e-02) x**2 + (1.23e-03) x**3',
+    '1.235 + 0.123 x + (1.235e-02) x**2 + (1.235e-03) x**3',
+    '1.2346 + 0.1235 x + 0.0123 x**2 + (1.2346e-03) x**3 + (1.2346e-04) x**4',
+    '1.23457 + 0.12346 x + 0.01235 x**2 + (1.23457e-03) x**3 + '
+    '(1.23457e-04) x**4',
+    '1.234568 + 0.123457 x + 0.012346 x**2 + 0.001235 x**3 + '
+    '(1.234568e-04) x**4 + (1.234568e-05) x**5',
+    '1.2345679 + 0.1234568 x + 0.0123457 x**2 + 0.0012346 x**3 + '
+    '(1.2345679e-04) x**4 + (1.2345679e-05) x**5')
+
+class TestPrintOptions:
+    """
+    Test the output is properly configured via printoptions.
+    The exponential notation is enabled automatically when the values 
+    are too small or too large.
+    """
+
+    @pytest.fixture(scope='class', autouse=True)
+    def use_ascii(self):
+        poly.set_default_printstyle('ascii')
+
+    def test_str(self):
+        p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])
+        assert_equal(str(p), '0.5 + 0.14285714 x + 14285714.28571429 x**2 '
+                             '+ (1.42857143e+08) x**3')
+
+        with printoptions(precision=3):
+            assert_equal(str(p), '0.5 + 0.143 x + 14285714.286 x**2 '
+                                 '+ (1.429e+08) x**3')
+
+    def test_latex(self):
+        p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])
+        assert_equal(p._repr_latex_(),
+            r'$x \mapsto \text{0.5} + \text{0.14285714}\,x + '
+            r'\text{14285714.28571429}\,x^{2} + '
+            r'\text{(1.42857143e+08)}\,x^{3}$')
+        
+        with printoptions(precision=3):
+            assert_equal(p._repr_latex_(),
+                r'$x \mapsto \text{0.5} + \text{0.143}\,x + '
+                r'\text{14285714.286}\,x^{2} + \text{(1.429e+08)}\,x^{3}$')
+
+    def test_fixed(self):
+        p = poly.Polynomial([1/2])
+        assert_equal(str(p), '0.5')
+        
+        with printoptions(floatmode='fixed'):
+            assert_equal(str(p), '0.50000000')
+        
+        with printoptions(floatmode='fixed', precision=4):
+            assert_equal(str(p), '0.5000')
+
+    def test_switch_to_exp(self):
+        for i, s in enumerate(SWITCH_TO_EXP):
+            with printoptions(precision=i):
+                p = poly.Polynomial([1.23456789*10**-i 
+                                     for i in range(i//2+3)])
+                assert str(p).replace('\n', ' ') == s 
+    
+    def test_non_finite(self):
+        p = poly.Polynomial([nan, inf])
+        assert str(p) == 'nan + inf x'
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
+        with printoptions(nanstr='NAN', infstr='INF'):
+            assert str(p) == 'NAN + INF x'
+            assert p._repr_latex_() == \
+                r'$x \mapsto \text{NAN} + \text{INF}\,x$'

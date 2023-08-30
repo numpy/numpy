@@ -1,18 +1,16 @@
 from collections.abc import Iterable
 from typing import Any, TypeVar, overload, SupportsIndex
 
-from numpy import dtype, generic
-from numpy.typing import (
+from numpy import generic
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,
     _Shape,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 

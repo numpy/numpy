@@ -1,5 +1,5 @@
 // Taken from:
-// https://github.com/dmlc/dlpack/blob/9b6176fdecb55e9bf39b16f08b96913ed3f275b4/include/dlpack/dlpack.h
+// https://github.com/dmlc/dlpack/blob/ca4d00ad3e2e0f410eeab3264d21b8a39397f362/include/dlpack/dlpack.h
 /*!
  *  Copyright (c) 2017 by Contributors
  * \file dlpack.h
@@ -8,14 +8,20 @@
 #ifndef DLPACK_DLPACK_H_
 #define DLPACK_DLPACK_H_
 
+/**
+ * \brief Compatibility with C++
+ */
 #ifdef __cplusplus
 #define DLPACK_EXTERN_C extern "C"
 #else
 #define DLPACK_EXTERN_C
 #endif
 
-/*! \brief The current version of dlpack */
-#define DLPACK_VERSION 050
+/*! \brief The current major version of dlpack */
+#define DLPACK_MAJOR_VERSION 1
+
+/*! \brief The current minor version of dlpack */
+#define DLPACK_MINOR_VERSION 0
 
 /*! \brief DLPACK_DLL prefix for windows */
 #ifdef _WIN32
@@ -34,10 +40,41 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*!
+ * \brief The DLPack version.
+ *
+ * A change in major version indicates that we have changed the
+ * data layout of the ABI - DLManagedTensorVersioned.
+ *
+ * A change in minor version indicates that we have added new
+ * code, such as a new device type, but the ABI is kept the same.
+ *
+ * If an obtained DLPack tensor has a major version that disagrees
+ * with the version number specified in this header file
+ * (i.e. major != DLPACK_MAJOR_VERSION), the consumer must call the deleter
+ * (and it is safe to do so). It is not safe to access any other fields
+ * as the memory layout will have changed.
+ *
+ * In the case of a minor version mismatch, the tensor can be safely used as
+ * long as the consumer knows how to interpret all fields. Minor version
+ * updates indicate the addition of enumeration values.
+ */
+typedef struct {
+  /*! \brief DLPack major version. */
+  uint32_t major;
+  /*! \brief DLPack minor version. */
+  uint32_t minor;
+} DLPackVersion;
+
 /*!
  * \brief The device type in DLDevice.
  */
+#ifdef __cplusplus
+typedef enum : int32_t {
+#else
 typedef enum {
+#endif
   /*! \brief CPU device */
   kDLCPU = 1,
   /*! \brief CUDA GPU device */
@@ -70,6 +107,17 @@ typedef enum {
    * \brief CUDA managed/unified memory allocated by cudaMallocManaged
    */
   kDLCUDAManaged = 13,
+  /*!
+   * \brief Unified shared memory allocated on a oneAPI non-partititioned
+   * device. Call to oneAPI runtime is required to determine the device
+   * type, the USM allocation type and the sycl context it is bound to.
+   *
+   */
+  kDLOneAPI = 14,
+  /*! \brief GPU support for next generation WebGPU standard. */
+  kDLWebGPU = 15,
+  /*! \brief Qualcomm Hexagon DSP */
+  kDLHexagon = 16,
 } DLDeviceType;
 
 /*!
@@ -82,7 +130,7 @@ typedef struct {
    * \brief The device index.
    * For vanilla CPU memory, pinned memory, or managed memory, this is set to 0.
    */
-  int device_id;
+  int32_t device_id;
 } DLDevice;
 
 /*!
@@ -107,16 +155,21 @@ typedef enum {
    * (C/C++/Python layout: compact struct per complex number)
    */
   kDLComplex = 5U,
+  /*! \brief boolean */
+  kDLBool = 6U,
 } DLDataTypeCode;
 
 /*!
- * \brief The data type the tensor can hold.
+ * \brief The data type the tensor can hold. The data type is assumed to follow the
+ * native endian-ness. An explicit error message should be raised when attempting to
+ * export an array with non-native endianness
  *
  *  Examples
- *   - float: type_code = 2, bits = 32, lanes=1
- *   - float4(vectorized 4 float): type_code = 2, bits = 32, lanes=4
- *   - int8: type_code = 0, bits = 8, lanes=1
+ *   - float: type_code = 2, bits = 32, lanes = 1
+ *   - float4(vectorized 4 float): type_code = 2, bits = 32, lanes = 4
+ *   - int8: type_code = 0, bits = 8, lanes = 1
  *   - std::complex<float>: type_code = 5, bits = 64, lanes = 1
+ *   - bool: type_code = 6, bits = 8, lanes = 1 (as per common array library convention, the underlying storage size of bool is 8 bits)
  */
 typedef struct {
   /*!
@@ -138,9 +191,16 @@ typedef struct {
  */
 typedef struct {
   /*!
-   * \brief The opaque data pointer points to the allocated data. This will be
-   * CUDA device pointer or cl_mem handle in OpenCL. This pointer is always
-   * aligned to 256 bytes as in CUDA.
+   * \brief The data pointer points to the allocated data. This will be CUDA
+   * device pointer or cl_mem handle in OpenCL. It may be opaque on some device
+   * types. This pointer is always aligned to 256 bytes as in CUDA. The
+   * `byte_offset` field should be used to point to the beginning of the data.
+   *
+   * Note that as of Nov 2021, multiply libraries (CuPy, PyTorch, TensorFlow,
+   * TVM, perhaps others) do not adhere to this 256 byte alignment requirement
+   * on CPU/CUDA/ROCm, and always use `byte_offset=0`.  This must be fixed
+   * (after which this note will be updated); at the moment it is recommended
+   * to not rely on the data pointer being correctly aligned.
    *
    * For given DLTensor, the size of memory required to store the contents of
    * data is calculated as follows:
@@ -160,7 +220,7 @@ typedef struct {
   /*! \brief The device of the tensor */
   DLDevice device;
   /*! \brief Number of dimensions */
-  int ndim;
+  int32_t ndim;
   /*! \brief The data type of the pointer*/
   DLDataType dtype;
   /*! \brief The shape of the tensor */
@@ -180,6 +240,13 @@ typedef struct {
  *  not meant to transfer the tensor. When the borrowing framework doesn't need
  *  the tensor, it should call the deleter to notify the host that the resource
  *  is no longer needed.
+ *
+ * \note This data structure is used as Legacy DLManagedTensor
+ *       in DLPack exchange and is deprecated after DLPack v0.8
+ *       Use DLManagedTensorVersioned instead.
+ *       This data structure may get renamed or deleted in future versions.
+ *
+ * \sa DLManagedTensorVersioned
  */
 typedef struct DLManagedTensor {
   /*! \brief DLTensor which is being memory managed */
@@ -188,13 +255,65 @@ typedef struct DLManagedTensor {
    *   which DLManagedTensor is used in the framework. It can also be NULL.
    */
   void * manager_ctx;
-  /*! \brief Destructor signature void (*)(void*) - this should be called
-   *   to destruct manager_ctx which holds the DLManagedTensor. It can be NULL
-   *   if there is no way for the caller to provide a reasonable destructor.
-   *   The destructors deletes the argument self as well.
+  /*!
+   * \brief Destructor - this should be called
+   * to destruct the manager_ctx  which backs the DLManagedTensor. It can be
+   * NULL if there is no way for the caller to provide a reasonable destructor.
+   * The destructors deletes the argument self as well.
    */
   void (*deleter)(struct DLManagedTensor * self);
 } DLManagedTensor;
+
+// bit masks used in in the DLManagedTensorVersioned
+
+/*! \brief bit mask to indicate that the tensor is read only. */
+#define DLPACK_FLAG_BITMASK_READ_ONLY (1UL << 0UL)
+
+/*!
+ * \brief A versioned and managed C Tensor object, manage memory of DLTensor.
+ *
+ * This data structure is intended to facilitate the borrowing of DLTensor by
+ * another framework. It is not meant to transfer the tensor. When the borrowing
+ * framework doesn't need the tensor, it should call the deleter to notify the
+ * host that the resource is no longer needed.
+ *
+ * \note This is the current standard DLPack exchange data structure.
+ */
+struct DLManagedTensorVersioned {
+  /*!
+   * \brief The API and ABI version of the current managed Tensor
+   */
+  DLPackVersion version;
+  /*!
+   * \brief the context of the original host framework.
+   *
+   * Stores DLManagedTensorVersioned is used in the
+   * framework. It can also be NULL.
+   */
+  void *manager_ctx;
+  /*!
+   * \brief Destructor.
+   *
+   * This should be called to destruct manager_ctx which holds the DLManagedTensorVersioned.
+   * It can be NULL if there is no way for the caller to provide a reasonable
+   * destructor. The destructors deletes the argument self as well.
+   */
+  void (*deleter)(struct DLManagedTensorVersioned *self);
+  /*!
+   * \brief Additional bitmask flags information about the tensor.
+   *
+   * By default the flags should be set to 0.
+   *
+   * \note Future ABI changes should keep everything until this field
+   *       stable, to ensure that deleter can be correctly called.
+   *
+   * \sa DLPACK_FLAG_BITMASK_READ_ONLY
+   */
+  uint64_t flags;
+  /*! \brief DLTensor which is being memory managed */
+  DLTensor dl_tensor;
+};
+
 #ifdef __cplusplus
 }  // DLPACK_EXTERN_C
 #endif

@@ -1,10 +1,45 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 
+
+/*
+ * In some API calls we wish to allow users to pass a DType class or a
+ * dtype instances with different meanings.
+ * This struct is mainly used for the argument parsing in
+ * `PyArray_DTypeOrDescrConverter`.
+ */
+typedef struct {
+    PyArray_DTypeMeta *dtype;
+    PyArray_Descr *descr;
+} npy_dtype_info;
+
+
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterOptional(PyObject *, npy_dtype_info *dt_info);
+
+NPY_NO_EXPORT int
+PyArray_DTypeOrDescrConverterRequired(PyObject *, npy_dtype_info *dt_info);
+
+NPY_NO_EXPORT int
+PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
+        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType);
+
 NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(
         PyArray_Descr *, void *);
 NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
         PyArray_Descr *self, void *);
+
+/*
+ * offset:    A starting offset.
+ * alignment: A power-of-two alignment.
+ *
+ * This macro returns the smallest value >= 'offset'
+ * that is divisible by 'alignment'. Because 'alignment'
+ * is a power of two and integers are twos-complement,
+ * it is possible to use some simple bit-fiddling to do this.
+ */
+#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
+                (((offset) + (alignment) - 1) & (-(alignment)))
 
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);

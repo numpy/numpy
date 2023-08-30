@@ -3,7 +3,7 @@
 .. module:: numpy.linalg
 
 Linear algebra (:mod:`numpy.linalg`)
-************************************
+====================================
 
 The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
 low level implementations of standard linear algebra algorithms. Those

@@ -3,6 +3,7 @@
  ** neon asimd
  ** sse2 avx2 avx512_skx
  ** vsx2
+ ** vx vxe
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -22,12 +23,14 @@
 #define scalar_max_i(A, B) ((A > B) ? A : B)
 #define scalar_min_i(A, B) ((A < B) ? A : B)
 // fp, propagates NaNs
-#define scalar_max_f(A, B) ((A >= B || npy_isnan(A)) ? A : B)
-#define scalar_max_d scalar_max_f
-#define scalar_max_l scalar_max_f
-#define scalar_min_f(A, B) ((A <= B || npy_isnan(A)) ? A : B)
-#define scalar_min_d scalar_min_f
-#define scalar_min_l scalar_min_f
+#define scalar_max(A, B) ((A >= B || npy_isnan(A)) ? A : B)
+#define scalar_max_f scalar_max
+#define scalar_max_d scalar_max
+#define scalar_max_l scalar_max
+#define scalar_min(A, B) ((A <= B || npy_isnan(A)) ? A : B)
+#define scalar_min_f scalar_min
+#define scalar_min_d scalar_min
+#define scalar_min_l scalar_min
 // fp, ignores NaNs
 #define scalar_maxp_f fmaxf
 #define scalar_maxp_d fmax
@@ -92,109 +95,11 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
 #endif
 
 /*******************************************************************************
- ** extra SIMD intrinsics
- ******************************************************************************/
-
-#if NPY_SIMD
-/**begin repeat
- * #sfx = s8, u8, s16, u16, s32, u32, s64, u64#
- * #is_64 = 0*6, 1*2#
- */
-#if defined(NPY_HAVE_ASIMD) && defined(__aarch64__)
-    #if !@is_64@
-        #define npyv_reduce_min_@sfx@ vminvq_@sfx@
-        #define npyv_reduce_max_@sfx@ vmaxvq_@sfx@
-    #else
-        NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_min_@sfx@(npyv_@sfx@ v)
-        {
-            npyv_lanetype_@sfx@ a = vgetq_lane_@sfx@(v, 0);
-            npyv_lanetype_@sfx@ b = vgetq_lane_@sfx@(v, 1);
-            npyv_lanetype_@sfx@ result = (a < b) ? a : b;
-            return result;
-        }
-        NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_max_@sfx@(npyv_@sfx@ v)
-        {
-            npyv_lanetype_@sfx@ a = vgetq_lane_@sfx@(v, 0);
-            npyv_lanetype_@sfx@ b = vgetq_lane_@sfx@(v, 1);
-            npyv_lanetype_@sfx@ result = (a > b) ? a : b;
-            return result;
-        }
-    #endif // !@is_64@
-#else
-    /**begin repeat1
-     * #intrin = min, max#
-     */
-    NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
-    {
-        npyv_lanetype_@sfx@ NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) s[npyv_nlanes_@sfx@];
-        npyv_storea_@sfx@(s, v);
-        npyv_lanetype_@sfx@ result = s[0];
-        for(int i=1; i<npyv_nlanes_@sfx@; ++i){
-            result = scalar_@intrin@_i(result, s[i]);
-        }
-        return result;
-    }
-    /**end repeat1**/
-#endif
-/**end repeat**/
-#endif // NPY_SIMD
-
-/**begin repeat
- * #sfx = f32, f64#
- * #bsfx = b32, b64#
- * #simd_chk = NPY_SIMD, NPY_SIMD_F64#
- * #scalar_sfx = f, d#
- */
-#if @simd_chk@
-#if defined(NPY_HAVE_ASIMD) && defined(__aarch64__)
-    #define npyv_minn_@sfx@ vminq_@sfx@
-    #define npyv_maxn_@sfx@ vmaxq_@sfx@
-    #define npyv_reduce_minn_@sfx@ vminvq_@sfx@
-    #define npyv_reduce_maxn_@sfx@ vmaxvq_@sfx@
-    #define npyv_reduce_minp_@sfx@ vminnmvq_@sfx@
-    #define npyv_reduce_maxp_@sfx@ vmaxnmvq_@sfx@
-#else
-    /**begin repeat1
-     * #intrin = min, max#
-     */
-    // propagates NaNs
-    NPY_FINLINE npyv_@sfx@ npyv_@intrin@n_@sfx@(npyv_@sfx@ a, npyv_@sfx@ b)
-    {
-        npyv_@sfx@ result = npyv_@intrin@_@sfx@(a, b);
-        // result = npyv_select_@sfx@(npyv_notnan_@sfx@(b), result, b);
-     // X86 handle second operand
-    #ifndef NPY_HAVE_SSE2
-        result = npyv_select_@sfx@(npyv_notnan_@sfx@(b), result, b);
-    #endif
-        result = npyv_select_@sfx@(npyv_notnan_@sfx@(a), result, a);
-        return result;
-    }
-    /**end repeat1**/
-    /**begin repeat1
-     * #intrin = minn, maxn, minp, maxp#
-     * #scalar_intrin = min, max, minp, maxp#
-     */
-    NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
-    {
-        npyv_lanetype_@sfx@ NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) s[npyv_nlanes_@sfx@];
-        npyv_storea_@sfx@(s, v);
-        npyv_lanetype_@sfx@ result = s[0];
-        for(int i=1; i<npyv_nlanes_@sfx@; ++i){
-            result = scalar_@scalar_intrin@_@scalar_sfx@(result, s[i]);
-        }
-        return result;
-    }
-    /**end repeat1**/
-#endif
-#endif // simd_chk
-/**end repeat**/
-
-/*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
 /**begin repeat
  * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
- * #simd_chk = NPY_SIMD*9, NPY_SIMD_F64#
+ * #simd_chk = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
  * #is_fp = 0*8, 1, 1#
  * #scalar_sfx = i*8, f, d#
  */
@@ -393,6 +298,9 @@ simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
 #elif NPY_SIMD && NPY_BITSOF_@BTYPE@ == @len@
     #if @is_fp@
         #define TO_SIMD_SFX(X) X##_f@len@
+        #if NPY_BITSOF_@BTYPE@ == 32 && !NPY_SIMD_F32
+            #undef TO_SIMD_SFX
+        #endif
         #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
             #undef TO_SIMD_SFX
         #endif
@@ -541,6 +449,29 @@ clear_fp:
 #if @is_fp@
     npy_clear_floatstatus_barrier((char*)dimensions);
 #endif
+}
+
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char *const *args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp n = dimensions[0];
+    npy_intp shape = steps[3];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
+        *indexed = SCALAR_OP(*indexed, *(@type@ *)value);
+    }
+    return 0;
 }
 
 #undef SCALAR_OP

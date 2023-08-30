@@ -18,10 +18,65 @@ sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
 
+.. note::
+
+   If you are having trouble building NumPy from source or setting up your
+   local development environment, you can try to build NumPy with GitHub
+   Codespaces. It allows you to create the correct development environment
+   right in your browser, reducing the need to install local development
+   environments and deal with incompatible dependencies.
+
+   If you have good internet connectivity and want a temporary set-up, it is
+   often faster to work on NumPy in a Codespaces environment. For documentation
+   on how to get started with Codespaces, see
+   `the Codespaces docs <https://docs.github.com/en/codespaces>`__.
+   When creating a codespace for the ``numpy/numpy`` repository, the default
+   2-core machine type works; 4-core will build and work a bit faster (but of
+   course at a cost of halving your number of free usage hours). Once your
+   codespace has started, you can run ``conda activate numpy-dev`` and your
+   development environment is completely set up - you can then follow the
+   relevant parts of the NumPy documentation to build, test, develop, write
+   docs, and contribute to NumPy.
+
+Using virtual environments
+--------------------------
+
+A frequently asked question is "How do I set up a development version of NumPy
+in parallel to a released version that I use to do my job/research?".
+
+One simple way to achieve this is to install the released version in
+site-packages, by using pip or conda for example, and set
+up the development version in a virtual environment.
+
+If you use conda, we recommend creating a separate virtual environment for
+numpy development using the ``environment.yml`` file in the root of the repo
+(this will create the environment and install all development dependencies at
+once)::
+
+    $ conda env create -f environment.yml  # `mamba` works too for this command
+    $ conda activate numpy-dev
+
+If you installed Python some other way than conda, first install
+`virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
+virtualenv (named ``numpy-dev`` here) with::
+
+    $ virtualenv numpy-dev
+
+Now, whenever you want to switch to the virtual environment, you can use the
+command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
+virtual environment and back to your previous shell.
+
+
 .. _testing-builds:
 
 Testing builds
 --------------
+
+Before running the tests, first install the test dependencies::
+
+    $ python -m pip install -r test_requirements.txt
+    $ python -m pip install asv # only for running benchmarks
+      
 
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
@@ -38,6 +93,11 @@ do one of::
 This builds NumPy first, so the first time it may take a few minutes.  If
 you specify ``-n``, the tests are run against the version of NumPy (if
 any) found on current PYTHONPATH.
+
+.. note::
+
+    If the above commands result in ``RuntimeError: Cannot parse version 0+untagged.xxxxx``,
+    run ``git pull upstream main --tags``.
 
 When specifying a target using ``-s``, ``-t``, or ``--python``, additional
 arguments may be forwarded to the target embedded by ``runtests.py`` by passing
@@ -131,34 +191,6 @@ to see this output, you can run the ``build_src`` stage verbosely::
 
     $ python build build_src -v
 
-Using virtual environments
---------------------------
-
-A frequently asked question is "How do I set up a development version of NumPy
-in parallel to a released version that I use to do my job/research?".
-
-One simple way to achieve this is to install the released version in
-site-packages, by using pip or conda for example, and set
-up the development version in a virtual environment.
-
-If you use conda, we recommend creating a separate virtual environment for
-numpy development using the ``environment.yml`` file in the root of the repo
-(this will create the environment and install all development dependencies at
-once)::
-
-    $ conda env create -f environment.yml  # `mamba` works too for this command
-    $ conda activate numpy-dev
-
-If you installed Python some other way than conda, first install
-`virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here) with::
-
-    $ virtualenv numpy-dev
-
-Now, whenever you want to switch to the virtual environment, you can use the
-command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
-virtual environment and back to your previous shell.
-
 
 Running tests
 -------------
@@ -190,9 +222,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.7, use::
+run the test suite with Python 3.9, use::
 
-    $ tox -e py37
+    $ tox -e py39
 
 For more extensive information, see :ref:`testing-guidelines`
 
@@ -263,6 +295,10 @@ Python is running inside gdb to verify your setup::
     >end
     sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
 
+Most python builds do not include debug symbols and are built with compiler
+optimizations enabled. To get the best debugging experience using a debug build
+of Python is encouraged, see :ref:`advanced_debugging`.
+
 Next you need to write a Python script that invokes the C code whose execution
 you want to debug. For instance ``mytest.py``::
 
@@ -281,13 +317,27 @@ And then in the debugger::
 
 The execution will now stop at the corresponding C function and you can step
 through it as usual. A number of useful Python-specific commands are available.
-For example to see where in the Python code you are, use ``py-list``.  For more
-details, see `DebuggingWithGdb`_. Here are some commonly used commands:
+For example to see where in the Python code you are, use ``py-list``, to see the
+python traceback, use ``py-bt``.  For more details, see
+`DebuggingWithGdb`_. Here are some commonly used commands:
 
    - ``list``: List specified function or line.
    - ``next``: Step program, proceeding through subroutine calls.
    - ``step``: Continue program being debugged, after signal or breakpoint.
    - ``print``: Print value of expression EXP.
+
+Rich support for Python debugging requires that the ``python-gdb.py`` script
+distributed with Python is installed in a path where gdb can find it. If you
+installed your Python build from your system package manager, you likely do
+not need to manually do anything. However, if you built Python from source,
+you will likely need to create a ``.gdbinit`` file in your home directory
+pointing gdb at the location of your Python installation. For example, a
+version of python installed via `pyenv <https://github.com/pyenv/pyenv>`_
+needs a ``.gdbinit`` file with the following contents:
+
+.. code-block:: text
+
+    add-auto-load-safe-path ~/.pyenv
 
 Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments
@@ -295,8 +345,6 @@ alternative debugger; run it on the python binary with arguments
 
 Building NumPy with a Python built with debug support (on Linux distributions
 typically packaged as ``python-dbg``) is highly recommended.
-
-
 
 .. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
 .. _tox: https://tox.readthedocs.io/

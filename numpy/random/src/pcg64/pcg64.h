@@ -54,6 +54,9 @@
 
 #ifdef _WIN32
 #include <stdlib.h>
+#endif
+
+#if defined(_WIN32) && !defined (__MINGW32__)
 #define inline __forceinline
 #endif
 
@@ -128,7 +131,7 @@ static inline pcg128_t pcg128_add(pcg128_t a, pcg128_t b) {
 static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
                                uint64_t *z0) {
 
-#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+#if defined _WIN32 && _M_AMD64
   z0[0] = _umul128(x, y, z1);
 #else
   uint64_t x0, x1, y0, y1;
@@ -182,7 +185,7 @@ static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
 
 static inline uint64_t
 pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
-#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+#if defined _WIN32 && _M_AMD64
   uint64_t h1;
   pcg128_t product;
 
@@ -212,7 +215,7 @@ static inline pcg128_t pcg128_mult_64(pcg128_t a, uint64_t b) {
 }
 
 static inline void pcg_cm_step_r(pcg_state_setseq_128 *rng) {
-#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+#if defined _WIN32 && _M_AMD64
   uint64_t h1;
   pcg128_t product;
 
@@ -255,7 +258,7 @@ static inline uint64_t pcg_cm_random_r(pcg_state_setseq_128* rng)
   hi *= lo;
 
   /* Run the CM step. */
-#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+#if defined _WIN32 && _M_AMD64
   uint64_t h1;
   pcg128_t product;
 

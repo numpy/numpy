@@ -6,6 +6,7 @@ dtype_V: np.dtype[np.void]
 dtype_i8: np.dtype[np.int64]
 
 reveal_type(np.dtype(np.float64))  # E: dtype[{float64}]
+reveal_type(np.dtype(np.float64, metadata={"test": "test"}))  # E: dtype[{float64}]
 reveal_type(np.dtype(np.int64))  # E: dtype[{int64}]
 
 # String aliases
@@ -48,11 +49,11 @@ reveal_type(np.dtype(("U", 10)))  # E: dtype[void]
 
 # Methods and attributes
 reveal_type(dtype_U.base)  # E: dtype[Any]
-reveal_type(dtype_U.subdtype)  # E: Union[None, Tuple[dtype[Any], builtins.tuple[builtins.int]]]
+reveal_type(dtype_U.subdtype)  # E: Union[None, tuple[dtype[Any], builtins.tuple[builtins.int, ...]]]
 reveal_type(dtype_U.newbyteorder())  # E: dtype[str_]
 reveal_type(dtype_U.type)  # E: Type[str_]
 reveal_type(dtype_U.name)  # E: str
-reveal_type(dtype_U.names)  # E: Union[None, builtins.tuple[builtins.str]]
+reveal_type(dtype_U.names)  # E: Union[None, builtins.tuple[builtins.str, ...]]
 
 reveal_type(dtype_U * 0)  # E: dtype[str_]
 reveal_type(dtype_U * 1)  # E: dtype[str_]

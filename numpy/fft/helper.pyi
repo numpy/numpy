@@ -1,19 +1,16 @@
 from typing import Any, TypeVar, overload
 
-from numpy import generic, dtype, integer, floating, complexfloating
-from numpy.typing import (
+from numpy import generic, integer, floating, complexfloating
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,
-    _SupportsArray,
-    _FiniteNestedSequence,
+    _ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 
@@ -30,21 +27,21 @@ def ifftshift(x: ArrayLike, axes: None | _ShapeLike = ...) -> NDArray[Any]: ...
 @overload
 def fftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeFloat_co,
+    d: _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def fftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeComplex_co,
+    d: _ArrayLikeComplex_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload
 def rfftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeFloat_co,
+    d: _ArrayLikeFloat_co = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def rfftfreq(
     n: int | integer[Any],
-    d: _ArrayLikeComplex_co,
+    d: _ArrayLikeComplex_co = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...

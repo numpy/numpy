@@ -19,6 +19,7 @@ __all__ = ['FCompiler', 'new_fcompiler', 'show_fcompilers',
 import os
 import sys
 import re
+from pathlib import Path
 
 from distutils.sysconfig import get_python_lib
 from distutils.fancy_getopt import FancyGetopt
@@ -36,6 +37,10 @@ from numpy.distutils import _shell_utils
 from .environment import EnvironmentConfig
 
 __metaclass__ = type
+
+
+FORTRAN_COMMON_FIXED_EXTENSIONS = ['.for', '.ftn', '.f77', '.f']
+
 
 class CompilerNotFound(Exception):
     pass
@@ -527,6 +532,12 @@ class FCompiler(CCompiler):
                 ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
                 python_exp = os.path.join(python_lib, 'config', 'python.exp')
                 linker_so = [ld_so_aix] + linker_so + ['-bI:'+python_exp]
+            if sys.platform.startswith('os400'):
+                from distutils.sysconfig import get_config_var
+                python_config = get_config_var('LIBPL')
+                ld_so_aix = os.path.join(python_config, 'ld_so_aix')
+                python_exp = os.path.join(python_config, 'python.exp')
+                linker_so = [ld_so_aix] + linker_so + ['-bI:'+python_exp]
             self.set_commands(linker_so=linker_so+linker_so_flags)
 
         linker_exe = self.linker_exe
@@ -565,7 +576,8 @@ class FCompiler(CCompiler):
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
         src_flags = {}
-        if is_f_file(src) and not has_f90_header(src):
+        if Path(src).suffix.lower() in FORTRAN_COMMON_FIXED_EXTENSIONS \
+           and not has_f90_header(src):
             flavor = ':f77'
             compiler = self.compiler_f77
             src_flags = get_f77flags(src)
@@ -964,7 +976,6 @@ def dummy_fortran_file():
     return name[:-2]
 
 
-is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
 _has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
 _has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search

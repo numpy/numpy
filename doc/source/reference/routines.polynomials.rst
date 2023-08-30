@@ -1,7 +1,7 @@
 .. _routines.polynomial:
 
 Polynomials
-***********
+===========
 
 Polynomials in NumPy can be *created*, *manipulated*, and even *fitted* using
 the :doc:`convenience classes <routines.polynomials.classes>`
@@ -18,14 +18,14 @@ Therefore :mod:`numpy.polynomial` is recommended for new coding.
 .. note:: **Terminology**
 
    The term *polynomial module* refers to the old API defined in
-   `numpy.lib.polynomial`, which includes the :class:`numpy.poly1d` class and
+   ``numpy.lib.polynomial``, which includes the :class:`numpy.poly1d` class and
    the polynomial functions prefixed with *poly* accessible from the `numpy`
    namespace (e.g. `numpy.polyadd`, `numpy.polyval`, `numpy.polyfit`, etc.).
 
    The term *polynomial package* refers to the new API defined in 
    `numpy.polynomial`, which includes the convenience classes for the
-   different kinds of polynomials (`numpy.polynomial.Polynomial`,
-   `numpy.polynomial.Chebyshev`, etc.).
+   different kinds of polynomials (:class:`~numpy.polynomial.polynomial.Polynomial`,
+   :class:`~numpy.polynomial.chebyshev.Chebyshev`, etc.).
 
 Transitioning from `numpy.poly1d` to `numpy.polynomial`
 -------------------------------------------------------
@@ -97,7 +97,7 @@ can't be mixed in arithmetic::
 
     >>> p1 = np.polynomial.Polynomial([1, 2, 3])
     >>> p1
-    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
     >>> p2 = np.polynomial.Polynomial([1, 2, 3], domain=[-2, 2])
     >>> p1 == p2
     False

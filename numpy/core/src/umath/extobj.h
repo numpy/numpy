@@ -3,30 +3,51 @@
 
 #include <numpy/ndarraytypes.h>  /* for NPY_NO_EXPORT */
 
+
+/* For the private exposure of the extobject contextvar to Python */
+extern NPY_NO_EXPORT PyObject *npy_extobj_contextvar;
+
+/*
+ * Represent the current ufunc error (and buffer) state.  we are using a
+ * capsule for now to store this, but it could make sense to refactor it into
+ * a proper (immutable) object.
+ * NOTE: Part of this information should be integrated into the public API
+ *       probably.  We expect extending it e.g. with a "fast" flag.
+ *       (although the public only needs to know *if* errors are checked, not
+ *       what we do with them, like warn, raise, ...).
+ */
+typedef struct {
+    int errmask;
+    npy_intp bufsize;
+    PyObject *pyfunc;
+} npy_extobj;
+
+
+/* Clearing is only `pyfunc` XDECREF, but could grow in principle */
+static inline void
+npy_extobj_clear(npy_extobj *extobj)
+{
+    Py_XDECREF(extobj->pyfunc);
+}
+
 NPY_NO_EXPORT int
-_error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *first);
+_check_ufunc_fperr(int errmask, const char *ufunc_name);
+
+NPY_NO_EXPORT int
+_get_bufsize_errmask(int *buffersize, int *errormask);
+
+
+NPY_NO_EXPORT int
+init_extobj(void);
+
+/*
+ * Private Python exposure of the extobj.
+ */
+NPY_NO_EXPORT PyObject *
+extobj_make_extobj(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 NPY_NO_EXPORT PyObject *
-get_global_ext_obj(void);
-
-NPY_NO_EXPORT int
-_extract_pyvals(PyObject *ref, const char *name, int *bufsize,
-                int *errmask, PyObject **errobj);
-
-NPY_NO_EXPORT int
-_check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name);
-
-NPY_NO_EXPORT int
-_get_bufsize_errmask(PyObject * extobj, const char *ufunc_name,
-                     int *buffersize, int *errormask);
-
-/********************/
-#define USE_USE_DEFAULTS 1
-/********************/
-
-#if USE_USE_DEFAULTS==1
-NPY_NO_EXPORT int
-ufunc_update_use_defaults(void);
-#endif
+extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg));
 
 #endif

@@ -9,7 +9,6 @@ from typing import (
 )
 
 from numpy import (
-    RankWarning as RankWarning,
     poly1d as poly1d,
     unsignedinteger,
     signedinteger,
@@ -23,7 +22,7 @@ from numpy import (
     object_,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ArrayLikeBool_co,

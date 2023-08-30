@@ -154,7 +154,7 @@ def eye(
 def from_dlpack(x: object, /) -> Array:
     from ._array_object import Array
 
-    return Array._new(np._from_dlpack(x))
+    return Array._new(np.from_dlpack(x))
 
 
 def full(

@@ -7,6 +7,9 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val);
+
+NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 typedef enum {
@@ -49,7 +52,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_PyIntFromIntp(npy_intp const value)
 {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG

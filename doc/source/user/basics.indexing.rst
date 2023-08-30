@@ -1,3 +1,6 @@
+.. for doctest:
+    >>> import numpy as np
+  
 .. _basics.indexing:
 
 ****************************************
@@ -36,7 +39,7 @@ Basic indexing
 .. _single-element-indexing:
 
 Single element indexing
-^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Single element indexing works
 exactly like that for other standard Python sequences. It is 0-based,
@@ -92,7 +95,7 @@ that is subsequently indexed by 2.
 .. _slicing-and-striding:
 
 Slicing and striding
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 Basic slicing extends Python's basic concept of slicing to N
 dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
@@ -100,14 +103,6 @@ dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 integer, or a tuple of slice objects and integers. :py:data:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
 well.
-
-.. deprecated:: 1.15.0
-
-  In order to remain backward compatible with a common usage in
-  Numeric, basic slicing is also initiated if the selection object is
-  any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
-  :class:`slice` objects, the :py:data:`Ellipsis` object, or the :const:`newaxis`
-  object, but not for integer arrays or other embedded sequences.
 
 .. index::
    triple: ndarray; special methods; getitem
@@ -213,7 +208,7 @@ concepts to remember include:
 
 - You may use slicing to set values in the array, but (unlike lists) you
   can never grow the array. The size of the value to be set in
-  ``x[obj] = value`` must be (broadcastable) to the same shape as
+  ``x[obj] = value`` must be (broadcastable to) the same shape as
   ``x[obj]``.
 
 - A slicing tuple can always be constructed as *obj*
@@ -231,7 +226,7 @@ concepts to remember include:
 .. _dimensional-indexing-tools:
 
 Dimensional indexing tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are some tools to facilitate the easy matching of array shapes with
 expressions and in assignments.
@@ -299,12 +294,8 @@ basic slicing that returns a :term:`view`).
    the former will trigger advanced indexing. Be sure to understand
    why this occurs.
 
-   Also recognize that ``x[[1, 2, 3]]`` will trigger advanced indexing,
-   whereas due to the deprecated Numeric compatibility mentioned above,
-   ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
-
 Integer array indexing
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 Integer array indexing allows selection of arbitrary items in the array
 based on their *N*-dimensional index. Each integer array represents a number
@@ -480,7 +471,7 @@ triple of RGB values is associated with each pixel location.
 .. _boolean-indexing:
 
 Boolean array indexing
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 This advanced indexing occurs when *obj* is an array object of Boolean
 type, such as may be returned from comparison operators. A single
@@ -490,12 +481,13 @@ tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
 arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
-If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
-filled with the elements of *x* corresponding to the :py:data:`True`
-values of *obj*.  The search order will be :term:`row-major`,
-C-style. If *obj* has :py:data:`True` values at entries that are outside
-of the bounds of *x*, then an index error will be raised. If *obj* is
-smaller than *x* it is identical to filling it with :py:data:`False`.
+If ``obj.ndim == x.ndim``, ``x[obj]``
+returns a 1-dimensional array filled with the elements of *x*
+corresponding to the :py:data:`True` values of *obj*. The search order
+will be :term:`row-major`, C-style. An index error will be raised if
+the shape of *obj* does not match the corresponding dimensions of *x*,
+regardless of whether those values are :py:data:`True` or
+:py:data:`False`.
 
 A common use case for this is filtering for desired element values.
 For example, one may wish to select all entries from an array which
@@ -611,7 +603,7 @@ with four True elements to select rows from a 3-D array of shape
 .. _combining-advanced-and-basic-indexing:
 
 Combining advanced and basic indexing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
 in the index (or the array has more dimensions than there are advanced indices),
@@ -715,7 +707,7 @@ Slicing can be combined with broadcasted boolean indices::
 .. _arrays.indexing.fields:
 
 Field access
--------------
+------------
 
 .. seealso:: :ref:`structured_arrays`
 
@@ -793,7 +785,7 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1] = 1.2
  >>> x[1]
  1
- >>> x[1] = 1.2j
+ >>> x[1] = 1.2j  # doctest: +IGNORE_EXCEPTION_DETAIL
  Traceback (most recent call last):
    ...
  TypeError: can't convert complex to int

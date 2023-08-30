@@ -5,7 +5,10 @@ import sys
 import sysconfig
 import pytest
 
+from numpy.testing import IS_WASM
 
+
+@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
@@ -26,7 +29,7 @@ def test_limited_api(tmp_path):
     # build the examples and "install" them into a temporary directory
 
     install_log = str(tmp_path / "tmp_install_log.txt")
-    subprocess.check_call(
+    subprocess.check_output(
         [
             sys.executable,
             "setup.py",

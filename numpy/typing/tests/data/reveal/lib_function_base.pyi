@@ -32,10 +32,6 @@ reveal_type(np.vectorize(  # E: vectorize
     int, otypes="i", doc="doc", excluded=(), cache=True, signature=None
 ))
 
-reveal_type(np.add_newdoc("__main__", "blabla", doc="test doc"))  # E: None
-reveal_type(np.add_newdoc("__main__", "blabla", doc=("meth", "test doc")))  # E: None
-reveal_type(np.add_newdoc("__main__", "blabla", doc=[("meth", "test doc")]))  # E: None
-
 reveal_type(np.rot90(AR_f8, k=2))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.rot90(AR_LIKE_f8, axes=(0, 1)))  # E: ndarray[Any, dtype[Any]]
 
@@ -50,11 +46,11 @@ reveal_type(np.iterable([1]))  # E: bool
 reveal_type(np.average(AR_f8))  # E: floating[Any]
 reveal_type(np.average(AR_f8, weights=AR_c16))  # E: complexfloating[Any, Any]
 reveal_type(np.average(AR_O))  # E: Any
-reveal_type(np.average(AR_f8, returned=True))  # E: Tuple[floating[Any], floating[Any]]
-reveal_type(np.average(AR_f8, weights=AR_c16, returned=True))  # E: Tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
-reveal_type(np.average(AR_O, returned=True))  # E: Tuple[Any, Any]
+reveal_type(np.average(AR_f8, returned=True))  # E: tuple[floating[Any], floating[Any]]
+reveal_type(np.average(AR_f8, weights=AR_c16, returned=True))  # E: tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
+reveal_type(np.average(AR_O, returned=True))  # E: tuple[Any, Any]
 reveal_type(np.average(AR_f8, axis=0))  # E: Any
-reveal_type(np.average(AR_f8, axis=0, returned=True))  # E: Tuple[Any, Any]
+reveal_type(np.average(AR_f8, axis=0, returned=True))  # E: tuple[Any, Any]
 
 reveal_type(np.asarray_chkfinite(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.asarray_chkfinite(AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
@@ -79,9 +75,10 @@ reveal_type(np.diff("bob", n=0))  # E: str
 reveal_type(np.diff(AR_f8, axis=0))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.diff(AR_LIKE_f8, prepend=1.5))  # E: ndarray[Any, dtype[Any]]
 
-reveal_type(np.angle(AR_f8))  # E: floating[Any]
-reveal_type(np.angle(AR_c16, deg=True))  # E: complexfloating[Any, Any]
-reveal_type(np.angle(AR_O))  # E: Any
+reveal_type(np.angle(f8))  # E: floating[Any]
+reveal_type(np.angle(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.angle(AR_c16, deg=True))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.angle(AR_O))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.unwrap(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.unwrap(AR_O))  # E: ndarray[Any, dtype[object_]]
@@ -95,10 +92,6 @@ reveal_type(np.extract(AR_i8, AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.extract(AR_i8, AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.place(AR_f8, mask=AR_i8, vals=5.0))  # E: None
-
-reveal_type(np.disp(1, linefeed=True))  # E: None
-with open("test", "w") as f:
-    reveal_type(np.disp("message", device=f))  # E: None
 
 reveal_type(np.cov(AR_f8, bias=True))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.cov(AR_f8, AR_c16, ddof=1))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
@@ -122,10 +115,6 @@ reveal_type(np.sinc(1j))  # E: complexfloating[Any, Any]
 reveal_type(np.sinc(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.sinc(AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 
-reveal_type(np.msort(CHAR_AR_U))  # E: Any
-reveal_type(np.msort(AR_U))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.msort(AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
-
 reveal_type(np.median(AR_f8, keepdims=False))  # E: floating[Any]
 reveal_type(np.median(AR_c16, overwrite_input=True))  # E: complexfloating[Any, Any]
 reveal_type(np.median(AR_m))  # E: timedelta64
@@ -133,8 +122,6 @@ reveal_type(np.median(AR_O))  # E: Any
 reveal_type(np.median(AR_f8, keepdims=True))  # E: Any
 reveal_type(np.median(AR_c16, axis=0))  # E: Any
 reveal_type(np.median(AR_LIKE_f8, out=AR_c16))  # E: ndarray[Any, dtype[{complex128}]]
-
-reveal_type(np.add_newdoc_ufunc(np.add, "docstring"))  # E: None
 
 reveal_type(np.percentile(AR_f8, 50))  # E: floating[Any]
 reveal_type(np.percentile(AR_c16, 50))  # E: complexfloating[Any, Any]

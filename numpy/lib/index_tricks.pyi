@@ -20,13 +20,13 @@ from numpy import (
     bytes_,
     bool_,
     int_,
-    float_,
-    complex_,
+    float64,
+    complex128,
     intp,
     _OrderCF,
     _ModeKind,
 )
-from numpy.typing import (
+from numpy._typing import (
     # Arrays
     ArrayLike,
     _NestedSequence,
@@ -66,9 +66,9 @@ def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
 @overload
 def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload
-def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[float_], ...]: ...
+def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[float64], ...]: ...
 @overload
-def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[complex_], ...]: ...
+def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[complex128], ...]: ...
 
 class nd_grid(Generic[_BoolType]):
     sparse: _BoolType
@@ -119,7 +119,7 @@ class AxisConcatenator:
     @staticmethod
     def makemat(
         data: ArrayLike, dtype: DTypeLike = ..., copy: bool = ...
-    ) -> _Matrix: ...
+    ) -> _Matrix[Any, Any]: ...
 
     # TODO: Sort out this `__getitem__` method
     def __getitem__(self, key: Any) -> Any: ...

@@ -8,7 +8,7 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import assert_, assert_equal, assert_raises, IS_MUSL
 
 class TestRealScalars:
     def test_str(self):
@@ -34,8 +34,8 @@ class TestRealScalars:
         def check(v):
             assert_equal(str(np.float64(v)), str(v))
             assert_equal(str(np.float64(v)), repr(v))
-            assert_equal(repr(np.float64(v)), repr(v))
-            assert_equal(repr(np.float64(v)), str(v))
+            assert_equal(repr(np.float64(v)), f"np.float64({v!r})")
+            assert_equal(repr(np.float64(v)), f"np.float64({v})")
 
         # check we use the same number of significant digits
         check(1.12345678901234567890)
@@ -153,7 +153,7 @@ class TestRealScalars:
                     "0.00000000000000000000000000000000000000000000140129846432"
                     "4817070923729583289916131280261941876515771757068283889791"
                     "08268586060148663818836212158203125")
-        
+
         assert_equal(fpos64(5e-324, unique=False, precision=1074),
                     "0.00000000000000000000000000000000000000000000000000000000"
                     "0000000000000000000000000000000000000000000000000000000000"
@@ -260,10 +260,10 @@ class TestRealScalars:
         assert_equal(fpos64('324', unique=False, precision=5,
                                    fractional=False), "324.00")
 
-
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
-        if hasattr(np, 'float128'):
+        # test is flaky for musllinux on np.float128
+        if hasattr(np, 'float128') and not IS_MUSL:
             tps.append(np.float128)
 
         fpos = np.format_float_positional

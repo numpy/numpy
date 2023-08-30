@@ -1,3 +1,6 @@
+import sys
+from tempfile import NamedTemporaryFile
+
 import pytest
 
 import numpy as np
@@ -44,6 +47,9 @@ class TestSFloat:
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"
+
+    def test_dtype_name(self):
+        assert SF(1.).name == "_ScaledFloatTestDType64"
 
     @pytest.mark.parametrize("scaling", [1., -1., 2.])
     def test_sfloat_from_float(self, scaling):
@@ -199,3 +205,102 @@ class TestSFloat:
         # The output casting does not match the bool, bool -> bool loop:
         with pytest.raises(TypeError):
             ufunc(a, a, out=np.empty(a.shape, dtype=int), casting="equiv")
+
+    def test_wrapped_and_wrapped_reductions(self):
+        a = self._get_array(2.)
+        float_equiv = a.astype(float)
+
+        expected = np.hypot(float_equiv, float_equiv)
+        res = np.hypot(a, a)
+        assert res.dtype == a.dtype
+        res_float = res.view(np.float64) * 2
+        assert_array_equal(res_float, expected)
+
+        # Also check reduction (keepdims, due to incorrect getitem)
+        res = np.hypot.reduce(a, keepdims=True)
+        assert res.dtype == a.dtype
+        expected = np.hypot.reduce(float_equiv, keepdims=True)
+        assert res.view(np.float64) * 2 == expected
+
+    def test_astype_class(self):
+        # Very simple test that we accept `.astype()` also on the class.
+        # ScaledFloat always returns the default descriptor, but it does
+        # check the relevant code paths.
+        arr = np.array([1., 2., 3.], dtype=object)
+
+        res = arr.astype(SF)  # passing the class class
+        expected = arr.astype(SF(1.))  # above will have discovered 1. scaling
+        assert_array_equal(res.view(np.float64), expected.view(np.float64))
+
+    def test_creation_class(self):
+        # passing in a dtype class should return
+        # the default descriptor
+        arr1 = np.array([1., 2., 3.], dtype=SF)
+        assert arr1.dtype == SF(1.)
+        arr2 = np.array([1., 2., 3.], dtype=SF(1.))
+        assert_array_equal(arr1.view(np.float64), arr2.view(np.float64))
+        assert arr1.dtype == arr2.dtype
+
+        assert np.empty(3, dtype=SF).dtype == SF(1.)
+        assert np.empty_like(arr1, dtype=SF).dtype == SF(1.)
+        assert np.zeros(3, dtype=SF).dtype == SF(1.)
+        assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
+
+    def test_np_save_load(self):
+        # this monkeypatch is needed because pickle
+        # uses the repr of a type to reconstruct it
+        np._ScaledFloatTestDType = SF
+
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        # adapted from RoundtripTest.roundtrip in np.save tests
+        with NamedTemporaryFile("wb", delete=False, suffix=".npz") as f:
+            with pytest.warns(UserWarning) as record:
+                np.savez(f.name, arr)
+
+        assert len(record) == 1
+
+        with np.load(f.name, allow_pickle=True) as data:
+            larr = data["arr_0"]
+        assert_array_equal(arr.view(np.float64), larr.view(np.float64))
+        assert larr.dtype == arr.dtype == SF(1.0)
+
+        del np._ScaledFloatTestDType
+
+    def test_flatiter(self):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+
+        for i, val in enumerate(arr.flat):
+            assert arr[i] == val
+
+    @pytest.mark.parametrize(
+        "index", [
+            [1, 2], ..., slice(None, 2, None),
+            np.array([True, True, False]), np.array([0, 1])
+        ], ids=["int_list", "ellipsis", "slice", "bool_array", "int_array"])
+    def test_flatiter_index(self, index):
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+        np.testing.assert_array_equal(
+            arr[index].view(np.float64), arr.flat[index].view(np.float64))
+
+        arr2 = arr.copy()
+        arr[index] = 5.0
+        arr2.flat[index] = 5.0
+        np.testing.assert_array_equal(
+            arr.view(np.float64), arr2.view(np.float64))
+
+def test_type_pickle():
+    # can't actually unpickle, but we can pickle (if in namespace)
+    import pickle
+
+    np._ScaledFloatTestDType = SF
+
+    s = pickle.dumps(SF)
+    res = pickle.loads(s)
+    assert res is SF
+
+    del np._ScaledFloatTestDType
+
+
+def test_is_numeric():
+    assert SF._is_numeric

@@ -6,6 +6,7 @@ Utility functions for
 - determining paths to tests
 
 """
+import glob
 import os
 import sys
 import subprocess
@@ -19,8 +20,8 @@ import contextlib
 import numpy
 
 from pathlib import Path
-from numpy.compat import asbytes, asstr
-from numpy.testing import temppath
+from numpy._utils import asunicode
+from numpy.testing import temppath, IS_WASM
 from importlib import import_module
 
 #
@@ -29,6 +30,10 @@ from importlib import import_module
 
 _module_dir = None
 _module_num = 5403
+
+if sys.platform == "cygwin":
+    NUMPY_INSTALL_ROOT = Path(__file__).parent.parent.parent
+    _module_list = list(NUMPY_INSTALL_ROOT.glob("**/*.dll"))
 
 
 def _cleanup():
@@ -58,7 +63,7 @@ def get_module_dir():
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     global _module_num
-    d = get_module_dir()
+    get_module_dir()
     name = "_test_ext_module_%d" % _module_num
     _module_num += 1
     if name in sys.modules:
@@ -117,6 +122,8 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         if ext in (".f90", ".f", ".c", ".pyf"):
             f2py_sources.append(dst)
 
+    assert f2py_sources
+
     # Prepare options
     if module_name is None:
         module_name = get_temp_module_name()
@@ -137,13 +144,28 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         out, err = p.communicate()
         if p.returncode != 0:
             raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asstr(out)))
+                               (cmd[4:], asunicode(out)))
     finally:
         os.chdir(cwd)
 
         # Partial cleanup
         for fn in dst_sources:
             os.unlink(fn)
+
+    # Rebase (Cygwin-only)
+    if sys.platform == "cygwin":
+        # If someone starts deleting modules after import, this will
+        # need to change to record how big each module is, rather than
+        # relying on rebase being able to find that from the files.
+        _module_list.extend(
+            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+        )
+        subprocess.check_call(
+            ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
+            + _module_list
+        )
+
+
 
     # Import
     return import_module(module_name)
@@ -185,6 +207,9 @@ def _get_compiler_status():
         return _compiler_status
 
     _compiler_status = (False, False, False)
+    if IS_WASM:
+        # Can't run compiler from inside WASM.
+        return _compiler_status
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
@@ -293,7 +318,7 @@ if __name__ == "__main__":
     script = os.path.join(d, get_temp_module_name() + ".py")
     dst_sources.append(script)
     with open(script, "wb") as f:
-        f.write(asbytes(code))
+        f.write(code.encode('latin1'))
 
     # Build
     cwd = os.getcwd()
@@ -332,9 +357,13 @@ class F2PyTest:
     only = []
     suffix = ".f"
     module = None
-    module_name = None
 
-    def setup(self):
+    @property
+    def module_name(self):
+        cls = type(self)
+        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+
+    def setup_method(self):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
 
@@ -353,15 +382,20 @@ class F2PyTest:
 
         needs_f77 = False
         needs_f90 = False
+        needs_pyf = False
         for fn in codes:
             if str(fn).endswith(".f"):
                 needs_f77 = True
             elif str(fn).endswith(".f90"):
                 needs_f90 = True
+            elif str(fn).endswith(".pyf"):
+                needs_pyf = True
         if needs_f77 and not has_f77_compiler():
             pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
             pytest.skip("No Fortran 90 compiler available")
+        if needs_pyf and not (has_f90_compiler() or has_f77_compiler()):
+            pytest.skip("No Fortran compiler available")
 
         # Build the module
         if self.code is not None:

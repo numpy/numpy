@@ -1,5 +1,6 @@
 import os
 import sys
+import sysconfig
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -37,7 +38,14 @@ def configuration(parent_package='', top_path=None):
         class numpy_linalg_lapack_lite(system_info):
             def calc_info(self):
                 info = {'language': 'c'}
-                if sys.maxsize > 2**32:
+                size_t_size = sysconfig.get_config_var("SIZEOF_SIZE_T")
+                if size_t_size:
+                    maxsize = 2**(size_t_size - 1) - 1
+                else:
+                    # We prefer using sysconfig as it allows cross-compilation
+                    # but the information may be missing (e.g. on windows).
+                    maxsize = sys.maxsize
+                if maxsize > 2**32:
                     # Build lapack-lite in 64-bit integer mode.
                     # The suffix is arbitrary (lapack_lite symbols follow it),
                     # but use the "64_" convention here.
@@ -69,7 +77,7 @@ def configuration(parent_package='', top_path=None):
     # umath_linalg module
     config.add_extension(
         '_umath_linalg',
-        sources=['umath_linalg.c.src', get_lapack_lite_sources],
+        sources=['umath_linalg.cpp', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
         libraries=['npymath'],

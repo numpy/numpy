@@ -1,5 +1,5 @@
 *****************
-Beyond the Basics
+Beyond the basics
 *****************
 
 |    The voyage of discovery is not in seeking new landscapes but in having
@@ -450,6 +450,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
 More information on creating sub-types in C can be learned by reading
 PEP 253 (available at https://www.python.org/dev/peps/pep-0253).
 
+.. _specific-array-subtyping:
 
 Specific features of ndarray sub-typing
 ---------------------------------------
@@ -458,7 +459,7 @@ Some special methods and attributes are used by arrays in order to
 facilitate the interoperation of sub-types with the base ndarray type.
 
 The __array_finalize\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_finalize__
 
@@ -469,13 +470,14 @@ The __array_finalize\__ method
    __new_\_ method nor the __init\__ method gets called. Instead, the
    sub-type is allocated and the appropriate instance-structure
    members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
-   attribute is looked-up in the object dictionary. If it is present
-   and not None, then it can be either a CObject containing a pointer
-   to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
-   single argument (which could be None)
+   attribute is looked-up in the object dictionary. If it is present and not
+   None, then it can be either a :c:type:`PyCapsule` containing a pointer to a
+   :c:func:`PyArray_FinalizeFunc` or it can be a method taking a single argument
+   (which could be None)
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
-   must be a pointer to a function with the signature:
+   If the :obj:`~numpy.class.__array_finalize__` attribute is a
+   :c:type:`PyCapsule`, then the pointer must be a pointer to a function with
+   the signature:
 
    .. code-block:: c
 
@@ -487,14 +489,14 @@ The __array_finalize\__ method
    is present). This routine can do anything it wants to. It should
    return a -1 on error and 0 otherwise.
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a CObject,
-   then it must be a Python method that takes the parent array as an
-   argument (which could be None if there is no parent), and returns
+   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a
+   :c:type:`PyCapsule`, then it must be a Python method that takes the parent
+   array as an argument (which could be None if there is no parent), and returns
    nothing. Errors in this method will be caught and handled.
 
 
 The __array_priority\__ attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_priority__
 
@@ -512,7 +514,7 @@ The __array_priority\__ attribute
    the return output.
 
 The __array_wrap\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_wrap__
 

@@ -1,5 +1,6 @@
 import platform
 import pytest
+import numpy as np
 
 from numpy import array
 from . import util
@@ -19,15 +20,13 @@ class TestReturnReal(util.F2PyTest):
         assert abs(t([234]) - 234) <= err
         assert abs(t((234, )) - 234.0) <= err
         assert abs(t(array(234)) - 234.0) <= err
-        assert abs(t(array([234])) - 234.0) <= err
-        assert abs(t(array([[234]])) - 234.0) <= err
-        assert abs(t(array([234], "b")) + 22) <= err
-        assert abs(t(array([234], "h")) - 234.0) <= err
-        assert abs(t(array([234], "i")) - 234.0) <= err
-        assert abs(t(array([234], "l")) - 234.0) <= err
-        assert abs(t(array([234], "B")) - 234.0) <= err
-        assert abs(t(array([234], "f")) - 234.0) <= err
-        assert abs(t(array([234], "d")) - 234.0) <= err
+        assert abs(t(array(234).astype("b")) + 22) <= err
+        assert abs(t(array(234, "h")) - 234.0) <= err
+        assert abs(t(array(234, "i")) - 234.0) <= err
+        assert abs(t(array(234, "l")) - 234.0) <= err
+        assert abs(t(array(234, "B")) - 234.0) <= err
+        assert abs(t(array(234, "f")) - 234.0) <= err
+        assert abs(t(array(234, "d")) - 234.0) <= err
         if tname in ["t0", "t4", "s0", "s4"]:
             assert t(1e200) == t(1e300)  # inf
 
@@ -51,6 +50,10 @@ class TestReturnReal(util.F2PyTest):
     platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
+)
+@pytest.mark.skipif(
+    np.dtype(np.intp).itemsize < 8,
+    reason="32-bit builds are buggy"
 )
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"

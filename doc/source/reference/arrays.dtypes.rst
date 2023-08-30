@@ -85,7 +85,7 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
    dtype('<U16')
    >>> dt['grades']
@@ -131,7 +131,7 @@ None
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`float_`.
+   The default data type: :class:`float64`.
 
 .. index::
    triple: dtype; construction; from type
@@ -155,14 +155,13 @@ Generic types
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
-    =====================================================  ===============
-    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float`
-    :class:`complexfloating`                               :class:`cfloat`
+    =====================================================  ===================
+    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float64`
+    :class:`complexfloating`                               :class:`complex128`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
-    :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
-    =====================================================  ===============
+    =====================================================  ===================
 
     .. deprecated:: 1.19
 
@@ -177,21 +176,18 @@ Built-in Python types
     Several python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
-    ================  ===============
-    :class:`int`      :class:`int\_`
-    :class:`bool`     :class:`bool\_`
-    :class:`float`    :class:`float\_`
-    :class:`complex`  :class:`cfloat`
-    :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`str\_`
-    :class:`buffer`   :class:`void`
-    (all others)      :class:`object_`
-    ================  ===============
+    ===================      ===============
+    :class:`int`             :class:`int\_`
+    :class:`bool`            :class:`bool\_`
+    :class:`float`           :class:`float64`
+    :class:`complex`         :class:`complex128`
+    :class:`bytes`           :class:`bytes\_`
+    :class:`str`             :class:`str\_`
+    :class:`memoryview`      :class:`void`
+    (all others)             :class:`object_`
+    ===================      ===============
 
-    Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targeting both Python 2 and 3
-    ``np.unicode_`` should be used as a dtype for strings.
-    See :ref:`Note on string types<string-dtype-note>`.
+   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 
@@ -263,11 +259,10 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Note on string types
 
-    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and `numpy.string_` continues to alias
-    `numpy.bytes_`. To use actual strings in Python 3 use ``U`` or `numpy.str_`.
-    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
-    used.
+    For backward compatibility with existing code originally written to support
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
+    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is

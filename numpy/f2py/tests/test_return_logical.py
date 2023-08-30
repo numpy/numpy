@@ -30,7 +30,7 @@ class TestReturnLogical(util.F2PyTest):
         assert t(array(234)) == 1
         assert t(array([234])) == 1
         assert t(array([[234]])) == 1
-        assert t(array([234], "b")) == 1
+        assert t(array([127], "b")) == 1
         assert t(array([234], "h")) == 1
         assert t(array([234], "i")) == 1
         assert t(array([234], "l")) == 1

@@ -8,6 +8,10 @@
  * TODO: Add an independent sphinx doc.
 */
 #include "numpy/npy_common.h"
+#ifndef __cplusplus
+    #include <stdbool.h>
+#endif
+
 #include "npy_cpu_dispatch.h"
 #include "simd_utils.h"
 
@@ -34,7 +38,7 @@ typedef double     npyv_lanetype_f64;
  * They had bad impact on the generated instructions,
  * sometimes the compiler deal with them without the respect
  * of 32-bit mode which lead to crush due to execute 64-bit
- * instructions and other times generate bad emulated instructions. 
+ * instructions and other times generate bad emulated instructions.
  */
     #undef _mm512_set1_epi64
     #undef _mm256_set1_epi64x
@@ -54,9 +58,9 @@ typedef double     npyv_lanetype_f64;
     #include "sse/sse.h"
 #endif
 
-// TODO: Add support for VSX(2.06) and BE Mode
-#if defined(NPY_HAVE_VSX2) && defined(__LITTLE_ENDIAN__)
-    #include "vsx/vsx.h"
+// TODO: Add support for VSX(2.06) and BE Mode for VSX
+#if defined(NPY_HAVE_VX) || (defined(NPY_HAVE_VSX2) && defined(__LITTLE_ENDIAN__))
+    #include "vec/vec.h"
 #endif
 
 #ifdef NPY_HAVE_NEON
@@ -64,10 +68,23 @@ typedef double     npyv_lanetype_f64;
 #endif
 
 #ifndef NPY_SIMD
+    /// SIMD width in bits or 0 if there's no SIMD extension available.
     #define NPY_SIMD 0
+    /// SIMD width in bytes or 0 if there's no SIMD extension available.
     #define NPY_SIMD_WIDTH 0
+    /// 1 if the enabled SIMD extension supports single-precision otherwise 0.
+    #define NPY_SIMD_F32 0
+    /// 1 if the enabled SIMD extension supports double-precision otherwise 0.
     #define NPY_SIMD_F64 0
+    /// 1 if the enabled SIMD extension supports native FMA otherwise 0.
+    /// note: we still emulate(fast) FMA intrinsics even if they
+    /// aren't supported but they shouldn't be used if the precision is matters.
     #define NPY_SIMD_FMA3 0
+    /// 1 if the enabled SIMD extension is running on big-endian mode otherwise 0.
+    #define NPY_SIMD_BIGENDIAN 0
+    /// 1 if the supported comparison intrinsics(lt, le, gt, ge)
+    /// raises FP invalid exception for quite NaNs.
+    #define NPY_SIMD_CMPSIGNAL 0
 #endif
 
 // enable emulated mask operations for all SIMD extension except for AVX512

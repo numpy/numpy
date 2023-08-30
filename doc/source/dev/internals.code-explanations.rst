@@ -270,7 +270,7 @@ has three different branches and one special case:
   as if there is no subarray but needs some care during setup.
 
 Deciding what case applies, checking broadcasting, and determining the kind
-of transposition needed are all done in :c:func:`PyArray_MapIterNew`. After
+of transposition needed are all done in ``PyArray_MapIterNew``. After
 setting up, there are two cases. If there is no subarray or it only has one
 element, no subarray iteration is necessary and an iterator is prepared
 which iterates all indexing arrays *as well as* the result or value array.
@@ -283,7 +283,7 @@ iteration.
 
 When advanced indices are next to each other transposing may be necessary.
 All necessary transposing is handled by :c:func:`PyArray_MapIterSwapAxes` and
-has to be handled by the caller unless :c:func:`PyArray_MapIterNew` is asked to
+has to be handled by the caller unless ``PyArray_MapIterNew`` is asked to
 allocate the result.
 
 After preparation, getting and setting are relatively straightforward,
@@ -421,7 +421,7 @@ the 1-D loop is completed.
 
 
 One loop
-^^^^^^^^
+~~~~~~~~
 
 This is the simplest case of all. The ufunc is executed by calling the
 underlying 1-D loop exactly once. This is possible only when we have
@@ -434,7 +434,7 @@ complete.
 
 
 Strided loop
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 When the input and output arrays are aligned and of the correct type,
 but the striding is not uniform (non-contiguous and 2-D or larger),
@@ -447,7 +447,7 @@ hardware error flags are checked after each 1-D loop is completed.
 
 
 Buffered loop
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
 This is the code that handles the situation whenever the input and/or
 output arrays are either misaligned or of the wrong datatype
@@ -514,7 +514,7 @@ objects have 0 and 1 elements respectively.
 
 
 Setup
-^^^^^
+~~~~~
 
 The setup function for all three methods is ``construct_reduce``.
 This function creates a reducing loop object and fills it with the
@@ -546,7 +546,7 @@ routine returns to the actual computation routine.
 
 
 :meth:`Reduce <ufunc.reduce>` 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. index::
    triple: ufunc; methods; reduce
@@ -585,7 +585,7 @@ the loop function on chunks no greater than the user-specified
 
 
 :meth:`Accumulate <ufunc.accumulate>`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. index::
    triple: ufunc; methods; accumulate
@@ -611,7 +611,7 @@ calling the underlying 1-D computational loop.
 
 
 :meth:`Reduceat <ufunc.reduceat>`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. index::
    triple: ufunc; methods; reduceat

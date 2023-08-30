@@ -4,7 +4,7 @@
 /*
  * Private API (here for inline)
  */
-static NPY_INLINE int
+static inline int
 _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
 
 /*
@@ -34,7 +34,7 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
         iter->coordinates[c] = iter->bounds[c][0]; \
     }
 
-static NPY_INLINE int
+static inline int
 _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp i, wb;
@@ -49,7 +49,7 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter)
 /*
  * Version optimized for 2d arrays, manual loop unrolling
  */
-static NPY_INLINE int
+static inline int
 _PyArrayNeighborhoodIter_IncrCoord2D(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp wb;
@@ -64,7 +64,7 @@ _PyArrayNeighborhoodIter_IncrCoord2D(PyArrayNeighborhoodIterObject* iter)
 /*
  * Advance to the next neighbour
  */
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 {
     _PyArrayNeighborhoodIter_IncrCoord (iter);
@@ -76,7 +76,7 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 /*
  * Reset functions
  */
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp i;

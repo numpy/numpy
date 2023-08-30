@@ -1,10 +1,10 @@
 Performance
------------
+===========
 
 .. currentmodule:: numpy.random
 
 Recommendation
-**************
+--------------
 
 The recommended generator for general use is `PCG64` or its upgraded variant
 `PCG64DXSM` for heavily-parallel use cases. They are statistically high quality,
@@ -31,7 +31,7 @@ many systems.
 .. _`fails some statistical tests`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/testu01.pdf
 
 Timings
-*******
+-------
 
 The timings below are the time in ns to produce 1 random value from a
 specific distribution.  The original `MT19937` generator is
@@ -86,7 +86,7 @@ performance was computed using a geometric mean.
    All timings were taken using Linux on an AMD Ryzen 9 3900X processor.
 
 Performance on different Operating Systems
-******************************************
+------------------------------------------
 Performance differs across platforms due to compiler and hardware availability
 (e.g., register width) differences. The default bit generator has been chosen
 to perform well on 64-bit platforms.  Performance on 32-bit operating systems

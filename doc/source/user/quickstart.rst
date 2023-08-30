@@ -230,8 +230,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.Generator.rand`,
-    `numpy.random.Generator.randn`,
+    `random.Generator.random`,
+    `random.Generator.normal`,
     `fromfunction`,
     `fromfile`
 
@@ -517,7 +517,7 @@ and other Python sequences.
     >>> for i in a:
     ...     print(i**(1 / 3.))
     ...
-    9.999999999999998
+    9.999999999999998  # may vary
     1.0
     9.999999999999998
     3.0
@@ -1482,7 +1482,7 @@ Further reading
 
 -  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
--  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
+-  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
--  :doc:`tutorial-svd <content/tutorial-svd>`
+-  :doc:`tutorial-svd <numpy-tutorials:content/tutorial-svd>`

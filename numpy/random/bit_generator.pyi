@@ -12,7 +12,7 @@ from typing import (
 )
 
 from numpy import dtype, ndarray, uint32, uint64
-from numpy.typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
+from numpy._typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
 
 _T = TypeVar("_T")
 
@@ -96,6 +96,9 @@ class BitGenerator(abc.ABC):
     def state(self) -> Mapping[str, Any]: ...
     @state.setter
     def state(self, value: Mapping[str, Any]) -> None: ...
+    @property
+    def seed_seq(self) -> ISeedSequence: ...
+    def spawn(self, n_children: int) -> list[BitGenerator]: ...
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload

@@ -1,0 +1,17 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module myroutine ! in 
+    interface  ! in :myroutine
+        subroutine s(n,m,c,x) ! in :myroutine:myroutine.f90
+            integer intent(in) :: n
+            integer intent(in) :: m
+            real(kind=8) dimension(:),intent(in) :: c
+            real(kind=8) dimension(n,m),intent(out),depend(m,n) :: x
+        end subroutine s
+    end interface 
+end python module myroutine
+
+! This file was auto-generated with f2py (version:1.23.0.dev0+120.g4da01f42d).
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e

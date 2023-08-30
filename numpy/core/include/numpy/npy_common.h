@@ -40,39 +40,6 @@
 #define NPY_GCC_OPT_3
 #endif
 
-/* compile target attributes */
-#if defined HAVE_ATTRIBUTE_TARGET_AVX && defined HAVE_LINK_AVX
-#define NPY_GCC_TARGET_AVX __attribute__((target("avx")))
-#else
-#define NPY_GCC_TARGET_AVX
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
-#define HAVE_ATTRIBUTE_TARGET_FMA
-#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
-#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
-#else
-#define NPY_GCC_TARGET_AVX2
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
-#else
-#define NPY_GCC_TARGET_AVX512F
-#endif
-
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX && defined HAVE_LINK_AVX512_SKX
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
-#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
-#else
-#define NPY_GCC_TARGET_AVX512_SKX
-#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -83,21 +50,6 @@
 #define NPY_GCC_NONNULL(n)
 #endif
 
-#if defined HAVE_XMMINTRIN_H && defined HAVE__MM_LOAD_PS
-#define NPY_HAVE_SSE_INTRINSICS
-#endif
-
-#if defined HAVE_EMMINTRIN_H && defined HAVE__MM_LOAD_PD
-#define NPY_HAVE_SSE2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
-#define NPY_HAVE_AVX2_INTRINSICS
-#endif
-
-#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
-#define NPY_HAVE_AVX512F_INTRINSICS
-#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
@@ -120,7 +72,7 @@
 /* unlike _mm_prefetch also works on non-x86 */
 #define NPY_PREFETCH(x, rw, loc) __builtin_prefetch((x), (rw), (loc))
 #else
-#ifdef HAVE__MM_PREFETCH
+#ifdef NPY_HAVE_SSE
 /* _MM_HINT_ET[01] (rw = 1) unsupported, only available in gcc >= 4.9 */
 #define NPY_PREFETCH(x, rw, loc) _mm_prefetch((x), loc == 0 ? _MM_HINT_NTA : \
                                              (loc == 1 ? _MM_HINT_T2 : \
@@ -131,6 +83,7 @@
 #endif
 #endif
 
+/* `NPY_INLINE` kept for backwards compatibility; use `inline` instead */
 #if defined(_MSC_VER) && !defined(__clang__)
     #define NPY_INLINE __inline
 /* clang included here to handle clang-cl on Windows */
@@ -147,9 +100,17 @@
 #ifdef _MSC_VER
     #define NPY_FINLINE static __forceinline
 #elif defined(__GNUC__)
-    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+    #define NPY_FINLINE static inline __attribute__((always_inline))
 #else
     #define NPY_FINLINE static
+#endif
+
+#if defined(_MSC_VER)
+    #define NPY_NOINLINE static __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define NPY_NOINLINE static __attribute__((noinline))
+#else
+    #define NPY_NOINLINE static
 #endif
 
 #ifdef HAVE___THREAD
@@ -176,7 +137,7 @@
  #define NPY_STEALS_REF_TO_ARG(n)
 #endif
 
-/* 64 bit file position support, also on win-amd64. Ticket #1660 */
+/* 64 bit file position support, also on win-amd64. Issue gh-2256 */
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
     defined(__MINGW32__) || defined(__MINGW64__)
     #include <io.h>
@@ -372,9 +333,11 @@ typedef unsigned char npy_bool;
  */
 #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
     #define NPY_LONGDOUBLE_FMT "g"
+    #define longdouble_t double
     typedef double npy_longdouble;
 #else
     #define NPY_LONGDOUBLE_FMT "Lg"
+    #define longdouble_t long double
     typedef long double npy_longdouble;
 #endif
 
@@ -400,49 +363,38 @@ typedef double npy_double;
 typedef Py_hash_t npy_hash_t;
 #define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
 
-/*
- * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
- * able to do .real/.imag. Will have to convert code first.
- */
-#if 0
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_DOUBLE)
-typedef complex npy_cdouble;
-#else
-typedef struct { double real, imag; } npy_cdouble;
+#ifdef __cplusplus
+extern "C++" {
+#endif
+#include <complex.h>
+#ifdef __cplusplus
+}
 #endif
 
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_FLOAT)
-typedef complex float npy_cfloat;
-#else
-typedef struct { float real, imag; } npy_cfloat;
-#endif
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && defined(__cplusplus)
+typedef struct 
+{
+    double _Val[2];
+} npy_cdouble;
 
-#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_LONG_DOUBLE)
-typedef complex long double npy_clongdouble;
-#else
-typedef struct {npy_longdouble real, imag;} npy_clongdouble;
-#endif
-#endif
-#if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
-#error npy_cdouble definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
-#endif
-typedef struct { double real, imag; } npy_cdouble;
+typedef struct
+{
+    float _Val[2];
+} npy_cfloat;
 
-#if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
-#error npy_cfloat definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
+typedef struct
+{
+    long double _Val[2];
+} npy_clongdouble;
+#elif defined(_MSC_VER) && !defined(__INTEL_COMPILER) /* && !defined(__cplusplus) */
+typedef _Dcomplex npy_cdouble;
+typedef _Fcomplex npy_cfloat;
+typedef _Lcomplex npy_clongdouble;
+#else /* !defined(_MSC_VER) || defined(__INTEL_COMPILER) */
+typedef double _Complex npy_cdouble;
+typedef float _Complex npy_cfloat;
+typedef longdouble_t _Complex npy_clongdouble;
 #endif
-typedef struct { float real, imag; } npy_cfloat;
-
-#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
-#error npy_clongdouble definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
-#endif
-typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
 /*
  * numarray-style bit-width typedefs
