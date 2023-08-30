@@ -89,12 +89,6 @@ from numpy.lib.shape_base import (
     put_along_axis as put_along_axis,
 )
 
-from numpy.lib.stride_tricks import (
-    broadcast_to as broadcast_to,
-    broadcast_arrays as broadcast_arrays,
-    broadcast_shapes as broadcast_shapes,
-)
-
 from numpy.core.multiarray import (
     add_docstring as add_docstring,
     tracemalloc_domain as tracemalloc_domain,

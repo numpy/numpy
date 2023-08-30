@@ -12,7 +12,7 @@ from numpy.core.numeric import (
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
-from numpy.lib.stride_tricks import broadcast_to
+from numpy.lib._stride_tricks_impl import broadcast_to
 
 
 __all__ = [
