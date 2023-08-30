@@ -65,7 +65,9 @@ class TestSimpleStridedCall:
 
 
 @pytest.mark.parametrize(
-    "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
+    "cls", [
+        np.ndarray, np.rec.recarray, np.char.chararray, np.matrix, np.memmap
+    ]
 )
 class TestClassGetItem:
     def test_class_getitem(self, cls: type[np.ndarray]) -> None:

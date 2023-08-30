@@ -139,7 +139,7 @@ The dtype of `numpy.recarray`, and the :ref:`routines.array-creation.rec`
 functions in general, can be specified in one of two ways:
 
 * Directly via the ``dtype`` argument.
-* With up to five helper arguments that operate via `numpy.format_parser`:
+* With up to five helper arguments that operate via `numpy.rec.format_parser`:
   ``formats``, ``names``, ``titles``, ``aligned`` and ``byteorder``.
 
 These two approaches are currently typed as being mutually exclusive,

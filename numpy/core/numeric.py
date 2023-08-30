@@ -12,7 +12,7 @@ from .multiarray import (
     ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, compare_chararrays,
+    asfortranarray, broadcast, can_cast,
     concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory,
@@ -50,7 +50,7 @@ __all__ = [
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
-    'identity', 'allclose', 'compare_chararrays', 'putmask',
+    'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
     'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']

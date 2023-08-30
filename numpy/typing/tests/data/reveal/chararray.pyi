@@ -9,8 +9,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-AR_U: np.chararray[Any, np.dtype[np.str_]]
-AR_S: np.chararray[Any, np.dtype[np.bytes_]]
+AR_U: np.char.chararray[Any, np.dtype[np.str_]]
+AR_S: np.char.chararray[Any, np.dtype[np.bytes_]]
 
 assert_type(AR_U == AR_U, npt.NDArray[np.bool_])
 assert_type(AR_S == AR_S, npt.NDArray[np.bool_])

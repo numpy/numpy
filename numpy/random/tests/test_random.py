@@ -487,7 +487,7 @@ class TestRandomDist:
                      # gh-11442
                      lambda x: (np.asarray([(i, i) for i in x],
                                            [("a", int), ("b", int)])
-                                .view(np.recarray)),
+                                .view(np.rec.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
                                           [("a", object), ("b", np.int32)])]:

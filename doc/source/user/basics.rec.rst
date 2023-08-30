@@ -673,13 +673,13 @@ appropriate `view <numpy-ndarray-view>`_::
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
- ...                      type=np.recarray)
+ ...                      type=np.rec.recarray)
 
-For convenience, viewing an ndarray as type :class:`numpy.recarray` will
+For convenience, viewing an ndarray as type :class:`numpy.rec.recarray` will
 automatically convert to :class:`numpy.record` datatype, so the dtype can be left
 out of the view::
 
- >>> recordarr = arr.view(np.recarray)
+ >>> recordarr = arr.view(np.rec.recarray)
  >>> recordarr.dtype
  dtype((numpy.record, [('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')]))
 

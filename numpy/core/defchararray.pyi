@@ -6,7 +6,6 @@ from typing import (
 )
 
 from numpy import (
-    chararray as chararray,
     dtype,
     str_,
     bytes_,
@@ -23,6 +22,8 @@ from numpy._typing import (
     _ArrayLikeInt_co as i_co,
     _ArrayLikeBool_co as b_co,
 )
+
+from numpy.core.defchararray import chararray
 
 from numpy.core.multiarray import compare_chararrays as compare_chararrays
 

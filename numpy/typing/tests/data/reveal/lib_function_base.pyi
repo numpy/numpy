@@ -23,7 +23,7 @@ AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 AR_b: npt.NDArray[np.bool_]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.chararray[Any, np.dtype[np.str_]]
+CHAR_AR_U: np.char.chararray[Any, np.dtype[np.str_]]
 
 def func(*args: Any, **kwargs: Any) -> Any: ...
 

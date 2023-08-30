@@ -20,9 +20,8 @@ import functools
 from .._utils import set_module
 from .numerictypes import (
     bytes_, str_, integer, int_, object_, bool_, character)
-from .numeric import ndarray, compare_chararrays
-from .numeric import array as narray
-from numpy.core.multiarray import _vec_string
+from .numeric import ndarray, array as narray
+from numpy.core.multiarray import _vec_string, compare_chararrays
 from numpy.core import overrides
 from numpy._utils import asbytes
 import numpy
@@ -36,7 +35,7 @@ __all__ = [
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
     'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
-    'array', 'asarray'
+    'array', 'asarray', 'compare_chararrays'
     ]
 
 
@@ -1920,7 +1919,6 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
-@set_module('numpy')
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,

@@ -34,7 +34,6 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'show_config': 'numpy.__config__.show',
         'row_stack': 'numpy.lib._shape_base_impl.row_stack'
     }

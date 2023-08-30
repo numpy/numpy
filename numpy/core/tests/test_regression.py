@@ -179,7 +179,7 @@ class TestRegression:
                ('head', '>u4'),
                ('data', '>u4', 2),
             ])
-        buf = np.recarray(1, dtype=dt)
+        buf = np.rec.recarray(1, dtype=dt)
         buf[0]['head'] = 1
         buf[0]['data'][:] = [1, 1]
 
@@ -378,7 +378,7 @@ class TestRegression:
 
     def test_chararray_rstrip(self):
         # Ticket #222
-        x = np.chararray((1,), 5)
+        x = np.char.chararray((1,), 5)
         x[0] = b'a   '
         x = x.rstrip()
         assert_equal(x[0], b'a')
@@ -1169,7 +1169,7 @@ class TestRegression:
         # Comparisons fail for NaN, so we can't use random memory
         # for the test.
         buf = np.zeros(40, dtype=np.int8)
-        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
+        a = np.rec.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
         b = a.tolist()
         assert_( a[0].tolist() == b[0])
         assert_( a[1].tolist() == b[1])
@@ -2079,8 +2079,8 @@ class TestRegression:
         a = np.array([('a', 1)], dtype='S1, int')
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
-        dtype = np.format_parser(['i4', 'i4'], [], [])
-        a = np.recarray((2,), dtype)
+        dtype = np.rec.format_parser(['i4', 'i4'], [], [])
+        a = np.rec.recarray((2,), dtype)
         a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
 

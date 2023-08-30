@@ -45,8 +45,8 @@ from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
 __all__ = [
-    'record', 'recarray', 'format_parser',
-    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+    'record', 'recarray', 'format_parser', 'fromarrays', 'fromrecords',
+    'fromstring', 'fromfile', 'array',
 ]
 
 
@@ -84,7 +84,7 @@ def find_duplicate(list):
     ]
 
 
-@set_module('numpy')
+@set_module('numpy.rec')
 class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
@@ -128,18 +128,18 @@ class format_parser:
 
     Examples
     --------
-    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
-    ...                  ['T1', 'T2', 'T3']).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
+    ...                      ['T1', 'T2', 'T3']).dtype
     dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
     will be used.
 
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
-    ...                  []).dtype
+    >>> np.rec.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    ...                      []).dtype
     dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
-    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
@@ -375,7 +375,7 @@ class recarray(ndarray):
     use one of the following methods:
 
     1. Create a standard ndarray and convert it to a record array,
-       using ``arr.view(np.recarray)``
+       using ``arr.view(np.rec.recarray)``
     2. Use the `buf` keyword.
     3. Use `np.rec.fromrecords`.
 
@@ -392,7 +392,7 @@ class recarray(ndarray):
 
     View the array as a record array:
 
-    >>> x = x.view(np.recarray)
+    >>> x = x.view(np.rec.recarray)
 
     >>> x.x
     array([1., 3.])
@@ -402,18 +402,13 @@ class recarray(ndarray):
 
     Create a new, empty record array:
 
-    >>> np.recarray((2,),
+    >>> np.rec.recarray((2,),
     ... dtype=[('x', int), ('y', float), ('z', int)]) #doctest: +SKIP
     rec.array([(-1073741821, 1.2249118382103472e-301, 24547520),
            (3471280, 1.2134086255804012e-316, 0)],
           dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
-
-    # manually set name and module so that this class's type shows
-    # up as "numpy.recarray" when printed
-    __name__ = 'recarray'
-    __module__ = 'numpy'
 
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
@@ -607,7 +602,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     Returns
     -------
-    np.recarray
+    np.rec.recarray
         Record array consisting of given arrayList columns.
 
     Examples
@@ -705,7 +700,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     Returns
     -------
-    np.recarray
+    np.rec.recarray
         record array consisting of given recList rows.
 
     Examples
@@ -791,7 +786,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    np.recarray
+    np.rec.recarray
         Record array view into the data in datastring. This will be readonly
         if `datastring` is readonly.
 
@@ -873,7 +868,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    np.recarray
+    np.rec.recarray
         record array consisting of data enclosed in file.
 
     Examples
@@ -985,16 +980,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     Returns
     -------
-    np.recarray
+    np.rec.recarray
         Record array created from the specified object.
 
     Notes
     -----
-    If `obj` is ``None``, then call the `~numpy.recarray` constructor. If
+    If `obj` is ``None``, then call the `~numpy.rec.recarray` constructor. If
     `obj` is a string, then call the `fromstring` constructor. If `obj` is a
     list or a tuple, then if the first object is an `~numpy.ndarray`, call
     `fromarrays`, otherwise call `fromrecords`. If `obj` is a
-    `~numpy.recarray`, then make a copy of the data in the recarray
+    `~numpy.rec.recarray`, then make a copy of the data in the recarray
     (if ``copy=True``) and use the new formats, names, and titles. If `obj`
     is a file, then call `fromfile`. Finally, if obj is an `ndarray`, then
     return ``obj.view(recarray)``, making a copy of the data if ``copy=True``.

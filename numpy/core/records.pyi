@@ -8,7 +8,6 @@ from typing import (
 )
 
 from numpy import (
-    format_parser as format_parser,
     record as record,
     recarray as recarray,
     dtype,
@@ -35,6 +34,17 @@ class _SupportsReadInto(Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
     def tell(self, /) -> int: ...
     def readinto(self, buffer: memoryview, /) -> int: ...
+
+class format_parser:
+    dtype: dtype[void]
+    def __init__(
+        self,
+        formats: DTypeLike,
+        names: None | str | Sequence[str],
+        titles: None | str | Sequence[str],
+        aligned: bool = ...,
+        byteorder: None | _ByteOrder = ...,
+    ) -> None: ...
 
 __all__: list[str]
 

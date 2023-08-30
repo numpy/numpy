@@ -350,13 +350,13 @@ class TestRecFunctions:
         dd_expected = structured_to_unstructured(d_plain, copy=True)
 
         # recarray
-        d = d_plain.view(np.recarray)
+        d = d_plain.view(np.rec.recarray)
 
         dd = structured_to_unstructured(d, copy=False)
         ddd = structured_to_unstructured(d, copy=True)
         assert_(np.shares_memory(d, dd))
-        assert_(type(dd) is np.recarray)
-        assert_(type(ddd) is np.recarray)
+        assert_(type(dd) is np.rec.recarray)
+        assert_(type(ddd) is np.rec.recarray)
         assert_equal(dd, dd_expected)
         assert_equal(ddd, dd_expected)
 

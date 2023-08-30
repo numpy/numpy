@@ -8,10 +8,11 @@ matplotlib.  They have been rewritten and extended for convenience.
 import itertools
 import numpy as np
 import numpy.ma as ma
-from numpy import ndarray, recarray
+from numpy import ndarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
+from numpy.core.records import recarray
 from numpy.lib._iotools import _is_string_like
 
 _check_fill_value = np.ma.core._check_fill_value
@@ -755,7 +756,7 @@ def rec_append_fields(base, names, data, dtypes=None):
 
     Returns
     -------
-    appended_array : np.recarray
+    appended_array : np.rec.recarray
     """
     return append_fields(base, names, data=data, dtypes=dtypes,
                          asrecarray=True, usemask=False)
@@ -1025,7 +1026,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     # we only allow a few types to be unstructured by manipulating the
     # strides, because we know it won't work with, for example, np.matrix nor
     # np.ma.MaskedArray.
-    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
+    can_view = type(arr) in (np.ndarray, np.rec.recarray, np.memmap)
     if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
         # all elements have the right dtype already; if they have a common
         # stride, we can just return a view
@@ -1662,7 +1663,7 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
              defaults=None):
     """
     Join arrays `r1` and `r2` on keys.
-    Alternative to join_by, that always returns a np.recarray.
+    Alternative to join_by, that always returns a np.rec.recarray.
 
     See Also
     --------

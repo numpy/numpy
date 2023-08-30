@@ -146,7 +146,7 @@ class TestFromrecords:
         a = np.array([(1,'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
         recordarr = np.rec.array(a)
-        recarr = a.view(np.recarray)
+        recarr = a.view(np.rec.recarray)
         recordview = a.view(np.dtype((np.record, a.dtype)))
 
         recordarr_r = eval("np." + repr(recordarr), {'np': np})
@@ -154,11 +154,11 @@ class TestFromrecords:
         # Prints the type `numpy.record` as part of the dtype:
         recordview_r = eval("np." + repr(recordview), {'np': np, 'numpy': np})
 
-        assert_equal(type(recordarr_r), np.recarray)
+        assert_equal(type(recordarr_r), np.rec.recarray)
         assert_equal(recordarr_r.dtype.type, np.record)
         assert_equal(recordarr, recordarr_r)
 
-        assert_equal(type(recarr_r), np.recarray)
+        assert_equal(type(recarr_r), np.rec.recarray)
         assert_equal(recarr_r.dtype.type, np.record)
         assert_equal(recarr, recarr_r)
 
@@ -173,30 +173,30 @@ class TestFromrecords:
 
         #check that np.rec.array gives right dtypes
         assert_equal(np.rec.array(a).dtype.type, np.record)
-        assert_equal(type(np.rec.array(a)), np.recarray)
+        assert_equal(type(np.rec.array(a)), np.rec.recarray)
         assert_equal(np.rec.array(b).dtype.type, np.int64)
-        assert_equal(type(np.rec.array(b)), np.recarray)
+        assert_equal(type(np.rec.array(b)), np.rec.recarray)
 
         #check that viewing as recarray does the same
-        assert_equal(a.view(np.recarray).dtype.type, np.record)
-        assert_equal(type(a.view(np.recarray)), np.recarray)
-        assert_equal(b.view(np.recarray).dtype.type, np.int64)
-        assert_equal(type(b.view(np.recarray)), np.recarray)
+        assert_equal(a.view(np.rec.recarray).dtype.type, np.record)
+        assert_equal(type(a.view(np.rec.recarray)), np.rec.recarray)
+        assert_equal(b.view(np.rec.recarray).dtype.type, np.int64)
+        assert_equal(type(b.view(np.rec.recarray)), np.rec.recarray)
 
-        #check that view to non-structured dtype preserves type=np.recarray
+        #check that view to non-structured dtype preserves type=np.rec.recarray
         r = np.rec.array(np.ones(4, dtype="f4,i4"))
         rv = r.view('f8').view('f4,i4')
-        assert_equal(type(rv), np.recarray)
+        assert_equal(type(rv), np.rec.recarray)
         assert_equal(rv.dtype.type, np.record)
 
-        #check that getitem also preserves np.recarray and np.record
+        #check that getitem also preserves np.rec.recarray and np.record
         r = np.rec.array(np.ones(4, dtype=[('a', 'i4'), ('b', 'i4'),
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
-        assert_equal(type(r['c']), np.recarray)
+        assert_equal(type(r['c']), np.rec.recarray)
 
         #and that it preserves subclasses (gh-6949)
-        class C(np.recarray):
+        class C(np.rec.recarray):
             pass
 
         c = r.view(C)
@@ -278,7 +278,7 @@ class TestFromrecords:
         # Issue #3993
         a = np.array([('abc ', 1), ('abc', 2)],
                      dtype=[('foo', 'S4'), ('bar', int)])
-        a = a.view(np.recarray)
+        a = a.view(np.rec.recarray)
         assert_equal(a.foo[0] == a.foo[1], False)
 
     def test_recarray_returntypes(self):
@@ -290,10 +290,10 @@ class TestFromrecords:
                                 ('baz', int), ('qux', qux_fields)])
         assert_equal(type(a.foo), np.ndarray)
         assert_equal(type(a['foo']), np.ndarray)
-        assert_equal(type(a.bar), np.recarray)
-        assert_equal(type(a['bar']), np.recarray)
+        assert_equal(type(a.bar), np.rec.recarray)
+        assert_equal(type(a['bar']), np.rec.recarray)
         assert_equal(a.bar.dtype.type, np.record)
-        assert_equal(type(a['qux']), np.recarray)
+        assert_equal(type(a['qux']), np.rec.recarray)
         assert_equal(a.qux.dtype.type, np.record)
         assert_equal(dict(a.qux.dtype.fields), qux_fields)
         assert_equal(type(a.baz), np.ndarray)
@@ -442,16 +442,18 @@ class TestRecord:
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
         dt = np.dtype([('foo', 'i8'), ('bar', 'O')])
-        r = np.zeros((1,3), dtype=dt).view(np.recarray)
+        r = np.zeros((1, 3), dtype=dt).view(np.rec.recarray)
         r.foo = np.array([1, 2, 3])  # TypeError?
 
         # https://github.com/numpy/numpy/issues/3256
-        ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
+        ra = np.rec.recarray(
+            (2,), dtype=[('x', object), ('y', float), ('z', int)]
+        )
         ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561
-        rec = np.recarray(1, dtype=[('x', float, 5)])
+        rec = np.rec.recarray(1, dtype=[('x', float, 5)])
         rec[0].x = 1
         assert_equal(rec[0].x, np.ones(5))
 
@@ -470,7 +472,7 @@ class TestRecord:
     @pytest.mark.parametrize('nfields', [0, 1, 2])
     def test_assign_dtype_attribute(self, nfields):
         dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
-        data = np.zeros(3, dt).view(np.recarray)
+        data = np.zeros(3, dt).view(np.rec.recarray)
 
         # the original and resulting dtypes differ on whether they are records
         assert data.dtype.type == np.record
@@ -486,9 +488,9 @@ class TestRecord:
         dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
         dt_outer = np.dtype([('inner', dt)])
 
-        data = np.zeros(3, dt_outer).view(np.recarray)
-        assert isinstance(data, np.recarray)
-        assert isinstance(data['inner'], np.recarray)
+        data = np.zeros(3, dt_outer).view(np.rec.recarray)
+        assert isinstance(data, np.rec.recarray)
+        assert isinstance(data['inner'], np.rec.recarray)
 
         data0 = data[0]
         assert isinstance(data0, np.record)
@@ -503,7 +505,7 @@ class TestRecord:
 
         dt_outer = np.dtype([('inner', dt_padded_end)])
 
-        data = np.zeros(3, dt_outer).view(np.recarray)
+        data = np.zeros(3, dt_outer).view(np.rec.recarray)
         assert_equal(data['inner'].dtype, dt_padded_end)
 
         data0 = data[0]
