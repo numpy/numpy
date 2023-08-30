@@ -27,7 +27,6 @@ __expired_attributes__ = {
         "It's an internal function and doesn't have a replacement.",
     "compat": "There's no replacement, as Python 2 is no longer supported.",
     "safe_eval": "Use `ast.literal_eval` instead.",
-
     "float_": "Use `np.float64` instead.",
     "complex_": "Use `np.complex128` instead.",
     "longfloat": "Use `np.longdouble` instead.",
@@ -41,7 +40,6 @@ __expired_attributes__ = {
     "Infinity": "Use `np.inf` instead.",
     "NaN": "Use `np.nan` instead.",
     "infty": "Use `np.inf` instead.",
-
     "issctype": "",
     "maximum_sctype": "",
     "obj2sctype": "",
@@ -61,4 +59,11 @@ __expired_attributes__ = {
     "deprecate": "Raise `DeprecationWarning` instead.",
     "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
     "disp": "Use your own printing function instead.",
+    "find_common_type": 
+        "This function is deprecated, use `numpy.promote_types` or "
+        "`numpy.result_type` instead.  To achieve semantics for the "
+        "`scalar_types` argument, use `numpy.result_type` and pass the "
+        "Python values `0`, `0.0`, or `0j`.",
+    "round_": "Use `np.round` instead.",
+    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead."   
 }

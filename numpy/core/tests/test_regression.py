@@ -1671,12 +1671,6 @@ class TestRegression:
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1])  # [0] if nonzero() ignores swap
 
-    def test_find_common_type_boolean(self):
-        # Ticket #1695
-        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
-            res = np.find_common_type([], ['?', '?'])
-        assert res == '?'
-
     def test_empty_mul(self):
         a = np.array([1.])
         a[1:1] *= 2

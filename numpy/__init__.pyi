@@ -377,7 +377,6 @@ from numpy.core.numeric import (
 
 from numpy.core.numerictypes import (
     issubdtype as issubdtype,
-    nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
     typecodes as typecodes,

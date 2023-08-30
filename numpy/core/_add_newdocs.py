@@ -6644,9 +6644,6 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('imag',
 add_newdoc('numpy.core.numerictypes', 'generic', ('itemsize',
     """The length of one element in bytes."""))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('nbytes',
-    """The length of the scalar in bytes."""))
-
 add_newdoc('numpy.core.numerictypes', 'generic', ('ndim',
     """The number of array dimensions."""))
 
