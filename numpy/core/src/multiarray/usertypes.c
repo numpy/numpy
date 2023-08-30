@@ -213,6 +213,9 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         }
     }
 
+    /* Invalidate cached hash value */
+    descr->hash = -1;
+
     userdescrs = realloc(userdescrs,
                          (NPY_NUMUSERTYPES+1)*sizeof(void *));
     if (userdescrs == NULL) {
