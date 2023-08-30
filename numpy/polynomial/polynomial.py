@@ -1260,7 +1260,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     cov : bool, optional
         If True, return the covariance matrix. By default, 
         the covariance are scaled by chi2/dof, where dof = M - (deg + 1),
-        i.e., the weights are presumed to be  unreliable except in a 
+        i.e., the weights are presumed to be unreliable except in a 
         relative sense and everything is scaled such that the reduced 
         chi2 is unity. This scaling is omitted if cov='unscaled', as 
         is relevant for the case that the weights are w = 1/sigma, 
