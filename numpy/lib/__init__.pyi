@@ -70,25 +70,6 @@ from numpy.lib.polynomial import (
     poly1d as poly1d,
 )
 
-from numpy.lib.shape_base import (
-    column_stack as column_stack,
-    row_stack as row_stack,
-    dstack as dstack,
-    array_split as array_split,
-    split as split,
-    hsplit as hsplit,
-    vsplit as vsplit,
-    dsplit as dsplit,
-    apply_over_axes as apply_over_axes,
-    expand_dims as expand_dims,
-    apply_along_axis as apply_along_axis,
-    kron as kron,
-    tile as tile,
-    get_array_wrap as get_array_wrap,
-    take_along_axis as take_along_axis,
-    put_along_axis as put_along_axis,
-)
-
 from numpy.core.multiarray import (
     add_docstring as add_docstring,
     tracemalloc_domain as tracemalloc_domain,

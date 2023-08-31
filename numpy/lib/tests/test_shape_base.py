@@ -3,12 +3,12 @@ import functools
 import sys
 import pytest
 
-from numpy.exceptions import AxisError
-from numpy.lib.shape_base import (
+from numpy import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
     put_along_axis
     )
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )

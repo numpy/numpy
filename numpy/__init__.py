@@ -183,19 +183,13 @@ else:
 
     from . import lib
     from .lib import (
-        DataSource, apply_along_axis, apply_over_axes,
-        array_split, c_, column_stack, diag_indices,
-        diag_indices_from, dsplit, dstack,
-        emath, expand_dims, fill_diagonal,
-        fromregex, get_array_wrap, genfromtxt,
-        hsplit, index_exp, ix_, kron, load, loadtxt,
-        mgrid, ndenumerate, ndindex, ogrid, 
+        DataSource, c_, diag_indices, diag_indices_from, emath, 
+        fromregex, genfromtxt, index_exp, ix_, load, loadtxt,
+        mgrid, ndenumerate, ndindex, ogrid, fill_diagonal,
         packbits, poly, poly1d, polyadd, polyder,
         polydiv, polyfit, polyint, polymul, polysub, polyval,
-        put_along_axis, r_, ravel_multi_index,
-        roots, row_stack, s_, save, savetxt, savez, 
-        savez_compressed, split, take_along_axis, tile, 
-        unpackbits, unravel_index, vsplit
+        r_, ravel_multi_index, roots, s_, save, savetxt, savez, 
+        savez_compressed, unpackbits, unravel_index
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -216,6 +210,11 @@ else:
         diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
         histogram2d, mask_indices, tril_indices, tril_indices_from, 
         triu_indices, triu_indices_from
+    )
+    from .lib._shape_base_impl import (
+        apply_over_axes, apply_along_axis, array_split, column_stack, dsplit,
+        dstack, expand_dims, hsplit, kron, put_along_axis, row_stack, split,
+        take_along_axis, tile, vsplit
     )
     from .lib._type_check_impl import (
         iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
@@ -296,6 +295,7 @@ else:
         set(lib._nanfunctions_impl.__all__) |
         set(lib._function_base_impl.__all__) |
         set(lib._twodim_base_impl.__all__) |
+        set(lib._shape_base_impl.__all__) |
         set(lib._type_check_impl.__all__) |
         set(lib._arraysetops_impl.__all__) |
         set(lib._ufunclike_impl.__all__) |

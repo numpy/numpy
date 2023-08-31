@@ -1351,7 +1351,7 @@ def test_suppress_warnings_module():
         sup.record(UserWarning)
         # suppress warning from other module (may have .pyc ending),
         # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib.shape_base)
+        sup.filter(module=np.lib._shape_base_impl)
         warnings.warn("Some warning")
         warn_other_module()
     # Check that the suppression did test the file correctly (this module

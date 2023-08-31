@@ -23,8 +23,8 @@ from . import _type_check_impl
 from . import index_tricks
 from . import _nanfunctions_impl
 from . import _function_base_impl
-from . import shape_base
 from . import _stride_tricks_impl
+from . import _shape_base_impl
 from . import stride_tricks
 from . import _twodim_base_impl
 from . import _ufunclike_impl
@@ -38,7 +38,6 @@ from . import _arraypad_impl
 from . import _version
 
 from .index_tricks import *
-from .shape_base import *
 from .polynomial import *
 from .npyio import *
 from .arrayterator import Arrayterator
@@ -49,7 +48,6 @@ from numpy.core.function_base import add_newdoc
 
 __all__ = ['emath']
 __all__ += index_tricks.__all__
-__all__ += shape_base.__all__
 __all__ += polynomial.__all__
 __all__ += npyio.__all__
 
@@ -70,7 +68,8 @@ def __getattr__(attr):
         return math
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base", 
-        "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base"
+        "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
+        "shape_base"
     ):
         raise AttributeError(
             f"`np.lib.{attr}` is now private. If you are using a public "
