@@ -243,7 +243,7 @@ memory, which is often desirable.
 
 These sparse coordinate grids are intended to be use with :ref:`broadcasting`.
 When all coordinates are used in an expression, broadcasting still leads to a
-fully-dimensonal result array.
+fully-dimensional result array.
 
 ::
 
