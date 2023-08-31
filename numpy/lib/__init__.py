@@ -33,7 +33,6 @@ from . import polynomial
 from . import _utils_impl
 from . import _arraysetops_impl
 from . import npyio
-from . import stride_tricks
 from . import arrayterator
 from . import _arraypad_impl
 from . import _version
