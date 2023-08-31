@@ -1808,7 +1808,7 @@ def chebinterpolate(func, deg, args=()):
     Examples
     --------
     >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
+    >>> C.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
     array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
             -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
              2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
@@ -2067,7 +2067,7 @@ class Chebyshev(ABCPolyBase):
 
         Notes
         -----
-        See `numpy.polynomial.chebfromfunction` for more details.
+        See `numpy.polynomial.chebinterpolate` for more details.
 
         """
         if domain is None:
