@@ -106,7 +106,7 @@ max_features_dict = {
   's390x': S390X_FEATURES,
   'arm': ARM_FEATURES,
   'aarch64': ARM_FEATURES,
-}.get(cpu_family, [])
+}.get(cpu_family, {})
 max_features = []
 foreach fet_name, fet_obj : max_features_dict
   max_features += [fet_obj]
