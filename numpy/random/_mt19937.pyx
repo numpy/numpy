@@ -1,4 +1,4 @@
-#cython: binding=True
+#cython: binding=False
 
 import operator
 

@@ -1,4 +1,4 @@
-#cython: binding=True
+#cython: binding=False
 
 from cpython.pycapsule cimport PyCapsule_New
 
