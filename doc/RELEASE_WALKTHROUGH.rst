@@ -122,7 +122,7 @@ repository::
 
 Sanity check::
 
-    $ spin test -m full
+    $ python3 -m spin test -m full
 
 Tag the release and push the tag. This requires write permission for the numpy
 repository::

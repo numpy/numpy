@@ -129,17 +129,6 @@ For more options including selecting compilers, setting custom compiler flags
 and controlling parallelism, see :doc:`scipy:building/compilers_and_options`
 (from the SciPy documentation.)
 
-.. 
-    NumPy uses a series of tests to probe the compiler and libc libraries for
-    functions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
-    using ``HAVE_XXX`` definitions. These tests are run during the ``build_src``
-    phase of the ``_multiarray_umath`` module in the ``generate_config_h`` and
-    ``generate_numpyconfig_h`` functions. Since the output of these calls includes
-    many compiler warnings and errors, by default it is run quietly. If you wish
-    to see this output, you can run the ``build_src`` stage verbosely::
-
-    $ python build build_src -v
-
 
 Running tests
 -------------

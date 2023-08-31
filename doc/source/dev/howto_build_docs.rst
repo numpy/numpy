@@ -93,37 +93,7 @@ Now you are ready to generate the docs, so write::
 
 This will build NumPy from source if you haven't already, and run Sphinx to
 build the ``html`` docs. If all goes well, this will generate a ``build/html``
-subdirectory in the ``/doc`` directory, containing the built documentation. If
-you get a message about ``installed numpy != current repo git version``, you
-must either override the check by setting ``GITVER`` or re-install NumPy.
-
-You can also use the ``Makefile`` under the ``/doc`` directory and run::
-
-    make html
-
-If you have built NumPy into a virtual environment and get an error
-that says ``numpy not found, cannot build documentation without...``,
-you need to override the makefile ``PYTHON`` variable at the command
-line, so instead of writing ``make html`` write::
-
-    make PYTHON=python html
-
-To build the PDF documentation, do instead::
-
-   make latex
-   make -C build/latex all-pdf
-
-You will need to have LaTeX_ installed for this, inclusive of support for
-Greek letters.  For example, on Ubuntu xenial ``texlive-lang-greek`` and
-``cm-super`` are needed.  Also, ``latexmk`` is needed on non-Windows systems.
-
-Instead of the above, you can also do::
-
-   make dist
-
-which will rebuild NumPy, install it to a temporary location, and
-build the documentation in all formats. This will most likely again
-only work on Unix platforms.
+subdirectory in the ``/doc`` directory, containing the built documentation.
 
 The documentation for NumPy distributed at https://numpy.org/doc in html and
 pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details
