@@ -137,22 +137,21 @@ if have_blas
   #   `dependency('blas', modules: cblas)`
   # see https://github.com/mesonbuild/meson/pull/10921.
   have_cblas = false
-  if cc.links('''
+  if blas_name.to_lower() == 'accelerate'
+    _cblas_header = '<Accelerate/Accelerate.h>'
+  elif blas_name.to_lower().startswith('mkl')
+    _cblas_header = '<mkl_cblas.h>'
+  else
+    _cblas_header = '<cblas.h>'
+  endif
+  if cc.links(f'''
       #ifndef BLAS_SYMBOL_SUFFIX
       #  define BLAS_SYMBOL_SUFFIX
       #endif
       #define EXPAND(suffix) cblas_ddot ## suffix
       #define DDOT(suffix) EXPAND(suffix)
 
-      #if defined __has_include
-        #if __has_include(<Accelerate/Accelerate.h>)
-          #include <Accelerate/Accelerate.h>
-        #else
-          #include <cblas.h>
-        #endif
-      #else
-        #include <cblas.h>
-      #endif
+      #include @_cblas_header@
 
       int main(int argc, const char *argv[])
       {
