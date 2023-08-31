@@ -35,7 +35,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-@set_module('numpy.lib.npyio')
 class BagObj:
     """
     BagObj(obj)
@@ -49,7 +48,7 @@ class BagObj:
 
     Examples
     --------
-    >>> from numpy.lib.npyio import BagObj as BO
+    >>> from numpy.lib._npyio_impl import BagObj as BO
     >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
     ...                                 # will call this method when any

@@ -10,7 +10,6 @@ pathlib_path: pathlib.Path
 str_file: IO[str]
 bytes_file: IO[bytes]
 
-bag_obj: np.lib.npyio.BagObj[int]
 npz_file: np.lib.npyio.NpzFile
 
 AR_i8: npt.NDArray[np.int64]
@@ -26,15 +25,12 @@ class BytesReader:
 bytes_writer: BytesWriter
 bytes_reader: BytesReader
 
-reveal_type(bag_obj.a)  # E: int
-reveal_type(bag_obj.b)  # E: int
-
 reveal_type(npz_file.zip)  # E: zipfile.ZipFile
 reveal_type(npz_file.fid)  # E: Union[None, typing.IO[builtins.str]]
 reveal_type(npz_file.files)  # E: list[builtins.str]
 reveal_type(npz_file.allow_pickle)  # E: bool
 reveal_type(npz_file.pickle_kwargs)  # E: Union[None, typing.Mapping[builtins.str, Any]]
-reveal_type(npz_file.f)  # E: lib.npyio.BagObj[lib.npyio.NpzFile]
+reveal_type(npz_file.f)  # E: lib._npyio_impl.BagObj[lib.npyio.NpzFile]
 reveal_type(npz_file["test"])  # E: ndarray[Any, dtype[Any]]
 reveal_type(len(npz_file))  # E: int
 with npz_file as f:

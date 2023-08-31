@@ -89,10 +89,3 @@ Binary format description
    :toctree: generated/
 
    lib.format
-
-Object wrappers
----------------
-.. autosummary::
-   :toctree: generated/
-
-   lib.npyio.BagObj
