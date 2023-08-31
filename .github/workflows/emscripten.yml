@@ -52,14 +52,23 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install "pydantic<2" pyodide-build==$PYODIDE_VERSION
+        run: pip install "pydantic<2" build pyodide-build==$PYODIDE_VERSION
 
       - name: Build
         run: |
-          # Pyodide is still in the process of adding better/easier support for
-          # non-setup.py based builds.
-          cp pyproject.toml.setuppy pyproject.toml
-          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          # Note that we need to cross-compile here. Using `pyodide build`
+          # fails on not having a cross file. The `source() function in
+          # `pyodide_build/cli/build.py` needs a --backend-flags parameter so
+          # that we can pass config-settings arguments to the backend.
+          # We'll then run into static assert issues in `pyconfig.h` due to:
+          # https://github.com/pyodide/pyodide/pull/2494#issuecomment-1118500743
+          # See also https://github.com/pyodide/pyodide/pull/2238 and the patches
+          # to _numpyconfig.h in https://github.com/pyodide/pyodide/tree/main/packages/numpy
+          #
+          # tl;dr this needs some work, and it seems like cross-compilation is
+          # hard because Pyodide doesn't ship its own Python interpreter that
+          # we can actually target during a direct cross build.
+          python -m build --wheel -Csetup-args=--cross-file=$PWD/tools/ci/emscripten.meson.cross -Csetup-args=-Dallow-noblas=true
 
       - name: set up node
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
@@ -77,4 +86,4 @@ jobs:
         run: |
           source .venv-pyodide/bin/activate
           cd ..
-          python numpy/runtests.py -n -vv
+          pytest --pyargs numpy -m "not slow"
