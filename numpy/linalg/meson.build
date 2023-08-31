@@ -1,10 +1,10 @@
 # Note that `python_xerbla.c` was excluded on Windows in setup.py;
 # unclear why and it seems needed, so unconditionally used here.
-lapack_lite_sources = [
-  'lapack_lite/python_xerbla.c',
-]
+python_xerbla_sources = ['lapack_lite/python_xerbla.c']
+
+lapack_lite_sources = []
 if not have_lapack
-  lapack_lite_sources += [
+  lapack_lite_sources = [
     'lapack_lite/f2c.c',
     'lapack_lite/f2c_c_lapack.c',
     'lapack_lite/f2c_d_lapack.c',
@@ -19,6 +19,7 @@ endif
 py.extension_module('lapack_lite',
   [
     'lapack_litemodule.c',
+    python_xerbla_sources,
     lapack_lite_sources,
   ],
   dependencies: [np_core_dep, blas_dep, lapack_dep],
@@ -29,6 +30,7 @@ py.extension_module('lapack_lite',
 py.extension_module('_umath_linalg',
   [
     'umath_linalg.cpp',
+    python_xerbla_sources,
     lapack_lite_sources,
   ],
   dependencies: [np_core_dep, blas_dep, lapack_dep],

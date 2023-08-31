@@ -25,6 +25,21 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 
 #define CBLAS_INDEX size_t  /* this may vary between platforms */
 
+#ifdef ACCELERATE_NEW_LAPACK
+    #if __MAC_OS_X_VERSION_MAX_ALLOWED < 130300
+        #ifdef HAVE_BLAS_ILP64
+            #error "Accelerate ILP64 support is only available with macOS 13.3 SDK or later"
+        #endif
+    #else
+        #define NO_APPEND_FORTRAN
+        #ifdef HAVE_BLAS_ILP64
+            #define BLAS_SYMBOL_SUFFIX $NEWLAPACK$ILP64
+        #else
+            #define BLAS_SYMBOL_SUFFIX $NEWLAPACK
+        #endif
+    #endif
+#endif
+
 #ifdef NO_APPEND_FORTRAN
 #define BLAS_FORTRAN_SUFFIX
 #else
