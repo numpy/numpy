@@ -53,3 +53,6 @@ from numpy.core.defchararray import (
     compare_chararrays as compare_chararrays,
     chararray as chararray
 )
+
+__all__: list[str]
+__path__: list[str]

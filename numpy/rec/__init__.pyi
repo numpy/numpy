@@ -8,3 +8,6 @@ from numpy.core.records import (
     fromfile as fromfile,
     array as array
 )
+
+__all__: list[str]
+__path__: list[str]
