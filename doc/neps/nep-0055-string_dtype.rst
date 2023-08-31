@@ -88,10 +88,10 @@ for wasting memory.
 
 Downstream usage of string data in NumPy arrays has proven out the need for a
 variable-width string data type. In practice, most downstream users employ
-``object`` arrays for this purpose. In particular, ``pandas`` has explicitly
+``object`` arrays for this purpose. In particular, Pandas has explicitly
 deprecated support for NumPy fixed-width strings, coerces NumPy fixed-width
 string arrays to ``object`` arrays, and in the future may switch to only
-supporting string data via ``PyArrow``, which has native support for UTF-8
+supporting string data via PyArrow, which has native support for UTF-8
 encoded variable-width string arrays [1]_. This is unfortunate, since ``object``
 arrays have no type guarantees, necessitating expensive sanitization passes and
 operations using object arrays cannot release the GIL.
@@ -434,7 +434,7 @@ the array buffer. For arrays consisting entirely of small strings this will
 bypass the need to do any sidecar heap allocations. This should be relatively
 straightforward to add but has not been completed yet to focus on other aspects
 of the proposal. While reserving a whole byte for flags may be unnecessary, we
-will still have 12 bits of space in the ``len`` field, which is much more than
+will still have 7 bytes of space in the ``len`` field, which is much more than
 is likely to be necessary to store the length of a single array element in
 real-world use, and having 256 possibilities for flags gives us flexibility for
 the future.
@@ -443,7 +443,7 @@ Besides the string data itself, each array element requires 16 bytes of storage
 for the ``npy_static_string`` instance in the array buffer. In principle we
 could use a 32 bit integer to store the ``len`` field, saving 4 bytes per array
 element, but if we only use a single bit for the small string optimization
-that will still leave us with an uncomfortably small 7 bits of space in the
+that will still leave us with an uncomfortably small 31 bits of space in the
 ``len`` field. In addition, making use of the small string optimization will
 somewhat offset the memory cost of a 64 bit ``len`` field, since many real-world
 use-cases employ small strings.
@@ -567,7 +567,7 @@ NaN-like Sentinels
 ++++++++++++++++++
 
 A NaN-like sentinel returns itself as the result of comparison operations. This
-includes the python ``nan`` float and the pandas missing data sentinel
+includes the python ``nan`` float and the Pandas missing data sentinel
 ``pd.NA``. We choose to make NaN-like sentinels inherit these behaviors in
 operations, so the result of addition is the sentinel:
 
