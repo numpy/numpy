@@ -46,7 +46,7 @@ from .arrayprint import _get_legacy_print_mode
 # All of the functions allow formats to be a dtype
 __all__ = [
     'record', 'recarray', 'format_parser', 'fromarrays', 'fromrecords',
-    'fromstring', 'fromfile', 'array',
+    'fromstring', 'fromfile', 'array', 'find_duplicate',
 ]
 
 
@@ -75,6 +75,7 @@ _byteorderconv = {'b':'>',
 numfmt = nt.sctypeDict
 
 
+@set_module('numpy.rec')
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
@@ -305,6 +306,8 @@ class record(nt.void):
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
 
+
+@set_module("numpy.rec")
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
 
@@ -535,7 +538,7 @@ class recarray(ndarray):
             # This should only happen if the user is playing
             # strange games with dtypes.
             prefix = "array("
-            fmt = 'array(%s,%sdtype=%s).view(numpy.recarray)'
+            fmt = 'array(%s,%sdtype=%s).view(numpy.rec.recarray)'
 
         # get data/shape string. logic taken from numeric.array_repr
         if self.size > 0 or self.shape == (0,):

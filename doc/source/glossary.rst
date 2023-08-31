@@ -442,7 +442,7 @@ Glossary
    record array
        A :term:`structured array` with allowing access in an attribute style
        (``a.field``) in addition to ``a['field']``. For details, see
-       :doc:`numpy.recarray. <reference/generated/numpy.recarray>`
+       :doc:`numpy.rec.recarray. <reference/generated/numpy.rec.recarray>`
 
 
    row-major

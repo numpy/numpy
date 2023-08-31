@@ -35,7 +35,7 @@ __all__ = [
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
     'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
-    'array', 'asarray', 'compare_chararrays'
+    'array', 'asarray', 'compare_chararrays', 'chararray'
     ]
 
 
@@ -1919,6 +1919,7 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
+@set_module("numpy.char")
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,

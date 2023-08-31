@@ -501,7 +501,7 @@ data-type. However, a chararray can also be created using the
    :toctree: generated/
 
    char.chararray
-   core.defchararray.array
+   char.array
 
 Another difference with the standard ndarray of str data-type is
 that the chararray inherits the feature introduced by Numarray that
@@ -526,7 +526,7 @@ scalar data type object :class:`record`.
 .. autosummary::
    :toctree: generated/
 
-   recarray
+   rec.recarray
    record
 
 .. note::

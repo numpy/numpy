@@ -76,10 +76,7 @@ from . import numeric
 from .numeric import *
 from . import fromnumeric
 from .fromnumeric import *
-from . import defchararray as char
-from . import records
-from . import records as rec
-from .records import record, recarray, format_parser
+from .records import record
 # Note: module name memmap is overwritten by a class with same name
 from .memmap import *
 from . import function_base
@@ -105,7 +102,7 @@ from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['char', 'rec', 'memmap', 'sctypeDict', 'record', 'abs']
+__all__ = ['memmap', 'sctypeDict', 'record', 'abs']
 __all__ += numeric.__all__
 __all__ += function_base.__all__
 __all__ += getlimits.__all__

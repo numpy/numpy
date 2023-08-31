@@ -129,8 +129,7 @@ else:
         atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr, 
         bitwise_and, bitwise_not, bitwise_or, bitwise_xor, block, bool_,
         broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
-        can_cast, cbrt, cdouble, ceil, char, character,
-        choose, clip, clongdouble,
+        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
         complexfloating, compress, concatenate, conj, conjugate, convolve,
         copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
         cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
@@ -156,7 +155,7 @@ else:
         negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
         number, object_, ones, ones_like, outer, partition,
         pi, positive, power, printoptions, prod, product, promote_types, 
-        ptp, put, putmask, rad2deg, radians, ravel, rec, reciprocal,
+        ptp, put, putmask, rad2deg, radians, ravel, reciprocal,
         record, remainder, repeat, require, reshape, resize, result_type, 
         right_shift, rint, roll, rollaxis, round, 
         searchsorted, set_printoptions,
@@ -248,7 +247,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test"
+        "f2py", "test", "rec", "char"
     }
 
     # We build warning messages for former attributes
@@ -358,6 +357,12 @@ else:
         elif attr == "typing":
             import numpy.typing as typing
             return typing
+        elif attr == "rec":
+            import numpy.rec as rec
+            return rec
+        elif attr == "char":
+            import numpy.char as char
+            return char
         elif attr == "array_api":
             import numpy.array_api as array_api
             return array_api

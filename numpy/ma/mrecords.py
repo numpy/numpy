@@ -1,6 +1,6 @@
 """:mod:`numpy.ma..mrecords`
 
-Defines the equivalent of :class:`numpy.recarrays` for masked arrays,
+Defines the equivalent of :class:`numpy.rec.recarrays` for masked arrays,
 where fields can be accessed as attributes.
 Note that :class:`numpy.ma.MaskedArray` already supports structured datatypes
 and the masking of individual fields.

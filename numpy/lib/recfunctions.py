@@ -596,7 +596,7 @@ def _rec_drop_fields_dispatcher(base, drop_names):
 @array_function_dispatch(_rec_drop_fields_dispatcher)
 def rec_drop_fields(base, drop_names):
     """
-    Returns a new numpy.recarray with fields in `drop_names` dropped.
+    Returns a new numpy.rec.recarray with fields in `drop_names` dropped.
     """
     return drop_fields(base, drop_names, usemask=False, asrecarray=True)
 
@@ -958,7 +958,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         If true, always return a copy. If false, a view is returned if
         possible, such as when the `dtype` and strides of the fields are
         suitable and the array subtype is one of `numpy.ndarray`,
-        `numpy.recarray` or `numpy.memmap`.
+        `numpy.rec.recarray` or `numpy.memmap`.
 
         .. versionchanged:: 1.25.0
             A view can now be returned if the fields are separated by a

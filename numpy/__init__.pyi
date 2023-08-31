@@ -207,6 +207,8 @@ from numpy import (
     version as version,
     exceptions as exceptions,
     dtypes as dtypes,
+    rec as rec,
+    char as char,
 )
 
 from numpy.core import defchararray, records
