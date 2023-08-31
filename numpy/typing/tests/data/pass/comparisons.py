@@ -66,13 +66,7 @@ AR_c > AR_i
 AR_c > AR_f
 AR_c > AR_c
 
-AR_m > AR_b
-AR_m > AR_u
-AR_m > AR_i
-AR_b > AR_m
-AR_u > AR_m
-AR_i > AR_m
-
+AR_m > AR_m
 AR_M > AR_M
 
 AR_O > AR_O
@@ -82,13 +76,7 @@ AR_O > 1
 # Time structures
 
 dt > dt
-
 td > td
-td > i
-td > i4
-td > i8
-td > AR_i
-td > SEQ
 
 # boolean
 

@@ -848,8 +848,23 @@ class _DomainSafeDivide:
         # component of numpy's import time.
         if self.tolerance is None:
             self.tolerance = np.finfo(float).tiny
+
         # don't call ma ufuncs from __array_wrap__ which would fail for scalars
         a, b = np.asarray(a), np.asarray(b)
+
+        if a.dtype.kind not in "fc" and b.dtype.kind not in "fc":
+            # Simply return "nonzero", do so by casting expecting that it is
+            # a bit more robust (e.g. works for timedelta64).
+            return ~b.astype(bool)
+
+        # Note: The code here flags invalid, even for values where the result
+        #       is still finite (but very large); it clearly doesn't do what
+        #       is expected for float32 (and maybe complex?).
+        #       But :shrug:.  It would be better to do at least complicated
+        #       handling after the fact probably.
+        #       this whole dance does not really add anything for the operator
+        #       and ma function (it masks all non-finite results) but does
+        #       kick in for `__array_wrap__` if called by the ufunc.
         with np.errstate(invalid='ignore'):
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 

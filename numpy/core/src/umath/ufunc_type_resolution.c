@@ -41,6 +41,7 @@
 #include "ufunc_object.h"
 #include "common.h"
 #include "convert_datatype.h"
+#include "_datetime.h"
 #include "dtypemeta.h"
 
 #include "mem_overlap.h"
@@ -375,7 +376,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
          * ResultType would give for number->string promotions.
          * (We never supported flexible dtypes here.)
          */
-        else if (!PyArray_ISFLEXIBLE(operands[0]) &&
+        if (!PyArray_ISFLEXIBLE(operands[0]) &&
                 !PyArray_ISFLEXIBLE(operands[1])) {
             out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
             if (out_dtypes[0] == NULL) {
@@ -769,8 +770,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -781,8 +782,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         }
         /* m8[<A>] + M8[<B>] => m8[gcd(<A>,<B>)] + M8[gcd(<A>,<B>)] */
         else if (type_num2 == NPY_DATETIME) {
-            out_dtypes[1] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            /* datetime_type_promote allows mixing timedelta and datetime */
+            out_dtypes[1] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[1] == NULL) {
                 return -1;
             }
@@ -818,8 +820,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     else if (type_num1 == NPY_DATETIME) {
         /* M8[<A>] + m8[<B>] => M8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            /* datetime_type_promote allows mixing timedelta and datetime */
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -959,8 +962,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] - m8[<B>] => m8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -991,8 +994,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     else if (type_num1 == NPY_DATETIME) {
         /* M8[<A>] - m8[<B>] => M8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1029,8 +1032,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         }
         /* M8[<A>] - M8[<B>] => M8[gcd(<A>,<B>)] - M8[gcd(<A>,<B>)] */
         else if (type_num2 == NPY_DATETIME) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -2243,8 +2246,8 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
     if (type_num1 == NPY_TIMEDELTA) {
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
+            out_dtypes[0] = datetime_type_promotion(
+                    PyArray_DESCR(operands[0]), PyArray_DESCR(operands[1]));
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);

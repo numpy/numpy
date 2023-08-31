@@ -194,6 +194,7 @@ from ._array_like import (
     _ArrayLikeComplex_co as _ArrayLikeComplex_co,
     _ArrayLikeNumber_co as _ArrayLikeNumber_co,
     _ArrayLikeTD64_co as _ArrayLikeTD64_co,
+    _ArrayLikeTD64_comp_co as _ArrayLikeTD64_comp_co,
     _ArrayLikeDT64_co as _ArrayLikeDT64_co,
     _ArrayLikeObject_co as _ArrayLikeObject_co,
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,

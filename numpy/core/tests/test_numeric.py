@@ -2602,8 +2602,8 @@ class TestClip:
         # for bugs in NPY_TIMEDELTA_MAX, based on a case
         # produced by hypothesis
         (np.zeros(10, dtype='m8') - 1,
-         0,
-         0,
+         np.timedelta64(0),
+         np.timedelta64(0),
          np.zeros(10, dtype='m8')),
     ])
     def test_clip_problem_cases(self, arr, amin, amax, exp):

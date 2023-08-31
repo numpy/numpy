@@ -1,6 +1,7 @@
 from typing import Any
 import numpy as np
 
+AR_b: np.ndarray[Any, np.dtype[np.bool_]]
 AR_i: np.ndarray[Any, np.dtype[np.int64]]
 AR_f: np.ndarray[Any, np.dtype[np.float64]]
 AR_c: np.ndarray[Any, np.dtype[np.complex128]]
@@ -20,6 +21,11 @@ AR_m > AR_M  # E: Unsupported operand types
 AR_M > AR_i  # E: Unsupported operand types
 AR_M > AR_f  # E: Unsupported operand types
 AR_M > AR_m  # E: Unsupported operand types
+
+AR_m > AR_b  # E: Unsupported operand types
+AR_m > AR_i  # E: Unsupported operand types
+AR_b > AR_m  # E: Unsupported operand types
+AR_i > AR_m  # E: Unsupported operand types
 
 AR_i > str()  # E: No overload variant
 AR_i > bytes()  # E: No overload variant

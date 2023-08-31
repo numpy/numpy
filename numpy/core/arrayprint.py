@@ -474,10 +474,9 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.bool_):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
-        if issubclass(dtypeobj, _nt.timedelta64):
-            return formatdict['timedelta']()
-        else:
-            return formatdict['int']()
+        return formatdict['int']()
+    elif issubclass(dtypeobj, _nt.timedelta64):
+        return formatdict['timedelta']()
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()

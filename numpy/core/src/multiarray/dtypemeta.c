@@ -669,24 +669,11 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    /*
-     * Timedelta/datetime shouldn't actually promote at all.  That they
-     * currently do means that we need additional hacks in the comparison
-     * type resolver.  For comparisons we have to make sure we reject it
-     * nicely in order to return an array of True/False values.
-     */
-    if (cls->type_num == NPY_DATETIME && other->type_num == NPY_TIMEDELTA) {
-        /*
-         * TODO: We actually currently do allow promotion here. This is
-         *       currently relied on within `np.add(datetime, timedelta)`,
-         *       while for concatenation the cast step will fail.
-         */
-        Py_INCREF(cls);
-        return cls;
-    }
-    return default_builtin_common_dtype(cls, other);
+    /* Datetimes/timedelta do not promote with anything else */
+    assert(cls != other);
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_DTypeMeta *)Py_NotImplemented;
 }
-
 
 
 static PyArray_DTypeMeta *
