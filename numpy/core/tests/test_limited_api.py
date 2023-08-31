@@ -7,6 +7,7 @@ import pytest
 
 from numpy.testing import IS_WASM
 
+
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),

@@ -58,7 +58,6 @@ def install_temp(tmp_path):
     sys.path.append(str(build_dir))
 
 def test_is_timedelta64_object(install_temp):
-    print(sys.path)
     import checks
 
     assert checks.is_td64(np.timedelta64(1234))
