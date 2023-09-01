@@ -676,7 +676,9 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         >v_base = inv(np.dot(lhs, lhs.T))
 
         However, this is numerically unstable.
-        It is calculated with SVD.
+        It is calculated with SVD considering
+        the Vandermonde Matrix (lhs) as the
+        Jacobian Matrix.
         """
 
         U, s, _ = svd(lhs, full_matrices=False)
