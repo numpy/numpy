@@ -38,129 +38,6 @@ of this chapter we assume that you have set up your git repo as described in
    relevant parts of the NumPy documentation to build, test, develop, write
    docs, and contribute to NumPy.
 
-
-.. _testing-builds:
-
-Testing builds
---------------
-
-Before running the tests, first install the test dependencies::
-
-    $ python -m pip install -r test_requirements.txt
-
-To build the development version of NumPy and run tests, spawn
-interactive shells with the Python import paths properly set up etc.,
-do one of::
-
-    $ python runtests.py -v
-    $ python runtests.py -v -s random
-    $ python runtests.py -v -t numpy/core/tests/test_nditer.py::test_iter_c_order
-    $ python runtests.py --ipython
-    $ python runtests.py --python somescript.py
-    $ python runtests.py --bench
-    $ python runtests.py -g -m full
-
-This builds NumPy first, so the first time it may take a few minutes.  If
-you specify ``-n``, the tests are run against the version of NumPy (if
-any) found on current PYTHONPATH.
-
-.. note::
-
-    If the above commands result in ``RuntimeError: Cannot parse version 0+untagged.xxxxx``,
-    run ``git pull upstream main --tags``.
-
-When specifying a target using ``-s``, ``-t``, or ``--python``, additional
-arguments may be forwarded to the target embedded by ``runtests.py`` by passing
-the extra arguments after a bare ``--``. For example, to run a test method with
-the ``--pdb`` flag forwarded to the target, run the following::
-
-    $ python runtests.py -t numpy/tests/test_scripts.py::test_f2py -- --pdb
-
-When using pytest as a target (the default), you can
-`match test names using python operators`_ by passing the ``-k`` argument to pytest::
-
-    $ python runtests.py -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
-
-.. note::
-
-    Remember that all tests of NumPy should pass before committing your changes.
-
-Using ``runtests.py`` is the recommended approach to running tests.
-There are also a number of alternatives to it, for example in-place
-build or installing to a virtualenv or a conda environment. See the FAQ below
-for details.
-
-.. note::
-
-   Some of the tests in the test suite require a large amount of
-   memory, and are skipped if your system does not have enough.
-
-   To override the automatic detection of available memory, set the
-   environment variable ``NPY_AVAILABLE_MEM``, for example
-   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
-   target option.
-
-
-Building in-place
------------------
-
-For development, you can set up an in-place build so that changes made to
-``.py`` files have effect without rebuild. First, run::
-
-    $ python setup.py build_ext -i
-
-This allows you to import the in-place built NumPy *from the repo base
-directory only*.  If you want the in-place build to be visible outside that
-base dir, you need to point your ``PYTHONPATH`` environment variable to this
-directory.  Some IDEs (`Spyder`_ for example) have utilities to manage
-``PYTHONPATH``.  On Linux and OSX, you can run the command::
-
-    $ export PYTHONPATH=$PWD
-
-and on Windows::
-
-    $ set PYTHONPATH=/path/to/numpy
-
-Now editing a Python source file in NumPy allows you to immediately
-test and use your changes (in ``.py`` files), by simply restarting the
-interpreter.
-
-Note that another way to do an inplace build visible outside the repo base dir
-is with ``python setup.py develop``.  Instead of adjusting ``PYTHONPATH``, this
-installs a ``.egg-link`` file into your site-packages as well as adjusts the
-``easy-install.pth`` there, so its a more permanent (and magical) operation.
-
-
-.. _Spyder: https://www.spyder-ide.org/
-
-Other build options
--------------------
-
-Build options can be discovered by running any of::
-
-    $ python setup.py --help
-    $ python setup.py --help-commands
-
-It's possible to do a parallel build with ``numpy.distutils`` with the ``-j`` option;
-see :ref:`parallel-builds` for more details.
-
-A similar approach to in-place builds and use of ``PYTHONPATH`` but outside the
-source tree is to use::
-
-    $ pip install . --prefix /some/owned/folder
-    $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
-
-
-NumPy uses a series of tests to probe the compiler and libc libraries for
-functions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
-using ``HAVE_XXX`` definitions. These tests are run during the ``build_src``
-phase of the ``_multiarray_umath`` module in the ``generate_config_h`` and
-``generate_numpyconfig_h`` functions. Since the output of these calls includes
-many compiler warnings and errors, by default it is run quietly. If you wish
-to see this output, you can run the ``build_src`` stage verbosely::
-
-    $ python build build_src -v
-
 Using virtual environments
 --------------------------
 
@@ -190,10 +67,73 @@ command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
 virtual environment and back to your previous shell.
 
 
+.. _testing-builds:
+
+Testing builds
+--------------
+
+Before running the tests, first install the test dependencies::
+
+    $ python -m pip install -r test_requirements.txt
+    $ python -m pip install asv # only for running benchmarks
+
+To build the development version of NumPy and run tests, spawn
+interactive shells with the Python import paths properly set up etc., use the
+`spin <https://github.com/scientific-python/spin>`_ utility. To run tests, do
+one of::
+
+    $ spin test -v
+    $ spin test numpy/random  # to run the tests in a specific module
+    $ spin test -v -t numpy/core/tests/test_nditer.py::test_iter_c_order
+
+This builds NumPy first, so the first time it may take a few minutes.
+
+You can also use ``spin bench`` for benchmarking. See ``spin --help`` for more
+command line options.
+
+.. note::
+
+    If the above commands result in ``RuntimeError: Cannot parse version 0+untagged.xxxxx``,
+    run ``git pull upstream main --tags``.
+
+Additional arguments may be forwarded to ``pytest`` by passing the extra
+arguments after a bare ``--``. For example, to run a test method with the
+``--pdb`` flag forwarded to the target, run the following::
+
+    $ spin test -t numpy/tests/test_scripts.py::test_f2py -- --pdb
+
+You can also  `match test names using python operators`_ by passing the ``-k``
+argument to pytest::
+
+    $ spin test -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
+
+.. note::
+
+    Remember that all tests of NumPy should pass before committing your changes.
+
+.. note::
+
+   Some of the tests in the test suite require a large amount of
+   memory, and are skipped if your system does not have enough.
+
+..
+   To override the automatic detection of available memory, set the
+   environment variable ``NPY_AVAILABLE_MEM``, for example
+   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
+   target option.
+
+Other build options
+-------------------
+
+For more options including selecting compilers, setting custom compiler flags
+and controlling parallelism, see :doc:`scipy:building/compilers_and_options`
+(from the SciPy documentation.)
+
+
 Running tests
 -------------
 
-Besides using ``runtests.py``, there are various ways to run the tests.  Inside
+Besides using ``spin``, there are various ways to run the tests.  Inside
 the interpreter, tests can be run like this::
 
     >>> np.test()  # doctest: +SKIPBLOCK
@@ -208,7 +148,7 @@ Or a similar way from the command line::
     $ python -c "import numpy as np; np.test()"
 
 Tests can also be run with ``pytest numpy``, however then the NumPy-specific
-plugin is not found which causes strange side effects
+plugin is not found which causes strange side effects.
 
 Running individual test files can be useful; it's much faster than running the
 whole test suite or that of a whole module (example: ``np.random.test()``).
@@ -224,10 +164,10 @@ run the test suite with Python 3.9, use::
 
     $ tox -e py39
 
-For more extensive information, see :ref:`testing-guidelines`
+For more extensive information, see :ref:`testing-guidelines`.
 
-*Note: do not run the tests from the root directory of your numpy git repo without ``runtests.py``,
-that will result in strange test errors.*
+Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
+that will result in strange test errors.
 
 Running Linting
 ---------------
@@ -239,15 +179,16 @@ Install all dependent packages using pip::
 
 To run lint checks before committing new code, run::
 
-    $ python runtests.py --lint uncommitted
+    $ python tools/linter.py
 
 To check all changes in newly added Python code of current branch with target branch, run::
 
-    $ python runtests.py --lint main
+    $ python tools/linter.py --branch main
 
-If there are no errors, the script exits with no message. In case of errors::
+If there are no errors, the script exits with no message. In case of errors,
+check the error message for details::
 
-    $ python runtests.py --lint main
+    $ python tools/linter.py --branch main
     ./numpy/core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
     1       E303 too many blank lines (3)
 
@@ -256,8 +197,8 @@ since the linter runs as part of the CI pipeline.
 
 For more details on Style Guidelines:
 
-   - `Python Style Guide`_
-   - `C Style Guide`_
+- `Python Style Guide`_
+- `C Style Guide`_
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -306,7 +247,7 @@ you want to debug. For instance ``mytest.py``::
 
 Now, you can run::
 
-    $ gdb --args python runtests.py -g --python mytest.py
+    $ spin gdb mytest.py
 
 And then in the debugger::
 
@@ -336,10 +277,6 @@ needs a ``.gdbinit`` file with the following contents:
 .. code-block:: text
 
     add-auto-load-safe-path ~/.pyenv
-
-Instead of plain ``gdb`` you can of course use your favourite
-alternative debugger; run it on the python binary with arguments
-``runtests.py -g --python mytest.py``.
 
 Building NumPy with a Python built with debug support (on Linux distributions
 typically packaged as ``python-dbg``) is highly recommended.
