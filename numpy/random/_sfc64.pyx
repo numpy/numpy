@@ -1,4 +1,4 @@
-#cython: binding=True
+#cython: binding=False
 
 import numpy as np
 cimport numpy as np
