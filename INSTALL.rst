@@ -74,17 +74,10 @@ for more details.
 Choosing compilers
 ==================
 
-NumPy needs a C compiler, and for development versions also needs Cython.  A Fortran
-compiler isn't needed to build NumPy itself; the ``numpy.f2py`` tests will be
-skipped when running the test suite if no Fortran compiler is available.  For
-building Scipy a Fortran compiler is needed though, so we include some details
-on Fortran compilers in the rest of this section.
-
-On OS X and Linux, all common compilers will work. The minimum supported GCC
-version is 6.5.
-
-For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
-installed then ``g77`` will be detected and used first.
+NumPy needs C and C++ compilers, and for development versions also needs
+Cython.  A Fortran compiler isn't needed to build NumPy itself; the
+``numpy.f2py`` tests will be skipped when running the test suite if no Fortran
+compiler is available. 
 
 For more options including selecting compilers, setting custom compiler flags
 and controlling parallelism, see
@@ -110,10 +103,11 @@ for more details.
 Building with optimized BLAS support
 ====================================
 
-Configuring which BLAS/LAPACK is used if you have multiple libraries installed,
-or you have only one installed but in a non-standard location, is done via a
-``site.cfg`` file.  See the ``site.cfg.example`` shipped with NumPy for more
-details.
+Configuring which BLAS/LAPACK is used if you have multiple libraries installed
+is done via a ``--config-settings`` CLI flag - if not given, the default choice
+is OpenBLAS. If your installed library is in a non-standard location, selecting
+that location is done via a pkg-config ``.pc`` file.
+See http://scipy.github.io/devdocs/building/blas_lapack.html for more details.
 
 Windows
 -------
@@ -126,9 +120,8 @@ For an overview of the state of BLAS/LAPACK libraries on Windows, see
 macOS
 -----
 
-You will need to install a BLAS/LAPACK library. We recommend using OpenBLAS or
-Intel MKL. Apple's Accelerate also still works, however it has bugs and we are
-likely to drop support for it in the near future.
+On macOS >= 13.3, you can use Apple's Accelerate library. On older macOS versions,
+Accelerate has bugs and we recommend using OpenBLAS or (on x86-64) Intel MKL.
 
 Ubuntu/Debian
 -------------
