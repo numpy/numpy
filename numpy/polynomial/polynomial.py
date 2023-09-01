@@ -1252,12 +1252,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the weight ``w[i]`` applies to the unsquared
-        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
-        chosen so that the errors of the products ``w[i]*y[i]`` all have the
-        same variance.  When using inverse-variance weighting, use
-        ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
+        Weights to apply to the unsquared residual of each point.  When 
+        these correspond to weighting by Gaussian uncertainties, use w = 1/sigma.  
+        Note that w here is the sqrt of the more typical definition of the weights 
+        in weighted least squares, which generally uses W = w**2 = 1/sigma**2 
+        (or more generally 1/var) to weight the squared residual of each point.
         .. versionadded:: 1.5.0
     cov : bool, optional
         If True, return the covariance matrix. By default, 
@@ -1266,9 +1265,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         relative sense and everything is scaled such that the reduced 
         chi2 (read as chi-squared) is unity. This scaling is omitted if 
         cov='unscaled', as is relevant for the case that the weights are 
-        w = 1/sigma, with sigma known to be a reliable estimate of the 
-        uncertainty.
-
+        are w**2 = 1/sigma**2, with sigma known to be a reliable estimate of 
+        the uncertainty.
         .. versionadded:: 1.25.2
 
     Returns

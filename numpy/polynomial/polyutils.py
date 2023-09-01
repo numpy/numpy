@@ -673,7 +673,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     if cov:
         """
         v_base can be directly calculated as
-        >v_base = inv(np.dot(lhs, lhs.T))
+        >v_base = np.inv(np.dot(lhs, lhs.T))
 
         However, this is numerically unstable.
         It is calculated with SVD considering
