@@ -610,6 +610,7 @@ class TestMisc:
         coef2 = poly.polyfit(x, y, [0, 2, 4])
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
+
         # test polyfit returns covariance matrix
         x = [1., 2., 3., 4., 5., 6., 7., 8., 9.]
         y = [1., 3., 2., 4., 5., 6., 6., 8., 9.]
