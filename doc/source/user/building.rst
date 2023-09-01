@@ -78,36 +78,13 @@ This will install all build dependencies and use Meson to compile and install
 the NumPy C-extensions and Python modules. If you need more control of build
 options and commands, see the following sections.
 
-Building from source
-~~~~~~~~~~~~~~~~~~~~
+To perform an in-place build that can be run from the source folder run::
 
-To build NumPy with meson, you can use the
-`spin <https://github.com/scientific-python/spin>`_ utility. First, install the
-build requirements with
+    pip install -r build_requirements.txt
+    pip install -e . --no-build-isolation
 
-::
-
-    python -m pip install -r build_requirements.txt
-
-then run::
-
-    spin build
-
-After compilation, NumPy will be installed into ``./build-install``.
-
-The build is done in parallel by default, using the optimal number of parallel processes. You can also control this via the ``-j`` option::
-    
-    spin build -j4
-
-This does not result in an in-place build, and to run the version of NumPy you
-have just built, you can use::
-
-    spin ipython  # alternatively, `spin python`
-
-and import NumPy as usual.
-
-For more information on the ``spin`` utility, use ``spin --help``.
-
+*Note: for build instructions to do development work on NumPy itself, see*
+:ref:`development-environment`.
 
 
 Advanced building with Meson
@@ -142,10 +119,8 @@ installed with::
 
 Run the full test suite with::
 
-    spin test
-
-Note that ``spin`` will accept ``pytest`` arguments directly, e. g.
-``spin test -- -v`` will increase verbosity level.
+    cd ..  # avoid picking up the source tree
+    pytest --pyargs numpy
 
 For detailed info on testing, see :ref:`testing-builds`.
 
