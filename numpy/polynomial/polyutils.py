@@ -23,7 +23,7 @@ import functools
 import warnings
 
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import svd
 
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.core.umath import absolute
@@ -671,7 +671,21 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full:
         return_tuple.append([resids, rank, s, rcond])
     if cov:
-        v_base = inv(np.dot(lhs, lhs.T))
+        """
+        v_base can be directly calculated as
+        >v_base = inv(np.dot(lhs, lhs.T))
+
+        However, this is numerically unstable.
+        It is calculated with SVD.
+        """
+
+        U, s, _ = svd(lhs, full_matrices=False)
+
+        threshold = np.finfo(float).eps * max(lhs.shape) * s[0]
+        mask_array = s > threshold
+        s = s[mask_array]
+        U = U[:, mask_array]
+        v_base = np.dot(U / s**2, U.T)
 
         if cov == "unscaled":
             fac = 1
