@@ -21,6 +21,7 @@ from numpy import (
     _PartitionKind,
     _SortKind,
     _SortSide,
+    _CastingKind,
 )
 from numpy._typing import (
     DTypeLike,
@@ -392,7 +393,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> _SCT: ...
 @overload
 def clip(
@@ -406,7 +407,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> Any: ...
 @overload
 def clip(
@@ -420,7 +421,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def clip(
@@ -434,7 +435,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> NDArray[Any]: ...
 @overload
 def clip(
@@ -448,7 +449,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> Any: ...
 @overload
 def clip(
@@ -462,7 +463,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
-    extobj: list[Any] = ...,
+    casting: _CastingKind = ...,
 ) -> _ArrayType: ...
 
 @overload
