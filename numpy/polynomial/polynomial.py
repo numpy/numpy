@@ -1253,10 +1253,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         to solve the fit's matrix equation) is also returned.
     w : array_like, shape (`M`,), optional
         Weights to apply to the unsquared residual of each point.  When 
-        these correspond to weighting by Gaussian uncertainties, use w = 1/sigma.  
-        Note that w here is the sqrt of the more typical definition of the weights 
-        in weighted least squares, which generally uses W = w**2 = 1/sigma**2 
-        (or more generally 1/var) to weight the squared residual of each point.
+        these correspond to weighting by Gaussian uncertainties,
+        use w = 1/sigma.  
+        Note that w here is the sqrt of the more typical definition 
+        of the weights in weighted least squares, which generally 
+        uses W = w**2 = 1/sigma**2 (or more generally 1/var) to weight the 
+        squared residual of each point.
         .. versionadded:: 1.5.0
     cov : bool, optional
         If True, return the covariance matrix. By default, 
