@@ -219,13 +219,12 @@ be installed with::
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, install
-`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__
-and then run::
+To measure the test coverage, run::
 
-  $ python runtests.py --coverage
+  $ spin test --coverage
 
-This will create a report in ``build/coverage``, which can be viewed with::
+This will create a report in ``html`` format at ``build/coverage``, which can be
+viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
 
@@ -234,10 +233,12 @@ This will create a report in ``build/coverage``, which can be viewed with::
 Building docs
 -------------
 
-To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run::
+To build the HTML documentation, use::
 
-    make html
+  spin docs
+
+You can also run ``make`` from the ``doc`` directory. ``make help`` lists
+all targets.
 
 To get the appropriate dependencies and other requirements,
 see :ref:`howto-build-docs`.
