@@ -886,9 +886,8 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
            [ True, False]])
     """
     element = np.asarray(element)
-    result = _in1d(element, test_elements, assume_unique=assume_unique,
-                    invert=invert, kind=kind).reshape(element.shape)
-    return result
+    return _in1d(element, test_elements, assume_unique=assume_unique,
+                 invert=invert, kind=kind).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):
@@ -968,5 +967,4 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    result = ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
-    return result
+    return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
