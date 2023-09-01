@@ -278,11 +278,6 @@ needs a ``.gdbinit`` file with the following contents:
 
     add-auto-load-safe-path ~/.pyenv
 
-.. 
-    Instead of plain ``gdb`` you can of course use your favourite
-    alternative debugger; run it on the python binary with arguments
-    ``runtests.py -g --python mytest.py``.
-
 Building NumPy with a Python built with debug support (on Linux distributions
 typically packaged as ``python-dbg``) is highly recommended.
 

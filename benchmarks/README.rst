@@ -46,19 +46,19 @@ and `--quick` is used to avoid repetitions.
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
 
-    spin bench bench_core
+    spin bench -t bench_core
 
-To run a benchmark defined in a class, such as ``Mandelbrot``
-from ``bench_avx.py``::
+To run a benchmark defined in a class, such as ``MeshGrid``
+from ``bench_creation.py``::
 
-    spin bench -t bench_avx.Mandelbrot
+    spin bench -t bench_creation.MeshGrid
 
 Compare changes in benchmark results to another version/commit/branch, use the
 ``--compare`` option (or the equivalent ``-c``)::
 
-    spin bench --compare v1.6.2 bench_core
-    spin bench --compare 8bf4e9b bench_core
-    spin bench -c main bench_core
+    spin bench --compare v1.6.2 -t bench_core
+    spin bench --compare 20d03bcfd -t bench_core
+    spin bench -c main -t bench_core
 
 All of the commands above display the results in plain text in
 the console, and the results are not saved for comparison with
