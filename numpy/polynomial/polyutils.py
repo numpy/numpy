@@ -23,7 +23,7 @@ import functools
 import warnings
 
 import numpy as np
-from numpy.linalg import svd
+from numpy.linalg import inv
 
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.core.umath import absolute
