@@ -20,7 +20,7 @@ from . import scimath as emath
 # Private submodules
 # load module names. See https://github.com/networkx/networkx/issues/5838
 from . import _type_check_impl
-from . import index_tricks
+from . import _index_tricks_impl
 from . import _nanfunctions_impl
 from . import _function_base_impl
 from . import _stride_tricks_impl
@@ -38,15 +38,12 @@ from . import arrayterator
 from . import _arraypad_impl
 from . import _version
 
-from .index_tricks import *
 from .arrayterator import Arrayterator
 from ._version import *
 from numpy.core._multiarray_umath import add_docstring, tracemalloc_domain
 from numpy.core.function_base import add_newdoc
 
-
 __all__ = ['emath']
-__all__ += index_tricks.__all__
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
@@ -66,7 +63,7 @@ def __getattr__(attr):
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base", 
         "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
-        "shape_base", "polynomial"
+        "shape_base", "polynomial", "index_tricks",
     ):
         raise AttributeError(
             f"`np.lib.{attr}` is now private. If you are using a public "

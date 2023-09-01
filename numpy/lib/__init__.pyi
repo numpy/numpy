@@ -26,21 +26,6 @@ from numpy.lib.arrayterator import (
     Arrayterator as Arrayterator,
 )
 
-from numpy.lib.index_tricks import (
-    ravel_multi_index as ravel_multi_index,
-    unravel_index as unravel_index,
-    mgrid as mgrid,
-    ogrid as ogrid,
-    r_ as r_,
-    c_ as c_,
-    s_ as s_,
-    index_exp as index_exp,
-    ix_ as ix_,
-    fill_diagonal as fill_diagonal,
-    diag_indices as diag_indices,
-    diag_indices_from as diag_indices_from,
-)
-
 from numpy.core.multiarray import (
     add_docstring as add_docstring,
     tracemalloc_domain as tracemalloc_domain,

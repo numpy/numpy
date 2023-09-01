@@ -9,7 +9,7 @@ from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.shape_base import _arrays_for_stack_dispatcher
-from numpy.lib.index_tricks import ndindex
+from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
 
