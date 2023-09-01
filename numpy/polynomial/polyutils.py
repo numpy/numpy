@@ -23,7 +23,7 @@ import functools
 import warnings
 
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import svd
 
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.core.umath import absolute
@@ -671,7 +671,12 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full:
         return_tuple.append([resids, rank, s, rcond])
     if cov:
-        v_base = inv(np.dot(lhs, lhs.T))
+        _, s, unity_arrays = svd(lhs, full_matrices=False)
+        threshold = np.finfo(float).eps * max(lhs.shape) * s[0]
+        s = s[s > threshold]
+        unity_arrays = unity_arrays[:s.size]
+        v_base = np.dot(unity_arrays.T / s**2, unity_arrays)
+
         if cov == "unscaled":
             fac = 1
         else:
