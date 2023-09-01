@@ -52,12 +52,20 @@ Basic Installation
 
 To install NumPy, run::
 
-    spin build -j 4
+    pip install .
 
-This will compile NumPy on 4 CPUs and install it into ``./build-install``.
-To run the build from the source folder run::
+This will compile NumPy on all available CPUs and install it into the active
+environment.
 
-    spin ipython  # Alternatively, `spin python`
+To run the build from the source folder for development purposes, use the
+``spin`` development CLI::
+
+    spin build    # installs in-tree under `build-install/`
+    spin ipython  # drop into an interpreter where `import numpy` picks up the local build
+
+Alternatively, use an editable install with::
+
+    pip install -e . --no-build-isolation
 
 See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_
 for more details.
