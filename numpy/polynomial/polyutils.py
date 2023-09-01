@@ -671,11 +671,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full:
         return_tuple.append([resids, rank, s, rcond])
     if cov:
-        _, s, unity_arrays = svd(lhs, full_matrices=False)
-        threshold = np.finfo(float).eps * max(lhs.shape) * s[0]
-        s = s[s > threshold]
-        unity_arrays = unity_arrays[:s.size]
-        v_base = np.dot(unity_arrays.T / s**2, unity_arrays)
+        v_base = inv(np.dot(lhs, lhs.T))
 
         if cov == "unscaled":
             fac = 1
