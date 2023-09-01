@@ -1257,6 +1257,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
+
+        .. versionadded:: 1.5.0
     cov : bool, optional
         If True, return the covariance matrix. By default, 
         the covariance are scaled by chi2/dof, where dof = M - (deg + 1),
@@ -1266,7 +1268,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         cov='unscaled', as is relevant for the case that the weights are 
         w = 1/sigma, with sigma known to be a reliable estimate of the 
         uncertainty.
-        .. versionadded:: 1.5.0
+
+        .. versionadded:: 1.25.2
 
     Returns
     -------
