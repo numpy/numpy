@@ -29,44 +29,31 @@ pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
 @pytest.fixture
-def install_temp(request, tmp_path):
+def install_temp(tmp_path):
     # Based in part on test_cython from random.tests.test_extending
     if IS_WASM:
         pytest.skip("No subprocess")
 
-    here = os.path.dirname(__file__)
-    ext_dir = os.path.join(here, "examples", "cython")
+    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
+    build_dir = tmp_path / "build"
+    os.makedirs(build_dir, exist_ok=True)
+    try:
+        subprocess.check_call(["meson", "--version"])
+    except FileNotFoundError:
+        pytest.skip("No usable 'meson' found")
+    if sys.platform == "win32":
+        subprocess.check_call(["meson", "setup",
+                               "--buildtype=release",
+                               "--vsenv", str(srcdir)],
+                              cwd=build_dir,
+                              )
+    else:
+        subprocess.check_call(["meson", "setup", str(srcdir)],
+                              cwd=build_dir
+                              )
+    subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
 
-    cytest = str(tmp_path / "cytest")
-
-    shutil.copytree(ext_dir, cytest)
-    # build the examples and "install" them into a temporary directory
-
-    install_log = str(tmp_path / "tmp_install_log.txt")
-    subprocess.check_output(
-        [
-            sys.executable,
-            "setup.py",
-            "build",
-            "install",
-            "--prefix", str(tmp_path / "installdir"),
-            "--single-version-externally-managed",
-            "--record",
-            install_log,
-        ],
-        cwd=cytest,
-    )
-
-    # In order to import the built module, we need its path to sys.path
-    # so parse that out of the record
-    with open(install_log) as fid:
-        for line in fid:
-            if "checks" in line:
-                sys.path.append(os.path.dirname(line))
-                break
-        else:
-            raise RuntimeError(f'could not parse "{install_log}"')
-
+    sys.path.append(str(build_dir))
 
 def test_is_timedelta64_object(install_temp):
     import checks
