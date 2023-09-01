@@ -19,7 +19,8 @@ import numpy as np
 import numpy.ma as ma
 from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.lib.npyio import recfromcsv, recfromtxt
+from numpy.lib import _npyio_impl
+from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -715,11 +716,11 @@ class TestLoadTxt(LoadTxtBase):
 
     def setup_method(self):
         # lower chunksize for testing
-        self.orig_chunk = np.lib.npyio._loadtxt_chunksize
-        np.lib.npyio._loadtxt_chunksize = 1
+        self.orig_chunk = _npyio_impl._loadtxt_chunksize
+        _npyio_impl._loadtxt_chunksize = 1
 
     def teardown_method(self):
-        np.lib.npyio._loadtxt_chunksize = self.orig_chunk
+        _npyio_impl._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
         c = TextIO()

@@ -29,17 +29,16 @@ from . import stride_tricks
 from . import _twodim_base_impl
 from . import _ufunclike_impl
 from . import _histograms_impl
-from . import polynomial
 from . import _utils_impl
 from . import _arraysetops_impl
+from . import _polynomial_impl
+from . import _npyio_impl
 from . import npyio
 from . import arrayterator
 from . import _arraypad_impl
 from . import _version
 
 from .index_tricks import *
-from .polynomial import *
-from .npyio import *
 from .arrayterator import Arrayterator
 from ._version import *
 from numpy.core._multiarray_umath import add_docstring, tracemalloc_domain
@@ -48,8 +47,6 @@ from numpy.core.function_base import add_newdoc
 
 __all__ = ['emath']
 __all__ += index_tricks.__all__
-__all__ += polynomial.__all__
-__all__ += npyio.__all__
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
@@ -69,7 +66,7 @@ def __getattr__(attr):
     elif attr in (
         "histograms", "type_check", "nanfunctions", "function_base", 
         "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
-        "shape_base"
+        "shape_base", "polynomial"
     ):
         raise AttributeError(
             f"`np.lib.{attr}` is now private. If you are using a public "

@@ -192,7 +192,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-@set_module('numpy')
+@set_module('numpy.lib.npyio')
 class DataSource:
     """
     DataSource(destpath='.')
@@ -216,7 +216,7 @@ class DataSource:
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = np.DataSource()
+        >>> repos = np.lib.npyio.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -228,13 +228,13 @@ class DataSource:
     --------
     ::
 
-        >>> ds = np.DataSource('/home/guido')
+        >>> ds = np.lib.npyio.DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/'
         >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
         '/home/guido/www.google.com/index.html'
 
-        >>> ds = np.DataSource(None)  # use with temporary file
+        >>> ds = np.lib.npyio.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')

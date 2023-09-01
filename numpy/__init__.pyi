@@ -489,7 +489,7 @@ from numpy.lib._nanfunctions_impl import (
     nanquantile as nanquantile,
 )
 
-from numpy.lib.npyio import (
+from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
@@ -504,7 +504,7 @@ from numpy.lib.npyio import (
     fromregex as fromregex,
 )
 
-from numpy.lib.polynomial import (
+from numpy.lib._polynomial_impl import (
     poly as poly,
     roots as roots,
     polyint as polyint,
@@ -3295,25 +3295,6 @@ class ndindex:
     def __init__(self, *shape: SupportsIndex) -> None: ...
     def __iter__(self: _T) -> _T: ...
     def __next__(self) -> _Shape: ...
-
-class DataSource:
-    def __init__(
-        self,
-        destpath: None | str | os.PathLike[str] = ...,
-    ) -> None: ...
-    def __del__(self) -> None: ...
-    def abspath(self, path: str) -> str: ...
-    def exists(self, path: str) -> bool: ...
-
-    # Whether the file-object is opened in string or bytes mode (by default)
-    # depends on the file-extension of `path`
-    def open(
-        self,
-        path: str,
-        mode: str = ...,
-        encoding: None | str = ...,
-        newline: None | str = ...,
-    ) -> IO[Any]: ...
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet

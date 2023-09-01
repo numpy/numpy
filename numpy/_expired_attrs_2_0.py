@@ -67,4 +67,5 @@ __expired_attributes__ = {
     "round_": "Use `np.round` instead.",
     "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
     "get_array_wrap": "",
+    "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
 }

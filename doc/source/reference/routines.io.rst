@@ -81,7 +81,7 @@ Data sources
 .. autosummary::
    :toctree: generated/
 
-   DataSource
+   lib.npyio.DataSource
 
 Binary format description
 -------------------------

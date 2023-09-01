@@ -120,6 +120,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.recfunctions",
     "lib.scimath",
     "lib.stride_tricks",
+    "lib.npyio",
     "linalg",
     "ma",
     "ma.extras",
@@ -194,8 +195,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "fft.helper",
     "lib.arrayterator",
     "lib.index_tricks",
-    "lib.npyio",
-    "lib.polynomial",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "linalg.lapack_lite",
     "linalg.linalg",

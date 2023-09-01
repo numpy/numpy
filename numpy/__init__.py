@@ -183,13 +183,9 @@ else:
 
     from . import lib
     from .lib import (
-        DataSource, c_, diag_indices, diag_indices_from, emath, 
-        fromregex, genfromtxt, index_exp, ix_, load, loadtxt,
+        c_, diag_indices, diag_indices_from, emath, index_exp, ix_,
         mgrid, ndenumerate, ndindex, ogrid, fill_diagonal,
-        packbits, poly, poly1d, polyadd, polyder,
-        polydiv, polyfit, polyint, polymul, polysub, polyval,
-        r_, ravel_multi_index, roots, s_, save, savetxt, savez, 
-        savez_compressed, unpackbits, unravel_index
+        r_, ravel_multi_index, s_, unravel_index
     )
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
@@ -230,6 +226,14 @@ else:
     )
     from .lib._stride_tricks_impl import (
         broadcast_arrays, broadcast_shapes, broadcast_to
+    )
+    from .lib._polynomial_impl import (
+        poly, polyint, polyder, polyadd, polysub, polymul, polydiv, polyval,
+        polyfit, poly1d, roots
+    )
+    from .lib._npyio_impl import (
+        savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
+        savez_compressed, unpackbits, fromregex
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -302,6 +306,8 @@ else:
         set(lib._arraypad_impl.__all__) |
         set(lib._utils_impl.__all__) |
         set(lib._stride_tricks_impl.__all__) |
+        set(lib._polynomial_impl.__all__) |
+        set(lib._npyio_impl.__all__) |
         {"show_config", "__version__"}
     )
 
