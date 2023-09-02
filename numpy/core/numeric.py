@@ -2213,9 +2213,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     Notes
     -----
     If the following equation is element-wise True, then allclose returns
-    True.
+    True.::
 
-     absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+     absolute(a - b) <= (atol + rtol * absolute(b))
 
     The above equation is not symmetric in `a` and `b`, so that
     ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
@@ -2294,9 +2294,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     .. versionadded:: 1.7.0
 
     For finite values, isclose uses the following equation to test whether
-    two floating point values are equivalent.
+    two floating point values are equivalent.::
 
-     absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+     absolute(a - b) <= (atol + rtol * absolute(b))
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
     in `a` and `b` -- it assumes `b` is the reference value -- so that
