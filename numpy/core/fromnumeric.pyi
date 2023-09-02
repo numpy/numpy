@@ -393,6 +393,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> _SCT: ...
 @overload
@@ -407,6 +408,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> Any: ...
 @overload
@@ -421,6 +423,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -435,6 +438,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -449,6 +453,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> Any: ...
 @overload
@@ -463,6 +468,7 @@ def clip(
     order: _OrderKACF = ...,
     subok: bool = ...,
     signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
     casting: _CastingKind = ...,
 ) -> _ArrayType: ...
 
