@@ -167,17 +167,13 @@ following functions.
 The purpose of ``numpy.meshgrid`` is to create a rectangular grid out of a set
 of one-dimensional coordinate arrays.
 
-Given arrays
-
- ::
+Given arrays::
    
    >>> x = np.array([0, 1, 2, 3])
    >>> y = np.array([0, 1, 2, 3, 4, 5])
 
 ``meshgrid`` will create two coordinate arrays, which can be used to generate
-the coordinate pairs determining this grid.
-
- ::
+the coordinate pairs determining this grid.::
 
    >>> xx, yy = np.meshgrid(x, y)
    >>> xx

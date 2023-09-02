@@ -702,9 +702,9 @@ def polyval(p, x):
        A summary of the differences can be found in the
        :doc:`transition guide </reference/routines.polynomials>`.
 
-    If `p` is of length N, this function returns the value:
+    If `p` is of length N, this function returns the value::
 
-        ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
+        p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
 
     If `x` is a sequence, then ``p(x)`` is returned for each element of ``x``.
     If `x` is another polynomial then the composite polynomial ``p(x(t))``
