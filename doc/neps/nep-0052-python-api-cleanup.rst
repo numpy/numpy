@@ -6,7 +6,9 @@ NEP 52 — Python API cleanup for NumPy 2.0
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Author: Nathan Goldbaum <ngoldbaum@quansight.com>
+:Author: Mateusz Sokół <msokol@quansight.com>
+:Status: Accepted
 :Type: Standards Track
 :Created: 2023-03-28
 :Resolution:
@@ -18,7 +20,8 @@ Abstract
 We propose to clean up NumPy's Python API for the NumPy 2.0 release.
 This includes a more clearly defined split between what is public and what is
 private, and reducing the size of the main namespace by removing aliases
-and functions that have better alternatives.
+and functions that have better alternatives. Futhermore, each function is meant
+to be accessible from only one place, so all duplicates also need to be dropped.
 
 
 Motivation and Scope
@@ -116,7 +119,9 @@ removed functions/classes, as well as for more strictly enforced private APIs.
 In order to make it easier to adopt the changes in this NEP, we will:
 
 1. Provide a transition guide that lists each API change and its replacement.
-2. Provide a script to automate the migration wherever possible. This will be
+2. Explicitly flag all expired attributes with a meaningful ``AttributeError``
+   that points out to the new place or recommends an alternative.
+3. Provide a script to automate the migration wherever possible. This will be
    similar to ``tools/replace_old_macros.sed`` (which adapts code for a
    previous C API naming scheme change). This will be ``sed`` (or equivalent)
    based rather than attempting AST analysis, so it won't cover everything.
@@ -140,16 +145,12 @@ order of 100. Here is a representative set of examples:
   `gh-17325 <https://github.com/numpy/numpy/issues/17325>`__,
   `gh-12334 <https://github.com/numpy/numpy/issues/12334>`__,
   and other issues for ``maximum_sctype`` and related functions).
-- Business day functionality can likely be removed (unclear if it needs
-  splitting out like was done for ``np.financial``).
 - The ``np.compat`` namespace, used during the Python 2 to 3 transition, will be removed.
 - Functions that are narrow in scope, with very few public use-cases,
-  will be removed.  See, e.g.
-  ``real_if_close`` (`gh-11375 <https://github.com/numpy/numpy/issues/11375>`__).
-  These will have to be identified manually and by issue triage.
+  will be removed. These will have to be identified manually and by issue triage.
 
 New namespaces are introduced for warnings/exceptions (``np.exceptions``) and
-for dtype-related functionality (``np.types``). NumPy 2.0 is a good opportunity
+for dtype-related functionality (``np.dtypes``). NumPy 2.0 is a good opportunity
 to populate these submodules from the main namespace.
 
 Functionality that is widely used but has a preferred alternative may either be
@@ -199,8 +200,10 @@ functionality groupings. Also by "mainstream" and special-purpose namespaces:
     numpy.emath
     numpy.f2py  # only a couple of public functions, like `compile` and `get_include`
     numpy.lib.stride_tricks
+    numpy.lib.npyio
     numpy.rec
-    numpy.types
+    numpy.dtypes
+    numpy.array_utils
 
     # Legacy (prefer not to use, there are better alternatives and/or this code
     # is deprecated or isn't reliable). This will be a third grouping in the
@@ -209,15 +212,15 @@ functionality groupings. Also by "mainstream" and special-purpose namespaces:
     numpy.char
     numpy.distutils
     numpy.ma
+    numpy.matlib
+    numpy.matrixlib
+    numpy.version
 
     # To remove
     numpy.compat
     numpy.core  # rename to _core
     numpy.doc
     numpy.math
-    numpy.matlib
-    numpy.matrixlib
-    numpy.version
 
     # To clean out or somehow deal with: everything in `numpy.lib`
 
@@ -326,6 +329,11 @@ Alternatives
 Discussion
 ----------
 
+- `gh-23999: Tracking issue for the NEP 52 <https://github.com/numpy/numpy/issues/23999>`__
+
+- `gh-24306: Overhaul of the main namespace <https://github.com/numpy/numpy/issues/24306>`__
+
+- `gh-24507: Overhaul of the np.lib namespace <https://github.com/numpy/numpy/issues/24507>`__
 
 References and Footnotes
 ------------------------
