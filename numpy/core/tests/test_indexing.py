@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
+from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
@@ -423,12 +424,12 @@ class TestIndexing:
                 return np.array(0)
 
         a = np.zeros(())
-        assert_(isinstance(a[()], np.float_))
+        assert_(isinstance(a[()], np.float64))
         a = np.zeros(1)
-        assert_(isinstance(a[z], np.float_))
+        assert_(isinstance(a[z], np.float64))
         a = np.zeros((1, 1))
-        assert_(isinstance(a[z, np.array(0)], np.float_))
-        assert_(isinstance(a[z, ArrayLike()], np.float_))
+        assert_(isinstance(a[z, np.array(0)], np.float64))
+        assert_(isinstance(a[z, ArrayLike()], np.float64))
 
         # And object arrays do not call it too often:
         b = np.array(0)
@@ -748,12 +749,12 @@ class TestFancyIndexingCast:
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
@@ -1199,7 +1200,7 @@ class TestMultiIndexingAutomated:
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
-            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('error', '', VisibleDeprecationWarning)
 
             def isskip(idx):
                 return isinstance(idx, str) and idx == "skip"
@@ -1270,7 +1271,7 @@ class TestFloatNonIntegerArgument:
         def mult(a, b):
             return a * b
 
-        assert_raises(TypeError, mult, [1], np.float_(3))
+        assert_raises(TypeError, mult, [1], np.float64(3))
         # following should be OK
         mult([1], np.int_(3))
 

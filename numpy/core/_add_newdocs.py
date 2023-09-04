@@ -5,7 +5,7 @@ requiring a re-compile.
 
 NOTE: Many of the methods of ndarray have corresponding functions.
       If you update these docstrings, please keep also the ones in
-      core/fromnumeric.py, core/defmatrix.py up-to-date.
+      core/fromnumeric.py, matrixlib/defmatrix.py up-to-date.
 
 """
 
@@ -898,11 +898,11 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Creating an array from sub-classes:
 
-    >>> np.array(np.mat('1 2; 3 4'))
+    >>> np.array(np.asmatrix('1 2; 3 4'))
     array([[1, 2],
            [3, 4]])
 
-    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
 
@@ -947,7 +947,6 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
@@ -1027,7 +1026,6 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and
@@ -1394,7 +1392,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
-    comparison operator specified by `cmp_op`.
+    comparison operator specified by `cmp`.
 
     Parameters
     ----------
@@ -1413,7 +1411,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If `cmp_op` is not valid.
+        If `cmp` is not valid.
     TypeError
         If at least one of `a` or `b` is a non-string array
 
@@ -3137,12 +3135,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3229,7 +3227,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     array([b'ceg', b'fac'], dtype='|S3')
 
     ``A.newbyteorder().byteswap()`` produces an array with the same values
-      but different representation in memory
+    but different representation in memory
 
     >>> A = np.array([1, 2, 3])
     >>> A.view(np.uint8)
@@ -4061,7 +4059,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The WRITEBACKIFCOPY and flag can never be set
+    The WRITEBACKIFCOPY flag can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that
@@ -4080,7 +4078,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     -----
     Array flags provide information about how the memory area used
     for the array is to be interpreted. There are 7 Boolean flags
-    in use, only four of which can be changed by the user:
+    in use, only three of which can be changed by the user:
     WRITEBACKIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
@@ -4480,7 +4478,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     A compatibility alias for `~ndarray.tobytes`, with exactly the same
     behavior.
 
-    Despite its name, it returns `bytes` not `str`\ s.
+    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
 
     .. deprecated:: 1.19.0
     """))
@@ -4581,7 +4579,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float_')``.
+        ``dtype('float64')``.
 
     Parameters
     ----------
@@ -6476,10 +6474,13 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Attributes
     ----------
-    Note: once a busdaycalendar object is created, you cannot modify the
-    weekmask or holidays.  The attributes return copies of internal data.
     weekmask : (copy) seven-element array of bool
     holidays : (copy) sorted array of datetime64[D]
+
+    Notes
+    -----
+    Once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
 
     Examples
     --------
@@ -6642,9 +6643,6 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('imag',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('itemsize',
     """The length of one element in bytes."""))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('nbytes',
-    """The length of the scalar in bytes."""))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('ndim',
     """The number of array dimensions."""))

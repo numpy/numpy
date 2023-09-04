@@ -23,7 +23,7 @@ __all__ = [
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'max', 'min',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -345,9 +345,9 @@ def choose(a, choices, out=None, mode='raise'):
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside ``[0, n-1]`` will be treated:
 
-          * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod ``n``
-          * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
+        * 'raise' : an exception is raised
+        * 'wrap' : value becomes value mod ``n``
+        * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
     -------
@@ -2600,7 +2600,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     .. warning::
         `ptp` preserves the data type of the array. This means the
         return value for an input of signed integers with n bits
-        (e.g. `np.int8`, `np.int16`, etc) is also a signed integer
+        (e.g. `numpy.int8`, `numpy.int16`, etc) is also a signed integer
         with n bits.  In that case, peak-to-peak values greater than
         ``2**(n-1)-1`` will be returned as negative values. An example
         with a work-around is shown below.
@@ -2784,7 +2784,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.max(b)
     np.float64(nan)
     >>> np.max(b, where=~np.isnan(b), initial=-1)
@@ -2928,7 +2928,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     array([10,  1])
 
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.min(b)
     np.float64(nan)
     >>> np.min(b, where=~np.isnan(b), initial=10)
@@ -3636,6 +3636,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     2.0
 
     Using the mean keyword to save computation time:
+
     >>> import numpy as np
     >>> from timeit import timeit
     >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
@@ -3800,6 +3801,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     4.0
 
     Using the mean keyword to save computation time:
+
     >>> import numpy as np
     >>> from timeit import timeit
     >>>
@@ -3839,33 +3841,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 # Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
-
-
-def _round__dispatcher(a, decimals=None, out=None):
-    # 2023-02-28, 1.25.0
-    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `round` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_round__dispatcher)
-def round_(a, decimals=0, out=None):
-    """
-    Round an array to the given number of decimals.
-
-    `~numpy.round_` is a disrecommended backwards-compatibility
-    alias of `~numpy.around` and `~numpy.round`.
-
-    .. deprecated:: 1.25.0
-        ``round_`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `round` instead.
-
-    See Also
-    --------
-    around : equivalent function; see for details.
-    """
-    return around(a, decimals=decimals, out=out)
 
 
 def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

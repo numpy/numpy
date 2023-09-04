@@ -32,8 +32,9 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
         Set treatment for all types of floating-point errors at once:
 
         - ignore: Take no action when the exception occurs.
-        - warn: Print a `RuntimeWarning` (via the Python `warnings` module).
-        - raise: Raise a `FloatingPointError`.
+        - warn: Print a :exc:`RuntimeWarning` (via the Python `warnings`
+          module).
+        - raise: Raise a :exc:`FloatingPointError`.
         - call: Call a function specified using the `seterrcall` function.
         - print: Print a warning directly to ``stdout``.
         - log: Record error in a Log object specified by `seterrcall`.
@@ -158,8 +159,8 @@ def setbufsize(size):
     Set the size of the buffer used in ufuncs.
 
     .. versionchanged:: 2.0
-        The scope of setting the buffer is tied to the `np.errstate` context.
-        Exiting a ``with errstate():`` will also restore the bufsize.
+        The scope of setting the buffer is tied to the `numpy.errstate`
+        context.  Exiting a ``with errstate():`` will also restore the bufsize.
 
     Parameters
     ----------

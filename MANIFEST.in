@@ -16,11 +16,13 @@ exclude azure-*.yml
 include .coveragerc
 
 # Sub-directories. Included are: numpy/, doc/, benchmarks/, tools/
-include numpy/_version.py
+include numpy/version.py
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
 include numpy/py.typed
 include numpy/random/include/*
 include numpy/*.pxd
+# Meson CPU Dispatcher
+recursive-include meson_cpu *.build *.in
 # Add build support that should go in sdist, but not go in bdist/be installed
 # Note that sub-directories that don't have __init__ are apparently not
 # included by 'recursive-include', so list those separately

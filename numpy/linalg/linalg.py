@@ -22,7 +22,7 @@ from typing import NamedTuple, Any
 from .._utils import set_module
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
+    csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
     add, multiply, sqrt, sum, isfinite,
     finfo, errstate, moveaxis, amin, amax, prod, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
@@ -31,7 +31,7 @@ from numpy.core import (
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
-from numpy.lib.twodim_base import triu, eye
+from numpy.lib._twodim_base_impl import triu, eye
 from numpy.linalg import _umath_linalg
 
 from numpy._typing import NDArray
@@ -1802,9 +1802,9 @@ def cond(x, p=None):
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
-            r[nan_mask] = Inf
+            r[nan_mask] = inf
         elif nan_mask:
-            r[()] = Inf
+            r[()] = inf
 
     # Convention is to return scalars instead of 0d arrays
     if r.ndim == 0:
@@ -2055,8 +2055,9 @@ def slogdet(a):
     logabsdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
-    If the determinant is zero, then `sign` will be 0 and `logabsdet` will be
-    -Inf. In all cases, the determinant is equal to ``sign * np.exp(logabsdet)``.
+    If the determinant is zero, then `sign` will be 0 and `logabsdet` 
+    will be -inf. In all cases, the determinant is equal to 
+    ``sign * np.exp(logabsdet)``.
 
     See Also
     --------
@@ -2447,7 +2448,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     The Frobenius norm is given by [1]_:
 
-        :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
+    :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
 
     The nuclear norm is the sum of the singular values.
 
@@ -2564,9 +2565,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         axis = (axis,)
 
     if len(axis) == 1:
-        if ord == Inf:
+        if ord == inf:
             return abs(x).max(axis=axis, keepdims=keepdims)
-        elif ord == -Inf:
+        elif ord == -inf:
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
             # Zero norm
@@ -2602,7 +2603,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             if col_axis > row_axis:
                 col_axis -= 1
             ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
-        elif ord == Inf:
+        elif ord == inf:
             if row_axis > col_axis:
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
@@ -2610,7 +2611,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             if col_axis > row_axis:
                 col_axis -= 1
             ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
-        elif ord == -Inf:
+        elif ord == -inf:
             if row_axis > col_axis:
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
@@ -2810,7 +2811,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     for l in range(1, n):
         for i in range(n - l):
             j = i + l
-            m[i, j] = Inf
+            m[i, j] = inf
             for k in range(i, j):
                 q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
                 if q < m[i, j]:

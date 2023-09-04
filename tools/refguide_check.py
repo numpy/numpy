@@ -96,7 +96,7 @@ DOCTEST_SKIPDICT = {
     # cases where NumPy docstrings import things from other 3'rd party libs:
     'numpy.core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.DataSource': None,
+    'numpy.lib.npyio.DataSource': None,
     'numpy.lib.Repository': None,
 }
 
@@ -614,9 +614,7 @@ CHECK_NAMESPACE = {
       'float64': np.float64,
       'dtype': np.dtype,
       'nan': np.nan,
-      'NaN': np.nan,
       'inf': np.inf,
-      'Inf': np.inf,
       'StringIO': io.StringIO,
 }
 

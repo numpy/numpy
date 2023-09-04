@@ -48,6 +48,13 @@ else
   ]
 endif
 
+macOS13_3_or_later = false
+if host_machine.system() == 'darwin'
+  r = run_command('xcrun', '-sdk', 'macosx', '--show-sdk-version', check: true)
+  sdkVersion = r.stdout().strip()
+
+  macOS13_3_or_later = sdkVersion.version_compare('>=13.3')
+endif
 
 # This is currently injected directly into CFLAGS/CXXFLAGS for wheel builds
 # (see cibuildwheel settings in pyproject.toml), but used by CI jobs already
@@ -81,6 +88,7 @@ endif
 # https://github.com/mesonbuild/meson/issues/2835
 blas_name = get_option('blas')
 lapack_name = get_option('lapack')
+
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
 if blas_name == 'openblas'
@@ -90,6 +98,23 @@ if blas_name == 'openblas'
     _openblas_names = ['openblas', 'OpenBLAS']
   endif
   blas = dependency(_openblas_names, required: false)
+elif blas_name.to_lower() == 'accelerate'
+  # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
+  if macOS13_3_or_later
+    accelerate_compile_args = ['-DACCELERATE_NEW_LAPACK']
+    if(use_ilp64)
+      accelerate_compile_args += '-DACCELERATE_LAPACK_ILP64'
+    endif
+    blas = declare_dependency(
+            compile_args: accelerate_compile_args,
+            dependencies: dependency('Accelerate')
+          )
+  else
+    if(use_ilp64)
+      error('macOS SDK 13.3+ is required for ILP64 support.')
+    endif
+    blas = dependency('Accelerate')
+  endif
 else
   blas = dependency(blas_name, required: false)
 endif
@@ -112,14 +137,22 @@ if have_blas
   #   `dependency('blas', modules: cblas)`
   # see https://github.com/mesonbuild/meson/pull/10921.
   have_cblas = false
-  if cc.links('''
+  if blas_name.to_lower() == 'accelerate'
+    _cblas_header = '<Accelerate/Accelerate.h>'
+  elif blas_name.to_lower().startswith('mkl')
+    _cblas_header = '<mkl_cblas.h>'
+  else
+    _cblas_header = '<cblas.h>'
+  endif
+  if cc.links(f'''
       #ifndef BLAS_SYMBOL_SUFFIX
       #  define BLAS_SYMBOL_SUFFIX
       #endif
       #define EXPAND(suffix) cblas_ddot ## suffix
       #define DDOT(suffix) EXPAND(suffix)
 
-      #include <cblas.h>
+      #include @_cblas_header@
+
       int main(int argc, const char *argv[])
       {
           double a[4] = {1,2,3,4};
@@ -178,9 +211,27 @@ else
 endif
 
 if lapack_name == 'openblas'
-  lapack_name = ['openblas', 'OpenBLAS']
+  lapack_dep = dependency(['openblas', 'OpenBLAS'], required: false)
+elif lapack_name.to_lower() == 'accelerate'
+  # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
+  if macOS13_3_or_later
+    accelerate_compile_args = ['-DACCELERATE_NEW_LAPACK']
+    if(use_ilp64)
+      accelerate_compile_args += '-DACCELERATE_LAPACK_ILP64'
+    endif
+    lapack_dep = declare_dependency(
+               compile_args: accelerate_compile_args,
+               dependencies: dependency('Accelerate')
+             )
+  else
+    if(use_ilp64)
+      error('macOS SDK 13.3+ is required for ILP64 support.')
+    endif
+    lapack_dep = dependency('Accelerate')
+  endif
+else
+  lapack_dep = dependency(lapack_name, required: false)
 endif
-lapack_dep = dependency(lapack_name, required: false)
 have_lapack = lapack_dep.found()
 if not have_lapack and not allow_noblas
   error('No LAPACK library detected! Install one, or use the ' + \
@@ -203,7 +254,7 @@ python_sources = [
   '_globals.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
-  '_version.py',
+  '_expired_attrs_2_0.py',
   'conftest.py',
   'ctypeslib.py',
   'ctypeslib.pyi',
@@ -212,8 +263,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
-  'py.typed',
-  'version.py'
+  'py.typed'
 ]
 
 py.install_sources(
@@ -243,13 +293,37 @@ pure_subdirs = [
   'polynomial',
   'testing',
   'tests',
-  'typing',
+  'typing'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'
 endif
 
 np_dir = py.get_install_dir() / 'numpy'
+
+# Generate version.py for sdist
+meson.add_dist_script(
+   ['_build_utils/gitversion.py', '--meson-dist', '--write',
+     'numpy/version.py']
+)
+if not fs.exists('version.py')
+  generate_version = custom_target(
+    'generate-version',
+    install: true,
+    build_always_stale: true,
+    build_by_default: true,
+    output: 'version.py',
+    input: '_build_utils/gitversion.py',
+    command: [py, '@INPUT@', '--write', '@OUTPUT@'],
+    install_dir: np_dir
+  )
+else
+  # When building from sdist, version.py exists and should be included
+  py.install_sources(
+    ['version.py'],
+    subdir : 'numpy'
+  )
+endif
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)

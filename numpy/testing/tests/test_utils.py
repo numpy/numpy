@@ -6,6 +6,7 @@ import pytest
 import weakref
 
 import numpy as np
+import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_array_less, build_err_msg,
@@ -373,7 +374,7 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
 
     def test_negative_zero(self):
-        self._test_not_equal(np.PZERO, np.NZERO)
+        self._test_not_equal(ncu.PZERO, ncu.NZERO)
 
     def test_complex(self):
         x = np.array([complex(1, 2), complex(1, np.nan)])
@@ -1197,8 +1198,8 @@ class TestULP:
             nan = np.array([np.nan]).astype(dt)
             big = np.array([np.finfo(dt).max])
             tiny = np.array([np.finfo(dt).tiny])
-            zero = np.array([np.PZERO]).astype(dt)
-            nzero = np.array([np.NZERO]).astype(dt)
+            zero = np.array([0.0]).astype(dt)
+            nzero = np.array([-0.0]).astype(dt)
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, inf,
                           maxulp=maxulp))
@@ -1350,7 +1351,7 @@ def test_suppress_warnings_module():
         sup.record(UserWarning)
         # suppress warning from other module (may have .pyc ending),
         # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib.shape_base)
+        sup.filter(module=np.lib._shape_base_impl)
         warnings.warn("Some warning")
         warn_other_module()
     # Check that the suppression did test the file correctly (this module

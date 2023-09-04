@@ -192,7 +192,7 @@ class ISeedSequence(abc.ABC):
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
+            the same `n_words`. This is a convenience for `BitGenerator`\ s that
             express their states as `uint64` arrays.
 
         Returns

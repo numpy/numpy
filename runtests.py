@@ -26,7 +26,7 @@ Disable pytest capturing of output by using its '-s' option:
     $ python runtests.py -- -s
 
 Generate C code coverage listing under build/lcov/:
-(requires http://ltp.sourceforge.net/coverage/lcov.php)
+(requires https://github.com/linux-test-project/lcov)
 
     $ python runtests.py --gcov [...other args...]
     $ python runtests.py --lcov-html
@@ -194,8 +194,8 @@ def main(argv):
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = \
             os.pathsep.join((
-                site_dir, 
-                site_dir_noarch, 
+                site_dir,
+                site_dir_noarch,
                 os.environ.get('PYTHONPATH', '')
             ))
     else:
@@ -256,7 +256,6 @@ def main(argv):
                 "pip install -r test_requirements.txt from the repo root"
             )
 
-        os.environ['MYPYPATH'] = site_dir
         # By default mypy won't color the output since it isn't being
         # invoked from a tty.
         os.environ['MYPY_FORCE_COLOR'] = '1'

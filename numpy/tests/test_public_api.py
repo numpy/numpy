@@ -34,24 +34,8 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
-        'add_newdoc': 'numpy.core.function_base.add_newdoc',
-        'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
-        'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
-        'disp': 'numpy.lib.function_base.disp',
-        'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
-        'get_include': 'numpy.lib.utils.get_include',
-        'recfromcsv': 'numpy.lib.npyio.recfromcsv',
-        'recfromtxt': 'numpy.lib.npyio.recfromtxt',
-        'safe_eval': 'numpy.lib.utils.safe_eval',
-        'set_string_function': 'numpy.core.arrayprint.set_string_function',
         'show_config': 'numpy.__config__.show',
-        'show_runtime': 'numpy.lib.utils.show_runtime',
-        'who': 'numpy.lib.utils.who',
     }
     # We override dir to not show these members
     allowlist = undocumented
@@ -126,9 +110,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "array_api",
     "array_api.linalg",
     "ctypeslib",
-    "doc",
-    "doc.constants",
-    "doc.ufuncs",
     "dtypes",
     "exceptions",
     "f2py",
@@ -139,11 +120,11 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.recfunctions",
     "lib.scimath",
     "lib.stride_tricks",
+    "lib.npyio",
     "linalg",
     "ma",
     "ma.extras",
     "ma.mrecords",
-    "matlib",
     "polynomial",
     "polynomial.chebyshev",
     "polynomial.hermite",
@@ -156,7 +137,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version",
+    "version"  # Should be removed for NumPy 2.0
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -212,26 +193,14 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.symbolic",
     "f2py.use_rules",
     "fft.helper",
-    "lib.arraypad",
-    "lib.arraysetops",
     "lib.arrayterator",
-    "lib.function_base",
-    "lib.histograms",
-    "lib.index_tricks",
-    "lib.nanfunctions",
-    "lib.npyio",
-    "lib.polynomial",
-    "lib.shape_base",
-    "lib.twodim_base",
-    "lib.type_check",
-    "lib.ufunclike",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
-    "lib.utils",
     "linalg.lapack_lite",
     "linalg.linalg",
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
+    "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
     "polynomial.polyutils",
@@ -363,8 +332,6 @@ def test_all_modules_are_expected():
 # below
 SKIP_LIST_2 = [
     'numpy.math',
-    'numpy.doc.constants.re',
-    'numpy.doc.constants.textwrap',
     'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
@@ -535,15 +502,18 @@ def test_array_api_entry_point():
     assert xp is numpy.array_api, msg
 
 
-@pytest.mark.parametrize("name", [
-        'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-        'ComplexWarning', 'TooHardError', 'AxisError'])
-def test_moved_exceptions(name):
-    # These were moved to the exceptions namespace, but currently still
-    # available
-    assert name in np.__all__
-    assert name not in np.__dir__()
-    # Fetching works, but __module__ is set correctly:
-    assert getattr(np, name).__module__ == "numpy.exceptions"
-    assert name in np.exceptions.__all__
-    getattr(np.exceptions, name)
+def test_main_namespace_all_dir_coherence():
+    """
+    Checks if `dir(np)` and `np.__all__` are consistent
+    and return same content, excluding private members.
+    """
+    def _remove_private_members(member_set):
+        return {m for m in member_set if not m.startswith('_')}
+    
+    all_members = _remove_private_members(np.__all__)
+    dir_members = _remove_private_members(np.__dir__())
+
+    assert all_members == dir_members, (
+        "Members that break symmetry: "
+        f"{all_members.symmetric_difference(dir_members)}"
+    )

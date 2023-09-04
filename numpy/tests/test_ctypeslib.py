@@ -213,6 +213,10 @@ class TestAsArray:
         # shape argument is required
         assert_raises(TypeError, as_array, p)
 
+    @pytest.mark.skipif(
+            sys.version_info[:2] == (3, 12),
+            reason="Broken in 3.12.0rc1, see gh-24399",
+    )
     def test_struct_array_pointer(self):
         from ctypes import c_int16, Structure, pointer
 

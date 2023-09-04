@@ -2131,7 +2131,6 @@ static PyObject *
     npy_@name@ frac;
 #endif
     int exponent;
-    int i;
 
     PyObject *py_exponent = NULL;
     PyObject *numerator = NULL;
@@ -2153,7 +2152,7 @@ static PyObject *
     frac = npy_frexp@c@(val, &exponent); /* val == frac * 2**exponent exactly */
 
     /* This relies on the floating point type being base 2 to converge */
-    for (i = 0; frac != npy_floor@c@(frac); i++) {
+    while (frac != npy_floor@c@(frac)) {
         frac *= 2.0;
         exponent--;
     }
@@ -4122,7 +4121,7 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
-     *        Floating, ComplexFloating, Flexible, Character#
+     *        Floating, ComplexFloating, Character#
      */
 
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;

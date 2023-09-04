@@ -350,7 +350,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     For each value that cannot be expressed as a real number or infinity, it
     returns ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arccos` is a complex analytical function that
+    For complex-valued input, `arcsinh` is a complex analytical function that
     has branch cuts `[1j, infj]` and `[-1j, -infj]` and is continuous from
     the right on the former and from the left on the latter.
 
@@ -1018,7 +1018,7 @@ add_newdoc('numpy.core.umath', 'heaviside',
     """
     Compute the Heaviside step function.
 
-    The Heaviside step function is defined as::
+    The Heaviside step function [1]_ is defined as::
 
                               0   if x1 < 0
         heaviside(x1, x2) =  x2   if x1 == 0
@@ -1047,8 +1047,8 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     References
     ----------
-    .. Wikipedia, "Heaviside step function",
-       https://en.wikipedia.org/wiki/Heaviside_step_function
+    .. [1] Wikipedia, "Heaviside step function",
+           https://en.wikipedia.org/wiki/Heaviside_step_function
 
     Examples
     --------
@@ -1713,7 +1713,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     False
     >>> np.isfinite(np.inf)
     False
-    >>> np.isfinite(np.NINF)
+    >>> np.isfinite(-np.inf)
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
     array([False,  True, False])
@@ -1765,7 +1765,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     True
     >>> np.isinf(np.nan)
     False
-    >>> np.isinf(np.NINF)
+    >>> np.isinf(-np.inf)
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
     array([ True,  True, False, False])
@@ -2036,7 +2036,7 @@ add_newdoc('numpy.core.umath', 'log',
     Examples
     --------
     >>> np.log([1, np.e, np.e**2, 0])
-    array([  0.,   1.,   2., -Inf])
+    array([  0.,   1.,   2., -inf])
 
     """)
 
@@ -2139,7 +2139,7 @@ add_newdoc('numpy.core.umath', 'log2',
     --------
     >>> x = np.array([0, 1, 2, 2**4])
     >>> np.log2(x)
-    array([-Inf,   0.,   1.,   4.])
+    array([-inf,   0.,   1.,   4.])
 
     >>> xi = np.array([0+1.j, 1, 2+0.j, 4.j])
     >>> np.log2(xi)
@@ -2507,7 +2507,7 @@ add_newdoc('numpy.core.umath', 'maximum',
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.maximum(np.Inf, 1)
+    >>> np.maximum(np.inf, 1)
     inf
 
     """)
@@ -2566,7 +2566,7 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([nan, nan, nan])
-    >>> np.minimum(-np.Inf, 1)
+    >>> np.minimum(-np.inf, 1)
     -inf
 
     """)
@@ -3341,7 +3341,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
-    equivalent to the Python modulus operator``x1 % x2`` and has the same sign
+    equivalent to the Python modulus operator ``x1 % x2`` and has the same sign
     as the divisor `x2`. The MATLAB function equivalent to ``np.remainder``
     is ``mod``.
 
@@ -3870,8 +3870,8 @@ add_newdoc('numpy.core.umath', 'cbrt',
     Returns
     -------
     y : ndarray
-        An array of the same shape as `x`, containing the cube
-        cube-root of each element in `x`.
+        An array of the same shape as `x`, containing the
+        cube root of each element in `x`.
         If `out` was provided, `y` is a reference to it.
         $OUT_SCALAR_1
 

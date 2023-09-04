@@ -5,7 +5,7 @@ import types
 
 import numpy as np
 from . import numeric as _nx
-from .numeric import result_type, NaN, asanyarray, ndim
+from .numeric import result_type, nan, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -161,7 +161,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
-        step = NaN
+        step = nan
         # Multiply with delta to allow possible override of output class.
         y = y * delta
 

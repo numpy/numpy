@@ -135,7 +135,7 @@ class _DeprecationTestCase:
 
 
 class _VisibleDeprecationTestCase(_DeprecationTestCase):
-    warning_cls = np.VisibleDeprecationWarning
+    warning_cls = np.exceptions.VisibleDeprecationWarning
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -409,7 +409,7 @@ class TestDTypeCoercion(_DeprecationTestCase):
 
     def test_not_deprecated(self):
         # All specific types are not deprecated:
-        for group in np.sctypes.values():
+        for group in np.core.sctypes.values():
             for scalar_type in group:
                 self.assert_not_deprecated(np.dtype, args=(scalar_type,))
 
@@ -617,14 +617,6 @@ class TestArrayFinalizeNone(_DeprecationTestCase):
 
         self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
 
-class TestAxisNotMAXDIMS(_DeprecationTestCase):
-    # Deprecated 2022-01-08, NumPy 1.23
-    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
-
-    def test_deprecated(self):
-        a = np.zeros((1,)*32)
-        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
-
 
 class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
     # Deprecated 2022-07-03, NumPy 1.23
@@ -697,18 +689,6 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-class TestDeprecatedGlobals(_DeprecationTestCase):
-    # Deprecated 2022-11-17, NumPy 1.24
-    def test_type_aliases(self):
-        # from builtins
-        self.assert_deprecated(lambda: np.bool8)
-        self.assert_deprecated(lambda: np.int0)
-        self.assert_deprecated(lambda: np.uint0)
-        self.assert_deprecated(lambda: np.bytes0)
-        self.assert_deprecated(lambda: np.str0)
-        self.assert_deprecated(lambda: np.object0)
-
-
 @pytest.mark.parametrize("name",
         ["bool", "long", "ulong", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
@@ -720,7 +700,7 @@ def test_future_scalar_attributes(name):
 
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
-    name in np.sctypeDict
+    name in np.core.sctypeDict
 
 
 # Ignore the above future attribute warning for this test.
@@ -744,10 +724,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
         self.assert_deprecated(np.finfo, args=(None,))
 
 class TestFromnumeric(_DeprecationTestCase):
-    # 2023-02-28, 1.25.0
-    def test_round_(self):
-        self.assert_deprecated(lambda: np.round_(np.array([1.5, 2.5, 3.5])))
-
     # 2023-03-02, 1.25.0
     def test_cumproduct(self):
         self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
@@ -766,10 +742,6 @@ class TestFromnumeric(_DeprecationTestCase):
 
 
 class TestMathAlias(_DeprecationTestCase):
-    # Deprecated in Numpy 1.25, 2023-04-06
-    def test_deprecated_np_math(self):
-        self.assert_deprecated(lambda: np.math)
-
     def test_deprecated_np_lib_math(self):
         self.assert_deprecated(lambda: np.lib.math)
 
@@ -777,14 +749,14 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy import (
-            byte_bounds, safe_eval, who, recfromcsv, recfromtxt,
-            disp, get_array_wrap, maximum_sctype
-        )
+        from numpy.lib._utils_impl import safe_eval
+        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
+        from numpy.lib._function_base_impl import disp
+        from numpy.lib._shape_base_impl import get_array_wrap
+        from numpy.core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
         
         self.assert_deprecated(lambda: safe_eval("None"))
-        self.assert_deprecated(lambda: who())
 
         data_gen = lambda: TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)

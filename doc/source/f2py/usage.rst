@@ -83,8 +83,13 @@ Here ``<fortran files>`` may also contain signature files. Among other options
     ``--wrap-functions`` is default because it ensures maximum portability and
     compiler independence.
 
-  ``--include-paths <path1>:<path2>:..``
+  ``--include-paths "<path1>:<path2>..."``
     Search include files from given directories.
+
+    .. note:: The paths are to be separated by the correct operating system
+              separator :py:data:`~os.pathsep`, that is ``:`` on Linux / MacOS
+              and ``;`` on Windows. In ``CMake`` this corresponds to using
+              ``$<SEMICOLON>``.
 
   ``--help-link [<list of resources names>]``
     List system resources found by ``numpy_distutils/system_info.py``. For

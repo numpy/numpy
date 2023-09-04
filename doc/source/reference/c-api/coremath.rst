@@ -213,13 +213,33 @@ Those can be useful for precise floating point comparison.
 
     .. versionadded:: 1.15.0
 
-Complex functions
-~~~~~~~~~~~~~~~~~
+.. _complex-numbers:
+
+Support for complex numbers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 C99-like complex functions have been added. Those can be used if you wish to
-implement portable C extensions. Since we still support platforms without C99
-complex type (most importantly Windows, where MSVC doesn't support C99 complex
-types as of Nov 2022), you need to restrict to C90-compatible syntax, e.g.:
+implement portable C extensions. Since NumPy 2.0 we use C99 complex types as
+the underlying type:
+
+.. code-block:: c
+
+    typedef double _Complex npy_cdouble;
+    typedef float _Complex npy_cfloat;
+    typedef long double _Complex npy_clongdouble;
+
+MSVC does not support the ``_Complex`` type itself, but has added support for
+the C99 ``complex.h`` header by providing its own implementation. Thus, under
+MSVC, the equivalent MSVC types will be used:
+
+.. code-block:: c
+
+    typedef _Dcomplex npy_cdouble;
+    typedef _Fcomplex npy_cfloat;
+    typedef _Lcomplex npy_clongdouble;
+
+Because MSVC still does not support C99 syntax for initializing a complex
+number, you need to restrict to C90-compatible syntax, e.g.:
 
 .. code-block:: c
 
@@ -228,6 +248,65 @@ types as of Nov 2022), you need to restrict to C90-compatible syntax, e.g.:
         npy_complex b;
 
         b = npy_log(a);
+
+A few utilities have also been added in
+``numpy/npy_math.h``, in order to retrieve or set the real or the imaginary
+part of a complex number:
+
+.. code-block:: c
+
+    npy_cdouble c;
+    npy_csetreal(&c, 1.0);
+    npy_csetimag(&c, 0.0);
+    printf("%d + %di\n", npy_creal(c), npy_cimag(c));
+
+.. versionchanged:: 2.0.0
+
+    The underlying C types for all of numpy's complex types have been changed to
+    use C99 complex types. Up until now the following was being used to represent
+    complex types:
+
+    .. code-block:: c
+
+        typedef struct { double real, imag; } npy_cdouble;
+        typedef struct { float real, imag; } npy_cfloat;
+        typedef struct {npy_longdouble real, imag;} npy_clongdouble;
+
+    Using the ``struct`` representation ensured that complex numbers could be used
+    on all platforms, even the ones without support for built-in complex types. It
+    also meant that a static library had to be shipped together with NumPy to
+    provide a C99 compatibility layer for downstream packages to use. In recent
+    years however, support for native complex types has been improved immensely,
+    with MSVC adding built-in support for the ``complex.h`` header in 2019.
+
+    To ease cross-version compatibility, macros that use the new set APIs have
+    been added.
+
+    .. code-block:: c
+
+        #define NPY_CSETREAL(z, r) npy_csetreal(z, r)
+        #define NPY_CSETIMAG(z, i) npy_csetimag(z, i)
+
+    A compatibility layer is also provided in ``numpy/npy_2_complexcompat.h``. It
+    checks whether the macros exist, and falls back to the 1.x syntax in case they
+    don't.
+
+    .. code-block:: c
+
+        #include <numpy/npy_math.h>
+
+        #ifndef NPY_CSETREALF
+        #define NPY_CSETREALF(c, r) (c)->real = (r)
+        #endif
+        #ifndef NPY_CSETIMAGF
+        #define NPY_CSETIMAGF(c, i) (c)->imag = (i)
+        #endif
+
+    We suggest all downstream packages that need this functionality to copy-paste
+    the compatibility layer code into their own sources and use that, so that
+    they can continue to support both NumPy 1.x and 2.x without issues. Note also
+    that the ``complex.h`` header is included in ``numpy/npy_common.h``, which
+    makes ``complex`` a reserved keyword.
 
 .. _linking-npymath:
 

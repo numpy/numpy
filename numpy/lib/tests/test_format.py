@@ -1022,7 +1022,7 @@ def test_metadata_dtype(dt, fail):
     else:
         arr2 = np.load(buf)
         # BUG: assert_array_equal does not check metadata
-        from numpy.lib.utils import drop_metadata
+        from numpy.lib._utils_impl import drop_metadata
         assert_array_equal(arr, arr2)
         assert drop_metadata(arr.dtype) is not arr.dtype
         assert drop_metadata(arr2.dtype) is arr2.dtype

@@ -80,9 +80,9 @@ reveal_type(np.linalg.det(AR_i8))  # E: Any
 reveal_type(np.linalg.det(AR_f8))  # E: Any
 reveal_type(np.linalg.det(AR_c16))  # E: Any
 
-reveal_type(np.linalg.lstsq(AR_i8, AR_i8))  # E: Tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]], {int32}, ndarray[Any, dtype[{float64}]]]
-reveal_type(np.linalg.lstsq(AR_i8, AR_f8))  # E: Tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]], {int32}, ndarray[Any, dtype[floating[Any]]]]
-reveal_type(np.linalg.lstsq(AR_f8, AR_c16))  # E: Tuple[ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[floating[Any]]], {int32}, ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.linalg.lstsq(AR_i8, AR_i8))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]], {int32}, ndarray[Any, dtype[{float64}]]]
+reveal_type(np.linalg.lstsq(AR_i8, AR_f8))  # E: tuple[ndarray[Any, dtype[floating[Any]]], ndarray[Any, dtype[floating[Any]]], {int32}, ndarray[Any, dtype[floating[Any]]]]
+reveal_type(np.linalg.lstsq(AR_f8, AR_c16))  # E: tuple[ndarray[Any, dtype[complexfloating[Any, Any]]], ndarray[Any, dtype[floating[Any]]], {int32}, ndarray[Any, dtype[floating[Any]]]]
 
 reveal_type(np.linalg.norm(AR_i8))  # E: floating[Any]
 reveal_type(np.linalg.norm(AR_f8))  # E: floating[Any]

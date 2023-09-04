@@ -24,7 +24,7 @@ Exported symbols include:
 
     object_
 
-    void, str_, unicode_
+    void, str_
 
     byte, ubyte,
     short, ushort
@@ -34,8 +34,8 @@ Exported symbols include:
     longlong, ulonglong,
 
     single, csingle,
-    float_, complex_,
-    longfloat, clongfloat,
+    double, cdouble,
+    longdouble, clongdouble,
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -55,25 +55,22 @@ Exported symbols include:
      |   |         ushort
      |   |         uintc
      |   |         uintp
-     |   |         uint_
+     |   |         uint
      |   |         ulonglong
      |   +-> inexact
      |       +-> floating          (floatxx)    (kind=f)
      |       |     half
      |       |     single
-     |       |     float_          (double)
-     |       |     longfloat
+     |       |     double
+     |       |     longdouble
      |       \\-> complexfloating  (complexxx)  (kind=c)
-     |             csingle         (singlecomplex)
-     |             complex_        (cfloat, cdouble)
-     |             clongfloat      (longcomplex)
+     |             csingle
+     |             cdouble
+     |             clongdouble
      +-> flexible
      |   +-> character
-     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
-     |   |     unicode_                         (kind=U)    [Python 2]
-     |   |
-     |   |     bytes_   (string_)               (kind=S)    [Python 3]
-     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |     bytes_                           (kind=S)
+     |   |     str_                             (kind=U)
      |   |
      |   \\-> void                              (kind=V)
      \\-> object_ (not used much)               (kind=O)
@@ -89,12 +86,11 @@ from .multiarray import (
 from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypes',
-           'ScalarType', 'obj2sctype', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
-           'issubdtype', 'datetime_data', 'datetime_as_string',
-           'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
-           ]
+__all__ = [
+    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
+    'datetime_as_string', 'busday_offset', 'busday_count', 
+    'is_busday', 'busdaycalendar'
+]
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np.core.numerictypes.UPPER_TABLE
@@ -155,19 +151,20 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(int)
+    >>> from numpy.core.numerictypes import maximum_sctype
+    >>> maximum_sctype(int)
     <class 'numpy.int64'>
-    >>> np.maximum_sctype(np.uint8)
+    >>> maximum_sctype(np.uint8)
     <class 'numpy.uint64'>
-    >>> np.maximum_sctype(complex)
+    >>> maximum_sctype(complex)
     <class 'numpy.complex256'> # may vary
 
-    >>> np.maximum_sctype(str)
+    >>> maximum_sctype(str)
     <class 'numpy.str_'>
 
-    >>> np.maximum_sctype('i2')
+    >>> maximum_sctype('i2')
     <class 'numpy.int64'>
-    >>> np.maximum_sctype('f4')
+    >>> maximum_sctype('f4')
     <class 'numpy.float128'> # may vary
 
     """
@@ -213,16 +210,17 @@ def issctype(rep):
 
     Examples
     --------
-    >>> np.issctype(np.int32)
+    >>> from numpy.core.numerictypes import issctype
+    >>> issctype(np.int32)
     True
-    >>> np.issctype(list)
+    >>> issctype(list)
     False
-    >>> np.issctype(1.1)
+    >>> issctype(1.1)
     False
 
     Strings are also a scalar type:
 
-    >>> np.issctype(np.dtype('str'))
+    >>> issctype(np.dtype('str'))
     True
 
     """
@@ -261,18 +259,19 @@ def obj2sctype(rep, default=None):
 
     Examples
     --------
-    >>> np.obj2sctype(np.int32)
+    >>> from numpy.core.numerictypes import obj2sctype
+    >>> obj2sctype(np.int32)
     <class 'numpy.int32'>
-    >>> np.obj2sctype(np.array([1., 2.]))
+    >>> obj2sctype(np.array([1., 2.]))
     <class 'numpy.float64'>
-    >>> np.obj2sctype(np.array([1.j]))
+    >>> obj2sctype(np.array([1.j]))
     <class 'numpy.complex128'>
 
-    >>> np.obj2sctype(dict)
+    >>> obj2sctype(dict)
     <class 'numpy.object_'>
-    >>> np.obj2sctype('string')
+    >>> obj2sctype('string')
 
-    >>> np.obj2sctype(1, default=list)
+    >>> obj2sctype(1, default=list)
     <class 'list'>
 
     """
@@ -354,11 +353,12 @@ def issubsctype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubsctype('S8', str)
+    >>> from numpy.core import issubsctype
+    >>> issubsctype('S8', str)
     False
-    >>> np.issubsctype(np.array([1]), int)
+    >>> issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), float)
+    >>> issubsctype(np.array([1]), float)
     False
 
     """
@@ -384,7 +384,6 @@ def issubdtype(arg1, arg2):
     See Also
     --------
     :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
-    issubsctype, issubclass_
 
     Examples
     --------
@@ -418,7 +417,7 @@ def issubdtype(arg1, arg2):
 
     For convenience, dtype-like objects are allowed too:
 
-    >>> np.issubdtype('S1', np.string_)
+    >>> np.issubdtype('S1', np.bytes_)
     True
     >>> np.issubdtype('i4', np.signedinteger)
     True
@@ -445,13 +444,11 @@ class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))
 
-nbytes = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, info in _concrete_typeinfo.items():
+    for info in _concrete_typeinfo.values():
         obj = info.type
-        nbytes[obj] = info.bits // 8
         if len(info) > 5:
             _maxvals[obj] = info.max
             _minvals[obj] = info.min
@@ -490,8 +487,9 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, np.complex_, np.string_, np.ndarray]:
-    ...     print(np.sctype2char(sctype))
+    >>> from numpy.core.numerictypes import sctype2char
+    >>> for sctype in [np.int32, np.double, np.cdouble, np.bytes_, np.ndarray]:
+    ...     print(sctype2char(sctype))
     l # may vary
     d
     D
@@ -499,9 +497,9 @@ def sctype2char(sctype):
     O
 
     >>> x = np.array([1., 2-1.j])
-    >>> np.sctype2char(x)
+    >>> sctype2char(x)
     'D'
-    >>> np.sctype2char(list)
+    >>> sctype2char(list)
     'O'
 
     """
@@ -546,49 +544,6 @@ typecodes = {'Character':'c',
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
 typeDict = sctypeDict
 
-# b -> boolean
-# u -> unsigned integer
-# i -> signed integer
-# f -> floating point
-# c -> complex
-# M -> datetime
-# m -> timedelta
-# S -> string
-# U -> Unicode string
-# V -> record
-# O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
-
-__test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
-__len_test_types = len(__test_types)
-
-# Keep incrementing until a common type both can be coerced to
-#  is found.  Otherwise, return None
-def _find_common_coerce(a, b):
-    if a > b:
-        return a
-    try:
-        thisind = __test_types.index(a.char)
-    except ValueError:
-        return None
-    return _can_coerce_all([a, b], start=thisind)
-
-# Find a data-type that all data-types in a list can be coerced to
-def _can_coerce_all(dtypelist, start=0):
-    N = len(dtypelist)
-    if N == 0:
-        return None
-    if N == 1:
-        return dtypelist[0]
-    thisind = start
-    while thisind < __len_test_types:
-        newdtype = dtype(__test_types[thisind])
-        numcoerce = len([x for x in dtypelist if newdtype >= x])
-        if numcoerce == N:
-            return newdtype
-        thisind += 1
-    return None
-
 def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
@@ -596,97 +551,3 @@ def _register_types():
     numbers.Number.register(number)
 
 _register_types()
-
-
-@set_module('numpy')
-def find_common_type(array_types, scalar_types):
-    """
-    Determine common type following standard coercion rules.
-
-    .. deprecated:: NumPy 1.25
-
-        This function is deprecated, use `numpy.promote_types` or
-        `numpy.result_type` instead.  To achieve semantics for the
-        `scalar_types` argument, use `numpy.result_type` and pass the Python
-        values `0`, `0.0`, or `0j`.
-        This will give the same results in almost all cases.
-        More information and rare exception can be found in the
-        `NumPy 1.25 release notes <https://numpy.org/devdocs/release/1.25.0-notes.html>`_.
-
-    Parameters
-    ----------
-    array_types : sequence
-        A list of dtypes or dtype convertible objects representing arrays.
-    scalar_types : sequence
-        A list of dtypes or dtype convertible objects representing scalars.
-
-    Returns
-    -------
-    datatype : dtype
-        The common data type, which is the maximum of `array_types` ignoring
-        `scalar_types`, unless the maximum of `scalar_types` is of a
-        different kind (`dtype.kind`). If the kind is not understood, then
-        None is returned.
-
-    See Also
-    --------
-    dtype, common_type, can_cast, mintypecode
-
-    Examples
-    --------
-    >>> np.find_common_type([], [np.int64, np.float32, complex])
-    dtype('complex128')
-    >>> np.find_common_type([np.int64, np.float32], [])
-    dtype('float64')
-
-    The standard casting rules ensure that a scalar cannot up-cast an
-    array unless the scalar is of a fundamentally different kind of data
-    (i.e. under a different hierarchy in the data type hierarchy) then
-    the array:
-
-    >>> np.find_common_type([np.float32], [np.int64, np.float64])
-    dtype('float32')
-
-    Complex is of a different type, so it up-casts the float in the
-    `array_types` argument:
-
-    >>> np.find_common_type([np.float32], [complex])
-    dtype('complex128')
-
-    Type specifier strings are convertible to dtypes and can therefore
-    be used instead of dtypes:
-
-    >>> np.find_common_type(['f4', 'f4', 'i4'], ['c8'])
-    dtype('complex128')
-
-    """
-    # Deprecated 2022-11-07, NumPy 1.25
-    warnings.warn(
-            "np.find_common_type is deprecated.  Please use `np.result_type` "
-            "or `np.promote_types`.\n"
-            "See https://numpy.org/devdocs/release/1.25.0-notes.html and the "
-            "docs for more information.  (Deprecated NumPy 1.25)",
-            DeprecationWarning, stacklevel=2)
-
-    array_types = [dtype(x) for x in array_types]
-    scalar_types = [dtype(x) for x in scalar_types]
-
-    maxa = _can_coerce_all(array_types)
-    maxsc = _can_coerce_all(scalar_types)
-
-    if maxa is None:
-        return maxsc
-
-    if maxsc is None:
-        return maxa
-
-    try:
-        index_a = _kind_list.index(maxa.kind)
-        index_sc = _kind_list.index(maxsc.kind)
-    except ValueError:
-        return None
-
-    if index_sc > index_a:
-        return _find_common_coerce(maxsc, maxa)
-    else:
-        return maxa

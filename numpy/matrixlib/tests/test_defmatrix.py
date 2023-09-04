@@ -7,7 +7,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises
     )
 from numpy.linalg import matrix_power
-from numpy.matrixlib import mat
 
 class TestCtor:
     def test_basic(self):
@@ -389,7 +388,7 @@ class TestPower:
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
-        a = mat(a)
+        a = asmatrix(a)
         assert_(type(matrix_power(a, 2)) is matrix)
 
     def test_list(self):

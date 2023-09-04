@@ -1,3 +1,0 @@
-* The ``legacy_inner_loop_selector`` member of the ufunc struct is removed
-  to simplify improvements to the dispatching system.
-  There are no known users overriding or directly accessing this member.
