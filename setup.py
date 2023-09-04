@@ -513,7 +513,6 @@ def setup_package():
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
             "Documentation": get_docs_url(),
-            "Release Notes" = "https://numpy.org/doc/stable/release",
             "Source Code": "https://github.com/numpy/numpy",
         },
         license='BSD-3-Clause',
