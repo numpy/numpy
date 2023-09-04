@@ -3931,6 +3931,7 @@ def percentile(a,
                method="linear",
                keepdims=False,
                *,
+               weights=None,
                interpolation=None):
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -3994,6 +3995,18 @@ def percentile(a,
 
         .. versionadded:: 1.9.0
 
+     weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the percentile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+        See the notes for more details.
+
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -4020,7 +4033,22 @@ def percentile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
+    In general, the percentile at percentage level math:`q` of a cumulative
+    probability distribution :math:`P` is defined as any number :math:`x`
+    that fulfills the *coverage conditions*
+    
+    .. math:: P(Y < x) \\leq q/100 \\quad\\text{and}
+              \\quad P(Y \\leq x) \\geq q/100
+    
+    with random variable :math:`Y\\sim P`.
+    For empirical percentiles as considered here, :math:`P` is the empirical
+    distribution function of the given data vector ``a`` of length ``n``,
+    i.e. :math:`P(Y \\leq t) = \\frac{1}{n} \\sum_i 1_{a_i \\leq t}`.
+    Then, the different methods correspond to different choices of :math:`x`
+    that fulfil the above inequalities.
+    
+    To be more concrete, given a vector ``V`` of length ``n``, the empirical
+    q-th percentile of ``V`` is
     the value ``q/100`` of the way from the minimum to the maximum in a
     sorted copy of ``V``. The values and distances of the two nearest
     neighbors as well as the `method` parameter will determine the
@@ -4132,6 +4160,14 @@ def percentile(a,
         NumPy method kept for backwards compatibility.
         Uses ``(i + j) / 2``.
 
+     **Weighted percentiles:**
+    For weighted percentiles, the above coverage conditions still hold. The
+    empirical cumulative distribution is simply replaced by its weighted
+    version, i.e. 
+    :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
+    Only ``method="inverted_cdf"`` supports weights.
+
+
     Examples
     --------
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
@@ -4213,8 +4249,16 @@ def percentile(a,
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            raise ValueError("Only method 'inverted_cdf' supports weights.")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -4300,6 +4344,8 @@ def quantile(a,
         weight equal to one.
         Only `method="inverted_cdf"` supports weights.
         See the notes for more details.
+
+        .. versionadded:: 2.0.0
 
     interpolation : str, optional
         Deprecated name for the method keyword argument.

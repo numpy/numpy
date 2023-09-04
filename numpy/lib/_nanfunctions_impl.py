@@ -24,6 +24,7 @@ import functools
 import warnings
 import numpy as np
 from numpy.lib import _function_base_impl as fnb
+from numpy.lib._function_base_impl import _weights_are_valid
 from numpy.core import overrides
 
 
@@ -1234,6 +1235,7 @@ def nanpercentile(
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1303,6 +1305,17 @@ def nanpercentile(
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
+
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the percentile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+
+        .. versionadded:: 2.0.0
 
     interpolation : str, optional
         Deprecated name for the method keyword argument.
@@ -1380,8 +1393,16 @@ def nanpercentile(
     q = np.asanyarray(q)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            raise ValueError("Only method 'inverted_cdf' supports weights.")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -1477,6 +1498,8 @@ def nanquantile(
         weight equal to one.
         Only `method="inverted_cdf"` supports weights.
 
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -1551,6 +1574,14 @@ def nanquantile(
     q = np.asanyarray(q)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            raise ValueError("Only method 'inverted_cdf' supports weights.")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
 
