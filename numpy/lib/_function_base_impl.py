@@ -4833,24 +4833,47 @@ def _quantile(
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
-        index_array = np.argsort(arr, axis=axis, kind="stable")
+        index_array = np.argsort(arr, axis=0, kind="stable")
         # TODO: Which value to set to slices_having_nans.
         slices_having_nans = None
         # TODO: Deal with nan values, e.g. np.isnan(arr(index_array[-1])) by
         # be true.
         # TODO: Special case quantiles == 0 and quantiles == 1?
-        arr = arr[index_array, ...]
-        weights = weights[index_array, ...]
+
+        # arr = arr[index_array, ...]  # but this adds trailing dimensions of
+        # 1.
+        arr = np.take_along_axis(arr, index_array, axis=0)
+        if weights.shape == arr.shape:
+            weights = np.take_along_axis(weights, index_array, axis=0)
+        else:
+            # weights is 1d
+            weights = weights.reshape(-1)[index_array, ...]
+        # weights = np.take_along_axis(weights, index_array, axis=axis)
         # We use the weights to calculate the empirical distribution function.
-        cdf = weights.cumsum(axis=axis, dtype=float)
+        cdf = weights.cumsum(axis=0, dtype=float)
         cdf /= cdf[-1, ...]  # normalization
         # Only inverted_cdf is supported. Search index i such that
         # sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
-        i = np.searchsorted(cdf, quantiles, side="left")
-        # We might have reached the maximum with i = len(arr), e.g. for
-        # quantile = 1.
-        i = np.minimum(i, values_count - 1)
-        result = take(arr, i, axis=0, out=out)
+
+        def find_cdf_1d(arr, cdf):
+            i = np.searchsorted(cdf, quantiles, side="left")
+            # We might have reached the maximum with i = len(arr), e.g. for
+            # quantiles == 1.
+            i = np.minimum(i, values_count - 1)
+            result = take(arr, i, axis=0, out=out)
+            return result
+
+        r_shape = arr.shape[1:]
+        if quantiles.ndim > 0: 
+            r_shape += quantiles.shape
+        result = np.empty_like(arr, shape=r_shape)
+        # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
+        # always, so we remove it here.
+        Nk = arr.shape[1:]
+        for kk in np.ndindex(Nk):
+            result[kk + np.s_[...,]] = find_cdf_1d(
+                arr[np.s_[:,] + kk], cdf[np.s_[:,] + kk]
+            )
 
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:

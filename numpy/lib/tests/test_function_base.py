@@ -3807,6 +3807,52 @@ class TestQuantile:
         q = np.quantile(np.repeat(y, w), alpha, method=method)
         assert_allclose(qw, q)
 
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    def test_quantile_with_weights_and_axis(self, method):
+        rng = np.random.default_rng(4321)
+
+        # 1d weight and single alpha
+        y = rng.random((2, 10, 3))
+        w = np.abs(rng.random(10))
+        alpha = 0.5
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(2, 3))
+        for i in range(2):
+            for j in range(3):
+                q_res[i, j] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w
+                )
+        assert_allclose(q, q_res)
+
+        # 1d weight and 1d alpha
+        alpha = [0.25, 0.5, 0.75, 1]  # shape (4,)
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(2, 3, 4))
+        for i in range(2):
+            for j in range(3):
+                q_res[i, j, :] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w
+                )
+        assert_allclose(q, q_res)
+
+        # 1d weight and 2d alpha
+        alpha = [[0.25, 0.5], [0.75, 1]]  # shape (2, 2)
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = q_res.reshape((2, 3, 2, 2))
+        assert_allclose(q, q_res)
+
+        # shape of weights equals shape of y
+        w = np.abs(rng.random((2, 10, 3)))
+        alpha = 0.5
+        q = np.quantile(y, alpha, weights=w, method=method, axis=1)
+        q_res = np.zeros(shape=(2, 3))
+        for i in range(2):
+            for j in range(3):
+                q_res[i, j] = np.quantile(
+                    y[i, :, j], alpha, method=method, weights=w[i, :, j]
+                )
+        assert_allclose(q, q_res)
+
     def test_quantile_weights_raises_negative_weights(self):
         y = [1, 2]
         w = [-0.5, 1]
