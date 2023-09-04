@@ -461,7 +461,7 @@ assert_type(i8 + AR_f, npt.NDArray[np.floating[Any]])
 
 assert_type(u8 + u8, np.uint64)
 assert_type(u8 + i4, Any)
-assert_type(u8 + u4, np.signedinteger[_32Bit | _64Bit])
+assert_type(u8 + u4, np.unsignedinteger[_32Bit | _64Bit])
 assert_type(u8 + b_, np.uint64)
 assert_type(u8 + b, np.uint64)
 assert_type(u8 + c, np.complex128)
