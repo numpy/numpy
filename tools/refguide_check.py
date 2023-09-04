@@ -60,7 +60,7 @@ directives.register_directive('only', Only)
 BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
-    'core',
+    '_core',
     'f2py',
     'linalg',
     'lib',
@@ -94,7 +94,7 @@ DOCTEST_SKIPDICT = {
     'numpy.random.power': None,
     'numpy.random.zipf': None,
     # cases where NumPy docstrings import things from other 3'rd party libs:
-    'numpy.core.from_dlpack': None,
+    'numpy.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
     'numpy.lib.npyio.DataSource': None,
     'numpy.lib.Repository': None,

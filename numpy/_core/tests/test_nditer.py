@@ -5,8 +5,8 @@ import textwrap
 import subprocess
 
 import numpy as np
-import numpy.core.umath as ncu
-import numpy.core._multiarray_tests as _multiarray_tests
+import numpy._core.umath as ncu
+import numpy._core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,

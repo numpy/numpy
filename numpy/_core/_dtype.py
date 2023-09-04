@@ -203,7 +203,7 @@ def _struct_dict_str(dtype, includealignedflag):
 
     # Build up a string to make the dictionary
 
-    if np.core.arrayprint._get_legacy_print_mode() <= 121:
+    if np._core.arrayprint._get_legacy_print_mode() <= 121:
         colon = ":"
         fieldsep = ","
     else:

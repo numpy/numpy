@@ -770,7 +770,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         else {
             PyErr_Format(PyExc_ValueError,
                     "integer clipmode must be RAISE, WRAP, or CLIP "
-                    "from 'numpy.core.multiarray'");
+                    "from 'numpy._core.multiarray'");
         }
     }
     return NPY_SUCCEED;

@@ -255,7 +255,7 @@ array_ctypes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *_numpy_internal;
     PyObject *ret;
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
     }
@@ -471,7 +471,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         static PyObject *checkfunc = NULL;
         PyObject *safe;
 
-        npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
+        npy_cache_import("numpy._core._internal", "_view_is_safe", &checkfunc);
         if (checkfunc == NULL) {
             goto fail;
         }

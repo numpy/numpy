@@ -605,7 +605,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     static PyObject *exc_type = NULL;
 
     npy_cache_import(
-        "numpy.core._exceptions", "_ArrayMemoryError",
+        "numpy._core._exceptions", "_ArrayMemoryError",
         &exc_type);
     if (exc_type == NULL) {
         goto fail;

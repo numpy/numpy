@@ -7,7 +7,7 @@ from typing import (
     Protocol,
 )
 
-from numpy.core.numerictypes import (
+from numpy._core.numerictypes import (
     issubdtype as issubdtype,
 )
 

@@ -367,7 +367,7 @@ class recarray(ndarray):
 
     See Also
     --------
-    core.records.fromrecords : Construct a record array from data.
+    _core.records.fromrecords : Construct a record array from data.
     record : fundamental data-type for `recarray`.
     numpy.rec.format_parser : determine a data-type from formats, names, titles.
 
@@ -613,7 +613,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1=np.array([1,2,3,4])
     >>> x2=np.array(['a','dd','xyz','12'])
     >>> x3=np.array([1.1,2,3,4])
-    >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
+    >>> r = np._core.records.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print(r[1])
     (2, 'dd', 2.0) # may vary
     >>> x1[1]=34
@@ -623,7 +623,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
-    >>> r = np.core.records.fromarrays(
+    >>> r = np._core.records.fromarrays(
     ...     [x1, x2, x3],
     ...     dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c', np.float32)]))
     >>> r
@@ -708,7 +708,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     Examples
     --------
-    >>> r=np.core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
+    >>> r=np._core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
     ... names='col1,col2,col3')
     >>> print(r[0])
     (456, 'dbe', 1.2)
@@ -800,7 +800,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     Examples
     --------
     >>> a = b'\x01\x02\x03abc'
-    >>> np.core.records.fromstring(a, dtype='u1,u1,u1,S3')
+    >>> np._core.records.fromstring(a, dtype='u1,u1,u1,S3')
     rec.array([(1, 2, 3, b'abc')],
             dtype=[('f0', 'u1'), ('f1', 'u1'), ('f2', 'u1'), ('f3', 'S3')])
 
@@ -808,12 +808,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     ...                 ('GradeLevel', np.int32)]
     >>> grades_array = np.array([('Sam', 33.3, 3), ('Mike', 44.4, 5),
     ...                         ('Aadi', 66.6, 6)], dtype=grades_dtype)
-    >>> np.core.records.fromstring(grades_array.tobytes(), dtype=grades_dtype)
+    >>> np._core.records.fromstring(grades_array.tobytes(), dtype=grades_dtype)
     rec.array([('Sam', 33.3, 3), ('Mike', 44.4, 5), ('Aadi', 66.6, 6)],
             dtype=[('Name', '<U10'), ('Marks', '<f8'), ('GradeLevel', '<i4')])
 
     >>> s = '\x01\x02\x03abc'
-    >>> np.core.records.fromstring(s, dtype='u1,u1,u1,S3')
+    >>> np._core.records.fromstring(s, dtype='u1,u1,u1,S3')
     Traceback (most recent call last)
        ...
     TypeError: a bytes-like object is required, not 'str'
@@ -885,7 +885,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> _ = fd.seek(0)
-    >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
+    >>> r=np._core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
     (0.5, 10, 'abcde')
@@ -1004,14 +1004,14 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
            [4, 5, 6],
            [7, 8, 9]])
 
-    >>> np.core.records.array(a)
+    >>> np.rec.array(a)
     rec.array([[1, 2, 3],
                [4, 5, 6],
                [7, 8, 9]],
         dtype=int32)
 
     >>> b = [(1, 1), (2, 4), (3, 9)]
-    >>> c = np.core.records.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
+    >>> c = np.rec.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
     >>> c
     rec.array([(1, 1.0), (2, 4.0), (3, 9.0)],
               dtype=[('x', '<i2'), ('y', '<f2')])

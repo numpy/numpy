@@ -39,7 +39,7 @@ from numpy import (
     void,
 )
 
-from numpy.core._type_aliases import (
+from numpy._core._type_aliases import (
     sctypeDict as sctypeDict,
     sctypes as sctypes,
 )

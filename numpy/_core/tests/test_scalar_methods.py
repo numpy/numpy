@@ -9,7 +9,7 @@ from typing import Any, Type
 import pytest
 import numpy as np
 
-from numpy.core import sctypes
+from numpy._core import sctypes
 from numpy.testing import assert_equal, assert_raises, IS_MUSL
 
 

@@ -4,10 +4,10 @@
 import warnings
 import numpy as np
 import pytest
-from numpy.core import finfo, iinfo
+from numpy._core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import assert_equal, assert_, assert_raises
-from numpy.core.getlimits import _discovered_machar, _float_ma
+from numpy._core.getlimits import _discovered_machar, _float_ma
 
 ##################################################
 
@@ -94,7 +94,7 @@ class TestIinfo:
         assert_raises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):
-        types = np.core.sctypes['uint']
+        types = np._core.sctypes['uint']
         for T in types:
             with np.errstate(over="ignore"):
                 max_calculated = T(0) - T(1)
@@ -187,7 +187,7 @@ def test_subnormal_warning():
 
 def test_plausible_finfo():
     # Assert that finfo returns reasonable results for all types
-    for ftype in np.core.sctypes['float'] + np.core.sctypes['complex']:
+    for ftype in np._core.sctypes['float'] + np._core.sctypes['complex']:
         info = np.finfo(ftype)
         assert_(info.nmant > 1)
         assert_(info.minexp < -1)

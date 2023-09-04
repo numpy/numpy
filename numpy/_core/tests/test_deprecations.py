@@ -17,7 +17,7 @@ from numpy.testing import (
     KnownFailureException, break_cycles,
     )
 
-from numpy.core._multiarray_tests import fromstring_null_term_c_api
+from numpy._core._multiarray_tests import fromstring_null_term_c_api
 
 try:
     import pytz
@@ -251,7 +251,7 @@ class TestNonNumericConjugate(_DeprecationTestCase):
 class TestNPY_CHAR(_DeprecationTestCase):
     # 2017-05-03, 1.13.0
     def test_npy_char_deprecation(self):
-        from numpy.core._multiarray_tests import npy_char_deprecation
+        from numpy._core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
         assert_(npy_char_deprecation() == 'S1')
 
@@ -409,7 +409,7 @@ class TestDTypeCoercion(_DeprecationTestCase):
 
     def test_not_deprecated(self):
         # All specific types are not deprecated:
-        for group in np.core.sctypes.values():
+        for group in np._core.sctypes.values():
             for scalar_type in group:
                 self.assert_not_deprecated(np.dtype, args=(scalar_type,))
 
@@ -524,7 +524,7 @@ class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
     message = "Unpickling a scalar with object dtype is deprecated."
 
     def test_deprecated(self):
-        ctor = np.core.multiarray.scalar
+        ctor = np._core.multiarray.scalar
         self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))
 
 
@@ -584,7 +584,7 @@ class TestMachAr(_DeprecationTestCase):
     warning_cls = DeprecationWarning
 
     def test_deprecated_module(self):
-        self.assert_deprecated(lambda: getattr(np.core, "MachAr"))
+        self.assert_deprecated(lambda: getattr(np._core, "MachAr"))
 
 
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
@@ -699,7 +699,7 @@ def test_future_scalar_attributes(name):
 
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
-    name in np.core.sctypeDict
+    name in np._core.sctypeDict
 
 
 # Ignore the above future attribute warning for this test.
@@ -752,7 +752,7 @@ class TestLibImports(_DeprecationTestCase):
         from numpy.lib._npyio_impl import recfromcsv, recfromtxt
         from numpy.lib._function_base_impl import disp
         from numpy.lib._shape_base_impl import get_array_wrap
-        from numpy.core.numerictypes import maximum_sctype
+        from numpy._core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
         from numpy import in1d, row_stack, trapz
         

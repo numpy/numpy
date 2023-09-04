@@ -3,7 +3,7 @@ from numpy.testing import assert_
 import numbers
 
 import numpy as np
-from numpy.core.numerictypes import sctypes
+from numpy._core.numerictypes import sctypes
 
 class TestABC:
     def test_abstract(self):

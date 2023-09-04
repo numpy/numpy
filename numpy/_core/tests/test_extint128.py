@@ -4,7 +4,7 @@ import operator
 import pytest
 
 import numpy as np
-import numpy.core._multiarray_tests as mt
+import numpy._core._multiarray_tests as mt
 
 from numpy.testing import assert_raises, assert_equal
 

@@ -2851,7 +2851,7 @@ Dragon4_PrintFloat_IEEE_binary128_be(
  * printf on ppc does so too by constructing un-normalized values to get
  * strange behavior from the OS printf:
  *
- *     >>> from numpy.core._multiarray_tests import format_float_OSprintf_g
+ *     >>> from numpy._core._multiarray_tests import format_float_OSprintf_g
  *     >>> x = np.array([0.3,0.3], dtype='f8').view('f16')[0]
  *     >>> format_float_OSprintf_g(x, 2)
  *     0.30

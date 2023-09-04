@@ -11,7 +11,7 @@ from types import TracebackType, MappingProxyType, GenericAlias
 from contextlib import contextmanager
 
 from numpy._pytesttester import PytestTester
-from numpy.core._internal import _ctypes
+from numpy._core._internal import _ctypes
 
 from numpy._typing import (
     # Arrays
@@ -214,22 +214,22 @@ from numpy import (
     char as char,
 )
 
-from numpy.core.records import (
+from numpy._core.records import (
     record as record,
     recarray as recarray,
 )
 
-from numpy.core.defchararray import (
+from numpy._core.defchararray import (
     chararray as chararray,
 )
 
-from numpy.core.function_base import (
+from numpy._core.function_base import (
     linspace as linspace,
     logspace as logspace,
     geomspace as geomspace,
 )
 
-from numpy.core.fromnumeric import (
+from numpy._core.fromnumeric import (
     take as take,
     reshape as reshape,
     choose as choose,
@@ -273,16 +273,16 @@ from numpy.core.fromnumeric import (
     var as var,
 )
 
-from numpy.core._asarray import (
+from numpy._core._asarray import (
     require as require,
 )
 
-from numpy.core._type_aliases import (
+from numpy._core._type_aliases import (
     sctypes as sctypes,
     sctypeDict as sctypeDict,
 )
 
-from numpy.core._ufunc_config import (
+from numpy._core._ufunc_config import (
     seterr as seterr,
     geterr as geterr,
     setbufsize as setbufsize,
@@ -293,7 +293,7 @@ from numpy.core._ufunc_config import (
     _ErrFunc,
 )
 
-from numpy.core.arrayprint import (
+from numpy._core.arrayprint import (
     set_printoptions as set_printoptions,
     get_printoptions as get_printoptions,
     array2string as array2string,
@@ -304,12 +304,12 @@ from numpy.core.arrayprint import (
     printoptions as printoptions,
 )
 
-from numpy.core.einsumfunc import (
+from numpy._core.einsumfunc import (
     einsum as einsum,
     einsum_path as einsum_path,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     array as array,
     empty_like as empty_like,
     empty as empty,
@@ -350,7 +350,7 @@ from numpy.core.multiarray import (
     flagsobj,
 )
 
-from numpy.core.numeric import (
+from numpy._core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
@@ -380,14 +380,14 @@ from numpy.core.numeric import (
     array_equiv as array_equiv,
 )
 
-from numpy.core.numerictypes import (
+from numpy._core.numerictypes import (
     issubdtype as issubdtype,
     cast as cast,
     ScalarType as ScalarType,
     typecodes as typecodes,
 )
 
-from numpy.core.shape_base import (
+from numpy._core.shape_base import (
     atleast_1d as atleast_1d,
     atleast_2d as atleast_2d,
     atleast_3d as atleast_3d,

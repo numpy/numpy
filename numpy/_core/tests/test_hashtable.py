@@ -1,7 +1,7 @@
 import pytest
 
 import random
-from numpy.core._multiarray_tests import identityhash_tester
+from numpy._core._multiarray_tests import identityhash_tester
 
 
 @pytest.mark.parametrize("key_length", [1, 3, 6])

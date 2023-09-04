@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy.core.multiarray import _vec_string
+from numpy._core.multiarray import _vec_string
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
     assert_raises_regex

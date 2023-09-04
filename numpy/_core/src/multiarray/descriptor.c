@@ -52,7 +52,7 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
     }
 
     /* Call the python function of the same name. */
-    _numpy_dtype_ctypes = PyImport_ImportModule("numpy.core._dtype_ctypes");
+    _numpy_dtype_ctypes = PyImport_ImportModule("numpy._core._dtype_ctypes");
     if (_numpy_dtype_ctypes == NULL) {
         return NULL;
     }
@@ -729,7 +729,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyArray_Descr *res;
     PyObject *_numpy_internal;
     assert(PyUnicode_Check(obj));
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
     }
@@ -1027,7 +1027,7 @@ _convert_from_field_dict(PyObject *obj, int align)
     PyObject *_numpy_internal;
     PyArray_Descr *res;
 
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
     }
@@ -2092,7 +2092,7 @@ arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
     /* let python handle this */
     PyObject *_numpy_dtype;
     PyObject *res;
-    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    _numpy_dtype = PyImport_ImportModule("numpy._core._dtype");
     if (_numpy_dtype == NULL) {
         return NULL;
     }
@@ -2164,7 +2164,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
         return res;
     }
 
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
     }
@@ -2640,7 +2640,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
+    mod = PyImport_ImportModule("numpy._core._multiarray_umath");
     if (mod == NULL) {
         Py_DECREF(ret);
         return NULL;
@@ -3404,7 +3404,7 @@ arraydescr_repr(PyArray_Descr *dtype)
 {
     PyObject *_numpy_dtype;
     PyObject *res;
-    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    _numpy_dtype = PyImport_ImportModule("numpy._core._dtype");
     if (_numpy_dtype == NULL) {
         return NULL;
     }
@@ -3420,7 +3420,7 @@ arraydescr_str(PyArray_Descr *dtype)
 {
     PyObject *_numpy_dtype;
     PyObject *res;
-    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    _numpy_dtype = PyImport_ImportModule("numpy._core._dtype");
     if (_numpy_dtype == NULL) {
         return NULL;
     }

@@ -608,7 +608,7 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
     static PyObject *tostring_func = NULL;
-    npy_cache_import("numpy.core.arrayprint",
+    npy_cache_import("numpy._core.arrayprint",
                      "_void_scalar_to_string", &tostring_func);
     if (tostring_func == NULL) {
         return NULL;
@@ -1991,7 +1991,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
+    mod = PyImport_ImportModule("numpy._core._multiarray_umath");
     if (mod == NULL) {
         Py_DECREF(ret);
         return NULL;

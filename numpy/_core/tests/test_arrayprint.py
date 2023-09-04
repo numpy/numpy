@@ -9,7 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     assert_raises_regex,
     )
-from numpy.core.arrayprint import _typelessdata
+from numpy._core.arrayprint import _typelessdata
 import textwrap
 
 class TestArrayRepr:

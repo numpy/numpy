@@ -19,8 +19,8 @@ import pytest
 
 import numpy as np
 import numpy.ma.core
-import numpy.core.fromnumeric as fromnumeric
-import numpy.core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings, IS_WASM

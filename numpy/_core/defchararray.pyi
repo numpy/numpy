@@ -30,7 +30,7 @@ from numpy._typing import (
     _ArrayLikeBool_co as b_co,
 )
 
-from numpy.core.multiarray import compare_chararrays as compare_chararrays
+from numpy._core.multiarray import compare_chararrays as compare_chararrays
 
 _SCT = TypeVar("_SCT", str_, bytes_)
 _CharArray = chararray[Any, dtype[_SCT]]

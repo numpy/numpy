@@ -79,7 +79,7 @@ npy_give_promotion_warnings(void)
     PyObject *val;
 
     npy_cache_import(
-            "numpy.core._ufunc_config", "NO_NEP50_WARNING",
+            "numpy._core._ufunc_config", "NO_NEP50_WARNING",
             &NO_NEP50_WARNING_CTX);
     if (NO_NEP50_WARNING_CTX == NULL) {
         PyErr_WriteUnraisable(NULL);

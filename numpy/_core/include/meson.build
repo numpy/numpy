@@ -23,7 +23,7 @@ installed_headers = [
 
 py.install_sources(
   installed_headers,
-  subdir: 'numpy/core/include/numpy'
+  subdir: 'numpy/_core/include/numpy'
 )
 
 py.install_sources(
@@ -31,7 +31,7 @@ py.install_sources(
     'numpy/random/bitgen.h',
     'numpy/random/distributions.h',
   ],
-  subdir: 'numpy/core/include/numpy/random'
+  subdir: 'numpy/_core/include/numpy/random'
 )
 
 
@@ -40,5 +40,5 @@ py.install_sources(
     'numpy/libdivide/libdivide.h',
     'numpy/libdivide/LICENSE.txt',
   ],
-  subdir: 'numpy/core/include/numpy/random'
+  subdir: 'numpy/_core/include/numpy/random'
 )

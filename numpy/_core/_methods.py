@@ -8,12 +8,12 @@ import pickle
 import warnings
 from contextlib import nullcontext
 
-from numpy.core import multiarray as mu
-from numpy.core import umath as um
-from numpy.core.multiarray import asanyarray
-from numpy.core import numerictypes as nt
-from numpy.core import _exceptions
-from numpy.core._ufunc_config import _no_nep50_warning
+from numpy._core import multiarray as mu
+from numpy._core import umath as um
+from numpy._core.multiarray import asanyarray
+from numpy._core import numerictypes as nt
+from numpy._core import _exceptions
+from numpy._core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!

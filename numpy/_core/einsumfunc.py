@@ -5,9 +5,9 @@ Implementation of optimized einsum.
 import itertools
 import operator
 
-from numpy.core.multiarray import c_einsum
-from numpy.core.numeric import asanyarray, tensordot
-from numpy.core.overrides import array_function_dispatch
+from numpy._core.multiarray import c_einsum
+from numpy._core.numeric import asanyarray, tensordot
+from numpy._core.overrides import array_function_dispatch
 
 __all__ = ['einsum', 'einsum_path']
 

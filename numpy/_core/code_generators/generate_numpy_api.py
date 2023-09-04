@@ -46,7 +46,7 @@ static int
 _import_array(void)
 {
   int st;
-  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+  PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
@@ -123,11 +123,35 @@ _import_array(void)
   return 0;
 }
 
-#define import_array() {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return NULL; } }
+#define import_array() { \
+  if (_import_array() < 0) { \
+    PyErr_Print(); \
+    PyErr_SetString( \
+        PyExc_ImportError, \
+        "numpy._core.multiarray failed to import" \
+    ); \
+    return NULL; \
+  } \
+}
 
-#define import_array1(ret) {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return ret; } }
+#define import_array1(ret) { \
+  if (_import_array() < 0) { \
+    PyErr_Print(); \
+    PyErr_SetString( \
+        PyExc_ImportError, \
+        "numpy._core.multiarray failed to import" \
+    ); \
+    return ret; \
+  } \
+}
 
-#define import_array2(msg, ret) {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, msg); return ret; } }
+#define import_array2(msg, ret) { \
+  if (_import_array() < 0) { \
+    PyErr_Print(); \
+    PyErr_SetString(PyExc_ImportError, msg); \
+    return ret; \
+  } \
+}
 
 #endif
 

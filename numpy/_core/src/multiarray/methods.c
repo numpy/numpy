@@ -105,14 +105,14 @@ npy_forward_method(
 }
 
 /*
- * Forwards an ndarray method to the function numpy.core._methods.<name>(...),
+ * Forwards an ndarray method to the function numpy._core._methods.<name>(...),
  * caching the callable in a local static variable. Note that the
  * initialization is not thread-safe, but relies on the CPython GIL to
  * be correct.
  */
 #define NPY_FORWARD_NDARRAY_METHOD(name) \
         static PyObject *callable = NULL; \
-        npy_cache_import("numpy.core._methods", name, &callable); \
+        npy_cache_import("numpy._core._methods", name, &callable); \
         if (callable == NULL) { \
             return NULL; \
         } \
@@ -401,7 +401,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
-        npy_cache_import("numpy.core._internal", "_getfield_is_safe",
+        npy_cache_import("numpy._core._internal", "_getfield_is_safe",
                          &checkfunc);
         if (checkfunc == NULL) {
             Py_DECREF(typed);
@@ -1294,7 +1294,7 @@ array_sort(PyArrayObject *self,
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
         if (_numpy_internal == NULL) {
             return NULL;
         }
@@ -1360,7 +1360,7 @@ array_partition(PyArrayObject *self,
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
         if (_numpy_internal == NULL) {
             return NULL;
         }
@@ -1427,7 +1427,7 @@ array_argsort(PyArrayObject *self,
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
         if (_numpy_internal == NULL) {
             return NULL;
         }
@@ -1488,7 +1488,7 @@ array_argpartition(PyArrayObject *self,
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
         if (_numpy_internal == NULL) {
             return NULL;
         }
@@ -1753,7 +1753,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
+    mod = PyImport_ImportModule("numpy._core._multiarray_umath");
     if (mod == NULL) {
         Py_DECREF(ret);
         return NULL;
@@ -1891,7 +1891,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
     /* Get the _frombuffer() function for reconstruction */
 
-    numeric_mod = PyImport_ImportModule("numpy.core.numeric");
+    numeric_mod = PyImport_ImportModule("numpy._core.numeric");
     if (numeric_mod == NULL) {
         Py_DECREF(buffer);
         return NULL;
@@ -2234,7 +2234,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
     static PyObject *method = NULL;
     PyObject *ret;
-    npy_cache_import("numpy.core._methods", "_dump", &method);
+    npy_cache_import("numpy._core._methods", "_dump", &method);
     if (method == NULL) {
         return -1;
     }
@@ -2256,7 +2256,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
     static PyObject *method = NULL;
-    npy_cache_import("numpy.core._methods", "_dumps", &method);
+    npy_cache_import("numpy._core._methods", "_dumps", &method);
     if (method == NULL) {
         return NULL;
     }

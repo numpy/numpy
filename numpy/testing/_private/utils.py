@@ -19,7 +19,7 @@ import pprint
 import sysconfig
 
 import numpy as np
-from numpy.core import (
+from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
@@ -326,7 +326,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
                          verbose)
         return
-    from numpy.core import ndarray, isscalar, signbit
+    from numpy._core import ndarray, isscalar, signbit
     from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose,
@@ -532,7 +532,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import ndarray
+    from numpy._core import ndarray
     from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
@@ -694,7 +694,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import (array2string, isnan, inf, bool_, errstate,
+    from numpy._core import (array2string, isnan, inf, bool_, errstate,
                             all, max, object_)
 
     x = np.asanyarray(x)
@@ -1063,9 +1063,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, result_type
-    from numpy.core.numerictypes import issubdtype
-    from numpy.core.fromnumeric import any as npany
+    from numpy._core import number, result_type
+    from numpy._core.numerictypes import issubdtype
+    from numpy._core.fromnumeric import any as npany
 
     def compare(x, y):
         try:
@@ -1633,7 +1633,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     import numpy as np
 
     def compare(x, y):
-        return np.core.numeric.isclose(x, y, rtol=rtol, atol=atol,
+        return np._core.numeric.isclose(x, y, rtol=rtol, atol=atol,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
@@ -2109,11 +2109,11 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     --------
     >>> import warnings
     >>> with np.testing.clear_and_catch_warnings(
-    ...         modules=[np.core.fromnumeric]):
+    ...         modules=[np._core.fromnumeric]):
     ...     warnings.simplefilter('always')
     ...     warnings.filterwarnings('ignore', module='np.core.fromnumeric')
     ...     # do something that raises a warning but ignore those in
-    ...     # np.core.fromnumeric
+    ...     # np._core.fromnumeric
     """
     class_modules = ()
 

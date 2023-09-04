@@ -8,8 +8,8 @@ import pytest
 import numpy as np
 from numpy.exceptions import AxisError
 
-_ArrayMemoryError = np.core._exceptions._ArrayMemoryError
-_UFuncNoLoopError = np.core._exceptions._UFuncNoLoopError
+_ArrayMemoryError = np._core._exceptions._ArrayMemoryError
+_UFuncNoLoopError = np._core._exceptions._UFuncNoLoopError
 
 class TestArrayMemoryError:
     def test_pickling(self):

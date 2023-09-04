@@ -3,7 +3,7 @@ import itertools
 
 import pytest
 import numpy as np
-from numpy.core.numerictypes import issctype, sctype2char, maximum_sctype
+from numpy._core.numerictypes import issctype, sctype2char, maximum_sctype
 from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
 # This is the structure of the table used for plain objects:
@@ -416,11 +416,11 @@ class TestIsSubDType:
 
 class TestSctypeDict:
     def test_longdouble(self):
-        assert_(np.core.sctypeDict['float64'] is not np.longdouble)
-        assert_(np.core.sctypeDict['complex128'] is not np.clongdouble)
+        assert_(np._core.sctypeDict['float64'] is not np.longdouble)
+        assert_(np._core.sctypeDict['complex128'] is not np.clongdouble)
 
     def test_ulong(self):
-        assert np.sctypeDict['ulong'] is np.ulong
+        assert np._core.sctypeDict['ulong'] is np.ulong
         assert np.dtype(np.ulong) is np.dtype("ulong")
         assert np.dtype(np.ulong).itemsize == np.dtype(np.long).itemsize
 
@@ -435,21 +435,21 @@ class TestMaximumSctype:
         't', [np.byte, np.short, np.intc, np.long, np.longlong]
     )
     def test_int(self, t):
-        assert_equal(maximum_sctype(t), np.core.sctypes['int'][-1])
+        assert_equal(maximum_sctype(t), np._core.sctypes['int'][-1])
 
     @pytest.mark.parametrize(
         't', [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
     )
     def test_uint(self, t):
-        assert_equal(maximum_sctype(t), np.core.sctypes['uint'][-1])
+        assert_equal(maximum_sctype(t), np._core.sctypes['uint'][-1])
 
     @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
     def test_float(self, t):
-        assert_equal(maximum_sctype(t), np.core.sctypes['float'][-1])
+        assert_equal(maximum_sctype(t), np._core.sctypes['float'][-1])
 
     @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
     def test_complex(self, t):
-        assert_equal(maximum_sctype(t), np.core.sctypes['complex'][-1])
+        assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
 
     @pytest.mark.parametrize('t', [np.bool_, np.object_, np.str_, np.bytes_,
                                    np.void])
@@ -473,7 +473,7 @@ class Test_sctype2char:
         assert_equal(sctype2char(np.ndarray), 'O')
 
     def test_third_party_scalar_type(self):
-        from numpy.core._rational_tests import rational
+        from numpy._core._rational_tests import rational
         assert_raises(KeyError, sctype2char, rational)
         assert_raises(KeyError, sctype2char, rational(1))
 

@@ -11,11 +11,11 @@ import re
 import warnings
 
 from .._utils import set_module
-import numpy.core.numeric as NX
+import numpy._core.numeric as NX
 
-from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
+from numpy._core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
-from numpy.core import overrides
+from numpy._core import overrides
 from numpy.exceptions import RankWarning
 from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._function_base_impl import trim_zeros

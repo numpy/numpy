@@ -6818,7 +6818,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     PyObject *doc;
 
     npy_cache_import(
-        "numpy.core._internal",
+        "numpy._core._internal",
         "_ufunc_doc_signature_formatter",
         &_sig_formatter);
 

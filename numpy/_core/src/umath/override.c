@@ -375,7 +375,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             static PyObject *errmsg_formatter = NULL;
             PyObject *errmsg;
 
-            npy_cache_import("numpy.core._internal",
+            npy_cache_import("numpy._core._internal",
                              "array_ufunc_errmsg_formatter",
                              &errmsg_formatter);
 

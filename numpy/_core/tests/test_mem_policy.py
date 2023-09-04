@@ -221,8 +221,8 @@ def get_module(tmp_path):
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_set_policy(get_module):
 
-    get_handler_name = np.core.multiarray.get_handler_name
-    get_handler_version = np.core.multiarray.get_handler_version
+    get_handler_name = np._core.multiarray.get_handler_name
+    get_handler_version = np._core.multiarray.get_handler_version
     orig_policy_name = get_handler_name()
 
     a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
@@ -249,7 +249,7 @@ def test_set_policy(get_module):
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_default_policy_singleton(get_module):
-    get_handler_name = np.core.multiarray.get_handler_name
+    get_handler_name = np._core.multiarray.get_handler_name
 
     # set the policy to default
     orig_policy = get_module.set_old_policy(None)
@@ -276,7 +276,7 @@ def test_policy_propagation(get_module):
     class MyArr(np.ndarray):
         pass
 
-    get_handler_name = np.core.multiarray.get_handler_name
+    get_handler_name = np._core.multiarray.get_handler_name
     orig_policy_name = get_handler_name()
     a = np.arange(10).view(MyArr).reshape((2, 5))
     assert get_handler_name(a) is None
@@ -290,30 +290,32 @@ def test_policy_propagation(get_module):
 
 
 async def concurrent_context1(get_module, orig_policy_name, event):
+    from numpy._core.multiarray import get_handler_name
     if orig_policy_name == 'default_allocator':
         get_module.set_secret_data_policy()
-        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+        assert get_handler_name() == 'secret_data_allocator'
     else:
         get_module.set_old_policy(None)
-        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+        assert get_handler_name() == 'default_allocator'
     event.set()
 
 
 async def concurrent_context2(get_module, orig_policy_name, event):
+    from numpy._core.multiarray import get_handler_name
     await event.wait()
     # the policy is not affected by changes in parallel contexts
-    assert np.core.multiarray.get_handler_name() == orig_policy_name
+    assert get_handler_name() == orig_policy_name
     # change policy in the child context
     if orig_policy_name == 'default_allocator':
         get_module.set_secret_data_policy()
-        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+        assert get_handler_name() == 'secret_data_allocator'
     else:
         get_module.set_old_policy(None)
-        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+        assert get_handler_name() == 'default_allocator'
 
 
 async def async_test_context_locality(get_module):
-    orig_policy_name = np.core.multiarray.get_handler_name()
+    orig_policy_name = np._core.multiarray.get_handler_name()
 
     event = asyncio.Event()
     # the child contexts inherit the parent policy
@@ -325,7 +327,7 @@ async def async_test_context_locality(get_module):
     await concurrent_task2
 
     # the parent context is not affected by child policy changes
-    assert np.core.multiarray.get_handler_name() == orig_policy_name
+    assert np._core.multiarray.get_handler_name() == orig_policy_name
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
@@ -338,21 +340,21 @@ def test_context_locality(get_module):
 
 def concurrent_thread1(get_module, event):
     get_module.set_secret_data_policy()
-    assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    assert np._core.multiarray.get_handler_name() == 'secret_data_allocator'
     event.set()
 
 
 def concurrent_thread2(get_module, event):
     event.wait()
     # the policy is not affected by changes in parallel threads
-    assert np.core.multiarray.get_handler_name() == 'default_allocator'
+    assert np._core.multiarray.get_handler_name() == 'default_allocator'
     # change policy in the child thread
     get_module.set_secret_data_policy()
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_thread_locality(get_module):
-    orig_policy_name = np.core.multiarray.get_handler_name()
+    orig_policy_name = np._core.multiarray.get_handler_name()
 
     event = threading.Event()
     # the child threads do not inherit the parent policy
@@ -366,23 +368,23 @@ def test_thread_locality(get_module):
     concurrent_task2.join()
 
     # the parent thread is not affected by child policy changes
-    assert np.core.multiarray.get_handler_name() == orig_policy_name
+    assert np._core.multiarray.get_handler_name() == orig_policy_name
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 @pytest.mark.skip(reason="too slow, see gh-23975")
 def test_new_policy(get_module):
     a = np.arange(10)
-    orig_policy_name = np.core.multiarray.get_handler_name(a)
+    orig_policy_name = np._core.multiarray.get_handler_name(a)
 
     orig_policy = get_module.set_secret_data_policy()
 
     b = np.arange(10)
-    assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
+    assert np._core.multiarray.get_handler_name(b) == 'secret_data_allocator'
 
     # test array manipulation. This is slow
     if orig_policy_name == 'default_allocator':
-        # when the np.core.test tests recurse into this test, the
+        # when the np._core.test tests recurse into this test, the
         # policy will be set so this "if" will be false, preventing
         # infinite recursion
         #
@@ -390,14 +392,14 @@ def test_new_policy(get_module):
         # - running tests with -- -s (to not capture stdout/stderr
         # - setting verbose=2
         # - setting extra_argv=['-vv'] here
-        assert np.core.test('full', verbose=1, extra_argv=[])
+        assert np._core.test('full', verbose=1, extra_argv=[])
         # also try the ma tests, the pickling test is quite tricky
         assert np.ma.test('full', verbose=1, extra_argv=[])
 
     get_module.set_old_policy(orig_policy)
 
     c = np.arange(10)
-    assert np.core.multiarray.get_handler_name(c) == orig_policy_name
+    assert np._core.multiarray.get_handler_name(c) == orig_policy_name
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
@@ -407,7 +409,7 @@ def test_new_policy(get_module):
 @pytest.mark.parametrize("policy", ["0", "1", None])
 def test_switch_owner(get_module, policy):
     a = get_module.get_array()
-    assert np.core.multiarray.get_handler_name(a) is None
+    assert np._core.multiarray.get_handler_name(a) is None
     get_module.set_own(a)
 
     if policy is None:
@@ -416,7 +418,7 @@ def test_switch_owner(get_module, policy):
         oldval = None
     else:
         policy = policy == "1"
-        oldval = np.core._multiarray_umath._set_numpy_warn_if_no_mem_policy(
+        oldval = np._core._multiarray_umath._set_numpy_warn_if_no_mem_policy(
             policy)
     try:
         # The policy should be NULL, so we have to assume we can call
@@ -431,7 +433,7 @@ def test_switch_owner(get_module, policy):
 
     finally:
         if oldval is not None:
-            np.core._multiarray_umath._set_numpy_warn_if_no_mem_policy(oldval)
+            np._core._multiarray_umath._set_numpy_warn_if_no_mem_policy(oldval)
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")

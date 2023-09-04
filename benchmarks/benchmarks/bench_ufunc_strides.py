@@ -2,7 +2,7 @@ from .common import Benchmark, get_data
 
 import numpy as np
 
-UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
+UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
           isinstance(obj, np.ufunc)]
 UFUNCS_UNARY = [uf for uf in UFUNCS if "O->O" in uf.types]
 

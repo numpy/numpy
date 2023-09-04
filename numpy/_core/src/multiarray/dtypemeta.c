@@ -469,7 +469,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     if (descr1->names != NULL && descr2->names != NULL) {
         /* If both have fields promoting individual fields may be possible */
         static PyObject *promote_fields_func = NULL;
-        npy_cache_import("numpy.core._internal", "_promote_fields",
+        npy_cache_import("numpy._core._internal", "_promote_fields",
                 &promote_fields_func);
         if (promote_fields_func == NULL) {
             return NULL;

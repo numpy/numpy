@@ -11,8 +11,8 @@ import numpy.ma as ma
 from numpy import ndarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
-from numpy.core.overrides import array_function_dispatch
-from numpy.core.records import recarray
+from numpy._core.overrides import array_function_dispatch
+from numpy._core.records import recarray
 from numpy.lib._iotools import _is_string_like
 
 _check_fill_value = np.ma.core._check_fill_value

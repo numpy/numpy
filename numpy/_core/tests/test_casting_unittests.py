@@ -16,7 +16,7 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 from numpy.testing import assert_array_equal
-from numpy.core._multiarray_umath import _get_castingimpl as get_castingimpl
+from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 
 # Simple skips object, parametric and long double (unsupported by struct)

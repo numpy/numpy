@@ -32,10 +32,10 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 import functools
 
-from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt
 from . import _pocketfft_internal as pfi
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core import overrides
+from numpy._core.multiarray import normalize_axis_index
+from numpy._core import overrides
 
 
 array_function_dispatch = functools.partial(

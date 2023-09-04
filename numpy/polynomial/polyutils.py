@@ -24,8 +24,8 @@ import warnings
 
 import numpy as np
 
-from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute
+from numpy._core.multiarray import dragon4_positional, dragon4_scientific
+from numpy._core.umath import absolute
 from numpy.exceptions import RankWarning
 
 __all__ = [

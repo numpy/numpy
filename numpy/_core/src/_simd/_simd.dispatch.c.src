@@ -920,11 +920,11 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
     static struct PyModuleDef defs = {
         .m_base = PyModuleDef_HEAD_INIT,
     #if defined(NPY_MTARGETS_CURRENT) // meson build
-        .m_name = "numpy.core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT),
+        .m_name = "numpy._core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT),
     #elif defined(NPY__CPU_TARGET_CURRENT)
-        .m_name = "numpy.core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
+        .m_name = "numpy._core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
     #else
-        .m_name = "numpy.core._simd.baseline",
+        .m_name = "numpy._core._simd.baseline",
     #endif
         .m_size = -1,
     #if NPY_SIMD

@@ -5,7 +5,7 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from numpy.core import (
+from numpy._core import (
     array, asarray, absolute, add, subtract, multiply, divide,
     remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
     bitwise_xor, invert, less, less_equal, not_equal, equal, greater,

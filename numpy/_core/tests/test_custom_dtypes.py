@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal
-from numpy.core._multiarray_umath import (
+from numpy._core._multiarray_umath import (
     _discover_array_parameters as discover_array_params, _get_sfloat_dtype)
 
 

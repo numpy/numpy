@@ -348,9 +348,9 @@ class TestPathUsage:
             a[5] = (0.5,10,'abcde')
             with path.open("wb") as fd:
                 a.tofile(fd)
-            x = np.core.records.fromfile(path,
-                                         formats='f8,i4,S5',
-                                         shape=10)
+            x = np._core.records.fromfile(
+                path, formats='f8,i4,S5', shape=10
+            )
             assert_array_equal(x, a)
 
 
@@ -437,7 +437,7 @@ class TestRecord:
         a['int'] = 42
         ctor, args = a[0].__reduce__()
         # check the constructor is what we expect before interpreting the arguments
-        assert ctor is np.core.multiarray.scalar
+        assert ctor is np._core.multiarray.scalar
         dtype, obj = args
         # make sure we did not pickle the address
         assert not isinstance(obj, bytes)

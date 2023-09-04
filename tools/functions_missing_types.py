@@ -32,7 +32,7 @@ EXCLUDE_LIST = {
         "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
-        "core",
+        "_core",
         "get_array_wrap",
         "int_asbuffer",
         "numarray",

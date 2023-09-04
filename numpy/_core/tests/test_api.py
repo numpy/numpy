@@ -1,8 +1,8 @@
 import sys
 
 import numpy as np
-import numpy.core.umath as ncu
-from numpy.core._rational_tests import rational
+import numpy._core.umath as ncu
+from numpy._core._rational_tests import rational
 import pytest
 from numpy.testing import (
      assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
@@ -300,7 +300,9 @@ def test_object_array_astype_to_void():
     assert arr.dtype == "V8"
 
 @pytest.mark.parametrize("t",
-    np.core.sctypes['uint'] + np.core.sctypes['int'] + np.core.sctypes['float']
+    np._core.sctypes['uint'] + 
+    np._core.sctypes['int'] + 
+    np._core.sctypes['float']
 )
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int

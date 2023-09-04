@@ -8,11 +8,11 @@ import pytest
 from pytest import param
 
 import numpy as np
-import numpy.core.umath as ncu
-import numpy.core._umath_tests as umt
+import numpy._core.umath as ncu
+import numpy._core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
-import numpy.core._operand_flag_tests as opflag_tests
-import numpy.core._rational_tests as _rational_tests
+import numpy._core._operand_flag_tests as opflag_tests
+import numpy._core._rational_tests as _rational_tests
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
@@ -29,7 +29,7 @@ from packaging.version import parse, Version
 cython_version = parse(cython.__version__)
 BUG_5411 = Version("3.0.0a7") <= cython_version <= Version("3.0.0b3")
 
-UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
+UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
@@ -176,7 +176,7 @@ class TestUfuncGenericLoops:
                 try:
                     return super().__getattr__(attr)
                 except AttributeError:
-                    return lambda: getattr(np.core.umath, attr)(val)
+                    return lambda: getattr(np._core.umath, attr)(val)
 
         # Use 0-D arrays, to ensure the same element call
         num_arr = np.array(val, dtype=np.float64)
@@ -204,14 +204,14 @@ class TestUfunc:
                                               protocol=proto)) is np.sin)
 
             # Check that ufunc not defined in the top level numpy namespace
-            # such as numpy.core._rational_tests.test_add can also be pickled
+            # such as numpy._core._rational_tests.test_add can also be pickled
             res = pickle.loads(pickle.dumps(_rational_tests.test_add,
                                             protocol=proto))
             assert_(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
-        astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
-                   b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
+        astring = (b"cnumpy._core\n_ufunc_reconstruct\np0\n"
+                   b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
     @pytest.mark.skipif(BUG_5411,
@@ -1905,7 +1905,7 @@ class TestUfunc:
         assert_equal(a, 10)
 
     def test_struct_ufunc(self):
-        import numpy.core._struct_ufunc_tests as struct_ufunc
+        import numpy._core._struct_ufunc_tests as struct_ufunc
 
         a = np.array([(1, 2, 3)], dtype='u8,u8,u8')
         b = np.array([(1, 2, 3)], dtype='u8,u8,u8')
@@ -2258,7 +2258,7 @@ class TestUfunc:
     def test_at_no_loop_for_op(self):
         # str dtype does not have a ufunc loop for np.add
         arr = np.ones(10, dtype=str)
-        with pytest.raises(np.core._exceptions._UFuncNoLoopError):
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.at(arr, [0, 1], [0, 1])
 
     def test_at_output_casting(self):

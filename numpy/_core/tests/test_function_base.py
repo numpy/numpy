@@ -7,8 +7,8 @@ from numpy import (
     logspace, linspace, geomspace, dtype, array, arange, isnan,
     ndarray, sqrt, nextafter, stack, errstate
     )
-from numpy.core import sctypes
-from numpy.core.function_base import add_newdoc
+from numpy._core import sctypes
+from numpy._core.function_base import add_newdoc
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
     IS_PYPY
@@ -458,14 +458,14 @@ class TestAdd_newdoc:
     def test_add_doc(self):
         # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
-        assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
-        assert_(len(np.core.ufunc.identity.__doc__) > 300)
+        assert_equal(np._core.flatiter.index.__doc__[:len(tgt)], tgt)
+        assert_(len(np._core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib._index_tricks_impl.mgrid.__doc__) > 300)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_errors_are_ignored(self):
-        prev_doc = np.core.flatiter.index.__doc__
+        prev_doc = np._core.flatiter.index.__doc__
         # nothing changed, but error ignored, this should probably
         # give a warning (or even error) in the future.
-        add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
-        assert prev_doc == np.core.flatiter.index.__doc__
+        add_newdoc("numpy._core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np._core.flatiter.index.__doc__

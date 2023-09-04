@@ -7,7 +7,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
     temppath, IS_MUSL
     )
-from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy._core.tests._locales import CommaDecimalPointLocale
 
 
 LD_INFO = np.finfo(np.longdouble)
@@ -391,5 +391,5 @@ def test_musllinux_x86_64_signature():
 def test_eps_positive():
     # np.finfo('g').eps should be positive on all platforms. If this isn't true
     # then something may have gone wrong with the MachArLike, e.g. if
-    # np.core.getlimits._discovered_machar didn't work properly
+    # np._core.getlimits._discovered_machar didn't work properly
     assert np.finfo(np.longdouble).eps > 0.

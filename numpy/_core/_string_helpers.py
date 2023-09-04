@@ -31,7 +31,7 @@ def english_lower(s):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import english_lower
+    >>> from numpy._core.numerictypes import english_lower
     >>> english_lower('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
     'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'
     >>> english_lower('')
@@ -59,7 +59,7 @@ def english_upper(s):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import english_upper
+    >>> from numpy._core.numerictypes import english_upper
     >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
     'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
     >>> english_upper('')
@@ -86,7 +86,7 @@ def english_capitalize(s):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import english_capitalize
+    >>> from numpy._core.numerictypes import english_capitalize
     >>> english_capitalize('int8')
     'Int8'
     >>> english_capitalize('Int8')

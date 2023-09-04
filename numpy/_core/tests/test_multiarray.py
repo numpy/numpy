@@ -22,8 +22,8 @@ from decimal import Decimal
 import mmap
 
 import numpy as np
-import numpy.core._multiarray_tests as _multiarray_tests
-from numpy.core._rational_tests import rational
+import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._rational_tests import rational
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
@@ -33,9 +33,9 @@ from numpy.testing import (
     assert_array_compare,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
-from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
-from numpy.core.multiarray import _get_ndarray_c_version
+from numpy._core.multiarray import _get_ndarray_c_version
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -141,7 +141,7 @@ class TestFlags:
         vals = np.frombuffer(data, 'B')
         assert_raises(ValueError, vals.setflags, write=True)
         types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
-        values = np.core.records.fromstring(data, types)
+        values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_raises(ValueError, vals.setflags, write=True)
 
@@ -154,7 +154,7 @@ class TestFlags:
         vals.setflags(write=True)
         assert_(vals.flags.writeable)
         types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
-        values = np.core.records.fromstring(data, types)
+        values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_(vals.flags.writeable)
         vals.setflags(write=False)
@@ -178,7 +178,7 @@ class TestFlags:
         # Test that the writeable flag can be changed for an array wrapping
         # low level C-data, but not owning its data.
         # Also see that this is deprecated to change from python.
-        from numpy.core._multiarray_tests import get_c_wrapping_array
+        from numpy._core._multiarray_tests import get_c_wrapping_array
 
         arr_writeable = get_c_wrapping_array(True)
         assert not arr_writeable.flags.owndata
@@ -578,7 +578,7 @@ class TestAssignment:
     )
     def test_unicode_assignment(self):
         # gh-5049
-        from numpy.core.arrayprint import set_string_function
+        from numpy._core.arrayprint import set_string_function
 
         @contextmanager
         def inject_str(s):
@@ -948,7 +948,7 @@ class TestCreation:
                         reason="malloc may not fail on 32 bit systems")
     def test_malloc_fails(self):
         # This test is guaranteed to fail due to a too large allocation
-        with assert_raises(np.core._exceptions._ArrayMemoryError):
+        with assert_raises(np._core._exceptions._ArrayMemoryError):
             np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
 
     def test_zeros(self):
@@ -4099,7 +4099,7 @@ class TestTemporaryElide:
         # def incref_elide(a):
         #    d = input.copy() # refcount 1
         #    return d, d + d # PyNumber_Add without increasing refcount
-        from numpy.core._multiarray_tests import incref_elide
+        from numpy._core._multiarray_tests import incref_elide
         d = np.ones(100000)
         orig, res = incref_elide(d)
         d + d
@@ -4114,7 +4114,7 @@ class TestTemporaryElide:
         #
         # def incref_elide_l(d):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
-        from numpy.core._multiarray_tests import incref_elide_l
+        from numpy._core._multiarray_tests import incref_elide_l
         # padding with 1 makes sure the object on the stack is not overwritten
         l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
@@ -4193,7 +4193,7 @@ class TestTemporaryElide:
 
 class TestCAPI:
     def test_IsPythonScalar(self):
-        from numpy.core._multiarray_tests import IsPythonScalar
+        from numpy._core._multiarray_tests import IsPythonScalar
         assert_(IsPythonScalar(b'foobar'))
         assert_(IsPythonScalar(1))
         assert_(IsPythonScalar(2**80))
@@ -4329,44 +4329,89 @@ class TestPickling:
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
     def test_version0_int8(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndt"
+            b"ype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff"
+            b"\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
+        )
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_float32(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndt"
+            b"ype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff"
+            b"\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@"
+            b"\x00\x00@@\x00\x00\x80@tb."
+        )
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_object(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndt"
+            b"ype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff"
+            b"\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U"
+            b"\x01bK\x02setb."
+        )
         a = np.array([{'a': 1}, {'b': 2}])
         p = self._loads(s)
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
     def test_version1_int8(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnump"
+            b"y\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ"
+            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
+        )
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_float32(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnump"
+            b"y\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ"
+            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?"
+            b"\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."
+        )
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_object(self):
-        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        s = (
+            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
+            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnump"
+            b"y\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ"
+            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK"
+            b"\x01s}q\x08U\x01bK\x02setb."
+        )
         a = np.array([{'a': 1}, {'b': 2}])
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_subarray_int_shape(self):
-        s = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp20\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\ntp24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\nNNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
+        s = (
+            b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray"
+            b"\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\n"
+            b"dtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN"
+            b"(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1"
+            b"\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp2"
+            b"0\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\nt"
+            b"p24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'"
+            b"\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\n"
+            b"NNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'"
+            b"\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
+        )
         a = np.array([(1, (1, 2))], dtype=[('a', 'i1', (2, 2)), ('b', 'i1', 2)])
         p = self._loads(s)
         assert_equal(a, p)
@@ -4971,7 +5016,7 @@ class TestClip:
         if expected_max is None:
             expected_max = clip_max
 
-        for T in np.core.sctypes[type_group]:
+        for T in np._core.sctypes[type_group]:
             if sys.byteorder == 'little':
                 byte_orders = ['=', '>']
             else:
@@ -5071,7 +5116,7 @@ class TestPutmask:
         mask = x < 40
 
         for val in [-100, 0, 15]:
-            for types in np.core.sctypes.values():
+            for types in np._core.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
                         if val < 0 and np.dtype(T).kind == "u":
@@ -5148,7 +5193,7 @@ class TestTake:
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4
-        for types in np.core.sctypes.values():
+        for types in np._core.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
                     self.tst_basic(x.copy().astype(T))
@@ -5952,7 +5997,7 @@ class TestRecord:
     def test_fromarrays_unicode(self):
         # A single name string provided to fromarrays() is allowed to be unicode
         # on both Python 2 and 3:
-        x = np.core.records.fromarrays(
+        x = np._core.records.fromarrays(
             [[0], [1]], names='a,b', formats='i4,i4')
         assert_equal(x['a'][0], 0)
         assert_equal(x['b'][0], 1)
@@ -6629,7 +6674,7 @@ class TestDot:
         assert_equal(zeros[1].array, zeros_test[1].array)
 
     def test_dot_2args(self):
-        from numpy.core.multiarray import dot
+        from numpy._core.multiarray import dot
 
         a = np.array([[1, 2], [3, 4]], dtype=float)
         b = np.array([[1, 0], [1, 1]], dtype=float)
@@ -6639,7 +6684,7 @@ class TestDot:
         assert_allclose(c, d)
 
     def test_dot_3args(self):
-        from numpy.core.multiarray import dot
+        from numpy._core.multiarray import dot
 
         np.random.seed(22)
         f = np.random.random_sample((1024, 16))
@@ -6661,7 +6706,7 @@ class TestDot:
         assert_array_equal(r2, r)
 
     def test_dot_3args_errors(self):
-        from numpy.core.multiarray import dot
+        from numpy._core.multiarray import dot
 
         np.random.seed(22)
         f = np.random.random_sample((1024, 16))
@@ -7714,7 +7759,7 @@ class TestMinScalarType:
         assert_equal(wanted, dt)
 
 
-from numpy.core._internal import _dtype_from_pep3118
+from numpy._core._internal import _dtype_from_pep3118
 
 
 class TestPEP3118Dtype:
@@ -7933,7 +7978,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x)
 
     def test_roundtrip_single_types(self):
-        for typ in np.core.sctypeDict.values():
+        for typ in np._core.sctypeDict.values():
             dtype = np.dtype(typ)
 
             if dtype.char in 'Mm':
@@ -8090,12 +8135,12 @@ class TestNewBufferProtocol:
 
     def test_reference_leak(self):
         if HAS_REFCOUNT:
-            count_1 = sys.getrefcount(np.core._internal)
+            count_1 = sys.getrefcount(np._core._internal)
         a = np.zeros(4)
         b = memoryview(a)
         c = np.asarray(b)
         if HAS_REFCOUNT:
-            count_2 = sys.getrefcount(np.core._internal)
+            count_2 = sys.getrefcount(np._core._internal)
             assert_equal(count_1, count_2)
         del c  # avoid pyflakes unused variable warning.
 
@@ -9182,7 +9227,9 @@ class TestFormat:
         a = np.array([np.pi])
         assert_raises(TypeError, '{:30}'.format, a)
 
+
 from numpy.testing import IS_PYPY
+
 
 class TestCTypes:
 
@@ -9193,7 +9240,7 @@ class TestCTypes:
         assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
 
     def test_ctypes_is_not_available(self):
-        from numpy.core import _internal
+        from numpy._core import _internal
         _internal.ctypes = None
         try:
             test_arr = np.array([[1, 2, 3], [4, 5, 6]])
@@ -9291,7 +9338,7 @@ class TestWritebackIfCopy:
         assert_equal(res, range(5))
 
     def test_insert_noncontiguous(self):
-        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
         # uses arr_insert
         np.place(a, a>2, [44, 55])
         assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
@@ -9299,12 +9346,12 @@ class TestWritebackIfCopy:
         assert_raises(ValueError, np.place, a, a>20, [])
 
     def test_put_noncontiguous(self):
-        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
         np.put(a, [0, 2], [44, 55])
         assert_equal(a, np.array([[44, 3], [55, 4], [2, 5]]))
 
     def test_putmask_noncontiguous(self):
-        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
         # uses arr_putmask
         np.putmask(a, a>2, a**2)
         assert_equal(a, np.array([[0, 9], [1, 16], [2, 25]]))
@@ -9325,7 +9372,7 @@ class TestWritebackIfCopy:
                                     [ 10, -10,  10]]))
 
     def test_flatiter__array__(self):
-        a = np.arange(9).reshape(3,3)
+        a = np.arange(9).reshape(3, 3)
         b = a.T.flat
         c = b.__array__()
         # triggers the WRITEBACKIFCOPY resolution, assuming refcount semantics
@@ -9333,12 +9380,14 @@ class TestWritebackIfCopy:
 
     def test_dot_out(self):
         # if HAVE_CBLAS, will use WRITEBACKIFCOPY
-        a = np.arange(9, dtype=float).reshape(3,3)
+        a = np.arange(9, dtype=float).reshape(3, 3)
         b = np.dot(a, a, out=a)
         assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
 
     def test_view_assign(self):
-        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_resolve
+        from numpy._core._multiarray_tests import (
+            npy_create_writebackifcopy, npy_resolve
+        )
 
         arr = np.arange(9).reshape(3, 3).T
         arr_wb = npy_create_writebackifcopy(arr)
@@ -9366,7 +9415,9 @@ class TestWritebackIfCopy:
             assert len(sup.log) == 1
 
     def test_view_discard_refcount(self):
-        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_discard
+        from numpy._core._multiarray_tests import (
+            npy_create_writebackifcopy, npy_discard
+        )
 
         arr = np.arange(9).reshape(3, 3).T
         orig = arr.copy()
@@ -9653,7 +9704,7 @@ def test_no_loop_gives_all_true_or_false(dt1, dt2):
         arr1 != arr2
 
     # Basic test with another operation:
-    with pytest.raises(np.core._exceptions._UFuncNoLoopError):
+    with pytest.raises(np._core._exceptions._UFuncNoLoopError):
         arr1 > arr2
 
 
@@ -9716,7 +9767,7 @@ def test_npymath_complex(fun, npfun, x, y, test_dtype):
 
 def test_npymath_real():
     # Smoketest npymath functions
-    from numpy.core._multiarray_tests import (
+    from numpy._core._multiarray_tests import (
         npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh)
 
     funcs = {npy_log10: np.log10,

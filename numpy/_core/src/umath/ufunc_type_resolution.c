@@ -80,7 +80,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     PyObject *exc_value;
 
     npy_cache_import(
-        "numpy.core._exceptions", "_UFuncBinaryResolutionError",
+        "numpy._core._exceptions", "_UFuncBinaryResolutionError",
         &exc_type);
     if (exc_type == NULL) {
         return -1;
@@ -111,7 +111,7 @@ raise_no_loop_found_error(
     static PyObject *exc_type = NULL;
 
     npy_cache_import(
-        "numpy.core._exceptions", "_UFuncNoLoopError",
+        "numpy._core._exceptions", "_UFuncNoLoopError",
         &exc_type);
     if (exc_type == NULL) {
         return -1;
@@ -181,7 +181,7 @@ raise_input_casting_error(
 {
     static PyObject *exc_type = NULL;
     npy_cache_import(
-        "numpy.core._exceptions", "_UFuncInputCastingError",
+        "numpy._core._exceptions", "_UFuncInputCastingError",
         &exc_type);
     if (exc_type == NULL) {
         return -1;
@@ -204,7 +204,7 @@ raise_output_casting_error(
 {
     static PyObject *exc_type = NULL;
     npy_cache_import(
-        "numpy.core._exceptions", "_UFuncOutputCastingError",
+        "numpy._core._exceptions", "_UFuncOutputCastingError",
         &exc_type);
     if (exc_type == NULL) {
         return -1;

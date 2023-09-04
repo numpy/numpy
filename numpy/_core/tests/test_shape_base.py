@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
-from numpy.core import (
+from numpy._core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
     )
 from numpy.exceptions import AxisError
-from numpy.core.shape_base import (_block_dispatcher, _block_setup,
+from numpy._core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,

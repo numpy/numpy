@@ -213,7 +213,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
     {
         static PyObject *internal_gcd_func = NULL;
 
-        npy_cache_import("numpy.core._internal", "_gcd", &internal_gcd_func);
+        npy_cache_import("numpy._core._internal", "_gcd", &internal_gcd_func);
         if (internal_gcd_func == NULL) {
             return NULL;
         }

@@ -9,8 +9,8 @@ import pickle
 
 import numpy as np
 import numpy.dtypes
-from numpy.core._rational_tests import rational
-from numpy.core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
+from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
     IS_PYSTON, _OLD_PROMOTION)

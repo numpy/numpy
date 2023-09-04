@@ -200,7 +200,7 @@ class TestRegression:
         np.dot(x, np.transpose(y), out=z)
         assert_equal(_z, np.ones(10))
         # Do the same for the built-in dot:
-        np.core.multiarray.dot(x, np.transpose(y), out=z)
+        np._core.multiarray.dot(x, np.transpose(y), out=z)
         assert_equal(_z, np.ones(10))
 
     def test_arange_endian(self):
@@ -458,23 +458,24 @@ class TestRegression:
         test_data = [
             # (original, py2_pickle)
             (np.str_('\u6f2c'),
-             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+             b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
              b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
              b"I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."),
 
             (np.array([9e123], dtype=np.float64),
-             b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
-             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\n"
-             b"p7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\n"
-             b"I0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb."),
+             b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
+             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtyp"
+             b"e\np7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1"
+             b"\nI-1\nI0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14"
+             b"\nb."),
 
             (np.array([(9e123,)], dtype=[('name', float)]),
-             b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n"
-             b"(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n"
-             b"(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n"
-             b"(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\n"
-             b"I-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\n"
-             b"bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
+             b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
+             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtyp"
+             b"e\np7\n(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'nam"
+             b"e'\np12\ntp13\n(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp"
+             b"17\n(I3\nS'<'\np18\nNNNI-1\nI-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1"
+             b"\nI0\ntp21\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
         ]
 
         for original, data in test_data:
@@ -1250,7 +1251,7 @@ class TestRegression:
         #Create test string data, construct void scalar from data and assert
         #that void scalar contains original data.
         test_string = np.array("test")
-        test_string_void_scalar = np.core.multiarray.scalar(
+        test_string_void_scalar = np._core.multiarray.scalar(
             np.dtype(("V", test_string.dtype.itemsize)), test_string.tobytes())
 
         assert_(test_string_void_scalar.view(test_string.dtype) == test_string)
@@ -1258,7 +1259,7 @@ class TestRegression:
         #Create record scalar, construct from data and assert that
         #reconstructed scalar is correct.
         test_record = np.ones((), "i,i")
-        test_record_void_scalar = np.core.multiarray.scalar(
+        test_record_void_scalar = np._core.multiarray.scalar(
             test_record.dtype, test_record.tobytes())
 
         assert_(test_record_void_scalar == test_record)
@@ -1484,7 +1485,10 @@ class TestRegression:
         from hashlib import sha256
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
-        assert_equal(sha256(x).hexdigest(), '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d')
+        assert_equal(
+            sha256(x).hexdigest(), 
+            '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d'
+        )
 
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
@@ -1506,7 +1510,7 @@ class TestRegression:
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.core.sctypeDict.values()
+        dtypes = [x for x in np._core.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], np.bool_)  # not x[0] because it is unordered
@@ -1919,10 +1923,10 @@ class TestRegression:
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
-        data = (b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\n"
-                b"tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
-                b"I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
-                b"p13\ntp14\nb.")
+        data = (b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray"
+                b"\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy"
+                b"\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11"
+                b"\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb.")
         # This should work:
         result = pickle.loads(data, encoding='latin1')
         assert_array_equal(result, np.array([129]).astype('b'))
@@ -1937,21 +1941,22 @@ class TestRegression:
         datas = [
             # (original, python2_pickle, koi8r_validity)
             (np.str_('\u6bd2'),
-             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
               b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
               b"tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
              'invalid'),
 
             (np.float64(9e123),
-             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\n"
-              b"p2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\n"
-              b"bS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
+             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+              b"(S'f8'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\n"
+              b"I0\ntp6\nbS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
              'invalid'),
 
-            (np.bytes_(b'\x9c'),  # different 8-bit code point in KOI8-R vs latin1
-             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\n"
-              b"I0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\n"
-              b"tp8\nRp9\n."),
+            # different 8-bit code point in KOI8-R vs latin1
+            (np.bytes_(b'\x9c'),  
+             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+              b"(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0"
+              b"\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n."),
              'different'),
         ]
         for original, data, koi8r_validity in datas:
@@ -2312,7 +2317,7 @@ class TestRegression:
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
-        all_types = set(np.core.sctypeDict.values()) - {np.void}
+        all_types = set(np._core.sctypeDict.values()) - {np.void}
         for t in all_types:
             val = t()
 
@@ -2324,7 +2329,7 @@ class TestRegression:
                 assert_(t.__hash__ != None)
 
     def test_scalar_copy(self):
-        scalar_types = set(np.core.sctypeDict.values())
+        scalar_types = set(np._core.sctypeDict.values())
         values = {
             np.void: b"a",
             np.bytes_: b"a",
@@ -2402,9 +2407,9 @@ class TestRegression:
         assert b'_multiarray_umath' not in s
         if protocol == 5 and len(val.shape) > 0:
             # unpickling ndarray goes through _frombuffer for protocol 5
-            assert b'numpy.core.numeric' in s
+            assert b'numpy._core.numeric' in s
         else:
-            assert b'numpy.core.multiarray' in s
+            assert b'numpy._core.multiarray' in s
 
     def test_object_casting_errors(self):
         # gh-11993 update to ValueError (see gh-16909), since strings can in

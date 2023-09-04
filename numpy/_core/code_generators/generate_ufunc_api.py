@@ -33,12 +33,12 @@ static void **PyUFunc_API=NULL;
 static inline int
 _import_umath(void)
 {
-  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+  PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
       PyErr_SetString(PyExc_ImportError,
-                      "numpy.core._multiarray_umath failed to import");
+                      "numpy._core._multiarray_umath failed to import");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
@@ -68,7 +68,7 @@ _import_umath(void)
         if (_import_umath() < 0) {\
             PyErr_Print();\
             PyErr_SetString(PyExc_ImportError,\
-                    "numpy.core.umath failed to import");\
+                    "numpy._core.umath failed to import");\
             return NULL;\
         }\
     } while(0)
@@ -79,7 +79,7 @@ _import_umath(void)
         if (_import_umath() < 0) {\
             PyErr_Print();\
             PyErr_SetString(PyExc_ImportError,\
-                    "numpy.core.umath failed to import");\
+                    "numpy._core.umath failed to import");\
             return ret;\
         }\
     } while(0)
@@ -100,7 +100,7 @@ _import_umath(void)
         if (_import_umath() < 0) {\
             PyErr_Print();\
             PyErr_SetString(PyExc_ImportError,\
-                    "numpy.core.umath failed to import");\
+                    "numpy._core.umath failed to import");\
         }\
     } while(0)
 

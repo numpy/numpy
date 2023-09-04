@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, IS_MUSL
-from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy._core.tests._locales import CommaDecimalPointLocale
 
 
 from io import StringIO

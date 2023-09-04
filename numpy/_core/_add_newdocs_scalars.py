@@ -5,9 +5,9 @@ platform-dependent information.
 """
 import sys
 import os
-from numpy.core import dtype
-from numpy.core import numerictypes as _numerictypes
-from numpy.core.function_base import add_newdoc
+from numpy._core import dtype
+from numpy._core import numerictypes as _numerictypes
+from numpy._core.function_base import add_newdoc
 
 ##############################################################################
 #
@@ -90,7 +90,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     {canonical_name_doc}{alias_doc}
     """
 
-    add_newdoc('numpy.core.numerictypes', obj, docstring)
+    add_newdoc('numpy._core.numerictypes', obj, docstring)
 
 
 add_newdoc_for_scalar_type('bool_', [],
@@ -301,7 +301,7 @@ add_newdoc_for_scalar_type('timedelta64', [],
     See :ref:`arrays.datetime` for more information.
     """)
 
-add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
+add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
     """
     integer.is_integer() -> bool
 
@@ -319,7 +319,7 @@ add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
 
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
-    add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
+    add_newdoc('numpy._core.numerictypes', float_name, ('as_integer_ratio',
         """
         {ftype}.as_integer_ratio() -> (int, int)
 
@@ -335,7 +335,7 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         (-1, 4)
         """.format(ftype=float_name)))
 
-    add_newdoc('numpy.core.numerictypes', float_name, ('is_integer',
+    add_newdoc('numpy._core.numerictypes', float_name, ('is_integer',
         f"""
         {float_name}.is_integer() -> bool
 
@@ -355,7 +355,7 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
     # Add negative examples for signed cases by checking typecode
-    add_newdoc('numpy.core.numerictypes', int_name, ('bit_count',
+    add_newdoc('numpy._core.numerictypes', int_name, ('bit_count',
         f"""
         {int_name}.bit_count() -> int
 

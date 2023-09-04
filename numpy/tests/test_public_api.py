@@ -23,6 +23,8 @@ def check_dir(module, module_name=None):
         module_name = module.__name__
     results = {}
     for name in dir(module):
+        if name == "core":
+            continue
         item = getattr(module, name)
         if (hasattr(item, '__module__') and hasattr(item, '__name__')
                 and item.__module__ != module_name):
@@ -84,7 +86,7 @@ def test_numpy_fft():
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 def test_NPY_NO_EXPORT():
-    cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
+    cdll = ctypes.CDLL(np._core._multiarray_tests.__file__)
     # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
     f = getattr(cdll, 'test_not_exported', None)
     assert f is None, ("'test_not_exported' is mistakenly exported, "
@@ -164,20 +166,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "compat.py3k",
     "conftest",
     "core",
-    "core.arrayprint",
-    "core.defchararray",
-    "core.einsumfunc",
-    "core.fromnumeric",
-    "core.function_base",
-    "core.getlimits",
-    "core.memmap",
-    "core.multiarray",
-    "core.numeric",
-    "core.numerictypes",
-    "core.overrides",
-    "core.records",
-    "core.shape_base",
-    "core.umath",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -289,17 +277,17 @@ def is_unexpected(name):
 # These are present in a directory with an __init__.py but cannot be imported
 # code_generators/ isn't installed, but present for an inplace build
 SKIP_LIST = [
-    "numpy.core.code_generators",
-    "numpy.core.code_generators.genapi",
-    "numpy.core.code_generators.generate_umath",
-    "numpy.core.code_generators.ufunc_docstrings",
-    "numpy.core.code_generators.generate_numpy_api",
-    "numpy.core.code_generators.generate_ufunc_api",
-    "numpy.core.code_generators.numpy_api",
-    "numpy.core.code_generators.generate_umath_doc",
-    "numpy.core.code_generators.verify_c_api_version",
-    "numpy.core.cversions",
-    "numpy.core.generate_numpy_api",
+    "numpy._core.code_generators",
+    "numpy._core.code_generators.genapi",
+    "numpy._core.code_generators.generate_umath",
+    "numpy._core.code_generators.ufunc_docstrings",
+    "numpy._core.code_generators.generate_numpy_api",
+    "numpy._core.code_generators.generate_ufunc_api",
+    "numpy._core.code_generators.numpy_api",
+    "numpy._core.code_generators.generate_umath_doc",
+    "numpy._core.code_generators.verify_c_api_version",
+    "numpy._core.cversions",
+    "numpy._core.generate_numpy_api",
 ]
 if sys.version_info < (3, 12):
     SKIP_LIST += ["numpy.distutils.msvc9compiler"]

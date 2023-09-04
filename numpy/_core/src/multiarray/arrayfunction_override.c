@@ -254,7 +254,7 @@ set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
     static PyObject *errmsg_formatter = NULL;
     /* No acceptable override found, raise TypeError. */
-    npy_cache_import("numpy.core._internal",
+    npy_cache_import("numpy._core._internal",
                      "array_function_errmsg_formatter",
                      &errmsg_formatter);
     if (errmsg_formatter != NULL) {

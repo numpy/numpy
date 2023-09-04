@@ -6,8 +6,8 @@ import types
 import numpy as np
 from . import numeric as _nx
 from .numeric import result_type, nan, asanyarray, ndim
-from numpy.core.multiarray import add_docstring
-from numpy.core import overrides
+from numpy._core.multiarray import add_docstring
+from numpy._core import overrides
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 

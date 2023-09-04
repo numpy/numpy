@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
-from numpy.core.overrides import (
+from numpy._core.overrides import (
     _get_implementing_args, array_function_dispatch,
     verify_matching_signatures)
 
@@ -709,7 +709,7 @@ class TestArrayLike:
 
 def test_function_like():
     # We provide a `__get__` implementation, make sure it works
-    assert type(np.mean) is np.core._multiarray_umath._ArrayFunctionDispatcher 
+    assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher 
 
     class MyClass:
         def __array__(self):

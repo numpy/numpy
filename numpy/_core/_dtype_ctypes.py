@@ -25,7 +25,7 @@ Unfortunately, this fails because:
 
 # We delay-import ctypes for distributions that do not include it.
 # While this module is not used unless the user passes in ctypes
-# members, it is eagerly imported from numpy/core/__init__.py.
+# members, it is eagerly imported from numpy/_core/__init__.py.
 import numpy as np
 
 

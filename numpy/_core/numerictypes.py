@@ -93,7 +93,7 @@ __all__ = [
 ]
 
 # we don't need all these imports, but we need to keep them for compatibility
-# for users using np.core.numerictypes.UPPER_TABLE
+# for users using np._core.numerictypes.UPPER_TABLE
 from ._string_helpers import (
     english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
 )
@@ -145,7 +145,7 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import maximum_sctype
+    >>> from numpy._core.numerictypes import maximum_sctype
     >>> maximum_sctype(int)
     <class 'numpy.int64'>
     >>> maximum_sctype(np.uint8)
@@ -204,7 +204,7 @@ def issctype(rep):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import issctype
+    >>> from numpy._core.numerictypes import issctype
     >>> issctype(np.int32)
     True
     >>> issctype(list)
@@ -253,7 +253,7 @@ def obj2sctype(rep, default=None):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import obj2sctype
+    >>> from numpy._core.numerictypes import obj2sctype
     >>> obj2sctype(np.int32)
     <class 'numpy.int32'>
     >>> obj2sctype(np.array([1., 2.]))
@@ -347,7 +347,7 @@ def issubsctype(arg1, arg2):
 
     Examples
     --------
-    >>> from numpy.core import issubsctype
+    >>> from numpy._core import issubsctype
     >>> issubsctype('S8', str)
     False
     >>> issubsctype(np.array([1]), int)
@@ -453,7 +453,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> from numpy.core.numerictypes import sctype2char
+    >>> from numpy._core.numerictypes import sctype2char
     >>> for sctype in [np.int32, np.double, np.cdouble, np.bytes_, np.ndarray]:
     ...     print(sctype2char(sctype))
     l # may vary

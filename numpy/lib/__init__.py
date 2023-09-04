@@ -42,8 +42,8 @@ from . import _version
 from .arrayterator import Arrayterator
 from ._version import *
 from .introspect import *
-from numpy.core._multiarray_umath import add_docstring, tracemalloc_domain
-from numpy.core.function_base import add_newdoc
+from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
+from numpy._core.function_base import add_newdoc
 
 __all__ = ['emath']
 

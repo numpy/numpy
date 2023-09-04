@@ -6,9 +6,9 @@ import pytest
 from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
 from numpy.testing import assert_array_max_ulp
 from numpy.testing._private.utils import _glibc_older_than
-from numpy.core._multiarray_umath import __cpu_features__
+from numpy._core._multiarray_umath import __cpu_features__
 
-UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
+UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
         isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 

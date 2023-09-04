@@ -62,7 +62,7 @@ array_repr(PyArrayObject *self)
      * We need to do a delayed import here as initialization on module load
      * leads to circular import problems.
      */
-    npy_cache_import("numpy.core.arrayprint", "_default_array_repr", &repr);
+    npy_cache_import("numpy._core.arrayprint", "_default_array_repr", &repr);
     if (repr == NULL) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__repr__");
@@ -85,7 +85,7 @@ array_str(PyArrayObject *self)
      * We need to do a delayed import here as initialization on module load leads
      * to circular import problems.
      */
-    npy_cache_import("numpy.core.arrayprint", "_default_array_str", &str);
+    npy_cache_import("numpy._core.arrayprint", "_default_array_str", &str);
     if (str == NULL) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__str__");

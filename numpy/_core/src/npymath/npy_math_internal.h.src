@@ -11,7 +11,7 @@
  * Say you want to add `foo`, these are the steps and the reasons for them.
  *
  * 1) Add foo to the appropriate list in the configuration system. The
- *    lists can be found in numpy/core/setup.py lines 63-105. Read the
+ *    lists can be found in numpy/_core/setup.py lines 63-105. Read the
  *    comments that come with them, they are very helpful.
  *
  * 2) The configuration system will define a macro HAVE_FOO if your function

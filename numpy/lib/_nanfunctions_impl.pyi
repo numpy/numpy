@@ -1,4 +1,4 @@
-from numpy.core.fromnumeric import (
+from numpy._core.fromnumeric import (
     amin,
     amax,
     argmin,

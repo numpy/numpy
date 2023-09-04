@@ -25,7 +25,7 @@ PyMODINIT_FUNC PyInit__simd(void)
 {
     static struct PyModuleDef defs = {
         .m_base = PyModuleDef_HEAD_INIT,
-        .m_name = "numpy.core._simd",
+        .m_name = "numpy._core._simd",
         .m_size = -1,
         .m_methods = _simd_methods
     };

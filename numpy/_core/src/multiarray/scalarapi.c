@@ -429,7 +429,7 @@ PyArray_FieldNames(PyObject *fields)
                 "Fields must be a dictionary");
         return NULL;
     }
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
     }

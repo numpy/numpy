@@ -7,9 +7,9 @@ import math
 from decimal import Decimal
 
 import numpy as np
-from numpy.core import umath, sctypes
-from numpy.core.numerictypes import obj2sctype
-from numpy.core.arrayprint import set_string_function
+from numpy._core import umath, sctypes
+from numpy._core.numerictypes import obj2sctype
+from numpy._core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
-from numpy.core._rational_tests import rational
+from numpy._core._rational_tests import rational
 from numpy import ma
 
 from hypothesis import given, strategies as st

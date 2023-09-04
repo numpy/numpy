@@ -696,7 +696,7 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
 
 NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.core.multiarray.flagsobj",
+    .tp_name = "numpy._core.multiarray.flagsobj",
     .tp_basicsize = sizeof(PyArrayFlagsObject),
     .tp_dealloc = (destructor)arrayflags_dealloc,
     .tp_repr = (reprfunc)arrayflags_print,

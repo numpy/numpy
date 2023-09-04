@@ -10,8 +10,8 @@ from fractions import Fraction
 from functools import reduce
 from collections import namedtuple
 
-import numpy.core.umath as ncu
-from numpy.core import _umath_tests as ncu_tests, sctypes
+import numpy._core.umath as ncu
+from numpy._core import _umath_tests as ncu_tests, sctypes
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
@@ -22,7 +22,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import _glibc_older_than
 
-UFUNCS = [obj for obj in np.core.umath.__dict__.values()
+UFUNCS = [obj for obj in np._core.umath.__dict__.values()
          if isinstance(obj, np.ufunc)]
 
 UFUNCS_UNARY = [
@@ -4472,7 +4472,7 @@ def test_nextafterl():
 
 
 def test_nextafter_0():
-    for t, direction in itertools.product(np.core.sctypes['float'], (1, -1)):
+    for t, direction in itertools.product(np._core.sctypes['float'], (1, -1)):
         # The value of tiny for double double is NaN, so we need to pass the
         # assert
         with suppress_warnings() as sup:

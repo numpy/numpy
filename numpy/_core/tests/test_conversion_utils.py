@@ -1,5 +1,5 @@
 """
-Tests for numpy/core/src/multiarray/conversion_utils.c
+Tests for numpy/_core/src/multiarray/conversion_utils.c
 """
 import re
 import sys
@@ -7,8 +7,8 @@ import sys
 import pytest
 
 import numpy as np
-import numpy.core._multiarray_tests as mt
-from numpy.core.multiarray import CLIP, WRAP, RAISE
+import numpy._core._multiarray_tests as mt
+from numpy._core.multiarray import CLIP, WRAP, RAISE
 from numpy.testing import assert_warns, IS_PYPY
 
 

@@ -11,7 +11,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport cython
 import numpy as np
 cimport numpy as np
-from numpy.core.multiarray import normalize_axis_index
+from numpy._core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string

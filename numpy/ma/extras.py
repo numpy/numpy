@@ -32,8 +32,8 @@ from .core import (
 
 import numpy as np
 from numpy import ndarray, array as nxarray
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.multiarray import normalize_axis_index
+from numpy._core.numeric import normalize_axis_tuple
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
 

@@ -1,5 +1,5 @@
 """
-Create the numpy.core.umath namespace for backward compatibility. In v1.16
+Create the numpy._core.umath namespace for backward compatibility. In v1.16
 the multiarray and umath c-extension modules were merged into a single
 _multiarray_umath extension module. So we replicate the old namespace
 by importing from the extension module.

@@ -24,11 +24,11 @@ import numpy as np
 from numpy import (
     bool_, dtype, ndarray, array as narray
 )
-from numpy.core.records import (
+from numpy._core.records import (
     recarray, fromarrays as recfromarrays, fromrecords as recfromrecords
 )
 
-_byteorderconv = np.core.records._byteorderconv
+_byteorderconv = np._core.records._byteorderconv
 
 
 _check_fill_value = ma.core._check_fill_value

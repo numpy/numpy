@@ -14,7 +14,7 @@ match exactly, and could be adjusted):
 import pytest
 
 import numpy as np
-from numpy.core._multiarray_tests import argparse_example_function as func
+from numpy._core._multiarray_tests import argparse_example_function as func
 
 
 def test_invalid_integers():
@@ -63,7 +63,7 @@ def test_string_fallbacks():
 
 def test_too_many_arguments_method_forwarding():
     # Not directly related to the standard argument parsing, but we sometimes
-    # forward methods to Python: arr.mean() calls np.core._methods._mean()
+    # forward methods to Python: arr.mean() calls np._core._methods._mean()
     # This adds code coverage for this `npy_forward_method`.
     arr = np.arange(3)
     args = range(1000)

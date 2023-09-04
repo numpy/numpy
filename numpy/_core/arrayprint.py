@@ -1465,11 +1465,11 @@ def dtype_is_implied(dtype):
 
     Examples
     --------
-    >>> np.core.arrayprint.dtype_is_implied(int)
+    >>> np._core.arrayprint.dtype_is_implied(int)
     True
     >>> np.array([1, 2, 3], int)
     array([1, 2, 3])
-    >>> np.core.arrayprint.dtype_is_implied(np.int8)
+    >>> np._core.arrayprint.dtype_is_implied(np.int8)
     False
     >>> np.array([1, 2, 3], np.int8)
     array([1, 2, 3], dtype=int8)
@@ -1728,7 +1728,7 @@ def set_string_function(f, repr=True):
 
     Examples
     --------
-    >>> from numpy.core.arrayprint import set_string_function
+    >>> from numpy._core.arrayprint import set_string_function
     >>> def pprint(arr):
     ...     return 'HA! - What are you going to do now?'
     ...

@@ -1,5 +1,5 @@
 import sys, platform, re, pytest
-from numpy.core._multiarray_umath import (
+from numpy._core._multiarray_umath import (
     __cpu_features__,
     __cpu_baseline__,
     __cpu_dispatch__,
@@ -138,7 +138,10 @@ class TestEnvPrivation:
     BASELINE_FEAT = None if len(__cpu_baseline__) == 0 else __cpu_baseline__[0]
     SCRIPT = """
 def main():
-    from numpy.core._multiarray_umath import __cpu_features__, __cpu_dispatch__
+    from numpy._core._multiarray_umath import (
+        __cpu_features__, 
+        __cpu_dispatch__
+    )
 
     detected = [feat for feat in __cpu_dispatch__ if __cpu_features__[feat]]
     print(detected)

@@ -953,7 +953,7 @@ _descriptor_from_pep3118_format(char const *s)
     }
 
     /* Convert */
-    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         Py_DECREF(str);
         free(buf);
@@ -974,7 +974,7 @@ _descriptor_from_pep3118_format(char const *s)
     }
     if (!PyArray_DescrCheck(descr)) {
         PyErr_Format(PyExc_RuntimeError,
-                     "internal error: numpy.core._internal._dtype_from_pep3118 "
+                     "internal error: numpy._core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
         Py_DECREF(descr);
         free(buf);
