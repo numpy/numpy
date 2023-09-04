@@ -83,8 +83,12 @@ Here ``<fortran files>`` may also contain signature files. Among other options
     ``--wrap-functions`` is default because it ensures maximum portability and
     compiler independence.
 
-  ``--include-paths <path1>:<path2>:..``
+  ``--include-paths "<path1><os.sep><path2>...<os.sep><pathN>"``
     Search include files from given directories.
+
+    .. note:: This will need to be separated by the correct operating system
+              separator `os.pathsep`_, that is ``:`` on Linux / MacOS and ``;`` on Windows.
+              See `gh-24533`_ for an example of usage in CMake systems.
 
   ``--help-link [<list of resources names>]``
     List system resources found by ``numpy_distutils/system_info.py``. For
@@ -295,3 +299,6 @@ resulting package to work, you need to create a file named ``__init__.py``
 (in the same directory as ``add.pyf``). Notice the extension module is
 defined entirely in terms of the ``add.pyf`` and ``add.f`` files. The
 conversion of the .pyf file to a .c file is handled by `numpy.distutils`.
+
+.. _os.pathsep: https://docs.python.org/3/library/os.html?highlight=os%20pathsep#os.pathsep
+.. _gh-24533: https://github.com/numpy/numpy/issues/24533#issuecomment-1703666568
