@@ -211,7 +211,7 @@ def isreal(x):
     """
     Returns a bool array, where True if input element is real.
 
-    If element has complex type with zero complex part, the return value
+    If element has complex type with zero imaginary part, the return value
     for that element is True.
 
     Parameters
