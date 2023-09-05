@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import TypeVar, Any, overload, Union, Literal
+from typing import TypeVar, Any, overload, Literal
 
 from numpy import (
     ndarray,
@@ -26,7 +26,7 @@ from numpy._typing import (
 
 _ArrayType = TypeVar(
     "_ArrayType",
-    bound=ndarray[Any, dtype[Union[bool_, number[Any]]]],
+    bound=ndarray[Any, dtype[bool_ | number[Any]]],
 )
 
 _OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]

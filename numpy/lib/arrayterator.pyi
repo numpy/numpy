@@ -2,7 +2,6 @@ from collections.abc import Generator
 from typing import (
     Any,
     TypeVar,
-    Union,
     overload,
 )
 
@@ -14,10 +13,12 @@ _Shape = TypeVar("_Shape", bound=Any)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
-_Index = Union[
-    Union[ellipsis, int, slice],
-    tuple[Union[ellipsis, int, slice], ...],
-]
+_Index = (
+    ellipsis
+    | int
+    | slice
+    | tuple[ellipsis | int | slice, ...]
+)
 
 __all__: list[str]
 

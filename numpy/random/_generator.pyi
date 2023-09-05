@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Union, overload, TypeVar, Literal
+from typing import Any, overload, TypeVar, Literal
 
 from numpy import (
     bool_,
@@ -47,22 +47,22 @@ from numpy._typing import (
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
-_DTypeLikeFloat32 = Union[
-    dtype[float32],
-    _SupportsDType[dtype[float32]],
-    type[float32],
-    _Float32Codes,
-    _SingleCodes,
-]
+_DTypeLikeFloat32 = (
+    dtype[float32]
+    | _SupportsDType[dtype[float32]]
+    | type[float32]
+    | _Float32Codes
+    | _SingleCodes
+)
 
-_DTypeLikeFloat64 = Union[
-    dtype[float64],
-    _SupportsDType[dtype[float64]],
-    type[float],
-    type[float64],
-    _Float64Codes,
-    _DoubleCodes,
-]
+_DTypeLikeFloat64 = (
+    dtype[float64]
+    | _SupportsDType[dtype[float64]]
+    | type[float]
+    | type[float64]
+    | _Float64Codes
+    | _DoubleCodes
+)
 
 class Generator:
     def __init__(self, bit_generator: BitGenerator) -> None: ...

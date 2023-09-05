@@ -47,16 +47,16 @@ from numpy._typing import (
 
     # Scalars
     _CharLike_co,
-    _BoolLike_co,
     _IntLike_co,
     _FloatLike_co,
-    _ComplexLike_co,
     _TD64Like_co,
     _NumberLike_co,
     _ScalarLike_co,
 
     # `number` precision
     NBitBase,
+    # NOTE: Do not remove the extended precision bit-types even if seemingly unused;
+    # they're used by the mypy plugin
     _256Bit,
     _128Bit,
     _96Bit,
@@ -169,26 +169,22 @@ from numpy._typing._extended_precision import (
 
 from collections.abc import (
     Callable,
-    Container,
     Iterable,
     Iterator,
     Mapping,
     Sequence,
-    Sized,
 )
 from typing import (
     Literal as L,
     Any,
     Generator,
     Generic,
-    IO,
     NoReturn,
     overload,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
     TypeVar,
-    Union,
     Protocol,
     SupportsIndex,
     Final,
@@ -284,7 +280,6 @@ from numpy.core._ufunc_config import (
     geterrcall as geterrcall,
     _ErrKind,
     _ErrFunc,
-    _ErrDictOptional,
 )
 
 from numpy.core.arrayprint import (
@@ -883,13 +878,13 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def type(self) -> type[_DTypeScalar_co]: ...
 
-_ArrayLikeInt = Union[
-    int,
-    integer[Any],
-    Sequence[Union[int, integer[Any]]],
-    Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
-    ndarray[Any, Any]
-]
+_ArrayLikeInt = (
+    int
+    | integer[Any]
+    | Sequence[int | integer[Any]]
+    | Sequence[Sequence[Any]]  # TODO: wait for support for recursive types
+    | ndarray[Any, Any]
+)
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter[Any])
 
@@ -1397,15 +1392,15 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 # There is currently no exhaustive way to type the buffer protocol,
 # as it is implemented exclusively in the C API (python/typing#593)
-_SupportsBuffer = Union[
-    bytes,
-    bytearray,
-    memoryview,
-    _array.array[Any],
-    mmap.mmap,
-    NDArray[Any],
-    generic,
-]
+_SupportsBuffer = (
+    bytes
+    | bytearray
+    | memoryview
+    | _array.array[Any]
+    | mmap.mmap
+    | NDArray[Any]
+    | generic
+)
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -1413,12 +1408,12 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 _2Tuple = tuple[_T, _T]
 _CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
-_ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
-_ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
-_ArrayFloat_co = NDArray[Union[bool_, integer[Any], floating[Any]]]
-_ArrayComplex_co = NDArray[Union[bool_, integer[Any], floating[Any], complexfloating[Any, Any]]]
-_ArrayNumber_co = NDArray[Union[bool_, number[Any]]]
-_ArrayTD64_co = NDArray[Union[bool_, integer[Any], timedelta64]]
+_ArrayUInt_co = NDArray[bool_ | unsignedinteger[Any]]
+_ArrayInt_co = NDArray[bool_ | integer[Any]]
+_ArrayFloat_co = NDArray[bool_ | integer[Any] | floating[Any]]
+_ArrayComplex_co = NDArray[bool_ | integer[Any] | floating[Any] | complexfloating[Any, Any]]
+_ArrayNumber_co = NDArray[bool_ | number[Any]]
+_ArrayTD64_co = NDArray[bool_ | integer[Any] | timedelta64]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype = dtype
@@ -2766,16 +2761,16 @@ class datetime64(generic):
     __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
     __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
-_IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
-_FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-_ComplexValue = Union[
-    None,
-    _CharLike_co,
-    SupportsFloat,
-    SupportsComplex,
-    SupportsIndex,
-    complex,  # `complex` is not a subtype of `SupportsComplex`
-]
+_IntValue = SupportsInt | _CharLike_co | SupportsIndex
+_FloatValue = None | _CharLike_co | SupportsFloat | SupportsIndex
+_ComplexValue = (
+    None
+    | _CharLike_co
+    | SupportsFloat
+    | SupportsComplex
+    | SupportsIndex
+    | complex  # `complex` is not a subtype of `SupportsComplex`
+)
 
 class integer(number[_NBit1]):  # type: ignore
     @property

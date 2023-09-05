@@ -3,13 +3,11 @@
 from ctypes import c_int64 as _c_intp
 
 import os
-import sys
 import ctypes
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
-    Union,
     TypeVar,
     Generic,
     overload,

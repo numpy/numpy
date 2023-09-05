@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, TypeVar, Union, overload, Literal
+from typing import Any, TypeVar, overload, Literal
 
 from numpy import ndarray
 from numpy._typing import DTypeLike, _SupportsArrayFunc
@@ -14,7 +14,7 @@ _Requirements = Literal[
     "O", "OWNDATA"
 ]
 _E = Literal["E", "ENSUREARRAY"]
-_RequirementsWithE = Union[_Requirements, _E]
+_RequirementsWithE = _Requirements | _E
 
 @overload
 def require(

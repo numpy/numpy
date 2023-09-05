@@ -1,9 +1,7 @@
-import datetime as dt
 from collections.abc import Sequence
-from typing import Union, Any, overload, TypeVar, Literal, SupportsIndex
+from typing import Any, overload, TypeVar, Literal, SupportsIndex
 
 from numpy import (
-    ndarray,
     number,
     uint64,
     int_,

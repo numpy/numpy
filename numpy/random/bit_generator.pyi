@@ -6,7 +6,6 @@ from typing import (
     NamedTuple,
     TypedDict,
     TypeVar,
-    Union,
     overload,
     Literal,
 )
@@ -16,18 +15,18 @@ from numpy._typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32C
 
 _T = TypeVar("_T")
 
-_DTypeLikeUint32 = Union[
-    dtype[uint32],
-    _SupportsDType[dtype[uint32]],
-    type[uint32],
-    _UInt32Codes,
-]
-_DTypeLikeUint64 = Union[
-    dtype[uint64],
-    _SupportsDType[dtype[uint64]],
-    type[uint64],
-    _UInt64Codes,
-]
+_DTypeLikeUint32 = (
+    dtype[uint32]
+    | _SupportsDType[dtype[uint32]]
+    | type[uint32]
+    | _UInt32Codes
+)
+_DTypeLikeUint64 = (
+    dtype[uint64]
+    | _SupportsDType[dtype[uint64]]
+    | type[uint64]
+    | _UInt64Codes
+)
 
 class _SeedSeqState(TypedDict):
     entropy: None | int | Sequence[int]

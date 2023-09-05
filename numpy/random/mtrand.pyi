@@ -1,6 +1,6 @@
 import builtins
 from collections.abc import Callable
-from typing import Any, Union, overload, Literal
+from typing import Any, overload, Literal
 
 from numpy import (
     bool_,
@@ -45,22 +45,22 @@ from numpy._typing import (
     _UIntCodes,
 )
 
-_DTypeLikeFloat32 = Union[
-    dtype[float32],
-    _SupportsDType[dtype[float32]],
-    type[float32],
-    _Float32Codes,
-    _SingleCodes,
-]
+_DTypeLikeFloat32 = (
+    dtype[float32]
+    | _SupportsDType[dtype[float32]]
+    | type[float32]
+    | _Float32Codes
+    | _SingleCodes
+)
 
-_DTypeLikeFloat64 = Union[
-    dtype[float64],
-    _SupportsDType[dtype[float64]],
-    type[float],
-    type[float64],
-    _Float64Codes,
-    _DoubleCodes,
-]
+_DTypeLikeFloat64 = (
+    dtype[float64]
+    | _SupportsDType[dtype[float64]]
+    | type[float]
+    | type[float64]
+    | _Float64Codes
+    | _DoubleCodes
+)
 
 class RandomState:
     _bit_generator: BitGenerator
