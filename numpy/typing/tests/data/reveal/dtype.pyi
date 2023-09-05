@@ -50,7 +50,7 @@ assert_type(np.dtype(None), np.dtype[np.double])
 assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
 
 # Parameterized dtypes
-assert_type(np.dtype("S8"), np.dtype)
+assert_type(np.dtype("S8"), np.dtype[Any])
 
 # Void
 assert_type(np.dtype(("U", 10)), np.dtype[np.void])
