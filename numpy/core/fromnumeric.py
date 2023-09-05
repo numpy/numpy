@@ -2241,8 +2241,6 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     cumsum : Cumulative sum of array elements.
 
-    trapz : Integration of array values using the composite trapezoidal rule.
-
     mean, average
 
     Notes
@@ -2544,7 +2542,6 @@ def cumsum(a, axis=None, dtype=None, out=None):
     See Also
     --------
     sum : Sum array elements.
-    trapz : Integration of array values using the composite trapezoidal rule.
     diff : Calculate the n-th discrete difference along given axis.
 
     Notes

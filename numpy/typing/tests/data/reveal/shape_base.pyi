@@ -32,9 +32,6 @@ assert_type(np.column_stack([AR_LIKE_f8]), npt.NDArray[Any])
 assert_type(np.dstack([AR_i8]), npt.NDArray[np.int64])
 assert_type(np.dstack([AR_LIKE_f8]), npt.NDArray[Any])
 
-assert_type(np.row_stack([AR_i8]), npt.NDArray[np.int64])
-assert_type(np.row_stack([AR_LIKE_f8]), npt.NDArray[Any])
-
 assert_type(np.array_split(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.array_split(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
 

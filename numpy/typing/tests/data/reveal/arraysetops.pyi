@@ -32,11 +32,6 @@ assert_type(np.setxor1d(AR_i8, AR_i8), npt.NDArray[np.int64])
 assert_type(np.setxor1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])
 assert_type(np.setxor1d(AR_f8, AR_i8), npt.NDArray[Any])
 
-assert_type(np.in1d(AR_i8, AR_i8), npt.NDArray[np.bool_])
-assert_type(np.in1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.bool_])
-assert_type(np.in1d(AR_f8, AR_i8), npt.NDArray[np.bool_])
-assert_type(np.in1d(AR_f8, AR_LIKE_f8, invert=True), npt.NDArray[np.bool_])
-
 assert_type(np.isin(AR_i8, AR_i8), npt.NDArray[np.bool_])
 assert_type(np.isin(AR_M, AR_M, assume_unique=True), npt.NDArray[np.bool_])
 assert_type(np.isin(AR_f8, AR_i8), npt.NDArray[np.bool_])

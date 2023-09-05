@@ -64,7 +64,6 @@ Sums, products, differences
    ediff1d
    gradient
    cross
-   trapz
 
 Exponents and logarithms
 ------------------------

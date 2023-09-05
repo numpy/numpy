@@ -2114,6 +2114,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
+@pytest.mark.filterwarnings('ignore:.*trapz.*:DeprecationWarning')
 class TestTrapz:
 
     def test_simple(self):
