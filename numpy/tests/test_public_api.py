@@ -121,6 +121,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.scimath",
     "lib.stride_tricks",
     "lib.npyio",
+    "lib.introspect",
     "linalg",
     "ma",
     "ma.extras",
@@ -509,7 +510,7 @@ def test_main_namespace_all_dir_coherence():
     """
     def _remove_private_members(member_set):
         return {m for m in member_set if not m.startswith('_')}
-    
+
     all_members = _remove_private_members(np.__all__)
     dir_members = _remove_private_members(np.__dir__())
 

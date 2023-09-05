@@ -234,7 +234,7 @@ def deprecate(*args, **kwargs):
         "`deprecate` is deprecated, "
         "use `warn` with `DeprecationWarning` instead. "
         "(deprecated in NumPy 2.0)",
-        DeprecationWarning, 
+        DeprecationWarning,
         stacklevel=2
     )
 
@@ -280,7 +280,7 @@ def deprecate_with_doc(msg):
         "`deprecate` is deprecated, "
         "use `warn` with `DeprecationWarning` instead. "
         "(deprecated in NumPy 2.0)",
-        DeprecationWarning, 
+        DeprecationWarning,
         stacklevel=2
     )
 
@@ -726,14 +726,17 @@ def _median_nancheck(data, result, axis):
 
 def _opt_info():
     """
-    Returns a string contains the supported CPU features by the current build.
+    Returns a string containing the CPU features supported
+    by the current build.
 
-    The string format can be explained as follows:
-        - dispatched features that are supported by the running machine
-          end with `*`.
-        - dispatched features that are "not" supported by the running machine
+    The format of the string can be explained as follows:
+        - Dispatched features supported by the running machine end with `*`.
+        - Dispatched features not supported by the running machine
           end with `?`.
-        - remained features are representing the baseline.
+        - Remaining features represent the baseline.
+
+    Returns:
+        str: A formatted string indicating the supported CPU features.
     """
     from numpy.core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
@@ -750,7 +753,6 @@ def _opt_info():
             enabled_features += f" {feature}?"
 
     return enabled_features
-
 
 def drop_metadata(dtype, /):
     """
