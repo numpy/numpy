@@ -10,8 +10,15 @@ from typing import (
     Literal,
 )
 
-from numpy import dtype, ndarray, uint32, uint64
-from numpy._typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
+from numpy import dtype, uint32, uint64
+from numpy._typing import (
+    NDArray,
+    _ArrayLikeInt_co,
+    _ShapeLike,
+    _SupportsDType,
+    _UInt32Codes,
+    _UInt64Codes,
+)
 
 _T = TypeVar("_T")
 
@@ -46,7 +53,7 @@ class ISeedSequence(abc.ABC):
     @abc.abstractmethod
     def generate_state(
         self, n_words: int, dtype: _DTypeLikeUint32 | _DTypeLikeUint64 = ...
-    ) -> ndarray[Any, dtype[uint32 | uint64]]: ...
+    ) -> NDArray[uint32 | uint64]: ...
 
 class ISpawnableSeedSequence(ISeedSequence):
     @abc.abstractmethod
@@ -55,7 +62,7 @@ class ISpawnableSeedSequence(ISeedSequence):
 class SeedlessSeedSequence(ISpawnableSeedSequence):
     def generate_state(
         self, n_words: int, dtype: _DTypeLikeUint32 | _DTypeLikeUint64 = ...
-    ) -> ndarray[Any, dtype[uint32 | uint64]]: ...
+    ) -> NDArray[uint32 | uint64]: ...
     def spawn(self: _T, n_children: int) -> list[_T]: ...
 
 class SeedSequence(ISpawnableSeedSequence):
@@ -63,7 +70,7 @@ class SeedSequence(ISpawnableSeedSequence):
     spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
-    pool: ndarray[Any, dtype[uint32]]
+    pool: NDArray[uint32]
     def __init__(
         self,
         entropy: None | int | Sequence[int] | _ArrayLikeInt_co = ...,
@@ -79,7 +86,7 @@ class SeedSequence(ISpawnableSeedSequence):
     ) -> _SeedSeqState: ...
     def generate_state(
         self, n_words: int, dtype: _DTypeLikeUint32 | _DTypeLikeUint64 = ...
-    ) -> ndarray[Any, dtype[uint32 | uint64]]: ...
+    ) -> NDArray[uint32 | uint64]: ...
     def spawn(self, n_children: int) -> list[SeedSequence]: ...
 
 class BitGenerator(abc.ABC):
@@ -101,7 +108,7 @@ class BitGenerator(abc.ABC):
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> ndarray[Any, dtype[uint64]]: ...  # type: ignore[misc]
+    def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> NDArray[uint64]: ...  # type: ignore[misc]
     @overload
     def random_raw(self, size: None | _ShapeLike = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...

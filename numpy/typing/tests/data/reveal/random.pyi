@@ -90,8 +90,8 @@ D_arr_0p1: npt.NDArray[np.float64] = np.array([0.1])
 D_arr_0p5: npt.NDArray[np.float64] = np.array([0.5])
 D_arr_0p9: npt.NDArray[np.float64] = np.array([0.9])
 D_arr_1p5: npt.NDArray[np.float64] = np.array([1.5])
-I_arr_10: np.ndarray[Any, np.dtype[np.int_]] = np.array([10], dtype=np.int_)
-I_arr_20: np.ndarray[Any, np.dtype[np.int_]] = np.array([20], dtype=np.int_)
+I_arr_10: npt.NDArray[np.int_] = np.array([10], dtype=np.int_)
+I_arr_20: npt.NDArray[np.int_] = np.array([20], dtype=np.int_)
 D_arr_like_0p1: list[float] = [0.1]
 D_arr_like_0p5: list[float] = [0.5]
 D_arr_like_0p9: list[float] = [0.9]
@@ -506,7 +506,7 @@ assert_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, 10), npt.NDArra
 assert_type(def_gen.hypergeometric(I_arr_20, I_arr_20, I_arr_10, size=1), npt.NDArray[np.int64])
 assert_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, size=1), npt.NDArray[np.int64])
 
-I_int64_100: np.ndarray[Any, np.dtype[np.int64]] = np.array([100], dtype=np.int64)
+I_int64_100: npt.NDArray[np.int64] = np.array([100], dtype=np.int64)
 
 assert_type(def_gen.integers(0, 100), int)
 assert_type(def_gen.integers(100), int)
@@ -542,10 +542,10 @@ assert_type(def_gen.integers(I_bool_high_closed, dtype=np.bool_, endpoint=True),
 assert_type(def_gen.integers(I_bool_low, I_bool_high_closed, dtype=np.bool_, endpoint=True), npt.NDArray[np.bool_])
 assert_type(def_gen.integers(0, I_bool_high_closed, dtype=np.bool_, endpoint=True), npt.NDArray[np.bool_])
 
-I_u1_low: np.ndarray[Any, np.dtype[np.uint8]] = np.array([0], dtype=np.uint8)
+I_u1_low: npt.NDArray[np.uint8] = np.array([0], dtype=np.uint8)
 I_u1_low_like: list[int] = [0]
-I_u1_high_open: np.ndarray[Any, np.dtype[np.uint8]] = np.array([255], dtype=np.uint8)
-I_u1_high_closed: np.ndarray[Any, np.dtype[np.uint8]] = np.array([255], dtype=np.uint8)
+I_u1_high_open: npt.NDArray[np.uint8] = np.array([255], dtype=np.uint8)
+I_u1_high_closed: npt.NDArray[np.uint8] = np.array([255], dtype=np.uint8)
 
 assert_type(def_gen.integers(256, dtype="u1"), int)
 assert_type(def_gen.integers(0, 256, dtype="u1"), int)
@@ -583,10 +583,10 @@ assert_type(def_gen.integers(I_u1_high_closed, dtype=np.uint8, endpoint=True), n
 assert_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype=np.uint8, endpoint=True), npt.NDArray[np.uint8])
 assert_type(def_gen.integers(0, I_u1_high_closed, dtype=np.uint8, endpoint=True), npt.NDArray[np.uint8])
 
-I_u2_low: np.ndarray[Any, np.dtype[np.uint16]] = np.array([0], dtype=np.uint16)
+I_u2_low: npt.NDArray[np.uint16] = np.array([0], dtype=np.uint16)
 I_u2_low_like: list[int] = [0]
-I_u2_high_open: np.ndarray[Any, np.dtype[np.uint16]] = np.array([65535], dtype=np.uint16)
-I_u2_high_closed: np.ndarray[Any, np.dtype[np.uint16]] = np.array([65535], dtype=np.uint16)
+I_u2_high_open: npt.NDArray[np.uint16] = np.array([65535], dtype=np.uint16)
+I_u2_high_closed: npt.NDArray[np.uint16] = np.array([65535], dtype=np.uint16)
 
 assert_type(def_gen.integers(65536, dtype="u2"), int)
 assert_type(def_gen.integers(0, 65536, dtype="u2"), int)
@@ -624,10 +624,10 @@ assert_type(def_gen.integers(I_u2_high_closed, dtype=np.uint16, endpoint=True), 
 assert_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype=np.uint16, endpoint=True), npt.NDArray[np.uint16])
 assert_type(def_gen.integers(0, I_u2_high_closed, dtype=np.uint16, endpoint=True), npt.NDArray[np.uint16])
 
-I_u4_low: np.ndarray[Any, np.dtype[np.uint32]] = np.array([0], dtype=np.uint32)
+I_u4_low: npt.NDArray[np.uint32] = np.array([0], dtype=np.uint32)
 I_u4_low_like: list[int] = [0]
-I_u4_high_open: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
-I_u4_high_closed: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
+I_u4_high_open: npt.NDArray[np.uint32] = np.array([4294967295], dtype=np.uint32)
+I_u4_high_closed: npt.NDArray[np.uint32] = np.array([4294967295], dtype=np.uint32)
 
 assert_type(def_gen.integers(4294967296, dtype=np.int_), int)
 assert_type(def_gen.integers(0, 4294967296, dtype=np.int_), int)
@@ -690,10 +690,10 @@ assert_type(def_gen.integers(I_u4_high_closed, dtype=np.uint, endpoint=True), np
 assert_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.uint, endpoint=True), npt.NDArray[np.uint])
 assert_type(def_gen.integers(0, I_u4_high_closed, dtype=np.uint, endpoint=True), npt.NDArray[np.uint])
 
-I_u8_low: np.ndarray[Any, np.dtype[np.uint64]] = np.array([0], dtype=np.uint64)
+I_u8_low: npt.NDArray[np.uint64] = np.array([0], dtype=np.uint64)
 I_u8_low_like: list[int] = [0]
-I_u8_high_open: np.ndarray[Any, np.dtype[np.uint64]] = np.array([18446744073709551615], dtype=np.uint64)
-I_u8_high_closed: np.ndarray[Any, np.dtype[np.uint64]] = np.array([18446744073709551615], dtype=np.uint64)
+I_u8_high_open: npt.NDArray[np.uint64] = np.array([18446744073709551615], dtype=np.uint64)
+I_u8_high_closed: npt.NDArray[np.uint64] = np.array([18446744073709551615], dtype=np.uint64)
 
 assert_type(def_gen.integers(18446744073709551616, dtype="u8"), int)
 assert_type(def_gen.integers(0, 18446744073709551616, dtype="u8"), int)
@@ -731,10 +731,10 @@ assert_type(def_gen.integers(I_u8_high_closed, dtype=np.uint64, endpoint=True), 
 assert_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype=np.uint64, endpoint=True), npt.NDArray[np.uint64])
 assert_type(def_gen.integers(0, I_u8_high_closed, dtype=np.uint64, endpoint=True), npt.NDArray[np.uint64])
 
-I_i1_low: np.ndarray[Any, np.dtype[np.int8]] = np.array([-128], dtype=np.int8)
+I_i1_low: npt.NDArray[np.int8] = np.array([-128], dtype=np.int8)
 I_i1_low_like: list[int] = [-128]
-I_i1_high_open: np.ndarray[Any, np.dtype[np.int8]] = np.array([127], dtype=np.int8)
-I_i1_high_closed: np.ndarray[Any, np.dtype[np.int8]] = np.array([127], dtype=np.int8)
+I_i1_high_open: npt.NDArray[np.int8] = np.array([127], dtype=np.int8)
+I_i1_high_closed: npt.NDArray[np.int8] = np.array([127], dtype=np.int8)
 
 assert_type(def_gen.integers(128, dtype="i1"), int)
 assert_type(def_gen.integers(-128, 128, dtype="i1"), int)
@@ -813,10 +813,10 @@ assert_type(def_gen.integers(I_i2_high_closed, dtype=np.int16, endpoint=True), n
 assert_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype=np.int16, endpoint=True), npt.NDArray[np.int16])
 assert_type(def_gen.integers(-32768, I_i2_high_closed, dtype=np.int16, endpoint=True), npt.NDArray[np.int16])
 
-I_i4_low: np.ndarray[Any, np.dtype[np.int32]] = np.array([-2147483648], dtype=np.int32)
+I_i4_low: npt.NDArray[np.int32] = np.array([-2147483648], dtype=np.int32)
 I_i4_low_like: list[int] = [-2147483648]
-I_i4_high_open: np.ndarray[Any, np.dtype[np.int32]] = np.array([2147483647], dtype=np.int32)
-I_i4_high_closed: np.ndarray[Any, np.dtype[np.int32]] = np.array([2147483647], dtype=np.int32)
+I_i4_high_open: npt.NDArray[np.int32] = np.array([2147483647], dtype=np.int32)
+I_i4_high_closed: npt.NDArray[np.int32] = np.array([2147483647], dtype=np.int32)
 
 assert_type(def_gen.integers(2147483648, dtype="i4"), int)
 assert_type(def_gen.integers(-2147483648, 2147483648, dtype="i4"), int)
@@ -854,10 +854,10 @@ assert_type(def_gen.integers(I_i4_high_closed, dtype=np.int32, endpoint=True), n
 assert_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype=np.int32, endpoint=True), npt.NDArray[np.int32])
 assert_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype=np.int32, endpoint=True), npt.NDArray[np.int32])
 
-I_i8_low: np.ndarray[Any, np.dtype[np.int64]] = np.array([-9223372036854775808], dtype=np.int64)
+I_i8_low: npt.NDArray[np.int64] = np.array([-9223372036854775808], dtype=np.int64)
 I_i8_low_like: list[int] = [-9223372036854775808]
-I_i8_high_open: np.ndarray[Any, np.dtype[np.int64]] = np.array([9223372036854775807], dtype=np.int64)
-I_i8_high_closed: np.ndarray[Any, np.dtype[np.int64]] = np.array([9223372036854775807], dtype=np.int64)
+I_i8_high_open: npt.NDArray[np.int64] = np.array([9223372036854775807], dtype=np.int64)
+I_i8_high_closed: npt.NDArray[np.int64] = np.array([9223372036854775807], dtype=np.int64)
 
 assert_type(def_gen.integers(9223372036854775808, dtype="i8"), int)
 assert_type(def_gen.integers(-9223372036854775808, 9223372036854775808, dtype="i8"), int)
@@ -907,10 +907,10 @@ assert_type(def_gen.choice(5, 3, p=[1 / 5] * 5), npt.NDArray[np.int64])
 assert_type(def_gen.choice(5, 3, p=[1 / 5] * 5, replace=False), npt.NDArray[np.int64])
 
 assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"]), Any)
-assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3), np.ndarray[Any, Any])
-assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, p=[1 / 4] * 4), np.ndarray[Any, Any])
-assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=True), np.ndarray[Any, Any])
-assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), np.ndarray[Any, Any])
+assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3), npt.NDArray[Any])
+assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, p=[1 / 4] * 4), npt.NDArray[Any])
+assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=True), npt.NDArray[Any])
+assert_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), npt.NDArray[Any])
 
 assert_type(def_gen.dirichlet([0.5, 0.5]), npt.NDArray[np.float64])
 assert_type(def_gen.dirichlet(np.array([0.5, 0.5])), npt.NDArray[np.float64])
@@ -935,16 +935,16 @@ assert_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]), npt.NDArray[n
 assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[np.float64])
 
 assert_type(def_gen.permutation(10), npt.NDArray[np.int64])
-assert_type(def_gen.permutation([1, 2, 3, 4]), np.ndarray[Any, Any])
-assert_type(def_gen.permutation(np.array([1, 2, 3, 4])), np.ndarray[Any, Any])
-assert_type(def_gen.permutation(D_2D, axis=1), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D_like), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D, axis=1), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D, out=D_2D), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D_like, out=D_2D), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D_like, out=D_2D), np.ndarray[Any, Any])
-assert_type(def_gen.permuted(D_2D, axis=1, out=D_2D), np.ndarray[Any, Any])
+assert_type(def_gen.permutation([1, 2, 3, 4]), npt.NDArray[Any])
+assert_type(def_gen.permutation(np.array([1, 2, 3, 4])), npt.NDArray[Any])
+assert_type(def_gen.permutation(D_2D, axis=1), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D_like), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D, axis=1), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D, out=D_2D), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D_like, out=D_2D), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D_like, out=D_2D), npt.NDArray[Any])
+assert_type(def_gen.permuted(D_2D, axis=1, out=D_2D), npt.NDArray[Any])
 
 assert_type(def_gen.shuffle(np.arange(10)), None)
 assert_type(def_gen.shuffle([1, 2, 3, 4, 5]), None)
@@ -1493,10 +1493,10 @@ assert_type(random_st.choice(5, 3, p=[1 / 5] * 5), npt.NDArray[np.int_])
 assert_type(random_st.choice(5, 3, p=[1 / 5] * 5, replace=False), npt.NDArray[np.int_])
 
 assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"]), Any)
-assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3), np.ndarray[Any, Any])
-assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, p=[1 / 4] * 4), np.ndarray[Any, Any])
-assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=True), np.ndarray[Any, Any])
-assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), np.ndarray[Any, Any])
+assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3), npt.NDArray[Any])
+assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, p=[1 / 4] * 4), npt.NDArray[Any])
+assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=True), npt.NDArray[Any])
+assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), npt.NDArray[Any])
 
 assert_type(random_st.dirichlet([0.5, 0.5]), npt.NDArray[np.float64])
 assert_type(random_st.dirichlet(np.array([0.5, 0.5])), npt.NDArray[np.float64])
@@ -1512,9 +1512,9 @@ assert_type(random_st.multivariate_normal(np.array([0.0]), [[1.0]]), npt.NDArray
 assert_type(random_st.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[np.float64])
 
 assert_type(random_st.permutation(10), npt.NDArray[np.int_])
-assert_type(random_st.permutation([1, 2, 3, 4]), np.ndarray[Any, Any])
-assert_type(random_st.permutation(np.array([1, 2, 3, 4])), np.ndarray[Any, Any])
-assert_type(random_st.permutation(D_2D), np.ndarray[Any, Any])
+assert_type(random_st.permutation([1, 2, 3, 4]), npt.NDArray[Any])
+assert_type(random_st.permutation(np.array([1, 2, 3, 4])), npt.NDArray[Any])
+assert_type(random_st.permutation(D_2D), npt.NDArray[Any])
 
 assert_type(random_st.shuffle(np.arange(10)), None)
 assert_type(random_st.shuffle([1, 2, 3, 4, 5]), None)

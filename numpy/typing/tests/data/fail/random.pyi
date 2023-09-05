@@ -1,11 +1,12 @@
 import numpy as np
-from typing import Any
+import numpy.typing as npt
 
 SEED_FLOAT: float = 457.3
-SEED_ARR_FLOAT: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0, 2, 3, 4])
+SEED_ARR_FLOAT: npt.NDArray[np.float64] = np.array([1.0, 2, 3, 4])
 SEED_ARRLIKE_FLOAT: list[float] = [1.0, 2.0, 3.0, 4.0]
 SEED_SEED_SEQ: np.random.SeedSequence = np.random.SeedSequence(0)
 SEED_STR: str = "String seeding not allowed"
+
 # default rng
 np.random.default_rng(SEED_FLOAT)  # E: incompatible type
 np.random.default_rng(SEED_ARR_FLOAT)  # E: incompatible type

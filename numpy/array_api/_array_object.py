@@ -55,7 +55,7 @@ class Array:
     functions, such as asarray().
 
     """
-    _array: np.ndarray[Any, Any]
+    _array: npt.NDArray[Any]
 
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.

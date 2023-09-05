@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 from numpy.core.arrayprint import _FormatOptions
 
 if sys.version_info >= (3, 11):
@@ -11,7 +12,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-AR: np.ndarray[Any, Any]
+AR: npt.NDArray[np.int64]
 func_float: Callable[[np.floating[Any]], str]
 func_int: Callable[[np.integer[Any]], str]
 
