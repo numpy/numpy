@@ -93,58 +93,6 @@ NPY_FINLINE double c_square_f64(double a)
 #define CONTIG  0
 #define NCONTIG 1
 
-/*
- * clang has a bug that's present at -O1 or greater.  When partially loading a
- * vector register for a reciprocal operation, the remaining elements are set
- * to 1 to avoid divide-by-zero.  The partial load is paired with a partial
- * store after the reciprocal operation.  clang notices that the entire register
- * is not needed for the store and optimizes out the fill of 1 to the remaining
- * elements.  This causes either a divide-by-zero or 0/0 with invalid exception
- * that we were trying to avoid by filling.
- *
- * Using a dummy variable marked 'volatile' convinces clang not to ignore
- * the explicit fill of remaining elements.  If `-ftrapping-math` is
- * supported, then it'll also avoid the bug.  `-ftrapping-math` is supported
- * on Apple clang v12+ for x86_64.  It is not currently supported for arm64.
- * `-ftrapping-math` is set by default of Numpy builds in
- * numpy/distutils/ccompiler.py.
- *
- * Note: Apple clang and clang upstream have different versions that overlap
- */
-#if defined(__clang__)
-    #if defined(__apple_build_version__)
-    // Apple Clang
-        #if __apple_build_version__ < 12000000
-        // Apple Clang before v12
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
-        #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
-        // Apple Clang after v12, targeting i386 or x86_64
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 0
-        #else
-        // Apple Clang after v12, not targeting i386 or x86_64
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
-        #endif
-    #else
-    // Clang, not Apple Clang
-        #if __clang_major__ < 10
-        // Clang before v10
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
-        #elif defined(_MSC_VER)
-        // clang-cl has the same bug
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
-        #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
-        // Clang v10+, targeting i386 or x86_64
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 0
-        #else
-        // Clang v10+, not targeting i386 or x86_64
-        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
-        #endif
-    #endif
-#else
-// Not a Clang compiler
-#define WORKAROUND_CLANG_RECIPROCAL_BUG 0
-#endif
-
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #sfx  = f32, f64#
@@ -155,7 +103,6 @@ NPY_FINLINE double c_square_f64(double a)
  * #kind     = rint,  floor, ceil, trunc, sqrt, absolute, square, reciprocal#
  * #intr     = rint,  floor, ceil, trunc, sqrt, abs,      square, recip#
  * #repl_0w1 = 0*7, 1#
- * #RECIP_WORKAROUND = 0*7, WORKAROUND_CLANG_RECIPROCAL_BUG#
  */
 /**begin repeat2
  * #STYPE  = CONTIG, NCONTIG, CONTIG,  NCONTIG#
@@ -228,15 +175,6 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
             npyv_@sfx@ v_src0 = npyv_loadn_tillz_@sfx@(src, ssrc, len);
         #endif
     #endif
-        #if @RECIP_WORKAROUND@
-            /*
-             * Workaround clang bug.  We use a dummy variable marked 'volatile'
-             * to convince clang that the entire vector is needed.  We only
-             * want to do this for the last iteration / partial load-store of
-             * the loop since 'volatile' forces a refresh of the contents.
-             */
-             volatile npyv_@sfx@ unused_but_workaround_bug = v_src0;
-        #endif // @RECIP_WORKAROUND@
         npyv_@sfx@ v_unary0 = npyv_@intr@_@sfx@(v_src0);
     #if @DTYPE@ == CONTIG
         npyv_store_till_@sfx@(dst, len, v_unary0);
@@ -251,8 +189,6 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
 /**end repeat1**/
 #endif // @VCHK@
 /**end repeat**/
-
-#undef WORKAROUND_CLANG_RECIPROCAL_BUG
 
 /********************************************************************************
  ** Defining ufunc inner functions
