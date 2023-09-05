@@ -13,7 +13,7 @@ else:
 
 _SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
 
-class SubClass(np.ndarray[Any, np.dtype[_SCT]]): ...
+class SubClass(npt.NDArray[_SCT]): ...
 
 i8: np.int64
 
@@ -119,14 +119,14 @@ assert_type(np.arange(0, 10, dtype="f8"), npt.NDArray[Any])
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])
 assert_type(np.require(B, requirements=None), SubClass[np.float64])
-assert_type(np.require(B, dtype=int), np.ndarray[Any, Any])
-assert_type(np.require(B, requirements="E"), np.ndarray[Any, Any])
-assert_type(np.require(B, requirements=["ENSUREARRAY"]), np.ndarray[Any, Any])
-assert_type(np.require(B, requirements={"F", "E"}), np.ndarray[Any, Any])
+assert_type(np.require(B, dtype=int), npt.NDArray[Any])
+assert_type(np.require(B, requirements="E"), npt.NDArray[Any])
+assert_type(np.require(B, requirements=["ENSUREARRAY"]), npt.NDArray[Any])
+assert_type(np.require(B, requirements={"F", "E"}), npt.NDArray[Any])
 assert_type(np.require(B, requirements=["C", "OWNDATA"]), SubClass[np.float64])
 assert_type(np.require(B, requirements="W"), SubClass[np.float64])
 assert_type(np.require(B, requirements="A"), SubClass[np.float64])
-assert_type(np.require(C), np.ndarray[Any, Any])
+assert_type(np.require(C), npt.NDArray[Any])
 
 assert_type(np.linspace(0, 10), npt.NDArray[np.floating[Any]])
 assert_type(np.linspace(0, 10j), npt.NDArray[np.complexfloating[Any, Any]])

@@ -14,7 +14,7 @@ AR_LIKE_i: list[int]
 AR_LIKE_f: list[float]
 AR_LIKE_U: list[str]
 
-AR_i8: np.ndarray[Any, np.dtype[np.int64]]
+AR_i8: npt.NDArray[np.int64]
 
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])

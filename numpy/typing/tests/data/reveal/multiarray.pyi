@@ -1,7 +1,6 @@
 import sys
 import datetime as dt
 from typing import Any, TypeVar
-from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -13,7 +12,7 @@ else:
 
 _SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
 
-class SubClass(np.ndarray[Any, np.dtype[_SCT]]): ...
+class SubClass(npt.NDArray[_SCT]): ...
 
 subclass: SubClass[np.float64]
 

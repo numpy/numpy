@@ -36,7 +36,6 @@ from numpy.core.function_base import (
 )
 
 __all__: list[str]
-__path__: list[str]
 test: PytestTester
 
 __version__ = version

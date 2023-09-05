@@ -15,16 +15,12 @@ from numpy import (
     ndindex as ndindex,
     ndarray,
     dtype,
-    integer,
     str_,
     bytes_,
     bool_,
     int_,
     float64,
     complex128,
-    intp,
-    _OrderCF,
-    _ModeKind,
 )
 from numpy._typing import (
     # Arrays
@@ -32,14 +28,10 @@ from numpy._typing import (
     _NestedSequence,
     _FiniteNestedSequence,
     NDArray,
-    _ArrayLikeInt,
 
     # DTypes
     DTypeLike,
     _SupportsDType,
-
-    # Shapes
-    _ShapeLike,
 )
 
 from numpy.core.multiarray import (
@@ -51,7 +43,7 @@ _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])
 _BoolType = TypeVar("_BoolType", Literal[True], Literal[False])
 _TupType = TypeVar("_TupType", bound=tuple[Any, ...])
-_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 __all__: list[str]
 
@@ -155,7 +147,7 @@ class IndexExpression(Generic[_BoolType]):
 index_exp: IndexExpression[Literal[True]]
 s_: IndexExpression[Literal[False]]
 
-def fill_diagonal(a: ndarray[Any, Any], val: Any, wrap: bool = ...) -> None: ...
+def fill_diagonal(a: NDArray[Any], val: Any, wrap: bool = ...) -> None: ...
 def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[int_], ...]: ...
 def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[int_], ...]: ...
 

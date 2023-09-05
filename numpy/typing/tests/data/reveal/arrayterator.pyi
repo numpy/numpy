@@ -10,7 +10,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-AR_i8: np.ndarray[Any, np.dtype[np.int64]]
+AR_i8: npt.NDArray[np.int64]
 ar_iter = np.lib.Arrayterator(AR_i8)
 
 assert_type(ar_iter.var, npt.NDArray[np.int64])

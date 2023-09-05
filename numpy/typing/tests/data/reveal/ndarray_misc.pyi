@@ -64,21 +64,21 @@ assert_type(AR_f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(axis=0), Any)
 assert_type(AR_f8.argmin(out=B), SubClass)
 
-assert_type(f8.argsort(), np.ndarray[Any, Any])
-assert_type(AR_f8.argsort(), np.ndarray[Any, Any])
+assert_type(f8.argsort(), npt.NDArray[Any])
+assert_type(AR_f8.argsort(), npt.NDArray[Any])
 
-assert_type(f8.astype(np.int64).choose([()]), np.ndarray[Any, Any])
-assert_type(AR_f8.choose([0]), np.ndarray[Any, Any])
+assert_type(f8.astype(np.int64).choose([()]), npt.NDArray[Any])
+assert_type(AR_f8.choose([0]), npt.NDArray[Any])
 assert_type(AR_f8.choose([0], out=B), SubClass)
 
-assert_type(f8.clip(1), np.ndarray[Any, Any])
-assert_type(AR_f8.clip(1), np.ndarray[Any, Any])
-assert_type(AR_f8.clip(None, 1), np.ndarray[Any, Any])
+assert_type(f8.clip(1), npt.NDArray[Any])
+assert_type(AR_f8.clip(1), npt.NDArray[Any])
+assert_type(AR_f8.clip(None, 1), npt.NDArray[Any])
 assert_type(AR_f8.clip(1, out=B), SubClass)
 assert_type(AR_f8.clip(None, 1, out=B), SubClass)
 
-assert_type(f8.compress([0]), np.ndarray[Any, Any])
-assert_type(AR_f8.compress([0]), np.ndarray[Any, Any])
+assert_type(f8.compress([0]), npt.NDArray[Any])
+assert_type(AR_f8.compress([0]), npt.NDArray[Any])
 assert_type(AR_f8.compress([0], out=B), SubClass)
 
 assert_type(f8.conj(), np.float64)
@@ -89,12 +89,12 @@ assert_type(f8.conjugate(), np.float64)
 assert_type(AR_f8.conjugate(), npt.NDArray[np.float64])
 assert_type(B.conjugate(), SubClass)
 
-assert_type(f8.cumprod(), np.ndarray[Any, Any])
-assert_type(AR_f8.cumprod(), np.ndarray[Any, Any])
+assert_type(f8.cumprod(), npt.NDArray[Any])
+assert_type(AR_f8.cumprod(), npt.NDArray[Any])
 assert_type(AR_f8.cumprod(out=B), SubClass)
 
-assert_type(f8.cumsum(), np.ndarray[Any, Any])
-assert_type(AR_f8.cumsum(), np.ndarray[Any, Any])
+assert_type(f8.cumsum(), npt.NDArray[Any])
+assert_type(AR_f8.cumsum(), npt.NDArray[Any])
 assert_type(AR_f8.cumsum(out=B), SubClass)
 
 assert_type(f8.max(), Any)
@@ -167,7 +167,7 @@ assert_type(AR_f8.argpartition([0]), npt.NDArray[np.intp])
 
 assert_type(AR_f8.diagonal(), npt.NDArray[np.float64])
 
-assert_type(AR_f8.dot(1), np.ndarray[Any, Any])
+assert_type(AR_f8.dot(1), npt.NDArray[Any])
 assert_type(AR_f8.dot([1]), Any)
 assert_type(AR_f8.dot(1, out=B), SubClass)
 

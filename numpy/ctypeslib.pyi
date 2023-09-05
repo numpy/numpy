@@ -3,13 +3,11 @@
 from ctypes import c_int64 as _c_intp
 
 import os
-import sys
 import ctypes
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
-    Union,
     TypeVar,
     Generic,
     overload,
@@ -91,7 +89,7 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
 
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[None]], obj: ndarray[Any, Any]) -> _ctypes[Any]: ...
+    def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
     @classmethod
     def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes[Any]: ...
