@@ -1,10 +1,11 @@
 from numpy.core import asarray
 from numpy.core.numeric import normalize_axis_tuple, normalize_axis_index
-
+from numpy._utils import set_module
 
 __all__ = ["byte_bounds", "normalize_axis_tuple", "normalize_axis_index"]
 
 
+@set_module("numpy.lib.array_utils")
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.
