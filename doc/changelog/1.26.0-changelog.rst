@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 18 people contributed to this release.  People with a "+" by their
+A total of 20 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -10,7 +10,9 @@ names contributed a patch for the first time.
 * Bas van Beek
 * Charles Harris
 * Developer-Ecosystem-Engineering
+* Filipe Laíns +
 * Jake Vanderplas
+* Liang Yan +
 * Marten van Kerkwijk
 * Matti Picus
 * Melissa Weber Mendonça
@@ -27,7 +29,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 51 pull requests were merged for this release.
+A total of 59 pull requests were merged for this release.
 
 * `#24305 <https://github.com/numpy/numpy/pull/24305>`__: MAINT: Prepare 1.26.x branch for development
 * `#24308 <https://github.com/numpy/numpy/pull/24308>`__: MAINT: Massive update of files from main for numpy 1.26
@@ -80,3 +82,11 @@ A total of 51 pull requests were merged for this release.
 * `#24638 <https://github.com/numpy/numpy/pull/24638>`__: MAINT: Bump actions/checkout from 3.6.0 to 4.0.0
 * `#24647 <https://github.com/numpy/numpy/pull/24647>`__: ENH: ``meson`` backend for ``f2py``
 * `#24648 <https://github.com/numpy/numpy/pull/24648>`__: MAINT: Refactor partial load Workaround for Clang
+* `#24653 <https://github.com/numpy/numpy/pull/24653>`__: REL: Prepare for the NumPy 1.26.0rc1 release.
+* `#24659 <https://github.com/numpy/numpy/pull/24659>`__: BLD: allow specifying the long double format to avoid the runtime...
+* `#24665 <https://github.com/numpy/numpy/pull/24665>`__: BLD: fix bug in random.mtrand extension, don't link libnpyrandom
+* `#24675 <https://github.com/numpy/numpy/pull/24675>`__: BLD: build wheels for 32-bit Python on Windows, using MSVC
+* `#24700 <https://github.com/numpy/numpy/pull/24700>`__: BLD: fix issue with compiler selection during cross compilation
+* `#24701 <https://github.com/numpy/numpy/pull/24701>`__: BUG: Fix data stmt handling for complex values in f2py
+* `#24707 <https://github.com/numpy/numpy/pull/24707>`__: TYP: Add annotations for the py3.12 buffer protocol
+* `#24718 <https://github.com/numpy/numpy/pull/24718>`__: DOC: fix a few doc build issues on 1.26.x and update `spin docs`...
