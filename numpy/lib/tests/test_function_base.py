@@ -3861,7 +3861,7 @@ class TestQuantile:
 
     @pytest.mark.parametrize(
             "method",
-            list(set(quantile_methods) - set(methods_supporting_weights)),
+            sorted(set(quantile_methods) - set(methods_supporting_weights)),
     )
     def test_quantile_weights_raises_unsupported_methods(self, method):
         y = [1, 2]
