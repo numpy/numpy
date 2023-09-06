@@ -203,14 +203,19 @@ def _commastring(astr):
     return result
 
 class dummy_ctype:
+
     def __init__(self, cls):
         self._cls = cls
+
     def __mul__(self, other):
         return self
+
     def __call__(self, *other):
         return self._cls(other)
+
     def __eq__(self, other):
         return self._cls == other._cls
+
     def __ne__(self, other):
         return self._cls != other._cls
 
@@ -233,6 +238,8 @@ def _getintp_ctype():
             val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
+
+
 _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
@@ -268,17 +275,17 @@ class _ctypes:
         """
         Return the data pointer cast to a particular c-types object.
         For example, calling ``self._as_parameter_`` is equivalent to
-        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
-        pointer to a ctypes array of floating-point data:
+        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use 
+        the data as a pointer to a ctypes array of floating-point data:
         ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
 
         The returned pointer will keep a reference to the array.
         """
         # _ctypes.cast function causes a circular reference of self._data in
         # self._data._objects. Attributes of self._data cannot be released
-        # until gc.collect is called. Make a copy of the pointer first then let
-        # it hold the array reference. This is a workaround to circumvent the
-        # CPython bug https://bugs.python.org/issue12836
+        # until gc.collect is called. Make a copy of the pointer first then
+        # let it hold the array reference. This is a workaround to circumvent
+        # the CPython bug https://bugs.python.org/issue12836.
         ptr = self._ctypes.cast(self._data, obj)
         ptr._arr = self._arr
         return ptr
@@ -305,14 +312,15 @@ class _ctypes:
     def data(self):
         """
         A pointer to the memory area of the array as a Python integer.
-        This memory area may contain data that is not aligned, or not in correct
-        byte-order. The memory area may not even be writeable. The array
-        flags and data-type of this array should be respected when passing this
-        attribute to arbitrary C-code to avoid trouble that can include Python
-        crashing. User Beware! The value of this attribute is exactly the same
-        as ``self._array_interface_['data'][0]``.
+        This memory area may contain data that is not aligned, or not in
+        correct byte-order. The memory area may not even be writeable.
+        The array flags and data-type of this array should be respected
+        when passing this attribute to arbitrary C-code to avoid trouble
+        that can include Python crashing. User Beware! The value of this
+        attribute is exactly the same as:
+        ``self._array_interface_['data'][0]``.
 
-        Note that unlike ``data_as``, a reference will not be kept to the array:
+        Note that unlike ``data_as``, a reference won't be kept to the array:
         code like ``ctypes.c_void_p((a + b).ctypes.data)`` will result in a
         pointer to a deallocated array, and should be spelt
         ``(a + b).ctypes.data_as(ctypes.c_void_p)``
@@ -335,10 +343,10 @@ class _ctypes:
     def strides(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
-        the basetype is the same as for the shape attribute. This ctypes array
-        contains the strides information from the underlying array. This strides
-        information is important for showing how many bytes must be jumped to
-        get to the next element in the array.
+        the basetype is the same as for the shape attribute. This ctypes 
+        array contains the strides information from the underlying array. 
+        This strides information is important for showing how many bytes 
+        must be jumped to get to the next element in the array.
         """
         return self.strides_as(_getintp_ctype())
 
@@ -551,6 +559,7 @@ def _view_is_safe(oldtype, newtype):
         raise TypeError("Cannot change data-type for object array.")
     return
 
+
 # Given a string containing a PEP 3118 format specifier,
 # construct a NumPy dtype
 
@@ -728,13 +737,15 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 "Unrepresentable PEP 3118 data type {!r} ({})"
                 .format(stream.next, desc))
         else:
-            raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
+            raise ValueError(
+                "Unknown PEP 3118 data type specifier %r" % stream.s
+            )
 
         #
         # Native alignment may require padding
         #
-        # Here we assume that the presence of a '@' character implicitly implies
-        # that the start of the array is *already* aligned.
+        # Here we assume that the presence of a '@' character implicitly 
+        # implies that the start of the array is *already* aligned.
         #
         extra_offset = 0
         if stream.byteorder == '@':
@@ -771,7 +782,9 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         if not (is_padding and name is None):
             if name is not None and name in field_spec['names']:
-                raise RuntimeError(f"Duplicate field name '{name}' in PEP3118 format")
+                raise RuntimeError(
+                    f"Duplicate field name '{name}' in PEP3118 format"
+                )
             field_spec['names'].append(name)
             field_spec['formats'].append(value)
             field_spec['offsets'].append(offset)

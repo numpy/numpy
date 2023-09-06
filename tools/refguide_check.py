@@ -94,7 +94,7 @@ DOCTEST_SKIPDICT = {
     'numpy.random.power': None,
     'numpy.random.zipf': None,
     # cases where NumPy docstrings import things from other 3'rd party libs:
-    'numpy.from_dlpack': None,
+    'numpy._core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
     'numpy.lib.npyio.DataSource': None,
     'numpy.lib.Repository': None,
@@ -662,7 +662,7 @@ class Checker(doctest.OutputChecker):
     obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
     vanilla = doctest.OutputChecker()
     rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary",
-                    "# uninitialized", "#uninitialized"}
+                    "# uninitialized", "#uninitialized", "# uninit"}
     stopwords = {'plt.', '.hist', '.show', '.ylim', '.subplot(',
                  'set_title', 'imshow', 'plt.show', '.axis(', '.plot(',
                  '.bar(', '.title', '.ylabel', '.xlabel', 'set_ylim', 'set_xlim',

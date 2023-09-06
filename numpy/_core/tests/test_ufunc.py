@@ -224,6 +224,7 @@ class TestUfunc:
         # possible add a specific qualname, or a hook into pickling instead
         # (dask+numba may benefit).
         _pickleable_module_global.ufunc = umt._pickleable_module_global_ufunc
+
         obj = pickle.loads(pickle.dumps(_pickleable_module_global.ufunc))
         assert obj is umt._pickleable_module_global_ufunc
 

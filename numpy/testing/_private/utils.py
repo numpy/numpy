@@ -2111,7 +2111,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     >>> with np.testing.clear_and_catch_warnings(
     ...         modules=[np._core.fromnumeric]):
     ...     warnings.simplefilter('always')
-    ...     warnings.filterwarnings('ignore', module='np.core.fromnumeric')
+    ...     warnings.filterwarnings('ignore', module='np._core.fromnumeric')
     ...     # do something that raises a warning but ignore those in
     ...     # np._core.fromnumeric
     """

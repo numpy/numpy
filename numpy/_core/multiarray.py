@@ -44,7 +44,8 @@ __all__ = [
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
     '_get_promotion_state', '_set_promotion_state']
 
-# For backward compatibility, make sure pickle imports these functions from here
+# For backward compatibility, make sure pickle imports 
+# these functions from here
 _reconstruct.__module__ = 'numpy._core.multiarray'
 scalar.__module__ = 'numpy._core.multiarray'
 
@@ -140,7 +141,7 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninit
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -150,7 +151,13 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
 def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
-    concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
+    concatenate(
+        (a1, a2, ...), 
+        axis=0, 
+        out=None, 
+        dtype=None, 
+        casting="same_kind"
+    )
 
     Join a sequence of arrays along an existing axis.
 
@@ -1373,8 +1380,10 @@ def shares_memory(a, b, max_work=None):
 
     >>> from numpy.lib.stride_tricks import as_strided
     >>> x = np.zeros([192163377], dtype=np.int8)
-    >>> x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
-    >>> x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+    >>> x1 = as_strided(
+    ...     x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
+    >>> x2 = as_strided(
+    ...     x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
     >>> np.shares_memory(x1, x2, max_work=1000)
     Traceback (most recent call last):
     ...
@@ -1432,7 +1441,13 @@ def may_share_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
 def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     """
-    is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
+    is_busday(
+        dates, 
+        weekmask='1111100', 
+        holidays=None, 
+        busdaycal=None, 
+        out=None
+    )
 
     Calculates which of the given dates are valid days, and which are not.
 
@@ -1487,7 +1502,15 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
                   busdaycal=None, out=None):
     """
-    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
+    busday_offset(
+        dates, 
+        offsets, 
+        roll='raise', 
+        weekmask='1111100', 
+        holidays=None, 
+        busdaycal=None, 
+        out=None
+    )
 
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
@@ -1501,7 +1524,8 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         The array of dates to process.
     offsets : array_like of int
         The array of offsets, which is broadcast with ``dates``.
-    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}, optional
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding',
+            'modifiedfollowing', 'modifiedpreceding'}, optional
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
@@ -1581,7 +1605,14 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 def busday_count(begindates, enddates, weekmask=None, holidays=None,
                  busdaycal=None, out=None):
     """
-    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaycal=None, out=None)
+    busday_count(
+        begindates, 
+        enddates, 
+        weekmask='1111100', 
+        holidays=[], 
+        busdaycal=None, 
+        out=None
+    )
 
     Counts the number of valid days between `begindates` and
     `enddates`, not including the day of `enddates`.
@@ -1658,12 +1689,13 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or a :ref:`datetime unit <arrays.dtypes.dateunits>`.
+        One of None, 'auto', or 
+        a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
-        Timezone information to use when displaying the datetime. If 'UTC', end
-        with a Z to indicate UTC time. If 'local', convert to the local timezone
-        first, and suffix with a +-#### timezone offset. If a tzinfo object,
-        then do as with 'local', but use the specified timezone.
+        Timezone information to use when displaying the datetime. If 'UTC',
+        end with a Z to indicate UTC time. If 'local', convert to the local
+        timezone first, and suffix with a +-#### timezone offset. If a tzinfo
+        object, then do as with 'local', but use the specified timezone.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}
         Casting to allow when changing between datetime units.
 

@@ -118,7 +118,6 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    from . import core
     from . import _core
     from ._core import (
         _no_nep50_warning, memmap, iinfo, finfo, recarray,
@@ -367,6 +366,9 @@ else:
         elif attr == "array_api":
             import numpy.array_api as array_api
             return array_api
+        elif attr == "core":
+            import numpy.core as core
+            return core
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils

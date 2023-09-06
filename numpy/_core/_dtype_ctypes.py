@@ -48,9 +48,12 @@ def _from_ctypes_structure(t):
         for fname, ftyp in t._fields_:
             names.append(fname)
             formats.append(dtype_from_ctypes_type(ftyp))
-            # Each type has a default offset, this is platform dependent for some types.
+            # Each type has a default offset, this is platform dependent
+            # for some types.
             effective_pack = min(t._pack_, ctypes.alignment(ftyp))
-            current_offset = ((current_offset + effective_pack - 1) // effective_pack) * effective_pack
+            current_offset = (
+                (current_offset + effective_pack - 1) // effective_pack
+            ) * effective_pack
             offsets.append(current_offset)
             current_offset += ctypes.sizeof(ftyp)
 

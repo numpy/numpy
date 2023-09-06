@@ -77,8 +77,8 @@ def _construction_repr(dtype, include_align=False, short=False):
     Parameters
     ----------
     short : bool
-        If true, this creates a shorter repr using 'kind' and 'itemsize', instead
-        of the longer type name.
+        If true, this creates a shorter repr using 'kind' and 'itemsize',
+        instead of the longer type name.
 
     include_align : bool
         If true, this includes the 'align=True' parameter

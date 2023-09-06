@@ -1,0 +1,6 @@
+Renamed ``numpy/core`` to ``numpy/_core``
+-----------------------------------------
+``numpy/core`` is now officially a private module and access to it
+in daily development is discouraged. To ensure backward compatibility,
+``numpy/core`` is still present as a shim that emits
+a ``DeprecationWarning`` on access.

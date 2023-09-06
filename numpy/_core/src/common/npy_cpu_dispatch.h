@@ -86,7 +86,7 @@ npy_cpu_dispatch_tracer_init(PyObject *mod);
  *
  * This will insert the following structure into the '__cpu_targets_info__' dictionary:
  *
- * numpy.core._multiarray_umath.__cpu_targets_info__
+ * numpy._core._multiarray_umath.__cpu_targets_info__
  * {
  *    "add": {
  *      "bbb": {

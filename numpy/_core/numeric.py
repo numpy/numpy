@@ -330,7 +330,9 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 _full_with_like = array_function_dispatch()(full)
 
 
-def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
+def _full_like_dispatcher(
+    a, fill_value, dtype=None, order=None, subok=None, shape=None
+):
     return (a,)
 
 
@@ -598,7 +600,7 @@ def argwhere(a):
     if np.ndim(a) == 0:
         a = shape_base.atleast_1d(a)
         # then remove the added dimension
-        return argwhere(a)[:,:0]
+        return argwhere(a)[:, :0]
     return transpose(nonzero(a))
 
 
@@ -680,20 +682,21 @@ def correlate(a, v, mode='valid'):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
+    scipy.signal.correlate : uses FFT which has superior performance 
+        on large arrays.
 
     Notes
     -----
-    The definition of correlation above is not unique and sometimes correlation
-    may be defined differently. Another common definition is [1]_:
+    The definition of correlation above is not unique and sometimes 
+    correlation may be defined differently. Another common definition is [1]_:
 
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
-    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
-    not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
-    be preferable.
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) 
+    because it does not use the FFT to compute the convolution; in that case,
+    `scipy.signal.correlate` might be preferable.
     
     References
     ----------
@@ -1879,31 +1882,31 @@ def isscalar(element):
 
     In most cases ``np.ndim(x) == 0`` should be used instead of this function,
     as that will also return true for 0d arrays. This is how numpy overloads
-    functions in the style of the ``dx`` arguments to `gradient` and the ``bins``
-    argument to `histogram`. Some key differences:
+    functions in the style of the ``dx`` arguments to `gradient` and 
+    the ``bins`` argument to `histogram`. Some key differences:
 
-    +--------------------------------------+---------------+-------------------+
-    | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
-    +======================================+===============+===================+
-    | PEP 3141 numeric objects (including  | ``True``      | ``True``          |
-    | builtins)                            |               |                   |
-    +--------------------------------------+---------------+-------------------+
-    | builtin string and buffer objects    | ``True``      | ``True``          |
-    +--------------------------------------+---------------+-------------------+
-    | other builtin objects, like          | ``False``     | ``True``          |
-    | `pathlib.Path`, `Exception`,         |               |                   |
-    | the result of `re.compile`           |               |                   |
-    +--------------------------------------+---------------+-------------------+
-    | third-party objects like             | ``False``     | ``True``          |
-    | `matplotlib.figure.Figure`           |               |                   |
-    +--------------------------------------+---------------+-------------------+
-    | zero-dimensional numpy arrays        | ``False``     | ``True``          |
-    +--------------------------------------+---------------+-------------------+
-    | other numpy arrays                   | ``False``     | ``False``         |
-    +--------------------------------------+---------------+-------------------+
-    | `list`, `tuple`, and other sequence  | ``False``     | ``False``         |
-    | objects                              |               |                   |
-    +--------------------------------------+---------------+-------------------+
+    +------------------------------------+---------------+-------------------+
+    | x                                  |``isscalar(x)``|``np.ndim(x) == 0``|
+    +====================================+===============+===================+
+    | PEP 3141 numeric objects           | ``True``      | ``True``          |
+    | (including builtins)               |               |                   |
+    +------------------------------------+---------------+-------------------+
+    | builtin string and buffer objects  | ``True``      | ``True``          |
+    +------------------------------------+---------------+-------------------+
+    | other builtin objects, like        | ``False``     | ``True``          |
+    | `pathlib.Path`, `Exception`,       |               |                   |
+    | the result of `re.compile`         |               |                   |
+    +------------------------------------+---------------+-------------------+
+    | third-party objects like           | ``False``     | ``True``          |
+    | `matplotlib.figure.Figure`         |               |                   |
+    +------------------------------------+---------------+-------------------+
+    | zero-dimensional numpy arrays      | ``False``     | ``True``          |
+    +------------------------------------+---------------+-------------------+
+    | other numpy arrays                 | ``False``     | ``False``         |
+    +------------------------------------+---------------+-------------------+
+    | `list`, `tuple`, and other         | ``False``     | ``False``         |
+    | sequence objects                   |               |                   |
+    +------------------------------------+---------------+-------------------+
 
     Examples
     --------
@@ -1955,14 +1958,14 @@ def binary_repr(num, width=None):
     width : int, optional
         The length of the returned string if `num` is positive, or the length
         of the two's complement if `num` is negative, provided that `width` is
-        at least a sufficient number of bits for `num` to be represented in the
-        designated form.
+        at least a sufficient number of bits for `num` to be represented in 
+        the designated form.
 
-        If the `width` value is insufficient, it will be ignored, and `num` will
-        be returned in binary (`num` > 0) or two's complement (`num` < 0) form
-        with its width equal to the minimum number of bits needed to represent
-        the number in the designated form. This behavior is deprecated and will
-        later raise an error.
+        If the `width` value is insufficient, it will be ignored, and `num`
+        will be returned in binary (`num` > 0) or two's complement (`num` < 0)
+        form with its width equal to the minimum number of bits needed to 
+        represent the number in the designated form. This behavior is
+        deprecated and will later raise an error.
 
         .. deprecated:: 1.12.0
 
