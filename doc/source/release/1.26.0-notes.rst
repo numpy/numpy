@@ -21,8 +21,74 @@ The highlights of this release are:
 - Cython 3.0.0 compatibility.
 - Use of the Meson build system
 - Updated SIMD support
+- f2py fixes, meson and bind(x) support
 
 The Python versions supported in this release are 3.9-3.12.
+
+
+New Features
+============
+
+Array API v2022.12 support in ``numpy.array_api``
+-------------------------------------------------
+
+- ``numpy.array_api`` now full supports the `v2022.12 version
+  <https://data-apis.org/array-api/2022.12>`__ of the array API standard. Note
+  that this does not yet include the optional ``fft`` extension in the
+  standard.
+
+(`gh-23789 <https://github.com/numpy/numpy/pull/23789>`__)
+
+Support for the updated Accelerate BLAS/LAPACK library
+------------------------------------------------------
+Support for the updated Accelerate BLAS/LAPACK library, including ILP64 (64-bit
+integer) support, in macOS 13.3 has been added. This brings arm64 support, and
+significant performance improvements of up to 10x for commonly used linear
+algebra operations. When Accelerate is selected at build time, the 13.3+
+version will automatically be used if available.
+
+(`gh-24053 <https://github.com/numpy/numpy/pull/24053>`__)
+
+``meson`` backend for ``f2py``
+------------------------------
+``f2py`` in compile mode (i.e. ``f2py -c``) now accepts the ``--backend meson``
+option. This is the default option for Python ``3.12`` on-wards. Older versions
+will still default to ``--backend distutils``.
+
+To support this in realistic use-cases, in compile mode ``f2py`` takes a
+``--dep`` flag one or many times which maps to ``dependency()`` calls in the
+``meson`` backend, and does nothing in the ``distutils`` backend.
+
+There are no changes for users of ``f2py`` only as a code generator, i.e.
+without ``-c``.
+
+(`gh-24532 <https://github.com/numpy/numpy/pull/24532>`__)
+
+``bind(c)`` support for ``f2py``
+--------------------------------
+Both functions and subroutines can be annotated with ``bind(c)``. ``f2py`` will
+handle both the correct type mapping, and preserve the unique label for other
+``C`` interfaces.
+
+**Note:** ``bind(c, name = 'routine_name_other_than_fortran_routine')`` is not
+honored by the ``f2py`` bindings by design, since ``bind(c)`` with the ``name``
+is meant to guarantee only the same name in ``C`` and ``Fortran``, not in
+``Python`` and ``Fortran``.
+
+(`gh-24555 <https://github.com/numpy/numpy/pull/24555>`__)
+
+
+Improvements
+============
+
+``iso_c_binding`` support for ``f2py``
+--------------------------------------
+Previously, users would have to define their own custom ``f2cmap`` file to use
+type mappings defined by the Fortran2003 ``iso_c_binding`` intrinsic module.
+These type maps are now natively supported by ``f2py``
+
+(`gh-24555 <https://github.com/numpy/numpy/pull/24555>`__)
+
 
 Build system changes
 ====================
@@ -75,27 +141,37 @@ issue tracker. We aim to phase out ``setup.py`` builds as soon as possible, and
 therefore would like to see all potential blockers surfaced early on in the
 1.26.0 release cycle.
 
+
 Contributors
 ============
 
-A total of 11 people contributed to this release.  People with a "+" by their
+A total of 18 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
+* @DWesl
+* Albert Steppi +
 * Bas van Beek
 * Charles Harris
+* Developer-Ecosystem-Engineering
+* Jake Vanderplas
+* Marten van Kerkwijk
 * Matti Picus
 * Melissa Weber Mendonça
+* Namami Shanker
+* Nathan Goldbaum
 * Ralf Gommers
+* Rohit Goswami
 * Sayed Adel
 * Sebastian Berg
 * Stefan van der Walt
 * Tyler Reddy
 * Warren Weckesser
 
+
 Pull requests merged
 ====================
 
-A total of 18 pull requests were merged for this release.
+A total of 51 pull requests were merged for this release.
 
 * `#24305 <https://github.com/numpy/numpy/pull/24305>`__: MAINT: Prepare 1.26.x branch for development
 * `#24308 <https://github.com/numpy/numpy/pull/24308>`__: MAINT: Massive update of files from main for numpy 1.26
@@ -115,3 +191,36 @@ A total of 18 pull requests were merged for this release.
 * `#24404 <https://github.com/numpy/numpy/pull/24404>`__: BLD: vendor meson-python to make the Windows builds with SIMD...
 * `#24405 <https://github.com/numpy/numpy/pull/24405>`__: BLD, SIMD: The meson CPU dispatcher implementation
 * `#24406 <https://github.com/numpy/numpy/pull/24406>`__: MAINT: Remove versioneer
+* `#24409 <https://github.com/numpy/numpy/pull/24409>`__: REL: Prepare for the NumPy 1.26.0b1 release.
+* `#24453 <https://github.com/numpy/numpy/pull/24453>`__: MAINT: Pin upper version of sphinx.
+* `#24455 <https://github.com/numpy/numpy/pull/24455>`__: ENH: Add prefix to _ALIGN Macro
+* `#24456 <https://github.com/numpy/numpy/pull/24456>`__: BUG: cleanup warnings [skip azp][skip circle][skip travis][skip...
+* `#24460 <https://github.com/numpy/numpy/pull/24460>`__: MAINT: Upgrade to spin 0.5
+* `#24495 <https://github.com/numpy/numpy/pull/24495>`__: BUG: ``asv dev`` has been removed, use ``asv run``.
+* `#24496 <https://github.com/numpy/numpy/pull/24496>`__: BUG: Fix meson build failure due to unchanged inplace auto-generated...
+* `#24521 <https://github.com/numpy/numpy/pull/24521>`__: BUG: fix issue with git-version script, needs a shebang to run
+* `#24522 <https://github.com/numpy/numpy/pull/24522>`__: BUG: Use a default assignment for git_hash [skip ci]
+* `#24524 <https://github.com/numpy/numpy/pull/24524>`__: BUG: fix NPY_cast_info error handling in choose
+* `#24526 <https://github.com/numpy/numpy/pull/24526>`__: BUG: Fix common block handling in f2py
+* `#24541 <https://github.com/numpy/numpy/pull/24541>`__: CI,TYP: Bump mypy to 1.4.1
+* `#24542 <https://github.com/numpy/numpy/pull/24542>`__: BUG: Fix assumed length f2py regression
+* `#24544 <https://github.com/numpy/numpy/pull/24544>`__: MAINT: Harmonize fortranobject
+* `#24545 <https://github.com/numpy/numpy/pull/24545>`__: TYP: add kind argument to numpy.isin type specification
+* `#24561 <https://github.com/numpy/numpy/pull/24561>`__: BUG: fix comparisons between masked and unmasked structured arrays
+* `#24590 <https://github.com/numpy/numpy/pull/24590>`__: CI: Exclude import libraries from list of DLLs on Cygwin.
+* `#24591 <https://github.com/numpy/numpy/pull/24591>`__: BLD: fix ``_umath_linalg`` dependencies
+* `#24594 <https://github.com/numpy/numpy/pull/24594>`__: MAINT: Stop testing on ppc64le.
+* `#24602 <https://github.com/numpy/numpy/pull/24602>`__: BLD: meson-cpu: fix SIMD support on platforms with no features
+* `#24606 <https://github.com/numpy/numpy/pull/24606>`__: BUG: Change Cython ``binding`` directive to "False".
+* `#24613 <https://github.com/numpy/numpy/pull/24613>`__: ENH: Adopt new macOS Accelerate BLAS/LAPACK Interfaces, including...
+* `#24614 <https://github.com/numpy/numpy/pull/24614>`__: DOC: Update building docs to use Meson
+* `#24615 <https://github.com/numpy/numpy/pull/24615>`__: TYP: Add the missing ``casting`` keyword to ``np.clip``
+* `#24616 <https://github.com/numpy/numpy/pull/24616>`__: TST: convert cython test from setup.py to meson
+* `#24617 <https://github.com/numpy/numpy/pull/24617>`__: MAINT: Fixup ``fromnumeric.pyi``
+* `#24622 <https://github.com/numpy/numpy/pull/24622>`__: BUG, ENH: Fix ``iso_c_binding`` type maps and fix ``bind(c)``...
+* `#24629 <https://github.com/numpy/numpy/pull/24629>`__: TYP: Allow ``binary_repr`` to accept any object implementing...
+* `#24630 <https://github.com/numpy/numpy/pull/24630>`__: TYP: Explicitly declare ``dtype`` and ``generic`` hashable
+* `#24637 <https://github.com/numpy/numpy/pull/24637>`__: ENH: Refactor the typing "reveal" tests using `typing.assert_type`
+* `#24638 <https://github.com/numpy/numpy/pull/24638>`__: MAINT: Bump actions/checkout from 3.6.0 to 4.0.0
+* `#24647 <https://github.com/numpy/numpy/pull/24647>`__: ENH: ``meson`` backend for ``f2py``
+* `#24648 <https://github.com/numpy/numpy/pull/24648>`__: MAINT: Refactor partial load Workaround for Clang
