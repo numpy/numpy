@@ -670,7 +670,9 @@ def common_type(*arrays):
     <class 'numpy.complex128'>
 
     """
-    v = _multiarray_umath.result_type(*arrays)
-    if issubclass(v.type, _integer_type):
+    common_type = _multiarray_umath.result_type(*arrays).type
+    if issubclass(common_type, _integer_type):
         return _nx.float64
-    return v.type
+    if not issubclass(common_type, _nx.inexact):
+        raise TypeError("can't get common type for non-numeric array")
+    return common_type
