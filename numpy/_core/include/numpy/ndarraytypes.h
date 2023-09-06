@@ -1276,6 +1276,14 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
+#define PyArray_MultiIter_SIZE(multi) (_PyMIT(multi)->size)
+#define PyArray_MultiIter_NDIM(multi) (_PyMIT(multi)->nd)
+#define PyArray_MultiIter_INDEX(multi) (_PyMIT(multi)->index)
+#define PyArray_MultiIter_NUMITER(multi) (_PyMIT(multi)->numiter)
+#define PyArray_MultiIter_DIMS(multi) (_PyMIT(multi)->dimensions)
+#define PyArray_MultiIter_ITERS(multi) (_PyMIT(multi)->iters)
+
+
 /*
  * Store the information needed for fancy-indexing over an array. The
  * fields are slightly unordered to keep consec, dataptr and subspace

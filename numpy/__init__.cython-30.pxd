@@ -542,6 +542,12 @@ cdef extern from "numpy/arrayobject.h":
     void* PyArray_MultiIter_DATA(broadcast multi, npy_intp i) nogil
     void PyArray_MultiIter_NEXTi(broadcast multi, npy_intp i) nogil
     bint PyArray_MultiIter_NOTDONE(broadcast multi) nogil
+    npy_intp PyArray_MultiIter_SIZE(broadcast multi) nogil
+    int PyArray_MultiIter_NDIM(broadcast multi) nogil
+    npy_intp PyArray_MultiIter_INDEX(broadcast multi) nogil
+    int PyArray_MultiIter_NUMITER(broadcast multi) nogil
+    npy_intp* PyArray_MultiIter_DIMS(broadcast multi) nogil
+    void** PyArray_MultiIter_ITERS(broadcast multi) nogil
 
     # Functions from __multiarray_api.h
 
