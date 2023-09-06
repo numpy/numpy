@@ -59,7 +59,7 @@ assert_type(
     np.rec.recarray[Any, np.dtype[Any]],
 )
 
-assert_type(np.rec.fromarrays(AR_LIST), np.recarray[Any, np.dtype[Any]])
+assert_type(np.rec.fromarrays(AR_LIST), np.rec.recarray[Any, np.dtype[Any]])
 assert_type(
     np.rec.fromarrays(AR_LIST, dtype=np.int64),
     np.rec.recarray[Any, np.dtype[Any]],
@@ -75,7 +75,7 @@ assert_type(
 
 assert_type(
     np.rec.fromrecords((1, 1.5)), 
-    np.recarray[Any, np.dtype[np.record]]
+    np.rec.recarray[Any, np.dtype[np.record]]
 )
 
 assert_type(
@@ -126,7 +126,7 @@ assert_type(
     np.rec.recarray[Any, np.dtype[np.record]],
 )
 
-assert_type(np.rec.array(AR_i8), np.recarray[Any, np.dtype[np.int64]])
+assert_type(np.rec.array(AR_i8), np.rec.recarray[Any, np.dtype[np.int64]])
 
 assert_type(
     np.rec.array([(1, 1.5)], dtype=[("i8", np.int64), ("f8", np.float64)]),

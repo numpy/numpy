@@ -2045,14 +2045,14 @@ class chararray(ndarray):
 
     Examples
     --------
-    >>> charar = np.chararray((3, 3))
+    >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
     chararray([[b'a', b'a', b'a'],
                [b'a', b'a', b'a'],
                [b'a', b'a', b'a']], dtype='|S1')
 
-    >>> charar = np.chararray(charar.shape, itemsize=5)
+    >>> charar = np.char.chararray(charar.shape, itemsize=5)
     >>> charar[:] = 'abc'
     >>> charar
     chararray([[b'abc', b'abc', b'abc'],
@@ -2246,7 +2246,7 @@ class chararray(ndarray):
         Examples
         --------
         >>> c = np.array(['a1b c', '1b ca', 'b ca1', 'Ca1b'], 'S5')
-        >>> c = c.view(np.chararray); c
+        >>> c = c.view(np.char.chararray); c
         chararray(['a1b c', '1b ca', 'b ca1', 'Ca1b'],
               dtype='|S5')
         >>> c[c.argsort()]
