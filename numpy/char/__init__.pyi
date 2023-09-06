@@ -55,4 +55,3 @@ from numpy.core.defchararray import (
 )
 
 __all__: list[str]
-__path__: list[str]
