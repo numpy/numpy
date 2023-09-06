@@ -3,7 +3,7 @@
 # to avoid building with Meson (e.g., in the Emscripten/Pyodide CI job)
 [project]
 name = "numpy"
-version = "1.26.0b1"
+version = "1.26.0rc1"
 
 [build-system]
 requires = [
