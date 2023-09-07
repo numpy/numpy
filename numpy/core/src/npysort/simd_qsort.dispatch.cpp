@@ -16,6 +16,7 @@
 namespace np { namespace qsort_simd {
 
 #if defined(NPY_HAVE_AVX512_SKX)
+#ifndef __CYGWIN__
 template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(int32_t *arr, npy_intp* arg, npy_intp num, npy_intp kth)
 {
     avx512_argselect(arr, reinterpret_cast<int64_t*>(arg), kth, num);
@@ -64,6 +65,7 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(double *arr, npy_intp num, npy_i
 {
     avx512_qselect(arr, kth, num, true);
 }
+#endif // __CYGWIN__
 #if !defined(_MSC_VER)
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
 {
