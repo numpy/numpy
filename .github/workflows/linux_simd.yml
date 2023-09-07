@@ -98,8 +98,8 @@ jobs:
 
     - name: Enable gcc-9
       run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 2
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 2
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-9
