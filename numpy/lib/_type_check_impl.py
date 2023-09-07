@@ -12,7 +12,7 @@ from .._utils import set_module
 import numpy._core.numeric as _nx
 from numpy._core.numeric import asarray, asanyarray, isnan, zeros
 from numpy._core import overrides, getlimits
-from numpy._core import _multiarray_umath
+from numpy._core._multiarray_umath import result_type as _result_type
 from ._ufunclike_impl import isneginf, isposinf
 
 
@@ -669,7 +669,7 @@ def common_type(*arrays):
     <class 'numpy.complex128'>
 
     """
-    common_type = _multiarray_umath.result_type(0., *[a.dtype for a in arrays]).type
+    common_type = _result_type(0., *[a.dtype for a in arrays]).type
     if not issubclass(common_type, _nx.inexact):
         raise TypeError("can't get common type for non-numeric array")
     return common_type
