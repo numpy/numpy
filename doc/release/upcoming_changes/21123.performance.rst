@@ -1,0 +1,7 @@
+Faster casting on modern x86-64 processors
+------------------------------------------
+Implicit/explicit casting is now significantly faster on contiguous arrays on 
+processors supporting AVX-2. This speeds many functions up like `numpy.sum`, 
+`numpy.prod`, `np.cumsum`, `np.cumprod`, `np.all` and `np.any`.
+Functions like `np.mean` or basic binary operation with a constant of a 
+different type requiring the array to be casted are a bit faster.
