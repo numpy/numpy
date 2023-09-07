@@ -377,7 +377,9 @@ endforeach
 # https://github.com/numpy/numpy/blob/eead09a3d02c09374942cdc787c0b5e4fe9e7472/numpy/core/setup_common.py#L264-L434
 # This port is in service of solving gh-23972
 # as well as https://github.com/mesonbuild/meson/issues/11068
-longdouble_format = meson.get_compiler('c').run(
+longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
+if longdouble_format == 'UNKNOWN'
+  longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -456,7 +458,8 @@ int main(void) {
   }
   }
 }
-''').stdout()
+  ''').stdout()
+endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
 endif
