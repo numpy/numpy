@@ -79,9 +79,6 @@ endif
 # important, because code in NumPy typically does not check the value but only
 # whether the symbol is defined. So `#define HAVE_SOMETHING 0` is wrong.
 
-#cmake = import('cmake')
-#hwy = cmake.subproject('highway')
-
 
 cdata = configuration_data()
 
@@ -813,6 +810,11 @@ umath_gen_headers = [
 
 foreach gen_mtargets : [
   [
+    'simd_absolute.dispatch.h',
+    'src/umath/absolute.dispatch.cpp',
+    [AVX2, SSE2, ASIMD]
+  ],
+  [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
@@ -915,7 +917,7 @@ foreach gen_mtargets : [
     'loops_unary_fp.dispatch.h',
     src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
     [
-      SSE41, SSE2,
+      AVX2, SSE2,
       VSX2,
       ASIMD, NEON,
       VXE, VX
@@ -964,7 +966,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -1053,10 +1056,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
-  src_file.process('src/common/npy_sort.h.src'),
-  
-  'src/npysort/simd_qsort.dispatch.cpp',
-  'src/npysort/simd_qsort_16bit.dispatch.cpp',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',
