@@ -22,6 +22,8 @@ from numpy.core.multiarray import typeinfo, dtype
 from numpy.core._dtype import _kind_name
 
 
+print(list(typeinfo.keys()))
+
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
 allTypes = {}            # Collect the types we will add to the module
 

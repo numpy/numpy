@@ -1040,7 +1040,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/scalarapi.c',
   'src/multiarray/strfuncs.c',
   'src/multiarray/temp_elide.c',
-  'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
   'src/npysort/quicksort.cpp',
