@@ -309,7 +309,9 @@ def test_truediv(Poly):
     p2 = p1 * 5
 
     for stype in np.ScalarType:
-        if not issubclass(stype, Number) or issubclass(stype, bool):
+        if not issubclass(stype, Number):
+            continue
+        if issubclass(stype, (bool, np.timedelta64)):
             continue
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
