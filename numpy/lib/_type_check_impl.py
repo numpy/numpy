@@ -12,6 +12,7 @@ from .._utils import set_module
 import numpy._core.numeric as _nx
 from numpy._core.numeric import asarray, asanyarray, isnan, zeros
 from numpy._core import overrides, getlimits
+from numpy._core import _multiarray_umath
 from ._ufunclike_impl import isneginf, isposinf
 
 
@@ -627,18 +628,6 @@ def typename(char):
 #-----------------------------------------------------------------------------
 
 
-#determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.float16, _nx.float32, _nx.float64, _nx.longdouble],
-              [None, _nx.complex64, _nx.complex128, _nx.clongdouble]]
-array_precision = {_nx.float16: 0,
-                   _nx.float32: 1,
-                   _nx.float64: 2,
-                   _nx.longdouble: 3,
-                   _nx.complex64: 1,
-                   _nx.complex128: 2,
-                   _nx.clongdouble: 3}
-
-
 def _common_type_dispatcher(*arrays):
     return arrays
 
@@ -680,20 +669,7 @@ def common_type(*arrays):
     <class 'numpy.complex128'>
 
     """
-    is_complex = False
-    precision = 0
-    for a in arrays:
-        t = a.dtype.type
-        if iscomplexobj(a):
-            is_complex = True
-        if issubclass(t, _nx.integer):
-            p = 2  # array_precision[_nx.double]
-        else:
-            p = array_precision.get(t, None)
-            if p is None:
-                raise TypeError("can't get common type for non-numeric array")
-        precision = max(precision, p)
-    if is_complex:
-        return array_type[1][precision]
-    else:
-        return array_type[0][precision]
+    common_type = _multiarray_umath.result_type(0., *[a.dtype for a in arrays]).type
+    if not issubclass(common_type, _nx.inexact):
+        raise TypeError("can't get common type for non-numeric array")
+    return common_type
