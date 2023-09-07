@@ -227,8 +227,38 @@ cdef extern from "numpy/arrayobject.h":
         pass
 
     ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
-        # Use through macros
-        pass
+
+        @property
+        cdef inline int numiter(self) nogil:
+            """The number of arrays that need to be broadcast to the same shape."""
+            return PyArray_MultiIter_NUMITER(self)
+
+        @property
+        cdef inline npy_intp size(self) nogil:
+            """The total broadcasted size."""
+            return PyArray_MultiIter_SIZE(self)
+
+        @property
+        cdef inline npy_intp index(self) nogil:
+            """The current (1-d) index into the broadcasted result."""
+            return PyArray_MultiIter_INDEX(self)
+
+        @property
+        cdef inline int nd(self) nogil:
+            """The number of dimensions in the broadcasted result."""
+            return PyArray_MultiIter_NDIM(self)
+
+        @property
+        cdef inline npy_intp* dimensions(self) nogil:
+            """The shape of the broadcasted result."""
+            return PyArray_MultiIter_DIMS(self)
+
+        @property
+        cdef inline void** iters(self) nogil:
+            """An array of iterator objects that holds the iterators for the arrays to be broadcast together.
+            On return, the iterators are adjusted for broadcasting."""
+            return PyArray_MultiIter_ITERS(self)
+
 
     ctypedef struct PyArrayObject:
         # For use in situations where ndarray can't replace PyArrayObject*,
