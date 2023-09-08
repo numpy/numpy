@@ -672,13 +672,14 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         return_tuple.append([resids, rank, s, rcond])
     if cov:
         """
-        v_base can be directly calculated as
-        >v_base = np.inv(np.dot(lhs, lhs.T))
+        Calculate the Moore-Penrose inverse using 
+        SVD while discarding small singular values for 
+        numerical stability.
 
-        However, this is numerically unstable.
-        It is calculated with SVD considering
-        the Vandermonde Matrix (lhs) as the
-        Jacobian Matrix.
+        Reference: 
+        Press et. al., 
+        "Numerical Recipes 3rd Edition: The Art of Scientific Computing", 
+        sec. 15.4.2 p. 794-795
         """
 
         U, s, _ = svd(lhs, full_matrices=False)
