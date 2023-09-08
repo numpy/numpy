@@ -615,7 +615,13 @@ class TestMisc:
         x = [1., 2., 3., 4., 5., 6., 7., 8., 9.]
         y = [1., 3., 2., 4., 5., 6., 6., 8., 9.]
         yerr = [10., 5., 3., 2., 10., 10., 10., 10., 10.]
-        coef1, cov_matrix = poly.polyfit(x, y, 1, w=yerr, cov=True, absolute_w=False)
+        coef1, cov_matrix = poly.polyfit(
+            x,
+            y,
+            1,
+            w=yerr,
+            cov=True,
+            absolute_w=False)
         assert_almost_equal(coef1, [0, 1], decimal=1)
         assert_almost_equal(
             cov_matrix,
