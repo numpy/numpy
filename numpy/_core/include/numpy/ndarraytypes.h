@@ -1281,7 +1281,7 @@ typedef struct {
 #define PyArray_MultiIter_INDEX(multi) (_PyMIT(multi)->index)
 #define PyArray_MultiIter_NUMITER(multi) (_PyMIT(multi)->numiter)
 #define PyArray_MultiIter_DIMS(multi) (_PyMIT(multi)->dimensions)
-#define PyArray_MultiIter_ITERS(multi) (_PyMIT(multi)->iters)
+#define PyArray_MultiIter_ITERS(multi) ((void **)_PyMIT(multi)->iters)
 
 
 /*
