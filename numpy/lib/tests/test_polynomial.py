@@ -162,7 +162,7 @@ class TestPolynomial:
                [ 0.4878, -0.9089,  0.3337]]
         assert_almost_equal(val, cov2, decimal=4)
 
-        m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov="unscaled")
+        m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov=True, absolute_w=True)
         assert_almost_equal([4.8927, -1.0177, 1.7768], m3, decimal=4)
         val = [[ 0.1473, -0.1677,  0.0163],
                [-0.1677,  0.228 , -0.0304],
@@ -193,7 +193,7 @@ class TestPolynomial:
         assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
         # Without scaling, since reduced chi2 is 1, the result should be the same.
         mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=np.ones(y.shape[0]),
-                               deg=0, cov="unscaled")
+                               deg=0, cov=True, absolute_w=True)
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.5)
         # If we estimate our errors wrong, no change with scaling:
@@ -203,7 +203,7 @@ class TestPolynomial:
         assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
         # But if we do not scale, our estimate for the error in the mean will
         # differ.
-        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov="unscaled")
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov=True, absolute_w=True)
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 
