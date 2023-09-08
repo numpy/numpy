@@ -2497,6 +2497,48 @@ Broadcasting (multi-iterators)
     through all of the elements (of the broadcasted result), otherwise
     it evaluates FALSE.
 
+.. c:function:: npy_intp PyArray_MultiIter_SIZE(PyObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the total broadcasted size of a multi-iterator object. 
+
+.. c:function:: int PyArray_MultiIter_NDIM(PyObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of dimensions in the broadcasted result of
+    a multi-iterator object.
+
+.. c:function:: npy_intp PyArray_MultiIter_INDEX(PyObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the current (1-d) index into the broadcasted result
+    of a multi-iterator object.
+
+.. c:function:: int PyArray_MultiIter_NUMITER(PyObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns the number of iterators that are represented by a
+    multi-iterator object.
+
+.. c:function:: void** PyArray_MultiIter_ITERS(PyObject* multi)
+
+    .. versionadded:: 1.26.0
+
+    Returns an array of iterator objects that holds the iterators for the
+    arrays to be broadcast together. On return, the iterators are adjusted
+    for broadcasting.
+
+.. c:function:: npy_intp* PyArray_MultiIter_DIMS(PyObject* multi)
+
+    .. versionadded:: 1.26
+
+    Returns a pointer to the dimensions/shape of the broadcasted result of a
+    multi-iterator object.
+
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 
     This function encapsulates the broadcasting rules. The *mit*
