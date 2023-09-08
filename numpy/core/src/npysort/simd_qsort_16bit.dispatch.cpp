@@ -6,6 +6,7 @@
 // 'baseline' option isn't specified within targets.
 
 #include "simd_qsort.hpp"
+#ifndef __CYGWIN__
 
 #if defined(NPY_HAVE_AVX512_SPR)
     #include "x86-simd-sort/src/avx512fp16-16bit-qsort.hpp"
@@ -15,13 +16,12 @@
  */
 void avx512_qsort_uint16(uint16_t*, intptr_t);
 void avx512_qsort_int16(int16_t*, intptr_t);
-void avx512_qselect_uint16(uint16_t*, npy_intp, npy_intp)
-void avx512_qselect_int16(int16_t*, npy_intp, npy_intp)
+void avx512_qselect_uint16(uint16_t*, npy_intp, npy_intp);
+void avx512_qselect_int16(int16_t*, npy_intp, npy_intp);
 
 #elif defined(NPY_HAVE_AVX512_ICL)
     #include "x86-simd-sort/src/avx512-16bit-qsort.hpp"
 /* Wrapper function defintions here: */
-#ifndef __CYGWIN__
 void avx512_qsort_uint16(uint16_t* arr, intptr_t size)
 {
     avx512_qsort(arr, size);
@@ -38,7 +38,6 @@ void avx512_qselect_int16(int16_t* arr, npy_intp kth, npy_intp size)
 {
     avx512_qselect(arr, kth, size, true);
 }
-#endif // __CYGWIN__
 #endif
 
 namespace np { namespace qsort_simd {
@@ -47,7 +46,6 @@ namespace np { namespace qsort_simd {
  * QSelect dispatch functions:
  */
 #if defined(NPY_HAVE_AVX512_ICL) || defined(NPY_HAVE_AVX512_SPR)
-#ifndef __CYGWIN__
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(Half *arr, npy_intp num, npy_intp kth)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
@@ -102,7 +100,8 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, intptr_t size)
     avx512_qsort(arr, size);
 #endif
 }
-#endif // __CYGWIN__
 #endif // NPY_HAVE_AVX512_ICL || SPR
 
 }} // namespace np::qsort_simd
+
+#endif // __CYGWIN__

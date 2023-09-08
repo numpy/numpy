@@ -6,6 +6,7 @@
 // 'baseline' option isn't specified within targets.
 
 #include "simd_qsort.hpp"
+#ifndef __CYGWIN__
 
 #if defined(NPY_HAVE_AVX512_SKX)
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
@@ -16,7 +17,6 @@
 namespace np { namespace qsort_simd {
 
 #if defined(NPY_HAVE_AVX512_SKX)
-#ifndef __CYGWIN__
 template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(int32_t *arr, npy_intp* arg, npy_intp num, npy_intp kth)
 {
     avx512_argselect(arr, reinterpret_cast<int64_t*>(arg), kth, num);
@@ -113,7 +113,8 @@ template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(double *arr, npy_intp *arg, npy
 {
     avx512_argsort(arr, reinterpret_cast<int64_t*>(arg), size);
 }
-#endif // __CYGWIN__
 #endif  // NPY_HAVE_AVX512_SKX
 
 }} // namespace np::simd
+
+#endif // __CYGWIN__
