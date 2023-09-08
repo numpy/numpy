@@ -74,12 +74,10 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_
     avx512_qselect(arr, size);
 #endif
 }
-#endif // __CYGWIN__
 
 /*
  * QSort dispatch functions:
  */
-#if !defined(_MSC_VER)
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, intptr_t size)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
@@ -104,7 +102,7 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, intptr_t size)
     avx512_qsort(arr, size);
 #endif
 }
-#endif // _MSC_VER
+#endif // __CYGWIN__
 #endif // NPY_HAVE_AVX512_ICL || SPR
 
 }} // namespace np::qsort_simd
