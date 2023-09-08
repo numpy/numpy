@@ -1211,7 +1211,7 @@ def polyvander3d(x, y, z, deg):
     return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
 
 
-def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False, absolute_w=True):
+def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Least-squares fit of a polynomial to data.
 
@@ -1261,14 +1261,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False, absolute_w=Tru
         squared residual of each point.
         .. versionadded:: 1.5.0
     cov : bool, optional
-        If True, return the covariance matrix.
-        .. versionadded:: 1.25.2
-    absolute_w: bool, optional
-        If False, the covariance are scaled by chi2/dof, where 
-        dof = M - (deg + 1), i.e., the weights are presumed to be unreliable 
-        except in a relative sense and everything is scaled such that the 
-        reduced chi2 (read as chi-squared) is unity. This scaling is omitted 
-        if absolute_w=True, as is relevant for the case that the weights are 
+        If True, return the covariance matrix. By default, 
+        the covariance are scaled by chi2/dof, where dof = M - (deg + 1),
+        i.e., the weights are presumed to be unreliable except in a 
+        relative sense and everything is scaled such that the reduced 
+        chi2 (read as chi-squared) is unity. This scaling is omitted if 
+        cov='unscaled', as is relevant for the case that the weights are 
         are w**2 = 1/sigma**2, with sigma known to be a reliable estimate of 
         the uncertainty.
         .. versionadded:: 1.25.2
@@ -1377,7 +1375,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False, absolute_w=Tru
                0.50443316,  0.28853036]), 1.1324274851176597e-014]
 
     """
-    return pu._fit(polyvander, x, y, deg, rcond, full, w, cov, absolute_w)
+    return pu._fit(polyvander, x, y, deg, rcond, full, w, cov)
 
 
 def polycompanion(c):

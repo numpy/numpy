@@ -126,8 +126,7 @@ def polyfit(
     rcond: None | float = ...,
     full: L[False] = ...,
     w: None | _ArrayLikeFloat_co = ...,
-    cov: L[False] = ...,
-    absolute_w: L[True] = ...,
+    cov: L[True, "unscaled"] = ...,
 ) -> _2Tup[NDArray[float64]]: ...
 @overload
 def polyfit(
@@ -137,8 +136,7 @@ def polyfit(
     rcond: None | float = ...,
     full: L[False] = ...,
     w: None | _ArrayLikeFloat_co = ...,
-    cov: L[False] = ...,
-    absolute_w: L[True] = ...,
+    cov: L[True, "unscaled"] = ...,
 ) -> _2Tup[NDArray[complex128]]: ...
 @overload
 def polyfit(
@@ -148,8 +146,7 @@ def polyfit(
     rcond: None | float = ...,
     full: L[True] = ...,
     w: None | _ArrayLikeFloat_co = ...,
-    cov: L[False] = ...,
-    absolute_w: L[True] = ...,
+    cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[float64]]: ...
 @overload
 def polyfit(
@@ -159,8 +156,7 @@ def polyfit(
     rcond: None | float = ...,
     full: L[True] = ...,
     w: None | _ArrayLikeFloat_co = ...,
-    cov: L[False] = ...,
-    absolute_w: L[True] = ...,
+    cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[complex128]]: ...
 
 @overload

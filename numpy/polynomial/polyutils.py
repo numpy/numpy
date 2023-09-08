@@ -580,7 +580,7 @@ def _sub(c1, c2):
     return trimseq(ret)
 
 
-def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False, absolute_w=True):
+def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Helper function used to implement the ``<type>fit`` functions.
 
@@ -690,7 +690,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False, absolut
         U = U[:, mask_array]
         v_base = np.dot(U / s**2, U.T)
 
-        if absolute_w:
+        if cov == "unscaled":
             fac = 1
         else:
             if len(x) <= order:

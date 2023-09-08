@@ -62,7 +62,7 @@ reveal_type(np.polyder(AR_O, m=2))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.polyfit(AR_f8, AR_f8, 2))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.polyfit(AR_f8, AR_i8, 1, full=True))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
-reveal_type(np.polyfit(AR_u4, AR_f8, 1.0, cov=True, absolute_w=True))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
+reveal_type(np.polyfit(AR_u4, AR_f8, 1.0, cov="unscaled"))  # E: tuple[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
 reveal_type(np.polyfit(AR_c16, AR_f8, 2))  # E: ndarray[Any, dtype[{complex128}]]
 reveal_type(np.polyfit(AR_f8, AR_c16, 1, full=True))  # E: tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[signedinteger[typing._32Bit]]], ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{float64}]]]
 reveal_type(np.polyfit(AR_u4, AR_c16, 1.0, cov=True))  # E: tuple[ndarray[Any, dtype[{complex128}]], ndarray[Any, dtype[{complex128}]]]
