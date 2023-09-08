@@ -580,7 +580,16 @@ def _sub(c1, c2):
     return trimseq(ret)
 
 
-def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False, absolute_w=True):
+def _fit(
+        vander_f,
+        x,
+        y,
+        deg,
+        rcond=None,
+        full=False,
+        w=None,
+        cov=False,
+        absolute_w=True):
     """
     Helper function used to implement the ``<type>fit`` functions.
 
