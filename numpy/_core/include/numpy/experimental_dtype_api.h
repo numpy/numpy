@@ -128,6 +128,7 @@
 #include <Python.h>
 #include "ndarraytypes.h"
 #include "_dtype_api.h"
+#include "utils.h"
 
 /*
  * The contents of PyArrayMethodObject are currently opaque (is there a way
@@ -353,7 +354,13 @@ import_experimental_dtype_api(int version)
         return 0;
     }
 
-    PyObject *multiarray = PyImport_ImportModule("numpy._core._multiarray_umath");
+    char numpy_major_version = get_installed_numpy_major_version();
+    PyObject *multiarray = NULL;
+    if (numpy_major_version == '2') {
+        multiarray = PyImport_ImportModule("numpy._core._multiarray_umath");
+    } else {
+        multiarray = PyImport_ImportModule("numpy.core._multiarray_umath");
+    }
     if (multiarray == NULL) {
         return -1;
     }

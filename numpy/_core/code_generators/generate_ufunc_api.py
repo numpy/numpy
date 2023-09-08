@@ -30,10 +30,18 @@ static void **PyUFunc_API=NULL;
 
 %s
 
+#include "numpy/utils.h"
+
 static inline int
 _import_umath(void)
 {
-  PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
+  char numpy_major_version = get_installed_numpy_major_version();
+  PyObject *numpy = NULL;
+  if (numpy_major_version == '2') {
+      numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
+  } else {
+      numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+  }
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {

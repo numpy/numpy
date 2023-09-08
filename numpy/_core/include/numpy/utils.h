@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_
 
+#include <Python.h>
+
 #ifndef __COMP_NPY_UNUSED
     #if defined(__GNUC__)
         #define __COMP_NPY_UNUSED __attribute__ ((__unused__))
@@ -33,5 +35,16 @@
 #define NPY_CAT__(a, b) a ## b
 #define NPY_CAT_(a, b) NPY_CAT__(a, b)
 #define NPY_CAT(a, b) NPY_CAT_(a, b)
+
+static char get_installed_numpy_major_version()
+{
+    PyObject *numpy = PyImport_ImportModule("numpy");
+    PyObject *version_obj = PyObject_GetAttrString(numpy, "__version__");
+    Py_DECREF(numpy);
+    char major_version = PyUnicode_ReadChar(version_obj, 0);
+    Py_DECREF(version_obj);
+
+    return major_version;
+}
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_ */
