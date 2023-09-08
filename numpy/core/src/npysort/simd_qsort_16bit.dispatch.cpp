@@ -30,13 +30,13 @@ void avx512_qsort_int16(int16_t* arr, intptr_t size)
 {
     avx512_qsort(arr, size);
 }
-void avx512_qselect_uint16(uint16_t* arr, intptr_t size)
+void avx512_qselect_uint16(uint16_t* arr, npy_intp kth, npy_intp size)
 {
-    avx512_qselect(arr, size);
+    avx512_qselect(arr, kth, size, true);
 }
-void avx512_qselect_int16(int16_t* arr, intptr_t size)
+void avx512_qselect_int16(int16_t* arr, npy_intp kth, npy_intp size)
 {
-    avx512_qselect(arr, size);
+    avx512_qselect(arr, kth, size, true);
 }
 #endif // __CYGWIN__
 #endif
@@ -60,18 +60,18 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(Half *arr, npy_intp num, npy_int
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(uint16_t *arr, npy_intp num, npy_intp kth)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
-    avx512_qselect_uint16(arr, size);
+    avx512_qselect_uint16(arr, kth, num);
 #else
-    avx512_qselect(arr, size);
+    avx512_qselect(arr, kth, num);
 #endif
 }
 
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_intp kth)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
-    avx512_qselect_uint16(arr, size);
+    avx512_qselect_int16(arr, kth, num);
 #else
-    avx512_qselect(arr, size);
+    avx512_qselect(arr, kth, num);
 #endif
 }
 
