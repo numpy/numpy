@@ -117,8 +117,9 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
 @set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
-                     linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None, floatmode=None, *, legacy=None):
+                     linewidth=None, suppress=None, nanstr=None,
+                     infstr=None, formatter=None, sign=None, floatmode=None,
+                     *, legacy=None):
     """
     Set printing options.
 
@@ -274,7 +275,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... linewidth=75, nanstr='nan', precision=8,
     ... suppress=False, threshold=1000, formatter=None)
 
-    Also to temporarily override options, use `printoptions` as a context manager:
+    Also to temporarily override options, use `printoptions`
+    as a context manager:
 
     >>> with np.printoptions(precision=2, suppress=True, threshold=5):
     ...     np.linspace(0, 10, 10)
@@ -388,7 +390,7 @@ def _leading_trailing(a, edgeitems, index=()):
 
     if a.shape[axis] > 2*edgeitems:
         return concatenate((
-            _leading_trailing(a, edgeitems, index + np.index_exp[ :edgeitems]),
+            _leading_trailing(a, edgeitems, index + np.index_exp[:edgeitems]),
             _leading_trailing(a, edgeitems, index + np.index_exp[-edgeitems:])
         ), axis=axis)
     else:
@@ -417,7 +419,8 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
                     formatter, **kwargs):
     # note: extra arguments in kwargs are ignored
 
-    # wrapped in lambdas to avoid taking a code path with the wrong type of data
+    # wrapped in lambdas to avoid taking a code path
+    # with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data, sign),
@@ -842,7 +845,9 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             if legacy <= 113:
                 elem_width = curr_width - len(separator.rstrip())
             else:
-                elem_width = curr_width - max(len(separator.rstrip()), len(']'))
+                elem_width = curr_width - max(
+                    len(separator.rstrip()), len(']')
+                )
 
             line = hanging_indent
             for i in range(leading_items):
@@ -853,7 +858,8 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             if show_summary:
                 s, line = _extendLine(
-                    s, line, summary_insert, elem_width, hanging_indent, legacy)
+                    s, line, summary_insert, elem_width, hanging_indent, legacy
+                )
                 if legacy <= 113:
                     line += ", "
                 else:
@@ -880,12 +886,15 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line_sep = separator.rstrip() + '\n'*(axes_left - 1)
 
             for i in range(leading_items):
-                nested = recurser(index + (i,), next_hanging_indent, next_width)
+                nested = recurser(
+                    index + (i,), next_hanging_indent, next_width
+                )
                 s += hanging_indent + nested + line_sep
 
             if show_summary:
                 if legacy <= 113:
-                    # trailing space, fixed nbr of newlines, and fixed separator
+                    # trailing space, fixed nbr of newlines,
+                    # and fixed separator
                     s += hanging_indent + summary_insert + ", \n"
                 else:
                     s += hanging_indent + summary_insert + line_sep
@@ -1031,7 +1040,9 @@ class FloatingFormat:
             nanlen = len(_format_options['nanstr'])
             inflen = len(_format_options['infstr']) + neginf
             offset = self.pad_right + 1  # +1 for decimal pt
-            self.pad_left = max(self.pad_left, nanlen - offset, inflen - offset)
+            self.pad_left = max(
+                self.pad_left, nanlen - offset, inflen - offset
+            )
 
     def __call__(self, x):
         if not np.isfinite(x):
@@ -1042,7 +1053,9 @@ class FloatingFormat:
                 else:  # isinf
                     sign = '-' if x < 0 else '+' if self.sign == '+' else ''
                     ret = sign + _format_options['infstr']
-                return ' '*(self.pad_left + self.pad_right + 1 - len(ret)) + ret
+                return ' '*(
+                    self.pad_left + self.pad_right + 1 - len(ret)
+                ) + ret
 
         if self.exp_format:
             return dragon4_scientific(x,
@@ -1106,8 +1119,8 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         Pad the left side of the string with whitespace until at least that
         many characters are to the left of the decimal point.
     exp_digits : non-negative integer, optional
-        Pad the exponent with zeros until it contains at least this many digits.
-        If omitted, the exponent will be at least 2 digits.
+        Pad the exponent with zeros until it contains at least this
+        many digits. If omitted, the exponent will be at least 2 digits.
     min_digits : non-negative integer or None, optional
         Minimum number of digits to print. This only has an effect for
         `unique=True`. In that case more digits than necessary to uniquely
@@ -1391,9 +1404,9 @@ class StructuredVoidFormat:
     """
     Formatter for structured np.void objects.
 
-    This does not work on structured alias types like np.dtype(('i4', 'i2,i2')),
-    as alias scalars lose their field information, and the implementation
-    relies upon np.void.__getitem__.
+    This does not work on structured alias types like
+    np.dtype(('i4', 'i2,i2')), as alias scalars lose their field information,
+    and the implementation relies upon np.void.__getitem__.
     """
     def __init__(self, format_functions):
         self.format_functions = format_functions
@@ -1401,8 +1414,9 @@ class StructuredVoidFormat:
     @classmethod
     def from_data(cls, data, **options):
         """
-        This is a second way to initialize StructuredVoidFormat, using the raw data
-        as input. Added to avoid changing the signature of __init__.
+        This is a second way to initialize StructuredVoidFormat,
+        using the raw data as input. Added to avoid changing
+        the signature of __init__.
         """
         format_functions = []
         for field_name in data.dtype.names:
@@ -1451,7 +1465,8 @@ _typelessdata = [int_, float64, complex128, bool_]
 
 def dtype_is_implied(dtype):
     """
-    Determine if the given dtype is implied by the representation of its values.
+    Determine if the given dtype is implied by the representation
+    of its values.
 
     Parameters
     ----------

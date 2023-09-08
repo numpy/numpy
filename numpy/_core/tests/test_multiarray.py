@@ -35,7 +35,7 @@ from numpy.testing import (
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
-from numpy._core.multiarray import _get_ndarray_c_version
+from numpy._core.multiarray import _get_ndarray_c_version, dot
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -4329,89 +4329,44 @@ class TestPickling:
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
     def test_version0_int8(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndt"
-            b"ype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff"
-            b"\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."  # noqa
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_float32(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndt"
-            b"ype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff"
-            b"\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@"
-            b"\x00\x00@@\x00\x00\x80@tb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."  # noqa
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_object(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndt"
-            b"ype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff"
-            b"\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U"
-            b"\x01bK\x02setb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb."  # noqa
         a = np.array([{'a': 1}, {'b': 2}])
         p = self._loads(s)
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
     def test_version1_int8(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnump"
-            b"y\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ"
-            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."  # noqa
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_float32(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnump"
-            b"y\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ"
-            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?"
-            b"\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."  # noqa
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_object(self):
-        s = (
-            b"\x80\x02cnumpy._core._internal\n_reconstruct\nq\x01cnumpy\n"
-            b"ndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnump"
-            b"y\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ"
-            b"\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK"
-            b"\x01s}q\x08U\x01bK\x02setb."
-        )
+        s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb."  # noqa
         a = np.array([{'a': 1}, {'b': 2}])
         p = self._loads(s)
         assert_equal(a, p)
 
     def test_subarray_int_shape(self):
-        s = (
-            b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray"
-            b"\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\n"
-            b"dtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN"
-            b"(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1"
-            b"\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp2"
-            b"0\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\nt"
-            b"p24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'"
-            b"\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\n"
-            b"NNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'"
-            b"\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
-        )
+        s = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp20\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\ntp24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\nNNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."  # noqa
         a = np.array([(1, (1, 2))], dtype=[('a', 'i1', (2, 2)), ('b', 'i1', 2)])
         p = self._loads(s)
         assert_equal(a, p)
@@ -6674,7 +6629,6 @@ class TestDot:
         assert_equal(zeros[1].array, zeros_test[1].array)
 
     def test_dot_2args(self):
-        from numpy._core.multiarray import dot
 
         a = np.array([[1, 2], [3, 4]], dtype=float)
         b = np.array([[1, 0], [1, 1]], dtype=float)
@@ -6684,7 +6638,6 @@ class TestDot:
         assert_allclose(c, d)
 
     def test_dot_3args(self):
-        from numpy._core.multiarray import dot
 
         np.random.seed(22)
         f = np.random.random_sample((1024, 16))
@@ -6706,7 +6659,6 @@ class TestDot:
         assert_array_equal(r2, r)
 
     def test_dot_3args_errors(self):
-        from numpy._core.multiarray import dot
 
         np.random.seed(22)
         f = np.random.random_sample((1024, 16))

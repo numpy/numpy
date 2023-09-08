@@ -496,15 +496,15 @@ for key in allTypes:
 
 del key
 
-typecodes = {'Character':'c',
-             'Integer':'bhilqp',
-             'UnsignedInteger':'BHILQP',
-             'Float':'efdg',
-             'Complex':'FDG',
-             'AllInteger':'bBhHiIlLqQpP',
-             'AllFloat':'efdgFDG',
+typecodes = {'Character': 'c',
+             'Integer': 'bhilqp',
+             'UnsignedInteger': 'BHILQP',
+             'Float': 'efdg',
+             'Complex': 'FDG',
+             'AllInteger': 'bBhHiIlLqQpP',
+             'AllFloat': 'efdgFDG',
              'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
+             'All': '?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
@@ -515,5 +515,6 @@ def _register_types():
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
     numbers.Number.register(number)
+
 
 _register_types()

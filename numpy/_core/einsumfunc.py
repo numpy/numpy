@@ -182,7 +182,9 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
         # Compute all unique pairs
         for curr in full_results:
             cost, positions, remaining = curr
-            for con in itertools.combinations(range(len(input_sets) - iteration), 2):
+            for con in itertools.combinations(
+                range(len(input_sets) - iteration), 2
+            ):
 
                 # Find the contraction
                 cont = _find_contraction(con, remaining, output_set)
@@ -194,7 +196,9 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
                     continue
 
                 # Build (total_cost, positions, indices_remaining)
-                total_cost =  cost + _flop_count(idx_contract, idx_removed, len(con), idx_dict)
+                total_cost = cost + _flop_count(
+                    idx_contract, idx_removed, len(con), idx_dict
+                )
                 new_pos = positions + [con]
                 iter_results.append((total_cost, new_pos, new_input_sets))
 
@@ -214,7 +218,10 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     path = min(full_results, key=lambda x: x[0])[1]
     return path
 
-def _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit, path_cost, naive_cost):
+def _parse_possible_contraction(
+        positions, input_sets, output_set, idx_dict, 
+        memory_limit, path_cost, naive_cost
+    ):
     """Compute the cost (removed size + flops) and resultant indices for
     performing the contraction specified by ``positions``.
 
@@ -242,7 +249,8 @@ def _parse_possible_contraction(positions, input_sets, output_set, idx_dict, mem
     positions : tuple of int
         The locations of the proposed tensors to contract.
     new_input_sets : list of sets
-        The resulting new list of indices if this proposed contraction is performed.
+        The resulting new list of indices if this proposed contraction
+        is performed.
 
     """
 
@@ -256,7 +264,9 @@ def _parse_possible_contraction(positions, input_sets, output_set, idx_dict, mem
         return None
 
     # Build sort tuple
-    old_sizes = (_compute_size_by_dict(input_sets[p], idx_dict) for p in positions)
+    old_sizes = (
+        _compute_size_by_dict(input_sets[p], idx_dict) for p in positions
+    )
     removed_size = sum(old_sizes) - new_size
 
     # NB: removed_size used to be just the size of any removed indices i.e.:
@@ -273,21 +283,24 @@ def _parse_possible_contraction(positions, input_sets, output_set, idx_dict, mem
 
 
 def _update_other_results(results, best):
-    """Update the positions and provisional input_sets of ``results`` based on
-    performing the contraction result ``best``. Remove any involving the tensors
-    contracted.
+    """Update the positions and provisional input_sets of ``results``
+    based on performing the contraction result ``best``. Remove any
+    involving the tensors contracted.
 
     Parameters
     ----------
     results : list
-        List of contraction results produced by ``_parse_possible_contraction``.
+        List of contraction results produced by 
+        ``_parse_possible_contraction``.
     best : list
-        The best contraction of ``results`` i.e. the one that will be performed.
+        The best contraction of ``results`` i.e. the one that
+        will be performed.
 
     Returns
     -------
     mod_results : list
-        The list of modified results, updated with outcome of ``best`` contraction.
+        The list of modified results, updated with outcome of
+        ``best`` contraction.
     """
 
     best_con = best[1]
@@ -353,9 +366,13 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
         return [(0, 1)]
 
     # Build up a naive cost
-    contract = _find_contraction(range(len(input_sets)), input_sets, output_set)
+    contract = _find_contraction(
+        range(len(input_sets)), input_sets, output_set
+    )
     idx_result, new_input_sets, idx_removed, idx_contract = contract
-    naive_cost = _flop_count(idx_contract, idx_removed, len(input_sets), idx_dict)
+    naive_cost = _flop_count(
+        idx_contract, idx_removed, len(input_sets), idx_dict
+    )
 
     # Initially iterate over all pairs
     comb_iter = itertools.combinations(range(len(input_sets)), 2)
@@ -366,29 +383,38 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
 
     for iteration in range(len(input_sets) - 1):
 
-        # Iterate over all pairs on first step, only previously found pairs on subsequent steps
+        # Iterate over all pairs on the first step, only previously
+        # found pairs on subsequent steps
         for positions in comb_iter:
 
             # Always initially ignore outer products
             if input_sets[positions[0]].isdisjoint(input_sets[positions[1]]):
                 continue
 
-            result = _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit, path_cost,
-                                                 naive_cost)
+            result = _parse_possible_contraction(
+                positions, input_sets, output_set, idx_dict,
+                memory_limit, path_cost, naive_cost
+            )
             if result is not None:
                 known_contractions.append(result)
 
-        # If we do not have a inner contraction, rescan pairs including outer products
+        # If we do not have a inner contraction, rescan pairs
+        # including outer products
         if len(known_contractions) == 0:
 
             # Then check the outer products
-            for positions in itertools.combinations(range(len(input_sets)), 2):
-                result = _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit,
-                                                     path_cost, naive_cost)
+            for positions in itertools.combinations(
+                range(len(input_sets)), 2
+            ):
+                result = _parse_possible_contraction(
+                    positions, input_sets, output_set, idx_dict,
+                    memory_limit, path_cost, naive_cost
+                )
                 if result is not None:
                     known_contractions.append(result)
 
-            # If we still did not find any remaining contractions, default back to einsum like behavior
+            # If we still did not find any remaining contractions,
+            # default back to einsum like behavior
             if len(known_contractions) == 0:
                 path.append(tuple(range(len(input_sets))))
                 break
@@ -396,7 +422,8 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
         # Sort based on first index
         best = min(known_contractions, key=lambda x: x[0])
 
-        # Now propagate as many unused contractions as possible to next iteration
+        # Now propagate as many unused contractions as possible
+        # to the next iteration
         known_contractions = _update_other_results(known_contractions, best)
 
         # Next iteration only compute contractions with the new tensor
@@ -583,8 +610,10 @@ def _parse_einsum_input(operands):
                     try:
                         s = operator.index(s)
                     except TypeError as e:
-                        raise TypeError("For this input type lists must contain "
-                                        "either int or Ellipsis") from e
+                        raise TypeError(
+                            "For this input type lists must contain "
+                            "either int or Ellipsis"
+                        ) from e
                     subscripts += einsum_symbols[s]
             if num != last:
                 subscripts += ","
@@ -598,8 +627,10 @@ def _parse_einsum_input(operands):
                     try:
                         s = operator.index(s)
                     except TypeError as e:
-                        raise TypeError("For this input type lists must contain "
-                                        "either int or Ellipsis") from e
+                        raise TypeError(
+                            "For this input type lists must contain "
+                            "either int or Ellipsis"
+                        ) from e
                     subscripts += einsum_symbols[s]
     # Check for proper "->"
     if ("-" in subscripts) or (">" in subscripts):
@@ -847,7 +878,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     einsum_call_arg = einsum_call
 
     # Python side parsing
-    input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
+    input_subscripts, output_subscript, operands = (
+        _parse_einsum_input(operands)
+    )
 
     # Build a few useful list and sets
     input_list = input_subscripts.split(',')
@@ -898,7 +931,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     # Compute naive cost
     # This isn't quite right, need to look into exactly how einsum does this
     inner_product = (sum(len(x) for x in input_sets) - len(indices)) > 0
-    naive_cost = _flop_count(indices, inner_product, len(input_list), dimension_dict)
+    naive_cost = _flop_count(
+        indices, inner_product, len(input_list), dimension_dict
+    )
 
     # Compute the path
     if explicit_einsum_path:
@@ -911,9 +946,13 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         # Nothing to be optimized, leave it to einsum
         path = [tuple(range(len(input_list)))]
     elif path_type == "greedy":
-        path = _greedy_path(input_sets, output_set, dimension_dict, memory_arg)
+        path = _greedy_path(
+            input_sets, output_set, dimension_dict, memory_arg
+        )
     elif path_type == "optimal":
-        path = _optimal_path(input_sets, output_set, dimension_dict, memory_arg)
+        path = _optimal_path(
+            input_sets, output_set, dimension_dict, memory_arg
+        )
     else:
         raise KeyError("Path name %s not found", path_type)
 
@@ -927,7 +966,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract
 
-        cost = _flop_count(idx_contract, idx_removed, len(contract_inds), dimension_dict)
+        cost = _flop_count(
+            idx_contract, idx_removed, len(contract_inds), dimension_dict
+        )
         cost_list.append(cost)
         scale_list.append(len(idx_contract))
         size_list.append(_compute_size_by_dict(out_inds, dimension_dict))
@@ -957,7 +998,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         broadcast_indices.append(new_bcast_inds)
         einsum_str = ",".join(tmp_inputs) + "->" + idx_result
 
-        contraction = (contract_inds, idx_removed, einsum_str, input_list[:], do_blas)
+        contraction = (
+            contract_inds, idx_removed, einsum_str, input_list[:], do_blas
+        )
         contraction_list.append(contraction)
 
     opt_cost = sum(cost_list) + 1
@@ -979,7 +1022,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     speedup = naive_cost / opt_cost
     max_i = max(size_list)
 
-    path_print  = "  Complete contraction:  %s\n" % overall_contraction
+    path_print = "  Complete contraction:  %s\n" % overall_contraction
     path_print += "         Naive scaling:  %d\n" % len(indices)
     path_print += "     Optimized scaling:  %d\n" % max(scale_list)
     path_print += "      Naive FLOP count:  %.3e\n" % naive_cost
@@ -1099,22 +1142,27 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     * Return a diagonal, :py:func:`numpy.diag`.
     * Array axis summations, :py:func:`numpy.sum`.
     * Transpositions and permutations, :py:func:`numpy.transpose`.
-    * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
-    * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
-    * Broadcasting, element-wise and scalar multiplication, :py:func:`numpy.multiply`.
+    * Matrix multiplication and dot product, :py:func:`numpy.matmul`
+        :py:func:`numpy.dot`.
+    * Vector inner and outer products, :py:func:`numpy.inner`
+        :py:func:`numpy.outer`.
+    * Broadcasting, element-wise and scalar multiplication,
+        :py:func:`numpy.multiply`.
     * Tensor contractions, :py:func:`numpy.tensordot`.
-    * Chained array operations, in efficient calculation order, :py:func:`numpy.einsum_path`.
+    * Chained array operations, in efficient calculation order,
+        :py:func:`numpy.einsum_path`.
 
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
     Whenever a label is repeated it is summed, so ``np.einsum('i,i', a, b)``
     is equivalent to :py:func:`np.inner(a,b) <numpy.inner>`. If a label
-    appears only once, it is not summed, so ``np.einsum('i', a)`` produces a
-    view of ``a`` with no changes. A further example ``np.einsum('ij,jk', a, b)``
-    describes traditional matrix multiplication and is equivalent to
-    :py:func:`np.matmul(a,b) <numpy.matmul>`. Repeated subscript labels in one
-    operand take the diagonal. For example, ``np.einsum('ii', a)`` is equivalent
-    to :py:func:`np.trace(a) <numpy.trace>`.
+    appears only once, it is not summed, so ``np.einsum('i', a)``
+    produces a view of ``a`` with no changes. A further example
+    ``np.einsum('ij,jk', a, b)`` describes traditional matrix multiplication
+    and is equivalent to :py:func:`np.matmul(a,b) <numpy.matmul>`.
+    Repeated subscript labels in one operand take the diagonal.
+    For example, ``np.einsum('ii', a)`` is equivalent to
+    :py:func:`np.trace(a) <numpy.trace>`.
 
     In *implicit mode*, the chosen subscripts are important
     since the axes of the output are reordered alphabetically.  This
@@ -1129,12 +1177,13 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     identifier '->' as well as the list of output subscript labels.
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
-    ``np.einsum('i->', a)`` is like :py:func:`np.sum(a, axis=-1) <numpy.sum>`,
-    and ``np.einsum('ii->i', a)`` is like :py:func:`np.diag(a) <numpy.diag>`.
-    The difference is that `einsum` does not allow broadcasting by default.
-    Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
-    order of the output subscript labels and therefore returns matrix
-    multiplication, unlike the example above in implicit mode.
+    ``np.einsum('i->', a)`` is like
+    :py:func:`np.sum(a, axis=-1) <numpy.sum>`, and ``np.einsum('ii->i', a)``
+    is like :py:func:`np.diag(a) <numpy.diag>`. The difference is that
+    `einsum` does not allow broadcasting by default. Additionally
+    ``np.einsum('ij,jh->ih', a, b)`` directly specifies the order of
+    the output subscript labels and therefore returns matrix multiplication,
+    unlike the example above in implicit mode.
 
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
@@ -1149,8 +1198,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view (changed in version 1.10.0).
 
-    `einsum` also provides an alternative way to provide the subscripts
-    and operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.
+    `einsum` also provides an alternative way to provide the subscripts and
+    operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.
     If the output shape is not provided in this format `einsum` will be
     calculated in implicit mode, otherwise it will be performed explicitly.
     The examples below have corresponding `einsum` calls with the two
@@ -1167,16 +1216,16 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     .. versionadded:: 1.12.0
 
     Added the ``optimize`` argument which will optimize the contraction order
-    of an einsum expression. For a contraction with three or more operands this
-    can greatly increase the computational efficiency at the cost of a larger
-    memory footprint during computation.
+    of an einsum expression. For a contraction with three or more operands
+    this can greatly increase the computational efficiency at the cost of
+    a larger memory footprint during computation.
 
     Typically a 'greedy' algorithm is applied which empirical tests have shown
     returns the optimal path in the majority of cases. In some cases 'optimal'
-    will return the superlative path through a more expensive, exhaustive search.
-    For iterative calculations it may be advisable to calculate the optimal path
-    once and reuse that path by supplying it as an argument. An example is given
-    below.
+    will return the superlative path through a more expensive, exhaustive
+    search. For iterative calculations it may be advisable to calculate
+    the optimal path once and reuse that path by supplying it as an argument.
+    An example is given below.
 
     See :py:func:`numpy.einsum_path` for more details.
 
@@ -1213,7 +1262,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     >>> np.sum(a, axis=1)
     array([ 10,  35,  60,  85, 110])
 
-    For higher dimensional arrays summing a single axis can be done with ellipsis:
+    For higher dimensional arrays summing a single axis can be done
+    with ellipsis:
 
     >>> np.einsum('...j->...', a)
     array([ 10,  35,  60,  85, 110])
@@ -1333,9 +1383,9 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
            [13, 40, 67, 94]])
 
     Chained array operations. For more complicated contractions, speed ups
-    might be achieved by repeatedly computing a 'greedy' path or pre-computing the
-    'optimal' path and repeatedly applying it, using an
-    `einsum_path` insertion (since version 1.12.0). Performance improvements can be
+    might be achieved by repeatedly computing a 'greedy' path or pre-computing
+    the 'optimal' path and repeatedly applying it, using an `einsum_path`
+    insertion (since version 1.12.0). Performance improvements can be
     particularly significant with larger arrays:
 
     >>> a = np.ones(64).reshape(2,4,8)
@@ -1348,7 +1398,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
 
     >>> for iteration in range(500):
-    ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')
+    ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a,
+    ...         optimize='optimal')
 
     Greedy `einsum` (faster optimal path approximation): ~160ms
 
@@ -1357,7 +1408,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Optimal `einsum` (best usage pattern in some use cases): ~110ms
 
-    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')[0]
+    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, 
+    ...     optimize='optimal')[0]
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)
 
@@ -1417,13 +1469,17 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
                 right_pos.append(input_right.find(s))
 
             # Contract!
-            new_view = tensordot(*tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
+            new_view = tensordot(
+                *tmp_operands, axes=(tuple(left_pos), tuple(right_pos))
+            )
 
             # Build a new view if needed
             if (tensor_result != results_index) or handle_out:
                 if handle_out:
                     kwargs["out"] = out
-                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **kwargs)
+                new_view = c_einsum(
+                    tensor_result + '->' + results_index, new_view, **kwargs
+                )
 
         # Call einsum
         else:

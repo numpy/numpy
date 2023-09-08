@@ -4215,7 +4215,7 @@ add_newdoc('numpy._core.umath', 'lcm',
 
     """)
 
-add_newdoc('numpy.core.umath', 'bitwise_count',
+add_newdoc('numpy._core.umath', 'bitwise_count',
     """
     Computes the number of 1-bits in the absolute value of ``x``.
     Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
@@ -4253,7 +4253,7 @@ add_newdoc('numpy.core.umath', 'bitwise_count',
 
     """)
 
-add_newdoc('numpy.core.umath', 'isalpha',
+add_newdoc('numpy._core.umath', 'isalpha',
     """
     Returns true for each element if all characters in the data
     interpreted as a string are alphabetic and there is at least

@@ -132,14 +132,6 @@ def _array_descr(descriptor):
 
     return result
 
-# Build a new array from the information in a pickle.
-# Note that the name numpy._core._internal._reconstruct is embedded in
-# pickles of ndarrays made with NumPy before release 1.0
-# so don't remove the name here, or you'll
-# break backward compatibility.
-def _reconstruct(subtype, shape, dtype):
-    return ndarray.__new__(subtype, shape, dtype)
-
 
 # format_re was originally from numarray by J. Todd Miller
 

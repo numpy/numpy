@@ -537,11 +537,6 @@ def test_python2_python3_interoperability():
     assert_array_equal(data, np.ones(2))
 
 
-@pytest.mark.filterwarnings(
-        "ignore:"
-        "`numpy.core` has been made officially private:"
-        "DeprecationWarning"
-)
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
@@ -551,7 +546,7 @@ def test_pickle_python2_python3():
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
-    for fname in ['py2-objarr.npy', 'py2-objarr.npz',
+    for fname in ['py2-np0-objarr.npy', 'py2-objarr.npy', 'py2-objarr.npz',
                   'py3-objarr.npy', 'py3-objarr.npz']:
         path = os.path.join(data_dir, fname)
 

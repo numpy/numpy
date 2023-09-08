@@ -156,6 +156,8 @@ _MACHAR_PARAMS = {
 _KNOWN_TYPES = {}
 def _register_type(machar, bytepat):
     _KNOWN_TYPES[bytepat] = machar
+
+
 _float_ma = {}
 
 
@@ -272,8 +274,8 @@ def _register_known_types():
 
     # Guessed / known parameters for double double; see:
     # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
-    # These numbers have the same exponent range as float64, but extended number of
-    # digits in the significand.
+    # These numbers have the same exponent range as float64, but extended
+    # number of digits in the significand.
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
     # As the smallest_normal in double double is so hard to calculate we set
     # it to NaN.
@@ -370,8 +372,8 @@ def _discovered_machar(ftype):
     """
     params = _MACHAR_PARAMS[ftype]
     return MachAr(lambda v: array([v], ftype),
-                  lambda v:_fr0(v.astype(params['itype']))[0],
-                  lambda v:array(_fr0(v)[0], ftype),
+                  lambda v: _fr0(v.astype(params['itype']))[0],
+                  lambda v: array(_fr0(v)[0], ftype),
                   lambda v: params['fmt'] % array(_fr0(v)[0], ftype),
                   params['title'])
 

@@ -259,7 +259,7 @@ pure_subdirs = [
   'tests',
   'typing',
   'rec',
-  'char'
+  'char',
   'core'
 ]
 if py.version().version_compare('<3.12')

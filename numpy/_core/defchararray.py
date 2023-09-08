@@ -862,7 +862,7 @@ def isalpha(a):
     --------
     str.isalpha
     """
-    return numpy.core.umath.isalpha(a)
+    return numpy._core.umath.isalpha(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1054,7 +1054,6 @@ def join(sep, seq):
     """
     return _to_bytes_or_str_array(
         _vec_string(sep, object_, 'join', (seq,)), seq)
-
 
 
 def _just_dispatcher(a, width, fillchar=None):
@@ -1642,9 +1641,9 @@ def strip(a, chars=None):
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
     array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
-    >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because whitespace leads
+    >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because ws leads
     array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
-    >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
+    >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because ws trails
     array(['aAaAa', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
@@ -1768,7 +1767,11 @@ def translate(a, table, deletechars=None):
             a_arr, a_arr.dtype, 'translate', (table,))
     else:
         return _vec_string(
-            a_arr, a_arr.dtype, 'translate', [table] + _clean_args(deletechars))
+            a_arr,
+            a_arr.dtype,
+            'translate',
+            [table] + _clean_args(deletechars)
+        )
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1874,7 +1877,9 @@ def isnumeric(a):
 
     """
     if not _is_unicode(a):
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+        raise TypeError(
+            "isnumeric is only available for Unicode strings and arrays"
+        )
     return _vec_string(a, bool_, 'isnumeric')
 
 
@@ -1928,8 +1933,9 @@ class chararray(ndarray):
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
        1.4, if one needs arrays of strings, it is recommended to use arrays of
-       `dtype` `~numpy.object_`, `~numpy.bytes_` or `~numpy.str_`, and use the free functions
-       in the `numpy.char` module for fast vectorized string operations.
+       `dtype` `~numpy.object_`, `~numpy.bytes_` or `~numpy.str_`, and use
+       the free functions in the `numpy.char` module for fast vectorized
+       string operations.
 
     Versus a NumPy array of dtype `~numpy.bytes_` or `~numpy.str_`, this
     class adds the following functionality:
@@ -2033,8 +2039,8 @@ class chararray(ndarray):
         Fixed stride displacement from the beginning of an axis?
         Default is 0. Needs to be >=0.
     strides : array_like of ints, optional
-        Strides for the array (see `~numpy.ndarray.strides` for full description).
-        Default is None.
+        Strides for the array (see `~numpy.ndarray.strides` for
+        full description). Default is None.
     order : {'C', 'F'}, optional
         The order in which the array data is stored in memory: 'C' ->
         "row major" order (the default), 'F' -> "column major"
@@ -2758,7 +2764,8 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        end when comparing values
 
     3) vectorized string operations are provided as methods
-       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`) and infix operators (e.g. ``+, *, %``)
+       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`)
+       and infix operators (e.g. ``+, *, %``)
 
     Parameters
     ----------
@@ -2886,8 +2893,8 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
        end when comparing values
 
     3) vectorized string operations are provided as methods
-       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`) and infix operators
-       (e.g. ``+``, ``*``, ``%``)
+       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`)
+       and infix operators (e.g. ``+``, ``*``, ``%``)
 
     Parameters
     ----------

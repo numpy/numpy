@@ -7,7 +7,8 @@ Most commonly, ndarrays contain elements of a single type, e.g. floats,
 integers, bools etc.  However, it is possible for elements to be combinations
 of these using structured types, such as::
 
-  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', np.int64), ('y', np.float64)])
+  >>> a = np.array([(1, 2.0), (1, 2.0)], 
+  ...     dtype=[('x', np.int64), ('y', np.float64)])
   >>> a
   array([(1, 2.), (1, 2.)], dtype=[('x', '<i8'), ('y', '<f8')])
 
@@ -52,20 +53,20 @@ __all__ = [
 
 ndarray = sb.ndarray
 
-_byteorderconv = {'b':'>',
-                  'l':'<',
-                  'n':'=',
-                  'B':'>',
-                  'L':'<',
-                  'N':'=',
-                  'S':'s',
-                  's':'s',
-                  '>':'>',
-                  '<':'<',
-                  '=':'=',
-                  '|':'|',
-                  'I':'|',
-                  'i':'|'}
+_byteorderconv = {'b': '>',
+                  'l': '<',
+                  'n': '=',
+                  'B': '>',
+                  'L': '<',
+                  'N': '=',
+                  'S': 's',
+                  's': 's',
+                  '>': '>',
+                  '<': '<',
+                  '=': '=',
+                  '|': '|',
+                  'I': '|',
+                  'i': '|'}
 
 # formats regular expression
 # allows multidimensional spec with a tuple syntax in front
@@ -129,9 +130,9 @@ class format_parser:
 
     Examples
     --------
-    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
-    ...                      ['T1', 'T2', 'T3']).dtype
-    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
+    >>> np.rec.format_parser(['<f8', '<i4'], ['col1', 'col2'],
+    ...                      ['T1', 'T2']).dtype
+    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
@@ -157,7 +158,10 @@ class format_parser:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
             dtype = sb.dtype(
-                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
+                [
+                    ('f{}'.format(i), format_) 
+                    for i, format_ in enumerate(formats)
+                ],
                 aligned,
             )
         else:
@@ -369,7 +373,7 @@ class recarray(ndarray):
     --------
     _core.records.fromrecords : Construct a record array from data.
     record : fundamental data-type for `recarray`.
-    numpy.rec.format_parser : determine a data-type from formats, names, titles.
+    numpy.rec.format_parser : determine data-type from formats, names, titles.
 
     Notes
     -----
@@ -420,14 +424,19 @@ class recarray(ndarray):
         if dtype is not None:
             descr = sb.dtype(dtype)
         else:
-            descr = format_parser(formats, names, titles, aligned, byteorder).dtype
+            descr = format_parser(
+                formats, names, titles, aligned, byteorder
+            ).dtype
 
         if buf is None:
-            self = ndarray.__new__(subtype, shape, (record, descr), order=order)
+            self = ndarray.__new__(
+                subtype, shape, (record, descr), order=order
+            )
         else:
-            self = ndarray.__new__(subtype, shape, (record, descr),
-                                      buffer=buf, offset=offset,
-                                      strides=strides, order=order)
+            self = ndarray.__new__(
+                subtype, shape, (record, descr), buffer=buf, 
+                offset=offset, strides=strides, order=order
+            )
         return self
 
     def __array_finalize__(self, obj):
@@ -474,7 +483,11 @@ class recarray(ndarray):
 
         # Automatically convert (void) structured types to records
         # (but not non-void structures, subarrays, or non-structured voids)
-        if attr == 'dtype' and issubclass(val.type, nt.void) and val.names is not None:
+        if (
+            attr == 'dtype' and 
+            issubclass(val.type, nt.void) and 
+            val.names is not None
+        ):
             val = sb.dtype((record, val))
 
         newattr = attr not in self.__dict__
@@ -523,7 +536,10 @@ class recarray(ndarray):
     def __repr__(self):
 
         repr_dtype = self.dtype
-        if self.dtype.type is record or not issubclass(self.dtype.type, nt.void):
+        if (
+            self.dtype.type is record or 
+            not issubclass(self.dtype.type, nt.void)
+        ):
             # If this is a full record array (has numpy.record dtype),
             # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
@@ -724,14 +740,18 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
-        arrlist = [sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])]
+        arrlist = [
+            sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])
+        ]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)
 
     if dtype is not None:
         descr = sb.dtype((record, dtype))
     else:
-        descr = format_parser(formats, names, titles, aligned, byteorder).dtype
+        descr = format_parser(
+            formats, names, titles, aligned, byteorder
+        ).dtype
 
     try:
         retval = sb.array(recList, dtype=descr)
@@ -905,8 +925,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         shape = (shape,)
 
     if hasattr(fd, 'readinto'):
-        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
-        # Example of fd: gzip, BytesIO, BufferedReader
+        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase
+        # interface. Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
         ctx = nullcontext(fd)
     else:
@@ -921,7 +941,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         if dtype is not None:
             descr = sb.dtype(dtype)
         else:
-            descr = format_parser(formats, names, titles, aligned, byteorder).dtype
+            descr = format_parser(
+                formats, names, titles, aligned, byteorder
+            ).dtype
 
         itemsize = descr.itemsize
 
@@ -937,7 +959,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
         if nbytes > size:
             raise ValueError(
-                    "Not enough bytes left in file for specified shape and type")
+                    "Not enough bytes left in file for specified "
+                    "shape and type."
+                )
 
         # create the array
         _array = recarray(shape, descr)

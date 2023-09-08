@@ -60,7 +60,6 @@ directives.register_directive('only', Only)
 BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
-    '_core',
     'f2py',
     'linalg',
     'lib',

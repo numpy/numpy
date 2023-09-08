@@ -32,9 +32,9 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 import functools
 
+from numpy.lib.array_utils import normalize_axis_index
 from numpy._core import asarray, zeros, swapaxes, conjugate, take, sqrt
 from . import _pocketfft_internal as pfi
-from numpy._core.multiarray import normalize_axis_index
 from numpy._core import overrides
 
 

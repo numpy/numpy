@@ -1124,7 +1124,7 @@ defdict = {
           ),
 'bitwise_count':
     Ufunc(1, 1, None,
-          docstrings.get('numpy.core.umath.bitwise_count'),
+          docstrings.get('numpy._core.umath.bitwise_count'),
           None,
           TD(ints, dispatch=[('loops_autovec', ints)], out='B'),
           TD(P, f='bit_count'),
@@ -1139,7 +1139,7 @@ defdict = {
           ),
 'isalpha':
     Ufunc(1, 1, False_,
-          docstrings.get('numpy.core.umath.isalpha'),
+          docstrings.get('numpy._core.umath.isalpha'),
           None,
           )
 }

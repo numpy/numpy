@@ -150,17 +150,8 @@ add_newdoc('numpy._core', 'flatiter', ('copy',
 
 add_newdoc('numpy._core', 'nditer',
     """
-    nditer(
-        op, 
-        flags=None, 
-        op_flags=None, 
-        op_dtypes=None, 
-        order='K',
-        casting='safe', 
-        op_axes=None, 
-        itershape=None, 
-        buffersize=0
-    )
+    nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K',
+        casting='safe', op_axes=None, itershape=None, buffersize=0)
 
     Efficient multi-dimensional iterator object to iterate over arrays.
     To get started using this object, see the
@@ -2921,7 +2912,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
-    """ a.__array__([dtype], /)
+    """
+    a.__array__([dtype], /)
 
     Returns either a new reference to self if dtype is not given or a new array
     of provided data type if dtype is different from the current dtype of the
@@ -2931,7 +2923,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
-    """a.__array_finalize__(obj, /)
+    """
+    a.__array_finalize__(obj, /)
 
     Present so subclasses can call super. Does nothing.
 
@@ -2939,7 +2932,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_prepare__',
-    """a.__array_prepare__(array[, context], /)
+    """
+    a.__array_prepare__(array[, context], /)
 
     Returns a view of `array` with the same type as self.
 
@@ -2947,7 +2941,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_prepare__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_wrap__',
-    """a.__array_wrap__(array[, context], /)
+    """
+    a.__array_wrap__(array[, context], /)
 
     Returns a view of `array` with the same type as self.
 
@@ -2955,7 +2950,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_wrap__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__copy__',
-    """a.__copy__()
+    """
+    a.__copy__()
 
     Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
 
@@ -2965,7 +2961,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__copy__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
-    """a.__class_getitem__(item, /)
+    """
+    a.__class_getitem__(item, /)
 
     Return a parametrized wrapper around the `~numpy.ndarray` type.
 
@@ -2994,7 +2991,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__(memo, /)
+    """
+    a.__deepcopy__(memo, /)
 
     Used if :func:`copy.deepcopy` is called on an array.
 
@@ -3002,7 +3000,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__deepcopy__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
-    """a.__reduce__()
+    """
+    a.__reduce__()
 
     For pickling.
 
@@ -3010,7 +3009,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__setstate__',
-    """a.__setstate__(state, /)
+    """
+    a.__setstate__(state, /)
 
     For unpickling.
 
@@ -3426,7 +3426,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dot'))
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('dump',
-    """a.dump(file)
+    """
+    a.dump(file)
 
     Dump a pickle of the array to the specified file.
     The array can be read back with pickle.load or numpy.load.
@@ -3700,14 +3701,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('prod',
     """
-    a.prod(
-        axis=None, 
-        dtype=None, 
-        out=None,
-        keepdims=False, 
-        initial=1, 
-        where=True
-    )
+    a.prod(axis=None, dtype=None, out=None, keepdims=False,
+        initial=1, where=True)
 
     Return the product of the array elements over the given axis
 

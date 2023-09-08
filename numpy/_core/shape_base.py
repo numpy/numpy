@@ -331,7 +331,8 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
     vstack : Stack arrays in sequence vertically (row wise).
     dstack : Stack arrays in sequence depth wise (along third axis).
     column_stack : Stack 1-D arrays as columns into a 2-D array.
-    hsplit : Split an array into multiple sub-arrays horizontally (column-wise).
+    hsplit : Split an array into multiple sub-arrays 
+             horizontally (column-wise).
 
     Examples
     --------
@@ -707,11 +708,11 @@ def block(arrays):
     the last dimension (-1), then these are concatenated along the
     second-last dimension (-2), and so on until the outermost list is reached.
 
-    Blocks can be of any dimension, but will not be broadcasted using the normal
-    rules. Instead, leading axes of size 1 are inserted, to make ``block.ndim``
-    the same for all blocks. This is primarily useful for working with scalars,
-    and means that code like ``np.block([v, 1])`` is valid, where
-    ``v.ndim == 1``.
+    Blocks can be of any dimension, but will not be broadcasted using
+    the normal rules. Instead, leading axes of size 1 are inserted, 
+    to make ``block.ndim`` the same for all blocks. This is primarily useful
+    for working with scalars, and means that code like ``np.block([v, 1])``
+    is valid, where ``v.ndim == 1``.
 
     When the nested list is two levels deep, this allows block matrices to be
     constructed from their components.

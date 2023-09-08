@@ -1,9 +1,9 @@
-from numpy._core import _dtype
-from ._utils import _raise_warning
-
-_raise_warning("*")
-
-_globals = globals()
-
-for item in _dtype.__dir__():
-    _globals[item] = getattr(_dtype, item)
+def __getattr__(attr_name):
+    from numpy._core import _dtype
+    from ._utils import _raise_warning
+    ret = getattr(_dtype, attr_name, None)
+    if ret is None:
+        raise AttributeError(
+            f"module 'numpy.core._dtype' has no attribute {attr_name}")
+    _raise_warning(attr_name, "_dtype")
+    return ret

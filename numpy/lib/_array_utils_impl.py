@@ -1,5 +1,5 @@
-from numpy.core import asarray
-from numpy.core.numeric import normalize_axis_tuple, normalize_axis_index
+from numpy._core import asarray
+from numpy._core.numeric import normalize_axis_tuple, normalize_axis_index
 from numpy._utils import set_module
 
 __all__ = ["byte_bounds", "normalize_axis_tuple", "normalize_axis_index"]

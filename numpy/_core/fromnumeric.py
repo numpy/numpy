@@ -850,7 +850,8 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
 
     >>> x = np.array([[3, 4, 2], [1, 3, 1]])
     >>> index_array = np.argpartition(x, kth=1, axis=-1)
-    >>> np.take_along_axis(x, index_array, axis=-1)  # same as np.partition(x, kth=1)
+    >>> # below is the same as np.partition(x, kth=1)
+    >>> np.take_along_axis(x, index_array, axis=-1)  
     array([[2, 3, 4],
            [1, 1, 3]])
 
@@ -876,9 +877,9 @@ def sort(a, axis=-1, kind=None, order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort or radix sort under the covers and, in general,
-        the actual implementation will vary with data type. The 'mergesort' option
-        is retained for backwards compatibility.
+        and 'mergesort' use timsort or radix sort under the covers and,
+        in general, the actual implementation will vary with data type.
+        The 'mergesort' option is retained for backwards compatibility.
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
@@ -947,7 +948,8 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
+    quicksort has been changed to:
+    `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
     When sorting does not make enough progress it switches to
     `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_.
     This implementation makes quicksort O(n*log(n)) in the worst case.
@@ -968,9 +970,10 @@ def sort(a, axis=-1, kind=None, order=None):
     sorted data. On random data timsort is almost identical to
     mergesort. It is now used for stable sort while quicksort is still the
     default sort if none is chosen. For timsort details, refer to
-    `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
-    'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
-    O(n) sort instead of O(n log n).
+    `CPython listsort.txt
+    <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_
+    'mergesort' and 'stable' are mapped to radix sort for integer data types.
+    Radix sort is an O(n) sort instead of O(n log n).
 
     .. versionchanged:: 1.18.0
 
@@ -1215,7 +1218,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[4],
            [3]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    ...     axis=-1).squeeze(axis=-1)
     array([4, 3])
 
     Setting `keepdims` to `True`,
@@ -1311,7 +1315,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([[2],
            [0]])
     >>> # Same as np.amax(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), 
+    ...     axis=-1).squeeze(axis=-1)
     array([2, 0])
 
     Setting `keepdims` to `True`,
@@ -1383,9 +1388,10 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function uses the same algorithm as the builtin python `bisect.bisect_left`
-    (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
-    which is also vectorized in the `v` argument.
+    This function uses the same algorithm as the builtin python 
+    `bisect.bisect_left` (``side='left'``) and `bisect.bisect_right`
+    (``side='right'``) functions, which is also vectorized
+    in the `v` argument.
 
     Examples
     --------
@@ -1472,7 +1478,9 @@ def resize(a, new_shape):
     for dim_length in new_shape:
         new_size *= dim_length
         if dim_length < 0:
-            raise ValueError('all elements of `new_shape` must be non-negative')
+            raise ValueError(
+                'all elements of `new_shape` must be non-negative'
+            )
 
     if a.size == 0 or new_size == 0:
         # First case must zero fill. The second would have repeats == 0.
@@ -1534,7 +1542,8 @@ def squeeze(a, axis=None):
     >>> np.squeeze(x, axis=1).shape
     Traceback (most recent call last):
     ...
-    ValueError: cannot select an axis to squeeze out which has size not equal to one
+    ValueError: cannot select an axis to squeeze out which has size
+    not equal to one
     >>> np.squeeze(x, axis=2).shape
     (1, 3)
     >>> x = np.array([[1234]])
@@ -1756,9 +1765,13 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     if isinstance(a, np.matrix):
         # Get trace of matrix via an array to preserve backward compatibility.
-        return asarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
+        return asarray(a).trace(
+            offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out
+        )
     else:
-        return asanyarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
+        return asanyarray(a).trace(
+            offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out
+        )
 
 
 def _ravel_dispatcher(a, order=None):
@@ -2296,9 +2309,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
         warnings.warn(
-            "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
-            "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2)
+            "Calling np.sum(generator) is deprecated, and in the future will "
+            "give a different result. Use np.sum(np.fromiter(generator)) or "
+            "the python sum builtin instead.",
+            DeprecationWarning, stacklevel=2
+        )
 
         res = _sum_(a)
         if out is not None:
@@ -2306,8 +2321,10 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
             return out
         return res
 
-    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims,
-                          initial=initial, where=where)
+    return _wrapreduction(
+        a, np.add, 'sum', axis, dtype, out, 
+        keepdims=keepdims, initial=initial, where=where
+    )
 
 
 def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2437,8 +2454,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
-        will consist of 0.0's and 1.0's). See :ref:`ufuncs-output-type` for more
-        details.
+        will consist of 0.0's and 1.0's). See :ref:`ufuncs-output-type`
+        for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2526,8 +2543,8 @@ def cumsum(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary. See :ref:`ufuncs-output-type` for
-        more details.
+        but the type will be cast if necessary. See :ref:`ufuncs-output-type`
+        for more details.
 
     Returns
     -------
@@ -3007,12 +3024,14 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
     initial : scalar, optional
-        The starting value for this product. See `~numpy.ufunc.reduce` for details.
+        The starting value for this product. See `~numpy.ufunc.reduce`
+        for details.
 
         .. versionadded:: 1.15.0
 
     where : array_like of bool, optional
-        Elements to include in the product. See `~numpy.ufunc.reduce` for details.
+        Elements to include in the product. See `~numpy.ufunc.reduce`
+        for details.
 
         .. versionadded:: 1.17.0
 
@@ -3270,8 +3289,8 @@ def round(a, decimals=0, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the output
-        values will be cast if necessary. See :ref:`ufuncs-output-type` for more
-        details.
+        values will be cast if necessary. See :ref:`ufuncs-output-type`
+        for more details.
 
     Returns
     -------

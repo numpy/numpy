@@ -7,7 +7,6 @@ are available in the main ``numpy`` namespace - use that instead.
 """
 
 import os
-import warnings
 
 from numpy.version import version as __version__
 
@@ -109,17 +108,6 @@ __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
 
-# We used to use `np._core._ufunc_reconstruct` to unpickle. 
-# This is unnecessary, but old pickles saved before 1.20 will be using it,
-# and there is no reason to break loading them.
-def _ufunc_reconstruct(module, name):
-    # The `fromlist` kwarg is required to ensure that `mod` points to the
-    # inner-most module rather than the parent package when module name is
-    # nested. This makes it possible to pickle non-toplevel ufuncs such as
-    # scipy.special.expit for instance.
-    mod = __import__(module, fromlist=[name])
-    return getattr(mod, name)
-
 
 def _ufunc_reduce(func):
     # Report the `__name__`. pickle will try to find the module. Note that
@@ -152,6 +140,7 @@ def _DType_reduce(DType):
 def __getattr__(name):
     # Deprecated 2022-11-22, NumPy 1.25.
     if name == "MachAr":
+        import warnings
         warnings.warn(
             "The `np._core.MachAr` is considered private API (NumPy 1.24)",
             DeprecationWarning, stacklevel=2,
@@ -166,9 +155,7 @@ copyreg.pickle(ufunc, _ufunc_reduce)
 copyreg.pickle(type(dtype), _DType_reduce, _DType_reconstruct)
 
 # Unclutter namespace (must keep _*_reconstruct for unpickling)
-del copyreg
-del _ufunc_reduce
-del _DType_reduce
+del copyreg, _ufunc_reduce, _DType_reduce
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

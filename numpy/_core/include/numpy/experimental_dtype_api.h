@@ -354,13 +354,8 @@ import_experimental_dtype_api(int version)
         return 0;
     }
 
-    char numpy_major_version = get_installed_numpy_major_version();
-    PyObject *multiarray = NULL;
-    if (numpy_major_version == '2') {
-        multiarray = PyImport_ImportModule("numpy._core._multiarray_umath");
-    } else {
-        multiarray = PyImport_ImportModule("numpy.core._multiarray_umath");
-    }
+    PyObject *multiarray = PyImport_ImportModule("numpy._core._multiarray_umath");
+
     if (multiarray == NULL) {
         return -1;
     }

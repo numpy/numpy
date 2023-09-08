@@ -30,26 +30,22 @@ static void **PyUFunc_API=NULL;
 
 %s
 
-#include "numpy/utils.h"
-
 static inline int
 _import_umath(void)
 {
-  char numpy_major_version = get_installed_numpy_major_version();
-  PyObject *numpy = NULL;
-  if (numpy_major_version == '2') {
-      numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
-  } else {
-      numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+  PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
+  if (numpy == NULL && PyErr_ExceptionMatches(PyExc_ModuleNotFoundError)) {
+    PyErr_Clear();
+    numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
   }
-  PyObject *c_api = NULL;
 
   if (numpy == NULL) {
       PyErr_SetString(PyExc_ImportError,
-                      "numpy._core._multiarray_umath failed to import");
+                      "_multiarray_umath failed to import");
       return -1;
   }
-  c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
+
+  PyObject *c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
   Py_DECREF(numpy);
   if (c_api == NULL) {
       PyErr_SetString(PyExc_AttributeError, "_UFUNC_API not found");

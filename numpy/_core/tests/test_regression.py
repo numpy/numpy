@@ -457,25 +457,20 @@ class TestRegression:
 
         test_data = [
             # (original, py2_pickle)
-            (np.str_('\u6f2c'),
-             b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-             b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
-             b"I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."),
+            (
+                np.str_('\u6f2c'),
+                b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."  # noqa
+            ),
 
-            (np.array([9e123], dtype=np.float64),
-             b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
-             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtyp"
-             b"e\np7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1"
-             b"\nI-1\nI0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14"
-             b"\nb."),
+            (
+                np.array([9e123], dtype=np.float64),
+                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb."  # noqa
+            ),
 
-            (np.array([(9e123,)], dtype=[('name', float)]),
-             b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
-             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtyp"
-             b"e\np7\n(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'nam"
-             b"e'\np12\ntp13\n(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp"
-             b"17\n(I3\nS'<'\np18\nNNNI-1\nI-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1"
-             b"\nI0\ntp21\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
+            (
+                np.array([(9e123,)], dtype=[('name', float)]),
+                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\nI-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."  # noqa
+            ),
         ]
 
         for original, data in test_data:
@@ -1923,10 +1918,7 @@ class TestRegression:
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
-        data = (b"cnumpy._core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray"
-                b"\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy"
-                b"\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11"
-                b"\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb.")
+        data = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb."  # noqa
         # This should work:
         result = pickle.loads(data, encoding='latin1')
         assert_array_equal(result, np.array([129]).astype('b'))
@@ -1941,22 +1933,16 @@ class TestRegression:
         datas = [
             # (original, python2_pickle, koi8r_validity)
             (np.str_('\u6bd2'),
-             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-              b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
-              b"tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n.",  # noqa
              'invalid'),
 
             (np.float64(9e123),
-             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-              b"(S'f8'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\n"
-              b"I0\ntp6\nbS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\nbS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n.",  # noqa
              'invalid'),
 
             # different 8-bit code point in KOI8-R vs latin1
             (np.bytes_(b'\x9c'),  
-             (b"cnumpy._core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-              b"(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0"
-              b"\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n."),
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
              'different'),
         ]
         for original, data, koi8r_validity in datas:
@@ -1974,7 +1960,9 @@ class TestRegression:
             elif koi8r_validity == 'invalid':
                 # Unicode code points outside latin1, so results
                 # to an encoding exception
-                assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
+                assert_raises(
+                    ValueError, pickle.loads, data, encoding='koi8-r'
+                )
             else:
                 raise ValueError(koi8r_validity)
 
@@ -2560,3 +2548,11 @@ class TestRegression:
         with pytest.raises(TypeError, match="not an acceptable base type"):
             class X(np.flexible, np.ma.core.MaskedArray):
                 pass
+
+    def test_load_ufunc_pickle(self):
+        # ufuncs are pickled with a semi-private path in
+        # numpy.core._multiarray_umath and must be loadable without warning
+        # despite np.core being deprecated.
+        test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'  # noqa
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np.add

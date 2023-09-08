@@ -210,7 +210,7 @@ class TestUfunc:
             assert_(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
-        astring = (b"cnumpy._core\n_ufunc_reconstruct\np0\n"
+        astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 

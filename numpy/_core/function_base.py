@@ -121,13 +121,16 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     """
     num = operator.index(num)
     if num < 0:
-        raise ValueError("Number of samples, %s, must be non-negative." % num)
+        raise ValueError(
+            "Number of samples, %s, must be non-negative." % num
+        )
     div = (num - 1) if endpoint else num
 
-    # Convert float/complex array scalars to float, gh-3504
-    # and make sure one can use variables that have an __array_interface__, gh-6634
+    # Convert float/complex array scalars to float (gh-3504),
+    # and make sure one can use variables that have
+    # an __array_interface__ (gh-6634).
     start = asanyarray(start) * 1.0
-    stop  = asanyarray(stop)  * 1.0
+    stop = asanyarray(stop) * 1.0
 
     dt = result_type(start, stop, float(num))
     if dtype is None:
@@ -138,9 +141,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     delta = stop - start
     y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
-    # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
-    # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
-    # see gh-7142. Hence, we multiply in place only for standard scalar types.
+    # In-place multiplication y *= delta/div is faster, but prevents
+    # the multiplicant from overriding what class is produced, and thus
+    # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply
+    # in place only for standard scalar types.
     if div > 0:
         _mult_inplace = _nx.isscalar(delta)
         step = delta / div
@@ -511,8 +515,9 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     doc : {str, Tuple[str, str], List[Tuple[str, str]]}
         If a string, the documentation to apply to `obj`
 
-        If a tuple, then the first element is interpreted as an attribute of
-        `obj` and the second as the docstring to apply - ``(method, docstring)``
+        If a tuple, then the first element is interpreted as an attribute
+        of `obj` and the second as the docstring to apply -
+        ``(method, docstring)``
 
         If a list, then each element of the list should be a tuple of length
         two - ``[(method1, docstring1), (method2, docstring2), ...]``
@@ -548,4 +553,6 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
         _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
     elif isinstance(doc, list):
         for attr, docstring in doc:
-            _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
+            _add_docstring(
+                getattr(new, attr), docstring.strip(), warn_on_python
+            )

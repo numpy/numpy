@@ -1,12 +1,15 @@
 import asyncio
 import gc
 import os
-import pytest
-import numpy as np
+import sys
 import threading
 import warnings
+
+import pytest
+
+import numpy as np
 from numpy.testing import extbuild, assert_warns, IS_WASM
-import sys
+from numpy._core.multiarray import get_handler_name
 
 
 # FIXME: numpy.testing.extbuild uses `numpy.distutils`, so this won't work on
@@ -290,7 +293,6 @@ def test_policy_propagation(get_module):
 
 
 async def concurrent_context1(get_module, orig_policy_name, event):
-    from numpy._core.multiarray import get_handler_name
     if orig_policy_name == 'default_allocator':
         get_module.set_secret_data_policy()
         assert get_handler_name() == 'secret_data_allocator'
@@ -301,7 +303,6 @@ async def concurrent_context1(get_module, orig_policy_name, event):
 
 
 async def concurrent_context2(get_module, orig_policy_name, event):
-    from numpy._core.multiarray import get_handler_name
     await event.wait()
     # the policy is not affected by changes in parallel contexts
     assert get_handler_name() == orig_policy_name

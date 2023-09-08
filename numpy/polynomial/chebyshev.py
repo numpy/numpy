@@ -109,7 +109,7 @@ References
 """
 import numpy as np
 import numpy.linalg as la
-from numpy._core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
