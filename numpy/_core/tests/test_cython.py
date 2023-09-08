@@ -169,7 +169,7 @@ class TestDatetimeStrings:
     [
         [np.random.rand(2)],
         [np.random.rand(2), np.random.rand(3, 1)],
-        [np.random.rand(3, 2), np.random.rand(2, 3, 2), np.random.rand(1, 2, 3, 2)],
+        [np.random.rand(2), np.random.rand(2, 3, 2), np.random.rand(1, 3, 2)],
         [np.random.rand(2, 1)] * 4 + [np.random.rand(1, 1, 1)],
     ]
 )
