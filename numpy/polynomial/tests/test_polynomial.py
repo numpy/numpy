@@ -629,7 +629,13 @@ class TestMisc:
             [-0.02, 0.]],
             decimal=2)
         #
-        coef, full, cov = poly.polyfit(x, y, 1, full=True, cov=True)
+        coef, full, cov = poly.polyfit(
+            x,
+            y,
+            1,
+            full=True,
+            cov=True,
+            absolute_w=False)
         assert_almost_equal(coef1, coef, decimal=1)
         assert_almost_equal(cov_matrix, cov, decimal=1)
         assert_almost_equal(full[0], 2.7, decimal=1)
