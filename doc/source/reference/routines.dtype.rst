@@ -36,7 +36,6 @@ Data type testing
    :toctree: generated/
 
    issubdtype
-   find_common_type
 
 Miscellaneous
 -------------

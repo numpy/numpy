@@ -10,6 +10,7 @@
 #include <Python.h>
 
 #include "npy_cpu_dispatch.h"
+#include "numpy/utils.h" // NPY_TOSTRING
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "_umath_tests.dispatch.h"

@@ -385,3 +385,42 @@ this will disable ``AVX2`` and ``FMA3``::
     NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
 
 If the feature is not available, a warning will be emitted.
+
+Tracking dispatched functions
+-----------------------------
+Discovering which CPU targets are enabled for different optimized functions is achievable
+through the Python function ``numpy.lib.introspect.opt_func_info``.
+This function offers the flexibility of applying filters using two optional arguments:
+one for refining function names and the other for specifying data types in the signatures.
+
+For example::
+
+   >> func_info = numpy.lib.introspect.opt_func_info(func_name='add|abs', signature='float64|complex64')
+   >> print(json.dumps(func_info, indent=2))
+   {
+     "absolute": {
+       "dd": {
+         "current": "SSE41",
+         "available": "SSE41 baseline(SSE SSE2 SSE3)"
+       },
+       "Ff": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "Dd": {
+         "current": "FMA3__AVX2",
+         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+     },
+     "add": {
+       "ddd": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       },
+       "FFF": {
+         "current": "FMA3__AVX2",
+         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+       }
+    }
+  }
+

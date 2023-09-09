@@ -5,7 +5,7 @@ of an n-dimensional array.
 """
 import numpy as np
 from numpy.core.overrides import array_function_dispatch
-from numpy.lib.index_tricks import ndindex
+from numpy.lib._index_tricks_impl import ndindex
 
 
 __all__ = ['pad']

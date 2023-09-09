@@ -737,24 +737,3 @@ def test_function_like():
     bound = np.mean.__get__(MyClass)  # classmethod
     with pytest.raises(TypeError, match="unsupported operand type"):
         bound()
-
-
-def test_scipy_trapz_support_shim():
-    # SciPy 1.10 and earlier "clone" trapz in this way, so we have a
-    # support shim in place: https://github.com/scipy/scipy/issues/17811
-    # That should be removed eventually.  This test copies what SciPy does.
-    # Hopefully removable 1 year after SciPy 1.11; shim added to NumPy 1.25.
-    import types
-    import functools
-
-    def _copy_func(f):
-        # Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
-        g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
-                            argdefs=f.__defaults__, closure=f.__closure__)
-        g = functools.update_wrapper(g, f)
-        g.__kwdefaults__ = f.__kwdefaults__
-        return g
-
-    trapezoid = _copy_func(np.trapz)
-
-    assert np.trapz([1, 2]) == trapezoid([1, 2])

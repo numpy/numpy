@@ -3,7 +3,6 @@ from typing import (
     Any,
     overload,
     TypeVar,
-    Union,
 )
 
 from numpy import (
@@ -41,7 +40,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 # The returned arrays dtype must be compatible with `np.equal`
 _MaskFunc = Callable[
     [NDArray[int_], _T],
-    NDArray[Union[number[Any], bool_, timedelta64, datetime64, object_]],
+    NDArray[number[Any] | bool_ | timedelta64 | datetime64 | object_],
 ]
 
 __all__: list[str]

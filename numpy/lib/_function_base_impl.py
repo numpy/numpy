@@ -2093,7 +2093,9 @@ def _parse_input_dimensions(args, input_core_dims):
         ndim = arg.ndim - len(core_dims)
         dummy_array = np.lib.stride_tricks.as_strided(0, arg.shape[:ndim])
         broadcast_args.append(dummy_array)
-    broadcast_shape = np.lib.stride_tricks._broadcast_shape(*broadcast_args)
+    broadcast_shape = np.lib._stride_tricks_impl._broadcast_shape(
+        *broadcast_args
+    )
     return broadcast_shape, dim_sizes
 
 
@@ -4491,7 +4493,7 @@ def _quantile_is_valid(q):
             if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        if not (np.all(0 <= q) and np.all(q <= 1)):
+        if not (q.min() >= 0 and q.max() <= 1):
             return False
     return True
 
@@ -4781,6 +4783,9 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
+    .. deprecated:: 2.0
+        Use `scipy.integrate.trapezoid` instead.
+
     If `x` is provided, the integration happens in sequence along its
     elements - they are not sorted.
 
@@ -4878,6 +4883,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
     """
+
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`trapz` is deprecated. Use `scipy.integrate.trapezoid` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     y = asanyarray(y)
     if x is None:
         d = dx

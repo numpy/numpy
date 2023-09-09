@@ -3870,8 +3870,8 @@ add_newdoc('numpy.core.umath', 'cbrt',
     Returns
     -------
     y : ndarray
-        An array of the same shape as `x`, containing the cube
-        cube-root of each element in `x`.
+        An array of the same shape as `x`, containing the
+        cube root of each element in `x`.
         If `out` was provided, `y` is a reference to it.
         $OUT_SCALAR_1
 

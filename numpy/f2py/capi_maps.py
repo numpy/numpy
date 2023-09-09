@@ -19,6 +19,7 @@ import re
 import os
 from .crackfortran import markoutercomma
 from . import cb_rules
+from ._isocbind import iso_c_binding_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -130,6 +131,7 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'byte': {'': 'char'},
               }
 
+f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []

@@ -724,10 +724,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
         self.assert_deprecated(np.finfo, args=(None,))
 
 class TestFromnumeric(_DeprecationTestCase):
-    # 2023-02-28, 1.25.0
-    def test_round_(self):
-        self.assert_deprecated(lambda: np.round_(np.array([1.5, 2.5, 3.5])))
-
     # 2023-03-02, 1.25.0
     def test_cumproduct(self):
         self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
@@ -754,11 +750,12 @@ class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
         from numpy.lib._utils_impl import safe_eval
-        from numpy.lib.npyio import recfromcsv, recfromtxt
+        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
         from numpy.lib._function_base_impl import disp
-        from numpy.lib.shape_base import get_array_wrap
+        from numpy.lib._shape_base_impl import get_array_wrap
         from numpy.core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
+        from numpy import in1d, row_stack, trapz
         
         self.assert_deprecated(lambda: safe_eval("None"))
 
@@ -770,3 +767,7 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: disp("test"))
         self.assert_deprecated(lambda: get_array_wrap())
         self.assert_deprecated(lambda: maximum_sctype(int))
+
+        self.assert_deprecated(lambda: in1d([1], [1]))
+        self.assert_deprecated(lambda: row_stack([[]]))
+        self.assert_deprecated(lambda: trapz([1], [1]))

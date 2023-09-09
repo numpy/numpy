@@ -178,62 +178,53 @@ NPY_FINLINE void npyv_storen2_f64(double *ptr, npy_intp stride, npyv_f64 a)
 /*********************************
  * Partial Load
  *********************************/
-#if defined(__clang__) && __clang_major__ > 7
-    /**
-     * Clang >=8 perform aggressive optimization that tends to
-     * zero the bits of upper half part of vectors even
-     * when we try to fill it up with certain scalars,
-     * which my lead to zero division errors.
-    */
-    #define NPYV__CLANG_ZEROUPPER
-#endif
 //// 32
 NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, npy_int32 fill)
 {
     assert(nlane > 0);
-#ifdef NPYV__CLANG_ZEROUPPER
-    if (nlane > 3) {
-        return npyv_load_s32(ptr);
-    }
-    npy_int32 NPY_DECL_ALIGNED(16) data[4] = {fill, fill, fill, fill};
-    for (npy_uint64 i = 0; i < nlane; ++i) {
-        data[i] = ptr[i];
-    }
-    return npyv_loada_s32(data);
-#else
     #ifndef NPY_HAVE_SSE41
         const short *wptr = (const short*)ptr;
     #endif
     const __m128i vfill = npyv_setall_s32(fill);
     __m128i a;
     switch(nlane) {
-    case 2:
-        return _mm_castpd_si128(
-            _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
-        );
+        case 2:
+            a = _mm_castpd_si128(
+                _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
+            );
+            break;
     #ifdef NPY_HAVE_SSE41
         case 1:
-            return _mm_insert_epi32(vfill, ptr[0], 0);
+            a = _mm_insert_epi32(vfill, ptr[0], 0);
+            break;
         case 3:
             a = _mm_loadl_epi64((const __m128i*)ptr);
             a = _mm_insert_epi32(a, ptr[2], 2);
             a = _mm_insert_epi32(a, fill, 3);
-            return a;
+            break;
     #else
         case 1:
             a = _mm_insert_epi16(vfill, wptr[0], 0);
-            return _mm_insert_epi16(a, wptr[1], 1);
+    a = _mm_insert_epi16(a, wptr[1], 1);
+            break;
         case 3:
             a = _mm_loadl_epi64((const __m128i*)ptr);
             a = _mm_unpacklo_epi64(a, vfill);
             a = _mm_insert_epi16(a, wptr[4], 4);
             a = _mm_insert_epi16(a, wptr[5], 5);
-            return a;
+            break;
     #endif // NPY_HAVE_SSE41
         default:
             return npyv_load_s32(ptr);
-        }
-#endif
+    }
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        // We use a variable marked 'volatile' to convince the compiler that
+        // the entire vector is needed.
+        volatile __m128i workaround = a;
+        // avoid optimizing it out
+        a = _mm_or_si128(workaround, a);
+    #endif
+    return a;
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
@@ -260,22 +251,17 @@ NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
 NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-#ifdef NPYV__CLANG_ZEROUPPER
-    if (nlane <= 2) {
-        npy_int64 NPY_DECL_ALIGNED(16) data[2] = {fill, fill};
-        for (npy_uint64 i = 0; i < nlane; ++i) {
-            data[i] = ptr[i];
-        }
-        return npyv_loada_s64(data);
-    }
-#else
     if (nlane == 1) {
         const __m128i vfill = npyv_setall_s64(fill);
-        return _mm_castpd_si128(
+        npyv_s64 a = _mm_castpd_si128(
             _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
         );
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile __m128i workaround = a;
+        a = _mm_or_si128(workaround, a);
+    #endif
+        return a;
     }
-#endif
     return npyv_load_s64(ptr);
 }
 // fill zero to rest lanes
@@ -295,9 +281,14 @@ NPY_FINLINE npyv_s32 npyv_load2_till_s32(const npy_int32 *ptr, npy_uintp nlane,
     assert(nlane > 0);
     if (nlane == 1) {
         const __m128i vfill = npyv_set_s32(fill_lo, fill_hi, fill_lo, fill_hi);
-        return _mm_castpd_si128(
+        __m128i a =  _mm_castpd_si128(
             _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
         );
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile __m128i workaround = a;
+        a = _mm_or_si128(workaround, a);
+    #endif
+        return a;
     }
     return npyv_load_s32(ptr);
 }
@@ -321,16 +312,6 @@ NPY_FINLINE npyv_s32
 npyv_loadn_till_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane, npy_int32 fill)
 {
     assert(nlane > 0);
-#ifdef NPYV__CLANG_ZEROUPPER
-    if (nlane > 3) {
-        return npyv_loadn_s32(ptr, stride);
-    }
-    npy_int32 NPY_DECL_ALIGNED(16) data[4] = {fill, fill, fill, fill};
-    for (npy_uint64 i = 0; i < nlane; ++i) {
-        data[i] = ptr[stride*i];
-    }
-    return npyv_loada_s32(data);
-#else
     __m128i vfill = npyv_setall_s32(fill);
     #ifndef NPY_HAVE_SSE41
         const short *wptr = (const short*)ptr;
@@ -360,8 +341,11 @@ npyv_loadn_till_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane, npy_
     default:
         return npyv_loadn_s32(ptr, stride);
     } // switch
-    return vfill;
+#if NPY_SIMD_GUARD_PARTIAL_LOAD
+    volatile __m128i workaround = vfill;
+    vfill = _mm_or_si128(workaround, vfill);
 #endif
+    return vfill;
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s32
@@ -402,22 +386,9 @@ NPY_FINLINE npyv_s64
 npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-#ifdef NPYV__CLANG_ZEROUPPER
-    if (nlane <= 2) {
-        npy_int64 NPY_DECL_ALIGNED(16) data[2] = {fill, fill};
-        for (npy_uint64 i = 0; i < nlane; ++i) {
-            data[i] = ptr[i*stride];
-        }
-        return npyv_loada_s64(data);
-    }
-#else
     if (nlane == 1) {
-        const __m128i vfill = npyv_setall_s64(fill);
-        return _mm_castpd_si128(
-            _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
-        );
+        return npyv_load_till_s64(ptr, 1, fill);
     }
-#endif
     return npyv_loadn_s64(ptr, stride);
 }
 // fill zero to rest lanes
@@ -437,9 +408,14 @@ NPY_FINLINE npyv_s32 npyv_loadn2_till_s32(const npy_int32 *ptr, npy_intp stride,
     assert(nlane > 0);
     if (nlane == 1) {
         const __m128i vfill = npyv_set_s32(0, 0, fill_lo, fill_hi);
-        return _mm_castpd_si128(
+        __m128i a = _mm_castpd_si128(
             _mm_loadl_pd(_mm_castsi128_pd(vfill), (double*)ptr)
         );
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile __m128i workaround = a;
+        a = _mm_or_si128(workaround, a);
+    #endif
+        return a;
     }
     return npyv_loadn2_s32(ptr, stride);
 }

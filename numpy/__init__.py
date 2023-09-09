@@ -136,7 +136,7 @@ else:
         cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
         datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
         double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
-        errstate, euler_gamma, exp, exp2, expm1, fabs, find_common_type, 
+        errstate, euler_gamma, exp, exp2, expm1, fabs, 
         flatiter, flatnonzero, flexible, 
         float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
         format_float_positional, format_float_scientific, format_parser, 
@@ -152,13 +152,13 @@ else:
         logical_or, logical_xor, logspace, longdouble, 
         longlong, matmul, max, maximum, 
         may_share_memory, mean, min, min_scalar_type, minimum, mod, 
-        modf, moveaxis, multiply, nan, nbytes, ndarray, ndim, nditer, 
+        modf, moveaxis, multiply, nan, ndarray, ndim, nditer, 
         negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
         number, object_, ones, ones_like, outer, partition,
         pi, positive, power, printoptions, prod, product, promote_types, 
         ptp, put, putmask, rad2deg, radians, ravel, rec, recarray, reciprocal,
         record, remainder, repeat, require, reshape, resize, result_type, 
-        right_shift, rint, roll, rollaxis, round, round_, 
+        right_shift, rint, roll, rollaxis, round, 
         searchsorted, set_printoptions,
         setbufsize, seterr, seterrcall, shape,
         shares_memory, short, sign, signbit, signedinteger, sin, single, 
@@ -182,22 +182,7 @@ else:
     del ta
 
     from . import lib
-    from .lib import (
-        DataSource, apply_along_axis, apply_over_axes,
-        array_split, broadcast_arrays, broadcast_shapes,
-        broadcast_to, c_, column_stack, diag_indices,
-        diag_indices_from, dsplit, dstack,
-        emath, expand_dims, fill_diagonal,
-        fromregex, get_array_wrap, genfromtxt,
-        hsplit, index_exp, ix_, kron, load, loadtxt,
-        mgrid, ndenumerate, ndindex, ogrid, 
-        packbits, poly, poly1d, polyadd, polyder,
-        polydiv, polyfit, polyint, polymul, polysub, polyval,
-        put_along_axis, r_, ravel_multi_index,
-        roots, row_stack, s_, save, savetxt, savez, 
-        savez_compressed, split, take_along_axis, tile, 
-        unpackbits, unravel_index, vsplit
-    )
+    from .lib import emath
     from .lib._histograms_impl import (
         histogram, histogram_bin_edges, histogramdd
     )
@@ -218,6 +203,11 @@ else:
         histogram2d, mask_indices, tril_indices, tril_indices_from, 
         triu_indices, triu_indices_from
     )
+    from .lib._shape_base_impl import (
+        apply_over_axes, apply_along_axis, array_split, column_stack, dsplit,
+        dstack, expand_dims, hsplit, kron, put_along_axis, row_stack, split,
+        take_along_axis, tile, vsplit
+    )
     from .lib._type_check_impl import (
         iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
         real_if_close, typename, mintypecode, common_type
@@ -229,6 +219,22 @@ else:
     from .lib._arraypad_impl import pad
     from .lib._utils_impl import (
         byte_bounds, show_runtime, get_include, info
+    )
+    from .lib._stride_tricks_impl import (
+        broadcast_arrays, broadcast_shapes, broadcast_to
+    )
+    from .lib._polynomial_impl import (
+        poly, polyint, polyder, polyadd, polysub, polymul, polydiv, polyval,
+        polyfit, poly1d, roots
+    )
+    from .lib._npyio_impl import (
+        savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
+        savez_compressed, unpackbits, fromregex
+    )
+    from .lib._index_tricks_impl import (
+        diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
+        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
+        index_exp
     )
     from . import matrixlib as _mat
     from .matrixlib import (
@@ -294,11 +300,16 @@ else:
         set(lib._nanfunctions_impl.__all__) |
         set(lib._function_base_impl.__all__) |
         set(lib._twodim_base_impl.__all__) |
+        set(lib._shape_base_impl.__all__) |
         set(lib._type_check_impl.__all__) |
         set(lib._arraysetops_impl.__all__) |
         set(lib._ufunclike_impl.__all__) |
         set(lib._arraypad_impl.__all__) |
         set(lib._utils_impl.__all__) |
+        set(lib._stride_tricks_impl.__all__) |
+        set(lib._polynomial_impl.__all__) |
+        set(lib._npyio_impl.__all__) |
+        set(lib._index_tricks_impl.__all__) |
         {"show_config", "__version__"}
     )
 

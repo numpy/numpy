@@ -1,5 +1,5 @@
 from ast import AST
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from typing import (
     Any,
     overload,
@@ -7,7 +7,8 @@ from typing import (
     Protocol,
 )
 
-from numpy import ndarray, generic
+from numpy import generic
+from numpy.typing import NDArray
 from numpy.core.numerictypes import (
     issubdtype as issubdtype,
 )
@@ -59,7 +60,7 @@ def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 # implementing the `__array_interface__` protocol. The caveat is
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
-def byte_bounds(a: generic | ndarray[Any, Any]) -> tuple[int, int]: ...
+def byte_bounds(a: generic | NDArray[Any]) -> tuple[int, int]: ...
 
 def info(
     object: object = ...,

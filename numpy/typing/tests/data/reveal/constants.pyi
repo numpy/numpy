@@ -1,12 +1,19 @@
+import sys
+
 import numpy as np
 
-reveal_type(np.e)  # E: float
-reveal_type(np.euler_gamma)  # E: float
-reveal_type(np.inf)  # E: float
-reveal_type(np.nan)  # E: float
-reveal_type(np.pi)  # E: float
+if sys.version_info >= (3, 11):
+    from typing import assert_type
+else:
+    from typing_extensions import assert_type
 
-reveal_type(np.little_endian)  # E: bool
-reveal_type(np.True_)  # E: bool_
-reveal_type(np.False_)  # E: bool_
+assert_type(np.e, float)
+assert_type(np.euler_gamma, float)
+assert_type(np.inf, float)
+assert_type(np.nan, float)
+assert_type(np.pi, float)
+
+assert_type(np.little_endian, bool)
+assert_type(np.True_, np.bool_)
+assert_type(np.False_, np.bool_)
 

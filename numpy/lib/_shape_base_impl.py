@@ -9,14 +9,14 @@ from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.shape_base import _arrays_for_stack_dispatcher
-from numpy.lib.index_tricks import ndindex
+from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
 
 __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
-    'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'take_along_axis',
+    'apply_along_axis', 'kron', 'tile', 'take_along_axis',
     'put_along_axis'
     ]
 
@@ -604,7 +604,19 @@ def expand_dims(a, axis):
     return a.reshape(shape)
 
 
-row_stack = vstack
+# TODO: Remove once deprecation period passes
+def row_stack(tup, *, dtype=None, casting="same_kind"):
+    # Deprecated in NumPy 2.0, 2023-08-18
+    warnings.warn(
+        "`row_stack` alias is deprecated. "
+        "Use `np.vstack` directly.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return vstack(tup, dtype=dtype, casting=casting)
+
+
+row_stack.__doc__ = vstack.__doc__
 
 
 def _column_stack_dispatcher(tup):
@@ -1034,19 +1046,6 @@ def dsplit(ary, indices_or_sections):
     if _nx.ndim(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
-
-
-def get_array_prepare(*args):
-    """Find the wrapper for the array with the highest priority.
-
-    In case of ties, leftmost wins. If no wrapper is found, return None
-    """
-    wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
-                 x.__array_prepare__) for i, x in enumerate(args)
-                                   if hasattr(x, '__array_prepare__'))
-    if wrappers:
-        return wrappers[-1][-1]
-    return None
 
 
 def get_array_wrap(*args):

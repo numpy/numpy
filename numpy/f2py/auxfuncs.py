@@ -16,8 +16,10 @@ Pearu Peterson
 """
 import pprint
 import sys
+import re
 import types
 from functools import reduce
+from copy import deepcopy
 
 from . import __version__
 from . import cfuncs
@@ -42,12 +44,13 @@ __all__ = [
     'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
     'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
     'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine',
+    'issubroutine', 'get_f2py_modulename',
     'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
     'isunsigned_chararray', 'isunsigned_long_long',
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value'
+    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
+    'deep_merge'
 ]
 
 
@@ -888,3 +891,42 @@ def applyrules(rules, d, var={}):
             if ret[k] == []:
                 del ret[k]
     return ret
+
+def deep_merge(dict1, dict2):
+    """Recursively merge two dictionaries into a new dictionary.
+
+    Parameters:
+    - dict1: The base dictionary.
+    - dict2: The dictionary to merge into a copy of dict1.
+             If a key exists in both, the dict2 value will take precedence.
+
+    Returns:
+    - A new merged dictionary.
+    """
+    merged_dict = deepcopy(dict1)
+    for key, value in dict2.items():
+        if key in merged_dict:
+            if isinstance(merged_dict[key], dict) and isinstance(value, dict):
+                merged_dict[key] = deep_merge(merged_dict[key], value)
+            else:
+                merged_dict[key] = value
+        else:
+            merged_dict[key] = value
+    return merged_dict
+
+_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
+
+def get_f2py_modulename(source):
+    name = None
+    with open(source) as f:
+        for line in f:
+            m = _f2py_module_name_match(line)
+            if m:
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
+    return name

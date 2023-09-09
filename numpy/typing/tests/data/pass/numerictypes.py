@@ -3,10 +3,6 @@ import numpy as np
 np.issubdtype("S1", np.bytes_)
 np.issubdtype(np.float64, np.float32)
 
-np.nbytes[int]
-np.nbytes["i8"]
-np.nbytes[np.int64]
-
 np.ScalarType
 np.ScalarType[0]
 np.ScalarType[3]

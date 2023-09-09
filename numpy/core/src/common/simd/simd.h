@@ -18,18 +18,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// lane type by intrin suffix
-typedef npy_uint8  npyv_lanetype_u8;
-typedef npy_int8   npyv_lanetype_s8;
-typedef npy_uint16 npyv_lanetype_u16;
-typedef npy_int16  npyv_lanetype_s16;
-typedef npy_uint32 npyv_lanetype_u32;
-typedef npy_int32  npyv_lanetype_s32;
-typedef npy_uint64 npyv_lanetype_u64;
-typedef npy_int64  npyv_lanetype_s64;
-typedef float      npyv_lanetype_f32;
-typedef double     npyv_lanetype_f64;
+/*
+ * clang commit a agrresive optimization behavoueir when flag `-ftrapping-math`
+ * isn't fully supported that's present at -O1 or greater. When partially loading a
+ * vector register for a operations that requires to fill up the remaining lanes
+ * with certain value for example divide operation needs to fill the remaining value
+ * with non-zero integer to avoid fp exception divide-by-zero.
+ * clang optimizer notices that the entire register is not needed for the store
+ * and optimizes out the fill of non-zero integer to the remaining
+ * elements. As workaround we mark the returned register with `volatile`
+ * followed by symmetric operand operation e.g. `or`
+ * to convince the compiler that the entire vector is needed.
+ */
+#if defined(__clang__) && !defined(NPY_HAVE_CLANG_FPSTRICT)
+    #define NPY_SIMD_GUARD_PARTIAL_LOAD 1
+#else
+    #define NPY_SIMD_GUARD_PARTIAL_LOAD 0
+#endif
 
 #if defined(_MSC_VER) && defined(_M_IX86)
 /*
@@ -50,6 +55,19 @@ typedef double     npyv_lanetype_f64;
     #undef _mm256_set_epi64x
     #undef _mm_set_epi64x
 #endif
+
+// lane type by intrin suffix
+typedef npy_uint8  npyv_lanetype_u8;
+typedef npy_int8   npyv_lanetype_s8;
+typedef npy_uint16 npyv_lanetype_u16;
+typedef npy_int16  npyv_lanetype_s16;
+typedef npy_uint32 npyv_lanetype_u32;
+typedef npy_int32  npyv_lanetype_s32;
+typedef npy_uint64 npyv_lanetype_u64;
+typedef npy_int64  npyv_lanetype_s64;
+typedef float      npyv_lanetype_f32;
+typedef double     npyv_lanetype_f64;
+
 #if defined(NPY_HAVE_AVX512F) && !defined(NPY_SIMD_FORCE_256) && !defined(NPY_SIMD_FORCE_128)
     #include "avx512/avx512.h"
 #elif defined(NPY_HAVE_AVX2) && !defined(NPY_SIMD_FORCE_128)
