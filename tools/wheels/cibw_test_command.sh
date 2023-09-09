@@ -18,6 +18,10 @@ if [[ $RUNNER_OS == "macOS"  && $RUNNER_ARCH == "X64" ]]; then
   # Needed so gfortran (not clang) can find system libraries like libm (-lm)
   # in f2py tests
   export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+elif [[ $RUNNER_OS == "Windows" && $IS_32_BIT == true ]] ; then
+  echo "Skip OpenBLAS version check for 32-bit Windows, no OpenBLAS used"
+  # Avoid this in GHA: "ERROR: Found GNU link.exe instead of MSVC link.exe"
+  rm /c/Program\ Files/Git/usr/bin/link.EXE
 else
   # For some reason the macos-x86_64 runner does not work with threadpoolctl
   # Skip this check there
