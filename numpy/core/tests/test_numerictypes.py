@@ -416,8 +416,8 @@ class TestIsSubDType:
 
 class TestSctypeDict:
     def test_longdouble(self):
-        assert_(np.core.sctypeDict['f8'] is not np.longdouble)
-        assert_(np.core.sctypeDict['c16'] is not np.clongdouble)
+        assert_(np.core.sctypeDict['float64'] is not np.longdouble)
+        assert_(np.core.sctypeDict['complex128'] is not np.clongdouble)
 
     def test_ulong(self):
         # Test that 'ulong' behaves like 'long'. np.core.sctypeDict['long'] 
@@ -427,11 +427,6 @@ class TestSctypeDict:
         with pytest.warns(FutureWarning):
             # We will probably allow this in the future:
             assert not hasattr(np, 'ulong')
-
-
-class TestBitName:
-    def test_abstract(self):
-        assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
 
 
 @pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
