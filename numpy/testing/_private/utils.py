@@ -1436,7 +1436,7 @@ def _assert_valid_refcount(op):
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
-                    err_msg='', verbose=True):
+                    err_msg='', verbose=True, *, strict=False):
     """
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
@@ -1469,6 +1469,12 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    strict : bool, optional
+        If True, raise an ``AssertionError`` when either the shape or the data
+        type of the arguments does not match. The special handling of scalars
+        mentioned in the Notes section is disabled.
+
+        .. versionadded:: 2.0.0
 
     Raises
     ------
@@ -1484,12 +1490,46 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     When one of `actual` and `desired` is a scalar and the other is
     array_like, the function checks that each element of the array_like
     object is equal to the scalar.
+    This behaviour can be disabled with the `strict` parameter.
 
     Examples
     --------
     >>> x = [1e-5, 1e-3, 1e-1]
     >>> y = np.arccos(np.cos(x))
     >>> np.testing.assert_allclose(x, y, rtol=1e-5, atol=0)
+
+    As mentioned in the Notes section, `assert_allclose` has special
+    handling for scalars. Here, the test checks that the value of `np.sin`
+    is nearly zero at integer multiples of pi.
+
+    >>> x = np.arange(3) * np.pi
+    >>> np.testing.assert_allclose(np.sin(x), 0, atol=1e-15)
+
+    Use `strict` to raise an ``AssertionError`` when comparing an array
+    with one or more dimensions against a scalar.
+
+    >>> np.testing.assert_allclose(np.sin(x), 0, atol=1e-15, strict=True)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Not equal to tolerance rtol=1e-07, atol=1e-15
+
+    (shapes (3,), () mismatch)
+     x: array([ 0.000000e+00,  1.224647e-16, -2.449294e-16])
+     y: array(0)
+
+    The `strict` parameter also ensures that the array data types match:
+
+    >>> y = np.zeros(3, dtype=np.float32)
+    >>> np.testing.assert_allclose(np.sin(x), y, atol=1e-15, strict=True)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Not equal to tolerance rtol=1e-07, atol=1e-15
+
+    (dtypes float64, float32 mismatch)
+     x: array([ 0.000000e+00,  1.224647e-16, -2.449294e-16])
+     y: array([0., 0., 0.], dtype=float32)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1502,7 +1542,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
-                         verbose=verbose, header=header, equal_nan=equal_nan)
+                         verbose=verbose, header=header, equal_nan=equal_nan,
+                         strict=strict)
 
 
 def assert_array_almost_equal_nulp(x, y, nulp=1):
