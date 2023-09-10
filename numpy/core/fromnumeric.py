@@ -2825,11 +2825,11 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     --------
     >>> np.amax([4])
     4
-    >>> np.amax([4,-1, 67, 89])
+    >>> np.amax([4, -1, 67, 89])
     89
-    >>> np.amax([[1,2,3,46,44],[2,3,4,55,5]], axis=0)
-    array([ 2,  3,  4, 55, 44])
-    >>> np.amax([[1,2,3,46,44],[2,3,4,55,5]], axis=1)
+    >>> np.amax([[1, 2, 3, 46, 44],[2, 3, 4, 55, 5]], axis=0)
+    array([2, 3, 4, 55, 44])
+    >>> np.amax([[1, 2, 3, 46, 44],[2, 3, 4, 55, 5]], axis=1)
     array([46, 55])
 
     """
