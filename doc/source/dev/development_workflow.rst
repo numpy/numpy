@@ -500,7 +500,7 @@ Then, go to your forked repository github page, say
 Click on the 'Admin' button, and add anyone else to the repo as a
 collaborator:
 
-   .. image:: pull_button.png
+.. image:: pull_button.png
 
 Now all those people can do::
 

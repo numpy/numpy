@@ -260,10 +260,10 @@ For example to see where in the Python code you are, use ``py-list``, to see the
 python traceback, use ``py-bt``.  For more details, see
 `DebuggingWithGdb`_. Here are some commonly used commands:
 
-   - ``list``: List specified function or line.
-   - ``next``: Step program, proceeding through subroutine calls.
-   - ``step``: Continue program being debugged, after signal or breakpoint.
-   - ``print``: Print value of expression EXP.
+- ``list``: List specified function or line.
+- ``next``: Step program, proceeding through subroutine calls.
+- ``step``: Continue program being debugged, after signal or breakpoint.
+- ``print``: Print value of expression EXP.
 
 Rich support for Python debugging requires that the ``python-gdb.py`` script
 distributed with Python is installed in a path where gdb can find it. If you

@@ -170,16 +170,16 @@ User documentation
 
 - NumPy style governs cases where:
 
-      - Google has no guidance, or
-      - We prefer not to use the Google style
+  - Google has no guidance, or
+  - We prefer not to use the Google style
 
   Our current rules:
 
-      - We pluralize *index* as *indices* rather than
-        `indexes <https://developers.google.com/style/word-list#letter-i>`_,
-        following the precedent of :func:`numpy.indices`.
+  - We pluralize *index* as *indices* rather than
+    `indexes <https://developers.google.com/style/word-list#letter-i>`_,
+    following the precedent of :func:`numpy.indices`.
 
-      - For consistency we also pluralize *matrix* as *matrices*.
+  - For consistency we also pluralize *matrix* as *matrices*.
 
 - Grammatical issues inadequately addressed by the NumPy or Google rules are
   decided by the section on "Grammar and Usage" in the most recent edition of
