@@ -1389,11 +1389,11 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Examples
     --------
-    >>> np.searchsorted([1,2,3,4,5], 3)
+    >>> np.searchsorted([11,12,13,14,15], 13)
     2
-    >>> np.searchsorted([1,2,3,4,5], 3, side='right')
+    >>> np.searchsorted([11,12,13,14,15], 13, side='right')
     3
-    >>> np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3])
+    >>> np.searchsorted([11,12,13,14,15], [-10, 20, 12, 13])
     array([0, 5, 1, 2])
 
     """
