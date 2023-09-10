@@ -30,7 +30,7 @@
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
-_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
+_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj, int align);
 
 static PyArray_Descr *
 _convert_from_any(PyObject *obj, int align);
@@ -254,7 +254,7 @@ _convert_from_tuple(PyObject *obj, int align)
     }
     PyObject *val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
-    PyArray_Descr *res = _try_convert_from_inherit_tuple(type, val);
+    PyArray_Descr *res = _try_convert_from_inherit_tuple(type, val, align);
     if ((PyObject *)res != Py_NotImplemented) {
         Py_DECREF(type);
         return res;
@@ -841,14 +841,14 @@ fail:
  * appropriate.
  */
 static PyArray_Descr *
-_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
+_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj, int align)
 {
     if (PyArray_IsScalar(newobj, Integer) || _is_tuple_of_integers(newobj)) {
         /* It's a subarray or flexible type instead */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_Descr *)Py_NotImplemented;
     }
-    PyArray_Descr *conv = _convert_from_any(newobj, 0);
+PyArray_Descr *conv = _convert_from_any(newobj, align);
     if (conv == NULL) {
         /* Let someone else try to convert this */
         PyErr_Clear();
@@ -887,6 +887,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         new->metadata = conv->metadata;
         Py_XINCREF(new->metadata);
     }
+    new->alignment = conv->alignment;
     /*
      * Certain flags must be inherited from the fields.  This is needed
      * only for void dtypes (or subclasses of it such as a record dtype).
