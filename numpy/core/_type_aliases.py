@@ -61,8 +61,8 @@ _extra_aliases = {
     "complex": "complex128",
     "object": "object_",
     "bytes": "bytes_",
-    "int": "intp",
-    "long": "intp",
+    "int": "int_",
+    "long": "int_",
     "ulong": "uint",
     "str": "str_",
 }

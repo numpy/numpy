@@ -210,8 +210,8 @@ class Type:
         "uint32": "UINT",
         "int64": "LONG",
         "uint64": "ULONG",
-        "intp": "LONG",
-        "uintp": "ULONG",
+        "intp": "INTP",
+        "uintp": "UINTP",
     }
 
     _type_cache = {}
