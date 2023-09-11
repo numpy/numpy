@@ -649,6 +649,7 @@ fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
         STRINGCOPYN(buf, str, n);
         return 1;
     }
+    return -1;
 capi_fail:
     PRINTPYOBJERR(obj);
     PyErr_SetString(#modulename#_error, \"try_pyarr_from_string failed\");
