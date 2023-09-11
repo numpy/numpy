@@ -12,11 +12,8 @@ from . import util
 
 wrap = None
 
-# Extend core typeinfo with CHARACTER to test dtype('c')
-_ti = _typeinfo['STRING']
-typeinfo = dict(
-    CHARACTER=type(_ti)(('c', _ti.num, 8, _ti.alignment, _ti.type)),
-    **_typeinfo)
+# Extend core typeinfo with CHAR to test dtype('c')
+typeinfo = dict(char=np.dtype("c"), **_typeinfo)
 
 
 def setup_module():
@@ -110,49 +107,50 @@ class Intent:
 intent = Intent()
 
 _type_names = [
-    "BOOL",
-    "BYTE",
-    "UBYTE",
-    "SHORT",
-    "USHORT",
-    "INT",
-    "UINT",
-    "LONG",
-    "ULONG",
-    "LONGLONG",
-    "ULONGLONG",
-    "FLOAT",
-    "DOUBLE",
-    "CFLOAT",
-    "STRING1",
-    "STRING5",
-    "CHARACTER",
+    "bool_",
+    "byte",
+    "ubyte",
+    "short",
+    "ushort",
+    "intc",
+    "uintc",
+    "int_",
+    "uint",
+    "longlong",
+    "ulonglong",
+    "float32",
+    "float64",
+    "complex64",
+    "complex128",
+    "bytes_",
+    "char",
 ]
 
-_cast_dict = {"BOOL": ["BOOL"]}
-_cast_dict["BYTE"] = _cast_dict["BOOL"] + ["BYTE"]
-_cast_dict["UBYTE"] = _cast_dict["BOOL"] + ["UBYTE"]
-_cast_dict["BYTE"] = ["BYTE"]
-_cast_dict["UBYTE"] = ["UBYTE"]
-_cast_dict["SHORT"] = _cast_dict["BYTE"] + ["UBYTE", "SHORT"]
-_cast_dict["USHORT"] = _cast_dict["UBYTE"] + ["BYTE", "USHORT"]
-_cast_dict["INT"] = _cast_dict["SHORT"] + ["USHORT", "INT"]
-_cast_dict["UINT"] = _cast_dict["USHORT"] + ["SHORT", "UINT"]
+_cast_dict = {"bool_": ["bool_"]}
+_cast_dict["byte"] = _cast_dict["bool_"] + ["byte"]
+_cast_dict["ubyte"] = _cast_dict["bool_"] + ["ubyte"]
+_cast_dict["byte"] = ["byte"]
+_cast_dict["ubyte"] = ["ubyte"]
+_cast_dict["short"] = _cast_dict["byte"] + ["ubyte", "short"]
+_cast_dict["ushort"] = _cast_dict["ubyte"] + ["byte", "ushort"]
+_cast_dict["intc"] = _cast_dict["short"] + ["ushort", "intc"]
+_cast_dict["uintc"] = _cast_dict["ushort"] + ["short", "uintc"]
 
-_cast_dict["LONG"] = _cast_dict["INT"] + ["LONG"]
-_cast_dict["ULONG"] = _cast_dict["UINT"] + ["ULONG"]
+_cast_dict["int_"] = _cast_dict["intc"] + ["int_"]
+_cast_dict["uint"] = _cast_dict["uintc"] + ["uint"]
 
-_cast_dict["LONGLONG"] = _cast_dict["LONG"] + ["LONGLONG"]
-_cast_dict["ULONGLONG"] = _cast_dict["ULONG"] + ["ULONGLONG"]
+_cast_dict["longlong"] = _cast_dict["int_"] + ["longlong"]
+_cast_dict["ulonglong"] = _cast_dict["uint"] + ["ulonglong"]
 
-_cast_dict["FLOAT"] = _cast_dict["SHORT"] + ["USHORT", "FLOAT"]
-_cast_dict["DOUBLE"] = _cast_dict["INT"] + ["UINT", "FLOAT", "DOUBLE"]
+_cast_dict["float32"] = _cast_dict["short"] + ["ushort", "float32"]
+_cast_dict["float64"] = _cast_dict["intc"] + ["uintc", "float32", "float64"]
 
-_cast_dict["CFLOAT"] = _cast_dict["FLOAT"] + ["CFLOAT"]
+_cast_dict["complex64"] = _cast_dict["float32"] + ["complex64"]
+_cast_dict["complex128"] = _cast_dict["float64"] + ["complex128"]
 
-_cast_dict['STRING1'] = ['STRING1']
-_cast_dict['STRING5'] = ['STRING5']
-_cast_dict['CHARACTER'] = ['CHARACTER']
+_cast_dict['bytes_'] = ['bytes_']
+_cast_dict['str_'] = ['str_']
+_cast_dict['char'] = ['char']
 
 # 32 bit system malloc typically does not provide the alignment required by
 # 16 byte long double types this means the inout intent cannot be satisfied
@@ -163,22 +161,59 @@ _cast_dict['CHARACTER'] = ['CHARACTER']
 if ((np.intp().dtype.itemsize != 4 or np.clongdouble().dtype.alignment <= 8)
         and sys.platform != "win32"
         and (platform.system(), platform.processor()) != ("Darwin", "arm")):
-    _type_names.extend(["LONGDOUBLE", "CDOUBLE", "CLONGDOUBLE"])
-    _cast_dict["LONGDOUBLE"] = _cast_dict["LONG"] + [
-        "ULONG",
-        "FLOAT",
-        "DOUBLE",
-        "LONGDOUBLE",
+    _type_names.extend(["longdouble", "complex128", "clongdouble"])
+    _cast_dict["longdouble"] = _cast_dict["int_"] + [
+        "uint",
+        "float32",
+        "float64",
+        "longdouble",
     ]
-    _cast_dict["CLONGDOUBLE"] = _cast_dict["LONGDOUBLE"] + [
-        "CFLOAT",
-        "CDOUBLE",
-        "CLONGDOUBLE",
+    _cast_dict["clongdouble"] = _cast_dict["longdouble"] + [
+        "complex64",
+        "complex128",
+        "clongdouble",
     ]
-    _cast_dict["CDOUBLE"] = _cast_dict["DOUBLE"] + ["CFLOAT", "CDOUBLE"]
+    _cast_dict["complex128"] = _cast_dict["float64"] + ["complex64", "complex128"]
 
 
 class Type:
+
+    # dtype names in numpy/f2py/tests/src/array_from_obj/wrapmodule.c
+    # are following C naming convention
+    python_to_c_name_map = {
+        "bool_": "BOOL",
+        "byte": "BYTE",
+        "ubyte": "UBYTE",
+        "short": "SHORT",
+        "ushort": "USHORT",
+        "intc": "INT",
+        "uintc": "UINT",
+        "int_": "LONG",
+        "uint": "ULONG",
+        "longlong": "LONGLONG",
+        "ulonglong": "ULONGLONG",
+        "float32": "FLOAT",
+        "float64": "DOUBLE",
+        "longdouble": "LONGDOUBLE",
+        "complex64": "CFLOAT",
+        "complex128": "CDOUBLE",
+        "clongdouble": "CLONGDOUBLE",
+        "object_": "OBJECT",
+        "bytes_": "STRING",
+        "char": "STRING",
+        "str_": "UNICODE",
+        "int8": "BYTE",
+        "uint8": "UBYTE",
+        "int16": "SHORT",
+        "uint16": "USHORT",
+        "int32": "INT",
+        "uint32": "UINT",
+        "int64": "LONG",
+        "uint64": "ULONG",
+        "intp": "LONG",
+        "uintp": "ULONG",
+    }
+
     _type_cache = {}
 
     def __new__(cls, name):
@@ -189,31 +224,33 @@ class Type:
                 if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
-        obj = cls._type_cache.get(name.upper(), None)
+        obj = cls._type_cache.get(name, None)
         if obj is not None:
             return obj
         obj = object.__new__(cls)
         obj._init(name)
-        cls._type_cache[name.upper()] = obj
+        cls._type_cache[name] = obj
         return obj
 
     def _init(self, name):
-        self.NAME = name.upper()
+        self.NAME = name
 
-        if self.NAME == 'CHARACTER':
+        if self.NAME == 'char':
             info = typeinfo[self.NAME]
             self.type_num = getattr(wrap, 'NPY_STRING')
             self.elsize = 1
             self.dtype = np.dtype('c')
-        elif self.NAME.startswith('STRING'):
-            info = typeinfo[self.NAME[:6]]
+        elif self.NAME == 'bytes_':
+            info = typeinfo[self.NAME]
             self.type_num = getattr(wrap, 'NPY_STRING')
-            self.elsize = int(self.NAME[6:] or 0)
+            self.elsize = int(5)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:
             info = typeinfo[self.NAME]
-            self.type_num = getattr(wrap, 'NPY_' + self.NAME)
-            self.elsize = info.bits // 8
+            self.type_num = getattr(
+                wrap, 'NPY_' + self.python_to_c_name_map[self.NAME]
+            )
+            self.elsize = info.itemsize
             self.dtype = np.dtype(info.type)
 
         assert self.type_num == info.num
@@ -390,14 +427,14 @@ class TestSharedMemory:
 
     @property
     def num2seq(self):
-        if self.type.NAME.startswith('STRING'):
+        if self.type.NAME == 'bytes_':
             elsize = self.type.elsize
             return ['1' * elsize, '2' * elsize]
         return [1, 2]
 
     @property
     def num23seq(self):
-        if self.type.NAME.startswith('STRING'):
+        if self.type.NAME == 'bytes_':
             elsize = self.type.elsize
             return [['1' * elsize, '2' * elsize, '3' * elsize],
                     ['4' * elsize, '5' * elsize, '6' * elsize]]
@@ -552,9 +589,6 @@ class TestSharedMemory:
 
     def test_in_cache_from_2casttype_failure(self):
         for t in self.type.all_types():
-            if t.NAME == 'STRING':
-                # string elsize is 0, so skipping the test
-                continue
             if t.elsize >= self.type.elsize:
                 continue
             obj = np.array(self.num2seq, dtype=t.dtype)

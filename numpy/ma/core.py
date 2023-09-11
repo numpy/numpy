@@ -199,7 +199,7 @@ for sctype in ntypes.sctypeDict.values():
     elif np.issubdtype(scalar_dtype, np.floating):
         info = np.finfo(sctype)
         min_val, max_val = info.min, info.max
-    elif scalar_dtype.kind is "b":
+    elif scalar_dtype.kind == "b":
         min_val, max_val = 0, 1
     else:
         min_val, max_val = None, None
