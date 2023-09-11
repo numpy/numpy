@@ -1513,7 +1513,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         ...
     AssertionError:
     Not equal to tolerance rtol=1e-07, atol=1e-15
-
+    <BLANKLINE>
     (shapes (3,), () mismatch)
      x: array([ 0.000000e+00,  1.224647e-16, -2.449294e-16])
      y: array(0)
@@ -1526,7 +1526,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         ...
     AssertionError:
     Not equal to tolerance rtol=1e-07, atol=1e-15
-
+    <BLANKLINE>
     (dtypes float64, float32 mismatch)
      x: array([ 0.000000e+00,  1.224647e-16, -2.449294e-16])
      y: array([0., 0., 0.], dtype=float32)
