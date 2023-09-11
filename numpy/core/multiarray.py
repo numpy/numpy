@@ -69,6 +69,7 @@ promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 _get_promotion_state.__module__ = 'numpy'
 _set_promotion_state.__module__ = 'numpy'
+normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't

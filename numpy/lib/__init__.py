@@ -36,6 +36,7 @@ from . import _npyio_impl
 from . import npyio
 from . import arrayterator
 from . import _arraypad_impl
+from . import array_utils
 from . import _version
 
 from .arrayterator import Arrayterator

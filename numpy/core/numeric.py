@@ -1328,6 +1328,7 @@ def rollaxis(a, axis, start=0):
     return a.transpose(axes)
 
 
+@set_module("numpy.lib.array_utils")
 def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     """
     Normalizes an axis argument into a tuple of non-negative integer axes.

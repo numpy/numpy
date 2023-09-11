@@ -65,7 +65,8 @@ __expired_attributes__ = {
         "`scalar_types` argument, use `numpy.result_type` and pass the "
         "Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
-    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
     "get_array_wrap": "",
     "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
+    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",  
+    "byte_bounds": "Now it's available under `np.lib.array_utils.byte_bounds`",
 }
