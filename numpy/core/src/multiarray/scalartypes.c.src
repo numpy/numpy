@@ -1710,7 +1710,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  *
  * #name = tolist, item, __deepcopy__, __copy__,
  *         swapaxes, conj, conjugate, nonzero,
- *         fill, transpose, newbyteorder#
+ *         fill, transpose#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args)
@@ -1718,13 +1718,6 @@ gentype_@name@(PyObject *self, PyObject *args)
     return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
-
-static PyObject *
-gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
-{
-    PyErr_SetString(PyExc_ValueError, "array-scalars are immutable");
-    return NULL;
-}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
@@ -1775,7 +1768,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, astype, resize,
  *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
@@ -2239,9 +2232,6 @@ static PyMethodDef gentype_methods[] = {
     {"item",
         (PyCFunction)gentype_item,
         METH_VARARGS, NULL},
-    {"itemset",
-        (PyCFunction)gentype_itemset,
-        METH_VARARGS, NULL},
     {"tobytes",
         (PyCFunction)gentype_tobytes,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2356,9 +2346,6 @@ static PyMethodDef gentype_methods[] = {
     {"min",
         (PyCFunction)gentype_min,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"ptp",
-        (PyCFunction)gentype_ptp,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"mean",
         (PyCFunction)gentype_mean,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2424,9 +2411,6 @@ static PyMethodDef gentype_methods[] = {
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"newbyteorder",
-        (PyCFunction)gentype_newbyteorder,
-        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 

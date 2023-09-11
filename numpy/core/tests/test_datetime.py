@@ -731,7 +731,7 @@ class TestDateTime:
         times_swapped = times.astype(times.dtype.newbyteorder())
         assert_array_equal(times, times_swapped)
 
-        unswapped = times_swapped.view(np.int64).newbyteorder()
+        unswapped = times_swapped.view(np.dtype("int64").newbyteorder())
         assert_array_equal(unswapped, times.view(np.int64))
 
     @pytest.mark.parametrize(["time1", "time2"],

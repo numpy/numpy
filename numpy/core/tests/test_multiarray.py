@@ -90,7 +90,6 @@ class TestFlags:
         mydict = locals()
         self.a.flags.writeable = False
         assert_raises(ValueError, runstring, 'self.a[0] = 3', mydict)
-        assert_raises(ValueError, runstring, 'self.a[0:1].itemset(3)', mydict)
         self.a.flags.writeable = True
         self.a[0] = 5
         self.a[0] = 0
@@ -1357,7 +1356,9 @@ class TestStructured:
         a = np.array([(1,)], dtype=[('a', '<i4')])
         assert_(np.can_cast(a.dtype, [('a', '>i4')], casting='unsafe'))
         b = a.astype([('a', '>i4')])
-        assert_equal(b, a.byteswap().newbyteorder())
+        a_tmp = a.byteswap()
+        a_tmp = a_tmp.view(a_tmp.dtype.newbyteorder())
+        assert_equal(b, a_tmp)
         assert_equal(a['a'][0], b['a'][0])
 
         # Check that equality comparison works on structured arrays if
@@ -1540,11 +1541,6 @@ class TestStructured:
         a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
         a[['a', 'b']] = a[['b', 'a']]
         assert_equal(a[0].item(), (2,1))
-
-    def test_scalar_assignment(self):
-        with assert_raises(ValueError):
-            arr = np.arange(25).reshape(5, 5)
-            arr.itemset(3)
 
     def test_structuredscalar_indexing(self):
         # test gh-7262

@@ -110,9 +110,10 @@ class TestProperties:
 
     def test_ptp(self):
         x = np.arange(4).reshape((2, 2))
-        assert_(x.ptp() == 3)
-        assert_(np.all(x.ptp(0) == np.array([2, 2])))
-        assert_(np.all(x.ptp(1) == np.array([1, 1])))
+        mx = x.view(np.matrix)
+        assert_(mx.ptp() == 3)
+        assert_(np.all(mx.ptp(0) == np.array([2, 2])))
+        assert_(np.all(mx.ptp(1) == np.array([1, 1])))
 
     def test_var(self):
         x = np.arange(9).reshape((3, 3))

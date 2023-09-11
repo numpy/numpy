@@ -1851,8 +1851,8 @@ def test_byteorder_check():
 
     for dtt in (np.float32, np.float64):
         arr = np.eye(4, dtype=dtt)
-        n_arr = arr.newbyteorder(native)
-        sw_arr = arr.newbyteorder('S').byteswap()
+        n_arr = arr.view(arr.dtype.newbyteorder(native))
+        sw_arr = arr.view(array.dtype.newbyteorder("S")).byteswap()
         assert_equal(arr.dtype.byteorder, '=')
         for routine in (linalg.inv, linalg.det, linalg.pinv):
             # Normal call

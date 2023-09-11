@@ -788,7 +788,7 @@ class matrix(N.ndarray):
                 [3]])
 
         """
-        return N.ndarray.ptp(self, axis, out)._align(axis)
+        return N.ptp(self, axis, out)._align(axis)
 
     @property
     def I(self):

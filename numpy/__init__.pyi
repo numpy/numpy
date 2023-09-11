@@ -1259,11 +1259,6 @@ class _ArrayOrScalarCommon:
         where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
-    def newbyteorder(
-        self: _ArraySelf,
-        __new_order: _ByteOrder = ...,
-    ) -> _ArraySelf: ...
-
     @overload
     def prod(
         self,
@@ -1283,21 +1278,6 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
         where: _ArrayLikeBool_co = ...,
-    ) -> _NdArraySubClass: ...
-
-    @overload
-    def ptp(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: None = ...,
-        keepdims: bool = ...,
-    ) -> Any: ...
-    @overload
-    def ptp(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: _NdArraySubClass = ...,
-        keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
     @overload

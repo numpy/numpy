@@ -319,7 +319,8 @@ class TestHalf:
         a = np.array([0, 0, -1, -1/1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
         assert_equal(a.nonzero()[0],
                      [2, 5, 6])
-        a = a.byteswap().newbyteorder()
+        a = a.byteswap()
+        a = a.view(a.dtype.newbyteorder())
         assert_equal(a.nonzero()[0],
                      [2, 5, 6])
 
