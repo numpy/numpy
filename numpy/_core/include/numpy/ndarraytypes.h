@@ -1312,10 +1312,10 @@ PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
 }
 
 
-static PyArrayIterObject **
+static void **
 PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
 {
-    return multi->iters;
+    return (void**)multi->iters;
 }
 
 
