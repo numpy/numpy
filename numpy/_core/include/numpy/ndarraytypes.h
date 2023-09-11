@@ -1277,42 +1277,42 @@ typedef struct {
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
 
-static int
+static NPY_INLINE int
 PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
 {
     return multi->numiter;
 }
 
 
-static npy_intp 
+static NPY_INLINE npy_intp 
 PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
 {
     return multi->size;
 }
 
 
-static npy_intp
+static NPY_INLINE npy_intp
 PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
 {
     return multi->index;
 }
 
 
-static int
+static NPY_INLINE int
 PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
 {
     return multi->nd;
 }
 
 
-static npy_intp *
+static NPY_INLINE npy_intp *
 PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
 {
     return multi->dimensions;
 }
 
 
-static void **
+static NPY_INLINE void **
 PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
 {
     return (void**)multi->iters;
