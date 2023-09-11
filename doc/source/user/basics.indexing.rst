@@ -491,7 +491,7 @@ regardless of whether those values are :py:data:`True` or
 
 A common use case for this is filtering for desired element values.
 For example, one may wish to select all entries from an array which
-are not :const:`NaN`::
+are not :const:`numpy.nan`::
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
