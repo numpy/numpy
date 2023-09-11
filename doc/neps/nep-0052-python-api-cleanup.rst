@@ -11,7 +11,7 @@ NEP 52 — Python API cleanup for NumPy 2.0
 :Status: Accepted
 :Type: Standards Track
 :Created: 2023-03-28
-:Resolution:
+:Resolution: https://github.com/numpy/numpy/issues/23999
 
 
 Abstract
@@ -213,14 +213,14 @@ functionality groupings. Also by "mainstream" and special-purpose namespaces:
     numpy.distutils
     numpy.ma
     numpy.matlib
-    numpy.matrixlib
-    numpy.version
 
     # To remove
     numpy.compat
     numpy.core  # rename to _core
     numpy.doc
     numpy.math
+    numpy.version  # rename to _version
+    numpy.matrixlib
 
     # To clean out or somehow deal with: everything in `numpy.lib`
 
@@ -287,6 +287,20 @@ E.g.:
 - ``.repeat`` (niche, use ``np.repeat`` function instead)
 
 
+API changes considered and rejected
+-----------------------------------
+
+For some functions and submodules it turned out that removing them would cause
+too much disruption or would require an amount of work disproportional to the
+actual gain. We arrived at this conclusion for such items:
+
+- Removing business day functions: `np.busday_count`, `np.busday_offset`, `np.busdaycalendar`.
+- Removing `np.nan*` functions and introducing new `nan_mode` argument to the related base functions.
+- Hiding histogram functions in the `np.histograms` submodule.
+- Hiding `c_`, `r_` and `s_` in the `np.lib.index_tricks` submodule.
+- Functions that looked niche but are present in the Array API (for example `np.can_cast`).
+
+
 Related Work
 ------------
 
@@ -299,11 +313,19 @@ The results were beneficial, and the impact on users relatively modest.
 Implementation
 --------------
 
-The full implementation will be split over many different PRs, each touching on
-a single API or a set of related APIs. To illustrate what those PRs will look
-like, we will link here to a representative set of example PRs:
+The implementation has been split over many different PRs, each touching on
+a single API or a set of related APIs. Here's a sample of the most impactful PRs:
 
-Deprecating non-preferred aliases and scheduling them for removal in 2.0:
+- `gh-24634: Rename numpy/core to numpy/_core <https://github.com/numpy/numpy/pull/24634>`__
+- `gh-24357: Cleaning numpy/__init__.py and main namespace - Part 2 <https://github.com/numpy/numpy/pull/24357>`__
+- `gh-24376: Cleaning numpy/__init__.py and main namespace - Part 3 <https://github.com/numpy/numpy/pull/24376>`__
+
+The complete list of cleanup work done in the 2.0 release can be found by searching a dedicated label:
+
+- `Numpy 2.0 API Changes: <https://github.com/numpy/numpy/labels/Numpy%202.0%20API%20Changes>`
+
+Some PRs has already been merged and shipped with the `1.25.0` release.
+For example, deprecating non-preferred aliases:
 
 - `gh-23302: deprecate np.round_; add round/min/max to the docs <https://github.com/numpy/numpy/pull/23302>`__
 - `gh-23314: deprecate product/cumproduct/sometrue/alltrue <https://github.com/numpy/numpy/pull/23314>`__
@@ -312,11 +334,7 @@ Hiding or removing objects that are accidentally made public or not even NumPy o
 
 - `gh-21403: remove some names from main numpy namespace <https://github.com/numpy/numpy/pull/21403>`__
 
-Restructuring of public submodules:
-
-- `gh-18447: hide internals of np.lib to only show submodules <https://github.com/numpy/numpy/pull/18447>`__
-
-Create new namespaces to make it easier to navigate the module structure:
+Creation of new namespaces to make it easier to navigate the module structure:
 
 - `gh-22644: Add new np.exceptions namespace for errors and warnings <https://github.com/numpy/numpy/pull/22644>`__
 
