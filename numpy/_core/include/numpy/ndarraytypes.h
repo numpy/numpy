@@ -1276,12 +1276,47 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-#define PyArray_MultiIter_SIZE(multi) (_PyMIT(multi)->size)
-#define PyArray_MultiIter_NDIM(multi) (_PyMIT(multi)->nd)
-#define PyArray_MultiIter_INDEX(multi) (_PyMIT(multi)->index)
-#define PyArray_MultiIter_NUMITER(multi) (_PyMIT(multi)->numiter)
-#define PyArray_MultiIter_DIMS(multi) (_PyMIT(multi)->dimensions)
-#define PyArray_MultiIter_ITERS(multi) ((void **)_PyMIT(multi)->iters)
+
+static int
+PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
+{
+    return multi->numiter;
+}
+
+
+static npy_intp 
+PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
+{
+    return multi->size;
+}
+
+
+static npy_intp
+PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
+{
+    return multi->index;
+}
+
+
+static int
+PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
+{
+    return multi->nd;
+}
+
+
+static npy_intp *
+PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
+{
+    return multi->dimensions;
+}
+
+
+static PyArrayIterObject **
+PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
+{
+    return multi->iters;
+}
 
 
 /*
