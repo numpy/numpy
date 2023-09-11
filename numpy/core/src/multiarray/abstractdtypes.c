@@ -155,12 +155,6 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             /* Use the default integer for bools: */
             return PyArray_DTypeFromTypeNum(NPY_LONG);
         }
-        else if (PyTypeNum_ISNUMBER(other->type_num) ||
-                 other->type_num == NPY_TIMEDELTA) {
-            /* All other numeric types (ant timedelta) are preserved: */
-            Py_INCREF(other);
-            return other;
-        }
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
@@ -211,11 +205,6 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             /* Use the default integer for bools and ints: */
             return PyArray_DTypeFromTypeNum(NPY_DOUBLE);
         }
-        else if (PyTypeNum_ISNUMBER(other->type_num)) {
-            /* All other numeric types (float+complex) are preserved: */
-            Py_INCREF(other);
-            return other;
-        }
     }
     else if (other == &PyArray_PyIntAbstractDType) {
         Py_INCREF(cls);
@@ -254,25 +243,6 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
             return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
-        }
-        else if (PyTypeNum_ISFLOAT(other->type_num)) {
-            /*
-             * For floats we choose the equivalent precision complex, although
-             * there is no CHALF, so half also goes to CFLOAT.
-             */
-            if (other->type_num == NPY_HALF || other->type_num == NPY_FLOAT) {
-                return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
-            }
-            if (other->type_num == NPY_DOUBLE) {
-                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
-            }
-            assert(other->type_num == NPY_LONGDOUBLE);
-            return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
-        }
-        else if (PyTypeNum_ISCOMPLEX(other->type_num)) {
-            /* All other numeric types are preserved: */
-            Py_INCREF(other);
-            return other;
         }
     }
     else if (NPY_DT_is_legacy(other)) {

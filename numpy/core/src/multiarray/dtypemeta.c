@@ -12,6 +12,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 
+#include "abstractdtypes.h"
 #include "arraytypes.h"
 #include "common.h"
 #include "dtypemeta.h"
@@ -623,6 +624,43 @@ static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES);
+    if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
+        /*
+         * The abstract complex has a lower priority than the concrete inexact
+         * types to ensure the correct promotion with integers.
+         */
+        if (other == &PyArray_PyComplexAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
+                Py_INCREF(cls);
+                return cls;
+            }
+            else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
+                    return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+            }
+            else if (cls->type_num == NPY_DOUBLE) {
+                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+            }
+            else if (cls->type_num == NPY_LONGDOUBLE) {
+                return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+            }
+        }
+        else if (other == &PyArray_PyFloatAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)
+                    || PyTypeNum_ISFLOAT(cls->type_num)) {
+                Py_INCREF(cls);
+                return cls;
+            }
+        }
+        else if (other == &PyArray_PyIntAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)
+                    || PyTypeNum_ISFLOAT(cls->type_num)
+                    || PyTypeNum_ISINTEGER(cls->type_num)
+                    || cls->type_num == NPY_TIMEDELTA) {
+                Py_INCREF(cls);
+                return cls;
+            }
+        }
+    }
     if (!NPY_DT_is_legacy(other) || other->type_num > cls->type_num) {
         /*
          * Let the more generic (larger type number) DType handle this
