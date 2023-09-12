@@ -1227,7 +1227,7 @@ class TestDtypeAttributes:
         assert_equal(dtype['e2'].alignment, 2)
 
         dtype = np.dtype(
-            [np.void, ('e1', np.timedelta64), ('e2', np.longdouble)],
+            (np.void, [('e1', np.timedelta64), ('e2', np.longdouble)]),
             align = True)
         assert_equal(dtype.alignment, 16)
         assert_equal(dtype['e1'].alignment, 8)
@@ -1242,8 +1242,7 @@ class TestDtypeAttributes:
                  ('e4', np.int8),
                  ('e5', np.int8),
                  ('e6', np.int8)
-            ]),
-            align = True)
+            ]), align = True)
         assert_equal(dtype.alignment, 2)
         assert_equal(dtype['e1'].alignment, 2)
         assert_equal(dtype['e2'].alignment, 2)
