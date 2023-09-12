@@ -71,7 +71,5 @@ __expired_attributes__ = {
     "byte_bounds": "Now it's available under `np.lib.array_utils.byte_bounds`",
     "compare_chararrays": 
         "It's still available as `np.char.compare_chararrays`.",
-    "chararray": "It's still available as `np.char.chararray`.",
     "format_parser": "It's still available as `np.rec.format_parser`.",
-    "recarray": "It's still available as `np.rec.recarray`.",
 }

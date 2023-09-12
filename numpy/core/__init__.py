@@ -76,7 +76,7 @@ from . import numeric
 from .numeric import *
 from . import fromnumeric
 from .fromnumeric import *
-from .records import record
+from .records import record, recarray
 # Note: module name memmap is overwritten by a class with same name
 from .memmap import *
 from . import function_base
@@ -102,7 +102,7 @@ from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['memmap', 'sctypeDict', 'record', 'abs']
+__all__ = ['memmap', 'sctypeDict', 'record', 'recarray', 'abs']
 __all__ += numeric.__all__
 __all__ += function_base.__all__
 __all__ += getlimits.__all__

@@ -771,3 +771,4 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: in1d([1], [1]))
         self.assert_deprecated(lambda: row_stack([[]]))
         self.assert_deprecated(lambda: trapz([1], [1]))
+        self.assert_deprecated(lambda: np.chararray)

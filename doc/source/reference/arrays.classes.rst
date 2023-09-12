@@ -526,7 +526,7 @@ scalar data type object :class:`record`.
 .. autosummary::
    :toctree: generated/
 
-   rec.recarray
+   recarray
    record
 
 .. note::

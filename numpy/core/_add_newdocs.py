@@ -978,9 +978,9 @@ add_newdoc('numpy.core.multiarray', 'asarray',
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
 
-    >>> issubclass(np.rec.recarray, np.ndarray)
+    >>> issubclass(np.recarray, np.ndarray)
     True
-    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.rec.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asarray(a) is a
     False
     >>> np.asanyarray(a) is a
@@ -1044,7 +1044,7 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
 
     Instances of `ndarray` subclasses are passed through as-is:
 
-    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.rec.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asanyarray(a) is a
     True
 
@@ -4645,7 +4645,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     Using a view to convert an array to a recarray:
 
-    >>> z = x.view(np.rec.recarray)
+    >>> z = x.view(np.recarray)
     >>> z.a
     array([1, 3], dtype=int8)
 

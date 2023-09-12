@@ -66,7 +66,7 @@ class TestSimpleStridedCall:
 
 @pytest.mark.parametrize(
     "cls", [
-        np.ndarray, np.rec.recarray, np.char.chararray, np.matrix, np.memmap
+        np.ndarray, np.recarray, np.char.chararray, np.matrix, np.memmap
     ]
 )
 class TestClassGetItem:

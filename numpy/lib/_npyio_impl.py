@@ -2500,7 +2500,7 @@ def recfromtxt(fname, **kwargs):
         from numpy.ma.mrecords import MaskedRecords
         output = output.view(MaskedRecords)
     else:
-        output = output.view(np.rec.recarray)
+        output = output.view(np.recarray)
     return output
 
 
@@ -2551,5 +2551,5 @@ def recfromcsv(fname, **kwargs):
         from numpy.ma.mrecords import MaskedRecords
         output = output.view(MaskedRecords)
     else:
-        output = output.view(np.rec.recarray)
+        output = output.view(np.recarray)
     return output

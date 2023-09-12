@@ -1,11 +1,8 @@
 * ``np.compare_chararrays`` has been removed from the main namespace. 
   Use ``np.char.compare_chararrays`` instead.
 
-* ``np.chararray`` has been removed from the main namespace. 
+* ``np.chararray`` has been deprecated and it will be removed in the future.
   Use ``np.char.chararray`` instead.
 
 * ``np.format_parser`` has been removed from the main namespace. 
   Use ``np.rec.format_parser`` instead.
-
-* ``np.recarray`` has been removed from the main namespace. 
-  Use ``np.rec.recarray`` instead.

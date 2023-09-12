@@ -3818,8 +3818,7 @@ class MaskedArray(ndarray):
         Subclassing is preserved. This means that if, e.g., the data part of
         the masked array is a recarray, `filled` returns a recarray:
 
-        >>> from numpy import rec
-        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(rec.recarray)
+        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(np.recarray)
         >>> m = np.ma.array(x, mask=[(True, False), (False, True)])
         >>> m.filled()
         rec.array([(999999,      2), (    -3, 999999)],

@@ -596,7 +596,7 @@ def _rec_drop_fields_dispatcher(base, drop_names):
 @array_function_dispatch(_rec_drop_fields_dispatcher)
 def rec_drop_fields(base, drop_names):
     """
-    Returns a new numpy.rec.recarray with fields in `drop_names` dropped.
+    Returns a new numpy.recarray with fields in `drop_names` dropped.
     """
     return drop_fields(base, drop_names, usemask=False, asrecarray=True)
 
@@ -756,7 +756,7 @@ def rec_append_fields(base, names, data, dtypes=None):
 
     Returns
     -------
-    appended_array : np.rec.recarray
+    appended_array : np.recarray
     """
     return append_fields(base, names, data=data, dtypes=dtypes,
                          asrecarray=True, usemask=False)
@@ -958,7 +958,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         If true, always return a copy. If false, a view is returned if
         possible, such as when the `dtype` and strides of the fields are
         suitable and the array subtype is one of `numpy.ndarray`,
-        `numpy.rec.recarray` or `numpy.memmap`.
+        `numpy.recarray` or `numpy.memmap`.
 
         .. versionchanged:: 1.25.0
             A view can now be returned if the fields are separated by a
@@ -1026,7 +1026,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     # we only allow a few types to be unstructured by manipulating the
     # strides, because we know it won't work with, for example, np.matrix nor
     # np.ma.MaskedArray.
-    can_view = type(arr) in (np.ndarray, np.rec.recarray, np.memmap)
+    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
     if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
         # all elements have the right dtype already; if they have a common
         # stride, we can just return a view
@@ -1663,7 +1663,7 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
              defaults=None):
     """
     Join arrays `r1` and `r2` on keys.
-    Alternative to join_by, that always returns a np.rec.recarray.
+    Alternative to join_by, that always returns a np.recarray.
 
     See Also
     --------

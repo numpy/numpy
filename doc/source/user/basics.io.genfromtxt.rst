@@ -323,7 +323,7 @@ Validating names
 ----------------
 
 NumPy arrays with a structured dtype can also be viewed as
-:class:`~numpy.rec.recarray`, where a field can be accessed as if it were an
+:class:`~numpy.recarray`, where a field can be accessed as if it were an
 attribute.  For that reason, we may need to make sure that the field name
 doesn't contain any space or invalid character, or that it does not
 correspond to the name of a standard attribute (like ``size`` or

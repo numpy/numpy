@@ -645,13 +645,13 @@ class TestMaskedArray:
     def test_pickling_subbaseclass(self):
         # Test pickling w/ a subclass of ndarray
         x = np.array([(1.0, 2), (3.0, 4)],
-                     dtype=[('x', float), ('y', int)]).view(np.rec.recarray)
+                     dtype=[('x', float), ('y', int)]).view(np.recarray)
         a = masked_array(x, mask=[(True, False), (False, True)])
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
             assert_equal(a_pickled._mask, a._mask)
             assert_equal(a_pickled, a)
-            assert_(isinstance(a_pickled._data, np.rec.recarray))
+            assert_(isinstance(a_pickled._data, np.recarray))
 
     def test_pickling_maskedconstant(self):
         # Test pickling MaskedConstant
@@ -5220,9 +5220,9 @@ class TestMaskedView:
     def test_view_to_dtype_and_type(self):
         (data, a, controlmask) = self.data
 
-        test = a.view((float, 2), np.rec.recarray)
+        test = a.view((float, 2), np.recarray)
         assert_equal(test, data)
-        assert_(isinstance(test, np.rec.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_(not isinstance(test, MaskedArray))
 
 

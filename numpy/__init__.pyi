@@ -211,9 +211,14 @@ from numpy import (
     char as char,
 )
 
-from numpy.core import defchararray, records
-char = defchararray
-rec = records
+from numpy.core.records import (
+    record as record,
+    recarray as recarray,
+)
+
+from numpy.core.defchararray import (
+    chararray as chararray,
+)
 
 from numpy.core.function_base import (
     linspace as linspace,
@@ -3389,15 +3394,6 @@ class iinfo(Generic[_IntType]):
     def __new__(cls, dtype: int | type[int]) -> iinfo[int_]: ...
     @overload
     def __new__(cls, dtype: str) -> iinfo[Any]: ...
-
-class record(void):
-    def __getattribute__(self, attr: str) -> Any: ...
-    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
-    def pprint(self) -> str: ...
-    @overload
-    def __getitem__(self, key: str | SupportsIndex) -> Any: ...
-    @overload
-    def __getitem__(self, key: list[str]) -> record: ...
 
 _NDIterFlagsKind = L[
     "buffered",

@@ -569,7 +569,7 @@ class TestRecord:
     def test_nonstructured_with_object(self):
         # See gh-23277, the dtype here thinks it contain objects, if the
         # assert about that fails, the test becomes meaningless (which is OK)
-        arr = np.rec.recarray((0,), dtype="O") 
+        arr = np.recarray((0,), dtype="O")
         assert arr.dtype.names is None  # no fields
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.

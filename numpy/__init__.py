@@ -120,7 +120,7 @@ else:
 
     from . import core
     from .core import (
-        _no_nep50_warning, memmap, iinfo, finfo,
+        _no_nep50_warning, memmap, iinfo, finfo, recarray,
         False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
@@ -389,6 +389,14 @@ else:
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
                 f"{__expired_attributes__[attr]}"
             )
+
+        if attr == "chararray":
+            warnings.warn(
+                "`np.chararray` is deprecated and will be removed from "
+                "the main namespace in the future. Use `np.char.chararray` "
+                "instead.", DeprecationWarning, stacklevel=2)
+            import numpy.char as char
+            return char.chararray
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))

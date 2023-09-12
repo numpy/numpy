@@ -630,7 +630,7 @@ Record Arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
-:class:`numpy.rec.recarray` that allows access to fields of structured arrays
+:class:`numpy.recarray` that allows access to fields of structured arrays
 by attribute instead of only by index.
 Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
@@ -673,13 +673,13 @@ appropriate `view <numpy-ndarray-view>`_::
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
- ...                      type=np.rec.recarray)
+ ...                      type=np.recarray)
 
-For convenience, viewing an ndarray as type :class:`numpy.rec.recarray` will
+For convenience, viewing an ndarray as type :class:`numpy.recarray` will
 automatically convert to :class:`numpy.record` datatype, so the dtype can be left
 out of the view::
 
- >>> recordarr = arr.view(np.rec.recarray)
+ >>> recordarr = arr.view(np.recarray)
  >>> recordarr.dtype
  dtype((numpy.record, [('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')]))
 
@@ -697,7 +697,7 @@ array if the field has a structured type but as a plain ndarray otherwise. ::
  >>> type(recordarr.foo)
  <class 'numpy.ndarray'>
  >>> type(recordarr.bar)
- <class 'numpy.rec.recarray'>
+ <class 'numpy.recarray'>
 
 Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but

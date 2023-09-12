@@ -2302,7 +2302,7 @@ M   33  21.99
         test = recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.rec.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
@@ -2322,7 +2322,7 @@ M   33  21.99
         test = recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.rec.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
@@ -2338,7 +2338,7 @@ M   33  21.99
         test = recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', int), ('b', int)])
-        assert_(isinstance(test, np.rec.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,3')
@@ -2346,7 +2346,7 @@ M   33  21.99
         test = recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
-        assert_(isinstance(test, np.rec.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
         #gh-10394
@@ -2626,7 +2626,7 @@ class TestPathUsage:
             test = recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.rec.recarray))
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
     @pytest.mark.parametrize("filename_type", [Path, str])
@@ -2643,7 +2643,7 @@ class TestPathUsage:
             test = recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.rec.recarray))
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
 

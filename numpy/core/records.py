@@ -307,7 +307,7 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 
-@set_module("numpy.rec")
+@set_module("numpy")
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
 
@@ -378,7 +378,7 @@ class recarray(ndarray):
     use one of the following methods:
 
     1. Create a standard ndarray and convert it to a record array,
-       using ``arr.view(np.rec.recarray)``
+       using ``arr.view(np.recarray)``
     2. Use the `buf` keyword.
     3. Use `np.rec.fromrecords`.
 
@@ -395,7 +395,7 @@ class recarray(ndarray):
 
     View the array as a record array:
 
-    >>> x = x.view(np.rec.recarray)
+    >>> x = x.view(np.recarray)
 
     >>> x.x
     array([1., 3.])
@@ -405,7 +405,7 @@ class recarray(ndarray):
 
     Create a new, empty record array:
 
-    >>> np.rec.recarray((2,),
+    >>> np.recarray((2,),
     ... dtype=[('x', int), ('y', float), ('z', int)]) #doctest: +SKIP
     rec.array([(-1073741821, 1.2249118382103472e-301, 24547520),
            (3471280, 1.2134086255804012e-316, 0)],
@@ -538,7 +538,7 @@ class recarray(ndarray):
             # This should only happen if the user is playing
             # strange games with dtypes.
             prefix = "array("
-            fmt = 'array(%s,%sdtype=%s).view(numpy.rec.recarray)'
+            fmt = 'array(%s,%sdtype=%s).view(numpy.recarray)'
 
         # get data/shape string. logic taken from numeric.array_repr
         if self.size > 0 or self.shape == (0,):
@@ -605,7 +605,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     Returns
     -------
-    np.rec.recarray
+    np.recarray
         Record array consisting of given arrayList columns.
 
     Examples
@@ -703,7 +703,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     Returns
     -------
-    np.rec.recarray
+    np.recarray
         record array consisting of given recList rows.
 
     Examples
@@ -789,7 +789,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    np.rec.recarray
+    np.recarray
         Record array view into the data in datastring. This will be readonly
         if `datastring` is readonly.
 
@@ -871,7 +871,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    np.rec.recarray
+    np.recarray
         record array consisting of data enclosed in file.
 
     Examples
@@ -983,16 +983,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     Returns
     -------
-    np.rec.recarray
+    np.recarray
         Record array created from the specified object.
 
     Notes
     -----
-    If `obj` is ``None``, then call the `~numpy.rec.recarray` constructor. If
+    If `obj` is ``None``, then call the `~numpy.recarray` constructor. If
     `obj` is a string, then call the `fromstring` constructor. If `obj` is a
     list or a tuple, then if the first object is an `~numpy.ndarray`, call
     `fromarrays`, otherwise call `fromrecords`. If `obj` is a
-    `~numpy.rec.recarray`, then make a copy of the data in the recarray
+    `~numpy.recarray`, then make a copy of the data in the recarray
     (if ``copy=True``) and use the new formats, names, and titles. If `obj`
     is a file, then call `fromfile`. Finally, if obj is an `ndarray`, then
     return ``obj.view(recarray)``, making a copy of the data if ``copy=True``.
