@@ -848,7 +848,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj, int align
         Py_INCREF(Py_NotImplemented);
         return (PyArray_Descr *)Py_NotImplemented;
     }
-PyArray_Descr *conv = _convert_from_any(newobj, align);
+    PyArray_Descr *conv = _convert_from_any(newobj, align);
     if (conv == NULL) {
         /* Let someone else try to convert this */
         PyErr_Clear();
