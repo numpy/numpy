@@ -393,16 +393,16 @@ class TestRecord:
         assert_equal(dt['e4'].alignment, 16)
         assert_equal(dt['e5'].alignment, 8)
         assert_equal(dt['e6'].alignment, 1)
-
-       
         
         dt = np.dtype(
             (np.record, 
-             [('e1', np.longdouble),
-              ('e2', np.longlong),
-              ('e3', np.int64),
-              ('e4', np.datetime64),
-              ('e5', np.short)]),
+             [
+                 ('e1', np.longdouble),
+                 ('e2', np.longlong),
+                 ('e3', np.int64),
+                 ('e4', np.datetime64),
+                 ('e5', np.short)
+                ]),
             align = True)
         assert_equal(dt.alignment, 16)
         assert_equal(dt['e1'].alignment, 16)
@@ -1220,30 +1220,30 @@ class TestDtypeAttributes:
 
     def test_alignment_dtype_baseclass(self):
         dtype = np.dtype(
-            (np.int32, 
-             {'e1':(np.int16, 0), 'e2':(np.int16, 2)}),
-             align = True)
+            (np.int32, {'e1': (np.int16, 0), 'e2': (np.int16, 2)}),
+            align = True)
         assert_equal(dtype.alignment, 2)
         assert_equal(dtype['e1'].alignment, 2)
         assert_equal(dtype['e2'].alignment, 2)
 
         dtype = np.dtype(
-            (np.void, 
-             [('e1', np.timedelta64), ('e2', np.longdouble)]), 
-             align = True)
+            [np.void, ('e1', np.timedelta64), ('e2', np.longdouble)],
+            align = True)
         assert_equal(dtype.alignment, 16)
         assert_equal(dtype['e1'].alignment, 8)
         assert_equal(dtype['e2'].alignment, 16)
 
         dtype = np.dtype(
             (np.longlong,
-             [('e1', np.int16),
-              ('e2', np.int16),
-              ('e3', np.int8),
-              ('e4', np.int8),
-              ('e5', np.int8),
-              ('e6', np.int8)]),
-              align = True)
+             [
+                 ('e1', np.int16),
+                 ('e2', np.int16),
+                 ('e3', np.int8),
+                 ('e4', np.int8),
+                 ('e5', np.int8),
+                 ('e6', np.int8)
+            ]),
+            align = True)
         assert_equal(dtype.alignment, 2)
         assert_equal(dtype['e1'].alignment, 2)
         assert_equal(dtype['e2'].alignment, 2)
@@ -1253,9 +1253,8 @@ class TestDtypeAttributes:
         assert_equal(dtype['e6'].alignment, 1)
 
         dtype = np.dtype(
-            ('u8',
-             {'e1': ('u2', 0), 'e2': ('u4', 4)}),
-             align = True)
+            ('u8', {'e1': ('u2', 0), 'e2': ('u4', 4)}),
+            align = True)
         assert_equal(dtype.alignment, 4)
         assert_equal(dtype['e1'].alignment, 2)
         assert_equal(dtype['e2'].alignment, 4)
