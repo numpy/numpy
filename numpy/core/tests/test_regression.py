@@ -138,7 +138,7 @@ class TestRegression:
         ulen = 1
         ucs_value = '\U0010FFFF'
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
-        ua.view(np.dtype.byteorder())  # Should succeed.
+        ua.view(ua.dtype.newbyteorder())  # Should succeed.
 
     def test_object_array_fill(self):
         # Ticket #86
@@ -519,7 +519,7 @@ class TestRegression:
         # Make sure methods and functions have same default axis
         # keyword and arguments
         funcs1 = ['argmax', 'argmin', 'sum', 'any', 'all', 'cumsum',
-                  'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
+                  'cumprod', 'prod', 'std', 'var', 'mean',
                   'round', 'min', 'max', 'argsort', 'sort']
         funcs2 = ['compress', 'take', 'repeat']
 
@@ -1159,7 +1159,6 @@ class TestRegression:
         assert_(dat.mean(1).info == 'jubba')
         assert_(dat.min(1).info == 'jubba')
         assert_(dat.prod(1).info == 'jubba')
-        assert_(dat.ptp(1).info == 'jubba')
         assert_(dat.ravel().info == 'jubba')
         assert_(dat.real.info == 'jubba')
         assert_(dat.repeat(2).info == 'jubba')
