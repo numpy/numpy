@@ -412,7 +412,6 @@ be performed.
    ndarray.argmax
    ndarray.min
    ndarray.argmin
-   ndarray.ptp
    ndarray.clip
    ndarray.conj
    ndarray.round

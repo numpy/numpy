@@ -1594,6 +1594,33 @@ gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
     return self;
 }
 
+static PyObject *
+gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+{
+    PyErr_SetString(PyExc_AttributeError, 
+                    "`newbyteorder` has been removed from scalar types. "
+                    "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
+    return NULL;
+}
+
+static PyObject *
+gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+{
+    PyErr_SetString(PyExc_AttributeError, 
+                    "`itemset` has been removed from scalar types "
+                    "because scalars are immutable.");
+    return NULL;
+}
+
+static PyObject *
+gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+{
+    PyErr_SetString(PyExc_AttributeError, 
+                    "`ptp` has been removed from scalar types. "
+                    "For a scalar, the range of values always equals 0.");
+    return NULL;
+}
+
 
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
@@ -1637,6 +1664,15 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
+        (setter)0, NULL, NULL},
+    {"newbyteorder",
+        (getter)gentype_newbyteorder,
+        (setter)0, NULL, NULL},
+    {"itemset",
+        (getter)gentype_itemset,
+        (setter)0, NULL, NULL},
+    {"ptp",
+        (getter)gentype_ptp,
         (setter)0, NULL, NULL},
     {"__array_interface__",
         (getter)gentype_interface_get,

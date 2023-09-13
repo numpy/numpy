@@ -938,6 +938,33 @@ array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_MatrixTranspose(self);
 }
 
+static PyObject *
+array_ptp(PyArrayObject *self, void *NPY_UNUSED(ignored))
+{
+    PyErr_SetString(PyExc_AttributeError,
+                    "`ptp` has been removed from ndarray class. "
+                    "Use np.ptp(arr, ...) instead");
+    return NULL;
+}
+
+static PyObject *
+array_newbyteorder(PyArrayObject *self, PyObject *args)
+{
+    PyErr_SetString(PyExc_AttributeError,
+                    "`newbyteorder` has been removed from ndarray class. "
+                    "Use `arr.view(arr.dtype.newbyteorder(order))` instead");
+    return NULL;
+}
+
+static PyObject *
+array_itemset(PyArrayObject *self, PyObject *args)
+{
+    PyErr_SetString(PyExc_AttributeError,
+                    "`itemset` has been removed from ndarray class. "
+                    "Use `arr[index] = value` instead");
+    return NULL;
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -1001,6 +1028,18 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"mT",
         (getter)array_matrix_transpose_get,
+        NULL,
+        NULL, NULL},
+    {"ptp",
+        (getter)array_ptp,
+        NULL,
+        NULL, NULL},
+    {"newbyteorder",
+        (getter)array_newbyteorder,
+        NULL,
+        NULL, NULL},
+    {"itemset",
+        (getter)array_itemset,
         NULL,
         NULL, NULL},
     {"__array_interface__",
