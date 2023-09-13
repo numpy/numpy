@@ -60,10 +60,9 @@ __expired_attributes__ = {
     "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
     "disp": "Use your own printing function instead.",
     "find_common_type": 
-        "This function is deprecated, use `numpy.promote_types` or "
-        "`numpy.result_type` instead.  To achieve semantics for the "
-        "`scalar_types` argument, use `numpy.result_type` and pass the "
-        "Python values `0`, `0.0`, or `0j`.",
+        "Use `numpy.promote_types` or `numpy.result_type` instead. "
+        "To achieve semantics for the `scalar_types` argument, use "
+        "`numpy.result_type` and pass the Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
     "get_array_wrap": "",
     "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
