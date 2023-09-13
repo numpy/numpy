@@ -1437,10 +1437,10 @@ def analyzeline(m, case, line):
                 outmess(
                     'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
-            i = 0
-            j = 0
             llen = len(l[1])
-            for v in rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')]):
+            for idx, v in enumerate(rmbadname(
+                    [x.strip() for x in markoutercomma(l[0]).split('@,@')])
+                                    ):
                 if v[0] == '(':
                     outmess(
                         'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
@@ -1449,18 +1449,26 @@ def analyzeline(m, case, line):
                     # wrapping.
                     continue
                 fc = 0
-                while (i < llen) and (fc or not l[1][i] == ','):
-                    if l[1][i] == "'":
-                        fc = not fc
-                    i = i + 1
-                i = i + 1
+                vtype = vars[v].get('typespec')
+                vdim = getdimension(vars[v])
+
+                if (vtype == 'complex'):
+                    cmplxpat = r"\(.*?\)"
+                    matches = re.findall(cmplxpat, l[1])
+                else:
+                    matches = l[1].split(',')
+
                 if v not in vars:
                     vars[v] = {}
-                if '=' in vars[v] and not vars[v]['='] == l[1][j:i - 1]:
+                if '=' in vars[v] and not vars[v]['='] == matches[idx]:
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
-                        v, vars[v]['='], l[1][j:i - 1]))
-                vars[v]['='] = l[1][j:i - 1]
-                j = i
+                        v, vars[v]['='], matches[idx]))
+
+                if vdim is not None:
+                    # Need to assign multiple values to one variable
+                    vars[v]['='] = "(/{}/)".format(", ".join(matches))
+                else:
+                    vars[v]['='] = matches[idx]
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
         if last_name is not None:

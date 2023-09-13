@@ -28,7 +28,7 @@ __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
     'getargs2', 'getcallprotoargument', 'getcallstatement',
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
-    'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
+    'getusercode1', 'getdimension', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
@@ -418,6 +418,13 @@ def isoptional(var):
 
 def isexternal(var):
     return 'attrspec' in var and 'external' in var['attrspec']
+
+
+def getdimension(var):
+    dimpattern = r"\((.*?)\)"
+    if 'attrspec' in var.keys():
+        if any('dimension' in s for s in var['attrspec']):
+            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
 
 
 def isrequired(var):
