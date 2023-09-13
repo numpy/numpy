@@ -4,7 +4,7 @@ NumPy 2.0 Migration Guide
 
 This document contains a set of instructions on how to update your codebase to NumPy 2.0
 Python API compatible version. Most of the changes are trivial, and require the end user
-to use different name/module to access a given function/constant.
+to use a different name/module to access a given function/constant.
 
 Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
 
@@ -14,7 +14,7 @@ Main namespace
 
 About 100 members of the main ``np`` namespace has been deprecated, removed or 
 moved to a new place. It was done to reduce clutter and establish only one way to
-access a given attribute. The table below shows memebers that have been removed:
+access a given attribute. The table below shows members that have been removed:
 
 ======================  =================================================================
 removed member          migration guidline
@@ -134,7 +134,7 @@ to the deprecation period policy.
 NDArray and scalar namespace
 ----------------------------
 
-A few methods from ``np.ndarray`` and ``np.generic`` scalar classes has been removed.
+A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been removed.
 The table below provides replacements for the removed members:
 
 ======================  ========================================================
