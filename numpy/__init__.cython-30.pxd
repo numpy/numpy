@@ -713,6 +713,7 @@ cdef extern from "numpy/arrayobject.h":
     # additional datetime related functions are defined below
 
 
+
 # Typedefs that matches the runtime dtype objects in
 # the numpy module.
 
@@ -1046,3 +1047,160 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
     returns the unit part of the dtype for a numpy datetime64 object.
     """
     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
+
+
+# Iterator API added in v1.6
+cdef extern from "numpy/arrayobject.h":
+    ctypedef struct NpyIter:
+        pass
+
+    # cdef class numpy.nditer [object NpyIter, check_size ignore]:
+    #     pass
+
+    cdef enum:
+        NPY_FAIL
+        NPY_SUCCEED
+
+    cdef enum:
+        # Track an index representing C order
+        NPY_ITER_C_INDEX
+        # Track an index representing Fortran order
+        NPY_ITER_F_INDEX
+        # Track a multi-index
+        NPY_ITER_MULTI_INDEX
+        # User code external to the iterator does the 1-dimensional innermost loop
+        NPY_ITER_EXTERNAL_LOOP
+        # Convert all the operands to a common data type
+        NPY_ITER_COMMON_DTYPE
+        # Operands may hold references, requiring API access during iteration
+        NPY_ITER_REFS_OK
+        # Zero-sized operands should be permitted, iteration checks IterSize for 0
+        NPY_ITER_ZEROSIZE_OK
+        # Permits reductions (size-0 stride with dimension size > 1)
+        NPY_ITER_REDUCE_OK
+        # Enables sub-range iteration
+        NPY_ITER_RANGED
+        # Enables buffering
+        NPY_ITER_BUFFERED
+        # When buffering is enabled, grows the inner loop if possible
+        NPY_ITER_GROWINNER
+        # Delay allocation of buffers until first Reset* call
+        NPY_ITER_DELAY_BUFALLOC
+        # When NPY_KEEPORDER is specified, disable reversing negative-stride axes
+        NPY_ITER_DONT_NEGATE_STRIDES
+        NPY_ITER_COPY_IF_OVERLAP
+        # The operand will be read from and written to
+        NPY_ITER_READWRITE
+        # The operand will only be read from
+        NPY_ITER_READONLY
+        # The operand will only be written to
+        NPY_ITER_WRITEONLY
+        # The operand's data must be in native byte order
+        NPY_ITER_NBO
+        # The operand's data must be aligned
+        NPY_ITER_ALIGNED
+        # The operand's data must be contiguous (within the inner loop)
+        NPY_ITER_CONTIG
+        # The operand may be copied to satisfy requirements
+        NPY_ITER_COPY
+        # The operand may be copied with WRITEBACKIFCOPY to satisfy requirements
+        NPY_ITER_UPDATEIFCOPY
+        # Allocate the operand if it is NULL
+        NPY_ITER_ALLOCATE
+        # If an operand is allocated, don't use any subtype
+        NPY_ITER_NO_SUBTYPE
+        # This is a virtual array slot, operand is NULL but temporary data is there
+        NPY_ITER_VIRTUAL
+        # Require that the dimension match the iterator dimensions exactly
+        NPY_ITER_NO_BROADCAST
+        # A mask is being used on this array, affects buffer -> array copy
+        NPY_ITER_WRITEMASKED
+        # This array is the mask for all WRITEMASKED operands
+        NPY_ITER_ARRAYMASK
+        # Assume iterator order data access for COPY_IF_OVERLAP
+        NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+    # construction and destruction functions
+    NpyIter* NpyIter_New(ndarray arr, npy_uint32 flags, NPY_ORDER order,
+                        NPY_CASTING casting, dtype datatype)
+    NpyIter* NpyIter_MultiNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags,
+                            NPY_ORDER order, NPY_CASTING casting,
+                            npy_uint32* op_flags, PyArray_Descr** op_dtypes)
+    NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags,
+                               NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags,
+                               PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes,
+                               const npy_intp* itershape, npy_intp buffersize)
+    NpyIter* NpyIter_Copy(NpyIter* it)
+    int NpyIter_RemoveAxis(NpyIter* it, int axis)
+    int NpyIter_RemoveMultiIndex(NpyIter* it)
+    int NpyIter_EnableExternalLoop(NpyIter* it)
+    int NpyIter_Deallocate(NpyIter* it)
+    int NpyIter_Reset(NpyIter* it, char** errmsg) nogil
+    int NpyIter_ResetToIterIndexRange(NpyIter* it, npy_intp istart,
+                                      npy_intp iend, char** errmsg) nogil
+    int NpyIter_ResetBasePointers(NpyIter* it, char** baseptrs, char** errmsg) nogil
+    int NpyIter_GotoMultiIndex(NpyIter* it, const npy_intp* multi_index) except NPY_FAIL
+    int NpyIter_GotoIndex(NpyIter* it, npy_intp index) except NPY_FAIL
+    npy_intp NpyIter_GetIterSize(NpyIter* it)
+    npy_intp NpyIter_GetIterIndex(NpyIter* it)
+    void NpyIter_GetIterIndexRange(NpyIter* it, npy_intp* istart, npy_intp* iend)
+    int NpyIter_GotoIterIndex(NpyIter* it, npy_intp iterindex) except NPY_FAIL
+    npy_bool NpyIter_HasDelayedBufAlloc(NpyIter* it)
+    npy_bool NpyIter_HasExternalLoop(NpyIter* it)
+    npy_bool NpyIter_HasMultiIndex(NpyIter* it)
+    npy_bool NpyIter_HasIndex(NpyIter* it)
+    npy_bool NpyIter_RequiresBuffering(NpyIter* it)
+    npy_bool NpyIter_IsBuffered(NpyIter* it)
+    npy_bool NpyIter_IsGrowInner(NpyIter* it)
+    npy_intp NpyIter_GetBufferSize(NpyIter* it)
+    int NpyIter_GetNDim(NpyIter* it)
+    int NpyIter_GetNOp(NpyIter* it)
+    npy_intp* NpyIter_GetAxisStrideArray(NpyIter* it, int axis) except NULL
+    int NpyIter_GetShape(NpyIter* it, npy_intp* outshape)
+    PyArray_Descr** NpyIter_GetDescrArray(NpyIter* it)
+    PyArrayObject** NpyIter_GetOperandArray(NpyIter* it)
+    ndarray NpyIter_GetIterView(NpyIter* it, npy_intp i)
+    void NpyIter_GetReadFlags(NpyIter* it, char* outreadflags)
+    void NpyIter_GetWriteFlags(NpyIter* it, char* outwriteflags)
+    int NpyIter_CreateCompatibleStrides(NpyIter* it, npy_intp itemsize, npy_intp*
+                                        outstrides) except NPY_FAIL
+    npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop)
+    # functions of iterating an NpyIter object
+    ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it)
+    ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords)
+    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) nogil
+    NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it, char** errmsg) nogil
+    char** NpyIter_GetDataPtrArray(NpyIter* it) nogil
+    char** NpyIter_GetInitialDataPtrArray(NpyIter* it) nogil
+    npy_intp* NpyIter_GetIndexPtr(NpyIter* it)
+    npy_intp* NpyIter_GetInnerStrideArray(NpyIter* it) nogil
+    npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter* it) nogil
+    void NpyIter_GetInnerFixedStrideArray(NpyIter* it, npy_intp* outstrides) nogil
+    npy_bool NpyIter_IterationNeedsAPI(NpyIter* it)
+    void NpyIter_DebugPrint(NpyIter* it)
+
+
+# Convinience functions for the Iterator API that propagate exceptions
+cdef inline NpyIter_IterNextFunc* NpyIter_GETITERNEXT(NpyIter* it) except NULL:
+    #"""An exception raising version of NpyIter_GetIterNext."""
+    return NpyIter_GetIterNext(it, NULL)
+
+
+cdef inline NpyIter_GetMultiIndexFunc* NpyIter_GETGETMULTIINDEX(NpyIter* it) except NULL:
+    """An exception raising version of NpyIter_GetGetMultiIndex."""
+    return NpyIter_GetGetMultiIndex(it, NULL)
+
+
+cdef inline int NpyIter_RESET(NpyIter* it) except NPY_FAIL:
+    """An exception raising version of NpyIter_Reset."""
+    return NpyIter_Reset(it, NULL)
+
+
+cdef inline int NpyIter_RESETTOITERINDEXRANGE(NpyIter* it, npy_intp istart, npy_intp iend) except NPY_FAIL:
+    """An exception raising version of NpyIter_ResetToIterIndexRange."""
+    return NpyIter_ResetToIterIndexRange(it, istart, iend, NULL)
+
+
+cdef inline int NpyIter_RESETBASEPOINTERS(NpyIter* it, char** baseptrs) except NPY_FAIL:
+    """An exception raising version of NpyIter_ResetBasePointers."""
+    return NpyIter_ResetBasePointers(it, baseptrs, NULL)
