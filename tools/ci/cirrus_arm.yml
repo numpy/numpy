@@ -22,6 +22,7 @@ modified_clone: &MODIFIED_CLONE
 
 
 linux_aarch64_test_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder-arm64
@@ -66,6 +67,7 @@ linux_aarch64_test_task:
 
 
 macos_arm64_test_task:
+  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   depends_on:
     - linux_aarch64_test
   macos_instance:
