@@ -540,10 +540,10 @@ def inv(a):
     t, result_t = _commonType(a)
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
-     with errstate(call=_raise_linalgerror_singular, invalid='call',
+    with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         ainv = _umath_linalg.inv(a, signature=signature)
-     if not matrix_rank(a) == a.shape[0]:
+    if not matrix_rank(a) == a.shape[0]:
         _raise_linalgerror_singular(LinAlgError("Singular matrix"), 1)
     return wrap(ainv.astype(result_t, copy=False))
 
