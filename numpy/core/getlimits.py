@@ -698,6 +698,8 @@ class iinfo:
         """Minimum value of given dtype."""
         if self.kind == 'u':
             return 0
+        elif self.kind == 'm':
+            raise ValueError("Minimum for timedelta64 depends on units")
         else:
             try:
                 val = iinfo._min_vals[self.key]
@@ -709,6 +711,8 @@ class iinfo:
     @property
     def max(self):
         """Maximum value of given dtype."""
+        if self.kind == 'm':
+            raise ValueError("Maximum for timedelta64 depends on units")
         try:
             val = iinfo._max_vals[self.key]
         except KeyError:
@@ -728,7 +732,10 @@ class iinfo:
             'max = %(max)s\n'
             '---------------------------------------------------------------\n'
             )
-        return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
+        if self.kind == 'm':
+            return fmt % {'dtype': self.dtype, 'min': 'depends on units', 'max': 'depends on units'}
+        else:
+            return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
