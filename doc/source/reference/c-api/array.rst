@@ -1086,7 +1086,7 @@ Converting data types
     The returned array must be freed by the caller of this routine
     (using :c:func:`PyDataMem_FREE` ) and all the array objects in it
     ``DECREF`` 'd or a memory-leak will occur. The example template-code
-    below shows a typically usage:
+    below shows a typical usage:
 
     .. versionchanged:: 1.18.0
        A mix of scalars and zero-dimensional arrays now produces a type
@@ -1249,7 +1249,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    :c:func:`Py_DECREF` in order copy any changes back to ``base`` and
+    :c:func:`Py_DECREF` in order to copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
