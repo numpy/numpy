@@ -1,4 +1,5 @@
 import builtins
+import sys
 import os
 import mmap
 import ctypes as ct
@@ -1389,17 +1390,18 @@ _ShapeType = TypeVar("_ShapeType", bound=Any)
 _ShapeType2 = TypeVar("_ShapeType2", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
-# There is currently no exhaustive way to type the buffer protocol,
-# as it is implemented exclusively in the C API (python/typing#593)
-_SupportsBuffer = (
-    bytes
-    | bytearray
-    | memoryview
-    | _array.array[Any]
-    | mmap.mmap
-    | NDArray[Any]
-    | generic
-)
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer as _SupportsBuffer
+else:
+    _SupportsBuffer = (
+        bytes
+        | bytearray
+        | memoryview
+        | _array.array[Any]
+        | mmap.mmap
+        | NDArray[Any]
+        | generic
+    )
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -1461,6 +1463,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         strides: None | _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
+
+    if sys.version_info >= (3, 12):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
 
     def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
@@ -2519,6 +2524,9 @@ class generic(_ArrayOrScalarCommon):
     @property
     def flat(self: _ScalarType) -> flatiter[NDArray[_ScalarType]]: ...
 
+    if sys.version_info >= (3, 12):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
+
     @overload
     def astype(
         self,
@@ -2720,6 +2728,9 @@ class object_(generic):
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
+
+    if sys.version_info >= (3, 12):
+        def __release_buffer__(self, buffer: memoryview, /) -> None: ...
 
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
