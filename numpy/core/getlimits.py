@@ -690,7 +690,7 @@ class iinfo:
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
-        if self.kind not in 'iu':
+        if self.kind not in 'ium':
             raise ValueError("Invalid integer data type %r." % (self.kind,))
 
     @property
