@@ -77,3 +77,23 @@ def make_iso_8601_datetime(dt: "datetime"):
         cnp.NPY_NO_CASTING,
     )
     return result
+
+
+cdef cnp.nditer NpyIter_from_nditer_obj(object it):
+    # one operand is assumed
+    cdef:
+        cnp.nditer cit = cnp.NpyIter_New(it.operands[0],
+                                         cnp.NPY_ITER_READWRITE,
+                                         cnp.NPY_CORDER, cnp.NPY_NO_CASTING,
+                                         <cnp.dtype>NULL)
+    return cit
+
+
+def get_nditer_size(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_GetIterSize(cit)
+
+
+def get_nditer_ndim(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_GetNOp(cit)

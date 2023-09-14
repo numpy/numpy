@@ -145,18 +145,8 @@
  * functions such as the various iternext functions.
  */
 
-struct NpyIter_InternalOnly {
-    /* Initial fixed position data */
-    npy_uint32 itflags;
-    npy_uint8 ndim, nop;
-    npy_int8 maskop;
-    npy_intp itersize, iterstart, iterend;
-    /* iterindex is only used if RANGED or BUFFERED is set */
-    npy_intp iterindex;
-    /* The rest is variable */
-    char iter_flexdata[];
-};
 
+typedef struct NpyIter_InternalOnly NpyIter_InternalOnly;
 typedef struct NpyIter_AxisData_tag NpyIter_AxisData;
 typedef struct NpyIter_TransferInfo_tag NpyIter_TransferInfo;
 typedef struct NpyIter_BufferData_tag NpyIter_BufferData;

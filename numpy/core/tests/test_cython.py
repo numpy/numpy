@@ -162,3 +162,17 @@ class TestDatetimeStrings:
         # uses NPY_FR_ns
         res = checks.get_datetime_iso_8601_strlen()
         assert res == 48
+
+
+def test_nditer_size(install_temp):
+    import checks
+    arr = np.random.rand(3, 2)
+    it = np.nditer(arr)
+    assert checks.get_nditer_size(it) == it.itersize
+
+
+def test_nditer_ndim(install_temp):
+    import checks
+    arr = np.random.rand(3, 2)
+    it = np.nditer([arr])
+    assert checks.get_nditer_ndim(it) == it.nop
