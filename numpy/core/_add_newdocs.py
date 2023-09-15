@@ -971,9 +971,9 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     If `dtype` is set, array is copied only if dtype does not match:
 
     >>> a = np.array([1, 2], dtype=np.float32)
-    >>> np.asarray(a, dtype=np.float32) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float32), a)
     True
-    >>> np.asarray(a, dtype=np.float64) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float64), a)
     False
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
