@@ -6,11 +6,6 @@ Files: numpy/linalg/lapack_lite/*
 License: BSD-3-Clause
   For details, see numpy/linalg/lapack_lite/LICENSE.txt
 
-Name: tempita
-Files: tools/npy_tempita/*
-License: MIT
-  For details, see tools/npy_tempita/license.txt
-
 Name: dragon4
 Files: numpy/core/src/multiarray/dragon4.c
 License: MIT

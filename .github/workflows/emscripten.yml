@@ -19,7 +19,8 @@ permissions:
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-22.04
-    if: "github.repository == 'numpy/numpy'"
+    if: false  # NOTE: job disabled, it needs to be moved to Meson (see gh-24603)
+    # if: "github.repository == 'numpy/numpy'"
     env:
       PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
