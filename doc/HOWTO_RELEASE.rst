@@ -100,12 +100,11 @@ github actions.
 
 Building docs
 -------------
-We are no longer building ``PDF`` files. All that will be needed is
+We are no longer building pdf files, only html docs. The ``numpy-html.zip``
+needed to upload to the doc server can be built with ``spin docs dist``.
 
-- virtualenv (pip).
-
-The other requirements will be filled automatically during the documentation
-build process.
+To install the necessary doc build dependencies into your development
+environment, run ``pip install -r doc_requirements.txt``.
 
 
 Uploading to PyPI

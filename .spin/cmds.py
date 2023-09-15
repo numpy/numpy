@@ -75,13 +75,8 @@ def build(ctx, meson_args, jobs=None, clean=False, verbose=False):
     default="auto",
     help="Number of parallel build jobs"
 )
-@click.option(
-    "--install-deps/--no-install-deps",
-    default=False,
-    help="Install dependencies before building"
-)
 @click.pass_context
-def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
+def docs(ctx, sphinx_target, clean, first_build, jobs):
     """📖 Build Sphinx documentation
 
     By default, SPHINXOPTS="-W", raising errors on warnings.
@@ -97,13 +92,12 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
 
       spin docs TARGET
 
-    """
-    if sphinx_target not in ('targets', 'help'):
-        if install_deps:
-            util.run(['pip', 'install', '-q', '-r', 'doc_requirements.txt'])
+    E.g., to build a zipfile of the html docs for distribution:
 
+      spin docs dist
+
+    """
     meson.docs.ignore_unknown_options = True
-    del ctx.params['install_deps']
     ctx.forward(meson.docs)
 
 
