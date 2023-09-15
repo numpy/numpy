@@ -7740,8 +7740,6 @@ class TestPEP3118Dtype:
         self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
 
     def test_trailing_padding(self):
-        # Trailing padding should be included, *and*, the item size
-        # should match the alignment if in aligned mode
         align = np.dtype('i').alignment
         size = np.dtype('i').itemsize
 
@@ -7749,18 +7747,65 @@ class TestPEP3118Dtype:
             return align*(1 + (n-1)//align)
 
         base = dict(formats=['i'], names=['f0'])
+        bbase = dict(formats=['b'], names=['f0'])
 
-        self._check('ix',    dict(itemsize=aligned(size + 1), **base))
-        self._check('ixx',   dict(itemsize=aligned(size + 2), **base))
-        self._check('ixxx',  dict(itemsize=aligned(size + 3), **base))
-        self._check('ixxxx', dict(itemsize=aligned(size + 4), **base))
-        self._check('i7x',   dict(itemsize=aligned(size + 7), **base))
+        self._check('ix',    dict(itemsize=size + 1, **base))
+        self._check('ixx',   dict(itemsize=size + 2, **base))
+        self._check('ixxx',  dict(itemsize=size + 3, **base))
+        self._check('ixxxx', dict(itemsize=size + 4, **base))
+        self._check('i7x',   dict(itemsize=size + 7, **base))
+        self._check('ix0i',  dict(itemsize=2*size, **base))
+        self._check('b0i',   dict(itemsize=size, **bbase))
+
+        # Our intepretaton of the PEP3118/struct spec is that trailing
+        # padding for alignment is assumed only inside of T{}.
+        self._check('T{ix}',    dict(itemsize=aligned(size + 1), **base))
+        self._check('T{ixx}',   dict(itemsize=aligned(size + 2), **base))
+        self._check('T{ixxx}',  dict(itemsize=aligned(size + 3), **base))
+        self._check('T{ixxxx}', dict(itemsize=aligned(size + 4), **base))
+        self._check('T{i7x}',   dict(itemsize=aligned(size + 7), **base))
+        self._check('T{ix0i}',  dict(itemsize=2*size, **base))
+        self._check('T{b0i}',   dict(itemsize=size, **bbase))
+
+        # check that alignment mode affects assumed trailing padding in T{}
+        self._check('T{=ix}',   dict(itemsize=size + 1, **base))
 
         self._check('^ix',    dict(itemsize=size + 1, **base))
         self._check('^ixx',   dict(itemsize=size + 2, **base))
         self._check('^ixxx',  dict(itemsize=size + 3, **base))
         self._check('^ixxxx', dict(itemsize=size + 4, **base))
         self._check('^i7x',   dict(itemsize=size + 7, **base))
+        self._check('^ixx0i', dict(itemsize=size + 2, **base))
+        self._check('^b0i', np.dtype('b'))
+
+        # check we can convert to memoryview and back, aligned and unaligned
+        arr = np.zeros(3, dtype=np.dtype('u1,i4,u1', align=True))
+        assert_equal(arr.dtype, np.array(memoryview(arr)).dtype)
+
+        arr = np.zeros(3, dtype=np.dtype('u1,i4,u1', align=False))
+        assert_equal(arr.dtype, np.array(memoryview(arr)).dtype)
+
+        a = np.empty(0,  np.dtype({'formats': ['u1'], 'offsets': [0],
+                                   'names': ['x'], 'itemsize': 4}))
+        assert_equal(a, np.array(memoryview(a)))
+
+        # check that 0-sized elements act as padding in @ alignment and not =
+        # outside of T{} (see python struct docs, example at very end)
+        self._check('B:f0:B:f1:', [('f0', 'u1'), ('f1', 'u1')])
+        self._check('B:f0:0iB:f1:0i', {'names': ['f0','f1'],
+                                       'formats': ['u1','u1'],
+                                       'offsets': [0,4],
+                                       'itemsize': 8})
+        self._check('=B:f0:0iB:f1:0i', [('f0', 'u1'), ('f1', 'u1')])
+
+        # PEP3118 cannot support overlapping/out-of-order fields
+        # (update these tests if it is improved to allow this)
+        a = np.empty(3, dtype={'names': ['a', 'b'],
+                               'formats': ['i4', 'i2'],
+                               'offsets': [0, 2]})
+        assert_raises(ValueError, memoryview, a)
+        a = np.empty(3, dtype='i4,i4')[['f1', 'f0']]
+        assert_raises(ValueError, memoryview, a)
 
     def test_native_padding_3(self):
         dt = np.dtype(
@@ -7792,15 +7837,9 @@ class TestPEP3118Dtype:
         align = np.dtype('i').alignment
         size = np.dtype('i').itemsize
 
-        def aligned(n):
-            return (align*(1 + (n-1)//align))
-
-        self._check('(3)T{ix}', (dict(
-            names=['f0'],
-            formats=['i'],
-            offsets=[0],
-            itemsize=aligned(size + 1)
-        ), (3,)))
+        expected_dtype = {'names': ['f0'], 'formats': ['i'],
+                          'itemsize': np.dtype('i,V1', align=True).itemsize}
+        self._check('(3)T{ix}', (expected_dtype, (3,)))
 
     def test_char_vs_string(self):
         dt = np.dtype('c')
