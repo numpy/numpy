@@ -3,7 +3,7 @@ name: Linux tests
 # This file is meant for testing across supported Python versions, build types
 # and interpreters (PyPy, python-dbg, a pre-release Python in summer time),
 # build-via-sdist, run benchmarks, measure code coverage, and other build
-# options like relaxed-strides.
+# options.
 
 on:
   push:
@@ -175,24 +175,6 @@ jobs:
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
         spin bench --quick
-
-  relaxed_strides_debug:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    env:
-      CHECK_BLAS: 1
-      NPY_USE_BLAS_ILP64: 1
-      NPY_RELAXED_STRIDES_DEBUG: 1
-    steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: '3.11'
-    - uses: ./.github/actions
 
   sdist:
     needs: [smoke_test]

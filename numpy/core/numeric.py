@@ -487,10 +487,8 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete and, because of changes due to relaxed stride
-    checking, its return value for the same array may differ for versions
-    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
-    array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
+    This function is obsolete. If you only want to check if an array is Fortran
+    contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
     ----------
