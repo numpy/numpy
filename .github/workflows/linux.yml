@@ -78,6 +78,7 @@ jobs:
         python-version: 'pypy3.9-v7.3.12'
     - name: Install system dependencies
       run: |
+        sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
     - uses: ./.github/meson_actions
 
@@ -92,6 +93,7 @@ jobs:
         fetch-depth: 0
     - name: Install debug Python
       run: |
+        sudo apt-get update
         sudo apt-get install python3-dbg ninja-build
     - name: Build NumPy and install into venv
       run: |
@@ -128,6 +130,7 @@ jobs:
     - name: Install gfortran and OpenBLAS (MacPython build)
       run: |
         set -xe
+        sudo apt update
         sudo apt install gfortran libgfortran5
         target=$(python tools/openblas_support.py)
         sudo cp -r $target/lib/* /usr/lib
@@ -156,6 +159,7 @@ jobs:
         python-version: '3.9'
     - name: Install build and benchmarking dependencies
       run: |
+        sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
         pip install spin cython asv virtualenv packaging
     - name: Install NumPy
@@ -205,6 +209,7 @@ jobs:
     - name: Install gfortran and OpenBLAS (MacPython build)
       run: |
         set -xe
+        sudo apt update
         sudo apt install gfortran libgfortran5
         target=$(python tools/openblas_support.py)
         sudo cp -r $target/lib/* /usr/lib

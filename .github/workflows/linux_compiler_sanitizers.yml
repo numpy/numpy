@@ -35,6 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
+        sudo apt-get update
         sudo apt-get install -y libopenblas-serial-dev
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
