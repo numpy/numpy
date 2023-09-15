@@ -1053,6 +1053,9 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
 
 cdef extern from "numpy/arrayobject.h":
 
+    ctypedef struct NpyIter:
+        pass
+
     ctypedef class numpy.nditer [object NpyIter, check_size ignore]:
         @property
         cdef inline npy_bool has_delayed_bufalloc(self):
@@ -1081,6 +1084,26 @@ cdef extern from "numpy/arrayobject.h":
         @property
         cdef inline npy_intp itersize(self):
             return NpyIter_GetIterSize(self)
+
+        @property
+        cdef inline int ndim(self):
+            return NpyIter_GetNDim(self)
+
+        @property
+        cdef inline int nop(self):
+            return NpyIter_GetNOp(self)
+
+        @property
+        cdef inline tuple[ndarray] itviews(self):
+            return tuple([NpyIter_GetIterView(self, <npy_intp>i) for i in range(self.nop)])
+
+        @property
+        cdef inline PyArrayObject** operands(self):
+            return NpyIter_GetOperandArray(self)
+
+        @property
+        cdef inline PyArray_Descr** dtypes(self):
+            return NpyIter_GetDescrArray(self)
 
     cdef enum:
         NPY_FAIL

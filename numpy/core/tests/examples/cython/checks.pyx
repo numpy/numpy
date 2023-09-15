@@ -82,18 +82,41 @@ def make_iso_8601_datetime(dt: "datetime"):
 cdef cnp.nditer NpyIter_from_nditer_obj(object it):
     # one operand is assumed
     cdef:
-        cnp.nditer cit = cnp.NpyIter_New(it.operands[0],
-                                         cnp.NPY_ITER_READWRITE,
-                                         cnp.NPY_CORDER, cnp.NPY_NO_CASTING,
-                                         <cnp.dtype>NULL)
+        list flag_array = [cnp.NPY_ITER_READWRITE]
+        cnp.npy_uint32 flags = flag_array[0]
+        cnp.nditer cit
+
+    if it.has_index:
+        flag_array.append(cnp.NPY_ITER_C_INDEX)
+    if it.has_delayed_bufalloc:
+        flag_array.extend((cnp.NPY_ITER_BUFFERED, cnp.NPY_ITER_DELAY_BUFALLOC))
+    if it.has_multi_index:
+        flag_array.append(cnp.NPY_ITER_MULTI_INDEX)
+
+    for f in flag_array:
+        flags |= f
+
+    cit = cnp.NpyIter_New(it.operands[0], flags, cnp.NPY_KEEPORDER,
+                          cnp.NPY_NO_CASTING, <cnp.dtype>NULL)
     return cit
 
 
 def get_nditer_size(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cnp.NpyIter_GetIterSize(cit)
+    return cit.itersize
 
 
 def get_nditer_ndim(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cnp.NpyIter_GetNOp(cit)
+    return cit.nop
+
+
+def nditer_has_delayed_bufalloc(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.has_delayed_bufalloc
+
+
+def nditer_has_index(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.has_index
+

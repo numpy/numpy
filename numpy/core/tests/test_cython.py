@@ -164,15 +164,24 @@ class TestDatetimeStrings:
         assert res == 48
 
 
-def test_nditer_size(install_temp):
+def test_nditer_attributes(install_temp):
     import checks
     arr = np.random.rand(3, 2)
     it = np.nditer(arr)
+
     assert checks.get_nditer_size(it) == it.itersize
-
-
-def test_nditer_ndim(install_temp):
-    import checks
-    arr = np.random.rand(3, 2)
-    it = np.nditer([arr])
     assert checks.get_nditer_ndim(it) == it.nop
+    assert checks.nditer_has_index(it) == it.has_index == False
+    it = np.nditer(arr, flags=["c_index"])
+    assert checks.nditer_has_index(it) == it.has_index == True
+    assert (
+        checks.nditer_has_delayed_bufalloc(it)
+        == it.has_delayed_bufalloc
+        == False
+    )
+    it = np.nditer(arr, flags=["buffered", "delay_bufalloc"])
+    assert (
+        checks.nditer_has_delayed_bufalloc(it)
+        == it.has_delayed_bufalloc
+        == True
+    )
