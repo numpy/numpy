@@ -83,7 +83,7 @@ cdef cnp.nditer NpyIter_from_nditer_obj(object it):
     # this function supports up to 5 iterator operands
     cdef:
         cnp.nditer cit
-        cnp.PyArray_Descr* op_dtypes[5]
+        # cnp.PyArray_Descr* op_dtypes[5]
         cnp.npy_uint32 op_flags[5]
         cnp.PyArrayObject* ops[5]
         cnp.npy_uint32 flags = 0
@@ -100,11 +100,12 @@ cdef cnp.nditer NpyIter_from_nditer_obj(object it):
         op_flags[i] = cnp.NPY_ITER_READONLY
 
     for i in range(it.nop):
-        op_dtypes[i] = cnp.PyArray_DESCR(it.operands[i])
+        # op_dtypes[i] = cnp.PyArray_DESCR(it.operands[i])
         ops[i] = <cnp.PyArrayObject*>it.operands[i]
 
     cit = cnp.NpyIter_MultiNew(it.nop, &ops[0], flags, cnp.NPY_KEEPORDER,
-                               cnp.NPY_NO_CASTING, &op_flags[0], &op_dtypes[0])
+                               cnp.NPY_NO_CASTING, &op_flags[0],
+                               <cnp.PyArray_Descr**>NULL)
     return cit
 
 

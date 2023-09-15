@@ -713,7 +713,6 @@ cdef extern from "numpy/arrayobject.h":
     # additional datetime related functions are defined below
 
 
-
 # Typedefs that matches the runtime dtype objects in
 # the numpy module.
 

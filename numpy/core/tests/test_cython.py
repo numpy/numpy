@@ -193,9 +193,8 @@ def test_nditer_attributes(install_temp):
     assert checks.nditer_has_multi_index(it) == it.has_multi_index == True
     assert checks.get_nditer_ndim(it) == it.ndim == 2
 
-    arr2 = np.random.rand(2, 1, 1)
+    arr2 = np.random.rand(2, 1, 2)
     it = np.nditer([arr, arr2])
     assert checks.get_nditer_nop(it) == it.nop == 2
-    assert checks.get_nditer_size(it) == it.itersize == np.prod(arr.shape +
-                                                                arr2.shape)
-    assert checks.get_nditer_ndim(it) == it.ndim
+    assert checks.get_nditer_size(it) == it.itersize == 12
+    assert checks.get_nditer_ndim(it) == it.ndim == 3
