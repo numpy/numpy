@@ -80,24 +80,31 @@ def make_iso_8601_datetime(dt: "datetime"):
 
 
 cdef cnp.nditer NpyIter_from_nditer_obj(object it):
-    # one operand is assumed
+    # this function supports up to 5 iterator operands
     cdef:
-        list flag_array = [cnp.NPY_ITER_READWRITE]
-        cnp.npy_uint32 flags = flag_array[0]
         cnp.nditer cit
+        cnp.PyArray_Descr* op_dtypes[5]
+        cnp.npy_uint32 op_flags[5]
+        cnp.PyArrayObject* ops[5]
+        cnp.npy_uint32 flags = 0
 
     if it.has_index:
-        flag_array.append(cnp.NPY_ITER_C_INDEX)
+        flags |= cnp.NPY_ITER_C_INDEX
     if it.has_delayed_bufalloc:
-        flag_array.extend((cnp.NPY_ITER_BUFFERED, cnp.NPY_ITER_DELAY_BUFALLOC))
+        flags |= cnp.NPY_ITER_BUFFERED | cnp.NPY_ITER_DELAY_BUFALLOC
     if it.has_multi_index:
-        flag_array.append(cnp.NPY_ITER_MULTI_INDEX)
+        flags |= cnp.NPY_ITER_MULTI_INDEX
 
-    for f in flag_array:
-        flags |= f
+    # one of READWRITE, READONLY and WRTIEONLY at the minimum must be specified for op_flags
+    for i in range(it.nop):
+        op_flags[i] = cnp.NPY_ITER_READONLY
 
-    cit = cnp.NpyIter_New(it.operands[0], flags, cnp.NPY_KEEPORDER,
-                          cnp.NPY_NO_CASTING, <cnp.dtype>NULL)
+    for i in range(it.nop):
+        op_dtypes[i] = cnp.PyArray_DESCR(it.operands[i])
+        ops[i] = <cnp.PyArrayObject*>it.operands[i]
+
+    cit = cnp.NpyIter_MultiNew(it.nop, &ops[0], flags, cnp.NPY_KEEPORDER,
+                               cnp.NPY_NO_CASTING, &op_flags[0], &op_dtypes[0])
     return cit
 
 
@@ -107,6 +114,11 @@ def get_nditer_size(it: "nditer"):
 
 
 def get_nditer_ndim(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.ndim
+
+
+def get_nditer_nop(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
     return cit.nop
 
@@ -120,3 +132,7 @@ def nditer_has_index(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
     return cit.has_index
 
+
+def nditer_has_multi_index(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.has_multi_index

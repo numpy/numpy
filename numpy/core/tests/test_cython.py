@@ -167,11 +167,12 @@ class TestDatetimeStrings:
 def test_nditer_attributes(install_temp):
     import checks
     arr = np.random.rand(3, 2)
-    it = np.nditer(arr)
 
-    assert checks.get_nditer_size(it) == it.itersize
-    assert checks.get_nditer_ndim(it) == it.nop
+    it = np.nditer(arr)
+    assert checks.get_nditer_size(it) == it.itersize == np.prod(arr.shape)
+    assert checks.get_nditer_ndim(it) == it.ndim == 1
     assert checks.nditer_has_index(it) == it.has_index == False
+
     it = np.nditer(arr, flags=["c_index"])
     assert checks.nditer_has_index(it) == it.has_index == True
     assert (
@@ -179,9 +180,22 @@ def test_nditer_attributes(install_temp):
         == it.has_delayed_bufalloc
         == False
     )
+
     it = np.nditer(arr, flags=["buffered", "delay_bufalloc"])
     assert (
         checks.nditer_has_delayed_bufalloc(it)
         == it.has_delayed_bufalloc
         == True
     )
+
+    it = np.nditer(arr, flags=["multi_index"])
+    assert checks.get_nditer_size(it) == it.itersize == np.prod(arr.shape)
+    assert checks.nditer_has_multi_index(it) == it.has_multi_index == True
+    assert checks.get_nditer_ndim(it) == it.ndim == 2
+
+    arr2 = np.random.rand(2, 1, 1)
+    it = np.nditer([arr, arr2])
+    assert checks.get_nditer_nop(it) == it.nop == 2
+    assert checks.get_nditer_size(it) == it.itersize == np.prod(arr.shape +
+                                                                arr2.shape)
+    assert checks.get_nditer_ndim(it) == it.ndim
