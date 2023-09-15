@@ -528,7 +528,7 @@ than in numpy 1.13. Arrays printed in scientific notation now also use the
 shortest scientific representation, instead of fixed precision as before.
 
  Additionally, the `str` of float scalars scalars will no longer be truncated
- in python2, unlike python2 `float`s.  `np.double` scalars now have a ``str``
+ in python2, unlike python2 `float`\ s.  `np.double` scalars now have a ``str``
  and ``repr`` identical to that of a python3 float.
 
 New functions ``np.format_float_scientific`` and ``np.format_float_positional``
