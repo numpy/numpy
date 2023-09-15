@@ -297,12 +297,7 @@ read_rows(stream *s,
                  */
                 data_array = (PyArrayObject *)PyArray_SimpleNewFromDescr(
                         ndim, result_shape, out_descr);
-#ifdef NPY_RELAXED_STRIDES_DEBUG
-                /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing */
-                if (result_shape[0] == 1) {
-                    PyArray_STRIDES(data_array)[0] = row_size;
-                }
-#endif /* NPY_RELAXED_STRIDES_DEBUG */
+
                 if (data_array == NULL) {
                     goto error;
                 }

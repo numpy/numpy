@@ -478,10 +478,6 @@ endif
 # TODO: document this (search for NPY_NOSMP in C API docs)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
 
-# Use bogus stride debug aid to flush out bugs where users use strides of
-# dimensions with length 1 to index a full contiguous array.
-cdata.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
-
 # Check whether we can use inttypes (C99) formats
 if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
   cdata.set10('NPY_USE_C99_FORMATS', true)

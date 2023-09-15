@@ -29,5 +29,3 @@ option('test-simd', type: 'array',
         description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
 option('test-simd-args', type: 'string', value: '',
         description: 'Extra args to be passed to the `_simd` module that is used for testing the NumPy SIMD interface')
-option('relaxed-strides-debug', type: 'boolean', value: false,
-        description: 'Enable relaxed strides debug mode (see `NPY_RELAXED_STRIDES_DEBUG` docs)')

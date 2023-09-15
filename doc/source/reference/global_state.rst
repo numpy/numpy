@@ -59,20 +59,6 @@ See :ref:`runtime-simd-dispatch`.
 Debugging-related options
 =========================
 
-Relaxed strides checking
-------------------------
-
-The *compile-time* environment variable::
-
-    NPY_RELAXED_STRIDES_DEBUG=0
-
-can be set to help debug code written in C which iterators through arrays
-manually.  When an array is contiguous and iterated in a contiguous manner,
-its ``strides`` should not be queried.  This option can help find errors where
-the ``strides`` are incorrectly used.
-For details see the :ref:`memory layout <memory-layout>` documentation.
-
-
 Warn if no memory allocation policy when deallocating data
 ----------------------------------------------------------
 
