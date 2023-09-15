@@ -1049,6 +1049,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
+  'src/multiarray/vec_string.c',
   'src/npysort/quicksort.cpp',
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort.cpp',
