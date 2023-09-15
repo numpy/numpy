@@ -1,5 +1,0 @@
-``np.errstate()`` is now faster and context safe
-------------------------------------------------
-The `np.errstate` context manager/decorator is now faster and
-safer.  Previously, it was not context safe and had (rarely)
-issues with thread-safety.

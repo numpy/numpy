@@ -652,8 +652,8 @@ def hermder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -765,8 +765,8 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -1148,7 +1148,7 @@ def hermvander(x, deg):
            [ 1.,  2.,  2., -4.]])
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1341,7 +1341,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1592,7 +1592,7 @@ def hermgauss(deg):
     the right value when integrating 1.
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 

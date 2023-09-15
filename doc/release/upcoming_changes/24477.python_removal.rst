@@ -1,0 +1,7 @@
+* ``np.find_common_type`` has been removed. Use ``numpy.promote_types`` or
+  ``numpy.result_type`` instead. To achieve semantics for the ``scalar_types``
+  argument, use ``numpy.result_type`` and pass the Pythonvalues ``0``, ``0.0``, or ``0j``.
+
+* ``np.round_`` has been removed. Use ``np.round`` instead.
+
+* ``np.nbytes`` has been removed. Use ``np.dtype(<dtype>).itemsize`` instead.

@@ -258,7 +258,7 @@ Glossary
            >>> a + 3
            array([3, 4, 5])
 
-       Ordinarly, vector operands must all be the same size, because NumPy
+       Ordinarily, vector operands must all be the same size, because NumPy
        works element by element -- for instance, ``c = a * b`` is ::
 
            c[0,0,0] = a[0,0,0] * b[0,0,0]

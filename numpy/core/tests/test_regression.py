@@ -277,7 +277,7 @@ class TestRegression:
 
     def test_numpy_float_python_long_addition(self):
         # Check that numpy float and python longs can be added correctly.
-        a = np.float_(23.) + 2**135
+        a = np.float64(23.) + 2**135
         assert_equal(a, 23. + 2**135)
 
     def test_binary_repr_0(self):
@@ -1523,7 +1523,7 @@ class TestRegression:
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.sctypeDict.values()
+        dtypes = [x for x in np.core.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], np.bool_)  # not x[0] because it is unordered
@@ -1670,12 +1670,6 @@ class TestRegression:
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1])  # [0] if nonzero() ignores swap
-
-    def test_find_common_type_boolean(self):
-        # Ticket #1695
-        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
-            res = np.find_common_type([], ['?', '?'])
-        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])
@@ -2334,7 +2328,7 @@ class TestRegression:
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
-        all_types = set(np.sctypeDict.values()) - {np.void}
+        all_types = set(np.core.sctypeDict.values()) - {np.void}
         for t in all_types:
             val = t()
 
@@ -2346,7 +2340,7 @@ class TestRegression:
                 assert_(t.__hash__ != None)
 
     def test_scalar_copy(self):
-        scalar_types = set(np.sctypeDict.values())
+        scalar_types = set(np.core.sctypeDict.values())
         values = {
             np.void: b"a",
             np.bytes_: b"a",

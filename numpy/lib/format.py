@@ -167,7 +167,7 @@ import pickle
 import warnings
 
 import numpy
-from numpy.lib.utils import drop_metadata
+from numpy.lib._utils_impl import drop_metadata
 
 
 __all__ = []

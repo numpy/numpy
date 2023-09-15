@@ -110,9 +110,6 @@ Salient points
 
 It is worth keeping in mind the following:
 
-* ``meson`` will default to passing ``-fimplicit-none`` under ``gfortran`` by
-  default, which differs from that of the standard ``np.distutils`` behaviour
-
 * It is not possible to use SCREAMCASE in this context, so either the contents
   of the ``.f`` file or the generated wrapper ``.c`` needs to be lowered to
   regular letters; which can be facilitated by the ``--lower`` option of

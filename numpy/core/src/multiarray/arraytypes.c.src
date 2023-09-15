@@ -4600,7 +4600,6 @@ set_typeinfo(PyObject *dict)
      * #FROM = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
      *         LONG, ULONG, LONGLONG, ULONGLONG,
      *         FLOAT, DOUBLE, LONGDOUBLE#
-     *
      * #NAME = Byte, UByte, Short, UShort, Int, UInt,
      *         Long, ULong, LongLong, ULongLong,
      *         Float, Double, LongDouble#
@@ -4609,10 +4608,14 @@ set_typeinfo(PyObject *dict)
      * #func = argmax, argmin#
      */
     NPY_CPU_DISPATCH_CALL_XB(_Py@NAME@_ArrFuncs.@func@ = (PyArray_ArgFunc*)@FROM@_@func@);
+    {
+        char sig[2] = {NPY_@FROM@LTR , '\0'};
+        NPY_CPU_DISPATCH_TRACE("@func@", sig);
+    }
     /**end repeat1**/
     /**end repeat**/
     NPY_CPU_DISPATCH_CALL_XB(_PyBool_ArrFuncs.argmax = (PyArray_ArgFunc*)BOOL_argmax);
-
+    NPY_CPU_DISPATCH_TRACE("argmax", "?");
     /*
      * Override the base class for all types, eventually all of this logic
      * should be defined on the class and inherited to the scalar.

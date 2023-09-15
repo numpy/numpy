@@ -57,7 +57,7 @@ New deprecations
 
 * The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` are
   deprecated. They were buggy and not documented and will be removed in the
-  1.18 release. Use `numpy.sctypeDict` instead.
+  1.18 release. Use ``numpy.sctypeDict`` instead.
 
 * The `numpy.asscalar` function is deprecated. It is an alias to the more
   powerful `numpy.ndarray.item`, not tested, and fails for scalars.

@@ -767,14 +767,6 @@ It is equivalent to `hstack` only for 2D arrays::
     array([[4., 3.],
            [2., 8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
-for any input arrays. In fact, `row_stack` is an alias for `vstack`::
-
-    >>> np.column_stack is np.hstack
-    False
-    >>> np.row_stack is np.vstack
-    True
-
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their

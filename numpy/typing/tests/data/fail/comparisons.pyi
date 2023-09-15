@@ -1,11 +1,11 @@
-from typing import Any
 import numpy as np
+import numpy.typing as npt
 
-AR_i: np.ndarray[Any, np.dtype[np.int64]]
-AR_f: np.ndarray[Any, np.dtype[np.float64]]
-AR_c: np.ndarray[Any, np.dtype[np.complex128]]
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]]
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
+AR_i: npt.NDArray[np.int64]
+AR_f: npt.NDArray[np.float64]
+AR_c: npt.NDArray[np.complex128]
+AR_m: npt.NDArray[np.timedelta64]
+AR_M: npt.NDArray[np.datetime64]
 
 AR_f > AR_m  # E: Unsupported operand types
 AR_c > AR_m  # E: Unsupported operand types

@@ -23,7 +23,7 @@ __all__ = [
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'max', 'min',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'ravel', 'repeat', 'reshape', 'resize', 'round', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -345,9 +345,9 @@ def choose(a, choices, out=None, mode='raise'):
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside ``[0, n-1]`` will be treated:
 
-          * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod ``n``
-          * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
+        * 'raise' : an exception is raised
+        * 'wrap' : value becomes value mod ``n``
+        * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
     -------
@@ -1389,11 +1389,11 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Examples
     --------
-    >>> np.searchsorted([1,2,3,4,5], 3)
+    >>> np.searchsorted([11,12,13,14,15], 13)
     2
-    >>> np.searchsorted([1,2,3,4,5], 3, side='right')
+    >>> np.searchsorted([11,12,13,14,15], 13, side='right')
     3
-    >>> np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3])
+    >>> np.searchsorted([11,12,13,14,15], [-10, 20, 12, 13])
     array([0, 5, 1, 2])
 
     """
@@ -2241,8 +2241,6 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     cumsum : Cumulative sum of array elements.
 
-    trapz : Integration of array values using the composite trapezoidal rule.
-
     mean, average
 
     Notes
@@ -2544,7 +2542,6 @@ def cumsum(a, axis=None, dtype=None, out=None):
     See Also
     --------
     sum : Sum array elements.
-    trapz : Integration of array values using the composite trapezoidal rule.
     diff : Calculate the n-th discrete difference along given axis.
 
     Notes
@@ -2784,7 +2781,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.max(b)
     np.float64(nan)
     >>> np.max(b, where=~np.isnan(b), initial=-1)
@@ -2928,7 +2925,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     array([10,  1])
 
     >>> b = np.arange(5, dtype=float)
-    >>> b[2] = np.NaN
+    >>> b[2] = np.nan
     >>> np.min(b)
     np.float64(nan)
     >>> np.min(b, where=~np.isnan(b), initial=10)
@@ -3841,33 +3838,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 # Aliases of other functions. Provided unique docstrings
 # are for reference purposes only. Wherever possible,
 # avoid using them.
-
-
-def _round__dispatcher(a, decimals=None, out=None):
-    # 2023-02-28, 1.25.0
-    warnings.warn("`round_` is deprecated as of NumPy 1.25.0, and will be "
-                  "removed in NumPy 2.0. Please use `round` instead.",
-                  DeprecationWarning, stacklevel=3)
-    return (a, out)
-
-
-@array_function_dispatch(_round__dispatcher)
-def round_(a, decimals=0, out=None):
-    """
-    Round an array to the given number of decimals.
-
-    `~numpy.round_` is a disrecommended backwards-compatibility
-    alias of `~numpy.around` and `~numpy.round`.
-
-    .. deprecated:: 1.25.0
-        ``round_`` is deprecated as of NumPy 1.25.0, and will be
-        removed in NumPy 2.0. Please use `round` instead.
-
-    See Also
-    --------
-    around : equivalent function; see for details.
-    """
-    return around(a, decimals=decimals, out=out)
 
 
 def _product_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

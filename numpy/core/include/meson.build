@@ -21,12 +21,6 @@ installed_headers = [
   'numpy/utils.h',
 ]
 
-# Note that oldnumeric.h is not installed on purpose. After investigation,
-# there are only two active repos left which use it, and those got a heads up
-# about removal of this header in numpy 1.25.0:
-#   https://github.com/enthought/enable/issues/1005
-#   https://github.com/fhs/pyhdf/issues/63
-
 py.install_sources(
   installed_headers,
   subdir: 'numpy/core/include/numpy'

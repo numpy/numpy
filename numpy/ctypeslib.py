@@ -253,12 +253,12 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     flags : str or tuple of str
         Array flags; may be one or more of:
 
-          - C_CONTIGUOUS / C / CONTIGUOUS
-          - F_CONTIGUOUS / F / FORTRAN
-          - OWNDATA / O
-          - WRITEABLE / W
-          - ALIGNED / A
-          - WRITEBACKIFCOPY / X
+        - C_CONTIGUOUS / C / CONTIGUOUS
+        - F_CONTIGUOUS / F / FORTRAN
+        - OWNDATA / O
+        - WRITEABLE / W
+        - ALIGNED / A
+        - WRITEBACKIFCOPY / X
 
     Returns
     -------
@@ -487,17 +487,17 @@ if ctypes is not None:
 
         ``np.dtype(as_ctypes_type(dt))`` will:
 
-         - insert padding fields
-         - reorder fields to be sorted by offset
-         - discard field titles
+        - insert padding fields
+        - reorder fields to be sorted by offset
+        - discard field titles
 
         ``as_ctypes_type(np.dtype(ctype))`` will:
 
-         - discard the class names of `ctypes.Structure`\ s and
-           `ctypes.Union`\ s
-         - convert single-element `ctypes.Union`\ s into single-element
-           `ctypes.Structure`\ s
-         - insert padding fields
+        - discard the class names of `ctypes.Structure`\ s and
+          `ctypes.Union`\ s
+        - convert single-element `ctypes.Union`\ s into single-element
+          `ctypes.Structure`\ s
+        - insert padding fields
 
         """
         return _ctype_from_dtype(_dtype(dtype))

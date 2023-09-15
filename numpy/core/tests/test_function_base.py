@@ -4,9 +4,10 @@ import pytest
 
 import numpy as np
 from numpy import (
-    logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
+    logspace, linspace, geomspace, dtype, array, arange, isnan,
     ndarray, sqrt, nextafter, stack, errstate
     )
+from numpy.core import sctypes
 from numpy.core.function_base import add_newdoc
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
@@ -231,9 +232,9 @@ class TestGeomspace:
 
         # Native types
         y = geomspace(1, 1e6, dtype=float)
-        assert_equal(y.dtype, dtype('float_'))
+        assert_equal(y.dtype, dtype('float64'))
         y = geomspace(1, 1e6, dtype=complex)
-        assert_equal(y.dtype, dtype('complex'))
+        assert_equal(y.dtype, dtype('complex128'))
 
     def test_start_stop_array_scalar(self):
         lim1 = array([120, 100], dtype="int8")
@@ -459,7 +460,7 @@ class TestAdd_newdoc:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
-        assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+        assert_(len(np.lib._index_tricks_impl.mgrid.__doc__) > 300)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_errors_are_ignored(self):

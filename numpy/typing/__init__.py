@@ -135,8 +135,8 @@ situation with either `typing.cast` or a ``# type: ignore`` comment.
 Record array dtypes
 ~~~~~~~~~~~~~~~~~~~
 
-The dtype of `numpy.recarray`, and the `numpy.rec` functions in general,
-can be specified in one of two ways:
+The dtype of `numpy.recarray`, and the :ref:`routines.array-creation.rec`
+functions in general, can be specified in one of two ways:
 
 * Directly via the ``dtype`` argument.
 * With up to five helper arguments that operate via `numpy.format_parser`:

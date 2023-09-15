@@ -1,5 +1,3 @@
-import numpy as np
+import numpy.lib.array_utils as array_utils
 
-np.byte_bounds(1)  # E: incompatible type
-
-np.lookfor(None)  # E: incompatible type
+array_utils.byte_bounds(1)  # E: incompatible type

@@ -312,7 +312,7 @@ class TestAttributes:
 
     def test_dtypeattr(self):
         assert_equal(self.one.dtype, np.dtype(np.int_))
-        assert_equal(self.three.dtype, np.dtype(np.float_))
+        assert_equal(self.three.dtype, np.dtype(np.float64))
         assert_equal(self.one.dtype.char, 'l')
         assert_equal(self.three.dtype.char, 'd')
         assert_(self.three.dtype.str[0] in '<>')
@@ -572,7 +572,7 @@ class TestAssignment:
     )
     def test_unicode_assignment(self):
         # gh-5049
-        from numpy.core.numeric import set_string_function
+        from numpy.core.arrayprint import set_string_function
 
         @contextmanager
         def inject_str(s):
@@ -611,7 +611,7 @@ class TestAssignment:
         # only relevant if longdouble is larger than float
         # we're looking for loss of precision
 
-        for dtype in (np.longdouble, np.longcomplex):
+        for dtype in (np.longdouble, np.clongdouble):
             # gh-8902
             tinyb = np.nextafter(np.longdouble(0), 1).astype(dtype)
             tinya = np.nextafter(np.longdouble(0), -1).astype(dtype)
@@ -4969,7 +4969,7 @@ class TestClip:
         if expected_max is None:
             expected_max = clip_max
 
-        for T in np.sctypes[type_group]:
+        for T in np.core.sctypes[type_group]:
             if sys.byteorder == 'little':
                 byte_orders = ['=', '>']
             else:
@@ -5069,7 +5069,7 @@ class TestPutmask:
         mask = x < 40
 
         for val in [-100, 0, 15]:
-            for types in np.sctypes.values():
+            for types in np.core.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
                         if val < 0 and np.dtype(T).kind == "u":
@@ -5146,7 +5146,7 @@ class TestTake:
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4
-        for types in np.sctypes.values():
+        for types in np.core.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
                     self.tst_basic(x.copy().astype(T))
@@ -7931,7 +7931,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x)
 
     def test_roundtrip_single_types(self):
-        for typ in np.sctypeDict.values():
+        for typ in np.core.sctypeDict.values():
             dtype = np.dtype(typ)
 
             if dtype.char in 'Mm':

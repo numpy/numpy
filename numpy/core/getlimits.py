@@ -9,7 +9,7 @@ from .._utils import set_module
 from ._machar import MachAr
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array, inf, NaN
+from .numeric import array, inf, nan
 from .umath import log10, exp2, nextafter, isnan
 
 
@@ -121,8 +121,8 @@ class MachArLike:
 
 _convert_to_float = {
     ntypes.csingle: ntypes.single,
-    ntypes.complex_: ntypes.float_,
-    ntypes.clongfloat: ntypes.longfloat
+    ntypes.complex128: ntypes.float64,
+    ntypes.clongdouble: ntypes.longdouble
     }
 
 # Parameters for creating MachAr / MachAr-like objects
@@ -277,7 +277,7 @@ def _register_known_types():
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
     # As the smallest_normal in double double is so hard to calculate we set
     # it to NaN.
-    smallest_normal_dd = NaN
+    smallest_normal_dd = nan
     # Leave the same value for the smallest subnormal as double
     smallest_subnormal_dd = ld(nextafter(0., 1.))
     float_dd_ma = MachArLike(ld,
@@ -508,7 +508,7 @@ class finfo:
         if obj is not None:
             return obj
         dtypes = [dtype]
-        newdtype = numeric.obj2sctype(dtype)
+        newdtype = ntypes.obj2sctype(dtype)
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype

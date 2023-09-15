@@ -70,6 +70,7 @@ if not (hasattr(multiarray, '_multiarray_umath') and
     raise ImportError(msg.format(path))
 
 from . import numerictypes as nt
+from .numerictypes import sctypes, sctypeDict
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
 from .numeric import *
@@ -105,7 +106,7 @@ from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['char', 'rec', 'memmap']
+__all__ = ['char', 'rec', 'memmap', 'sctypeDict']
 __all__ += numeric.__all__
 __all__ += ['record', 'recarray', 'format_parser', 'chararray', 'abs']
 __all__ += function_base.__all__

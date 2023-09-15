@@ -488,7 +488,7 @@ if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
 endif
 
 visibility_hidden = ''
-if cc.has_function_attribute('visibility:hidden')
+if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'
   visibility_hidden = '__attribute__((visibility("hidden")))'
 endif
 cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
@@ -841,9 +841,7 @@ foreach gen_mtargets : [
   [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
-    # Enabling SIMD on clang-cl raises spurious FP exceptions
-    # TODO (seiko2plus): debug spurious FP exceptions for single-precision log/exp
-    compiler_id == 'clang-cl' ? [] : [
+    [
       AVX512_SKX, AVX512F, [AVX2, FMA3]
     ]
   ],
@@ -887,9 +885,7 @@ foreach gen_mtargets : [
   [
     'loops_trigonometric.dispatch.h',
     src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
-    # Enabling SIMD on clang-cl raises spurious FP exceptions
-    # TODO (seiko2plus): debug spurious FP exceptions for single-precision sin/cos
-    compiler_id == 'clang-cl' ? [] : [
+    [
       AVX512F, [AVX2, FMA3],
       VSX4, VSX3, VSX2,
       NEON_VFPV4,
@@ -986,6 +982,7 @@ src_multiarray_umath_common = [
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
+  'src/common/npy_cpu_dispatch.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas

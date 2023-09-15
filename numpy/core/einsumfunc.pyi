@@ -1,14 +1,13 @@
 from collections.abc import Sequence
-from typing import TypeVar, Any, overload, Union, Literal
+from typing import TypeVar, Any, overload, Literal
 
 from numpy import (
-    ndarray,
-    dtype,
     bool_,
     number,
     _OrderKACF,
 )
 from numpy._typing import (
+    NDArray,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -26,7 +25,7 @@ from numpy._typing import (
 
 _ArrayType = TypeVar(
     "_ArrayType",
-    bound=ndarray[Any, dtype[Union[bool_, number[Any]]]],
+    bound=NDArray[bool_ | number[Any]],
 )
 
 _OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]

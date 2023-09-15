@@ -935,8 +935,8 @@ def chebder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -1054,8 +1054,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -1419,7 +1419,7 @@ def chebvander(x, deg):
         the converted `x`.
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1615,7 +1615,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1808,7 +1808,7 @@ def chebinterpolate(func, deg, args=()):
     Examples
     --------
     >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
+    >>> C.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
     array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
             -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
              2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
@@ -1879,7 +1879,7 @@ def chebgauss(deg):
     .. math:: w_i = \\pi / n
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 
@@ -2067,7 +2067,7 @@ class Chebyshev(ABCPolyBase):
 
         Notes
         -----
-        See `numpy.polynomial.chebfromfunction` for more details.
+        See `numpy.polynomial.chebinterpolate` for more details.
 
         """
         if domain is None:

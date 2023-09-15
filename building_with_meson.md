@@ -37,12 +37,9 @@ pytest --pyargs numpy
 
 ### pip install
 
-Note that `pip` will use the default build system, which is (as of now) still
-`numpy.distutils`. In order to switch that default to Meson, uncomment the
-`build-backend = "mesonpy"` line at the top of `pyproject.toml`.
-
-After that is done, `pip install .` or `pip install --no-build-isolation .`
-will work as expected. As does building an sdist or wheel with `python -m build`,
+Note that `pip` will use the default build system, which is now Meson.
+Commands such as `pip install .` or `pip install --no-build-isolation .`
+will work as expected, as does building an sdist or wheel with `python -m build`,
 or `pip install -e . --no-build-isolation` for an editable install.
 For a more complete developer experience than editable installs, consider using
 `spin` instead though (see above).

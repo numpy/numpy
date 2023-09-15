@@ -1,6 +1,0 @@
-* ``npy_interrupt.h`` and the corresponding macros like ``NPY_SIGINT_ON``
-  have been removed.  We recommend querying ``PyErr_CheckSignals()`` or
-  ``PyOS_InterruptOccurred()`` periodically.  (These do currently require
-  holding the GIL though).
-* The ``noprefix.h`` header has been removed, replace missing symbols with
-  their prefixed counterparts (usually an added ``NPY_`` or ``npy_``).

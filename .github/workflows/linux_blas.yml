@@ -36,22 +36,6 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  openblas64_setuppy:
-    runs-on: ubuntu-latest
-    if: "github.repository == 'numpy/numpy'"
-    env:
-      DOWNLOAD_OPENBLAS: 1
-      NPY_USE_BLAS_ILP64: 1
-    steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-      with:
-        python-version: '3.11'
-    - uses: ./.github/actions
-
   openblas32_stable_nightly:
     if: "github.repository == 'numpy/numpy'"
     runs-on: ubuntu-latest
@@ -62,7 +46,7 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
       with:
         submodules: recursive
         fetch-depth: 0
