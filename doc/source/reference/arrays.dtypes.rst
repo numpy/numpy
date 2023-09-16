@@ -296,7 +296,7 @@ String with comma-separated fields
       >>> dt = np.dtype("a3, 3u8, (3,4)a10")
 
 Type strings
-   Any string in :obj:`numpy.sctypeDict`.keys():
+   Any string name of a NumPy dtype, e.g.:
 
    .. admonition:: Example
 

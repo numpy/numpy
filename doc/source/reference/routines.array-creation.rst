@@ -47,8 +47,7 @@ From existing data
 Creating record arrays
 ----------------------
 
-.. note:: :mod:`numpy.core.records` is used to create record
-   array. Please refer to :ref:`arrays.classes.rec` for
+.. note:: Please refer to :ref:`arrays.classes.rec` for
    record arrays.
 
 .. autosummary::
@@ -66,7 +65,7 @@ Creating character arrays (:mod:`numpy.char`)
 ---------------------------------------------
 
 .. note:: :mod:`numpy.char` is the preferred alias for
-   :mod:`numpy.core.defchararray`.
+   ``numpy.core.defchararray`` module.
 
 .. autosummary::
    :toctree: generated/
@@ -104,5 +103,4 @@ The Matrix class
 .. autosummary::
    :toctree: generated/
 
-   mat
    bmat

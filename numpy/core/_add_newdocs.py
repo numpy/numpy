@@ -5,7 +5,7 @@ requiring a re-compile.
 
 NOTE: Many of the methods of ndarray have corresponding functions.
       If you update these docstrings, please keep also the ones in
-      core/fromnumeric.py, core/defmatrix.py up-to-date.
+      core/fromnumeric.py, matrixlib/defmatrix.py up-to-date.
 
 """
 
@@ -971,9 +971,9 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     If `dtype` is set, array is copied only if dtype does not match:
 
     >>> a = np.array([1, 2], dtype=np.float32)
-    >>> np.asarray(a, dtype=np.float32) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float32), a)
     True
-    >>> np.asarray(a, dtype=np.float64) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float64), a)
     False
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
@@ -1392,7 +1392,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
-    comparison operator specified by `cmp_op`.
+    comparison operator specified by `cmp`.
 
     Parameters
     ----------
@@ -1411,7 +1411,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If `cmp_op` is not valid.
+        If `cmp` is not valid.
     TypeError
         If at least one of `a` or `b` is a non-string array
 
@@ -4059,7 +4059,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The WRITEBACKIFCOPY and flag can never be set
+    The WRITEBACKIFCOPY flag can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that
@@ -4078,7 +4078,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     -----
     Array flags provide information about how the memory area used
     for the array is to be interpreted. There are 7 Boolean flags
-    in use, only four of which can be changed by the user:
+    in use, only three of which can be changed by the user:
     WRITEBACKIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
@@ -6643,9 +6643,6 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('imag',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('itemsize',
     """The length of one element in bytes."""))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('nbytes',
-    """The length of the scalar in bytes."""))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('ndim',
     """The number of array dimensions."""))

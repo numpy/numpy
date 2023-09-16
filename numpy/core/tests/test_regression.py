@@ -644,10 +644,6 @@ class TestRegression:
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
-    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
-    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous.
-    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride debug")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -903,17 +899,6 @@ class TestRegression:
     def test_copy_detection_corner_case(self):
         # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
-
-    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
-    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous,
-    # 0-sized reshape itself is tested elsewhere.
-    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride debug")
-    def test_copy_detection_corner_case2(self):
-        # Ticket #771: strides are not set correctly when reshaping 0-sized
-        # arrays
-        b = np.indices((0, 3, 4)).T.reshape(-1, 3)
-        assert_equal(b.strides, (3 * b.itemsize, b.itemsize))
 
     def test_object_array_refcounting(self):
         # Ticket #633
@@ -1670,12 +1655,6 @@ class TestRegression:
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1])  # [0] if nonzero() ignores swap
-
-    def test_find_common_type_boolean(self):
-        # Ticket #1695
-        with pytest.warns(DeprecationWarning, match="np.find_common_type"):
-            res = np.find_common_type([], ['?', '?'])
-        assert res == '?'
 
     def test_empty_mul(self):
         a = np.array([1.])

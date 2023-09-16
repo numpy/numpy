@@ -277,7 +277,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
                          verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
@@ -421,9 +421,9 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test verifies that the elements of `actual` and `desired` satisfy.
+    The test verifies that the elements of `actual` and `desired` satisfy::
 
-        ``abs(desired-actual) < float64(1.5 * 10**(-decimal))``
+        abs(desired-actual) < float64(1.5 * 10**(-decimal))
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation in `assert_array_almost_equal` did up to rounding
@@ -482,7 +482,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import ndarray
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -934,9 +934,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
               comparisons.
 
     The test verifies identical shapes and that the elements of ``actual`` and
-    ``desired`` satisfy.
+    ``desired`` satisfy::
 
-        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+        abs(desired-actual) < 1.5 * 10**(-decimal)
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation did up to rounding vagaries. An exception is raised
@@ -1732,7 +1732,7 @@ def assert_warns(warning_class, *args, **kwargs):
     If a different type of warning is thrown, it will not be caught.
 
     If called with all arguments other than the warning class omitted, may be
-    used as a context manager:
+    used as a context manager::
 
         with assert_warns(SomeWarning):
             do_something()
@@ -1792,7 +1792,7 @@ def assert_no_warnings(*args, **kwargs):
     """
     Fail if the given callable produces any warnings.
 
-    If called with all arguments omitted, may be used as a context manager:
+    If called with all arguments omitted, may be used as a context manager::
 
         with assert_no_warnings():
             do_something()
@@ -2335,7 +2335,7 @@ def assert_no_gc_cycles(*args, **kwargs):
     """
     Fail if the given callable produces any reference cycles.
 
-    If called with all arguments omitted, may be used as a context manager:
+    If called with all arguments omitted, may be used as a context manager::
 
         with assert_no_gc_cycles():
             do_something()

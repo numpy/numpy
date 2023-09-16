@@ -3520,8 +3520,6 @@ class TestMethods:
         # 1-element tidy strides test:
         a = np.array([[1]])
         a.strides = (123, 432)
-        # If the following stride is not 8, NPY_RELAXED_STRIDES_DEBUG is
-        # messing them up on purpose:
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -8032,9 +8030,7 @@ class TestNewBufferProtocol:
             assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:q:dx:B:e:@H:f:=I:g:L:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
         else:
             assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:q:dx:B:e:@H:f:=I:g:Q:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
-        # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides
-        if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
-            assert_equal(y.strides, (sz,))
+        assert_equal(y.strides, (sz,))
         assert_equal(y.itemsize, sz)
 
     def test_export_subarray(self):
@@ -8142,23 +8138,6 @@ class TestNewBufferProtocol:
             shape, strides = _multiarray_tests.get_buffer_info(
                     arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
-
-    @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
-    @pytest.mark.skipif(not np.ones((10, 1), order="C").flags.f_contiguous,
-            reason="Test is unnecessary (but fails) without relaxed strides.")
-    def test_relaxed_strides_buffer_info_leak(self, arr=np.ones((1, 10))):
-        """Test that alternating export of C- and F-order buffers from
-        an array which is both C- and F-order when relaxed strides is
-        active works.
-        This test defines array in the signature to ensure leaking more
-        references every time the test is run (catching the leak with
-        pytest-leaks).
-        """
-        for i in range(10):
-            _, s = _multiarray_tests.get_buffer_info(arr, ['F_CONTIGUOUS'])
-            assert s == (8, 8)
-            _, s = _multiarray_tests.get_buffer_info(arr, ['C_CONTIGUOUS'])
-            assert s == (80, 8)
 
     def test_out_of_order_fields(self):
         dt = np.dtype(dict(
@@ -9788,8 +9767,6 @@ def test_uintalignment_and_alignment():
 class TestAlignment:
     # adapted from scipy._lib.tests.test__util.test__aligned_zeros
     # Checks that unusual memory alignments don't trip up numpy.
-    # In particular, check RELAXED_STRIDES don't trip alignment assertions in
-    # NDEBUG mode for size-0 arrays (gh-12503)
 
     def check(self, shape, dtype, order, align):
         err_msg = repr((shape, dtype, order, align))

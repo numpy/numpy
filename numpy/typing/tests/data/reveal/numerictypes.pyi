@@ -1,19 +1,58 @@
+import sys
+from typing import Literal
+
 import numpy as np
 
-reveal_type(np.cast[int])  # E: _CastFunc
-reveal_type(np.cast["i8"])  # E: _CastFunc
-reveal_type(np.cast[np.int64])  # E: _CastFunc
+if sys.version_info >= (3, 11):
+    from typing import assert_type
+else:
+    from typing_extensions import assert_type
 
-reveal_type(np.nbytes[int])  # E: int
-reveal_type(np.nbytes["i8"])  # E: int
-reveal_type(np.nbytes[np.int64])  # E: int
+assert_type(np.cast[int], np.core.numerictypes._CastFunc)
+assert_type(np.cast["i8"], np.core.numerictypes._CastFunc)
+assert_type(np.cast[np.int64], np.core.numerictypes._CastFunc)
 
-reveal_type(np.ScalarType)  # E: tuple
-reveal_type(np.ScalarType[0])  # E: Type[builtins.int]
-reveal_type(np.ScalarType[3])  # E: Type[builtins.bool]
-reveal_type(np.ScalarType[8])  # E: Type[{csingle}]
-reveal_type(np.ScalarType[10])  # E: Type[{clongdouble}]
+assert_type(
+    np.ScalarType,
+    tuple[
+        type[int],
+        type[float],
+        type[complex],
+        type[bool],
+        type[bytes],
+        type[str],
+        type[memoryview],
+        type[np.bool_],
+        type[np.csingle],
+        type[np.cdouble],
+        type[np.clongdouble],
+        type[np.half],
+        type[np.single],
+        type[np.double],
+        type[np.longdouble],
+        type[np.byte],
+        type[np.short],
+        type[np.intc],
+        type[np.int_],
+        type[np.longlong],
+        type[np.timedelta64],
+        type[np.datetime64],
+        type[np.object_],
+        type[np.bytes_],
+        type[np.str_],
+        type[np.ubyte],
+        type[np.ushort],
+        type[np.uintc],
+        type[np.uint],
+        type[np.ulonglong],
+        type[np.void],
+    ],
+)
+assert_type(np.ScalarType[0], type[int])
+assert_type(np.ScalarType[3], type[bool])
+assert_type(np.ScalarType[8], type[np.csingle])
+assert_type(np.ScalarType[10], type[np.clongdouble])
 
-reveal_type(np.typecodes["Character"])  # E: Literal['c']
-reveal_type(np.typecodes["Complex"])  # E: Literal['FDG']
-reveal_type(np.typecodes["All"])  # E: Literal['?bhilqpBHILQPefdgFDGSUVOMm']
+assert_type(np.typecodes["Character"], Literal["c"])
+assert_type(np.typecodes["Complex"], Literal["FDG"])
+assert_type(np.typecodes["All"], Literal["?bhilqpBHILQPefdgFDGSUVOMm"])

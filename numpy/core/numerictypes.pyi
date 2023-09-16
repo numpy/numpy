@@ -1,9 +1,7 @@
 import sys
 import types
-from collections.abc import Iterable
 from typing import (
     Literal as L,
-    Union,
     overload,
     Any,
     TypeVar,
@@ -71,16 +69,16 @@ class _typedict(dict[type[generic], _T]):
     def __getitem__(self, key: DTypeLike) -> _T: ...
 
 if sys.version_info >= (3, 10):
-    _TypeTuple = Union[
-        type[Any],
-        types.UnionType,
-        tuple[Union[type[Any], types.UnionType, tuple[Any, ...]], ...],
-    ]
+    _TypeTuple = (
+        type[Any]
+        | types.UnionType
+        | tuple[type[Any] | types.UnionType | tuple[Any, ...], ...]
+    )
 else:
-    _TypeTuple = Union[
-        type[Any],
-        tuple[Union[type[Any], tuple[Any, ...]], ...],
-    ]
+    _TypeTuple = (
+        type[Any]
+        | tuple[type[Any] | tuple[Any, ...], ...]
+    )
 
 __all__: list[str]
 
@@ -119,7 +117,6 @@ def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 def sctype2char(sctype: DTypeLike) -> str: ...
 
 cast: _typedict[_CastFunc]
-nbytes: _typedict[int]
 typecodes: _TypeCodes
 ScalarType: tuple[
     type[int],

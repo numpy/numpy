@@ -145,7 +145,6 @@ Changing the number of dimensions
    ma.hstack
    ma.hsplit
    ma.mr_
-   ma.row_stack
    ma.vstack
 
 

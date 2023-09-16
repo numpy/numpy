@@ -487,10 +487,8 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete and, because of changes due to relaxed stride
-    checking, its return value for the same array may differ for versions
-    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
-    array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
+    This function is obsolete. If you only want to check if an array is Fortran
+    contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
     ----------
@@ -1328,6 +1326,7 @@ def rollaxis(a, axis, start=0):
     return a.transpose(axes)
 
 
+@set_module("numpy.lib.array_utils")
 def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     """
     Normalizes an axis argument into a tuple of non-negative integer axes.
@@ -2213,9 +2212,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     Notes
     -----
     If the following equation is element-wise True, then allclose returns
-    True.
+    True.::
 
-     absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+     absolute(a - b) <= (atol + rtol * absolute(b))
 
     The above equation is not symmetric in `a` and `b`, so that
     ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
@@ -2294,9 +2293,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     .. versionadded:: 1.7.0
 
     For finite values, isclose uses the following equation to test whether
-    two floating point values are equivalent.
+    two floating point values are equivalent.::
 
-     absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+     absolute(a - b) <= (atol + rtol * absolute(b))
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
     in `a` and `b` -- it assumes `b` is the reference value -- so that

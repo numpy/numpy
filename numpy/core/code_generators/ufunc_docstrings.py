@@ -350,7 +350,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     For each value that cannot be expressed as a real number or infinity, it
     returns ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arccos` is a complex analytical function that
+    For complex-valued input, `arcsinh` is a complex analytical function that
     has branch cuts `[1j, infj]` and `[-1j, -infj]` and is continuous from
     the right on the former and from the left on the latter.
 
@@ -3870,8 +3870,8 @@ add_newdoc('numpy.core.umath', 'cbrt',
     Returns
     -------
     y : ndarray
-        An array of the same shape as `x`, containing the cube
-        cube-root of each element in `x`.
+        An array of the same shape as `x`, containing the
+        cube root of each element in `x`.
         If `out` was provided, `y` is a reference to it.
         $OUT_SCALAR_1
 

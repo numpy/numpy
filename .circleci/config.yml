@@ -20,7 +20,7 @@ jobs:
       - checkout
 
       - run:
-          name: Check-skip
+          name: check skip
           command: |
             export git_log=$(git log --max-count=1 --pretty=format:"%B" | tr "\n" " ")
             echo "Got commit message:"
@@ -40,22 +40,19 @@ jobs:
       - run:
           name: update submodules
           command: |
-            git submodule init
-            git submodule update
+            git submodule update --init
 
       - run:
-          name: create virtual environment, install dependencies
+          name: install system dependencies
           command: |
             sudo apt-get update
-            #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
               texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
-            python3.11 -m venv venv
-            . venv/bin/activate
 
       - run:
-          name: build numpy
+          name: build NumPy
           command: |
+            python3.11 -m venv venv
             . venv/bin/activate
             pip install --progress-bar=off -r test_requirements.txt
             # get newer, pre-release versions of critical packages
@@ -67,7 +64,7 @@ jobs:
           name: create release notes
           command: |
             . venv/bin/activate
-            VERSION=$(python -c "import setup; print(setup.VERSION)")
+            VERSION=$(pip show numpy | grep Version: | cut -d ' ' -f 2 | cut -c 1-5)
             towncrier build --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py
 
@@ -75,8 +72,11 @@ jobs:
           name: run doctests on documentation
           command: |
             . venv/bin/activate
-            (cd doc ; git submodule update --init)
+            # Note: keep these two checks separate, because they seem to
+            # influence each other through changing global state (e.g., via
+            # `np.polynomial.set_default_printstyle`)
             python tools/refguide_check.py --rst
+            python tools/refguide_check.py --doctests
 
       - run:
           name: build devdocs w/ref warnings

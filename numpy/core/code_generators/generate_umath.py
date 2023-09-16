@@ -1240,7 +1240,9 @@ def make_arrays(funcdict):
             if cfunc_fname:
                 funclist.append(cfunc_fname)
                 if t.dispatch:
-                    dispdict.setdefault(t.dispatch, []).append((name, k, cfunc_fname))
+                    dispdict.setdefault(t.dispatch, []).append(
+                        (name, k, cfunc_fname, t.in_ + t.out)
+                    )
             else:
                 funclist.append('NULL')
 
@@ -1265,8 +1267,9 @@ def make_arrays(funcdict):
             #include "{dname}.dispatch.h"
             #endif
         """))
-        for (ufunc_name, func_idx, cfunc_name) in funcs:
+        for (ufunc_name, func_idx, cfunc_name, inout) in funcs:
             code2list.append(textwrap.dedent(f"""\
+                NPY_CPU_DISPATCH_TRACE("{ufunc_name}", "{''.join(inout)}");
                 NPY_CPU_DISPATCH_CALL_XB({ufunc_name}_functions[{func_idx}] = {cfunc_name});
             """))
     return "\n".join(code1list), "\n".join(code2list)

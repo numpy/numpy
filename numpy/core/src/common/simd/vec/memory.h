@@ -210,24 +210,33 @@ NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, n
     const npyv_u32 vlane = npyv_setall_u32(blane);
     const npyv_b32 mask  = vec_cmpgt(vlane, steps);
     npyv_s32 a = vec_load_len(ptr, blane*4-1);
-    return vec_sel(vfill, a, mask);
+    a = vec_sel(vfill, a, mask);
 #else
+    npyv_s32 a;
     switch(nlane) {
     case 1:
-        return vec_insert(ptr[0], vfill, 0);
+        a = vec_insert(ptr[0], vfill, 0);
+        break;
     case 2:
-        return (npyv_s32)vec_insert(
+        a = (npyv_s32)vec_insert(
             *npyv__ptr2u64(ptr), (npyv_u64)vfill, 0
         );
+        break;
     case 3:
         vfill = vec_insert(ptr[2], vfill, 2);
-        return (npyv_s32)vec_insert(
+        a = (npyv_s32)vec_insert(
             *npyv__ptr2u64(ptr), (npyv_u64)vfill, 0
         );
+        break;
     default:
         return npyv_load_s32(ptr);
     }
 #endif
+#if NPY_SIMD_GUARD_PARTIAL_LOAD
+    volatile npyv_s32 workaround = a;
+    a = vec_or(workaround, a);
+#endif
+    return a;
 }
 // fill zero to rest lanes
 NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
@@ -244,7 +253,12 @@ NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, n
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return npyv_set_s64(ptr[0], fill);
+        npyv_s64 r = npyv_set_s64(ptr[0], fill);
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s64 workaround = r;
+        r = vec_or(workaround, r);
+    #endif
+        return r;
     }
     return npyv_load_s64(ptr);
 }
@@ -264,7 +278,12 @@ NPY_FINLINE npyv_s32 npyv_load2_till_s32(const npy_int32 *ptr, npy_uintp nlane,
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return npyv_set_s32(ptr[0], ptr[1], fill_lo, fill_hi);
+        npyv_s32 r = npyv_set_s32(ptr[0], ptr[1], fill_lo, fill_hi);
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = r;
+        r = vec_or(workaround, r);
+    #endif
+        return r;
     }
     return npyv_load_s32(ptr);
 }
@@ -299,6 +318,10 @@ npyv_loadn_till_s32(const npy_int32 *ptr, npy_intp stride, npy_uintp nlane, npy_
     default:
         return npyv_loadn_s32(ptr, stride);
     } // switch
+#if NPY_SIMD_GUARD_PARTIAL_LOAD
+    volatile npyv_s32 workaround = vfill;
+    vfill = vec_or(workaround, vfill);
+#endif
     return vfill;
 }
 // fill zero to rest lanes
@@ -311,7 +334,7 @@ npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return npyv_set_s64(*ptr, fill);
+        return npyv_load_till_s64(ptr, nlane, fill);
     }
     return npyv_loadn_s64(ptr, stride);
 }
@@ -325,7 +348,12 @@ NPY_FINLINE npyv_s32 npyv_loadn2_till_s32(const npy_int32 *ptr, npy_intp stride,
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return npyv_set_s32(ptr[0], ptr[1], fill_lo, fill_hi);
+        npyv_s32 r = npyv_set_s32(ptr[0], ptr[1], fill_lo, fill_hi);
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = r;
+        r = vec_or(workaround, r);
+    #endif
+        return r;
     }
     return npyv_loadn2_s32(ptr, stride);
 }
@@ -333,7 +361,12 @@ NPY_FINLINE npyv_s32 npyv_loadn2_tillz_s32(const npy_int32 *ptr, npy_intp stride
 {
     assert(nlane > 0);
     if (nlane == 1) {
-        return (npyv_s32)npyv_set_s64(*(npy_int64*)ptr, 0);
+        npyv_s32 r = (npyv_s32)npyv_set_s64(*(npy_int64*)ptr, 0);
+    #if NPY_SIMD_GUARD_PARTIAL_LOAD
+        volatile npyv_s32 workaround = r;
+        r = vec_or(workaround, r);
+    #endif
+        return r;
     }
     return npyv_loadn2_s32(ptr, stride);
 }

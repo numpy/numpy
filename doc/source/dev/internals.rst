@@ -19,21 +19,21 @@ items. NumPy also contains a significant set of data that describes how to
 interpret the data in the data buffer. This extra information contains (among
 other things):
 
- 1) The basic data element's size in bytes.
- 2) The start of the data within the data buffer (an offset relative to the
-    beginning of the data buffer).
- 3) The number of :term:`dimensions <dimension>` and the size of each dimension.
- 4) The separation between elements for each dimension (the :term:`stride`).
-    This does not have to be a multiple of the element size.
- 5) The byte order of the data (which may not be the native byte order).
- 6) Whether the buffer is read-only.
- 7) Information (via the :class:`dtype` object) about the interpretation of the
-    basic data element. The basic data element may be as simple as an int or a
-    float, or it may be a compound object (e.g.,
-    :term:`struct-like <structured data type>`), a fixed character field,
-    or Python object pointers.
- 8) Whether the array is to be interpreted as :term:`C-order <C order>`
-    or :term:`Fortran-order <Fortran order>`.
+1. The basic data element's size in bytes.
+2. The start of the data within the data buffer (an offset relative to the
+   beginning of the data buffer).
+3. The number of :term:`dimensions <dimension>` and the size of each dimension.
+4. The separation between elements for each dimension (the :term:`stride`).
+   This does not have to be a multiple of the element size.
+5. The byte order of the data (which may not be the native byte order).
+6. Whether the buffer is read-only.
+7. Information (via the :class:`dtype` object) about the interpretation of the
+   basic data element. The basic data element may be as simple as an int or a
+   float, or it may be a compound object (e.g.,
+   :term:`struct-like <structured data type>`), a fixed character field,
+   or Python object pointers.
+8. Whether the array is to be interpreted as :term:`C-order <C order>`
+   or :term:`Fortran-order <Fortran order>`.
 
 This arrangement allows for the very flexible use of arrays. One thing that it
 allows is simple changes to the metadata to change the interpretation of the

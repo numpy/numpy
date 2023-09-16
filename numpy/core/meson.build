@@ -1,5 +1,3 @@
-# This file should contain what setup.py + setup_common.py do (WIP)
-#
 # Potential issues to address or keep track of:
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
@@ -478,17 +476,13 @@ endif
 # TODO: document this (search for NPY_NOSMP in C API docs)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
 
-# Use bogus stride debug aid to flush out bugs where users use strides of
-# dimensions with length 1 to index a full contiguous array.
-cdata.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
-
 # Check whether we can use inttypes (C99) formats
 if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
   cdata.set10('NPY_USE_C99_FORMATS', true)
 endif
 
 visibility_hidden = ''
-if cc.has_function_attribute('visibility:hidden')
+if cc.has_function_attribute('visibility:hidden') and host_machine.system() != 'cygwin'
   visibility_hidden = '__attribute__((visibility("hidden")))'
 endif
 cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
@@ -841,9 +835,7 @@ foreach gen_mtargets : [
   [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
-    # Enabling SIMD on clang-cl raises spurious FP exceptions
-    # TODO (seiko2plus): debug spurious FP exceptions for single-precision log/exp
-    compiler_id == 'clang-cl' ? [] : [
+    [
       AVX512_SKX, AVX512F, [AVX2, FMA3]
     ]
   ],
@@ -887,9 +879,7 @@ foreach gen_mtargets : [
   [
     'loops_trigonometric.dispatch.h',
     src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
-    # Enabling SIMD on clang-cl raises spurious FP exceptions
-    # TODO (seiko2plus): debug spurious FP exceptions for single-precision sin/cos
-    compiler_id == 'clang-cl' ? [] : [
+    [
       AVX512F, [AVX2, FMA3],
       VSX4, VSX3, VSX2,
       NEON_VFPV4,
@@ -986,6 +976,7 @@ src_multiarray_umath_common = [
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
+  'src/common/npy_cpu_dispatch.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas

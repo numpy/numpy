@@ -22,9 +22,10 @@ on:
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
     - cron: "42 2 * * SUN,WED"
-  push:
   pull_request:
-    types: [labeled, opened, synchronize, reopened]
+    branches:
+      - main
+      - maintenance/**
   workflow_dispatch:
 
 concurrency:
@@ -43,7 +44,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -62,9 +63,6 @@ jobs:
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
-      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
@@ -78,6 +76,7 @@ jobs:
           - [ubuntu-20.04, musllinux_x86_64]
           - [macos-12, macosx_x86_64]
           - [windows-2019, win_amd64]
+          - [windows-2019, win32]
         python: ["cp39", "cp310", "cp311", "cp312"]  # "pp39"
         exclude:
           # Don't build PyPy 32-bit windows
@@ -91,7 +90,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -99,6 +98,12 @@ jobs:
           # A shallow clone can work when the following issue is resolved:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
+
+      - name: Setup MSVC (32-bit)
+        if: ${{ matrix.buildplat[1] == 'win32' }}
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
 
       - name: pkg-config-for-win
         run: |
@@ -116,7 +121,7 @@ jobs:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
@@ -171,7 +176,7 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -203,7 +208,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: sdist
           path: ./dist/*

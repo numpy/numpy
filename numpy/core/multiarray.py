@@ -69,6 +69,7 @@ promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 _get_promotion_state.__module__ = 'numpy'
 _set_promotion_state.__module__ = 'numpy'
+normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -480,7 +481,7 @@ def lexsort(keys, axis=None):
     A normal ``argsort`` would have yielded:
 
     >>> [(a[i],b[i]) for i in np.argsort(a)]
-    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
+    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 1), (4, 2), (5, 4)]
 
     Structured arrays are sorted lexically by ``argsort``:
 

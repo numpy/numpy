@@ -167,9 +167,6 @@ base offset itself is a multiple of `self.itemsize`. Understanding
     for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
     Fortran-style contiguous arrays is true.
 
-    ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
-    incorrectly relying on the strides in C-extension code (see below warning).
-
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major` (C)
 order, unless otherwise specified, but, for example, :ref:`basic
 array slicing <arrays.indexing>` often produces :term:`views <view>`

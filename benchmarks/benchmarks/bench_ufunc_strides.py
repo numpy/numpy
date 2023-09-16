@@ -100,7 +100,10 @@ class _AbstractUnary(Benchmark):
         ufunc(*self.ufunc_args)
 
 class UnaryFP(_AbstractUnary):
-    params = [UFUNCS_UNARY, [1, 2, 4], [1, 2, 4], ['e', 'f', 'd']]
+    params = [[uf for uf in UFUNCS_UNARY if uf != np.invert],
+              [1, 4],
+              [1, 2],
+              ['e', 'f', 'd']]
 
     def setup(self, ufunc, stride_in, stride_out, dtype):
         _AbstractUnary.setup(self, ufunc, stride_in, stride_out, dtype)
@@ -115,7 +118,7 @@ class UnaryFPSpecial(UnaryFP):
 class BinaryFP(_AbstractBinary):
     params = [
         [np.maximum, np.minimum, np.fmax, np.fmin, np.ldexp],
-        [1, 2, 4], [1, 2, 4], [1, 2, 4], ['f', 'd']
+        [1, 2], [1, 4], [1, 2, 4], ['f', 'd']
     ]
 
 class BinaryFPSpecial(BinaryFP):

@@ -86,10 +86,11 @@ from .multiarray import (
 from .._utils import set_module
 
 # we add more at the bottom
-__all__ = ['ScalarType', 'nbytes', 'typecodes', 'find_common_type',
-           'issubdtype', 'datetime_data', 'datetime_as_string',
-           'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
-           ]
+__all__ = [
+    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
+    'datetime_as_string', 'busday_offset', 'busday_count', 
+    'is_busday', 'busdaycalendar'
+]
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np.core.numerictypes.UPPER_TABLE
@@ -383,7 +384,6 @@ def issubdtype(arg1, arg2):
     See Also
     --------
     :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
-    issubsctype, issubclass_
 
     Examples
     --------
@@ -444,13 +444,11 @@ class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))
 
-nbytes = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, info in _concrete_typeinfo.items():
+    for info in _concrete_typeinfo.values():
         obj = info.type
-        nbytes[obj] = info.bits // 8
         if len(info) > 5:
             _maxvals[obj] = info.max
             _minvals[obj] = info.min
@@ -546,49 +544,6 @@ typecodes = {'Character':'c',
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
 typeDict = sctypeDict
 
-# b -> boolean
-# u -> unsigned integer
-# i -> signed integer
-# f -> floating point
-# c -> complex
-# M -> datetime
-# m -> timedelta
-# S -> string
-# U -> Unicode string
-# V -> record
-# O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
-
-__test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
-__len_test_types = len(__test_types)
-
-# Keep incrementing until a common type both can be coerced to
-#  is found.  Otherwise, return None
-def _find_common_coerce(a, b):
-    if a > b:
-        return a
-    try:
-        thisind = __test_types.index(a.char)
-    except ValueError:
-        return None
-    return _can_coerce_all([a, b], start=thisind)
-
-# Find a data-type that all data-types in a list can be coerced to
-def _can_coerce_all(dtypelist, start=0):
-    N = len(dtypelist)
-    if N == 0:
-        return None
-    if N == 1:
-        return dtypelist[0]
-    thisind = start
-    while thisind < __len_test_types:
-        newdtype = dtype(__test_types[thisind])
-        numcoerce = len([x for x in dtypelist if newdtype >= x])
-        if numcoerce == N:
-            return newdtype
-        thisind += 1
-    return None
-
 def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
@@ -596,97 +551,3 @@ def _register_types():
     numbers.Number.register(number)
 
 _register_types()
-
-
-@set_module('numpy')
-def find_common_type(array_types, scalar_types):
-    """
-    Determine common type following standard coercion rules.
-
-    .. deprecated:: NumPy 1.25
-
-        This function is deprecated, use `numpy.promote_types` or
-        `numpy.result_type` instead.  To achieve semantics for the
-        `scalar_types` argument, use `numpy.result_type` and pass the Python
-        values `0`, `0.0`, or `0j`.
-        This will give the same results in almost all cases.
-        More information and rare exception can be found in the
-        `NumPy 1.25 release notes <https://numpy.org/devdocs/release/1.25.0-notes.html>`_.
-
-    Parameters
-    ----------
-    array_types : sequence
-        A list of dtypes or dtype convertible objects representing arrays.
-    scalar_types : sequence
-        A list of dtypes or dtype convertible objects representing scalars.
-
-    Returns
-    -------
-    datatype : dtype
-        The common data type, which is the maximum of `array_types` ignoring
-        `scalar_types`, unless the maximum of `scalar_types` is of a
-        different kind (`dtype.kind`). If the kind is not understood, then
-        None is returned.
-
-    See Also
-    --------
-    dtype, common_type, can_cast, mintypecode
-
-    Examples
-    --------
-    >>> np.find_common_type([], [np.int64, np.float32, complex])
-    dtype('complex128')
-    >>> np.find_common_type([np.int64, np.float32], [])
-    dtype('float64')
-
-    The standard casting rules ensure that a scalar cannot up-cast an
-    array unless the scalar is of a fundamentally different kind of data
-    (i.e. under a different hierarchy in the data type hierarchy) then
-    the array:
-
-    >>> np.find_common_type([np.float32], [np.int64, np.float64])
-    dtype('float32')
-
-    Complex is of a different type, so it up-casts the float in the
-    `array_types` argument:
-
-    >>> np.find_common_type([np.float32], [complex])
-    dtype('complex128')
-
-    Type specifier strings are convertible to dtypes and can therefore
-    be used instead of dtypes:
-
-    >>> np.find_common_type(['f4', 'f4', 'i4'], ['c8'])
-    dtype('complex128')
-
-    """
-    # Deprecated 2022-11-07, NumPy 1.25
-    warnings.warn(
-            "np.find_common_type is deprecated.  Please use `np.result_type` "
-            "or `np.promote_types`.\n"
-            "See https://numpy.org/devdocs/release/1.25.0-notes.html and the "
-            "docs for more information.  (Deprecated NumPy 1.25)",
-            DeprecationWarning, stacklevel=2)
-
-    array_types = [dtype(x) for x in array_types]
-    scalar_types = [dtype(x) for x in scalar_types]
-
-    maxa = _can_coerce_all(array_types)
-    maxsc = _can_coerce_all(scalar_types)
-
-    if maxa is None:
-        return maxsc
-
-    if maxsc is None:
-        return maxa
-
-    try:
-        index_a = _kind_list.index(maxa.kind)
-        index_sc = _kind_list.index(maxsc.kind)
-    except ValueError:
-        return None
-
-    if index_sc > index_a:
-        return _find_common_coerce(maxsc, maxa)
-    else:
-        return maxa

@@ -4903,6 +4903,10 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (npy_cpu_init() < 0) {
         goto err;
     }
+    /* Initialize CPU dispatch tracer */
+    if (npy_cpu_dispatch_tracer_init(m) < 0) {
+        goto err;
+    }
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,

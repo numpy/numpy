@@ -1,4 +1,5 @@
 import builtins
+import sys
 import os
 import mmap
 import ctypes as ct
@@ -47,16 +48,16 @@ from numpy._typing import (
 
     # Scalars
     _CharLike_co,
-    _BoolLike_co,
     _IntLike_co,
     _FloatLike_co,
-    _ComplexLike_co,
     _TD64Like_co,
     _NumberLike_co,
     _ScalarLike_co,
 
     # `number` precision
     NBitBase,
+    # NOTE: Do not remove the extended precision bit-types even if seemingly unused;
+    # they're used by the mypy plugin
     _256Bit,
     _128Bit,
     _96Bit,
@@ -169,26 +170,22 @@ from numpy._typing._extended_precision import (
 
 from collections.abc import (
     Callable,
-    Container,
     Iterable,
     Iterator,
     Mapping,
     Sequence,
-    Sized,
 )
 from typing import (
     Literal as L,
     Any,
     Generator,
     Generic,
-    IO,
     NoReturn,
     overload,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
     TypeVar,
-    Union,
     Protocol,
     SupportsIndex,
     Final,
@@ -284,7 +281,6 @@ from numpy.core._ufunc_config import (
     geterrcall as geterrcall,
     _ErrKind,
     _ErrFunc,
-    _ErrDictOptional,
 )
 
 from numpy.core.arrayprint import (
@@ -377,7 +373,6 @@ from numpy.core.numeric import (
 
 from numpy.core.numerictypes import (
     issubdtype as issubdtype,
-    nbytes as nbytes,
     cast as cast,
     ScalarType as ScalarType,
     typecodes as typecodes,
@@ -397,11 +392,11 @@ from numpy.lib import (
     emath as emath,
 )
 
-from numpy.lib.arraypad import (
+from numpy.lib._arraypad_impl import (
     pad as pad,
 )
 
-from numpy.lib.arraysetops import (
+from numpy.lib._arraysetops_impl import (
     ediff1d as ediff1d,
     intersect1d as intersect1d,
     setxor1d as setxor1d,
@@ -412,7 +407,7 @@ from numpy.lib.arraysetops import (
     isin as isin,
 )
 
-from numpy.lib.function_base import (
+from numpy.lib._function_base_impl import (
     select as select,
     piecewise as piecewise,
     trim_zeros as trim_zeros,
@@ -458,7 +453,7 @@ from numpy.lib._histograms_impl import (
     histogramdd as histogramdd,
 )
 
-from numpy.lib.index_tricks import (
+from numpy.lib._index_tricks_impl import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
     mgrid as mgrid,
@@ -490,7 +485,7 @@ from numpy.lib._nanfunctions_impl import (
     nanquantile as nanquantile,
 )
 
-from numpy.lib.npyio import (
+from numpy.lib._npyio_impl import (
     savetxt as savetxt,
     loadtxt as loadtxt,
     genfromtxt as genfromtxt,
@@ -505,7 +500,7 @@ from numpy.lib.npyio import (
     fromregex as fromregex,
 )
 
-from numpy.lib.polynomial import (
+from numpy.lib._polynomial_impl import (
     poly as poly,
     roots as roots,
     polyint as polyint,
@@ -518,7 +513,7 @@ from numpy.lib.polynomial import (
     polyfit as polyfit,
 )
 
-from numpy.lib.shape_base import (
+from numpy.lib._shape_base_impl import (
     column_stack as column_stack,
     row_stack as row_stack,
     dstack as dstack,
@@ -532,18 +527,17 @@ from numpy.lib.shape_base import (
     apply_along_axis as apply_along_axis,
     kron as kron,
     tile as tile,
-    get_array_wrap as get_array_wrap,
     take_along_axis as take_along_axis,
     put_along_axis as put_along_axis,
 )
 
-from numpy.lib.stride_tricks import (
+from numpy.lib._stride_tricks_impl import (
     broadcast_to as broadcast_to,
     broadcast_arrays as broadcast_arrays,
     broadcast_shapes as broadcast_shapes,
 )
 
-from numpy.lib.twodim_base import (
+from numpy.lib._twodim_base_impl import (
     diag as diag,
     diagflat as diagflat,
     eye as eye,
@@ -561,7 +555,7 @@ from numpy.lib.twodim_base import (
     triu_indices_from as triu_indices_from,
 )
 
-from numpy.lib.type_check import (
+from numpy.lib._type_check_impl import (
     mintypecode as mintypecode,
     real as real,
     imag as imag,
@@ -575,18 +569,15 @@ from numpy.lib.type_check import (
     common_type as common_type,
 )
 
-from numpy.lib.ufunclike import (
+from numpy.lib._ufunclike_impl import (
     fix as fix,
     isposinf as isposinf,
     isneginf as isneginf,
 )
 
-from numpy.lib.utils import (
-    issubdtype as issubdtype,
+from numpy.lib._utils_impl import (
     get_include as get_include,
     info as info,
-    source as source,
-    byte_bounds as byte_bounds,
     show_runtime as show_runtime,
 )
 
@@ -621,7 +612,6 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
 
 __all__: list[str]
 __dir__: list[str]
-__path__: list[str]
 __version__: str
 __git_version__: str
 test: PytestTester
@@ -633,13 +623,14 @@ test: PytestTester
 
 def show_config() -> None: ...
 
-_NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray[Any, Any])
+_NdArraySubClass = TypeVar("_NdArraySubClass", bound=NDArray[Any])
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
 @final
 class dtype(Generic[_DTypeScalar_co]):
     names: None | tuple[builtins.str, ...]
+    def __hash__(self) -> int: ...
     # Overload for subclass of generic
     @overload
     def __new__(
@@ -887,13 +878,13 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def type(self) -> type[_DTypeScalar_co]: ...
 
-_ArrayLikeInt = Union[
-    int,
-    integer[Any],
-    Sequence[Union[int, integer[Any]]],
-    Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
-    ndarray[Any, Any]
-]
+_ArrayLikeInt = (
+    int
+    | integer[Any]
+    | Sequence[int | integer[Any]]
+    | Sequence[Sequence[Any]]  # TODO: wait for support for recursive types
+    | NDArray[Any]
+)
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter[Any])
 
@@ -908,11 +899,11 @@ class flatiter(Generic[_NdArraySubClass]):
     def index(self) -> int: ...
     def copy(self) -> _NdArraySubClass: ...
     def __iter__(self: _FlatIterSelf) -> _FlatIterSelf: ...
-    def __next__(self: flatiter[ndarray[Any, dtype[_ScalarType]]]) -> _ScalarType: ...
+    def __next__(self: flatiter[NDArray[_ScalarType]]) -> _ScalarType: ...
     def __len__(self) -> int: ...
     @overload
     def __getitem__(
-        self: flatiter[ndarray[Any, dtype[_ScalarType]]],
+        self: flatiter[NDArray[_ScalarType]],
         key: int | integer[Any] | tuple[int | integer[Any]],
     ) -> _ScalarType: ...
     @overload
@@ -1110,7 +1101,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         kind: None | _SortKind = ...,
         order: None | str | Sequence[str] = ...,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
 
     @overload
     def choose(
@@ -1118,7 +1109,7 @@ class _ArrayOrScalarCommon:
         choices: ArrayLike,
         out: None = ...,
         mode: _ModeKind = ...,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def choose(
         self,
@@ -1134,7 +1125,7 @@ class _ArrayOrScalarCommon:
         max: None | ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def clip(
         self,
@@ -1142,7 +1133,7 @@ class _ArrayOrScalarCommon:
         max: ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def clip(
         self,
@@ -1166,7 +1157,7 @@ class _ArrayOrScalarCommon:
         a: ArrayLike,
         axis: None | SupportsIndex = ...,
         out: None = ...,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def compress(
         self,
@@ -1185,7 +1176,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def cumprod(
         self,
@@ -1200,7 +1191,7 @@ class _ArrayOrScalarCommon:
         axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-    ) -> ndarray[Any, Any]: ...
+    ) -> NDArray[Any]: ...
     @overload
     def cumsum(
         self,
@@ -1399,17 +1390,18 @@ _ShapeType = TypeVar("_ShapeType", bound=Any)
 _ShapeType2 = TypeVar("_ShapeType2", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
-# There is currently no exhaustive way to type the buffer protocol,
-# as it is implemented exclusively in the C API (python/typing#593)
-_SupportsBuffer = Union[
-    bytes,
-    bytearray,
-    memoryview,
-    _array.array[Any],
-    mmap.mmap,
-    NDArray[Any],
-    generic,
-]
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer as _SupportsBuffer
+else:
+    _SupportsBuffer = (
+        bytes
+        | bytearray
+        | memoryview
+        | _array.array[Any]
+        | mmap.mmap
+        | NDArray[Any]
+        | generic
+    )
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -1417,12 +1409,12 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 _2Tuple = tuple[_T, _T]
 _CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
-_ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
-_ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
-_ArrayFloat_co = NDArray[Union[bool_, integer[Any], floating[Any]]]
-_ArrayComplex_co = NDArray[Union[bool_, integer[Any], floating[Any], complexfloating[Any, Any]]]
-_ArrayNumber_co = NDArray[Union[bool_, number[Any]]]
-_ArrayTD64_co = NDArray[Union[bool_, integer[Any], timedelta64]]
+_ArrayUInt_co = NDArray[bool_ | unsignedinteger[Any]]
+_ArrayInt_co = NDArray[bool_ | integer[Any]]
+_ArrayFloat_co = NDArray[bool_ | integer[Any] | floating[Any]]
+_ArrayComplex_co = NDArray[bool_ | integer[Any] | floating[Any] | complexfloating[Any, Any]]
+_ArrayNumber_co = NDArray[bool_ | number[Any]]
+_ArrayTD64_co = NDArray[bool_ | integer[Any] | timedelta64]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype = dtype
@@ -1445,7 +1437,7 @@ class _SupportsImag(Protocol[_T_co]):
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     __hash__: ClassVar[None]
     @property
-    def base(self) -> None | ndarray[Any, Any]: ...
+    def base(self) -> None | NDArray[Any]: ...
     @property
     def ndim(self) -> int: ...
     @property
@@ -1471,6 +1463,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         strides: None | _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
+
+    if sys.version_info >= (3, 12):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
 
     def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
@@ -1600,7 +1595,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         axis: None | SupportsIndex = ...,
         kind: _PartitionKind = ...,
         order: None | str | Sequence[str] = ...,
-    ) -> ndarray[Any, _dtype[intp]]: ...
+    ) -> NDArray[intp]: ...
 
     def diagonal(
         self,
@@ -1612,14 +1607,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     # 1D + 1D returns a scalar;
     # all other with at least 1 non-0D array return an ndarray.
     @overload
-    def dot(self, b: _ScalarLike_co, out: None = ...) -> ndarray[Any, Any]: ...
+    def dot(self, b: _ScalarLike_co, out: None = ...) -> NDArray[Any]: ...
     @overload
     def dot(self, b: ArrayLike, out: None = ...) -> Any: ...  # type: ignore[misc]
     @overload
     def dot(self, b: ArrayLike, out: _NdArraySubClass) -> _NdArraySubClass: ...
 
     # `nonzero()` is deprecated for 0d arrays/generics
-    def nonzero(self) -> tuple[ndarray[Any, _dtype[intp]], ...]: ...
+    def nonzero(self) -> tuple[NDArray[intp], ...]: ...
 
     def partition(
         self,
@@ -1651,7 +1646,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         v: ArrayLike,
         side: _SortSide = ...,
         sorter: None | _ArrayLikeInt_co = ...,
-    ) -> ndarray[Any, _dtype[intp]]: ...
+    ) -> NDArray[intp]: ...
 
     def setfield(
         self,
@@ -1688,7 +1683,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     @overload
     def take(  # type: ignore[misc]
-        self: ndarray[Any, _dtype[_ScalarType]],
+        self: NDArray[_ScalarType],
         indices: _IntLike_co,
         axis: None | SupportsIndex = ...,
         out: None = ...,
@@ -1785,19 +1780,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     # Dispatch to the underlying `generic` via protocols
     def __int__(
-        self: ndarray[Any, _dtype[SupportsInt]],  # type: ignore[type-var]
+        self: NDArray[SupportsInt],  # type: ignore[type-var]
     ) -> int: ...
 
     def __float__(
-        self: ndarray[Any, _dtype[SupportsFloat]],  # type: ignore[type-var]
+        self: NDArray[SupportsFloat],  # type: ignore[type-var]
     ) -> float: ...
 
     def __complex__(
-        self: ndarray[Any, _dtype[SupportsComplex]],  # type: ignore[type-var]
+        self: NDArray[SupportsComplex],  # type: ignore[type-var]
     ) -> complex: ...
 
     def __index__(
-        self: ndarray[Any, _dtype[SupportsIndex]],  # type: ignore[type-var]
+        self: NDArray[SupportsIndex],  # type: ignore[type-var]
     ) -> int: ...
 
     def __len__(self) -> int: ...
@@ -2511,9 +2506,10 @@ class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     @overload
-    def __array__(self: _ScalarType, dtype: None = ..., /) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    def __array__(self: _ScalarType, dtype: None = ..., /) -> NDArray[_ScalarType]: ...
     @overload
     def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
+    def __hash__(self) -> int: ...
     @property
     def base(self) -> None: ...
     @property
@@ -2526,7 +2522,10 @@ class generic(_ArrayOrScalarCommon):
     def strides(self) -> tuple[()]: ...
     def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
-    def flat(self: _ScalarType) -> flatiter[ndarray[Any, _dtype[_ScalarType]]]: ...
+    def flat(self: _ScalarType) -> flatiter[NDArray[_ScalarType]]: ...
+
+    if sys.version_info >= (3, 12):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
 
     @overload
     def astype(
@@ -2552,19 +2551,19 @@ class generic(_ArrayOrScalarCommon):
     @overload
     def view(
         self: _ScalarType,
-        type: type[ndarray[Any, Any]] = ...,
+        type: type[NDArray[Any]] = ...,
     ) -> _ScalarType: ...
     @overload
     def view(
         self,
         dtype: _DTypeLike[_ScalarType],
-        type: type[ndarray[Any, Any]] = ...,
+        type: type[NDArray[Any]] = ...,
     ) -> _ScalarType: ...
     @overload
     def view(
         self,
         dtype: DTypeLike,
-        type: type[ndarray[Any, Any]] = ...,
+        type: type[NDArray[Any]] = ...,
     ) -> Any: ...
 
     @overload
@@ -2599,7 +2598,7 @@ class generic(_ArrayOrScalarCommon):
         axis: None | SupportsIndex = ...,
         out: None = ...,
         mode: _ModeKind = ...,
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
     @overload
     def take(
         self,
@@ -2613,26 +2612,26 @@ class generic(_ArrayOrScalarCommon):
         self: _ScalarType,
         repeats: _ArrayLikeInt_co,
         axis: None | SupportsIndex = ...,
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
 
     def flatten(
         self: _ScalarType,
         order: _OrderKACF = ...,
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
 
     def ravel(
         self: _ScalarType,
         order: _OrderKACF = ...,
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
 
     @overload
     def reshape(
         self: _ScalarType, shape: _ShapeLike, /, *, order: _OrderACF = ...
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
     @overload
     def reshape(
         self: _ScalarType, *shape: SupportsIndex, order: _OrderACF = ...
-    ) -> ndarray[Any, _dtype[_ScalarType]]: ...
+    ) -> NDArray[_ScalarType]: ...
 
     def squeeze(
         self: _ScalarType, axis: None | L[0] | tuple[()] = ...
@@ -2730,6 +2729,9 @@ class object_(generic):
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
 
+    if sys.version_info >= (3, 12):
+        def __release_buffer__(self, buffer: memoryview, /) -> None: ...
+
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
 class _DatetimeScalar(Protocol):
@@ -2769,16 +2771,16 @@ class datetime64(generic):
     __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
     __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
-_IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
-_FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-_ComplexValue = Union[
-    None,
-    _CharLike_co,
-    SupportsFloat,
-    SupportsComplex,
-    SupportsIndex,
-    complex,  # `complex` is not a subtype of `SupportsComplex`
-]
+_IntValue = SupportsInt | _CharLike_co | SupportsIndex
+_FloatValue = None | _CharLike_co | SupportsFloat | SupportsIndex
+_ComplexValue = (
+    None
+    | _CharLike_co
+    | SupportsFloat
+    | SupportsComplex
+    | SupportsIndex
+    | complex  # `complex` is not a subtype of `SupportsComplex`
+)
 
 class integer(number[_NBit1]):  # type: ignore
     @property
@@ -3299,25 +3301,6 @@ class ndindex:
     def __init__(self, *shape: SupportsIndex) -> None: ...
     def __iter__(self: _T) -> _T: ...
     def __next__(self) -> _Shape: ...
-
-class DataSource:
-    def __init__(
-        self,
-        destpath: None | str | os.PathLike[str] = ...,
-    ) -> None: ...
-    def __del__(self) -> None: ...
-    def abspath(self, path: str) -> str: ...
-    def exists(self, path: str) -> bool: ...
-
-    # Whether the file-object is opened in string or bytes mode (by default)
-    # depends on the file-extension of `path`
-    def open(
-        self,
-        path: str,
-        mode: str = ...,
-        encoding: None | str = ...,
-        newline: None | str = ...,
-    ) -> IO[Any]: ...
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet

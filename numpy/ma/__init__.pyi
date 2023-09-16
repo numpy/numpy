@@ -230,5 +230,4 @@ from numpy.ma.extras import (
 )
 
 __all__: list[str]
-__path__: list[str]
 test: PytestTester

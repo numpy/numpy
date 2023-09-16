@@ -16,7 +16,6 @@ from typing import (
     overload,
     type_check_only,
     TypeVar,
-    Union,
     Final,
     SupportsIndex,
 )
@@ -25,7 +24,7 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import ParamSpec
 
-from numpy import generic, dtype, number, object_, bool_, _FloatValue
+from numpy import number, object_, bool_, _FloatValue
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -49,12 +48,12 @@ _FT = TypeVar("_FT", bound=Callable[..., Any])
 # that is supported by `np.logical_and.reduce`
 _ComparisonFunc = Callable[
     [NDArray[Any], NDArray[Any]],
-    Union[
-        bool,
-        bool_,
-        number[Any],
-        NDArray[Union[bool_, number[Any], object_]],
-    ],
+    (
+        bool
+        | bool_
+        | number[Any]
+        | NDArray[bool_ | number[Any] | object_]
+    )
 ]
 
 __all__: list[str]

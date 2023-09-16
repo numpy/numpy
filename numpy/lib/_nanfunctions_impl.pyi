@@ -12,7 +12,7 @@ from numpy.core.fromnumeric import (
     std
 )
 
-from numpy.lib.function_base import (
+from numpy.lib._function_base_impl import (
     median,
     percentile,
     quantile,
