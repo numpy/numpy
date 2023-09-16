@@ -1,13 +1,12 @@
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_compare
-
 from numpy.random import SeedSequence
 
-
 def test_reference_data():
-    """ Check that SeedSequence generates data the same as the C++ reference.
+    """
+    Test that SeedSequence generates data consistent with the C++ reference.
 
-    https://gist.github.com/imneme/540829265469e673d045
+    Reference: https://gist.github.com/imneme/540829265469e673d045
     """
     inputs = [
         [3735928559, 195939070, 229505742, 305419896],
@@ -45,6 +44,7 @@ def test_reference_data():
         [1857481142255628931, 596584038813451439],
         [18305404959516669237, 14103312907920476776],
     ]
+    
     for seed, expected, expected64 in zip(inputs, outputs, outputs64):
         expected = np.array(expected, dtype=np.uint32)
         ss = SeedSequence(seed)
@@ -53,9 +53,9 @@ def test_reference_data():
         state64 = ss.generate_state(len(expected64), dtype=np.uint64)
         assert_array_equal(state64, expected64)
 
-
 def test_zero_padding():
-    """ Ensure that the implicit zero-padding does not cause problems.
+    """
+    Ensure that implicit zero-padding does not cause problems.
     """
     # Ensure that large integers are inserted in little-endian fashion to avoid
     # trailing 0s.
@@ -66,13 +66,13 @@ def test_zero_padding():
         ss0.generate_state(4),
         ss1.generate_state(4))
 
-    # Ensure backwards compatibility with the original 0.17 release for small
+    # Ensure backward compatibility with the original 0.17 release for small
     # integers and no spawn key.
     expected42 = np.array([3444837047, 2669555309, 2046530742, 3581440988],
                           dtype=np.uint32)
     assert_array_equal(SeedSequence(42).generate_state(4), expected42)
 
-    # Regression test for gh-16539 to ensure that the implicit 0s don't
+    # Regression test for gh-16539 to ensure that implicit 0s don't
     # conflict with spawn keys.
     assert_array_compare(
         np.not_equal,
