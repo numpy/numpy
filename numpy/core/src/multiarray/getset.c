@@ -942,8 +942,8 @@ static PyObject *
 array_ptp(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     PyErr_SetString(PyExc_AttributeError,
-                    "`ptp` has been removed from ndarray class. "
-                    "Use np.ptp(arr, ...) instead");
+                    "`ptp` was removed from the ndarray class in NumPy 2.0. "
+                    "Use np.ptp(arr, ...) instead.");
     return NULL;
 }
 
@@ -951,8 +951,9 @@ static PyObject *
 array_newbyteorder(PyArrayObject *self, PyObject *args)
 {
     PyErr_SetString(PyExc_AttributeError,
-                    "`newbyteorder` has been removed from ndarray class. "
-                    "Use `arr.view(arr.dtype.newbyteorder(order))` instead");
+                    "`newbyteorder` was removed from the ndarray class "
+                    "in NumPy 2.0. "
+                    "Use `arr.view(arr.dtype.newbyteorder(order))` instead.");
     return NULL;
 }
 
@@ -960,8 +961,8 @@ static PyObject *
 array_itemset(PyArrayObject *self, PyObject *args)
 {
     PyErr_SetString(PyExc_AttributeError,
-                    "`itemset` has been removed from ndarray class. "
-                    "Use `arr[index] = value` instead");
+                    "`itemset` was removed from the ndarray class in "
+                    "NumPy 2.0. Use `arr[index] = value` instead.");
     return NULL;
 }
 

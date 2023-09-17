@@ -44,7 +44,6 @@ __expired_attributes__ = {
     "maximum_sctype": "",
     "obj2sctype": "",
     "sctype2char": "",
-    "sctypeDict": "",
     "sctypes": "",
     "issubsctype": "Use `np.issubdtype` instead.",
     "set_string_function": 

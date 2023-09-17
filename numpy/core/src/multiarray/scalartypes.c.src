@@ -1598,7 +1598,7 @@ static PyObject *
 gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     PyErr_SetString(PyExc_AttributeError, 
-                    "`newbyteorder` has been removed from scalar types. "
+                    "`newbyteorder` was removed from scalar types in NumPy 2.0. "
                     "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
     return NULL;
 }
@@ -1607,7 +1607,7 @@ static PyObject *
 gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     PyErr_SetString(PyExc_AttributeError, 
-                    "`itemset` has been removed from scalar types "
+                    "`itemset` was removed from scalar types in NumPy 2.0 "
                     "because scalars are immutable.");
     return NULL;
 }
@@ -1616,7 +1616,7 @@ static PyObject *
 gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     PyErr_SetString(PyExc_AttributeError, 
-                    "`ptp` has been removed from scalar types. "
+                    "`ptp` was removed from scalar types in NumPy 2.0. "
                     "For a scalar, the range of values always equals 0.");
     return NULL;
 }
