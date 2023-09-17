@@ -307,7 +307,7 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 
-@set_module("numpy")
+@set_module("numpy.rec")
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
 
