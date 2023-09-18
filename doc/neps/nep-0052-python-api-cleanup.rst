@@ -11,8 +11,7 @@ NEP 52 — Python API cleanup for NumPy 2.0
 :Status: Accepted
 :Type: Standards Track
 :Created: 2023-03-28
-:Resolution: https://github.com/numpy/numpy/issues/23999
-
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/QLMPFTWA67DXE3JCUQT2RIRLQ44INS4F/
 
 Abstract
 --------
