@@ -733,7 +733,7 @@ General check of Python Type
 .. c:function:: int PyArray_CheckScalar(PyObject *op)
 
     Evaluates true if *op* is either an array scalar (an instance of a
-    sub-type of :c:data:`PyGenericArr_Type` ), or an instance of (a
+    sub-type of :c:data:`PyGenericArrType_Type` ), or an instance of (a
     sub-class of) :c:data:`PyArray_Type` whose dimensionality is 0.
 
 .. c:function:: int PyArray_IsPythonNumber(PyObject *op)
@@ -750,13 +750,13 @@ General check of Python Type
 
     Evaluates true if *op* is either a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
-    type of :c:data:`PyGenericArr_Type` ).
+    type of :c:data:`PyGenericArrType_Type` ).
 
 .. c:function:: int PyArray_CheckAnyScalar(PyObject *op)
 
     Evaluates true if *op* is a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
-    sub-type of :c:data:`PyGenericArr_Type`) or an instance of a sub-type of
+    sub-type of :c:data:`PyGenericArrType_Type`) or an instance of a sub-type of
     :c:data:`PyArray_Type` whose dimensionality is 0.
 
 
