@@ -733,9 +733,11 @@ class iinfo:
             '---------------------------------------------------------------\n'
             )
         if self.kind == 'm':
-            return fmt % {'dtype': self.dtype, 'min': 'depends on units', 'max': 'depends on units'}
+            return fmt % {'dtype': self.dtype, 'min': 'depends on units',
+                          'max': 'depends on units'}
         else:
-            return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
+            return fmt % {'dtype': self.dtype, 'min': self.min,
+                          'max': self.max}
 
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
