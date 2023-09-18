@@ -144,6 +144,7 @@
  * from the iterator, or as constants in the case of specialized
  * functions such as the various iternext functions.
  */
+
 struct NpyIter_InternalOnly {
     /* Initial fixed position data */
     npy_uint32 itflags;
