@@ -9,11 +9,10 @@ import pickle
 
 import numpy as np
 import numpy.ma as ma
-from numpy import recarray
 from numpy.ma import masked, nomask
 from numpy.testing import temppath
 from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
     )
 from numpy.ma.mrecords import (
     MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,

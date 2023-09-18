@@ -20,9 +20,8 @@ import functools
 from .._utils import set_module
 from .numerictypes import (
     bytes_, str_, integer, int_, object_, bool_, character)
-from .numeric import ndarray, compare_chararrays
-from .numeric import array as narray
-from numpy.core.multiarray import _vec_string
+from .numeric import ndarray, array as narray
+from numpy.core.multiarray import _vec_string, compare_chararrays
 from numpy.core import overrides
 from numpy._utils import asbytes
 import numpy
@@ -36,7 +35,7 @@ __all__ = [
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
     'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
-    'array', 'asarray'
+    'array', 'asarray', 'compare_chararrays', 'chararray'
     ]
 
 
@@ -1920,7 +1919,7 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
-@set_module('numpy')
+@set_module("numpy.char")
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
@@ -2046,14 +2045,14 @@ class chararray(ndarray):
 
     Examples
     --------
-    >>> charar = np.chararray((3, 3))
+    >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
     chararray([[b'a', b'a', b'a'],
                [b'a', b'a', b'a'],
                [b'a', b'a', b'a']], dtype='|S1')
 
-    >>> charar = np.chararray(charar.shape, itemsize=5)
+    >>> charar = np.char.chararray(charar.shape, itemsize=5)
     >>> charar[:] = 'abc'
     >>> charar
     chararray([[b'abc', b'abc', b'abc'],
@@ -2247,7 +2246,7 @@ class chararray(ndarray):
         Examples
         --------
         >>> c = np.array(['a1b c', '1b ca', 'b ca1', 'Ca1b'], 'S5')
-        >>> c = c.view(np.chararray); c
+        >>> c = c.view(np.char.chararray); c
         chararray(['a1b c', '1b ca', 'b ca1', 'Ca1b'],
               dtype='|S5')
         >>> c[c.argsort()]

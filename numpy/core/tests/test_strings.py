@@ -64,12 +64,16 @@ def test_string_comparisons(op, ufunc, sym, dtypes, aligned):
     expected = [op(d1, d2) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
     assert_array_equal(op(arr, arr2), expected)
     assert_array_equal(ufunc(arr, arr2), expected)
-    assert_array_equal(np.compare_chararrays(arr, arr2, sym, False), expected)
+    assert_array_equal(
+        np.char.compare_chararrays(arr, arr2, sym, False), expected
+    )
 
     expected = [op(d2, d1) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
     assert_array_equal(op(arr2, arr), expected)
     assert_array_equal(ufunc(arr2, arr), expected)
-    assert_array_equal(np.compare_chararrays(arr2, arr, sym, False), expected)
+    assert_array_equal(
+        np.char.compare_chararrays(arr2, arr, sym, False), expected
+    )
 
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
@@ -82,7 +86,9 @@ def test_string_comparisons_empty(op, ufunc, sym, dtypes):
     expected = np.empty(np.broadcast_shapes(arr.shape, arr2.shape), dtype=bool)
     assert_array_equal(op(arr, arr2), expected)
     assert_array_equal(ufunc(arr, arr2), expected)
-    assert_array_equal(np.compare_chararrays(arr, arr2, sym, False), expected)
+    assert_array_equal(
+        np.char.compare_chararrays(arr, arr2, sym, False), expected
+    )
 
 
 @pytest.mark.parametrize("str_dt", ["S", "U"])

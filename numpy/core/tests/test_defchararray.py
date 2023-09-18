@@ -135,9 +135,9 @@ class TestVecString:
 class TestWhitespace:
     def setup_method(self):
         self.A = np.array([['abc ', '123  '],
-                           ['789 ', 'xyz ']]).view(np.chararray)
+                           ['789 ', 'xyz ']]).view(np.char.chararray)
         self.B = np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.chararray)
+                           ['789', 'xyz']]).view(np.char.chararray)
 
     def test1(self):
         assert_(np.all(self.A == self.B))
@@ -149,7 +149,7 @@ class TestWhitespace:
 
 class TestChar:
     def setup_method(self):
-        self.A = np.array('abc1', dtype='c').view(np.chararray)
+        self.A = np.array('abc1', dtype='c').view(np.char.chararray)
 
     def test_it(self):
         assert_equal(self.A.shape, (4,))
@@ -158,9 +158,9 @@ class TestChar:
 class TestComparisons:
     def setup_method(self):
         self.A = np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.chararray)
+                           ['789', 'xyz']]).view(np.char.chararray)
         self.B = np.array([['efg', '123  '],
-                           ['051', 'tuv']]).view(np.chararray)
+                           ['051', 'tuv']]).view(np.char.chararray)
 
     def test_not_equal(self):
         assert_array_equal((self.A != self.B), [[True, False], [True, True]])
@@ -192,7 +192,7 @@ class TestComparisonsMixed1(TestComparisons):
     def setup_method(self):
         TestComparisons.setup_method(self)
         self.B = np.array([['efg', '123  '],
-                           ['051', 'tuv']], np.str_).view(np.chararray)
+                           ['051', 'tuv']], np.str_).view(np.char.chararray)
 
 class TestComparisonsMixed2(TestComparisons):
     """Ticket #1276"""
@@ -200,16 +200,19 @@ class TestComparisonsMixed2(TestComparisons):
     def setup_method(self):
         TestComparisons.setup_method(self)
         self.A = np.array([['abc', '123'],
-                           ['789', 'xyz']], np.str_).view(np.chararray)
+                           ['789', 'xyz']], np.str_) \
+                            .view(np.char.chararray)
 
 class TestInformation:
     def setup_method(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
+                           ['123 \t 345 \0 ', 'UPPER']]) \
+                            .view(np.char.chararray)
         self.B = np.array([[' \u03a3 ', ''],
                            ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
+                           ['123 \t 345 \0 ', 'UPPER']]) \
+                            .view(np.char.chararray)
 
     def test_len(self):
         assert_(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
@@ -313,10 +316,11 @@ class TestMethods:
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']],
-                          dtype='S').view(np.chararray)
+                          dtype='S').view(np.char.chararray)
         self.B = np.array([[' \u03a3 ', ''],
                            ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
+                           ['123 \t 345 \0 ', 'UPPER']]).view(
+                                                            np.char.chararray)
 
     def test_capitalize(self):
         tgt = [[b' abc ', b''],
@@ -584,26 +588,26 @@ class TestMethods:
 class TestOperations:
     def setup_method(self):
         self.A = np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.chararray)
+                           ['789', 'xyz']]).view(np.char.chararray)
         self.B = np.array([['efg', '456'],
-                           ['051', 'tuv']]).view(np.chararray)
+                           ['051', 'tuv']]).view(np.char.chararray)
 
     def test_add(self):
         AB = np.array([['abcefg', '123456'],
-                       ['789051', 'xyztuv']]).view(np.chararray)
+                       ['789051', 'xyztuv']]).view(np.char.chararray)
         assert_array_equal(AB, (self.A + self.B))
         assert_(len((self.A + self.B)[0][0]) == 6)
 
     def test_radd(self):
         QA = np.array([['qabc', 'q123'],
-                       ['q789', 'qxyz']]).view(np.chararray)
+                       ['q789', 'qxyz']]).view(np.char.chararray)
         assert_array_equal(QA, ('q' + self.A))
 
     def test_mul(self):
         A = self.A
         for r in (2, 3, 5, 7, 197):
             Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
-                           [A[1, 0]*r, A[1, 1]*r]]).view(np.chararray)
+                           [A[1, 0]*r, A[1, 1]*r]]).view(np.char.chararray)
 
             assert_array_equal(Ar, (self.A * r))
 
@@ -616,7 +620,7 @@ class TestOperations:
         A = self.A
         for r in (2, 3, 5, 7, 197):
             Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
-                           [A[1, 0]*r, A[1, 1]*r]]).view(np.chararray)
+                           [A[1, 0]*r, A[1, 1]*r]]).view(np.char.chararray)
             assert_array_equal(Ar, (r * self.A))
 
         for ob in [object(), 'qrs']:
@@ -626,19 +630,19 @@ class TestOperations:
 
     def test_mod(self):
         """Ticket #856"""
-        F = np.array([['%d', '%f'], ['%s', '%r']]).view(np.chararray)
+        F = np.array([['%d', '%f'], ['%s', '%r']]).view(np.char.chararray)
         C = np.array([[3, 7], [19, 1]], dtype=np.int64)
         FC = np.array([['3', '7.000000'],
-                       ['19', 'np.int64(1)']]).view(np.chararray)
+                       ['19', 'np.int64(1)']]).view(np.char.chararray)
         assert_array_equal(FC, F % C)
 
-        A = np.array([['%.3f', '%d'], ['%s', '%r']]).view(np.chararray)
+        A = np.array([['%.3f', '%d'], ['%s', '%r']]).view(np.char.chararray)
         A1 = np.array([['1.000', '1'],
-                       ['1', repr(np.array(1)[()])]]).view(np.chararray)
+                       ['1', repr(np.array(1)[()])]]).view(np.char.chararray)
         assert_array_equal(A1, (A % 1))
 
         A2 = np.array([['1.000', '2'],
-                       ['3', repr(np.array(4)[()])]]).view(np.chararray)
+                       ['3', repr(np.array(4)[()])]]).view(np.char.chararray)
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
@@ -654,7 +658,7 @@ class TestOperations:
         """Regression test for https://github.com/numpy/numpy/issues/5982"""
 
         arr = np.array([['abc ', 'def '], ['geh ', 'ijk ']],
-                       dtype='S4').view(np.chararray)
+                       dtype='S4').view(np.char.chararray)
         sl1 = arr[:]
         assert_array_equal(sl1, arr)
         assert_(sl1.base is arr)
@@ -672,7 +676,7 @@ def test_empty_indexing():
     """Regression test for ticket 1948."""
     # Check that indexing a chararray with an empty list/array returns an
     # empty chararray instead of a chararray with a single empty string in it.
-    s = np.chararray((4,))
+    s = np.char.chararray((4,))
     assert_(s[[]].size == 0)
 
 

@@ -134,8 +134,8 @@ assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)
 assert_type(np.busdaycalendar(holidays=[M]), np.busdaycalendar)
 
-assert_type(np.compare_chararrays("a", "b", "!=", rstrip=False), npt.NDArray[np.bool_])
-assert_type(np.compare_chararrays(b"a", b"a", "==", True), npt.NDArray[np.bool_])
+assert_type(np.char.compare_chararrays("a", "b", "!=", rstrip=False), npt.NDArray[np.bool_])
+assert_type(np.char.compare_chararrays(b"a", b"a", "==", True), npt.NDArray[np.bool_])
 
 assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], flags=["c_index"]), tuple[np.nditer, ...])
 assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_flags=[["readonly", "readonly"]]), tuple[np.nditer, ...])

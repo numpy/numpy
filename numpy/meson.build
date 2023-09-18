@@ -293,7 +293,9 @@ pure_subdirs = [
   'polynomial',
   'testing',
   'tests',
-  'typing'
+  'typing',
+  'rec',
+  'char'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'

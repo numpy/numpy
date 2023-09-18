@@ -494,14 +494,14 @@ executing them on an element-by-element basis. Perhaps the easiest
 way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode
 data-type. However, a chararray can also be created using the
-:meth:`numpy.chararray` constructor, or via the
+:meth:`numpy.char.chararray` constructor, or via the
 :func:`numpy.char.array <core.defchararray.array>` function:
 
 .. autosummary::
    :toctree: generated/
 
-   chararray
-   core.defchararray.array
+   char.chararray
+   char.array
 
 Another difference with the standard ndarray of str data-type is
 that the chararray inherits the feature introduced by Numarray that

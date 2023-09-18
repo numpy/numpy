@@ -630,8 +630,8 @@ Record Arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
-:class:`numpy.recarray` that allows access to fields of structured arrays by
-attribute instead of only by index.
+:class:`numpy.recarray` that allows access to fields of structured arrays
+by attribute instead of only by index.
 Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
 The ``numpy.rec`` module provides functions for creating recarrays from
@@ -697,7 +697,7 @@ array if the field has a structured type but as a plain ndarray otherwise. ::
  >>> type(recordarr.foo)
  <class 'numpy.ndarray'>
  >>> type(recordarr.bar)
- <class 'numpy.recarray'>
+ <class 'numpy.rec.recarray'>
 
 Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but

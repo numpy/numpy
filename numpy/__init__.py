@@ -120,7 +120,7 @@ else:
 
     from . import core
     from .core import (
-        _no_nep50_warning, memmap, iinfo, finfo,
+        _no_nep50_warning, memmap, iinfo, finfo, recarray,
         False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
         arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
@@ -129,8 +129,7 @@ else:
         atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr, 
         bitwise_and, bitwise_not, bitwise_or, bitwise_xor, block, bool_,
         broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
-        can_cast, cbrt, cdouble, ceil, char, character, chararray,
-        choose, clip, clongdouble, compare_chararrays,
+        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
         complexfloating, compress, concatenate, conj, conjugate, convolve,
         copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
         cumprod, cumproduct, cumsum, datetime64, datetime_as_string, 
@@ -139,7 +138,7 @@ else:
         errstate, euler_gamma, exp, exp2, expm1, fabs, 
         flatiter, flatnonzero, flexible, sctypeDict,
         float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
-        format_float_positional, format_float_scientific, format_parser, 
+        format_float_positional, format_float_scientific, 
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
         get_printoptions, getbufsize, geterr, geterrcall, greater, 
@@ -156,7 +155,7 @@ else:
         negative, nested_iters, newaxis, nextafter, nonzero, not_equal,
         number, object_, ones, ones_like, outer, partition,
         pi, positive, power, printoptions, prod, product, promote_types, 
-        ptp, put, putmask, rad2deg, radians, ravel, rec, recarray, reciprocal,
+        ptp, put, putmask, rad2deg, radians, ravel, reciprocal,
         record, remainder, repeat, require, reshape, resize, result_type, 
         right_shift, rint, roll, rollaxis, round, 
         searchsorted, set_printoptions,
@@ -248,7 +247,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test"
+        "f2py", "test", "rec", "char"
     }
 
     # We build warning messages for former attributes
@@ -358,6 +357,12 @@ else:
         elif attr == "typing":
             import numpy.typing as typing
             return typing
+        elif attr == "rec":
+            import numpy.rec as rec
+            return rec
+        elif attr == "char":
+            import numpy.char as char
+            return char
         elif attr == "array_api":
             import numpy.array_api as array_api
             return array_api
@@ -384,6 +389,14 @@ else:
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
                 f"{__expired_attributes__[attr]}"
             )
+
+        if attr == "chararray":
+            warnings.warn(
+                "`np.chararray` is deprecated and will be removed from "
+                "the main namespace in the future. Use an array with a string "
+                "or bytes dtype instead.", DeprecationWarning, stacklevel=2)
+            import numpy.char as char
+            return char.chararray
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))

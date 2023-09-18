@@ -22,10 +22,10 @@ import warnings
 
 import numpy as np
 from numpy import (
-    bool_, dtype, ndarray, recarray, array as narray
+    bool_, dtype, ndarray, array as narray
 )
 from numpy.core.records import (
-    fromarrays as recfromarrays, fromrecords as recfromrecords
+    recarray, fromarrays as recfromarrays, fromrecords as recfromrecords
 )
 
 _byteorderconv = np.core.records._byteorderconv

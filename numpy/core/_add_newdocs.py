@@ -980,7 +980,7 @@ add_newdoc('numpy.core.multiarray', 'asarray',
 
     >>> issubclass(np.recarray, np.ndarray)
     True
-    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asarray(a) is a
     False
     >>> np.asanyarray(a) is a
@@ -1044,7 +1044,7 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
 
     Instances of `ndarray` subclasses are passed through as-is:
 
-    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asanyarray(a) is a
     True
 
@@ -1419,7 +1419,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     --------
     >>> a = np.array(["a", "b", "cde"])
     >>> b = np.array(["a", "a", "dec"])
-    >>> np.compare_chararrays(a, b, ">", True)
+    >>> np.char.compare_chararrays(a, b, ">", True)
     array([False,  True, False])
 
     """)

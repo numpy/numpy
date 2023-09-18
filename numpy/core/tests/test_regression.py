@@ -378,7 +378,7 @@ class TestRegression:
 
     def test_chararray_rstrip(self):
         # Ticket #222
-        x = np.chararray((1,), 5)
+        x = np.char.chararray((1,), 5)
         x[0] = b'a   '
         x = x.rstrip()
         assert_equal(x[0], b'a')
@@ -2079,7 +2079,7 @@ class TestRegression:
         a = np.array([('a', 1)], dtype='S1, int')
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
-        dtype = np.format_parser(['i4', 'i4'], [], [])
+        dtype = np.rec.format_parser(['i4', 'i4'], [], [])
         a = np.recarray((2,), dtype)
         a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
