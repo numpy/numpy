@@ -100,6 +100,13 @@ class TestIinfo:
                 max_calculated = T(0) - T(1)
             assert_equal(iinfo(T).max, max_calculated)
 
+    def test_timedelta64(self):
+        assert_equal(iinfo(np.timedelta64).bits, 64)
+        with assert_raises(ValueError):
+            iinfo(np.timedelta64).min
+        with assert_raises(ValueError):
+            iinfo(np.timedelta64).max
+
 class TestRepr:
     def test_iinfo_repr(self):
         expected = "iinfo(min=-32768, max=32767, dtype=int16)"
