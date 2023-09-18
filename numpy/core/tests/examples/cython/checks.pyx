@@ -132,7 +132,9 @@ def get_npyiter_operands(it: "nditer"):
 
 def get_npyiter_itviews(it: "nditer"):
     cdef cnp.NpyIter* cit = npyiter_from_npyiter_obj(it)
-    return tuple([cnp.NpyIter_GetIterView(cit, <cnp.npy_intp>i) for i in range(it.nop)])
+    return tuple(
+        [cnp.NpyIter_GetIterView(cit, <cnp.npy_intp>i) for i in range(it.nop)]
+    )
 
 
 def get_npyiter_dtypes(it: "nditer"):
