@@ -56,8 +56,10 @@ __expired_attributes__ = {
     "mat": "Use `np.asmatrix` instead.",
     "recfromcsv": "Use `np.genfromtxt` with comma delimiter instead.",
     "recfromtxt": "Use `np.genfromtxt` instead.",
-    "deprecate": "Raise `DeprecationWarning` instead.",
-    "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
+    "deprecate": "Emit `DeprecationWarning` with `warnings.warn` directly, "
+        "or use `typing.deprecated`.",
+    "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
+        "directly, or use `typing.deprecated`.",
     "disp": "Use your own printing function instead.",
     "find_common_type": 
         "Use `numpy.promote_types` or `numpy.result_type` instead. "
