@@ -51,4 +51,5 @@ details are found in :ref:`reference`.
 
    ../glossary
    ../release
+   ../numpy_2_0_migration_guide
    ../license
