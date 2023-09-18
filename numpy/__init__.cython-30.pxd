@@ -1104,6 +1104,11 @@ cdef extern from "numpy/arrayobject.h":
         cdef inline PyArray_Descr** dtypes(self):
             return NpyIter_GetDescrArray(self)
 
+        @property
+        cdef inline npy_bool finished(self):
+            return not (NpyIter_GetIterIndex(self) < NpyIter_GetIterSize(self))
+
+
     cdef enum:
         NPY_FAIL
         NPY_SUCCEED

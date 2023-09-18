@@ -198,3 +198,13 @@ def test_nditer_attributes(install_temp):
     assert checks.get_nditer_nop(it) == it.nop == 2
     assert checks.get_nditer_size(it) == it.itersize == 12
     assert checks.get_nditer_ndim(it) == it.ndim == 3
+    assert all(
+        x is y for x, y in zip(checks.get_nditer_operands(it), it.operands)
+    )
+    assert all(
+        [
+            np.allclose(x, y)
+            for x, y in zip(checks.get_nditer_itviews(it), it.itviews)
+        ]
+    )
+

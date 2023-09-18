@@ -80,12 +80,12 @@ def make_iso_8601_datetime(dt: "datetime"):
 
 
 cdef cnp.nditer NpyIter_from_nditer_obj(object it):
-    # this function supports up to 5 iterator operands
+    # this function supports up to 3 iterator operands
     cdef:
         cnp.nditer cit
         # cnp.PyArray_Descr* op_dtypes[5]
-        cnp.npy_uint32 op_flags[5]
-        cnp.PyArrayObject* ops[5]
+        cnp.npy_uint32 op_flags[3]
+        cnp.PyArrayObject* ops[3]
         cnp.npy_uint32 flags = 0
 
     if it.has_index:
@@ -124,6 +124,21 @@ def get_nditer_nop(it: "nditer"):
     return cit.nop
 
 
+def get_nditer_operands(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return tuple([<cnp.ndarray>cit.operands[i] for i in range(it.nop)])
+
+
+def get_nditer_itviews(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.itviews
+
+
+def get_nditer_dtypes(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return tuple([<cnp.dtype>cit.dtypes[i] for i in range(it.nop)])
+
+
 def nditer_has_delayed_bufalloc(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
     return cit.has_delayed_bufalloc
@@ -137,3 +152,8 @@ def nditer_has_index(it: "nditer"):
 def nditer_has_multi_index(it: "nditer"):
     cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
     return cit.has_multi_index
+
+
+def nditer_has_finished(it: "nditer"):
+    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
+    return cit.finished
