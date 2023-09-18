@@ -79,10 +79,10 @@ def make_iso_8601_datetime(dt: "datetime"):
     return result
 
 
-cdef cnp.nditer NpyIter_from_nditer_obj(object it):
+cdef cnp.NpyIter* NpyIter_from_nditer_obj(object it):
     # this function supports up to 3 iterator operands
     cdef:
-        cnp.nditer cit
+        cnp.NpyIter* cit
         # cnp.PyArray_Descr* op_dtypes[5]
         cnp.npy_uint32 op_flags[3]
         cnp.PyArrayObject* ops[3]
@@ -110,50 +110,53 @@ cdef cnp.nditer NpyIter_from_nditer_obj(object it):
 
 
 def get_nditer_size(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.itersize
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_GetIterSize(cit)
 
 
 def get_nditer_ndim(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.ndim
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_GetNDim(cit)
 
 
 def get_nditer_nop(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.nop
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_GetNOp(cit)
 
 
 def get_nditer_operands(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return tuple([<cnp.ndarray>cit.operands[i] for i in range(it.nop)])
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    arr = cnp.NpyIter_GetOperandArray(cit)
+    return tuple([<cnp.ndarray>arr[i] for i in range(it.nop)])
 
 
 def get_nditer_itviews(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.itviews
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return tuple([cnp.NpyIter_GetIterView(cit, <cnp.npy_intp>i) for i in range(it.nop)])
 
 
 def get_nditer_dtypes(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return tuple([<cnp.dtype>cit.dtypes[i] for i in range(it.nop)])
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    arr = cnp.NpyIter_GetDescrArray(cit)
+    return tuple([<cnp.dtype>arr[i] for i in range(it.nop)])
 
 
 def nditer_has_delayed_bufalloc(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.has_delayed_bufalloc
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_HasDelayedBufAlloc(cit)
 
 
 def nditer_has_index(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.has_index
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_HasIndex(cit)
 
 
 def nditer_has_multi_index(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.has_multi_index
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    return cnp.NpyIter_HasMultiIndex(cit)
 
 
 def nditer_has_finished(it: "nditer"):
-    cdef cnp.nditer cit = NpyIter_from_nditer_obj(it)
-    return cit.finished
+    cdef cnp.NpyIter* cit = NpyIter_from_nditer_obj(it)
+    cnp.NpyIter_GotoIterIndex(cit, it.index)
+    return not (cnp.NpyIter_GetIterIndex(cit) < cnp.NpyIter_GetIterSize(cit))

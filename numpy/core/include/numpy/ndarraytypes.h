@@ -1004,17 +1004,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  **********************************/
 
 /* The actual structure of the iterator is an internal detail */
-struct NpyIter_InternalOnly {
-    /* Initial fixed position data */
-    npy_uint32 itflags;
-    npy_uint8 ndim, nop;
-    npy_int8 maskop;
-    npy_intp itersize, iterstart, iterend;
-    /* iterindex is only used if RANGED or BUFFERED is set */
-    npy_intp iterindex;
-    /* The rest is variable */
-    char iter_flexdata[];
-};
 typedef struct NpyIter_InternalOnly NpyIter;
 
 /* Iterator function pointers that may be specialized */
