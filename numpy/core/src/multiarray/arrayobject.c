@@ -1002,6 +1002,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip)
 {
     PyArrayObject *result;
+    PyObject *new;
     PyArrayMultiIterObject *mit;
     int val, cast = 0;
 
@@ -1025,7 +1026,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             return NULL;
         }
         unicode->elsize = PyArray_DESCR(other)->elsize;
-        PyObject *new = PyArray_FromAny((PyObject *)other,
+        new = PyArray_FromAny((PyObject *)other,
                 unicode, 0, 0, 0, NULL);
         if (new == NULL) {
             return NULL;
