@@ -198,7 +198,7 @@ def lag2poly(c):
 #
 
 # Laguerre
-lagdomain = np.array([0, 1])
+lagdomain = np.array([0., 1.])
 
 # Laguerre coefficients representing zero.
 lagzero = np.array([0])

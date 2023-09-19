@@ -202,7 +202,7 @@ def herm2poly(c):
 #
 
 # Hermite
-hermdomain = np.array([-1, 1])
+hermdomain = np.array([-1., 1.])
 
 # Hermite coefficients representing zero.
 hermzero = np.array([0])

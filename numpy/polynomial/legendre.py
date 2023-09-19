@@ -212,7 +212,7 @@ def leg2poly(c):
 #
 
 # Legendre
-legdomain = np.array([-1, 1])
+legdomain = np.array([-1., 1.])
 
 # Legendre coefficients representing zero.
 legzero = np.array([0])

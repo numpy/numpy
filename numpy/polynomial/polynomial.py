@@ -94,7 +94,7 @@ polytrim = pu.trimcoef
 #
 
 # Polynomial default domain.
-polydomain = np.array([-1, 1])
+polydomain = np.array([-1., 1.])
 
 # Polynomial coefficients representing zero.
 polyzero = np.array([0])

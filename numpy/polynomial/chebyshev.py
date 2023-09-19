@@ -461,7 +461,7 @@ def cheb2poly(c):
 #
 
 # Chebyshev default domain.
-chebdomain = np.array([-1, 1])
+chebdomain = np.array([-1., 1.])
 
 # Chebyshev coefficients representing zero.
 chebzero = np.array([0])
