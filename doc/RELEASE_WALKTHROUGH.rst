@@ -56,7 +56,7 @@ Five documents usually need to be updated or created for the release PR:
 - The release-notes
 - The ``.mailmap`` file
 - The ``pyproject.toml`` file
-- The ``pyproject.setuppy.toml`` file # 1.26.x only
+- The ``pyproject.toml.setuppy`` file # 1.26.x only
 
 These changes should be made in an ordinary PR against the maintenance branch.
 The commit message should contain a ``[wheel build]`` directive to test if the
@@ -69,7 +69,7 @@ commit message might be something like::
     - Update 1.20.0-notes.rst.
     - Update .mailmap.
     - Update pyproject.toml
-    - Update pyproject.setuppy.toml
+    - Update pyproject.toml.setuppy
 
     [wheel build]
 
@@ -111,10 +111,10 @@ index file will need updating.
 Set the release version
 -----------------------
 
-Edit the ``pyproject.toml`` and ``pyproject.setuppy.toml`` files and set the
+Edit the ``pyproject.toml`` and ``pyproject.toml.setuppy`` files and set the
 release version::
 
-    $ gvim pyproject.toml pyproject.setuppy.toml
+    $ gvim pyproject.toml pyproject.toml.setuppy
 
 
 Check the ``pavement.py`` and ``doc/source/release.rst`` files
@@ -262,6 +262,7 @@ and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
 
     $ git clean -xdfq
     $ git co v1.21.0
+    $ rm -rf doc/build  # want version to be current
     $ python -m spin docs merge-doc --build
     $ pushd doc/build/merge
 
