@@ -10,12 +10,13 @@
 #include "simd_qsort.hpp"
 #ifndef __CYGWIN__
 
-#define USE_HIGHWAY defined(__aarch64__) && defined(NPY_CAN_LINK_HIGHWAY)
+#define USE_HIGHWAY defined(__aarch64__)
 
 #if defined(NPY_HAVE_AVX512_SKX)
     #include "x86-simd-sort/src/avx512-32bit-qsort.hpp"
     #include "x86-simd-sort/src/avx512-64bit-qsort.hpp"
 #elif USE_HIGHWAY
+    #define VQSORT_ONLY_STATIC 1
     #include "hwy/contrib/sort/vqsort-inl.h"
 #endif
 

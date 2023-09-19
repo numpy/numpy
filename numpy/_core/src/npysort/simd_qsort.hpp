@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 
-#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || (defined(__aarch64__) && !defined(NPY_CAN_LINK_HIGHWAY)))
+#define DISABLE_HIGHWAY_OPTIMIZATION defined(__arm__)
 
 namespace np { namespace qsort_simd {
 

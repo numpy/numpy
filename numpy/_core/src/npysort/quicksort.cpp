@@ -60,7 +60,7 @@
 #include <utility>
 
 #define NOT_USED NPY_UNUSED(unused)
-#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || (defined(__aarch64__) && !defined(NPY_CAN_LINK_HIGHWAY)))
+#define DISABLE_HIGHWAY_OPTIMIZATION defined(__arm__)
 
 /*
  * pushing largest partition has upper bound of log2(n) space
