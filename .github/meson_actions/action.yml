@@ -12,6 +12,7 @@ runs:
       pip install -r build_requirements.txt
       echo "::endgroup::"
       echo "::group::Building NumPy"
+      # spin build will pick up any scipy-openblas openblas.pc in ./openblas
       spin build --clean -- ${MESON_ARGS[@]}
       echo "::endgroup::"
 

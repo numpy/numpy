@@ -37,9 +37,14 @@ if not meson_import_dir.exists():
     "-v", "--verbose", is_flag=True,
     help="Print all build output, even installation"
 )
+@click.option(
+    "--with-scipy-openblas", type=click.Choice(["32", "64"]),
+    default=None,
+    help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
+)
 @click.argument("meson_args", nargs=-1)
 @click.pass_context
-def build(ctx, meson_args, jobs=None, clean=False, verbose=False, quiet=False):
+def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False):
     """🔧 Build package with Meson/ninja and install
 
     MESON_ARGS are passed through e.g.:
@@ -53,6 +58,7 @@ def build(ctx, meson_args, jobs=None, clean=False, verbose=False, quiet=False):
 
     CFLAGS="-O0 -g" spin build
     """
+    _maybe_setup_openblas(ctx, with_scipy_openblas)
     ctx.forward(meson.build)
 
 
@@ -413,7 +419,34 @@ def ipython(ctx, ipython_args):
     util.run(["ipython", "--ignore-cwd",
               f"--TerminalIPythonApp.exec_lines={preimport}"] +
              list(ipython_args))
+<<<<<<< HEAD
  
+=======
+
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.argument("args", nargs=-1)
+@click.pass_context
+def run(ctx, args):
+    """🏁 Run a shell command with PYTHONPATH set
+
+    \b
+    spin run make
+    spin run 'echo $PYTHONPATH'
+    spin run python -c 'import sys; del sys.path[0]; import mypkg'
+
+    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
+    above, you need to provide a single, quoted command to `run`:
+
+    spin run 'echo $SHELL && echo $PWD'
+
+    On Windows, all shell commands are run via Bash.
+    Install Git for Windows if you don't have Bash already.
+    """
+    ctx.invoke(build)
+    ctx.forward(meson.run)
+
+>>>>>>> b68dd546e (ENH: use OpenBLAS from a wheel)
 
 @click.command(context_settings={"ignore_unknown_options": True})
 @click.pass_context
@@ -425,3 +458,55 @@ def mypy(ctx):
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.option(
+    "--with-scipy-openblas", type=click.Choice(["32", "64"]),
+    default=None, required=True,
+    help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
+)
+def config_openblas(with_scipy_openblas):
+    """🔧 Create .openblas/openblas.pc file
+
+    Also modify _distributor_init.py
+
+    Requires a pre-installed scipy-openblas64 or scipy-openblas32
+    """
+    _config_openblas(with_scipy_openblas)
+
+def _config_openblas(blas_variant):
+    import importlib
+    basedir = os.getcwd()
+    openblas_dir = os.path.join(basedir, ".openblas")
+    pkg_config_fname = os.path.join(openblas_dir, "openblas.pc")
+    if blas_variant:
+        module_name = f"scipy_openblas{blas_variant}"
+        try:
+            openblas = importlib.import_module(module_name)
+        except ModuleNotFoundError:
+            raise RuntimeError(f"'pip install {module_name} first")
+        openblas.write__distributor_init(os.path.join(basedir, "numpy"))
+        os.makedirs(openblas_dir, exist_ok=True)
+        with open(pkg_config_fname, "wt", encoding="utf8") as fid:
+            fid.write(openblas.get_pkg_config())
+ 
+def _maybe_setup_openblas(ctx, blas_variant):
+    _config_openblas(blas_variant)
+    import importlib
+    basedir = os.getcwd()
+    openblas_dir = os.path.join(basedir, ".openblas")
+    pkg_config_fname = os.path.join(openblas_dir, "openblas.pc")
+    if blas_variant == 64:
+        ctx.params["meson_args"] += (
+            "-Dblas-symbol-suffix=64_",
+            "-Duse-ilp64=true",
+        )
+    if os.path.exists(pkg_config_fname):
+        oldvalue = os.environ.get("PKG_CONFIG_PATH", "")
+        if oldvalue:
+            os.environ["PKG_CONFIG_PATH"] = openblas_dir + os.pathsep + oldvalue
+        else:
+            os.environ["PKG_CONFIG_PATH"] = openblas_dir
+    ctx.params.pop("with_scipy_openblas", None)

@@ -35,8 +35,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
-        sudo apt-get update
-        sudo apt-get install -y libopenblas-serial-dev
+        pip install scipy-openblas32 spin
+        spin config-openblas --with-scipy-openblas=32
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
