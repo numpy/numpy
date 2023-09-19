@@ -206,6 +206,7 @@ def leg2poly(c):
             c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
         return polyadd(c0, polymulx(c1))
 
+
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.

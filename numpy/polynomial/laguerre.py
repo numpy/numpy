@@ -192,6 +192,7 @@ def lag2poly(c):
             c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
         return polyadd(c0, polysub(c1, polymulx(c1)))
 
+
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
