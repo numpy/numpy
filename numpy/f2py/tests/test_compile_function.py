@@ -17,6 +17,10 @@ def setup_module():
         pytest.skip("Needs C compiler")
     if not util.has_f77_compiler():
         pytest.skip("Needs FORTRAN 77 compiler")
+    if sys.version_info[:2] >= (3, 12):
+        pytest.skip(
+            "F2PY compilation tests do not work with meson."
+        )
 
 
 # extra_args can be a list (since gh-11937) or string.
