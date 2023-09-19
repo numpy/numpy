@@ -294,7 +294,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     /*
      * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
      * The longest "reasonable" index that produces a result of <= 32 dimensions
-     * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
+     * is `(0,)*ncu.MAXDIMS + (None,)*ncu.MAXDIMS`. Longer indices can exist, but
      * are uncommon.
      */
     PyObject *raw_indices[NPY_MAXDIMS*2];
@@ -487,8 +487,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
 
-                /* TODO: This can't fail, right? Is there a faster way? */
-                if (PyObject_IsTrue((PyObject *)arr)) {
+                /* TODO: The faster way can be n = ((npy_bool *)PyArray_BYTES(arr))[0] != 0 */
+                int istrue = PyObject_IsTrue((PyObject *)arr);
+                if (istrue == -1) {
+                    goto failed_building_indices;
+                }
+                if (istrue) {
                     n = 1;
                 }
                 else {

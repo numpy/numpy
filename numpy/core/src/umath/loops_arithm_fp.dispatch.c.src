@@ -31,59 +31,6 @@
 /********************************************************************************
  ** Defining ufunc inner functions
  ********************************************************************************/
-
-/*
- * clang has a bug that's present at -O1 or greater.  When partially loading a
- * vector register for a divide operation, the remaining elements are set
- * to 1 to avoid divide-by-zero.  The partial load is paired with a partial
- * store after the divide operation.  clang notices that the entire register
- * is not needed for the store and optimizes out the fill of 1 to the remaining
- * elements.  This causes either a divide-by-zero or 0/0 with invalid exception
- * that we were trying to avoid by filling.
- *
- * Using a dummy variable marked 'volatile' convinces clang not to ignore
- * the explicit fill of remaining elements.  If `-ftrapping-math` is
- * supported, then it'll also avoid the bug.  `-ftrapping-math` is supported
- * on Apple clang v12+ for x86_64.  It is not currently supported for arm64.
- * `-ftrapping-math` is set by default of Numpy builds in
- * numpy/distutils/ccompiler.py.
- *
- * Note: Apple clang and clang upstream have different versions that overlap
- */
-#if defined(__clang__)
-    #if defined(__apple_build_version__)
-    // Apple Clang
-        #if __apple_build_version__ < 12000000
-        // Apple Clang before v12
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 1
-        #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
-        // Apple Clang after v12, targeting i386 or x86_64
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 0
-        #else
-        // Apple Clang after v12, not targeting i386 or x86_64
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 1
-        #endif
-    #else
-    // Clang, not Apple Clang
-        #if __clang_major__ < 10
-        // Clang before v10
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 1
-        #elif defined(_MSC_VER)
-        // clang-cl has the same bug
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 1
-        #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
-        // Clang v10+, targeting i386 or x86_64
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 0
-        #else
-        // Clang v10+, not targeting i386 or x86_64
-        #define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 1
-        #endif
-    #endif
-#else
-// Not a Clang compiler
-#define WORKAROUND_CLANG_PARTIAL_LOAD_BUG 0
-#endif
-
 /**begin repeat
  * Float types
  *  #type = npy_float, npy_double#
@@ -148,12 +95,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_store_@sfx@((@type@*)dst, r0);
                 npyv_store_@sfx@((@type@*)(dst + vstep), r1);
             }
-        #if @is_div@ && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            const int vstop = hstep - 1;
-        #else
-            const int vstop = 0;
-        #endif // #if @is_div@ && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            for (; len > vstop; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
+            for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
             #if @is_div@
                 npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
                 npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
@@ -164,15 +106,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
                 npyv_store_till_@sfx@((@type@*)dst, len, r);
             }
-        #if @is_div@ && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            // last partial iteration for divide and working around clang partial load bug
-            if(len > 0){
-                npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
-                volatile npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
-                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
-                npyv_store_till_@sfx@((@type@*)dst, len, r);
-            }
-        #endif // #if @is_div@ && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
         }
         else if (ssrc0 == 0 && ssrc1 == sizeof(@type@) && sdst == ssrc1) {
             npyv_@sfx@ a = npyv_setall_@sfx@(*((@type@*)src0));
@@ -184,12 +117,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_store_@sfx@((@type@*)dst, r0);
                 npyv_store_@sfx@((@type@*)(dst + vstep), r1);
             }
-        #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            const int vstop = hstep - 1;
-        #else
-            const int vstop = 0;
-        #endif // #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            for (; len > vstop; len -= hstep, src1 += vstep, dst += vstep) {
+            for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
             #if @is_div@ || @is_mul@
                 npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
             #else
@@ -198,14 +126,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
                 npyv_store_till_@sfx@((@type@*)dst, len, r);
             }
-        #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            // last partial iteration for multiply / divide and working around clang partial load bug
-            if(len > 0){
-                volatile npyv_@sfx@ b = npyv_load_till_@sfx@((const @type@*)src1, len, 1.0@c@);
-                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
-                npyv_store_till_@sfx@((@type@*)dst, len, r);
-            }
-        #endif // #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
         }
         else if (ssrc1 == 0 && ssrc0 == sizeof(@type@) && sdst == ssrc0) {
             npyv_@sfx@ b = npyv_setall_@sfx@(*((@type@*)src1));
@@ -217,12 +137,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_store_@sfx@((@type@*)dst, r0);
                 npyv_store_@sfx@((@type@*)(dst + vstep), r1);
             }
-        #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            const int vstop = hstep - 1;
-        #else
-            const int vstop = 0;
-        #endif // #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            for (; len > vstop; len -= hstep, src0 += vstep, dst += vstep) {
+            for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
             #if @is_div@ || @is_mul@
                 npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
             #else
@@ -231,14 +146,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
                 npyv_store_till_@sfx@((@type@*)dst, len, r);
             }
-        #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
-            // last partial iteration for multiply / divide and working around clang partial load bug
-            if(len > 0){
-                volatile npyv_@sfx@ a = npyv_load_till_@sfx@((const @type@*)src0, len, 1.0@c@);
-                npyv_@sfx@ r = npyv_@intrin@_@sfx@(a, b);
-                npyv_store_till_@sfx@((@type@*)dst, len, r);
-            }
-        #endif // #if (@is_div@ || @is_mul@) && WORKAROUND_CLANG_PARTIAL_LOAD_BUG
         } else {
             goto loop_scalar;
         }
@@ -258,14 +165,19 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @type@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@type@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
         *indexed = *indexed @OP@ *(@type@ *)value;
     }
     return 0;
@@ -273,8 +185,6 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
 
 /**end repeat1**/
 /**end repeat**/
-
-#undef WORKAROUND_CLANG_PARTIAL_LOAD_BUG
 
 //###############################################################################
 //## Complex Single/Double precision
@@ -650,14 +560,19 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
 (PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
 {
     char *ip1 = args[0];
-    char *indx = args[1];
+    char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
     npy_intp i;
     @ftype@ *indexed;
-    for(i = 0; i < n; i++, indx += isindex, value += isb) {
-        indexed = (@ftype@ *)(ip1 + is1 * *(npy_intp *)indx);
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@ftype@ *)(ip1 + is1 * indx);
         const @ftype@ b_r = ((@ftype@ *)value)[0];
         const @ftype@ b_i = ((@ftype@ *)value)[1];
     #if @is_mul@

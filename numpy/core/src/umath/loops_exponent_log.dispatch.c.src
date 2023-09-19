@@ -717,7 +717,7 @@ simd_@func@_f64(const npyv_lanetype_f64 *src, npy_intp ssrc,
             x = npyv_loadn_tillz_f64(src, ssrc, len);
         }
 #endif
-        npyv_f64 out = __svml_@func@8(x);
+        npyv_f64 out = __svml_@func@8_ha(x);
         if (sdst == 1) {
             npyv_store_till_f64(dst, len, out);
         } else {

@@ -44,6 +44,7 @@ jobs:
             git checkout $GITHUB_BASE_REF
             git -c user.email="you@example.com" merge --no-commit my_ref_name
         fi
+        git submodule update --init
 
         ln -s /usr/local/bin/python3.10 /usr/local/bin/python
 
@@ -59,8 +60,8 @@ jobs:
         RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
 
         pip install -r build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions
 
         # use meson to build and test 
         spin build
-        spin test
+        spin test -j auto

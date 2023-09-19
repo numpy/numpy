@@ -14,7 +14,7 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    fastCopyAndTranspose, _flagdict, from_dlpack, _place, _reconstruct,
+    _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
     _get_promotion_state, _set_promotion_state
@@ -39,8 +39,8 @@ __all__ = [
     'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
-    'set_legacy_print_mode', 'set_string_function',
-    'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
+    'set_legacy_print_mode',
+    'set_typeDict', 'shares_memory', 'typeinfo',
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
     '_get_promotion_state', '_set_promotion_state']
 
@@ -69,6 +69,7 @@ promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 _get_promotion_state.__module__ = 'numpy'
 _set_promotion_state.__module__ = 'numpy'
+normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -173,7 +174,8 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
-
+        For a description of the options, please see :term:`casting`.
+        
         .. versionadded:: 1.20.0
 
     Returns
@@ -479,7 +481,7 @@ def lexsort(keys, axis=None):
     A normal ``argsort`` would have yielded:
 
     >>> [(a[i],b[i]) for i in np.argsort(a)]
-    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
+    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 1), (4, 2), (5, 4)]
 
     Structured arrays are sorted lexically by ``argsort``:
 
@@ -515,12 +517,12 @@ def can_cast(from_, to, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -1094,12 +1096,12 @@ def copyto(dst, src, casting=None, where=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur when copying.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
@@ -1503,18 +1505,18 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
-          * 'raise' means to raise an exception for an invalid day.
-          * 'nat' means to return a NaT (not-a-time) for an invalid day.
-          * 'forward' and 'following' mean to take the first valid day
-            later in time.
-          * 'backward' and 'preceding' mean to take the first valid day
-            earlier in time.
-          * 'modifiedfollowing' means to take the first valid day
-            later in time unless it is across a Month boundary, in which
-            case to take the first valid day earlier in time.
-          * 'modifiedpreceding' means to take the first valid day
-            earlier in time unless it is across a Month boundary, in which
-            case to take the first valid day later in time.
+        * 'raise' means to raise an exception for an invalid day.
+        * 'nat' means to return a NaT (not-a-time) for an invalid day.
+        * 'forward' and 'following' mean to take the first valid day
+          later in time.
+        * 'backward' and 'preceding' mean to take the first valid day
+          earlier in time.
+        * 'modifiedfollowing' means to take the first valid day
+          later in time unless it is across a Month boundary, in which
+          case to take the first valid day earlier in time.
+        * 'modifiedpreceding' means to take the first valid day
+          earlier in time unless it is across a Month boundary, in which
+          case to take the first valid day later in time.
     weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday are
         valid days. May be specified as a length-seven list or array, like

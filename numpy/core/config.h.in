@@ -37,7 +37,6 @@
 #mesondefine HAVE_ATTRIBUTE_NONNULL
 
 /* C99 complex support and complex.h are not universal */
-#mesondefine HAVE_COMPLEX_H
 #mesondefine HAVE_CABS
 #mesondefine HAVE_CACOS
 #mesondefine HAVE_CACOSH
@@ -95,7 +94,6 @@
 #mesondefine HAVE_CTANHL
 
 #mesondefine NPY_CAN_LINK_SVML
-#mesondefine NPY_RELAXED_STRIDES_DEBUG
 
 #mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
 #mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE

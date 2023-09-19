@@ -167,7 +167,7 @@ import pickle
 import warnings
 
 import numpy
-from numpy.lib.utils import drop_metadata
+from numpy.lib._utils_impl import drop_metadata
 
 
 __all__ = []
@@ -277,6 +277,23 @@ def dtype_to_descr(dtype):
         # fiddled with. This needs to be fixed in the C implementation of
         # dtype().
         return dtype.descr
+    elif not type(dtype)._legacy:
+        # this must be a user-defined dtype since numpy does not yet expose any
+        # non-legacy dtypes in the public API
+        #
+        # non-legacy dtypes don't yet have __array_interface__
+        # support. Instead, as a hack, we use pickle to save the array, and lie
+        # that the dtype is object. When the array is loaded, the descriptor is
+        # unpickled with the array and the object dtype in the header is
+        # discarded.
+        #
+        # a future NEP should define a way to serialize user-defined
+        # descriptors and ideally work out the possible security implications
+        warnings.warn("Custom dtypes are saved as python objects using the "
+                      "pickle protocol. Loading this file requires "
+                      "allow_pickle=True to be set.",
+                      UserWarning, stacklevel=2)
+        return "|O"
     else:
         return dtype.str
 
@@ -284,8 +301,8 @@ def descr_to_dtype(descr):
     """
     Returns a dtype based off the given description.
 
-    This is essentially the reverse of `dtype_to_descr()`. It will remove
-    the valueless padding fields created by, i.e. simple fields like
+    This is essentially the reverse of `~lib.format.dtype_to_descr`. It will
+    remove the valueless padding fields created by, i.e. simple fields like
     dtype('float32'), and then convert the description to its corresponding
     dtype.
 
@@ -293,7 +310,7 @@ def descr_to_dtype(descr):
     ----------
     descr : object
         The object retrieved by dtype.descr. Can be passed to
-        `numpy.dtype()` in order to replicate the input dtype.
+        `numpy.dtype` in order to replicate the input dtype.
 
     Returns
     -------
@@ -710,12 +727,18 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         # Set buffer size to 16 MiB to hide the Python loop overhead.
         buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
 
-    if array.dtype.hasobject:
+    dtype_class = type(array.dtype)
+
+    if array.dtype.hasobject or not dtype_class._legacy:
         # We contain Python objects so we cannot write out the data
         # directly.  Instead, we will pickle it out
         if not allow_pickle:
-            raise ValueError("Object arrays cannot be saved when "
-                             "allow_pickle=False")
+            if array.dtype.hasobject:
+                raise ValueError("Object arrays cannot be saved when "
+                                 "allow_pickle=False")
+            if not dtype_class._legacy:
+                raise ValueError("User-defined dtypes cannot be saved "
+                                 "when allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
         pickle.dump(array, fp, protocol=3, **pickle_kwargs)

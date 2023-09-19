@@ -45,8 +45,8 @@ from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
 __all__ = [
-    'record', 'recarray', 'format_parser',
-    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+    'record', 'recarray', 'format_parser', 'fromarrays', 'fromrecords',
+    'fromstring', 'fromfile', 'array', 'find_duplicate',
 ]
 
 
@@ -75,6 +75,7 @@ _byteorderconv = {'b':'>',
 numfmt = nt.sctypeDict
 
 
+@set_module('numpy.rec')
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
@@ -84,7 +85,7 @@ def find_duplicate(list):
     ]
 
 
-@set_module('numpy')
+@set_module('numpy.rec')
 class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
@@ -124,22 +125,22 @@ class format_parser:
 
     See Also
     --------
-    dtype, typename, sctype2char
+    dtype, typename
 
     Examples
     --------
-    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
-    ...                  ['T1', 'T2', 'T3']).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
+    ...                      ['T1', 'T2', 'T3']).dtype
     dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
     will be used.
 
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
-    ...                  []).dtype
+    >>> np.rec.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    ...                      []).dtype
     dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
-    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
@@ -305,6 +306,8 @@ class record(nt.void):
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
 
+
+@set_module("numpy.rec")
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
 
@@ -409,11 +412,6 @@ class recarray(ndarray):
           dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
-
-    # manually set name and module so that this class's type shows
-    # up as "numpy.recarray" when printed
-    __name__ = 'recarray'
-    __module__ = 'numpy'
 
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,

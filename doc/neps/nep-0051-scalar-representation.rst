@@ -4,10 +4,10 @@
 NEP 51 — Changing the representation of NumPy scalars
 =====================================================
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2022-09-13
-
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/U2A4RCJSXMK7GG23MA5QMRG4KQYFMO2S/
 
 Abstract
 ========
@@ -232,6 +232,15 @@ found `here <https://github.com/numpy/numpy/pull/22449>`_
 Implementation
 ==============
 
+.. note::
+    This part has *not* been implemented in the
+    `initial PR <https://github.com/numpy/numpy/pull/22449>`_.
+    A similar change will be required to fix certain cases in printing and
+    allow fully correct printing e.g. of structured scalars which include
+    longdoubles.
+    A similar solution is also expected to be necessary in the future
+    to allow custom DTypes to correctly print.
+
 The new representations can be mostly implemented on the scalar types with
 the largest changes needed in the test suite.
 
@@ -318,7 +327,7 @@ strings like ``f"{arr:r}"`` are not in any way limited by using ``"r"`` or
 Discussion
 ==========
 
-* An initial discussion on this changed happened in the mailing list:
+* An discussion on this changed happened in the mailing list thread:
   https://mail.python.org/archives/list/numpy-discussion@python.org/thread/7GLGFHTZHJ6KQPOLMVY64OM6IC6KVMYI/
 * There was a previous issue [1]_ and PR [2]_ to change only the
   representation of the NumPy booleans.  The PR was later updated to change

@@ -34,8 +34,8 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.lib.function_base import _ureduce
-from numpy.lib.index_tricks import AxisConcatenator
+from numpy.lib._function_base_impl import _ureduce
+from numpy.lib._index_tricks_impl import AxisConcatenator
 
 
 def issequence(seq):
@@ -191,7 +191,7 @@ def masked_all_like(arr):
             [--, --, --]],
       mask=[[ True,  True,  True],
             [ True,  True,  True]],
-      fill_value=1e+20,
+      fill_value=np.float64(1e+20),
       dtype=float32)
 
     The dtype of the masked array matches the dtype of `arr`.
@@ -773,7 +773,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             s = mid.sum(out=out)
             if not odd:
                 s = np.true_divide(s, 2., casting='safe', out=out)
-            s = np.lib.utils._median_nancheck(asorted, s, axis)
+            s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
         else:
             s = mid.mean(out=out)
 
@@ -813,7 +813,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         s = np.ma.sum(low_high, axis=axis, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
-        s = np.lib.utils._median_nancheck(asorted, s, axis)
+        s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
     else:
         s = np.ma.mean(low_high, axis=axis, out=out)
 

@@ -10,8 +10,8 @@ import pytest
 from pytest import param
 
 import numpy as np
+import numpy.core._multiarray_umath as ncu
 from numpy.core._rational_tests import rational
-from numpy.core._multiarray_umath import _discover_array_parameters
 
 from numpy.testing import (
     assert_array_equal, assert_warns, IS_PYPY)
@@ -91,7 +91,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     yield param(np.sqrt(np.complex64(2+3j)), id="complex64")
     yield param(np.sqrt(np.complex128(2+3j)), id="complex128")
     if extended_precision:
-        yield param(np.sqrt(np.longcomplex(2+3j)), id="clongdouble")
+        yield param(np.sqrt(np.clongdouble(2+3j)), id="clongdouble")
 
     # Bool:
     # XFAIL: Bool should be added, but has some bad properties when it
@@ -213,11 +213,11 @@ class TestScalarDiscovery:
         # Check that the character special case errors correctly if the
         # array is too deep:
         nested = ["string"]  # 2 dimensions (due to string being sequence)
-        for i in range(np.MAXDIMS - 2):
+        for i in range(ncu.MAXDIMS - 2):
             nested = [nested]
 
         arr = np.array(nested, dtype='c')
-        assert arr.shape == (1,) * (np.MAXDIMS - 1) + (6,)
+        assert arr.shape == (1,) * (ncu.MAXDIMS - 1) + (6,)
         with pytest.raises(ValueError):
             np.array([nested], dtype="c")
 
@@ -288,7 +288,7 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr4)
 
     @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
-    @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("cast_to", scalar_instances())
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
         """
@@ -371,7 +371,7 @@ class TestScalarDiscovery:
         else:
             dtype = np.dtype(dtype_char)
 
-        discovered_dtype, _ = _discover_array_parameters([], type(dtype))
+        discovered_dtype, _ = ncu._discover_array_parameters([], type(dtype))
 
         assert discovered_dtype == dtype
         assert discovered_dtype.itemsize == dtype.itemsize
@@ -486,11 +486,11 @@ class TestNested:
     def test_nested_simple(self):
         initial = [1.2]
         nested = initial
-        for i in range(np.MAXDIMS - 1):
+        for i in range(ncu.MAXDIMS - 1):
             nested = [nested]
 
         arr = np.array(nested, dtype="float64")
-        assert arr.shape == (1,) * np.MAXDIMS
+        assert arr.shape == (1,) * ncu.MAXDIMS
         with pytest.raises(ValueError):
             np.array([nested], dtype="float64")
 
@@ -499,7 +499,7 @@ class TestNested:
 
         arr = np.array([nested], dtype=object)
         assert arr.dtype == np.dtype("O")
-        assert arr.shape == (1,) * np.MAXDIMS
+        assert arr.shape == (1,) * ncu.MAXDIMS
         assert arr.item() is initial
 
     def test_pathological_self_containing(self):
@@ -507,7 +507,7 @@ class TestNested:
         l = []
         l.append(l)
         arr = np.array([l, l, l], dtype=object)
-        assert arr.shape == (3,) + (1,) * (np.MAXDIMS - 1)
+        assert arr.shape == (3,) + (1,) * (ncu.MAXDIMS - 1)
 
         # Also check a ragged case:
         arr = np.array([l, [None], l], dtype=object)
@@ -525,7 +525,7 @@ class TestNested:
         initial = arraylike(np.ones((1, 1)))
 
         nested = initial
-        for i in range(np.MAXDIMS - 1):
+        for i in range(ncu.MAXDIMS - 1):
             nested = [nested]
 
         with pytest.raises(ValueError, match=".*would exceed the maximum"):
@@ -536,7 +536,7 @@ class TestNested:
         # (due to running out of dimensions), this is currently supported but
         # a special case which is not ideal.
         arr = np.array(nested, dtype=object)
-        assert arr.shape == (1,) * np.MAXDIMS
+        assert arr.shape == (1,) * ncu.MAXDIMS
         assert arr.item() == np.array(initial).item()
 
     @pytest.mark.parametrize("arraylike", arraylikes())
@@ -573,11 +573,11 @@ class TestNested:
         mismatch_first_dim = np.zeros((1, 2))
         mismatch_second_dim = np.zeros((3, 3))
 
-        dtype, shape = _discover_array_parameters(
+        dtype, shape = ncu._discover_array_parameters(
             [arr, mismatch_second_dim], dtype=np.dtype("O"))
         assert shape == (2, 3)
 
-        dtype, shape = _discover_array_parameters(
+        dtype, shape = ncu._discover_array_parameters(
             [arr, mismatch_first_dim], dtype=np.dtype("O"))
         assert shape == (2,)
         # The second case is currently supported because the arrays
@@ -870,3 +870,29 @@ def test_subarray_from_array_construction():
 
     res = np.array(arr, dtype="(2,2)f")
     assert_array_equal(res, expected)
+
+
+def test_empty_string():
+    # Empty strings are unfortunately often converted to S1 and we need to
+    # make sure we are filling the S1 and not the (possibly) detected S0
+    # result.  This should likely just return S0 and if not maybe the decision
+    # to return S1 should be moved.
+    res = np.array([""] * 10, dtype="S")
+    assert_array_equal(res, np.array("\0", "S1"))
+    assert res.dtype == "S1"
+
+    arr = np.array([""] * 10, dtype=object)
+
+    res = arr.astype("S")
+    assert_array_equal(res, b"")
+    assert res.dtype == "S1"
+
+    res = np.array(arr, dtype="S")
+    assert_array_equal(res, b"")
+    # TODO: This is arguably weird/wrong, but seems old:
+    assert res.dtype == f"S{np.dtype('O').itemsize}"
+
+    res = np.array([[""] * 10, arr], dtype="S")
+    assert_array_equal(res, b"")
+    assert res.shape == (2, 10)
+    assert res.dtype == "S1"

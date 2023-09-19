@@ -5,7 +5,7 @@ requiring a re-compile.
 
 NOTE: Many of the methods of ndarray have corresponding functions.
       If you update these docstrings, please keep also the ones in
-      core/fromnumeric.py, core/defmatrix.py up-to-date.
+      core/fromnumeric.py, matrixlib/defmatrix.py up-to-date.
 
 """
 
@@ -390,7 +390,8 @@ add_newdoc('numpy.core', 'nditer',
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before
     using the result. The temporary data will be written back to the
-    original data when the `__exit__` function is called but not before:
+    original data when the :meth:`~object.__exit__` function is called
+    but not before:
 
     >>> a = np.arange(6, dtype='i4')[::-2]
     >>> with np.nditer(a, [],
@@ -897,11 +898,11 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Creating an array from sub-classes:
 
-    >>> np.array(np.mat('1 2; 3 4'))
+    >>> np.array(np.asmatrix('1 2; 3 4'))
     array([[1, 2],
            [3, 4]])
 
-    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
 
@@ -946,7 +947,6 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
@@ -971,16 +971,16 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     If `dtype` is set, array is copied only if dtype does not match:
 
     >>> a = np.array([1, 2], dtype=np.float32)
-    >>> np.asarray(a, dtype=np.float32) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float32), a)
     True
-    >>> np.asarray(a, dtype=np.float64) is a
+    >>> np.shares_memory(np.asarray(a, dtype=np.float64), a)
     False
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
 
     >>> issubclass(np.recarray, np.ndarray)
     True
-    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asarray(a) is a
     False
     >>> np.asanyarray(a) is a
@@ -1026,7 +1026,6 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and
@@ -1045,7 +1044,7 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
 
     Instances of `ndarray` subclasses are passed through as-is:
 
-    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> a = np.array([(1., 2), (3., 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asanyarray(a) is a
     True
 
@@ -1393,7 +1392,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
-    comparison operator specified by `cmp_op`.
+    comparison operator specified by `cmp`.
 
     Parameters
     ----------
@@ -1412,7 +1411,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If `cmp_op` is not valid.
+        If `cmp` is not valid.
     TypeError
         If at least one of `a` or `b` is a non-string array
 
@@ -1420,7 +1419,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     --------
     >>> a = np.array(["a", "b", "cde"])
     >>> b = np.array(["a", "a", "dec"])
-    >>> np.compare_chararrays(a, b, ">", True)
+    >>> np.char.compare_chararrays(a, b, ">", True)
     array([False,  True, False])
 
     """)
@@ -1671,16 +1670,6 @@ add_newdoc('numpy.core.multiarray', 'from_dlpack',
     >>> x = torch.arange(10)
     >>> # create a view of the torch tensor "x" in NumPy
     >>> y = np.from_dlpack(x)
-    """)
-
-add_newdoc('numpy.core', 'fastCopyAndTranspose',
-    """
-    fastCopyAndTranspose(a)
-
-    .. deprecated:: 1.24
-
-       fastCopyAndTranspose is deprecated and will be removed. Use the copy and
-       transpose methods instead, e.g. ``arr.T.copy()``
     """)
 
 add_newdoc('numpy.core.multiarray', 'correlate',
@@ -2789,8 +2778,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
         offset = sum(np.array(i) * a.strides)
 
-    A more detailed explanation of strides can be found in the
-    "ndarray.rst" file in the NumPy reference guide.
+    A more detailed explanation of strides can be found in
+    :ref:`arrays.ndarray`.
 
     .. warning::
 
@@ -2905,13 +2894,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mT',
     >>> a
     array([[[0, 1],
             [2, 3]],
-    
+    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
     >>> a.mT
     array([[[0, 2],
             [1, 3]],
-    
+    <BLANKLINE>
            [[4, 6],
             [5, 7]]])
     
@@ -3146,12 +3135,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3238,7 +3227,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     array([b'ceg', b'fac'], dtype='|S3')
 
     ``A.newbyteorder().byteswap()`` produces an array with the same values
-      but different representation in memory
+    but different representation in memory
 
     >>> A = np.array([1, 2, 3])
     >>> A.view(np.uint8)
@@ -4070,7 +4059,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The WRITEBACKIFCOPY and flag can never be set
+    The WRITEBACKIFCOPY flag can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that
@@ -4089,7 +4078,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     -----
     Array flags provide information about how the memory area used
     for the array is to be interpreted. There are 7 Boolean flags
-    in use, only four of which can be changed by the user:
+    in use, only three of which can be changed by the user:
     WRITEBACKIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
@@ -4486,9 +4475,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
     a.tostring(order='C')
 
-    A compatibility alias for `tobytes`, with exactly the same behavior.
+    A compatibility alias for `~ndarray.tobytes`, with exactly the same
+    behavior.
 
-    Despite its name, it returns `bytes` not `str`\ s.
+    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
 
     .. deprecated:: 1.19.0
     """))
@@ -4589,7 +4579,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float_')``.
+        ``dtype('float64')``.
 
     Parameters
     ----------
@@ -4663,7 +4653,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     >>> x[0] = (9, 10)
     >>> z[0]
-    (9, 10)
+    np.record((9, 10), dtype=[('a', 'i1'), ('b', 'i1')])
 
     Views that change the dtype size (bytes per entry) should normally be
     avoided on arrays defined by slices, transposes, fortran-ordering, etc.:
@@ -5619,7 +5609,7 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
     >>> int32 = np.dtype("int32")
     >>> float32 = np.dtype("float32")
 
-    The typical ufunc call does not pass an output dtype.  `np.add` has two
+    The typical ufunc call does not pass an output dtype.  `numpy.add` has two
     inputs and one output, so leave the output as ``None`` (not provided):
 
     >>> np.add.resolve_dtypes((int32, float32, None))
@@ -5909,7 +5899,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     `__array_interface__` attribute.
 
     Warning: This attribute exists specifically for `__array_interface__`,
-    and passing it directly to `np.dtype` will not accurately reconstruct
+    and passing it directly to `numpy.dtype` will not accurately reconstruct
     some dtypes (e.g., scalar and subarray dtypes).
 
     Examples
@@ -6484,10 +6474,13 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Attributes
     ----------
-    Note: once a busdaycalendar object is created, you cannot modify the
-    weekmask or holidays.  The attributes return copies of internal data.
     weekmask : (copy) seven-element array of bool
     holidays : (copy) sorted array of datetime64[D]
+
+    Notes
+    -----
+    Once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
 
     Examples
     --------
@@ -6650,9 +6643,6 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('imag',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('itemsize',
     """The length of one element in bytes."""))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('nbytes',
-    """The length of the scalar in bytes."""))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('ndim',
     """The number of array dimensions."""))
@@ -6934,7 +6924,7 @@ add_newdoc('numpy.core.numerictypes', 'complexfloating',
 add_newdoc('numpy.core.numerictypes', 'flexible',
     """
     Abstract base class of all scalar types without predefined length.
-    The actual size of these types depends on the specific `np.dtype`
+    The actual size of these types depends on the specific `numpy.dtype`
     instantiation.
 
     """)

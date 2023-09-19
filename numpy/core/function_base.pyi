@@ -178,7 +178,6 @@ def geomspace(
     axis: SupportsIndex = ...,
 ) -> NDArray[Any]: ...
 
-# Re-exported to `np.lib.function_base`
 def add_newdoc(
     place: str,
     obj: str,

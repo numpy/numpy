@@ -96,7 +96,7 @@ DOCTEST_SKIPDICT = {
     # cases where NumPy docstrings import things from other 3'rd party libs:
     'numpy.core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.DataSource': None,
+    'numpy.lib.npyio.DataSource': None,
     'numpy.lib.Repository': None,
 }
 
@@ -614,9 +614,7 @@ CHECK_NAMESPACE = {
       'float64': np.float64,
       'dtype': np.dtype,
       'nan': np.nan,
-      'NaN': np.nan,
       'inf': np.inf,
-      'Inf': np.inf,
       'StringIO': io.StringIO,
 }
 
@@ -715,7 +713,7 @@ class Checker(doctest.OutputChecker):
             # Maybe we're printing a numpy array? This produces invalid python
             # code: `print(np.arange(3))` produces "[0 1 2]" w/o commas between
             # values. So, reinsert commas and retry.
-            # TODO: handle (1) abberivation (`print(np.arange(10000))`), and
+            # TODO: handle (1) abbreviation (`print(np.arange(10000))`), and
             #              (2) n-dim arrays with n > 1
             s_want = want.strip()
             s_got = got.strip()

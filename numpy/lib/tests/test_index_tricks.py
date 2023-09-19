@@ -5,9 +5,9 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_raises_regex,
     )
-from numpy.lib.index_tricks import (
+from numpy.lib._index_tricks_impl import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, r_, s_, ix_
+    index_exp, ndindex, c_, r_, s_, ix_
     )
 
 
@@ -405,7 +405,7 @@ class TestIx_:
 
 
 def test_c_():
-    a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
+    a = c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 

@@ -278,8 +278,12 @@ arrayflags_writebackifcopy_set(
                 "Cannot set flags on array scalars.");
         return -1;
     }
+    int istrue = PyObject_IsTrue(obj);
+    if (istrue == -1) {
+        return -1;
+    }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False));
+                              (istrue ? Py_True : Py_False));
     if (res == NULL) {
         return -1;
     }
@@ -303,8 +307,12 @@ arrayflags_aligned_set(
                 "Cannot set flags on array scalars.");
         return -1;
     }
+    int istrue = PyObject_IsTrue(obj);
+    if (istrue == -1) {
+        return -1;
+    }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False),
+                              (istrue ? Py_True : Py_False),
                               Py_None);
     if (res == NULL) {
         return -1;
@@ -329,8 +337,13 @@ arrayflags_writeable_set(
                 "Cannot set flags on array scalars.");
         return -1;
     }
+
+    int istrue = PyObject_IsTrue(obj);
+    if (istrue == -1) {
+        return -1;
+    }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO",
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False),
+                              (istrue ? Py_True : Py_False),
                               Py_None, Py_None);
     if (res == NULL) {
         return -1;

@@ -7,6 +7,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -757,7 +758,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
             "must be one of 'clip', 'raise', or 'wrap'");
     }
     else {
-        /* For users passing `np.RAISE`, `np.WRAP`, `np.CLIP` */
+        /* For users passing `RAISE`, `WRAP`, `CLIP` */
         int number = PyArray_PyIntAsInt(object);
         if (error_converting(number)) {
             goto fail;
@@ -768,7 +769,8 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         }
         else {
             PyErr_Format(PyExc_ValueError,
-                    "integer clipmode must be np.RAISE, np.WRAP, or np.CLIP");
+                    "integer clipmode must be RAISE, WRAP, or CLIP "
+                    "from 'numpy.core.multiarray'");
         }
     }
     return NPY_SUCCEED;

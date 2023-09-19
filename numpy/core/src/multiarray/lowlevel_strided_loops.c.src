@@ -134,8 +134,8 @@ static int
 
 #if @is_aligned@
     /* sanity check */
-    assert(N == 0 || npy_is_aligned(dst, _UINT_ALIGN(@type@)));
-    assert(N == 0 || npy_is_aligned(src, _UINT_ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(dst, NPY_ALIGNOF_UINT(@type@)));
+    assert(N == 0 || npy_is_aligned(src, NPY_ALIGNOF_UINT(@type@)));
 #endif
     /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
     while (N > 0) {
@@ -220,8 +220,8 @@ static NPY_GCC_OPT_3 int
     }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
-    assert(N == 0 || npy_is_aligned(dst, _UINT_ALIGN(@type@)));
-    assert(N == 0 || npy_is_aligned(src, _UINT_ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(dst, NPY_ALIGNOF_UINT(@type@)));
+    assert(N == 0 || npy_is_aligned(src, NPY_ALIGNOF_UINT(@type@)));
 #endif
 #if @elsize@ == 1 && @dst_contig@
     memset(dst, *src, N);
@@ -864,8 +864,8 @@ static NPY_GCC_OPT_3 int
 
 #if @aligned@
    /* sanity check */
-    assert(N == 0 || npy_is_aligned(src, _ALIGN(_TYPE1)));
-    assert(N == 0 || npy_is_aligned(dst, _ALIGN(_TYPE2)));
+    assert(N == 0 || npy_is_aligned(src, NPY_ALIGNOF(_TYPE1)));
+    assert(N == 0 || npy_is_aligned(dst, NPY_ALIGNOF(_TYPE2)));
 #endif
 
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
@@ -1515,7 +1515,7 @@ mapiter_trivial_@name@(
         while (itersize--) {
             char * self_ptr;
             npy_intp indval = *((npy_intp*)ind_ptr);
-            assert(npy_is_aligned(ind_ptr, _UINT_ALIGN(npy_intp)));
+            assert(npy_is_aligned(ind_ptr, NPY_ALIGNOF_UINT(npy_intp)));
 #if @isget@
             if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
                 return -1;
@@ -1529,8 +1529,8 @@ mapiter_trivial_@name@(
 
 #if @isget@
 #if @elsize@
-            assert(npy_is_aligned(result_ptr, _UINT_ALIGN(@copytype@)));
-            assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
+            assert(npy_is_aligned(result_ptr, NPY_ALIGNOF_UINT(@copytype@)));
+            assert(npy_is_aligned(self_ptr, NPY_ALIGNOF_UINT(@copytype@)));
             *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
 #else
             char *args[2] = {self_ptr, result_ptr};
@@ -1544,8 +1544,8 @@ mapiter_trivial_@name@(
 
 #else /* !@isget@ */
 #if @elsize@
-            assert(npy_is_aligned(result_ptr, _UINT_ALIGN(@copytype@)));
-            assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
+            assert(npy_is_aligned(result_ptr, NPY_ALIGNOF_UINT(@copytype@)));
+            assert(npy_is_aligned(self_ptr, NPY_ALIGNOF_UINT(@copytype@)));
             *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
 #else
             char *args[2] = {result_ptr, self_ptr};
@@ -1672,7 +1672,7 @@ mapiter_@name@(
                         for (i=0; i < @numiter@; i++) {
                             npy_intp indval = *((npy_intp*)outer_ptrs[i]);
                             assert(npy_is_aligned(outer_ptrs[i],
-                                                  _UINT_ALIGN(npy_intp)));
+                                                  NPY_ALIGNOF_UINT(npy_intp)));
 
 #if @isget@ && @one_iter@
                             if (check_and_adjust_index(&indval, fancy_dims[i],
@@ -1693,9 +1693,9 @@ mapiter_@name@(
 #if @isget@
 #if @elsize@
                         assert(npy_is_aligned(outer_ptrs[i],
-                                              _UINT_ALIGN(@copytype@)));
+                                              NPY_ALIGNOF_UINT(@copytype@)));
                         assert(npy_is_aligned(self_ptr,
-                                              _UINT_ALIGN(@copytype@)));
+                                              NPY_ALIGNOF_UINT(@copytype@)));
                         *(@copytype@ *)(outer_ptrs[i]) = *(@copytype@ *)self_ptr;
 #else
                         char *args[2] = {self_ptr, outer_ptrs[i]};
@@ -1709,9 +1709,9 @@ mapiter_@name@(
 #else /* !@isget@ */
 #if @elsize@
                         assert(npy_is_aligned(outer_ptrs[i],
-                               _UINT_ALIGN(@copytype@)));
+                               NPY_ALIGNOF_UINT(@copytype@)));
                         assert(npy_is_aligned(self_ptr,
-                               _UINT_ALIGN(@copytype@)));
+                               NPY_ALIGNOF_UINT(@copytype@)));
                         *(@copytype@ *)self_ptr = *(@copytype@ *)(outer_ptrs[i]);
 #else
                         char *args[2] = {outer_ptrs[i], self_ptr};

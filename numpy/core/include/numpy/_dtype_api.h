@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 12
+#define __EXPERIMENTAL_DTYPE_API_VERSION 13
 
 struct PyArrayMethodObject_tag;
 
@@ -403,6 +403,12 @@ typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
  */
 typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
+
+/*
+ * Convenience utility for getting a reference to the DType metaclass associated
+ * with a dtype instance.
+ */
+#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

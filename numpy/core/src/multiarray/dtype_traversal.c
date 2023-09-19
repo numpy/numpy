@@ -200,7 +200,7 @@ npy_object_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
     return 0;
 }
 
-/**************** Structured DType generic funcationality ***************/
+/**************** Structured DType generic functionality ***************/
 
 /*
  * Note that legacy user dtypes also make use of this.  Someone managed to

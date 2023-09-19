@@ -259,7 +259,7 @@ General
 -------
 
 Specifying a custom string formatter with a `_format` array attribute is
-deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
+deprecated. The new ``formatter`` keyword in ``numpy.set_printoptions`` or
 ``numpy.array2string`` can be used instead.
 
 The deprecated imports in the polynomial package have been removed.

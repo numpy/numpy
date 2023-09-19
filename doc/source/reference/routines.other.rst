@@ -21,7 +21,7 @@ Memory ranges
 
    shares_memory
    may_share_memory
-   byte_bounds
+   lib.array_utils.byte_bounds
 
 Array mixins
 ------------
@@ -46,17 +46,9 @@ Utility
    get_include
    show_config
    show_runtime
-   deprecate
-   deprecate_with_doc
    broadcast_shapes
-
-Matlab-like Functions
----------------------
-.. autosummary::
-   :toctree: generated/
-
-   who
-   disp
+   lib.array_utils.normalize_axis_index
+   lib.array_utils.normalize_axis_tuple
 
 .. automodule:: numpy.exceptions
 

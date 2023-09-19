@@ -1,0 +1,135 @@
+name: macOS tests (meson)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+permissions:
+   contents: read  # to fetch code (actions/checkout)
+
+env:
+  CCACHE_DIR: "${{ github.workspace }}/.ccache"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  x86_conda:
+    name: macOS x86-64 conda
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name:  Prepare cache dirs and timestamps
+      id:    prep-ccache
+      shell: bash -l {0}
+      run: |
+        mkdir -p "${CCACHE_DIR}"
+        echo "dir=$CCACHE_DIR" >> $GITHUB_OUTPUT
+        NOW=$(date -u +"%F-%T")
+        echo "timestamp=${NOW}" >> $GITHUB_OUTPUT
+        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+
+    - name: Setup compiler cache
+      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      id:    cache-ccache
+      with:
+        path: ${{ steps.prep-ccache.outputs.dir }}
+        key:  ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-${{ steps.prep-ccache.outputs.timestamp }}
+        restore-keys: |
+          ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
+
+    - name: Setup Mambaforge
+      uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge
+        channel-priority: true
+        activate-environment: numpy-dev
+        use-only-tar-bz2: false
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        use-mamba: true
+
+    # Updates if `environment.yml` or the date changes. The latter is needed to
+    # ensure we re-solve once a day (since we don't lock versions). Could be
+    # replaced by a conda-lock based approach in the future.
+    - name: Cache conda environment
+      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      env:
+        # Increase this value to reset cache if environment.yml has not changed
+        CACHE_NUMBER: 1
+      with:
+        path: ${{ env.CONDA }}/envs/numpy-dev
+        key:
+          ${{ runner.os }}--${{ steps.prep-ccache.outputs.today }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+      id: envcache
+
+    - name: Update Conda Environment
+      run: mamba env update -n numpy-dev -f environment.yml
+      if: steps.envcache.outputs.cache-hit != 'true'
+
+    - name: Build and Install NumPy
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        CC="ccache $CC" spin build -j2
+
+    - name: Run test suite (full)
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        export OMP_NUM_THREADS=2
+        spin test -j2 -m full
+
+    - name: Ccache statistics
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        ccache -s
+
+  accelerate:
+    name: Accelerate ILP64
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      with:
+        python-version: '3.10'
+
+    - uses: maxim-lobanov/setup-xcode@9a697e2b393340c3cacd97468baa318e4c883d98 # v1.5.1
+      with:
+        xcode-version: '14.3'
+
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install pytest pytest-xdist hypothesis
+
+    - name: Build NumPy against Accelerate (ILP64)
+      run: |
+        spin build -- -Dblas=accelerate -Dlapack=accelerate -Duse-ilp64=true
+
+    - name: Show meson-log.txt
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Test
+      run: |
+        spin test -j2

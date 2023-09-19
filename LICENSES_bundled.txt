@@ -6,11 +6,6 @@ Files: numpy/linalg/lapack_lite/*
 License: BSD-3-Clause
   For details, see numpy/linalg/lapack_lite/LICENSE.txt
 
-Name: tempita
-Files: tools/npy_tempita/*
-License: MIT
-  For details, see tools/npy_tempita/license.txt
-
 Name: dragon4
 Files: numpy/core/src/multiarray/dragon4.c
 License: MIT
@@ -20,3 +15,22 @@ Name: libdivide
 Files: numpy/core/include/numpy/libdivide/*
 License: Zlib
   For license text, see numpy/core/include/numpy/libdivide/LICENSE.txt
+
+
+Note that the following files are vendored in the repository and sdist but not
+installed in built numpy packages:
+
+Name: Meson
+Files: vendored-meson/meson/*
+License: Apache 2.0
+  For license text, see vendored-meson/meson/COPYING
+
+Name: meson-python
+Files: vendored-meson/meson-python/*
+License: MIT
+  For license text, see vendored-meson/meson-python/LICENSE
+
+Name: spin
+Files: .spin/cmds.py
+License: BSD-3
+  For license text, see .spin/LICENSE

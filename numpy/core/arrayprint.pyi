@@ -1,4 +1,3 @@
-from types import TracebackType
 from collections.abc import Callable
 from typing import Any, Literal, TypedDict, SupportsIndex
 
@@ -7,8 +6,6 @@ from typing import Any, Literal, TypedDict, SupportsIndex
 from contextlib import _GeneratorContextManager
 
 from numpy import (
-    ndarray,
-    generic,
     bool_,
     integer,
     timedelta64,
@@ -16,12 +13,10 @@ from numpy import (
     floating,
     complexfloating,
     void,
-    str_,
-    bytes_,
     longdouble,
     clongdouble,
 )
-from numpy._typing import ArrayLike, _CharLike_co, _FloatLike_co
+from numpy._typing import NDArray, _CharLike_co, _FloatLike_co
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
@@ -72,7 +67,7 @@ def set_printoptions(
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
-    a: ndarray[Any, Any],
+    a: NDArray[Any],
     max_line_width: None | int = ...,
     precision: None | SupportsIndex = ...,
     suppress_small: None | bool = ...,
@@ -112,19 +107,19 @@ def format_float_positional(
     min_digits: None | int = ...,
 ) -> str: ...
 def array_repr(
-    arr: ndarray[Any, Any],
+    arr: NDArray[Any],
     max_line_width: None | int = ...,
     precision: None | SupportsIndex = ...,
     suppress_small: None | bool = ...,
 ) -> str: ...
 def array_str(
-    a: ndarray[Any, Any],
+    a: NDArray[Any],
     max_line_width: None | int = ...,
     precision: None | SupportsIndex = ...,
     suppress_small: None | bool = ...,
 ) -> str: ...
 def set_string_function(
-    f: None | Callable[[ndarray[Any, Any]], str], repr: bool = ...
+    f: None | Callable[[NDArray[Any]], str], repr: bool = ...
 ) -> None: ...
 def printoptions(
     precision: None | SupportsIndex = ...,

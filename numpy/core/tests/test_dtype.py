@@ -348,6 +348,21 @@ class TestRecord:
                                  ('b', [('f0', '<i2'), ('', '|V2'),
                                  ('f1', '<f4')], (2,))])
 
+    def test_empty_struct_alignment(self):
+        # Empty dtypes should have an alignment of 1
+        dt = np.dtype([], align=True)
+        assert_equal(dt.alignment, 1)
+        dt = np.dtype([('f0', [])], align=True)
+        assert_equal(dt.alignment, 1)
+        dt = np.dtype({'names': [],
+                       'formats': [],
+                       'offsets': []}, align=True)
+        assert_equal(dt.alignment, 1)
+        dt = np.dtype({'names': ['f0'],
+                       'formats': [[]],
+                       'offsets': [0]}, align=True)
+        assert_equal(dt.alignment, 1)
+
     def test_union_struct(self):
         # Should be able to create union dtypes
         dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
@@ -554,7 +569,7 @@ class TestRecord:
     def test_nonstructured_with_object(self):
         # See gh-23277, the dtype here thinks it contain objects, if the
         # assert about that fails, the test becomes meaningless (which is OK)
-        arr = np.recarray((0,), dtype="O") 
+        arr = np.recarray((0,), dtype="O")
         assert arr.dtype.names is None  # no fields
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.

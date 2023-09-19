@@ -19,10 +19,10 @@ Does this affect me?
 
 If you
 
-  1. only use a single `Generator` instance,
-  2. only use `RandomState` or the functions in `numpy.random`,
-  3. only use the `PCG64.jumped` method to generate parallel streams,
-  4. explicitly use a `BitGenerator` other than `PCG64`,
+1. only use a single `Generator` instance,
+2. only use `RandomState` or the functions in `numpy.random`,
+3. only use the `PCG64.jumped` method to generate parallel streams,
+4. explicitly use a `BitGenerator` other than `PCG64`,
 
 then this weakness does not affect you at all. Carry on.
 

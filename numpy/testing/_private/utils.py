@@ -22,7 +22,7 @@ import numpy as np
 from numpy.core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
-import numpy.linalg.lapack_lite
+import numpy.linalg._umath_linalg
 
 from io import StringIO
 
@@ -54,22 +54,18 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
-HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
+HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
 _OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
 IS_MUSL = False
-try:
-    from packaging.tags import sys_tags
-    _tags = list(sys_tags())
-    if 'musllinux' in _tags[0].platform:
-        IS_MUSL = True
-except ImportError:
-    # fallback to sysconfig (might be flaky)
-    # value could be None.
-    v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
-    if 'musl' in v:
-        IS_MUSL = True
+# alternate way is
+# from packaging.tags import sys_tags
+#     _tags = list(sys_tags())
+#     if 'musllinux' in _tags[0].platform:
+_v = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+if 'musl' in _v:
+    IS_MUSL = True
 
 
 def assert_(val, msg=''):
@@ -281,7 +277,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
                          verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
@@ -425,9 +421,9 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test verifies that the elements of `actual` and `desired` satisfy.
+    The test verifies that the elements of `actual` and `desired` satisfy::
 
-        ``abs(desired-actual) < float64(1.5 * 10**(-decimal))``
+        abs(desired-actual) < float64(1.5 * 10**(-decimal))
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation in `assert_array_almost_equal` did up to rounding
@@ -486,7 +482,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import ndarray
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -938,9 +934,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
               comparisons.
 
     The test verifies identical shapes and that the elements of ``actual`` and
-    ``desired`` satisfy.
+    ``desired`` satisfy::
 
-        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+        abs(desired-actual) < 1.5 * 10**(-decimal)
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation did up to rounding vagaries. An exception is raised
@@ -1005,7 +1001,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, float_, result_type
+    from numpy.core import number, result_type
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 
@@ -1031,7 +1027,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
-            z = z.astype(float_)  # handle object arrays
+            z = z.astype(np.float64)  # handle object arrays
 
         return z < 1.5 * 10.0**(-decimal)
 
@@ -1736,7 +1732,7 @@ def assert_warns(warning_class, *args, **kwargs):
     If a different type of warning is thrown, it will not be caught.
 
     If called with all arguments other than the warning class omitted, may be
-    used as a context manager:
+    used as a context manager::
 
         with assert_warns(SomeWarning):
             do_something()
@@ -1796,7 +1792,7 @@ def assert_no_warnings(*args, **kwargs):
     """
     Fail if the given callable produces any warnings.
 
-    If called with all arguments omitted, may be used as a context manager:
+    If called with all arguments omitted, may be used as a context manager::
 
         with assert_no_warnings():
             do_something()
@@ -2339,7 +2335,7 @@ def assert_no_gc_cycles(*args, **kwargs):
     """
     Fail if the given callable produces any reference cycles.
 
-    If called with all arguments omitted, may be used as a context manager:
+    If called with all arguments omitted, may be used as a context manager::
 
         with assert_no_gc_cycles():
             do_something()

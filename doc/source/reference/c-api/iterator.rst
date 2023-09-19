@@ -392,7 +392,7 @@ Construction and Destruction
     Causes the iterator to track a multi-index.
     This prevents the iterator from coalescing axes to
     produce bigger inner loops. If the loop is also not buffered
-    and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+    and no index is being tracked (:c:func:`NpyIter_RemoveAxis` can be called),
     then the iterator size can be ``-1`` to indicate that the iterator
     is too large. This can happen due to complex broadcasting and
     will result in errors being created when the setting the iterator
@@ -557,7 +557,7 @@ Construction and Destruction
     Indicate how the user of the iterator will read or write
     to ``op[i]``.  Exactly one of these flags must be specified
     per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
-    for a user-provided operand may trigger `WRITEBACKIFCOPY``
+    for a user-provided operand may trigger ``WRITEBACKIFCOPY``
     semantics. The data will be written back to the original array
     when ``NpyIter_Deallocate`` is called.
 
@@ -956,9 +956,9 @@ Construction and Destruction
 
     Returns the number of elements being iterated.  This is the product
     of all the dimensions in the shape.  When a multi index is being tracked
-    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    (and :c:func:`NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
     indicate an iterator is too large.  Such an iterator is invalid, but
-    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    may become valid after :c:func:`NpyIter_RemoveAxis` is called. It is not
     necessary to check for this case.
 
 .. c:function:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)

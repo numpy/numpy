@@ -1,5 +1,5 @@
 *****************
-Beyond the Basics
+Beyond the basics
 *****************
 
 |    The voyage of discovery is not in seeking new landscapes but in having

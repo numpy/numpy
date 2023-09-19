@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy.core import swapaxes
+from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -21,6 +22,13 @@ from numpy.testing import (
     assert_almost_equal, assert_allclose, suppress_warnings,
     assert_raises_regex, HAS_LAPACK64, IS_WASM
     )
+try:
+    import numpy.linalg.lapack_lite
+except ImportError:
+    # May be broken when numpy was built without BLAS/LAPACK present
+    # If so, ensure we don't break the whole test suite - the `lapack_lite`
+    # submodule should be removed, it's only used in two tests in this file.
+    pass
 
 
 def consistent_subclass(out, in_):
@@ -780,7 +788,7 @@ class TestCond(CondCases):
         A[0,1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
-            assert_(isinstance(c, np.float_))
+            assert_(isinstance(c, np.float64))
             assert_(np.isnan(c))
 
         A = np.ones((3, 2, 2))
@@ -1320,7 +1328,7 @@ class _TestNormGeneral(_TestNormBase):
         # Compare the use of `axis` with computing the norm of each row
         # or column separately.
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.inf, -np.inf]:
             expected0 = [norm(A[:, k], ord=order) for k in range(A.shape[1])]
             assert_almost_equal(norm(A, ord=order, axis=0), expected0)
             expected1 = [norm(A[k, :], ord=order) for k in range(A.shape[0])]
@@ -1329,7 +1337,7 @@ class _TestNormGeneral(_TestNormBase):
         # Matrix norms.
         B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
         nd = B.ndim
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+        for order in [None, -2, 2, -1, 1, np.inf, -np.inf, 'fro']:
             for axis in itertools.combinations(range(-nd, nd), 2):
                 row_axis, col_axis = axis
                 if row_axis < 0:
@@ -1368,7 +1376,7 @@ class _TestNormGeneral(_TestNormBase):
                 shape_err.format(found.shape, expected_shape, None, None))
 
         # Vector norms.
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.inf, -np.inf]:
             for k in range(A.ndim):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
@@ -1381,7 +1389,7 @@ class _TestNormGeneral(_TestNormBase):
                         shape_err.format(found.shape, expected_shape, order, k))
 
         # Matrix norms.
-        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
+        for order in [None, -2, 2, -1, 1, np.inf, -np.inf, 'fro', 'nuc']:
             for k in itertools.permutations(range(A.ndim), 2):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
@@ -1510,8 +1518,8 @@ class _TestNorm2D(_TestNormBase):
             assert_raises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
-        assert_raises(np.AxisError, norm, B, None, 3)
-        assert_raises(np.AxisError, norm, B, None, (2, 3))
+        assert_raises(AxisError, norm, B, None, 3)
+        assert_raises(AxisError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
 

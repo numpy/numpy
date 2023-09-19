@@ -29,19 +29,19 @@ them.
 
 /* Table of constant values */
 
-static complex c_b21 = {1.f,0.f};
+static singlecomplex c_b21 = {1.f,0.f};
 static doublecomplex c_b1078 = {1.,0.};
 
-/* Subroutine */ int caxpy_(integer *n, complex *ca, complex *cx, integer *
-	incx, complex *cy, integer *incy)
+/* Subroutine */ int caxpy_(integer *n, singlecomplex *ca, singlecomplex *cx, integer *
+	incx, singlecomplex *cy, integer *incy)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    complex q__1, q__2;
+    singlecomplex q__1, q__2;
 
     /* Local variables */
     static integer i__, ix, iy;
-    extern doublereal scabs1_(complex *);
+    extern doublereal scabs1_(singlecomplex *);
 
 
 /*
@@ -119,7 +119,7 @@ L20:
     return 0;
 } /* caxpy_ */
 
-/* Subroutine */ int ccopy_(integer *n, complex *cx, integer *incx, complex *
+/* Subroutine */ int ccopy_(integer *n, singlecomplex *cx, integer *incx, singlecomplex *
 	cy, integer *incy)
 {
     /* System generated locals */
@@ -193,16 +193,16 @@ L20:
     return 0;
 } /* ccopy_ */
 
-/* Complex */ VOID cdotc_(complex * ret_val, integer *n, complex *cx, integer
-	*incx, complex *cy, integer *incy)
+/* Complex */ VOID cdotc_(singlecomplex * ret_val, integer *n, singlecomplex *cx, integer
+	*incx, singlecomplex *cy, integer *incy)
 {
     /* System generated locals */
     integer i__1, i__2;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex ctemp;
+    static singlecomplex ctemp;
 
 
 /*
@@ -280,16 +280,16 @@ L20:
     return ;
 } /* cdotc_ */
 
-/* Complex */ VOID cdotu_(complex * ret_val, integer *n, complex *cx, integer
-	*incx, complex *cy, integer *incy)
+/* Complex */ VOID cdotu_(singlecomplex * ret_val, integer *n, singlecomplex *cx, integer
+	*incx, singlecomplex *cy, integer *incy)
 {
     /* System generated locals */
     integer i__1, i__2, i__3;
-    complex q__1, q__2;
+    singlecomplex q__1, q__2;
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex ctemp;
+    static singlecomplex ctemp;
 
 
 /*
@@ -367,18 +367,18 @@ L20:
 } /* cdotu_ */
 
 /* Subroutine */ int cgemm_(char *transa, char *transb, integer *m, integer *
-	n, integer *k, complex *alpha, complex *a, integer *lda, complex *b,
-	integer *ldb, complex *beta, complex *c__, integer *ldc)
+	n, integer *k, singlecomplex *alpha, singlecomplex *a, integer *lda, singlecomplex *b,
+	integer *ldb, singlecomplex *beta, singlecomplex *c__, integer *ldc)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, c_dim1, c_offset, i__1, i__2,
 	    i__3, i__4, i__5, i__6;
-    complex q__1, q__2, q__3, q__4;
+    singlecomplex q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, j, l, info;
     static logical nota, notb;
-    static complex temp;
+    static singlecomplex temp;
     static logical conja, conjb;
     extern logical lsame_(char *, char *);
     static integer nrowa, nrowb;
@@ -1034,17 +1034,17 @@ L20:
 
 } /* cgemm_ */
 
-/* Subroutine */ int cgemv_(char *trans, integer *m, integer *n, complex *
-	alpha, complex *a, integer *lda, complex *x, integer *incx, complex *
-	beta, complex *y, integer *incy)
+/* Subroutine */ int cgemv_(char *trans, integer *m, integer *n, singlecomplex *
+	alpha, singlecomplex *a, integer *lda, singlecomplex *x, integer *incx, singlecomplex *
+	beta, singlecomplex *y, integer *incy)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
-    static complex temp;
+    static singlecomplex temp;
     static integer lenx, leny;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
@@ -1423,16 +1423,16 @@ L20:
 
 } /* cgemv_ */
 
-/* Subroutine */ int cgerc_(integer *m, integer *n, complex *alpha, complex *
-	x, integer *incx, complex *y, integer *incy, complex *a, integer *lda)
+/* Subroutine */ int cgerc_(integer *m, integer *n, singlecomplex *alpha, singlecomplex *
+	x, integer *incx, singlecomplex *y, integer *incy, singlecomplex *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2;
+    singlecomplex q__1, q__2;
 
     /* Local variables */
     static integer i__, j, ix, jy, kx, info;
-    static complex temp;
+    static singlecomplex temp;
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
 
@@ -1618,16 +1618,16 @@ L20:
 
 } /* cgerc_ */
 
-/* Subroutine */ int cgeru_(integer *m, integer *n, complex *alpha, complex *
-	x, integer *incx, complex *y, integer *incy, complex *a, integer *lda)
+/* Subroutine */ int cgeru_(integer *m, integer *n, singlecomplex *alpha, singlecomplex *
+	x, integer *incx, singlecomplex *y, integer *incy, singlecomplex *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2;
+    singlecomplex q__1, q__2;
 
     /* Local variables */
     static integer i__, j, ix, jy, kx, info;
-    static complex temp;
+    static singlecomplex temp;
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
 
@@ -1813,18 +1813,18 @@ L20:
 
 } /* cgeru_ */
 
-/* Subroutine */ int chemv_(char *uplo, integer *n, complex *alpha, complex *
-	a, integer *lda, complex *x, integer *incx, complex *beta, complex *y,
+/* Subroutine */ int chemv_(char *uplo, integer *n, singlecomplex *alpha, singlecomplex *
+	a, integer *lda, singlecomplex *x, integer *incx, singlecomplex *beta, singlecomplex *y,
 	 integer *incy)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1;
-    complex q__1, q__2, q__3, q__4;
+    singlecomplex q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
-    static complex temp1, temp2;
+    static singlecomplex temp1, temp2;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
@@ -2222,17 +2222,17 @@ L20:
 
 } /* chemv_ */
 
-/* Subroutine */ int cher2_(char *uplo, integer *n, complex *alpha, complex *
-	x, integer *incx, complex *y, integer *incy, complex *a, integer *lda)
+/* Subroutine */ int cher2_(char *uplo, integer *n, singlecomplex *alpha, singlecomplex *
+	x, integer *incx, singlecomplex *y, integer *incy, singlecomplex *a, integer *lda)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5, i__6;
     real r__1;
-    complex q__1, q__2, q__3, q__4;
+    singlecomplex q__1, q__2, q__3, q__4;
 
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
-    static complex temp1, temp2;
+    static singlecomplex temp1, temp2;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
@@ -2647,18 +2647,18 @@ L20:
 } /* cher2_ */
 
 /* Subroutine */ int cher2k_(char *uplo, char *trans, integer *n, integer *k,
-	complex *alpha, complex *a, integer *lda, complex *b, integer *ldb,
-	real *beta, complex *c__, integer *ldc)
+	singlecomplex *alpha, singlecomplex *a, integer *lda, singlecomplex *b, integer *ldb,
+	real *beta, singlecomplex *c__, integer *ldc)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, c_dim1, c_offset, i__1, i__2,
 	    i__3, i__4, i__5, i__6, i__7;
     real r__1;
-    complex q__1, q__2, q__3, q__4, q__5, q__6;
+    singlecomplex q__1, q__2, q__3, q__4, q__5, q__6;
 
     /* Local variables */
     static integer i__, j, l, info;
-    static complex temp1, temp2;
+    static singlecomplex temp1, temp2;
     extern logical lsame_(char *, char *);
     static integer nrowa;
     static logical upper;
@@ -3296,18 +3296,18 @@ L20:
 } /* cher2k_ */
 
 /* Subroutine */ int cherk_(char *uplo, char *trans, integer *n, integer *k,
-	real *alpha, complex *a, integer *lda, real *beta, complex *c__,
+	real *alpha, singlecomplex *a, integer *lda, real *beta, singlecomplex *c__,
 	integer *ldc)
 {
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3, i__4, i__5,
 	    i__6;
     real r__1;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, l, info;
-    static complex temp;
+    static singlecomplex temp;
     extern logical lsame_(char *, char *);
     static integer nrowa;
     static real rtemp;
@@ -3802,12 +3802,12 @@ L20:
 
 } /* cherk_ */
 
-/* Subroutine */ int cscal_(integer *n, complex *ca, complex *cx, integer *
+/* Subroutine */ int cscal_(integer *n, singlecomplex *ca, singlecomplex *cx, integer *
 	incx)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    complex q__1;
+    singlecomplex q__1;
 
     /* Local variables */
     static integer i__, nincx;
@@ -3870,16 +3870,16 @@ L20:
     return 0;
 } /* cscal_ */
 
-/* Subroutine */ int csrot_(integer *n, complex *cx, integer *incx, complex *
+/* Subroutine */ int csrot_(integer *n, singlecomplex *cx, integer *incx, singlecomplex *
 	cy, integer *incy, real *c__, real *s)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex ctemp;
+    static singlecomplex ctemp;
 
 
 /*
@@ -3887,7 +3887,7 @@ L20:
     =======
 
     CSROT applies a plane rotation, where the cos and sin (c and s) are real
-    and the vectors cx and cy are complex.
+    and the vectors cx and cy are singlecomplex.
     jack dongarra, linpack, 3/11/78.
 
     Arguments
@@ -4005,12 +4005,12 @@ L20:
     return 0;
 } /* csrot_ */
 
-/* Subroutine */ int csscal_(integer *n, real *sa, complex *cx, integer *incx)
+/* Subroutine */ int csscal_(integer *n, real *sa, singlecomplex *cx, integer *incx)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
     real r__1, r__2;
-    complex q__1;
+    singlecomplex q__1;
 
     /* Local variables */
     static integer i__, nincx;
@@ -4075,7 +4075,7 @@ L20:
     return 0;
 } /* csscal_ */
 
-/* Subroutine */ int cswap_(integer *n, complex *cx, integer *incx, complex *
+/* Subroutine */ int cswap_(integer *n, singlecomplex *cx, integer *incx, singlecomplex *
 	cy, integer *incy)
 {
     /* System generated locals */
@@ -4083,7 +4083,7 @@ L20:
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex ctemp;
+    static singlecomplex ctemp;
 
 
 /*
@@ -4158,17 +4158,17 @@ L20:
 } /* cswap_ */
 
 /* Subroutine */ int ctrmm_(char *side, char *uplo, char *transa, char *diag,
-	integer *m, integer *n, complex *alpha, complex *a, integer *lda,
-	complex *b, integer *ldb)
+	integer *m, integer *n, singlecomplex *alpha, singlecomplex *a, integer *lda,
+	singlecomplex *b, integer *ldb)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4, i__5,
 	    i__6;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, k, info;
-    static complex temp;
+    static singlecomplex temp;
     extern logical lsame_(char *, char *);
     static logical lside;
     static integer nrowa;
@@ -4820,15 +4820,15 @@ L20:
 } /* ctrmm_ */
 
 /* Subroutine */ int ctrmv_(char *uplo, char *trans, char *diag, integer *n,
-	complex *a, integer *lda, complex *x, integer *incx)
+	singlecomplex *a, integer *lda, singlecomplex *x, integer *incx)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
-    static complex temp;
+    static singlecomplex temp;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static logical noconj, nounit;
@@ -5352,17 +5352,17 @@ L20:
 } /* ctrmv_ */
 
 /* Subroutine */ int ctrsm_(char *side, char *uplo, char *transa, char *diag,
-	integer *m, integer *n, complex *alpha, complex *a, integer *lda,
-	complex *b, integer *ldb)
+	integer *m, integer *n, singlecomplex *alpha, singlecomplex *a, integer *lda,
+	singlecomplex *b, integer *ldb)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4, i__5,
 	    i__6, i__7;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, k, info;
-    static complex temp;
+    static singlecomplex temp;
     extern logical lsame_(char *, char *);
     static logical lside;
     static integer nrowa;
@@ -6024,15 +6024,15 @@ L20:
 } /* ctrsm_ */
 
 /* Subroutine */ int ctrsv_(char *uplo, char *trans, char *diag, integer *n,
-	complex *a, integer *lda, complex *x, integer *incx)
+	singlecomplex *a, integer *lda, singlecomplex *x, integer *incx)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
-    complex q__1, q__2, q__3;
+    singlecomplex q__1, q__2, q__3;
 
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
-    static complex temp;
+    static singlecomplex temp;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static logical noconj, nounit;
@@ -6629,7 +6629,7 @@ doublereal dcabs1_(doublecomplex *z__)
     Purpose
     =======
 
-    DCABS1 computes absolute value of a double complex number
+    DCABS1 computes absolute value of a double singlecomplex number
 
     =====================================================================
 */
@@ -10658,7 +10658,7 @@ doublereal dznrm2_(integer *n, doublecomplex *x, integer *incx)
 
 } /* dznrm2_ */
 
-integer icamax_(integer *n, complex *cx, integer *incx)
+integer icamax_(integer *n, singlecomplex *cx, integer *incx)
 {
     /* System generated locals */
     integer ret_val, i__1;
@@ -10666,7 +10666,7 @@ integer icamax_(integer *n, complex *cx, integer *incx)
     /* Local variables */
     static integer i__, ix;
     static real smax;
-    extern doublereal scabs1_(complex *);
+    extern doublereal scabs1_(singlecomplex *);
 
 
 /*
@@ -11066,7 +11066,7 @@ L40:
     return 0;
 } /* saxpy_ */
 
-doublereal scabs1_(complex *z__)
+doublereal scabs1_(singlecomplex *z__)
 {
     /* System generated locals */
     real ret_val, r__1, r__2;
@@ -11085,7 +11085,7 @@ doublereal scabs1_(complex *z__)
     return ret_val;
 } /* scabs1_ */
 
-doublereal scasum_(integer *n, complex *cx, integer *incx)
+doublereal scasum_(integer *n, singlecomplex *cx, integer *incx)
 {
     /* System generated locals */
     integer i__1, i__2, i__3;
@@ -11154,7 +11154,7 @@ L20:
     return ret_val;
 } /* scasum_ */
 
-doublereal scnrm2_(integer *n, complex *x, integer *incx)
+doublereal scnrm2_(integer *n, singlecomplex *x, integer *incx)
 {
     /* System generated locals */
     integer i__1, i__2, i__3;

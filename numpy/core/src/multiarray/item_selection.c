@@ -968,6 +968,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     npy_intp mi;
+    NPY_cast_info cast_info = {.func = NULL};
     ap = NULL;
 
     /*
@@ -993,9 +994,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (multi == NULL) {
         goto fail;
     }
+    dtype = PyArray_DESCR(mps[0]);
+
     /* Set-up return array */
     if (out == NULL) {
-        dtype = PyArray_DESCR(mps[0]);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
                                                     dtype,
@@ -1032,7 +1034,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        dtype = PyArray_DESCR(mps[0]);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
     }
@@ -1040,8 +1041,21 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (obj == NULL) {
         goto fail;
     }
-    elsize = PyArray_DESCR(obj)->elsize;
+    elsize = dtype->elsize;
     ret_data = PyArray_DATA(obj);
+    npy_intp transfer_strides[2] = {elsize, elsize};
+    npy_intp one = 1;
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    if (PyDataType_REFCHK(dtype)) {
+        int is_aligned = IsUintAligned(obj);
+        PyArray_GetDTypeTransferFunction(
+                    is_aligned,
+                    dtype->elsize,
+                    dtype->elsize,
+                    dtype,
+                    dtype, 0, &cast_info,
+                    &transfer_flags);
+    }
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
@@ -1074,12 +1088,22 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        memmove(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
+        if (cast_info.func == NULL) {
+            /* We ensure memory doesn't overlap, so can use memcpy */
+            memcpy(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
+        }
+        else {
+            char *args[2] = {PyArray_MultiIter_DATA(multi, mi), ret_data};
+            if (cast_info.func(&cast_info.context, args, &one,
+                                transfer_strides, cast_info.auxdata) < 0) {
+                goto fail;
+            }
+        }
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
 
-    PyArray_INCREF(obj);
+    NPY_cast_info_xfree(&cast_info);
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
@@ -1095,6 +1119,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     return (PyObject *)obj;
 
  fail:
+    NPY_cast_info_xfree(&cast_info);
     Py_XDECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);

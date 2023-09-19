@@ -188,17 +188,17 @@ Check the C API version number
 ------------------------------
 The C API version needs to be tracked in three places
 
-- numpy/core/setup_common.py
+- numpy/core/meson.build
 - numpy/core/code_generators/cversions.txt
 - numpy/core/include/numpy/numpyconfig.h
 
 There are three steps to the process.
 
-1. If the API has changed, increment the C_API_VERSION in setup_common.py. The
-   API is unchanged only if any code compiled against the current API will be
-   backward compatible with the last released NumPy version. Any changes to
-   C structures or additions to the public interface will make the new API
-   not backward compatible.
+1. If the API has changed, increment the C_API_VERSION in
+   numpy/core/meson.build. The API is unchanged only if any code compiled
+   against the current API will be backward compatible with the last released
+   NumPy version. Any changes to C structures or additions to the public
+   interface will make the new API not backward compatible.
 
 2. If the C_API_VERSION in the first step has changed, or if the hash of
    the API has changed, the cversions.txt file needs to be updated. To check
@@ -221,15 +221,15 @@ There are three steps to the process.
    increased from the previous version if some of the functions or macros in
    the include files were deprecated.
 
-The C ABI version number in numpy/core/setup_common.py should only be
-updated for a major release.
+The C ABI version number in numpy/core/meson.build should only be updated for a
+major release.
 
 
 Check the release notes
 -----------------------
 Use `towncrier`_ to build the release note and
 commit the changes. This will remove all the fragments from
-``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.
+``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.::
 
     towncrier build --version "<version>"
     git commit -m"Create release note"

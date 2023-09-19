@@ -8,6 +8,8 @@ from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 from . import util
 from numpy.f2py import crackfortran
 import textwrap
+import contextlib
+import io
 
 
 class TestNoSpace(util.F2PyTest):
@@ -57,6 +59,12 @@ class TestPublicPrivate:
         assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
         assert set(tt['c']['attrspec']) == {'public'}
 
+    def test_nowrap_private_proceedures(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh23879.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        pyf = crackfortran.crack2fortran(mod)
+        assert 'bar' not in pyf
 
 class TestModuleProcedure():
     def test_moduleOperators(self, tmp_path):
@@ -182,9 +190,6 @@ class TestDimSpec(util.F2PyTest):
         ! the value of n is computed in f2py wrapper
         !f2py intent(out) n
         integer, dimension({dimspec}), intent(in) :: a
-        if (a({first}).gt.0) then
-          print*, "a=", a
-        endif
       end subroutine
     """)
 
@@ -335,3 +340,11 @@ class TestFortranGroupCounters(util.F2PyTest):
             crackfortran.crackfortran([str(fpath)])
         except Exception as exc:
             assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
+
+
+class TestF77CommonBlockReader():
+    def test_gh22648(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
+        with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
+            mod = crackfortran.crackfortran([str(fpath)])
+        assert "Mismatch" not in stdout_f2py.getvalue()

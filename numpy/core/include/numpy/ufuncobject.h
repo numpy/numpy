@@ -65,30 +65,6 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
-/*
- * Legacy loop selector. (This should NOT normally be used and we can expect
- * that only the `PyUFunc_DefaultLegacyInnerLoopSelector` is ever set).
- * However, unlike the masked version, it probably still works.
- *
- * ufunc:             The ufunc object.
- * dtypes:            An array which has been populated with dtypes,
- *                    in most cases by the type resolution function
- *                    for the same ufunc.
- * out_innerloop:     Should be populated with the correct ufunc inner
- *                    loop for the given type.
- * out_innerloopdata: Should be populated with the void* data to
- *                    be passed into the out_innerloop function.
- * out_needs_api:     If the inner loop needs to use the Python API,
- *                    should set the to 1, otherwise should leave
- *                    this untouched.
- */
-typedef int (PyUFunc_LegacyInnerLoopSelectionFunc)(
-                            struct _tagPyUFuncObject *ufunc,
-                            PyArray_Descr **dtypes,
-                            PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata,
-                            int *out_needs_api);
-
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -161,13 +137,8 @@ typedef struct _tagPyUFuncObject {
          * with the dtypes for the inputs and outputs.
          */
         PyUFunc_TypeResolutionFunc *type_resolver;
-        /*
-         * A function which returns an inner loop written for
-         * NumPy 1.6 and earlier ufuncs. This is for backwards
-         * compatibility, and may be NULL if inner_loop_selector
-         * is specified.
-         */
-        PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+        /* Was the legacy loop resolver */
+        void *reserved2;
         /*
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
@@ -180,7 +151,7 @@ typedef struct _tagPyUFuncObject {
         #endif
 
         /* Was previously the `PyUFunc_MaskedInnerLoopSelectionFunc` */
-        void *_always_null_previously_masked_innerloop_selector;
+        void *reserved3;
 
         /*
          * List of flags for each operand when ufunc is called by nditer object.

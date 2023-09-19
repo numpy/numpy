@@ -52,16 +52,6 @@ clean:
 	-rm -rf build/*
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
-docenv:
-	$(PYTHON) -mvenv docenv
-	( \
-            . docenv/bin/activate; \
-            pip install -q --upgrade pip; \
-            pip install -q  -r ../test_requirements.txt; \
-            pip install -q  -r ../doc_requirements.txt; \
-            pip install -q ..; \
-	)
-
 gitwash-update:
 	rm -rf source/dev/gitwash
 	install -d source/dev/gitwash
@@ -81,8 +71,8 @@ gitwash-update:
 #
 
 #SPHINXBUILD="LANG=C sphinx-build"
-NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
-GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:7])" 2>/dev/null)
+GITVER ?= $(shell (cd ..; set -o pipefail && git rev-parse HEAD 2>/dev/null | cut -c1-7) || echo Unknown)
 
 version-check:
 ifeq "$(GITVER)" "Unknown"

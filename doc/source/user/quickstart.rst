@@ -230,8 +230,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.Generator.rand`,
-    `numpy.random.Generator.randn`,
+    `random.Generator.random`,
+    `random.Generator.normal`,
     `fromfunction`,
     `fromfile`
 
@@ -517,7 +517,7 @@ and other Python sequences.
     >>> for i in a:
     ...     print(i**(1 / 3.))
     ...
-    9.999999999999998
+    9.999999999999998  # may vary
     1.0
     9.999999999999998
     3.0
@@ -766,14 +766,6 @@ It is equivalent to `hstack` only for 2D arrays::
     >>> np.hstack((a[:, newaxis], b[:, newaxis]))  # the result is the same
     array([[4., 3.],
            [2., 8.]])
-
-On the other hand, the function `row_stack` is equivalent to `vstack`
-for any input arrays. In fact, `row_stack` is an alias for `vstack`::
-
-    >>> np.column_stack is np.hstack
-    False
-    >>> np.row_stack is np.vstack
-    True
 
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second

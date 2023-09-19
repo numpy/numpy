@@ -24,7 +24,6 @@ from numpy.linalg.linalg import (
 from numpy._pytesttester import PytestTester
 
 __all__: list[str]
-__path__: list[str]
 test: PytestTester
 
 class LinAlgError(Exception): ...
