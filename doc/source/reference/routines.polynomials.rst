@@ -97,7 +97,7 @@ can't be mixed in arithmetic::
 
     >>> p1 = np.polynomial.Polynomial([1, 2, 3])
     >>> p1
-    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+    Polynomial([1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> p2 = np.polynomial.Polynomial([1, 2, 3], domain=[-2, 2])
     >>> p1 == p2
     False
