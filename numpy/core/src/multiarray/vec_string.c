@@ -3,6 +3,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -10,15 +11,89 @@
 #include "dtypemeta.h"
 
 static PyObject *
-_vec_string_is_alpha_unicode(PyArrayIterObject *in_iter)
+_vec_string_add_unicode(PyArrayIterObject **in_iters)
 {
-    int truesize = PyArray_ITEMSIZE(in_iter->ao) / sizeof(npy_ucs4);
-    npy_ucs4 *data = ((npy_ucs4 *) in_iter->dataptr) + truesize - 1;
-    while (data >= (npy_ucs4 *) in_iter->dataptr && *data == '\0') data--;
+    npy_ucs4 *left, *right, *data;
+    Py_ssize_t left_len, right_len;
 
-    if (data <= (npy_ucs4 *) in_iter->dataptr) Py_RETURN_FALSE;
+    left = (npy_ucs4 *) in_iters[0]->dataptr;
+    right = (npy_ucs4 *) in_iters[1]->dataptr;
 
-    for (; data >= (npy_ucs4 *) in_iter->dataptr; data--) {
+    data = left + PyArray_ITEMSIZE(in_iters[0]->ao) / sizeof(npy_ucs4) - 1;
+    while (data >= left && *data == '\0') data--;
+    left_len = data - left + 1;
+
+    data = right + PyArray_ITEMSIZE(in_iters[1]->ao) / sizeof(npy_ucs4) - 1;
+    while (data >= right && *data == '\0') data--;
+    right_len = data - right + 1;
+
+    if (left_len + right_len > PY_SSIZE_T_MAX) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "strings are too large to concat");
+        return NULL;
+    }
+
+    if (left_len == 0) {
+        return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, right, right_len);
+    }
+    if (right_len == 0) {
+        return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, left, left_len);
+    }
+
+    npy_ucs4 buf[left_len+right_len];
+    memcpy(buf, left, left_len * sizeof(npy_ucs4));
+    memcpy(buf+left_len, right, right_len * sizeof(npy_ucs4));
+
+    return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buf, left_len+right_len);
+}
+
+static PyObject *
+_vec_string_add_bytes(PyArrayIterObject **in_iters)
+{
+    char *left, *right, *data;
+    Py_ssize_t left_len, right_len;
+
+    left = (char *) in_iters[0]->dataptr;
+    right = (char *) in_iters[1]->dataptr;
+
+    data = left + PyArray_ITEMSIZE(in_iters[0]->ao) - 1;
+    while (data >= left && *data == '\0') data--;
+    left_len = data - left + 1;
+
+    data = right + PyArray_ITEMSIZE(in_iters[1]->ao) - 1;
+    while (data >= right && *data == '\0') data--;
+    right_len = data - right + 1;
+
+    if (left_len + right_len > PY_SSIZE_T_MAX) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "strings are too large to concat");
+        return NULL;
+    }
+
+    if (left_len == 0) {
+        return PyBytes_FromStringAndSize(right, right_len);
+    }
+    if (right_len == 0) {
+        return PyBytes_FromStringAndSize(left, left_len);
+    }
+
+    char buf[left_len+right_len];
+    memcpy(buf, left, left_len);
+    memcpy(buf+left_len, right, right_len);
+
+    return PyBytes_FromStringAndSize(buf, left_len+right_len);
+}
+
+static PyObject *
+_vec_string_is_alpha_unicode(PyArrayIterObject **in_iter)
+{
+    int truesize = PyArray_ITEMSIZE(in_iter[0]->ao) / sizeof(npy_ucs4);
+    npy_ucs4 *data = ((npy_ucs4 *) in_iter[0]->dataptr) + truesize - 1;
+    while (data >= (npy_ucs4 *) in_iter[0]->dataptr && *data == '\0') data--;
+
+    if (data <= (npy_ucs4 *) in_iter[0]->dataptr) Py_RETURN_FALSE;
+
+    for (; data >= (npy_ucs4 *) in_iter[0]->dataptr; data--) {
         if (!Py_UNICODE_ISALPHA(*data)) {
             Py_RETURN_FALSE;
         }
@@ -27,14 +102,14 @@ _vec_string_is_alpha_unicode(PyArrayIterObject *in_iter)
 }
 
 static PyObject *
-_vec_string_is_alpha_bytes(PyArrayIterObject *in_iter)
+_vec_string_is_alpha_bytes(PyArrayIterObject **in_iter)
 {
-    char *data = in_iter->dataptr + PyArray_ITEMSIZE(in_iter->ao) - 1;
-    while (data >= in_iter->dataptr && *data == '\0') data--;
+    char *data = in_iter[0]->dataptr + PyArray_ITEMSIZE(in_iter[0]->ao) - 1;
+    while (data >= in_iter[0]->dataptr && *data == '\0') data--;
 
-    if (data <= in_iter->dataptr) Py_RETURN_FALSE;
+    if (data <= in_iter[0]->dataptr) Py_RETURN_FALSE;
 
-    for (; data >= in_iter->dataptr; data--) {
+    for (; data >= in_iter[0]->dataptr; data--) {
         if (!isalpha(*data)) {
             Py_RETURN_FALSE;
         }
@@ -42,7 +117,7 @@ _vec_string_is_alpha_bytes(PyArrayIterObject *in_iter)
     Py_RETURN_TRUE;
 }
 
-typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *);
+typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject **);
 
 typedef struct {
     const char *name;
@@ -60,6 +135,7 @@ static _vec_string_named_fast_op *SUPPORTED_FAST_OPS[] = {
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {
+        {"__add__", _vec_string_add_unicode, _vec_string_add_bytes, 1},
         {"isalpha", _vec_string_is_alpha_unicode, _vec_string_is_alpha_bytes, 0},
         {NULL, NULL, NULL, -1},
     }
@@ -217,6 +293,83 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 }
 
 static PyObject *
+_vec_string_fast_op_with_args(PyArrayObject* char_array, PyArray_Descr* type,
+                      _vec_string_fast_op method, PyObject* args)
+{
+    PyObject* broadcast_args[NPY_MAXARGS];
+    PyArrayMultiIterObject* in_iter = NULL;
+    PyArrayObject* result = NULL;
+    PyArrayIterObject* out_iter = NULL;
+    Py_ssize_t i, nargs;
+
+    nargs = PySequence_Size(args) + 1;
+    if (nargs == -1 || nargs > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                "len(args) must be < %d", NPY_MAXARGS - 1);
+        Py_DECREF(type);
+        goto err;
+    }
+
+    broadcast_args[0] = (PyObject*)char_array;
+    for (i = 1; i < nargs; i++) {
+        PyObject* item = PySequence_GetItem(args, i-1);
+        if (item == NULL) {
+            Py_DECREF(type);
+            goto err;
+        }
+        broadcast_args[i] = item;
+        Py_DECREF(item);
+    }
+    in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
+        (broadcast_args, nargs, 0);
+    if (in_iter == NULL) {
+        Py_DECREF(type);
+        goto err;
+    }
+
+    result = (PyArrayObject*)PyArray_SimpleNewFromDescr(in_iter->nd,
+            in_iter->dimensions, type);
+    if (result == NULL) {
+        goto err;
+    }
+
+    out_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)result);
+    if (out_iter == NULL) {
+        goto err;
+    }
+
+    while (PyArray_MultiIter_NOTDONE(in_iter)) {
+        PyObject* item_result = method(in_iter->iters);
+        if (item_result == NULL) {
+            goto err;
+        }
+
+        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+            Py_DECREF(item_result);
+            PyErr_SetString( PyExc_TypeError,
+                    "result array type does not match underlying function");
+            goto err;
+        }
+        Py_DECREF(item_result);
+
+        PyArray_MultiIter_NEXT(in_iter);
+        PyArray_ITER_NEXT(out_iter);
+    }
+
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+
+    return (PyObject*)result;
+
+ err:
+    Py_XDECREF(in_iter);
+    Py_XDECREF(out_iter);
+    Py_XDECREF(result);
+
+    return 0;
+}
+
+static PyObject *
 _vec_string_no_args(PyArrayObject* char_array,
                                    PyArray_Descr* type, PyObject* method)
 {
@@ -316,7 +469,10 @@ _vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec
     }
 
     while (PyArray_ITER_NOTDONE(in_iter)) {
-        PyObject* item_result = method(in_iter);
+        PyObject* item_result = method(&in_iter);
+        if (item_result == NULL) {
+            goto err;
+        }
 
         if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
             Py_DECREF(item_result);
@@ -366,11 +522,11 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
 
     fast_method_found = get_fast_op(char_array, method_name, &fast_method, &fast_method_with_args);
     if (fast_method_found) {
-        // if (fast_method_with_args) {
-        //     result = _vec_string_fast_op_with_args(char_array, type, fast_method, args_seq);
-        // } else {
+        if (fast_method_with_args) {
+            result = _vec_string_fast_op_with_args(char_array, type, fast_method, args_seq);
+        } else {
             result = _vec_string_fast_op_no_args(char_array, type, fast_method);
-        // }
+        }
     } else {
         if (PyArray_TYPE(char_array) == NPY_STRING) {
             method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
