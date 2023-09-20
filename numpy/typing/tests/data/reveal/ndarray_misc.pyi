@@ -115,21 +115,11 @@ assert_type(AR_f8.min(axis=0), Any)
 assert_type(AR_f8.min(keepdims=True), Any)
 assert_type(AR_f8.min(out=B), SubClass)
 
-assert_type(f8.newbyteorder(), np.float64)
-assert_type(AR_f8.newbyteorder(), npt.NDArray[np.float64])
-assert_type(B.newbyteorder('|'), SubClass)
-
 assert_type(f8.prod(), Any)
 assert_type(AR_f8.prod(), Any)
 assert_type(AR_f8.prod(axis=0), Any)
 assert_type(AR_f8.prod(keepdims=True), Any)
 assert_type(AR_f8.prod(out=B), SubClass)
-
-assert_type(f8.ptp(), Any)
-assert_type(AR_f8.ptp(), Any)
-assert_type(AR_f8.ptp(axis=0), Any)
-assert_type(AR_f8.ptp(keepdims=True), Any)
-assert_type(AR_f8.ptp(out=B), SubClass)
 
 assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])

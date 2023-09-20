@@ -272,22 +272,22 @@ class ByteorderValues:
     def test_values0D(self):
         # Check byteorder of 0-dimensional objects
         ua = np.array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
-        ua2 = ua.newbyteorder()
+        ua2 = ua.view(ua.dtype.newbyteorder())
         # This changes the interpretation of the data region (but not the
         #  actual data), therefore the returned scalars are not
         #  the same (they are byte-swapped versions of each other).
         assert_(ua[()] != ua2[()])
-        ua3 = ua2.newbyteorder()
+        ua3 = ua2.view(ua2.dtype.newbyteorder())
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
     def test_valuesSD(self):
         # Check byteorder of single-dimensional objects
         ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
-        ua2 = ua.newbyteorder()
+        ua2 = ua.view(ua.dtype.newbyteorder())
         assert_((ua != ua2).all())
         assert_(ua[-1] != ua2[-1])
-        ua3 = ua2.newbyteorder()
+        ua3 = ua2.view(ua2.dtype.newbyteorder())
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
@@ -295,10 +295,10 @@ class ByteorderValues:
         # Check byteorder of multi-dimensional objects
         ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4,
                       dtype='U%s' % self.ulen)
-        ua2 = ua.newbyteorder()
+        ua2 = ua.view(ua.dtype.newbyteorder())
         assert_((ua != ua2).all())
         assert_(ua[-1, -1, -1] != ua2[-1, -1, -1])
-        ua3 = ua2.newbyteorder()
+        ua3 = ua2.view(ua2.dtype.newbyteorder())
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 

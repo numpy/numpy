@@ -881,7 +881,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a[5] = (0.5,10,'abcde')
     >>>
     >>> fd=TemporaryFile()
-    >>> a = a.newbyteorder('<')
+    >>> a = a.view(a.dtype.newbyteorder('<'))
     >>> a.tofile(fd)
     >>>
     >>> _ = fd.seek(0)

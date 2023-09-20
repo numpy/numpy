@@ -273,7 +273,7 @@ For the following methods there are also corresponding functions in
 :func:`clip`, :func:`compress`, :func:`copy`, :func:`cumprod`,
 :func:`cumsum`, :func:`diagonal`, :func:`imag`, :func:`max <amax>`,
 :func:`mean`, :func:`min <amin>`, :func:`nonzero`, :func:`partition`,
-:func:`prod`, :func:`ptp`, :func:`put`, :func:`ravel`, :func:`real`,
+:func:`prod`, :func:`put`, :func:`ravel`, :func:`real`,
 :func:`repeat`, :func:`reshape`, :func:`round <around>`,
 :func:`searchsorted`, :func:`sort`, :func:`squeeze`, :func:`std`,
 :func:`sum`, :func:`swapaxes`, :func:`take`, :func:`trace`,
@@ -287,7 +287,6 @@ Array conversion
 
    ndarray.item
    ndarray.tolist
-   ndarray.itemset
    ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
@@ -410,7 +409,6 @@ be performed.
    ndarray.argmax
    ndarray.min
    ndarray.argmin
-   ndarray.ptp
    ndarray.clip
    ndarray.conj
    ndarray.round

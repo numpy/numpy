@@ -364,14 +364,6 @@ array_min(PyArrayObject *self,
 }
 
 static PyObject *
-array_ptp(PyArrayObject *self,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
-{
-    NPY_FORWARD_NDARRAY_METHOD("_ptp");
-}
-
-
-static PyObject *
 array_swapaxes(PyArrayObject *self, PyObject *args)
 {
     int axis1, axis2;
@@ -778,90 +770,6 @@ array_toscalar(PyArrayObject *self, PyObject *args)
 
     return PyArray_MultiIndexGetItem(self, multi_index);
 }
-
-static PyObject *
-array_setscalar(PyArrayObject *self, PyObject *args)
-{
-    npy_intp multi_index[NPY_MAXDIMS];
-    int n = PyTuple_GET_SIZE(args) - 1;
-    int idim, ndim = PyArray_NDIM(self);
-    PyObject *obj;
-
-    if (n < 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "itemset must have at least one argument");
-        return NULL;
-    }
-    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
-        return NULL;
-    }
-
-    obj = PyTuple_GET_ITEM(args, n);
-
-    /* If there is a tuple as a single argument, treat it as the argument */
-    if (n == 1 && PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
-        args = PyTuple_GET_ITEM(args, 0);
-        n = PyTuple_GET_SIZE(args);
-    }
-
-    if (n == 0) {
-        if (PyArray_SIZE(self) == 1) {
-            for (idim = 0; idim < ndim; ++idim) {
-                multi_index[idim] = 0;
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "can only convert an array of size 1 to a Python scalar");
-            return NULL;
-        }
-    }
-    /* Special case of C-order flat indexing... :| */
-    else if (n == 1 && ndim != 1) {
-        npy_intp *shape = PyArray_SHAPE(self);
-        npy_intp value, size = PyArray_SIZE(self);
-
-        value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (error_converting(value)) {
-            return NULL;
-        }
-
-        if (check_and_adjust_index(&value, size, -1, NULL) < 0) {
-            return NULL;
-        }
-
-        /* Convert the flat index into a multi-index */
-        for (idim = ndim-1; idim >= 0; --idim) {
-            multi_index[idim] = value % shape[idim];
-            value /= shape[idim];
-        }
-    }
-    /* A multi-index tuple */
-    else if (n == ndim) {
-        npy_intp value;
-
-        for (idim = 0; idim < ndim; ++idim) {
-            value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
-            if (error_converting(value)) {
-                return NULL;
-            }
-            multi_index[idim] = value;
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "incorrect number of indices for array");
-        return NULL;
-    }
-
-    if (PyArray_MultiIndexSetItem(self, multi_index, obj) < 0) {
-        return NULL;
-    }
-    else {
-        Py_RETURN_NONE;
-    }
-}
-
 
 static PyObject *
 array_astype(PyArrayObject *self,
@@ -2817,25 +2725,6 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
-
-static PyObject *
-array_newbyteorder(PyArrayObject *self, PyObject *args)
-{
-    char endian = NPY_SWAP;
-    PyArray_Descr *new;
-
-    if (!PyArg_ParseTuple(args, "|O&:newbyteorder", PyArray_ByteorderConverter,
-                          &endian)) {
-        return NULL;
-    }
-    new = PyArray_DescrNewByteorder(PyArray_DESCR(self), endian);
-    if (!new) {
-        return NULL;
-    }
-    return PyArray_View(self, new, NULL);
-
-}
-
 static PyObject *
 array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
@@ -3031,9 +2920,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"item",
         (PyCFunction)array_toscalar,
         METH_VARARGS, NULL},
-    {"itemset",
-        (PyCFunction) array_setscalar,
-        METH_VARARGS, NULL},
     {"max",
         (PyCFunction)array_max,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3043,9 +2929,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"min",
         (PyCFunction)array_min,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"newbyteorder",
-        (PyCFunction)array_newbyteorder,
-        METH_VARARGS, NULL},
     {"nonzero",
         (PyCFunction)array_nonzero,
         METH_VARARGS, NULL},
@@ -3054,9 +2937,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"prod",
         (PyCFunction)array_prod,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"ptp",
-        (PyCFunction)array_ptp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"put",
         (PyCFunction)array_put,
