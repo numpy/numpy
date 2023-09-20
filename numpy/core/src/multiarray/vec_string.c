@@ -10,9 +10,9 @@
 #include "dtypemeta.h"
 
 static PyObject *
-_vec_string_is_alpha_unicode(PyArrayIterObject *in_iter, npy_intp itemsize)
+_vec_string_is_alpha_unicode(PyArrayIterObject *in_iter)
 {
-    int truesize = itemsize / sizeof(npy_ucs4);
+    int truesize = PyArray_ITEMSIZE(in_iter->ao) / sizeof(npy_ucs4);
     npy_ucs4 *data = ((npy_ucs4 *) in_iter->dataptr) + truesize - 1;
     while (data >= (npy_ucs4 *) in_iter->dataptr && *data == '\0') data--;
 
@@ -27,9 +27,9 @@ _vec_string_is_alpha_unicode(PyArrayIterObject *in_iter, npy_intp itemsize)
 }
 
 static PyObject *
-_vec_string_is_alpha_bytes(PyArrayIterObject *in_iter, npy_intp itemsize)
+_vec_string_is_alpha_bytes(PyArrayIterObject *in_iter)
 {
-    char *data = in_iter->dataptr + itemsize - 1;
+    char *data = in_iter->dataptr + PyArray_ITEMSIZE(in_iter->ao) - 1;
     while (data >= in_iter->dataptr && *data == '\0') data--;
 
     if (data <= in_iter->dataptr) Py_RETURN_FALSE;
@@ -42,7 +42,7 @@ _vec_string_is_alpha_bytes(PyArrayIterObject *in_iter, npy_intp itemsize)
     Py_RETURN_TRUE;
 }
 
-typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *, npy_intp);
+typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *);
 
 typedef struct {
     const char *name;
@@ -297,7 +297,6 @@ _vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec
     PyArrayIterObject* in_iter = NULL;
     PyArrayObject* result = NULL;
     PyArrayIterObject* out_iter = NULL;
-    npy_intp itemsize;
 
     in_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)char_array);
     if (in_iter == NULL) {
@@ -316,9 +315,8 @@ _vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec
         goto err;
     }
 
-    itemsize = PyArray_ITEMSIZE(char_array);
     while (PyArray_ITER_NOTDONE(in_iter)) {
-        PyObject* item_result = method(in_iter, itemsize);
+        PyObject* item_result = method(in_iter);
 
         if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
             Py_DECREF(item_result);
