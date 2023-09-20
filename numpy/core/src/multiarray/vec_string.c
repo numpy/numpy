@@ -10,11 +10,32 @@
 #include "dtypemeta.h"
 
 static PyObject *
-_vec_string_is_alpha(PyArrayIterObject *in_iter, npy_intp itemsize)
+_vec_string_is_alpha_unicode(PyArrayIterObject *in_iter, npy_intp itemsize)
 {
-    char *data = in_iter->dataptr;
-    for (int i = 0; i < itemsize; i++) {
-        if (!isalpha(data[i])) {
+    int truesize = itemsize / sizeof(npy_ucs4);
+    npy_ucs4 *data = ((npy_ucs4 *) in_iter->dataptr) + truesize - 1;
+    while (data >= (npy_ucs4 *) in_iter->dataptr && *data == '\0') data--;
+
+    if (data <= (npy_ucs4 *) in_iter->dataptr) Py_RETURN_FALSE;
+
+    for (; data >= (npy_ucs4 *) in_iter->dataptr; data--) {
+        if (!Py_UNICODE_ISALPHA(*data)) {
+            Py_RETURN_FALSE;
+        }
+    }
+    Py_RETURN_TRUE;
+}
+
+static PyObject *
+_vec_string_is_alpha_bytes(PyArrayIterObject *in_iter, npy_intp itemsize)
+{
+    char *data = in_iter->dataptr + itemsize - 1;
+    while (data >= in_iter->dataptr && *data == '\0') data--;
+
+    if (data <= in_iter->dataptr) Py_RETURN_FALSE;
+
+    for (; data >= in_iter->dataptr; data--) {
+        if (!isalpha(*data)) {
             Py_RETURN_FALSE;
         }
     }
@@ -25,27 +46,29 @@ typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *, npy_intp);
 
 typedef struct {
     const char *name;
-    _vec_string_fast_op func;
+    _vec_string_fast_op unicode_func;
+    _vec_string_fast_op bytes_func;
     int with_args;
 } _vec_string_named_fast_op;
 
 static _vec_string_named_fast_op *SUPPORTED_FAST_OPS[] = {
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
-    (_vec_string_named_fast_op[]) {{NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
+    (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {
-        {"isalpha", _vec_string_is_alpha, 0},
-    },
+        {"isalpha", _vec_string_is_alpha_unicode, _vec_string_is_alpha_bytes, 0},
+        {NULL, NULL, NULL, -1},
+    }
 };
 
 static int N_FAST_OP_LISTS = 8;
 
-int
-get_fast_op(PyObject *method_name, _vec_string_fast_op *method, int *with_args)
+static int
+get_fast_op(PyArrayObject *char_array, PyObject *method_name, _vec_string_fast_op *method, int *with_args)
 {
     const char *method_name_str = PyUnicode_AsUTF8(method_name);
     const int method_name_len = strlen(method_name_str);
@@ -56,7 +79,11 @@ get_fast_op(PyObject *method_name, _vec_string_fast_op *method, int *with_args)
 
     for (_vec_string_named_fast_op *f = SUPPORTED_FAST_OPS[method_name_len]; f->name != NULL; f++) {
         if (strncmp(method_name_str, f->name, method_name_len) == 0) {
-            *method = f->func;
+            if (PyArray_TYPE(char_array) == NPY_UNICODE) {
+                *method = f->unicode_func;
+            } else {
+                *method = f->bytes_func;
+            }
             *with_args = f->with_args;
             return 1;
         }
@@ -339,8 +366,8 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         goto err;
     }
 
-    fast_method_found = get_fast_op(method_name, &fast_method, &fast_method_with_args);
-    if (fast_method_found && PyArray_TYPE(char_array) != NPY_UNICODE) {
+    fast_method_found = get_fast_op(char_array, method_name, &fast_method, &fast_method_with_args);
+    if (fast_method_found) {
         // if (fast_method_with_args) {
         //     result = _vec_string_fast_op_with_args(char_array, type, fast_method, args_seq);
         // } else {
