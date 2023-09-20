@@ -198,7 +198,7 @@ static int _is_user_defined_string_array(PyArrayObject* array)
 
 static PyObject *
 _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
-                      PyObject* method, PyObject* args)
+                      void* method, PyObject* args, int fast)
 {
     PyObject* broadcast_args[NPY_MAXARGS];
     PyArrayMultiIterObject* in_iter = NULL;
@@ -245,24 +245,29 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 
     while (PyArray_MultiIter_NOTDONE(in_iter)) {
         PyObject* item_result;
-        PyObject* args_tuple = PyTuple_New(n);
-        if (args_tuple == NULL) {
-            goto err;
-        }
 
-        for (i = 0; i < n; i++) {
-            PyArrayIterObject* it = in_iter->iters[i];
-            PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
-            if (arg == NULL) {
-                Py_DECREF(args_tuple);
+        if (fast) {
+            item_result = ((_vec_string_fast_op) method)(in_iter->iters);
+        } else {
+            PyObject* args_tuple = PyTuple_New(n);
+            if (args_tuple == NULL) {
                 goto err;
             }
-            /* Steals ref to arg */
-            PyTuple_SetItem(args_tuple, i, arg);
-        }
 
-        item_result = PyObject_CallObject(method, args_tuple);
-        Py_DECREF(args_tuple);
+            for (i = 0; i < n; i++) {
+                PyArrayIterObject* it = in_iter->iters[i];
+                PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
+                if (arg == NULL) {
+                    Py_DECREF(args_tuple);
+                    goto err;
+                }
+                /* Steals ref to arg */
+                PyTuple_SetItem(args_tuple, i, arg);
+            }
+
+            item_result = PyObject_CallObject((PyObject *)method, args_tuple);
+            Py_DECREF(args_tuple);
+        }
         if (item_result == NULL) {
             goto err;
         }
@@ -293,85 +298,8 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 }
 
 static PyObject *
-_vec_string_fast_op_with_args(PyArrayObject* char_array, PyArray_Descr* type,
-                      _vec_string_fast_op method, PyObject* args)
-{
-    PyObject* broadcast_args[NPY_MAXARGS];
-    PyArrayMultiIterObject* in_iter = NULL;
-    PyArrayObject* result = NULL;
-    PyArrayIterObject* out_iter = NULL;
-    Py_ssize_t i, nargs;
-
-    nargs = PySequence_Size(args) + 1;
-    if (nargs == -1 || nargs > NPY_MAXARGS) {
-        PyErr_Format(PyExc_ValueError,
-                "len(args) must be < %d", NPY_MAXARGS - 1);
-        Py_DECREF(type);
-        goto err;
-    }
-
-    broadcast_args[0] = (PyObject*)char_array;
-    for (i = 1; i < nargs; i++) {
-        PyObject* item = PySequence_GetItem(args, i-1);
-        if (item == NULL) {
-            Py_DECREF(type);
-            goto err;
-        }
-        broadcast_args[i] = item;
-        Py_DECREF(item);
-    }
-    in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
-        (broadcast_args, nargs, 0);
-    if (in_iter == NULL) {
-        Py_DECREF(type);
-        goto err;
-    }
-
-    result = (PyArrayObject*)PyArray_SimpleNewFromDescr(in_iter->nd,
-            in_iter->dimensions, type);
-    if (result == NULL) {
-        goto err;
-    }
-
-    out_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)result);
-    if (out_iter == NULL) {
-        goto err;
-    }
-
-    while (PyArray_MultiIter_NOTDONE(in_iter)) {
-        PyObject* item_result = method(in_iter->iters);
-        if (item_result == NULL) {
-            goto err;
-        }
-
-        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
-            Py_DECREF(item_result);
-            PyErr_SetString( PyExc_TypeError,
-                    "result array type does not match underlying function");
-            goto err;
-        }
-        Py_DECREF(item_result);
-
-        PyArray_MultiIter_NEXT(in_iter);
-        PyArray_ITER_NEXT(out_iter);
-    }
-
-    Py_DECREF(in_iter);
-    Py_DECREF(out_iter);
-
-    return (PyObject*)result;
-
- err:
-    Py_XDECREF(in_iter);
-    Py_XDECREF(out_iter);
-    Py_XDECREF(result);
-
-    return 0;
-}
-
-static PyObject *
-_vec_string_no_args(PyArrayObject* char_array,
-                                   PyArray_Descr* type, PyObject* method)
+_vec_string_no_args(PyArrayObject* char_array, PyArray_Descr* type,
+                    void* method, int fast)
 {
     /*
      * This is a faster version of _vec_string_args to use when there
@@ -402,74 +330,18 @@ _vec_string_no_args(PyArrayObject* char_array,
 
     while (PyArray_ITER_NOTDONE(in_iter)) {
         PyObject* item_result;
-        PyObject* item = PyArray_ToScalar(in_iter->dataptr, in_iter->ao);
-        if (item == NULL) {
-            goto err;
+
+        if (fast) {
+            item_result = ((_vec_string_fast_op) method)(&in_iter);
+        } else {
+            PyObject* item = PyArray_ToScalar(in_iter->dataptr, in_iter->ao);
+            if (item == NULL) {
+                goto err;
+            }
+
+            item_result = PyObject_CallFunctionObjArgs((PyObject *) method, item, NULL);
+            Py_DECREF(item);
         }
-
-        item_result = PyObject_CallFunctionObjArgs(method, item, NULL);
-        Py_DECREF(item);
-        if (item_result == NULL) {
-            goto err;
-        }
-
-        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
-            Py_DECREF(item_result);
-            PyErr_SetString( PyExc_TypeError,
-                "result array type does not match underlying function");
-            goto err;
-        }
-        Py_DECREF(item_result);
-
-        PyArray_ITER_NEXT(in_iter);
-        PyArray_ITER_NEXT(out_iter);
-    }
-
-    Py_DECREF(in_iter);
-    Py_DECREF(out_iter);
-
-    return (PyObject*)result;
-
- err:
-    Py_XDECREF(in_iter);
-    Py_XDECREF(out_iter);
-    Py_XDECREF(result);
-
-    return 0;
-}
-
-static PyObject *
-_vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec_string_fast_op method)
-{
-    /*
-     * This is a faster version of _vec_string_args to use when there
-     * are no additional arguments to the string method.  This doesn't
-     * require a broadcast iterator (and broadcast iterators don't work
-     * with 1 argument anyway).
-     */
-    PyArrayIterObject* in_iter = NULL;
-    PyArrayObject* result = NULL;
-    PyArrayIterObject* out_iter = NULL;
-
-    in_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)char_array);
-    if (in_iter == NULL) {
-        Py_DECREF(type);
-        goto err;
-    }
-
-    result = (PyArrayObject*)PyArray_SimpleNewFromDescr(
-            PyArray_NDIM(char_array), PyArray_DIMS(char_array), type);
-    if (result == NULL) {
-        goto err;
-    }
-
-    out_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)result);
-    if (out_iter == NULL) {
-        goto err;
-    }
-
-    while (PyArray_ITER_NOTDONE(in_iter)) {
-        PyObject* item_result = method(&in_iter);
         if (item_result == NULL) {
             goto err;
         }
@@ -523,9 +395,9 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     fast_method_found = get_fast_op(char_array, method_name, &fast_method, &fast_method_with_args);
     if (fast_method_found) {
         if (fast_method_with_args) {
-            result = _vec_string_fast_op_with_args(char_array, type, fast_method, args_seq);
+            result = _vec_string_with_args(char_array, type, fast_method, args_seq, /*fast*/ 1);
         } else {
-            result = _vec_string_fast_op_no_args(char_array, type, fast_method);
+            result = _vec_string_no_args(char_array, type, fast_method, /*fast*/ 1);
         }
     } else {
         if (PyArray_TYPE(char_array) == NPY_STRING) {
@@ -552,10 +424,10 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
 
         if (args_seq == NULL
                 || (PySequence_Check(args_seq) && PySequence_Size(args_seq) == 0)) {
-            result = _vec_string_no_args(char_array, type, method);
+            result = _vec_string_no_args(char_array, type, method, /*fast*/ 0);
         }
         else if (PySequence_Check(args_seq)) {
-            result = _vec_string_with_args(char_array, type, method, args_seq);
+            result = _vec_string_with_args(char_array, type, method, args_seq, /*fast*/ 0);
         }
         else {
             Py_DECREF(type);
