@@ -885,121 +885,18 @@ Files: numpy/.dylibs/libquadmath*.so
 Description: dynamically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libquadmath
 
-libquadmath/*.[hc]:
+    GCC Quad-Precision Math Library
+    Copyright (C) 2010-2019 Free Software Foundation, Inc.
+    Written by Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
 
-   Copyright (C) 2010 Free Software Foundation, Inc.
-   Written by Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
-   Written by Tobias Burnus  <burnus@net-b.de>
-
-This file is part of the libiberty library.
-Libiberty is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-Libiberty is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
-https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html
-
-libquadmath/math:
-
-atanq.c, expm1q.c, j0q.c, j1q.c, log1pq.c, logq.c:
-    Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov> 
-
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
+    This file is part of the libquadmath library.
+    Libquadmath is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
     License as published by the Free Software Foundation; either
     version 2.1 of the License, or (at your option) any later version.
 
-    This library is distributed in the hope that it will be useful,
+    Libquadmath is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+    Library General Public License for more details.
     https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-coshq.c, erfq.c, jnq.c, lgammaq.c, powq.c, roundq.c:
-   Changes for 128-bit __float128 are
-   Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-   and are incorporated herein by permission of the author.  The author 
-   reserves the right to distribute this material elsewhere under different
-   copying permissions.  These modifications are distributed here under 
-   the following terms:
-
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-    https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-cosq_kernel.c, expq.c, sincos_table.c, sincosq.c, sincosq_kernel.c,
-sinq_kernel.c, truncq.c:
-   Copyright (C) 1997, 1999 Free Software Foundation, Inc.
-
-   The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Lesser General Public
-   License as published by the Free Software Foundation; either
-   version 2.1 of the License, or (at your option) any later version.
-
-   The GNU C Library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
-   https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-isinfq.c:
- * Written by J.T. Conklin <jtc@netbsd.org>.
- * Change for long double by Jakub Jelinek <jj@ultra.linux.cz>
- * Public domain.
-
-llroundq.c, lroundq.c, tgammaq.c:
-   Copyright (C) 1997, 1999, 2002, 2004 Free Software Foundation, Inc.
-   This file is part of the GNU C Library.
-   Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
-                  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
-
-   The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Lesser General Public
-   License as published by the Free Software Foundation; either
-   version 2.1 of the License, or (at your option) any later version.
-
-   The GNU C Library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
-   https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-log10q.c:
-   Cephes Math Library Release 2.2:  January, 1991
-   Copyright 1984, 1991 by Stephen L. Moshier
-   Adapted for glibc November, 2001
-
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-    https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-remaining files:
-
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
- * is preserved.
-
-
-
-
