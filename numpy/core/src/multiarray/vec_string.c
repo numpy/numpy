@@ -10,10 +10,10 @@
 #include "dtypemeta.h"
 
 static PyObject *
-_vec_string_is_alpha(PyArrayIterObject *in_iter)
+_vec_string_is_alpha(PyArrayIterObject *in_iter, npy_intp itemsize)
 {
     char *data = in_iter->dataptr;
-    for (int i = 0, l = strlen(data); i < l; i++) {
+    for (int i = 0; i < itemsize; i++) {
         if (!isalpha(data[i])) {
             Py_RETURN_FALSE;
         }
@@ -21,7 +21,7 @@ _vec_string_is_alpha(PyArrayIterObject *in_iter)
     Py_RETURN_TRUE;
 }
 
-typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *);
+typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject *, npy_intp);
 
 typedef struct {
     const char *name;
@@ -270,6 +270,7 @@ _vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec
     PyArrayIterObject* in_iter = NULL;
     PyArrayObject* result = NULL;
     PyArrayIterObject* out_iter = NULL;
+    npy_intp itemsize;
 
     in_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)char_array);
     if (in_iter == NULL) {
@@ -288,8 +289,9 @@ _vec_string_fast_op_no_args(PyArrayObject *char_array, PyArray_Descr *type, _vec
         goto err;
     }
 
+    itemsize = PyArray_ITEMSIZE(char_array);
     while (PyArray_ITER_NOTDONE(in_iter)) {
-        PyObject* item_result = method(in_iter);
+        PyObject* item_result = method(in_iter, itemsize);
 
         if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
             Py_DECREF(item_result);
@@ -338,7 +340,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     }
 
     fast_method_found = get_fast_op(method_name, &fast_method, &fast_method_with_args);
-    if (fast_method_found) {
+    if (fast_method_found && PyArray_TYPE(char_array) != NPY_UNICODE) {
         // if (fast_method_with_args) {
         //     result = _vec_string_fast_op_with_args(char_array, type, fast_method, args_seq);
         // } else {
