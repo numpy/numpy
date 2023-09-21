@@ -10,45 +10,53 @@
 #include "numpy/arrayobject.h"
 #include "dtypemeta.h"
 
-static PyObject *
-_vec_string_add_unicode(PyArrayIterObject **in_iters)
+static int
+_vec_string_add_unicode(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
 {
     npy_ucs4 *left, *right, *data;
-    Py_ssize_t left_len, right_len;
+    Py_ssize_t left_len, left_len_in_bytes, right_len, right_len_in_bytes;
 
     left = (npy_ucs4 *) in_iters[0]->dataptr;
     right = (npy_ucs4 *) in_iters[1]->dataptr;
 
     data = left + PyArray_ITEMSIZE(in_iters[0]->ao) / sizeof(npy_ucs4) - 1;
-    while (data >= left && *data == '\0') data--;
+    while (data >= left && *data == '\0') {
+        data--;
+    }
     left_len = data - left + 1;
+    left_len_in_bytes = left_len * sizeof(npy_ucs4);
 
     data = right + PyArray_ITEMSIZE(in_iters[1]->ao) / sizeof(npy_ucs4) - 1;
-    while (data >= right && *data == '\0') data--;
+    while (data >= right && *data == '\0') {
+        data--;
+    }
     right_len = data - right + 1;
+    right_len_in_bytes = right_len * sizeof(npy_ucs4);
 
     if (left_len + right_len > PY_SSIZE_T_MAX) {
         PyErr_SetString(PyExc_OverflowError,
                         "strings are too large to concat");
-        return NULL;
+        return 0;
     }
 
     if (left_len == 0) {
-        return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, right, right_len);
+        memcpy(out_iter->dataptr, right, right_len_in_bytes);
+        memset(out_iter->dataptr + right_len_in_bytes, 0, PyArray_ITEMSIZE(out_iter->ao) - right_len_in_bytes);
     }
     if (right_len == 0) {
-        return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, left, left_len);
+        memcpy(out_iter->dataptr, left, left_len_in_bytes);
+        memset(out_iter->dataptr + left_len_in_bytes, 0, PyArray_ITEMSIZE(out_iter->ao) - left_len_in_bytes);
     }
 
-    npy_ucs4 buf[left_len+right_len];
-    memcpy(buf, left, left_len * sizeof(npy_ucs4));
-    memcpy(buf+left_len, right, right_len * sizeof(npy_ucs4));
-
-    return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buf, left_len+right_len);
+    memcpy(out_iter->dataptr, left, left_len_in_bytes);
+    memcpy(out_iter->dataptr + left_len_in_bytes, right, right_len_in_bytes);
+    memset(out_iter->dataptr + left_len_in_bytes + right_len_in_bytes, 0,
+           PyArray_ITEMSIZE(out_iter->ao) - right_len_in_bytes - left_len_in_bytes);
+    return 1;
 }
 
-static PyObject *
-_vec_string_add_bytes(PyArrayIterObject **in_iters)
+static int
+_vec_string_add_bytes(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
 {
     char *left, *right, *data;
     Py_ssize_t left_len, right_len;
@@ -67,57 +75,73 @@ _vec_string_add_bytes(PyArrayIterObject **in_iters)
     if (left_len + right_len > PY_SSIZE_T_MAX) {
         PyErr_SetString(PyExc_OverflowError,
                         "strings are too large to concat");
-        return NULL;
+        return 0;
     }
 
     if (left_len == 0) {
-        return PyBytes_FromStringAndSize(right, right_len);
+        memcpy(out_iter->dataptr, right, right_len);
+        memset(out_iter->dataptr + right_len, 0, PyArray_ITEMSIZE(out_iter->ao) - right_len);
     }
     if (right_len == 0) {
-        return PyBytes_FromStringAndSize(left, left_len);
+        memcpy(out_iter->dataptr, left, left_len);
+        memset(out_iter->dataptr + left_len, 0, PyArray_ITEMSIZE(out_iter->ao) - left_len);
     }
 
-    char buf[left_len+right_len];
-    memcpy(buf, left, left_len);
-    memcpy(buf+left_len, right, right_len);
-
-    return PyBytes_FromStringAndSize(buf, left_len+right_len);
+    memcpy(out_iter->dataptr, left, left_len);
+    memcpy(out_iter->dataptr + left_len, right, right_len);
+    memset(out_iter->dataptr + left_len + right_len, 0,
+           PyArray_ITEMSIZE(out_iter->ao) - right_len - left_len);
+    return 1;
 }
 
-static PyObject *
-_vec_string_is_alpha_unicode(PyArrayIterObject **in_iter)
+static int
+_vec_string_is_alpha_unicode(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
 {
     int truesize = PyArray_ITEMSIZE(in_iter[0]->ao) / sizeof(npy_ucs4);
     npy_ucs4 *data = ((npy_ucs4 *) in_iter[0]->dataptr) + truesize - 1;
-    while (data >= (npy_ucs4 *) in_iter[0]->dataptr && *data == '\0') data--;
+    while (data >= (npy_ucs4 *) in_iter[0]->dataptr && *data == '\0') {
+        data--;
+    }
 
-    if (data <= (npy_ucs4 *) in_iter[0]->dataptr) Py_RETURN_FALSE;
+    if (data <= (npy_ucs4 *) in_iter[0]->dataptr) {
+        *out_iter->dataptr = (npy_bool) NPY_FALSE;
+        return 1;
+    }
 
     for (; data >= (npy_ucs4 *) in_iter[0]->dataptr; data--) {
         if (!Py_UNICODE_ISALPHA(*data)) {
-            Py_RETURN_FALSE;
+            *out_iter->dataptr = (npy_bool) NPY_FALSE;
+            return 1;
         }
     }
-    Py_RETURN_TRUE;
+    *out_iter->dataptr = (npy_bool) NPY_TRUE;
+    return 1;
 }
 
-static PyObject *
-_vec_string_is_alpha_bytes(PyArrayIterObject **in_iter)
+static int
+_vec_string_is_alpha_bytes(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
 {
     char *data = in_iter[0]->dataptr + PyArray_ITEMSIZE(in_iter[0]->ao) - 1;
-    while (data >= in_iter[0]->dataptr && *data == '\0') data--;
+    while (data >= in_iter[0]->dataptr && *data == '\0') {
+        data--;
+    }
 
-    if (data <= in_iter[0]->dataptr) Py_RETURN_FALSE;
+    if (data <= in_iter[0]->dataptr) {
+        *out_iter->dataptr = (npy_bool) NPY_FALSE;
+        return 1;
+    };
 
     for (; data >= in_iter[0]->dataptr; data--) {
         if (!isalpha(*data)) {
-            Py_RETURN_FALSE;
+            *out_iter->dataptr = (npy_bool) NPY_FALSE;
+            return 1;
         }
     }
-    Py_RETURN_TRUE;
+    *out_iter->dataptr = (npy_bool) NPY_TRUE;
+    return 1;
 }
 
-typedef PyObject * (*_vec_string_fast_op)(PyArrayIterObject **);
+typedef int (*_vec_string_fast_op)(PyArrayIterObject **, PyArrayIterObject *);
 
 typedef struct {
     const char *name;
@@ -244,11 +268,12 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     }
 
     while (PyArray_MultiIter_NOTDONE(in_iter)) {
-        PyObject* item_result;
-
         if (fast) {
-            item_result = ((_vec_string_fast_op) method)(in_iter->iters);
+            if (!((_vec_string_fast_op) method)(in_iter->iters, out_iter)) {
+                goto err;
+            }
         } else {
+            PyObject* item_result;
             PyObject* args_tuple = PyTuple_New(n);
             if (args_tuple == NULL) {
                 goto err;
@@ -267,18 +292,18 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 
             item_result = PyObject_CallObject((PyObject *)method, args_tuple);
             Py_DECREF(args_tuple);
-        }
-        if (item_result == NULL) {
-            goto err;
-        }
+            if (item_result == NULL) {
+                goto err;
+            }
 
-        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+            if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+                Py_DECREF(item_result);
+                PyErr_SetString( PyExc_TypeError,
+                        "result array type does not match underlying function");
+                goto err;
+            }
             Py_DECREF(item_result);
-            PyErr_SetString( PyExc_TypeError,
-                    "result array type does not match underlying function");
-            goto err;
         }
-        Py_DECREF(item_result);
 
         PyArray_MultiIter_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
@@ -329,11 +354,12 @@ _vec_string_no_args(PyArrayObject* char_array, PyArray_Descr* type,
     }
 
     while (PyArray_ITER_NOTDONE(in_iter)) {
-        PyObject* item_result;
-
         if (fast) {
-            item_result = ((_vec_string_fast_op) method)(&in_iter);
+            if (!((_vec_string_fast_op) method)(&in_iter, out_iter)) {
+                goto err;
+            }
         } else {
+            PyObject* item_result;
             PyObject* item = PyArray_ToScalar(in_iter->dataptr, in_iter->ao);
             if (item == NULL) {
                 goto err;
@@ -341,18 +367,19 @@ _vec_string_no_args(PyArrayObject* char_array, PyArray_Descr* type,
 
             item_result = PyObject_CallFunctionObjArgs((PyObject *) method, item, NULL);
             Py_DECREF(item);
-        }
-        if (item_result == NULL) {
-            goto err;
-        }
 
-        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+            if (item_result == NULL) {
+                goto err;
+            }
+
+            if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+                Py_DECREF(item_result);
+                PyErr_SetString( PyExc_TypeError,
+                    "result array type does not match underlying function");
+                goto err;
+            }
             Py_DECREF(item_result);
-            PyErr_SetString( PyExc_TypeError,
-                "result array type does not match underlying function");
-            goto err;
         }
-        Py_DECREF(item_result);
 
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
