@@ -126,7 +126,7 @@ assertion fails, the test fails. Common assertion functions include:
 - :func:`numpy.testing.assert_array_less` for testing (strict) elementwise
   ordering between a result array and a reference.
 
-Note that these assertion functions only compare the numerical vales of the
+Note that these assertion functions only compare the numerical values of the
 arrays. Consider adding separate ``assert`` statements regarding the array
 dtype and shape (when the reference is a scalar). Note that
 ``pytest`` internally rewrites the ``assert`` statement to give informative
