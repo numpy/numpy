@@ -49,11 +49,11 @@ steps:
   displayName: 'Build NumPy'
 
 - powershell: |
-    # copy from c:/opt/openblas/openblas_dll to numpy/.libs to ensure it can
+    # copy from c:/opt/openblas/openblas_dll to numpy/../numpy.libs to ensure it can
     # get loaded when numpy is imported (no RPATH on Windows)
     $target = $(python -c "import sysconfig; print(sysconfig.get_path('platlib'))")
-    mkdir $target/numpy/.libs
-    copy C:/opt/openblas/openblas_dll/*.dll $target/numpy/.libs
+    mkdir $target/numpy.libs
+    copy C:/opt/openblas/openblas_dll/*.dll $target/numpy.libs
   displayName: 'Copy OpenBLAS DLL to site-packages'
 
 - script: |
