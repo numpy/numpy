@@ -930,6 +930,17 @@ class TestAssertAllclose:
         msgs = str(exc_info.value).split('\n')
         assert_equal(msgs[4], 'Max absolute difference: 4')
 
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.ones(3)
+        y = np.ones(())
+        assert_allclose(x, y)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, y, strict=True)
+        assert_allclose(x, x)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, x.astype(np.float32), strict=True)
+
 
 class TestArrayAlmostEqualNulp:
 

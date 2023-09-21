@@ -312,6 +312,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_allclose(
@@ -322,6 +324,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal_nulp(
