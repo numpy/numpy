@@ -4,6 +4,7 @@ PROJECT_DIR="$1"
 PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
 
 # Update license
+cat $PROJECT_DIR/LICENSES_bundled.txt >> $PROJECT_DIR/LICENSE.txt
 if [[ $RUNNER_OS == "Linux" ]] ; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
 elif [[ $RUNNER_OS == "macOS" ]]; then
