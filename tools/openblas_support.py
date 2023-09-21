@@ -238,6 +238,9 @@ def extract_tarfile_to(tarfileobj, target_path, archive_path):
 def make_init(dirname):
     '''
     Create a _distributor_init.py file for OpenBlas
+
+    Obsoleted by the use of delvewheel in wheel building, which
+    adds an equivalent snippet to numpy/__init__.py, but still useful in CI
     '''
     with open(os.path.join(dirname, '_distributor_init.py'), 'w') as fid:
         fid.write(textwrap.dedent("""
@@ -246,19 +249,19 @@ def make_init(dirname):
             Once a DLL is preloaded, its namespace is made available to any
             subsequent DLL. This file originated in the numpy-wheels repo,
             and is created as part of the scripts that build the wheel.
+
             '''
             import os
             import glob
             if os.name == 'nt':
-                # convention for storing / loading the DLL from
-                # numpy/.libs/, if present
+                # load any DLL from numpy/../numpy.libs/, if present
                 try:
                     from ctypes import WinDLL
-                    basedir = os.path.dirname(__file__)
                 except:
                     pass
                 else:
-                    libs_dir = os.path.abspath(os.path.join(basedir, '.libs'))
+                    basedir = os.path.dirname(__file__)
+                    libs_dir = os.path.abspath(os.path.join(basedir, os.pardir, 'numpy.libs'))
                     DLL_filenames = []
                     if os.path.isdir(libs_dir):
                         for filename in glob.glob(os.path.join(libs_dir,
