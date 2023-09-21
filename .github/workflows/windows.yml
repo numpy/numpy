@@ -68,8 +68,7 @@ jobs:
       run: |
         # Getting the OpenBLAS DLL to the right place so it loads
         $installed_path = "$PWD\build-install\usr\Lib\site-packages"
-        $numpy_path = "${installed_path}\numpy"
-        $libs_path = "${numpy_path}\.libs"
+        $libs_path = "${installed_path}\numpy.libs"
         mkdir ${libs_path}
         $ob_path = "C:/opt/64/bin/"
         cp $ob_path/*.dll $libs_path
