@@ -5,10 +5,10 @@ This binary distribution of NumPy also bundles the following software:
 
 
 Name: OpenBLAS
-Files: numpy.libs/libopenb*.so
+Files: numpy.libs/libopenblas*.so
 Description: bundled as a dynamically linked library
 Availability: https://github.com/OpenMathLib/OpenBLAS/
-License: 3-clause BSD
+License: BSD-3-Clause-Attribution
   Copyright (c) 2011-2014, The OpenBLAS Project
   All rights reserved.
 
@@ -41,10 +41,10 @@ License: 3-clause BSD
 
 
 Name: LAPACK
-Files: numpy.libs/libopenb*.so
+Files: numpy.libs/libopenblas*.so
 Description: bundled in OpenBLAS
 Availability: https://github.com/OpenMathLib/OpenBLAS/
-License 3-clause BSD
+License: BSD-3-Clause-Attribution
   Copyright (c) 1992-2013 The University of Tennessee and The University
                           of Tennessee Research Foundation.  All rights
                           reserved.
@@ -99,7 +99,7 @@ Name: GCC runtime library
 Files: numpy.libs/libgfortran*.so
 Description: dynamically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgfortran
-License: GPLv3 + runtime exception
+License: GPL-3.0-with-GCC-exception
   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
   Libgfortran is free software; you can redistribute it and/or modify
@@ -883,6 +883,7 @@ Name: libquadmath
 Files: numpy.libs/libquadmath*.so
 Description: dynamically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libquadmath
+License: LGPL-2.1-or-later
 
     GCC Quad-Precision Math Library
     Copyright (C) 2010-2019 Free Software Foundation, Inc.
