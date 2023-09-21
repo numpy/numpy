@@ -261,7 +261,8 @@ def make_init(dirname):
                     pass
                 else:
                     basedir = os.path.dirname(__file__)
-                    libs_dir = os.path.abspath(os.path.join(basedir, os.pardir, 'numpy.libs'))
+                    libs_dir = os.path.join(basedir, os.pardir, 'numpy.libs')
+                    libs_dir = os.path.abspath(libs_dir)
                     DLL_filenames = []
                     if os.path.isdir(libs_dir):
                         for filename in glob.glob(os.path.join(libs_dir,
