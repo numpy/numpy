@@ -19,9 +19,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  DOWNLOAD_OPENBLAS: 1
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
