@@ -1499,8 +1499,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     >>> np.testing.assert_allclose(x, y, rtol=1e-5, atol=0)
 
     As mentioned in the Notes section, `assert_allclose` has special
-    handling for scalars. Here, the test checks that the value of `np.sin`
-    is nearly zero at integer multiples of pi.
+    handling for scalars. Here, the test checks that the value of `numpy.sin`
+    is nearly zero at integer multiples of π.
 
     >>> x = np.arange(3) * np.pi
     >>> np.testing.assert_allclose(np.sin(x), 0, atol=1e-15)
