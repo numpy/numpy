@@ -1136,7 +1136,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     .. [3]  Fornberg B. (1988) Generation of Finite Difference Formulas on
             Arbitrarily Spaced Grids,
             Mathematics of Computation 51, no. 184 : 699-706.
-            `PDF <http://www.ams.org/journals/mcom/1988-51-184/
+            `PDF <https://www.ams.org/journals/mcom/1988-51-184/
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
@@ -3644,7 +3644,7 @@ def sinc(x):
     References
     ----------
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
-           Resource. http://mathworld.wolfram.com/SincFunction.html
+           Resource. https://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
            https://en.wikipedia.org/wiki/Sinc_function
 

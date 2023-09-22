@@ -26,7 +26,7 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
     [mypy]
     plugins = numpy.typing.mypy_plugin
 
-.. _mypy: http://mypy-lang.org/
+.. _mypy: https://mypy-lang.org/
 .. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
 
 """

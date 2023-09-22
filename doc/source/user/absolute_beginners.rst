@@ -1699,4 +1699,4 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/*
+*Image credits: Jay Alammar https://jalammar.github.io/*

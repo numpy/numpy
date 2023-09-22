@@ -118,8 +118,8 @@ territory ([2]_).
        a collision internal to `SeedSequence` is the way a failure would be
        observed.
 
-.. _`implements an algorithm`: http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
-.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+.. _`implements an algorithm`: https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html
 .. _`avalanche properties`: https://en.wikipedia.org/wiki/Avalanche_effect
 .. _`not unique to numpy`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf
 

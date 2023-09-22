@@ -19,7 +19,7 @@
  * For additional information about the PCG random number generation scheme,
  * including its license and other licensing options, visit
  *
- *     http://www.pcg-random.org
+ *     https://www.pcg-random.org
  *
  * Relicensed MIT in May 2019
  *

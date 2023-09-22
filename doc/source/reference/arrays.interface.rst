@@ -21,7 +21,7 @@ The array interface protocol
    backward-compatible implementation utilizing the array interface
    described here.
 
-__ http://cython.org/
+__ https://cython.org/
 __ https://github.com/cython/cython/wiki/tutorials-numpy
 
 :version: 3
