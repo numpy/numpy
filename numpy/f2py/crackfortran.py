@@ -1445,25 +1445,20 @@ def analyzeline(m, case, line):
                     vtype = vars[v].get('typespec')
                     vdim = getdimension(vars[v])
                     matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
-                    vars.setdefault(v, {})
-                    current_val = vars[v].get('=')
                     new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
-                    if current_val and current_val != new_val:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
-                    vars[v]['='] = new_val
-                except:
+                except: # gh-24746
                     idy, jdx, fc = 0, 0, 0
                     while idy < len(l[1]) and (fc or l[1][idy] != ','):
                         if l[1][idy] == "'":
                             fc = not fc
                         idy += 1
-                    vars.setdefault(v, {})
-                    current_val = vars[v].get('=')
                     new_val = l[1][jdx:idy]
-                    if current_val and current_val != new_val:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
-                    vars[v]['='] = new_val
                     jdx = idy + 1
+                vars.setdefault(v, {})
+                current_val = vars[v].get('=')
+                if current_val and current_val != new_val:
+                    outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
+                vars[v]['='] = new_val
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
         if last_name:
