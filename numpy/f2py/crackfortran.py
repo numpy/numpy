@@ -1425,9 +1425,7 @@ def analyzeline(m, case, line):
             if dl.startswith(','):
                 dl = dl[1:].strip()
             ll.append([dl, il])
-        vars = {}
-        if 'vars' in groupcache[groupcounter]:
-            vars = groupcache[groupcounter]['vars']
+        vars = groupcache[groupcounter].get('vars', {})
         last_name = None
         for l in ll:
             l = [x.strip() for x in l]
@@ -1452,48 +1450,23 @@ def analyzeline(m, case, line):
                 try:
                     vtype = vars[v].get('typespec') # can fail
                     vdim = getdimension(vars[v])
-
-                    if (vtype == 'complex'):
-                        cmplxpat = r"\(.*?\)"
-                        matches = re.findall(cmplxpat, l[1])
-                    else:
-                        matches = l[1].split(',')
-
-                    if v not in vars:
-                        vars[v] = {}
-                    if '=' in vars[v] and not vars[v]['='] == matches[idx]:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
-                            v, vars[v]['='], matches[idx]))
-
-                    if vdim is not None:
-                        # Need to assign multiple values to one variable
-                        vars[v]['='] = "(/{}/)".format(", ".join(matches))
-                    else:
-                        vars[v]['='] = matches[idx]
+                    matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
+                    vars.setdefault(v, {})
+                    if '=' in vars[v] and vars[v]['='] != matches[idx]:
+                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, vars[v]['='], matches[idx]))
+                    vars[v]['='] = "(/{}/)".format(", ".join(matches)) if vdim is not None else matches[idx]
                 except:
-                    i = 0
-                    j = 0
-                    for v in rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')]):
-                        if v[0] == '(':
-                            outmess(
-                                'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
-                            # XXX: subsequent init expressions may get wrong values.
-                            # Ignoring since data statements are irrelevant for
-                            # wrapping.
-                            continue
-                    fc = 0
-                    while (i < llen) and (fc or not l[1][i] == ','):
-                        if l[1][i] == "'":
+                    idy, jdx, fc = 0, 0, 0
+                    while idy < llen and (fc or l[1][idy] != ','):
+                        if l[1][idy] == "'":
                             fc = not fc
-                        i = i + 1
-                    i = i + 1
-                    if v not in vars:
-                         vars[v] = {}
-                    if '=' in vars[v] and not vars[v]['='] == l[1][j:i - 1]:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
-                            v, vars[v]['='], l[1][j:i - 1]))
-                    vars[v]['='] = l[1][j:i - 1]
-                    j = i
+                        idy += 1
+                    idy += 1
+                    vars.setdefault(v, {})
+                    if '=' in vars[v] and vars[v]['='] != l[1][jdx:idy - 1]:
+                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, vars[v]['='], l[1][jdx:idy - 1]))
+                    vars[v]['='] = l[1][jdx:idy - 1]
+                    jdx = idy
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
         if last_name is not None:
