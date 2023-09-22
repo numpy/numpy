@@ -330,8 +330,8 @@ def add(x1, x2):
     array(['ad', 'be', 'cf'], dtype='<U2')
 
     >>> b = np.array(["d", "e", "f"])
-    >>> np.char.add(np.array(['a']), b)
-    array(['ad', 'ae', 'af'], dtype='<U2')
+    >>> np.char.add(b, 'python')
+    array(['dpython', 'epython', 'fpython'], dtype='<U7')
 
     """
     arr1 = numpy.asarray(x1)
@@ -850,6 +850,13 @@ def isalnum(a):
     See Also
     --------
     str.isalnum
+
+    Examples
+    --------
+    >>> arr = np.array(['abc', '123', '', 'abc123', '#'])
+    >>> np.char.isalnum(arr)
+    array([ True,  True, False,  True, False])
+
     """
     return _vec_string(a, bool_, 'isalnum')
 
