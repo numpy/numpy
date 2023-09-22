@@ -204,20 +204,13 @@ static int _is_user_defined_string_array(PyArrayObject* array)
             PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
             return 1;
         }
-        else {
-            PyErr_SetString(
-                PyExc_TypeError,
-                "string comparisons are only allowed for dtypes with a "
-                "scalar type that is a subtype of str or bytes.");
-            return 0;
-        }
-    }
-    else {
         PyErr_SetString(
             PyExc_TypeError,
-            "string operation on non-string array");
+            "string comparisons are only allowed for dtypes with a "
+            "scalar type that is a subtype of str or bytes.");
         return 0;
     }
+    return 0;
 }
 
 static PyObject *
@@ -406,6 +399,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     PyObject* method_name;
     PyObject* args_seq = NULL;
 
+    int user_defined_dtype = 0;
     int fast_method_found = 0;
     int fast_method_with_args = 0;
     _vec_string_fast_op fast_method = NULL;
@@ -419,8 +413,9 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         goto err;
     }
 
+    user_defined_dtype = _is_user_defined_string_array(char_array);
     fast_method_found = get_fast_op(char_array, method_name, &fast_method, &fast_method_with_args);
-    if (fast_method_found) {
+    if (fast_method_found && !user_defined_dtype) {
         if (fast_method_with_args) {
             result = _vec_string_with_args(char_array, type, fast_method, args_seq, /*fast*/ 1);
         } else {
@@ -434,12 +429,17 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
             method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
         }
         else {
-            if (_is_user_defined_string_array(char_array)) {
+            if (user_defined_dtype) {
                 PyTypeObject* scalar_type =
                     NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;
                 method = PyObject_GetAttr((PyObject*)scalar_type, method_name);
             }
             else {
+                if (!PyErr_Occurred()) {
+                    PyErr_SetString(
+                        PyExc_TypeError,
+                        "string operation on non-string array");
+                }
                 Py_DECREF(type);
                 goto err;
             }
