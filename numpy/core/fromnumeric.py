@@ -2393,8 +2393,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any(np.nan)
     True
 
-    >>>inf = float('inf')
-    >>>np.any(inf)
+    >>>np.any(float('inf'))
     True
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
