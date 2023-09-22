@@ -328,7 +328,7 @@ def add(x1, x2):
     >>> b = np.array(["d", "e", "f"])
     >>> np.char.add(a, b)
     array(['ad', 'be', 'cf'], dtype='<U2')
-    
+
     >>> b = np.array(["d", "e", "f"])
     >>> np.char.add(np.array(['a']), b)
     array(['ad', 'ae', 'af'], dtype='<U2')
@@ -1240,6 +1240,16 @@ def partition(a, sep):
     See Also
     --------
     str.partition
+
+    Examples
+    --------
+    >>> arr = np.array(["a:z", "123", ":", "a:"])
+    >>> sep = ':'
+    >>> np.char.partition(arr, sep)
+    array([['a', ':', 'z'],
+       ['123', '', ''],
+       ['', ':', ''],
+       ['a', ':', '']], dtype='<U3')
 
     """
     return _to_bytes_or_str_array(
