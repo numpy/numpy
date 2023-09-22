@@ -1,0 +1,3 @@
+* A fast path that operates directly on C-level raw data, instead of calling
+  the equivalent Python methods, has been added for ``np.char.add`` and
+  ``np.char.isalpha``.

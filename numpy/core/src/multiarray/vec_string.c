@@ -150,6 +150,10 @@ typedef struct {
     int with_args;
 } _vec_string_named_fast_op;
 
+// This static array contains all of the np.char functions that support
+// fast ops, according to the length of the method name as a string.
+// For example, __add__ and isalpha are at index seven, cause they're
+// seven characters long.
 static _vec_string_named_fast_op *SUPPORTED_FAST_OPS[] = {
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
