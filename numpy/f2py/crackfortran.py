@@ -1428,48 +1428,45 @@ def analyzeline(m, case, line):
         vars = groupcache[groupcounter].get('vars', {})
         last_name = None
         for l in ll:
-            l = [x.strip() for x in l]
-            if l[0][0] == ',':
+            l[0], l[1] = l[0].strip(), l[1].strip()
+            if l[0].startswith(','):
                 l[0] = l[0][1:]
-            if l[0][0] == '(':
-                outmess(
-                    'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
+            if l[0].startswith('('):
+                outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
-            llen = len(l[1])
-            for idx, v in enumerate(rmbadname(
-                    [x.strip() for x in markoutercomma(l[0]).split('@,@')])
-                                    ):
-                if v[0] == '(':
-                    outmess(
-                        'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
+            for idx, v in enumerate(rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')])):
+                if v.startswith('('):
+                    outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
                     # XXX: subsequent init expressions may get wrong values.
                     # Ignoring since data statements are irrelevant for
                     # wrapping.
                     continue
-                fc = 0
                 try:
-                    vtype = vars[v].get('typespec') # can fail
+                    vtype = vars[v].get('typespec')
                     vdim = getdimension(vars[v])
                     matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
                     vars.setdefault(v, {})
-                    if '=' in vars[v] and vars[v]['='] != matches[idx]:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, vars[v]['='], matches[idx]))
-                    vars[v]['='] = "(/{}/)".format(", ".join(matches)) if vdim is not None else matches[idx]
+                    current_val = vars[v].get('=')
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                    if current_val and current_val != new_val:
+                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
+                    vars[v]['='] = new_val
                 except:
                     idy, jdx, fc = 0, 0, 0
-                    while idy < llen and (fc or l[1][idy] != ','):
+                    while idy < len(l[1]) and (fc or l[1][idy] != ','):
                         if l[1][idy] == "'":
                             fc = not fc
                         idy += 1
-                    idy += 1
                     vars.setdefault(v, {})
-                    if '=' in vars[v] and vars[v]['='] != l[1][jdx:idy - 1]:
-                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, vars[v]['='], l[1][jdx:idy - 1]))
-                    vars[v]['='] = l[1][jdx:idy - 1]
-                    jdx = idy
+                    current_val = vars[v].get('=')
+                    new_val = l[1][jdx:idy]
+                    if current_val and current_val != new_val:
+                        outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
+                    vars[v]['='] = new_val
+                    jdx = idy + 1
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
-        if last_name is not None:
+        if last_name:
             previous_context = ('variable', last_name, groupcounter)
     elif case == 'common':
         line = m.group('after').strip()
