@@ -318,6 +318,21 @@ def add(x1, x2):
         Output array of `bytes_` or `str_`, depending on input types
         of the same shape as `x1` and `x2`.
 
+    Examples
+    --------
+    >>> a = np.array(["a", "b", "c"])
+    >>> np.char.add("0", a)
+    array(['0a', '0b', '0c'], dtype='<U2')
+
+    >>> a = np.array(["a", "b", "c"])
+    >>> b = np.array(["d", "e", "f"])
+    >>> np.char.add(a, b)
+    array(['ad', 'be', 'cf'], dtype='<U2')
+    
+    >>> b = np.array(["d", "e", "f"])
+    >>> np.char.add(np.array(['a']), b)
+    array(['ad', 'ae', 'af'], dtype='<U2')
+
     """
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
