@@ -2393,6 +2393,10 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any(np.nan)
     True
 
+    >>>inf = float('inf')
+    >>>np.any(inf)
+    True
+
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
     False
 
@@ -2405,6 +2409,21 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     True
     >>> id(z), id(o) # identity of z and o              # doctest: +SKIP
     (191614240, 191614240)
+
+    >>>np.any([[1.0,3.5,-0.9],[4.5,7.9,0],[-5.6,11,3.7]],out=np.array(float))
+    array(1.0, dtype=object)
+    
+    >>>np.shape([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]])
+    (2,2,3)
+    >>>ex = np.any([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]],axis=2,keepdims=True)
+    >>>ex
+    array([[[ True],
+        [ True]],
+
+       [[ True],
+        [ True]]])
+    >>>ex.shape
+    (2,2,1)
 
     """
     return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
