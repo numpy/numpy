@@ -671,9 +671,6 @@ def correlate(a, v, mode='valid'):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
-    old_behavior : bool
-        `old_behavior` was removed in NumPy 1.10. If you need the old
-        behavior, use `multiarray.correlate`.
 
     Returns
     -------
@@ -683,7 +680,6 @@ def correlate(a, v, mode='valid'):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
-    multiarray.correlate : Old, no conjugate, version of correlate.
     scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
