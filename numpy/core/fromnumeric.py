@@ -423,24 +423,34 @@ def _repeat_dispatcher(a, repeats, axis=None):
 @array_function_dispatch(_repeat_dispatcher)
 def repeat(a, repeats, axis=None):
     """
-    Repeat each element of an array after themselves
+    Repeat each element of an array after themselves. Multiple pairs of
+    `repeats` and `axis` are allowed.
 
     Parameters
     ----------
     a : array_like
         Input array.
-    repeats : int or array of ints
-        The number of repetitions for each element.  `repeats` is broadcasted
-        to fit the shape of the given axis.
-    axis : int, optional
-        The axis along which to repeat values.  By default, use the
+    repeats : int or array of ints or tuple of ints or tuple of arrays of ints
+        The number or collection of repetitions for each element in the
+        matching axis. `repeats` is broadcasted to fit the shape of the given
+        corresponding axis.
+    axis : None or int or tuple of ints, optional
+        The axis or axes along which to repeat values. By default, use the
         flattened input array, and return a flat output array.
 
     Returns
     -------
     repeated_array : ndarray
         Output array which has the same shape as `a`, except along
-        the given axis.
+        the given axes.
+
+    Raises
+    ------
+    ValueError
+        If more axes are provided than repeats elements.
+
+    TypeError
+        If repeats or axis contain values other than integers.
 
     See Also
     --------
@@ -461,10 +471,67 @@ def repeat(a, repeats, axis=None):
     array([[1, 2],
            [3, 4],
            [3, 4]])
+    >>> np.repeat(x, ([3, 3], [1, 2]), (1, 0))
+    array([[1, 1, 1, 2, 2, 2],
+           [3, 3, 3, 4, 4, 4],
+           [3, 3, 3, 4, 4, 4]])
+    >>> np.repeat(x, (3, [1, 2], 1), (1, 0))
+    array([1, 1, 1, 2, 2, 2,
+           3, 3, 3, 4, 4, 4,
+           3, 3, 3, 4, 4, 4])
 
     """
-    return _wrapfunc(a, 'repeat', repeats, axis=axis)
+    if type(repeats) is not tuple and type(axis) is not tuple:
+        return _wrapfunc(a, 'repeat', repeats, axis=axis)
 
+    # No default behaviour for missing repeats elements
+    if len(repeats) < len(axis):
+        raise ValueError(f"Must provide matching or greater length `repeats` "
+                         f"and `axis`; got {len(repeats)} repeats "
+                         f"elements and {len(axis)} axes elements.")
+    
+    # Check for incompatible data types
+    for element in repeats:
+        if type(element) is not int and type(element) is not list:
+            raise TypeError("`repeats` values must be an array of integers, "
+                            "tuple of integers, tuple of arrays of integers "
+                            "or an integer, not "
+                            "{name}.".format(name=type(element).__name__))
+        if type(element) is not int:
+            for entry in element:
+                if type(entry) is not int:
+                    raise TypeError("`repeats` values must be integers, not "
+                                    "{name}.".format(name=type(entry).
+                                                    __name__))
+                if entry < 1:
+                    raise TypeError("all elements of `repeats` must be "
+                                    "positive integers.")
+
+    for element in axis:
+        if type(element) is not int:
+            raise TypeError("`axis` values must be integers, not {name}."
+                            .format(name=type(element).__name__))
+        if element < 0:
+            raise TypeError("All elements of `axis` must be non-negative.")
+        if element > a.ndim - 1:
+            raise TypeError(f"Axis {element} is out of bounds for array of "
+                            f"dimension {a.ndim}.")
+        
+    # Takes into account flat output arrays
+    flattened_repeats = repeats[len(axis):]
+
+    # Optimize performance by prioritizing axes with greater repeat total
+    repeats, axis = (tuple(x) for x in zip(*sorted(zip(repeats[0:len(axis)],
+                     axis), key = lambda k: k[0] * np.shape(a)[k[1]] 
+                     if type(k[0]) is int else np.sum(k[0]))))
+    
+    repeats += flattened_repeats
+    axis += (len(repeats) - len(axis)) * (None,)
+
+    for index in range(len(repeats)):
+        a = _wrapfunc(a, 'repeat', repeats[index], axis[index])
+
+    return a
 
 def _put_dispatcher(a, ind, v, mode=None):
     return (a, ind, v)

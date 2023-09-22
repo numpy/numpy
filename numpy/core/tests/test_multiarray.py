@@ -7392,6 +7392,7 @@ class TestRepeat:
     def setup_method(self):
         self.m = np.array([1, 2, 3, 4, 5, 6])
         self.m_rect = self.m.reshape((2, 3))
+        self.m_square = np.append(self.m_rect, [[7, 8, 9]], axis=0)
 
     def test_basic(self):
         A = np.repeat(self.m, [1, 3, 2, 1, 1, 2])
@@ -7424,6 +7425,107 @@ class TestRepeat:
         assert_equal(A, [[1, 1, 2, 2, 3, 3],
                          [4, 4, 5, 5, 6, 6]])
 
+    def test_double_call(self):
+        A = np.repeat(self.m_square, ([1, 2, 2], [1, 2, 3]), axis=(0, 1))
+        assert_equal(A, [[1, 2, 2, 3, 3, 3],
+                         [4, 5, 5, 6, 6, 6],
+                         [4, 5, 5, 6, 6, 6],
+                         [7, 8, 8, 9, 9, 9],
+                         [7, 8, 8, 9, 9, 9]])
+
+    def test_double_call_broadcast(self):
+        A = np.repeat(self.m_rect, (2, 2), axis=(0, 1))
+        assert_equal(A, [[1, 1, 2, 2, 3, 3],
+                         [1, 1, 2, 2, 3, 3],
+                         [4, 4, 5, 5, 6, 6],
+                         [4, 4, 5, 5, 6, 6]])
+        
+        A = np.repeat(self.m_rect, (2, 2), axis=(1, 0))
+        assert_equal(A, [[1, 1, 2, 2, 3, 3],
+                         [1, 1, 2, 2, 3, 3],
+                         [4, 4, 5, 5, 6, 6],
+                         [4, 4, 5, 5, 6, 6]])
+
+    def test_double_call_broadcast2(self):
+        A = np.repeat(self.m_square, ([1, 2, 2], 2), axis=(0, 1))
+        assert_equal(A, [[1, 1, 2, 2, 3, 3],
+                         [4, 4, 5, 5, 6, 6],
+                         [4, 4, 5, 5, 6, 6],
+                         [7, 7, 8, 8, 9, 9],
+                         [7, 7, 8, 8, 9, 9]])
+    
+    def test_flattened_output_array(self):
+        A = np.repeat(self.m_square, ([1, 2, 2], 2, 1), axis=(0, 1))
+        assert_equal(A, [1, 1, 2, 2, 3, 3,
+                         4, 4, 5, 5, 6, 6,
+                         4, 4, 5, 5, 6, 6,
+                         7, 7, 8, 8, 9, 9,
+                         7, 7, 8, 8, 9, 9])
+
+    def test_flattened_output_array2(self):
+        A = np.repeat(self.m_square, (2, [1, 2, 1], 1, 1), axis=(1, 0))
+        assert_equal(A, [1, 1, 2, 2, 3, 3,
+                         4, 4, 5, 5, 6, 6,
+                         4, 4, 5, 5, 6, 6,
+                         7, 7, 8, 8, 9, 9])
+
+    def test_repeated_axis(self):
+        A = np.repeat(self.m_square, ([1, 2, 2], [1, 2, 3], [1, 2, 3, 4, 5],
+                       [1, 2, 3, 4, 5, 6]), axis=(0, 1, 0, 1))
+        assert_equal(A, [[1, 2, 2, 2, 2, 2, 3, 3, 3, 3,
+                          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+                         [4, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                         [4, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                         [4, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                         [4, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                         [4, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                         [7, 8, 8, 8, 8, 8, 9, 9, 9, 9,
+                          9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]])
+     
+    def test_invalid_argument_count(self):
+        assert_raises(ValueError, np.repeat, self.m_square,
+                      ([2, 2, 1],), axis=(0, 1))
+
+    def test_decimal_repeats_entry(self):
+        assert_raises(TypeError, np.repeat, self.m_square, 
+                      ([2.0, 2, 1], [2, 2, 3]), axis=(0, 1))
+
+    def test_null_repeats_entry(self):
+        assert_raises(TypeError, np.repeat, self.m_square,
+                      ([0, 2, 2], [2, 2, 3], 1), axis=(0, 1))
+
+    def test_decimal_axis(self):
+        assert_raises(TypeError, np.repeat, self.m_square,
+                      ([2, 2, 2], [2, 2, 3]), axis=(0, 1.0))
+
+    def test_negative_axis(self):
+        assert_raises(TypeError, np.repeat, self.m_square,
+                      ([2, 2, 1], [2, 2, 1], 2), axis=(0, -1))
+
+    def test_out_of_bounds_axis(self):
+        assert_raises(TypeError, np.repeat, self.m_square,
+                      ([2, 2, 1], [2, 2, 1]), axis=(0, 2))
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
