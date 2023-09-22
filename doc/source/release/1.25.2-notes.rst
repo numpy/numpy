@@ -45,7 +45,7 @@ A total of 19 pull requests were merged for this release.
 * `#24234 <https://github.com/numpy/numpy/pull/24234>`__: MAINT: exclude min, max and round from ``np.__all__``
 * `#24241 <https://github.com/numpy/numpy/pull/24241>`__: MAINT: Dependabot updates
 * `#24242 <https://github.com/numpy/numpy/pull/24242>`__: BUG: Fix the signature for np.array_api.take
-* `#24243 <https://github.com/numpy/numpy/pull/24243>`__: BLD: update OpenBLAS to an intermeidate commit
+* `#24243 <https://github.com/numpy/numpy/pull/24243>`__: BLD: update OpenBLAS to an intermediate commit
 * `#24244 <https://github.com/numpy/numpy/pull/24244>`__: BUG: Fix reference count leak in str(scalar).
 * `#24245 <https://github.com/numpy/numpy/pull/24245>`__: BUG: fix invalid function pointer conversion error
 * `#24255 <https://github.com/numpy/numpy/pull/24255>`__: BUG: Factor out slow ``getenv`` call used for memory policy warning

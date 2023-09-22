@@ -1210,7 +1210,7 @@ def tile(A, reps):
     behavior, promote `A` to d-dimensions manually before calling this
     function.
 
-    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by prepending 1's to it.
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 

@@ -135,7 +135,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 
     /*
      * arr might not have the right number of dimensions
-     * and need to be reshaped first by pre-pending ones
+     * and need to be reshaped first by prepending ones
      */
     arr = *ret;
     if (PyArray_NDIM(arr) != mit->nd) {

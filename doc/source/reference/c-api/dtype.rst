@@ -294,7 +294,7 @@ Boolean
 (Un)Signed Integer
 ~~~~~~~~~~~~~~~~~~
 
-Unsigned versions of the integers can be defined by pre-pending a 'u'
+Unsigned versions of the integers can be defined by prepending a 'u'
 to the front of the integer name.
 
 .. c:type:: npy_byte

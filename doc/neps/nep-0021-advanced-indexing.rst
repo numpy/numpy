@@ -377,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
