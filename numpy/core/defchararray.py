@@ -1555,6 +1555,22 @@ def split(a, sep=None, maxsplit=None):
     --------
     str.split, rsplit
 
+    Examples
+    --------
+    >>> arr = np.array(['a b c', 'd e f', 'g h'])
+    >>> np.char.split(arr)
+    array([list(['a', 'b', 'c']), list(['d', 'e', 'f']), list(['g', 'h'])],
+      dtype=object)
+
+    >>> arr = np.array(['r,g,b', 'x;y', 'z'])
+    >>> np.char.split(arr, ",")
+    array([list(['r', 'g', 'b']), list(['x;y']), list(['z'])], dtype=object)
+
+    >>> arr = np.array(['1 2 3 4 5', 'a b c d', 'X Y Z'])
+    >>> np.char.split(arr, maxsplit=2)
+    array([list(['1', '2', '3 4 5']), list(['a', 'b', 'c d']),
+       list(['X', 'Y', 'Z'])], dtype=object)
+
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
