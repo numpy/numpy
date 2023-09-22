@@ -876,6 +876,13 @@ def isalpha(a):
     See Also
     --------
     str.isalpha
+
+    Examples
+    --------
+    >>> arr = np.array(['abc', '123', '', 'abc123'])
+    >>> np.char.isalpha(arr)
+    array([ True, False, False, False])
+
     """
     return _vec_string(a, bool_, 'isalpha')
 
