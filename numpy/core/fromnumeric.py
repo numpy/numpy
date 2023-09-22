@@ -2393,7 +2393,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any(np.nan)
     True
 
-    >>>np.any(float('inf'))
+    >>> np.any(float('inf'))
     True
 
     >>> np.any([[True, False], [False, False]], where=[[False], [True]])
@@ -2409,19 +2409,19 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> id(z), id(o) # identity of z and o              # doctest: +SKIP
     (191614240, 191614240)
 
-    >>>np.any([[1.0,3.5,-0.9],[4.5,7.9,0],[-5.6,11,3.7]],out=np.array(float))
+    >>> np.any([[1.0,3.5,-0.9],[4.5,7.9,0],[-5.6,11,3.7]],out=np.array(float))
     array(1.0, dtype=object)
     
-    >>>np.shape([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]])
+    >>> np.shape([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]])
     (2,2,3)
-    >>>ex = np.any([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]],axis=2,keepdims=True)
-    >>>ex
+    >>> ex = np.any([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]],axis=2,keepdims=True)
+    >>> ex
     array([[[ True],
         [ True]],
 
        [[ True],
         [ True]]])
-    >>>ex.shape
+    >>> ex.shape
     (2,2,1)
 
     """
