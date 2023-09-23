@@ -2418,7 +2418,6 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> ex
     array([[[ True],
         [ True]],
-
        [[ True],
         [ True]]])
     >>> ex.shape
