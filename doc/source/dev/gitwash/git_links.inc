@@ -36,7 +36,6 @@
 .. _git branch: https://www.kernel.org/pub/software/scm/git/docs/git-branch.html
 .. _git remote: https://www.kernel.org/pub/software/scm/git/docs/git-remote.html
 .. _git config: https://www.kernel.org/pub/software/scm/git/docs/git-config.html
-.. _why the -a flag?: https://gitready.com/beginner/2009/01/18/the-staging-area.html
 .. _git staging area: https://gitready.com/beginner/2009/01/18/the-staging-area.html
 .. _tangled working copy problem: https://tomayko.com/writings/the-thing-about-git
 .. _git management: https://web.archive.org/web/20090328043540/http://kerneltrap.org/Linux/Git_Management
