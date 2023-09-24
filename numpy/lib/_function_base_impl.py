@@ -703,7 +703,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
-    Define the sigma function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
+    Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
     >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
