@@ -1441,6 +1441,15 @@ def analyzeline(m, case, line):
                     # Ignoring since data statements are irrelevant for
                     # wrapping.
                     continue
+                if '!' in l[1]:
+                    # Fixes gh-24746 pyf generation
+                    # XXX: This essentially ignores the value for generating the pyf which is fine:
+                    # integer dimension(3) :: mytab
+                    # common /mycom/ mytab
+                    # Since in any case it is initialized in the Fortran code
+                    outmess('Comment line in declaration "%s" is not supported. Skipping.\n' % l[1])
+                    new_val = 0
+                    continue
                 try:
                     vtype = vars[v].get('typespec')
                     vdim = getdimension(vars[v])
