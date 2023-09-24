@@ -45,3 +45,14 @@ class TestDataF77(util.F2PyTest):
         mod = crackfortran(str(self.sources[0]))
         print(mod[0]['vars'])
         assert mod[0]['vars']['mydata']['='] == '0'
+
+
+class TestDataWithCommentsF77(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "data_with_comments.f")]
+
+    # For gh-23276
+    def test_data_stmts(self):
+        assert len(self.module.mycom.mytab) == 3
+        assert self.module.mycom.mytab[0] == 0
+        assert self.module.mycom.mytab[1] == 4
+        assert self.module.mycom.mytab[2] == 0
