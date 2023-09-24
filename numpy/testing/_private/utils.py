@@ -1208,7 +1208,7 @@ def rundocs(filename=None, raise_on_error=True):
     -----
     The doctests can be run by the user/developer by adding the ``doctests``
     argument to the ``test()`` call. For example, to run all tests (including
-    doctests) for `numpy.lib`:
+    doctests) for ``numpy.lib``:
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """

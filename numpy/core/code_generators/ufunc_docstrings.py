@@ -1617,7 +1617,7 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Notes
     -----
-    `bitwise_not` is an alias for `invert`:
+    ``numpy.bitwise_not`` is an alias for `invert`:
 
     >>> np.bitwise_not is np.invert
     True
