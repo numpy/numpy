@@ -4,6 +4,7 @@ PROJECT_DIR="$1"
 PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
 
 # Update license
+cat $PROJECT_DIR/LICENSES_bundled.txt >> $PROJECT_DIR/LICENSE.txt
 if [[ $RUNNER_OS == "Linux" ]] ; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
 elif [[ $RUNNER_OS == "macOS" ]]; then
@@ -36,7 +37,6 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     # this location you need to alter that script.
     mkdir -p /c/opt/openblas/openblas_dll
 
-    PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     mkdir -p /c/opt/32/lib/pkgconfig
     mkdir -p /c/opt/64/lib/pkgconfig
     target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); ilp64=obs.get_ilp64(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, ilp64);print(target)")
