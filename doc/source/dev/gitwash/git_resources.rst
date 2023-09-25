@@ -10,16 +10,13 @@ Tutorials and summaries
 * `github help`_ has an excellent series of how-to guides.
 * `learn.github`_ has an excellent series of tutorials
 * The `pro git book`_ is a good in-depth book on git.
-* A `git cheat sheet`_ is a page giving summaries of common commands.
 * The `git user manual`_
 * The `git tutorial`_
 * The `git community book`_
 * `git ready`_ - a nice series of tutorials
-* `git casts`_ - video snippets giving git how-tos.
 * `git magic`_ - extended introduction with intermediate detail
 * The `git parable`_ is an easy read explaining the concepts behind git.
 * Our own `git foundation`_ expands on the `git parable`_.
-* Fernando Perez' git page - `Fernando's git page`_ - many links and tips
 * A good but technical page on `git concepts`_
 * `git svn crash course`_: git_ for those of us used to subversion_
 

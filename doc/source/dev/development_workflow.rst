@@ -118,8 +118,8 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. For more information, see `why the -a flag?`_ - and the
-   helpful use-case description in the `tangled working copy problem`_.
+   not careful. For more information, see the helpful use-case description in
+   the `tangled working copy problem`_.
 
 #. Push the changes to your forked repo on github_::
 

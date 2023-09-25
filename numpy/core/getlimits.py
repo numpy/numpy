@@ -467,7 +467,7 @@ class finfo:
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
-           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
+           pp.1-70, 2008, https://doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
 

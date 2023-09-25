@@ -66,7 +66,7 @@
  * Magic[3]: 00000001 00000001... = (T)~(T)0/255
  *
  * Counting bits set, in parallel
- * Based on: http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+ * Based on: https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
  *
  * Generic Algorithm for type T:
  * a = a - ((a >> 1) & (T)~(T)0/3);

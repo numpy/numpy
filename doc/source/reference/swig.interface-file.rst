@@ -5,7 +5,7 @@ Introduction
 ------------
 
 The Simple Wrapper and Interface Generator (or `SWIG
-<http://www.swig.org>`_) is a powerful tool for generating wrapper
+<https://www.swig.org>`_) is a powerful tool for generating wrapper
 code for interfacing to a wide variety of scripting languages.
 `SWIG`_ can parse header files, and using only the code prototypes,
 create an interface to the target language.  But `SWIG`_ is not
@@ -427,8 +427,7 @@ Memory Managed Argout View Arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A recent addition to ``numpy.i`` are typemaps that permit argout
-arrays with views into memory that is managed.  See the discussion `here
-<http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory>`_.
+arrays with views into memory that is managed.
 
 1D:
 

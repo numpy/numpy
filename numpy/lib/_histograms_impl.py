@@ -128,7 +128,7 @@ def _hist_bin_stone(x, range):
     https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
 
     This paper by Stone appears to be the origination of this rule.
-    http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
+    https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
 
     Parameters
     ----------

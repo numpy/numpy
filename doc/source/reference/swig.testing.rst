@@ -4,7 +4,7 @@ Testing the numpy.i Typemaps
 Introduction
 ------------
 
-Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
+Writing tests for the ``numpy.i`` `SWIG <https://www.swig.org/>`_
 interface file is a combinatorial headache.  At present, 12 different
 data types are supported, each with 74 different argument signatures,
 for a total of 888 typemaps supported "out of the box".  Each of these

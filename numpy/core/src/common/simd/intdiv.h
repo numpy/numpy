@@ -18,7 +18,7 @@
  * Therefore we are using division by multiplying with precomputed reciprocal technique,
  * the method that been used in this implementation is based on T. Granlund and P. L. Montgomery
  * “Division by invariant integers using multiplication(see [Figure 4.1, 5.1]
- * http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.2556)
+ * https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.2556)
  *
  * It shows a good impact for all architectures especially on X86,
  * however computing divisor parameters is kind of expensive so this implementation

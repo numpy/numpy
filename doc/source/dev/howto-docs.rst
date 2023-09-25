@@ -138,7 +138,7 @@ documentation, converts the rST into HTML and other formats. For more on
 rST, see the `Quick reStructuredText Guide
 <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`__ or the
 `reStructuredText Primer
-<http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 
 
 ***********************
@@ -195,7 +195,7 @@ User documentation
 Docstrings
 ==========
 
-When using `Sphinx <http://www.sphinx-doc.org/>`_ in combination with the
+When using `Sphinx <https://www.sphinx-doc.org/>`_ in combination with the
 NumPy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the
 ``Parameters`` section from your docstring and convert it into a field
