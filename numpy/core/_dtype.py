@@ -126,7 +126,7 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
-    elif dtype.kind == '\x00':
+    elif not type(dtype)._legacy:
         return f"'{byteorder}{type(dtype).__name__}{dtype.itemsize * 8}'"
 
     # unlike the other types, subclasses of void are preserved - but
@@ -353,8 +353,9 @@ def _name_get(dtype):
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    if dtype.kind == '\x00':
+    if not type(dtype)._legacy:
         name = type(dtype).__name__
+
     elif issubclass(dtype.type, np.void):
         # historically, void subclasses preserve their name, eg `record64`
         name = dtype.type.__name__
