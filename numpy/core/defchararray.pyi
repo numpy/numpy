@@ -171,14 +171,14 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         sub: U_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def count(
         self: _CharArray[bytes_],
         sub: S_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
 
     def decode(
         self: _CharArray[bytes_],
@@ -218,14 +218,14 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         sub: U_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def find(
         self: _CharArray[bytes_],
         sub: S_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
 
     @overload
     def index(
@@ -233,14 +233,14 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         sub: U_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def index(
         self: _CharArray[bytes_],
         sub: S_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
 
     @overload
     def join(
@@ -309,14 +309,14 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         sub: U_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def rfind(
         self: _CharArray[bytes_],
         sub: S_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
 
     @overload
     def rindex(
@@ -324,14 +324,14 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         sub: U_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def rindex(
         self: _CharArray[bytes_],
         sub: S_co,
         start: i_co = ...,
         end: None | i_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
 
     @overload
     def rjust(
@@ -666,14 +666,14 @@ def count(
     sub: U_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def count(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 
 @overload
 def endswith(
@@ -696,14 +696,14 @@ def find(
     sub: U_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def find(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 
 @overload
 def index(
@@ -711,14 +711,14 @@ def index(
     sub: U_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def index(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 
 def isalpha(a: U_co | S_co) -> NDArray[bool_]: ...
 def isalnum(a: U_co | S_co) -> NDArray[bool_]: ...
@@ -736,14 +736,14 @@ def rfind(
     sub: U_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def rfind(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 
 @overload
 def rindex(
@@ -751,14 +751,14 @@ def rindex(
     sub: U_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def rindex(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
     end: None | i_co = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 
 @overload
 def startswith(
@@ -775,7 +775,7 @@ def startswith(
     end: None | i_co = ...,
 ) -> NDArray[bool_]: ...
 
-def str_len(A: U_co | S_co) -> NDArray[int_]: ...
+def str_len(A: U_co | S_co) -> NDArray[long]: ...
 
 # Overload 1 and 2: str- or bytes-based array-likes
 # overload 3: arbitrary object with unicode=False  (-> bytes_)

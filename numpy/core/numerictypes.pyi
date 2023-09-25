@@ -133,7 +133,7 @@ ScalarType: tuple[
     type[byte],
     type[short],
     type[intc],
-    type[int_],
+    type[long],
     type[longlong],
     type[timedelta64],
     type[datetime64],
@@ -143,7 +143,7 @@ ScalarType: tuple[
     type[ubyte],
     type[ushort],
     type[uintc],
-    type[uint],
+    type[ulong],
     type[ulonglong],
     type[void],
 ]

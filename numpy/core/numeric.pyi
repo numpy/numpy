@@ -555,13 +555,13 @@ def indices(
     dimensions: Sequence[int],
     dtype: type[int] = ...,
     sparse: Literal[False] = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
     dtype: type[int] = ...,
     sparse: Literal[True] = ...,
-) -> tuple[NDArray[int_], ...]: ...
+) -> tuple[NDArray[long], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],

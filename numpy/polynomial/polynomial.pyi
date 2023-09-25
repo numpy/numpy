@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import int_
+from numpy import long
 from numpy.typing import NDArray
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
@@ -9,10 +9,10 @@ __all__: list[str]
 
 polytrim = trimcoef
 
-polydomain: NDArray[int_]
-polyzero: NDArray[int_]
-polyone: NDArray[int_]
-polyx: NDArray[int_]
+polydomain: NDArray[long]
+polyzero: NDArray[long]
+polyone: NDArray[long]
+polyx: NDArray[long]
 
 def polyline(off, scl): ...
 def polyfromroots(roots): ...

@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import int_
+from numpy import long
 from numpy.typing import NDArray
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
@@ -12,10 +12,10 @@ chebtrim = trimcoef
 def poly2cheb(pol): ...
 def cheb2poly(c): ...
 
-chebdomain: NDArray[int_]
-chebzero: NDArray[int_]
-chebone: NDArray[int_]
-chebx: NDArray[int_]
+chebdomain: NDArray[long]
+chebzero: NDArray[long]
+chebone: NDArray[long]
+chebx: NDArray[long]
 
 def chebline(off, scl): ...
 def chebfromroots(roots): ...

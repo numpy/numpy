@@ -814,7 +814,7 @@ def busday_count(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> int_: ...
+) -> long: ...
 @overload
 def busday_count(  # type: ignore[misc]
     begindates: ArrayLike | dt.date | _NestedSequence[dt.date],
@@ -823,7 +823,7 @@ def busday_count(  # type: ignore[misc]
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def busday_count(
     begindates: ArrayLike | dt.date | _NestedSequence[dt.date],

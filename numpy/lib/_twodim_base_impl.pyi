@@ -39,7 +39,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 
 # The returned arrays dtype must be compatible with `np.equal`
 _MaskFunc = Callable[
-    [NDArray[int_], _T],
+    [NDArray[long], _T],
     NDArray[number[Any] | bool_ | timedelta64 | datetime64 | object_],
 ]
 

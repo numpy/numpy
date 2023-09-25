@@ -681,7 +681,7 @@ def prod(
     keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
-) -> int_: ...
+) -> long: ...
 @overload
 def prod(
     a: _ArrayLikeUInt_co,
@@ -769,7 +769,7 @@ def cumprod(
     axis: None | SupportsIndex = ...,
     dtype: None = ...,
     out: None = ...,
-) -> NDArray[int_]: ...
+) -> NDArray[long]: ...
 @overload
 def cumprod(
     a: _ArrayLikeUInt_co,
