@@ -5,7 +5,7 @@ This binary distribution of NumPy also bundles the following software:
 
 
 Name: OpenBLAS
-Files: numpy\.libs\libopenblas*.dll
+Files: numpy.libs\libopenblas*.dll
 Description: bundled as a dynamically linked library
 Availability: https://github.com/OpenMathLib/OpenBLAS/
 License: BSD-3-Clause-Attribution
@@ -41,7 +41,7 @@ License: BSD-3-Clause-Attribution
 
 
 Name: LAPACK
-Files: numpy\.libs\libopenblas*.dll
+Files: numpy.libs\libopenblas*.dll
 Description: bundled in OpenBLAS
 Availability: https://github.com/OpenMathLib/OpenBLAS/
 License: BSD-3-Clause-Attribution
@@ -96,7 +96,7 @@ License: BSD-3-Clause-Attribution
 
 
 Name: GCC runtime library
-Files: numpy\.libs\libopenblas*.dll
+Files: numpy.libs\libopenblas*.dll
 Description: statically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgfortran
 License: GPL-3.0-with-GCC-exception
@@ -880,7 +880,7 @@ Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
 
 Name: libquadmath
-Files: numpy\.libs\libopenb*.dll
+Files: numpy.libs\libopenb*.dll
 Description: statically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libquadmath
 License: LGPL-2.1-or-later
