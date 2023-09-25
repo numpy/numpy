@@ -343,7 +343,7 @@ def _unsigned_subtract(a, b):
         np.byte: np.ubyte,
         np.short: np.ushort,
         np.intc: np.uintc,
-        np.int_: np.uint,
+        np.long: np.ulong,
         np.longlong: np.ulonglong
     }
     dt = np.result_type(a, b)

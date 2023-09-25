@@ -120,14 +120,14 @@ class TestVecString:
     def test_invalid_result_type(self):
 
         def fail():
-            _vec_string(['a'], np.int_, 'strip')
+            _vec_string(['a'], np.long, 'strip')
 
         assert_raises(TypeError, fail)
 
     def test_broadcast_error(self):
 
         def fail():
-            _vec_string([['abc', 'def']], np.int_, 'find', (['a', 'd', 'j'],))
+            _vec_string([['abc', 'def']], np.long, 'find', (['a', 'd', 'j'],))
 
         assert_raises(ValueError, fail)
 

@@ -71,8 +71,8 @@ to handle your output. The responsibility of altering the reduce type is
 mostly up to you. There is one exception: if no *dtype* is given for a
 reduction on the "add" or "multiply" operations, then if the input type is
 an integer (or Boolean) data-type and smaller than the size of the
-:class:`numpy.int_` data type, it will be internally upcast to the :class:`.int_`
-(or :class:`numpy.uint`) data-type. In the previous example::
+:class:`numpy.long` data type, it will be internally upcast to the :class:`.long`
+(or :class:`numpy.ulong`) data-type. In the previous example::
 
    >>> x.dtype 
    dtype('int64')

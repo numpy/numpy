@@ -1345,7 +1345,7 @@ class TestRegression:
 
     def test_dtype_keyerrors_(self):
         # Ticket #1106.
-        dt = np.dtype([('f1', np.uint)])
+        dt = np.dtype([('f1', np.ulong)])
         assert_raises(KeyError, dt.__getitem__, "f2")
         assert_raises(IndexError, dt.__getitem__, 1)
         assert_raises(TypeError, dt.__getitem__, 0.0)

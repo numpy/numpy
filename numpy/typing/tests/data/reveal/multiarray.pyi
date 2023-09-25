@@ -112,9 +112,9 @@ assert_type(np.datetime_data("m8[D]"), tuple[str, int])
 assert_type(np.datetime_data(np.datetime64), tuple[str, int])
 assert_type(np.datetime_data(np.dtype(np.timedelta64)), tuple[str, int])
 
-assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
-assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
-assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
+assert_type(np.busday_count("2011-01", "2011-02"), np.long)
+assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.long])
+assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.long])
 
 assert_type(np.busday_offset(M, m), np.datetime64)
 assert_type(np.busday_offset(date_scalar, m), np.datetime64)
@@ -139,5 +139,5 @@ assert_type(np.char.compare_chararrays(b"a", b"a", "==", True), npt.NDArray[np.b
 
 assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], flags=["c_index"]), tuple[np.nditer, ...])
 assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_flags=[["readonly", "readonly"]]), tuple[np.nditer, ...])
-assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_dtypes=np.int_), tuple[np.nditer, ...])
+assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_dtypes=np.long), tuple[np.nditer, ...])
 assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], order="C", casting="no"), tuple[np.nditer, ...])

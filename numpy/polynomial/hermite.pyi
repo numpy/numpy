@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import int_, float64
+from numpy import long, float64
 from numpy.typing import NDArray
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
@@ -12,9 +12,9 @@ hermtrim = trimcoef
 def poly2herm(pol): ...
 def herm2poly(c): ...
 
-hermdomain: NDArray[int_]
-hermzero: NDArray[int_]
-hermone: NDArray[int_]
+hermdomain: NDArray[long]
+hermzero: NDArray[long]
+hermone: NDArray[long]
 hermx: NDArray[float64]
 
 def hermline(off, scl): ...

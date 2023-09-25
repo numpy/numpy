@@ -2753,8 +2753,8 @@ class TestAllclose:
 
     def test_min_int(self):
         # Could make problems because of abs(min_int) == min_int
-        min_int = np.iinfo(np.int_).min
-        a = np.array([min_int], dtype=np.int_)
+        min_int = np.iinfo(np.long).min
+        a = np.array([min_int], dtype=np.long)
         assert_(np.allclose(a, a))
 
     def test_equalnan(self):

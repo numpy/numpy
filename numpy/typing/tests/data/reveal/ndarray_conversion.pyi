@@ -9,7 +9,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-nd: npt.NDArray[np.int_]
+nd: npt.NDArray[np.long]
 
 # item
 assert_type(nd.item(), int)
@@ -37,14 +37,14 @@ assert_type(nd.astype(np.float64, "K", "unsafe", True), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe", True, True), npt.NDArray[np.float64])
 
 # byteswap
-assert_type(nd.byteswap(), npt.NDArray[np.int_])
-assert_type(nd.byteswap(True), npt.NDArray[np.int_])
+assert_type(nd.byteswap(), npt.NDArray[np.long])
+assert_type(nd.byteswap(True), npt.NDArray[np.long])
 
 # copy
-assert_type(nd.copy(), npt.NDArray[np.int_])
-assert_type(nd.copy("C"), npt.NDArray[np.int_])
+assert_type(nd.copy(), npt.NDArray[np.long])
+assert_type(nd.copy("C"), npt.NDArray[np.long])
 
-assert_type(nd.view(), npt.NDArray[np.int_])
+assert_type(nd.view(), npt.NDArray[np.long])
 assert_type(nd.view(np.float64), npt.NDArray[np.float64])
 assert_type(nd.view(float), npt.NDArray[Any])
 assert_type(nd.view(np.float64, np.matrix), np.matrix[Any, Any])

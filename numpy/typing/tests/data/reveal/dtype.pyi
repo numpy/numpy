@@ -29,7 +29,7 @@ assert_type(np.dtype("str"), np.dtype[np.str_])
 # Python types
 assert_type(np.dtype(complex), np.dtype[np.cdouble])
 assert_type(np.dtype(float), np.dtype[np.double])
-assert_type(np.dtype(int), np.dtype[np.int_])
+assert_type(np.dtype(int), np.dtype[np.long])
 assert_type(np.dtype(bool), np.dtype[np.bool_])
 assert_type(np.dtype(str), np.dtype[np.str_])
 assert_type(np.dtype(bytes), np.dtype[np.bytes_])

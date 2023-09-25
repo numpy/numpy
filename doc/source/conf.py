@@ -47,8 +47,8 @@ def replace_scalar_type_names():
 
     # change the __name__ of the scalar types
     for name in [
-        'byte', 'short', 'intc', 'int_', 'longlong',
-        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'byte', 'short', 'intc', 'long', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'ulong', 'ulonglong',
         'half', 'single', 'double', 'longdouble',
         'half', 'csingle', 'cdouble', 'clongdouble',
     ]:

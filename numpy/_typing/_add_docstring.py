@@ -141,7 +141,7 @@ add_newdoc('NDArray', repr(NDArray),
         >>> print(npt.NDArray[np.float64])
         numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
 
-        >>> NDArrayInt = npt.NDArray[np.int_]
+        >>> NDArrayInt = npt.NDArray[np.long]
         >>> a: NDArrayInt = np.arange(10)
 
         >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:

@@ -78,7 +78,7 @@ class TestRegression:
         # Check that the multivariate_normal size argument can be a
         # numpy integer.
         random.multivariate_normal([0], [[0]], size=1)
-        random.multivariate_normal([0], [[0]], size=np.int_(1))
+        random.multivariate_normal([0], [[0]], size=np.long(1))
         random.multivariate_normal([0], [[0]], size=np.int64(1))
 
     def test_beta_small_parameters(self):

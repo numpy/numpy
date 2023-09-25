@@ -175,8 +175,8 @@ assert_type(np.full([1, 1, 1], i8), npt.NDArray[Any])
 assert_type(np.full(1, i8, dtype=np.float64), npt.NDArray[np.float64])
 assert_type(np.full(1, i8, dtype=float), npt.NDArray[Any])
 
-assert_type(np.indices([1, 2, 3]), npt.NDArray[np.int_])
-assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.int_], ...])
+assert_type(np.indices([1, 2, 3]), npt.NDArray[np.long])
+assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.long], ...])
 
 assert_type(np.fromfunction(func, (3, 5)), SubClass[np.float64])
 

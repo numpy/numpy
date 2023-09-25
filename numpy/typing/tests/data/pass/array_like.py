@@ -30,7 +30,7 @@ x13: ArrayLike = A()
 
 scalar: _SupportsArray[np.dtype[np.int64]] = np.int64(1)
 scalar.__array__()
-array: _SupportsArray[np.dtype[np.int_]] = np.array(1)
+array: _SupportsArray[np.dtype[np.long]] = np.array(1)
 array.__array__()
 
 a: _SupportsArray[np.dtype[np.float64]] = A()

@@ -622,7 +622,7 @@ cdef class RandomState:
         tomaxint(size=None)
 
         Return a sample of uniformly distributed random integers in the interval
-        [0, ``np.iinfo(np.int_).max``]. The `np.int_` type translates to the C long
+        [0, ``np.iinfo(np.long).max``]. The `np.long` type translates to the C long
         integer type and its precision is platform dependent.
 
         Parameters
@@ -651,7 +651,7 @@ cdef class RandomState:
                 [ 739731006, 1947757578]],
                [[1871712945,  752307660],
                 [1601631370, 1479324245]]])
-        >>> rs.tomaxint((2,2,2)) < np.iinfo(np.int_).max
+        >>> rs.tomaxint((2,2,2)) < np.iinfo(np.long).max
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
@@ -1289,11 +1289,11 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type `numpy.int_` between `low` and `high`, inclusive.
+        Random integers of type `numpy.long` between `low` and `high`, inclusive.
 
-        Return random integers of type `numpy.int_` from the "discrete uniform"
+        Return random integers of type `numpy.long` from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The `numpy.int_`
+        None (the default), then results are from [1, `low`]. The `numpy.long`
         type translates to the C long integer type and its precision
         is platform dependent.
 

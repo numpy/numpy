@@ -136,14 +136,14 @@ else:
         datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot, 
         double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
         errstate, euler_gamma, exp, exp2, expm1, fabs, 
-        flatiter, flatnonzero, flexible, sctypeDict,
+        flatiter, flatnonzero, flexible, sctypeDict, long, ulong,
         float_power, floating, floor, floor_divide, fmax, fmin, fmod, 
         format_float_positional, format_float_scientific, 
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter, 
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace, 
         get_printoptions, getbufsize, geterr, geterrcall, greater, 
         greater_equal, half, heaviside, hstack, hypot, identity, iinfo, 
-        indices, inexact, inf, inner, int_,
+        indices, inexact, inf, inner,
         intc, integer, invert, is_busday, isclose, isfinite, isfortran,
         isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
         left_shift, less, less_equal, lexsort, linspace, little_endian, log, 
@@ -164,7 +164,7 @@ else:
         sinh, size, sometrue, sort, spacing, sqrt, square, 
         squeeze, stack, std, str_, subtract, sum, swapaxes, take,
         tan, tanh, tensordot, timedelta64, trace, transpose, 
-        true_divide, trunc, typecodes, ubyte, ufunc, uint, uintc, ulonglong, 
+        true_divide, trunc, typecodes, ubyte, ufunc, uintc, ulonglong, 
         unsignedinteger, ushort, var, vdot, void, vstack, where, 
         zeros, zeros_like, _get_promotion_state, _set_promotion_state,
         int8, int16, int32, int64, intp, uint8, uint16, uint32, uint64, uintp,
@@ -288,7 +288,7 @@ else:
     # probably wait for NumPy 1.26 or 2.0.
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
-    __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
+    __future_scalars__ = {"bool", "str", "bytes", "object"}
 
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()
@@ -389,14 +389,32 @@ else:
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
                 f"{__expired_attributes__[attr]}"
             )
+        
+        def _raise_warning_msg(attr_name: str, migration_msg: str) -> None:
+            warnings.warn(
+                f"`{attr_name}` is deprecated and will be removed from "
+                f"the main namespace in the future. {migration_msg}", 
+                DeprecationWarning, stacklevel=2
+            )
 
         if attr == "chararray":
-            warnings.warn(
-                "`np.chararray` is deprecated and will be removed from "
-                "the main namespace in the future. Use an array with a string "
-                "or bytes dtype instead.", DeprecationWarning, stacklevel=2)
+            _raise_warning_msg(
+                attr_name="np.chararray", 
+                migration_msg="Use an array with a string or "
+                              "bytes dtype instead."
+            )
             import numpy.char as char
             return char.chararray
+        elif attr == "int_":
+            _raise_warning_msg(
+                attr_name="np.int_", migration_msg="Use `np.long` instead."
+            )
+            return long
+        elif attr == "uint":
+            _raise_warning_msg(
+                attr_name="np.uint", migration_msg="Use `np.ulong` instead."
+            )
+            return ulong
 
         raise AttributeError("module {!r} has no attribute "
                              "{!r}".format(__name__, attr))

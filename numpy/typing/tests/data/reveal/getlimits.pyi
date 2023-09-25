@@ -43,7 +43,7 @@ assert_type(finfo_f8.tiny, np.float64)
 assert_type(finfo_f8.smallest_normal, np.float64)
 assert_type(finfo_f8.smallest_subnormal, np.float64)
 
-assert_type(np.iinfo(i), np.iinfo[np.int_])
+assert_type(np.iinfo(i), np.iinfo[np.long])
 assert_type(np.iinfo(i8), np.iinfo[np.int64])
 assert_type(np.iinfo(u4), np.iinfo[np.uint32])
 assert_type(np.iinfo('i2'), np.iinfo[Any])

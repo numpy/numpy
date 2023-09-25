@@ -73,8 +73,8 @@ D_arr_0p1: np.ndarray[Any, np.dtype[np.float64]] = np.array([0.1])
 D_arr_0p5: np.ndarray[Any, np.dtype[np.float64]] = np.array([0.5])
 D_arr_0p9: np.ndarray[Any, np.dtype[np.float64]] = np.array([0.9])
 D_arr_1p5: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.5])
-I_arr_10: np.ndarray[Any, np.dtype[np.int_]] = np.array([10], dtype=np.int_)
-I_arr_20: np.ndarray[Any, np.dtype[np.int_]] = np.array([20], dtype=np.int_)
+I_arr_10: np.ndarray[Any, np.dtype[np.long]] = np.array([10], dtype=np.long)
+I_arr_20: np.ndarray[Any, np.dtype[np.long]] = np.array([20], dtype=np.long)
 D_arr_like_0p1: list[float] = [0.1]
 D_arr_like_0p5: list[float] = [0.5]
 D_arr_like_0p9: list[float] = [0.9]

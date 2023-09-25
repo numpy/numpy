@@ -689,8 +689,7 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-@pytest.mark.parametrize("name",
-        ["bool", "long", "ulong", "str", "bytes", "object"])
+@pytest.mark.parametrize("name", ["bool", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
     # FutureWarning added 2022-11-17, NumPy 1.24,
     assert name not in dir(np)  # we may want to not add them
@@ -746,7 +745,7 @@ class TestMathAlias(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.lib.math)
 
 
-class TestLibImports(_DeprecationTestCase):
+class TestDeprecationsFromRelease_2_0(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
         from numpy.lib._utils_impl import safe_eval
@@ -772,3 +771,5 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: row_stack([[]]))
         self.assert_deprecated(lambda: trapz([1], [1]))
         self.assert_deprecated(lambda: np.chararray)
+        self.assert_deprecated(lambda: np.int_)
+        self.assert_deprecated(lambda: np.uint)

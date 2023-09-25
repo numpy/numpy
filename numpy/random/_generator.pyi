@@ -10,8 +10,8 @@ from numpy import (
     int16,
     int32,
     int64,
-    int_,
-    uint,
+    long,
+    ulong,
     uint8,
     uint16,
     uint32,
@@ -34,7 +34,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
-    _IntCodes,
+    _LongCodes,
     _ShapeLike,
     _SingleCodes,
     _SupportsDType,
@@ -42,7 +42,7 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
-    _UIntCodes,
+    _ULongCodes,
 )
 
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
@@ -323,18 +323,18 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
+        dtype: dtype[long] | type[int] | type[long] | _LongCodes | _SupportsDType[dtype[long]] = ...,
         endpoint: bool = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
+        dtype: dtype[ulong] | type[ulong] | _ULongCodes | _SupportsDType[dtype[ulong]] = ...,
         endpoint: bool = ...,
-    ) -> NDArray[uint]: ...
+    ) -> NDArray[ulong]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->NDArray[int64], ArrayLike[_T] -> _T | NDArray[Any]
     @overload
     def choice(

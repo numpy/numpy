@@ -476,7 +476,7 @@ class TestSelect:
     def test_non_bool_deprecation(self):
         choices = self.choices
         conditions = self.conditions[:]
-        conditions[0] = conditions[0].astype(np.int_)
+        conditions[0] = conditions[0].astype(np.long)
         assert_raises(TypeError, select, conditions, choices)
         conditions[0] = conditions[0].astype(np.uint8)
         assert_raises(TypeError, select, conditions, choices)
@@ -766,7 +766,7 @@ class TestDiff:
         for n, (expected, out) in enumerate(zip(expected, output), start=1):
             assert_(type(out) is np.ndarray)
             assert_array_equal(out, expected)
-            assert_equal(out.dtype, np.int_)
+            assert_equal(out.dtype, np.long)
             assert_equal(len(out), max(0, len(x) - n))
 
     def test_times(self):
@@ -2321,7 +2321,7 @@ class TestCov:
     frequencies = np.array([1, 4, 1])
     x2_repeats = np.array([[0.0], [1.0], [1.0], [1.0], [1.0], [2.0]]).T
     res2 = np.array([[0.4, -0.4], [-0.4, 0.4]])
-    unit_frequencies = np.ones(3, dtype=np.int_)
+    unit_frequencies = np.ones(3, dtype=np.long)
     weights = np.array([1.0, 4.0, 1.0])
     res3 = np.array([[2. / 3., -2. / 3.], [-2. / 3., 2. / 3.]])
     unit_weights = np.ones(3)
@@ -2374,11 +2374,11 @@ class TestCov:
                         self.res1)
         nonint = self.frequencies + 0.5
         assert_raises(TypeError, cov, self.x1, fweights=nonint)
-        f = np.ones((2, 3), dtype=np.int_)
+        f = np.ones((2, 3), dtype=np.long)
         assert_raises(RuntimeError, cov, self.x1, fweights=f)
-        f = np.ones(2, dtype=np.int_)
+        f = np.ones(2, dtype=np.long)
         assert_raises(RuntimeError, cov, self.x1, fweights=f)
-        f = -1 * np.ones(3, dtype=np.int_)
+        f = -1 * np.ones(3, dtype=np.long)
         assert_raises(ValueError, cov, self.x1, fweights=f)
 
     def test_aweights(self):

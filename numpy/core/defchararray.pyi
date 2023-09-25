@@ -12,7 +12,7 @@ from numpy import (
     dtype,
     str_,
     bytes_,
-    int_,
+    long,
     bool_,
     object_,
     _OrderKACF,

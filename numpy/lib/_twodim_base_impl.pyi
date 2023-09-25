@@ -11,7 +11,7 @@ from numpy import (
     bool_,
     timedelta64,
     datetime64,
-    int_,
+    long,
     intp,
     float64,
     signedinteger,
@@ -219,20 +219,20 @@ def tril_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[long], NDArray[long]]: ...
 
 def tril_indices_from(
     arr: NDArray[Any],
     k: int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[long], NDArray[long]]: ...
 
 def triu_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[long], NDArray[long]]: ...
 
 def triu_indices_from(
     arr: NDArray[Any],
     k: int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[long], NDArray[long]]: ...

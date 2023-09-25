@@ -546,7 +546,7 @@ class TestInv(InvCases):
         # Check that all kinds of 0-sized arrays work
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res = linalg.inv(a)
         assert_(res.dtype.type is np.float64)
         assert_equal(a.shape, res.shape)
@@ -579,7 +579,7 @@ class TestEigvals(EigvalsCases):
         # Check that all kinds of 0-sized arrays work
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res = linalg.eigvals(a)
         assert_(res.dtype.type is np.float64)
         assert_equal((0, 1), res.shape)
@@ -622,7 +622,7 @@ class TestEig(EigCases):
         # Check that all kinds of 0-sized arrays work
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res, res_v = linalg.eig(a)
         assert_(res_v.dtype.type is np.float64)
         assert_(res.dtype.type is np.float64)
@@ -1135,7 +1135,7 @@ class TestEigvalsh:
         # Check that all kinds of 0-sized arrays work
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res = linalg.eigvalsh(a)
         assert_(res.dtype.type is np.float64)
         assert_equal((0, 1), res.shape)
@@ -1213,7 +1213,7 @@ class TestEigh:
         # Check that all kinds of 0-sized arrays work
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res, res_v = linalg.eigh(a)
         assert_(res_v.dtype.type is np.float64)
         assert_(res.dtype.type is np.float64)
@@ -1828,7 +1828,7 @@ class TestCholesky:
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
-        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        a = np.zeros((0, 1, 1), dtype=np.long).view(ArraySubclass)
         res = linalg.cholesky(a)
         assert_equal(a.shape, res.shape)
         assert_(res.dtype.type is np.float64)

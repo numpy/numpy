@@ -3070,7 +3070,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     the unsigned platform integer:
 
     >>> x = np.array([1, 2, 3], dtype=np.uint8)
-    >>> np.prod(x).dtype == np.uint
+    >>> np.prod(x).dtype == np.ulong
     True
 
     If `x` is of a signed integer type, then the output type

@@ -30,7 +30,7 @@ Exported symbols include:
     short, ushort
     intc, uintc,
     intp, uintp,
-    int_, uint,
+    long, ulong,
     longlong, ulonglong,
 
     single, csingle,

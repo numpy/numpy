@@ -3150,7 +3150,7 @@ class TestMaskedArrayMethods:
         assert_(allclose(a, 0, masked_equal=True))
 
         # Test that the function works for MIN_INT integer typed arrays
-        a = masked_array([np.iinfo(np.int_).min], dtype=np.int_)
+        a = masked_array([np.iinfo(np.long).min], dtype=np.long)
         assert_(allclose(a, a))
 
     def test_allclose_timedelta(self):

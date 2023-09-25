@@ -49,11 +49,11 @@ The primitive types supported are tied closely to those in C:
       - ``unsigned int``
       - Platform-defined
 
-    * - `numpy.int_`
+    * - `numpy.long`
       - ``long``
       - Platform-defined
 
-    * - `numpy.uint`
+    * - `numpy.ulong`
       - ``unsigned long``
       - Platform-defined
 
@@ -126,7 +126,7 @@ functions or methods accept. Some examples::
     >>> x = np.float32(1.0)
     >>> x
     1.0
-    >>> y = np.int_([1,2,4])
+    >>> y = np.long([1,2,4])
     >>> y
     array([1, 2, 4])
     >>> z = np.arange(3, dtype=np.uint8)
@@ -151,7 +151,7 @@ the type itself as a function. For example: ::
     array([0, 1, 2], dtype=int8)
 
 Note that, above, we use the *Python* float object as a dtype.  NumPy knows
-that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool_``,
+that ``int`` refers to ``np.long``, ``bool`` means ``np.bool_``,
 that ``float`` is ``np.float64`` and ``complex`` is ``np.complex128``.
 The other data-types do not have Python equivalents.
 

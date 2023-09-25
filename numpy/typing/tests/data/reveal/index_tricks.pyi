@@ -68,7 +68,7 @@ assert_type(np.ix_(AR_i8), tuple[npt.NDArray[np.int64], ...])
 
 assert_type(np.fill_diagonal(AR_i8, 5), None)
 
-assert_type(np.diag_indices(4), tuple[npt.NDArray[np.int_], ...])
-assert_type(np.diag_indices(2, 3), tuple[npt.NDArray[np.int_], ...])
+assert_type(np.diag_indices(4), tuple[npt.NDArray[np.long], ...])
+assert_type(np.diag_indices(2, 3), tuple[npt.NDArray[np.long], ...])
 
-assert_type(np.diag_indices_from(AR_i8), tuple[npt.NDArray[np.int_], ...])
+assert_type(np.diag_indices_from(AR_i8), tuple[npt.NDArray[np.long], ...])

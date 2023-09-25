@@ -25,7 +25,7 @@ except TypeError:
     USING_CLANG_CL = False
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
-         np.int_, np.uint, np.longlong, np.ulonglong,
+         np.long, np.ulong, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
 
@@ -504,7 +504,7 @@ class TestConversion:
         def overflow_error_func(dtype):
             dtype(np.iinfo(dtype).max + 1)
 
-        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
+        for code in [np.long, np.ulong, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
     def test_int_from_infinite_longdouble(self):
@@ -712,8 +712,8 @@ class TestMultiply:
         for arr_like in (ArrayLike(np.ones(3)), memoryview(np.ones(3))):
             assert_array_equal(arr_like * np.float32(3.), np.full(3, 3.))
             assert_array_equal(np.float32(3.) * arr_like, np.full(3, 3.))
-            assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
-            assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
+            assert_array_equal(arr_like * np.long(3), np.full(3, 3))
+            assert_array_equal(np.long(3) * arr_like, np.full(3, 3))
 
 
 class TestNegative:

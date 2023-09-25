@@ -219,7 +219,7 @@ def deprecate(*args, **kwargs):
     Note that ``olduint`` returns a value after printing Deprecation
     Warning:
 
-    >>> olduint = np.lib.utils.deprecate(np.uint)
+    >>> olduint = np.lib.utils.deprecate(np.ulong)
     DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
     6

@@ -2316,7 +2316,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     Second mode:
 
     >>> np.ndarray((2,), buffer=np.array([1,2,3]),
-    ...            offset=np.int_().itemsize,
+    ...            offset=np.long().itemsize,
     ...            dtype=int) # offset = 1*itemsize, i.e. skip first element
     array([2, 3])
 
@@ -2755,7 +2755,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     `a.size` returns a standard arbitrary precision Python integer. This
     may not be the case with other methods of obtaining the same value
     (like the suggested ``np.prod(a.shape)``, which returns an instance
-    of ``np.int_``), and may be relevant if the value is used further in
+    of ``np.long``), and may be relevant if the value is used further in
     calculations that may overflow a fixed size integer type.
 
     Examples

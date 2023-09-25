@@ -181,9 +181,9 @@ Functions
         The name for the ufunc as a ``NULL`` terminated string.  Specifying
         a name of 'add' or 'multiply' enables a special behavior for
         integer-typed reductions when no dtype is given. If the input type is an
-        integer (or boolean) data type smaller than the size of the `numpy.int_`
-        data type, it will be internally upcast to the `numpy.int_` (or
-        `numpy.uint`) data type.
+        integer (or boolean) data type smaller than the size of the `numpy.long`
+        data type, it will be internally upcast to the `numpy.long` (or
+        `numpy.ulong`) data type.
 
     :param doc:
         Allows passing in a documentation string to be stored with the

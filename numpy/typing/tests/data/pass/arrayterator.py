@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 import numpy as np
 
-AR_i8: np.ndarray[Any, np.dtype[np.int_]] = np.arange(10)
+AR_i8: np.ndarray[Any, np.dtype[np.long]] = np.arange(10)
 ar_iter = np.lib.Arrayterator(AR_i8)
 
 ar_iter.var

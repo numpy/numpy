@@ -70,7 +70,7 @@ from numpy._typing import (
     _NBitShort,
     _NBitIntC,
     _NBitIntP,
-    _NBitInt,
+    _NBitLong,
     _NBitLongLong,
     _NBitHalf,
     _NBitSingle,
@@ -96,13 +96,13 @@ from numpy._typing import (
     _ShortCodes,
     _IntCCodes,
     _IntPCodes,
-    _IntCodes,
+    _LongCodes,
     _LongLongCodes,
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
-    _UIntCodes,
+    _ULongCodes,
     _ULongLongCodes,
     _HalfCodes,
     _SingleCodes,
@@ -658,7 +658,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: type[bool], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[bool_]: ...
     @overload
-    def __new__(cls, dtype: type[int], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[int_]: ...
+    def __new__(cls, dtype: type[int], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[long]: ...
     @overload
     def __new__(cls, dtype: None | type[float], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[float64]: ...
     @overload
@@ -689,7 +689,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: _UIntPCodes | type[ct.c_void_p] | type[ct.c_size_t], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[uintp]: ...
     @overload
-    def __new__(cls, dtype: _UIntCodes | type[ct.c_ulong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[uint]: ...
+    def __new__(cls, dtype: _ULongCodes | type[ct.c_ulong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulong]: ...
     @overload
     def __new__(cls, dtype: _ULongLongCodes | type[ct.c_ulonglong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[ulonglong]: ...
 
@@ -711,7 +711,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: _IntPCodes | type[ct.c_ssize_t], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[intp]: ...
     @overload
-    def __new__(cls, dtype: _IntCodes | type[ct.c_long], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[int_]: ...
+    def __new__(cls, dtype: _LongCodes | type[ct.c_long], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[long]: ...
     @overload
     def __new__(cls, dtype: _LongLongCodes | type[ct.c_longlong], align: bool = ..., copy: bool = ..., metadata: dict[builtins.str, Any] = ...) -> dtype[longlong]: ...
 
@@ -2857,7 +2857,7 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int_ = signedinteger[_NBitInt]
+long = signedinteger[_NBitLong]
 longlong = signedinteger[_NBitLongLong]
 
 # TODO: `item`/`tolist` returns either `dt.timedelta` or `int`
@@ -2938,7 +2938,7 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint = unsignedinteger[_NBitInt]
+ulong = unsignedinteger[_NBitLong]
 ulonglong = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit1]):  # type: ignore
@@ -3290,7 +3290,7 @@ class ndenumerate(Generic[_ScalarType]):
     @overload
     def __new__(cls, arr: bool | _NestedSequence[bool]) -> ndenumerate[bool_]: ...
     @overload
-    def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[int_]: ...
+    def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[long]: ...
     @overload
     def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float64]: ...
     @overload
@@ -3389,7 +3389,7 @@ class iinfo(Generic[_IntType]):
     @overload
     def __new__(cls, dtype: _IntType | _DTypeLike[_IntType]) -> iinfo[_IntType]: ...
     @overload
-    def __new__(cls, dtype: int | type[int]) -> iinfo[int_]: ...
+    def __new__(cls, dtype: int | type[int]) -> iinfo[long]: ...
     @overload
     def __new__(cls, dtype: str) -> iinfo[Any]: ...
 

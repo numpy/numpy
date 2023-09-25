@@ -90,10 +90,10 @@ assert_type(
 assert_type(np.mask_indices(10, func1), tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]])
 assert_type(np.mask_indices(8, func2, "0"), tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]])
 
-assert_type(np.tril_indices(10), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+assert_type(np.tril_indices(10), tuple[npt.NDArray[np.long], npt.NDArray[np.long]])
 
-assert_type(np.tril_indices_from(AR_b), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+assert_type(np.tril_indices_from(AR_b), tuple[npt.NDArray[np.long], npt.NDArray[np.long]])
 
-assert_type(np.triu_indices(10), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+assert_type(np.triu_indices(10), tuple[npt.NDArray[np.long], npt.NDArray[np.long]])
 
-assert_type(np.triu_indices_from(AR_b), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+assert_type(np.triu_indices_from(AR_b), tuple[npt.NDArray[np.long], npt.NDArray[np.long]])

@@ -1,7 +1,7 @@
 import numpy as np
 
 class DTypeLike:
-    dtype: np.dtype[np.int_]
+    dtype: np.dtype[np.long]
 
 dtype_like: DTypeLike
 

@@ -4,7 +4,7 @@ from typing import Any, overload, TypeVar, Literal, SupportsIndex
 from numpy import (
     number,
     uint64,
-    int_,
+    long,
     int64,
     intp,
     float16,

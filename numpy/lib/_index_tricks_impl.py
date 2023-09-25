@@ -148,7 +148,7 @@ class nd_grid:
         try:
             size = []
             # Mimic the behavior of `np.arange` and use a data type
-            # which is at least as large as `np.int_`
+            # which is at least as large as `np.long`
             num_list = [0]
             for k in range(len(key)):
                 step = key[k].step

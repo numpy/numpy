@@ -684,12 +684,12 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
 
     def test_dtype_error(self):
         for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object_]:
+            for dtype in [np.bool_, np.long, np.object_]:
                 assert_raises(TypeError, f, _ndat, axis=1, dtype=dtype)
 
     def test_out_dtype_error(self):
         for f in self.nanfuncs:
-            for dtype in [np.bool_, np.int_, np.object_]:
+            for dtype in [np.bool_, np.long, np.object_]:
                 out = np.empty(_ndat.shape[0], dtype=dtype)
                 assert_raises(TypeError, f, _ndat, axis=1, out=out)
 

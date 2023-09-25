@@ -21,7 +21,7 @@ from numpy import (
     floating,
     complexfloating,
     bool_,
-    int_,
+    long,
     intp,
     float64,
     timedelta64,

@@ -11,8 +11,8 @@ from numpy import (
     int16,
     int32,
     int64,
-    int_,
-    uint,
+    long,
+    ulong,
     uint8,
     uint16,
     uint32,
@@ -34,7 +34,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
-    _IntCodes,
+    _LongCodes,
     _ShapeLike,
     _SingleCodes,
     _SupportsDType,
@@ -42,7 +42,7 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
-    _UIntCodes,
+    _ULongCodes,
 )
 
 _DTypeLikeFloat32 = (
@@ -107,7 +107,7 @@ class RandomState:
     @overload
     def tomaxint(self, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
-    def tomaxint(self, size: _ShapeLike) -> NDArray[int_]: ...
+    def tomaxint(self, size: _ShapeLike) -> NDArray[long]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -136,7 +136,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -215,16 +215,16 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
-    ) -> NDArray[int_]: ...
+        dtype: dtype[long] | type[int] | type[long] | _LongCodes | _SupportsDType[dtype[long]] = ...,
+    ) -> NDArray[long]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
-    ) -> NDArray[uint]: ...
+        dtype: dtype[ulong] | type[ulong] | _ULongCodes | _SupportsDType[dtype[ulong]] = ...,
+    ) -> NDArray[ulong]: ...
     def bytes(self, length: int) -> builtins.bytes: ...
     @overload
     def choice(
@@ -241,7 +241,7 @@ class RandomState:
         size: _ShapeLike = ...,
         replace: bool = ...,
         p: None | _ArrayLikeFloat_co = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def choice(
         self,
@@ -283,7 +283,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def standard_normal(self, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
@@ -449,31 +449,31 @@ class RandomState:
     @overload
     def binomial(
         self, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def negative_binomial(self, n: float, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def negative_binomial(
         self, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def poisson(self, lam: float = ..., size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def poisson(
         self, lam: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def zipf(self, a: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def zipf(
         self, a: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def geometric(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def geometric(
         self, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def hypergeometric(self, ngood: int, nbad: int, nsample: int, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
@@ -483,13 +483,13 @@ class RandomState:
         nbad: _ArrayLikeInt_co,
         nsample: _ArrayLikeInt_co,
         size: None | _ShapeLike = ...,
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     @overload
     def logseries(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def logseries(
         self, p: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     def multivariate_normal(
         self,
         mean: _ArrayLikeFloat_co,
@@ -500,13 +500,13 @@ class RandomState:
     ) -> NDArray[float64]: ...
     def multinomial(
         self, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
-    ) -> NDArray[int_]: ...
+    ) -> NDArray[long]: ...
     def dirichlet(
         self, alpha: _ArrayLikeFloat_co, size: None | _ShapeLike = ...
     ) -> NDArray[float64]: ...
     def shuffle(self, x: ArrayLike) -> None: ...
     @overload
-    def permutation(self, x: int) -> NDArray[int_]: ...
+    def permutation(self, x: int) -> NDArray[long]: ...
     @overload
     def permutation(self, x: ArrayLike) -> NDArray[Any]: ...
 

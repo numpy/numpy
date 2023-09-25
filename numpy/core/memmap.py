@@ -255,7 +255,8 @@ class memmap(ndarray):
                     except TypeError:
                         pass
                 shape = tuple(shape)
-                size = np.intp(1)  # avoid default choice of np.int_, which might overflow
+                # avoid default choice of np.long, which might overflow
+                size = np.intp(1)
                 for k in shape:
                     size *= k
 

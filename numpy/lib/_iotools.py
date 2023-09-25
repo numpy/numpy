@@ -495,12 +495,11 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
-               (nx.int_, int, -1),]
+    _mapper = [(nx.bool_, str2bool, False), (nx.long, int, -1)]
 
     # On 32-bit systems, we need to make sure that we explicitly include
-    # nx.int64 since ns.int_ is nx.int32.
-    if nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize:
+    # nx.int64 since nx.long is nx.int32.
+    if nx.dtype(nx.long).itemsize < nx.dtype(nx.int64).itemsize:
         _mapper.append((nx.int64, int, -1))
 
     _mapper.extend([(nx.float64, float, nx.nan),

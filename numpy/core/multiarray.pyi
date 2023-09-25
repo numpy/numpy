@@ -29,7 +29,7 @@ from numpy import (
     bool_,
     uint8,
     intp,
-    int_,
+    long,
     float64,
     timedelta64,
     datetime64,

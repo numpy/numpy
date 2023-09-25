@@ -46,7 +46,7 @@ of the flexible itemsize array types (:class:`str_`,
    links to the classes and is a vector graphic. Unfortunately it looks worse
    and the html <map> element providing the linked regions is misaligned.
 
-   .. inheritance-diagram:: byte short intc int_ longlong ubyte ushort uintc uint ulonglong half single double longdouble csingle cdouble clongdouble bool_ datetime64 timedelta64 object_ bytes_ str_ void
+   .. inheritance-diagram:: byte short intc int_ longlong ubyte ushort uintc ulong ulonglong half single double longdouble csingle cdouble clongdouble bool_ datetime64 timedelta64 object_ bytes_ str_ void
 
 .. [#] However, array scalars are immutable, so none of the array
        scalar attributes are settable.
@@ -132,7 +132,7 @@ Signed integer types
    :members: __init__
    :exclude-members: __init__
 
-.. autoclass:: numpy.int_
+.. autoclass:: numpy.long
    :members: __init__
    :exclude-members: __init__
 
@@ -159,7 +159,7 @@ Unsigned integer types
    :members: __init__
    :exclude-members: __init__
 
-.. autoclass:: numpy.uint
+.. autoclass:: numpy.ulong
    :members: __init__
    :exclude-members: __init__
 
@@ -343,7 +343,7 @@ are also provided.
                int64
 
    Aliases for the signed integer types (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   `numpy.intc`, `numpy.long` and `numpy.longlong`) with the specified number
    of bits.
 
    Compatible with the C99 ``int8_t``, ``int16_t``, ``int32_t``, and
@@ -355,7 +355,7 @@ are also provided.
                uint64
 
    Alias for the unsigned integer types (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) with the specified number
+   `numpy.uintc`, `numpy.ulong` and `numpy.ulonglong`) with the specified number
    of bits.
 
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
@@ -364,7 +364,7 @@ are also provided.
 .. attribute:: intp
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) that is the same size as a
+   `numpy.intc`, `numpy.long` and `numpy.longlong`) that is the same size as a
    pointer.
 
    Compatible with the C ``intptr_t``.
@@ -374,7 +374,7 @@ are also provided.
 .. attribute:: uintp
 
    Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) that is the same size as a
+   `numpy.uintc`, `numpy.ulong` and `numpy.ulonglong`) that is the same size as a
    pointer.
 
    Compatible with the C ``uintptr_t``.

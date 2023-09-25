@@ -60,7 +60,7 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 
     Returns
     -------
-    out : uint or ndarray
+    out : ulong or ndarray
         Drawn samples.
 
     Notes

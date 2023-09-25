@@ -317,7 +317,7 @@ class TestAttributes:
         assert_equal(self.two.base, np.arange(20))
 
     def test_dtypeattr(self):
-        assert_equal(self.one.dtype, np.dtype(np.int_))
+        assert_equal(self.one.dtype, np.dtype(np.long))
         assert_equal(self.three.dtype, np.dtype(np.float64))
         assert_equal(self.one.dtype.char, 'l')
         assert_equal(self.three.dtype.char, 'd')
@@ -328,9 +328,9 @@ class TestAttributes:
     def test_int_subclassing(self):
         # Regression test for https://github.com/numpy/numpy/pull/3526
 
-        numpy_int = np.int_(0)
+        numpy_int = np.long(0)
 
-        # int_ doesn't inherit from Python int, because it's not fixed-width
+        # long doesn't inherit from Python int, because it's not fixed-width
         assert_(not isinstance(numpy_int, int))
 
     def test_stridesattr(self):
@@ -4239,7 +4239,7 @@ class TestCAPI:
 class TestSubscripting:
     def test_test_zero_rank(self):
         x = np.array([1, 2, 3])
-        assert_(isinstance(x[0], np.int_))
+        assert_(isinstance(x[0], np.long))
         assert_(type(x[0, ...]) is np.ndarray)
 
 
@@ -4571,17 +4571,17 @@ class TestArgmaxArgminCommon:
         a = np.ones((10, 5))
         arg_method = getattr(a, method)
         # Check some simple shape mismatches
-        out = np.ones(11, dtype=np.int_)
+        out = np.ones(11, dtype=np.long)
         assert_raises(ValueError, arg_method, -1, out)
 
-        out = np.ones((2, 5), dtype=np.int_)
+        out = np.ones((2, 5), dtype=np.long)
         assert_raises(ValueError, arg_method, -1, out)
 
         # these could be relaxed possibly (used to allow even the previous)
-        out = np.ones((1, 10), dtype=np.int_)
+        out = np.ones((1, 10), dtype=np.long)
         assert_raises(ValueError, arg_method, -1, out)
 
-        out = np.ones(10, dtype=np.int_)
+        out = np.ones(10, dtype=np.long)
         arg_method(-1, out=out)
         assert_equal(out, arg_method(-1))
 
@@ -5623,8 +5623,8 @@ class TestIO:
             b'1_x_3_x_4_x_5', [1, 3, 4, 5], tmp_filename, sep='_x_')
 
     def test_dtype(self, tmp_filename):
-        v = np.array([1, 2, 3, 4], dtype=np.int_)
-        self._check_from(b'1,2,3,4', v, tmp_filename, sep=',', dtype=np.int_)
+        v = np.array([1, 2, 3, 4], dtype=np.long)
+        self._check_from(b'1,2,3,4', v, tmp_filename, sep=',', dtype=np.long)
 
     def test_dtype_bool(self, tmp_filename):
         # can't use _check_from because fromstring can't handle True/False
@@ -9736,10 +9736,10 @@ def test_uintalignment_and_alignment():
     # alignment code needs to satisfy these requirements:
     #  1. numpy structs match C struct layout
     #  2. ufuncs/casting is safe wrt to aligned access
-    #  3. copy code is safe wrt to "uint alidned" access
+    #  3. copy code is safe wrt to "ulong alidned" access
     #
     # Complex types are the main problem, whose alignment may not be the same
-    # as their "uint alignment".
+    # as their "ulong alignment".
     #
     # This test might only fail on certain platforms, where uint64 alignment is
     # not equal to complex64 alignment. The second 2 tests will only fail

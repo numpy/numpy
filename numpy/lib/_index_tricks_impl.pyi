@@ -18,7 +18,7 @@ from numpy import (
     str_,
     bytes_,
     bool_,
-    int_,
+    long,
     float64,
     complex128,
 )

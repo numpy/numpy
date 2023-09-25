@@ -2349,7 +2349,7 @@ def test_iter_buffered_reduce_reuse():
             nditer2.iterindex = skip
 
             for (a2_in, b2_in) in nditer2:
-                b2_in += a2_in.astype(np.int_)
+                b2_in += a2_in.astype(np.long)
 
             comp_res = nditer2.operands[-1]
 
@@ -2363,7 +2363,7 @@ def test_iter_buffered_reduce_reuse():
                 nditer1.iterindex = skip
 
                 for (a1_in, b1_in) in nditer1:
-                    b1_in += a1_in.astype(np.int_)
+                    b1_in += a1_in.astype(np.long)
 
                 res = nditer1.operands[-1]
             assert_array_equal(res, comp_res)

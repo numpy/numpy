@@ -636,7 +636,7 @@ cdef class BitGenerator():
 
         Returns
         -------
-        out : uint or ndarray
+        out : ulong or ndarray
             Drawn samples.
 
         Notes

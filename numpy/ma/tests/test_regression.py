@@ -93,5 +93,5 @@ class TestRegression:
     def test_structured_array(self):
         # see gh-22041
         np.ma.array((1, (b"", b"")),
-                    dtype=[("x", np.int_),
+                    dtype=[("x", np.long),
                           ("y", [("i", np.void), ("j", np.void)])])

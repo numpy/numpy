@@ -877,7 +877,7 @@ class TestAssertAllclose:
         assert_raises(AssertionError, assert_allclose, 10, 6, rtol=0.5)
 
     def test_min_int(self):
-        a = np.array([np.iinfo(np.int_).min], dtype=np.int_)
+        a = np.array([np.iinfo(np.long).min], dtype=np.long)
         # Should not raise:
         assert_allclose(a, a)
 

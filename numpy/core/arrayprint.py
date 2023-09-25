@@ -39,7 +39,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          set_legacy_print_mode)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float64, complex128, bool_,
+from .numerictypes import (intc, long, longlong, float64, complex128, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
 import operator
@@ -1446,7 +1446,7 @@ def _void_scalar_to_string(x, is_repr=True):
     return f"{cls_fqn}({val_repr}, dtype={void_dtype!s})"
 
 
-_typelessdata = [int_, float64, complex128, bool_]
+_typelessdata = [long, float64, complex128, bool_]
 
 
 def dtype_is_implied(dtype):

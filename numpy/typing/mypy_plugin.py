@@ -2,7 +2,7 @@
 Its functionality can be split into three distinct parts:
 
 * Assigning the (platform-dependent) precisions of certain `~numpy.number`
-  subclasses, including the likes of `~numpy.int_`, `~numpy.intp` and
+  subclasses, including the likes of `~numpy.long`, `~numpy.intp` and
   `~numpy.longlong`. See the documentation on
   :ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
   of the affected classes. Without the plugin the precision of all relevant
@@ -59,7 +59,7 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitShort", np.short),
         ("_NBitIntC", np.intc),
         ("_NBitIntP", np.intp),
-        ("_NBitInt", np.int_),
+        ("_NBitLong", np.long),
         ("_NBitLongLong", np.longlong),
 
         ("_NBitHalf", np.half),
@@ -155,7 +155,7 @@ if TYPE_CHECKING or MYPY_EX is None:
             """Set the precision of platform-specific `numpy.number`
             subclasses.
 
-            For example: `numpy.int_`, `numpy.longlong` and `numpy.longdouble`.
+            For example: `numpy.long`, `numpy.longlong` and `numpy.longdouble`.
             """
             if fullname in _PRECISION_DICT:
                 return _hook

@@ -2468,7 +2468,7 @@ M   33  21.99
 
         assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.int_)
+        assert_(test.dtype['f2'] == np.long)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)

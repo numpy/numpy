@@ -1494,7 +1494,7 @@ class TestPromotion:
              ([1., 1., np.int64], np.float64),
              ([1., 1j, np.float64], np.complex128),
              ([1j, 1j, np.float64], np.complex128),
-             ([1, True, np.bool_], np.int_),
+             ([1, True, np.bool_], np.long),
             ])
     def test_permutations_do_not_influence_result(self, dtypes, expected):
         # Tests that most permutations do not influence the result.  In the
@@ -1530,11 +1530,6 @@ def test_invalid_dtype_string():
 def test_keyword_argument():
     # test for https://github.com/numpy/numpy/pull/16574#issuecomment-642660971
     assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
-
-
-def test_ulong_dtype():
-    # test for gh-21063
-    assert np.dtype("ulong") == np.dtype(np.uint)
 
 
 class TestFromDTypeAttribute:
@@ -1640,11 +1635,11 @@ class TestDTypeClasses:
         for code in non_numeric_codes:
             assert not type(np.dtype(code))._is_numeric
 
-    @pytest.mark.parametrize("int_", ["UInt", "Int"])
+    @pytest.mark.parametrize("long", ["UInt", "Int"])
     @pytest.mark.parametrize("size", [8, 16, 32, 64])
-    def test_integer_alias_names(self, int_, size):
-        DType = getattr(numpy.dtypes, f"{int_}{size}DType")
-        sctype = getattr(numpy, f"{int_.lower()}{size}")
+    def test_integer_alias_names(self, long, size):
+        DType = getattr(numpy.dtypes, f"{long}{size}DType")
+        sctype = getattr(numpy, f"{long.lower()}{size}")
         assert DType.type is sctype
         assert DType.__name__.lower().removesuffix("dtype") == sctype.__name__
 

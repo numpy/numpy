@@ -397,10 +397,10 @@ class TestNanToNum:
     def test_integer(self):
         vals = nan_to_num(1)
         assert_all(vals == 1)
-        assert_equal(type(vals), np.int_)
+        assert_equal(type(vals), np.long)
         vals = nan_to_num(1, nan=10, posinf=20, neginf=30)
         assert_all(vals == 1)
-        assert_equal(type(vals), np.int_)
+        assert_equal(type(vals), np.long)
 
     def test_float(self):
         vals = nan_to_num(1.0)

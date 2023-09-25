@@ -120,7 +120,7 @@ add_newdoc_for_scalar_type('intc', [],
     Signed integer type, compatible with C ``int``.
     """)
 
-add_newdoc_for_scalar_type('int_', [],
+add_newdoc_for_scalar_type('long', [],
     """
     Signed integer type, compatible with Python :class:`int` and C ``long``.
     """)
@@ -145,7 +145,7 @@ add_newdoc_for_scalar_type('uintc', [],
     Unsigned integer type, compatible with C ``unsigned int``.
     """)
 
-add_newdoc_for_scalar_type('uint', [],
+add_newdoc_for_scalar_type('ulong', [],
     """
     Unsigned integer type, compatible with C ``unsigned long``.
     """)

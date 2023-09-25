@@ -32,13 +32,13 @@ from ._char_codes import (
     _ShortCodes,
     _IntCCodes,
     _IntPCodes,
-    _IntCodes,
+    _LongCodes,
     _LongLongCodes,
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
-    _UIntCodes,
+    _ULongCodes,
     _ULongLongCodes,
     _HalfCodes,
     _SingleCodes,
@@ -154,7 +154,7 @@ _DTypeLikeUInt = Union[
     _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
-    _UIntCodes,
+    _ULongCodes,
     _ULongLongCodes,
 ]
 _DTypeLikeInt = Union[
@@ -170,7 +170,7 @@ _DTypeLikeInt = Union[
     _ShortCodes,
     _IntCCodes,
     _IntPCodes,
-    _IntCodes,
+    _LongCodes,
     _LongLongCodes,
 ]
 _DTypeLikeFloat = Union[

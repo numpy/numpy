@@ -1966,7 +1966,7 @@ class TestAVXFloat32Transcendental:
     def test_sincos_float32(self):
         np.random.seed(42)
         N = 1000000
-        M = np.int_(N/20)
+        M = np.long(N/20)
         index = np.random.randint(low=0, high=N, size=M)
         x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
         if not _glibc_older_than("2.17"):

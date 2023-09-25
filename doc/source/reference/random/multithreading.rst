@@ -37,7 +37,7 @@ change.
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
             self.values = np.empty(n)
-            self.step = np.ceil(n / threads).astype(np.int_)
+            self.step = np.ceil(n / threads).astype(np.long)
 
         def fill(self):
             def _fill(random_state, out, first, last):

@@ -339,7 +339,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
             (type == (PyObject *)&PySignedIntegerArrType_Type)) {
         if (DEPRECATE("Converting `np.integer` or `np.signedinteger` to "
                       "a dtype is deprecated. The current result is "
-                      "`np.dtype(np.int_)` which is not strictly correct. "
+                      "`np.dtype(np.long)` which is not strictly correct. "
                       "Note that the result depends on the system. To ensure "
                       "stable results use may want to use `np.int64` or "
                       "`np.int32`.") < 0) {
@@ -349,7 +349,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
     }
     else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
         if (DEPRECATE("Converting `np.unsignedinteger` to a dtype is "
-                      "deprecated. The current result is `np.dtype(np.uint)` "
+                      "deprecated. The current result is `np.dtype(np.ulong)` "
                       "which is not strictly correct. Note that the result "
                       "depends on the system. To ensure stable results you may "
                       "want to use `np.uint64` or `np.uint32`.") < 0) {

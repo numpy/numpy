@@ -525,9 +525,9 @@ class TestUfunc:
     @pytest.mark.parametrize("casting", ["unsafe", "same_kind", "safe"])
     def test_partial_signature_mismatch(self, casting):
         # If the second argument matches already, no need to specify it:
-        res = np.ldexp(np.float32(1.), np.int_(2), dtype="d")
+        res = np.ldexp(np.float32(1.), np.long(2), dtype="d")
         assert res.dtype == "d"
-        res = np.ldexp(np.float32(1.), np.int_(2), signature=(None, None, "d"))
+        res = np.ldexp(np.float32(1.), np.long(2), signature=(None, None, "d"))
         assert res.dtype == "d"
 
         # ldexp only has a loop for long input as second argument, overriding

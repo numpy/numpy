@@ -91,7 +91,7 @@ class TestIndexing:
         assert_equal(a[()], a)
         assert_(a[()].base is a)
         a = np.array(0)
-        assert_(isinstance(a[()], np.int_))
+        assert_(isinstance(a[()], np.long))
 
     def test_void_scalar_empty_tuple(self):
         s = np.zeros((), dtype='V4')
@@ -1273,7 +1273,7 @@ class TestFloatNonIntegerArgument:
 
         assert_raises(TypeError, mult, [1], np.float64(3))
         # following should be OK
-        mult([1], np.int_(3))
+        mult([1], np.long(3))
 
     def test_reduce_axis_float_index(self):
         d = np.zeros((3,3,3))
