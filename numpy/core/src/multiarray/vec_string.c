@@ -10,27 +10,41 @@
 #include "numpy/arrayobject.h"
 #include "dtypemeta.h"
 
+static Py_ssize_t
+ucs4_get_length(PyArrayIterObject *iter)
+{
+    npy_ucs4 *buffer = (npy_ucs4 *) iter->dataptr;
+    npy_ucs4 *data = buffer + PyArray_ITEMSIZE(iter->ao) / sizeof(npy_ucs4) - 1;
+    while (data >= buffer && *data == '\0') {
+        data--;
+    }
+    return data - buffer + 1;
+}
+
+static Py_ssize_t
+bytes_get_length(PyArrayIterObject *iter)
+{
+    char *buffer = iter->dataptr;
+    char *data = buffer + PyArray_ITEMSIZE(iter->ao) - 1;
+    while (data >= buffer && *data == '\0') {
+        data--;
+    }
+    return data - buffer + 1;
+}
+
 static int
 _vec_string_add_unicode(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
 {
-    npy_ucs4 *left, *right, *data;
+    npy_ucs4 *left, *right;
     Py_ssize_t left_len, left_len_in_bytes, right_len, right_len_in_bytes;
 
     left = (npy_ucs4 *) in_iters[0]->dataptr;
     right = (npy_ucs4 *) in_iters[1]->dataptr;
 
-    data = left + PyArray_ITEMSIZE(in_iters[0]->ao) / sizeof(npy_ucs4) - 1;
-    while (data >= left && *data == '\0') {
-        data--;
-    }
-    left_len = data - left + 1;
+    left_len = ucs4_get_length(in_iters[0]);
     left_len_in_bytes = left_len * sizeof(npy_ucs4);
 
-    data = right + PyArray_ITEMSIZE(in_iters[1]->ao) / sizeof(npy_ucs4) - 1;
-    while (data >= right && *data == '\0') {
-        data--;
-    }
-    right_len = data - right + 1;
+    right_len = ucs4_get_length(in_iters[1]);
     right_len_in_bytes = right_len * sizeof(npy_ucs4);
 
     if (left_len + right_len > PY_SSIZE_T_MAX) {
@@ -58,19 +72,14 @@ _vec_string_add_unicode(PyArrayIterObject **in_iters, PyArrayIterObject *out_ite
 static int
 _vec_string_add_bytes(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
 {
-    char *left, *right, *data;
+    char *left, *right;
     Py_ssize_t left_len, right_len;
 
     left = (char *) in_iters[0]->dataptr;
     right = (char *) in_iters[1]->dataptr;
 
-    data = left + PyArray_ITEMSIZE(in_iters[0]->ao) - 1;
-    while (data >= left && *data == '\0') data--;
-    left_len = data - left + 1;
-
-    data = right + PyArray_ITEMSIZE(in_iters[1]->ao) - 1;
-    while (data >= right && *data == '\0') data--;
-    right_len = data - right + 1;
+    left_len = bytes_get_length(in_iters[0]);
+    right_len = bytes_get_length(in_iters[1]);
 
     if (left_len + right_len > PY_SSIZE_T_MAX) {
         PyErr_SetString(PyExc_OverflowError,
@@ -97,19 +106,16 @@ _vec_string_add_bytes(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
 static int
 _vec_string_is_alpha_unicode(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
 {
-    int truesize = PyArray_ITEMSIZE(in_iter[0]->ao) / sizeof(npy_ucs4);
-    npy_ucs4 *data = ((npy_ucs4 *) in_iter[0]->dataptr) + truesize - 1;
-    while (data >= (npy_ucs4 *) in_iter[0]->dataptr && *data == '\0') {
-        data--;
-    }
+    npy_ucs4 *data = (npy_ucs4 *) (*in_iter)->dataptr;
+    Py_ssize_t len = ucs4_get_length(*in_iter);
 
-    if (data <= (npy_ucs4 *) in_iter[0]->dataptr) {
+    if (len == 0) {
         *out_iter->dataptr = (npy_bool) NPY_FALSE;
         return 1;
     }
 
-    for (; data >= (npy_ucs4 *) in_iter[0]->dataptr; data--) {
-        if (!Py_UNICODE_ISALPHA(*data)) {
+    for (Py_ssize_t i = 0; i < len; i++) {
+        if (!Py_UNICODE_ISALPHA(data[i])) {
             *out_iter->dataptr = (npy_bool) NPY_FALSE;
             return 1;
         }
@@ -121,18 +127,16 @@ _vec_string_is_alpha_unicode(PyArrayIterObject **in_iter, PyArrayIterObject *out
 static int
 _vec_string_is_alpha_bytes(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
 {
-    char *data = in_iter[0]->dataptr + PyArray_ITEMSIZE(in_iter[0]->ao) - 1;
-    while (data >= in_iter[0]->dataptr && *data == '\0') {
-        data--;
-    }
+    char *data = in_iter[0]->dataptr;
+    Py_ssize_t len = bytes_get_length(*in_iter);
 
-    if (data <= in_iter[0]->dataptr) {
+    if (len == 0) {
         *out_iter->dataptr = (npy_bool) NPY_FALSE;
         return 1;
     };
 
-    for (; data >= in_iter[0]->dataptr; data--) {
-        if (!isalpha(*data)) {
+    for (Py_ssize_t i = 0; i < len; i++) {
+        if (!isalpha(data[i])) {
             *out_iter->dataptr = (npy_bool) NPY_FALSE;
             return 1;
         }
