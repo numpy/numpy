@@ -1,7 +1,7 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_DISTUTILS_H_
 #define NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_DISTUTILS_H_
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_
-    #error "Not standlone header please use 'npy_cpu_dispatch.h'"
+    #error "Not standalone header please use 'npy_cpu_dispatch.h'"
 #endif
 /**
  * This header should be removed after support for distutils is removed.

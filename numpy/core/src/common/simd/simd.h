@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 /*
- * clang commit a agrresive optimization behavoueir when flag `-ftrapping-math`
+ * clang commit an aggressive optimization behaviour when flag `-ftrapping-math`
  * isn't fully supported that's present at -O1 or greater. When partially loading a
  * vector register for a operations that requires to fill up the remaining lanes
  * with certain value for example divide operation needs to fill the remaining value

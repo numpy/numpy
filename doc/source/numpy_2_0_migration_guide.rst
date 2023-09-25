@@ -17,7 +17,7 @@ moved to a new place. It was done to reduce clutter and establish only one way t
 access a given attribute. The table below shows members that have been removed:
 
 ======================  =================================================================
-removed member          migration guidline
+removed member          migration guideline
 ======================  =================================================================
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
@@ -88,7 +88,7 @@ in case it's infeasible, reach out to us with a request to restore the removed e
 The next table presents deprecated members, which will be removed in a release after ``2.0``:
 
 ================= =======================================================================
-deprecated member migration guidline
+deprecated member migration guideline
 ================= =======================================================================
 in1d              Use ``np.isin`` instead.
 row_stack         Use ``np.vstack`` instead (``row_stack`` was an alias for ``v_stack``).
@@ -147,7 +147,7 @@ A few methods from ``np.ndarray`` and ``np.generic`` scalar classes have been re
 The table below provides replacements for the removed members:
 
 ======================  ========================================================
-expired member          migration guidline
+expired member          migration guideline
 ======================  ========================================================
 newbyteorder            Use ``arr.view(arr.dtype.newbyteorder(order))`` instead.
 ptp                     Use ``np.ptp(arr, ...)`` instead.

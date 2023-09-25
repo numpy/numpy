@@ -19,7 +19,7 @@ Abstract
 We propose to clean up NumPy's Python API for the NumPy 2.0 release.
 This includes a more clearly defined split between what is public and what is
 private, and reducing the size of the main namespace by removing aliases
-and functions that have better alternatives. Futhermore, each function is meant
+and functions that have better alternatives. Furthermore, each function is meant
 to be accessible from only one place, so all duplicates also need to be dropped.
 
 

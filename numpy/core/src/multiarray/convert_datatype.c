@@ -2763,7 +2763,7 @@ cast_to_string_resolve_descriptors(
      * NOTE: The following code used to be part of PyArray_AdaptFlexibleDType
      *
      * Get a string-size estimate of the input. These
-     * are generallly the size needed, rounded up to
+     * are generally the size needed, rounded up to
      * a multiple of eight.
      */
     npy_intp size = -1;

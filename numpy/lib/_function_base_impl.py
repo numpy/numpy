@@ -4289,8 +4289,8 @@ def quantile(a,
     -------
     quantile : scalar or ndarray
         If `q` is a single probability and `axis=None`, then the result
-        is a scalar. If multiple probabilies levels are given, first axis of
-        the result corresponds to the quantiles. The other axes are
+        is a scalar. If multiple probability levels are given, first axis
+        of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
         data-type is ``float64``. Otherwise, the output data-type is the
