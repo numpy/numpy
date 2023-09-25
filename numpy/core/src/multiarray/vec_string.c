@@ -10,140 +10,17 @@
 #include "numpy/arrayobject.h"
 #include "dtypemeta.h"
 
-static Py_ssize_t
-ucs4_get_length(PyArrayIterObject *iter)
-{
-    npy_ucs4 *buffer = (npy_ucs4 *) iter->dataptr;
-    npy_ucs4 *data = buffer + PyArray_ITEMSIZE(iter->ao) / sizeof(npy_ucs4) - 1;
-    while (data >= buffer && *data == '\0') {
-        data--;
-    }
-    return data - buffer + 1;
-}
+#include "stringlib/stringlib.h"
+#include "stringlib/length.h"
+#include "stringlib/isalpha.h"
+#include "stringlib/add.h"
+#include "stringlib/undef.h"
 
-static Py_ssize_t
-bytes_get_length(PyArrayIterObject *iter)
-{
-    char *buffer = iter->dataptr;
-    char *data = buffer + PyArray_ITEMSIZE(iter->ao) - 1;
-    while (data >= buffer && *data == '\0') {
-        data--;
-    }
-    return data - buffer + 1;
-}
-
-static int
-_vec_string_add_unicode(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
-{
-    npy_ucs4 *left, *right;
-    Py_ssize_t left_len, left_len_in_bytes, right_len, right_len_in_bytes;
-
-    left = (npy_ucs4 *) in_iters[0]->dataptr;
-    right = (npy_ucs4 *) in_iters[1]->dataptr;
-
-    left_len = ucs4_get_length(in_iters[0]);
-    left_len_in_bytes = left_len * sizeof(npy_ucs4);
-
-    right_len = ucs4_get_length(in_iters[1]);
-    right_len_in_bytes = right_len * sizeof(npy_ucs4);
-
-    if (left_len + right_len > PY_SSIZE_T_MAX) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "strings are too large to concat");
-        return 0;
-    }
-
-    if (left_len == 0) {
-        memcpy(out_iter->dataptr, right, right_len_in_bytes);
-        memset(out_iter->dataptr + right_len_in_bytes, 0, PyArray_ITEMSIZE(out_iter->ao) - right_len_in_bytes);
-    }
-    if (right_len == 0) {
-        memcpy(out_iter->dataptr, left, left_len_in_bytes);
-        memset(out_iter->dataptr + left_len_in_bytes, 0, PyArray_ITEMSIZE(out_iter->ao) - left_len_in_bytes);
-    }
-
-    memcpy(out_iter->dataptr, left, left_len_in_bytes);
-    memcpy(out_iter->dataptr + left_len_in_bytes, right, right_len_in_bytes);
-    memset(out_iter->dataptr + left_len_in_bytes + right_len_in_bytes, 0,
-           PyArray_ITEMSIZE(out_iter->ao) - right_len_in_bytes - left_len_in_bytes);
-    return 1;
-}
-
-static int
-_vec_string_add_bytes(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
-{
-    char *left, *right;
-    Py_ssize_t left_len, right_len;
-
-    left = (char *) in_iters[0]->dataptr;
-    right = (char *) in_iters[1]->dataptr;
-
-    left_len = bytes_get_length(in_iters[0]);
-    right_len = bytes_get_length(in_iters[1]);
-
-    if (left_len + right_len > PY_SSIZE_T_MAX) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "strings are too large to concat");
-        return 0;
-    }
-
-    if (left_len == 0) {
-        memcpy(out_iter->dataptr, right, right_len);
-        memset(out_iter->dataptr + right_len, 0, PyArray_ITEMSIZE(out_iter->ao) - right_len);
-    }
-    if (right_len == 0) {
-        memcpy(out_iter->dataptr, left, left_len);
-        memset(out_iter->dataptr + left_len, 0, PyArray_ITEMSIZE(out_iter->ao) - left_len);
-    }
-
-    memcpy(out_iter->dataptr, left, left_len);
-    memcpy(out_iter->dataptr + left_len, right, right_len);
-    memset(out_iter->dataptr + left_len + right_len, 0,
-           PyArray_ITEMSIZE(out_iter->ao) - right_len - left_len);
-    return 1;
-}
-
-static int
-_vec_string_is_alpha_unicode(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
-{
-    npy_ucs4 *data = (npy_ucs4 *) (*in_iter)->dataptr;
-    Py_ssize_t len = ucs4_get_length(*in_iter);
-
-    if (len == 0) {
-        *out_iter->dataptr = (npy_bool) NPY_FALSE;
-        return 1;
-    }
-
-    for (Py_ssize_t i = 0; i < len; i++) {
-        if (!Py_UNICODE_ISALPHA(data[i])) {
-            *out_iter->dataptr = (npy_bool) NPY_FALSE;
-            return 1;
-        }
-    }
-    *out_iter->dataptr = (npy_bool) NPY_TRUE;
-    return 1;
-}
-
-static int
-_vec_string_is_alpha_bytes(PyArrayIterObject **in_iter, PyArrayIterObject *out_iter)
-{
-    char *data = in_iter[0]->dataptr;
-    Py_ssize_t len = bytes_get_length(*in_iter);
-
-    if (len == 0) {
-        *out_iter->dataptr = (npy_bool) NPY_FALSE;
-        return 1;
-    };
-
-    for (Py_ssize_t i = 0; i < len; i++) {
-        if (!isalpha(data[i])) {
-            *out_iter->dataptr = (npy_bool) NPY_FALSE;
-            return 1;
-        }
-    }
-    *out_iter->dataptr = (npy_bool) NPY_TRUE;
-    return 1;
-}
+#include "stringlib/ucs4lib.h"
+#include "stringlib/length.h"
+#include "stringlib/isalpha.h"
+#include "stringlib/add.h"
+#include "stringlib/undef.h"
 
 typedef int (*_vec_string_fast_op)(PyArrayIterObject **, PyArrayIterObject *);
 
@@ -167,8 +44,8 @@ static _vec_string_named_fast_op *SUPPORTED_FAST_OPS[] = {
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {{NULL, NULL, NULL, -1}},
     (_vec_string_named_fast_op[]) {
-        {"__add__", _vec_string_add_unicode, _vec_string_add_bytes, 1},
-        {"isalpha", _vec_string_is_alpha_unicode, _vec_string_is_alpha_bytes, 0},
+        {"__add__", ucs4lib_add, stringlib_add, 1},
+        {"isalpha", ucs4lib_isalpha, stringlib_isalpha, 0},
         {NULL, NULL, NULL, -1},
     }
 };
