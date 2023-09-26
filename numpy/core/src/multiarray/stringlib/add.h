@@ -17,7 +17,7 @@ STRINGLIB(add)(PyArrayIterObject **in_iters, PyArrayIterObject *out_iter)
     right_len = STRINGLIB(get_length)(in_iters[1]);
     right_len_in_bytes = right_len * sizeof(STRINGLIB_CHAR);
 
-    if (left_len + right_len > PY_SSIZE_T_MAX) {
+    if (left_len > PY_SSIZE_T_MAX - right_len) {
         PyErr_SetString(PyExc_OverflowError,
                         "strings are too large to concat");
         return 0;
