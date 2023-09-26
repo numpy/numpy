@@ -52,6 +52,13 @@ jobs:
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
           ]
           - [
+              "ppc64le - baseline(Power9)",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
               "s390x",
               "s390x-linux-gnu",
               "s390x/ubuntu:22.04",
