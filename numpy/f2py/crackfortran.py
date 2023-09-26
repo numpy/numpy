@@ -1448,24 +1448,14 @@ def analyzeline(m, case, line):
                     # common /mycom/ mytab
                     # Since in any case it is initialized in the Fortran code
                     outmess('Comment line in declaration "%s" is not supported. Skipping.\n' % l[1])
-                    new_val = 0
                     continue
-                try:
-                    vtype = vars[v].get('typespec')
-                    vdim = getdimension(vars[v])
-                    matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
-                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
-                except: # gh-24746
-                    idy, jdx, fc = 0, 0, 0
-                    while idy < len(l[1]) and (fc or l[1][idy] != ','):
-                        if l[1][idy] == "'":
-                            fc = not fc
-                        idy += 1
-                    new_val = l[1][jdx:idy]
-                    jdx = idy + 1
                 vars.setdefault(v, {})
+                vtype = vars[v].get('typespec')
+                vdim = getdimension(vars[v])
+                matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
+                new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
                 current_val = vars[v].get('=')
-                if current_val and current_val != new_val:
+                if current_val and (current_val != new_val):
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
                 vars[v]['='] = new_val
                 last_name = v
