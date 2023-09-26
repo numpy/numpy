@@ -284,6 +284,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     PyObject* method_name;
     PyObject* args_seq = NULL;
 
+    int fast_path = 0;
     int user_defined_dtype = 0;
     int fast_method_found = 0;
     int fast_method_with_args = 0;
@@ -301,10 +302,11 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     user_defined_dtype = _is_user_defined_string_array(char_array);
     fast_method_found = get_fast_op(char_array, method_name, &fast_method, &fast_method_with_args);
     if (fast_method_found && !user_defined_dtype) {
+        fast_path = 1;
         if (fast_method_with_args) {
-            result = _vec_string_with_args(char_array, type, fast_method, args_seq, /*fast*/ 1);
+            result = _vec_string_with_args(char_array, type, fast_method, args_seq, fast_path);
         } else {
-            result = _vec_string_no_args(char_array, type, fast_method, /*fast*/ 1);
+            result = _vec_string_no_args(char_array, type, fast_method, fast_path);
         }
     } else {
         if (PyArray_TYPE(char_array) == NPY_STRING) {
@@ -334,12 +336,13 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
             goto err;
         }
 
+        fast_path = 0;
         if (args_seq == NULL
                 || (PySequence_Check(args_seq) && PySequence_Size(args_seq) == 0)) {
-            result = _vec_string_no_args(char_array, type, method, /*fast*/ 0);
+            result = _vec_string_no_args(char_array, type, method, fast_path);
         }
         else if (PySequence_Check(args_seq)) {
-            result = _vec_string_with_args(char_array, type, method, args_seq, /*fast*/ 0);
+            result = _vec_string_with_args(char_array, type, method, args_seq, fast_path);
         }
         else {
             Py_DECREF(type);
