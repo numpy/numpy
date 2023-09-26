@@ -53,23 +53,15 @@ jobs:
         python -m venv test_env
         source test_env/bin/activate
 
-        # install openblas by co-opting the CIBW setup script
         pip install scipy-openblas64
-        RUNNER_OS=Linux sh tools/wheels/cibw_before_build.sh .
 
-        pip install -r build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r build_requirements.txt -r test_requirements.txt
 
         # use meson to build and test 
         spin build --with-scipy-openblas=64
         spin test -j auto
 
-      - name: Meson Log
-        shell: bash
-        if: ${{ failure() && steps.test-musllinux_x86_64.conclusion == 'failure' }}
-        run: |
-          echo "::group::Meson Log"
-          cat build/meson-logs/meson-log.txt
-          echo "::endgroup::"
-
-
+    - name: Meson Log
+      shell: bash
+      run: |
+        cat build/meson-logs/meson-log.txt

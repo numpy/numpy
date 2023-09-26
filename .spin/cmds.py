@@ -419,34 +419,7 @@ def ipython(ctx, ipython_args):
     util.run(["ipython", "--ignore-cwd",
               f"--TerminalIPythonApp.exec_lines={preimport}"] +
              list(ipython_args))
-<<<<<<< HEAD
- 
-=======
 
-
-@click.command(context_settings={"ignore_unknown_options": True})
-@click.argument("args", nargs=-1)
-@click.pass_context
-def run(ctx, args):
-    """🏁 Run a shell command with PYTHONPATH set
-
-    \b
-    spin run make
-    spin run 'echo $PYTHONPATH'
-    spin run python -c 'import sys; del sys.path[0]; import mypkg'
-
-    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
-    above, you need to provide a single, quoted command to `run`:
-
-    spin run 'echo $SHELL && echo $PWD'
-
-    On Windows, all shell commands are run via Bash.
-    Install Git for Windows if you don't have Bash already.
-    """
-    ctx.invoke(build)
-    ctx.forward(meson.run)
-
->>>>>>> b68dd546e (ENH: use OpenBLAS from a wheel)
 
 @click.command(context_settings={"ignore_unknown_options": True})
 @click.pass_context
@@ -490,7 +463,7 @@ def _config_openblas(blas_variant):
         openblas.write__distributor_init(os.path.join(basedir, "numpy"))
         os.makedirs(openblas_dir, exist_ok=True)
         with open(pkg_config_fname, "wt", encoding="utf8") as fid:
-            fid.write(openblas.get_pkg_config())
+            fid.write(openblas.get_pkg_config().replace("\\", "/"))
  
 def _maybe_setup_openblas(ctx, blas_variant):
     _config_openblas(blas_variant)
@@ -498,7 +471,7 @@ def _maybe_setup_openblas(ctx, blas_variant):
     basedir = os.getcwd()
     openblas_dir = os.path.join(basedir, ".openblas")
     pkg_config_fname = os.path.join(openblas_dir, "openblas.pc")
-    if blas_variant == 64:
+    if blas_variant == "64":
         ctx.params["meson_args"] += (
             "-Dblas-symbol-suffix=64_",
             "-Duse-ilp64=true",
