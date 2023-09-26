@@ -126,14 +126,22 @@ class TestBuiltin:
         with assert_raises(TypeError):
             np.dtype(dtype)
 
-    def test_remaining_dtypes_with_bad_bytesize(self):
-        # The np.<name> aliases were deprecated, these probably should be too 
-        assert np.dtype("int0") is np.dtype("intp")
-        assert np.dtype("uint0") is np.dtype("uintp")
-        assert np.dtype("bool8") is np.dtype("bool")
-        assert np.dtype("bytes0") is np.dtype("bytes")
-        assert np.dtype("str0") is np.dtype("str")
-        assert np.dtype("object0") is np.dtype("object")
+    def test_expired_dtypes_with_bad_bytesize(self):
+        match: str = r".*removed in NumPy 2.0.*"
+        with pytest.raises(TypeError, match=match):
+            np.dtype("int0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("uint0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("bool8")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("bytes0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("str0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("object0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("void0")
 
     @pytest.mark.parametrize(
         'value',
