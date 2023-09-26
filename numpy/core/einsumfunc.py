@@ -11,7 +11,9 @@ from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['einsum', 'einsum_path']
 
-einsum_symbols = string.ascii_letters
+# importing string for string.ascii_letters would be too slow
+# the first import before caching has been measured to take 800 µs (#23777)
+einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 einsum_symbols_set = set(einsum_symbols)
 
 
