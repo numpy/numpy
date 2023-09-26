@@ -802,7 +802,7 @@ def select(condlist, choicelist, default=0):
     >>> np.select(condlist, choicelist, 55)
     array([ 0,  1,  2,  3,  4, 25])
 
-    Test case showing when the default value is used:
+    Test case showing when the default value is used below-
     >>> condlist = [x<=4, x<=0]
     >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist, 70)
