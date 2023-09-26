@@ -63,6 +63,11 @@ class ConcatenateStackArrays(Benchmark):
         np.stack(self.xarg, axis=1)
 
 
+class ConcatenateNestedArrays(ConcatenateStackArrays):
+    # Large number of small arrays to test GIL (non-)release
+    params = [[(1, 1)], [1000, 100000], TYPES1]
+
+
 class DimsManipulations(Benchmark):
     params = [
         [(2, 1, 4), (2, 1), (5, 2, 3, 1)],
