@@ -11,7 +11,7 @@ from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['einsum', 'einsum_path']
 
-einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+einsum_symbols = string.ascii_letters
 einsum_symbols_set = set(einsum_symbols)
 
 
