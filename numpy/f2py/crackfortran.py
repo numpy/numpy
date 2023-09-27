@@ -1453,7 +1453,26 @@ def analyzeline(m, case, line):
                 vtype = vars[v].get('typespec')
                 vdim = getdimension(vars[v])
                 matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
-                new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                try:
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                except IndexError:
+                    # gh-24746
+                    # Runs only if above code fails. Fixes the line
+                    # DATA IVAR1, IVAR2, IVAR3, IVAR4, EVAR5 /4*0,0.0D0/
+                    # by exanding to ['0', '0', '0', '0', '0.0d0']
+                    if any("*" in m for m in matches):
+                        expanded_list = []
+                        for match in matches:
+                            if "*" in match:
+                                try:
+                                    multiplier, value = match.split("*")
+                                    expanded_list.extend([value.strip()] * int(multiplier))
+                                except ValueError: # if int(multiplier) fails
+                                    expanded_list.append(match.strip())
+                            else:
+                                expanded_list.append(match.strip())
+                        matches = expanded_list
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
                 current_val = vars[v].get('=')
                 if current_val and (current_val != new_val):
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
