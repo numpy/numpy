@@ -1459,7 +1459,7 @@ def analyzeline(m, case, line):
                     # gh-24746
                     # Runs only if above code fails. Fixes the line
                     # DATA IVAR1, IVAR2, IVAR3, IVAR4, EVAR5 /4*0,0.0D0/
-                    # by exanding to ['0', '0', '0', '0', '0.0d0']
+                    # by expanding to ['0', '0', '0', '0', '0.0d0']
                     if any("*" in m for m in matches):
                         expanded_list = []
                         for match in matches:
