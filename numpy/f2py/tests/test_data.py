@@ -47,6 +47,18 @@ class TestDataF77(util.F2PyTest):
         assert mod[0]['vars']['mydata']['='] == '0'
 
 
+class TestDataMultiplierF77(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "data_multiplier.f")]
+
+    # For gh-23276
+    def test_data_stmts(self):
+        assert self.module.mycom.ivar1 == 3
+        assert self.module.mycom.ivar2 == 3
+        assert self.module.mycom.ivar3 == 2
+        assert self.module.mycom.ivar4 == 2
+        assert self.module.mycom.evar5 == 0
+
+
 class TestDataWithCommentsF77(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_with_comments.f")]
 
