@@ -39,7 +39,7 @@ if not meson_import_dir.exists():
 )
 @click.argument("meson_args", nargs=-1)
 @click.pass_context
-def build(ctx, meson_args, jobs=None, clean=False, verbose=False):
+def build(ctx, meson_args, jobs=None, clean=False, verbose=False, quiet=False):
     """🔧 Build package with Meson/ninja and install
 
     MESON_ARGS are passed through e.g.:
@@ -185,51 +185,6 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
     for extra_param in ('markexpr', 'n_jobs', 'tests', 'verbose'):
         del ctx.params[extra_param]
     ctx.forward(meson.test)
-
-
-@click.command()
-@click.option('--code', '-c', help='Python program passed in as a string')
-@click.argument('gdb_args', nargs=-1)
-def gdb(code, gdb_args):
-    """👾 Execute a Python snippet with GDB
-
-      spin gdb -c 'import numpy as np; print(np.__version__)'
-
-    Or pass arguments to gdb:
-
-      spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
-
-    Or run another program, they way you normally would with gdb:
-
-     \b
-     spin gdb ls
-     spin gdb -- --args ls -al
-
-    You can also run Python programs:
-
-     \b
-     spin gdb my_tests.py
-     spin gdb -- my_tests.py --mytest-flag
-    """
-    meson._set_pythonpath()
-    gdb_args = list(gdb_args)
-
-    if gdb_args and gdb_args[0].endswith('.py'):
-        gdb_args = ['--args', sys.executable] + gdb_args
-
-    if sys.version_info[:2] >= (3, 11):
-        PYTHON_FLAGS = ['-P']
-        code_prefix = ''
-    else:
-        PYTHON_FLAGS = []
-        code_prefix = 'import sys; sys.path.pop(0); '
-
-    if code:
-        PYTHON_ARGS = ['-c', code_prefix + code]
-        gdb_args += ['--args', sys.executable] + PYTHON_FLAGS + PYTHON_ARGS
-
-    gdb_cmd = ['gdb', '-ex', 'set detach-on-fork on'] + gdb_args
-    util.run(gdb_cmd, replace=True)
 
 
 # From scipy: benchmarks/benchmarks/common.py
@@ -430,7 +385,6 @@ def python(ctx, python_args):
     """
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
-    ctx.invoke(build)
     ctx.forward(meson.python)
 
 
@@ -459,29 +413,6 @@ def ipython(ctx, ipython_args):
     util.run(["ipython", "--ignore-cwd",
               f"--TerminalIPythonApp.exec_lines={preimport}"] +
              list(ipython_args))
-
-
-@click.command(context_settings={"ignore_unknown_options": True})
-@click.argument("args", nargs=-1)
-@click.pass_context
-def run(ctx, args):
-    """🏁 Run a shell command with PYTHONPATH set
-
-    \b
-    spin run make
-    spin run 'echo $PYTHONPATH'
-    spin run python -c 'import sys; del sys.path[0]; import mypkg'
-
-    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
-    above, you need to provide a single, quoted command to `run`:
-
-    spin run 'echo $SHELL && echo $PWD'
-
-    On Windows, all shell commands are run via Bash.
-    Install Git for Windows if you don't have Bash already.
-    """
-    ctx.invoke(build)
-    ctx.forward(meson.run)
  
 
 @click.command(context_settings={"ignore_unknown_options": True})
