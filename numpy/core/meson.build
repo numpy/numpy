@@ -318,15 +318,6 @@ optional_function_attributes = [
 #  endif
 #endforeach
 
-# Max possible optimization flags. We pass this flags to all our dispatch-able
-# (multi_targets) sources.
-compiler_id = cc.get_id()
-max_opt = {
-  'msvc': ['/O2'],
-  'intel-cl': ['/O3'],
-}.get(compiler_id, ['-O3'])
-max_opt = cc.has_multi_arguments(max_opt) ? max_opt : []
-
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
 # Call arguments are required as the compiler will do strict signature checking
@@ -739,8 +730,8 @@ foreach gen_mtargets : [
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common,
+    cpp_args: cpp_args_common,
     include_directories: [
       'include',
       'src/common',
@@ -776,8 +767,8 @@ foreach gen_mtargets : [
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common,
+    cpp_args: cpp_args_common,
     include_directories: [
       'include',
       'src/common',
@@ -947,8 +938,8 @@ foreach gen_mtargets : [
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common,
+    cpp_args: cpp_args_common,
     include_directories: [
       'include',
       'src/common',
