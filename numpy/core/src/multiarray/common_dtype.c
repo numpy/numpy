@@ -95,12 +95,13 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
  * `a.__common_dtype__(b) is a` (and thus `b` cannot alter the end-result).
  * Clearing means, we do not have to worry about them later.
  *
- * For the moment, abstract dtypes are not handled special here.  In a first
+ * Abstract dtypes are not handled specially here.  In a first
  * version they were but this version also tried to be able to do value-based
  * behavior.
  * There may be some advantage to special casing the abstract ones (e.g.
  * so that the concrete ones do not have to deal with it), but this would
- * require more complex handling later on.
+ * require more complex handling later on. See the logic in
+ * default_builtin_common_dtype
  *
  * @param length Number of DTypes
  * @param dtypes
