@@ -1049,7 +1049,8 @@ class TestTypes:
         assert_equal(promote_func(f64, np.array([f32])), np.dtype(np.float64))
         assert_equal(promote_func(fld, np.array([f32])),
                      np.dtype(np.longdouble))
-        assert_equal(promote_func(np.array([f64]), fld), np.dtype(np.float64))
+        assert_equal(promote_func(np.array([f64]), fld),
+                     np.dtype(np.longdouble))
         assert_equal(promote_func(fld, np.array([c64])),
                      np.dtype(np.clongdouble))
         assert_equal(promote_func(c64, np.array([f64])),
