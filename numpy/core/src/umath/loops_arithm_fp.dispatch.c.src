@@ -367,12 +367,16 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     }
 #endif
 #if @VECTOR@
-    // Certain versions of Apple clang (commonly used in CI images) produce non-deterministic
-    // output in the mul path with AVX2 enabled on x86_64.  Work around by scalarising.
-#if @is_mul@ && defined(NPY_CPU_AMD64) && defined(__clang__) && defined(__apple_build_version__) && \
-    __apple_build_version__ >= 14000000 && __apple_build_version__ < 14030000
-    goto loop_scalar;
-#endif  // end affected Apple clang.
+    // Certain versions of Apple clang (commonly used in CI images) produce
+    // non-deterministic output in the mul path with AVX2 enabled on x86_64.
+    // Work around by scalarising.
+    #if @is_mul@ \
+            && defined(NPY_CPU_AMD64) && defined(__clang__) \
+            && defined(__apple_build_version__) \
+            && __apple_build_version__ >= 14000000 \
+            && __apple_build_version__ < 14030000
+        goto loop_scalar;
+    #endif  // end affected Apple clang.
     if (is_mem_overlap(b_src0, b_ssrc0, b_dst, b_sdst, len) ||
         is_mem_overlap(b_src1, b_ssrc1, b_dst, b_sdst, len) ||
         b_sdst  % sizeof(@ftype@) != 0 || b_sdst == 0 ||
