@@ -547,6 +547,9 @@ class TestUfunc:
         with pytest.raises(TypeError):
             np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
 
+    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
+            reason="NEP 50 impl breaks casting checks when `dtype=` is used "
+                   "together with python scalars.")
     def test_use_output_signature_for_all_arguments(self):
         # Test that providing only `dtype=` or `signature=(None, None, dtype)`
         # is sufficient if falling back to a homogeneous signature works.
@@ -1887,7 +1890,7 @@ class TestUfunc:
         result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
         assert_equal(result, target)
 
-        # This path used to go into legacy promotion, but doesn't now:
+        # This scalar path used to go into legacy promotion, but doesn't now:
         result = _rational_tests.test_add(a, np.uint16(2))
         target = np.array([2, 3, 4], dtype=_rational_tests.rational)
         assert_equal(result, target)

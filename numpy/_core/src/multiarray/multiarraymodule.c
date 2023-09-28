@@ -3295,7 +3295,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         NPY_ITER_READONLY | NPY_ITER_ALIGNED,
         NPY_ITER_READONLY | NPY_ITER_ALIGNED
     };
-    PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[0] + 2,
+    PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[2],
                                                     0, NULL);
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                 common_dt, common_dt};

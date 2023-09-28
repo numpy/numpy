@@ -912,7 +912,17 @@ def test_operator_scalars(op, type1, type2):
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
-def test_longdouble_inf_loop(sctype, op):
+def test_longdouble_operators_with_obj(sctype, op):
+    # This is/used to be tricky, because NumPy generally falls back to
+    # using the ufunc via `np.asarray()`, this effectively might do:
+    # longdouble + None
+    #   -> asarray(longdouble) + np.array(None, dtype=object)
+    #   -> asarray(longdouble).astype(object) + np.array(None, dtype=object)
+    # And after getting the scalars in the inner loop:
+    #   -> longdouble + None
+    #
+    # That would recurse infinitely.  Other scalars return the python object
+    # on cast, so this type of things works OK.
     try:
         op(sctype(3), None)
     except TypeError:
@@ -926,7 +936,8 @@ def test_longdouble_inf_loop(sctype, op):
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
 @pytest.mark.parametrize("sctype", [np.longdouble, np.clongdouble])
 @np.errstate(all="ignore")
-def test_longdouble_inf_loop(sctype, op):
+def test_longdouble_operators_with_large_int(sctype, op):
+    # (See `test_longdouble_operators_with_obj` for why longdouble is special)
     # NEP 50 means that the result is clearly a (c)longdouble here:
     if sctype == np.clongdouble and op in [operator.mod, operator.floordiv]:
         # The above operators are not support for complex though...

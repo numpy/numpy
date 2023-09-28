@@ -79,7 +79,7 @@ class TestFromInt:
 
     def test_uint64_from_negative(self):
         with pytest.raises(OverflowError):
-            assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
+            np.uint64(-2)
 
 
 int_types = [np.byte, np.short, np.intc, np.long, np.longlong]
