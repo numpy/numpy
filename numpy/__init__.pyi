@@ -2467,6 +2467,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
 
+    def bitwise_count(
+        self,
+        out: None | NDArray[Any] = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
+        casting: _CastingKind = ...,
+        order: _OrderKACF = ...,
+        dtype: DTypeLike = ...,
+        subok: bool = ...,
+    ) -> NDArray[Any]: ...
+
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
     def dtype(self) -> _DType_co: ...
@@ -2613,6 +2624,17 @@ class generic(_ArrayOrScalarCommon):
     def reshape(
         self: _ScalarType, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> NDArray[_ScalarType]: ...
+
+    def bitwise_count(
+        self,
+        out: None | NDArray[Any] = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
+        casting: _CastingKind = ...,
+        order: _OrderKACF = ...,
+        dtype: DTypeLike = ...,
+        subok: bool = ...,
+    ) -> Any: ...
 
     def squeeze(
         self: _ScalarType, axis: None | L[0] | tuple[()] = ...
@@ -3138,6 +3160,7 @@ arctan2: _UFunc_Nin2_Nout1[L['arctan2'], L[5], None]
 arctan: _UFunc_Nin1_Nout1[L['arctan'], L[8], None]
 arctanh: _UFunc_Nin1_Nout1[L['arctanh'], L[8], None]
 bitwise_and: _UFunc_Nin2_Nout1[L['bitwise_and'], L[12], L[-1]]
+bitwise_count: _UFunc_Nin1_Nout1[L['bitwise_count'], L[11], None]
 bitwise_not: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
 bitwise_or: _UFunc_Nin2_Nout1[L['bitwise_or'], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L['bitwise_xor'], L[12], L[0]]

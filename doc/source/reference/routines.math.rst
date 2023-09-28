@@ -181,3 +181,5 @@ Miscellaneous
    real_if_close
 
    interp
+
+   bitwise_count

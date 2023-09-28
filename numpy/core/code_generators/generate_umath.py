@@ -1122,6 +1122,13 @@ defdict = {
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
+'bitwise_count':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.bitwise_count'),
+          None,
+          TD(ints, dispatch=[('loops_autovec', ints)], out='B'),
+          TD(P, f='bit_count'),
+          ),
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),

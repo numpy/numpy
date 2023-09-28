@@ -4214,3 +4214,41 @@ add_newdoc('numpy.core.umath', 'lcm',
     array([ 0, 20, 20, 60, 20, 20])
 
     """)
+
+add_newdoc('numpy.core.umath', 'bitwise_count',
+    """
+    Computes the number of 1-bits in the absolute value of ``x``.
+    Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
+
+    Parameters
+    ----------
+    x : array_like, unsigned int
+        Input array.
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        The corresponding number of 1-bits in the input.
+        Returns uint8 for all integer types
+        $OUT_SCALAR_1
+
+    References
+    ----------
+    .. [1] https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+
+    .. [2] Wikipedia, "Hamming weight",
+           https://en.wikipedia.org/wiki/Hamming_weight
+
+    .. [3] http://aggregate.ee.engr.uky.edu/MAGIC/#Population%20Count%20(Ones%20Count)
+
+    Examples
+    --------
+    >>> np.bitwise_count(1023)
+    10
+    >>> a = np.array([2**i - 1 for i in range(16)])
+    >>> np.bitwise_count(a)
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
+          dtype=uint8)
+
+    """)

@@ -678,7 +678,6 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
 /**end repeat1**/
 /**end repeat**/
 
-
 #define __popcnt32 __popcnt
 /**begin repeat
  *
