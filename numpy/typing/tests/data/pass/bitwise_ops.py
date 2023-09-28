@@ -63,11 +63,11 @@ u8 | u8
 u8 ^ u8
 u8 & u8
 
-u8 << AR
-u8 >> AR
-u8 | AR
-u8 ^ AR
-u8 & AR
+i << AR
+i >> AR
+i | AR
+i ^ AR
+i & AR
 
 u4 << u4
 u4 >> u4
