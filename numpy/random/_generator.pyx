@@ -4229,7 +4229,7 @@ cdef class Generator:
             elif colors.size > 0 and not np.issubdtype(colors.dtype,
                                                        np.integer):
                 invalid_colors = True
-            elif np.any((colors < 0) | (colors > INT64_MAX)):
+            elif np.any((colors < 0) | (colors > np.int64(INT64_MAX))):
                 invalid_colors = True
         except ValueError:
             invalid_colors = True
