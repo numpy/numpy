@@ -1364,14 +1364,23 @@ class TestPickling:
 
     @pytest.mark.parametrize("DType",
         [type(np.dtype(t)) for t in np.typecodes['All']] +
-        [np.dtype(rational), np.dtype])
-    def test_pickle_types(self, DType):
-        # Check that DTypes (the classes/types) roundtrip when pickling and
-        # that pickling doesn't change the hash value
-        pre_pickle_hash = hash(DType)
+        [type(np.dtype(rational))])
+    def test_pickle_metaclasses(self, DType):
+        # Check that DTypes (the classes/types) roundtrip when pickling
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
             assert roundtrip_DType is DType
+
+    @pytest.mark.parametrize("DType",
+        [np.dtype(t) for t in np.typecodes['All']] +
+        [np.dtype(rational), np.dtype])
+    def test_pickle_types(self, DType):
+        # Check that DTypes (the instances) roundtrip when pickling and that
+        # pickling doesn't change the hash value
+        pre_pickle_hash = hash(DType)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
+            assert roundtrip_DType == DType
             assert hash(DType) == pre_pickle_hash
 
 
