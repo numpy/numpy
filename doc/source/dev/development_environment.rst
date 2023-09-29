@@ -238,6 +238,23 @@ Most python builds do not include debug symbols and are built with compiler
 optimizations enabled. To get the best debugging experience using a debug build
 of Python is encouraged, see :ref:`advanced_debugging`.
 
+In terms of debugging, NumPy also needs to be built in a debug mode. You need to use
+``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
+during object building. To generate source-level debug information within the build process run::
+
+    $ CFLAGS="-O0 -g" CXXFLAGS="-O0 -g" spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
+
+.. note::
+
+    In case you are using conda environment be aware that conda sets ``CFLAGS``
+    and ``CXXFLAGS`` automatically, and they will include the ``-O2`` flag by default.
+    To take control of these variables in conda, you can create ``env_vars.sh``
+    file in the ``<path-to-conda-envs>/numpy-dev/etc/conda/activate.d`` directory.
+    In this file you can export ``CFLAGS`` and ``CXXFLAGS`` variables.
+    For complete instructions please refer to
+    https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables.
+
+
 Next you need to write a Python script that invokes the C code whose execution
 you want to debug. For instance ``mytest.py``::
 
@@ -249,9 +266,18 @@ Now, you can run::
 
     $ spin gdb mytest.py
 
+In case you are using clang toolchain::
+
+    $ lldb python mytest.py
+
 And then in the debugger::
 
     (gdb) break array_empty_like
+    (gdb) run
+
+lldb counterpart::
+
+    (gdb) breakpoint set --name array_empty_like
     (gdb) run
 
 The execution will now stop at the corresponding C function and you can step
