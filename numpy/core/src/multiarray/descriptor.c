@@ -1851,7 +1851,10 @@ _convert_from_str(PyObject *obj, int align)
                 strcmp(type, "str0") == 0 || strcmp(type, "bytes0") == 0 ||
                 strcmp(type, "bool8") == 0
             ) {
-                goto expired_alias_fail;
+                PyErr_Format(PyExc_TypeError,
+                        "Alias %R was removed in NumPy 2.0. Use a name "
+                        "without a digit at the end.", obj);
+                return NULL;
             }
             goto fail;
         }
@@ -1882,10 +1885,6 @@ _convert_from_str(PyObject *obj, int align)
     }
     return ret;
 
-expired_alias_fail:
-    PyErr_Format(PyExc_TypeError, "Alias %R was removed in NumPy 2.0. Use "
-                                  "a name without a digit at the end.", obj);
-    return NULL;
 fail:
     PyErr_Format(PyExc_TypeError, "data type %R not understood", obj);
     return NULL;
