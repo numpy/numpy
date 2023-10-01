@@ -2236,9 +2236,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     See Also
     --------
     ndarray.sum : Equivalent method.
-
-    add.reduce : Equivalent functionality of `add`.
-
+    add: ``numpy.add.reduce`` equivalent function.
     cumsum : Cumulative sum of array elements.
 
     mean, average

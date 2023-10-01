@@ -5494,11 +5494,6 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
         The dtypes which NumPy would use for the calculation.  Note that
         dtypes may not match the passed in ones (casting is necessary).
 
-    See Also
-    --------
-    numpy.ufunc._resolve_dtypes_and_context :
-        Similar function to this, but returns additional information which
-        give access to the core C functionality of NumPy.
 
     Examples
     --------
@@ -5845,7 +5840,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('flags',
     """
     Bit-flags describing how this data type is to be interpreted.
 
-    Bit-masks are in `numpy.core.multiarray` as the constants
+    Bit-masks are in ``numpy.core.multiarray`` as the constants
     `ITEM_HASOBJECT`, `LIST_PICKLE`, `ITEM_IS_POINTER`, `NEEDS_INIT`,
     `NEEDS_PYAPI`, `USE_GETITEM`, `USE_SETITEM`. A full explanation
     of these flags is in C-API documentation; they are largely useful

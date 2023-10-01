@@ -125,7 +125,7 @@ class format_parser:
 
     See Also
     --------
-    dtype, typename
+    numpy.dtype, numpy.typename
 
     Examples
     --------
@@ -369,7 +369,7 @@ class recarray(ndarray):
     --------
     core.records.fromrecords : Construct a record array from data.
     record : fundamental data-type for `recarray`.
-    format_parser : determine a data-type from formats, names, titles.
+    numpy.rec.format_parser : determine a data-type from formats, names, titles.
 
     Notes
     -----
