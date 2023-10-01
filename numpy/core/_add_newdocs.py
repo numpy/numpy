@@ -4137,7 +4137,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     >>> a = np.array([3, 4, 2, 1])
     >>> a.partition(3)
     >>> a
-    array([2, 1, 3, 4])
+    array([2, 1, 3, 4]) # may vary
 
     >>> a.partition((1, 3))
     >>> a
