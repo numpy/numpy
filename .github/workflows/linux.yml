@@ -73,10 +73,10 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: 'pypy3.9-v7.3.12'
-    - name: Install system dependencies
+    - name: Setup using scipy-openblas
       run: |
-        sudo apt-get update
-        sudo apt-get install libopenblas-dev ninja-build
+        python -m pip install scipy-openblas32 spin
+        spin config-openblas --with-scipy-openblas=32
     - uses: ./.github/meson_actions
 
   debug:
@@ -124,14 +124,13 @@ jobs:
       run: |
         pip install -r build_requirements.txt
         pip install -r test_requirements.txt
-    - name: Install gfortran and OpenBLAS (MacPython build)
+    - name: Install gfortran and setup OpenBLAS (MacPython build)
       run: |
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        target=$(python tools/openblas_support.py)
-        sudo cp -r $target/lib/* /usr/lib
-        sudo cp $target/include/* /usr/include
+        pip install scipy-openblas32
+        spin config-openblas --with-scipy-openblas=32
     - name: Build a wheel
       run: |
         python -m build --wheel --no-isolation --skip-dependency-check
@@ -185,17 +184,17 @@ jobs:
     - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: '3.11'
-    - name: Install gfortran and OpenBLAS (MacPython build)
+    - name: Install gfortran and setup OpenBLAS (MacPython build)
       run: |
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        target=$(python tools/openblas_support.py)
-        sudo cp -r $target/lib/* /usr/lib
-        sudo cp $target/include/* /usr/include
+        pip install scipy-openblas32 spin
+        spin config-openblas --with-scipy-openblas=32
     - name: Build a wheel via an sdist
       run: |
         pip install build
+        export PKG_CONFIG_PATH=${PWD}/.openblas
         python -m build
         pip install dist/numpy*.whl
     - name: Install test dependencies

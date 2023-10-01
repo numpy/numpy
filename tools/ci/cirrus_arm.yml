@@ -52,9 +52,6 @@ linux_aarch64_test_task:
     echo "PATH=$PATH" >> $CIRRUS_ENV
     echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
 
-    # required for figuring out the system tags in openblas_support
-    pip install packaging
-
     pip install -r build_requirements.txt
     pip install -r test_requirements.txt
 
@@ -97,10 +94,6 @@ macos_arm64_test_task:
     RUNNER_OS="macOS"
     SDKROOT=/Applications/Xcode-14.0.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
     
-    # NOTE: OpenBLAS is not used in this job; if that's done in the future, ensure
-    # PKG_CONFIG_PATH points to the directory containing the openblas.pc file
-    # that's installed with the cibw_before_build.sh command.
-    # used for installing OpenBLAS/gfortran
     bash tools/wheels/cibw_before_build.sh $PWD
 
     pushd ~/

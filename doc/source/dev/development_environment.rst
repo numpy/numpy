@@ -66,6 +66,10 @@ Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
 virtual environment and back to your previous shell.
 
+Building from source
+--------------------
+
+See building-from-source_
 
 .. _testing-builds:
 

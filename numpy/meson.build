@@ -92,12 +92,18 @@ lapack_name = get_option('lapack')
 # pkg-config uses a lower-case name while CMake uses a capitalized name, so try
 # that too to make the fallback detection with CMake work
 if blas_name == 'openblas'
-  if use_ilp64
-    _openblas_names = ['openblas64', 'openblas', 'OpenBLAS']
+  # first try scipy-openblas, and if found don't look for cblas or lapack
+  blas = dependency('scipy-openblas', required: false)
+  if blas.found()
+    blas_name = 'scipy-openblas'
   else
-    _openblas_names = ['openblas', 'OpenBLAS']
-  endif
+    if use_ilp64
+      _openblas_names = ['openblas64', 'openblas', 'OpenBLAS']
+    else
+      _openblas_names = ['openblas', 'OpenBLAS']
+    endif
   blas = dependency(_openblas_names, required: false)
+  endif
 elif blas_name.to_lower() == 'accelerate'
   # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
   if macOS13_3_or_later
@@ -144,7 +150,9 @@ if have_blas
   else
     _cblas_header = '<cblas.h>'
   endif
-  if cc.links(f'''
+  if blas_name == 'scipy-openblas'
+    have_cblas = true
+  elif cc.links(f'''
       #ifndef BLAS_SYMBOL_SUFFIX
       #  define BLAS_SYMBOL_SUFFIX
       #endif
@@ -229,6 +237,8 @@ elif lapack_name.to_lower() == 'accelerate'
     endif
     lapack_dep = dependency('Accelerate')
   endif
+elif blas_name == 'scipy-openblas'
+  lapac_dep = dependency('scipy-openblas', required: false)
 else
   lapack_dep = dependency(lapack_name, required: false)
 endif
@@ -265,6 +275,10 @@ python_sources = [
   'matlib.py',
   'py.typed'
 ]
+
+if blas_name == 'scipy-openblas'
+  python_sources += ['_distributor_init_local.py']
+endif
 
 py.install_sources(
   python_sources,
