@@ -49,6 +49,8 @@ jobs:
         ln -s /usr/local/bin/python3.10 /usr/local/bin/python
 
     - name: test-musllinux_x86_64
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         python -m venv test_env
         source test_env/bin/activate

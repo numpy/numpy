@@ -76,7 +76,7 @@ stages:
             python3 -m pip install ninja scipy-openblas32 spin && \
             python3 -m pip install -r test_requirements.txt && \
             echo CFLAGS \$CFLAGS && \
-            spin openblas-config --with-scipy-openblas=32 && \
+            spin config-openblas --with-scipy-openblas=32 && \
             export PKG_CONFIG_PATH=/numpy/.openblas && \
             python3 -m pip install  . && \
             cd tools && \

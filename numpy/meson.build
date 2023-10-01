@@ -218,7 +218,9 @@ else
   endif
 endif
 
-if lapack_name == 'openblas'
+if blas_name == 'scipy-openblas'
+  lapack_dep = dependency('scipy-openblas', required: false)
+elif lapack_name == 'openblas'
   lapack_dep = dependency(['openblas', 'OpenBLAS'], required: false)
 elif lapack_name.to_lower() == 'accelerate'
   # macOS 13.3+ has updated interfaces aligned with BLAS/LAPACK 3.9.1.  Use them if available.
@@ -237,8 +239,6 @@ elif lapack_name.to_lower() == 'accelerate'
     endif
     lapack_dep = dependency('Accelerate')
   endif
-elif blas_name == 'scipy-openblas'
-  lapac_dep = dependency('scipy-openblas', required: false)
 else
   lapack_dep = dependency(lapack_name, required: false)
 endif

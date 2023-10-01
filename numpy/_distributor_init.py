@@ -7,6 +7,6 @@ For example, this is a good place to put any BLAS/LAPACK initialization code.
 """
 
 try:
-    import _distributor_init_local
-except ModuleNotFoundError:
+    from . import _distributor_init_local
+except ImportError:
     pass

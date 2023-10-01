@@ -60,7 +60,7 @@ def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=
     """
     # XXX keep in sync with upstream build
     if with_scipy_openblas:
-        _config_openblas(ctx, with_scipy_openblas)
+        _config_openblas(with_scipy_openblas)
     ctx.params.pop("with_scipy_openblas", None)
     ctx.forward(meson.build)
 

@@ -132,6 +132,8 @@ jobs:
         pip install scipy-openblas32
         spin config-openblas --with-scipy-openblas=32
     - name: Build a wheel
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         python -m build --wheel --no-isolation --skip-dependency-check
         pip install dist/numpy*.whl

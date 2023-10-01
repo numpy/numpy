@@ -48,12 +48,16 @@ jobs:
 
     - name: Install NumPy (MSVC)
       if: matrix.compiler == 'MSVC'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         python -m pip install scipy-openblas32
         spin build --with-scipy-openblas=32 -j2 -- --vsenv
 
     - name: Install NumPy (Clang-cl)
       if: matrix.compiler == 'Clang-cl'
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
         python -m pip install scipy-openblas32
