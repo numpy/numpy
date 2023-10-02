@@ -87,7 +87,7 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     }
     #if !DISABLE_HIGHWAY_OPTIMIZATION
     else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-        #if !defined(NPY_DISABLE_OPTIMIZATION)
+        #ifndef NPY_DISABLE_OPTIMIZATION
             #include "simd_qsort.dispatch.h"
         #endif
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
