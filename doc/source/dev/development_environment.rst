@@ -242,15 +242,17 @@ In terms of debugging, NumPy also needs to be built in a debug mode. You need to
 ``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
 during object building. To generate source-level debug information within the build process run::
 
-    $ CFLAGS="-O0 -g" CXXFLAGS="-O0 -g" spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
+    $ spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
 
 .. note::
 
     In case you are using conda environment be aware that conda sets ``CFLAGS``
     and ``CXXFLAGS`` automatically, and they will include the ``-O2`` flag by default.
-    To take control of these variables in conda, you can create ``env_vars.sh``
-    file in the ``<path-to-conda-envs>/numpy-dev/etc/conda/activate.d`` directory.
-    In this file you can export ``CFLAGS`` and ``CXXFLAGS`` variables.
+    You can safely use ``unset CFLAGS && unset CXXFLAGS`` to avoid them or provide them
+    at the beginning of the ``spin`` command: ``CFLAGS="-O0 -g" CXXFLAGS="-O0 -g"``.
+    Alternatively, to take control of these variables more permanently, you can create
+    ``env_vars.sh`` file in the ``<path-to-conda-envs>/numpy-dev/etc/conda/activate.d``
+    directory. In this file you can export ``CFLAGS`` and ``CXXFLAGS`` variables.
     For complete instructions please refer to
     https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables.
 
@@ -277,8 +279,8 @@ And then in the debugger::
 
 lldb counterpart::
 
-    (gdb) breakpoint set --name array_empty_like
-    (gdb) run
+    (lldb) breakpoint set --name array_empty_like
+    (lldb) run
 
 The execution will now stop at the corresponding C function and you can step
 through it as usual. A number of useful Python-specific commands are available.
