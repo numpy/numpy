@@ -167,6 +167,8 @@ def assert_equal(
     desired: object,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def print_assert_equal(
