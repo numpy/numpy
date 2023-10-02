@@ -129,6 +129,10 @@ string_isalpha(int len, const character *str)
         len = string_rstrip(len, str);
     }
 
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
     for (int i = 0; i < len; i++) {
         npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*str);
         if (!isalpha) {

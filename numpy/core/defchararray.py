@@ -2093,6 +2093,14 @@ class chararray(ndarray):
         _globalvar = 0
         return self
 
+    def __array_prepare__(self, arr, context=None):
+        if arr.dtype.char in "US":
+            return arr.view(type(self))
+        return arr
+
+    def __array_wrap__(self, arr, context=None):
+        return arr
+
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
         if not _globalvar and self.dtype.char not in 'SUbc':
