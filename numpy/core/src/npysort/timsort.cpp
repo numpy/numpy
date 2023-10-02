@@ -1010,7 +1010,7 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun, type *vp,
            size_t len)
 {
     npy_intp sz;
-    type *pl, *pi, *pj, *pr;
+    type *pl, *pi, *pj, *pr, *lo, *hi, *mid;
 
     if (NPY_UNLIKELY(num - l == 1)) {
         return 1;
@@ -1053,8 +1053,19 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun, type *vp,
         for (; pi < pr; pi += len) {
             Tag::copy(vp, pi, len);
             pj = pi;
+            lo = pl;
+            hi = pi;
 
-            while (pl < pj && Tag::less(vp, pj - len, len)) {
+            while(lo < hi) {
+                mid = lo + (hi - lo) / 2;
+                if (Tag::less(vp, mid, len)) {
+                    hi = mid;
+                } else {
+                    lo = mid + len;
+                }
+            }
+
+            while(pj > lo) {
                 Tag::copy(pj, pj - len, len);
                 pj -= len;
             }
@@ -1447,7 +1458,7 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
 {
     npy_intp sz;
     npy_intp vi;
-    npy_intp *pl, *pi, *pj, *pr;
+    npy_intp *pl, *pi, *pj, *pr, *lo, *hi, *mid;
 
     if (NPY_UNLIKELY(num - l == 1)) {
         return 1;
@@ -1492,9 +1503,19 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
         for (; pi < pr; ++pi) {
             vi = *pi;
             pj = pi;
+            lo = pl;
+            hi = pi;
 
-            while (pl < pj &&
-                   Tag::less(arr + vi * len, arr + (*(pj - 1)) * len, len)) {
+            while(lo < hi) {
+                mid = lo + (hi - lo) / 2;
+                if (Tag::less(arr + vi * len, arr + (*mid) * len, len)) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            
+            while(pj > lo) {
                 *pj = *(pj - 1);
                 --pj;
             }
@@ -1903,7 +1924,7 @@ npy_count_run(char *arr, npy_intp l, npy_intp num, npy_intp minrun, char *vp,
               size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
 {
     npy_intp sz;
-    char *pl, *pi, *pj, *pr;
+    char *pl, *pi, *pj, *pr, *lo, *hi, *mid;
 
     if (NPY_UNLIKELY(num - l == 1)) {
         return 1;
@@ -1946,8 +1967,19 @@ npy_count_run(char *arr, npy_intp l, npy_intp num, npy_intp minrun, char *vp,
         for (; pi < pr; pi += len) {
             GENERIC_COPY(vp, pi, len);
             pj = pi;
+            lo = pl;
+            hi = pi;
 
-            while (pl < pj && cmp(vp, pj - len, py_arr) < 0) {
+            while(lo < hi) {
+                mid = lo + (hi - lo) / 2;
+                if (cmp(vp, mid, py_arr) < 0) {
+                    hi = mid;
+                } else {
+                    lo = mid + len;
+                }
+            }
+
+            while(pj > lo) {
                 GENERIC_COPY(pj, pj - len, len);
                 pj -= len;
             }
@@ -2339,7 +2371,7 @@ npy_acount_run(char *arr, npy_intp *tosort, npy_intp l, npy_intp num,
 {
     npy_intp sz;
     npy_intp vi;
-    npy_intp *pl, *pi, *pj, *pr;
+    npy_intp *pl, *pi, *pj, *pr, *lo, *hi, *mid;
 
     if (NPY_UNLIKELY(num - l == 1)) {
         return 1;
@@ -2384,9 +2416,19 @@ npy_acount_run(char *arr, npy_intp *tosort, npy_intp l, npy_intp num,
         for (; pi < pr; ++pi) {
             vi = *pi;
             pj = pi;
+            lo = pl;
+            hi = pi;
 
-            while (pl < pj &&
-                   cmp(arr + vi * len, arr + (*(pj - 1)) * len, py_arr) < 0) {
+            while(lo < hi) {
+                mid = lo + (hi - lo) / 2;
+                if (cmp(arr + vi * len, arr + (*mid) * len, py_arr) < 0) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+
+            while(pj > lo) {
                 *pj = *(pj - 1);
                 --pj;
             }
