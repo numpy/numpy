@@ -688,5 +688,5 @@ def test_add_types(dt1, dt2):
     # If the following fails, e.g. use a number and test "V" explicitly
     arr2 = np.array([b"423"], dtype=dt2)
     with pytest.raises(TypeError,
-            match=f".*same dtype kind.*{arr1.dtype}.*{arr2.dtype}"):
+            match=f"ufunc 'add' cannot use operands.*{arr1.dtype.char}.*{arr2.dtype.char}"):
         np.char.add(arr1, arr2)

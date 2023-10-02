@@ -761,12 +761,26 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
     /* Use the default when datetime and timedelta are not involved */
-    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)
+        && !PyTypeNum_ISSTRING(type_num1) && !PyTypeNum_ISSTRING(type_num2)) {
         return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
     }
 
-    if (type_num1 == NPY_TIMEDELTA) {
+    if ((type_num1 == NPY_STRING && type_num2 == NPY_STRING)
+            || (type_num1 == NPY_UNICODE && type_num2 == NPY_UNICODE)) {
+        out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                             PyArray_DESCR(operands[1]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = out_dtypes[0];
+        Py_INCREF(out_dtypes[2]);
+    } else if (PyTypeNum_ISSTRING(type_num1) || PyTypeNum_ISSTRING(type_num2)) {
+        return raise_binary_type_reso_error(ufunc, operands);
+    } else if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
             out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),

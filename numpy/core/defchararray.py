@@ -319,22 +319,8 @@ def add(x1, x2):
         of the same shape as `x1` and `x2`.
 
     """
-    arr1 = numpy.asarray(x1)
-    arr2 = numpy.asarray(x2)
-    out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
+    return numpy.add(x1, x2)
 
-    if type(arr1.dtype) != type(arr2.dtype):
-        # Enforce this for now.  The solution to it will be implement add
-        # as a ufunc.  It never worked right on Python 3: bytes + unicode gave
-        # nonsense unicode + bytes errored, and unicode + object used the
-        # object dtype itemsize as num chars (worked on short strings).
-        # bytes + void worked but promoting void->bytes is dubious also.
-        raise TypeError(
-            "np.char.add() requires both arrays of the same dtype kind, but "
-            f"got dtypes: '{arr1.dtype}' and '{arr2.dtype}' (the few cases "
-            "where this used to work often lead to incorrect results).")
-
-    return _vec_string(arr1, type(arr1.dtype)(out_size), '__add__', (arr2,))
 
 def _multiply_dispatcher(a, i):
     return (a,)
@@ -2195,7 +2181,7 @@ class chararray(ndarray):
         --------
         add
         """
-        return asarray(add(self, other))
+        return add(self, other)
 
     def __radd__(self, other):
         """
@@ -2206,7 +2192,7 @@ class chararray(ndarray):
         --------
         add
         """
-        return asarray(add(numpy.asarray(other), self))
+        return add(other, self)
 
     def __mul__(self, i):
         """
