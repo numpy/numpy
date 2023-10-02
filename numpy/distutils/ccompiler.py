@@ -382,7 +382,7 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     cmd : class instance
         An instance inheriting from `distutils.cmd.Command`.
     ignore : sequence of str, optional
-        List of `CCompiler` commands (without ``'set_'``) that should not be
+        List of ``distutils.ccompiler.CCompiler`` commands (without ``'set_'``) that should not be
         altered. Strings that are checked for are:
         ``('include_dirs', 'define', 'undef', 'libraries', 'library_dirs',
         'rpath', 'link_objects')``.
@@ -581,7 +581,7 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
     -------
     matcher : callable
         A function that is appropriate to use as the ``.version_match``
-        attribute of a `CCompiler` class. `matcher` takes a single parameter,
+        attribute of a ``distutils.ccompiler.CCompiler`` class. `matcher` takes a single parameter,
         a version string.
 
     """
@@ -623,7 +623,7 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
     Returns
     -------
     version : str or None
-        Version string, in the format of `distutils.version.LooseVersion`.
+        Version string, in the format of ``distutils.version.LooseVersion``.
 
     """
     if not force and hasattr(self, 'version'):
@@ -686,7 +686,7 @@ def CCompiler_cxx_compiler(self):
     Returns
     -------
     cxx : class instance
-        The C++ compiler, as a `CCompiler` instance.
+        The C++ compiler, as a ``distutils.ccompiler.CCompiler`` instance.
 
     """
     if self.compiler_type in ('msvc', 'intelw', 'intelemw'):
