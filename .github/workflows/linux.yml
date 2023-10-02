@@ -191,12 +191,12 @@ jobs:
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        pip install scipy-openblas32 spin
-        spin config-openblas --with-scipy-openblas=32
+        target=$(python tools/openblas_support.py)
+        sudo cp -r $target/lib/* /usr/lib
+        sudo cp $target/include/* /usr/include
     - name: Build a wheel via an sdist
       run: |
         pip install build
-        export PKG_CONFIG_PATH=${PWD}/.openblas
         python -m build
         pip install dist/numpy*.whl
     - name: Install test dependencies
