@@ -2099,6 +2099,8 @@ class chararray(ndarray):
         return arr
 
     def __array_wrap__(self, arr, context=None):
+        if arr.dtype.char in "US":
+            return arr.view(type(self))
         return arr
 
     def __array_finalize__(self, obj):
