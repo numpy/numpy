@@ -237,12 +237,12 @@ def extract_tarfile_to(tarfileobj, target_path, archive_path):
 
 def make_init(dirname):
     '''
-    Create a _distributor_init_local.py file for OpenBlas
+    Create a _distributor_init.py file for OpenBlas
 
     Obsoleted by the use of delvewheel in wheel building, which
     adds an equivalent snippet to numpy/__init__.py, but still useful in CI
     '''
-    with open(os.path.join(dirname, '_distributor_init_local.py'), 'w') as fid:
+    with open(os.path.join(dirname, '_distributor_init.py'), 'w') as fid:
         fid.write(textwrap.dedent("""
             '''
             Helper to preload windows dlls to prevent dll not found errors.
