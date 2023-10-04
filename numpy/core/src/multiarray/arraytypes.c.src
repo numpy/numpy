@@ -4724,8 +4724,6 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
-    _letter_to_num[NPY_STRINGLTR2] = NPY_STRING;
-
     /**begin repeat
       * #name = BOOL,
       *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,

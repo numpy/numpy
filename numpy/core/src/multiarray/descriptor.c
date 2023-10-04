@@ -1792,7 +1792,6 @@ _convert_from_str(PyObject *obj, int align)
             kind = type[0];
             switch (kind) {
                 case NPY_STRINGLTR:
-                case NPY_STRINGLTR2:
                     check_num = NPY_STRING;
                     break;
 
