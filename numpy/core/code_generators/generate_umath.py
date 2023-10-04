@@ -1137,6 +1137,11 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'isalpha' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.isalpha'),
+          None,
+          )
 }
 
 def indent(st, spaces):

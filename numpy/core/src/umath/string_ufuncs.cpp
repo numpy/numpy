@@ -223,19 +223,20 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
 
 template <bool rstrip, typename character>
-static void
-string_isalpha_loop(char **args, npy_intp const *dimensions,
-                    npy_intp const *steps, void *NPY_UNUSED(extra))
+static int
+string_isalpha_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     /*
      * Note, fetching `elsize` from the descriptor is OK even without the GIL,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int len = steps[0] / sizeof(character);
+    int len = context->descriptors[0]->elsize / sizeof(character);
 
-    char *in = args[0];
-    char *out = args[1];
+    char *in = data[0];
+    char *out = data[1];
 
     npy_intp N = dimensions[0];
 
@@ -243,9 +244,11 @@ string_isalpha_loop(char **args, npy_intp const *dimensions,
         npy_bool res = string_isalpha<rstrip>(len, (character *) in);
         *(npy_bool *)out = res;
 
-        in += steps[0];
-        out += steps[1];
+        in += strides[0];
+        out += strides[1];
     }
+
+    return 0;
 }
 
 
@@ -302,13 +305,9 @@ struct add_loops<rstrip, character, comp, comps...> {
     }
 };
 
-PyUFuncGenericFunction isalpha_funcs[2] = {&string_isalpha_loop<false, npy_byte>, &string_isalpha_loop<false, npy_ucs4>};
-static char isalpha_types[4] = {NPY_STRING, NPY_BOOL,
-                                NPY_UNICODE, NPY_BOOL};
 
-
-NPY_NO_EXPORT int
-init_string_ufuncs(PyObject *umath)
+static int
+init_comparison(PyObject *umath)
 {
     int res = -1;
     /* NOTE: This should receive global symbols? */
@@ -326,8 +325,6 @@ init_string_ufuncs(PyObject *umath)
         {NPY_METH_strided_loop, nullptr},
         {0, nullptr}
     };
-
-    PyObject *new_ufunc = NULL;
 
     PyArrayMethod_Spec spec = {};
     spec.name = "templated_string_comparison";
@@ -351,13 +348,53 @@ init_string_ufuncs(PyObject *umath)
         goto finish;
     }
 
-    /* Create isalpha ufunc */
-    new_ufunc = PyUFunc_FromFuncAndData(isalpha_funcs, NULL, isalpha_types, 2, 1, 1, PyUFunc_None, "isalpha", "templated_isalpha", 0);
-    if (PyDict_SetItemString(umath, "isalpha", new_ufunc) < 0) {
-        Py_DECREF(new_ufunc);
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+static int
+init_isalpha(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isalpha";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<false, npy_byte>) < 0) {
         goto finish;
     }
-    Py_DECREF(new_ufunc);
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<false, npy_ucs4>) < 0) {
+        goto finish;
+    }
 
     res = 0;
   finish:
@@ -365,6 +402,21 @@ init_string_ufuncs(PyObject *umath)
     Py_DECREF(Unicode);
     Py_DECREF(Bool);
     return res;
+}
+
+
+NPY_NO_EXPORT int
+init_string_ufuncs(PyObject *umath)
+{
+    if (init_comparison(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isalpha(umath) < 0) {
+        return -1;
+    }
+
+    return 0;
 }
 
 

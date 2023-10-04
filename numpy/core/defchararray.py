@@ -21,7 +21,6 @@ from .._utils import set_module
 from .numerictypes import (
     bytes_, str_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, array as narray
-from numpy.core import multiarray
 from numpy.core.multiarray import _vec_string, compare_chararrays
 from numpy.core import overrides
 from numpy._utils import asbytes
@@ -863,7 +862,7 @@ def isalpha(a):
     --------
     str.isalpha
     """
-    return multiarray.isalpha(a)
+    return numpy.core.umath.isalpha(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
