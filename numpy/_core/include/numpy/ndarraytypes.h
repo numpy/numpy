@@ -120,13 +120,14 @@ enum NPY_TYPECHAR {
         NPY_CHARLTR = 'c',
 
         /*
-         * No Descriptor, just a define -- this let's
-         * Python users specify an array of integers
-         * large enough to hold a pointer on the
-         * platform
+         * Note, we removed `NPY_INTPLTR` due to changing its definition
+         * to 'n', rather than 'p'.  On any typical platform this is the
+         * same integer.  'n' should be used for the `np.intp` with the same
+         * size as `size_t` while 'p' remains pointer sized.
+         *
+         * 'p', 'P', 'n', and 'N' are valid and defined explicitly
+         * in `arraytypes.c.src`.
          */
-        NPY_INTPLTR = 'p',
-        NPY_UINTPLTR = 'P',
 
         /*
          * These are for dtype 'kinds', not dtype 'typecodes'

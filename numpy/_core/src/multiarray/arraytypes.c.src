@@ -4711,7 +4711,6 @@ set_typeinfo(PyObject *dict)
      *
      * #name = BOOL,
      *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-     *         INTP, UINTP,
      *         LONG, ULONG, LONGLONG, ULONGLONG,
      *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
      *         CFLOAT, CDOUBLE, CLONGDOUBLE,
@@ -4722,6 +4721,18 @@ set_typeinfo(PyObject *dict)
     _letter_to_num[NPY_@name@LTR] = NPY_@name@;
 
     /**end repeat**/
+    _letter_to_num['n'] = NPY_INTP;
+    _letter_to_num['N'] = NPY_UINTP;
+
+#if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INTP
+    _letter_to_num['p'] = NPY_INTP;
+    _letter_to_num['P'] = NPY_UINTP;
+#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG
+    _letter_to_num['p'] = NPY_LONGLONG;
+    _letter_to_num['P'] = NPY_ULONGLONG;
+#else
+    #error "Did not find correct pointer sized integer."
+#endif
 
     /**begin repeat
       * #name = BOOL,

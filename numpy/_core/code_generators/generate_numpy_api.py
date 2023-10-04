@@ -82,6 +82,17 @@ _import_array(void)
   }
 
   /*
+   * On exceedingly few platforms these sizes may not match, in which case
+   * We do not support older NumPy versions at all.
+   */
+  if (sizeof(Py_ssize_t) != sizeof(Py_intptr_t) &&
+        PyArray_GetNDArrayCFeatureVersion() < NPY_2_0_API_VERSION) {
+    PyErr_Format(PyExc_RuntimeError,
+        "module compiled against NumPy 2.0 but running on NumPy 1.x. "
+        "Unfortunately, this is not supported on niche platforms where "
+        "`sizeof(size_t) != sizeof(inptr_t)`.");
+  }
+  /*
    * Perform runtime check of C API version.  As of now NumPy 2.0 is ABI
    * backwards compatible (in the exposed feature subset!) for all practical
    * purposes.
