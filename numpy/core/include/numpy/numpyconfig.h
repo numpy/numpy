@@ -119,12 +119,15 @@
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /* NumPy internal build, always use current version. */
     #define NPY_FEATURE_VERSION NPY_API_VERSION
+    #pragma message "NumPy internal build. Setting NPY_FEATURE_VERSION to " NPY_FEATURE_VERSION
 #elif defined(NPY_TARGET_VERSION) && NPY_TARGET_VERSION
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
+    #pragma message "NPY_FEATURE_VERSION set to " NPY_FEATURE_VERSION
 #else
     /* Use the default (increase when dropping Python 3.9 support) */
     #define NPY_FEATURE_VERSION NPY_1_19_API_VERSION
+    #pragma message "NPY_FEATURE_VERSION not set so using " NPY_FEATURE_VERSION
 #endif
 
 /* Sanity check the (requested) feature version */
