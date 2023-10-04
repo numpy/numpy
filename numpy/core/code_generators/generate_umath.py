@@ -35,9 +35,6 @@ class docstrings:
 class FullTypeDescr:
     pass
 
-class EmptyFunctionTypeDescr:
-    pass
-
 class FuncNameSuffix:
     """Stores the suffix to append when generating functions names.
     """
@@ -100,7 +97,7 @@ def _check_order(types1, types2):
     dtype_order = allP + "O"
     for t1, t2 in zip(types1, types2):
         # We have no opinion on object or time ordering for now:
-        if t1 in "OPSU" or t2 in "OPSU":
+        if t1 in "OP" or t2 in "OP":
             return True
         if t1 in "mM" or t2 in "mM":
             return True
@@ -303,8 +300,6 @@ all = '?bBhHiIlLqQefdgFDGOmM'
 
 O = 'O'
 P = 'P'
-S = 'S'
-U = 'U'
 ints = 'bBhHiIlLqQ'
 sints = 'bhilq'
 uints = 'BHILQ'
@@ -1144,12 +1139,10 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
-'isalpha' :
+'isalpha':
     Ufunc(1, 1, False_,
           docstrings.get('numpy.core.umath.isalpha'),
           None,
-          [TypeDescription(U, EmptyFunctionTypeDescr, U, '?'),
-           TypeDescription(S, EmptyFunctionTypeDescr, S, '?')],
           )
 }
 
@@ -1200,6 +1193,7 @@ def make_arrays(funcdict):
     # later
     code1list = []
     code2list = []
+    empty = set()
     dispdict  = {}
     names = sorted(funcdict.keys())
     for name in names:
@@ -1220,9 +1214,6 @@ def make_arrays(funcdict):
                     cfunc_fname = f"{tname}_{t.in_}_bool_{cfunc_alias}"
                 else:
                     cfunc_fname = f"{tname}_{t.in_}_{t.out}_{cfunc_alias}"
-            elif t.func_data is EmptyFunctionTypeDescr:
-                datalist.append('(void *)NULL')
-                tname = english_upper(chartoname[t.type])
             elif isinstance(t.func_data, FuncNameSuffix):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
@@ -1275,15 +1266,18 @@ def make_arrays(funcdict):
 
             k += 1
 
-        funcnames = ', '.join(funclist)
-        signames = ', '.join(siglist)
-        datanames = ', '.join(datalist)
-        code1list.append("static PyUFuncGenericFunction %s_functions[] = {%s};"
-                         % (name, funcnames))
-        code1list.append("static void * %s_data[] = {%s};"
-                         % (name, datanames))
-        code1list.append("static char %s_signatures[] = {%s};"
-                         % (name, signames))
+        if funclist or siglist or datalist:
+            funcnames = ', '.join(funclist)
+            signames = ', '.join(siglist)
+            datanames = ', '.join(datalist)
+            code1list.append("static PyUFuncGenericFunction %s_functions[] = {%s};"
+                            % (name, funcnames))
+            code1list.append("static void * %s_data[] = {%s};"
+                            % (name, datanames))
+            code1list.append("static char %s_signatures[] = {%s};"
+                            % (name, signames))
+        else:
+            empty.add(name)
 
     for dname, funcs in dispdict.items():
         code2list.append(textwrap.dedent(f"""
@@ -1296,9 +1290,9 @@ def make_arrays(funcdict):
                 NPY_CPU_DISPATCH_TRACE("{ufunc_name}", "{''.join(inout)}");
                 NPY_CPU_DISPATCH_CALL_XB({ufunc_name}_functions[{func_idx}] = {cfunc_name});
             """))
-    return "\n".join(code1list), "\n".join(code2list)
+    return "\n".join(code1list), "\n".join(code2list), empty
 
-def make_ufuncs(funcdict):
+def make_ufuncs(funcdict, empty):
     code3list = []
     names = sorted(funcdict.keys())
     for name in names:
@@ -1308,23 +1302,42 @@ def make_ufuncs(funcdict):
             sig = "NULL"
         else:
             sig = '"{}"'.format(uf.signature)
-        fmt = textwrap.dedent("""\
-            identity = {identity_expr};
-            if ({has_identity} && identity == NULL) {{
-                return -1;
-            }}
-            f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-                {name}_functions, {name}_data, {name}_signatures, {nloops},
-                {nin}, {nout}, {identity}, "{name}",
-                {doc}, 0, {sig}, identity
-            );
-            if ({has_identity}) {{
-                Py_DECREF(identity);
-            }}
-            if (f == NULL) {{
-                return -1;
-            }}
-        """)
+        if name in empty:
+            fmt = textwrap.dedent("""\
+                identity = {identity_expr};
+                if ({has_identity} && identity == NULL) {{
+                    return -1;
+                }}
+                f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+                    NULL, NULL, NULL, {nloops},
+                    {nin}, {nout}, {identity}, "{name}",
+                    {doc}, 0, {sig}, identity
+                );
+                if ({has_identity}) {{
+                    Py_DECREF(identity);
+                }}
+                if (f == NULL) {{
+                    return -1;
+                }}
+            """)
+        else:
+            fmt = textwrap.dedent("""\
+                identity = {identity_expr};
+                if ({has_identity} && identity == NULL) {{
+                    return -1;
+                }}
+                f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+                    {name}_functions, {name}_data, {name}_signatures, {nloops},
+                    {nin}, {nout}, {identity}, "{name}",
+                    {doc}, 0, {sig}, identity
+                );
+                if ({has_identity}) {{
+                    Py_DECREF(identity);
+                }}
+                if (f == NULL) {{
+                    return -1;
+                }}
+            """)
         args = dict(
             name=name, nloops=len(uf.type_descriptions),
             nin=uf.nin, nout=uf.nout,
@@ -1386,8 +1399,8 @@ def make_ufuncs(funcdict):
 
 
 def make_code(funcdict, filename):
-    code1, code2 = make_arrays(funcdict)
-    code3 = make_ufuncs(funcdict)
+    code1, code2, empty = make_arrays(funcdict)
+    code3 = make_ufuncs(funcdict, empty)
     code2 = indent(code2, 4)
     code3 = indent(code3, 4)
     code = textwrap.dedent(r"""
