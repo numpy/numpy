@@ -34,27 +34,27 @@ character_cmp(character a, character b)
 
 template<typename character>
 static inline int
-string_rstrip(int len, const character *str)
+string_rstrip(const character *str, int elsize)
 {
     /*
      * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
      * does not support unicode whitespace (and never has).
      */
-    while (len > 0) {
-        character c = str[len-1];
+    while (elsize > 0) {
+        character c = str[elsize-1];
         if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
             break;
         }
-        len--;
+        elsize--;
     }
-    return len;
+    return elsize;
 }
 
 template<typename character>
 static inline int
-get_length(const character *str, int itemsize)
+get_length(const character *str, int elsize)
 {
-    const character *d = str + itemsize - 1;
+    const character *d = str + elsize - 1;
     while (d >= str && *d == '\0') {
         d--;
     }
@@ -68,11 +68,12 @@ get_length(const character *str, int itemsize)
  */
 template <bool rstrip, typename character>
 static inline int
-string_cmp(int len1, const character *str1, int len2, const character *str2)
+string_cmp(const character *str1, int elsize1, const character *str2, int elsize2)
 {
+    int len1 = elsize2, len2 = elsize2;
     if (rstrip) {
-        len1 = string_rstrip(len1, str1);
-        len2 = string_rstrip(len2, str2);
+        len1 = string_rstrip(str1, elsize1);
+        len2 = string_rstrip(str2, elsize2);
     }
 
     int n = PyArray_MIN(len1, len2);
@@ -122,9 +123,9 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
 
 template <typename character>
 static inline npy_bool
-string_isalpha(int len, const character *str)
+string_isalpha(const character *str, int elsize)
 {
-    len = get_length(str, len);
+    int len = get_length(str, elsize);
 
     if (len == 0) {
         return (npy_bool) 0;
@@ -175,8 +176,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int len1 = context->descriptors[0]->elsize / sizeof(character);
-    int len2 = context->descriptors[1]->elsize / sizeof(character);
+    int elsize1 = context->descriptors[0]->elsize / sizeof(character);
+    int elsize2 = context->descriptors[1]->elsize / sizeof(character);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -186,7 +187,7 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         int cmp = string_cmp<rstrip>(
-                len1, (character *)in1, len2, (character *)in2);
+                (character *)in1, elsize1, (character *)in2, elsize2);
         npy_bool res;
         switch (comp) {
             case COMP::EQ:
@@ -230,7 +231,7 @@ string_isalpha_loop(PyArrayMethod_Context *context,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int len = context->descriptors[0]->elsize / sizeof(character);
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
 
     char *in = data[0];
     char *out = data[1];
@@ -238,7 +239,7 @@ string_isalpha_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isalpha<character>(len, (character *) in);
+        npy_bool res = string_isalpha<character>((character *) in, elsize);
         *(npy_bool *)out = res;
 
         in += strides[0];
