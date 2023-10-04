@@ -35,6 +35,9 @@ class docstrings:
 class FullTypeDescr:
     pass
 
+class EmptyFunctionTypeDescr:
+    pass
+
 class FuncNameSuffix:
     """Stores the suffix to append when generating functions names.
     """
@@ -97,7 +100,7 @@ def _check_order(types1, types2):
     dtype_order = allP + "O"
     for t1, t2 in zip(types1, types2):
         # We have no opinion on object or time ordering for now:
-        if t1 in "OP" or t2 in "OP":
+        if t1 in "OPSU" or t2 in "OPSU":
             return True
         if t1 in "mM" or t2 in "mM":
             return True
@@ -290,6 +293,8 @@ chartoname = {
     # '.' is like 'O', but calls a method of the object instead
     # of a function
     'P': 'OBJECT',
+    'U': 'UNICODE',
+    'S': 'STRING',
 }
 
 no_obj_bool = 'bBhHiIlLqQefdgFDGmM'
@@ -298,6 +303,8 @@ all = '?bBhHiIlLqQefdgFDGOmM'
 
 O = 'O'
 P = 'P'
+S = 'S'
+U = 'U'
 ints = 'bBhHiIlLqQ'
 sints = 'bhilq'
 uints = 'BHILQ'
@@ -1138,9 +1145,11 @@ defdict = {
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 'isalpha' :
-    Ufunc(1, 1, None,
+    Ufunc(1, 1, False_,
           docstrings.get('numpy.core.umath.isalpha'),
           None,
+          [TypeDescription(U, EmptyFunctionTypeDescr, U, '?'),
+           TypeDescription(S, EmptyFunctionTypeDescr, S, '?')],
           )
 }
 
@@ -1211,6 +1220,9 @@ def make_arrays(funcdict):
                     cfunc_fname = f"{tname}_{t.in_}_bool_{cfunc_alias}"
                 else:
                     cfunc_fname = f"{tname}_{t.in_}_{t.out}_{cfunc_alias}"
+            elif t.func_data is EmptyFunctionTypeDescr:
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
             elif isinstance(t.func_data, FuncNameSuffix):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
