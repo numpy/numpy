@@ -33,7 +33,7 @@ class TestReturnComplex(util.F2PyTest):
         assert abs(t(array([234 + 3j], "F")) - (234 + 3j)) <= err
         assert abs(t(array([234], "D")) - 234.0) <= err
 
-        # pytest.raises(TypeError, t, array([234], 'a1'))
+        # pytest.raises(TypeError, t, array([234], 'S1'))
         pytest.raises(TypeError, t, "abc")
 
         pytest.raises(IndexError, t, [])

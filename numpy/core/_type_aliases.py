@@ -222,7 +222,7 @@ _set_array_types()
 
 # Add additional strings to the sctypeDict
 _toadd = ['int', ('float', 'double'), ('complex', 'cdouble'), 
-          'bool', 'object', 'str', 'bytes', ('a', 'bytes_')]
+          'bool', 'object', 'str', 'bytes']
 
 for name in _toadd:
     if isinstance(name, tuple):
