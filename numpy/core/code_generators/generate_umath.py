@@ -1191,7 +1191,6 @@ def make_arrays(funcdict):
     # later
     code1list = []
     code2list = []
-    empty = set()
     dispdict  = {}
     names = sorted(funcdict.keys())
     for name in names:
@@ -1275,8 +1274,9 @@ def make_arrays(funcdict):
                             % (name, datanames))
             code1list.append("static char %s_signatures[] = {%s};"
                             % (name, signames))
+            uf.empty = False
         else:
-            empty.add(name)
+            uf.empty = True
 
     for dname, funcs in dispdict.items():
         code2list.append(textwrap.dedent(f"""
@@ -1289,9 +1289,9 @@ def make_arrays(funcdict):
                 NPY_CPU_DISPATCH_TRACE("{ufunc_name}", "{''.join(inout)}");
                 NPY_CPU_DISPATCH_CALL_XB({ufunc_name}_functions[{func_idx}] = {cfunc_name});
             """))
-    return "\n".join(code1list), "\n".join(code2list), empty
+    return "\n".join(code1list), "\n".join(code2list)
 
-def make_ufuncs(funcdict, empty):
+def make_ufuncs(funcdict):
     code3list = []
     names = sorted(funcdict.keys())
     for name in names:
@@ -1301,44 +1301,29 @@ def make_ufuncs(funcdict, empty):
             sig = "NULL"
         else:
             sig = '"{}"'.format(uf.signature)
-        if name in empty:
-            fmt = textwrap.dedent("""\
-                identity = {identity_expr};
-                if ({has_identity} && identity == NULL) {{
-                    return -1;
-                }}
-                f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-                    NULL, NULL, NULL, {nloops},
-                    {nin}, {nout}, {identity}, "{name}",
-                    {doc}, 0, {sig}, identity
-                );
-                if ({has_identity}) {{
-                    Py_DECREF(identity);
-                }}
-                if (f == NULL) {{
-                    return -1;
-                }}
-            """)
-        else:
-            fmt = textwrap.dedent("""\
-                identity = {identity_expr};
-                if ({has_identity} && identity == NULL) {{
-                    return -1;
-                }}
-                f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-                    {name}_functions, {name}_data, {name}_signatures, {nloops},
-                    {nin}, {nout}, {identity}, "{name}",
-                    {doc}, 0, {sig}, identity
-                );
-                if ({has_identity}) {{
-                    Py_DECREF(identity);
-                }}
-                if (f == NULL) {{
-                    return -1;
-                }}
-            """)
+        fmt = textwrap.dedent("""\
+            identity = {identity_expr};
+            if ({has_identity} && identity == NULL) {{
+                return -1;
+            }}
+            f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+                {funcs}, {data}, {signatures}, {nloops},
+                {nin}, {nout}, {identity}, "{name}",
+                {doc}, 0, {sig}, identity
+            );
+            if ({has_identity}) {{
+                Py_DECREF(identity);
+            }}
+            if (f == NULL) {{
+                return -1;
+            }}
+        """)
         args = dict(
-            name=name, nloops=len(uf.type_descriptions),
+            name=name,
+            funcs=f"{name}_functions" if not uf.empty else "NULL",
+            data=f"{name}_data" if not uf.empty else "NULL",
+            signatures=f"{name}_signatures" if not uf.empty else "NULL",
+            nloops=len(uf.type_descriptions),
             nin=uf.nin, nout=uf.nout,
             has_identity='0' if uf.identity is None_ else '1',
             identity='PyUFunc_IdentityValue',
@@ -1398,8 +1383,8 @@ def make_ufuncs(funcdict, empty):
 
 
 def make_code(funcdict, filename):
-    code1, code2, empty = make_arrays(funcdict)
-    code3 = make_ufuncs(funcdict, empty)
+    code1, code2 = make_arrays(funcdict)
+    code3 = make_ufuncs(funcdict)
     code2 = indent(code2, 4)
     code3 = indent(code3, 4)
     code = textwrap.dedent(r"""

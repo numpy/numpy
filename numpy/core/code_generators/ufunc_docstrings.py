@@ -4255,14 +4255,15 @@ add_newdoc('numpy.core.umath', 'bitwise_count',
 
 add_newdoc('numpy.core.umath', 'isalpha',
     """
-    Returns true for each element if all characters in the string are
-    alphabetic and there is at least one character, false otherwise.
+    Returns true for each element if all characters in the data
+    interpreted as a string are alphabetic and there is at least
+    one character, false otherwise.
 
-    For 8-bit strings, this method is locale-dependent.
+    For 8-bit strings (i.e. ``bytes``), this method is locale-dependent.
 
     Parameters
     ----------
-    x : array_like, str or unicode
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
     $PARAMS
 
     Returns
