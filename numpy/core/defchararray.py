@@ -2093,12 +2093,14 @@ class chararray(ndarray):
         return self
 
     def __array_prepare__(self, arr, context=None):
-        if arr.dtype.char in "US":
+        # When calling a ufunc, we return a chararray when the output is a string-like array
+        # or an ndarray otherwise
+        if arr.dtype.char in "SUbc":
             return arr.view(type(self))
         return arr
 
     def __array_wrap__(self, arr, context=None):
-        if arr.dtype.char in "US":
+        if arr.dtype.char in "SUbc":
             return arr.view(type(self))
         return arr
 

@@ -37,9 +37,9 @@ static inline int
 string_rstrip(int len, const character *str)
 {
     /*
-    * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
-    * does not support unicode whitespace (and never has).
-    */
+     * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
+     * does not support unicode whitespace (and never has).
+     */
     while (len > 0) {
         character c = str[len-1];
         if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
@@ -120,14 +120,11 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
     return 0;
 }
 
-template <bool rstrip, typename character>
+template <typename character>
 static inline npy_bool
 string_isalpha(int len, const character *str)
 {
     len = get_length(str, len);
-    if (rstrip) {
-        len = string_rstrip(len, str);
-    }
 
     if (len == 0) {
         return (npy_bool) 0;
@@ -222,7 +219,7 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
 
 
-template <bool rstrip, typename character>
+template <typename character>
 static int
 string_isalpha_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -241,7 +238,7 @@ string_isalpha_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        npy_bool res = string_isalpha<rstrip>(len, (character *) in);
+        npy_bool res = string_isalpha<character>(len, (character *) in);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -386,13 +383,13 @@ init_isalpha(PyObject *umath)
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     /* All String loops */
-    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<false, npy_byte>) < 0) {
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_byte>) < 0) {
         goto finish;
     }
 
     /* All Unicode loops */
     dtypes[0] = Unicode;
-    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<false, npy_ucs4>) < 0) {
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_ucs4>) < 0) {
         goto finish;
     }
 
