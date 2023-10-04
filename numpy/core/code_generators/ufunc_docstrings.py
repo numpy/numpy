@@ -4258,13 +4258,11 @@ add_newdoc('numpy.core.umath', 'isalpha',
     Returns true for each element if all characters in the string are
     alphabetic and there is at least one character, false otherwise.
 
-    Calls :meth:`str.isalpha` element-wise.
-
     For 8-bit strings, this method is locale-dependent.
 
     Parameters
     ----------
-    x : array_like of str or unicode
+    x : array_like, str or unicode
     $PARAMS
 
     Returns
