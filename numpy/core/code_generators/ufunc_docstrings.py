@@ -4252,3 +4252,27 @@ add_newdoc('numpy.core.umath', 'bitwise_count',
           dtype=uint8)
 
     """)
+
+add_newdoc('numpy.core.umath', 'isalpha',
+    """
+    Returns true for each element if all characters in the data
+    interpreted as a string are alphabetic and there is at least
+    one character, false otherwise.
+
+    For 8-bit strings (i.e. ``bytes``), this method is locale-dependent.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of bools
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.isalpha
+    """)

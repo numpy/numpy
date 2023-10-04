@@ -862,7 +862,7 @@ def isalpha(a):
     --------
     str.isalpha
     """
-    return _vec_string(a, bool_, 'isalpha')
+    return numpy.core.umath.isalpha(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -2091,6 +2091,18 @@ class chararray(ndarray):
             self[...] = filler
         _globalvar = 0
         return self
+
+    def __array_prepare__(self, arr, context=None):
+        # When calling a ufunc, we return a chararray if the ufunc output
+        # is a string-like array, or an ndarray otherwise
+        if arr.dtype.char in "SUbc":
+            return arr.view(type(self))
+        return arr
+
+    def __array_wrap__(self, arr, context=None):
+        if arr.dtype.char in "SUbc":
+            return arr.view(type(self))
+        return arr
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
