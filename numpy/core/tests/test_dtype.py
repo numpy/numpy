@@ -146,7 +146,7 @@ class TestBuiltin:
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
-         'i4, (2,3)f8, f4', 'a3, 3u8, (3,4)a10',
+         'i4, (2,3)f8, f4', 'S3, 3u8, (3,4)S10',
          '>f', '<f', '=f', '|f',
         ])
     def test_dtype_bytes_str_equivalence(self, value):
