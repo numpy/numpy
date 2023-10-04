@@ -101,7 +101,7 @@ stages:
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
           PyPy39-64bit-fast:
-            PYTHON_VERSION: 'pypy3.9'
+            PYTHON_VERSION: 'pypy3.10'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64
