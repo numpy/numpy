@@ -290,8 +290,6 @@ chartoname = {
     # '.' is like 'O', but calls a method of the object instead
     # of a function
     'P': 'OBJECT',
-    'U': 'UNICODE',
-    'S': 'STRING',
 }
 
 no_obj_bool = 'bBhHiIlLqQefdgFDGmM'
