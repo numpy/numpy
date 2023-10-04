@@ -2093,8 +2093,8 @@ class chararray(ndarray):
         return self
 
     def __array_prepare__(self, arr, context=None):
-        # When calling a ufunc, we return a chararray when the output is a string-like array
-        # or an ndarray otherwise
+        # When calling a ufunc, we return a chararray if the ufunc output
+        # is a string-like array, or an ndarray otherwise
         if arr.dtype.char in "SUbc":
             return arr.view(type(self))
         return arr
