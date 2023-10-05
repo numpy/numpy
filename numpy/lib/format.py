@@ -170,7 +170,7 @@ import numpy
 from numpy.lib._utils_impl import drop_metadata
 
 
-__all__ = []
+__all__ = ["NumpyUnpickler"]
 
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}

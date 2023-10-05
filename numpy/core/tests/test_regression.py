@@ -18,7 +18,6 @@ from numpy.testing import (
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy._utils import asbytes, asunicode
-from numpy.lib.format import NumpyUnpickler
 
 
 class TestRegression:
@@ -1925,7 +1924,7 @@ class TestRegression:
                 b"I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
                 b"p13\ntp14\nb.")
         # This should work:
-        result = NumpyUnpickler(BytesIO(data), encoding='latin1').load()
+        result = pickle.loads(data, encoding='latin1')
         assert_array_equal(result, np.array([129]).astype('b'))
         # Should not segfault:
         assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
@@ -1956,7 +1955,7 @@ class TestRegression:
              'different'),
         ]
         for original, data, koi8r_validity in datas:
-            result = NumpyUnpickler(BytesIO(data), encoding='latin1').load()
+            result = pickle.loads(data, encoding='latin1')
             assert_equal(result, original)
 
             # Decoding under non-latin1 encoding (e.g.) KOI8-R can
@@ -1965,17 +1964,12 @@ class TestRegression:
                 # Unicode code points happen to lie within latin1,
                 # but are different in koi8-r, resulting to silent
                 # bogus results
-                result = NumpyUnpickler(
-                    BytesIO(data), encoding='koi8-r'
-                ).load()
+                result = pickle.loads(data, encoding='koi8-r')
                 assert_(result != original)
             elif koi8r_validity == 'invalid':
                 # Unicode code points outside latin1, so results
                 # to an encoding exception
-                invalid_unpickler = NumpyUnpickler(
-                    BytesIO(data), encoding='koi8-r'
-                )
-                assert_raises(ValueError, invalid_unpickler.load)
+                assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
             else:
                 raise ValueError(koi8r_validity)
 
