@@ -12,87 +12,116 @@ Array types and conversions between types
 NumPy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
-The primitive types supported are tied closely to those in C:
+NumPy's primitive types are tied closely to those in C:
 
 .. list-table::
     :header-rows: 1
 
-    * - Numpy type
-      - C type
+    * - Canonical Python API name
+      - Python API "C-like" name
+      - Actual C type
       - Description
 
     * - `numpy.bool_`
-      - ``bool``
+      - N/A
+      - N/A
       - Boolean (True or False) stored as a byte
 
-    * - `numpy.byte`
+    * - `numpy.int8`
+      - `numpy.byte`
       - ``signed char``
       - Platform-defined
 
-    * - `numpy.ubyte`
+    * - `numpy.uint8`
+      - `numpy.ubyte`
       - ``unsigned char``
       - Platform-defined
 
-    * - `numpy.short`
+    * - `numpy.int16`
+      - `numpy.short`
       - ``short``
       - Platform-defined
 
-    * - `numpy.ushort`
+    * - `numpy.uint16`
+      - `numpy.ushort`
       - ``unsigned short``
       - Platform-defined
 
-    * - `numpy.intc`
+    * - `numpy.int32`
+      - `numpy.intc`
       - ``int``
       - Platform-defined
 
-    * - `numpy.uintc`
+    * - `numpy.uint32`
+      - `numpy.uintc`
       - ``unsigned int``
       - Platform-defined
 
-    * - `numpy.int_`
+    * - `numpy.intp`
+      - N/A
+      - ``intptr_t``
+      - Platform-defined
+
+    * - `numpy.uintp`
+      - N/A
+      - ``uintptr_t``
+      - Platform-defined
+
+    * - `numpy.int32` or `numpy.int64`
+      - `numpy.long`
       - ``long``
       - Platform-defined
 
-    * - `numpy.uint`
+    * - `numpy.uint32` or `numpy.uint64`
+      - `numpy.ulong`
       - ``unsigned long``
       - Platform-defined
 
-    * - `numpy.longlong`
+    * - N/A
+      - `numpy.longlong`
       - ``long long``
       - Platform-defined
 
-    * - `numpy.ulonglong`
+    * - N/A
+      - `numpy.ulonglong`
       - ``unsigned long long``
       - Platform-defined
 
-    * - `numpy.half` / `numpy.float16`
-      -
+    * - `numpy.float16`
+      - `numpy.half`
+      - N/A
       - Half precision float:
         sign bit, 5 bits exponent, 10 bits mantissa
 
-    * - `numpy.single`
+    * - `numpy.float32`
+      - `numpy.single`
       - ``float``
       - Platform-defined single precision float:
         typically sign bit, 8 bits exponent, 23 bits mantissa
 
-    * - `numpy.double`
+    * - `numpy.float64`
+      - `numpy.double`
       - ``double``
       - Platform-defined double precision float:
         typically sign bit, 11 bits exponent, 52 bits mantissa.
 
-    * - `numpy.longdouble`
+    * - `numpy.float96` or `numpy.float128`
+      - `numpy.longdouble`
       - ``long double``
       - Platform-defined extended-precision float
 
-    * - `numpy.csingle`
+    * - `numpy.complex64`
+      - `numpy.csingle`
       - ``float complex``
       - Complex number, represented by two single-precision floats (real and imaginary components)
 
-    * - `numpy.cdouble`
+    * - `numpy.complex128`
+      - `numpy.cdouble`
       - ``double complex``
       - Complex number, represented by two double-precision floats (real and imaginary components).
 
-    * - `numpy.clongdouble`
+    * - `numpy.complex192` or `numpy.complex256`
+      - `numpy.clongdouble`
       - ``long double complex``
       - Complex number, represented by two extended-precision floats (real and imaginary components).
 
