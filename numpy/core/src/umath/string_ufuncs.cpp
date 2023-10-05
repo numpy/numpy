@@ -402,7 +402,7 @@ init_comparison(PyObject *umath)
 
 
 static NPY_CASTING
-string_add_no_casting(
+string_addition_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
         PyArray_Descr *given_descrs[3],
@@ -438,7 +438,7 @@ init_add(PyObject *umath)
      */
     PyType_Slot slots[] = {
         {NPY_METH_strided_loop, nullptr},
-        {NPY_METH_resolve_descriptors, (void *) &string_add_no_casting},
+        {NPY_METH_resolve_descriptors, (void *) &string_addition_resolve_descriptors},
         {0, nullptr}
     };
 
