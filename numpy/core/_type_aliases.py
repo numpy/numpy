@@ -26,6 +26,7 @@ from numpy.core.multiarray import typeinfo, dtype
 
 sctypeDict = {}
 allTypes = {}
+c_names_dict = {}
 
 _abstract_type_names = {
     "generic", "integer", "inexact", "floating", "number",
@@ -37,9 +38,12 @@ for _abstract_type_name in _abstract_type_names:
     allTypes[_abstract_type_name] = getattr(ma, _abstract_type_name)
 
 for k, v in typeinfo.items():
-    concrete_type = v.type
-    allTypes[k] = concrete_type
-    sctypeDict[k] = concrete_type
+    if k.startswith("NPY_") and v not in c_names_dict:
+        c_names_dict[k[4:]] = v
+    else:
+        concrete_type = v.type
+        allTypes[k] = concrete_type
+        sctypeDict[k] = concrete_type
 
 _aliases = {
     "double": "float64",
@@ -69,6 +73,18 @@ _extra_aliases = {
 
 for k, v in _extra_aliases.items():
     sctypeDict[k] = allTypes[v]
+
+# include extended precision sized aliases
+for is_complex, full_name in [(False, "longdouble"), (True, "clongdouble")]:
+    longdouble_type: type = allTypes[full_name]
+
+    bits: int = dtype(longdouble_type).itemsize * 8
+    base_name: str = "complex" if is_complex else "float"
+    extended_prec_name: str = f"{base_name}{bits}"
+    if extended_prec_name not in allTypes:
+        sctypeDict[extended_prec_name] = longdouble_type
+        allTypes[extended_prec_name] = longdouble_type
+
 
 ####################
 # Building `sctypes`

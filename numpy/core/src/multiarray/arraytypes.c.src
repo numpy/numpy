@@ -4790,6 +4790,14 @@ set_typeinfo(PyObject *dict)
         goto error;
     }
 #endif
+
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, "NPY_@NAME@", (PyObject *)dtype);
+    Py_DECREF(dtype);
+    if (ret < 0) {
+        goto error;
+    }
+
     /**end repeat**/
 
     /* Intp and UIntp are an additional alias */
