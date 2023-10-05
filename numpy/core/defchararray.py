@@ -319,6 +319,18 @@ def add(x1, x2):
         of the same shape as `x1` and `x2`.
 
     """
+    arr1 = numpy.asarray(x1)
+    arr2 = numpy.asarray(x2)
+    if type(arr1.dtype) != type(arr2.dtype):
+        # Enforce this for now.  The solution to it will be implement add
+        # as a ufunc.  It never worked right on Python 3: bytes + unicode gave
+        # nonsense unicode + bytes errored, and unicode + object used the
+        # object dtype itemsize as num chars (worked on short strings).
+        # bytes + void worked but promoting void->bytes is dubious also.
+        raise TypeError(
+            "np.char.add() requires both arrays of the same dtype kind, but "
+            f"got dtypes: '{arr1.dtype}' and '{arr2.dtype}' (the few cases "
+            "where this used to work often lead to incorrect results).")
     return numpy.add(x1, x2)
 
 

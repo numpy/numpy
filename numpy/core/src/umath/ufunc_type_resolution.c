@@ -762,7 +762,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)
-        && !PyTypeNum_ISSTRING(type_num1) && !PyTypeNum_ISSTRING(type_num2)) {
+        && !(PyTypeNum_ISSTRING(type_num1) && PyTypeNum_ISSTRING(type_num2))) {
         return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
     }
@@ -778,8 +778,6 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         Py_INCREF(out_dtypes[1]);
         out_dtypes[2] = out_dtypes[0];
         Py_INCREF(out_dtypes[2]);
-    } else if (PyTypeNum_ISSTRING(type_num1) || PyTypeNum_ISSTRING(type_num2)) {
-        return raise_binary_type_reso_error(ufunc, operands);
     } else if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
