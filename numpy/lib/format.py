@@ -822,7 +822,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
         if pickle_kwargs is None:
             pickle_kwargs = {}
         try:
-            array = pickle.load(fp, **pickle_kwargs)
+            array = NumpyUnpickler(fp, **pickle_kwargs).load()
         except UnicodeError as err:
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
@@ -1011,3 +1011,27 @@ def isfileobj(f):
         return True
     except OSError:
         return False
+
+
+class NumpyUnpickler(pickle.Unpickler):
+    """
+    A thin wrapper for :py:class:`pickle.Unpickler` that
+    allows to load 1.x array pickles with numpy 2.0 and
+    2.0 array pickles with numpy 1.26.
+    """
+
+    def find_class(self, module: str, name: str) -> object:
+        import numpy as np
+        numpy_major_version: int = np.lib.NumpyVersion(np.__version__).major
+        if (
+            module.startswith("numpy.core") and
+            numpy_major_version >= 2 and
+            hasattr(np, "_core")
+        ):
+            module = module.replace("core", "_core", 1)
+        elif (
+            module.startswith("numpy._core") and
+            numpy_major_version <= 1
+        ):
+            module = module.replace("_core", "core", 1)
+        return pickle.Unpickler.find_class(self, module, name)
