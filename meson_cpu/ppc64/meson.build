@@ -26,6 +26,9 @@ VSX3 = mod_features.new(
   'VSX3', 3, implies: VSX2, args: {'val': '-mcpu=power9', 'match': '.*[mcpu=|vsx].*'},
   detect: {'val': 'VSX3', 'match': 'VSX.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vsx3.c')[0],
+  extra_tests: {
+    'VSX3_HALF_DOUBLE': files(source_root + '/numpy/distutils/checks/extra_vsx3_half_double.c')[0]
+  }
 )
 VSX4 = mod_features.new(
   'VSX4', 4, implies: VSX3, args: {'val': '-mcpu=power10', 'match': '.*[mcpu=|vsx].*'},
