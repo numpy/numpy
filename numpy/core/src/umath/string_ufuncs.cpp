@@ -410,15 +410,15 @@ string_addition_resolve_descriptors(
         npy_intp *NPY_UNUSED(view_offset))
 {
     Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     Py_INCREF(given_descrs[1]);
-    loop_descrs[1] = given_descrs[1];
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
     loop_descrs[2] = PyArray_DescrNew(given_descrs[0]);
     if (loop_descrs[2] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
     loop_descrs[2]->elsize += given_descrs[1]->elsize;
-    return NPY_SAME_KIND_CASTING;
+    return NPY_NO_CASTING;
 }
 
 
