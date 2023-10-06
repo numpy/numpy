@@ -12,7 +12,15 @@ Array types and conversions between types
 NumPy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
-NumPy's primitive types are tied closely to those in C:
+NumPy provides both bit sized type names and names based on the names of C types.
+Since the definition of C types are platform dependent, this means the explicitly
+bit sized should be preferred to avoid platform-dependent behavior in programs
+using NumPy.
+
+To ease integration with C code, where it is more natural to refer to
+platform-dependent C types, NumPy also provides type aliases that correspond
+to the C types for the platform. Some dtypes have trailing underscore to avoid
+confusion with builtin python type names, such as `numpy.bool_`.
 
 .. list-table::
     :header-rows: 1
@@ -24,80 +32,80 @@ NumPy's primitive types are tied closely to those in C:
 
     * - `numpy.bool_`
       - N/A
-      - N/A
-      - Boolean (True or False) stored as a byte
+      - ``stdbool``
+      - Boolean (True or False) stored as a byte.
 
     * - `numpy.int8`
       - `numpy.byte`
       - ``signed char``
-      - Platform-defined
+      - Platform-defined integer type with 8 bits.
 
     * - `numpy.uint8`
       - `numpy.ubyte`
       - ``unsigned char``
-      - Platform-defined
+      - Platform-defined integer type with 8 bits without sign.
 
     * - `numpy.int16`
       - `numpy.short`
       - ``short``
-      - Platform-defined
+      - Platform-defined integer type with 16 bits.
 
     * - `numpy.uint16`
       - `numpy.ushort`
       - ``unsigned short``
-      - Platform-defined
+      - Platform-defined integer type with 16 bits without sign.
 
     * - `numpy.int32`
       - `numpy.intc`
       - ``int``
-      - Platform-defined
+      - Platform-defined integer type with 32 bits.
 
     * - `numpy.uint32`
       - `numpy.uintc`
       - ``unsigned int``
-      - Platform-defined
+      - Platform-defined integer type with 32 bits without sign.
 
     * - `numpy.intp`
       - N/A
       - ``intptr_t``
-      - Platform-defined
+      - Platform-defined integer type capable of holding a pointer.
 
     * - `numpy.uintp`
       - N/A
       - ``uintptr_t``
-      - Platform-defined
+      - Platform-defined integer type capable of holding a pointer without sign.
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`
       - ``long``
-      - Platform-defined
+      - Platform-defined integer type with at least 32 bits.
 
     * - `numpy.uint32` or `numpy.uint64`
       - `numpy.ulong`
       - ``unsigned long``
-      - Platform-defined
+      - Platform-defined integer type with at least 32 bits without sign.
 
     * - N/A
       - `numpy.longlong`
       - ``long long``
-      - Platform-defined
+      - Platform-defined integer type with at least 64 bits.
 
     * - N/A
       - `numpy.ulonglong`
       - ``unsigned long long``
-      - Platform-defined
+      - Platform-defined integer type with at least 64 bits without sign.
 
     * - `numpy.float16`
       - `numpy.half`
       - N/A
       - Half precision float:
-        sign bit, 5 bits exponent, 10 bits mantissa
+        sign bit, 5 bits exponent, 10 bits mantissa.
 
     * - `numpy.float32`
       - `numpy.single`
       - ``float``
       - Platform-defined single precision float:
-        typically sign bit, 8 bits exponent, 23 bits mantissa
+        typically sign bit, 8 bits exponent, 23 bits mantissa.
 
     * - `numpy.float64`
       - `numpy.double`
@@ -108,12 +116,12 @@ NumPy's primitive types are tied closely to those in C:
     * - `numpy.float96` or `numpy.float128`
       - `numpy.longdouble`
       - ``long double``
-      - Platform-defined extended-precision float
+      - Platform-defined extended-precision float.
 
     * - `numpy.complex64`
       - `numpy.csingle`
       - ``float complex``
-      - Complex number, represented by two single-precision floats (real and imaginary components)
+      - Complex number, represented by two single-precision floats (real and imaginary components).
 
     * - `numpy.complex128`
       - `numpy.cdouble`
@@ -128,7 +136,6 @@ NumPy's primitive types are tied closely to those in C:
 
 Since many of these have platform-dependent definitions, a set of fixed-size
 aliases are provided (See :ref:`sized-aliases`).
-
 
 
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
