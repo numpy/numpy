@@ -169,7 +169,7 @@ from numpy.compat import (
     )
 
 
-__all__ = []
+__all__ = ["NumpyUnpickler"]
 
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
@@ -797,7 +797,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
         if pickle_kwargs is None:
             pickle_kwargs = {}
         try:
-            array = pickle.load(fp, **pickle_kwargs)
+            array = NumpyUnpickler(fp, **pickle_kwargs).load()
         except UnicodeError as err:
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
@@ -974,3 +974,15 @@ def _read_bytes(fp, size, error_template="ran out of data"):
         raise ValueError(msg % (error_template, size, len(data)))
     else:
         return data
+
+
+class NumpyUnpickler(pickle.Unpickler):
+    """
+    A thin wrapper for :py:class:`pickle.Unpickler` that
+    allows to load 2.0 array pickles with numpy 1.26.
+    """
+
+    def find_class(self, module: str, name: str) -> object:
+        if module.startswith("numpy._core"):
+            module = module.replace("_core", "core", 1)
+        return pickle.Unpickler.find_class(self, module, name)
