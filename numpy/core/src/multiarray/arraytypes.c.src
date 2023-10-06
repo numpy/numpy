@@ -28,7 +28,6 @@
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
-#include "typeinfo.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -4586,7 +4585,7 @@ PyArray_DescrFromType(int type)
 NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict)
 {
-    PyObject *infodict, *s;
+    PyObject *infodict = NULL;
     int i;
 
     PyArray_Descr *dtype;
@@ -4754,196 +4753,88 @@ set_typeinfo(PyObject *dict)
     int ret;
     /**begin repeat
      *
-     * #name = BOOL,
+     * #NAME = BOOL,
+     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+     *         STRING, UNICODE, VOID, OBJECT,
+     *         DATETIME, TIMEDELTA,
      *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-     *         INTP, UINTP,
      *         LONG, ULONG, LONGLONG, ULONGLONG#
-     * #uname = BOOL,
-     *          BYTE*2, SHORT*2, INT*2,
-     *          INTP*2,
-     *          LONG*2, LONGLONG*2#
      * #Name = Bool,
+     *         Half, Float, Double, LongDouble,
+     *         CFloat, CDouble, CLongDouble,
+     *         Bytes, Str, Void, Object,
+     *         DateTime64, TimeDelta64,
      *         Byte, UByte, Short, UShort, Int, UInt,
-     *         Intp, UIntp,
      *         Long, ULong, LongLong, ULongLong#
-     * #type = npy_bool,
-     *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
-     *         npy_intp, npy_uintp,
-     *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
-     * #max= 1,
-     *       NPY_MAX_BYTE, NPY_MAX_UBYTE, NPY_MAX_SHORT,
-     *       NPY_MAX_USHORT, NPY_MAX_INT, PyLong_FromUnsignedLong(NPY_MAX_UINT),
-     *       PyLong_FromLongLong((npy_longlong) NPY_MAX_INTP),
-     *       PyLong_FromUnsignedLongLong((npy_ulonglong) NPY_MAX_UINTP),
-     *       NPY_MAX_LONG,
-     *       PyLong_FromUnsignedLong((npy_ulong) NPY_MAX_ULONG),
-     *       PyLong_FromLongLong((npy_longlong) NPY_MAX_LONGLONG),
-     *       PyLong_FromUnsignedLongLong((npy_ulonglong) NPY_MAX_ULONGLONG)#
-     * #min = 0, NPY_MIN_BYTE, 0, NPY_MIN_SHORT, 0, NPY_MIN_INT, 0,
-     *        PyLong_FromLongLong((npy_longlong) NPY_MIN_INTP),
-     *        0, NPY_MIN_LONG, 0,
-     *        PyLong_FromLongLong((npy_longlong) NPY_MIN_LONGLONG), 0#
-     * #cx = i*6, N, N, N, l, N, N, N#
-     * #cn = i*7, N, i, l, i, N, i#
      */
 
-    s = PyArray_typeinforanged(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, NPY_ALIGNOF(@type@),
-        Py_BuildValue("@cx@", @max@),
-        Py_BuildValue("@cn@", @min@),
-        &Py@Name@ArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "@name@", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-
-
-    /**end repeat**/
-
-
-    /**begin repeat
-     *
-     * #type = npy_half, npy_float, npy_double, npy_longdouble,
-     *         npy_cfloat, npy_cdouble, npy_clongdouble#
-     * #name = HALF, FLOAT, DOUBLE, LONGDOUBLE,
-     *         CFLOAT, CDOUBLE, CLONGDOUBLE#
-     * #Name = Half, Float, Double, LongDouble,
-     *         CFloat, CDouble, CLongDouble#
+    /*
+     * Add the scalar dtypes with their names and aliases (integers have them)
+     * to the dict to populate the namespace in Python.
+     * Note that we do lose one piece of information due to intp/uintp since
+     * they are strict aliases and we do not add the "p" and "P" character
+     * codes for them.
      */
-    s = PyArray_typeinfo(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        NPY_ALIGNOF(@type@), &Py@Name@ArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "@name@", s);
-    Py_DECREF(s);
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, NPY_@NAME@_name, (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
+    }
+#ifdef NPY_@NAME@_alias
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, NPY_@NAME@_alias, (PyObject *)dtype);
+    Py_DECREF(dtype);
+    if (ret < 0) {
+        goto error;
+    }
+#endif
+
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, "NPY_@NAME@", (PyObject *)dtype);
+    Py_DECREF(dtype);
+    if (ret < 0) {
+        goto error;
     }
 
     /**end repeat**/
 
-    s = PyArray_typeinfo(
-        NPY_OBJECTLTR, NPY_OBJECT, sizeof(PyObject *) * CHAR_BIT,
-        NPY_ALIGNOF(PyObject *),
-        &PyObjectArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "OBJECT", s);
-    Py_DECREF(s);
+    /* Intp and UIntp are an additional alias */
+    dtype = PyArray_DescrFromType(NPY_INTP);
+    ret = PyDict_SetItemString(infodict, "intp", (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
     }
-    s = PyArray_typeinfo(
-        NPY_STRINGLTR, NPY_STRING, 0, NPY_ALIGNOF(char),
-        &PyStringArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "STRING", s);
-    Py_DECREF(s);
+    dtype = PyArray_DescrFromType(NPY_UINTP);
+    ret = PyDict_SetItemString(infodict, "uintp", (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinfo(
-        NPY_UNICODELTR, NPY_UNICODE, 0, NPY_ALIGNOF(npy_ucs4),
-        &PyUnicodeArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "UNICODE", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinfo(
-        NPY_VOIDLTR, NPY_VOID, 0, NPY_ALIGNOF(char),
-        &PyVoidArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "VOID", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinforanged(
-        NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
-        NPY_ALIGNOF(npy_datetime),
-        MyPyLong_FromInt64(NPY_MAX_DATETIME),
-        MyPyLong_FromInt64(NPY_MIN_DATETIME),
-        &PyDatetimeArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "DATETIME", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinforanged(
-        NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
-        NPY_ALIGNOF(npy_timedelta),
-        MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
-        MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
-        &PyTimedeltaArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "TIMEDELTA", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
     }
 
-#define SETTYPE(name)                                   \
-    Py_INCREF(&Py##name##ArrType_Type);                 \
-    if (PyDict_SetItemString(infodict, #name,           \
-            (PyObject *)&Py##name##ArrType_Type) < 0) { \
-        Py_DECREF(infodict);                            \
-        return -1;                                      \
+    /*
+     * Add the abstract scalar types to the `_multiarray_umath` namespace.
+     * (duplicates making the name lowercase)
+     */
+#define SETTYPE(Name, name)                                    \
+    Py_INCREF(&Py##Name##ArrType_Type);                  \
+    if (PyDict_SetItemString(dict, #name,                \
+            (PyObject *)&Py##Name##ArrType_Type) < 0) {  \
+        goto error;                                      \
     }
 
-    SETTYPE(Generic);
-    SETTYPE(Number);
-    SETTYPE(Integer);
-    SETTYPE(Inexact);
-    SETTYPE(SignedInteger);
-    SETTYPE(UnsignedInteger);
-    SETTYPE(Floating);
-    SETTYPE(ComplexFloating);
-    SETTYPE(Flexible);
-    SETTYPE(Character);
+    SETTYPE(Generic, generic);
+    SETTYPE(Number, number);
+    SETTYPE(Integer, integer);
+    SETTYPE(Inexact, inexact);
+    SETTYPE(SignedInteger, signedinteger);
+    SETTYPE(UnsignedInteger, unsignedinteger);
+    SETTYPE(Floating, floating);
+    SETTYPE(ComplexFloating, complexfloating);
+    SETTYPE(Flexible, flexible);
+    SETTYPE(Character, character);
 
 #undef SETTYPE
 
@@ -4953,6 +4844,10 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     return 0;
+
+  error:
+    Py_XDECREF(infodict);
+    return -1;
 }
 
 #undef _MAX_LETTER

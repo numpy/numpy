@@ -8,10 +8,6 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
-assert_type(np.cast[int], np.core.numerictypes._CastFunc)
-assert_type(np.cast["i8"], np.core.numerictypes._CastFunc)
-assert_type(np.cast[np.int64], np.core.numerictypes._CastFunc)
-
 assert_type(
     np.ScalarType,
     tuple[
