@@ -14,6 +14,7 @@ NumPy binary files (NPY, NPZ)
    save
    savez
    savez_compressed
+   lib.format.NumpyUnpickler
 
 The format of these binary file types is documented in
 :py:mod:`numpy.lib.format`
