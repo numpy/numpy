@@ -980,7 +980,7 @@ npy_ctanh@c@(@ctype@ z)
  * and arccosine functions using exception handling" by T. E. Hull, Thomas F.
  * Fairgrieve, and Ping Tak Peter Tang, published in ACM Transactions on
  * Mathematical Software, Volume 23 Issue 3, 1997, Pages 299-335,
- * http://dl.acm.org/citation.cfm?id=275324.
+ * https://dl.acm.org/doi/10.1145/275323.275324.
  *
  * Throughout we use the convention z = x + I*y.
  *

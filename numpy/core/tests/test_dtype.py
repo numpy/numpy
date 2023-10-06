@@ -126,19 +126,27 @@ class TestBuiltin:
         with assert_raises(TypeError):
             np.dtype(dtype)
 
-    def test_remaining_dtypes_with_bad_bytesize(self):
-        # The np.<name> aliases were deprecated, these probably should be too 
-        assert np.dtype("int0") is np.dtype("intp")
-        assert np.dtype("uint0") is np.dtype("uintp")
-        assert np.dtype("bool8") is np.dtype("bool")
-        assert np.dtype("bytes0") is np.dtype("bytes")
-        assert np.dtype("str0") is np.dtype("str")
-        assert np.dtype("object0") is np.dtype("object")
+    def test_expired_dtypes_with_bad_bytesize(self):
+        match: str = r".*removed in NumPy 2.0.*"
+        with pytest.raises(TypeError, match=match):
+            np.dtype("int0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("uint0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("bool8")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("bytes0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("str0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("object0")
+        with pytest.raises(TypeError, match=match):
+            np.dtype("void0")
 
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
-         'i4, (2,3)f8, f4', 'a3, 3u8, (3,4)a10',
+         'i4, (2,3)f8, f4', 'S3, 3u8, (3,4)S10',
          '>f', '<f', '=f', '|f',
         ])
     def test_dtype_bytes_str_equivalence(self, value):
@@ -569,7 +577,7 @@ class TestRecord:
     def test_nonstructured_with_object(self):
         # See gh-23277, the dtype here thinks it contain objects, if the
         # assert about that fails, the test becomes meaningless (which is OK)
-        arr = np.recarray((0,), dtype="O") 
+        arr = np.recarray((0,), dtype="O")
         assert arr.dtype.names is None  # no fields
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.

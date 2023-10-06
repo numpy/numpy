@@ -838,7 +838,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         Character that is used to quote string fields. Default is '"'
         (a double quote). Use None to disable quote support.
     imaginary_unit : str, optional
-        Character that represent the imaginay unit `sqrt(-1)`.
+        Character that represent the imaginary unit `sqrt(-1)`.
         Default is 'j'.
     usecols : array_like, optional
         A one-dimensional array of integer column numbers.  These are the

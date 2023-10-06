@@ -20,9 +20,8 @@ import functools
 from .._utils import set_module
 from .numerictypes import (
     bytes_, str_, integer, int_, object_, bool_, character)
-from .numeric import ndarray, compare_chararrays
-from .numeric import array as narray
-from numpy.core.multiarray import _vec_string
+from .numeric import ndarray, array as narray
+from numpy.core.multiarray import _vec_string, compare_chararrays
 from numpy.core import overrides
 from numpy._utils import asbytes
 import numpy
@@ -36,7 +35,7 @@ __all__ = [
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
     'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
-    'array', 'asarray'
+    'array', 'asarray', 'compare_chararrays', 'chararray'
     ]
 
 
@@ -411,9 +410,6 @@ def mod(a, values):
     out : ndarray
         Output array of str or unicode, depending on input types
 
-    See Also
-    --------
-    str.__mod__
 
     """
     return _to_bytes_or_str_array(
@@ -866,7 +862,7 @@ def isalpha(a):
     --------
     str.isalpha
     """
-    return _vec_string(a, bool_, 'isalpha')
+    return numpy.core.umath.isalpha(a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1920,7 +1916,7 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
-@set_module('numpy')
+@set_module("numpy.char")
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
@@ -1932,10 +1928,10 @@ class chararray(ndarray):
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
        1.4, if one needs arrays of strings, it is recommended to use arrays of
-       `dtype` `object_`, `bytes_` or `str_`, and use the free functions
+       `dtype` `~numpy.object_`, `~numpy.bytes_` or `~numpy.str_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
-    Versus a NumPy array of dtype `bytes_` or `str_`, this
+    Versus a NumPy array of dtype `~numpy.bytes_` or `~numpy.str_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -2037,7 +2033,7 @@ class chararray(ndarray):
         Fixed stride displacement from the beginning of an axis?
         Default is 0. Needs to be >=0.
     strides : array_like of ints, optional
-        Strides for the array (see `ndarray.strides` for full description).
+        Strides for the array (see `~numpy.ndarray.strides` for full description).
         Default is None.
     order : {'C', 'F'}, optional
         The order in which the array data is stored in memory: 'C' ->
@@ -2046,14 +2042,14 @@ class chararray(ndarray):
 
     Examples
     --------
-    >>> charar = np.chararray((3, 3))
+    >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
     chararray([[b'a', b'a', b'a'],
                [b'a', b'a', b'a'],
                [b'a', b'a', b'a']], dtype='|S1')
 
-    >>> charar = np.chararray(charar.shape, itemsize=5)
+    >>> charar = np.char.chararray(charar.shape, itemsize=5)
     >>> charar[:] = 'abc'
     >>> charar
     chararray([[b'abc', b'abc', b'abc'],
@@ -2095,6 +2091,18 @@ class chararray(ndarray):
             self[...] = filler
         _globalvar = 0
         return self
+
+    def __array_prepare__(self, arr, context=None):
+        # When calling a ufunc, we return a chararray if the ufunc output
+        # is a string-like array, or an ndarray otherwise
+        if arr.dtype.char in "SUbc":
+            return arr.view(type(self))
+        return arr
+
+    def __array_wrap__(self, arr, context=None):
+        if arr.dtype.char in "SUbc":
+            return arr.view(type(self))
+        return arr
 
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
@@ -2247,7 +2255,7 @@ class chararray(ndarray):
         Examples
         --------
         >>> c = np.array(['a1b c', '1b ca', 'b ca1', 'Ca1b'], 'S5')
-        >>> c = c.view(np.chararray); c
+        >>> c = c.view(np.char.chararray); c
         chararray(['a1b c', '1b ca', 'b ca1', 'Ca1b'],
               dtype='|S5')
         >>> c[c.argsort()]
@@ -2732,13 +2740,13 @@ class chararray(ndarray):
 @set_module("numpy.char")
 def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     """
-    Create a `chararray`.
+    Create a `~numpy.char.chararray`.
 
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
        arrays of type `bytes_` or `str_` and use the free functions
-       in :mod:`numpy.char <numpy.core.defchararray>` for fast
+       in :mod:`numpy.char` for fast
        vectorized string operations instead.
 
     Versus a NumPy array of dtype `bytes_` or `str_`, this
@@ -2751,7 +2759,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        end when comparing values
 
     3) vectorized string operations are provided as methods
-       (e.g. `~chararray.endswith`) and infix operators (e.g. ``+, *, %``)
+       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`) and infix operators (e.g. ``+, *, %``)
 
     Parameters
     ----------
@@ -2772,11 +2780,11 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         requirements (`itemsize`, unicode, `order`, etc.).
 
     unicode : bool, optional
-        When true, the resulting `chararray` can contain Unicode
+        When true, the resulting `~numpy.char.chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
         None and `obj` is one of the following:
 
-        - a `chararray`,
+        - a `~numpy.char.chararray`,
         - an ndarray of type `str_` or `unicode_`
         - a Python str or unicode object,
 
@@ -2866,7 +2874,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 @set_module("numpy.char")
 def asarray(obj, itemsize=None, unicode=None, order=None):
     """
-    Convert the input to a `chararray`, copying the data only if
+    Convert the input to a `~numpy.char.chararray`, copying the data only if
     necessary.
 
     Versus a NumPy array of dtype `bytes_` or `str_`, this
@@ -2879,7 +2887,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
        end when comparing values
 
     3) vectorized string operations are provided as methods
-       (e.g. `~chararray.endswith`) and infix operators
+       (e.g. `chararray.endswith <numpy.char.chararray.endswith>`) and infix operators
        (e.g. ``+``, ``*``, ``%``)
 
     Parameters
@@ -2895,11 +2903,11 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         chunked into `itemsize` pieces.
 
     unicode : bool, optional
-        When true, the resulting `chararray` can contain Unicode
+        When true, the resulting `~numpy.char.chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
         None and `obj` is one of the following:
 
-        - a `chararray`,
+        - a `~numpy.char.chararray`,
         - an ndarray of type `str_` or `unicode_`
         - a Python str or unicode object,
 

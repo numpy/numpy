@@ -17,7 +17,7 @@ select the precision desired.
     The names for the types in c code follows c naming conventions
     more closely. The Python names for these types follow Python
     conventions.  Thus, :c:data:`NPY_FLOAT` picks up a 32-bit float in
-    C, but :class:`numpy.float_` in Python corresponds to a 64-bit
+    C, but :class:`numpy.float64` in Python corresponds to a 64-bit
     double. The bit-width names can be used in both Python and C for
     clarity.
 
@@ -294,7 +294,7 @@ Boolean
 (Un)Signed Integer
 ~~~~~~~~~~~~~~~~~~
 
-Unsigned versions of the integers can be defined by pre-pending a 'u'
+Unsigned versions of the integers can be defined by prepending a 'u'
 to the front of the integer name.
 
 .. c:type:: npy_byte

@@ -11,7 +11,10 @@ from numpy.core._multiarray_umath import __cpu_features__
 UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
         isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
+
+# Remove functions that do not support `floats`
 UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
+UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
 
 IS_AVX = __cpu_features__.get('AVX512F', False) or \
         (__cpu_features__.get('FMA3', False) and __cpu_features__.get('AVX2', False))

@@ -9,6 +9,9 @@ import operator
 import numpy as np
 
 import pytest
+import hypothesis
+from hypothesis import strategies
+
 from numpy.testing import IS_WASM
 
 
@@ -244,3 +247,27 @@ def test_nep50_in_concat_and_choose():
     with pytest.warns(UserWarning, match="result dtype changed"):
         res = np.choose(1, [np.float32(1), 1.])
     assert res.dtype == "float32"
+
+
+@pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
+        (np.float32, [np.float32],
+            [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),
+        (np.complex64, [np.float32, 0j],
+            [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),
+        (np.float32, [np.int16, np.uint16, np.float16],
+            [np.int8, np.uint8, np.float32, 0., 0]),
+        (np.int32, [np.int16, np.uint16],
+            [np.int8, np.uint8, 0, np.bool_]),
+        ])
+@hypothesis.given(data=strategies.data())
+def test_expected_promotion(expected, dtypes, optional_dtypes, data):
+    np._set_promotion_state("weak")
+
+    # Sample randomly while ensuring "dtypes" is always present:
+    optional = data.draw(strategies.lists(
+            strategies.sampled_from(dtypes + optional_dtypes)))
+    all_dtypes = dtypes + optional
+    dtypes_sample = data.draw(strategies.permutations(all_dtypes))
+
+    res = np.result_type(*dtypes_sample)
+    assert res == expected

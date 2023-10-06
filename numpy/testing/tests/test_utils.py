@@ -232,14 +232,14 @@ class TestArrayEqual(_GenericTest):
         b = 1.
 
         with pytest.raises(AssertionError):
-            assert_array_equal(a, b, strict=True)
+            self._assert_func(a, b, strict=True)
 
     def test_array_vs_array_strict(self):
         """Test comparing two arrays with strict option."""
         a = np.array([1., 1., 1.])
         b = np.array([1., 1., 1.])
 
-        assert_array_equal(a, b, strict=True)
+        self._assert_func(a, b, strict=True)
 
     def test_array_vs_float_array_strict(self):
         """Test comparing two arrays with strict option."""
@@ -247,7 +247,7 @@ class TestArrayEqual(_GenericTest):
         b = np.array([1., 1., 1.])
 
         with pytest.raises(AssertionError):
-            assert_array_equal(a, b, strict=True)
+            self._assert_func(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
@@ -790,6 +790,18 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.zeros(3)
+        y = np.ones(())
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y, strict=True)
+        y = np.broadcast_to(y, x.shape)
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y.astype(np.float32), strict=True)
+
 
 class TestWarns:
 
@@ -929,6 +941,17 @@ class TestAssertAllclose:
             assert_allclose(x, y, atol=3)
         msgs = str(exc_info.value).split('\n')
         assert_equal(msgs[4], 'Max absolute difference: 4')
+
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.ones(3)
+        y = np.ones(())
+        assert_allclose(x, y)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, y, strict=True)
+        assert_allclose(x, x)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, x.astype(np.float32), strict=True)
 
 
 class TestArrayAlmostEqualNulp:

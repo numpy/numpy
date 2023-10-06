@@ -438,6 +438,7 @@ NPY_NO_EXPORT void
         *((@type@ *)op1) = 1;
     }
 }
+
 /**begin repeat1
  * Arithmetic
  * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor#

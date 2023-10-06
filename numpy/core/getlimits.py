@@ -333,7 +333,8 @@ def _get_machar(ftype):
     # Detect known / suspected types
     # ftype(-1.0) / ftype(10.0) is better than ftype('-0.1') because stold
     # may be deficient
-    key = (ftype(-1.0) / ftype(10.)).newbyteorder('<').tobytes()
+    key = (ftype(-1.0) / ftype(10.))
+    key = key.view(key.dtype.newbyteorder("<")).tobytes()
     ma_like = None
     if ftype == ntypes.longdouble:
         # Could be 80 bit == 10 byte extended precision, where last bytes can
@@ -466,7 +467,7 @@ class finfo:
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
-           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
+           pp.1-70, 2008, https://doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
 

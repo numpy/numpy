@@ -1,5 +1,3 @@
-# This file should contain what setup.py + setup_common.py do (WIP)
-#
 # Potential issues to address or keep track of:
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
@@ -477,10 +475,6 @@ endif
 # Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
 # TODO: document this (search for NPY_NOSMP in C API docs)
 cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
-
-# Use bogus stride debug aid to flush out bugs where users use strides of
-# dimensions with length 1 to index a full contiguous array.
-cdata.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
 
 # Check whether we can use inttypes (C99) formats
 if cc.has_header_symbol('inttypes.h', 'PRIdPTR')

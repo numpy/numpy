@@ -740,7 +740,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
     >>> p = np.partition(a, 4)
     >>> p
-    array([0, 1, 2, 1, 2, 5, 2, 3, 3, 6, 7, 7, 7, 7])
+    array([0, 1, 2, 1, 2, 5, 2, 3, 3, 6, 7, 7, 7, 7]) # may vary
 
     ``p[4]`` is 2;  all elements in ``p[:4]`` are less than or equal
     to ``p[4]``, and all elements in ``p[5:]`` are greater than or
@@ -838,13 +838,13 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
 
     >>> x = np.array([3, 4, 2, 1])
     >>> x[np.argpartition(x, 3)]
-    array([2, 1, 3, 4])
+    array([2, 1, 3, 4]) # may vary
     >>> x[np.argpartition(x, (1, 3))]
-    array([1, 2, 3, 4])
+    array([1, 2, 3, 4]) # may vary
 
     >>> x = [3, 4, 2, 1]
     >>> np.array(x)[np.argpartition(x, 3)]
-    array([2, 1, 3, 4])
+    array([2, 1, 3, 4]) # may vary
 
     Multi-dimensional array:
 
@@ -2236,9 +2236,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     See Also
     --------
     ndarray.sum : Equivalent method.
-
-    add.reduce : Equivalent functionality of `add`.
-
+    add: ``numpy.add.reduce`` equivalent function.
     cumsum : Cumulative sum of array elements.
 
     mean, average
@@ -2671,13 +2669,6 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            ptp = a.ptp
-        except AttributeError:
-            pass
-        else:
-            return ptp(axis=axis, out=out, **kwargs)
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 

@@ -1297,7 +1297,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_STRINGLTR:
-        case NPY_STRINGLTR2:
             newtype = NPY_STRING;
             break;
 

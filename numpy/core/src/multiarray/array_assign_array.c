@@ -132,8 +132,14 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char*)&src_data);
     }
+
+    /* Ensure number of elements exceeds threshold for threading */
     if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
@@ -238,7 +244,11 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         npy_clear_floatstatus_barrier(src_data);
     }
     if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
-        NPY_BEGIN_THREADS;
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 

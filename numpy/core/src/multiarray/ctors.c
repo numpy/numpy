@@ -3971,10 +3971,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         }
         ((PyArrayObject_fields *)ret)->data = new_data;
 
-        if (count < 0 || NPY_RELAXED_STRIDES_DEBUG) {
+        if (count < 0) {
             /*
-             * If the count was smaller than zero or NPY_RELAXED_STRIDES_DEBUG
-             * was active, the strides may be all 0 or intentionally mangled
+             * If the count was smaller than zero, the strides may be all 0
              * (even in the later dimensions for `count < 0`!
              * Thus, fix all strides here again for C-contiguity.
              */
@@ -4047,12 +4046,6 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
             else {
                 not_cf_contig = 0;
             }
-#if NPY_RELAXED_STRIDES_DEBUG
-            /* For testing purpose only */
-            if (dims[i] == 1) {
-                strides[i] = NPY_MAX_INTP;
-            }
-#endif /* NPY_RELAXED_STRIDES_DEBUG */
         }
         if (not_cf_contig) {
             *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
@@ -4071,12 +4064,6 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
             else {
                 not_cf_contig = 0;
             }
-#if NPY_RELAXED_STRIDES_DEBUG
-            /* For testing purpose only */
-            if (dims[i] == 1) {
-                strides[i] = NPY_MAX_INTP;
-            }
-#endif /* NPY_RELAXED_STRIDES_DEBUG */
         }
         if (not_cf_contig) {
             *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &

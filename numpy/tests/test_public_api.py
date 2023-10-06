@@ -31,15 +31,11 @@ def check_dir(module, module_name=None):
 
 
 def test_numpy_namespace():
-    # None of these objects are publicly documented to be part of the main
-    # NumPy namespace (some are useful though, others need to be cleaned up)
-    undocumented = {
-        'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
-        'show_config': 'numpy.__config__.show',
-        'row_stack': 'numpy.lib._shape_base_impl.row_stack'
-    }
     # We override dir to not show these members
-    allowlist = undocumented
+    allowlist = {
+        'recarray': 'numpy.rec.recarray',
+        'show_config': 'numpy.__config__.show',
+    }
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal

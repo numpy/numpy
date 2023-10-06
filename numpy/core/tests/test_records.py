@@ -51,17 +51,29 @@ class TestFromrecords:
         assert_equal(r1, r2)
 
     def test_method_array(self):
-        r = np.rec.array(b'abcdefg' * 100, formats='i2,a3,i4', shape=3, byteorder='big')
+        r = np.rec.array(
+            b'abcdefg' * 100, formats='i2,S3,i4', shape=3, byteorder='big'
+        )
         assert_equal(r[1].item(), (25444, b'efg', 1633837924))
 
     def test_method_array2(self):
-        r = np.rec.array([(1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'), (5, 55, 'ex'),
-                     (6, 66, 'f'), (7, 77, 'g')], formats='u1,f4,a1')
+        r = np.rec.array(
+            [
+                (1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'),
+                (5, 55, 'ex'), (6, 66, 'f'), (7, 77, 'g')
+            ],
+            formats='u1,f4,S1'
+        )
         assert_equal(r[1].item(), (2, 22.0, b'b'))
 
     def test_recarray_slices(self):
-        r = np.rec.array([(1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'), (5, 55, 'ex'),
-                     (6, 66, 'f'), (7, 77, 'g')], formats='u1,f4,a1')
+        r = np.rec.array(
+            [
+                (1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'),
+                (5, 55, 'ex'), (6, 66, 'f'), (7, 77, 'g')
+            ],
+            formats='u1,f4,S1'
+        )
         assert_equal(r[1::2][1].item(), (4, 44.0, b'd'))
 
     def test_recarray_fromarrays(self):
@@ -78,14 +90,16 @@ class TestFromrecords:
         filename = path.join(data_dir, 'recarray_from_file.fits')
         fd = open(filename, 'rb')
         fd.seek(2880 * 2)
-        r1 = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        r1 = np.rec.fromfile(fd, formats='f8,i4,S5', shape=3, byteorder='big')
         fd.seek(2880 * 2)
-        r2 = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        r2 = np.rec.array(fd, formats='f8,i4,S5', shape=3, byteorder='big')
         fd.seek(2880 * 2)
         bytes_array = BytesIO()
         bytes_array.write(fd.read())
         bytes_array.seek(0)
-        r3 = np.rec.fromfile(bytes_array, formats='f8,i4,a5', shape=3, byteorder='big')
+        r3 = np.rec.fromfile(
+            bytes_array, formats='f8,i4,S5', shape=3, byteorder='big'
+        )
         fd.close()
         assert_equal(r1, r2)
         assert_equal(r2, r3)
@@ -330,12 +344,12 @@ class TestPathUsage:
         with temppath(suffix='.bin') as path:
             path = Path(path)
             np.random.seed(123)
-            a = np.random.rand(10).astype('f8,i4,a5')
+            a = np.random.rand(10).astype('f8,i4,S5')
             a[5] = (0.5,10,'abcde')
             with path.open("wb") as fd:
                 a.tofile(fd)
             x = np.core.records.fromfile(path,
-                                         formats='f8,i4,a5',
+                                         formats='f8,i4,S5',
                                          shape=10)
             assert_array_equal(x, a)
 
@@ -442,11 +456,13 @@ class TestRecord:
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
         dt = np.dtype([('foo', 'i8'), ('bar', 'O')])
-        r = np.zeros((1,3), dtype=dt).view(np.recarray)
+        r = np.zeros((1, 3), dtype=dt).view(np.recarray)
         r.foo = np.array([1, 2, 3])  # TypeError?
 
         # https://github.com/numpy/numpy/issues/3256
-        ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
+        ra = np.recarray(
+            (2,), dtype=[('x', object), ('y', float), ('z', int)]
+        )
         ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):

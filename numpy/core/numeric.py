@@ -12,7 +12,7 @@ from .multiarray import (
     ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, compare_chararrays,
+    asfortranarray, broadcast, can_cast,
     concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory,
@@ -50,7 +50,7 @@ __all__ = [
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
-    'identity', 'allclose', 'compare_chararrays', 'putmask',
+    'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
     'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
     '_get_promotion_state', '_set_promotion_state']
@@ -487,10 +487,8 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete and, because of changes due to relaxed stride
-    checking, its return value for the same array may differ for versions
-    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
-    array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
+    This function is obsolete. If you only want to check if an array is Fortran
+    contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
     ----------
@@ -673,9 +671,6 @@ def correlate(a, v, mode='valid'):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
-    old_behavior : bool
-        `old_behavior` was removed in NumPy 1.10. If you need the old
-        behavior, use `multiarray.correlate`.
 
     Returns
     -------
@@ -685,7 +680,6 @@ def correlate(a, v, mode='valid'):
     See Also
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
-    multiarray.correlate : Old, no conjugate, version of correlate.
     scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes

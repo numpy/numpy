@@ -22,7 +22,7 @@
 
 /*
  * This file contains a modified version of Ryan Juckett's Dragon4
- * implementation, obtained from http://www.ryanjuckett.com,
+ * implementation, obtained from https://www.ryanjuckett.com,
  * which has been ported from C++ to C and which has
  * modifications specific to printing floats in numpy.
  *
@@ -58,7 +58,7 @@ bitmask_u32(npy_uint32 n)
 
 /*
  *  Get the log base 2 of a 32-bit unsigned integer.
- *  http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
+ *  https://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
  */
 static npy_uint32
 LogBase2_32(npy_uint32 val)
@@ -1087,10 +1087,10 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
  * See the following papers for more information on the algorithm:
  *  "How to Print Floating-Point Numbers Accurately"
  *    Steele and White
- *    http://kurtstephens.com/files/p372-steele.pdf
+ *    https://kurtstephens.com/files/p372-steele.pdf
  *  "Printing Floating-Point Numbers Quickly and Accurately"
  *    Burger and Dybvig
- *    http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.4656
+ *    https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.4656
  *
  * This implementation is essentially a port of the "Figure 3" Scheme code from
  * Burger and Dybvig, but with the following additional differences:
@@ -1111,7 +1111,7 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
  *  details of the integer calculations.
  *
  * There is some more documentation of these changes on Ryan Juckett's website
- * at http://www.ryanjuckett.com/programming/printing-floating-point-numbers/
+ * at https://www.ryanjuckett.com/printing-floating-point-numbers/
  *
  * This code also has a few implementation differences from Ryan Juckett's
  * version:
@@ -1265,7 +1265,7 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
      * Compute an estimate for digitExponent that will be correct or undershoot
      * by one.  This optimization is based on the paper "Printing Floating-Point
      * Numbers Quickly and Accurately" by Burger and Dybvig
-     * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.4656
+     * https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.4656
      * We perform an additional subtraction of 0.69 to increase the frequency of
      * a failed estimate because that lets us take a faster branch in the code.
      * 0.69 is chosen because 0.69 + log10(2) is less than one by a reasonable

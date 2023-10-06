@@ -589,7 +589,7 @@ def typename(char):
 
     See Also
     --------
-    dtype, typecodes
+    dtype
 
     Examples
     --------

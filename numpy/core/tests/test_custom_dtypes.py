@@ -51,6 +51,12 @@ class TestSFloat:
     def test_dtype_name(self):
         assert SF(1.).name == "_ScaledFloatTestDType64"
 
+    def test_sfloat_structured_dtype_printing(self):
+        dt = np.dtype([("id", int), ("value", SF(0.5))])
+        # repr of structured dtypes need special handling because the
+        # implementation bypasses the object repr
+        assert "('value', '_ScaledFloatTestDType64')" in repr(dt)
+
     @pytest.mark.parametrize("scaling", [1., -1., 2.])
     def test_sfloat_from_float(self, scaling):
         a = np.array([1., 2., 3.]).astype(dtype=SF(scaling))

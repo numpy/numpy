@@ -8,6 +8,7 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.core.numeric import normalize_axis_tuple
+from numpy.core.overrides import set_module
 from numpy.core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
@@ -544,7 +545,7 @@ def expand_dims(a, axis):
     --------
     squeeze : The inverse operation, removing singleton dimensions
     reshape : Insert, remove, and combine dimensions, and resize existing ones
-    doc.indexing, atleast_1d, atleast_2d, atleast_3d
+    atleast_1d, atleast_2d, atleast_3d
 
     Examples
     --------
@@ -604,7 +605,8 @@ def expand_dims(a, axis):
     return a.reshape(shape)
 
 
-# TODO: Remove once deprecation period passes
+# NOTE: Remove once deprecation period passes
+@set_module("numpy")
 def row_stack(tup, *, dtype=None, casting="same_kind"):
     # Deprecated in NumPy 2.0, 2023-08-18
     warnings.warn(
@@ -1208,7 +1210,7 @@ def tile(A, reps):
     behavior, promote `A` to d-dimensions manually before calling this
     function.
 
-    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by prepending 1's to it.
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 

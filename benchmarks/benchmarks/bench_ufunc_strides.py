@@ -164,7 +164,7 @@ class UnaryIntContig(_AbstractUnary):
         [getattr(np, uf) for uf in (
             'positive', 'square', 'reciprocal', 'conjugate', 'logical_not',
             'invert', 'isnan', 'isinf', 'isfinite',
-            'absolute', 'sign'
+            'absolute', 'sign', 'bitwise_count'
         )],
         [1], [1],
         ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']

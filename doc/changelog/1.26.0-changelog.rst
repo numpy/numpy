@@ -1,0 +1,92 @@
+
+Contributors
+============
+
+A total of 20 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @DWesl
+* Albert Steppi +
+* Bas van Beek
+* Charles Harris
+* Developer-Ecosystem-Engineering
+* Filipe Laíns +
+* Jake Vanderplas
+* Liang Yan +
+* Marten van Kerkwijk
+* Matti Picus
+* Melissa Weber Mendonça
+* Namami Shanker
+* Nathan Goldbaum
+* Ralf Gommers
+* Rohit Goswami
+* Sayed Adel
+* Sebastian Berg
+* Stefan van der Walt
+* Tyler Reddy
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 59 pull requests were merged for this release.
+
+* `#24305 <https://github.com/numpy/numpy/pull/24305>`__: MAINT: Prepare 1.26.x branch for development
+* `#24308 <https://github.com/numpy/numpy/pull/24308>`__: MAINT: Massive update of files from main for numpy 1.26
+* `#24322 <https://github.com/numpy/numpy/pull/24322>`__: CI: fix wheel builds on the 1.26.x branch
+* `#24326 <https://github.com/numpy/numpy/pull/24326>`__: BLD: update openblas to newer version
+* `#24327 <https://github.com/numpy/numpy/pull/24327>`__: TYP: Trim down the ``_NestedSequence.__getitem__`` signature
+* `#24328 <https://github.com/numpy/numpy/pull/24328>`__: BUG: fix choose refcount leak
+* `#24337 <https://github.com/numpy/numpy/pull/24337>`__: TST: fix running the test suite in builds without BLAS/LAPACK
+* `#24338 <https://github.com/numpy/numpy/pull/24338>`__: BUG: random: Fix generation of nan by dirichlet.
+* `#24340 <https://github.com/numpy/numpy/pull/24340>`__: MAINT: Dependabot updates from main
+* `#24342 <https://github.com/numpy/numpy/pull/24342>`__: MAINT: Add back NPY_RUN_MYPY_IN_TESTSUITE=1
+* `#24353 <https://github.com/numpy/numpy/pull/24353>`__: MAINT: Update ``extbuild.py`` from main.
+* `#24356 <https://github.com/numpy/numpy/pull/24356>`__: TST: fix distutils tests for deprecations in recent setuptools...
+* `#24375 <https://github.com/numpy/numpy/pull/24375>`__: MAINT: Update cibuildwheel to version 2.15.0
+* `#24381 <https://github.com/numpy/numpy/pull/24381>`__: MAINT: Fix codespaces setup.sh script
+* `#24403 <https://github.com/numpy/numpy/pull/24403>`__: ENH: Vendor meson for multi-target build support
+* `#24404 <https://github.com/numpy/numpy/pull/24404>`__: BLD: vendor meson-python to make the Windows builds with SIMD...
+* `#24405 <https://github.com/numpy/numpy/pull/24405>`__: BLD, SIMD: The meson CPU dispatcher implementation
+* `#24406 <https://github.com/numpy/numpy/pull/24406>`__: MAINT: Remove versioneer
+* `#24409 <https://github.com/numpy/numpy/pull/24409>`__: REL: Prepare for the NumPy 1.26.0b1 release.
+* `#24453 <https://github.com/numpy/numpy/pull/24453>`__: MAINT: Pin upper version of sphinx.
+* `#24455 <https://github.com/numpy/numpy/pull/24455>`__: ENH: Add prefix to _ALIGN Macro
+* `#24456 <https://github.com/numpy/numpy/pull/24456>`__: BUG: cleanup warnings [skip azp][skip circle][skip travis][skip...
+* `#24460 <https://github.com/numpy/numpy/pull/24460>`__: MAINT: Upgrade to spin 0.5
+* `#24495 <https://github.com/numpy/numpy/pull/24495>`__: BUG: ``asv dev`` has been removed, use ``asv run``.
+* `#24496 <https://github.com/numpy/numpy/pull/24496>`__: BUG: Fix meson build failure due to unchanged inplace auto-generated...
+* `#24521 <https://github.com/numpy/numpy/pull/24521>`__: BUG: fix issue with git-version script, needs a shebang to run
+* `#24522 <https://github.com/numpy/numpy/pull/24522>`__: BUG: Use a default assignment for git_hash [skip ci]
+* `#24524 <https://github.com/numpy/numpy/pull/24524>`__: BUG: fix NPY_cast_info error handling in choose
+* `#24526 <https://github.com/numpy/numpy/pull/24526>`__: BUG: Fix common block handling in f2py
+* `#24541 <https://github.com/numpy/numpy/pull/24541>`__: CI,TYP: Bump mypy to 1.4.1
+* `#24542 <https://github.com/numpy/numpy/pull/24542>`__: BUG: Fix assumed length f2py regression
+* `#24544 <https://github.com/numpy/numpy/pull/24544>`__: MAINT: Harmonize fortranobject
+* `#24545 <https://github.com/numpy/numpy/pull/24545>`__: TYP: add kind argument to numpy.isin type specification
+* `#24561 <https://github.com/numpy/numpy/pull/24561>`__: BUG: fix comparisons between masked and unmasked structured arrays
+* `#24590 <https://github.com/numpy/numpy/pull/24590>`__: CI: Exclude import libraries from list of DLLs on Cygwin.
+* `#24591 <https://github.com/numpy/numpy/pull/24591>`__: BLD: fix ``_umath_linalg`` dependencies
+* `#24594 <https://github.com/numpy/numpy/pull/24594>`__: MAINT: Stop testing on ppc64le.
+* `#24602 <https://github.com/numpy/numpy/pull/24602>`__: BLD: meson-cpu: fix SIMD support on platforms with no features
+* `#24606 <https://github.com/numpy/numpy/pull/24606>`__: BUG: Change Cython ``binding`` directive to "False".
+* `#24613 <https://github.com/numpy/numpy/pull/24613>`__: ENH: Adopt new macOS Accelerate BLAS/LAPACK Interfaces, including...
+* `#24614 <https://github.com/numpy/numpy/pull/24614>`__: DOC: Update building docs to use Meson
+* `#24615 <https://github.com/numpy/numpy/pull/24615>`__: TYP: Add the missing ``casting`` keyword to ``np.clip``
+* `#24616 <https://github.com/numpy/numpy/pull/24616>`__: TST: convert cython test from setup.py to meson
+* `#24617 <https://github.com/numpy/numpy/pull/24617>`__: MAINT: Fixup ``fromnumeric.pyi``
+* `#24622 <https://github.com/numpy/numpy/pull/24622>`__: BUG, ENH: Fix ``iso_c_binding`` type maps and fix ``bind(c)``...
+* `#24629 <https://github.com/numpy/numpy/pull/24629>`__: TYP: Allow ``binary_repr`` to accept any object implementing...
+* `#24630 <https://github.com/numpy/numpy/pull/24630>`__: TYP: Explicitly declare ``dtype`` and ``generic`` hashable
+* `#24637 <https://github.com/numpy/numpy/pull/24637>`__: ENH: Refactor the typing "reveal" tests using `typing.assert_type`
+* `#24638 <https://github.com/numpy/numpy/pull/24638>`__: MAINT: Bump actions/checkout from 3.6.0 to 4.0.0
+* `#24647 <https://github.com/numpy/numpy/pull/24647>`__: ENH: ``meson`` backend for ``f2py``
+* `#24648 <https://github.com/numpy/numpy/pull/24648>`__: MAINT: Refactor partial load Workaround for Clang
+* `#24653 <https://github.com/numpy/numpy/pull/24653>`__: REL: Prepare for the NumPy 1.26.0rc1 release.
+* `#24659 <https://github.com/numpy/numpy/pull/24659>`__: BLD: allow specifying the long double format to avoid the runtime...
+* `#24665 <https://github.com/numpy/numpy/pull/24665>`__: BLD: fix bug in random.mtrand extension, don't link libnpyrandom
+* `#24675 <https://github.com/numpy/numpy/pull/24675>`__: BLD: build wheels for 32-bit Python on Windows, using MSVC
+* `#24700 <https://github.com/numpy/numpy/pull/24700>`__: BLD: fix issue with compiler selection during cross compilation
+* `#24701 <https://github.com/numpy/numpy/pull/24701>`__: BUG: Fix data stmt handling for complex values in f2py
+* `#24707 <https://github.com/numpy/numpy/pull/24707>`__: TYP: Add annotations for the py3.12 buffer protocol
+* `#24718 <https://github.com/numpy/numpy/pull/24718>`__: DOC: fix a few doc build issues on 1.26.x and update `spin docs`...

@@ -75,6 +75,7 @@ present in ``setuptools``:
 - Per-compiler build flag customization (e.g. `-O3` and `SSE2` flags are default)
 - a simple user build config system, see `site.cfg.example <https://github.com/numpy/numpy/blob/master/site.cfg.example>`__
 - SIMD intrinsics support
+- Support for the NumPy-specific ``.src`` templating format for ``.c``/``.h`` files
 
 The most widely used feature is nested ``setup.py`` files. This feature may
 perhaps still be ported to ``setuptools`` in the future (it needs a volunteer

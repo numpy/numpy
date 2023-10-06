@@ -138,7 +138,7 @@ class TestRegression:
         ulen = 1
         ucs_value = '\U0010FFFF'
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
-        ua.newbyteorder()  # Should succeed.
+        ua.view(ua.dtype.newbyteorder())  # Should succeed.
 
     def test_object_array_fill(self):
         # Ticket #86
@@ -378,7 +378,7 @@ class TestRegression:
 
     def test_chararray_rstrip(self):
         # Ticket #222
-        x = np.chararray((1,), 5)
+        x = np.char.chararray((1,), 5)
         x[0] = b'a   '
         x = x.rstrip()
         assert_equal(x[0], b'a')
@@ -519,7 +519,7 @@ class TestRegression:
         # Make sure methods and functions have same default axis
         # keyword and arguments
         funcs1 = ['argmax', 'argmin', 'sum', 'any', 'all', 'cumsum',
-                  'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
+                  'cumprod', 'prod', 'std', 'var', 'mean',
                   'round', 'min', 'max', 'argsort', 'sort']
         funcs2 = ['compress', 'take', 'repeat']
 
@@ -573,7 +573,7 @@ class TestRegression:
         x1 = np.array([[1, 2], [3, 4], [5, 6]])
         x2 = np.array(['a', 'dd', 'xyz'])
         x3 = np.array([1.1, 2, 3])
-        np.rec.fromarrays([x1, x2, x3], formats="(2,)i4,a3,f8")
+        np.rec.fromarrays([x1, x2, x3], formats="(2,)i4,S3,f8")
 
     def test_object_array_assign(self):
         x = np.empty((2, 2), object)
@@ -644,10 +644,6 @@ class TestRegression:
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
-    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
-    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous.
-    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride debug")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -904,17 +900,6 @@ class TestRegression:
         # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
 
-    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
-    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous,
-    # 0-sized reshape itself is tested elsewhere.
-    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride debug")
-    def test_copy_detection_corner_case2(self):
-        # Ticket #771: strides are not set correctly when reshaping 0-sized
-        # arrays
-        b = np.indices((0, 3, 4)).T.reshape(-1, 3)
-        assert_equal(b.strides, (3 * b.itemsize, b.itemsize))
-
     def test_object_array_refcounting(self):
         # Ticket #633
         if not hasattr(sys, 'getrefcount'):
@@ -1158,9 +1143,7 @@ class TestRegression:
         assert_(dat.max(1).info == 'jubba')
         assert_(dat.mean(1).info == 'jubba')
         assert_(dat.min(1).info == 'jubba')
-        assert_(dat.newbyteorder().info == 'jubba')
         assert_(dat.prod(1).info == 'jubba')
-        assert_(dat.ptp(1).info == 'jubba')
         assert_(dat.ravel().info == 'jubba')
         assert_(dat.real.info == 'jubba')
         assert_(dat.repeat(2).info == 'jubba')
@@ -1668,7 +1651,8 @@ class TestRegression:
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
         a.dtype = np.float32
         assert_equal(a.nonzero()[0], [1])
-        a = a.byteswap().newbyteorder()
+        a = a.byteswap()
+        a = a.view(a.dtype.newbyteorder())
         assert_equal(a.nonzero()[0], [1])  # [0] if nonzero() ignores swap
 
     def test_empty_mul(self):
@@ -2094,7 +2078,7 @@ class TestRegression:
         a = np.array([('a', 1)], dtype='S1, int')
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
-        dtype = np.format_parser(['i4', 'i4'], [], [])
+        dtype = np.rec.format_parser(['i4', 'i4'], [], [])
         a = np.recarray((2,), dtype)
         a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)

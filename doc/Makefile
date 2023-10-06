@@ -52,16 +52,6 @@ clean:
 	-rm -rf build/*
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
-docenv:
-	$(PYTHON) -mvenv docenv
-	( \
-            . docenv/bin/activate; \
-            pip install -q --upgrade pip; \
-            pip install -q  -r ../test_requirements.txt; \
-            pip install -q  -r ../doc_requirements.txt; \
-            pip install -q ..; \
-	)
-
 gitwash-update:
 	rm -rf source/dev/gitwash
 	install -d source/dev/gitwash

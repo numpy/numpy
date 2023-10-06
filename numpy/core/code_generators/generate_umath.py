@@ -1122,6 +1122,13 @@ defdict = {
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
+'bitwise_count':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.bitwise_count'),
+          None,
+          TD(ints, dispatch=[('loops_autovec', ints)], out='B'),
+          TD(P, f='bit_count'),
+          ),
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),
@@ -1130,6 +1137,11 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'isalpha':
+    Ufunc(1, 1, False_,
+          docstrings.get('numpy.core.umath.isalpha'),
+          None,
+          )
 }
 
 def indent(st, spaces):
@@ -1251,15 +1263,20 @@ def make_arrays(funcdict):
 
             k += 1
 
-        funcnames = ', '.join(funclist)
-        signames = ', '.join(siglist)
-        datanames = ', '.join(datalist)
-        code1list.append("static PyUFuncGenericFunction %s_functions[] = {%s};"
-                         % (name, funcnames))
-        code1list.append("static void * %s_data[] = {%s};"
-                         % (name, datanames))
-        code1list.append("static char %s_signatures[] = {%s};"
-                         % (name, signames))
+        if funclist or siglist or datalist:
+            funcnames = ', '.join(funclist)
+            signames = ', '.join(siglist)
+            datanames = ', '.join(datalist)
+            code1list.append(
+                "static PyUFuncGenericFunction %s_functions[] = {%s};"
+                % (name, funcnames))
+            code1list.append("static void * %s_data[] = {%s};"
+                            % (name, datanames))
+            code1list.append("static char %s_signatures[] = {%s};"
+                            % (name, signames))
+            uf.empty = False
+        else:
+            uf.empty = True
 
     for dname, funcs in dispdict.items():
         code2list.append(textwrap.dedent(f"""
@@ -1290,7 +1307,7 @@ def make_ufuncs(funcdict):
                 return -1;
             }}
             f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-                {name}_functions, {name}_data, {name}_signatures, {nloops},
+                {funcs}, {data}, {signatures}, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
                 {doc}, 0, {sig}, identity
             );
@@ -1302,7 +1319,11 @@ def make_ufuncs(funcdict):
             }}
         """)
         args = dict(
-            name=name, nloops=len(uf.type_descriptions),
+            name=name,
+            funcs=f"{name}_functions" if not uf.empty else "NULL",
+            data=f"{name}_data" if not uf.empty else "NULL",
+            signatures=f"{name}_signatures" if not uf.empty else "NULL",
+            nloops=len(uf.type_descriptions),
             nin=uf.nin, nout=uf.nout,
             has_identity='0' if uf.identity is None_ else '1',
             identity='PyUFunc_IdentityValue',

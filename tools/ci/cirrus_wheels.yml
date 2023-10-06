@@ -1,6 +1,6 @@
 build_and_store_wheels: &BUILD_AND_STORE_WHEELS
   install_cibuildwheel_script:
-    - python -m pip install cibuildwheel==2.15.0
+    - python -m pip install cibuildwheel
   cibuildwheel_script:
     - cibuildwheel
   wheels_artifacts:
@@ -42,7 +42,7 @@ linux_aarch64_task:
     apt update
     apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
     git fetch origin
-    ./tools/travis-before-install.sh
+    bash ./tools/wheels/cibw_before_build.sh ${PWD}
     which python
     echo $CIRRUS_CHANGE_MESSAGE
   <<: *BUILD_AND_STORE_WHEELS

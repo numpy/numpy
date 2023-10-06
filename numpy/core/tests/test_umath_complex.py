@@ -16,7 +16,7 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-#FIXME: this will probably change when we require full C99 campatibility
+#FIXME: this will probably change when we require full C99 compatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(ncu.NZERO, 0)).imag != np.pi))

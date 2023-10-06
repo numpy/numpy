@@ -44,7 +44,6 @@ __expired_attributes__ = {
     "maximum_sctype": "",
     "obj2sctype": "",
     "sctype2char": "",
-    "sctypeDict": "",
     "sctypes": "",
     "issubsctype": "Use `np.issubdtype` instead.",
     "set_string_function": 
@@ -56,17 +55,21 @@ __expired_attributes__ = {
     "mat": "Use `np.asmatrix` instead.",
     "recfromcsv": "Use `np.genfromtxt` with comma delimiter instead.",
     "recfromtxt": "Use `np.genfromtxt` instead.",
-    "deprecate": "Raise `DeprecationWarning` instead.",
-    "deprecate_with_doc": "Raise `DeprecationWarning` instead.",
+    "deprecate": "Emit `DeprecationWarning` with `warnings.warn` directly, "
+        "or use `typing.deprecated`.",
+    "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
+        "directly, or use `typing.deprecated`.",
     "disp": "Use your own printing function instead.",
     "find_common_type": 
-        "This function is deprecated, use `numpy.promote_types` or "
-        "`numpy.result_type` instead.  To achieve semantics for the "
-        "`scalar_types` argument, use `numpy.result_type` and pass the "
-        "Python values `0`, `0.0`, or `0j`.",
+        "Use `numpy.promote_types` or `numpy.result_type` instead. "
+        "To achieve semantics for the `scalar_types` argument, use "
+        "`numpy.result_type` and pass the Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
     "get_array_wrap": "",
     "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
     "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",  
     "byte_bounds": "Now it's available under `np.lib.array_utils.byte_bounds`",
+    "compare_chararrays": 
+        "It's still available as `np.char.compare_chararrays`.",
+    "format_parser": "It's still available as `np.rec.format_parser`.",
 }

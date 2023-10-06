@@ -703,7 +703,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
-    Define the sigma function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
+    Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
     >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
@@ -1136,7 +1136,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     .. [3]  Fornberg B. (1988) Generation of Finite Difference Formulas on
             Arbitrarily Spaced Grids,
             Mathematics of Computation 51, no. 184 : 699-706.
-            `PDF <http://www.ams.org/journals/mcom/1988-51-184/
+            `PDF <https://www.ams.org/journals/mcom/1988-51-184/
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
@@ -3644,7 +3644,7 @@ def sinc(x):
     References
     ----------
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
-           Resource. http://mathworld.wolfram.com/SincFunction.html
+           Resource. https://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
            https://en.wikipedia.org/wiki/Sinc_function
 
@@ -4289,8 +4289,8 @@ def quantile(a,
     -------
     quantile : scalar or ndarray
         If `q` is a single probability and `axis=None`, then the result
-        is a scalar. If multiple probabilies levels are given, first axis of
-        the result corresponds to the quantiles. The other axes are
+        is a scalar. If multiple probability levels are given, first axis
+        of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
         data-type is ``float64``. Otherwise, the output data-type is the
@@ -5616,7 +5616,7 @@ def digitize(x, bins, right=False):
     much better for larger number of bins than the previous linear search.
     It also removes the requirement for the input array to be 1-dimensional.
 
-    For monotonically _increasing_ `bins`, the following are equivalent::
+    For monotonically *increasing* `bins`, the following are equivalent::
 
         np.digitize(x, bins, right=True)
         np.searchsorted(bins, x, side='left')

@@ -6,6 +6,7 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+#include "numpy/ufuncobject.h"
 
 #include "numpyos.h"
 #include "dispatching.h"
@@ -31,6 +32,34 @@ character_cmp(character a, character b)
     }
 }
 
+template<typename character>
+static inline int
+string_rstrip(const character *str, int elsize)
+{
+    /*
+     * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
+     * does not support unicode whitespace (and never has).
+     */
+    while (elsize > 0) {
+        character c = str[elsize-1];
+        if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
+            break;
+        }
+        elsize--;
+    }
+    return elsize;
+}
+
+template<typename character>
+static inline int
+get_length(const character *str, int elsize)
+{
+    const character *d = str + elsize - 1;
+    while (d >= str && *d == '\0') {
+        d--;
+    }
+    return d - str + 1;
+}
 
 /*
  * Compare two strings of different length.  Note that either string may be
@@ -39,27 +68,12 @@ character_cmp(character a, character b)
  */
 template <bool rstrip, typename character>
 static inline int
-string_cmp(int len1, const character *str1, int len2, const character *str2)
+string_cmp(const character *str1, int elsize1, const character *str2, int elsize2)
 {
+    int len1 = elsize1, len2 = elsize2;
     if (rstrip) {
-        /*
-         * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
-         * does not support unicode whitespace (and never has).
-         */
-        while (len1 > 0) {
-            character c = str1[len1-1];
-            if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
-                break;
-            }
-            len1--;
-        }
-        while (len2 > 0) {
-            character c = str2[len2-1];
-            if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
-                break;
-            }
-            len2--;
-        }
+        len1 = string_rstrip(str1, elsize1);
+        len2 = string_rstrip(str2, elsize2);
     }
 
     int n = PyArray_MIN(len1, len2);
@@ -107,6 +121,26 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
     return 0;
 }
 
+template <typename character>
+static inline npy_bool
+string_isalpha(const character *str, int elsize)
+{
+    int len = get_length(str, elsize);
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*str);
+        if (!isalpha) {
+            return isalpha;
+        }
+        str++;
+    }
+    return (npy_bool) 1;
+}
+
 
 /*
  * Helper for templating, avoids warnings about uncovered switch paths.
@@ -142,8 +176,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int len1 = context->descriptors[0]->elsize / sizeof(character);
-    int len2 = context->descriptors[1]->elsize / sizeof(character);
+    int elsize1 = context->descriptors[0]->elsize / sizeof(character);
+    int elsize2 = context->descriptors[1]->elsize / sizeof(character);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -153,7 +187,7 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         int cmp = string_cmp<rstrip>(
-                len1, (character *)in1, len2, (character *)in2);
+                (character *)in1, elsize1, (character *)in2, elsize2);
         npy_bool res;
         switch (comp) {
             case COMP::EQ:
@@ -181,6 +215,37 @@ string_comparison_loop(PyArrayMethod_Context *context,
         in2 += strides[1];
         out += strides[2];
     }
+    return 0;
+}
+
+
+
+template <typename character>
+static int
+string_isalpha_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    /*
+     * Note, fetching `elsize` from the descriptor is OK even without the GIL,
+     * however it may be that this should be moved into `auxdata` eventually,
+     * which may also be slightly faster/cleaner (but more involved).
+     */
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        npy_bool res = string_isalpha<character>((character *) in, elsize);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
     return 0;
 }
 
@@ -239,8 +304,8 @@ struct add_loops<rstrip, character, comp, comps...> {
 };
 
 
-NPY_NO_EXPORT int
-init_string_ufuncs(PyObject *umath)
+static int
+init_comparison(PyObject *umath)
 {
     int res = -1;
     /* NOTE: This should receive global symbols? */
@@ -287,6 +352,69 @@ init_string_ufuncs(PyObject *umath)
     Py_DECREF(Unicode);
     Py_DECREF(Bool);
     return res;
+}
+
+
+static int
+init_isalpha(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isalpha";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_byte>) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    if (add_loop(umath, "isalpha", &spec, string_isalpha_loop<npy_ucs4>) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+NPY_NO_EXPORT int
+init_string_ufuncs(PyObject *umath)
+{
+    if (init_comparison(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isalpha(umath) < 0) {
+        return -1;
+    }
+
+    return 0;
 }
 
 
