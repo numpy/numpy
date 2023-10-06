@@ -459,7 +459,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                 raise ValueError("Cannot load file containing pickled data "
                                  "when allow_pickle=False")
             try:
-                return format.NumpyUnpickler(fid, **pickle_kwargs).load()
+                return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
                 raise pickle.UnpicklingError(
                     f"Failed to interpret file {file!r} as a pickle") from e

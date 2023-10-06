@@ -1,11 +1,6 @@
 `numpy.lib.format.NumpyUnpickler`
 ---------------------------------
 
-The `numpy.lib.format.NumpyUnpickler` class was added,
-that provides a stable way for:
-
-* Loading pickled arrays, created with NumPy 1.x,
-  when Numpy 2.0 is used.
-
-* Loading pickled arrays, created with NumPy 2.0,
-  when Numpy 1.26 is used.
+`numpy.lib.format.NumpyUnpickler` class was added
+that provides a stable way for loading pickled arrays,
+created with NumPy 1.x, with Numpy 2.0.
