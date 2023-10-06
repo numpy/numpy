@@ -32,7 +32,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
 
     * - `numpy.bool_`
       - N/A
-      - ``stdbool``
+      - ``bool`` (defined in ``stdbool.h``)
       - Boolean (True or False) stored as a byte.
 
     * - `numpy.int8`
@@ -67,12 +67,12 @@ confusion with builtin python type names, such as `numpy.bool_`.
 
     * - `numpy.intp`
       - N/A
-      - ``intptr_t``
+      - ``intptr_t`` (defined in ``stdint.h``)
       - Platform-defined integer type capable of holding a pointer.
 
     * - `numpy.uintp`
       - N/A
-      - ``uintptr_t``
+      - ``uintptr_t`` (defined in ``stdint.h``)
       - Platform-defined integer type capable of holding a pointer without sign.
 
     * - `numpy.int32` or `numpy.int64`
@@ -113,7 +113,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
       - Platform-defined double precision float:
         typically sign bit, 11 bits exponent, 52 bits mantissa.
 
-    * - `numpy.float96` or `numpy.float128`
+    * - ``numpy.float96`` or `numpy.float128`
       - `numpy.longdouble`
       - ``long double``
       - Platform-defined extended-precision float.
@@ -128,7 +128,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
       - ``double complex``
       - Complex number, represented by two double-precision floats (real and imaginary components).
 
-    * - `numpy.complex192` or `numpy.complex256`
+    * - ``numpy.complex192`` or `numpy.complex256`
       - `numpy.clongdouble`
       - ``long double complex``
       - Complex number, represented by two extended-precision floats (real and imaginary components).
