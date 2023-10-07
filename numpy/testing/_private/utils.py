@@ -869,6 +869,16 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     The usual caution for verifying equality with floating point numbers is
     advised.
 
+    .. note:: When either `x` or `y` is already an instance of `numpy.ndarray`
+        and `y` is not a ``dict``, the behavior of ``assert_equal(x, y)`` is
+        identical to the behavior of this function. Otherwise, this function
+        performs `np.asanyarray` on the inputs before comparison, whereas
+        `assert_equal` defines special comparison rules for common Python
+        types. For example, only `assert_equal` can be used to compare nested
+        Python lists. In new code, consider using only `assert_equal`,
+        explicitly converting either `x` or `y` to arrays if the behavior of
+        `assert_array_equal` is desired.
+
     Parameters
     ----------
     x : array_like
