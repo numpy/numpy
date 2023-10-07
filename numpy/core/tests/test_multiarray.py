@@ -9698,9 +9698,12 @@ def test_ragged_comparison_fails(op):
 def test_npymath_complex(fun, npfun, x, y, test_dtype):
     # Smoketest npymath functions
     z = test_dtype(complex(x, y))
-    got = fun(z)
-    expected = npfun(z)
-    assert_allclose(got, expected)
+    with np.errstate(invalid='ignore'):
+        # Fallback implementations may emit a warning for +-inf (see gh-24876):
+        #     RuntimeWarning: invalid value encountered in absolute
+        got = fun(z)
+        expected = npfun(z)
+        assert_allclose(got, expected)
 
 
 def test_npymath_real():
