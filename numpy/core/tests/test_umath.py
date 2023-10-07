@@ -1646,6 +1646,8 @@ class TestSpecialFloats:
                           np.array(1200.0, dtype='d'))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.skipif('bsd' in sys.platform,
+            reason="fallback implementation may not raise, see gh-2487")
     def test_cosh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
         out = [np.nan, np.nan, np.inf, np.inf]
