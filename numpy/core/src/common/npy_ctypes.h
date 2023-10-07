@@ -1,5 +1,5 @@
-#ifndef NPY_CTYPES_H
-#define NPY_CTYPES_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_
 
 #include <Python.h>
 
@@ -14,7 +14,7 @@
  * This entire function is just a wrapper around the Python function of the
  * same name.
  */
-NPY_INLINE static int
+static inline int
 npy_ctypes_check(PyTypeObject *obj)
 {
     static PyObject *py_func = NULL;
@@ -47,4 +47,4 @@ fail:
     return 0;
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_ */

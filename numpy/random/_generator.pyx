@@ -1,10 +1,12 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3, binding=True
 import operator
 import warnings
+from collections.abc import Sequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 cimport cython
 import numpy as np
@@ -13,6 +15,7 @@ from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
+from libc.math cimport sqrt
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
@@ -22,10 +25,20 @@ from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+            validate_output_shape
         )
+
+cdef extern from "numpy/arrayobject.h":
+    int PyArray_ResolveWritebackIfCopy(np.ndarray)
+    int PyArray_FailUnlessWriteable(np.PyArrayObject *obj,
+                                    const char *name) except -1
+    object PyArray_FromArray(np.PyArrayObject *, np.PyArray_Descr *, int)
+
+    enum:
+        NPY_ARRAY_WRITEBACKIFCOPY
 
 np.import_array()
 
@@ -45,6 +58,77 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
             return -1
         sum += colors[i]
     return sum
+
+
+cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
+                                   np.npy_intp first, np.npy_intp itemsize,
+                                   np.npy_intp stride,
+                                   char* data, char* buf) nogil:
+    # We trick gcc into providing a specialized implementation for
+    # the most common case, yielding a ~33% performance improvement.
+    # Note that apparently, only one branch can ever be specialized.
+    if itemsize == sizeof(np.npy_intp):
+        _shuffle_raw(bitgen, n, first, sizeof(np.npy_intp), stride, data, buf)
+    else:
+        _shuffle_raw(bitgen, n, first, itemsize, stride, data, buf)
+
+
+cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, np.npy_intp itemsize,
+                              np.npy_intp stride,
+                              char* data, char* buf) nogil:
+    """
+    Parameters
+    ----------
+    bitgen
+        Pointer to a bitgen_t instance.
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    itemsize
+        Size in bytes of item
+    stride
+        Array stride
+    data
+        Location of data
+    buf
+        Location of buffer (itemsize)
+    """
+    cdef np.npy_intp i, j
+
+    for i in reversed(range(first, n)):
+        j = random_interval(bitgen, i)
+        string.memcpy(buf, data + j * stride, itemsize)
+        string.memcpy(data + j * stride, data + i * stride, itemsize)
+        string.memcpy(data + i * stride, buf, itemsize)
+
+
+cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, int64_t* data) nogil:
+    """
+    Parameters
+    ----------
+    bitgen
+        Pointer to a bitgen_t instance.
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    data
+        Location of data
+    """
+    cdef np.npy_intp i, j
+    cdef int64_t temp
+    for i in reversed(range(first, n)):
+        j = random_bounded_uint64(bitgen, 0, i, 0, 0)
+        temp = data[j]
+        data[j] = data[i]
+        data[i] = temp
 
 
 cdef bint _check_bit_generator(object bitgen):
@@ -95,8 +179,8 @@ cdef class Generator:
     Examples
     --------
     >>> from numpy.random import Generator, PCG64
-    >>> rg = Generator(PCG64())
-    >>> rg.standard_normal()
+    >>> rng = Generator(PCG64())
+    >>> rng.standard_normal()
     -0.203  # random
 
     See Also
@@ -136,8 +220,11 @@ cdef class Generator:
         self.bit_generator.state = state
 
     def __reduce__(self):
+        ctor, name_tpl, state = self._bit_generator.__reduce__()
+
         from ._pickle import __generator_ctor
-        return __generator_ctor, (self.bit_generator.state['bit_generator'],), self.bit_generator.state
+        # Requirements of __generator_ctor are (name, ctor)
+        return __generator_ctor, (name_tpl[0], ctor), state
 
     @property
     def bit_generator(self):
@@ -151,6 +238,64 @@ cdef class Generator:
         """
         return self._bit_generator
 
+    def spawn(self, int n_children):
+        """
+        spawn(n_children)
+
+        Create new independent child generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
+        .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
+
+        Returns
+        -------
+        child_generators : list of Generators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.BitGenerator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the bit generator and seed sequence.
+        bit_generator :
+            The bit generator instance used by the generator.
+
+        Examples
+        --------
+        Starting from a seeded default generator:
+
+        >>> # High quality entropy created with: f"0x{secrets.randbits(128):x}"
+        >>> entropy = 0x3034c61a9ae04ff8cb62ab8ec2c4b501
+        >>> rng = np.random.default_rng(entropy)
+
+        Create two new generators for example for parallel execution:
+
+        >>> child_rng1, child_rng2 = rng.spawn(2)
+
+        Drawn numbers from each are independent but derived from the initial
+        seeding entropy:
+
+        >>> rng.uniform(), child_rng1.uniform(), child_rng2.uniform()
+        (0.19029263503854454, 0.9475673279178444, 0.4702687338396767)
+
+        It is safe to spawn additional children from the original ``rng`` or
+        the children:
+
+        >>> more_child_rngs = rng.spawn(20)
+        >>> nested_spawn = child_rng1.spawn(20)
+
+        """
+        return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
+
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype=np.float64, out=None)
@@ -158,10 +303,10 @@ cdef class Generator:
         Return random floats in the half-open interval [0.0, 1.0).
 
         Results are from the "continuous uniform" distribution over the
-        stated interval.  To sample :math:`Unif[a, b), b > a` multiply
-        the output of `random` by `(b-a)` and add `a`::
+        stated interval.  To sample :math:`Unif[a, b), b > a` use `uniform`
+        or multiply the output of `random` by ``(b - a)`` and add ``a``::
 
-          (b - a) * random() + a
+            (b - a) * random() + a
 
         Parameters
         ----------
@@ -182,6 +327,10 @@ cdef class Generator:
         out : float or ndarray of floats
             Array of random floats of shape `size` (unless ``size=None``, in which
             case a single float is returned).
+
+        See Also
+        --------
+        uniform : Draw samples from the parameterized uniform distribution.
 
         Examples
         --------
@@ -289,6 +438,22 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
 
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
+
         References
         ----------
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
@@ -305,7 +470,7 @@ cdef class Generator:
                     0.0, '', CONS_NONE,
                     None)
 
-    def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
+    def standard_exponential(self, size=None, dtype=np.float64, method='zig', out=None):
         """
         standard_exponential(size=None, dtype=np.float64, method='zig', out=None)
 
@@ -345,12 +510,12 @@ cdef class Generator:
         """
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
-            if method == u'zig':
+            if method == 'zig':
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
             else:
                 return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif _dtype == np.float32:
-            if method == u'zig':
+            if method == 'zig':
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
             else:
                 return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
@@ -439,7 +604,7 @@ cdef class Generator:
         ----------
         .. [1] Daniel Lemire., "Fast Random Integer Generation in an Interval",
                ACM Transactions on Modeling and Computer Simulation 29 (1), 2019,
-               http://arxiv.org/abs/1805.10941.
+               https://arxiv.org/abs/1805.10941.
 
         """
         if high is None:
@@ -480,7 +645,7 @@ cdef class Generator:
             raise TypeError('Unsupported dtype %r for integers' % _dtype)
 
 
-        if size is None and dtype in (bool, int, np.compat.long):
+        if size is None and dtype in (bool, int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -498,13 +663,13 @@ cdef class Generator:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         Examples
         --------
         >>> np.random.default_rng().bytes(10)
-        ' eh\\x85\\x022SZ\\xbf\\xa4' #random
+        b'\\xfeC\\x9b\\x86\\x17\\xf2\\xa1\\xafcp' # random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
@@ -518,7 +683,7 @@ cdef class Generator:
         """
         choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
 
-        Generates a random sample from a given 1-D array
+        Generates a random sample from a given array
 
         Parameters
         ----------
@@ -533,11 +698,12 @@ cdef class Generator:
             len(size)``. Default is None, in which case a single value is
             returned.
         replace : bool, optional
-            Whether the sample is with or without replacement
+            Whether the sample is with or without replacement. Default is True,
+            meaning that a value of ``a`` can be selected multiple times.
         p : 1-D array_like, optional
             The probabilities associated with each entry in a.
-            If not given the sample assumes a uniform distribution over all
-            entries in a.
+            If not given, the sample assumes a uniform distribution over all
+            entries in ``a``.
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
@@ -563,6 +729,12 @@ cdef class Generator:
         --------
         integers, shuffle, permutation
 
+        Notes
+        -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -583,6 +755,13 @@ cdef class Generator:
         >>> rng.choice(5, 3, replace=False)
         array([3,1,0]) # random
         >>> #This is equivalent to rng.permutation(np.arange(5))[:3]
+
+        Generate a uniform random sample from a 2-D array along the first
+        axis (the default), without replacement:
+
+        >>> rng.choice([[0, 1, 2], [3, 4, 5], [6, 7, 8]], 2, replace=False)
+        array([[3, 4, 5], # random
+               [0, 1, 2]])
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
@@ -606,20 +785,22 @@ cdef class Generator:
         cdef uint64_t set_size, mask
         cdef uint64_t[::1] hash_set
         # Format and Verify input
+        a_original = a
         a = np.array(a, copy=False)
         if a.ndim == 0:
             try:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
-            except TypeError:
-                raise ValueError("a must an array or an integer")
+            except TypeError as exc:
+                raise ValueError("a must be a sequence or an integer, "
+                                 f"not {type(a_original)}") from exc
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be a positive integer unless no"
+                raise ValueError("a must be a positive integer unless no "
                                  "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("a cannot be empty unless no samples are"
+                raise ValueError("a cannot be empty unless no samples are "
                                  "taken")
 
         if p is not None:
@@ -707,8 +888,8 @@ cdef class Generator:
                     idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
-                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
-                                          idx_data)
+                        _shuffle_int(&self._bitgen, pop_size_i,
+                                     max(pop_size_i - size_i, 1), idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
@@ -736,7 +917,7 @@ cdef class Generator:
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
-                            self._shuffle_int(size_i, 1, idx_data)
+                            _shuffle_int(&self._bitgen, size_i, 1, idx_data)
                 idx.shape = shape
 
         if is_scalar and isinstance(idx, np.ndarray):
@@ -779,7 +960,10 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The default value is 1.0.
+            less than high.  The high limit may be included in the returned array of 
+            floats due to floating-point rounding in the equation 
+            ``low + (high-low) * random_sample()``.  high - low must be 
+            non-negative.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -805,10 +989,6 @@ cdef class Generator:
         anywhere within the interval ``[a, b)``, and zero elsewhere.
 
         When ``high`` == ``low``, values of ``low`` will be returned.
-        If ``high`` < ``low``, the results are officially undefined
-        and may eventually raise an error, i.e. do not rely on this
-        function to behave when passed arguments satisfying that
-        inequality condition.
 
         Examples
         --------
@@ -834,7 +1014,7 @@ cdef class Generator:
         """
         cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
-        cdef double _low, _high, range
+        cdef double _low, _high, rng
         cdef object temp
 
         alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
@@ -843,13 +1023,13 @@ cdef class Generator:
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
             _high = PyFloat_AsDouble(high)
-            range = _high - _low
-            if not np.isfinite(range):
-                raise OverflowError('Range exceeds valid bounds')
+            rng = _high - _low
+            if not np.isfinite(rng):
+                raise OverflowError('high - low range exceeds valid bounds')
 
             return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                         _low, '', CONS_NONE,
-                        range, '', CONS_NONE,
+                        rng, 'high - low', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         None)
 
@@ -863,7 +1043,7 @@ cdef class Generator:
             raise OverflowError('Range exceeds valid bounds')
         return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                     alow, '', CONS_NONE,
-                    arange, '', CONS_NONE,
+                    arange, 'high - low', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     None)
 
@@ -902,16 +1082,17 @@ cdef class Generator:
 
         Notes
         -----
-        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+        For random samples from the normal distribution with mean ``mu`` and
+        standard deviation ``sigma``, use one of::
 
-            mu + sigma * gen.standard_normal(size=...)
-            gen.normal(mu, sigma, size=...)
+            mu + sigma * rng.standard_normal(size=...)
+            rng.normal(mu, sigma, size=...)
 
         Examples
         --------
         >>> rng = np.random.default_rng()
         >>> rng.standard_normal()
-        2.1923875335537315 #random
+        2.1923875335537315 # random
 
         >>> s = rng.standard_normal(8000)
         >>> s
@@ -923,7 +1104,8 @@ cdef class Generator:
         >>> s.shape
         (3, 4, 2)
 
-        Two-by-four array of samples from :math:`N(3, 6.25)`:
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> 3 + 2.5 * rng.standard_normal(size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1015,7 +1197,7 @@ cdef class Generator:
         0.0  # may vary
 
         >>> abs(sigma - np.std(s, ddof=1))
-        0.1  # may vary
+        0.0  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1027,7 +1209,8 @@ cdef class Generator:
         ...          linewidth=2, color='r')
         >>> plt.show()
 
-        Two-by-four array of samples from N(3, 6.25):
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1093,7 +1276,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1181,7 +1364,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1344,7 +1527,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NoncentralF-Distribution.html
+               https://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
                https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -1570,7 +1753,7 @@ cdef class Generator:
               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
-              http://mathworld.wolfram.com/CauchyDistribution.html
+              https://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
               https://en.wikipedia.org/wiki/Cauchy_distribution
 
@@ -1647,33 +1830,45 @@ cdef class Generator:
         ...                    7515, 8230, 8770])
 
         Does their energy intake deviate systematically from the recommended
-        value of 7725 kJ?
+        value of 7725 kJ? Our null hypothesis will be the absence of deviation,
+        and the alternate hypothesis will be the presence of an effect that could be
+        either positive or negative, hence making our test 2-tailed. 
 
-        We have 10 degrees of freedom, so is the sample mean within 95% of the
-        recommended value?
+        Because we are estimating the mean and we have N=11 values in our sample,
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
+        compute the t statistic using the empirical mean and empirical standard 
+        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        empirical standard deviation on an unbiased estimate of the variance (note:
+        the final estimate is not unbiased due to the concave nature of the square 
+        root).
 
-        >>> s = np.random.default_rng().standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
         1142.1232221373727
-
-        Calculate the t statistic, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom, N-1.
-
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> t
+        -2.8207540608310198
+
+        We draw 1000000 samples from Student's t distribution with the adequate
+        degrees of freedom.
+
         >>> import matplotlib.pyplot as plt
+        >>> s = np.random.default_rng().standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        For a one-sided t-test, how far out in the distribution does the t
-        statistic appear?
+        Does our t statistic land in one of the two critical regions found at 
+        both tails of the distribution?
 
-        >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
+        0.018318  #random < 0.05, statistic is in critical region
 
-        So the p-value is about 0.009, which says the null hypothesis has a
-        probability of about 99% of being true.
+        The probability value for this 2-tailed test is about 1.83%, which is 
+        lower than the 5% pre-determined significance threshold. 
+
+        Therefore, the probability of observing values as extreme as our intake
+        conditionally on the null hypothesis being true is too low, and we reject 
+        the null hypothesis of no deviation. 
 
         """
         return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
@@ -1989,7 +2184,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         Notes
         -----
@@ -2116,7 +2311,7 @@ cdef class Generator:
                Generalizations, " Birkhauser, 2001.
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LaplaceDistribution.html
+               https://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
                https://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -2320,7 +2515,7 @@ cdef class Generator:
                Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LogisticDistribution.html
+               https://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
                https://en.wikipedia.org/wiki/Logistic_distribution
 
@@ -2439,7 +2634,7 @@ cdef class Generator:
         >>> b = []
         >>> for i in range(1000):
         ...    a = 10. + rng.standard_normal(100)
-        ...    b.append(np.product(a))
+        ...    b.append(np.prod(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
         >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
@@ -2758,7 +2953,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/BinomialDistribution.html
+               https://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
                https://en.wikipedia.org/wiki/Binomial_distribution
 
@@ -2809,6 +3004,7 @@ cdef class Generator:
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -2878,7 +3074,7 @@ cdef class Generator:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
@@ -2886,11 +3082,27 @@ cdef class Generator:
         then the probability distribution of the number of non-"1"s that
         appear before the third "1" is a negative binomial distribution.
 
+        Because this method internally calls ``Generator.poisson`` with an
+        intermediate random value, a ValueError is raised when the choice of 
+        :math:`n` and :math:`p` would result in the mean + 10 sigma of the sampled
+        intermediate distribution exceeding the max acceptable value of the 
+        ``Generator.poisson`` method. This happens when :math:`p` is too low 
+        (a lot of failures happen for every success) and :math:`n` is too big (
+        a lot of successes are allowed).
+        Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
+
+        .. math:: n\\frac{1-p}{p}+10n\\sqrt{n}\\frac{1-p}{p}<2^{63}-1-10\\sqrt{2^{63}-1},
+
+        Where the left side of the equation is the derived mean + 10 sigma of
+        a sample from the gamma distribution internally used as the :math:`lam`
+        parameter of a poisson sample, and the right side of the equation is
+        the constraint for maximum value of :math:`lam` in ``Generator.poisson``.
+
         References
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+               https://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
                https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
@@ -2910,9 +3122,41 @@ cdef class Generator:
         ...    print(i, "wells drilled, probability of one success =", probability)
 
         """
+
+        cdef bint is_scalar = True
+        cdef double *_dn
+        cdef double *_dp
+        cdef double _dmax_lam
+
+        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
+
+        if not is_scalar:
+            check_array_constraint(n_arr, 'n', CONS_POSITIVE_NOT_NAN)
+            check_array_constraint(p_arr, 'p', CONS_BOUNDED_GT_0_1)
+            # Check that the choice of negative_binomial parameters won't result in a
+            # call to the poisson distribution function with a value of lam too large.
+            max_lam_arr = (1 - p_arr) / p_arr * (n_arr + 10 * np.sqrt(n_arr))
+            if np.any(np.greater(max_lam_arr, POISSON_LAM_MAX)):
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
+
+        else:
+            _dn = <double*>np.PyArray_DATA(n_arr)
+            _dp = <double*>np.PyArray_DATA(p_arr)
+
+            check_constraint(_dn[0], 'n', CONS_POSITIVE_NOT_NAN)
+            check_constraint(_dp[0], 'p', CONS_BOUNDED_GT_0_1)
+            # Check that the choice of negative_binomial parameters won't result in a
+            # call to the poisson distribution function with a value of lam too large.
+            _dmax_lam = (1 - _dp[0]) / _dp[0] * (_dn[0] + 10 * sqrt(_dn[0]))
+            if _dmax_lam > POISSON_LAM_MAX:
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
+
         return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
-                    n, 'n', CONS_POSITIVE_NOT_NAN,
-                    p, 'p', CONS_BOUNDED_GT_0_1,
+                    n_arr, 'n', CONS_NONE,
+                    p_arr, 'p', CONS_NONE,
                     0.0, '', CONS_NONE)
 
     def poisson(self, lam=1.0, size=None):
@@ -2927,8 +3171,9 @@ cdef class Generator:
         Parameters
         ----------
         lam : float or array_like of floats
-            Expectation of interval, must be >= 0. A sequence of expectation
-            intervals must be broadcastable over the requested size.
+            Expected number of events occurring in a fixed-time interval,
+            must be >= 0. A sequence must be broadcastable over the requested
+            size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2959,7 +3204,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/PoissonDistribution.html
+               https://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
                https://en.wikipedia.org/wiki/Poisson_distribution
 
@@ -2997,7 +3242,7 @@ cdef class Generator:
         `a` > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
-        continuous probability distribution that satisfies Zipf's law: the
+        discrete probability distribution that satisfies Zipf's law: the
         frequency of an item is inversely proportional to its rank in a
         frequency table.
 
@@ -3025,9 +3270,10 @@ cdef class Generator:
         -----
         The probability density for the Zipf distribution is
 
-        .. math:: p(x) = \\frac{x^{-a}}{\\zeta(a)},
+        .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        where :math:`\\zeta` is the Riemann Zeta function.
+        for integers :math:`k \geq 1`, where :math:`\\zeta` is the Riemann Zeta
+        function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
         that the frequency of any word in a sample of a language is inversely
@@ -3043,22 +3289,29 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> a = 2. # parameter
-        >>> s = np.random.default_rng().zipf(a, 1000)
+        >>> a = 4.0
+        >>> n = 20000
+        >>> s = np.random.default_rng().zipf(a, size=n)
 
         Display the histogram of the samples, along with
-        the probability density function:
+        the expected histogram based on the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import special  # doctest: +SKIP
+        >>> from scipy.special import zeta  # doctest: +SKIP
 
-        Truncate s values at 50 so plot is interesting:
+        `bincount` provides a fast histogram for small integers.
 
-        >>> count, bins, ignored = plt.hist(s[s<50],
-        ...         50, density=True)
-        >>> x = np.arange(1., 50.)
-        >>> y = x**(-a) / special.zetac(a)  # doctest: +SKIP
-        >>> plt.plot(x, y/max(y), linewidth=2, color='r')  # doctest: +SKIP
+        >>> count = np.bincount(s)
+        >>> k = np.arange(1, s.max() + 1)
+
+        >>> plt.bar(k, count[1:], alpha=0.5, label='sample count')
+        >>> plt.plot(k, n*(k**-a)/zeta(a), 'k.-', alpha=0.5,
+        ...          label='expected count')   # doctest: +SKIP
+        >>> plt.semilogy()
+        >>> plt.grid(alpha=0.4)
+        >>> plt.legend()
+        >>> plt.title(f'Zipf sample, a={a}, size={n}')
         >>> plt.show()
 
         """
@@ -3110,7 +3363,7 @@ cdef class Generator:
         How many trials succeeded after a single run?
 
         >>> (z == 1).sum() / 10000.
-        0.34889999999999999 #random
+        0.34889999999999999 # random
 
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
@@ -3196,7 +3449,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/HypergeometricDistribution.html
+               https://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
         .. [4] Stadlober, Ernst, "The ratio of uniforms approach for generating
@@ -3224,7 +3477,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        DEF HYPERGEOM_MAX = 10**9
+        cdef double HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
@@ -3268,12 +3521,12 @@ cdef class Generator:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3337,7 +3590,7 @@ cdef class Generator:
 
         """
         return disc(&random_logseries, &self._bitgen, size, self.lock, 1, 0,
-                 p, 'p', CONS_BOUNDED_0_1,
+                 p, 'p', CONS_BOUNDED_LT_0_1,
                  0.0, '', CONS_NONE,
                  0.0, '', CONS_NONE)
 
@@ -3354,8 +3607,8 @@ cdef class Generator:
         generalization of the one-dimensional normal distribution to higher
         dimensions.  Such a distribution is specified by its mean and
         covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
+        (average or "center") and variance (the squared standard deviation,
+        or "width") of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -3410,9 +3663,9 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
-            the diagonal)
+        - Spherical covariance (`cov` is a multiple of the identity matrix)
+        - Diagonal covariance (`cov` has non-negative elements, and only on
+          the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
@@ -3432,6 +3685,12 @@ cdef class Generator:
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed.
 
+        This function internally uses linear algebra routines, and thus results
+        may not be identical (even up to precision) across architectures, OSes,
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
+
         References
         ----------
         .. [1] Papoulis, A., "Probability, Random Variables, and Stochastic
@@ -3449,16 +3708,40 @@ cdef class Generator:
         (3, 3, 2)
 
         We can use a different method other than the default to factorize cov:
+
         >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
         >>> y.shape
         (3, 3, 2)
 
-        The following is probably true, given that 0.6 is roughly twice the
-        standard deviation:
+        Here we generate 800 samples from the bivariate normal distribution
+        with mean [0, 0] and covariance matrix [[6, -3], [-3, 3.5]].  The
+        expected variances of the first and second components of the sample
+        are 6 and 3.5, respectively, and the expected correlation
+        coefficient is -3/sqrt(6*3.5) ≈ -0.65465.
 
-        >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True] # random
+        >>> cov = np.array([[6, -3], [-3, 3.5]])
+        >>> pts = rng.multivariate_normal([0, 0], cov, size=800)
 
+        Check that the mean, covariance, and correlation coefficient of the
+        sample are close to the expected values:
+
+        >>> pts.mean(axis=0)
+        array([ 0.0326911 , -0.01280782])  # may vary
+        >>> np.cov(pts.T)
+        array([[ 5.96202397, -2.85602287],
+               [-2.85602287,  3.47613949]])  # may vary
+        >>> np.corrcoef(pts.T)[0, 1]
+        -0.6273591314603949  # may vary
+
+        We can visualize this data with a scatter plot.  The orientation
+        of the point cloud illustrates the negative correlation of the
+        components of this sample.
+
+        >>> import matplotlib.pyplot as plt
+        >>> plt.plot(pts[:, 0], pts[:, 1], '.', alpha=0.5)
+        >>> plt.axis('equal')
+        >>> plt.grid()
+        >>> plt.show()
         """
         if method not in {'eigh', 'svd', 'cholesky'}:
             raise ValueError(
@@ -3467,6 +3750,11 @@ cdef class Generator:
         # Check preconditions on arguments
         mean = np.array(mean)
         cov = np.array(cov)
+
+        if (np.issubdtype(mean.dtype, np.complexfloating) or
+                np.issubdtype(cov.dtype, np.complexfloating)):
+            raise TypeError("mean and cov must not be complex")
+
         if size is None:
             shape = []
         elif isinstance(size, (int, long, np.integer)):
@@ -3516,7 +3804,7 @@ cdef class Generator:
             from numpy.linalg import cholesky
             l = cholesky(cov)
 
-        # make sure check_valid is ignored whe method == 'cholesky'
+        # make sure check_valid is ignored when method == 'cholesky'
         # since the decomposition will have failed if cov is not valid.
         if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
@@ -3528,10 +3816,10 @@ cdef class Generator:
                 psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
+                    warnings.warn("covariance is not symmetric positive-semidefinite.",
                                   RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError("covariance is not symmetric positive-semidefinite.")
 
         if method == 'cholesky':
             _factor = l
@@ -3565,24 +3853,38 @@ cdef class Generator:
         ----------
         n : int or array-like of ints
             Number of experiments.
-        pvals : sequence of floats, length p
-            Probabilities of each of the ``p`` different outcomes.  These
-            must sum to 1 (however, the last element is always assumed to
-            account for the remaining probability, as long as
-            ``sum(pvals[:-1]) <= 1)``.
+        pvals : array-like of floats
+            Probabilities of each of the ``p`` different outcomes with shape
+            ``(k0, k1, ..., kn, p)``. Each element ``pvals[i,j,...,:]`` must
+            sum to 1 (however, the last element is always assumed to account
+            for the remaining probability, as long as
+            ``sum(pvals[..., :-1], axis=-1) <= 1.0``. Must have at least 1
+            dimension where pvals.shape[-1] > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn each with ``p`` elements. Default
+            is None where the output size is determined by the broadcast shape
+            of ``n`` and all by the final dimension of ``pvals``, which is
+            denoted as ``b=(b0, b1, ..., bq)``. If size is not None, then it
+            must be compatible with the broadcast shape ``b``. Specifically,
+            size must have ``q`` or more elements and size[-(q-j):] must equal
+            ``bj``.
 
         Returns
         -------
         out : ndarray
-            The drawn samples, of shape *size*, if that was provided.  If not,
-            the shape is ``(N,)``.
+            The drawn samples, of shape size, if provided. When size is
+            provided, the output shape is size + (p,)  If not specified,
+            the shape is determined by the broadcast shape of ``n`` and
+            ``pvals``, ``(b0, b1, ..., bq)`` augmented with the dimension of
+            the multinomial, ``p``, so that that output shape is
+            ``(b0, b1, ..., bq, p)``.
 
-            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
-            value drawn from the distribution.
+            Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
+            from the distribution.
+
+            .. versionchanged:: 1.22.0
+                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
@@ -3606,7 +3908,7 @@ cdef class Generator:
         Now, do one experiment throwing the dice 10 time, and 10 times again,
         and another throwing the dice 20 times, and 20 times again:
 
-        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=2)
+        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=(2, 2))
         array([[[2, 4, 0, 1, 2, 1],
                 [1, 3, 0, 3, 1, 2]],
                [[1, 4, 4, 4, 4, 3],
@@ -3619,6 +3921,38 @@ cdef class Generator:
 
         >>> rng.multinomial(100, [1/7.]*5 + [2/7.])
         array([11, 16, 14, 17, 16, 26])  # random
+
+        Simulate 10 throws of a 4-sided die and 20 throws of a 6-sided die
+
+        >>> rng.multinomial([10, 20],[[1/4]*4 + [0]*2, [1/6]*6])
+        array([[2, 1, 4, 3, 0, 0],
+               [3, 3, 3, 6, 1, 4]], dtype=int64)  # random
+
+        Generate categorical random variates from two categories where the
+        first has 3 outcomes and the second has 2.
+
+        >>> rng.multinomial(1, [[.1, .5, .4 ], [.3, .7, .0]])
+        array([[0, 0, 1],
+               [0, 1, 0]], dtype=int64)  # random
+
+        ``argmax(axis=-1)`` is then used to return the categories.
+
+        >>> pvals = [[.1, .5, .4 ], [.3, .7, .0]]
+        >>> rvs = rng.multinomial(1, pvals, size=(4,2))
+        >>> rvs.argmax(axis=-1)
+        array([[0, 1],
+               [2, 0],
+               [2, 1],
+               [2, 0]], dtype=int64)  # random
+
+        The same output dimension can be produced using broadcasting.
+
+        >>> rvs = rng.multinomial([[1]] * 4, pvals)
+        >>> rvs.argmax(axis=-1)
+        array([[0, 1],
+               [2, 0],
+               [2, 1],
+               [2, 0]], dtype=int64)  # random
 
         The probability inputs should be normalized. As an implementation
         detail, the value of the last entry is ignored and assumed to take
@@ -3634,33 +3968,82 @@ cdef class Generator:
         >>> rng.multinomial(100, [1.0, 2.0])  # WRONG
         Traceback (most recent call last):
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
-
         """
 
-        cdef np.npy_intp d, i, sz, offset
+        cdef np.npy_intp d, i, sz, offset, pi
         cdef np.ndarray parr, mnarr, on, temp_arr
         cdef double *pix
+        cdef int ndim
         cdef int64_t *mnix
         cdef int64_t ni
         cdef np.broadcast it
+        on = <np.ndarray>np.PyArray_FROM_OTF(n,
+                                             np.NPY_INT64,
+                                             np.NPY_ARRAY_ALIGNED |
+                                             np.NPY_ARRAY_C_CONTIGUOUS)
+        parr = <np.ndarray>np.PyArray_FROM_OTF(pvals,
+                                               np.NPY_DOUBLE,
+                                               np.NPY_ARRAY_ALIGNED |
+                                               np.NPY_ARRAY_C_CONTIGUOUS)
+        ndim = parr.ndim
+        d = parr.shape[ndim - 1] if ndim >= 1 else 0
+        if d == 0:
+            raise ValueError(
+                "pvals must have at least 1 dimension and the last dimension "
+                "of pvals must be greater than 0."
+            )
 
-        d = len(pvals)
-        on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
-        parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
+        pix = <double*>np.PyArray_DATA(parr)
+        sz = np.PyArray_SIZE(parr)
+        # Cython 0.29.20 would not correctly translate the range-based for
+        # loop to a C for loop
+        # for offset in range(<np.npy_intp>0, sz, d):
+        offset = 0
+        while offset < sz:
+            if kahan_sum(pix + offset, d-1) > (1.0 + 1e-12):
+                # When floating, but not float dtype, and close, improve the error
+                # 1.0001 works for float16 and float32
+                slice_repr = "[:-1]" if ndim == 1 else "[...,:-1]"
+                if (isinstance(pvals, np.ndarray)
+                        and np.issubdtype(pvals.dtype, np.floating)
+                        and pvals.dtype != float
+                        and pvals.sum() < 1.0001):
+                    msg = (f"sum(pvals{slice_repr}.astype(np.float64)) > 1.0."
+                           " The pvals array is cast to 64-bit floating"
+                           " point prior to checking the sum. Precision "
+                           "changes when casting may cause problems even "
+                           "if the sum of the original pvals is valid.")
+                else:
+                    msg = f"sum(pvals{slice_repr}) > 1.0"
+                raise ValueError(msg)
+            offset += d
 
-        if np.PyArray_NDIM(on) != 0: # vector
+        if np.PyArray_NDIM(on) != 0 or ndim > 1: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
+            # This provides the offsets to use in the C-contig parr when
+            # broadcasting
+            offsets = <np.ndarray>np.arange(
+                0, np.PyArray_SIZE(parr), d, dtype=np.intp
+            ).reshape((<object>parr).shape[:ndim - 1])
             if size is None:
-                it = np.PyArray_MultiIterNew1(on)
+                it = np.PyArray_MultiIterNew2(on, offsets)
             else:
                 temp = np.empty(size, dtype=np.int8)
                 temp_arr = <np.ndarray>temp
-                it = np.PyArray_MultiIterNew2(on, temp_arr)
+                it = np.PyArray_MultiIterNew3(on, offsets, temp_arr)
+                # Validate size and the broadcast shape
+                try:
+                    size = (operator.index(size),)
+                except:
+                    size = tuple(size)
+                # This test verifies that an axis with dim 1 in size has not
+                # been increased by broadcasting with the input
+                if it.shape != size:
+                    raise ValueError(
+                        f"Output size {size} is not compatible with "
+                        f"broadcast dimensions of inputs {it.shape}."
+                    )
             shape = it.shape + (d,)
             multin = np.zeros(shape, dtype=np.int64)
             mnarr = <np.ndarray>multin
@@ -3670,7 +4053,8 @@ cdef class Generator:
             with self.lock, nogil:
                 for i in range(sz):
                     ni = (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
-                    random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
+                    pi = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 1))[0]
+                    random_multinomial(&self._bitgen, ni, &mnix[offset], &pix[pi], d, &self._binomial)
                     offset += d
                     np.PyArray_MultiIter_NEXT(it)
             return multin
@@ -3941,9 +4325,9 @@ cdef class Generator:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
-            If any value in ``alpha`` is less than or equal to zero
+            If any value in ``alpha`` is less than zero
 
         Notes
         -----
@@ -3969,7 +4353,7 @@ cdef class Generator:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.org.uk/mackay/itila/
+               https://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
                https://en.wikipedia.org/wiki/Dirichlet_distribution
 
@@ -4022,8 +4406,9 @@ cdef class Generator:
         alpha_arr = <np.ndarray>np.PyArray_FROMANY(
             alpha, np.NPY_DOUBLE, 1, 1,
             np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        if np.any(np.less_equal(alpha_arr, 0)):
-            raise ValueError('alpha <= 0')
+        if np.any(np.less(alpha_arr, 0)):
+            raise ValueError('alpha < 0')
+
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         if size is None:
@@ -4083,17 +4468,23 @@ cdef class Generator:
                 csum += alpha_data[j]
                 alpha_csum_data[j] = csum
 
-            with self.lock, nogil:
-                while i < totsize:
-                    acc = 1.
-                    for j in range(k - 1):
-                        v = random_beta(&self._bitgen, alpha_data[j],
-                                        alpha_csum_data[j + 1])
-                        val_data[i + j] = acc * v
-                        acc *= (1. - v)
-                    val_data[i + k - 1] = acc
-                    i = i + k
-
+            # If csum == 0, then all the values in alpha are 0, and there is
+            # nothing to do, because diric was created with np.zeros().
+            if csum > 0:
+                with self.lock, nogil:
+                    while i < totsize:
+                        acc = 1.
+                        for j in range(k - 1):
+                            v = random_beta(&self._bitgen, alpha_data[j],
+                                            alpha_csum_data[j + 1])
+                            val_data[i + j] = acc * v
+                            acc *= (1. - v)
+                            if alpha_csum_data[j + 1] == 0:
+                                # v must be 1, so acc is now 0. All
+                                # remaining elements will be left at 0.
+                                break
+                        val_data[i + k - 1] = acc
+                        i = i + k
         else:
             # Standard case: Unit normalisation of a vector of gamma random
             # variates
@@ -4111,19 +4502,178 @@ cdef class Generator:
 
         return diric
 
-    # Shuffling and permutations:
+    def permuted(self, object x, *, axis=None, out=None):
+        """
+        permuted(x, axis=None, out=None)
+
+        Randomly permute `x` along axis `axis`.
+
+        Unlike `shuffle`, each slice along the given axis is shuffled
+        independently of the others.
+
+        Parameters
+        ----------
+        x : array_like, at least one-dimensional
+            Array to be shuffled.
+        axis : int, optional
+            Slices of `x` in this axis are shuffled. Each slice
+            is shuffled independently of the others.  If `axis` is
+            None, the flattened array is shuffled.
+        out : ndarray, optional
+            If given, this is the destination of the shuffled array.
+            If `out` is None, a shuffled copy of the array is returned.
+
+        Returns
+        -------
+        ndarray
+            If `out` is None, a shuffled copy of `x` is returned.
+            Otherwise, the shuffled array is stored in `out`,
+            and `out` is returned
+
+        See Also
+        --------
+        shuffle
+        permutation
+        
+        Notes
+        -----
+        An important distinction between methods ``shuffle``  and ``permuted`` is 
+        how they both treat the ``axis`` parameter which can be found at 
+        :ref:`generator-handling-axis-parameter`.
+
+        Examples
+        --------
+        Create a `numpy.random.Generator` instance:
+
+        >>> rng = np.random.default_rng()
+
+        Create a test array:
+
+        >>> x = np.arange(24).reshape(3, 8)
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        Shuffle the rows of `x`:
+
+        >>> y = rng.permuted(x, axis=1)
+        >>> y
+        array([[ 4,  3,  6,  7,  1,  2,  5,  0],  # random
+               [15, 10, 14,  9, 12, 11,  8, 13],
+               [17, 16, 20, 21, 18, 22, 23, 19]])
+
+        `x` has not been modified:
+
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        To shuffle the rows of `x` in-place, pass `x` as the `out`
+        parameter:
+
+        >>> y = rng.permuted(x, axis=1, out=x)
+        >>> x
+        array([[ 3,  0,  4,  7,  1,  6,  2,  5],  # random
+               [ 8, 14, 13,  9, 12, 11, 15, 10],
+               [17, 18, 16, 22, 19, 23, 20, 21]])
+
+        Note that when the ``out`` parameter is given, the return
+        value is ``out``:
+
+        >>> y is x
+        True
+        """
+
+        cdef int ax
+        cdef np.npy_intp axlen, axstride, itemsize
+        cdef void *buf
+        cdef np.flatiter it
+        cdef np.ndarray to_shuffle
+        cdef int status
+        cdef int flags
+
+        x = np.asarray(x)
+
+        if out is None:
+            out = x.copy(order='K')
+        else:
+            if type(out) is not np.ndarray:
+                raise TypeError('out must be a numpy array')
+            PyArray_FailUnlessWriteable(<np.PyArrayObject *>out, "out")
+            if out.shape != x.shape:
+                raise ValueError('out must have the same shape as x')
+            np.copyto(out, x, casting='safe')
+
+        if axis is None:
+            if x.ndim > 1:
+                if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
+                    flags = (np.NPY_ARRAY_C_CONTIGUOUS |
+                             NPY_ARRAY_WRITEBACKIFCOPY)
+                    to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out,
+                                                   <np.PyArray_Descr *>NULL, flags)
+                    self.shuffle(to_shuffle.ravel(order='K'))
+                    # Because we only execute this block if out is not
+                    # contiguous, we know this call will always result in a
+                    # copy of to_shuffle back to out. I.e. status will be 1.
+                    status = PyArray_ResolveWritebackIfCopy(to_shuffle)
+                    assert status == 1
+                else:
+                    # out is n-d with n > 1, but is either C- or F-contiguous,
+                    # so we know out.ravel(order='A') is a view.
+                    self.shuffle(out.ravel(order='A'))
+            else:
+                # out is 1-d
+                self.shuffle(out)
+            return out
+
+        ax = normalize_axis_index(axis, np.ndim(out))
+        itemsize = out.itemsize
+        axlen = out.shape[ax]
+        axstride = out.strides[ax]
+
+        it = np.PyArray_IterAllButAxis(out, &ax)
+
+        buf = PyMem_Malloc(itemsize)
+        if buf == NULL:
+            raise MemoryError('memory allocation failed in permuted')
+
+        if out.dtype.hasobject:
+            # Keep the GIL when shuffling an object array.
+            with self.lock:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
+        else:
+            # out is not an object array, so we can release the GIL.
+            with self.lock, nogil:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
+
+        PyMem_Free(buf)
+        return out
+
     def shuffle(self, object x, axis=0):
         """
         shuffle(x, axis=0)
 
-        Modify a sequence in-place by shuffling its contents.
+        Modify an array or sequence in-place by shuffling its contents.
 
         The order of sub-arrays is changed but their contents remains the same.
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
         axis : int, optional
             The axis which `x` is shuffled along. Default is 0.
             It is only supported on `ndarray` objects.
@@ -4132,15 +4682,32 @@ cdef class Generator:
         -------
         None
 
+        See Also
+        --------
+        permuted
+        permutation
+
+        Notes
+        -----
+        An important distinction between methods ``shuffle``  and ``permuted`` is 
+        how they both treat the ``axis`` parameter which can be found at 
+        :ref:`generator-handling-axis-parameter`.
+
         Examples
         --------
         >>> rng = np.random.default_rng()
         >>> arr = np.arange(10)
+        >>> arr
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> rng.shuffle(arr)
         >>> arr
-        [1 7 5 2 9 4 3 6 0 8] # random
+        array([2, 0, 7, 5, 1, 4, 8, 9, 3, 6]) # random
 
         >>> arr = np.arange(9).reshape((3, 3))
+        >>> arr
+        array([[0, 1, 2],
+               [3, 4, 5],
+               [6, 7, 8]])
         >>> rng.shuffle(arr)
         >>> arr
         array([[3, 4, 5], # random
@@ -4148,6 +4715,10 @@ cdef class Generator:
                [0, 1, 2]])
 
         >>> arr = np.arange(9).reshape((3, 3))
+        >>> arr
+        array([[0, 1, 2],
+               [3, 4, 5],
+               [6, 7, 8]])
         >>> rng.shuffle(arr, axis=1)
         >>> arr
         array([[2, 0, 1], # random
@@ -4159,13 +4730,17 @@ cdef class Generator:
             char* x_ptr
             char* buf_ptr
 
-        axis = normalize_axis_index(axis, np.ndim(x))
+        if isinstance(x, np.ndarray):
+            if not x.flags.writeable:
+                raise ValueError('array is read-only')
+            # Only call ndim on ndarrays, see GH 18142
+            axis = normalize_axis_index(axis, np.ndim(x))
 
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4173,16 +4748,21 @@ cdef class Generator:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
-            with self.lock:
-                # We trick gcc into providing a specialized implementation for
-                # the most common case, yielding a ~33% performance improvement.
-                # Note that apparently, only one branch can ever be specialized.
-                if itemsize == sizeof(np.npy_intp):
-                    self._shuffle_raw(n, 1, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
-                else:
-                    self._shuffle_raw(n, 1, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+            buf_ptr = np.PyArray_BYTES(buf)
+            if x.dtype.hasobject:
+                with self.lock:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
+            else:
+                # Same as above, but the GIL is released.
+                with self.lock, nogil:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
@@ -4191,11 +4771,21 @@ cdef class Generator:
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
                         continue
-                    buf[...] = x[j]
-                    x[j] = x[i]
-                    x[i] = buf
+                    buf[...] = x[j, ...]
+                    x[j, ...] = x[i, ...]
+                    x[i, ...] = buf
         else:
             # Untyped path.
+            if not isinstance(x, Sequence):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    f"you are shuffling a '{type(x).__name__}' object "
+                    "which is not a subclass of 'Sequence'; "
+                    "`shuffle` is not guaranteed to behave correctly. "
+                    "E.g., non-numpy array/tensor objects with view semantics "
+                    "may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=1)  # Cython does not add a level
+
             if axis != 0:
                 raise NotImplementedError("Axis argument is only supported "
                                           "on ndarray objects")
@@ -4203,56 +4793,6 @@ cdef class Generator:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)
                     x[i], x[j] = x[j], x[i]
-
-    cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp first,
-                             np.npy_intp itemsize, np.npy_intp stride,
-                             char* data, char* buf):
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        itemsize
-            Size in bytes of item
-        stride
-            Array stride
-        data
-            Location of data
-        buf
-            Location of buffer (itemsize)
-        """
-        cdef np.npy_intp i, j
-        for i in reversed(range(first, n)):
-            j = random_interval(&self._bitgen, i)
-            string.memcpy(buf, data + j * stride, itemsize)
-            string.memcpy(data + j * stride, data + i * stride, itemsize)
-            string.memcpy(data + i * stride, buf, itemsize)
-
-    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
-                             int64_t* data) nogil:
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        data
-            Location of data
-        """
-        cdef np.npy_intp i, j
-        cdef int64_t temp
-        for i in reversed(range(first, n)):
-            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
-            temp = data[j]
-            data[j] = data[i]
-            data[i] = temp
 
     def permutation(self, object x, axis=0):
         """
@@ -4292,7 +4832,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)
@@ -4326,6 +4866,7 @@ cdef class Generator:
         return arr[tuple(slices)]
 
 
+@cython.embedsignature(True)
 def default_rng(seed=None):
     """Construct a new Generator with the default BitGenerator (PCG64).
 
@@ -4336,7 +4877,7 @@ def default_rng(seed=None):
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in a`SeedSequence` instance
+        pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
@@ -4349,6 +4890,61 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+
+    See :ref:`seeding_and_entropy` for more information about seeding.
+    
+    Examples
+    --------
+    ``default_rng`` is the recommended constructor for the random number class
+    ``Generator``. Here are several ways we can construct a random 
+    number generator using ``default_rng`` and the ``Generator`` class. 
+    
+    Here we use ``default_rng`` to generate a random float:
+ 
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(12345)
+    >>> print(rng)
+    Generator(PCG64)
+    >>> rfloat = rng.random()
+    >>> rfloat
+    0.22733602246716966
+    >>> type(rfloat)
+    <class 'float'>
+     
+    Here we use ``default_rng`` to generate 3 random integers between 0 
+    (inclusive) and 10 (exclusive):
+        
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(12345)
+    >>> rints = rng.integers(low=0, high=10, size=3)
+    >>> rints
+    array([6, 2, 7])
+    >>> type(rints[0])
+    <class 'numpy.int64'>
+    
+    Here we specify a seed so that we have reproducible results:
+    
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> print(rng)
+    Generator(PCG64)
+    >>> arr1 = rng.random((3, 3))
+    >>> arr1
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+
+    If we exit and restart our Python interpreter, we'll see that we
+    generate the same random numbers again:
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> arr2 = rng.random((3, 3))
+    >>> arr2
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+
     """
     if _check_bit_generator(seed):
         # We were passed a BitGenerator, so just wrap it up.

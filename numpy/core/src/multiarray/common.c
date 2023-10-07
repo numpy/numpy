@@ -1,8 +1,9 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
@@ -12,7 +13,6 @@
 #include "abstractdtypes.h"
 #include "usertypes.h"
 
-#include "common.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
@@ -47,8 +47,8 @@ _array_find_python_scalar_type(PyObject *op)
         return PyArray_DescrFromType(NPY_CDOUBLE);
     }
     else if (PyLong_Check(op)) {
-        return PyArray_PyIntAbstractDType.discover_descr_from_pyobject(
-                    &PyArray_PyIntAbstractDType, op);
+        return NPY_DT_CALL_discover_descr_from_pyobject(
+                &PyArray_PyIntAbstractDType, op);
     }
     return NULL;
 }
@@ -108,8 +108,8 @@ PyArray_DTypeFromObjectStringDiscovery(
 
 /*
  * This function is now identical to the new PyArray_DiscoverDTypeAndShape
- * but only returns the the dtype. It should in most cases be slowly phased
- * out. (Which may need some refactoring to PyArray_FromAny to make it simpler)
+ * but only returns the dtype. It should in most cases be slowly phased out.
+ * (Which may need some refactoring to PyArray_FromAny to make it simpler)
  */
 NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
@@ -119,7 +119,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     int ndim;
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            obj, maxdims, shape, &cache, NULL, NULL, out_dtype);
+            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, 0);
     if (ndim < 0) {
         return -1;
     }
@@ -127,62 +127,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return 0;
 }
 
-
-/* new reference */
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *c_str)
-{
-    PyArray_Descr *descr = NULL;
-    PyObject *stringobj = PyString_FromString(c_str);
-
-    if (stringobj == NULL) {
-        return NULL;
-    }
-    if (PyArray_DescrConverter(stringobj, &descr) != NPY_SUCCEED) {
-        Py_DECREF(stringobj);
-        return NULL;
-    }
-    Py_DECREF(stringobj);
-    return descr;
-}
-
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i)
-{
-    npy_intp dim0;
-
-    if (PyArray_NDIM(mp) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
-        return NULL;
-    }
-    dim0 = PyArray_DIMS(mp)[0];
-    if (check_and_adjust_index(&i, dim0, 0, NULL) < 0)
-        return NULL;
-    if (i == 0) {
-        return PyArray_DATA(mp);
-    }
-    return PyArray_BYTES(mp)+i*PyArray_STRIDES(mp)[0];
-}
-
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret)
-{
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyObject *zero = PyInt_FromLong(0);
-        PyArray_FillObjectArray(ret, zero);
-        Py_DECREF(zero);
-        if (PyErr_Occurred()) {
-            Py_DECREF(ret);
-            return -1;
-        }
-    }
-    else {
-        npy_intp n = PyArray_NBYTES(ret);
-        memset(PyArray_DATA(ret), 0, n);
-    }
-    return 0;
-}
 
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
@@ -254,7 +198,6 @@ NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
-    PyObject *ret, *tmp;
 
     /*
      * Negative dimension indicates "newaxis", which can
@@ -264,40 +207,40 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     for (i = 0; i < n && vals[i] < 0; i++);
 
     if (i == n) {
-        return PyUString_FromFormat("()%s", ending);
-    }
-    else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
+        return PyUnicode_FromFormat("()%s", ending);
     }
 
+    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
+    if (ret == NULL) {
+        return NULL;
+    }
     for (; i < n; ++i) {
+        PyObject *tmp;
+
         if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
+            tmp = PyUnicode_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&ret, tmp);
+        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
+        Py_DECREF(tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
     if (i == 1) {
-        tmp = PyUString_FromFormat(",)%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S,)%s", ret, ending));
     }
     else {
-        tmp = PyUString_FromFormat(")%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S)%s", ret, ending));
     }
-    PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }
 
@@ -310,7 +253,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
              *shape1 = NULL, *shape2 = NULL,
              *shape1_i = NULL, *shape2_j = NULL;
 
-    format = PyUString_FromString("shapes %s and %s not aligned:"
+    format = PyUnicode_FromString("shapes %s and %s not aligned:"
                                   " %d (dim %d) != %d (dim %d)");
 
     shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
@@ -333,7 +276,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
         goto end;
     }
 
-    errmsg = PyUString_Format(format, fmt_args);
+    errmsg = PyUnicode_Format(format, fmt_args);
     if (errmsg != NULL) {
         PyErr_SetObject(PyExc_ValueError, errmsg);
     }
@@ -373,10 +316,7 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
     off  = PyTuple_GET_ITEM(value, 1);
 
-    if (PyInt_Check(off)) {
-        *offset = PyInt_AsSsize_t(off);
-    }
-    else if (PyLong_Check(off)) {
+    if (PyLong_Check(off)) {
         *offset = PyLong_AsSsize_t(off);
     }
     else {
@@ -501,3 +441,32 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
     }
 }
 
+NPY_NO_EXPORT int
+check_is_convertible_to_scalar(PyArrayObject *v)
+{
+    if (PyArray_NDIM(v) == 0) {
+        return 0;
+    }
+
+    /* Remove this if-else block when the deprecation expires */
+    if (PyArray_SIZE(v) == 1) {
+        /* Numpy 1.25.0, 2023-01-02 */
+        if (DEPRECATE(
+                "Conversion of an array with ndim > 0 to a scalar "
+                "is deprecated, and will error in future. "
+                "Ensure you extract a single element from your array "
+                "before performing this operation. "
+                "(Deprecated NumPy 1.25.)") < 0) {
+            return -1;
+        }
+        return 0;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+            "only length-1 arrays can be converted to Python scalars");
+        return -1;
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+            "only 0-dimensional arrays can be converted to Python scalars");
+    return -1;
+}

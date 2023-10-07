@@ -1,19 +1,28 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <string.h>
 
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
+#include "npy_argparse.h"
 #include "npy_config.h"
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
 #include "ctors.h"
 #include "common.h"
+#include "simd/simd.h"
 
+#include <string.h>
+
+typedef enum {
+    PACK_ORDER_LITTLE = 0,
+    PACK_ORDER_BIG
+} PACK_ORDER;
 
 /*
  * Returns -1 if the array is monotonic decreasing,
@@ -101,7 +110,8 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
  * output array.
  */
 NPY_NO_EXPORT PyObject *
-arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
+                            Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
@@ -109,11 +119,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("bincount", args, len_args, kwnames,
+                "list", NULL, &list,
+                "|weights", NULL, &weight,
+                "|minlength", NULL, &mlength,
+                NULL, NULL, NULL) < 0) {
+        return NULL;
     }
 
     lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
@@ -226,7 +239,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     npy_intp len_x;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|_monotonicity", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:_monotonicity", kwlist,
                                      &obj_x)) {
         return NULL;
     }
@@ -249,7 +262,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     NPY_END_THREADS
     Py_DECREF(arr_x);
 
-    return PyInt_FromLong(monotonic);
+    return PyLong_FromLong(monotonic);
 }
 
 /*
@@ -257,7 +270,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
  * indicated by the mask
  */
 NPY_NO_EXPORT PyObject *
-arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     char *src, *dest;
     npy_bool *mask_data;
@@ -370,7 +383,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 #ifdef __INTEL_COMPILER
 #pragma intel optimization_level 0
 #endif
-static NPY_INLINE npy_intp
+static inline npy_intp
 _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, const npy_intp i0)
 {
     npy_intp i;
@@ -481,7 +494,8 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
 #undef LIKELY_IN_CACHE_SIZE
 
 NPY_NO_EXPORT PyObject *
-arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -492,12 +506,16 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     const npy_double *dy, *dx, *dz;
     npy_double *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -646,7 +664,8 @@ fail:
 
 /* As for arr_interp but for complex fp values */
 NPY_NO_EXPORT PyObject *
-arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args,
+                             PyObject *kwnames)
 {
 
     PyObject *fp, *xp, *x;
@@ -659,12 +678,16 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
-
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
-                                     kwlist, &x, &xp, &fp, &left, &right)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
+                "x", NULL, &x,
+                "xp", NULL, &xp,
+                "fp", NULL, &fp,
+                "|left", NULL, &left,
+                "|right", NULL, &right,
+                NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -711,12 +734,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         lval = dy[0];
     }
     else {
-        lval.real = PyComplex_RealAsDouble(left);
-        if (error_converting(lval.real)) {
+        npy_csetreal(&lval, PyComplex_RealAsDouble(left));
+        if (error_converting(npy_creal(lval))) {
             goto fail;
         }
-        lval.imag = PyComplex_ImagAsDouble(left);
-        if (error_converting(lval.imag)) {
+        npy_csetimag(&lval, PyComplex_ImagAsDouble(left));
+        if (error_converting(npy_cimag(lval))) {
             goto fail;
         }
     }
@@ -725,12 +748,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         rval = dy[lenxp - 1];
     }
     else {
-        rval.real = PyComplex_RealAsDouble(right);
-        if (error_converting(rval.real)) {
+        npy_csetreal(&rval, PyComplex_RealAsDouble(right));
+        if (error_converting(npy_creal(rval))) {
             goto fail;
         }
-        rval.imag = PyComplex_ImagAsDouble(right);
-        if (error_converting(rval.imag)) {
+        npy_csetimag(&rval, PyComplex_ImagAsDouble(right));
+        if (error_converting(npy_cimag(rval))) {
             goto fail;
         }
     }
@@ -765,8 +788,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
-                slopes[i].real = (dy[i+1].real - dy[i].real) * inv_dx;
-                slopes[i].imag = (dy[i+1].imag - dy[i].imag) * inv_dx;
+                npy_csetreal(&slopes[i], (npy_creal(dy[i+1]) - npy_creal(dy[i])) * inv_dx);
+                npy_csetimag(&slopes[i], (npy_cimag(dy[i+1]) - npy_cimag(dy[i])) * inv_dx);
             }
         }
 
@@ -774,8 +797,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             const npy_double x_val = dz[i];
 
             if (npy_isnan(x_val)) {
-                dres[i].real = x_val;
-                dres[i].imag = 0.0;
+                npy_csetreal(&dres[i], x_val);
+                npy_csetimag(&dres[i], 0.0);
                 continue;
             }
 
@@ -800,25 +823,25 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 }
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
-                    slope.real = (dy[j+1].real - dy[j].real) * inv_dx;
-                    slope.imag = (dy[j+1].imag - dy[j].imag) * inv_dx;
+                    npy_csetreal(&slope, (npy_creal(dy[j+1]) - npy_creal(dy[j])) * inv_dx);
+                    npy_csetimag(&slope, (npy_cimag(dy[j+1]) - npy_cimag(dy[j])) * inv_dx);
                 }
 
                 /* If we get nan in one direction, try the other */
-                dres[i].real = slope.real*(x_val - dx[j]) + dy[j].real;
-                if (NPY_UNLIKELY(npy_isnan(dres[i].real))) {
-                    dres[i].real = slope.real*(x_val - dx[j+1]) + dy[j+1].real;
-                    if (NPY_UNLIKELY(npy_isnan(dres[i].real)) &&
-                            dy[j].real == dy[j+1].real) {
-                        dres[i].real = dy[j].real;
+                npy_csetreal(&dres[i], npy_creal(slope)*(x_val - dx[j]) + npy_creal(dy[j]));
+                if (NPY_UNLIKELY(npy_isnan(npy_creal(dres[i])))) {
+                    npy_csetreal(&dres[i], npy_creal(slope)*(x_val - dx[j+1]) + npy_creal(dy[j+1]));
+                    if (NPY_UNLIKELY(npy_isnan(npy_creal(dres[i]))) &&
+                            npy_creal(dy[j]) == npy_creal(dy[j+1])) {
+                        npy_csetreal(&dres[i], npy_creal(dy[j]));
                     }
                 }
-                dres[i].imag = slope.imag*(x_val - dx[j]) + dy[j].imag;
-                if (NPY_UNLIKELY(npy_isnan(dres[i].imag))) {
-                    dres[i].imag = slope.imag*(x_val - dx[j+1]) + dy[j+1].imag;
-                    if (NPY_UNLIKELY(npy_isnan(dres[i].imag)) &&
-                            dy[j].imag == dy[j+1].imag) {
-                        dres[i].imag = dy[j].imag;
+                npy_csetimag(&dres[i], npy_cimag(slope)*(x_val - dx[j]) + npy_cimag(dy[j]));
+                if (NPY_UNLIKELY(npy_isnan(npy_cimag(dres[i])))) {
+                    npy_csetimag(&dres[i], npy_cimag(slope)*(x_val - dx[j+1]) + npy_cimag(dy[j+1]));
+                    if (NPY_UNLIKELY(npy_isnan(npy_cimag(dres[i]))) &&
+                            npy_cimag(dy[j]) == npy_cimag(dy[j+1])) {
+                        npy_csetimag(&dres[i], npy_cimag(dy[j]));
                     }
                 }
             }
@@ -1032,7 +1055,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     NpyIter *iter = NULL;
 
-    char *kwlist[] = {"multi_index", "dims", "mode", "order", NULL};
+    static char *kwlist[] = {"multi_index", "dims", "mode", "order", NULL};
 
     memset(op, 0, sizeof(op));
     dtype[0] = NULL;
@@ -1061,7 +1084,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
             s = 1;
             for (i = dimensions.len-1; i >= 0; --i) {
                 ravel_strides[i] = s;
-                if (npy_mul_with_overflow_intp(&s, s, dimensions.ptr[i])) {
+                if (npy_mul_sizes_with_overflow(&s, s, dimensions.ptr[i])) {
                     PyErr_SetString(PyExc_ValueError,
                         "invalid dims: array size defined by dims is larger "
                         "than the maximum possible size.");
@@ -1073,7 +1096,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
             s = 1;
             for (i = 0; i < dimensions.len; ++i) {
                 ravel_strides[i] = s;
-                if (npy_mul_with_overflow_intp(&s, s, dimensions.ptr[i])) {
+                if (npy_mul_sizes_with_overflow(&s, s, dimensions.ptr[i])) {
                     PyErr_SetString(PyExc_ValueError,
                         "invalid dims: array size defined by dims is larger "
                         "than the maximum possible size.");
@@ -1227,42 +1250,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     int i, ret_ndim;
     npy_intp ret_dims[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
 
-    char *kwlist[] = {"indices", "shape", "order", NULL};
-
-    /*
-     * TODO: remove this in favor of warning raised in the dispatcher when
-     * __array_function__ is enabled by default.
-     */
-
-    /*
-     * Continue to support the older "dims" argument in place
-     * of the "shape" argument. Issue an appropriate warning
-     * if "dims" is detected in keywords, then replace it with
-     * the new "shape" argument and continue processing as usual.
-     */
-    if (kwds) {
-        PyObject *dims_item, *shape_item;
-        dims_item = _PyDict_GetItemStringWithError(kwds, "dims");
-        if (dims_item == NULL && PyErr_Occurred()){
-            return NULL;
-        }
-        shape_item = _PyDict_GetItemStringWithError(kwds, "shape");
-        if (shape_item == NULL && PyErr_Occurred()){
-            return NULL;
-        }
-        if (dims_item != NULL && shape_item == NULL) {
-            if (DEPRECATE("'shape' argument should be"
-                          " used instead of 'dims'") < 0) {
-                return NULL;
-            }
-            if (PyDict_SetItemString(kwds, "shape", dims_item) < 0) {
-                return NULL;
-            }
-            if (PyDict_DelItemString(kwds, "dims") < 0) {
-                return NULL;
-            }
-        }
-    }
+    static char *kwlist[] = {"indices", "shape", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
                     kwlist,
@@ -1416,23 +1404,39 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
+arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
-    #if (PY_VERSION_HEX >= 0x030700A2)
     const char *docstr;
-    #else
-    char *docstr;
-    #endif
     static char *msg = "already has a different docstring";
 
     /* Don't add docstrings */
+#if PY_VERSION_HEX > 0x030b0000
+    static long optimize = -1000;
+    if (optimize < 0) {
+        PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
+        PyObject *level = PyObject_GetAttrString(flags, "optimize");
+        optimize = PyLong_AsLong(level);
+        Py_DECREF(level);
+    }
+    if (optimize > 1) {
+#else
     if (Py_OptimizeFlag > 1) {
+#endif
         Py_RETURN_NONE;
     }
 
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("add_docstring", args, len_args, NULL,
+            "", NULL, &obj,
+            "", NULL, &str,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    if (!PyUnicode_Check(str)) {
+        PyErr_SetString(PyExc_TypeError,
+                "argument docstring of add_docstring should be a str");
         return NULL;
     }
 
@@ -1455,9 +1459,26 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyCFunctionObject *new = (PyCFunctionObject *)obj;
         _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
     }
-    else if (Py_TYPE(obj) == &PyType_Type) {
+    else if (PyObject_TypeCheck(obj, &PyType_Type)) {
+        /*
+         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
+         * `tp_doc` extracts the signature line, but we currently do not use
+         * it.  It may make sense to only add it as `__doc__` and
+         * `__text_signature__` to the dict in the future.
+         * The dictionary path is only necessary for heaptypes (currently not
+         * used) and metaclasses.
+         * If `__doc__` as stored in `tp_dict` is None, we assume this was
+         * filled in by `PyType_Ready()` and should also be replaced.
+         */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
+        if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
+                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+            /* Warning: Modifying `tp_dict` is not generally safe! */
+            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+                return NULL;
+            }
+        }
     }
     else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
         PyMemberDescrObject *new = (PyMemberDescrObject *)obj;
@@ -1500,27 +1521,12 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_RETURN_NONE;
 }
 
-#if defined NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
-#endif
-
-#ifdef NPY_HAVE_NEON
-    typedef npy_uint64 uint64_unaligned __attribute__((aligned(16)));
-    static NPY_INLINE int32_t
-    sign_mask(uint8x16_t input)
-    {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-    }
-#endif
 /*
  * This function packs boolean values in the input array into the bits of a
  * byte array. Truth values are determined as usual: 0 is false, everything
  * else is true.
  */
-static NPY_INLINE void
+static NPY_GCC_OPT_3 inline void
 pack_inner(const char *inptr,
            npy_intp element_size,   /* in bytes */
            npy_intp n_in,
@@ -1528,7 +1534,7 @@ pack_inner(const char *inptr,
            char *outptr,
            npy_intp n_out,
            npy_intp out_stride,
-           char order)
+           PACK_ORDER order)
 {
     /*
      * Loop through the elements of inptr.
@@ -1540,62 +1546,64 @@ pack_inner(const char *inptr,
     npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
 
-#if defined NPY_HAVE_SSE2_INTRINSICS && defined HAVE__M_FROM_INT64
+#if NPY_SIMD
     if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        __m128i zero = _mm_setzero_si128();
+        npyv_u8 v_zero = npyv_zero_u8();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *(npy_uint64*)inptr;
-            npy_uint64 b = *(npy_uint64*)(inptr + 8);
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
+        const int vstep = npyv_nlanes_u64;
+        const int vstepx4 = vstep * 4;
+        const int isAligned = npy_is_aligned(outptr, sizeof(npy_uint64));
+        vn_out -= (vn_out & (vstep - 1));
+        for (; index <= vn_out - vstepx4; index += vstepx4, inptr += npyv_nlanes_u8 * 4) {
+            npyv_u8 v0 = npyv_load_u8((const npy_uint8*)inptr);
+            npyv_u8 v1 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 1);
+            npyv_u8 v2 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 2);
+            npyv_u8 v3 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 3);
+            if (order == PACK_ORDER_BIG) {
+                v0 = npyv_rev64_u8(v0);
+                v1 = npyv_rev64_u8(v1);
+                v2 = npyv_rev64_u8(v2);
+                v3 = npyv_rev64_u8(v3);
             }
-            
-            /* note x86 can load unaligned */
-            __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
-            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = _mm_cmpeq_epi8(v, zero);
-            v = _mm_cmpeq_epi8(v, zero);
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            r = _mm_movemask_epi8(v);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
+            npy_uint64 bb[4];
+            bb[0] = npyv_tobits_b8(npyv_cmpneq_u8(v0, v_zero));
+            bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
+            bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
+            bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
+            if(out_stride == 1 && 
+                (!NPY_ALIGNMENT_REQUIRED || isAligned)) {
+                npy_uint64 *ptr64 = (npy_uint64*)outptr;
+            #if NPY_SIMD_WIDTH == 16
+                npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
+                ptr64[0] = bcomp;
+            #elif NPY_SIMD_WIDTH == 32
+                ptr64[0] = bb[0] | (bb[1] << 32);
+                ptr64[1] = bb[2] | (bb[3] << 32);
+            #else
+                ptr64[0] = bb[0]; ptr64[1] = bb[1];
+                ptr64[2] = bb[2]; ptr64[3] = bb[3];
+            #endif
+                outptr += vstepx4;
+            } else {
+                for(int i = 0; i < 4; i++) {
+                    for (int j = 0; j < vstep; j++) {
+                        memcpy(outptr, (char*)&bb[i] + j, 1);
+                        outptr += out_stride;
+                    }
+                }
+            }
         }
-    }
-#elif defined NPY_HAVE_NEON
-    if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        /* don't handle non-full 8-byte remainder */
-        npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *((uint64_unaligned*)inptr);
-            npy_uint64 b = *((uint64_unaligned*)(inptr + 8));
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
+        for (; index < vn_out; index += vstep, inptr += npyv_nlanes_u8) {
+            npyv_u8 va = npyv_load_u8((const npy_uint8*)inptr);
+            if (order == PACK_ORDER_BIG) {
+                va = npyv_rev64_u8(va);
             }
-            uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
-            uint64x2_t zero = vdupq_n_u64(0);
-            /* false -> 0x00 and true -> 0xFF */
-            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            uint8x16_t input = vreinterpretq_u8_u64(v);
-            r = sign_mask(input);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
+            npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
+            for (int i = 0; i < vstep; ++i) {
+                memcpy(outptr, (char*)&bb + i, 1);
+                outptr += out_stride;
+            }
         }
     }
 #endif
@@ -1606,14 +1614,11 @@ pack_inner(const char *inptr,
     /* Don't reset index. Just handle remainder of above block */
     for (; index < n_out; index++) {
         unsigned char build = 0;
-        int i, maxi;
-        npy_intp j;
-
-        maxi = (index == n_out - 1) ? remain : 8;
-        if (order == 'b') {
-            for (i = 0; i < maxi; i++) {
+        int maxi = (index == n_out - 1) ? remain : 8;
+        if (order == PACK_ORDER_BIG) {
+            for (int i = 0; i < maxi; i++) {
                 build <<= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0);
                 }
                 inptr += in_stride;
@@ -1624,9 +1629,9 @@ pack_inner(const char *inptr,
         }
         else
         {
-            for (i = 0; i < maxi; i++) {
+            for (int i = 0; i < maxi; i++) {
                 build >>= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0) ? 128 : 0;
                 }
                 inptr += in_stride;
@@ -1720,13 +1725,13 @@ pack_bits(PyObject *input, int axis, char order)
         Py_XDECREF(ot);
         goto fail;
     }
-
+    const PACK_ORDER ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(out, axis));
     while (PyArray_ITER_NOTDONE(it)) {
         pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
                    PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
                    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
-                   PyArray_STRIDE(out, axis), order);
+                   PyArray_STRIDE(out, axis), ordere);
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
     }

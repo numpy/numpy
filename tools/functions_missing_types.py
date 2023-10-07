@@ -27,20 +27,19 @@ EXCLUDE_LIST = {
         "division",
         "print_function",
         "warnings",
+        "sys",
+        "os",
+        "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
-        "alen",
-        "add_docstring",
-        "add_newdoc",
-        "add_newdoc_ufunc",
         "core",
-        "fastCopyAndTranspose",
         "get_array_wrap",
         "int_asbuffer",
+        "numarray",
         "oldnumeric",
         "safe_eval",
-        "set_numeric_ops",
         "test",
+        "typeDict",
         # Builtins
         "bool",
         "complex",
@@ -50,17 +49,6 @@ EXCLUDE_LIST = {
         "object",
         "str",
         "unicode",
-        # Should use numpy_financial instead
-        "fv",
-        "ipmt",
-        "irr",
-        "mirr",
-        "nper",
-        "npv",
-        "pmt",
-        "ppmt",
-        "pv",
-        "rate",
         # More standard names should be preferred
         "alltrue",  # all
         "sometrue",  # any

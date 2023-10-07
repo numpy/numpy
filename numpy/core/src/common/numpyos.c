@@ -1,11 +1,9 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <locale.h>
-#include <stdio.h>
-
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
@@ -13,14 +11,13 @@
 
 #include "npy_pycompat.h"
 
+#include <locale.h>
+#include <stdio.h>
+
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
 #ifdef HAVE_XLOCALE_H
-    /*
-     * the defines from xlocale.h are included in locale.h on some systems;
-     * see gh-8367
-     */
-    #include <xlocale.h>
+#include <xlocale.h>  // xlocale was removed in glibc 2.26, see gh-8367
 #endif
 #endif
 
@@ -357,7 +354,7 @@ NumPyOS_ascii_isspace(int c)
  *
  * Same as isalpha under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_isalpha(char c)
 {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
@@ -773,27 +770,34 @@ NumPyOS_ascii_ftoLf(FILE *fp, long double *value)
 NPY_NO_EXPORT npy_longlong
 NumPyOS_strtoll(const char *str, char **endptr, int base)
 {
-#if defined HAVE_STRTOLL
     return strtoll(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoi64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtol(str, endptr, base);
-#endif
 }
 
 NPY_NO_EXPORT npy_ulonglong
 NumPyOS_strtoull(const char *str, char **endptr, int base)
 {
-#if defined HAVE_STRTOULL
     return strtoull(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoui64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtoul(str, endptr, base);
-#endif
 }
 
+#ifdef _MSC_VER
 
+#include <stdlib.h>
+
+#if _MSC_VER >= 1900
+/* npy3k_compat.h uses this function in the _Py_BEGIN/END_SUPPRESS_IPH
+ * macros. It does not need to be defined when building using MSVC
+ * earlier than 14.0 (_MSC_VER == 1900).
+ */
+
+static void __cdecl _silent_invalid_parameter_handler(
+    wchar_t const* expression,
+    wchar_t const* function,
+    wchar_t const* file,
+    unsigned int line,
+    uintptr_t pReserved) { }
+
+_invalid_parameter_handler _Py_silent_invalid_parameter_handler = _silent_invalid_parameter_handler;
+
+#endif
+
+#endif

@@ -1,11 +1,14 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-/*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
+
 #include "arrayobject.h"
 
 #include "npy_config.h"
@@ -23,6 +26,11 @@
 #include "mem_overlap.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
+#define NPY_ITERATOR_IMPLEMENTATION_CODE
+#include "nditer_impl.h"
+
+#include "umathmodule.h"
 
 
 #define HAS_INTEGER 1
@@ -63,49 +71,13 @@ array_length(PyArrayObject *self)
 
 /* -------------------------------------------------------------- */
 
-/*NUMPY_API
- *
+
+/*
+ * Helper for `PyArray_MapIterSwapAxes` (and related), see its documentation.
  */
-NPY_NO_EXPORT void
-PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
+static void
+_get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
 {
-    PyObject *new;
-    int n1, n2, n3, val, bnd;
-    int i;
-    PyArray_Dims permute;
-    npy_intp d[NPY_MAXDIMS];
-    PyArrayObject *arr;
-
-    permute.ptr = d;
-    permute.len = mit->nd;
-
-    /*
-     * arr might not have the right number of dimensions
-     * and need to be reshaped first by pre-pending ones
-     */
-    arr = *ret;
-    if (PyArray_NDIM(arr) != mit->nd) {
-        for (i = 1; i <= PyArray_NDIM(arr); i++) {
-            permute.ptr[mit->nd-i] = PyArray_DIMS(arr)[PyArray_NDIM(arr)-i];
-        }
-        for (i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
-            permute.ptr[i] = 1;
-        }
-        new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
-        Py_DECREF(arr);
-        *ret = (PyArrayObject *)new;
-        if (new == NULL) {
-            return;
-        }
-    }
-
-    /*
-     * Setting and getting need to have different permutations.
-     * On the get we are permuting the returned object, but on
-     * setting we are permuting the object-to-be-set.
-     * The set permutation is the inverse of the get permutation.
-     */
-
     /*
      * For getting the array the tuple for transpose is
      * (n1,...,n1+n2-1,0,...,n1-1,n1+n2,...,n3-1)
@@ -118,31 +90,77 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
      * For setting the array the tuple for transpose is
      * (n2,...,n1+n2-1,0,...,n2-1,n1+n2,...n3-1)
      */
-    n1 = mit->nd_fancy;
-    n2 = mit->consec; /* axes to insert at */
-    n3 = mit->nd;
+    int n1 = fancy_ndim;
+    int n2 = consec;  /* axes to insert at */
+    int n3 = ndim;
 
     /* use n1 as the boundary if getting but n2 if setting */
-    bnd = getmap ? n1 : n2;
-    val = bnd;
-    i = 0;
+    int bnd = getmap ? n1 : n2;
+    int val = bnd;
+    int i = 0;
     while (val < n1 + n2) {
-        permute.ptr[i++] = val++;
+        dims[i++] = val++;
     }
     val = 0;
     while (val < bnd) {
-        permute.ptr[i++] = val++;
+        dims[i++] = val++;
     }
     val = n1 + n2;
     while (val < n3) {
-        permute.ptr[i++] = val++;
+        dims[i++] = val++;
     }
+}
+
+
+/*NUMPY_API
+ *
+ * Swap the axes to or from their inserted form. MapIter always puts the
+ * advanced (array) indices first in the iteration. But if they are
+ * consecutive, will insert/transpose them back before returning.
+ * This is stored as `mit->consec != 0` (the place where they are inserted)
+ * For assignments, the opposite happens: The values to be assigned are
+ * transposed (getmap=1 instead of getmap=0). `getmap=0` and `getmap=1`
+ * undo the other operation.
+ */
+NPY_NO_EXPORT void
+PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
+{
+    PyObject *new;
+    PyArray_Dims permute;
+    npy_intp d[NPY_MAXDIMS];
+    PyArrayObject *arr;
+
+    permute.ptr = d;
+    permute.len = mit->nd;
+
+    /*
+     * arr might not have the right number of dimensions
+     * and need to be reshaped first by prepending ones
+     */
+    arr = *ret;
+    if (PyArray_NDIM(arr) != mit->nd) {
+        for (int i = 1; i <= PyArray_NDIM(arr); i++) {
+            permute.ptr[mit->nd-i] = PyArray_DIMS(arr)[PyArray_NDIM(arr)-i];
+        }
+        for (int i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
+            permute.ptr[i] = 1;
+        }
+        new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
+        Py_DECREF(arr);
+        *ret = (PyArrayObject *)new;
+        if (new == NULL) {
+            return;
+        }
+    }
+
+    _get_transpose(mit->nd_fancy, mit->consec, mit->nd, getmap, permute.ptr);
+
     new = PyArray_Transpose(*ret, &permute);
     Py_DECREF(*ret);
     *ret = (PyArrayObject *)new;
 }
 
-static NPY_INLINE void
+static inline void
 multi_DECREF(PyObject **objects, npy_intp n)
 {
     npy_intp i;
@@ -158,7 +176,7 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * Useful if a tuple is being iterated over multiple times, or for a code path
  * that doesn't always want the overhead of allocating a tuple.
  */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
@@ -176,7 +194,7 @@ unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 }
 
 /* Unpack a single scalar index, taking a new reference to match unpack_tuple */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 {
     Py_INCREF(index);
@@ -187,21 +205,8 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 /**
  * Turn an index argument into a c-array of `PyObject *`s, one for each index.
  *
- * When a scalar is passed, this is written directly to the buffer. When a
- * tuple is passed, the tuple elements are unpacked into the buffer.
- *
- * When some other sequence is passed, this implements the following section
- * from the advanced indexing docs to decide whether to unpack or just write
- * one element:
- *
- * > In order to remain backward compatible with a common usage in Numeric,
- * > basic slicing is also initiated if the selection object is any non-ndarray
- * > sequence (such as a list) containing slice objects, the Ellipsis object,
- * > or the newaxis object, but not for integer arrays or other embedded
- * > sequences.
- *
- * It might be worth deprecating this behaviour (gh-4434), in which case the
- * entire function should become a simple check of PyTuple_Check.
+ * When a tuple is passed, the tuple elements are unpacked into the buffer.
+ * Anything else is handled by unpack_scalar().
  *
  * @param  index     The index object, which may or may not be a tuple. This is
  *                   a borrowed reference.
@@ -218,129 +223,32 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 NPY_NO_EXPORT npy_intp
 unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 {
-    npy_intp n, i;
-    npy_bool commit_to_unpack;
+    /* It is likely that the logic here can be simplified. See the discussion
+     * on https://github.com/numpy/numpy/pull/21029
+     */
 
     /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
         return unpack_tuple((PyTupleObject *)index, result, result_n);
     }
 
-    /* Obvious single-entry cases */
-    if (0  /* to aid macros below */
-            || PyLong_CheckExact(index)
-            || index == Py_None
-            || PySlice_Check(index)
-            || PyArray_Check(index)
-            || !PySequence_Check(index)
-            || PyBaseString_Check(index)) {
-
-        return unpack_scalar(index, result, result_n);
-    }
-
     /*
      * Passing a tuple subclass - coerce to the base type. This incurs an
-     * allocation, but doesn't need to be a fast path anyway
+     * allocation, but doesn't need to be a fast path anyway. Note that by
+     * calling `PySequence_Tuple`, we ensure that the subclass `__iter__` is
+     * called.
      */
     if (PyTuple_Check(index)) {
         PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }
-        n = unpack_tuple(tup, result, result_n);
+        npy_intp n = unpack_tuple(tup, result, result_n);
         Py_DECREF(tup);
         return n;
     }
 
-    /*
-     * At this point, we're left with a non-tuple, non-array, sequence:
-     * typically, a list. We use some somewhat-arbitrary heuristics from here
-     * onwards to decided whether to treat that list as a single index, or a
-     * list of indices.
-     */
-
-    /* if len fails, treat like a scalar */
-    n = PySequence_Size(index);
-    if (n < 0) {
-        PyErr_Clear();
-        return unpack_scalar(index, result, result_n);
-    }
-
-    /*
-     * Backwards compatibility only takes effect for short sequences - otherwise
-     * we treat it like any other scalar.
-     *
-     * Sequences < NPY_MAXDIMS with any slice objects
-     * or newaxis, Ellipsis or other arrays or sequences
-     * embedded, are considered equivalent to an indexing
-     * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
-     */
-    if (n >= NPY_MAXDIMS) {
-        return unpack_scalar(index, result, result_n);
-    }
-
-    /* In case we change result_n elsewhere */
-    assert(n <= result_n);
-
-    /*
-     * Some other type of short sequence - assume we should unpack it like a
-     * tuple, and then decide whether that was actually necessary.
-     */
-    commit_to_unpack = 0;
-    for (i = 0; i < n; i++) {
-        PyObject *tmp_obj = result[i] = PySequence_GetItem(index, i);
-
-        if (commit_to_unpack) {
-            /* propagate errors */
-            if (tmp_obj == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            /*
-             * if getitem fails (unusual) before we've committed, then stop
-             * unpacking
-             */
-            if (tmp_obj == NULL) {
-                PyErr_Clear();
-                break;
-            }
-
-            /* decide if we should treat this sequence like a tuple */
-            if (PyArray_Check(tmp_obj)
-                    || PySequence_Check(tmp_obj)
-                    || PySlice_Check(tmp_obj)
-                    || tmp_obj == Py_Ellipsis
-                    || tmp_obj == Py_None) {
-                if (DEPRECATE_FUTUREWARNING(
-                        "Using a non-tuple sequence for multidimensional "
-                        "indexing is deprecated; use `arr[tuple(seq)]` "
-                        "instead of `arr[seq]`. In the future this will be "
-                        "interpreted as an array index, `arr[np.array(seq)]`, "
-                        "which will result either in an error or a different "
-                        "result.") < 0) {
-                    i++;  /* since loop update doesn't run */
-                    goto fail;
-                }
-                commit_to_unpack = 1;
-            }
-        }
-    }
-
-    /* unpacking was the right thing to do, and we already did it */
-    if (commit_to_unpack) {
-        return n;
-    }
-    /* got to the end, never found an indication that we should have unpacked */
-    else {
-        /* we partially filled result, so empty it first */
-        multi_DECREF(result, i);
-        return unpack_scalar(index, result, result_n);
-    }
-
-fail:
-    multi_DECREF(result, i);
-    return -1;
+    return unpack_scalar(index, result, result_n);
 }
 
 /**
@@ -386,7 +294,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     /*
      * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
      * The longest "reasonable" index that produces a result of <= 32 dimensions
-     * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
+     * is `(0,)*ncu.MAXDIMS + (None,)*ncu.MAXDIMS`. Longer indices can exist, but
      * are uncommon.
      */
     PyObject *raw_indices[NPY_MAXDIMS*2];
@@ -539,22 +447,22 @@ prepare_index(PyArrayObject *self, PyObject *index,
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
-             * dimensionality and size is a boolean index.
-             * If this is not the case, it is instead expanded into (multiple)
-             * integer array indices.
+             * shape is a boolean index. If this is not the case, it is
+             * instead expanded into (multiple) integer array indices.
              */
             PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
             if ((index_ndim == 1) && allow_boolean) {
                 /*
-                 * If ndim and size match, this can be optimized as a single
-                 * boolean index. The size check is necessary only to support
-                 * old non-matching sizes by using fancy indexing instead.
-                 * The reason for that is that fancy indexing uses nonzero,
-                 * and only the result of nonzero is checked for legality.
+                 * If shapes match exactly, this can be optimized as a single
+                 * boolean index. When the dimensions are identical but the shapes are not,
+                 * this is always an error. The check ensures that these errors are raised
+                 * and match those of the generic path.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
-                        && PyArray_SIZE(arr) == PyArray_SIZE(self)) {
+                        && PyArray_CompareLists(PyArray_DIMS(arr),
+                                                PyArray_DIMS(self),
+                                                PyArray_NDIM(arr))) {
 
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;
@@ -579,8 +487,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
 
-                /* TODO: This can't fail, right? Is there a faster way? */
-                if (PyObject_IsTrue((PyObject *)arr)) {
+                /* TODO: The faster way can be n = ((npy_bool *)PyArray_BYTES(arr))[0] != 0 */
+                int istrue = PyObject_IsTrue((PyObject *)arr);
+                if (istrue == -1) {
+                    goto failed_building_indices;
+                }
+                if (istrue) {
                     n = 1;
                 }
                 else {
@@ -946,9 +858,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                if (NpySlice_GetIndicesEx(indices[i].object,
-                                          PyArray_DIMS(self)[orig_dim],
-                                          &start, &stop, &step, &n_steps) < 0) {
+                if (PySlice_GetIndicesEx(indices[i].object,
+                                         PyArray_DIMS(self)[orig_dim],
+                                         &start, &stop, &step, &n_steps) < 0) {
                     return -1;
                 }
                 if (n_steps <= 0) {
@@ -981,13 +893,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+    *view = (PyArrayObject *)PyArray_NewFromDescr_int(
             ensure_array ? &PyArray_Type : Py_TYPE(self),
             PyArray_DESCR(self),
             new_dim, new_shape, new_strides, data_ptr,
             PyArray_FLAGS(self),
             ensure_array ? NULL : (PyObject *)self,
-            (PyObject *)self);
+            (PyObject *)self, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (*view == NULL) {
         return -1;
     }
@@ -1014,7 +926,6 @@ array_boolean_subscript(PyArrayObject *self,
     char *ret_data;
     PyArray_Descr *dtype;
     PyArrayObject *ret;
-    int needs_api = 0;
 
     size = count_boolean_trues(PyArray_NDIM(bmask), PyArray_DATA(bmask),
                                 PyArray_DIMS(bmask), PyArray_STRIDES(bmask));
@@ -1037,8 +948,6 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *op[2] = {self, bmask};
         npy_uint32 flags, op_flags[2];
         npy_intp fixed_strides[3];
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
 
         NpyIter_IterNextFunc *iternext;
         npy_intp innersize, *innerstrides;
@@ -1063,13 +972,19 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
+        /*
+         * TODO: Ignoring cast flags, since this is only ever a copy. In
+         *       principle that may not be quite right in some future?
+         */
+        NPY_ARRAYMETHOD_FLAGS cast_flags;
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info,
+                        &cast_flags) != NPY_SUCCEED) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
             return NULL;
@@ -1080,7 +995,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (iternext == NULL) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
-            NPY_AUXDATA_FREE(transferdata);
+            NPY_cast_info_xfree(&cast_info);
             return NULL;
         }
 
@@ -1091,6 +1006,9 @@ array_boolean_subscript(PyArrayObject *self,
 
         self_stride = innerstrides[0];
         bmask_stride = innerstrides[1];
+        npy_intp strides[2] = {self_stride, itemsize};
+
+        int res = 0;
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
             self_data = dataptrs[0];
@@ -1105,8 +1023,12 @@ array_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                stransfer(ret_data, itemsize, self_data, self_stride,
-                            subloopsize, itemsize, transferdata);
+                char *args[2] = {self_data, ret_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
+                if (res < 0) {
+                    break;
+                }
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 ret_data += subloopsize * itemsize;
@@ -1115,8 +1037,15 @@ array_boolean_subscript(PyArrayObject *self,
 
         NPY_END_THREADS;
 
-        NpyIter_Deallocate(iter);
-        NPY_AUXDATA_FREE(transferdata);
+        if (!NpyIter_Deallocate(iter)) {
+            res = -1;
+        }
+        NPY_cast_info_xfree(&cast_info);
+        if (res < 0) {
+            /* Should be practically impossible, since there is no cast */
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
 
     if (!PyArray_CheckExact(self)) {
@@ -1153,9 +1082,8 @@ NPY_NO_EXPORT int
 array_assign_boolean_subscript(PyArrayObject *self,
                     PyArrayObject *bmask, PyArrayObject *v, NPY_ORDER order)
 {
-    npy_intp size, src_itemsize, v_stride;
+    npy_intp size, v_stride;
     char *v_data;
-    int needs_api = 0;
     npy_intp bmask_size;
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
@@ -1205,10 +1133,10 @@ array_assign_boolean_subscript(PyArrayObject *self,
         v_stride = 0;
     }
 
-    src_itemsize = PyArray_DESCR(v)->elsize;
     v_data = PyArray_DATA(v);
 
     /* Create an iterator for the data */
+    int res = 0;
     if (size > 0) {
         NpyIter *iter;
         PyArrayObject *op[2] = {self, bmask};
@@ -1219,8 +1147,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         npy_intp innersize, *innerstrides;
         char **dataptrs;
 
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
         npy_intp self_stride, bmask_stride, subloopsize;
         char *self_data;
         char *bmask_data;
@@ -1252,21 +1178,28 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS cast_flags;
         if (PyArray_GetDTypeTransferFunction(
-                        IsUintAligned(self) && IsAligned(self) &&
+                 IsUintAligned(self) && IsAligned(self) &&
                         IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info,
+                        &cast_flags) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
         }
 
-        if (!needs_api) {
+        if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_BEGIN_THREADS_NDITER(iter);
         }
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            npy_clear_floatstatus_barrier((char *)self);
+        }
+
+        npy_intp strides[2] = {v_stride, self_stride};
 
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1282,35 +1215,36 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                stransfer(self_data, self_stride, v_data, v_stride,
-                            subloopsize, src_itemsize, transferdata);
+
+                char *args[2] = {v_data, self_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
+                if (res < 0) {
+                    break;
+                }
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 v_data += subloopsize * v_stride;
             }
         } while (iternext(iter));
 
-        if (!needs_api) {
+        if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_END_THREADS;
         }
 
-        NPY_AUXDATA_FREE(transferdata);
-        NpyIter_Deallocate(iter);
-    }
-
-    if (needs_api) {
-        /*
-         * FIXME?: most assignment operations stop after the first occurrence
-         * of an error. Boolean does not currently, but should at least
-         * report the error. (This is only relevant for things like str->int
-         * casts which call into python)
-         */
-        if (PyErr_Occurred()) {
-            return -1;
+        NPY_cast_info_xfree(&cast_info);
+        if (!NpyIter_Deallocate(iter)) {
+            res = -1;
+        }
+        if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            int fpes = npy_get_floatstatus_barrier((char *)self);
+            if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+                return -1;
+            }
         }
     }
 
-    return 0;
+    return res;
 }
 
 
@@ -1402,7 +1336,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1413,10 +1347,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
         else if (tup == NULL){
-            PyObject *errmsg = PyUString_FromString("no field of name ");
-            PyUString_Concat(&errmsg, ind);
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
+            PyErr_Format(PyExc_ValueError, "no field of name %S", ind);
             return 0;
         }
         if (_unpack_field(tup, &fieldtype, &offset) < 0) {
@@ -1434,7 +1365,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_BYTES(arr) + offset,
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
         if (*view == NULL) {
             return 0;
         }
@@ -1466,7 +1398,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyErr_Clear();
                 return -1;
             }
-            is_string = PyBaseString_Check(item);
+            is_string = PyUnicode_Check(item);
             Py_DECREF(item);
             if (!is_string) {
                 return -1;
@@ -1488,7 +1420,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_DATA(arr),
                 PyArray_FLAGS(arr),
                 (PyObject *)arr, (PyObject *)arr,
-                0, 1);
+                /* We do not preserve the dtype for a subarray one, only str */
+                _NPY_ARRAY_ALLOW_EMPTY_STRING);
 
         if (*view == NULL) {
             return 0;
@@ -1508,6 +1441,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     int index_type;
     int index_num;
     int i, ndim, fancy_ndim;
+    NPY_cast_info cast_info = {.func = NULL};
+
     /*
      * Index info array. We can have twice as many indices as dimensions
      * (because of None). The + 1 is to not need to check as much.
@@ -1634,7 +1569,20 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 goto finish;
             }
 
-            if (mapiter_trivial_get(self, ind, (PyArrayObject *)result) < 0) {
+            NPY_ARRAYMETHOD_FLAGS transfer_flags;
+            npy_intp itemsize = PyArray_ITEMSIZE(self);
+            /* We can assume the newly allocated result is aligned */
+            int is_aligned = IsUintAligned(self);
+
+            if (PyArray_GetDTypeTransferFunction(is_aligned,
+                    itemsize, itemsize,
+                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+                goto finish;
+            }
+
+            if (mapiter_trivial_get(
+                    self, ind, (PyArrayObject *)result, is_aligned, &cast_info) < 0) {
                 Py_DECREF(result);
                 result = NULL;
                 goto finish;
@@ -1673,7 +1621,56 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
-    if (mapiter_get(mit) < 0) {
+    /*
+     * Alignment information (swapping is never needed, since we buffer),
+     * could also check extra_op is buffered, but it should rarely matter.
+     */
+    int is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
+    /*
+     * NOTE: Getting never actually casts, so we currently do not bother to do
+     *       the full checks (floating point errors) here (unlike assignment).
+     */
+    int meth_flags = NpyIter_GetTransferFlags(mit->outer);
+    if (mit->extra_op_iter) {
+        int extra_op_flags = NpyIter_GetTransferFlags(mit->extra_op_iter);
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, extra_op_flags);
+    }
+
+    if (mit->subspace_iter != NULL) {
+        int extra_op_flags = NpyIter_GetTransferFlags(mit->subspace_iter);
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, extra_op_flags);
+
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp fixed_strides[2];
+        /*
+         * Get a dtype transfer function, since there are no
+         * buffers, this is safe.
+         */
+        NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
+
+        if (PyArray_GetDTypeTransferFunction(is_aligned,
+                fixed_strides[0], fixed_strides[1],
+                PyArray_DESCR(self), PyArray_DESCR(mit->extra_op),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto finish;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+    else {
+        /* May need a generic copy function (only for refs and odd sizes) */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+
+        if (PyArray_GetDTypeTransferFunction(1,
+                itemsize, itemsize,
+                PyArray_DESCR(self), PyArray_DESCR(self),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto finish;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+
+    if (mapiter_get(mit, &cast_info, meth_flags, is_aligned) < 0) {
         goto finish;
     }
 
@@ -1708,6 +1705,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
   finish:
+    NPY_cast_info_xfree(&cast_info);
     Py_XDECREF(mit);
     Py_XDECREF(view);
     /* Clean up indices */
@@ -1792,6 +1790,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArrayMapIterObject *mit = NULL;
+
+    /* When a subspace is used, casting is done manually. */
+    NPY_cast_info cast_info = {.func = NULL};
 
     if (op == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1965,7 +1966,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             index_num == 1 && tmp_arr) {
         /* The array being indexed has one dimension and it is a fancy index */
         PyArrayObject *ind = (PyArrayObject*)indices[0].object;
-
         /* Check if the type is equivalent */
         if (PyArray_EquivTypes(PyArray_DESCR(self),
                                    PyArray_DESCR(tmp_arr)) &&
@@ -1984,8 +1984,20 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
+            NPY_ARRAYMETHOD_FLAGS transfer_flags;
+            npy_intp itemsize = PyArray_ITEMSIZE(self);
+            int is_aligned = IsUintAligned(self) && IsUintAligned(tmp_arr);
+
+            if (PyArray_GetDTypeTransferFunction(is_aligned,
+                    itemsize, itemsize,
+                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+                goto fail;
+            }
+
             /* trivial_set checks the index for us */
-            if (mapiter_trivial_set(self, ind, tmp_arr) < 0) {
+            if (mapiter_trivial_set(
+                    self, ind, tmp_arr, is_aligned, &cast_info) < 0) {
                 goto fail;
             }
             goto success;
@@ -2029,12 +2041,63 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         }
     }
 
-    /* Can now reset the outer iterator (delayed bufalloc) */
-    if (NpyIter_Reset(mit->outer, NULL) < 0) {
+    if (PyArray_MapIterCheckIndices(mit) < 0) {
         goto fail;
     }
 
-    if (PyArray_MapIterCheckIndices(mit) < 0) {
+    /*
+     * Alignment information (swapping is never needed, since we buffer),
+     * could also check extra_op is buffered, but it should rarely matter.
+     */
+    int is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
+    int meth_flags = NpyIter_GetTransferFlags(mit->outer);
+
+    if (mit->extra_op_iter) {
+        int extra_op_flags = NpyIter_GetTransferFlags(mit->extra_op_iter);
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, extra_op_flags);
+    }
+
+    if (mit->subspace_iter != NULL) {
+        int extra_op_flags = NpyIter_GetTransferFlags(mit->subspace_iter);
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, extra_op_flags);
+
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp fixed_strides[2];
+
+        /*
+         * Get a dtype transfer function, since there are no
+         * buffers, this is safe.
+         */
+        NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
+
+        if (PyArray_GetDTypeTransferFunction(is_aligned,
+                fixed_strides[1], fixed_strides[0],
+                PyArray_DESCR(mit->extra_op), PyArray_DESCR(self),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+    else {
+        /* May need a generic copy function (only for refs and odd sizes) */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+
+        if (PyArray_GetDTypeTransferFunction(1,
+                itemsize, itemsize,
+                PyArray_DESCR(self), PyArray_DESCR(self),
+                0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
+            goto fail;
+        }
+        meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
+    }
+
+    if (!(meth_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier((char *)mit);
+    }
+
+    /* Can now reset the outer iterator (delayed bufalloc) */
+    if (NpyIter_Reset(mit->outer, NULL) < 0) {
         goto fail;
     }
 
@@ -2042,9 +2105,15 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
      * Could add a casting check, but apparently most assignments do
      * not care about safe casting.
      */
-
-    if (mapiter_set(mit) < 0) {
+    if (mapiter_set(mit, &cast_info, meth_flags, is_aligned) < 0) {
         goto fail;
+    }
+
+    if (!(meth_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier((char *)mit);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            goto fail;
+        }
     }
 
     Py_DECREF(mit);
@@ -2055,6 +2124,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     Py_XDECREF((PyObject *)view);
     Py_XDECREF((PyObject *)tmp_arr);
     Py_XDECREF((PyObject *)mit);
+    NPY_cast_info_xfree(&cast_info);
+
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
@@ -2063,6 +2134,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
   success:
     Py_XDECREF((PyObject *)view);
     Py_XDECREF((PyObject *)tmp_arr);
+    NPY_cast_info_xfree(&cast_info);
+
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
@@ -2183,7 +2256,7 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
 
 /* Reset the map iterator to the beginning */
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 PyArray_MapIterReset(PyArrayMapIterObject *mit)
 {
     npy_intp indval;
@@ -2191,12 +2264,16 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     int i;
 
     if (mit->size == 0) {
-        return;
+        return 0;
     }
 
-    NpyIter_Reset(mit->outer, NULL);
+    if (!NpyIter_Reset(mit->outer, NULL)) {
+        return -1;
+    }
     if (mit->extra_op_iter) {
-        NpyIter_Reset(mit->extra_op_iter, NULL);
+        if (!NpyIter_Reset(mit->extra_op_iter, NULL)) {
+            return -1;
+        }
 
         baseptrs[1] = mit->extra_op_ptrs[0];
     }
@@ -2213,14 +2290,16 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     mit->dataptr = baseptrs[0];
 
     if (mit->subspace_iter) {
-        NpyIter_ResetBasePointers(mit->subspace_iter, baseptrs, NULL);
+        if (!NpyIter_ResetBasePointers(mit->subspace_iter, baseptrs, NULL)) {
+            return -1;
+        }
         mit->iter_count = *NpyIter_GetInnerLoopSizePtr(mit->subspace_iter);
     }
     else {
         mit->iter_count = *NpyIter_GetInnerLoopSizePtr(mit->outer);
     }
 
-    return;
+    return 0;
 }
 
 
@@ -2326,7 +2405,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  * @param Number of indices
  * @param The array that is being iterated
  *
- * @return 0 on success -1 on failure
+ * @return 0 on success -1 on failure (broadcasting or too many fancy indices)
  */
 static int
 mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
@@ -2340,7 +2419,6 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
     int consec_status = -1;
     int axis, broadcast_axis;
     npy_intp dimension;
-    PyObject *errmsg, *tmp;
 
     for (i = 0; i < mit->nd_fancy; i++) {
         mit->dimensions[i] = 1;
@@ -2365,6 +2443,17 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
             /* consec_status == 0 means there was a fancy index before */
             if (consec_status == 0) {
                 consec_status = 1;
+            }
+        }
+
+        /* Before contunuing, ensure that there are not too fancy indices */
+        if (indices[i].type & HAS_FANCY) {
+            if (NPY_UNLIKELY(j >= NPY_MAXDIMS)) {
+                PyErr_Format(PyExc_IndexError,
+                        "too many advanced (array) indices. This probably "
+                        "means you are indexing with too many booleans. "
+                        "(more than %d found)", NPY_MAXDIMS);
+                return -1;
             }
         }
 
@@ -2428,35 +2517,38 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
 
     return 0;
 
-  broadcast_error:
+broadcast_error: ;  // Declarations cannot follow labels, add empty statement.
     /*
      * Attempt to set a meaningful exception. Could also find out
      * if a boolean index was converted.
      */
-    errmsg = PyUString_FromString("shape mismatch: indexing arrays could not "
-                                  "be broadcast together with shapes ");
+    PyObject *errmsg = PyUnicode_FromString("");
     if (errmsg == NULL) {
         return -1;
     }
-
     for (i = 0; i < index_num; i++) {
         if (!(indices[i].type & HAS_FANCY)) {
             continue;
         }
-        tmp = convert_shape_to_string(
-                    PyArray_NDIM((PyArrayObject *)indices[i].object),
-                    PyArray_SHAPE((PyArrayObject *)indices[i].object),
-                    " ");
+
+        int ndim = PyArray_NDIM((PyArrayObject *)indices[i].object);
+        npy_intp *shape = PyArray_SHAPE((PyArrayObject *)indices[i].object);
+        PyObject *tmp = convert_shape_to_string(ndim, shape, " ");
         if (tmp == NULL) {
+            Py_DECREF(errmsg);
             return -1;
         }
-        PyUString_ConcatAndDel(&errmsg, tmp);
+
+        Py_SETREF(errmsg, PyUnicode_Concat(errmsg, tmp));
+        Py_DECREF(tmp);
         if (errmsg == NULL) {
             return -1;
         }
     }
 
-    PyErr_SetObject(PyExc_IndexError, errmsg);
+    PyErr_Format(PyExc_IndexError,
+            "shape mismatch: indexing arrays could not "
+            "be broadcast together with shapes %S", errmsg);
     Py_DECREF(errmsg);
     return -1;
 }
@@ -2648,10 +2740,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype)
 {
-    PyObject *errmsg, *tmp;
     /* For shape reporting on error */
     PyArrayObject *original_extra_op = extra_op;
 
+    /* NOTE: MAXARGS is the actual limit (2*NPY_MAXDIMS is index number one) */
     PyArrayObject *index_arrays[NPY_MAXDIMS];
     PyArray_Descr *intp_descr;
     PyArray_Descr *dtypes[NPY_MAXDIMS];  /* borrowed references */
@@ -2673,13 +2765,14 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
+    mit = (PyArrayMapIterObject *)PyArray_malloc(
+            sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     if (mit == NULL) {
         Py_DECREF(intp_descr);
         return NULL;
     }
     /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject));
+    memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
     Py_INCREF(arr);
@@ -2955,6 +3048,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /* If external array is iterated, and no subspace is needed */
     nops = mit->numiter;
+
+    if (!uses_subspace) {
+        outer_flags |= NPY_ITER_EXTERNAL_LOOP;
+    }
+
     if (extra_op_flags && !uses_subspace) {
         /*
          * NOTE: This small limitation should practically not matter.
@@ -3001,9 +3099,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
     if (mit->outer == NULL) {
         goto fail;
-    }
-    if (!uses_subspace) {
-        NpyIter_EnableExternalLoop(mit->outer);
     }
 
     mit->outer_next = NpyIter_GetIterNext(mit->outer, NULL);
@@ -3142,7 +3237,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
 
-    if (NpyIter_IterationNeedsAPI(mit->outer)) {
+    if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
         mit->needs_api = 1;
         /*
          * NOTE: In this case, need to call PyErr_Occurred() after
@@ -3178,45 +3273,37 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     goto finish;
 
   broadcast_error:
-    errmsg = PyUString_FromString("shape mismatch: value array "
-                    "of shape ");
-    if (errmsg == NULL) {
-        goto finish;
-    }
-
     /* Report the shape of the original array if it exists */
     if (original_extra_op == NULL) {
         original_extra_op = extra_op;
     }
 
-    tmp = convert_shape_to_string(PyArray_NDIM(original_extra_op),
-                                  PyArray_DIMS(original_extra_op), " ");
-    if (tmp == NULL) {
-        goto finish;
-    }
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
+    int extra_ndim = PyArray_NDIM(original_extra_op);
+    npy_intp *extra_dims = PyArray_DIMS(original_extra_op);
+    PyObject *shape1 = convert_shape_to_string(extra_ndim, extra_dims, "");
+    if (shape1 == NULL) {
         goto finish;
     }
 
-    tmp = PyUString_FromString("could not be broadcast to indexing "
-                    "result of shape ");
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
+    /* Unscramble the iterator shape for reporting when `mit->consec` is used */
+    npy_intp transposed[NPY_MAXDIMS];
+    _get_transpose(mit->nd_fancy, mit->consec, mit->nd, 1, transposed);
+    for (i = 0; i < mit->nd; i++) {
+        transposed[i] = mit->dimensions[transposed[i]];
+    }
+
+    PyObject *shape2 = convert_shape_to_string(mit->nd, transposed, "");
+    if (shape2 == NULL) {
+        Py_DECREF(shape1);
         goto finish;
     }
 
-    tmp = convert_shape_to_string(mit->nd, mit->dimensions, "");
-    if (tmp == NULL) {
-        goto finish;
-    }
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
-        goto finish;
-    }
+    PyErr_Format(PyExc_ValueError,
+            "shape mismatch: value array of shape %S could not be broadcast "
+            "to indexing result of shape %S", shape1, shape2);
 
-    PyErr_SetObject(PyExc_ValueError, errmsg);
-    Py_DECREF(errmsg);
+    Py_DECREF(shape1);
+    Py_DECREF(shape2);
 
   finish:
     Py_XDECREF(extra_op);
@@ -3233,7 +3320,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
  * to avoid problems if `a` is modified during the iteration.
- * `iter->array` may contain a copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
+ * `iter->array` may contain a copied array (WRITEBACKIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
@@ -3301,9 +3388,12 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         goto fail;
     }
 
+    if (PyArray_MapIterReset(mit) < 0) {
+        goto fail;
+    }
+
     Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
-    PyArray_MapIterReset(mit);
 
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
@@ -3315,7 +3405,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
     Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     Py_XDECREF((PyObject *)mit);
-    for (i=0; i < index_num; i++) {
+    for (i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
     return NULL;

@@ -1,0 +1,56 @@
+name: Test with compiler sanitizers (Linux)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHON_VERSION: 3.11
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  gcc_sanitizers:
+    if: "github.repository == 'numpy/numpy'"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install dependencies
+      run: |
+        pip install -r build_requirements.txt
+        pip install scipy-openblas32 spin
+    - name: Build
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run:
+        spin build --with-scipy-openblas=32 -- --werror -Db_sanitize=address,undefined
+    - name: Test
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      env:
+        TERM: xterm-256color
+      run: |
+        pip install pytest pytest-xdist hypothesis typing_extensions
+        ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
+        LD_PRELOAD=$(gcc --print-file-name=libasan.so) \
+        python -m spin test -- -v -s
+        
+  

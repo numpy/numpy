@@ -389,7 +389,7 @@ uses a per-state lock instead of the GIL.
 MaskedArray support for more complicated base classes
 -----------------------------------------------------
 Built-in assumptions that the baseclass behaved like a plain array are being
-removed. In particalur, ``repr`` and ``str`` should now work more reliably.
+removed. In particular, ``repr`` and ``str`` should now work more reliably.
 
 
 C-API

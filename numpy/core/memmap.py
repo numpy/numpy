@@ -1,9 +1,8 @@
+from contextlib import nullcontext
+import operator
 import numpy as np
+from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
-from numpy.compat import (
-    os_fspath, contextlib_nullcontext, is_pathlib_path
-)
-from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
@@ -37,7 +36,10 @@ class memmap(ndarray):
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
 
-    Delete the memmap instance to close the memmap file.
+    Flush the memmap instance to write the changes to the file. Currently there
+    is no API to close the underlying ``mmap``. It is tricky to ensure the
+    resource is actually closed, since it may be shared between different
+    memmap instances.
 
 
     Parameters
@@ -56,6 +58,7 @@ class memmap(ndarray):
         | 'r+' | Open existing file for reading and writing.                 |
         +------+-------------------------------------------------------------+
         | 'w+' | Create or overwrite existing file for reading and writing.  |
+        |      | If ``mode == 'w+'`` then `shape` must also be specified.    |
         +------+-------------------------------------------------------------+
         | 'c'  | Copy-on-write: assignments affect data in memory, but       |
         |      | changes are not saved to disk.  The file on disk is         |
@@ -71,12 +74,17 @@ class memmap(ndarray):
         additional data. By default, ``memmap`` will start at the beginning of
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
-    shape : tuple, optional
+    shape : int or sequence of ints, optional
         The desired shape of the array. If ``mode == 'r'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
         and data-type.
+
+        .. versionchanged:: 2.0
+         The shape parameter can now be any integer sequence type, previously
+         types were limited to tuple and int.
+    
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -97,7 +105,7 @@ class memmap(ndarray):
     flush
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
-        changes to disk before removing the object.
+        changes to disk.
 
 
     See also
@@ -109,7 +117,7 @@ class memmap(ndarray):
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-    
+
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
@@ -148,9 +156,9 @@ class memmap(ndarray):
     >>> fp.filename == path.abspath(filename)
     True
 
-    Deletion flushes memory changes to disk before removing the object:
+    Flushes memory changes to disk in order to read them back
 
-    >>> del fp
+    >>> fp.flush()
 
     Load the memmap and verify data was stored:
 
@@ -217,12 +225,15 @@ class memmap(ndarray):
                 ) from None
 
         if mode == 'w+' and shape is None:
-            raise ValueError("shape must be given")
+            raise ValueError("shape must be given if mode == 'w+'")
 
         if hasattr(filename, 'read'):
-            f_ctx = contextlib_nullcontext(filename)
+            f_ctx = nullcontext(filename)
         else:
-            f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
+            f_ctx = open(
+                os.fspath(filename),
+                ('r' if mode == 'c' else mode)+'b'
+            )
 
         with f_ctx as fid:
             fid.seek(0, 2)
@@ -238,8 +249,12 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if not isinstance(shape, tuple):
-                    shape = (shape,)
+                if type(shape) not in (tuple, list):
+                    try:
+                        shape = [operator.index(shape)]
+                    except TypeError:
+                        pass
+                shape = tuple(shape)
                 size = np.intp(1)  # avoid default choice of np.int_, which might overflow
                 for k in shape:
                     size *= k
@@ -269,7 +284,7 @@ class memmap(ndarray):
             self.offset = offset
             self.mode = mode
 
-            if is_pathlib_path(filename):
+            if isinstance(filename, os.PathLike):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()
@@ -313,7 +328,7 @@ class memmap(ndarray):
             self.base.flush()
 
     def __array_wrap__(self, arr, context=None):
-        arr = super(memmap, self).__array_wrap__(arr, context)
+        arr = super().__array_wrap__(arr, context)
 
         # Return a memmap if a memmap was given as the output of the
         # ufunc. Leave the arr class unchanged if self is not a memmap
@@ -328,7 +343,7 @@ class memmap(ndarray):
         return arr.view(np.ndarray)
 
     def __getitem__(self, index):
-        res = super(memmap, self).__getitem__(index)
+        res = super().__getitem__(index)
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res

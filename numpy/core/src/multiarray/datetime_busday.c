@@ -6,12 +6,12 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
 
 #include "npy_config.h"
@@ -365,6 +365,7 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
                     npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
     npy_int64 count, whole_weeks;
+
     int day_of_week = 0;
     int swapped = 0;
 
@@ -386,6 +387,10 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
         date_begin = date_end;
         date_end = tmp;
         swapped = 1;
+        // we swapped date_begin and date_end, so we need to correct for the
+        // original date_end that should not be included. gh-23197
+        date_begin++;
+        date_end++;
     }
 
     /* Remove any earlier holidays */
@@ -834,24 +839,23 @@ static int
 PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
 {
     PyObject *obj = roll_in;
-    char *str;
-    Py_ssize_t len;
 
-    /* Make obj into an ASCII string */
-    Py_INCREF(obj);
-    if (PyUnicode_Check(obj)) {
-        /* accept unicode input */
-        PyObject *obj_str;
-        obj_str = PyUnicode_AsASCIIString(obj);
+    /* Make obj into an UTF8 string */
+    if (PyBytes_Check(obj)) {
+        /* accept bytes input */
+        PyObject *obj_str = PyUnicode_FromEncodedObject(obj, NULL, NULL);
         if (obj_str == NULL) {
-            Py_DECREF(obj);
             return 0;
         }
-        Py_DECREF(obj);
         obj = obj_str;
     }
+    else {
+        Py_INCREF(obj);
+    }
 
-    if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+    Py_ssize_t len;
+    char const *str = PyUnicode_AsUTF8AndSize(obj, &len);
+    if (str == NULL) {
         Py_DECREF(obj);
         return 0;
     }
@@ -935,8 +939,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_offset(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates", "offsets", "roll",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates", "offsets", "roll",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
@@ -1066,8 +1070,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"begindates", "enddates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"begindates", "enddates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
 
@@ -1211,8 +1215,8 @@ NPY_NO_EXPORT PyObject *
 array_is_busday(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *out_in = NULL;
 

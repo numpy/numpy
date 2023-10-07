@@ -1,5 +1,5 @@
-#ifndef __NPY_LONGDOUBLE_H
-#define __NPY_LONGDOUBLE_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_LONGDOUBLE_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_LONGDOUBLE_H_
 
 #include "npy_config.h"
 #include "numpy/ndarraytypes.h"
@@ -24,4 +24,4 @@ npy_longdouble_to_PyLong(npy_longdouble ldval);
 NPY_VISIBILITY_HIDDEN npy_longdouble
 npy_longdouble_from_PyLong(PyObject *long_obj);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_LONGDOUBLE_H_ */

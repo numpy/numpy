@@ -1,4 +1,6 @@
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "numpy/npy_common.h"
 #include "npy_cblas.h"
 

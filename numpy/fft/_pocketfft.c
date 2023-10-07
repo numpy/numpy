@@ -9,21 +9,21 @@
  *  Copyright (C) 2004-2018 Max-Planck-Society
  *  \author Martin Reinecke
  */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "numpy/arrayobject.h"
+
+#include "npy_config.h"
 
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "npy_config.h"
-#define restrict NPY_RESTRICT
-
 #define RALLOC(type,num) \
-  ((type *)malloc((num)*sizeof(type)))
+  (assert(num != 0), ((type *)malloc((num)*sizeof(type))))
 #define DEALLOC(ptr) \
   do { free(ptr); (ptr)=NULL; } while(0)
 
@@ -1056,8 +1056,10 @@ static cfftp_plan make_cfftp_plan (size_t length)
   if (length==1) return plan;
   if (cfftp_factorize(plan)!=0) { DEALLOC(plan); return NULL; }
   size_t tws=cfftp_twsize(plan);
-  plan->mem=RALLOC(cmplx,tws);
-  if (!plan->mem) { DEALLOC(plan); return NULL; }
+  if (tws != 0) {
+    plan->mem=RALLOC(cmplx,tws);
+    if (!plan->mem) { DEALLOC(plan); return NULL; }
+  }
   if (cfftp_comp_twiddle(plan)!=0)
     { DEALLOC(plan->mem); DEALLOC(plan); return NULL; }
   return plan;
@@ -1820,7 +1822,6 @@ static size_t rfftp_twsize(rfftp_plan plan)
     l1*=ip;
     }
   return twsize;
-  return 0;
   }
 
 WARN_UNUSED_RESULT NOINLINE static int rfftp_comp_twiddle (rfftp_plan plan)
@@ -1876,8 +1877,10 @@ NOINLINE static rfftp_plan make_rfftp_plan (size_t length)
   if (length==1) return plan;
   if (rfftp_factorize(plan)!=0) { DEALLOC(plan); return NULL; }
   size_t tws=rfftp_twsize(plan);
-  plan->mem=RALLOC(double,tws);
-  if (!plan->mem) { DEALLOC(plan); return NULL; }
+  if (tws != 0) {
+    plan->mem=RALLOC(double,tws);
+    if (!plan->mem) { DEALLOC(plan); return NULL; }
+  }
   if (rfftp_comp_twiddle(plan)!=0)
     { DEALLOC(plan->mem); DEALLOC(plan); return NULL; }
   return plan;
@@ -2206,7 +2209,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
     double *dptr = (double *)PyArray_DATA(data);
     int fail=0;
     Py_BEGIN_ALLOW_THREADS;
-    NPY_SIGINT_ON;
     plan = make_cfft_plan(npts);
     if (!plan) fail=1;
     if (!fail)
@@ -2217,7 +2219,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
           dptr += npts*2;
       }
     if (plan) destroy_cfft_plan(plan);
-    NPY_SIGINT_OFF;
     Py_END_ALLOW_THREADS;
     if (fail) {
       Py_XDECREF(data);
@@ -2231,6 +2232,8 @@ execute_real_forward(PyObject *a1, double fct)
 {
     rfft_plan plan=NULL;
     int fail = 0;
+    npy_intp tdim[NPY_MAXDIMS];
+
     PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
             PyArray_DescrFromType(NPY_DOUBLE), 1, 0,
             NPY_ARRAY_DEFAULT | NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
@@ -2240,15 +2243,11 @@ execute_real_forward(PyObject *a1, double fct)
     int ndim = PyArray_NDIM(data);
     const npy_intp *odim = PyArray_DIMS(data);
     int npts = odim[ndim - 1];
-    npy_intp *tdim=(npy_intp *)malloc(ndim*sizeof(npy_intp));
-    if (!tdim)
-      { Py_XDECREF(data); return NULL; }
     for (int d=0; d<ndim-1; ++d)
       tdim[d] = odim[d];
     tdim[ndim-1] = npts/2 + 1;
     PyArrayObject *ret = (PyArrayObject *)PyArray_Empty(ndim,
             tdim, PyArray_DescrFromType(NPY_CDOUBLE), 0);
-    free(tdim);
     if (!ret) fail=1;
     if (!fail) {
       int rstep = PyArray_DIM(ret, PyArray_NDIM(ret) - 1)*2;
@@ -2258,7 +2257,6 @@ execute_real_forward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail)
@@ -2272,7 +2270,6 @@ execute_real_forward(PyObject *a1, double fct)
             dptr += npts;
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {
@@ -2303,7 +2300,6 @@ execute_real_backward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail) {
@@ -2316,7 +2312,6 @@ execute_real_backward(PyObject *a1, double fct)
         }
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {

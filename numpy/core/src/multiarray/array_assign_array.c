@@ -6,13 +6,15 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/ndarraytypes.h>
+#include "numpy/ndarraytypes.h"
+#include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -23,6 +25,9 @@
 #include "lowlevel_strided_loops.h"
 
 #include "array_assign.h"
+#include "dtype_transfer.h"
+
+#include "umathmodule.h"
 
 /*
  * Check that array data is both uint-aligned and true-aligned for all array
@@ -82,10 +87,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     npy_intp src_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
+    int aligned;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -117,32 +119,57 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         src_strides_it[0], dst_strides_it[0],
                         src_dtype, dst_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &flags) != NPY_SUCCEED) {
         return -1;
     }
 
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier((char*)&src_data);
     }
+
+    /* Ensure number of elements exceeds threshold for threading */
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
+    }
+
+    npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, src_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
+        char *args[2] = {src_data, dst_data};
+        if (cast_info.func(&cast_info.context,
+                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             src_data, src_strides_it);
 
     NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
 
-    NPY_AUXDATA_FREE(transferdata);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier((char*)&src_data);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            return -1;
+        }
+    }
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return 0;
+fail:
+    NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 /*
@@ -165,10 +192,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_MaskedStridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
+    int aligned;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -204,36 +228,63 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         src_strides_it[0],
                         dst_strides_it[0],
                         wheremask_strides_it[0],
                         src_dtype, dst_dtype, wheremask_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &flags) != NPY_SUCCEED) {
         return -1;
     }
 
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier(src_data);
     }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        npy_intp nitems = 1, i;
+        for (i = 0; i < ndim; i++) {
+            nitems *= shape_it[i];
+        }
+        NPY_BEGIN_THREADS_THRESHOLDED(nitems);
+    }
+    npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+        PyArray_MaskedStridedUnaryOp *stransfer;
+        stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
+
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, src_strides_it[0],
-                    (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
+        char *args[2] = {src_data, dst_data};
+        if (stransfer(&cast_info.context,
+                args, &shape_it[0], strides,
+                (npy_bool *)wheremask_data, wheremask_strides_it[0],
+                cast_info.auxdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             src_data, src_strides_it,
                             wheremask_data, wheremask_strides_it);
 
     NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
 
-    NPY_AUXDATA_FREE(transferdata);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier(src_data);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            return -1;
+        }
+    }
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return 0;
+
+fail:
+    NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 /*

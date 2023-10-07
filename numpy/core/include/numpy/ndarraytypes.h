@@ -1,5 +1,5 @@
-#ifndef NDARRAYTYPES_H
-#define NDARRAYTYPES_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
 #include "npy_common.h"
 #include "npy_endian.h"
@@ -44,23 +44,6 @@
 #define NPY_FAIL 0
 #define NPY_SUCCEED 1
 
-/*
- * Binary compatibility version number.  This number is increased
- * whenever the C-API is changed such that binary compatibility is
- * broken, i.e. whenever a recompile of extension modules is needed.
- */
-#define NPY_VERSION NPY_ABI_VERSION
-
-/*
- * Minor API version.  This number is increased whenever a change is
- * made to the C-API -- whether it breaks binary compatibility or not.
- * Some changes, such as adding a function pointer to the end of the
- * function table, can be made without breaking binary compatibility.
- * In this case, only the NPY_FEATURE_VERSION (*not* NPY_VERSION)
- * would be increased.  Whenever binary compatibility is broken, both
- * NPY_VERSION and NPY_FEATURE_VERSION should be increased.
- */
-#define NPY_FEATURE_VERSION NPY_API_VERSION
 
 enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_BYTE, NPY_UBYTE,
@@ -87,7 +70,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 #pragma deprecated(NPY_CHAR)
 #endif
 
@@ -129,7 +112,6 @@ enum NPY_TYPECHAR {
         NPY_CLONGDOUBLELTR = 'G',
         NPY_OBJECTLTR = 'O',
         NPY_STRINGLTR = 'S',
-        NPY_STRINGLTR2 = 'a',
         NPY_UNICODELTR = 'U',
         NPY_VOIDLTR = 'V',
         NPY_DATETIMELTR = 'M',
@@ -210,6 +192,7 @@ typedef enum {
 
 /* For specifying allowed casting in operations which support it */
 typedef enum {
+        _NPY_ERROR_OCCURRED_IN_CAST = -1,
         /* Only allow identical types */
         NPY_NO_CASTING=0,
         /* Allow identical and byte swapped types */
@@ -219,7 +202,7 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4
+        NPY_UNSAFE_CASTING=4,
 } NPY_CASTING;
 
 typedef enum {
@@ -227,6 +210,12 @@ typedef enum {
         NPY_WRAP=1,
         NPY_RAISE=2
 } NPY_CLIPMODE;
+
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
 
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
@@ -341,12 +330,10 @@ struct NpyAuxData_tag {
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
-  /*
-   * Macros to define how array, and dimension/strides data is
-   * allocated.
-   */
-
-  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
+/*
+* Macros to define how array, and dimension/strides data is
+* allocated. These should be made private
+*/
 
 #define NPY_USE_PYMEM 1
 
@@ -412,25 +399,10 @@ typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
 typedef int (PyArray_SortFunc)(void *, npy_intp, void *);
 typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, void *);
-typedef int (PyArray_PartitionFunc)(void *, npy_intp, npy_intp,
-                                    npy_intp *, npy_intp *,
-                                    void *);
-typedef int (PyArray_ArgPartitionFunc)(void *, npy_intp *, npy_intp, npy_intp,
-                                       npy_intp *, npy_intp *,
-                                       void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
 typedef int (PyArray_ScalarKindFunc)(void *);
-
-typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
-                                    void *max, void *out);
-typedef void (PyArray_FastPutmaskFunc)(void *in, void *mask, npy_intp n_in,
-                                       void *values, npy_intp nv);
-typedef int  (PyArray_FastTakeFunc)(void *dest, void *src, npy_intp *indarray,
-                                       npy_intp nindarray, npy_intp n_outer,
-                                       npy_intp m_middle, npy_intp nelem,
-                                       NPY_CLIPMODE clipmode);
 
 typedef struct {
         npy_intp *ptr;
@@ -537,9 +509,9 @@ typedef struct {
         int **cancastscalarkindto;
         int *cancastto;
 
-        PyArray_FastClipFunc *fastclip;
-        PyArray_FastPutmaskFunc *fastputmask;
-        PyArray_FastTakeFunc *fasttake;
+        void *_unused1;
+        void *_unused2;
+        void *_unused3;
 
         /*
          * Function to select smallest
@@ -653,6 +625,29 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
+ * Memory handler structure for array data.
+ */
+/* The declaration of free differs from PyMemAllocatorEx */
+typedef struct {
+    void *ctx;
+    void* (*malloc) (void *ctx, size_t size);
+    void* (*calloc) (void *ctx, size_t nelem, size_t elsize);
+    void* (*realloc) (void *ctx, void *ptr, size_t new_size);
+    void (*free) (void *ctx, void *ptr, size_t size);
+    /*
+     * This is the end of the version=1 struct. Only add new fields after
+     * this line
+     */
+} PyDataMemAllocator;
+
+typedef struct {
+    char name[127];  /* multiple of 64 to keep the struct aligned */
+    uint8_t version; /* currently 1 */
+    PyDataMemAllocator allocator;
+} PyDataMem_Handler;
+
+
+/*
  * The main array object structure.
  *
  * It has been recommended to use the inline functions defined below
@@ -701,6 +696,15 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+#if NPY_FEATURE_VERSION >= NPY_1_20_API_VERSION
+    void *_buffer_info;  /* private buffer info, tagged to allow warning */
+#endif
+    /*
+     * For malloc/calloc/realloc/free per object
+     */
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+    PyObject *mem_handler;
+#endif
 } PyArrayObject_fields;
 
 /*
@@ -720,7 +724,18 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+/*
+ * Removed 2020-Nov-25, NumPy 1.20
+ * #define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+ *
+ * The above macro was removed as it gave a false sense of a stable ABI
+ * with respect to the structures size.  If you require a runtime constant,
+ * you can use `PyArray_Type.tp_basicsize` instead.  Otherwise, please
+ * see the PyArrayObject documentation or ask the NumPy developers for
+ * information on how to correctly replace the macro in a way that is
+ * compatible with multiple NumPy versions.
+ */
+
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -790,11 +805,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS. Arrays with
  * more then one dimension can be C_CONTIGUOUS and F_CONTIGUOUS
  * at the same time if they have either zero or one element.
- * If NPY_RELAXED_STRIDES_CHECKING is set, a higher dimensional
- * array is always C_CONTIGUOUS and F_CONTIGUOUS if it has zero elements
- * and the array is contiguous if ndarray.squeeze() is contiguous.
- * I.e. dimensions for which `ndarray.shape[dimension] == 1` are
- * ignored.
+ * A higher dimensional array always has the same contiguity flags as
+ * `array.squeeze()`; dimensions with `array.shape[dimension] == 1` are
+ * effectively ignored when checking for contiguity.
  */
 
 /*
@@ -817,7 +830,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Always copy the array. Returned arrays are always CONTIGUOUS,
- * ALIGNED, and WRITEABLE.
+ * ALIGNED, and WRITEABLE. See also: NPY_ARRAY_ENSURENOCOPY = 0x4000.
  *
  * This flag may be requested in constructor functions.
  */
@@ -872,8 +885,14 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * This flag may be requested in constructor functions.
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
+
+/*
+ * No copy may be made while converting from an object/array (result is a view)
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_ENSURENOCOPY 0x4000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
@@ -896,14 +915,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_DEFAULT      (NPY_ARRAY_CARRAY)
 #define NPY_ARRAY_IN_ARRAY     (NPY_ARRAY_CARRAY_RO)
 #define NPY_ARRAY_OUT_ARRAY    (NPY_ARRAY_CARRAY)
-#define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY | \
-                                NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY)
 #define NPY_ARRAY_INOUT_ARRAY2 (NPY_ARRAY_CARRAY | \
                                 NPY_ARRAY_WRITEBACKIFCOPY)
 #define NPY_ARRAY_IN_FARRAY    (NPY_ARRAY_FARRAY_RO)
 #define NPY_ARRAY_OUT_FARRAY   (NPY_ARRAY_FARRAY)
-#define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY | \
-                                NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY)
 #define NPY_ARRAY_INOUT_FARRAY2 (NPY_ARRAY_FARRAY | \
                                 NPY_ARRAY_WRITEBACKIFCOPY)
 
@@ -926,19 +943,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BUFSIZE 8192
 /* buffer stress test size: */
 /*#define NPY_BUFSIZE 17*/
-
-#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
-#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
-#define PyArray_CLT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag) : \
-                               ((p).real < (q).real)))
-#define PyArray_CGT(p,q) ((((p).real==(q).real) ? ((p).imag > (q).imag) : \
-                               ((p).real > (q).real)))
-#define PyArray_CLE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag) : \
-                               ((p).real <= (q).real)))
-#define PyArray_CGE(p,q) ((((p).real==(q).real) ? ((p).imag >= (q).imag) : \
-                               ((p).real >= (q).real)))
-#define PyArray_CEQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
-#define PyArray_CNE(p,q) (((p).real!=(q).real) || ((p).imag != (q).imag))
 
 /*
  * C API: consists of Macros and functions.  The MACROS are defined
@@ -1199,6 +1203,8 @@ struct PyArrayIterObject_tag {
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
                      __npy_i++) { \
+                        _PyAIT(it)->coordinates[__npy_i] = \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
                         _PyAIT(it)->dataptr += \
                                 (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
                                 * _PyAIT(it)->strides[__npy_i]; \
@@ -1269,7 +1275,6 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-
 /*
  * Store the information needed for fancy-indexing over an array. The
  * fields are slightly unordered to keep consec, dataptr and subspace
@@ -1322,7 +1327,10 @@ typedef struct {
         int                   nd_fancy;
         npy_intp              fancy_dims[NPY_MAXDIMS];
 
-        /* Whether the iterator (any of the iterators) requires API */
+        /*
+         * Whether the iterator (any of the iterators) requires API.  This is
+         * unused by NumPy itself; ArrayMethod flags are more precise.
+         */
         int                   needs_api;
 
         /*
@@ -1413,12 +1421,12 @@ typedef struct {
  */
 
 /* General: those work for any mode */
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 #if 0
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #endif
 
@@ -1426,9 +1434,11 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * Include inline implementations - functions defined there are not
  * considered public API
  */
-#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 #include "_neighborhood_iterator_imp.h"
-#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+
+
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
@@ -1462,85 +1472,85 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * ABI compatibility.
  */
 
-static NPY_INLINE int
+static inline int
 PyArray_NDIM(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->nd;
 }
 
-static NPY_INLINE void *
+static inline void *
 PyArray_DATA(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
-static NPY_INLINE char *
+static inline char *
 PyArray_BYTES(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_STRIDES(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->strides;
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_DIM(const PyArrayObject *arr, int idim)
 {
     return ((PyArrayObject_fields *)arr)->dimensions[idim];
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_STRIDE(const PyArrayObject *arr, int istride)
 {
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
-static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+static inline NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
-static NPY_INLINE NPY_RETURNS_BORROWED_REF PyArray_Descr *
+static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_FLAGS(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->flags;
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_ITEMSIZE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->elsize;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_TYPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->type_num;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
@@ -1552,7 +1562,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
  * and of a type understood by the arrays dtype.
  * Use `PyArray_Pack` if the value may be of a different dtype.
  */
-static NPY_INLINE int
+static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
@@ -1587,13 +1597,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                      (PyArrayObject *)(obj))
 #endif
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 PyArray_DTYPE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_SHAPE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
@@ -1603,7 +1613,7 @@ PyArray_SHAPE(PyArrayObject *arr)
  * Enables the specified array flags. Does no checking,
  * assumes you know what you're doing.
  */
-static NPY_INLINE void
+static inline void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags |= flags;
@@ -1613,11 +1623,19 @@ PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
  * Clears the specified array flags. Does no checking,
  * assumes you know what you're doing.
  */
-static NPY_INLINE void
+static inline void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
+
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+    static inline NPY_RETURNS_BORROWED_REF PyObject *
+    PyArray_HANDLER(PyArrayObject *arr)
+    {
+        return ((PyArrayObject_fields *)arr)->mem_handler;
+    }
+#endif
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 
@@ -1759,8 +1777,8 @@ typedef struct {
 } npy_stride_sort_item;
 
 /************************************************************
- * This is the form of the struct that's returned pointed by the
- * PyCObject attribute of an array __array_struct__. See
+ * This is the form of the struct that's stored in the
+ * PyCapsule returned by an array's __array_struct__ attribute. See
  * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
  * documentation.
  ************************************************************/
@@ -1803,13 +1821,6 @@ typedef struct {
                            */
 } PyArrayInterface;
 
-/*
- * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
- * See the documentation for PyDataMem_SetEventHook.
- */
-typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
-                                       void *user_data);
-
 
 /*
  * PyArray_DTypeMeta related definitions.
@@ -1818,27 +1829,13 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /*
-     * The Structures defined in this block are considered private API and
-     * may change without warning!
+     * The Structures defined in this block are currently considered
+     * private API and may change without warning!
+     * Part of this (at least the size) is expected to be public API without
+     * further modifications.
      */
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
-
-    typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
-
-    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-            PyArray_DTypeMeta *cls, PyObject *obj);
-
-    /*
-     * Before making this public, we should decide whether it should pass
-     * the type, or allow looking at the object. A possible use-case:
-     * `np.array(np.array([0]), dtype=np.ndarray)`
-     * Could consider arrays that are not `dtype=ndarray` "scalars".
-     */
-    typedef int (is_known_scalar_type_function)(
-            PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-    typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
@@ -1850,7 +1847,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * it is a fairly complex construct which may be better to allow
      * refactoring of.
      */
-    struct PyArray_DTypeMeta_tag {
+    typedef struct {
         PyHeapTypeObject super;
 
         /*
@@ -1859,42 +1856,26 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * may be a pointer to the *prototype* instance?
          */
         PyArray_Descr *singleton;
-        /*
-         * Is this DType created using the old API? This exists mainly to
-         * allow for assertions in paths specific to wrapping legacy types.
-         */
-        npy_bool legacy;
-        /* The values stored by a parametric datatype depend on its instance */
-        npy_bool parametric;
-        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
-        npy_bool abstract;
+        /* Copy of the legacy DTypes type number, usually invalid. */
+        int type_num;
 
-        /*
-         * The following fields replicate the most important dtype information.
-         * In the legacy implementation most of these are stored in the
-         * PyArray_Descr struct.
-         */
         /* The type object of the scalar instances (may be NULL?) */
         PyTypeObject *scalar_type;
-        /* kind for this type */
-        char kind;
-        /* unique-character representing this type */
-        char type;
-        /* flags describing data type */
-        char flags;
-        /* number representing this type */
-        int type_num;
         /*
-         * Point to the original ArrFuncs.
-         * NOTE: We could make a copy to detect changes to `f`.
+         * DType flags to signal legacy, parametric, or
+         * abstract.  But plenty of space for additional information/flags.
          */
-        PyArray_ArrFuncs *f;
+        npy_uint64 flags;
 
-        /* DType methods, these could be moved into its own struct */
-        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
-        is_known_scalar_type_function *is_known_scalar_type;
-        default_descr_function *default_descr;
-    };
+        /*
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
+         * while also ensuring flexibility for all opaque API (with one
+         * indirection due the pointer lookup).
+         */
+        void *dt_slots;
+        void *reserved[3];
+    } PyArray_DTypeMeta;
 
 #endif  /* NPY_INTERNAL_BUILD */
 
@@ -1925,4 +1906,4 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #undef NPY_DEPRECATED_INCLUDES
 
-#endif /* NPY_ARRAYTYPES_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

@@ -7,8 +7,6 @@ by importing from the extension module.
 """
 
 import functools
-import warnings
-
 from . import overrides
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
@@ -16,39 +14,48 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
+    _flagdict, from_dlpack, _place, _reconstruct,
+    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
+    _get_madvise_hugepage, _set_madvise_hugepage,
+    _get_promotion_state, _set_promotion_state
     )
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
-    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
-    '_flagdict', '_insert', '_reconstruct', '_vec_string', '_monotonicity',
-    'add_docstring', 'arange', 'array', 'bincount', 'broadcast',
-    'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
+    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
+    '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
+    '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
+    'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
+    'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
-    'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
+    'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
-    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
-    'interp', 'interp_complex', 'is_busday', 'lexsort',
-    'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
-    'nested_iters', 'normalize_axis_index', 'packbits',
-    'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
-    'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
-    'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
-    'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
-    'where', 'zeros']
+    'frombuffer', 'fromfile', 'fromiter', 'fromstring',
+    'get_handler_name', 'get_handler_version', 'inner', 'interp',
+    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'may_share_memory',
+    'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
+    'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
+    'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
+    'set_legacy_print_mode',
+    'set_typeDict', 'shares_memory', 'typeinfo',
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    '_get_promotion_state', '_set_promotion_state']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
 scalar.__module__ = 'numpy.core.multiarray'
 
 
+from_dlpack.__module__ = 'numpy'
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
+asarray.__module__ = 'numpy'
+asanyarray.__module__ = 'numpy'
+ascontiguousarray.__module__ = 'numpy'
+asfortranarray.__module__ = 'numpy'
 datetime_data.__module__ = 'numpy'
 empty.__module__ = 'numpy'
 frombuffer.__module__ = 'numpy'
@@ -56,13 +63,13 @@ fromfile.__module__ = 'numpy'
 fromiter.__module__ = 'numpy'
 frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
-geterrobj.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
-set_numeric_ops.__module__ = 'numpy'
-seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
+_get_promotion_state.__module__ = 'numpy'
+_set_promotion_state.__module__ = 'numpy'
+normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -90,14 +97,14 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
-        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        'F' means F-order, 'A' means 'F' if `prototype` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `prototype`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -141,9 +148,9 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None):
+def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
-    concatenate((a1, a2, ...), axis=0, out=None)
+    concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
 
     Join a sequence of arrays along an existing axis.
 
@@ -159,6 +166,17 @@ def concatenate(arrays, axis=None, out=None):
         If provided, the destination to place the result. The shape must be
         correct, matching that of what concatenate would have returned if no
         out argument were specified.
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+        .. versionadded:: 1.20.0
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+        For a description of the options, please see :term:`casting`.
+        
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -234,7 +252,7 @@ def concatenate(arrays, axis=None, out=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
 def inner(a, b):
     """
-    inner(a, b)
+    inner(a, b, /)
 
     Inner product of two arrays.
 
@@ -249,12 +267,16 @@ def inner(a, b):
     Returns
     -------
     out : ndarray
-        `out.shape = a.shape[:-1] + b.shape[:-1]`
+        If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+        ``out.shape = (*a.shape[:-1], *b.shape[:-1])``
 
     Raises
     ------
     ValueError
-        If the last dimension of `a` and `b` has different size.
+        If both `a` and `b` are nonscalar and their last dimensions have
+        different sizes.
 
     See Also
     --------
@@ -268,14 +290,14 @@ def inner(a, b):
 
         np.inner(a, b) = sum(a[:]*b[:])
 
-    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+    More generally, if ``ndim(a) = r > 0`` and ``ndim(b) = s > 0``::
 
         np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
 
     or explicitly::
 
-        np.inner(a, b)[i0,...,ir-1,j0,...,js-1]
-             = sum(a[i0,...,ir-1,:]*b[j0,...,js-1,:])
+        np.inner(a, b)[i0,...,ir-2,j0,...,js-2]
+             = sum(a[i0,...,ir-2,:]*b[j0,...,js-2,:])
 
     In addition `a` or `b` may be scalars, in which case::
 
@@ -290,13 +312,24 @@ def inner(a, b):
     >>> np.inner(a, b)
     2
 
-    A multidimensional example:
+    Some multidimensional examples:
 
     >>> a = np.arange(24).reshape((2,3,4))
     >>> b = np.arange(4)
-    >>> np.inner(a, b)
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (2, 3)
+    >>> c
     array([[ 14,  38,  62],
            [ 86, 110, 134]])
+
+    >>> a = np.arange(2).reshape((1,1,2))
+    >>> b = np.arange(6).reshape((3,2))
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (1, 1, 3)
+    >>> c
+    array([[[1, 3, 5]]])
 
     An example where `b` is a scalar:
 
@@ -311,7 +344,7 @@ def inner(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
 def where(condition, x=None, y=None):
     """
-    where(condition, [x, y])
+    where(condition, [x, y], /)
 
     Return elements chosen from `x` or `y` depending on `condition`.
 
@@ -396,7 +429,7 @@ def lexsort(keys, axis=None):
     for the primary sort order, the second-to-last key for the secondary sort
     order, and so on. The keys argument must be a sequence of objects that
     can be converted to arrays of the same shape. If a 2D array is provided
-    for the keys argument, it's rows are interpreted as the sorting keys and
+    for the keys argument, its rows are interpreted as the sorting keys and
     sorting is according to the last row, second last row etc.
 
     Parameters
@@ -448,7 +481,7 @@ def lexsort(keys, axis=None):
     A normal ``argsort`` would have yielded:
 
     >>> [(a[i],b[i]) for i in np.argsort(a)]
-    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
+    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 1), (4, 2), (5, 4)]
 
     Structured arrays are sorted lexically by ``argsort``:
 
@@ -484,12 +517,12 @@ def can_cast(from_, to, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -583,7 +616,7 @@ def can_cast(from_, to, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
 def min_scalar_type(a):
     """
-    min_scalar_type(a)
+    min_scalar_type(a, /)
 
     For scalar ``a``, returns the data type with the smallest size
     and smallest scalar kind which can hold its value.  For non-scalar
@@ -680,7 +713,7 @@ def result_type(*arrays_and_dtypes):
     the data types are combined with :func:`promote_types`
     to produce the return value.
 
-    Otherwise, `min_scalar_type` is called on each array, and
+    Otherwise, `min_scalar_type` is called on each scalar, and
     the resulting data types are all combined with :func:`promote_types`
     to produce the return value.
 
@@ -716,16 +749,20 @@ def dot(a, b, out=None):
     - If both `a` and `b` are 2-D arrays, it is matrix multiplication,
       but using :func:`matmul` or ``a @ b`` is preferred.
 
-    - If either `a` or `b` is 0-D (scalar), it is equivalent to :func:`multiply`
-      and using ``numpy.multiply(a, b)`` or ``a * b`` is preferred.
+    - If either `a` or `b` is 0-D (scalar), it is equivalent to
+      :func:`multiply` and using ``numpy.multiply(a, b)`` or ``a * b`` is
+      preferred.
 
     - If `a` is an N-D array and `b` is a 1-D array, it is a sum product over
       the last axis of `a` and `b`.
 
     - If `a` is an N-D array and `b` is an M-D array (where ``M>=2``), it is a
-      sum product over the last axis of `a` and the second-to-last axis of `b`::
+      sum product over the last axis of `a` and the second-to-last axis of
+      `b`::
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
     ----------
@@ -795,7 +832,7 @@ def dot(a, b, out=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
     """
-    vdot(a, b)
+    vdot(a, b, /)
 
     Return the dot product of two vectors.
 
@@ -853,7 +890,7 @@ def vdot(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
 def bincount(x, weights=None, minlength=None):
     """
-    bincount(x, weights=None, minlength=0)
+    bincount(x, /, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -989,7 +1026,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None, dims=None):
+def unravel_index(indices, shape=None, order=None):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1035,9 +1072,6 @@ def unravel_index(indices, shape=None, order=None, dims=None):
     (3, 1, 4, 1)
 
     """
-    if dims is not None:
-        warnings.warn("'shape' argument should be used instead of 'dims'",
-                      DeprecationWarning, stacklevel=3)
     return (indices,)
 
 
@@ -1062,22 +1096,38 @@ def copyto(dst, src, casting=None, where=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur when copying.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
+
+    Examples
+    --------
+    >>> A = np.array([4, 5, 6])
+    >>> B = [1, 2, 3]
+    >>> np.copyto(A, B)
+    >>> A
+    array([1, 2, 3])
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> B = [[4, 5, 6], [7, 8, 9]]
+    >>> np.copyto(A, B)
+    >>> A
+    array([[4, 5, 6],
+           [7, 8, 9]])
+
     """
     return (dst, src, where)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
-def putmask(a, mask, values):
+def putmask(a, /, mask, values):
     """
     putmask(a, mask, values)
 
@@ -1090,7 +1140,7 @@ def putmask(a, mask, values):
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Target array.
     mask : array_like
         Boolean mask array. It has to be the same shape as `a`.
@@ -1124,7 +1174,7 @@ def putmask(a, mask, values):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
 def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, axis=None, bitorder='big')
+    packbits(a, /, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1182,7 +1232,7 @@ def packbits(a, axis=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
 def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, axis=None, count=None, bitorder='big')
+    unpackbits(a, /, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
@@ -1266,7 +1316,7 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
 def shares_memory(a, b, max_work=None):
     """
-    shares_memory(a, b, max_work=None)
+    shares_memory(a, b, /, max_work=None)
 
     Determine if two arrays share memory.
 
@@ -1294,7 +1344,7 @@ def shares_memory(a, b, max_work=None):
 
     Raises
     ------
-    numpy.TooHardError
+    numpy.exceptions.TooHardError
         Exceeded max_work.
 
     Returns
@@ -1328,7 +1378,7 @@ def shares_memory(a, b, max_work=None):
     >>> np.shares_memory(x1, x2, max_work=1000)
     Traceback (most recent call last):
     ...
-    numpy.TooHardError: Exceeded max_work
+    numpy.exceptions.TooHardError: Exceeded max_work
 
     Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
     around 1 minute for this case. It is possible to find problems
@@ -1341,7 +1391,7 @@ def shares_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
 def may_share_memory(a, b, max_work=None):
     """
-    may_share_memory(a, b, max_work=None)
+    may_share_memory(a, b, /, max_work=None)
 
     Determine if two arrays might share memory
 
@@ -1419,7 +1469,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     busday_offset : Applies an offset counted in valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1455,18 +1505,18 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
-          * 'raise' means to raise an exception for an invalid day.
-          * 'nat' means to return a NaT (not-a-time) for an invalid day.
-          * 'forward' and 'following' mean to take the first valid day
-            later in time.
-          * 'backward' and 'preceding' mean to take the first valid day
-            earlier in time.
-          * 'modifiedfollowing' means to take the first valid day
-            later in time unless it is across a Month boundary, in which
-            case to take the first valid day earlier in time.
-          * 'modifiedpreceding' means to take the first valid day
-            earlier in time unless it is across a Month boundary, in which
-            case to take the first valid day later in time.
+        * 'raise' means to raise an exception for an invalid day.
+        * 'nat' means to return a NaT (not-a-time) for an invalid day.
+        * 'forward' and 'following' mean to take the first valid day
+          later in time.
+        * 'backward' and 'preceding' mean to take the first valid day
+          earlier in time.
+        * 'modifiedfollowing' means to take the first valid day
+          later in time unless it is across a Month boundary, in which
+          case to take the first valid day earlier in time.
+        * 'modifiedpreceding' means to take the first valid day
+          earlier in time unless it is across a Month boundary, in which
+          case to take the first valid day later in time.
     weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday are
         valid days. May be specified as a length-seven list or array, like
@@ -1494,7 +1544,7 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1576,7 +1626,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_offset : Applies an offset counted in valid days.
 

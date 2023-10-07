@@ -16,10 +16,10 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-#FIXME: this will probably change when we require full C99 campatibility
+#FIXME: this will probably change when we require full C99 compatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
-                            or (np.log(complex(np.NZERO, 0)).imag != np.pi))
+                            or (np.log(complex(ncu.NZERO, 0)).imag != np.pi))
 # TODO: replace with a check on whether platform-provided C99 funcs are used
 xfail_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
 
@@ -48,8 +48,8 @@ class TestCexp:
         f = np.exp
 
         # cexp(+-0 + 0i) is 1 + 0i
-        check(f, np.PZERO, 0, 1, 0, False)
-        check(f, np.NZERO, 0, 1, 0, False)
+        check(f, ncu.PZERO, 0, 1, 0, False)
+        check(f, ncu.NZERO, 0, 1, 0, False)
 
         # cexp(x + infi) is nan + nani for finite x and raises 'invalid' FPU
         # exception
@@ -61,8 +61,8 @@ class TestCexp:
         check(f,  np.inf, 0, np.inf, 0)
 
         # cexp(-inf + yi) is +0 * (cos(y) + i sin(y)) for finite y
-        check(f,  -np.inf, 1, np.PZERO, np.PZERO)
-        check(f,  -np.inf, 0.75 * np.pi, np.NZERO, np.PZERO)
+        check(f,  -np.inf, 1, ncu.PZERO, ncu.PZERO)
+        check(f,  -np.inf, 0.75 * np.pi, ncu.NZERO, ncu.PZERO)
 
         # cexp(inf + yi) is +inf * (cos(y) + i sin(y)) for finite y
         check(f,  np.inf, 1, np.inf, np.inf)
@@ -134,8 +134,7 @@ class TestClog:
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
@@ -150,7 +149,7 @@ class TestClog:
         # clog(-0 + i0) returns -inf + i pi and raises the 'divide-by-zero'
         # floating-point exception.
         with np.errstate(divide='raise'):
-            x = np.array([np.NZERO], dtype=complex)
+            x = np.array([ncu.NZERO], dtype=complex)
             y = complex(-np.inf, np.pi)
             assert_raises(FloatingPointError, np.log, x)
         with np.errstate(divide='ignore'):
@@ -307,15 +306,15 @@ class TestCsqrt:
         f = np.sqrt
 
         # csqrt(+-0 + 0i) is 0 + 0i
-        check(f, np.PZERO, 0, 0, 0)
-        check(f, np.NZERO, 0, 0, 0)
+        check(f, ncu.PZERO, 0, 0, 0)
+        check(f, ncu.NZERO, 0, 0, 0)
 
         # csqrt(x + infi) is inf + infi for any x (including NaN)
         check(f,  1, np.inf, np.inf, np.inf)
         check(f, -1, np.inf, np.inf, np.inf)
 
-        check(f, np.PZERO, np.inf, np.inf, np.inf)
-        check(f, np.NZERO, np.inf, np.inf, np.inf)
+        check(f, ncu.PZERO, np.inf, np.inf, np.inf)
+        check(f, ncu.NZERO, np.inf, np.inf, np.inf)
         check(f,   np.inf, np.inf, np.inf, np.inf)
         check(f,  -np.inf, np.inf, np.inf, np.inf)
         check(f,  -np.nan, np.inf, np.inf, np.inf)
@@ -326,10 +325,10 @@ class TestCsqrt:
         check(f,  0, np.nan, np.nan, np.nan)
 
         # csqrt(-inf + yi) is +0 + infi for any finite y > 0
-        check(f, -np.inf, 1, np.PZERO, np.inf)
+        check(f, -np.inf, 1, ncu.PZERO, np.inf)
 
         # csqrt(inf + yi) is +inf + 0i for any finite y > 0
-        check(f, np.inf, 1, np.inf, np.PZERO)
+        check(f, np.inf, 1, np.inf, ncu.PZERO)
 
         # csqrt(-inf + nani) is nan +- infi (both +i infi are valid)
         def _check_ninf_nan(dummy):
@@ -355,28 +354,34 @@ class TestCsqrt:
         # cuts first)
 
 class TestCpow:
-    def setup(self):
+    def setup_method(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def teardown(self):
+    def teardown_method(self):
         np.seterr(**self.olderr)
 
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = x ** 2
         y = np.power(x, 2)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     def test_scalar(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
         y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
         lx = list(range(len(x)))
-        # Compute the values for complex type in python
-        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
-        # Substitute a result allowed by C99 standard
-        p_r[4] = complex(np.inf, np.nan)
-        # Do the same with numpy complex scalars
+
+        # Hardcode the expected `builtins.complex` values,
+        # as complex exponentiation is broken as of bpo-44698
+        p_r = [
+            1+0j,
+            0.20787957635076193+0j,
+            0.35812203996480685+0.6097119028618724j,
+            0.12659112128185032+0.48847676699581527j,
+            complex(np.inf, np.nan),
+            complex(np.nan, np.nan),
+        ]
+
         n_r = [x[i] ** y[i] for i in lx]
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
@@ -385,41 +390,47 @@ class TestCpow:
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
         y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
         lx = list(range(len(x)))
-        # Compute the values for complex type in python
-        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
-        # Substitute a result allowed by C99 standard
-        p_r[4] = complex(np.inf, np.nan)
-        # Do the same with numpy arrays
+
+        # Hardcode the expected `builtins.complex` values,
+        # as complex exponentiation is broken as of bpo-44698
+        p_r = [
+            1+0j,
+            0.20787957635076193+0j,
+            0.35812203996480685+0.6097119028618724j,
+            0.12659112128185032+0.48847676699581527j,
+            complex(np.inf, np.nan),
+            complex(np.nan, np.nan),
+        ]
+
         n_r = x ** y
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
 class TestCabs:
-    def setup(self):
+    def setup_method(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def teardown(self):
+    def teardown_method(self):
         np.seterr(**self.olderr)
 
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
         x = np.array([1+0j], dtype=complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([complex(1, np.NZERO)], dtype=complex)
+        x = np.array([complex(1, ncu.NZERO)], dtype=complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([complex(np.inf, np.NZERO)], dtype=complex)
+        x = np.array([complex(np.inf, ncu.NZERO)], dtype=complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([complex(np.nan, np.NZERO)], dtype=complex)
+        x = np.array([complex(np.nan, ncu.NZERO)], dtype=complex)
         assert_array_equal(np.abs(x), np.real(x))
 
     def test_cabs_inf_nan(self):
@@ -452,9 +463,10 @@ class TestCabs:
             return np.abs(complex(a, b))
 
         xa = np.array(x, dtype=complex)
-        for i in range(len(xa)):
-            ref = g(x[i], y[i])
-            check_real_value(f, x[i], y[i], ref)
+        assert len(xa) == len(x) == len(y)
+        for xi, yi in zip(x, y):
+            ref = g(xi, yi)
+            check_real_value(f, xi, yi, ref)
 
 class TestCarg:
     def test_simple(self):
@@ -462,35 +474,35 @@ class TestCarg:
         check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)
 
         check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
-        check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
+        check_real_value(ncu._arg, ncu.PZERO, ncu.PZERO, ncu.PZERO)
 
     # TODO This can be xfail when the generator functions are got rid of.
     @pytest.mark.skip(
         reason="Complex arithmetic with signed zero fails on most platforms")
     def test_zero(self):
         # carg(-0 +- 0i) returns +- pi
-        check_real_value(ncu._arg, np.NZERO, np.PZERO,  np.pi, False)
-        check_real_value(ncu._arg, np.NZERO, np.NZERO, -np.pi, False)
+        check_real_value(ncu._arg, ncu.NZERO, ncu.PZERO,  np.pi, False)
+        check_real_value(ncu._arg, ncu.NZERO, ncu.NZERO, -np.pi, False)
 
         # carg(+0 +- 0i) returns +- 0
-        check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
-        check_real_value(ncu._arg, np.PZERO, np.NZERO, np.NZERO)
+        check_real_value(ncu._arg, ncu.PZERO, ncu.PZERO, ncu.PZERO)
+        check_real_value(ncu._arg, ncu.PZERO, ncu.NZERO, ncu.NZERO)
 
         # carg(x +- 0i) returns +- 0 for x > 0
-        check_real_value(ncu._arg, 1, np.PZERO, np.PZERO, False)
-        check_real_value(ncu._arg, 1, np.NZERO, np.NZERO, False)
+        check_real_value(ncu._arg, 1, ncu.PZERO, ncu.PZERO, False)
+        check_real_value(ncu._arg, 1, ncu.NZERO, ncu.NZERO, False)
 
         # carg(x +- 0i) returns +- pi for x < 0
-        check_real_value(ncu._arg, -1, np.PZERO,  np.pi, False)
-        check_real_value(ncu._arg, -1, np.NZERO, -np.pi, False)
+        check_real_value(ncu._arg, -1, ncu.PZERO,  np.pi, False)
+        check_real_value(ncu._arg, -1, ncu.NZERO, -np.pi, False)
 
         # carg(+- 0 + yi) returns pi/2 for y > 0
-        check_real_value(ncu._arg, np.PZERO, 1, 0.5 * np.pi, False)
-        check_real_value(ncu._arg, np.NZERO, 1, 0.5 * np.pi, False)
+        check_real_value(ncu._arg, ncu.PZERO, 1, 0.5 * np.pi, False)
+        check_real_value(ncu._arg, ncu.NZERO, 1, 0.5 * np.pi, False)
 
         # carg(+- 0 + yi) returns -pi/2 for y < 0
-        check_real_value(ncu._arg, np.PZERO, -1, 0.5 * np.pi, False)
-        check_real_value(ncu._arg, np.NZERO, -1, -0.5 * np.pi, False)
+        check_real_value(ncu._arg, ncu.PZERO, -1, 0.5 * np.pi, False)
+        check_real_value(ncu._arg, ncu.NZERO, -1, -0.5 * np.pi, False)
 
     #def test_branch_cuts(self):
     #    _check_branch_cut(ncu._arg, -1, 1j, -1, 1)
@@ -501,8 +513,8 @@ class TestCarg:
         check_real_value(ncu._arg, -np.inf, -1, -np.pi, False)
 
         # carg(np.inf +- yi) returns +-0 for finite y > 0
-        check_real_value(ncu._arg, np.inf,  1, np.PZERO, False)
-        check_real_value(ncu._arg, np.inf, -1, np.NZERO, False)
+        check_real_value(ncu._arg, np.inf,  1, ncu.PZERO, False)
+        check_real_value(ncu._arg, np.inf, -1, ncu.NZERO, False)
 
         # carg(x +- np.infi) returns +-pi/2 for finite x
         check_real_value(ncu._arg, 1,  np.inf,  0.5 * np.pi, False)
@@ -541,7 +553,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
         else:
             assert_almost_equal(f(z1), z2)
 
-class TestSpecialComplexAVX(object):
+class TestSpecialComplexAVX:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
@@ -568,7 +580,7 @@ class TestSpecialComplexAVX(object):
         with np.errstate(invalid='ignore'):
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
-class TestComplexAbsoluteAVX(object):
+class TestComplexAbsoluteAVX:
     @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
@@ -579,11 +591,11 @@ class TestComplexAbsoluteAVX(object):
         assert_equal(np.abs(arr[::stride]), abs_true[::stride])
 
 # Testcase taken as is from https://github.com/numpy/numpy/issues/16660
-class TestComplexAbsoluteMixedDTypes(object):
+class TestComplexAbsoluteMixedDTypes:
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     @pytest.mark.parametrize("func", ['abs', 'square', 'conjugate'])
-    
+
     def test_array(self, stride, astype, func):
         dtype = [('template_id', '<i8'), ('bank_chisq','<f4'),
                  ('bank_chisq_dof','<i8'), ('chisq', '<f4'), ('chisq_dof','<i8'),
@@ -602,9 +614,9 @@ class TestComplexAbsoluteMixedDTypes(object):
         myfunc = getattr(np, func)
         a = vec['mycomplex']
         g = myfunc(a[::stride])
-        
+
         b = vec['mycomplex'].copy()
         h = myfunc(b[::stride])
-        
+
         assert_array_max_ulp(h.real, g.real, 1)
         assert_array_max_ulp(h.imag, g.imag, 1)

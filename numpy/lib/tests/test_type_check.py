@@ -1,10 +1,10 @@
 import numpy as np
+from numpy import (
+    common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
+    nan_to_num, isrealobj, iscomplexobj, real_if_close
+    )
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises
-    )
-from numpy.lib.type_check import (
-    common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, asfarray, real_if_close
     )
 
 
@@ -18,14 +18,14 @@ class TestCommonType:
         af16 = np.array([[1, 2], [3, 4]], dtype=np.float16)
         af32 = np.array([[1, 2], [3, 4]], dtype=np.float32)
         af64 = np.array([[1, 2], [3, 4]], dtype=np.float64)
-        acs = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.csingle)
-        acd = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.cdouble)
+        acs = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.complex64)
+        acd = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.complex128)
         assert_(common_type(ai32) == np.float64)
         assert_(common_type(af16) == np.float16)
         assert_(common_type(af32) == np.float32)
         assert_(common_type(af64) == np.float64)
-        assert_(common_type(acs) == np.csingle)
-        assert_(common_type(acd) == np.cdouble)
+        assert_(common_type(acs) == np.complex64)
+        assert_(common_type(acd) == np.complex128)
 
 
 class TestMintypecode:
@@ -155,7 +155,7 @@ class TestIscomplex:
     def test_fail(self):
         z = np.array([-1, 0, 1])
         res = iscomplex(z)
-        assert_(not np.sometrue(res, axis=0))
+        assert_(not np.any(res, axis=0))
 
     def test_pass(self):
         z = np.array([-1j, 1, 0])
@@ -405,18 +405,18 @@ class TestNanToNum:
     def test_float(self):
         vals = nan_to_num(1.0)
         assert_all(vals == 1.0)
-        assert_equal(type(vals), np.float_)
+        assert_equal(type(vals), np.float64)
         vals = nan_to_num(1.1, nan=10, posinf=20, neginf=30)
         assert_all(vals == 1.1)
-        assert_equal(type(vals), np.float_)
+        assert_equal(type(vals), np.float64)
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
         assert_all(vals == 1+1j)
-        assert_equal(type(vals), np.complex_)
+        assert_equal(type(vals), np.complex128)
         vals = nan_to_num(1+1j, nan=10, posinf=20, neginf=30)
         assert_all(vals == 1+1j)
-        assert_equal(type(vals), np.complex_)
+        assert_equal(type(vals), np.complex128)
 
     def test_complex_bad(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -425,7 +425,7 @@ class TestNanToNum:
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(np.isfinite(vals))
-        assert_equal(type(vals), np.complex_)
+        assert_equal(type(vals), np.complex128)
 
     def test_complex_bad2(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -433,7 +433,7 @@ class TestNanToNum:
             v += np.array(-1+1.j)/0.
         vals = nan_to_num(v)
         assert_all(np.isfinite(vals))
-        assert_equal(type(vals), np.complex_)
+        assert_equal(type(vals), np.complex128)
         # Fixme
         #assert_all(vals.imag > 1e10)  and assert_all(np.isfinite(vals))
         # !! This is actually (unexpectedly) positive
@@ -463,16 +463,3 @@ class TestRealIfClose:
         assert_all(iscomplexobj(b))
         b = real_if_close(a+1e-7j, tol=1e-6)
         assert_all(isrealobj(b))
-
-
-class TestArrayConversion:
-
-    def test_asfarray(self):
-        a = asfarray(np.array([1, 2, 3]))
-        assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, np.floating))
-
-        # previously this would infer dtypes from arrays, unlike every single
-        # other numpy function
-        assert_raises(TypeError,
-            asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))

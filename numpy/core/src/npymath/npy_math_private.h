@@ -19,13 +19,18 @@
 #define _NPY_MATH_PRIVATE_H_
 
 #include <Python.h>
+#ifdef __cplusplus
+#include <cmath>
+using std::isgreater;
+using std::isless;
+#else
 #include <math.h>
+#endif
 
 #include "npy_config.h"
 #include "npy_fpmath.h"
 
 #include "numpy/npy_math.h"
-#include "numpy/npy_cpu.h"
 #include "numpy/npy_endian.h"
 #include "numpy/npy_common.h"
 
@@ -166,10 +171,6 @@ do {                                                            \
   sf_u.word = (i);                                              \
   (d) = sf_u.value;                                             \
 } while (0)
-
-#ifdef NPY_USE_C99_COMPLEX
-#include <complex.h>
-#endif
 
 /*
  * Long double support
@@ -477,67 +478,5 @@ do {                                                            \
      (((IEEEl2bitsrep_part)(v) << LDBL_MANH_SHIFT) & LDBL_MANH_MASK))
 
 #endif /* !HAVE_LDOUBLE_DOUBLE_DOUBLE_* */
-
-/*
- * Those unions are used to convert a pointer of npy_cdouble to native C99
- * complex or our own complex type independently on whether C99 complex
- * support is available
- */
-#ifdef NPY_USE_C99_COMPLEX
-
-/*
- * Microsoft C defines _MSC_VER
- * Intel compiler does not use MSVC complex types, but defines _MSC_VER by
- * default.
- */
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-typedef union {
-        npy_cdouble npy_z;
-        _Dcomplex c99_z;
-} __npy_cdouble_to_c99_cast;
-
-typedef union {
-        npy_cfloat npy_z;
-        _Fcomplex c99_z;
-} __npy_cfloat_to_c99_cast;
-
-typedef union {
-        npy_clongdouble npy_z;
-        _Lcomplex c99_z;
-} __npy_clongdouble_to_c99_cast;
-#else /* !_MSC_VER */
-typedef union {
-        npy_cdouble npy_z;
-        complex double c99_z;
-} __npy_cdouble_to_c99_cast;
-
-typedef union {
-        npy_cfloat npy_z;
-        complex float c99_z;
-} __npy_cfloat_to_c99_cast;
-
-typedef union {
-        npy_clongdouble npy_z;
-        complex long double c99_z;
-} __npy_clongdouble_to_c99_cast;
-#endif /* !_MSC_VER */
-
-#else /* !NPY_USE_C99_COMPLEX */
-typedef union {
-        npy_cdouble npy_z;
-        npy_cdouble c99_z;
-} __npy_cdouble_to_c99_cast;
-
-typedef union {
-        npy_cfloat npy_z;
-        npy_cfloat c99_z;
-} __npy_cfloat_to_c99_cast;
-
-typedef union {
-        npy_clongdouble npy_z;
-        npy_clongdouble c99_z;
-} __npy_clongdouble_to_c99_cast;
-#endif /* !NPY_USE_C99_COMPLEX */
-
 
 #endif /* !_NPY_MATH_PRIVATE_H_ */

@@ -35,10 +35,8 @@ Example::
 
 """
 import os
-import shutil
-import io
 
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 
 _open = open
@@ -99,7 +97,7 @@ class _FileOpeners:
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: io.open}
+        self._file_openers = {None: open}
 
     def _load(self):
         if self._loaded:
@@ -162,7 +160,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
@@ -174,7 +172,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         The default path is the current directory.
     encoding : {None, str}, optional
         Open text file with given encoding. The default encoding will be
-        what `io.open` uses.
+        what `open` uses.
     newline : {None, str}, optional
         Newline to use when reading text file.
 
@@ -194,7 +192,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-@set_module('numpy')
+@set_module('numpy.lib.npyio')
 class DataSource:
     """
     DataSource(destpath='.')
@@ -218,7 +216,7 @@ class DataSource:
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = np.DataSource()
+        >>> repos = np.lib.npyio.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -230,13 +228,13 @@ class DataSource:
     --------
     ::
 
-        >>> ds = np.DataSource('/home/guido')
+        >>> ds = np.lib.npyio.DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/'
         >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
         '/home/guido/www.google.com/index.html'
 
-        >>> ds = np.DataSource(None)  # use with temporary file
+        >>> ds = np.lib.npyio.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
@@ -257,6 +255,8 @@ class DataSource:
     def __del__(self):
         # Remove temp directories
         if hasattr(self, '_istmpdest') and self._istmpdest:
+            import shutil
+
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
@@ -279,8 +279,9 @@ class DataSource:
     def _splitzipext(self, filename):
         """Split zip extension from filename and return filename.
 
-        *Returns*:
-            base, zip_ext : {tuple}
+        Returns
+        -------
+        base, zip_ext : {tuple}
 
         """
 
@@ -319,10 +320,10 @@ class DataSource:
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib is slow and
+        # We import these here because importing them is slow and
         # a significant fraction of numpy's total import time.
+        import shutil
         from urllib.request import urlopen
-        from urllib.error import URLError
 
         upath = self.abspath(path)
 
@@ -380,7 +381,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -440,7 +441,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -491,7 +492,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -499,7 +500,7 @@ class DataSource:
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -528,7 +529,7 @@ class DataSource:
             return _file_openers[ext](found, mode=mode,
                                       encoding=encoding, newline=newline)
         else:
-            raise IOError("%s not found." % path)
+            raise FileNotFoundError(f"{path} not found.")
 
 
 class Repository (DataSource):
@@ -602,7 +603,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -629,7 +630,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -658,7 +659,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -668,7 +669,7 @@ class Repository (DataSource):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -687,7 +688,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str
+        files : list of str or pathlib.Path
             List of file names (not containing a directory part).
 
         Notes

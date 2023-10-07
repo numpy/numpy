@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Test printing of scalar types.
 
 """
@@ -59,10 +58,10 @@ class TestInherit:
 class TestCharacter:
     def test_char_radd(self):
         # GH issue 9620, reached gentype_add and raise TypeError
-        np_s = np.string_('abc')
-        np_u = np.unicode_('abc')
+        np_s = np.bytes_('abc')
+        np_u = np.str_('abc')
         s = b'def'
-        u = u'def'
+        u = 'def'
         assert_(np_s.__radd__(np_s) is NotImplemented)
         assert_(np_s.__radd__(np_u) is NotImplemented)
         assert_(np_s.__radd__(s) is NotImplemented)
@@ -72,7 +71,7 @@ class TestCharacter:
         assert_(np_u.__radd__(s) is NotImplemented)
         assert_(np_u.__radd__(u) is NotImplemented)
         assert_(s + np_s == b'defabc')
-        assert_(u + np_u == u'defabc')
+        assert_(u + np_u == 'defabc')
 
         class MyStr(str, np.generic):
             # would segfault
@@ -91,9 +90,9 @@ class TestCharacter:
         assert ret == b"defabc"
 
     def test_char_repeat(self):
-        np_s = np.string_('abc')
-        np_u = np.unicode_('abc')
+        np_s = np.bytes_('abc')
+        np_u = np.str_('abc')
         res_s = b'abc' * 5
-        res_u = u'abc' * 5
+        res_u = 'abc' * 5
         assert_(np_s * 5 == res_s)
         assert_(np_u * 5 == res_u)

@@ -114,17 +114,20 @@ def _scalar_str(dtype, short):
         # platforms, so it should never include the itemsize here.
         return "'O'"
 
-    elif dtype.type == np.string_:
+    elif dtype.type == np.bytes_:
         if _isunsized(dtype):
             return "'S'"
         else:
             return "'S%d'" % dtype.itemsize
 
-    elif dtype.type == np.unicode_:
+    elif dtype.type == np.str_:
         if _isunsized(dtype):
             return "'%sU'" % byteorder
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
+
+    elif not type(dtype)._legacy:
+        return f"'{byteorder}{type(dtype).__name__}{dtype.itemsize * 8}'"
 
     # unlike the other types, subclasses of void are preserved - but
     # historically the repr does not actually reveal the subclass
@@ -176,7 +179,7 @@ def _byte_order_str(dtype):
 
 
 def _datetime_metadata_str(dtype):
-    # TODO: this duplicates the C append_metastr_to_string
+    # TODO: this duplicates the C metastr_to_unicode functionality
     unit, count = np.datetime_data(dtype)
     if unit == 'generic':
         return ''
@@ -200,34 +203,46 @@ def _struct_dict_str(dtype, includealignedflag):
 
     # Build up a string to make the dictionary
 
+    if np.core.arrayprint._get_legacy_print_mode() <= 121:
+        colon = ":"
+        fieldsep = ","
+    else:
+        colon = ": "
+        fieldsep = ", "
+
     # First, the names
-    ret = "{'names':["
-    ret += ",".join(repr(name) for name in names)
+    ret = "{'names'%s[" % colon
+    ret += fieldsep.join(repr(name) for name in names)
 
     # Second, the formats
-    ret += "], 'formats':["
-    ret += ",".join(
+    ret += "], 'formats'%s[" % colon
+    ret += fieldsep.join(
         _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes)
 
     # Third, the offsets
-    ret += "], 'offsets':["
-    ret += ",".join("%d" % offset for offset in offsets)
+    ret += "], 'offsets'%s[" % colon
+    ret += fieldsep.join("%d" % offset for offset in offsets)
 
     # Fourth, the titles
     if any(title is not None for title in titles):
-        ret += "], 'titles':["
-        ret += ",".join(repr(title) for title in titles)
+        ret += "], 'titles'%s[" % colon
+        ret += fieldsep.join(repr(title) for title in titles)
 
     # Fifth, the itemsize
-    ret += "], 'itemsize':%d" % dtype.itemsize
+    ret += "], 'itemsize'%s%d" % (colon, dtype.itemsize)
 
     if (includealignedflag and dtype.isalignedstruct):
         # Finally, the aligned flag
-        ret += ", 'aligned':True}"
+        ret += ", 'aligned'%sTrue}" % colon
     else:
         ret += "}"
 
     return ret
+
+
+def _aligned_offset(offset, alignment):
+    # round up offset:
+    return - (-offset // alignment) * alignment
 
 
 def _is_packed(dtype):
@@ -242,12 +257,23 @@ def _is_packed(dtype):
 
     Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
+    align = dtype.isalignedstruct
+    max_alignment = 1
     total_offset = 0
     for name in dtype.names:
         fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
+
+        if align:
+            total_offset = _aligned_offset(total_offset, fld_dtype.alignment)
+            max_alignment = max(max_alignment, fld_dtype.alignment)
+
         if fld_offset != total_offset:
             return False
         total_offset += fld_dtype.itemsize
+
+    if align:
+        total_offset = _aligned_offset(total_offset, max_alignment)
+
     if total_offset != dtype.itemsize:
         return False
     return True
@@ -311,6 +337,8 @@ def _name_includes_bit_suffix(dtype):
     elif dtype.type == np.bool_:
         # implied
         return False
+    elif dtype.type is None:
+        return True
     elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
         # unspecified
         return False
@@ -325,7 +353,10 @@ def _name_get(dtype):
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    if issubclass(dtype.type, np.void):
+    if not type(dtype)._legacy:
+        name = type(dtype).__name__
+
+    elif issubclass(dtype.type, np.void):
         # historically, void subclasses preserve their name, eg `record64`
         name = dtype.type.__name__
     else:

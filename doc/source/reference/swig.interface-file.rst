@@ -5,7 +5,7 @@ Introduction
 ------------
 
 The Simple Wrapper and Interface Generator (or `SWIG
-<http://www.swig.org>`_) is a powerful tool for generating wrapper
+<https://www.swig.org>`_) is a powerful tool for generating wrapper
 code for interfacing to a wide variety of scripting languages.
 `SWIG`_ can parse header files, and using only the code prototypes,
 create an interface to the target language.  But `SWIG`_ is not
@@ -213,18 +213,18 @@ The ``numpy.i`` interface file uses the ``%numpy_typemaps`` macro to
 implement typemaps for the following C data types and ``int``
 dimension types:
 
-  * ``signed char``
-  * ``unsigned char``
-  * ``short``
-  * ``unsigned short``
-  * ``int``
-  * ``unsigned int``
-  * ``long``
-  * ``unsigned long``
-  * ``long long``
-  * ``unsigned long long``
-  * ``float``
-  * ``double``
+* ``signed char``
+* ``unsigned char``
+* ``short``
+* ``unsigned short``
+* ``int``
+* ``unsigned int``
+* ``long``
+* ``unsigned long``
+* ``long long``
+* ``unsigned long long``
+* ``float``
+* ``double``
 
 In the following descriptions, we reference a generic ``DATA_TYPE``, which
 could be any of the C data types listed above, and ``DIM_TYPE`` which
@@ -235,7 +235,7 @@ the buffer pointer.  Names with ``FARRAY`` are for Fortran-ordered
 arrays, and names with ``ARRAY`` are for C-ordered (or 1D arrays).
 
 Input Arrays
-````````````
+~~~~~~~~~~~~
 
 Input arrays are defined as arrays of data that are passed into a
 routine but are not altered in-place or returned to the user.  The
@@ -245,33 +245,33 @@ of array.  The input array signatures are
 
 1D:
 
-  * ``(	DATA_TYPE IN_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY1, int DIM1 )``
-  * ``(	int DIM1, DATA_TYPE* IN_ARRAY1 )``
+* ``(	DATA_TYPE IN_ARRAY1[ANY] )``
+* ``(	DATA_TYPE* IN_ARRAY1, int DIM1 )``
+* ``(	int DIM1, DATA_TYPE* IN_ARRAY1 )``
 
 2D:
 
-  * ``(	DATA_TYPE IN_ARRAY2[ANY][ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2 )``
-  * ``(	int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2 )``
-  * ``(	DATA_TYPE* IN_FARRAY2, int DIM1, int DIM2 )``
-  * ``(	int DIM1, int DIM2, DATA_TYPE* IN_FARRAY2 )``
+* ``(	DATA_TYPE IN_ARRAY2[ANY][ANY] )``
+* ``(	DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2 )``
+* ``(	int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2 )``
+* ``(	DATA_TYPE* IN_FARRAY2, int DIM1, int DIM2 )``
+* ``(	int DIM1, int DIM2, DATA_TYPE* IN_FARRAY2 )``
 
 3D:
 
-  * ``(	DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )``
-  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )``
-  * ``(	DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )``
-  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )``
+* ``(	DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )``
+* ``(	DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )``
+* ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )``
+* ``(	DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )``
+* ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )``
 
 4D:
 
-  * ``(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])``
-  * ``(DATA_TYPE* IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
-  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* IN_ARRAY4)``
-  * ``(DATA_TYPE* IN_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
-  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* IN_FARRAY4)``
+* ``(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])``
+* ``(DATA_TYPE* IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+* ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* IN_ARRAY4)``
+* ``(DATA_TYPE* IN_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+* ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* IN_FARRAY4)``
 
 The first signature listed, ``( DATA_TYPE IN_ARRAY[ANY] )`` is for
 one-dimensional arrays with hard-coded dimensions.  Likewise,
@@ -279,7 +279,7 @@ one-dimensional arrays with hard-coded dimensions.  Likewise,
 with hard-coded dimensions, and similarly for three-dimensional.
 
 In-Place Arrays
-```````````````
+~~~~~~~~~~~~~~~
 
 In-place arrays are defined as arrays that are modified in-place.  The
 input values may or may not be used, but the values at the time the
@@ -289,33 +289,33 @@ signatures are
 
 1D:
 
-  * ``(	DATA_TYPE INPLACE_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY1, int DIM1 )``
-  * ``(	int DIM1, DATA_TYPE* INPLACE_ARRAY1 )``
+* ``(	DATA_TYPE INPLACE_ARRAY1[ANY] )``
+* ``(	DATA_TYPE* INPLACE_ARRAY1, int DIM1 )``
+* ``(	int DIM1, DATA_TYPE* INPLACE_ARRAY1 )``
 
 2D:
 
-  * ``(	DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2 )``
-  * ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2 )``
-  * ``(	DATA_TYPE* INPLACE_FARRAY2, int DIM1, int DIM2 )``
-  * ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_FARRAY2 )``
+* ``(	DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )``
+* ``(	DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2 )``
+* ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2 )``
+* ``(	DATA_TYPE* INPLACE_FARRAY2, int DIM1, int DIM2 )``
+* ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_FARRAY2 )``
 
 3D:
 
-  * ``(	DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3 )``
-  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3 )``
-  * ``(	DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )``
-  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )``
+* ``(	DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )``
+* ``(	DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3 )``
+* ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3 )``
+* ``(	DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )``
+* ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )``
 
 4D:
 
-  * ``(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])``
-  * ``(DATA_TYPE* INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
-  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* INPLACE_ARRAY4)``
-  * ``(DATA_TYPE* INPLACE_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
-  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* INPLACE_FARRAY4)``
+* ``(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])``
+* ``(DATA_TYPE* INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+* ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* INPLACE_ARRAY4)``
+* ``(DATA_TYPE* INPLACE_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+* ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* INPLACE_FARRAY4)``
 
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
@@ -328,11 +328,11 @@ This form checks for continuity but allows either C or Fortran ordering.
 
 ND:
 
- * ``(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)``
+* ``(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)``
 
 
 Argout Arrays
-`````````````
+~~~~~~~~~~~~~
 
 Argout arrays are arrays that appear in the input arguments in C, but
 are in fact output arrays.  This pattern occurs often when there is
@@ -349,21 +349,21 @@ argument.  The argout signatures are
 
 1D:
 
-  * ``(	DATA_TYPE ARGOUT_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* ARGOUT_ARRAY1, int DIM1 )``
-  * ``(	int DIM1, DATA_TYPE* ARGOUT_ARRAY1 )``
+* ``(	DATA_TYPE ARGOUT_ARRAY1[ANY] )``
+* ``(	DATA_TYPE* ARGOUT_ARRAY1, int DIM1 )``
+* ``(	int DIM1, DATA_TYPE* ARGOUT_ARRAY1 )``
 
 2D:
 
-  * ``(	DATA_TYPE ARGOUT_ARRAY2[ANY][ANY] )``
+* ``(	DATA_TYPE ARGOUT_ARRAY2[ANY][ANY] )``
 
 3D:
 
-  * ``(	DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )``
+* ``(	DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )``
 
 4D:
 
-  * ``(	DATA_TYPE ARGOUT_ARRAY4[ANY][ANY][ANY][ANY] )``
+* ``(	DATA_TYPE ARGOUT_ARRAY4[ANY][ANY][ANY][ANY] )``
 
 These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
@@ -376,7 +376,7 @@ cannot be avoided.  Note that for these types of 1D typemaps, the
 Python function will take a single argument representing ``DIM1``.
 
 Argout View Arrays
-``````````````````
+~~~~~~~~~~~~~~~~~~
 
 Argoutview arrays are for when your C code provides you with a view of
 its internal data and does not require any memory to be allocated by
@@ -396,69 +396,68 @@ typemap signatures are therefore
 
 1D:
 
-  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )``
-  * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )``
+* ``( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )``
+* ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )``
 
 2D:
 
-  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
-  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2 )``
-  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
-  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_FARRAY2 )``
+* ``( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
+* ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2 )``
+* ``( DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
+* ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_FARRAY2 )``
 
 3D:
 
-  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
-  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)``
-  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
-  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)``
+* ``( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+* ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)``
+* ``( DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+* ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)``
 
 4D:
 
-  * ``(DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_ARRAY4)``
-  * ``(DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_FARRAY4)``
+* ``(DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_ARRAY4)``
+* ``(DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_FARRAY4)``
 
 Note that arrays with hard-coded dimensions are not supported.  These
 cannot follow the double pointer signatures of these typemaps.
 
 Memory Managed Argout View Arrays
-`````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A recent addition to ``numpy.i`` are typemaps that permit argout
-arrays with views into memory that is managed.  See the discussion `here
-<http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory>`_.
+arrays with views into memory that is managed.
 
 1D:
 
-  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)``
-  * ``(DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEWM_ARRAY1)``
+* ``(DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)``
+* ``(DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEWM_ARRAY1)``
 
 2D:
 
-  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_ARRAY2)``
-  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_FARRAY2)``
+* ``(DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_ARRAY2)``
+* ``(DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_FARRAY2)``
 
 3D:
 
-  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)``
-  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)``
+* ``(DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)``
+* ``(DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)``
 
 4D:
 
-  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)``
-  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
-  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)``
+* ``(DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)``
+* ``(DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+* ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)``
 
 
 Output Arrays
-`````````````
+~~~~~~~~~~~~~
 
 The ``numpy.i`` interface file does not support typemaps for output
 arrays, for several reasons.  First, C/C++ return arguments are
@@ -479,7 +478,7 @@ function to be wrapped, either with ``%extend`` for the case of class
 methods or ``%ignore`` and ``%rename`` for the case of functions.
 
 Other Common Types: bool
-````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that C++ type ``bool`` is not supported in the list in the
 `Available Typemaps`_ section.  NumPy bools are a single byte, while
@@ -497,7 +496,7 @@ to fix the data length problem, and `Input Arrays`_ will work fine,
 but `In-Place Arrays`_ might fail type-checking.
 
 Other Common Types: complex
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Typemap conversions for complex floating-point types is also not
 supported automatically.  This is because Python and NumPy are
@@ -566,7 +565,7 @@ be fixed.  It is suggested that you do this anyway, as it only
 increases the capabilities of your Python interface.
 
 Why is There a Second File?
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `SWIG`_ type checking and conversion system is a complicated
 combination of C macros, `SWIG`_ macros, `SWIG`_ typemaps and `SWIG`_
@@ -604,309 +603,294 @@ in your code using::
 in your `SWIG`_ interface file.
 
 Macros
-``````
+~~~~~~
 
-  **is_array(a)**
-    Evaluates as true if ``a`` is non-``NULL`` and can be cast to a
-    ``PyArrayObject*``.
+**is_array(a)**
+  Evaluates as true if ``a`` is non-``NULL`` and can be cast to a
+  ``PyArrayObject*``.
 
-  **array_type(a)**
-    Evaluates to the integer data type code of ``a``, assuming ``a`` can
-    be cast to a ``PyArrayObject*``.
+**array_type(a)**
+  Evaluates to the integer data type code of ``a``, assuming ``a`` can
+  be cast to a ``PyArrayObject*``.
 
-  **array_numdims(a)**
-    Evaluates to the integer number of dimensions of ``a``, assuming
-    ``a`` can be cast to a ``PyArrayObject*``.
+**array_numdims(a)**
+  Evaluates to the integer number of dimensions of ``a``, assuming
+  ``a`` can be cast to a ``PyArrayObject*``.
 
-  **array_dimensions(a)**
-    Evaluates to an array of type ``npy_intp`` and length
-    ``array_numdims(a)``, giving the lengths of all of the dimensions
-    of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
+**array_dimensions(a)**
+  Evaluates to an array of type ``npy_intp`` and length
+  ``array_numdims(a)``, giving the lengths of all of the dimensions
+  of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
 
-  **array_size(a,i)**
-    Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
-    can be cast to a ``PyArrayObject*``.
+**array_size(a,i)**
+  Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
+  can be cast to a ``PyArrayObject*``.
 
-  **array_strides(a)**
-    Evaluates to an array of type ``npy_intp`` and length
-    ``array_numdims(a)``, giving the stridess of all of the dimensions
-    of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.  A
-    stride is the distance in bytes between an element and its
-    immediate neighbor along the same axis.
+**array_strides(a)**
+  Evaluates to an array of type ``npy_intp`` and length
+  ``array_numdims(a)``, giving the stridess of all of the dimensions
+  of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.  A
+  stride is the distance in bytes between an element and its
+  immediate neighbor along the same axis.
 
-  **array_stride(a,i)**
-    Evaluates to the ``i``-th stride of ``a``, assuming ``a`` can be
-    cast to a ``PyArrayObject*``.
+**array_stride(a,i)**
+  Evaluates to the ``i``-th stride of ``a``, assuming ``a`` can be
+  cast to a ``PyArrayObject*``.
 
-  **array_data(a)**
-    Evaluates to a pointer of type ``void*`` that points to the data
-    buffer of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
+**array_data(a)**
+  Evaluates to a pointer of type ``void*`` that points to the data
+  buffer of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
 
-  **array_descr(a)**
-    Returns a borrowed reference to the dtype property
-    (``PyArray_Descr*``) of ``a``, assuming ``a`` can be cast to a
-    ``PyArrayObject*``.
+**array_descr(a)**
+  Returns a borrowed reference to the dtype property
+  (``PyArray_Descr*``) of ``a``, assuming ``a`` can be cast to a
+  ``PyArrayObject*``.
 
-  **array_flags(a)**
-    Returns an integer representing the flags of ``a``, assuming ``a``
-    can be cast to a ``PyArrayObject*``.
+**array_flags(a)**
+  Returns an integer representing the flags of ``a``, assuming ``a``
+  can be cast to a ``PyArrayObject*``.
 
-  **array_enableflags(a,f)**
-    Sets the flag represented by ``f`` of ``a``, assuming ``a`` can be
-    cast to a ``PyArrayObject*``.
+**array_enableflags(a,f)**
+  Sets the flag represented by ``f`` of ``a``, assuming ``a`` can be
+  cast to a ``PyArrayObject*``.
 
-  **array_is_contiguous(a)**
-    Evaluates as true if ``a`` is a contiguous array.  Equivalent to
-    ``(PyArray_ISCONTIGUOUS(a))``.
+**array_is_contiguous(a)**
+  Evaluates as true if ``a`` is a contiguous array.  Equivalent to
+  ``(PyArray_ISCONTIGUOUS(a))``.
 
-  **array_is_native(a)**
-    Evaluates as true if the data buffer of ``a`` uses native byte
-    order.  Equivalent to ``(PyArray_ISNOTSWAPPED(a))``.
+**array_is_native(a)**
+  Evaluates as true if the data buffer of ``a`` uses native byte
+  order.  Equivalent to ``(PyArray_ISNOTSWAPPED(a))``.
 
-  **array_is_fortran(a)**
-    Evaluates as true if ``a`` is FORTRAN ordered.
+**array_is_fortran(a)**
+  Evaluates as true if ``a`` is FORTRAN ordered.
 
 Routines
-````````
+~~~~~~~~
 
-  **pytype_string()**
+**pytype_string()**
+  Return type: ``const char*``
 
-    Return type: ``const char*``
+  Arguments:
 
-    Arguments:
+  * ``PyObject* py_obj``, a general Python object.
 
-    * ``PyObject* py_obj``, a general Python object.
+  Return a string describing the type of ``py_obj``.
 
-    Return a string describing the type of ``py_obj``.
 
+**typecode_string()**
+  Return type: ``const char*``
 
-  **typecode_string()**
+  Arguments:
 
-    Return type: ``const char*``
+  * ``int typecode``, a NumPy integer typecode.
 
-    Arguments:
+  Return a string describing the type corresponding to the NumPy
+  ``typecode``.
 
-    * ``int typecode``, a NumPy integer typecode.
+**type_match()**
+  Return type: ``int``
 
-    Return a string describing the type corresponding to the NumPy
-    ``typecode``.
+  Arguments:
 
-  **type_match()**
+  * ``int actual_type``, the NumPy typecode of a NumPy array.
 
-    Return type: ``int``
+  * ``int desired_type``, the desired NumPy typecode.
 
-    Arguments:
+  Make sure that ``actual_type`` is compatible with
+  ``desired_type``.  For example, this allows character and
+  byte types, or int and long types, to match.  This is now
+  equivalent to ``PyArray_EquivTypenums()``.
 
-    * ``int actual_type``, the NumPy typecode of a NumPy array.
 
-    * ``int desired_type``, the desired NumPy typecode.
+**obj_to_array_no_conversion()**
+  Return type: ``PyArrayObject*``
 
-    Make sure that ``actual_type`` is compatible with
-    ``desired_type``.  For example, this allows character and
-    byte types, or int and long types, to match.  This is now
-    equivalent to ``PyArray_EquivTypenums()``.
+  Arguments:
 
+  * ``PyObject* input``, a general Python object.
 
-  **obj_to_array_no_conversion()**
+  * ``int typecode``, the desired NumPy typecode.
 
-    Return type: ``PyArrayObject*``
+  Cast ``input`` to a ``PyArrayObject*`` if legal, and ensure that
+  it is of type ``typecode``.  If ``input`` cannot be cast, or the
+  ``typecode`` is wrong, set a Python error and return ``NULL``.
 
-    Arguments:
 
-    * ``PyObject* input``, a general Python object.
+**obj_to_array_allow_conversion()**
+  Return type: ``PyArrayObject*``
 
-    * ``int typecode``, the desired NumPy typecode.
+  Arguments:
 
-    Cast ``input`` to a ``PyArrayObject*`` if legal, and ensure that
-    it is of type ``typecode``.  If ``input`` cannot be cast, or the
-    ``typecode`` is wrong, set a Python error and return ``NULL``.
+  * ``PyObject* input``, a general Python object.
 
+  * ``int typecode``, the desired NumPy typecode of the resulting
+    array.
 
-  **obj_to_array_allow_conversion()**
+  * ``int* is_new_object``, returns a value of 0 if no conversion
+    performed, else 1.
 
-    Return type: ``PyArrayObject*``
+  Convert ``input`` to a NumPy array with the given ``typecode``.
+  On success, return a valid ``PyArrayObject*`` with the correct
+  type.  On failure, the Python error string will be set and the
+  routine returns ``NULL``.
 
-    Arguments:
 
-    * ``PyObject* input``, a general Python object.
+**make_contiguous()**
+  Return type: ``PyArrayObject*``
 
-    * ``int typecode``, the desired NumPy typecode of the resulting
-      array.
+  Arguments:
 
-    * ``int* is_new_object``, returns a value of 0 if no conversion
-      performed, else 1.
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    Convert ``input`` to a NumPy array with the given ``typecode``.
-    On success, return a valid ``PyArrayObject*`` with the correct
-    type.  On failure, the Python error string will be set and the
-    routine returns ``NULL``.
+  * ``int* is_new_object``, returns a value of 0 if no conversion
+    performed, else 1.
 
+  * ``int min_dims``, minimum allowable dimensions.
 
-  **make_contiguous()**
+  * ``int max_dims``, maximum allowable dimensions.
 
-    Return type: ``PyArrayObject*``
+  Check to see if ``ary`` is contiguous.  If so, return the input
+  pointer and flag it as not a new object.  If it is not contiguous,
+  create a new ``PyArrayObject*`` using the original data, flag it
+  as a new object and return the pointer.
 
-    Arguments:
 
-    * ``PyArrayObject* ary``, a NumPy array.
+**make_fortran()**
+  Return type: ``PyArrayObject*``
 
-    * ``int* is_new_object``, returns a value of 0 if no conversion
-      performed, else 1.
+  Arguments
 
-    * ``int min_dims``, minimum allowable dimensions.
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    * ``int max_dims``, maximum allowable dimensions.
+  * ``int* is_new_object``, returns a value of 0 if no conversion
+    performed, else 1.
 
-    Check to see if ``ary`` is contiguous.  If so, return the input
-    pointer and flag it as not a new object.  If it is not contiguous,
-    create a new ``PyArrayObject*`` using the original data, flag it
-    as a new object and return the pointer.
+  Check to see if ``ary`` is Fortran contiguous.  If so, return the
+  input pointer and flag it as not a new object.  If it is not
+  Fortran contiguous, create a new ``PyArrayObject*`` using the
+  original data, flag it as a new object and return the pointer.
 
 
-  **make_fortran()**
+**obj_to_array_contiguous_allow_conversion()**
+  Return type: ``PyArrayObject*``
 
-    Return type: ``PyArrayObject*``
+  Arguments:
 
-    Arguments
+  * ``PyObject* input``, a general Python object.
 
-    * ``PyArrayObject* ary``, a NumPy array.
+  * ``int typecode``, the desired NumPy typecode of the resulting
+    array.
 
-    * ``int* is_new_object``, returns a value of 0 if no conversion
-      performed, else 1.
+  * ``int* is_new_object``, returns a value of 0 if no conversion
+    performed, else 1.
 
-    Check to see if ``ary`` is Fortran contiguous.  If so, return the
-    input pointer and flag it as not a new object.  If it is not
-    Fortran contiguous, create a new ``PyArrayObject*`` using the
-    original data, flag it as a new object and return the pointer.
+  Convert ``input`` to a contiguous ``PyArrayObject*`` of the
+  specified type.  If the input object is not a contiguous
+  ``PyArrayObject*``, a new one will be created and the new object
+  flag will be set.
 
 
-  **obj_to_array_contiguous_allow_conversion()**
+**obj_to_array_fortran_allow_conversion()**
+  Return type: ``PyArrayObject*``
 
-    Return type: ``PyArrayObject*``
+  Arguments:
 
-    Arguments:
+  * ``PyObject* input``, a general Python object.
 
-    * ``PyObject* input``, a general Python object.
+  * ``int typecode``, the desired NumPy typecode of the resulting
+    array.
 
-    * ``int typecode``, the desired NumPy typecode of the resulting
-      array.
+  * ``int* is_new_object``, returns a value of 0 if no conversion
+    performed, else 1.
 
-    * ``int* is_new_object``, returns a value of 0 if no conversion
-      performed, else 1.
+  Convert ``input`` to a Fortran contiguous ``PyArrayObject*`` of
+  the specified type.  If the input object is not a Fortran
+  contiguous ``PyArrayObject*``, a new one will be created and the
+  new object flag will be set.
 
-    Convert ``input`` to a contiguous ``PyArrayObject*`` of the
-    specified type.  If the input object is not a contiguous
-    ``PyArrayObject*``, a new one will be created and the new object
-    flag will be set.
 
+**require_contiguous()**
+  Return type: ``int``
 
-  **obj_to_array_fortran_allow_conversion()**
+  Arguments:
 
-    Return type: ``PyArrayObject*``
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    Arguments:
+  Test whether ``ary`` is contiguous.  If so, return 1.  Otherwise,
+  set a Python error and return 0.
 
-    * ``PyObject* input``, a general Python object.
 
-    * ``int typecode``, the desired NumPy typecode of the resulting
-      array.
+**require_native()**
+  Return type: ``int``
 
-    * ``int* is_new_object``, returns a value of 0 if no conversion
-      performed, else 1.
+  Arguments:
 
-    Convert ``input`` to a Fortran contiguous ``PyArrayObject*`` of
-    the specified type.  If the input object is not a Fortran
-    contiguous ``PyArrayObject*``, a new one will be created and the
-    new object flag will be set.
+  * ``PyArray_Object* ary``, a NumPy array.
 
+  Require that ``ary`` is not byte-swapped.  If the array is not
+  byte-swapped, return 1.  Otherwise, set a Python error and
+  return 0.
 
-  **require_contiguous()**
+**require_dimensions()**
+  Return type: ``int``
 
-    Return type: ``int``
+  Arguments:
 
-    Arguments:
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    * ``PyArrayObject* ary``, a NumPy array.
+  * ``int exact_dimensions``, the desired number of dimensions.
 
-    Test whether ``ary`` is contiguous.  If so, return 1.  Otherwise,
-    set a Python error and return 0.
+  Require ``ary`` to have a specified number of dimensions.  If the
+  array has the specified number of dimensions, return 1.
+  Otherwise, set a Python error and return 0.
 
 
-  **require_native()**
+**require_dimensions_n()**
+  Return type: ``int``
 
-    Return type: ``int``
+  Arguments:
 
-    Arguments:
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    * ``PyArray_Object* ary``, a NumPy array.
+  * ``int* exact_dimensions``, an array of integers representing
+    acceptable numbers of dimensions.
 
-    Require that ``ary`` is not byte-swapped.  If the array is not
-    byte-swapped, return 1.  Otherwise, set a Python error and
-    return 0.
+  * ``int n``, the length of ``exact_dimensions``.
 
-  **require_dimensions()**
+  Require ``ary`` to have one of a list of specified number of
+  dimensions.  If the array has one of the specified number of
+  dimensions, return 1.  Otherwise, set the Python error string
+  and return 0.
 
-    Return type: ``int``
 
-    Arguments:
+**require_size()**
+  Return type: ``int``
 
-    * ``PyArrayObject* ary``, a NumPy array.
+  Arguments:
 
-    * ``int exact_dimensions``, the desired number of dimensions.
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    Require ``ary`` to have a specified number of dimensions.  If the
-    array has the specified number of dimensions, return 1.
-    Otherwise, set a Python error and return 0.
+  * ``npy_int* size``, an array representing the desired lengths of
+    each dimension.
 
+  * ``int n``, the length of ``size``.
 
-  **require_dimensions_n()**
+  Require ``ary`` to have a specified shape.  If the array has the
+  specified shape, return 1.  Otherwise, set the Python error
+  string and return 0.
 
-    Return type: ``int``
 
-    Arguments:
+**require_fortran()**
+  Return type: ``int``
 
-    * ``PyArrayObject* ary``, a NumPy array.
+  Arguments:
 
-    * ``int* exact_dimensions``, an array of integers representing
-      acceptable numbers of dimensions.
+  * ``PyArrayObject* ary``, a NumPy array.
 
-    * ``int n``, the length of ``exact_dimensions``.
-
-    Require ``ary`` to have one of a list of specified number of
-    dimensions.  If the array has one of the specified number of
-    dimensions, return 1.  Otherwise, set the Python error string
-    and return 0.
-
-
-  **require_size()**
-
-    Return type: ``int``
-
-    Arguments:
-
-    * ``PyArrayObject* ary``, a NumPy array.
-
-    * ``npy_int* size``, an array representing the desired lengths of
-      each dimension.
-
-    * ``int n``, the length of ``size``.
-
-    Require ``ary`` to have a specified shape.  If the array has the
-    specified shape, return 1.  Otherwise, set the Python error
-    string and return 0.
-
-
-  **require_fortran()**
-
-    Return type: ``int``
-
-    Arguments:
-
-    * ``PyArrayObject* ary``, a NumPy array.
-
-    Require the given ``PyArrayObject`` to to be Fortran ordered.  If
-    the ``PyArrayObject`` is already Fortran ordered, do nothing.
-    Else, set the Fortran ordering flag and recompute the strides.
+  Require the given ``PyArrayObject`` to be Fortran ordered.  If
+  the ``PyArrayObject`` is already Fortran ordered, do nothing.
+  Else, set the Fortran ordering flag and recompute the strides.
 
 
 Beyond the Provided Typemaps
@@ -916,7 +900,7 @@ There are many C or C++ array/NumPy array situations not covered by
 a simple ``%include "numpy.i"`` and subsequent ``%apply`` directives.
 
 A Common Example
-````````````````
+~~~~~~~~~~~~~~~~
 
 Consider a reasonable prototype for a dot product function::
 
@@ -974,40 +958,40 @@ above for ``my_dot`` to get the behavior we want (note that
 macro to perform this task.
 
 Other Situations
-````````````````
+~~~~~~~~~~~~~~~~
 
 There are other wrapping situations in which ``numpy.i`` may be
 helpful when you encounter them.
 
-  * In some situations, it is possible that you could use the
-    ``%numpy_typemaps`` macro to implement typemaps for your own
-    types.  See the `Other Common Types: bool`_ or `Other Common
-    Types: complex`_ sections for examples.  Another situation is if
-    your dimensions are of a type other than ``int`` (say ``long`` for
-    example)::
+* In some situations, it is possible that you could use the
+  ``%numpy_typemaps`` macro to implement typemaps for your own
+  types.  See the `Other Common Types: bool`_ or `Other Common
+  Types: complex`_ sections for examples.  Another situation is if
+  your dimensions are of a type other than ``int`` (say ``long`` for
+  example)::
 
-        %numpy_typemaps(double, NPY_DOUBLE, long)
+      %numpy_typemaps(double, NPY_DOUBLE, long)
 
-  * You can use the code in ``numpy.i`` to write your own typemaps.
-    For example, if you had a five-dimensional array as a function
-    argument, you could cut-and-paste the appropriate four-dimensional
-    typemaps into your interface file.  The modifications for the
-    fourth dimension would be trivial.
+* You can use the code in ``numpy.i`` to write your own typemaps.
+  For example, if you had a five-dimensional array as a function
+  argument, you could cut-and-paste the appropriate four-dimensional
+  typemaps into your interface file.  The modifications for the
+  fourth dimension would be trivial.
 
-  * Sometimes, the best approach is to use the ``%extend`` directive
-    to define new methods for your classes (or overload existing ones)
-    that take a ``PyObject*`` (that either is or can be converted to a
-    ``PyArrayObject*``) instead of a pointer to a buffer.  In this
-    case, the helper routines in ``numpy.i`` can be very useful.
+* Sometimes, the best approach is to use the ``%extend`` directive
+  to define new methods for your classes (or overload existing ones)
+  that take a ``PyObject*`` (that either is or can be converted to a
+  ``PyArrayObject*``) instead of a pointer to a buffer.  In this
+  case, the helper routines in ``numpy.i`` can be very useful.
 
-  * Writing typemaps can be a bit nonintuitive.  If you have specific
-    questions about writing `SWIG`_ typemaps for NumPy, the
-    developers of ``numpy.i`` do monitor the
-    `Numpy-discussion <mailto:Numpy-discussion@python.org>`_ and
-    `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
+* Writing typemaps can be a bit nonintuitive.  If you have specific
+  questions about writing `SWIG`_ typemaps for NumPy, the
+  developers of ``numpy.i`` do monitor the
+  `Numpy-discussion <mailto:Numpy-discussion@python.org>`_ and
+  `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
 
 A Final Note
-````````````
+~~~~~~~~~~~~
 
 When you use the ``%apply`` directive, as is usually necessary to use
 ``numpy.i``, it will remain in effect until you tell `SWIG`_ that it
@@ -1030,37 +1014,37 @@ Summary
 Out of the box, ``numpy.i`` provides typemaps that support conversion
 between NumPy arrays and C arrays:
 
-  * That can be one of 12 different scalar types: ``signed char``,
-    ``unsigned char``, ``short``, ``unsigned short``, ``int``,
-    ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
-    ``unsigned long long``, ``float`` and ``double``.
+* That can be one of 12 different scalar types: ``signed char``,
+  ``unsigned char``, ``short``, ``unsigned short``, ``int``,
+  ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
+  ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 74 different argument signatures for each data type,
-    including:
+* That support 74 different argument signatures for each data type,
+  including:
 
-    + One-dimensional, two-dimensional, three-dimensional and
-      four-dimensional arrays.
+  + One-dimensional, two-dimensional, three-dimensional and
+    four-dimensional arrays.
 
-    + Input-only, in-place, argout, argoutview, and memory managed
-      argoutview behavior.
+  + Input-only, in-place, argout, argoutview, and memory managed
+    argoutview behavior.
 
-    + Hard-coded dimensions, data-buffer-then-dimensions
-      specification, and dimensions-then-data-buffer specification.
+  + Hard-coded dimensions, data-buffer-then-dimensions
+    specification, and dimensions-then-data-buffer specification.
 
-    + Both C-ordering ("last dimension fastest") or Fortran-ordering
-      ("first dimension fastest") support for 2D, 3D and 4D arrays.
+  + Both C-ordering ("last dimension fastest") or Fortran-ordering
+    ("first dimension fastest") support for 2D, 3D and 4D arrays.
 
 The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
-  * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 74 argument signatures for the user's choice of
-    (1) C data type, (2) NumPy data type (assuming they match), and
-    (3) dimension type.
+* A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
+  implementing the 74 argument signatures for the user's choice of
+  (1) C data type, (2) NumPy data type (assuming they match), and
+  (3) dimension type.
 
-  * Fourteen C macros and fifteen C functions that can be used to
-    write specialized typemaps, extensions, or inlined functions that
-    handle cases not covered by the provided typemaps.  Note that the
-    macros and functions are coded specifically to work with the NumPy
-    C/API regardless of NumPy version number, both before and after
-    the deprecation of some aspects of the API after version 1.6.
+* Fourteen C macros and fifteen C functions that can be used to
+  write specialized typemaps, extensions, or inlined functions that
+  handle cases not covered by the provided typemaps.  Note that the
+  macros and functions are coded specifically to work with the NumPy
+  C/API regardless of NumPy version number, both before and after
+  the deprecation of some aspects of the API after version 1.6.

@@ -1,6 +1,15 @@
-[submodule "doc/scipy-sphinx-theme"]
-	path = doc/scipy-sphinx-theme
-	url = https://github.com/scipy/scipy-sphinx-theme.git
-[submodule "doc/sphinxext"]
-	path = doc/sphinxext
-	url = https://github.com/numpy/numpydoc.git
+[submodule "doc/source/_static/scipy-mathjax"]
+	path = doc/source/_static/scipy-mathjax
+	url = https://github.com/scipy/scipy-mathjax.git
+[submodule "numpy/core/src/umath/svml"]
+	path = numpy/core/src/umath/svml
+	url = https://github.com/numpy/SVML.git
+[submodule "numpy/core/src/npysort/x86-simd-sort"]
+	path = numpy/core/src/npysort/x86-simd-sort
+	url = https://github.com/intel/x86-simd-sort
+[submodule "vendored-meson/meson"]
+	path = vendored-meson/meson
+	url = https://github.com/numpy/meson.git
+[submodule "vendored-meson/meson-python"]
+	path = vendored-meson/meson-python
+	url = https://github.com/numpy/meson-python.git

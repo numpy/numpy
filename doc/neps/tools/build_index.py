@@ -1,6 +1,7 @@
 """
 Scan the directory of nep files and extract their metadata.  The
-metadata is passed to Jinja for filling out `index.rst.tmpl`.
+metadata is passed to Jinja for filling out the toctrees for various NEP
+categories.
 """
 
 import os
@@ -50,7 +51,7 @@ def nep_metadata():
         if not tags['Title'].startswith(f'NEP {nr} — '):
             raise RuntimeError(
                 f'Title for NEP {nr} does not start with "NEP {nr} — " '
-                '(note that — here is a special, enlongated dash). Got: '
+                '(note that — here is a special, elongated dash). Got: '
                 f'    {tags["Title"]!r}')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
@@ -100,14 +101,16 @@ def nep_metadata():
 
     return {'neps': neps, 'has_provisional': has_provisional}
 
-
-infile = 'index.rst.tmpl'
-outfile = 'index.rst'
-
 meta = nep_metadata()
 
-print(f'Compiling {infile} -> {outfile}')
-index = render(infile, meta)
+for nepcat in (
+    "provisional", "accepted", "deferred", "finished", "meta",
+    "open", "rejected",
+):
+    infile = f"{nepcat}.rst.tmpl"
+    outfile =f"{nepcat}.rst"
 
-with open(outfile, 'w') as f:
-    f.write(index)
+    print(f'Compiling {infile} -> {outfile}')
+    genf = render(infile, meta)
+    with open(outfile, 'w') as f:
+        f.write(genf)

@@ -1,5 +1,5 @@
-#ifndef Py_UFUNCOBJECT_H
-#define Py_UFUNCOBJECT_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
@@ -65,51 +65,6 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
-/*
- * Given an array of DTypes as returned by the PyUFunc_TypeResolutionFunc,
- * and an array of fixed strides (the array will contain NPY_MAX_INTP for
- * strides which are not necessarily fixed), returns an inner loop
- * with associated auxiliary data.
- *
- * For backwards compatibility, there is a variant of the inner loop
- * selection which returns an inner loop irrespective of the strides,
- * and with a void* static auxiliary data instead of an NpyAuxData *
- * dynamically allocatable auxiliary data.
- *
- * ufunc:             The ufunc object.
- * dtypes:            An array which has been populated with dtypes,
- *                    in most cases by the type resolution function
- *                    for the same ufunc.
- * fixed_strides:     For each input/output, either the stride that
- *                    will be used every time the function is called
- *                    or NPY_MAX_INTP if the stride might change or
- *                    is not known ahead of time. The loop selection
- *                    function may use this stride to pick inner loops
- *                    which are optimized for contiguous or 0-stride
- *                    cases.
- * out_innerloop:     Should be populated with the correct ufunc inner
- *                    loop for the given type.
- * out_innerloopdata: Should be populated with the void* data to
- *                    be passed into the out_innerloop function.
- * out_needs_api:     If the inner loop needs to use the Python API,
- *                    should set the to 1, otherwise should leave
- *                    this untouched.
- */
-typedef int (PyUFunc_LegacyInnerLoopSelectionFunc)(
-                            struct _tagPyUFuncObject *ufunc,
-                            PyArray_Descr **dtypes,
-                            PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata,
-                            int *out_needs_api);
-typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
-                            struct _tagPyUFuncObject *ufunc,
-                            PyArray_Descr **dtypes,
-                            PyArray_Descr *mask_dtype,
-                            npy_intp *fixed_strides,
-                            npy_intp fixed_mask_stride,
-                            PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata,
-                            int *out_needs_api);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -130,7 +85,7 @@ typedef struct _tagPyUFuncObject {
         /* Array of one-dimensional core loops */
         PyUFuncGenericFunction *functions;
         /* Array of funcdata that gets passed into the functions */
-        void **data;
+        void *const *data;
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
@@ -141,7 +96,7 @@ typedef struct _tagPyUFuncObject {
         const char *name;
 
         /* Array of type numbers, of size ('nargs' * 'ntypes') */
-        char *types;
+        const char *types;
 
         /* Documentation string */
         const char *doc;
@@ -182,23 +137,21 @@ typedef struct _tagPyUFuncObject {
          * with the dtypes for the inputs and outputs.
          */
         PyUFunc_TypeResolutionFunc *type_resolver;
-        /*
-         * A function which returns an inner loop written for
-         * NumPy 1.6 and earlier ufuncs. This is for backwards
-         * compatibility, and may be NULL if inner_loop_selector
-         * is specified.
-         */
-        PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+        /* Was the legacy loop resolver */
+        void *reserved2;
         /*
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        void *reserved2;
-        /*
-         * A function which returns a masked inner loop for the ufunc.
-         */
-        PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
+        #ifndef Py_LIMITED_API
+            vectorcallfunc vectorcall;
+        #else
+            void *vectorcall;
+        #endif
+
+        /* Was previously the `PyUFunc_MaskedInnerLoopSelectionFunc` */
+        void *reserved3;
 
         /*
          * List of flags for each operand when ufunc is called by nditer object.
@@ -215,7 +168,7 @@ typedef struct _tagPyUFuncObject {
         npy_uint32 iter_flags;
 
         /* New in NPY_API_VERSION 0x0000000D and above */
-
+    #if NPY_FEATURE_VERSION >= NPY_1_16_API_VERSION
         /*
          * for each core_num_dim_ix distinct dimension names,
          * the possible "frozen" size (-1 if not frozen).
@@ -229,7 +182,15 @@ typedef struct _tagPyUFuncObject {
 
         /* Identity for reduction, when identity == PyUFunc_IdentityValue */
         PyObject *identity_value;
+    #endif  /* NPY_FEATURE_VERSION >= NPY_1_16_API_VERSION */
 
+        /* New in NPY_API_VERSION 0x0000000F and above */
+    #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+        /* New private fields related to dispatching */
+        void *_dispatch_cache;
+        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        PyObject *_loops;
+    #endif
 } PyUFuncObject;
 
 #include "arrayobject.h"
@@ -241,34 +202,10 @@ typedef struct _tagPyUFuncObject {
 /* flags inferred during execution */
 #define UFUNC_CORE_DIM_MISSING 0x00040000
 
-#define UFUNC_ERR_IGNORE 0
-#define UFUNC_ERR_WARN   1
-#define UFUNC_ERR_RAISE  2
-#define UFUNC_ERR_CALL   3
-#define UFUNC_ERR_PRINT  4
-#define UFUNC_ERR_LOG    5
-
-        /* Python side integer mask */
-
-#define UFUNC_MASK_DIVIDEBYZERO 0x07
-#define UFUNC_MASK_OVERFLOW 0x3f
-#define UFUNC_MASK_UNDERFLOW 0x1ff
-#define UFUNC_MASK_INVALID 0xfff
-
-#define UFUNC_SHIFT_DIVIDEBYZERO 0
-#define UFUNC_SHIFT_OVERFLOW     3
-#define UFUNC_SHIFT_UNDERFLOW    6
-#define UFUNC_SHIFT_INVALID      9
-
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
 
-   /* Default user error mode */
-#define UFUNC_ERR_DEFAULT                               \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_OVERFLOW) +      \
-        (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
 
 #if NPY_ALLOW_THREADS
 #define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0);
@@ -362,8 +299,8 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
-
 #ifdef __cplusplus
 }
 #endif
-#endif /* !Py_UFUNCOBJECT_H */
+
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_ */

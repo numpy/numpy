@@ -1,11 +1,13 @@
+import pickle
+
 import numpy as np
+from numpy.testing import assert_warns
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
                                 assert_array_equal)
 from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
-from numpy.compat import pickle
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -172,7 +174,7 @@ class TestMaskedMatrix:
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup(self):
+    def setup_method(self):
         x = np.arange(5, dtype='float')
         mx = MMatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
@@ -198,7 +200,8 @@ class TestSubclassing:
         # Result should work
         assert_equal(add(mx, x), mx+x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
-        assert_(isinstance(add.outer(mx, mx), MMatrix))
+        with assert_warns(DeprecationWarning):
+            assert_(isinstance(add.outer(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, x), MMatrix))
 

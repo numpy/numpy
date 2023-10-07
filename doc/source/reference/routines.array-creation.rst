@@ -7,8 +7,8 @@ Array creation routines
 
 .. currentmodule:: numpy
 
-Ones and zeros
---------------
+From shape or value
+-------------------
 .. autosummary::
    :toctree: generated/
 
@@ -35,6 +35,7 @@ From existing data
    asmatrix
    copy
    frombuffer
+   from_dlpack
    fromfile
    fromfunction
    fromiter
@@ -43,11 +44,11 @@ From existing data
 
 .. _routines.array-creation.rec:
 
-Creating record arrays (:mod:`numpy.rec`)
------------------------------------------
+Creating record arrays
+----------------------
 
-.. note:: :mod:`numpy.rec` is the preferred alias for
-   :mod:`numpy.core.records`.
+.. note:: Please refer to :ref:`arrays.classes.rec` for
+   record arrays.
 
 .. autosummary::
    :toctree: generated/
@@ -64,7 +65,7 @@ Creating character arrays (:mod:`numpy.char`)
 ---------------------------------------------
 
 .. note:: :mod:`numpy.char` is the preferred alias for
-   :mod:`numpy.core.defchararray`.
+   ``numpy.core.defchararray`` module.
 
 .. autosummary::
    :toctree: generated/
@@ -102,5 +103,4 @@ The Matrix class
 .. autosummary::
    :toctree: generated/
 
-   mat
    bmat

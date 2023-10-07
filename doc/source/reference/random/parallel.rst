@@ -1,7 +1,7 @@
 Parallel Random Number Generation
 =================================
 
-There are three strategies implemented that can be used to produce
+There are four main strategies implemented that can be used to produce
 repeatable pseudo-random numbers across multiple processes (local
 or distributed).
 
@@ -11,6 +11,11 @@ or distributed).
 
 `~SeedSequence` spawning
 ------------------------
+
+NumPy allows you to spawn new (with very high probability) independent
+`~BitGenerator` and `~Generator` instances via their ``spawn()`` method.
+This spawning is implemented by the `~SeedSequence` used for initializing
+the bit generators random stream.
 
 `~SeedSequence` `implements an algorithm`_ to process a user-provided seed,
 typically as an integer of some size, and to convert it into an initial state for
@@ -28,8 +33,8 @@ streams.
 
 `~SeedSequence` avoids these problems by using successions of integer hashes
 with good `avalanche properties`_ to ensure that flipping any bit in the input
-input has about a 50% chance of flipping any bit in the output. Two input seeds
-that are very close to each other will produce initial states that are very far
+has about a 50% chance of flipping any bit in the output. Two input seeds that
+are very close to each other will produce initial states that are very far
 from each other (with very high probability). It is also constructed in such
 a way that you can provide arbitrary-sized integers or lists of integers.
 `~SeedSequence` will take all of the bits that you provide and mix them
@@ -53,15 +58,25 @@ wrap this together into an API that is easy to use and difficult to misuse.
 
 .. end_block
 
-Child `~SeedSequence` objects can also spawn to make grandchildren, and so on.
-Each `~SeedSequence` has its position in the tree of spawned `~SeedSequence`
-objects mixed in with the user-provided seed to generate independent (with very
-high probability) streams.
+For convenience the direct use of `~SeedSequence` is not necessary.
+The above ``streams`` can be spawned directly from a parent generator
+via `~Generator.spawn`:
 
 .. code-block:: python
 
-  grandchildren = child_seeds[0].spawn(4)
-  grand_streams = [default_rng(s) for s in grandchildren]
+  parent_rng = default_rng(12345)
+  streams = parent_rng.spawn(10)
+
+.. end_block
+
+Child objects can also spawn to make grandchildren, and so on.
+Each child has a `~SeedSequence` with its position in the tree of spawned
+child objects mixed in with the user-provided seed to generate independent
+(with very high probability) streams.
+
+.. code-block:: python
+
+  grandchildren = streams[0].spawn(4)
 
 .. end_block
 
@@ -88,10 +103,11 @@ territory ([2]_).
        estimate the naive upper bound on a napkin and take comfort knowing
        that the probability is actually lower.
 
-.. [2] In this calculation, we can ignore the amount of numbers drawn from each
-       stream. Each of the PRNGs we provide has some extra protection built in
+.. [2] In this calculation, we can mostly ignore the amount of numbers drawn from each
+       stream. See :ref:`upgrading-pcg64` for the technical details about
+       `PCG64`. The other PRNGs we provide have some extra protection built in
        that avoids overlaps if the `~SeedSequence` pools differ in the
-       slightest bit. `PCG64` has :math:`2^{127}` separate cycles
+       slightest bit. `PCG64DXSM` has :math:`2^{127}` separate cycles
        determined by the seed in addition to the position in the
        :math:`2^{128}` long period for each cycle, so one has to both get on or
        near the same cycle *and* seed a nearby position in the cycle.
@@ -102,10 +118,91 @@ territory ([2]_).
        a collision internal to `SeedSequence` is the way a failure would be
        observed.
 
-.. _`implements an algorithm`: http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
-.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+.. _`implements an algorithm`: https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+.. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html
 .. _`avalanche properties`: https://en.wikipedia.org/wiki/Avalanche_effect
 .. _`not unique to numpy`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf
+
+
+.. _sequence-of-seeds:
+
+Sequence of Integer Seeds
+-------------------------
+
+As discussed in the previous section, `~SeedSequence` can not only take an
+integer seed, it can also take an arbitrary-length sequence of (non-negative)
+integers. If one exercises a little care, one can use this feature to design
+*ad hoc* schemes for getting safe parallel PRNG streams with similar safety
+guarantees as spawning.
+
+For example, one common use case is that a worker process is passed one
+root seed integer for the whole calculation and also an integer worker ID (or
+something more granular like a job ID, batch ID, or something similar). If
+these IDs are created deterministically and uniquely, then one can derive
+reproducible parallel PRNG streams by combining the ID and the root seed
+integer in a list.
+
+.. code-block:: python
+
+  # default_rng() and each of the BitGenerators use SeedSequence underneath, so
+  # they all accept sequences of integers as seeds the same way.
+  from numpy.random import default_rng
+
+  def worker(root_seed, worker_id):
+      rng = default_rng([worker_id, root_seed])
+      # Do work ...
+
+  root_seed = 0x8c3c010cb4754c905776bdac5ee7501
+  results = [worker(root_seed, worker_id) for worker_id in range(10)]
+
+.. end_block
+
+This can be used to replace a number of unsafe strategies that have been used
+in the past which try to combine the root seed and the ID back into a single
+integer seed value. For example, it is common to see users add the worker ID to
+the root seed, especially with the legacy `~RandomState` code.
+
+.. code-block:: python
+
+  # UNSAFE! Do not do this!
+  worker_seed = root_seed + worker_id
+  rng = np.random.RandomState(worker_seed)
+
+.. end_block
+
+It is true that for any one run of a parallel program constructed this way,
+each worker will have distinct streams. However, it is quite likely that
+multiple invocations of the program with different seeds will get overlapping
+sets of worker seeds. It is not uncommon (in the author's self-experience) to
+change the root seed merely by an increment or two when doing these repeat
+runs. If the worker seeds are also derived by small increments of the worker
+ID, then subsets of the workers will return identical results, causing a bias
+in the overall ensemble of results.
+
+Combining the worker ID and the root seed as a list of integers eliminates this
+risk. Lazy seeding practices will still be fairly safe.
+
+This scheme does require that the extra IDs be unique and deterministically
+created. This may require coordination between the worker processes. It is
+recommended to place the varying IDs *before* the unvarying root seed.
+`~SeedSequence.spawn` *appends* integers after the user-provided seed, so if
+you might be mixing both this *ad hoc* mechanism and spawning, or passing your
+objects down to library code that might be spawning, then it is a little bit
+safer to prepend your worker IDs rather than append them to avoid a collision.
+
+.. code-block:: python
+
+  # Good.
+  worker_seed = [worker_id, root_seed]
+
+  # Less good. It will *work*, but it's less flexible.
+  worker_seed = [root_seed, worker_id]
+
+.. end_block
+
+With those caveats in mind, the safety guarantees against collision are about
+the same as with spawning, discussed in the previous section. The algorithmic
+mechanisms are the same.
 
 
 .. _independent-streams:
@@ -150,11 +247,13 @@ BitGenerator, the size of the jump and the bits in the default unsigned random
 are listed below.
 
 +-----------------+-------------------------+-------------------------+-------------------------+
-| BitGenerator    | Period                  |  Jump Size              | Bits                    |
+| BitGenerator    | Period                  |  Jump Size              | Bits per Draw           |
 +=================+=========================+=========================+=========================+
-| MT19937         | :math:`2^{19937}`       | :math:`2^{128}`         | 32                      |
+| MT19937         | :math:`2^{19937}-1`     | :math:`2^{128}`         | 32                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | PCG64           | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| PCG64DXSM       | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+

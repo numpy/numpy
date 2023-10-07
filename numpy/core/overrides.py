@@ -2,52 +2,63 @@
 import collections
 import functools
 import os
-import textwrap
 
+from .._utils import set_module
+from .._utils._inspect import getargspec
 from numpy.core._multiarray_umath import (
-    add_docstring, implement_array_function, _get_implementing_args)
-from numpy.compat._inspect import getargspec
+    add_docstring,  _get_implementing_args, _ArrayFunctionDispatcher)
 
 
-ARRAY_FUNCTION_ENABLED = bool(
-    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
+ARRAY_FUNCTIONS = set()
+
+array_function_like_doc = (
+    """like : array_like, optional
+        Reference object to allow the creation of arrays which are not
+        NumPy arrays. If an array-like passed in as ``like`` supports
+        the ``__array_function__`` protocol, the result will be defined
+        by it. In this case, it ensures the creation of an array object
+        compatible with that passed in via this argument."""
+)
+
+def set_array_function_like_doc(public_api):
+    if public_api.__doc__ is not None:
+        public_api.__doc__ = public_api.__doc__.replace(
+            "${ARRAY_FUNCTION_LIKE}",
+            array_function_like_doc,
+        )
+    return public_api
 
 
 add_docstring(
-    implement_array_function,
+    _ArrayFunctionDispatcher,
     """
-    Implement a function with checks for __array_function__ overrides.
+    Class to wrap functions with checks for __array_function__ overrides.
 
     All arguments are required, and can only be passed by position.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
+    dispatcher : function or None
+        The dispatcher function that returns a single sequence-like object
+        of all arguments relevant.  It must have the same signature (except
+        the default values) as the actual implementation.
+        If ``None``, this is a ``like=`` dispatcher and the
+        ``_ArrayFunctionDispatcher`` must be called with ``like`` as the
+        first (additional and positional) argument.
     implementation : function
-        Function that implements the operation on NumPy array without
-        overrides when called like ``implementation(*args, **kwargs)``.
-    public_api : function
-        Function exposed by NumPy's public API originally called like
-        ``public_api(*args, **kwargs)`` on which arguments are now being
-        checked.
-    relevant_args : iterable
-        Iterable of arguments to check for __array_function__ methods.
-    args : tuple
-        Arbitrary positional arguments originally passed into ``public_api``.
-    kwargs : dict
-        Arbitrary keyword arguments originally passed into ``public_api``.
+        Function that implements the operation on NumPy arrays without
+        overrides.  Arguments passed calling the ``_ArrayFunctionDispatcher``
+        will be forwarded to this (and the ``dispatcher``) as if using
+        ``*args, **kwargs``.
 
-    Returns
-    -------
-    Result from calling ``implementation()`` or an ``__array_function__``
-    method, as appropriate.
-
-    Raises
-    ------
-    TypeError : if no implementation is found.
+    Attributes
+    ----------
+    _implementation : function
+        The original implementation passed in.
     """)
 
 
-# exposed for testing purposes; used internally by implement_array_function
+# exposed for testing purposes; used internally by _ArrayFunctionDispatcher
 add_docstring(
     _get_implementing_args,
     """
@@ -91,37 +102,7 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def set_module(module):
-    """Decorator for overriding __module__ on a function or class.
-
-    Example usage::
-
-        @set_module('numpy')
-        def example():
-            pass
-
-        assert example.__module__ == 'numpy'
-    """
-    def decorator(func):
-        if module is not None:
-            func.__module__ = module
-        return func
-    return decorator
-
-
-
-# Call textwrap.dedent here instead of in the function so as to avoid
-# calling dedent multiple times on the same text
-_wrapped_func_source = textwrap.dedent("""
-    @functools.wraps(implementation)
-    def {name}(*args, **kwargs):
-        relevant_args = dispatcher(*args, **kwargs)
-        return implement_array_function(
-            implementation, {name}, relevant_args, args, kwargs)
-    """)
-
-
-def array_function_dispatch(dispatcher, module=None, verify=True,
+def array_function_dispatch(dispatcher=None, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
 
@@ -129,10 +110,14 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
     Parameters
     ----------
-    dispatcher : callable
+    dispatcher : callable or None
         Function that when called like ``dispatcher(*args, **kwargs)`` with
         arguments from the NumPy function call returns an iterable of
         array-like arguments to check for ``__array_function__``.
+
+        If `None`, the first argument is used as the single `like=` argument
+        and not passed on.  A function implementing `like=` must call its
+        dispatcher with `like` as the first non-keyword argument.
     module : str, optional
         __module__ attribute to set on new function, e.g., ``module='numpy'``.
         By default, module is copied from the decorated function.
@@ -152,47 +137,33 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     Returns
     -------
     Function suitable for decorating the implementation of a NumPy function.
+
     """
-
-    if not ARRAY_FUNCTION_ENABLED:
-        def decorator(implementation):
-            if docs_from_dispatcher:
-                add_docstring(implementation, dispatcher.__doc__)
-            if module is not None:
-                implementation.__module__ = module
-            return implementation
-        return decorator
-
     def decorator(implementation):
         if verify:
-            verify_matching_signatures(implementation, dispatcher)
+            if dispatcher is not None:
+                verify_matching_signatures(implementation, dispatcher)
+            else:
+                # Using __code__ directly similar to verify_matching_signature
+                co = implementation.__code__
+                last_arg = co.co_argcount + co.co_kwonlyargcount - 1
+                last_arg = co.co_varnames[last_arg]
+                if last_arg != "like" or co.co_kwonlyargcount == 0:
+                    raise RuntimeError(
+                        "__array_function__ expects `like=` to be the last "
+                        "argument and a keyword-only argument. "
+                        f"{implementation} does not seem to comply.")
 
         if docs_from_dispatcher:
             add_docstring(implementation, dispatcher.__doc__)
 
-        # Equivalently, we could define this function directly instead of using
-        # exec. This version has the advantage of giving the helper function a
-        # more interpettable name. Otherwise, the original function does not
-        # show up at all in many cases, e.g., if it's written in C or if the
-        # dispatcher gets an invalid keyword argument.
-        source = _wrapped_func_source.format(name=implementation.__name__)
-
-        source_object = compile(
-            source, filename='<__array_function__ internals>', mode='exec')
-        scope = {
-            'implementation': implementation,
-            'dispatcher': dispatcher,
-            'functools': functools,
-            'implement_array_function': implement_array_function,
-        }
-        exec(source_object, scope)
-
-        public_api = scope[implementation.__name__]
+        public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
+        public_api = functools.wraps(implementation)(public_api)
 
         if module is not None:
             public_api.__module__ = module
 
-        public_api._implementation = implementation
+        ARRAY_FUNCTIONS.add(public_api)
 
         return public_api
 

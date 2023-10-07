@@ -1,0 +1,315 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.0.0 Release Notes
+=========================
+
+
+New functions
+=============
+
+Matrix transpose support for ndarrays
+-------------------------------------
+NumPy now offers support for calculating the matrix transpose of an array. The
+matrix transpose is equivalent to swapping the last two axes of an array. Both
+``np.ndarray`` and ``np.ma.MaskedArray`` now expose an ``.mT`` attribute.
+
+(`gh-23762 <https://github.com/numpy/numpy/pull/23762>`__)
+
+
+NumPy 2.0 Python API removals
+=============================
+
+* ``np.geterrobj``, ``np.seterrobj`` and the related ufunc keyword argument
+  ``extobj=`` have been removed.  The preferred replacement for all of these
+  is using the context manager ``with np.errstate():``.
+
+  (`gh-23922 <https://github.com/numpy/numpy/pull/23922>`__)
+
+* ``np.cast`` has been removed. The literal replacement for
+  ``np.cast[dtype](arg)`` is ``np.asarray(arg, dtype=dtype)``.
+
+* ``np.source`` has been removed. The preferred replacement is 
+  ``inspect.getsource``.
+
+* ``np.lookfor`` has been removed.
+
+  (`gh-24144 <https://github.com/numpy/numpy/pull/24144>`__)
+
+* ``numpy.who`` has been removed. As an alternative for the removed functionality, one
+  can use a variable explorer that is available in IDEs such as Spyder or Jupyter Notebook.
+
+  (`gh-24321 <https://github.com/numpy/numpy/pull/24321>`__)
+
+* Multiple niche enums, expired members and functions have been removed from 
+  the main namespace, such as: ``ERR_*``, ``SHIFT_*``, ``np.fastCopyAndTranspose``, 
+  ``np.kernel_version``, ``np.numarray``, ``np.oldnumeric`` and ``np.set_numeric_ops``.
+
+  (`gh-24316 <https://github.com/numpy/numpy/pull/24316>`__)
+
+* Replaced ``from ... import *`` in the ``numpy/__init__.py`` with explicit imports. 
+  As a result, these main namespace members got removed: ``np.FLOATING_POINT_SUPPORT``,
+  ``np.FPE_*``, ``np.NINF``, ``np.PINF``, ``np.NZERO``, ``np.PZERO``, ``np.CLIP``, 
+  ``np.WRAP``, ``np.WRAP``, ``np.RAISE``, ``np.BUFSIZE``, ``np.UFUNC_BUFSIZE_DEFAULT``, 
+  ``np.UFUNC_PYVALS_NAME``, ``np.ALLOW_THREADS``, ``np.MAXDIMS``, ``np.MAY_SHARE_EXACT``,
+  ``np.MAY_SHARE_BOUNDS``, ``add_newdoc``, ``np.add_docstring`` and 
+  ``np.add_newdoc_ufunc``.
+
+  (`gh-24357 <https://github.com/numpy/numpy/pull/24357>`__)
+
+
+Deprecations
+============
+
+* ``np.compat`` has been deprecated, as Python 2 is no longer supported.
+
+* ``np.safe_eval`` has been deprecated. ``ast.literal_eval`` should be used instead.
+
+  (`gh-23830 <https://github.com/numpy/numpy/pull/23830>`__)
+
+* ``np.recfromcsv``, ``np.recfromtxt``, ``np.disp``, ``np.get_array_wrap``, 
+  ``np.maximum_sctype``, ``np.deprecate`` and ``np.deprecate_with_doc`` 
+  have been deprecated.
+
+  (`gh-24154 <https://github.com/numpy/numpy/pull/24154>`__)
+
+
+Expired deprecations
+====================
+
+* The ``np.core.umath_tests`` submodule has been removed from the public API.
+  (Deprecated in NumPy 1.15)
+
+  (`gh-23809 <https://github.com/numpy/numpy/pull/23809>`__)
+
+* The ``PyDataMem_SetEventHook`` deprecation has expired and it is
+  removed.  Use ``tracemalloc`` and the ``np.lib.tracemalloc_domain``
+  domain.  (Deprecated in NumPy 1.23)
+
+  (`gh-23921 <https://github.com/numpy/numpy/pull/23921>`__)
+
+* The deprecation of ``set_numeric_ops`` and the C functions
+  ``PyArray_SetNumericOps`` and ``PyArray_GetNumericOps`` has
+  been expired and the functions removed.  (Deprecated NumPy 1.16)
+
+  (`gh-23998 <https://github.com/numpy/numpy/pull/23998>`__)
+
+* The ``fasttake``, ``fastclip``, and ``fastputmask``  ``ArrFuncs``
+  deprecation is now finalized.
+* The deprecated function ``fastCopyAndTranspose`` and its C counterpart
+  is now removed.
+* The deprecation of ``PyArray_ScalarFromObject`` is now finalized.
+
+  (`gh-24312 <https://github.com/numpy/numpy/pull/24312>`__)
+
+* ``np.msort`` has been removed. For a replacement, ``np.sort(a, axis=0)`` 
+  should be used instead.
+
+  (`gh-24494 <https://github.com/numpy/numpy/pull/24494>`__)
+
+
+C API changes
+=============
+
+* The ``PyArray_CGT``, ``PyArray_CLT``, ``PyArray_CGE``, ``PyArray_CLE``,
+  ``PyArray_CEQ``, ``PyArray_CNE`` macros have been removed.
+* ``PyArray_MIN`` and ``PyArray_MAX`` have been moved from ``ndarraytypes.h``
+  to ``npy_math.h``.
+
+  (`gh-24258 <https://github.com/numpy/numpy/pull/24258>`__)
+
+Datetime functionality exposed in the C API and Cython bindings
+---------------------------------------------------------------
+
+The functions ``NpyDatetime_ConvertDatetime64ToDatetimeStruct``,
+``NpyDatetime_ConvertDatetimeStructToDatetime64``,
+``NpyDatetime_ConvertPyDateTimeToDatetimeStruct``,
+``NpyDatetime_GetDatetimeISO8601StrLen``, ``NpyDatetime_MakeISO8601Datetime``,
+and ``NpyDatetime_ParseISO8601Datetime`` have been added to the C API to
+facilitate converting between strings, Python datetimes, and NumPy datetimes in
+external libraries.
+
+(`gh-21199 <https://github.com/numpy/numpy/pull/21199>`__)
+
+Const correctness for the generalized ufunc C API
+-------------------------------------------------
+The NumPy C API's functions for constructing generalized ufuncs
+(``PyUFunc_FromFuncAndData``, ``PyUFunc_FromFuncAndDataAndSignature``,
+``PyUFunc_FromFuncAndDataAndSignatureAndIdentity``) take ``types`` and ``data``
+arguments that are not modified by NumPy's internals. Like the ``name`` and
+``doc`` arguments, third-party Python extension modules are likely to supply
+these arguments from static constants. The ``types`` and ``data`` arguments are
+now const-correct: they are declared as ``const char *types`` and
+``void *const *data``, respectively. C code should not be affected, but C++
+code may be.
+
+(`gh-23847 <https://github.com/numpy/numpy/pull/23847>`__)
+
+
+NumPy 2.0 C API removals
+========================
+
+* ``npy_interrupt.h`` and the corresponding macros like ``NPY_SIGINT_ON``
+  have been removed.  We recommend querying ``PyErr_CheckSignals()`` or
+  ``PyOS_InterruptOccurred()`` periodically.  (These do currently require
+  holding the GIL though).
+* The ``noprefix.h`` header has been removed, replace missing symbols with
+  their prefixed counterparts (usually an added ``NPY_`` or ``npy_``).
+
+  (`gh-23919 <https://github.com/numpy/numpy/pull/23919>`__)
+
+* ``PyUFunc_GetPyVals``, ``PyUFunc_handlefperr``, and ``PyUFunc_checkfperr``
+  have been removed.
+  If needed, a new backwards compatible function to raise floating point errors
+  could be restored.  (There are no known users and the functions would have made
+  ``with np.errstate()`` fixes much more difficult.)
+
+  (`gh-23922 <https://github.com/numpy/numpy/pull/23922>`__)
+
+* The ``numpy/old_defines.h`` which was part of the API deprecated since NumPy 1.7
+  has been removed.  This removes macros of the form ``PyArray_CONSTANT``.
+  The script at https://github.com/numpy/numpy/blob/main/tools/replace_old_macros.sed
+  may be useful to convert them to the ``NPY_CONSTANT`` version.
+
+  (`gh-24011 <https://github.com/numpy/numpy/pull/24011>`__)
+
+* The ``legacy_inner_loop_selector`` member of the ufunc struct is removed
+  to simplify improvements to the dispatching system.
+  There are no known users overriding or directly accessing this member.
+
+  (`gh-24271 <https://github.com/numpy/numpy/pull/24271>`__)
+
+
+New Features
+============
+
+Array API v2022.12 support in ``numpy.array_api``
+-------------------------------------------------
+
+- ``numpy.array_api`` now fully supports the `v2022.12 version
+  <https://data-apis.org/array-api/2022.12>`__ of the array API standard. Note
+  that this does not yet include the optional ``fft`` extension in the
+  standard.
+
+(`gh-23789 <https://github.com/numpy/numpy/pull/23789>`__)
+
+
+Improvements
+============
+
+Integer sequences as the ``shape`` argument for `np.memmap`
+-----------------------------------------------------------
+`np.memmap` can now be created with any integer sequence as the ``shape`` 
+argument, such as a list or numpy array of integers. Previously, only the 
+types of tuple and int could be used without raising an error.
+
+(`gh-23729 <https://github.com/numpy/numpy/pull/23729>`__)
+
+``np.errstate()`` is now faster and context safe
+------------------------------------------------
+The `np.errstate` context manager/decorator is now faster and
+safer.  Previously, it was not context safe and had (rarely)
+issues with thread-safety.
+
+(`gh-23936 <https://github.com/numpy/numpy/pull/23936>`__)
+
+Complex types - Underlying type changes
+---------------------------------------
+
+* The underlying C types for all of numpy's complex types have been changed to
+  use C99 complex types.
+
+* While this change does not affect the memory layout of complex types, it
+  changes the API to be used, in order to directly retrieve or write the real or
+  complex part of the complex number, since direct field access (as in ``c.real``
+  or ``c.imag``) is no longer an option. You can now use utilities provided in
+  ``numpy/npy_math.h`` to do these operations, like this:
+
+  .. code-block:: c
+
+      npy_cdouble c;
+      npy_csetreal(&c, 1.0);
+      npy_csetimag(&c, 0.0);
+      printf("%d + %di\n", npy_creal(c), npy_cimag(c));
+
+* To ease cross-version compatibility, equivalent macros and a compatibility
+  layer have been added which can be used by downstream packages to continue
+  to support both NumPy 1.x and 2.x. See :ref:`complex-numbers` for more info.
+
+* ``numpy/npy_common.h`` now includes ``complex.h``, which means that ``complex``
+  is now a reserved keyword.
+
+(`gh-24085 <https://github.com/numpy/numpy/pull/24085>`__)
+
+
+Changes
+=======
+
+* ``np.gradient()`` now returns a tuple rather than a list making the
+  return value immutable.
+
+  (`gh-23861 <https://github.com/numpy/numpy/pull/23861>`__)
+
+* Being fully context and thread-safe, ``np.errstate`` can only
+  be entered once now.
+* ``np.setbufsize`` is now tied to ``np.errstate()``:  Leaving an
+  ``np.errstate`` context will also reset the ``bufsize``.
+
+  (`gh-23936 <https://github.com/numpy/numpy/pull/23936>`__)
+
+Representation of NumPy scalars changed
+---------------------------------------
+As per :ref:`NEP 51 <NEP51>`, the scalar representation has been
+updated to include the type information to avoid confusion with
+Python scalars.
+The are now printed as ``np.float64(3.0)`` rather than just ``3.0``.
+This may disrupt workflows that store representations of numbers
+(e.g. to files) making it harder to read them.  They should be stored as
+explicit strings, for example by using ``str()`` or ``f"{scalar!s}"``.
+For the time being, affected users can use ``np.set_printoptions(legacy="1.25")``
+to get the old behavior (with possibly a few exceptions).
+Documentation of downstream projects may require larger updates,
+if code snippets are tested.  We are working on tooling for:
+`doctest-plus <https://github.com/scientific-python/pytest-doctestplus/issues/107>`__
+to facilitate updates.
+
+(`gh-22449 <https://github.com/numpy/numpy/pull/22449>`__)
+
+Truthyness of NumPy strings changed
+-----------------------------------
+NumPy strings previously were inconsistent about how they defined
+if the string is ``True`` or ``False`` and the definition did not
+match the one used by Python.
+Strings are now considered ``True`` when they are non-empty and
+``False`` when they are empty.
+This changes the following distinct cases:
+
+* Casts from string to boolean were previously roughly equivalent
+  to ``string_array.astype(np.int64).astype(bool)``, meaning that only
+  valid integers could be cast.
+  Now a string of ``"0"`` will be considered ``True`` since it is not empty.
+  If you need the old behavior, you may use the above step (casting
+  to integer first) or ``string_array == "0"`` (if the input is only ever ``0`` or ``1``).
+  To get the new result on old NumPy versions use ``string_array != ""``.
+* ``np.nonzero(string_array)`` previously ignored whitespace so that
+  a string only containing whitespace was considered ``False``.
+  Whitespace is now considered ``True``.
+
+This change does not affect ``np.loadtxt``, ``np.fromstring``, or ``np.genfromtxt``.
+The first two still use the integer definition, while ``genfromtxt`` continues to
+match for ``"true"`` (ignoring case).
+However, if ``np.bool_`` is used as a converter the result will change.
+
+The change does affect ``np.fromregex`` as it uses direct assignments.
+
+(`gh-23871 <https://github.com/numpy/numpy/pull/23871>`__)
+
+Add mean keyword to var and std function
+----------------------------------------
+Often when the standard deviation is needed the mean is also needed. The same
+holds for the variance and the mean. Until now the mean is then calculated twice,
+the change introduced here for the var and std functions allows for passing in a
+precalculated mean as an keyword argument. See the doc-strings for details and an
+example illustrating the speed-up.
+
+(`gh-24126 <https://github.com/numpy/numpy/pull/24126>`__)

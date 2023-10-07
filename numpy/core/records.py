@@ -35,18 +35,19 @@ Record arrays allow us to access fields as properties::
 """
 import os
 import warnings
-from collections import Counter, OrderedDict
+from collections import Counter
+from contextlib import nullcontext
 
+from .._utils import set_module
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import (
-    isfileobj, os_fspath, contextlib_nullcontext
-)
-from numpy.core.overrides import set_module
-from .arrayprint import get_printoptions
+from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
-__all__ = ['record', 'recarray', 'format_parser']
+__all__ = [
+    'record', 'recarray', 'format_parser', 'fromarrays', 'fromrecords',
+    'fromstring', 'fromfile', 'array', 'find_duplicate',
+]
 
 
 ndarray = sb.ndarray
@@ -67,34 +68,24 @@ _byteorderconv = {'b':'>',
                   'i':'|'}
 
 # formats regular expression
-# allows multidimension spec with a tuple syntax in front
+# allows multidimensional spec with a tuple syntax in front
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
-numfmt = nt.typeDict
-
-# taken from OrderedDict recipes in the Python documentation
-# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
-class _OrderedCounter(Counter, OrderedDict):
-    """Counter that remembers the order elements are first encountered"""
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
-
-    def __reduce__(self):
-        return self.__class__, (OrderedDict(self),)
+numfmt = nt.sctypeDict
 
 
+@set_module('numpy.rec')
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
         item
-        for item, counts in _OrderedCounter(list).items()
+        for item, counts in Counter(list).items()
         if counts > 1
     ]
 
 
-@set_module('numpy')
+@set_module('numpy.rec')
 class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
@@ -134,22 +125,22 @@ class format_parser:
 
     See Also
     --------
-    dtype, typename, sctype2char
+    numpy.dtype, numpy.typename
 
     Examples
     --------
-    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
-    ...                  ['T1', 'T2', 'T3']).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
+    ...                      ['T1', 'T2', 'T3']).dtype
     dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
     will be used.
 
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
-    ...                  []).dtype
+    >>> np.rec.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    ...                      []).dtype
     dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
-    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
@@ -240,14 +231,14 @@ class record(nt.void):
     __module__ = 'numpy'
 
     def __repr__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             return self.__str__()
-        return super(record, self).__repr__()
+        return super().__repr__()
 
     def __str__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             return str(self.item())
-        return super(record, self).__str__()
+        return super().__str__()
 
     def __getattribute__(self, attr):
         if attr in ('setfield', 'getfield', 'dtype'):
@@ -315,6 +306,8 @@ class record(nt.void):
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
 
+
+@set_module("numpy.rec")
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
 
@@ -374,9 +367,9 @@ class recarray(ndarray):
 
     See Also
     --------
-    rec.fromrecords : Construct a record array from data.
+    core.records.fromrecords : Construct a record array from data.
     record : fundamental data-type for `recarray`.
-    format_parser : determine a data-type from formats, names, titles.
+    numpy.rec.format_parser : determine a data-type from formats, names, titles.
 
     Notes
     -----
@@ -419,11 +412,6 @@ class recarray(ndarray):
           dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
-
-    # manually set name and module so that this class's type shows
-    # up as "numpy.recarray" when printed
-    __name__ = 'recarray'
-    __module__ = 'numpy'
 
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
@@ -516,7 +504,7 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = super(recarray, self).__getitem__(indx)
+        obj = super().__getitem__(indx)
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element
@@ -561,7 +549,7 @@ class recarray(ndarray):
             lst = "[], shape=%s" % (repr(self.shape),)
 
         lf = '\n'+' '*len(prefix)
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             lf = ' ' + lf  # trailing space
         return fmt % (lst, lf, repr_dtype)
 
@@ -595,6 +583,7 @@ def _deprecate_shape_0_as_None(shape):
         return shape
 
 
+@set_module("numpy.rec")
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """Create a record array from a (flat) list of arrays
@@ -630,7 +619,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
-    
+
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
@@ -674,20 +663,22 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if nn > 0:
         shape = shape[:-nn]
 
-    for k, obj in enumerate(arrayList):
-        nn = descr[k].ndim
-        testshape = obj.shape[:obj.ndim - nn]
-        if testshape != shape:
-            raise ValueError("array-shape mismatch in array %d" % k)
-
     _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
-    for i in range(len(arrayList)):
-        _array[_names[i]] = arrayList[i]
+    for k, obj in enumerate(arrayList):
+        nn = descr[k].ndim
+        testshape = obj.shape[:obj.ndim - nn]
+        name = _names[k]
+        if testshape != shape:
+            raise ValueError(f'array-shape mismatch in array {k} ("{name}")')
+
+        _array[name] = obj
 
     return _array
 
+
+@set_module("numpy.rec")
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
     """Create a recarray from a list of records in text form.
@@ -772,6 +763,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     return res
 
 
+@set_module("numpy.rec")
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     r"""Create a record array from binary data
@@ -847,14 +839,15 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     return _array
 
 def get_remaining_size(fd):
+    pos = fd.tell()
     try:
-        fn = fd.fileno()
-    except AttributeError:
-        return os.path.getsize(fd.name) - fd.tell()
-    st = os.fstat(fn)
-    size = st.st_size - fd.tell()
-    return size
+        fd.seek(0, 2)
+        return fd.tell() - pos
+    finally:
+        fd.seek(pos, 0)
 
+
+@set_module("numpy.rec")
 def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
@@ -888,7 +881,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a[5] = (0.5,10,'abcde')
     >>>
     >>> fd=TemporaryFile()
-    >>> a = a.newbyteorder('<')
+    >>> a = a.view(a.dtype.newbyteorder('<'))
     >>> a.tofile(fd)
     >>>
     >>> _ = fd.seek(0)
@@ -911,12 +904,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, int):
         shape = (shape,)
 
-    if isfileobj(fd):
+    if hasattr(fd, 'readinto'):
+        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
+        # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
-        ctx = contextlib_nullcontext(fd)
+        ctx = nullcontext(fd)
     else:
         # open file
-        ctx = open(os_fspath(fd), 'rb')
+        ctx = open(os.fspath(fd), 'rb')
 
     with ctx as fd:
         if offset > 0:
@@ -948,30 +943,32 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         _array = recarray(shape, descr)
         nbytesread = fd.readinto(_array.data)
         if nbytesread != nbytes:
-            raise IOError("Didn't read as many bytes as expected")
+            raise OSError("Didn't read as many bytes as expected")
 
     return _array
 
+
+@set_module("numpy.rec")
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
           names=None, titles=None, aligned=False, byteorder=None, copy=True):
     """
     Construct a record array from a wide-variety of objects.
 
-    A general-purpose record array constructor that dispatches to the 
+    A general-purpose record array constructor that dispatches to the
     appropriate `recarray` creation function based on the inputs (see Notes).
 
     Parameters
     ----------
-    obj: any
+    obj : any
         Input object. See Notes for details on how various input types are
         treated.
-    dtype: data-type, optional
+    dtype : data-type, optional
         Valid dtype for array.
-    shape: int or tuple of ints, optional
+    shape : int or tuple of ints, optional
         Shape of each array.
-    offset: int, optional
+    offset : int, optional
         Position in the file or buffer to start reading from.
-    strides: tuple of ints, optional
+    strides : tuple of ints, optional
         Buffer (`buf`) is interpreted according to these strides (strides
         define how many bytes each array element, row, column, etc.
         occupy in memory).
@@ -979,7 +976,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         If `dtype` is ``None``, these arguments are passed to
         `numpy.format_parser` to construct a dtype. See that function for
         detailed documentation.
-    copy: bool, optional
+    copy : bool, optional
         Whether to copy the input object (True), or to use a reference instead.
         This option only applies when the input is an ndarray or recarray.
         Defaults to True.
@@ -995,7 +992,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     `obj` is a string, then call the `fromstring` constructor. If `obj` is a
     list or a tuple, then if the first object is an `~numpy.ndarray`, call
     `fromarrays`, otherwise call `fromrecords`. If `obj` is a
-    `~numpy.recarray`, then make a copy of the data in the recarray 
+    `~numpy.recarray`, then make a copy of the data in the recarray
     (if ``copy=True``) and use the new formats, names, and titles. If `obj`
     is a file, then call `fromfile`. Finally, if obj is an `ndarray`, then
     return ``obj.view(recarray)``, making a copy of the data if ``copy=True``.
@@ -1036,7 +1033,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     array('def', dtype='<U3')
     """
 
-    if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
+    if ((isinstance(obj, (type(None), str)) or hasattr(obj, 'readinto')) and
            formats is None and dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
@@ -1078,7 +1075,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = new.copy()
         return new
 
-    elif isfileobj(obj):
+    elif hasattr(obj, 'readinto'):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, ndarray):

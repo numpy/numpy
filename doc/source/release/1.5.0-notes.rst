@@ -35,7 +35,7 @@ New features
 Warning on casting complex to real
 ----------------------------------
 
-Numpy now emits a `numpy.ComplexWarning` when a complex number is cast
+Numpy now emits a ``numpy.ComplexWarning`` when a complex number is cast
 into a real number. For example:
 
     >>> x = np.array([1,2,3])

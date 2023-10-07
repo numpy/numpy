@@ -1,32 +1,21 @@
 """
 Functions for changing global ufunc configuration
 
-This provides helpers which wrap `umath.geterrobj` and `umath.seterrobj`
+This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
+`_extobj_contextvar` from umath.
 """
 import collections.abc
 import contextlib
+import contextvars
+import functools
 
-from .overrides import set_module
-from .umath import (
-    UFUNC_BUFSIZE_DEFAULT,
-    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG, ERR_DEFAULT,
-    SHIFT_DIVIDEBYZERO, SHIFT_OVERFLOW, SHIFT_UNDERFLOW, SHIFT_INVALID,
-)
-from . import umath
+from .._utils import set_module
+from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
-    "errstate",
+    "errstate", '_no_nep50_warning'
 ]
-
-_errdict = {"ignore": ERR_IGNORE,
-            "warn": ERR_WARN,
-            "raise": ERR_RAISE,
-            "call": ERR_CALL,
-            "print": ERR_PRINT,
-            "log": ERR_LOG}
-
-_errdict_rev = {value: key for key, value in _errdict.items()}
 
 
 @set_module('numpy')
@@ -43,8 +32,9 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
         Set treatment for all types of floating-point errors at once:
 
         - ignore: Take no action when the exception occurs.
-        - warn: Print a `RuntimeWarning` (via the Python `warnings` module).
-        - raise: Raise a `FloatingPointError`.
+        - warn: Print a :exc:`RuntimeWarning` (via the Python `warnings`
+          module).
+        - raise: Raise a :exc:`FloatingPointError`.
         - call: Call a function specified using the `seterrcall` function.
         - print: Print a warning directly to ``stdout``.
         - log: Record error in a Log object specified by `seterrcall`.
@@ -84,48 +74,35 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
-    >>> old_settings = np.seterr(all='ignore')  #seterr to known value
-    >>> np.seterr(over='raise')
-    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
-    >>> np.seterr(**old_settings)  # reset to default
-    {'divide': 'ignore', 'over': 'raise', 'under': 'ignore', 'invalid': 'ignore'}
-
+    >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
     30464
+    >>> np.seterr(over='raise')
+    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
     >>> old_settings = np.seterr(all='warn', over='raise')
     >>> np.int16(32000) * np.int16(3)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    FloatingPointError: overflow encountered in short_scalars
+    FloatingPointError: overflow encountered in scalar multiply
 
-    >>> from collections import OrderedDict
     >>> old_settings = np.seterr(all='print')
-    >>> OrderedDict(np.geterr())
-    OrderedDict([('divide', 'print'), ('over', 'print'), ('under', 'print'), ('invalid', 'print')])
+    >>> np.geterr()
+    {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
     >>> np.int16(32000) * np.int16(3)
     30464
+    >>> np.seterr(**orig_settings)  # restore original
+    {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
 
     """
 
-    pyvals = umath.geterrobj()
-    old = geterr()
+    old = _get_extobj_dict()
+    # The errstate doesn't include call and bufsize, so pop them:
+    old.pop("call", None)
+    old.pop("bufsize", None)
 
-    if divide is None:
-        divide = all or old['divide']
-    if over is None:
-        over = all or old['over']
-    if under is None:
-        under = all or old['under']
-    if invalid is None:
-        invalid = all or old['invalid']
-
-    maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
-                 (_errdict[over] << SHIFT_OVERFLOW) +
-                 (_errdict[under] << SHIFT_UNDERFLOW) +
-                 (_errdict[invalid] << SHIFT_INVALID))
-
-    pyvals[1] = maskvalue
-    umath.seterrobj(pyvals)
+    extobj = _make_extobj(
+            all=all, divide=divide, over=over, under=under, invalid=invalid)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -153,30 +130,26 @@ def geterr():
 
     Examples
     --------
-    >>> from collections import OrderedDict
-    >>> sorted(np.geterr().items())
-    [('divide', 'warn'), ('invalid', 'warn'), ('over', 'warn'), ('under', 'ignore')]
-    >>> np.arange(3.) / np.arange(3.)
+    >>> np.geterr()
+    {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
+    >>> np.arange(3.) / np.arange(3.)  # doctest: +SKIP
     array([nan,  1.,  1.])
+    RuntimeWarning: invalid value encountered in divide
 
-    >>> oldsettings = np.seterr(all='warn', over='raise')
-    >>> OrderedDict(sorted(np.geterr().items()))
-    OrderedDict([('divide', 'warn'), ('invalid', 'warn'), ('over', 'raise'), ('under', 'warn')])
+    >>> oldsettings = np.seterr(all='warn', invalid='raise')
+    >>> np.geterr()
+    {'divide': 'warn', 'over': 'warn', 'under': 'warn', 'invalid': 'raise'}
     >>> np.arange(3.) / np.arange(3.)
-    array([nan,  1.,  1.])
+    Traceback (most recent call last):
+      ...
+    FloatingPointError: invalid value encountered in divide
+    >>> oldsettings = np.seterr(**oldsettings)  # restore original
 
     """
-    maskvalue = umath.geterrobj()[1]
-    mask = 7
-    res = {}
-    val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
-    res['divide'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_OVERFLOW) & mask
-    res['over'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_UNDERFLOW) & mask
-    res['under'] = _errdict_rev[val]
-    val = (maskvalue >> SHIFT_INVALID) & mask
-    res['invalid'] = _errdict_rev[val]
+    res = _get_extobj_dict()
+    # The "geterr" doesn't include call and bufsize,:
+    res.pop("call", None)
+    res.pop("bufsize", None)
     return res
 
 
@@ -185,23 +158,19 @@ def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
 
+    .. versionchanged:: 2.0
+        The scope of setting the buffer is tied to the `numpy.errstate`
+        context.  Exiting a ``with errstate():`` will also restore the bufsize.
+
     Parameters
     ----------
     size : int
         Size of buffer.
 
     """
-    if size > 10e6:
-        raise ValueError("Buffer size, %s, is too big." % size)
-    if size < 5:
-        raise ValueError("Buffer size, %s, is too small." % size)
-    if size % 16 != 0:
-        raise ValueError("Buffer size, %s, is not a multiple of 16." % size)
-
-    pyvals = umath.geterrobj()
-    old = getbufsize()
-    pyvals[0] = size
-    umath.seterrobj(pyvals)
+    old = _get_extobj_dict()["bufsize"]
+    extobj = _make_extobj(bufsize=size)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -216,7 +185,7 @@ def getbufsize():
         Size of ufunc buffer in bytes.
 
     """
-    return umath.geterrobj()[0]
+    return _get_extobj_dict()["bufsize"]
 
 
 @set_module('numpy')
@@ -268,18 +237,17 @@ def seterrcall(func):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
 
-    >>> saved_handler = np.seterrcall(err_handler)
-    >>> save_err = np.seterr(all='call')
-    >>> from collections import OrderedDict
+    >>> orig_handler = np.seterrcall(err_handler)
+    >>> orig_err = np.seterr(all='call')
 
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([inf, inf, inf])
 
-    >>> np.seterrcall(saved_handler)
+    >>> np.seterrcall(orig_handler)
     <function err_handler at 0x...>
-    >>> OrderedDict(sorted(np.seterr(**save_err).items()))
-    OrderedDict([('divide', 'call'), ('invalid', 'call'), ('over', 'call'), ('under', 'call')])
+    >>> np.seterr(**orig_err)
+    {'divide': 'call', 'over': 'call', 'under': 'call', 'invalid': 'call'}
 
     Log error message:
 
@@ -293,23 +261,18 @@ def seterrcall(func):
     >>> save_err = np.seterr(all='log')
 
     >>> np.array([1, 2, 3]) / 0.0
-    LOG: Warning: divide by zero encountered in true_divide
+    LOG: Warning: divide by zero encountered in divide
     array([inf, inf, inf])
 
-    >>> np.seterrcall(saved_handler)
-    <numpy.core.numeric.Log object at 0x...>
-    >>> OrderedDict(sorted(np.seterr(**save_err).items()))
-    OrderedDict([('divide', 'log'), ('invalid', 'log'), ('over', 'log'), ('under', 'log')])
+    >>> np.seterrcall(orig_handler)
+    <numpy.Log object at 0x...>
+    >>> np.seterr(**orig_err)
+    {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
-    if func is not None and not isinstance(func, collections.abc.Callable):
-        if (not hasattr(func, 'write') or
-                not isinstance(func.write, collections.abc.Callable)):
-            raise ValueError("Only callable can be used as callback")
-    pyvals = umath.geterrobj()
-    old = geterrcall()
-    pyvals[2] = func
-    umath.seterrobj(pyvals)
+    old = _get_extobj_dict()["call"]
+    extobj = _make_extobj(call=func)
+    _extobj_contextvar.set(extobj)
     return old
 
 
@@ -343,10 +306,10 @@ def geterrcall():
     --------
     >>> np.geterrcall()  # we did not yet set a handler, returns None
 
-    >>> oldsettings = np.seterr(all='call')
+    >>> orig_settings = np.seterr(all='call')
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
-    >>> oldhandler = np.seterrcall(err_handler)
+    >>> old_handler = np.seterrcall(err_handler)
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([inf, inf, inf])
@@ -354,9 +317,11 @@ def geterrcall():
     >>> cur_handler = np.geterrcall()
     >>> cur_handler is err_handler
     True
+    >>> old_settings = np.seterr(**orig_settings)  # restore original
+    >>> old_handler = np.seterrcall(None)  # restore original
 
     """
-    return umath.geterrobj()[2]
+    return _get_extobj_dict()["call"]
 
 
 class _unspecified:
@@ -367,7 +332,7 @@ _Unspecified = _unspecified()
 
 
 @set_module('numpy')
-class errstate(contextlib.ContextDecorator):
+class errstate:
     """
     errstate(**kwargs)
 
@@ -381,7 +346,11 @@ class errstate(contextlib.ContextDecorator):
     ..  versionchanged:: 1.17.0
         `errstate` is also usable as a function decorator, saving
         a level of indentation if an entire function is wrapped.
-        See :py:class:`contextlib.ContextDecorator` for more information.
+
+    .. versionchanged:: 2.0
+        `errstate` is now fully thread and asyncio safe, but may not be
+        entered more than once.
+        It is not safe to decorate async functions using ``errstate``.
 
     Parameters
     ----------
@@ -402,17 +371,16 @@ class errstate(contextlib.ContextDecorator):
 
     Examples
     --------
-    >>> from collections import OrderedDict
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
     array([nan, inf, inf])
-    >>> with np.errstate(divide='warn'):
+    >>> with np.errstate(divide='ignore'):
     ...     np.arange(3) / 0.
     array([nan, inf, inf])
 
     >>> np.sqrt(-1)
-    nan
+    np.float64(nan)
     >>> with np.errstate(invalid='raise'):
     ...     np.sqrt(-1)
     Traceback (most recent call last):
@@ -421,30 +389,84 @@ class errstate(contextlib.ContextDecorator):
 
     Outside the context the error handling behavior has not changed:
 
-    >>> OrderedDict(sorted(np.geterr().items()))
-    OrderedDict([('divide', 'ignore'), ('invalid', 'ignore'), ('over', 'ignore'), ('under', 'ignore')])
+    >>> np.geterr()
+    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
+    >>> olderr = np.seterr(**olderr)  # restore original state
 
     """
+    __slots__ = (
+        "_call", "_all", "_divide", "_over", "_under", "_invalid", "_token")
 
-    def __init__(self, *, call=_Unspecified, **kwargs):
-        self.call = call
-        self.kwargs = kwargs
+    def __init__(self, *, call=_Unspecified,
+                 all=None, divide=None, over=None, under=None, invalid=None):
+        self._token = None
+        self._call = call
+        self._all = all
+        self._divide = divide
+        self._over = over
+        self._under = under
+        self._invalid = invalid
 
     def __enter__(self):
-        self.oldstate = seterr(**self.kwargs)
-        if self.call is not _Unspecified:
-            self.oldcall = seterrcall(self.call)
+        # Note that __call__ duplicates much of this logic
+        if self._token is not None:
+            raise TypeError("Cannot enter `np.errstate` twice.")
+        if self._call is _Unspecified:
+            extobj = _make_extobj(
+                    all=self._all, divide=self._divide, over=self._over,
+                    under=self._under, invalid=self._invalid)
+        else:
+            extobj = _make_extobj(
+                    call=self._call,
+                    all=self._all, divide=self._divide, over=self._over,
+                    under=self._under, invalid=self._invalid)
+
+        self._token = _extobj_contextvar.set(extobj)
 
     def __exit__(self, *exc_info):
-        seterr(**self.oldstate)
-        if self.call is not _Unspecified:
-            seterrcall(self.oldcall)
+        _extobj_contextvar.reset(self._token)
+
+    def __call__(self, func):
+        # We need to customize `__call__` compared to `ContextDecorator`
+        # because we must store the token per-thread so cannot store it on
+        # the instance (we could create a new instance for this).
+        # This duplicates the code from `__enter__`.
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
+            if self._call is _Unspecified:
+                extobj = _make_extobj(
+                        all=self._all, divide=self._divide, over=self._over,
+                        under=self._under, invalid=self._invalid)
+            else:
+                extobj = _make_extobj(
+                        call=self._call,
+                        all=self._all, divide=self._divide, over=self._over,
+                        under=self._under, invalid=self._invalid)
+
+            _token = _extobj_contextvar.set(extobj)
+            try:
+                # Call the original, decorated, function:
+                return func(*args, **kwargs)
+            finally:
+                _extobj_contextvar.reset(_token)
+
+        return inner
 
 
-def _setdef():
-    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
-    umath.seterrobj(defval)
+NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
 
+@set_module('numpy')
+@contextlib.contextmanager
+def _no_nep50_warning():
+    """
+    Context manager to disable NEP 50 warnings.  This context manager is
+    only relevant if the NEP 50 warnings are enabled globally (which is not
+    thread/context safe).
 
-# set the default values
-_setdef()
+    This warning context manager itself is fully safe, however.
+    """
+    token = NO_NEP50_WARNING.set(True)
+    try:
+        yield
+    finally:
+        NO_NEP50_WARNING.reset(token)

@@ -4,19 +4,20 @@ from numpy.testing import assert_equal
 
 def test_dispatcher():
     """
-    Testing the utilites of the CPU dispatcher
+    Testing the utilities of the CPU dispatcher
     """
     targets = (
         "SSE2", "SSE41", "AVX2",
         "VSX", "VSX2", "VSX3",
-        "NEON", "ASIMD", "ASIMDHP"
+        "NEON", "ASIMD", "ASIMDHP",
+        "VX", "VXE"
     )
     highest_sfx = "" # no suffix for the baseline
     all_sfx = []
     for feature in reversed(targets):
         # skip baseline features, by the default `CCompilerOpt` do not generate separated objects
         # for the baseline,  just one object combined all of them via 'baseline' option
-        # within the configuration statments.
+        # within the configuration statements.
         if feature in __cpu_baseline__:
             continue
         # check compiler and running machine support

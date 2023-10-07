@@ -85,7 +85,7 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
    dtype('<U16')
    >>> dt['grades']
@@ -122,24 +122,21 @@ constructor:
 What can be converted to a data-type object is described below:
 
 :class:`dtype` object
-
    .. index::
       triple: dtype; construction; from dtype
 
    Used as-is.
 
 None
-
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`float_`.
+   The default data type: :class:`float64`.
 
 .. index::
    triple: dtype; construction; from type
 
 Array-scalar types
-
     The 24 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
     This is true for their sub-classes as well.
@@ -155,47 +152,42 @@ Array-scalar types
        >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
-
-    .. deprecated NumPy 1.19::
-
-        The use of generic types is deprecated. This is because it can be
-        unexpected in a context such as ``arr.astype(dtype=np.floating)``.
-        ``arr.astype(dtype=np.floating)`` which casts an array of ``float32``
-        to an array of ``float64``, even though ``float32`` is a subdtype of
-        ``np.floating``.
-
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
-    =====================================================  ===============
-    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float`
-    :class:`complexfloating`                               :class:`cfloat`
+    =====================================================  ===================
+    :class:`number`, :class:`inexact`, :class:`floating`   :class:`float64`
+    :class:`complexfloating`                               :class:`complex128`
     :class:`integer`, :class:`signedinteger`               :class:`int\_`
     :class:`unsignedinteger`                               :class:`uint`
-    :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
-    =====================================================  ===============
+    =====================================================  ===================
+
+    .. deprecated:: 1.19
+
+        This conversion of generic scalar types is deprecated.
+        This is because it can be unexpected in a context such as
+        ``arr.astype(dtype=np.floating)``, which casts an array of ``float32``
+        to an array of ``float64``, even though ``float32`` is a subdtype of
+        ``np.floating``.
+
 
 Built-in Python types
-
     Several python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
-    ================  ===============
-    :class:`int`      :class:`int\_`
-    :class:`bool`     :class:`bool\_`
-    :class:`float`    :class:`float\_`
-    :class:`complex`  :class:`cfloat`
-    :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`str\_`
-    :class:`buffer`   :class:`void`
-    (all others)      :class:`object_`
-    ================  ===============
+    ===================      ===============
+    :class:`int`             :class:`int\_`
+    :class:`bool`            :class:`bool\_`
+    :class:`float`           :class:`float64`
+    :class:`complex`         :class:`complex128`
+    :class:`bytes`           :class:`bytes\_`
+    :class:`str`             :class:`str\_`
+    :class:`memoryview`      :class:`void`
+    (all others)             :class:`object_`
+    ===================      ===============
 
-    Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targeting both Python 2 and 3
-    ``np.unicode_`` should be used as a dtype for strings.
-    See :ref:`Note on string types<string-dtype-note>`.
+   Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
 
@@ -209,7 +201,6 @@ Built-in Python types
         that such types may map to a specific (new) dtype in the future.
 
 Types with ``.dtype``
-
     Any type object with a ``dtype`` attribute: The attribute will be
     accessed and used directly. The attribute must return something
     that is convertible into a dtype object.
@@ -223,7 +214,6 @@ prepended with ``'>'`` (:term:`big-endian`), ``'<'``
 specify the byte order.
 
 One-character strings
-
     Each built-in data-type has a character code
     (the updated Numeric typecodes), that uniquely identifies it.
 
@@ -235,7 +225,6 @@ One-character strings
        >>> dt = np.dtype('d')  # double-precision floating-point number
 
 Array-protocol type strings (see :ref:`arrays.interface`)
-
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
    where it is interpreted as the number of characters.  The item size
@@ -263,22 +252,19 @@ Array-protocol type strings (see :ref:`arrays.interface`)
       >>> dt = np.dtype('i4')   # 32-bit signed integer
       >>> dt = np.dtype('f8')   # 64-bit floating-point number
       >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('a25')  # 25-length zero-terminated bytes
+      >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
       >>> dt = np.dtype('U25')  # 25-character string
 
    .. _string-dtype-note:
 
    .. admonition:: Note on string types
 
-    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and ``np.string_`` continues to map to
-    ``np.bytes_``.
-    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
-    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
-    used.
+    For backward compatibility with existing code originally written to support
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
+    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
-
    A short-hand notation for specifying the format of a structured data type is
    a comma-separated string of basic formats.
 
@@ -307,11 +293,10 @@ String with comma-separated fields
       - field named ``f2`` containing a 3 x 4 sub-array
         containing 10-character strings
 
-      >>> dt = np.dtype("a3, 3u8, (3,4)a10")
+      >>> dt = np.dtype("S3, 3u8, (3,4)S10")
 
 Type strings
-
-   Any string in :obj:`numpy.sctypeDict`.keys():
+   Any string name of a NumPy dtype, e.g.:
 
    .. admonition:: Example
 
@@ -322,7 +307,6 @@ Type strings
    triple: dtype; construction; from tuple
 
 ``(flexible_dtype, itemsize)``
-
     The first argument must be an object that is converted to a
     zero-sized flexible data-type object, the second argument is
     an integer providing the desired itemsize.
@@ -333,7 +317,6 @@ Type strings
        >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
-
     .. index::
        pair: dtype; sub-array
 
@@ -354,10 +337,9 @@ Type strings
    triple: dtype; construction; from list
 
 ``[(field_name, field_dtype, field_shape), ...]``
-
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
-   :obj:`__array_interface__` attribute.)
+   :obj:`~object.__array_interface__` attribute.)
 
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
@@ -394,7 +376,6 @@ Type strings
    triple: dtype; construction; from dict
 
 ``{'names': ..., 'formats': ..., 'offsets': ..., 'titles': ..., 'itemsize': ...}``
-
     This style has two required and three optional keys.  The *names*
     and *formats* keys are required. Their respective values are
     equal-length lists with the field names and the field formats.
@@ -405,9 +386,9 @@ Type strings
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
     (limited to `ctypes.c_int`) for each field, while the *titles* value is a
-    list of titles for each field (None can be used if no title is
-    desired for that field). The *titles* can be any :class:`string`
-    or :class:`unicode` object and will add another entry to the
+    list of titles for each field (``None`` can be used if no title is
+    desired for that field). The *titles* can be any object, but when a
+    :class:`str` object will add another entry to the
     fields dictionary keyed by the title and referencing the same
     field tuple which will contain the title as an additional tuple
     member.
@@ -436,7 +417,6 @@ Type strings
 
 
 ``{'field1': ..., 'field2': ..., ...}``
-
     This usage is discouraged, because it is ambiguous with the
     other dict-based construction method. If you have a field
     called 'names' and a field called 'formats' there will be
@@ -458,7 +438,6 @@ Type strings
        ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
-
     In NumPy 1.7 and later, this form allows `base_dtype` to be interpreted as
     a structured dtype. Arrays created with this dtype will have underlying
     dtype `base_dtype` but will have fields and flags taken from `new_dtype`.
@@ -553,6 +532,13 @@ Attributes providing additional information:
    dtype.alignment
    dtype.base
 
+Metadata attached by the user:
+
+.. autosummary::
+   :toctree: generated/
+
+    dtype.metadata
+
 
 Methods
 -------
@@ -571,3 +557,20 @@ The following methods implement the pickle protocol:
 
    dtype.__reduce__
    dtype.__setstate__
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__class_getitem__
+
+Comparison operations:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__ge__
+   dtype.__gt__
+   dtype.__le__
+   dtype.__lt__

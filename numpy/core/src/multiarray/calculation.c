@@ -1,11 +1,13 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "lowlevel_strided_loops.h"
+#include "dtypemeta.h"
 
 #include "npy_config.h"
 
@@ -34,18 +36,25 @@ power_of_ten(int n)
     return ret;
 }
 
-/*NUMPY_API
- * ArgMax
- */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
+_PyArray_ArgMinMaxCommon(PyArrayObject *op,
+        int axis, PyArrayObject *out, int keepdims,
+        npy_bool is_argmax)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
-    PyArray_ArgFunc* arg_func;
-    char *ip;
+    PyArray_ArgFunc* arg_func = NULL;
+    char *ip, *func_name;
     npy_intp *rptr;
     npy_intp i, n, m;
     int elsize;
+    // Keep a copy because axis changes via call to PyArray_CheckAxis
+    int axis_copy = axis;
+    npy_intp _shape_buf[NPY_MAXDIMS];
+    npy_intp *out_shape;
+    // Keep the number of dimensions and shape of
+    // original array. Helps when `keepdims` is True.
+    npy_intp* original_op_shape = PyArray_DIMS(op);
+    int out_ndim = PyArray_NDIM(op);
     NPY_BEGIN_THREADS_DEF;
 
     if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
@@ -79,14 +88,48 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         op = ap;
     }
 
-    /* Will get native-byte order contiguous copy. */
-    ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
-                                  PyArray_DESCR(op)->type_num, 1, 0);
+    // Will get native-byte order contiguous copy.
+    PyArray_Descr *descr = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(op));
+    if (descr == NULL) {
+        return NULL;
+    }
+    ap = (PyArrayObject *)PyArray_FromArray(op, descr, NPY_ARRAY_DEFAULT);
+
     Py_DECREF(op);
     if (ap == NULL) {
         return NULL;
     }
-    arg_func = PyArray_DESCR(ap)->f->argmax;
+
+    // Decides the shape of the output array.
+    if (!keepdims) {
+        out_ndim = PyArray_NDIM(ap) - 1;
+        out_shape = PyArray_DIMS(ap);
+    }
+    else {
+        out_shape = _shape_buf;
+        if (axis_copy == NPY_MAXDIMS) {
+            for (int i = 0; i < out_ndim; i++) {
+                out_shape[i] = 1;
+            }
+        }
+        else {
+            /*
+             * While `ap` may be transposed, we can ignore this for `out` because the
+             * transpose only reorders the size 1 `axis` (not changing memory layout).
+             */
+            memcpy(out_shape, original_op_shape, out_ndim * sizeof(npy_intp));
+            out_shape[axis] = 1;
+        }
+    }
+
+    if (is_argmax) {
+        func_name = "argmax";
+        arg_func = PyArray_DESCR(ap)->f->argmax;
+    }
+    else {
+        func_name = "argmin";
+        arg_func = PyArray_DESCR(ap)->f->argmin;
+    }
     if (arg_func == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "data type not ordered");
@@ -95,26 +138,28 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     elsize = PyArray_DESCR(ap)->elsize;
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "attempt to get argmax of an empty sequence");
+        PyErr_Format(PyExc_ValueError,
+                    "attempt to get %s of an empty sequence",
+                    func_name);
         goto fail;
     }
 
     if (!out) {
         rp = (PyArrayObject *)PyArray_NewFromDescr(
                 Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
-                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
+                out_ndim, out_shape, NULL, NULL,
                 0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }
     }
     else {
-        if ((PyArray_NDIM(out) != PyArray_NDIM(ap) - 1) ||
-                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
-                                      PyArray_NDIM(out))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "output array does not match result of np.argmax.");
+        if ((PyArray_NDIM(out) != out_ndim) ||
+                !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
+                                        out_ndim)) {
+            PyErr_Format(PyExc_ValueError,
+                    "output array does not match result of np.%s.",
+                    func_name);
             goto fail;
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
@@ -135,7 +180,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY/WRTIEBACKIFCOPY if necessary */
+    /* Trigger the WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
         PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
@@ -150,120 +195,36 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     return NULL;
 }
 
+NPY_NO_EXPORT PyObject*
+_PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
+        int axis, PyArrayObject *out, int keepdims)
+{
+    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, 1);
+}
+
+/*NUMPY_API
+ * ArgMax
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
+{
+    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, 1);
+}
+
+NPY_NO_EXPORT PyObject *
+_PyArray_ArgMinWithKeepdims(PyArrayObject *op,
+        int axis, PyArrayObject *out, int keepdims)
+{
+    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, 0);
+}
+
 /*NUMPY_API
  * ArgMin
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    PyArrayObject *ap = NULL, *rp = NULL;
-    PyArray_ArgFunc* arg_func;
-    char *ip;
-    npy_intp *rptr;
-    npy_intp i, n, m;
-    int elsize;
-    NPY_BEGIN_THREADS_DEF;
-
-    if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
-        return NULL;
-    }
-    /*
-     * We need to permute the array so that axis is placed at the end.
-     * And all other dimensions are shifted left.
-     */
-    if (axis != PyArray_NDIM(ap)-1) {
-        PyArray_Dims newaxes;
-        npy_intp dims[NPY_MAXDIMS];
-        int i;
-
-        newaxes.ptr = dims;
-        newaxes.len = PyArray_NDIM(ap);
-        for (i = 0; i < axis; i++) {
-            dims[i] = i;
-        }
-        for (i = axis; i < PyArray_NDIM(ap) - 1; i++) {
-            dims[i] = i + 1;
-        }
-        dims[PyArray_NDIM(ap) - 1] = axis;
-        op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
-        Py_DECREF(ap);
-        if (op == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        op = ap;
-    }
-
-    /* Will get native-byte order contiguous copy. */
-    ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
-                                  PyArray_DESCR(op)->type_num, 1, 0);
-    Py_DECREF(op);
-    if (ap == NULL) {
-        return NULL;
-    }
-    arg_func = PyArray_DESCR(ap)->f->argmin;
-    if (arg_func == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "data type not ordered");
-        goto fail;
-    }
-    elsize = PyArray_DESCR(ap)->elsize;
-    m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
-    if (m == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "attempt to get argmin of an empty sequence");
-        goto fail;
-    }
-
-    if (!out) {
-        rp = (PyArrayObject *)PyArray_NewFromDescr(
-                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
-                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
-                0, (PyObject *)ap);
-        if (rp == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        if ((PyArray_NDIM(out) != PyArray_NDIM(ap) - 1) ||
-                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
-                                      PyArray_NDIM(out))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "output array does not match result of np.argmin.");
-            goto fail;
-        }
-        rp = (PyArrayObject *)PyArray_FromArray(out,
-                              PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
-        if (rp == NULL) {
-            goto fail;
-        }
-    }
-
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
-    n = PyArray_SIZE(ap)/m;
-    rptr = (npy_intp *)PyArray_DATA(rp);
-    for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        arg_func(ip, m, rptr, ap);
-        rptr += 1;
-    }
-    NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
-
-    Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY/WRITEBACKIFCOPY if necessary */
-    if (out != NULL && out != rp) {
-        PyArray_ResolveWritebackIfCopy(rp);
-        Py_DECREF(rp);
-        rp = out;
-        Py_INCREF(rp);
-    }
-    return (PyObject *)rp;
-
- fail:
-    Py_DECREF(ap);
-    Py_XDECREF(rp);
-    return NULL;
+    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, 0);
 }
 
 /*NUMPY_API
@@ -392,7 +353,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         else {
             val = PyArray_DIM(arrnew,i);
         }
-        PyTuple_SET_ITEM(newshape, i, PyInt_FromLong((long)val));
+        PyTuple_SET_ITEM(newshape, i, PyLong_FromSsize_t(val));
     }
     arr2 = (PyArrayObject *)PyArray_Reshape(arr1, newshape);
     Py_DECREF(arr1);
@@ -423,7 +384,8 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     arr2 = (PyArrayObject *)PyArray_EnsureAnyArray(
-                PyArray_GenericBinaryFunction(arr1, obj3, n_ops.multiply));
+                PyArray_GenericBinaryFunction((PyObject *)arr1, obj3,
+                                               n_ops.multiply));
     Py_DECREF(arr1);
     Py_DECREF(obj3);
     if (arr2 == NULL) {
@@ -821,84 +783,12 @@ PyArray_All(PyArrayObject *self, int axis, PyArrayObject *out)
 }
 
 
-static PyObject *
-_GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
-                          PyObject *op)
-{
-    if (out == NULL) {
-        return PyObject_CallFunction(op, "OO", m1, m2);
-    }
-    else {
-        PyObject *args, *ret;
-        static PyObject *kw = NULL;
-
-        if (kw == NULL) {
-            kw = Py_BuildValue("{s:s}", "casting", "unsafe");
-            if (kw == NULL) {
-                return NULL;
-            }
-        }
-
-        args = Py_BuildValue("OOO", m1, m2, out);
-        if (args == NULL) {
-            return NULL;
-        }
-
-        ret = PyObject_Call(op, args, kw);
-
-        Py_DECREF(args);
-
-        return ret;
-    }
-}
-
-static PyObject *
-_slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
-{
-    PyObject *res1=NULL, *res2=NULL;
-
-    if (max != NULL) {
-        res1 = _GenericBinaryOutFunction(self, max, out, n_ops.minimum);
-        if (res1 == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        res1 = (PyObject *)self;
-        Py_INCREF(res1);
-    }
-
-    if (min != NULL) {
-        res2 = _GenericBinaryOutFunction((PyArrayObject *)res1,
-                                         min, out, n_ops.maximum);
-        if (res2 == NULL) {
-            Py_XDECREF(res1);
-            return NULL;
-        }
-    }
-    else {
-        res2 = res1;
-        Py_INCREF(res2);
-    }
-    Py_DECREF(res1);
-    return res2;
-}
-
 /*NUMPY_API
  * Clip
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
-    PyArray_FastClipFunc *func;
-    int outgood = 0, ingood = 0;
-    PyArrayObject *maxa = NULL;
-    PyArrayObject *mina = NULL;
-    PyArrayObject *newout = NULL, *newin = NULL;
-    PyArray_Descr *indescr = NULL, *newdescr = NULL;
-    char *max_data, *min_data;
-    PyObject *zero;
-
     /* Treat None the same as NULL */
     if (min == Py_None) {
         min = NULL;
@@ -913,288 +803,15 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         return NULL;
     }
 
-    func = PyArray_DESCR(self)->f->fastclip;
-    if (func == NULL) {
-        if (min == NULL) {
-            return PyObject_CallFunctionObjArgs(n_ops.minimum, self, max, out, NULL);
-        }
-        else if (max == NULL) {
-            return PyObject_CallFunctionObjArgs(n_ops.maximum, self, min, out, NULL);
-        }
-        else {
-            return PyObject_CallFunctionObjArgs(n_ops.clip, self, min, max, out, NULL);
-        }
+    if (min == NULL) {
+        return PyObject_CallFunctionObjArgs(n_ops.minimum, self, max, out, NULL);
     }
-
-    /*
-     * NumPy 1.17.0, 2019-02-24
-     * NumPy 1.19.0, 2020-01-15
-     *
-     * Setting `->f->fastclip to anything but NULL has been deprecated in 1.19
-     * the code path below was previously deprecated since 1.17.
-     * (the deprecation moved to registration time instead of execution time)
-     * everything below can be removed once this deprecation completes
-     */
-
-    if (func == NULL
-        || (min != NULL && !PyArray_CheckAnyScalar(min))
-        || (max != NULL && !PyArray_CheckAnyScalar(max))
-        || PyArray_ISBYTESWAPPED(self)
-        || (out && PyArray_ISBYTESWAPPED(out))) {
-        return _slow_array_clip(self, min, max, out);
-    }
-    /* Use the fast scalar clip function */
-
-    /* First we need to figure out the correct type */
-    if (min != NULL) {
-        indescr = PyArray_DescrFromObject(min, NULL);
-        if (indescr == NULL) {
-            goto fail;
-        }
-    }
-    if (max != NULL) {
-        newdescr = PyArray_DescrFromObject(max, indescr);
-        Py_XDECREF(indescr);
-        indescr = NULL;
-        if (newdescr == NULL) {
-            goto fail;
-        }
+    else if (max == NULL) {
+        return PyObject_CallFunctionObjArgs(n_ops.maximum, self, min, out, NULL);
     }
     else {
-        /* Steal the reference */
-        newdescr = indescr;
-        indescr = NULL;
+        return PyObject_CallFunctionObjArgs(n_ops.clip, self, min, max, out, NULL);
     }
-
-
-    /*
-     * Use the scalar descriptor only if it is of a bigger
-     * KIND than the input array (and then find the
-     * type that matches both).
-     */
-    if (PyArray_ScalarKind(newdescr->type_num, NULL) >
-        PyArray_ScalarKind(PyArray_DESCR(self)->type_num, NULL)) {
-        indescr = PyArray_PromoteTypes(newdescr, PyArray_DESCR(self));
-        if (indescr == NULL) {
-            goto fail;
-        }
-        func = indescr->f->fastclip;
-        if (func == NULL) {
-            Py_DECREF(indescr);
-            return _slow_array_clip(self, min, max, out);
-        }
-    }
-    else {
-        indescr = PyArray_DESCR(self);
-        Py_INCREF(indescr);
-    }
-    Py_DECREF(newdescr);
-    newdescr = NULL;
-
-    if (!PyDataType_ISNOTSWAPPED(indescr)) {
-        PyArray_Descr *descr2;
-        descr2 = PyArray_DescrNewByteorder(indescr, '=');
-        Py_DECREF(indescr);
-        indescr = NULL;
-        if (descr2 == NULL) {
-            goto fail;
-        }
-        indescr = descr2;
-    }
-
-    /* Convert max to an array */
-    if (max != NULL) {
-        Py_INCREF(indescr);
-        maxa = (PyArrayObject *)PyArray_FromAny(max, indescr, 0, 0,
-                                 NPY_ARRAY_DEFAULT, NULL);
-        if (maxa == NULL) {
-            goto fail;
-        }
-    }
-
-    /*
-     * If we are unsigned, then make sure min is not < 0
-     * This is to match the behavior of _slow_array_clip
-     *
-     * We allow min and max to go beyond the limits
-     * for other data-types in which case they
-     * are interpreted as their modular counterparts.
-    */
-    if (min != NULL) {
-        if (PyArray_ISUNSIGNED(self)) {
-            int cmp;
-            zero = PyInt_FromLong(0);
-            cmp = PyObject_RichCompareBool(min, zero, Py_LT);
-            if (cmp == -1) {
-                Py_DECREF(zero);
-                goto fail;
-            }
-            if (cmp == 1) {
-                min = zero;
-            }
-            else {
-                Py_DECREF(zero);
-                Py_INCREF(min);
-            }
-        }
-        else {
-            Py_INCREF(min);
-        }
-
-        /* Convert min to an array */
-        Py_INCREF(indescr);
-        mina = (PyArrayObject *)PyArray_FromAny(min, indescr, 0, 0,
-                                 NPY_ARRAY_DEFAULT, NULL);
-        Py_DECREF(min);
-        if (mina == NULL) {
-            goto fail;
-        }
-    }
-
-    /*
-     * Check to see if input is single-segment, aligned,
-     * and in native byteorder
-     */
-    if (PyArray_ISONESEGMENT(self) &&
-                            PyArray_CHKFLAGS(self, NPY_ARRAY_ALIGNED) &&
-                            PyArray_ISNOTSWAPPED(self) &&
-                            (PyArray_DESCR(self) == indescr)) {
-        ingood = 1;
-    }
-    if (!ingood) {
-        int flags;
-
-        if (PyArray_ISFORTRAN(self)) {
-            flags = NPY_ARRAY_FARRAY;
-        }
-        else {
-            flags = NPY_ARRAY_CARRAY;
-        }
-        Py_INCREF(indescr);
-        newin = (PyArrayObject *)PyArray_FromArray(self, indescr, flags);
-        if (newin == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        newin = self;
-        Py_INCREF(newin);
-    }
-
-    /*
-     * At this point, newin is a single-segment, aligned, and correct
-     * byte-order array of the correct type
-     *
-     * if ingood == 0, then it is a copy, otherwise,
-     * it is the original input.
-     */
-
-    /*
-     * If we have already made a copy of the data, then use
-     * that as the output array
-     */
-    if (out == NULL && !ingood) {
-        out = newin;
-    }
-
-    /*
-     * Now, we know newin is a usable array for fastclip,
-     * we need to make sure the output array is available
-     * and usable
-     */
-    if (out == NULL) {
-        Py_INCREF(indescr);
-        out = (PyArrayObject*)PyArray_NewFromDescr(Py_TYPE(self),
-                                            indescr, PyArray_NDIM(self),
-                                            PyArray_DIMS(self),
-                                            NULL, NULL,
-                                            PyArray_ISFORTRAN(self),
-                                            (PyObject *)self);
-        if (out == NULL) {
-            goto fail;
-        }
-
-        outgood = 1;
-    }
-    else Py_INCREF(out);
-    /* Input is good at this point */
-    if (out == newin) {
-        outgood = 1;
-    }
-
-
-    /* make sure the shape of the output array is the same */
-    if (!PyArray_SAMESHAPE(newin, out)) {
-        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
-                        "same shape as the input.");
-        goto fail;
-    }
-
-    if (!outgood && PyArray_EQUIVALENTLY_ITERABLE(
-                            self, out, PyArray_TRIVIALLY_ITERABLE_OP_READ,
-                            PyArray_TRIVIALLY_ITERABLE_OP_NOREAD) &&
-                        PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
-                        PyArray_ISNOTSWAPPED(out) &&
-                        PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
-        outgood = 1;
-    }
-
-    /*
-     * Do we still not have a suitable output array?
-     * Create one, now. No matter why the array is not suitable a copy has
-     * to be made. This may be just to avoid memory overlap though.
-     */
-    if (!outgood) {
-        int oflags;
-        if (PyArray_ISFORTRAN(self)) {
-            oflags = NPY_ARRAY_FARRAY;
-        }
-        else {
-            oflags = NPY_ARRAY_CARRAY;
-        }
-        oflags |= (NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST |
-                   NPY_ARRAY_ENSURECOPY);
-        Py_INCREF(indescr);
-        newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
-        if (newout == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        newout = out;
-        Py_INCREF(newout);
-    }
-
-    /* Now we can call the fast-clip function */
-    min_data = max_data = NULL;
-    if (mina != NULL) {
-        min_data = PyArray_DATA(mina);
-    }
-    if (maxa != NULL) {
-        max_data = PyArray_DATA(maxa);
-    }
-    func(PyArray_DATA(newin), PyArray_SIZE(newin), min_data, max_data, PyArray_DATA(newout));
-
-    /* Clean up temporary variables */
-    Py_XDECREF(indescr);
-    Py_XDECREF(newdescr);
-    Py_XDECREF(mina);
-    Py_XDECREF(maxa);
-    Py_DECREF(newin);
-    /* Copy back into out if out was not already a nice array. */
-    PyArray_ResolveWritebackIfCopy(newout);
-    Py_DECREF(newout);
-    return (PyObject *)out;
-
- fail:
-    Py_XDECREF(indescr);
-    Py_XDECREF(newdescr);
-    Py_XDECREF(maxa);
-    Py_XDECREF(mina);
-    Py_XDECREF(newin);
-    PyArray_DiscardWritebackIfCopy(newout);
-    Py_XDECREF(newout);
-    return NULL;
 }
 
 
@@ -1211,7 +828,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
                                                 n_ops.conjugate);
         }
         else {
-            return PyArray_GenericBinaryFunction(self,
+            return PyArray_GenericBinaryFunction((PyObject *)self,
                                                  (PyObject *)out,
                                                  n_ops.conjugate);
         }

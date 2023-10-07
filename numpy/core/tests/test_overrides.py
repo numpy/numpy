@@ -1,20 +1,19 @@
 import inspect
 import sys
+import os
+import tempfile
+from io import StringIO
 from unittest import mock
+import pickle
+
+import pytest
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
-from numpy.compat import pickle
-import pytest
-
-
-requires_array_function = pytest.mark.skipif(
-    not ARRAY_FUNCTION_ENABLED,
-    reason="__array_function__ dispatch not enabled.")
+    verify_matching_signatures)
 
 
 def _return_not_implemented(self, *args, **kwargs):
@@ -147,7 +146,6 @@ class TestGetImplementingArgs:
 
 class TestNDArrayArrayFunction:
 
-    @requires_array_function
     def test_method(self):
 
         class Other:
@@ -206,7 +204,6 @@ class TestNDArrayArrayFunction:
                                      args=(array,), kwargs={})
 
 
-@requires_array_function
 class TestArrayFunctionDispatch:
 
     def test_pickle(self):
@@ -245,8 +242,20 @@ class TestArrayFunctionDispatch:
         with assert_raises_regex(TypeError, 'no implementation found'):
             dispatched_one_arg(array)
 
+    def test_where_dispatch(self):
 
-@requires_array_function
+        class DuckArray:
+            def __array_function__(self, ufunc, method, *inputs, **kwargs):
+                return "overridden"
+
+        array = np.array(1)
+        duck_array = DuckArray()
+
+        result = np.std(array, where=duck_array)
+
+        assert_equal(result, "overridden")
+
+
 class TestVerifyMatchingSignatures:
 
     def test_verify_matching_signatures(self):
@@ -299,7 +308,6 @@ def _new_duck_type_and_implements():
     return (MyArray, implements)
 
 
-@requires_array_function
 class TestArrayFunctionImplementation:
 
     def test_one_arg(self):
@@ -352,6 +360,112 @@ class TestArrayFunctionImplementation:
                 TypeError, "no implementation found for 'my.func'"):
             func(MyArray())
 
+    @pytest.mark.parametrize("name", ["concatenate", "mean", "asarray"])
+    def test_signature_error_message_simple(self, name):
+        func = getattr(np, name)
+        try:
+            # all of these functions need an argument:
+            func()
+        except TypeError as e:
+            exc = e
+
+        assert exc.args[0].startswith(f"{name}()")
+
+    def test_signature_error_message(self):
+        # The lambda function will be named "<lambda>", but the TypeError
+        # should show the name as "func"
+        def _dispatcher():
+            return ()
+
+        @array_function_dispatch(_dispatcher)
+        def func():
+            pass
+
+        try:
+            func._implementation(bad_arg=3)
+        except TypeError as e:
+            expected_exception = e
+
+        try:
+            func(bad_arg=3)
+            raise AssertionError("must fail")
+        except TypeError as exc:
+            if exc.args[0].startswith("_dispatcher"):
+                # We replace the qualname currently, but it used `__name__`
+                # (relevant functions have the same name and qualname anyway)
+                pytest.skip("Python version is not using __qualname__ for "
+                            "TypeError formatting.")
+
+            assert exc.args == expected_exception.args
+
+    @pytest.mark.parametrize("value", [234, "this func is not replaced"])
+    def test_dispatcher_error(self, value):
+        # If the dispatcher raises an error, we must not attempt to mutate it
+        error = TypeError(value)
+
+        def dispatcher():
+            raise error
+
+        @array_function_dispatch(dispatcher)
+        def func():
+            return 3
+
+        try:
+            func()
+            raise AssertionError("must fail")
+        except TypeError as exc:
+            assert exc is error  # unmodified exception
+
+    def test_properties(self):
+        # Check that str and repr are sensible
+        func = dispatched_two_arg
+        assert str(func) == str(func._implementation)
+        repr_no_id = repr(func).split("at ")[0]
+        repr_no_id_impl = repr(func._implementation).split("at ")[0]
+        assert repr_no_id == repr_no_id_impl
+
+    @pytest.mark.parametrize("func", [
+            lambda x, y: 0,  # no like argument
+            lambda like=None: 0,  # not keyword only
+            lambda *, like=None, a=3: 0,  # not last (not that it matters)
+        ])
+    def test_bad_like_sig(self, func):
+        # We sanity check the signature, and these should fail.
+        with pytest.raises(RuntimeError):
+            array_function_dispatch()(func)
+
+    def test_bad_like_passing(self):
+        # Cover internal sanity check for passing like as first positional arg
+        def func(*, like=None):
+            pass
+
+        func_with_like = array_function_dispatch()(func)
+        with pytest.raises(TypeError):
+            func_with_like()
+        with pytest.raises(TypeError):
+            func_with_like(like=234)
+
+    def test_too_many_args(self):
+        # Mainly a unit-test to increase coverage
+        objs = []
+        for i in range(40):
+            class MyArr:
+                def __array_function__(self, *args, **kwargs):
+                    return NotImplemented
+
+            objs.append(MyArr())
+
+        def _dispatch(*args):
+            return args
+
+        @array_function_dispatch(_dispatch)
+        def func(*args):
+            pass
+
+        with pytest.raises(TypeError, match="maximum number"):
+            func(*objs)
+
+
 
 class TestNDArrayMethods:
 
@@ -380,7 +494,6 @@ class TestNumPyFunctions:
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
 
-    @requires_array_function
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
 
@@ -390,7 +503,6 @@ class TestNumPyFunctions:
 
         assert_equal(np.sum(MyArray()), 'yes')
 
-    @requires_array_function
     def test_sum_on_mock_array(self):
 
         # We need a proxy for mocks because __array_function__ is only looked
@@ -411,7 +523,6 @@ class TestNumPyFunctions:
             np.sum, (ArrayProxy,), (proxy,), {})
         proxy.value.__array__.assert_not_called()
 
-    @requires_array_function
     def test_sum_forwarding_implementation(self):
 
         class MyArray(np.ndarray):
@@ -425,3 +536,204 @@ class TestNumPyFunctions:
         # note: the internal implementation of np.sum() calls the .sum() method
         array = np.array(1).view(MyArray)
         assert_equal(np.sum(array), 'summed')
+
+
+class TestArrayLike:
+    def setup_method(self):
+        class MyArray():
+            def __init__(self, function=None):
+                self.function = function
+
+            def __array_function__(self, func, types, args, kwargs):
+                assert func is getattr(np, func.__name__)
+                try:
+                    my_func = getattr(self, func.__name__)
+                except AttributeError:
+                    return NotImplemented
+                return my_func(*args, **kwargs)
+
+        self.MyArray = MyArray
+
+        class MyNoArrayFunctionArray():
+            def __init__(self, function=None):
+                self.function = function
+
+        self.MyNoArrayFunctionArray = MyNoArrayFunctionArray
+
+    def add_method(self, name, arr_class, enable_value_error=False):
+        def _definition(*args, **kwargs):
+            # Check that `like=` isn't propagated downstream
+            assert 'like' not in kwargs
+
+            if enable_value_error and 'value_error' in kwargs:
+                raise ValueError
+
+            return arr_class(getattr(arr_class, name))
+        setattr(arr_class, name, _definition)
+
+    def func_args(*args, **kwargs):
+        return args, kwargs
+
+    def test_array_like_not_implemented(self):
+        self.add_method('array', self.MyArray)
+
+        ref = self.MyArray.array()
+
+        with assert_raises_regex(TypeError, 'no implementation found'):
+            array_like = np.asarray(1, like=ref)
+
+    _array_tests = [
+        ('array', *func_args((1,))),
+        ('asarray', *func_args((1,))),
+        ('asanyarray', *func_args((1,))),
+        ('ascontiguousarray', *func_args((2, 3))),
+        ('asfortranarray', *func_args((2, 3))),
+        ('require', *func_args((np.arange(6).reshape(2, 3),),
+                               requirements=['A', 'F'])),
+        ('empty', *func_args((1,))),
+        ('full', *func_args((1,), 2)),
+        ('ones', *func_args((1,))),
+        ('zeros', *func_args((1,))),
+        ('arange', *func_args(3)),
+        ('frombuffer', *func_args(b'\x00' * 8, dtype=int)),
+        ('fromiter', *func_args(range(3), dtype=int)),
+        ('fromstring', *func_args('1,2', dtype=int, sep=',')),
+        ('loadtxt', *func_args(lambda: StringIO('0 1\n2 3'))),
+        ('genfromtxt', *func_args(lambda: StringIO('1,2.1'),
+                                  dtype=[('int', 'i8'), ('float', 'f8')],
+                                  delimiter=',')),
+    ]
+
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
+    @pytest.mark.parametrize('numpy_ref', [True, False])
+    def test_array_like(self, function, args, kwargs, numpy_ref):
+        self.add_method('array', self.MyArray)
+        self.add_method(function, self.MyArray)
+        np_func = getattr(np, function)
+        my_func = getattr(self.MyArray, function)
+
+        if numpy_ref is True:
+            ref = np.array(1)
+        else:
+            ref = self.MyArray.array()
+
+        like_args = tuple(a() if callable(a) else a for a in args)
+        array_like = np_func(*like_args, **kwargs, like=ref)
+
+        if numpy_ref is True:
+            assert type(array_like) is np.ndarray
+
+            np_args = tuple(a() if callable(a) else a for a in args)
+            np_arr = np_func(*np_args, **kwargs)
+
+            # Special-case np.empty to ensure values match
+            if function == "empty":
+                np_arr.fill(1)
+                array_like.fill(1)
+
+            assert_equal(array_like, np_arr)
+        else:
+            assert type(array_like) is self.MyArray
+            assert array_like.function is my_func
+
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
+    @pytest.mark.parametrize('ref', [1, [1], "MyNoArrayFunctionArray"])
+    def test_no_array_function_like(self, function, args, kwargs, ref):
+        self.add_method('array', self.MyNoArrayFunctionArray)
+        self.add_method(function, self.MyNoArrayFunctionArray)
+        np_func = getattr(np, function)
+
+        # Instantiate ref if it's the MyNoArrayFunctionArray class
+        if ref == "MyNoArrayFunctionArray":
+            ref = self.MyNoArrayFunctionArray.array()
+
+        like_args = tuple(a() if callable(a) else a for a in args)
+
+        with assert_raises_regex(TypeError,
+                'The `like` argument must be an array-like that implements'):
+            np_func(*like_args, **kwargs, like=ref)
+
+    @pytest.mark.parametrize('numpy_ref', [True, False])
+    def test_array_like_fromfile(self, numpy_ref):
+        self.add_method('array', self.MyArray)
+        self.add_method("fromfile", self.MyArray)
+
+        if numpy_ref is True:
+            ref = np.array(1)
+        else:
+            ref = self.MyArray.array()
+
+        data = np.random.random(5)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fname = os.path.join(tmpdir, "testfile")
+            data.tofile(fname)
+
+            array_like = np.fromfile(fname, like=ref)
+            if numpy_ref is True:
+                assert type(array_like) is np.ndarray
+                np_res = np.fromfile(fname, like=ref)
+                assert_equal(np_res, data)
+                assert_equal(array_like, np_res)
+            else:
+                assert type(array_like) is self.MyArray
+                assert array_like.function is self.MyArray.fromfile
+
+    def test_exception_handling(self):
+        self.add_method('array', self.MyArray, enable_value_error=True)
+
+        ref = self.MyArray.array()
+
+        with assert_raises(TypeError):
+            # Raises the error about `value_error` being invalid first
+            np.array(1, value_error=True, like=ref)
+
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
+    def test_like_as_none(self, function, args, kwargs):
+        self.add_method('array', self.MyArray)
+        self.add_method(function, self.MyArray)
+        np_func = getattr(np, function)
+
+        like_args = tuple(a() if callable(a) else a for a in args)
+        # required for loadtxt and genfromtxt to init w/o error.
+        like_args_exp = tuple(a() if callable(a) else a for a in args)
+
+        array_like = np_func(*like_args, **kwargs, like=None)
+        expected = np_func(*like_args_exp, **kwargs)
+        # Special-case np.empty to ensure values match
+        if function == "empty":
+            array_like.fill(1)
+            expected.fill(1)
+        assert_equal(array_like, expected)
+
+
+def test_function_like():
+    # We provide a `__get__` implementation, make sure it works
+    assert type(np.mean) is np.core._multiarray_umath._ArrayFunctionDispatcher 
+
+    class MyClass:
+        def __array__(self):
+            # valid argument to mean:
+            return np.arange(3)
+
+        func1 = staticmethod(np.mean)
+        func2 = np.mean
+        func3 = classmethod(np.mean)
+
+    m = MyClass()
+    assert m.func1([10]) == 10
+    assert m.func2() == 1  # mean of the arange
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        # Tries to operate on the class
+        m.func3()
+
+    # Manual binding also works (the above may shortcut):
+    bound = np.mean.__get__(m, MyClass)
+    assert bound() == 1
+
+    bound = np.mean.__get__(None, MyClass)  # unbound actually
+    assert bound([10]) == 10
+
+    bound = np.mean.__get__(MyClass)  # classmethod
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        bound()

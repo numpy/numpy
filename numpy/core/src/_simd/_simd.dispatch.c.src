@@ -1,0 +1,974 @@
+/*@targets #simd_test*/
+#include "_simd.h"
+#include "_simd_inc.h"
+
+#if NPY_SIMD
+#include "_simd_data.inc"
+#include "_simd_convert.inc"
+#include "_simd_vector.inc"
+#include "_simd_arg.inc"
+#include "_simd_easyintrin.inc"
+
+//#########################################################################
+//## Defining NPYV intrinsics as module functions
+//#########################################################################
+/**begin repeat
+ * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #esfx      = u16,s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
+ * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
+ * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
+ * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
+ * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sumup_sup = 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   1,   0,   1,   1#
+ * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
+ * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
+ * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
+ * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
+ * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
+ */
+#if @simd_sup@
+/***************************
+ * Memory
+ ***************************/
+/**begin repeat1
+ * # intrin = load, loada, loads, loadl#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, q@sfx@)
+/**end repeat1**/
+SIMD_IMPL_INTRIN_1(load_@sfx@x2, v@sfx@x2, q@sfx@)
+
+/**begin repeat1
+ * # intrin = store, storea, stores, storel, storeh, store#
+ * # x = ,,,,, x2#
+ */
+// special definition due to the nature of @intrin@
+static PyObject *
+simd__intrin_@intrin@_@sfx@@x@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@@x@};
+    if (!PyArg_ParseTuple(
+        args, "O&O&:@intrin@_@sfx@@x@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &vec_arg
+    )) {
+        return NULL;
+    }
+    npyv_@intrin@_@sfx@@x@(seq_arg.data.q@sfx@, vec_arg.data.v@sfx@@x@);
+    // write-back
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        simd_arg_free(&seq_arg);
+        return NULL;
+    }
+    simd_arg_free(&seq_arg);
+    Py_RETURN_NONE;
+}
+/**end repeat1**/
+
+/****************************************
+ * Non-contiguous/Partial Memory access
+ ****************************************/
+#if @ncont_sup@
+// Partial Load
+SIMD_IMPL_INTRIN_3(load_till_@sfx@, v@sfx@, q@sfx@, u32, @sfx@)
+SIMD_IMPL_INTRIN_2(load_tillz_@sfx@, v@sfx@, q@sfx@, u32)
+#if @size@ == 32
+    SIMD_IMPL_INTRIN_4(load2_till_@sfx@, v@sfx@, q@sfx@, u32, @sfx@, @sfx@)
+    SIMD_IMPL_INTRIN_2(load2_tillz_@sfx@, v@sfx@, q@sfx@, u32)
+#else
+    SIMD_IMPL_INTRIN_4(load2_till_@sfx@, v@sfx@, q@sfx@, u32, @sfx@, @sfx@)
+    SIMD_IMPL_INTRIN_2(load2_tillz_@sfx@, v@sfx@, q@sfx@, u32)
+#endif
+
+// Partial Store
+/**begin repeat1
+ * #intrin = store_till, store2_till, store2_till#
+ * #chksize= 0,          32,           64#
+ */
+#if !@chksize@ || @chksize@ == @size@
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@};
+    if (!PyArg_ParseTuple(
+        args, "O&O&O&:@intrin@_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &nlane_arg,
+        simd_arg_converter, &vec_arg
+    )) {
+        return NULL;
+    }
+    npyv_@intrin@_@sfx@(
+        seq_arg.data.q@sfx@, nlane_arg.data.u32, vec_arg.data.v@sfx@
+    );
+    // write-back
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        simd_arg_free(&seq_arg);
+        return NULL;
+    }
+    simd_arg_free(&seq_arg);
+    Py_RETURN_NONE;
+}
+#endif // chksize
+
+/**end repeat1**/
+// Non-contiguous Load
+/**begin repeat1
+ * #intrin = loadn,       loadn2,       loadn2,
+ *           loadn_till,  loadn2_till,  loadn2_till,
+ *           loadn_tillz, loadn2_tillz, loadn2_tillz#
+ * #scale  = 1,2,2,       1,2,2,         1,2,2#
+ * #till   = 0*3,         1*3,           1*3#
+ * #fill   = 0*3,         1*3,           0*3#
+ # #fill2  = 0*3,         0,1,1,         0*3#
+ * #format = ,,,          O&O&, O&O&O&*2,O&*3#
+ * #chksize= 0,32,64,     0,32,64,       0,32,64#
+ */
+#if !@chksize@ || @chksize@ == @size@
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg stride_arg = {.dtype = simd_data_s64};
+#if @till@
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+#endif // till
+#if @fill@
+    simd_arg fill_arg = {.dtype = simd_data_@sfx@};
+#endif
+#if @fill2@
+    simd_arg fill2_arg = {.dtype = simd_data_@sfx@};
+#endif
+    if (!PyArg_ParseTuple(
+        args, "@format@O&O&:@intrin@_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &stride_arg
+#if @till@
+        ,simd_arg_converter, &nlane_arg
+#endif
+#if @fill@
+        ,simd_arg_converter, &fill_arg
+#endif
+#if @fill2@
+        ,simd_arg_converter, &fill2_arg
+#endif
+    )) {
+        return NULL;
+    }
+    npyv_lanetype_@sfx@ *seq_ptr = seq_arg.data.q@sfx@;
+    npy_intp stride = (npy_intp)stride_arg.data.s64;
+    Py_ssize_t cur_seq_len = simd_sequence_len(seq_ptr);
+    Py_ssize_t min_seq_len = stride * npyv_nlanes_@sfx@;
+    if (stride < 0) {
+        seq_ptr += cur_seq_len - 1 * @scale@;
+        min_seq_len = -min_seq_len;
+    }
+    if (cur_seq_len < min_seq_len) {
+        PyErr_Format(PyExc_ValueError,
+            "@intrin@_@sfx@(), according to provided stride %d, the "
+            "minimum acceptable size of the required sequence is %d, given(%d)",
+            stride, min_seq_len, cur_seq_len
+        );
+        goto err;
+    }
+    npyv_@sfx@ rvec = npyv_@intrin@_@sfx@(
+        seq_ptr, stride
+    #if @till@
+        , nlane_arg.data.u32
+    #endif
+    #if @fill@
+        , fill_arg.data.@sfx@
+    #endif
+    #if @fill2@
+        , fill2_arg.data.@sfx@
+    #endif
+    );
+    simd_arg ret = {
+        .dtype = simd_data_v@sfx@, .data = {.v@sfx@=rvec}
+    };
+    simd_arg_free(&seq_arg);
+    return simd_arg_to_obj(&ret);
+err:
+    simd_arg_free(&seq_arg);
+    return NULL;
+}
+#endif // chksize
+/**end repeat1**/
+
+// Non-contiguous Store
+/**begin repeat1
+ * #intrin = storen,      storen2,      storen2,
+             storen_till, storen2_till, storen2_till#
+ * #scale  = 1,2,2,       1,2,2#
+ * #till   = 0*3,         1*3#
+ * #format = ,,,          O&*3#
+ * #chksize= 0,32,64,     0,32,64#
+ */
+#if !@chksize@ || @chksize@ == @size@
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg stride_arg = {.dtype = simd_data_s64};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@};
+#if @till@
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+#endif
+    if (!PyArg_ParseTuple(
+        args, "@format@O&O&O&:storen_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &stride_arg
+#if @till@
+        ,simd_arg_converter, &nlane_arg
+#endif
+        ,simd_arg_converter, &vec_arg
+    )) {
+        return NULL;
+    }
+    npyv_lanetype_@sfx@ *seq_ptr = seq_arg.data.q@sfx@;
+    npy_intp stride = (npy_intp)stride_arg.data.s64;
+    Py_ssize_t cur_seq_len = simd_sequence_len(seq_ptr);
+    Py_ssize_t min_seq_len = stride * npyv_nlanes_@sfx@;
+    if (stride < 0) {
+        seq_ptr += cur_seq_len - 1*@scale@;
+        min_seq_len = -min_seq_len;
+    }
+    // overflow guard
+    if (cur_seq_len < min_seq_len) {
+        PyErr_Format(PyExc_ValueError,
+            "@intrin@_@sfx@(), according to provided stride %d, the"
+            "minimum acceptable size of the required sequence is %d, given(%d)",
+            stride, min_seq_len, cur_seq_len
+        );
+        goto err;
+    }
+    npyv_@intrin@_@sfx@(
+        seq_ptr, stride
+    #if @till@
+        ,nlane_arg.data.u32
+    #endif
+        ,vec_arg.data.v@sfx@
+    );
+    // write-back
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        goto err;
+    }
+    simd_arg_free(&seq_arg);
+    Py_RETURN_NONE;
+err:
+    simd_arg_free(&seq_arg);
+    return NULL;
+}
+#endif // chksize
+/**end repeat1**/
+#endif // @ncont_sup@
+
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_IMPL_INTRIN_2(lut32_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
+#if @size@ == 64
+SIMD_IMPL_INTRIN_2(lut16_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
+/***************************
+ * Misc
+ ***************************/
+SIMD_IMPL_INTRIN_0(zero_@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(extract0_@sfx@, @sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(setall_@sfx@, v@sfx@, @sfx@)
+SIMD_IMPL_INTRIN_3(select_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+
+/**begin repeat1
+ * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+#if @simd_sup2@
+SIMD_IMPL_INTRIN_1(reinterpret_@sfx_to@_@sfx@, v@sfx_to@, v@sfx@)
+#endif // simd_sup2
+/**end repeat1**/
+
+/**
+ * special definition due to the nature of intrinsics
+ * npyv_setf_@sfx@ and npy_set_@sfx@.
+*/
+/**begin repeat1
+ * #intrin = setf, set#
+ */
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    npyv_lanetype_@sfx@ *data = simd_sequence_from_iterable(args, simd_data_q@sfx@, npyv_nlanes_@sfx@);
+    if (data == NULL) {
+        return NULL;
+    }
+    simd_data r = {.v@sfx@ = npyv_@intrin@_@sfx@(
+        data[0],  data[1],  data[2],  data[3],  data[4],  data[5],  data[6],  data[7],
+        data[8],  data[9],  data[10], data[11], data[12], data[13], data[14], data[15],
+        data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
+        data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
+        data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39],
+        data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47],
+        data[48], data[49], data[50], data[51], data[52], data[53], data[54], data[55],
+        data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63],
+        data[64] // for setf
+    )};
+    simd_sequence_free(data);
+    return (PyObject*)PySIMDVector_FromData(r, simd_data_v@sfx@);
+}
+/**end repeat1**/
+
+/***************************
+ * Reorder
+ ***************************/
+/**begin repeat1
+ * # intrin = combinel, combineh#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+/**begin repeat1
+ * # intrin = combine, zip, unzip#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@x2, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @rev64_sup@
+SIMD_IMPL_INTRIN_1(rev64_@sfx@, v@sfx@, v@sfx@)
+#endif
+
+// special implementation to convert runtime constants to immediate values
+#if @size@ == 32
+// one call for element index then gather them within one vector
+// instead of unroll the 255 possible cases.
+NPY_FINLINE npyv_@sfx@
+npyv_permi128_@sfx@_(npyv_@sfx@ a, unsigned e0, unsigned e1, unsigned e2, unsigned e3)
+{
+   /**begin repeat1
+    * # en = e0, e1, e2, e3#
+    */
+    npyv_@sfx@ v@en@;
+    npyv_lanetype_@sfx@ d@en@[npyv_nlanes_@sfx@];
+    if (0) {}
+   /**begin repeat2
+    * # imm = 1, 2, 3#
+    */
+    else if (@en@ == @imm@) {
+        v@en@ = npyv_permi128_@sfx@(a, @imm@, @imm@, @imm@, @imm@);
+    }
+    /**end repeat2**/
+    else {
+        v@en@ = npyv_permi128_@sfx@(a, 0, 0, 0, 0);
+    }
+    npyv_store_@sfx@(d@en@, v@en@);
+    /**end repeat1**/
+    if (e0 == e1 && e0 == e2 && e0 == e3) {
+        return ve0;
+    }
+    for (int i = 0; i < npyv_nlanes_@sfx@; i += 4) {
+        de0[i+1] = de1[i+1];
+        de0[i+2] = de2[i+2];
+        de0[i+3] = de3[i+3];
+    }
+    return npyv_load_@sfx@(de0);
+}
+SIMD_IMPL_INTRIN_5(permi128_@sfx@_, v@sfx@, v@sfx@, u8, u8, u8, u8)
+#elif @size@ == 64
+NPY_FINLINE npyv_@sfx@
+npyv_permi128_@sfx@_(npyv_@sfx@ a, unsigned e0, unsigned e1)
+{
+    if (e0 == 1 && e1 == 0) {
+        return npyv_permi128_@sfx@(a, 1, 0);
+    }
+    else if (e0 == 0 && e1 == 1) {
+        return npyv_permi128_@sfx@(a, 0, 1);
+    }
+    else if (e0 == 1 && e1 == 1) {
+        return npyv_permi128_@sfx@(a, 1, 1);
+    }
+    return npyv_permi128_@sfx@(a, 0, 0);
+}
+SIMD_IMPL_INTRIN_3(permi128_@sfx@_, v@sfx@, v@sfx@, u8, u8)
+#endif
+
+/***************************
+ * Operators
+ ***************************/
+#if @shl_imm@ > 0
+SIMD_IMPL_INTRIN_2(shl_@sfx@, v@sfx@, v@sfx@, u8)
+SIMD_IMPL_INTRIN_2(shr_@sfx@, v@sfx@, v@sfx@, u8)
+// immediate constant
+SIMD_IMPL_INTRIN_2IMM(shli_@sfx@, v@sfx@, v@sfx@, @shl_imm@)
+SIMD_IMPL_INTRIN_2IMM(shri_@sfx@, v@sfx@, v@sfx@, @shr_imm@)
+#endif // shl_imm
+
+/**begin repeat1
+ * #intrin = and, or, xor#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
+
+/**begin repeat1
+ * #intrin = cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @bitw8b_sup@
+SIMD_IMPL_INTRIN_2(andc_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_2(andc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(orc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xnor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+#endif
+
+// test cross all vector lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, u8, v@sfx@)
+/**end repeat1**/
+/***************************
+ * Conversion
+ ***************************/
+SIMD_IMPL_INTRIN_1(cvt_@sfx@_@bsfx@, v@sfx@,  v@bsfx@)
+SIMD_IMPL_INTRIN_1(cvt_@bsfx@_@sfx@, v@bsfx@, v@sfx@)
+#if @expand_sup@
+SIMD_IMPL_INTRIN_1(expand_@esfx@_@sfx@, v@esfx@x2, v@sfx@)
+#endif // expand_sup
+/***************************
+ * Arithmetic
+ ***************************/
+/**begin repeat1
+ * #intrin = add, sub#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @sat_sup@
+/**begin repeat1
+ * #intrin = adds, subs#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif // sat_sup
+
+#if @mul_sup@
+SIMD_IMPL_INTRIN_2(mul_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+#endif // mul_sup
+
+#if @div_sup@
+SIMD_IMPL_INTRIN_2(div_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+#endif // div_sup
+
+#if @intdiv_sup@
+SIMD_IMPL_INTRIN_1(divisor_@sfx@, v@sfx@x3, @sfx@)
+SIMD_IMPL_INTRIN_2(divc_@sfx@, v@sfx@, v@sfx@, v@sfx@x3)
+#endif // intdiv_sup
+
+#if @fused_sup@
+/**begin repeat1
+ * #intrin = muladd, mulsub, nmuladd, nmulsub, muladdsub#
+ */
+SIMD_IMPL_INTRIN_3(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif // fused_sup
+
+#if @sum_sup@
+SIMD_IMPL_INTRIN_1(sum_@sfx@, @sfx@, v@sfx@)
+#endif // sum_sup
+
+#if @sumup_sup@
+SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
+#endif // sumup_sup
+
+/***************************
+ * Math
+ ***************************/
+#if @fp_only@
+/**begin repeat1
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * #intrin = max, min#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @fp_only@
+/**begin repeat1
+ * #intrin = maxp, minp, maxn, minn#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
+/**end repeat1**/
+/**end repeat1**/
+#endif
+
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_IMPL_INTRIN_4(@intrin@_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @fp_only@
+SIMD_IMPL_INTRIN_4(ifdiv_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_3(ifdivz_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+#endif
+
+#endif // simd_sup
+/**end repeat**/
+/*************************************************************************
+ * Variant
+ ************************************************************************/
+SIMD_IMPL_INTRIN_0N(cleanup)
+
+/*************************************************************************
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+#if NPY_SIMD_F32
+    SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
+#endif
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_1(notnan_f64, vb64, vf64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+#if NPY_SIMD_F32
+    SIMD_IMPL_INTRIN_1(round_s32_f32, vs32, vf32)
+#endif
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_2(round_s32_f64, vs32, vf64, vf64)
+#endif
+
+/*************************************************************************
+ * A special section for boolean intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+// Logical
+SIMD_IMPL_INTRIN_2(and_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(or_@bsfx@,  v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
+// test cross vector's lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@bsfx@, u8, v@bsfx@)
+/**end repeat1**/
+/**end repeat**/
+/***************************
+ * Conversions
+ ***************************/
+// Convert mask vector to integer bitfield
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_IMPL_INTRIN_1(tobits_@bsfx@, u64, v@bsfx@)
+/**end repeat**/
+
+SIMD_IMPL_INTRIN_2(pack_b8_b16, vb8, vb16, vb16)
+SIMD_IMPL_INTRIN_4(pack_b8_b32, vb8, vb32, vb32, vb32, vb32)
+SIMD_IMPL_INTRIN_8(pack_b8_b64, vb8, vb64, vb64, vb64, vb64,
+                                     vb64, vb64, vb64, vb64)
+
+//#########################################################################
+//## Attach module functions
+//#########################################################################
+static PyMethodDef simd__intrinsics_methods[] = {
+/**begin repeat
+ * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
+ * #esfx      = u16, s8, u32,s16, u32, s32, u64, s64, f32, f64#
+ * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
+ * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
+ * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
+ * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sumup_sup = 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   1,   0,   1,   1#
+ * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
+ * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
+ * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
+ * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
+ * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
+ */
+#if @simd_sup@
+
+/***************************
+ * Memory
+ ***************************/
+/**begin repeat1
+ * # intrin = load, loada, loads, loadl, store, storea, stores, storel, storeh#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+/**begin repeat1
+ * # intrin = load, store#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@x2)
+/**end repeat1**/
+
+/****************************************
+ * Non-contiguous/Partial Memory access
+ ****************************************/
+#if @ncont_sup@
+/**begin repeat1
+ * #intrin = load_till, load_tillz, loadn, loadn_till, loadn_tillz,
+ *           store_till, storen, storen_till#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#if @size@ == 32
+    /**begin repeat1
+     * #intrin = load2_till, load2_tillz, loadn2, loadn2_till, loadn2_tillz,
+     *           store2_till, storen2, storen2_till#
+     */
+    SIMD_INTRIN_DEF(@intrin@_@sfx@)
+    /**end repeat1**/
+#else
+    /**begin repeat1
+     * #intrin = load2_till, load2_tillz, loadn2, loadn2_till, loadn2_tillz,
+     *           store2_till, storen2, storen2_till#
+     */
+    SIMD_INTRIN_DEF(@intrin@_@sfx@)
+    /**end repeat1**/
+#endif
+#endif // ncont_sup
+
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_INTRIN_DEF(lut32_@sfx@)
+#endif
+#if @size@ == 64
+SIMD_INTRIN_DEF(lut16_@sfx@)
+#endif
+/***************************
+ * Misc
+ ***************************/
+/**begin repeat1
+ * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+#if @simd_sup2@
+SIMD_INTRIN_DEF(reinterpret_@sfx_to@_@sfx@)
+#endif // simd_sup2
+/**end repeat1**/
+
+/**begin repeat1
+ * # intrin = set, setf, setall, zero, select, extract0#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Reorder
+ ***************************/
+/**begin repeat1
+ * # intrin = combinel, combineh, combine, zip, unzip#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @rev64_sup@
+SIMD_INTRIN_DEF(rev64_@sfx@)
+#endif
+
+#if @size@ > 16
+{ "permi128_@sfx@", simd__intrin_permi128_@sfx@_, METH_VARARGS, NULL },
+#endif
+
+/***************************
+ * Operators
+ ***************************/
+#if @shl_imm@ > 0
+/**begin repeat1
+ * # intrin = shl, shr, shli, shri#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // shl_imm
+
+/**begin repeat1
+ * #intrin = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple,
+ *           any, all#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @bitw8b_sup@
+SIMD_INTRIN_DEF(andc_@sfx@)
+SIMD_INTRIN_DEF(andc_@bsfx@)
+SIMD_INTRIN_DEF(orc_@bsfx@)
+SIMD_INTRIN_DEF(xnor_@bsfx@)
+#endif
+
+/***************************
+ * Conversion
+ ***************************/
+SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
+SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
+#if @expand_sup@
+SIMD_INTRIN_DEF(expand_@esfx@_@sfx@)
+#endif // expand_sup
+/***************************
+ * Arithmetic
+ ***************************/
+/**begin repeat1
+ * #intrin = add, sub#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @sat_sup@
+/**begin repeat1
+ * #intrin = adds, subs#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // sat_sup
+
+#if @mul_sup@
+SIMD_INTRIN_DEF(mul_@sfx@)
+#endif // mul_sup
+
+#if @div_sup@
+SIMD_INTRIN_DEF(div_@sfx@)
+#endif // div_sup
+
+#if @intdiv_sup@
+SIMD_INTRIN_DEF(divisor_@sfx@)
+SIMD_INTRIN_DEF(divc_@sfx@)
+#endif // intdiv_sup
+
+#if @fused_sup@
+/**begin repeat1
+ * #intrin = muladd, mulsub, nmuladd, nmulsub, muladdsub#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // fused_sup
+
+#if @sum_sup@
+SIMD_INTRIN_DEF(sum_@sfx@)
+#endif // sum_sup
+
+#if @sumup_sup@
+SIMD_INTRIN_DEF(sumup_@sfx@)
+#endif // sumup_sup
+/***************************
+ * Math
+ ***************************/
+#if @fp_only@
+/**begin repeat1
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * #intrin = max, min#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @fp_only@
+/**begin repeat1
+ * #intrin = maxp, minp, maxn, minn#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
+/**end repeat1**/
+/**end repeat1**/
+#endif
+
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @fp_only@
+/**begin repeat1
+ * #intrin = ifdiv, ifdivz#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif
+
+#endif // simd_sup
+/**end repeat**/
+/*************************************************************************
+ * Variant
+ ************************************************************************/
+SIMD_INTRIN_DEF(cleanup)
+
+/*************************************************************************
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+#if NPY_SIMD_F32
+    SIMD_INTRIN_DEF(notnan_f32)
+#endif
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(notnan_f64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+#if NPY_SIMD_F32
+    SIMD_INTRIN_DEF(round_s32_f32)
+#endif
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(round_s32_f64)
+#endif
+
+/*************************************************************************
+ * A special section for boolean intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+// Logical
+SIMD_INTRIN_DEF(and_@bsfx@)
+SIMD_INTRIN_DEF(or_@bsfx@)
+SIMD_INTRIN_DEF(xor_@bsfx@)
+SIMD_INTRIN_DEF(not_@bsfx@)
+// test cross vector's lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_INTRIN_DEF(@intrin@_@bsfx@)
+/**end repeat1**/
+/**end repeat**/
+/***************************
+ * Conversions
+ ***************************/
+// Convert mask vector to integer bitfield
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_INTRIN_DEF(tobits_@bsfx@)
+/**end repeat**/
+
+// Pack multiple vectors into one
+SIMD_INTRIN_DEF(pack_b8_b16)
+SIMD_INTRIN_DEF(pack_b8_b32)
+SIMD_INTRIN_DEF(pack_b8_b64)
+
+/************************************************************************/
+{NULL, NULL, 0, NULL}
+}; // PyMethodDef
+
+#endif // NPY_SIMD
+
+//#########################################################################
+//## Defining a separate module for each target
+//#########################################################################
+NPY_VISIBILITY_HIDDEN PyObject *
+NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
+{
+    static struct PyModuleDef defs = {
+        .m_base = PyModuleDef_HEAD_INIT,
+    #if defined(NPY_MTARGETS_CURRENT) // meson build
+        .m_name = "numpy.core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT),
+    #elif defined(NPY__CPU_TARGET_CURRENT)
+        .m_name = "numpy.core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
+    #else
+        .m_name = "numpy.core._simd.baseline",
+    #endif
+        .m_size = -1,
+    #if NPY_SIMD
+        .m_methods = simd__intrinsics_methods
+    #else
+        .m_methods = NULL
+    #endif
+    };
+    PyObject *m = PyModule_Create(&defs);
+    if (m == NULL) {
+        return NULL;
+    }
+    if (PyModule_AddIntConstant(m, "simd", NPY_SIMD)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_f32", NPY_SIMD_F32)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_bigendian", NPY_SIMD_BIGENDIAN)) {
+        goto err;
+    }
+#if NPY_SIMD
+    if (PySIMDVectorType_Init(m)) {
+        goto err;
+    }
+    /**begin repeat
+     * #sfx = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+     */
+    if (PyModule_AddIntConstant(m, "nlanes_@sfx@", npyv_nlanes_@sfx@)) {
+        goto err;
+    }
+    /**end repeat**/
+#endif // NPY_SIMD
+    return m;
+err:
+    Py_DECREF(m);
+    return NULL;
+}

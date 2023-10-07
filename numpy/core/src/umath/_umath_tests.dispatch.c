@@ -1,13 +1,16 @@
 /**
- * Testing the utilites of the CPU dispatcher
+ * Testing the utilities of the CPU dispatcher
  *
  * @targets $werror baseline
  * SSE2 SSE41 AVX2
  * VSX VSX2 VSX3
  * NEON ASIMD ASIMDHP
  */
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
 #include "npy_cpu_dispatch.h"
+#include "numpy/utils.h" // NPY_TOSTRING
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "_umath_tests.dispatch.h"
@@ -29,5 +32,6 @@ void NPY_CPU_DISPATCH_CURFX(_umath_tests_dispatch_attach)(PyObject *list)
     PyObject *item = PyUnicode_FromString(NPY_TOSTRING(NPY_CPU_DISPATCH_CURFX(func)));
     if (item) {
         PyList_Append(list, item);
+        Py_DECREF(item);
     }
 }

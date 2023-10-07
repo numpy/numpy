@@ -1,0 +1,4 @@
+:orphan:
+
+Getting started
+===============

@@ -1,13 +1,15 @@
+import datetime
+import pickle
+
+import pytest
 
 import numpy
 import numpy as np
-import datetime
-import pytest
 from numpy.testing import (
+    IS_WASM,
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex, assert_array_equal,
     )
-from numpy.compat import pickle
 
 # Use pytz to test out various time zones if available
 try:
@@ -26,6 +28,7 @@ class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
+                     'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
@@ -62,6 +65,7 @@ class TestDateTime:
         assert_raises(TypeError, np.dtype, 'm7')
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
+        assert_raises(TypeError, np.dtype, 'M8[3000000000ps]')
 
     def test_datetime_casting_rules(self):
         # Cannot cast safely/same_kind between timedelta and datetime
@@ -136,6 +140,42 @@ class TestDateTime:
         assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
+    def test_datetime_prefix_conversions(self):
+        # regression tests related to gh-19631;
+        # test metric prefixes from seconds down to
+        # attoseconds for bidirectional conversions
+        smaller_units = ['M8[7000ms]',
+                         'M8[2000us]',
+                         'M8[1000ns]',
+                         'M8[5000ns]',
+                         'M8[2000ps]',
+                         'M8[9000fs]',
+                         'M8[1000as]',
+                         'M8[2000000ps]',
+                         'M8[1000000as]',
+                         'M8[2000000000ps]',
+                         'M8[1000000000as]']
+        larger_units = ['M8[7s]',
+                        'M8[2ms]',
+                        'M8[us]',
+                        'M8[5us]',
+                        'M8[2ns]',
+                        'M8[9ps]',
+                        'M8[1fs]',
+                        'M8[2us]',
+                        'M8[1ps]',
+                        'M8[2ms]',
+                        'M8[1ns]']
+        for larger_unit, smaller_unit in zip(larger_units, smaller_units):
+            assert np.can_cast(larger_unit, smaller_unit, casting='safe')
+            assert np.can_cast(smaller_unit, larger_unit, casting='safe')
+
+    @pytest.mark.parametrize("unit", [
+        "s", "ms", "us", "ns", "ps", "fs", "as"])
+    def test_prohibit_negative_datetime(self, unit):
+        with assert_raises(TypeError):
+            np.array([1], dtype=f"M8[-1{unit}]")
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         assert_(np.datetime64('NaT') !=
@@ -151,7 +191,7 @@ class TestDateTime:
         expected = np.arange(size)
         arr = np.tile(np.datetime64('NaT'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
-    
+
     @pytest.mark.parametrize("size", [
         3, 21, 217, 1000])
     def test_timedelta_nat_argsort_stability(self, size):
@@ -200,10 +240,10 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.datetime64('NaT')), 'NaT')
         assert_equal(repr(np.datetime64('NaT')),
-                     "numpy.datetime64('NaT')")
+                     "np.datetime64('NaT')")
         assert_equal(str(np.datetime64('2011-02')), '2011-02')
         assert_equal(repr(np.datetime64('2011-02')),
-                     "numpy.datetime64('2011-02')")
+                     "np.datetime64('2011-02')")
 
         # None gets constructed as NaT
         assert_equal(np.datetime64(None), np.datetime64('NaT'))
@@ -340,12 +380,12 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.timedelta64('NaT')), 'NaT')
         assert_equal(repr(np.timedelta64('NaT')),
-                     "numpy.timedelta64('NaT')")
+                     "np.timedelta64('NaT')")
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
         assert_equal(repr(np.timedelta64(-3, 's')),
-                     "numpy.timedelta64(-3,'s')")
+                     "np.timedelta64(-3,'s')")
         assert_equal(repr(np.timedelta64(12)),
-                     "numpy.timedelta64(12)")
+                     "np.timedelta64(12)")
 
         # Construction from an integer produces generic units
         assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
@@ -428,6 +468,10 @@ class TestDateTime:
         expected = np.array(datetime.timedelta(seconds=20),
                             np.timedelta64)
         assert_equal(actual, expected)
+
+    def test_timedelta_nat_format(self):
+        # gh-17552
+        assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
@@ -676,10 +720,67 @@ class TestDateTime:
         assert_equal(uni_a, uni_b)
 
         # Datetime to long string - gh-9712
-        assert_equal(str_a, dt_a.astype((np.string_, 128)))
-        str_b = np.empty(str_a.shape, dtype=(np.string_, 128))
+        assert_equal(str_a, dt_a.astype((np.bytes_, 128)))
+        str_b = np.empty(str_a.shape, dtype=(np.bytes_, 128))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
+
+    @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
+    def test_time_byteswapping(self, time_dtype):
+        times = np.array(["2017", "NaT"], dtype=time_dtype)
+        times_swapped = times.astype(times.dtype.newbyteorder())
+        assert_array_equal(times, times_swapped)
+
+        unswapped = times_swapped.view(np.dtype("int64").newbyteorder())
+        assert_array_equal(unswapped, times.view(np.int64))
+
+    @pytest.mark.parametrize(["time1", "time2"],
+            [("M8[s]", "M8[D]"), ("m8[s]", "m8[ns]")])
+    def test_time_byteswapped_cast(self, time1, time2):
+        dtype1 = np.dtype(time1)
+        dtype2 = np.dtype(time2)
+        times = np.array(["2017", "NaT"], dtype=dtype1)
+        expected = times.astype(dtype2)
+
+        # Test that every byte-swapping combination also returns the same
+        # results (previous tests check that this comparison works fine).
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2)
+        assert_array_equal(res, expected)
+        res = times.astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
+    @pytest.mark.parametrize("str_dtype", ["U", "S"])
+    def test_datetime_conversions_byteorders(self, str_dtype, time_dtype):
+        times = np.array(["2017", "NaT"], dtype=time_dtype)
+        # Unfortunately, timedelta does not roundtrip:
+        from_strings = np.array(["2017", "NaT"], dtype=str_dtype)
+        to_strings = times.astype(str_dtype)  # assume this is correct
+
+        # Check that conversion from times to string works if src is swapped:
+        times_swapped = times.astype(times.dtype.newbyteorder())
+        res = times_swapped.astype(str_dtype)
+        assert_array_equal(res, to_strings)
+        # And also if both are swapped:
+        res = times_swapped.astype(to_strings.dtype.newbyteorder())
+        assert_array_equal(res, to_strings)
+        # only destination is swapped:
+        res = times.astype(to_strings.dtype.newbyteorder())
+        assert_array_equal(res, to_strings)
+
+        # Check that conversion from string to times works if src is swapped:
+        from_strings_swapped = from_strings.astype(
+                from_strings.dtype.newbyteorder())
+        res = from_strings_swapped.astype(time_dtype)
+        assert_array_equal(res, times)
+        # And if both are swapped:
+        res = from_strings_swapped.astype(times.dtype.newbyteorder())
+        assert_array_equal(res, times)
+        # Only destination is swapped:
+        res = from_strings.astype(times.dtype.newbyteorder())
+        assert_array_equal(res, times)
 
     def test_datetime_array_str(self):
         a = np.array(['2011-03-16', '1920-01-01', '2013-05-19'], dtype='M')
@@ -903,12 +1004,11 @@ class TestDateTime:
                      casting='unsafe'))
 
         # Shouldn't be able to compare datetime and timedelta
-        # TODO: Changing to 'same_kind' or 'safe' casting in the ufuncs by
-        #       default is needed to properly catch this kind of thing...
         a = np.array('2012-12-21', dtype='M8[D]')
         b = np.array(3, dtype='m8[D]')
-        #assert_raises(TypeError, np.less, a, b)
-        assert_raises(TypeError, np.less, a, b, casting='same_kind')
+        assert_raises(TypeError, np.less, a, b)
+        # not even if "unsafe"
+        assert_raises(TypeError, np.less, a, b, casting='unsafe')
 
     def test_datetime_like(self):
         a = np.array([3], dtype='m8[4D]')
@@ -1195,6 +1295,7 @@ class TestDateTime:
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),
@@ -1269,6 +1370,7 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
+    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
@@ -1311,13 +1413,13 @@ class TestDateTime:
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
             # m8 / m8
-            assert_equal(tda / tdb, 6.0 / 9.0)
-            assert_equal(np.divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(np.true_divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(tdb / tda, 9.0 / 6.0)
+            assert_equal(tda / tdb, 6 / 9)
+            assert_equal(np.divide(tda, tdb), 6 / 9)
+            assert_equal(np.true_divide(tda, tdb), 6 / 9)
+            assert_equal(tdb / tda, 9 / 6)
             assert_equal((tda / tdb).dtype, np.dtype('f8'))
-            assert_equal(tda / tdd, 60.0)
-            assert_equal(tdd / tda, 1.0 / 60.0)
+            assert_equal(tda / tdd, 60)
+            assert_equal(tdd / tda, 1 / 60)
 
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
@@ -1338,7 +1440,7 @@ class TestDateTime:
 
         # NaTs
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
+            sup.filter(RuntimeWarning,  r".*encountered in divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1653,8 +1755,9 @@ class TestDateTime:
                      '1959-10-13T12:34:56')
         assert_equal(np.datetime_as_string(np.datetime64(datetime, 'ms')),
                      '1959-10-13T12:34:56.789')
-        assert_equal(np.datetime_as_string(np.datetime64(datetime, 'us')),
-                     '1959-10-13T12:34:56.789012')
+        for us in ['us', 'μs', b'us']:  # check non-ascii and bytes too
+            assert_equal(np.datetime_as_string(np.datetime64(datetime, us)),
+                         '1959-10-13T12:34:56.789012')
 
         datetime = '1969-12-31T23:34:56.789012345678901234'
 
@@ -1893,6 +1996,7 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
@@ -1928,6 +2032,27 @@ class TestDateTime:
         assert_equal(np.maximum.reduce(a).dtype, np.dtype('m8[s]'))
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
+
+    def test_timedelta_correct_mean(self):
+        # test mainly because it worked only via a bug in that allowed:
+        # `timedelta.sum(dtype="f8")` to ignore the dtype request.
+        a = np.arange(1000, dtype="m8[s]")
+        assert_array_equal(a.mean(), a.sum() / len(a))
+
+    def test_datetime_no_subtract_reducelike(self):
+        # subtracting two datetime64 works, but we cannot reduce it, since
+        # the result of that subtraction will have a different dtype.
+        arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
+        msg = r"the resolved dtypes are not compatible"
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.reduce(arr)
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.accumulate(arr)
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.reduceat(arr, [0])
 
     def test_datetime_busday_offset(self):
         # First Monday in June
@@ -2206,16 +2331,23 @@ class TestDateTime:
         assert_equal(np.busday_count('2011-01-01', dates, busdaycal=bdd),
                      np.arange(366))
         # Returns negative value when reversed
+        # -1 since the '2011-01-01' is not a busday
         assert_equal(np.busday_count(dates, '2011-01-01', busdaycal=bdd),
-                     -np.arange(366))
+                     -np.arange(366) - 1)
 
+        # 2011-12-31 is a saturday
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
+        # only the first generated date is in the future of 2011-12-31
+        expected = np.arange(366)
+        expected[0] = -1
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
-                     np.arange(366))
+                     expected)
         # Returns negative value when reversed
+        expected = -np.arange(366)+1
+        expected[0] = 0
         assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
-                     -np.arange(366))
+                     expected)
 
         # Can't supply both a weekmask/holidays and busdaycal
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
@@ -2227,6 +2359,17 @@ class TestDateTime:
         assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
         # Returns negative value when reversed
         assert_equal(np.busday_count('2011-04', '2011-03', weekmask='Mon'), -4)
+
+        sunday = np.datetime64('2023-03-05')
+        monday = sunday + 1
+        friday = sunday + 5
+        saturday = sunday + 6
+        assert_equal(np.busday_count(sunday, monday), 0)
+        assert_equal(np.busday_count(monday, sunday), -1)
+
+        assert_equal(np.busday_count(friday, saturday), 1)
+        assert_equal(np.busday_count(saturday, friday), 0)
+
 
     def test_datetime_is_busday(self):
         holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
@@ -2389,3 +2532,39 @@ class TestDateTimeData:
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
+
+    def test_bytes(self):
+        # byte units are converted to unicode
+        dt = np.datetime64('2000', (b'ms', 5))
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+        dt = np.datetime64('2000', b'5ms')
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+    def test_non_ascii(self):
+        # μs is normalized to μ
+        dt = np.datetime64('2000', ('μs', 5))
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+        dt = np.datetime64('2000', '5μs')
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+
+def test_comparisons_return_not_implemented():
+    # GH#17017
+
+    class custom:
+        __array_priority__ = 10000
+
+    obj = custom()
+
+    dt = np.datetime64('2000', 'ns')
+    td = dt - dt
+
+    for item in [dt, td]:
+        assert item.__eq__(obj) is NotImplemented
+        assert item.__ne__(obj) is NotImplemented
+        assert item.__le__(obj) is NotImplemented
+        assert item.__lt__(obj) is NotImplemented
+        assert item.__ge__(obj) is NotImplemented
+        assert item.__gt__(obj) is NotImplemented

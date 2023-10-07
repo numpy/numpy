@@ -1,11 +1,17 @@
-#ifndef _NPY_CALCULATION_H_
-#define _NPY_CALCULATION_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CALCULATION_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CALCULATION_H_
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject *out);
 
 NPY_NO_EXPORT PyObject*
+_PyArray_ArgMaxWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims);
+
+NPY_NO_EXPORT PyObject*
 PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject *out);
+
+NPY_NO_EXPORT PyObject*
+_PyArray_ArgMinWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims);
 
 NPY_NO_EXPORT PyObject*
 PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out);
@@ -61,4 +67,4 @@ PyArray_All(PyArrayObject* self, int axis, PyArrayObject* out);
 NPY_NO_EXPORT PyObject*
 PyArray_Any(PyArrayObject* self, int axis, PyArrayObject* out);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CALCULATION_H_ */

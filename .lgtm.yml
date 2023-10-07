@@ -1,6 +1,7 @@
 path_classifiers:
   library:
     - tools
+    - numpy/_version.py
   generated:
     # The exports defined in __init__.py are defined in the Cython module
     # np.random.mtrand. By excluding this file we suppress a number of

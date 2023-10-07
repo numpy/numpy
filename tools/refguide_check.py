@@ -19,11 +19,12 @@ another function, or deprecated, or ...)
 Another use of this helper script is to check validity of code samples
 in docstrings::
 
-    $ python refguide_check.py --doctests ma
+    $ python tools/refguide_check.py --doctests ma
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
+    $ python tools/refguide_check.py --rst doc/source
+
 """
 import copy
 import doctest
@@ -41,7 +42,6 @@ from contextlib import contextmanager, redirect_stderr
 from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
-from pkg_resources import parse_version
 
 import sphinx
 import numpy as np
@@ -51,27 +51,16 @@ from numpydoc.docscrape_sphinx import get_doc_object
 
 SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
-if parse_version(sphinx.__version__) >= parse_version('1.5'):
-    # Enable specific Sphinx directives
-    from sphinx.directives.other import SeeAlso, Only
-    directives.register_directive('seealso', SeeAlso)
-    directives.register_directive('only', Only)
-else:
-    # Remove sphinx directives that don't run without Sphinx environment.
-    # Sphinx < 1.5 installs all directives on import...
-    directives._directives.pop('versionadded', None)
-    directives._directives.pop('versionchanged', None)
-    directives._directives.pop('moduleauthor', None)
-    directives._directives.pop('sectionauthor', None)
-    directives._directives.pop('codeauthor', None)
-    directives._directives.pop('toctree', None)
+# Enable specific Sphinx directives
+from sphinx.directives.other import SeeAlso, Only
+directives.register_directive('seealso', SeeAlso)
+directives.register_directive('only', Only)
 
 
 BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
     'core',
-    'doc.structured_arrays',
     'f2py',
     'linalg',
     'lib',
@@ -93,18 +82,23 @@ OTHER_MODULE_DOCS = {
 
 # these names are known to fail doctesting and we like to keep it that way
 # e.g. sometimes pseudocode is acceptable etc
-DOCTEST_SKIPLIST = set([
+#
+# Optionally, a subset of methods can be skipped by setting dict-values
+# to a container of method-names
+DOCTEST_SKIPDICT = {
     # cases where NumPy docstrings import things from SciPy:
-    'numpy.lib.vectorize',
-    'numpy.random.standard_gamma',
-    'numpy.random.gamma',
-    'numpy.random.vonmises',
-    'numpy.random.power',
-    'numpy.random.zipf',
+    'numpy.lib.vectorize': None,
+    'numpy.random.standard_gamma': None,
+    'numpy.random.gamma': None,
+    'numpy.random.vonmises': None,
+    'numpy.random.power': None,
+    'numpy.random.zipf': None,
+    # cases where NumPy docstrings import things from other 3'rd party libs:
+    'numpy.core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.DataSource',
-    'numpy.lib.Repository',
-])
+    'numpy.lib.npyio.DataSource': None,
+    'numpy.lib.Repository': None,
+}
 
 # Skip non-numpy RST files, historical release notes
 # Any single-directory exact match will skip the directory and all subdirs.
@@ -118,10 +112,19 @@ RST_SKIPLIST = [
     'changelog',
     'doc/release',
     'doc/source/release',
+    'doc/release/upcoming_changes',
     'c-info.ufunc-tutorial.rst',
     'c-info.python-as-glue.rst',
     'f2py.getting-started.rst',
+    'f2py-examples.rst',
     'arrays.nditer.cython.rst',
+    'how-to-verify-bug.rst',
+    # See PR 17222, these should be fixed
+    'basics.dispatch.rst',
+    'basics.subclassing.rst',
+    'basics.interoperability.rst',
+    'misc.rst',
+    'TESTS.rst'
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -157,9 +160,8 @@ def short_path(path, cwd=None):
 
     Parameters
     ----------
-    path: str or None
-
-    cwd: str or None
+    path : str or None
+    cwd : str or None
 
     Returns
     -------
@@ -260,7 +262,7 @@ def get_all_dict(module):
         except ValueError:
             pass
     if not all_dict:
-        # Must be a pure documentation module like doc.structured_arrays
+        # Must be a pure documentation module
         all_dict.append('__doc__')
 
     # Modules are almost always private; real submodules need a separate
@@ -296,7 +298,7 @@ def compare(all_dict, others, names, module_name):
         List of non deprecated sub modules for module_name
     others : list
         List of sub modules for module_name
-    names :  set
+    names : set
         Set of function names or special directives present in
         docstring of module_name
     module_name : ModuleType
@@ -335,8 +337,8 @@ def is_deprecated(f):
     """
     Check if module `f` is deprecated
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     f : ModuleType
 
     Returns
@@ -388,8 +390,8 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     output += "Objects in refguide: %i\n\n" % num_ref
 
     only_all, only_ref, missing = compare(all_dict, others, names, module_name)
-    dep_in_ref = set(only_ref).intersection(deprecated)
-    only_ref = set(only_ref).difference(deprecated)
+    dep_in_ref = only_ref.intersection(deprecated)
+    only_ref = only_ref.difference(deprecated)
 
     if len(dep_in_ref) > 0:
         output += "Deprecated objects in refguide::\n\n"
@@ -612,9 +614,7 @@ CHECK_NAMESPACE = {
       'float64': np.float64,
       'dtype': np.dtype,
       'nan': np.nan,
-      'NaN': np.nan,
       'inf': np.inf,
-      'Inf': np.inf,
       'StringIO': io.StringIO,
 }
 
@@ -713,7 +713,7 @@ class Checker(doctest.OutputChecker):
             # Maybe we're printing a numpy array? This produces invalid python
             # code: `print(np.arange(3))` produces "[0 1 2]" w/o commas between
             # values. So, reinsert commas and retry.
-            # TODO: handle (1) abberivation (`print(np.arange(10000))`), and
+            # TODO: handle (1) abbreviation (`print(np.arange(10000))`), and
             #              (2) n-dim arrays with n > 1
             s_want = want.strip()
             s_got = got.strip()
@@ -771,13 +771,12 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Parameters
     ----------
-    tests: list
+    tests : list
 
     full_name : str
 
     verbose : bool
-
-    doctest_warning : bool
+    doctest_warnings : bool
 
     Returns
     -------
@@ -863,8 +862,12 @@ def check_doctests(module, verbose, ns=None,
     for name in get_all_dict(module)[0]:
         full_name = module.__name__ + '.' + name
 
-        if full_name in DOCTEST_SKIPLIST:
-            continue
+        if full_name in DOCTEST_SKIPDICT:
+            skip_methods = DOCTEST_SKIPDICT[full_name]
+            if skip_methods is None:
+                continue
+        else:
+            skip_methods = None
 
         try:
             obj = getattr(module, name)
@@ -884,6 +887,10 @@ def check_doctests(module, verbose, ns=None,
                             "Failed to get doctests!\n" +
                             traceback.format_exc()))
             continue
+
+        if skip_methods is not None:
+            tests = [i for i in tests if
+                     i.name.partition(".")[2] not in skip_methods]
 
         success, output = _run_doctests(tests, full_name, verbose,
                                         doctest_warnings)
@@ -965,7 +972,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     results = []
 
     _, short_name = os.path.split(fname)
-    if short_name in DOCTEST_SKIPLIST:
+    if short_name in DOCTEST_SKIPDICT:
         return results
 
     full_name = fname
@@ -1144,7 +1151,12 @@ def main(argv):
         init_matplotlib()
 
     for submodule_name in module_names:
-        module_name = BASE_MODULE + '.' + submodule_name
+        prefix = BASE_MODULE + '.'
+        if not submodule_name.startswith(prefix):
+            module_name = prefix + submodule_name
+        else:
+            module_name = submodule_name
+
         __import__(module_name)
         module = sys.modules[module_name]
 

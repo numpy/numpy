@@ -1,3 +1,5 @@
+.. _c_api_deprecations:
+
 C API Deprecations
 ==================
 
@@ -48,7 +50,9 @@ warnings).
 
 To use the NPY_NO_DEPRECATED_API mechanism, you need to #define it to
 the target API version of NumPy before #including any NumPy headers.
-If you want to confirm that your code is clean against 1.7, use::
+If you want to confirm that your code is clean against 1.7, use:
+
+.. code-block:: c
 
     #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
@@ -56,3 +60,7 @@ On compilers which support a #warning mechanism, NumPy issues a
 compiler warning if you do not define the symbol NPY_NO_DEPRECATED_API.
 This way, the fact that there are deprecations will be flagged for
 third-party developers who may not have read the release notes closely.
+
+Note that defining NPY_NO_DEPRECATED_API is not sufficient to make your
+extension ABI compatible with a given NumPy version. See
+:ref:`for-downstream-package-authors`.

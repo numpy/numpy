@@ -48,4 +48,6 @@ code.
    ufunc
    generalized-ufuncs
    coremath
+   datetimes
    deprecations
+   data_memory

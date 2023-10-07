@@ -300,9 +300,10 @@ def randn(*args):
 
     Notes
     -----
-    For random samples from :math:`N(\\mu, \\sigma^2)`, use:
+    For random samples from the normal distribution with mean ``mu`` and
+    standard deviation ``sigma``, use::
 
-    ``sigma * np.matlib.randn(...) + mu``
+        sigma * np.matlib.randn(...) + mu
 
     Examples
     --------
@@ -314,7 +315,8 @@ def randn(*args):
     matrix([[ 0.99734545,  0.2829785 , -1.50629471],
             [-0.57860025,  1.65143654, -2.42667924]])
 
-    Two-by-four matrix of samples from :math:`N(3, 6.25)`:
+    Two-by-four matrix of samples from the normal distribution with
+    mean 3 and standard deviation 2.5:
 
     >>> 2.5 * np.matlib.randn((2, 4)) + 3
     matrix([[1.92771843, 6.16484065, 0.83314899, 1.30278462],

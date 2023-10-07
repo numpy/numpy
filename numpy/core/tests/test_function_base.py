@@ -1,9 +1,17 @@
+import sys
+
+import pytest
+
+import numpy as np
 from numpy import (
-    logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
+    logspace, linspace, geomspace, dtype, array, arange, isnan,
     ndarray, sqrt, nextafter, stack, errstate
     )
+from numpy.core import sctypes
+from numpy.core.function_base import add_newdoc
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
+    IS_PYPY
     )
 
 
@@ -64,6 +72,33 @@ class TestLogspace:
         assert_equal(t3, t4)
         t5 = logspace(start, stop, 6, axis=-1)
         assert_equal(t5, t2.T)
+
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    def test_base_array(self, axis: int):
+        start = 1
+        stop = 2
+        num = 6
+        base = array([1, 2])
+        t1 = logspace(start, stop, num=num, base=base, axis=axis)
+        t2 = stack(
+            [logspace(start, stop, num=num, base=_base) for _base in base],
+            axis=(axis + 1) % t1.ndim,
+        )
+        assert_equal(t1, t2)
+
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    def test_stop_base_array(self, axis: int):
+        start = 1
+        stop = array([2, 3])
+        num = 6
+        base = array([1, 2])
+        t1 = logspace(start, stop, num=num, base=base, axis=axis)
+        t2 = stack(
+            [logspace(start, _stop, num=num, base=_base)
+             for _stop, _base in zip(stop, base)],
+            axis=(axis + 1) % t1.ndim,
+        )
+        assert_equal(t1, t2)
 
     def test_dtype(self):
         y = logspace(0, 6, dtype='float32')
@@ -197,9 +232,9 @@ class TestGeomspace:
 
         # Native types
         y = geomspace(1, 1e6, dtype=float)
-        assert_equal(y.dtype, dtype('float_'))
+        assert_equal(y.dtype, dtype('float64'))
         y = geomspace(1, 1e6, dtype=complex)
-        assert_equal(y.dtype, dtype('complex'))
+        assert_equal(y.dtype, dtype('complex128'))
 
     def test_start_stop_array_scalar(self):
         lim1 = array([120, 100], dtype="int8")
@@ -402,3 +437,35 @@ class TestLinspace:
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
+                    
+    def test_round_negative(self):
+        y = linspace(-1, 3, num=8, dtype=int)
+        t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
+        assert_array_equal(y, t)
+
+    def test_any_step_zero_and_not_mult_inplace(self):
+        # any_step_zero is True, _mult_inplace is False
+        start = array([0.0, 1.0])
+        stop = array([2.0, 1.0])
+        y = linspace(start, stop, 3)
+        assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
+    
+
+class TestAdd_newdoc:
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_doc(self):
+        # test that np.add_newdoc did attach a docstring successfully:
+        tgt = "Current flat index into the array."
+        assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
+        assert_(len(np.core.ufunc.identity.__doc__) > 300)
+        assert_(len(np.lib._index_tricks_impl.mgrid.__doc__) > 300)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_errors_are_ignored(self):
+        prev_doc = np.core.flatiter.index.__doc__
+        # nothing changed, but error ignored, this should probably
+        # give a warning (or even error) in the future.
+        add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np.core.flatiter.index.__doc__

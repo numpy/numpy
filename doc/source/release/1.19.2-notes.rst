@@ -1,0 +1,57 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.19.2 Release Notes
+==========================
+
+NumPy 1.19.2 fixes several bugs, prepares for the upcoming Cython 3.x release.
+and pins setuptools to keep distutils working while upstream modifications are
+ongoing. The aarch64 wheels are built with the latest manylinux2014 release
+that fixes the problem of differing page sizes used by different linux distros.
+
+This release supports Python 3.6-3.8. Cython >= 0.29.21 needs to be used when
+building with Python 3.9 for testing purposes.
+
+There is a known problem with Windows 10 version=2004 and OpenBLAS svd that we
+are trying to debug. If you are running that Windows version you should use a
+NumPy version that links to the MKL library, earlier Windows versions are fine.
+
+Improvements
+============
+
+Add NumPy declarations for Cython 3.0 and later
+-----------------------------------------------
+The pxd declarations for Cython 3.0 were improved to avoid using deprecated
+NumPy C-API features.  Extension modules built with Cython 3.0+ that use NumPy
+can now set the C macro ``NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION`` to avoid
+C compiler warnings about deprecated API usage.
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Pauli Virtanen
+* Philippe Ombredanne +
+* Sebastian Berg
+* Stefan Behnel +
+* Stephan Loyd +
+* Zac Hatfield-Dodds
+
+Pull requests merged
+====================
+
+A total of 9 pull requests were merged for this release.
+
+* `#16959 <https://github.com/numpy/numpy/pull/16959>`__: TST: Change aarch64 to arm64 in travis.yml.
+* `#16998 <https://github.com/numpy/numpy/pull/16998>`__: MAINT: Configure hypothesis in ``np.test()`` for determinism,...
+* `#17000 <https://github.com/numpy/numpy/pull/17000>`__: BLD: pin setuptools < 49.2.0
+* `#17015 <https://github.com/numpy/numpy/pull/17015>`__: ENH: Add NumPy declarations to be used by Cython 3.0+
+* `#17125 <https://github.com/numpy/numpy/pull/17125>`__: BUG: Remove non-threadsafe sigint handling from fft calculation
+* `#17243 <https://github.com/numpy/numpy/pull/17243>`__: BUG: core: fix ilp64 blas dot/vdot/... for strides > int32 max
+* `#17244 <https://github.com/numpy/numpy/pull/17244>`__: DOC: Use SPDX license expressions with correct license
+* `#17245 <https://github.com/numpy/numpy/pull/17245>`__: DOC: Fix the link to the quick-start in the old API functions
+* `#17272 <https://github.com/numpy/numpy/pull/17272>`__: BUG: fix pickling of arrays larger than 2GiB

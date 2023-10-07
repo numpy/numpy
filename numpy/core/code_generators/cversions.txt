@@ -1,6 +1,8 @@
 # Hash below were defined from numpy_api_order.txt and ufunc_api_order.txt
 # When adding a new version here for a new minor release, also add the same
-# version as NPY_x_y_API_VERSION in numpyconfig.h
+# version as NPY_x_y_API_VERSION in numpyconfig.h and C_API_VERSION in
+# numpy/core/meson.build
+
 0x00000001 = 603580d224763e58c5e7147f804dc0f5
 0x00000002 = 8ecb29306758515ae69749c803a75da1
 0x00000003 = bf22c0d05b31625d2a7015988d61ce5a
@@ -50,8 +52,25 @@
 # Version 13 (NumPy 1.17) No change.
 # Version 13 (NumPy 1.18) No change.
 # Version 13 (NumPy 1.19) No change.
-# Version 13 (NumPy 1.20) No change.
 0x0000000d = 5b0e8bbded00b166125974fc71e80a33
 
-# Version 14 (NumPy 1.19) DType related API additions
+# Version 14 (NumPy 1.20)
+# DType related API additions.
+# A new field was added to the end of PyArrayObject_fields.
+# Version 14 (NumPy 1.21) No change.
 0x0000000e = 17a0f366e55ec05e5c5c149123478452
+
+# Version 15 (NumPy 1.22)
+# Configurable memory allocations
+0x0000000f = b8783365b873681cd204be50cdfb448d
+
+# Version 16 (NumPy 1.23)
+# NonNull attributes removed from numpy_api.py
+# Version 16 (NumPy 1.24) No change.
+0x00000010 = 04a7bf1e65350926a0e528798da263c0
+
+# Version 17 (NumPy 1.25) No actual change.
+0x00000011 = ca1aebdad799358149567d9d93cbca09
+
+# Version 18 (NumPy 2.0.0)
+0x00000012 = c48425db43c108beeb57eb7ef155d38e

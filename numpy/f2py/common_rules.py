@@ -13,8 +13,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.19 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
@@ -93,6 +91,7 @@ def buildhooks(m):
         idims = []
         for n in inames:
             ct = capi_maps.getctype(vars[n])
+            elsize = capi_maps.get_elsize(vars[n])
             at = capi_maps.c2capi_map[ct]
             dm = capi_maps.getarrdims(n, vars[n])
             if dm['dims']:
@@ -102,7 +101,8 @@ def buildhooks(m):
             dms = dm['dims'].strip()
             if not dms:
                 dms = '-1'
-            cadd('\t{\"%s\",%s,{{%s}},%s},' % (n, dm['rank'], dms, at))
+            cadd('\t{\"%s\",%s,{{%s}},%s, %s},'
+                 % (n, dm['rank'], dms, at, elsize))
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
         inames1_tps = ','.join(['char *' + s for s in inames1])
@@ -123,7 +123,9 @@ def buildhooks(m):
              % (F_FUNC, lower_name, name.upper(), name))
         cadd('}\n')
         iadd('\ttmp = PyFortranObject_New(f2py_%s_def,f2py_init_%s);' % (name, name))
-        iadd('\tF2PyDict_SetItemString(d, \"%s\", tmp);' % name)
+        iadd('\tif (tmp == NULL) return NULL;')
+        iadd('\tif (F2PyDict_SetItemString(d, \"%s\", tmp) == -1) return NULL;'
+             % name)
         iadd('\tPy_DECREF(tmp);')
         tname = name.replace('_', '\\_')
         dadd('\\subsection{Common block \\texttt{%s}}\n' % (tname))

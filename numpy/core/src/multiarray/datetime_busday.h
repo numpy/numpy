@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE__DATETIME_BUSDAY_H_
-#define _NPY_PRIVATE__DATETIME_BUSDAY_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAY_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAY_H_
 
 /*
  * This is the 'busday_offset' function exposed for calling
@@ -25,4 +25,4 @@ NPY_NO_EXPORT PyObject *
 array_is_busday(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAY_H_ */

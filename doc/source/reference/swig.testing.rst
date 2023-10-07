@@ -4,7 +4,7 @@ Testing the numpy.i Typemaps
 Introduction
 ------------
 
-Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
+Writing tests for the ``numpy.i`` `SWIG <https://www.swig.org/>`_
 interface file is a combinatorial headache.  At present, 12 different
 data types are supported, each with 74 different argument signatures,
 for a total of 888 typemaps supported "out of the box".  Each of these
@@ -81,18 +81,18 @@ macro defines several function prototypes that have the prefix
 ``TEST_FUNC_PROTOS`` is then implemented for all of the data types
 supported by ``numpy.i``:
 
-  * ``signed char``
-  * ``unsigned char``
-  * ``short``
-  * ``unsigned short``
-  * ``int``
-  * ``unsigned int``
-  * ``long``
-  * ``unsigned long``
-  * ``long long``
-  * ``unsigned long long``
-  * ``float``
-  * ``double``
+* ``signed char``
+* ``unsigned char``
+* ``short``
+* ``unsigned short``
+* ``int``
+* ``unsigned int``
+* ``long``
+* ``unsigned long``
+* ``long long``
+* ``unsigned long long``
+* ``float``
+* ``double``
 
 Testing Source Files
 --------------------
@@ -133,15 +133,15 @@ class to several other python classes, each one specific to a
 particular data type.  The ``VectorTestCase`` class stores two strings
 for typing information:
 
-    **self.typeStr**
-      A string that matches one of the ``SNAME`` prefixes used in
-      ``Vector.h`` and ``Vector.cxx``.  For example, ``"double"``.
+**self.typeStr**
+  A string that matches one of the ``SNAME`` prefixes used in
+  ``Vector.h`` and ``Vector.cxx``.  For example, ``"double"``.
 
-    **self.typeCode**
-      A short (typically single-character) string that represents a
-      data type in numpy and corresponds to ``self.typeStr``.  For
-      example, if ``self.typeStr`` is ``"double"``, then
-      ``self.typeCode`` should be ``"d"``.
+**self.typeCode**
+  A short (typically single-character) string that represents a
+  data type in numpy and corresponds to ``self.typeStr``.  For
+  example, if ``self.typeStr`` is ``"double"``, then
+  ``self.typeCode`` should be ``"d"``.
 
 Each test defined by the ``VectorTestCase`` class extracts the python
 function it is trying to test by accessing the ``Vector`` module's

@@ -1,0 +1,40 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Bas van Beek
+* Charles Harris
+* Christoph Gohlke
+* Mateusz Sokół +
+* Michael Lamparski
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 20 pull requests were merged for this release.
+
+* `#18382 <https://github.com/numpy/numpy/pull/18382>`__: MAINT: Update f2py from master.
+* `#18459 <https://github.com/numpy/numpy/pull/18459>`__: BUG: ``diagflat`` could overflow on windows or 32-bit platforms
+* `#18460 <https://github.com/numpy/numpy/pull/18460>`__: BUG: Fix refcount leak in f2py ``complex_double_from_pyobj``.
+* `#18461 <https://github.com/numpy/numpy/pull/18461>`__: BUG: Fix tiny memory leaks when ``like=`` overrides are used
+* `#18462 <https://github.com/numpy/numpy/pull/18462>`__: BUG: Remove temporary change of descr/flags in VOID functions
+* `#18469 <https://github.com/numpy/numpy/pull/18469>`__: BUG: Segfault in nditer buffer dealloc for Object arrays
+* `#18485 <https://github.com/numpy/numpy/pull/18485>`__: BUG: Remove suspicious type casting
+* `#18486 <https://github.com/numpy/numpy/pull/18486>`__: BUG: remove nonsensical comparison of pointer < 0
+* `#18487 <https://github.com/numpy/numpy/pull/18487>`__: BUG: verify pointer against NULL before using it
+* `#18488 <https://github.com/numpy/numpy/pull/18488>`__: BUG: check if PyArray_malloc succeeded
+* `#18546 <https://github.com/numpy/numpy/pull/18546>`__: BUG: incorrect error fallthrough in nditer
+* `#18559 <https://github.com/numpy/numpy/pull/18559>`__: CI: Backport CI fixes from main.
+* `#18599 <https://github.com/numpy/numpy/pull/18599>`__: MAINT: Add annotations for ``dtype.__getitem__``, ``__mul__`` and...
+* `#18611 <https://github.com/numpy/numpy/pull/18611>`__: BUG: NameError in numpy.distutils.fcompiler.compaq
+* `#18612 <https://github.com/numpy/numpy/pull/18612>`__: BUG: Fixed ``where`` keyword for ``np.mean`` & ``np.var`` methods
+* `#18617 <https://github.com/numpy/numpy/pull/18617>`__: CI: Update apt package list before Python install
+* `#18636 <https://github.com/numpy/numpy/pull/18636>`__: MAINT: Ensure that re-exported sub-modules are properly annotated
+* `#18638 <https://github.com/numpy/numpy/pull/18638>`__: BUG: Fix ma coercion list-of-ma-arrays if they do not cast to...
+* `#18661 <https://github.com/numpy/numpy/pull/18661>`__: BUG: Fix small valgrind-found issues
+* `#18671 <https://github.com/numpy/numpy/pull/18671>`__: BUG: Fix small issues found with pytest-leaks

@@ -15,8 +15,8 @@ NEP 18 — A dispatch mechanism for NumPy's high level array functions
 :Updated: 2019-05-25
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-August/078493.html
 
-Abstact
--------
+Abstract
+--------
 
 We propose the ``__array_function__`` protocol, to allow arguments of NumPy
 functions to define how that function operates on them. This will allow
@@ -132,9 +132,9 @@ Unlike ``__array_ufunc__``, there are no high-level guarantees about the
 type of ``func``, or about which of ``args`` and ``kwargs`` may contain objects
 implementing the array API.
 
-As a convenience for ``__array_function__`` implementors, ``types`` provides all
+As a convenience for ``__array_function__`` implementers, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
-allows implementors to quickly identify cases where they should defer to
+allows implementers to quickly identify cases where they should defer to
 ``__array_function__`` implementations on other arguments.
 The type of ``types`` is intentionally vague:
 ``frozenset`` would most closely match intended use, but we may use ``tuple``
@@ -487,7 +487,7 @@ gymnastics when we decided to add new optional arguments, e.g., the new
             kwargs['keepdims'] = keepdims
         return array.sum(..., **kwargs)
 
-For ``__array_function__`` implementors, this also means that it is possible
+For ``__array_function__`` implementers, this also means that it is possible
 to implement even existing optional arguments incrementally, and only in cases
 where it makes sense. For example, a library implementing immutable arrays
 would not be required to explicitly include an unsupported ``out`` argument in

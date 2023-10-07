@@ -1,15 +1,7 @@
-# NumPy static imports for Cython
+# NumPy static imports for Cython < 3.0
 #
 # If any of the PyArray_* functions are called, import_array must be
 # called first.
-#
-# This also defines backwards-compatibility buffer acquisition
-# code for use in Python 2.x (or Python <= 2.5 when NumPy starts
-# implementing PEP-3118 directly).
-#
-# Because of laziness, the format string of the buffer is statically
-# allocated. Increase the size if this is not enough, or submit a
-# patch to do this properly.
 #
 # Author: Dag Sverre Seljebotn
 #
@@ -138,7 +130,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ALIGNED
         NPY_NOTSWAPPED
         NPY_WRITEABLE
-        NPY_UPDATEIFCOPY
         NPY_ARR_HAS_DESCR
 
         NPY_BEHAVED
@@ -170,7 +161,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_ALIGNED
         NPY_ARRAY_NOTSWAPPED
         NPY_ARRAY_WRITEABLE
-        NPY_ARRAY_UPDATEIFCOPY
+        NPY_ARRAY_WRITEBACKIFCOPY
 
         NPY_ARRAY_BEHAVED
         NPY_ARRAY_BEHAVED_NS
@@ -228,11 +219,11 @@ cdef extern from "numpy/arrayobject.h":
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
 
-    ctypedef extern class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
+    ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
         pass
 
-    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
+    ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
         cdef int numiter
         cdef npy_intp size, index
         cdef int nd
@@ -298,8 +289,8 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef long double  npy_float128
 
     ctypedef struct npy_cfloat:
-        double real
-        double imag
+        float real
+        float imag
 
     ctypedef struct npy_cdouble:
         double real
@@ -368,7 +359,7 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_TYPE(ndarray arr) nogil
 
     object PyArray_GETITEM(ndarray arr, void *itemptr)
-    int PyArray_SETITEM(ndarray arr, void *itemptr, object obj)
+    int PyArray_SETITEM(ndarray arr, void *itemptr, object obj) except -1
 
     bint PyTypeNum_ISBOOL(int) nogil
     bint PyTypeNum_ISUNSIGNED(int) nogil
@@ -482,7 +473,6 @@ cdef extern from "numpy/arrayobject.h":
     void* PyArray_GETPTR3(ndarray m, npy_intp i, npy_intp j, npy_intp k) nogil
     void* PyArray_GETPTR4(ndarray m, npy_intp i, npy_intp j, npy_intp k, npy_intp l) nogil
 
-    void PyArray_XDECREF_ERR(ndarray)
     # Cannot be supported due to out arg
     # void PyArray_DESCR_REPLACE(descr)
 
@@ -516,21 +506,19 @@ cdef extern from "numpy/arrayobject.h":
     # Functions taking dtype and returning object/ndarray are disabled
     # for now as they steal dtype references. I'm conservative and disable
     # more than is probably needed until it can be checked further.
-    int PyArray_SetNumericOps        (object)
-    object PyArray_GetNumericOps ()
-    int PyArray_INCREF (ndarray)
-    int PyArray_XDECREF (ndarray)
+    int PyArray_INCREF (ndarray) except *  # uses PyArray_Item_INCREF...
+    int PyArray_XDECREF (ndarray) except *  # uses PyArray_Item_DECREF...
     void PyArray_SetStringFunction (object, int)
     dtype PyArray_DescrFromType (int)
     object PyArray_TypeObjectFromType (int)
     char * PyArray_Zero (ndarray)
     char * PyArray_One (ndarray)
     #object PyArray_CastToType (ndarray, dtype, int)
-    int PyArray_CastTo (ndarray, ndarray)
-    int PyArray_CastAnyTo (ndarray, ndarray)
-    int PyArray_CanCastSafely (int, int)
-    npy_bool PyArray_CanCastTo (dtype, dtype)
-    int PyArray_ObjectType (object, int)
+    int PyArray_CastTo (ndarray, ndarray) except -1
+    int PyArray_CastAnyTo (ndarray, ndarray) except -1
+    int PyArray_CanCastSafely (int, int)  # writes errors
+    npy_bool PyArray_CanCastTo (dtype, dtype)  # writes errors
+    int PyArray_ObjectType (object, int) except 0
     dtype PyArray_DescrFromObject (object, dtype)
     #ndarray* PyArray_ConvertToCommonType (object, int *)
     dtype PyArray_DescrFromScalar (object)
@@ -541,10 +529,7 @@ cdef extern from "numpy/arrayobject.h":
     void PyArray_ScalarAsCtype (object, void *)
     #int PyArray_CastScalarToCtype (object, void *, dtype)
     #int PyArray_CastScalarDirect (object, dtype, void *, int)
-    object PyArray_ScalarFromObject (object)
     #PyArray_VectorUnaryFunc * PyArray_GetCastFunc (dtype, int)
-    object PyArray_FromDims (int, int *, int)
-    #object PyArray_FromDimsAndDataAndDescr (int, int *, dtype, char *)
     #object PyArray_FromAny (object, dtype, int, int, int, object)
     object PyArray_EnsureArray (object)
     object PyArray_EnsureAnyArray (object)
@@ -554,34 +539,34 @@ cdef extern from "numpy/arrayobject.h":
     #object PyArray_FromIter (object, dtype, npy_intp)
     object PyArray_Return (ndarray)
     #object PyArray_GetField (ndarray, dtype, int)
-    #int PyArray_SetField (ndarray, dtype, int, object)
+    #int PyArray_SetField (ndarray, dtype, int, object) except -1
     object PyArray_Byteswap (ndarray, npy_bool)
     object PyArray_Resize (ndarray, PyArray_Dims *, int, NPY_ORDER)
-    int PyArray_MoveInto (ndarray, ndarray)
-    int PyArray_CopyInto (ndarray, ndarray)
-    int PyArray_CopyAnyInto (ndarray, ndarray)
-    int PyArray_CopyObject (ndarray, object)
+    int PyArray_MoveInto (ndarray, ndarray) except -1
+    int PyArray_CopyInto (ndarray, ndarray) except -1
+    int PyArray_CopyAnyInto (ndarray, ndarray) except -1
+    int PyArray_CopyObject (ndarray, object) except -1
     object PyArray_NewCopy (ndarray, NPY_ORDER)
     object PyArray_ToList (ndarray)
     object PyArray_ToString (ndarray, NPY_ORDER)
-    int PyArray_ToFile (ndarray, stdio.FILE *, char *, char *)
-    int PyArray_Dump (object, object, int)
+    int PyArray_ToFile (ndarray, stdio.FILE *, char *, char *) except -1
+    int PyArray_Dump (object, object, int) except -1
     object PyArray_Dumps (object, int)
-    int PyArray_ValidType (int)
+    int PyArray_ValidType (int)  # Cannot error
     void PyArray_UpdateFlags (ndarray, int)
     object PyArray_New (type, int, npy_intp *, int, npy_intp *, void *, int, int, object)
     #object PyArray_NewFromDescr (type, dtype, int, npy_intp *, npy_intp *, void *, int, object)
     #dtype PyArray_DescrNew (dtype)
     dtype PyArray_DescrNewFromType (int)
-    double PyArray_GetPriority (object, double)
+    double PyArray_GetPriority (object, double)  # clears errors as of 1.25
     object PyArray_IterNew (object)
     object PyArray_MultiIterNew (int, ...)
 
-    int PyArray_PyIntAsInt (object)
+    int PyArray_PyIntAsInt (object) except? -1
     npy_intp PyArray_PyIntAsIntp (object)
-    int PyArray_Broadcast (broadcast)
-    void PyArray_FillObjectArray (ndarray, object)
-    int PyArray_FillWithScalar (ndarray, object)
+    int PyArray_Broadcast (broadcast) except -1
+    void PyArray_FillObjectArray (ndarray, object) except *
+    int PyArray_FillWithScalar (ndarray, object) except -1
     npy_bool PyArray_CheckStrides (int, int, npy_intp, npy_intp, npy_intp *, npy_intp *)
     dtype PyArray_DescrNewByteorder (dtype, char)
     object PyArray_IterAllButAxis (object, int *)
@@ -595,10 +580,10 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFlagsObject (object)
     npy_bool PyArray_CanCastScalar (type, type)
     #int PyArray_CompareUCS4 (npy_ucs4 *, npy_ucs4 *, register size_t)
-    int PyArray_RemoveSmallest (broadcast)
+    int PyArray_RemoveSmallest (broadcast) except -1
     int PyArray_ElementStrides (object)
-    void PyArray_Item_INCREF (char *, dtype)
-    void PyArray_Item_XDECREF (char *, dtype)
+    void PyArray_Item_INCREF (char *, dtype) except *
+    void PyArray_Item_XDECREF (char *, dtype) except *
     object PyArray_FieldNames (object)
     object PyArray_Transpose (ndarray, PyArray_Dims *)
     object PyArray_TakeFrom (ndarray, object, int, ndarray, NPY_CLIPMODE)
@@ -606,7 +591,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_PutMask (ndarray, object, object)
     object PyArray_Repeat (ndarray, object, int)
     object PyArray_Choose (ndarray, object, ndarray, NPY_CLIPMODE)
-    int PyArray_Sort (ndarray, int, NPY_SORTKIND)
+    int PyArray_Sort (ndarray, int, NPY_SORTKIND) except -1
     object PyArray_ArgSort (ndarray, int, NPY_SORTKIND)
     object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, PyObject *)
     object PyArray_ArgMax (ndarray, int, ndarray)
@@ -640,53 +625,50 @@ cdef extern from "numpy/arrayobject.h":
     void * PyArray_GetPtr (ndarray, npy_intp*)
     int PyArray_CompareLists (npy_intp *, npy_intp *, int)
     #int PyArray_AsCArray (object*, void *, npy_intp *, int, dtype)
-    #int PyArray_As1D (object*, char **, int *, int)
-    #int PyArray_As2D (object*, char ***, int *, int *, int)
     int PyArray_Free (object, void *)
     #int PyArray_Converter (object, object*)
-    int PyArray_IntpFromSequence (object, npy_intp *, int)
+    int PyArray_IntpFromSequence (object, npy_intp *, int) except -1
     object PyArray_Concatenate (object, int)
     object PyArray_InnerProduct (object, object)
     object PyArray_MatrixProduct (object, object)
-    object PyArray_CopyAndTranspose (object)
     object PyArray_Correlate (object, object, int)
     int PyArray_TypestrConvert (int, int)
-    #int PyArray_DescrConverter (object, dtype*)
-    #int PyArray_DescrConverter2 (object, dtype*)
-    int PyArray_IntpConverter (object, PyArray_Dims *)
-    #int PyArray_BufferConverter (object, chunk)
-    int PyArray_AxisConverter (object, int *)
-    int PyArray_BoolConverter (object, npy_bool *)
-    int PyArray_ByteorderConverter (object, char *)
-    int PyArray_OrderConverter (object, NPY_ORDER *)
-    unsigned char PyArray_EquivTypes (dtype, dtype)
+    #int PyArray_DescrConverter (object, dtype*) except 0
+    #int PyArray_DescrConverter2 (object, dtype*) except 0
+    int PyArray_IntpConverter (object, PyArray_Dims *) except 0
+    #int PyArray_BufferConverter (object, chunk) except 0
+    int PyArray_AxisConverter (object, int *) except 0
+    int PyArray_BoolConverter (object, npy_bool *) except 0
+    int PyArray_ByteorderConverter (object, char *) except 0
+    int PyArray_OrderConverter (object, NPY_ORDER *) except 0
+    unsigned char PyArray_EquivTypes (dtype, dtype)  # clears errors
     #object PyArray_Zeros (int, npy_intp *, dtype, int)
     #object PyArray_Empty (int, npy_intp *, dtype, int)
     object PyArray_Where (object, object, object)
     object PyArray_Arange (double, double, double, int)
     #object PyArray_ArangeObj (object, object, object, dtype)
-    int PyArray_SortkindConverter (object, NPY_SORTKIND *)
+    int PyArray_SortkindConverter (object, NPY_SORTKIND *) except 0
     object PyArray_LexSort (object, int)
     object PyArray_Round (ndarray, int, ndarray)
     unsigned char PyArray_EquivTypenums (int, int)
-    int PyArray_RegisterDataType (dtype)
-    int PyArray_RegisterCastFunc (dtype, int, PyArray_VectorUnaryFunc *)
-    int PyArray_RegisterCanCast (dtype, int, NPY_SCALARKIND)
+    int PyArray_RegisterDataType (dtype) except -1
+    int PyArray_RegisterCastFunc (dtype, int, PyArray_VectorUnaryFunc *) except -1
+    int PyArray_RegisterCanCast (dtype, int, NPY_SCALARKIND) except -1
     #void PyArray_InitArrFuncs (PyArray_ArrFuncs *)
     object PyArray_IntTupleFromIntp (int, npy_intp *)
     int PyArray_TypeNumFromName (char *)
-    int PyArray_ClipmodeConverter (object, NPY_CLIPMODE *)
-    #int PyArray_OutputConverter (object, ndarray*)
+    int PyArray_ClipmodeConverter (object, NPY_CLIPMODE *) except 0
+    #int PyArray_OutputConverter (object, ndarray*) except 0
     object PyArray_BroadcastToShape (object, npy_intp *, int)
-    void _PyArray_SigintHandler (int)
-    void* _PyArray_GetSigintBuf ()
-    #int PyArray_DescrAlignConverter (object, dtype*)
-    #int PyArray_DescrAlignConverter2 (object, dtype*)
-    int PyArray_SearchsideConverter (object, void *)
+    #int PyArray_DescrAlignConverter (object, dtype*) except 0
+    #int PyArray_DescrAlignConverter2 (object, dtype*) except 0
+    int PyArray_SearchsideConverter (object, void *) except 0
     object PyArray_CheckAxis (ndarray, int *, int)
     npy_intp PyArray_OverflowMultiplyList (npy_intp *, int)
     int PyArray_CompareString (char *, char *, size_t)
-    int PyArray_SetBaseObject(ndarray, base)  # NOTE: steals a reference to base! Use "set_array_base()" instead.
+    int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
+
+    # additional datetime related functions are defined below
 
 
 # Typedefs that matches the runtime dtype objects in
@@ -720,11 +702,9 @@ ctypedef double complex complex128_t
 # The int types are mapped a bit surprising --
 # numpy.int corresponds to 'l' and numpy.long to 'q'
 ctypedef npy_long       int_t
-ctypedef npy_longlong   long_t
 ctypedef npy_longlong   longlong_t
 
 ctypedef npy_ulong      uint_t
-ctypedef npy_ulonglong  ulong_t
 ctypedef npy_ulonglong  ulonglong_t
 
 ctypedef npy_intp       intp_t
@@ -761,73 +741,6 @@ cdef inline tuple PyDataType_SHAPE(dtype d):
     else:
         return ()
 
-cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:
-    # Recursive utility function used in __getbuffer__ to get format
-    # string. The new location in the format string is returned.
-
-    cdef dtype child
-    cdef int endian_detector = 1
-    cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)
-    cdef tuple fields
-
-    for childname in descr.names:
-        fields = descr.fields[childname]
-        child, new_offset = fields
-
-        if (end - f) - <int>(new_offset - offset[0]) < 15:
-            raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
-
-        if ((child.byteorder == c'>' and little_endian) or
-            (child.byteorder == c'<' and not little_endian)):
-            raise ValueError(u"Non-native byte order not supported")
-            # One could encode it in the format string and have Cython
-            # complain instead, BUT: < and > in format strings also imply
-            # standardized sizes for datatypes, and we rely on native in
-            # order to avoid reencoding data types based on their size.
-            #
-            # A proper PEP 3118 exporter for other clients than Cython
-            # must deal properly with this!
-
-        # Output padding bytes
-        while offset[0] < new_offset:
-            f[0] = 120 # "x"; pad byte
-            f += 1
-            offset[0] += 1
-
-        offset[0] += child.itemsize
-
-        if not PyDataType_HASFIELDS(child):
-            t = child.type_num
-            if end - f < 5:
-                raise RuntimeError(u"Format string allocated too short.")
-
-            # Until ticket #99 is fixed, use integers to avoid warnings
-            if   t == NPY_BYTE:        f[0] =  98 #"b"
-            elif t == NPY_UBYTE:       f[0] =  66 #"B"
-            elif t == NPY_SHORT:       f[0] = 104 #"h"
-            elif t == NPY_USHORT:      f[0] =  72 #"H"
-            elif t == NPY_INT:         f[0] = 105 #"i"
-            elif t == NPY_UINT:        f[0] =  73 #"I"
-            elif t == NPY_LONG:        f[0] = 108 #"l"
-            elif t == NPY_ULONG:       f[0] = 76  #"L"
-            elif t == NPY_LONGLONG:    f[0] = 113 #"q"
-            elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
-            elif t == NPY_FLOAT:       f[0] = 102 #"f"
-            elif t == NPY_DOUBLE:      f[0] = 100 #"d"
-            elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
-            elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
-            elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
-            elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg
-            elif t == NPY_OBJECT:      f[0] = 79 #"O"
-            else:
-                raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
-            f += 1
-        else:
-            # Cython ignores struct boundary information ("T{...}"),
-            # so don't output it
-            f = _util_dtypestring(child, f, end, offset)
-    return f
-
 
 cdef extern from "numpy/ndarrayobject.h":
     PyTypeObject PyTimedeltaArrType_Type
@@ -840,7 +753,35 @@ cdef extern from "numpy/ndarraytypes.h":
         NPY_DATETIMEUNIT base
         int64_t num
 
+    ctypedef struct npy_datetimestruct:
+        int64_t year
+        int32_t month, day, hour, min, sec, us, ps, as
+
+
 cdef extern from "numpy/arrayscalars.h":
+
+    # abstract types
+    ctypedef class numpy.generic [object PyObject]:
+        pass
+    ctypedef class numpy.number [object PyObject]:
+        pass
+    ctypedef class numpy.integer [object PyObject]:
+        pass
+    ctypedef class numpy.signedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.unsignedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.inexact [object PyObject]:
+        pass
+    ctypedef class numpy.floating [object PyObject]:
+        pass
+    ctypedef class numpy.complexfloating [object PyObject]:
+        pass
+    ctypedef class numpy.flexible [object PyObject]:
+        pass
+    ctypedef class numpy.character [object PyObject]:
+        pass
+
     ctypedef struct PyDatetimeScalarObject:
         # PyObject_HEAD
         npy_datetime obval
@@ -868,6 +809,31 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_as
 
 
+cdef extern from "numpy/arrayobject.h":
+    # These are part of the C-API defined in `__multiarray_api.h`
+
+    # NumPy internal definitions in datetime_strings.c:
+    int get_datetime_iso_8601_strlen "NpyDatetime_GetDatetimeISO8601StrLen" (
+            int local, NPY_DATETIMEUNIT base)
+    int make_iso_8601_datetime "NpyDatetime_MakeISO8601Datetime" (
+            npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+            int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+            NPY_CASTING casting) except -1
+
+    # NumPy internal definition in datetime.c:
+    # May return 1 to indicate that object does not appear to be a datetime
+    # (returns 0 on success).
+    int convert_pydatetime_to_datetimestruct "NpyDatetime_ConvertPyDateTimeToDatetimeStruct" (
+            PyObject *obj, npy_datetimestruct *out,
+            NPY_DATETIMEUNIT *out_bestunit, int apply_tzinfo) except -1
+    int convert_datetime64_to_datetimestruct "NpyDatetime_ConvertDatetime64ToDatetimeStruct" (
+            PyArray_DatetimeMetaData *meta, npy_datetime dt,
+            npy_datetimestruct *out) except -1
+    int convert_datetimestruct_to_datetime64 "NpyDatetime_ConvertDatetimeStructToDatetime64"(
+            PyArray_DatetimeMetaData *meta, const npy_datetimestruct *dts,
+            npy_datetime *out) except -1
+
+
 #
 # ufunc API
 #
@@ -876,7 +842,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
-    ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
+    ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         cdef:
             int nin, nout, nargs
             int identity
@@ -895,33 +861,15 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
-        UFUNC_ERR_IGNORE
-        UFUNC_ERR_WARN
-        UFUNC_ERR_RAISE
-        UFUNC_ERR_CALL
-        UFUNC_ERR_PRINT
-        UFUNC_ERR_LOG
-        UFUNC_MASK_DIVIDEBYZERO
-        UFUNC_MASK_OVERFLOW
-        UFUNC_MASK_UNDERFLOW
-        UFUNC_MASK_INVALID
-        UFUNC_SHIFT_DIVIDEBYZERO
-        UFUNC_SHIFT_OVERFLOW
-        UFUNC_SHIFT_UNDERFLOW
-        UFUNC_SHIFT_INVALID
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
-        UFUNC_ERR_DEFAULT
-        UFUNC_ERR_DEFAULT2
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
     int PyUFunc_RegisterLoopForType(ufunc, int,
-                                    PyUFuncGenericFunction, int *, void *)
-    int PyUFunc_GenericFunction \
-        (ufunc, PyObject *, PyObject *, PyArrayObject **)
+                                    PyUFuncGenericFunction, int *, void *) except -1
     void PyUFunc_f_f_As_d_d \
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_d_d \
@@ -964,14 +912,8 @@ cdef extern from "numpy/ufuncobject.h":
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_On_Om \
          (char **, npy_intp *, npy_intp *, void *)
-    int PyUFunc_GetPyValues \
-        (char *, int *, int *, PyObject **)
-    int PyUFunc_checkfperr \
-           (int, PyObject *, int *)
     void PyUFunc_clearfperr()
     int PyUFunc_getfperr()
-    int PyUFunc_handlefperr \
-        (int, PyObject *, int, int *)
     int PyUFunc_ReplaceLoopBySignature \
         (ufunc, PyUFuncGenericFunction, int *, PyUFuncGenericFunction *)
     object PyUFunc_FromFuncAndDataAndSignature \

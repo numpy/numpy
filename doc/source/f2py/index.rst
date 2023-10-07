@@ -1,12 +1,14 @@
-#####################################
-F2PY Users Guide and Reference Manual
-#####################################
+.. _f2py:
 
-The purpose of the ``F2PY`` --*Fortran to Python interface generator*--
-is to provide a connection between Python and Fortran
-languages.  F2PY is a part of NumPy_ (``numpy.f2py``) and also available as a
-standalone command line tool ``f2py`` when ``numpy`` is installed that
-facilitates creating/building Python C/API extension modules that make it
+=====================================
+F2PY user guide and reference manual
+=====================================
+
+The purpose of the ``F2PY`` --*Fortran to Python interface generator*-- utility
+is to provide a connection between Python and Fortran. F2PY is a part of NumPy_
+(``numpy.f2py``) and also available as a standalone command line tool.
+
+F2PY facilitates creating/building Python C/API extension modules that make it
 possible
 
 * to call Fortran 77/90/95 external subroutines and Fortran 90/95
@@ -16,15 +18,29 @@ possible
 
 from Python.
 
-.. toctree::
-   :maxdepth: 2
+F2PY can be used either as a command line tool ``f2py`` or as a Python
+module ``numpy.f2py``. While we try to provide the command line tool as part
+of the numpy setup, some platforms like Windows make it difficult to
+reliably put the executables on the ``PATH``. If the ``f2py`` command is not
+available in your system, you may have to run it as a module::
 
-   f2py.getting-started
-   signature-file
-   python-usage
-   usage
-   distutils
-   advanced
+   python -m numpy.f2py
+
+Using the ``python -m`` invocation is also good practice if you have multiple
+Python installs with NumPy in your system (outside of virtual environments) and
+you want to ensure you pick up a particular version of Python/F2PY.
+
+If you run ``f2py`` with no arguments, and the line ``numpy Version`` at the
+end matches the NumPy version printed from ``python -m numpy.f2py``, then you
+can use the shorter version. If not, or if you cannot run ``f2py``, you should
+replace all calls to ``f2py`` mentioned in this guide with the longer version.
+
+.. toctree::
+   :maxdepth: 3
+
+   f2py-user
+   f2py-reference
+   windows/index
 
 .. _Python: https://www.python.org/
 .. _NumPy: https://www.numpy.org/

@@ -49,10 +49,10 @@ First, fetch new commits from the ``upstream`` repository:
 
    git fetch upstream
 
-Then, create a new branch based on the master branch of the upstream
+Then, create a new branch based on the main branch of the upstream
 repository::
 
-   git checkout -b my-new-feature upstream/master
+   git checkout -b my-new-feature upstream/main
 
 
 .. _editing-workflow:
@@ -118,8 +118,8 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. For more information, see `why the -a flag?`_ - and the
-   helpful use-case description in the `tangled working copy problem`_.
+   not careful. For more information, see the helpful use-case description in
+   the `tangled working copy problem`_.
 
 #. Push the changes to your forked repo on github_::
 
@@ -147,7 +147,7 @@ In more detail
 
 It may be the case that while you were working on your edits, new commits have
 been added to ``upstream`` that affect your work. In this case, follow the
-:ref:`rebasing-on-master` section of this document to apply those changes to
+:ref:`rebasing-on-main` section of this document to apply those changes to
 your branch.
 
 .. _writing-the-commit-message:
@@ -185,8 +185,101 @@ Standard acronyms to start the commit message with are::
    REV: revert an earlier commit
    STY: style fix (whitespace, PEP8)
    TST: addition or modification of tests
+   TYP: static typing
    REL: related to releasing numpy
 
+Commands to skip continuous integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default a lot of continuous integration (CI) jobs are run for every PR,
+from running the test suite on different operating systems and hardware
+platforms to building the docs. In some cases you already know that CI isn't
+needed (or not all of it), for example if you work on CI config files, text in
+the README, or other files that aren't involved in regular build, test or docs
+sequences. In such cases you may explicitly skip CI by including one or more of
+these fragments in each commit message of a PR:
+
+* ``[skip ci]``: skip all CI
+
+  Only recommended if you are still not ready for the checks to run on your PR
+  (for example, if this is only a draft.)
+
+* ``[skip actions]``: skip GitHub Actions jobs
+
+  `GitHub Actions <https://docs.github.com/actions>`__ is where most of the CI
+  checks are run, including the linter, benchmarking, running basic tests for
+  most architectures and OSs, and several compiler and CPU optimization
+  settings.
+  `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
+
+* ``[skip travis]``: skip TravisCI jobs
+
+  `TravisCI <https://www.travis-ci.com/>`__ will test your changes against
+  Python 3.9 on the PowerPC and s390x architectures.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.travis.yml>`__
+
+* ``[skip azp]``: skip Azure jobs
+
+  `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
+  where all comprehensive tests are run. This is an expensive run, and one you
+  could typically skip if you do documentation-only changes, for example.
+  `See the main configuration file for these checks. <https://github.com/numpy/numpy/blob/main/azure-pipelines.yml>`__
+
+* ``[skip circle]``: skip CircleCI jobs
+
+  `CircleCI <https://circleci.com/>`__ is where we build the documentation and
+  store the generated artifact for preview in each PR. This check will also run
+  all the docstrings examples and verify their results. If you don't make
+  documentation changes, but you make changes to a function's API, for example,
+  you may need to run these tests to verify that the doctests are still valid.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
+
+* ``[skip cirrus]``: skip Cirrus jobs
+
+  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
+  uploads.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
+
+Test building wheels
+~~~~~~~~~~~~~~~~~~~~
+
+Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+in order to build wheels through continuous integration services. To save resources, the
+cibuildwheel wheel builders are not run by default on every single PR or commit to main.
+
+If you would like to test that your pull request do not break the wheel builders,
+you may either append ``[wheel build]`` to the end of the commit message of the commit
+or add one of the following labels to the pull request(if you have the permissions to do so):
+
+- ``36 - Build``: for pull requests changing build processes/configurations
+- ``03 - Maintenance``: for pull requests upgrading dependencies
+- ``14 - Release``: for pull requests preparing for a release
+
+The wheels built via github actions (including 64-bit linux, macOS, and
+windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
+files. You can access them from the Summary page of the "Wheel builder"
+Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
+Additionally, the wheels will be uploaded to
+https://anaconda.org/scientific-python-nightly-wheels/ on the following conditions:
+
+- by a weekly cron job or
+- if the github action or travis build has been manually triggered, which requires appropriate permissions
+
+The wheels will be uploaded to https://anaconda.org/multibuild-wheels-staging/
+if the build was triggered by a tag to the repo that begins with ``v``
+
+.. _Action: https://github.com/numpy/numpy/actions
+.. _travis: https://app.travis-ci.com/github/numpy/numpy/builds
+
+.. _workflow_mailing_list:
+
+Get the mailing list's opinion
+=======================================================
+
+If you plan a new feature or API change, it's wisest to first email the
+NumPy `mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`_
+asking for comment. If you haven't heard back in a week, it's
+OK to ping the list again.
 
 .. _asking-for-merging:
 
@@ -197,20 +290,29 @@ When you feel your work is finished, you can create a pull request (PR). Github
 has a nice help page that outlines the process for `filing pull requests`_.
 
 If your changes involve modifications to the API or addition/modification of a
-function, you should
+function, add a release note to the ``doc/release/upcoming_changes/``
+directory, following the instructions and format in the
+``doc/release/upcoming_changes/README.rst`` file.
 
-- send an email to the `NumPy mailing list`_ with a link to your PR along with
-  a description of and a motivation for your changes. This may generate
-  changes and feedback. It might be prudent to start with this step if your
-  change may be controversial.
-- add a release note to the ``doc/release/upcoming_changes/`` directory,
-  following the instructions and format in the
-  ``doc/release/upcoming_changes/README.rst`` file.
 
-.. _rebasing-on-master:
+.. _workflow_PR_timeline:
 
-Rebasing on master
-==================
+Getting your PR reviewed
+========================
+
+We review pull requests as soon as we can, typically within a week. If you get
+no review comments within two weeks, feel free to ask for feedback by
+adding a comment on your PR (this will notify maintainers).
+
+If your PR is large or complicated, asking for input on the numpy-discussion
+mailing list may also be useful.
+
+
+
+.. _rebasing-on-main:
+
+Rebasing on main
+================
 
 This updates your feature branch with changes from the upstream `NumPy
 github`_ repo. If you do not absolutely need to do this, try to avoid doing
@@ -225,8 +327,8 @@ Next, you need to update the feature branch::
    git checkout my-new-feature
    # make a backup in case you mess up
    git branch tmp my-new-feature
-   # rebase on upstream master branch
-   git rebase upstream/master
+   # rebase on upstream main branch
+   git rebase upstream/main
 
 If you have made changes to files that have changed also upstream,
 this may generate merge conflicts that you need to resolve. See
@@ -239,7 +341,7 @@ Finally, remove the backup branch upon a successful rebase::
 
 .. note::
 
-   Rebasing on master is preferred over merging upstream back to your
+   Rebasing on main is preferred over merging upstream back to your
    branch. Using ``git merge`` and ``git pull`` is discouraged when
    working on feature branches.
 
@@ -290,7 +392,7 @@ Rewriting commit history
 
    Do this only for your own feature branches.
 
-There's an embarrassing typo in a commit you made? Or perhaps the you
+There's an embarrassing typo in a commit you made? Or perhaps you
 made several false starts you would like the posterity not to see.
 
 This can be done via *interactive rebasing*.
@@ -306,7 +408,7 @@ Suppose that the commit history looks like this::
     29001ed Add pre-nep for a couple of structured_array_extensions.
     ...
 
-and ``6ad92e5`` is the last commit in the ``master`` branch. Suppose we
+and ``6ad92e5`` is the last commit in the ``main`` branch. Suppose we
 want to make the following changes:
 
 * Rewrite the commit message for ``13d7934`` to something more sensible.
@@ -373,7 +475,7 @@ Deleting a branch on github_
 
 ::
 
-   git checkout master
+   git checkout main
    # delete branch locally
    git branch -D my-unwanted-branch
    # delete branch on github
@@ -398,7 +500,7 @@ Then, go to your forked repository github page, say
 Click on the 'Admin' button, and add anyone else to the repo as a
 collaborator:
 
-   .. image:: pull_button.png
+.. image:: pull_button.png
 
 Now all those people can do::
 
@@ -412,6 +514,28 @@ usual::
 
      git commit -am 'ENH - much better code'
      git push origin my-feature-branch # pushes directly into your repo
+
+
+Checkout changes from an existing pull request
+==============================================
+
+If you want to test the changes in a pull request or continue the work in a
+new pull request, the commits are to be cloned into a local branch in your
+forked repository
+
+First ensure your upstream points to the main repo, as from :ref:`linking-to-upstream`
+
+Then, fetch the changes and create a local branch. Assuming ``$ID`` is the pull request number
+and ``$BRANCHNAME`` is the name of the *new local* branch you wish to create::
+
+    git fetch upstream pull/$ID/head:$BRANCHNAME
+
+Checkout the newly created branch::
+
+    git checkout $BRANCHNAME
+
+You now have the changes in the pull request.
+
 
 Exploring your repository
 =========================
@@ -432,25 +556,25 @@ Backporting
 ===========
 
 Backporting is the process of copying new feature/fixes committed in
-`numpy/master`_ back to stable release branches. To do this you make a branch
+`numpy/main`_ back to stable release branches. To do this you make a branch
 off the branch you are backporting to, cherry pick the commits you want from
-``numpy/master``, and then submit a pull request for the branch containing the
+``numpy/main``, and then submit a pull request for the branch containing the
 backport.
 
 1. First, you need to make the branch you will work on. This needs to be
-   based on the older version of NumPy (not master)::
+   based on the older version of NumPy (not main)::
 
     # Make a new branch based on numpy/maintenance/1.8.x,
     # backport-3324 is our new name for the branch.
     git checkout -b backport-3324 upstream/maintenance/1.8.x
 
-2. Now you need to apply the changes from master to this branch using
+2. Now you need to apply the changes from main to this branch using
    `git cherry-pick`_::
 
     # Update remote
     git fetch upstream
     # Check the commit log for commits to cherry pick
-    git log upstream/master
+    git log upstream/main
     # This pull request included commits aa7a047 to c098283 (inclusive)
     # so you use the .. syntax (for a range of commits), the ^ makes the
     # range inclusive.
@@ -461,7 +585,7 @@ backport.
 
 3. You might run into some conflicts cherry picking here. These are
    resolved the same way as merge/rebase conflicts. Except here you can
-   use `git blame`_ to see the difference between master and the
+   use `git blame`_ to see the difference between main and the
    backported branch to make sure nothing gets screwed up.
 
 4. Push the new branch to your Github repository::
@@ -469,8 +593,8 @@ backport.
     git push -u origin backport-3324
 
 5. Finally make a pull request using Github. Make sure it is against the
-   maintenance branch and not master, Github will usually suggest you
-   make the pull request against master.
+   maintenance branch and not main, Github will usually suggest you
+   make the pull request against main.
 
 .. _pushing-to-main:
 
@@ -480,7 +604,7 @@ Pushing changes to the main repo
 *Requires commit rights to the main NumPy repo.*
 
 When you have a set of "ready" changes in a feature branch ready for
-NumPy's ``master`` or ``maintenance`` branches, you can push
+NumPy's ``main`` or ``maintenance`` branches, you can push
 them to ``upstream`` as follows:
 
 1. First, merge or rebase on the target branch.
@@ -488,23 +612,23 @@ them to ``upstream`` as follows:
    a) Only a few, unrelated commits then prefer rebasing::
 
         git fetch upstream
-        git rebase upstream/master
+        git rebase upstream/main
 
-      See :ref:`rebasing-on-master`.
+      See :ref:`rebasing-on-main`.
 
    b) If all of the commits are related, create a merge commit::
 
         git fetch upstream
-        git merge --no-ff upstream/master
+        git merge --no-ff upstream/main
 
 2. Check that what you are going to push looks sensible::
 
-        git log -p upstream/master..
+        git log -p upstream/main..
         git log --oneline --graph
 
 3. Push to upstream::
 
-        git push upstream my-feature-branch:master
+        git push upstream my-feature-branch:main
 
 .. note::
 

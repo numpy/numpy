@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_STRFUNCS_H_
-#define _NPY_ARRAY_STRFUNCS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_STRFUNCS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_STRFUNCS_H_
 
 NPY_NO_EXPORT void
 PyArray_SetStringFunction(PyObject *op, int repr);
@@ -13,4 +13,4 @@ array_str(PyArrayObject *self);
 NPY_NO_EXPORT PyObject *
 array_format(PyArrayObject *self, PyObject *args);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_STRFUNCS_H_ */

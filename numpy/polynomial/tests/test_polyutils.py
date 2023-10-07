@@ -11,10 +11,14 @@ from numpy.testing import (
 class TestMisc:
 
     def test_trimseq(self):
-        for i in range(5):
-            tgt = [1]
-            res = pu.trimseq([1] + [0]*5)
+        tgt = [1]
+        for num_trailing_zeros in range(5):
+            res = pu.trimseq([1] + [0] * num_trailing_zeros)
             assert_equal(res, tgt)
+
+    def test_trimseq_empty_input(self):
+        for empty_seq in [[], np.array([], dtype=np.int32)]:
+            assert_equal(pu.trimseq(empty_seq), empty_seq)
 
     def test_as_series(self):
         # check exceptions
@@ -40,6 +44,21 @@ class TestMisc:
         assert_equal(pu.trimcoef(coef, 1), coef[:-3])
         assert_equal(pu.trimcoef(coef, 2), [0])
 
+    def test_vander_nd_exception(self):
+        # n_dims != len(points)
+        assert_raises(ValueError, pu._vander_nd, (), (1, 2, 3), [90])
+        # n_dims != len(degrees)
+        assert_raises(ValueError, pu._vander_nd, (), (), [90.65])
+        # n_dims == 0
+        assert_raises(ValueError, pu._vander_nd, (), (), [])
+
+    def test_div_zerodiv(self):
+        # c2[-1] == 0
+        assert_raises(ZeroDivisionError, pu._div, pu._div, (1, 2, 3), [0])
+
+    def test_pow_too_large(self):
+        # power > maxpower
+        assert_raises(ValueError, pu._pow, (), [1, 2, 3], 5, 4)
 
 class TestDomain:
 

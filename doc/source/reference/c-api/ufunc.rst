@@ -10,28 +10,27 @@ UFunc API
 Constants
 ---------
 
-.. c:var:: UFUNC_ERR_{HANDLER}
+``UFUNC_{THING}_{ERR}``
+    .. c:macro:: UFUNC_FPE_DIVIDEBYZERO
 
-    ``{HANDLER}`` can be **IGNORE**, **WARN**, **RAISE**, or **CALL**
+    .. c:macro:: UFUNC_FPE_OVERFLOW
 
-.. c:var:: UFUNC_{THING}_{ERR}
+    .. c:macro:: UFUNC_FPE_UNDERFLOW
 
-    ``{THING}`` can be **MASK**, **SHIFT**, or **FPE**, and ``{ERR}`` can
-    be **DIVIDEBYZERO**, **OVERFLOW**, **UNDERFLOW**, and **INVALID**.
+    .. c:macro:: UFUNC_FPE_INVALID
 
-.. c:var:: PyUFunc_{VALUE}
+``PyUFunc_{VALUE}``
+    .. c:macro:: PyUFunc_One
 
-    .. c:var:: PyUFunc_One
+    .. c:macro:: PyUFunc_Zero
 
-    .. c:var:: PyUFunc_Zero
+    .. c:macro:: PyUFunc_MinusOne
 
-    .. c:var:: PyUFunc_MinusOne
+    .. c:macro:: PyUFunc_ReorderableNone
 
-    .. c:var:: PyUFunc_ReorderableNone
+    .. c:macro:: PyUFunc_None
 
-    .. c:var:: PyUFunc_None
-
-    .. c:var:: PyUFunc_IdentityValue
+    .. c:macro:: PyUFunc_IdentityValue
 
 
 Macros
@@ -50,12 +49,76 @@ Macros
     was released (because loop->obj was not true).
 
 
+Types
+-----
+
+.. c:type:: PyUFuncGenericFunction
+
+    Pointers to functions that actually implement the underlying
+    (element-by-element) function :math:`N` times with the following
+    signature:
+
+    .. c:function:: void loopfunc(\
+            char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
+
+        *args*
+
+            An array of pointers to the actual data for the input and output
+            arrays. The input arguments are given first followed by the output
+            arguments.
+
+        *dimensions*
+
+            A pointer to the size of the dimension over which this function is
+            looping.
+
+        *steps*
+
+            A pointer to the number of bytes to jump to get to the
+            next element in this dimension for each of the input and
+            output arguments.
+
+        *data*
+
+            Arbitrary data (extra arguments, function names, *etc.* )
+            that can be stored with the ufunc and will be passed in
+            when it is called. May be ``NULL``.
+
+            .. versionchanged:: 1.23.0
+               Accepts ``NULL`` `data` in addition to array of ``NULL`` values.
+
+        This is an example of a func specialized for addition of doubles
+        returning doubles.
+
+        .. code-block:: c
+
+            static void
+            double_add(char **args,
+                       npy_intp const *dimensions,
+                       npy_intp const *steps,
+                       void *extra)
+            {
+                npy_intp i;
+                npy_intp is1 = steps[0], is2 = steps[1];
+                npy_intp os = steps[2], n = dimensions[0];
+                char *i1 = args[0], *i2 = args[1], *op = args[2];
+                for (i = 0; i < n; i++) {
+                    *((double *)op) = *((double *)i1) +
+                                      *((double *)i2);
+                    i1 += is1;
+                    i2 += is2;
+                    op += os;
+                 }
+            }
+
+
 Functions
 ---------
 
-.. c:function:: PyObject* PyUFunc_FromFuncAndData( \
-        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
-        int nin, int nout, int identity, char* name, char* doc, int unused)
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( \
+        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        int ntypes, int nin, int nout, int identity, const char *name, \
+        const char *doc, int unused)
 
     Create a new broadcasting universal function from required variables.
     Each ufunc builds around the notion of an element-by-element
@@ -70,73 +133,21 @@ Functions
        ufunc object is alive.
 
     :param func:
-        Must to an array of length *ntypes* containing
-        :c:type:`PyUFuncGenericFunction` items. These items are pointers to
-        functions that actually implement the underlying
-        (element-by-element) function :math:`N` times with the following
-        signature:
-
-        .. c:function:: void loopfunc(
-                char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
-
-            *args*
-
-                An array of pointers to the actual data for the input and output
-                arrays. The input arguments are given first followed by the output
-                arguments.
-
-            *dimensions*
-
-                A pointer to the size of the dimension over which this function is
-                looping.
-
-            *steps*
-
-                A pointer to the number of bytes to jump to get to the
-                next element in this dimension for each of the input and
-                output arguments.
-
-            *data*
-
-                Arbitrary data (extra arguments, function names, *etc.* )
-                that can be stored with the ufunc and will be passed in
-                when it is called.
-
-            This is an example of a func specialized for addition of doubles
-            returning doubles.
-
-            .. code-block:: c
-
-                static void
-                double_add(char **args,
-                           npy_intp const *dimensions,
-                           npy_intp const *steps,
-                           void *extra)
-                {
-                    npy_intp i;
-                    npy_intp is1 = steps[0], is2 = steps[1];
-                    npy_intp os = steps[2], n = dimensions[0];
-                    char *i1 = args[0], *i2 = args[1], *op = args[2];
-                    for (i = 0; i < n; i++) {
-                        *((double *)op) = *((double *)i1) +
-                                          *((double *)i2);
-                        i1 += is1;
-                        i2 += is2;
-                        op += os;
-                     }
-                }
+        Must point to an array containing *ntypes*
+        :c:type:`PyUFuncGenericFunction` elements.
 
     :param data:
-        Should be ``NULL`` or a pointer to an array of size *ntypes*
-        . This array may contain arbitrary extra-data to be passed to
-        the corresponding loop function in the func array.
+        Should be ``NULL`` or a pointer to an array of size *ntypes*.
+        This array may contain arbitrary extra-data to be passed to
+        the corresponding loop function in the func array, including
+        ``NULL``.
 
     :param types:
        Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
        `numpy.dtype.num` (built-in only) that the corresponding
        function in the ``func`` array accepts. For instance, for a comparison
        ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
-       first function accepts `numpy.int32` and the the second
+       first function accepts `numpy.int32` and the second
        `numpy.int64`, with both returning `numpy.bool_`, ``types`` would
        be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
        ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0.
@@ -184,9 +195,10 @@ Functions
     :param unused:
         Unused and present for backwards compatibility of the C-API.
 
-.. c:function:: PyObject* PyUFunc_FromFuncAndDataAndSignature( \
-        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
-        int nin, int nout, int identity, char* name, char* doc, int unused, char *signature)
+.. c:function:: PyObject *PyUFunc_FromFuncAndDataAndSignature( \
+        PyUFuncGenericFunction *func, void *const *data, const char *types, \
+        int ntypes, int nin, int nout, int identity, const char *name, \
+        const char *doc, int unused, const char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
    an extra *signature* argument, to define a
@@ -205,7 +217,7 @@ Functions
         int nin, int nout, int identity, char *name, char *doc, int unused, \
         char *signature, PyObject *identity_value)
 
-   This function is very similar to `PyUFunc_FromFuncAndDataAndSignature` above,
+   This function is very similar to :c:func:`PyUFunc_FromFuncAndDataAndSignature` above,
    but has an extra *identity_value* argument, to define an arbitrary identity
    for the ufunc when ``identity`` is passed as ``PyUFunc_IdentityValue``.
 
@@ -252,49 +264,9 @@ Functions
     signature is an array of data-type numbers indicating the inputs
     followed by the outputs assumed by the 1-d loop.
 
-.. c:function:: int PyUFunc_GenericFunction( \
-        PyUFuncObject* self, PyObject* args, PyObject* kwds, PyArrayObject** mps)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    Instead of this function ``PyObject_Call(ufunc, args, kwds)`` should be
-    used. The above function differs from this because it ignores support
-    for non-array, or array subclasses as inputs.
-    To ensure identical behaviour, it may be necessary to convert all inputs
-    using ``PyArray_FromAny(obj, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)``.
-
-.. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
-
-    A simple interface to the IEEE error-flag checking support. The
-    *errmask* argument is a mask of :c:data:`UFUNC_MASK_{ERR}` bitmasks
-    indicating which errors to check for (and how to check for
-    them). The *errobj* must be a Python tuple with two elements: a
-    string containing the name which will be used in any communication
-    of error and either a callable Python object (call-back function)
-    or :c:data:`Py_None`. The callable object will only be used if
-    :c:data:`UFUNC_ERR_CALL` is set as the desired error checking
-    method. This routine manages the GIL and is safe to call even
-    after releasing the GIL. If an error in the IEEE-compatible
-    hardware is determined a -1 is returned, otherwise a 0 is
-    returned.
-
 .. c:function:: void PyUFunc_clearfperr()
 
     Clear the IEEE error flags.
-
-.. c:function:: void PyUFunc_GetPyValues( \
-        char* name, int* bufsize, int* errmask, PyObject** errobj)
-
-    Get the Python values used for ufunc processing from the
-    thread-local storage area unless the defaults have been set in
-    which case the name lookup is bypassed. The name is placed as a
-    string in the first element of *\*errobj*. The second element is
-    the looked-up function to call on error callback. The value of the
-    looked-up buffer-size to use is passed into *bufsize*, and the
-    value of the error mask is placed into *errmask*.
 
 
 Generic functions
@@ -459,9 +431,9 @@ structure.
 Importing the API
 -----------------
 
-.. c:var:: PY_UFUNC_UNIQUE_SYMBOL
+.. c:macro:: PY_UFUNC_UNIQUE_SYMBOL
 
-.. c:var:: NO_IMPORT_UFUNC
+.. c:macro:: NO_IMPORT_UFUNC
 
 .. c:function:: void import_ufunc(void)
 
