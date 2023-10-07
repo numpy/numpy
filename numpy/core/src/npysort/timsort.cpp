@@ -74,20 +74,15 @@ resize_buffer_intp(buffer_intp *buffer, npy_intp new_size)
         return 0;
     }
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
-        buffer->pw = (npy_intp *)malloc(new_size * sizeof(npy_intp));
-    }
-    else {
-        buffer->pw =
-                (npy_intp *)realloc(buffer->pw, new_size * sizeof(npy_intp));
-    }
+    npy_intp *new_pw = (npy_intp *)realloc(buffer->pw, new_size * sizeof(npy_intp));
 
     buffer->size = new_size;
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+    if (NPY_UNLIKELY(new_pw == NULL)) {
         return -NPY_ENOMEM;
     }
     else {
+        buffer->pw = new_pw;
         return 0;
     }
 }
@@ -113,19 +108,14 @@ resize_buffer_(buffer_<Tag> *buffer, npy_intp new_size)
         return 0;
     }
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
-        buffer->pw = (type *)malloc(new_size * sizeof(type));
-    }
-    else {
-        buffer->pw = (type *)realloc(buffer->pw, new_size * sizeof(type));
-    }
-
+    type *new_pw = (type *)realloc(buffer->pw, new_size * sizeof(type));
     buffer->size = new_size;
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+    if (NPY_UNLIKELY(new_pw == NULL)) {
         return -NPY_ENOMEM;
     }
     else {
+        buffer->pw = new_pw;
         return 0;
     }
 }
@@ -986,20 +976,14 @@ resize_buffer_(string_buffer_<Tag> *buffer, npy_intp new_size)
         return 0;
     }
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
-        buffer->pw = (type *)malloc(sizeof(type) * new_size * buffer->len);
-    }
-    else {
-        buffer->pw = (type *)realloc(buffer->pw,
-                                     sizeof(type) * new_size * buffer->len);
-    }
-
+    type *new_pw = (type *)realloc(buffer->pw, sizeof(type) * new_size * buffer->len);
     buffer->size = new_size;
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+    if (NPY_UNLIKELY(new_pw == NULL)) {
         return -NPY_ENOMEM;
     }
     else {
+        buffer->pw = new_pw;
         return 0;
     }
 }
@@ -1880,20 +1864,14 @@ resize_buffer_char(buffer_char *buffer, npy_intp new_size)
         return 0;
     }
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
-        buffer->pw = (char *)malloc(sizeof(char) * new_size * buffer->len);
-    }
-    else {
-        buffer->pw = (char *)realloc(buffer->pw,
-                                     sizeof(char) * new_size * buffer->len);
-    }
-
+    char *new_pw = (char *)realloc(buffer->pw, sizeof(char) * new_size * buffer->len);
     buffer->size = new_size;
 
-    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+    if (NPY_UNLIKELY(new_pw == NULL)) {
         return -NPY_ENOMEM;
     }
     else {
+        buffer->pw = new_pw;
         return 0;
     }
 }
