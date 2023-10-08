@@ -331,7 +331,8 @@ if not fs.exists('version.py')
     output: 'version.py',
     input: '_build_utils/gitversion.py',
     command: [py, '@INPUT@', '--write', '@OUTPUT@'],
-    install_dir: np_dir
+    install_dir: np_dir,
+    install_tag: 'python-runtime'
   )
 else
   # When building from sdist, version.py exists and should be included
@@ -342,7 +343,7 @@ else
 endif
 
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: np_dir)
+  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime')
 endforeach
 
 compilers = {
@@ -423,6 +424,7 @@ configure_file(
   output: '__config__.py',
   configuration : conf_data,
   install_dir: np_dir,
+  install_tag: 'python-runtime'
 )
 
 subdir('core')

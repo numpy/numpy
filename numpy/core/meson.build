@@ -512,7 +512,8 @@ _numpyconfig_h = configure_file(
   output: '_numpyconfig.h',
   configuration: cdata,
   install: true,
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 # Build npymath static library
@@ -567,7 +568,8 @@ configure_file(
     'sep' : dir_separator,
   }),
   install: true,
-  install_dir: np_dir / 'core/lib/npy-pkg-config'
+  install_dir: np_dir / 'core/lib/npy-pkg-config',
+  install_tag: 'devel'
 )
 configure_file(
   input: 'mlib.ini.in',
@@ -577,7 +579,8 @@ configure_file(
     'msvc_mathlib' : 'm.lib',
   }),
   install: true,
-  install_dir: np_dir / 'core/lib/npy-pkg-config'
+  install_dir: np_dir / 'core/lib/npy-pkg-config',
+  install_tag: 'devel'
 )
 
 if false
@@ -622,7 +625,8 @@ src_numpy_api = custom_target('__multiarray_api',
   input : 'code_generators/generate_numpy_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 src_ufunc_api = custom_target('__ufunc_api',
@@ -630,7 +634,8 @@ src_ufunc_api = custom_target('__ufunc_api',
   input : 'code_generators/generate_ufunc_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@'],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 
@@ -1260,4 +1265,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: np_dir / 'core')
+install_subdir('tests', install_dir: np_dir / 'core', install_tag: 'python-runtime')
