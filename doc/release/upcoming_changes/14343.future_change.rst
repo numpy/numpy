@@ -1,0 +1,5 @@
+Support for array ``atol`` and ``rtol`` in ``np.all_isclose`` and ``np.isclose``
+--------------------------------------------------------------------------------
+The keywords ``atol`` and ``rtol`` in ``np.isclose`` and ``np.all_isclose``
+now accepts both scalars and arrays. An array, if given, must broadcast
+to the shapes of x and y.
