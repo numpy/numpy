@@ -359,7 +359,7 @@ Added a mypy plugin for handling platform-specific ``numpy.number`` precisions
 ------------------------------------------------------------------------------
 A mypy_ plugin is now available for automatically assigning the (platform-dependent)
 precisions of certain `~numpy.number` subclasses, including the likes of
-`~numpy.long`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
+`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
 :ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
 of the affected classes.
 

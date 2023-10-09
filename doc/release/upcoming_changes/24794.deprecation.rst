@@ -1,3 +1,5 @@
-* ``np.int_`` has been deprecated. Use ``np.long`` instead.
+* ``np.int_`` as the spelling of C's ``long`` has been deprecated.
+  Use the new ``np.long`` instead.
 
-* ``np.uint`` has been deprecated. Use ``np.ulong`` instead.
+* ``np.uint`` as the spelling of C's ``unsigned long`` has been deprecated.
+  Use the new ``np.ulong`` instead.
