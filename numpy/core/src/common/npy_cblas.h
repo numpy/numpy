@@ -57,8 +57,21 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 #define BLAS_FUNC_CONCAT(name,prefix,suffix,suffix2) prefix ## name ## suffix ## suffix2
 #define BLAS_FUNC_EXPAND(name,prefix,suffix,suffix2) BLAS_FUNC_CONCAT(name,prefix,suffix,suffix2)
 
-#define CBLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,,BLAS_SYMBOL_SUFFIX)
+/*
+ * Use either the OpenBLAS scheme with the `64_` suffix behind the Fortran
+ * compiler symbol mangling, or the MKL scheme (and upcoming
+ * reference-lapack#666) which does it the other way around and uses `_64`.
+ */
+#ifdef OPENBLAS_ILP64_NAMING_SCHEME
 #define BLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,BLAS_FORTRAN_SUFFIX,BLAS_SYMBOL_SUFFIX)
+#else
+#define BLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,BLAS_SYMBOL_SUFFIX,BLAS_FORTRAN_SUFFIX)
+#endif
+/*
+ * Note that CBLAS doesn't include Fortran compiler symbol mangling, so ends up
+ * being the same in both schemes
+ */
+#define CBLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,,BLAS_SYMBOL_SUFFIX)
 
 #ifdef HAVE_BLAS_ILP64
 #define CBLAS_INT npy_int64

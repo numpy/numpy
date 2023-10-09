@@ -60,7 +60,7 @@ jobs:
         pip install -r build_requirements.txt -r test_requirements.txt
 
         # use meson to build and test 
-        spin build --with-scipy-openblas=64
+        spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
         spin test -j auto
 
     - name: Meson Log
