@@ -1238,7 +1238,7 @@ def eig(a):
     The number `w` is an eigenvalue of `a` if there exists a vector `v` such
     that ``a @ v = w * v``. Thus, the arrays `a`, `eigenvalues`, and
     `eigenvectors` satisfy the equations ``a @ eigenvectors[:,i] =
-    eigenvalues[i] * eigenvalues[:,i]`` for :math:`i \\in \\{0,...,M-1\\}`.
+    eigenvalues[i] * eigenvectors[:,i]`` for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `eigenvectors` may not be of maximum rank, that is, some of the
     columns may be linearly dependent, although round-off error may obscure
