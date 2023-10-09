@@ -51,8 +51,9 @@ _aliases = {
     "single": "float32",
     "csingle": "complex64",
     "half": "float16",
-    "int_": "long",
-    "uint": "ulong",
+    # Default integer:
+    "int_": "intp",
+    "uint": "uintp",
 }
 
 for k, v in _aliases.items():
