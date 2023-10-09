@@ -29,6 +29,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    DTypeLike,
 )
 
 _T = TypeVar("_T")
@@ -294,4 +295,15 @@ def multi_dot(
     arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co],
     *,
     out: None | NDArray[Any] = ...,
+) -> Any: ...
+
+def diagonal(
+    x: ArrayLike,  # >= 2D array
+    offset: SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+def trace(
+    x: ArrayLike,  # >= 2D array
+    offset: SupportsIndex = ...,
+    dtype: DTypeLike = ...,
 ) -> Any: ...

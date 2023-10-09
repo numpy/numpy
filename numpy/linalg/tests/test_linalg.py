@@ -2201,3 +2201,30 @@ def test_blas64_geqrf_lwork_smoketest():
     # Should result to an integer of a reasonable size
     lwork = int(work.item())
     assert_(2**32 < lwork < 2**42)
+
+
+def test_diagonal():
+    # Here we only test if selected axes are compatible
+    # with Array API (last two). Core implementation
+    # of `diagonal` is tested in `test_multiarray.py`.
+    x = np.arange(60).reshape((3, 4, 5))
+    actual = np.linalg.diagonal(x)
+    expected = np.array(
+        [
+            [0,  6, 12, 18],
+            [20, 26, 32, 38],
+            [40, 46, 52, 58],
+        ]
+    )
+    assert_equal(actual, expected)
+
+
+def test_trace():
+    # Here we only test if selected axes are compatible
+    # with Array API (last two). Core implementation
+    # of `trace` is tested in `test_multiarray.py`.
+    x = np.arange(60).reshape((3, 4, 5))
+    actual = np.linalg.trace(x)
+    expected = np.array([36, 116, 196])
+
+    assert_equal(actual, expected)
