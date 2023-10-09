@@ -1,0 +1,16 @@
+Redefinition of ``np.intp``/``np.uintp`` (almost never a change)
+----------------------------------------------------------------
+Due to the actual use of these types almost always matching the use of
+``size_t``/``Py_ssize_t`` this is now the definition in C.
+Previously, it matched ``intptr_t`` and ``uintptr_t`` which would often
+have been subtly incorrect in principle. 
+This has no effect on the vast majority of machines since the size
+of these types only differ on extremely niche platforms.
+
+However, in general it means that:
+* Pointers may not necessarily fit into an ``intp`` typed
+  array anymore.  The ``p`` and ``P`` character codes can
+  still be used, however. 
+* The new character codes ``nN`` were introduced.
+* It is now correct to use the Python C-API functions when parsing
+  to ``npy_intp`` typed arguments.
