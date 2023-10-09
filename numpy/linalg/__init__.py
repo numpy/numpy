@@ -52,6 +52,7 @@ Norms and other numbers
    det
    matrix_rank
    slogdet
+   trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -62,6 +63,11 @@ Solving equations and inverting matrices
    inv
    pinv
    tensorinv
+
+Other matrix operations
+-----------------------
+
+   diagonal (Array API compatible)
 
 Exceptions
 ----------
