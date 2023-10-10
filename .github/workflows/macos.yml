@@ -100,7 +100,7 @@ jobs:
         ccache -s
 
   accelerate:
-    name: Accelerate ILP64
+    name: Accelerate (LP64, ILP64)
     if: "github.repository == 'numpy/numpy'"
     runs-on: macos-13
     steps:
@@ -122,14 +122,15 @@ jobs:
         pip install -r build_requirements.txt
         pip install pytest pytest-xdist hypothesis
 
+    - name: Build against Accelerate (LP64)
+      run: spin build -- -Ddisable-optimization=true
+
+    - name: Test (linalg only)
+      run: spin test -j2 -- numpy/linalg
+
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        spin build -- -Dblas=accelerate -Dlapack=accelerate -Duse-ilp64=true
+        spin build -- -Duse-ilp64=true
 
-    - name: Show meson-log.txt
-      if: always()
-      run: 'cat build/meson-logs/meson-log.txt'
-
-    - name: Test
-      run: |
-        spin test -j2
+    - name: Test (fast tests)
+      run: spin test -j2
