@@ -142,6 +142,12 @@ class TestBuiltin:
             np.dtype("object0")
         with pytest.raises(TypeError, match=match):
             np.dtype("void0")
+        # `a` alias was also removed (both with and without bytesize)
+        with pytest.raises(TypeError, match=match):
+            np.dtype("a")
+        # warning is still issued from the C layer for bytsized variant
+        with pytest.raises(TypeError):
+            np.dtype("a8")
 
     @pytest.mark.parametrize(
         'value',

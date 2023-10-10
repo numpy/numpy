@@ -69,6 +69,7 @@ _extra_aliases = {
     "long": "int_",
     "ulong": "uint",
     "str": "str_",
+    "unicode": "str_",
 }
 
 for k, v in _extra_aliases.items():

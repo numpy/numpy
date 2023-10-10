@@ -1855,6 +1855,13 @@ _convert_from_str(PyObject *obj, int align)
                         "without a digit at the end.", obj);
                 return NULL;
             }
+            if (strcmp(type, "a") == 0) {
+                PyErr_Format(PyExc_TypeError,
+                        "Data type alias `a` was removed in NumPy 2.0. "
+                        "Use `S` alias instead.", obj);
+                return NULL;
+            }
+
             goto fail;
         }
 
