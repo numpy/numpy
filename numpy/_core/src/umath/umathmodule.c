@@ -27,6 +27,7 @@
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
+#include "special_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 
 /* Automatically generated code to define all ufuncs: */
@@ -331,6 +332,10 @@ int initumath(PyObject *m)
     }
 
     if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
+    if (init_special_int_comparisons(d) < 0) {
         return -1;
     }
 

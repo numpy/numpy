@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 13
+#define __EXPERIMENTAL_DTYPE_API_VERSION 14
 
 struct PyArrayMethodObject_tag;
 
@@ -129,16 +129,17 @@ typedef struct {
  * SLOTS IDs For the ArrayMethod creation, once fully public, IDs are fixed
  * but can be deprecated and arbitrarily extended.
  */
-#define NPY_METH_resolve_descriptors 1
+#define NPY_METH_resolve_descriptors_raw 1
+#define NPY_METH_resolve_descriptors 2
 /* We may want to adapt the `get_loop` signature a bit: */
-#define _NPY_METH_get_loop 2
-#define NPY_METH_get_reduction_initial 3
+#define _NPY_METH_get_loop 4
+#define NPY_METH_get_reduction_initial 5
 /* specific loops for constructions/default get_loop: */
-#define NPY_METH_strided_loop 4
-#define NPY_METH_contiguous_loop 5
-#define NPY_METH_unaligned_strided_loop 6
-#define NPY_METH_unaligned_contiguous_loop 7
-#define NPY_METH_contiguous_indexed_loop 8
+#define NPY_METH_strided_loop 6
+#define NPY_METH_contiguous_loop 7
+#define NPY_METH_unaligned_strided_loop 8
+#define NPY_METH_unaligned_contiguous_loop 9
+#define NPY_METH_contiguous_indexed_loop 10
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -158,6 +159,26 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* Input descriptors (instances).  Outputs may be NULL. */
         PyArray_Descr **given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
+        PyArray_Descr **loop_descrs,
+        npy_intp *view_offset);
+
+
+/*
+ * Rarely needed, slightly more powerful version of `resolve_descriptors`.
+ * See also `resolve_descriptors_function` for details on shared arguments.
+ */
+typedef NPY_CASTING (resolve_descriptors_raw_function)(
+        struct PyArrayMethodObject_tag *method,
+        PyArray_DTypeMeta **dtypes,
+        /* Unlike above, these can have any DType and we may allow NULL. */
+        PyArray_Descr **given_descrs,
+        /*
+         * Input scalars or NULL.  Only ever passed for python scalars.
+         * WARNING: In some cases, a loop may be explicitly selected and the
+         *     value passed is not available (NULL) or does not have the
+         *     expected type.
+         */
+        PyObject **input_scalars,
         PyArray_Descr **loop_descrs,
         npy_intp *view_offset);
 

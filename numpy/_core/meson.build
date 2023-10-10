@@ -1097,6 +1097,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/special_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:

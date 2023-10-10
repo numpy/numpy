@@ -1842,6 +1842,7 @@ static PyObject *
  *         LONG, ULONG, LONGLONG, ULONGLONG,
  *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #isint = 1*10, 0*7#
  * #simp = def*10, def_half, def*3, fcmplx, cmplx, lcmplx#
  */
 #define IS_@name@
@@ -1851,6 +1852,27 @@ static PyObject*
 {
     npy_@name@ arg1, arg2;
     int out = 0;
+
+#if @isint@
+    /* Special case comparison with python integers */
+    if (PyLong_CheckExact(other)) {
+        PyObject *self_val = PyNumber_Index(self);
+        if (self_val == NULL) {
+            return NULL;
+        }
+        int res = PyObject_RichCompareBool(self_val, other, cmp_op);
+        Py_DECREF(self_val);
+        if (res < 0) {
+            return NULL;
+        }
+        else if (res) {
+            PyArrayScalar_RETURN_TRUE;
+        }
+        else {
+            PyArrayScalar_RETURN_FALSE;
+        }
+    }
+#endif
 
     /*
      * Extract the other value (if it is compatible).

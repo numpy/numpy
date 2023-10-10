@@ -275,6 +275,12 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                         == PyTuple_GET_ITEM(curr_dtypes, 2)) {
                     continue;
                 }
+                /*
+                 * This should be a reduce, but doesn't follow the reduce
+                 * pattern.  So (for now?) consider this not a match.
+                 */
+                matches = NPY_FALSE;
+                continue;
             }
 
             if (resolver_dtype == (PyArray_DTypeMeta *)Py_None) {

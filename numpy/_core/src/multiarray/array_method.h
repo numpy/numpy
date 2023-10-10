@@ -45,6 +45,7 @@ typedef struct PyArrayMethodObject_tag {
     NPY_CASTING casting;
     /* default flags. The get_strided_loop function can override these */
     NPY_ARRAYMETHOD_FLAGS flags;
+    resolve_descriptors_raw_function *resolve_descriptors_raw;
     resolve_descriptors_function *resolve_descriptors;
     get_loop_function *get_strided_loop;
     get_reduction_initial_function  *get_reduction_initial;

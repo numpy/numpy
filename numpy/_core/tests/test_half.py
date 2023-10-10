@@ -266,8 +266,8 @@ class TestHalf:
         if len(a32_fail) != 0:
             bad_index = a32_fail[0]
             assert_equal(self.finite_f32, a_manual,
-                 "First non-equal is half value %x -> %g != %g" %
-                            (self.finite_f16[bad_index],
+                 "First non-equal is half value 0x%x -> %g != %g" %
+                            (a_bits[bad_index],
                              self.finite_f32[bad_index],
                              a_manual[bad_index]))
 
@@ -275,8 +275,8 @@ class TestHalf:
         if len(a64_fail) != 0:
             bad_index = a64_fail[0]
             assert_equal(self.finite_f64, a_manual,
-                 "First non-equal is half value %x -> %g != %g" %
-                            (self.finite_f16[bad_index],
+                 "First non-equal is half value 0x%x -> %g != %g" %
+                            (a_bits[bad_index],
                              self.finite_f64[bad_index],
                              a_manual[bad_index]))
 

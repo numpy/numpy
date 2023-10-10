@@ -221,12 +221,6 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
-        if (NPY_DT_is_abstract(spec->dtypes[i])) {
-            PyErr_Format(PyExc_TypeError,
-                    "abstract DType %S are currently not supported."
-                    "(method: %s)", spec->dtypes[i], spec->name);
-            return -1;
-        }
     }
     return 0;
 }
@@ -261,6 +255,9 @@ fill_arraymethod_from_slots(
      */
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
+            case NPY_METH_resolve_descriptors_raw:
+                meth->resolve_descriptors_raw = slot->pfunc;
+                continue;
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
