@@ -27,7 +27,7 @@ The NumPy library contains multidimensional array and matrix data structures
 **ndarray**, a homogeneous n-dimensional array object, with methods to
 efficiently operate on it. NumPy can be used to perform a wide variety of
 mathematical operations on arrays.  It adds powerful data structures to Python
-that guarantee efficient calculations with arrays and matrices and it supplies
+that support efficient calculations with arrays and matrices and it supplies
 an enormous library of high-level mathematical functions that operate on these
 arrays and matrices.
 
@@ -106,91 +106,138 @@ less memory and is convenient to use. NumPy uses much less memory to store data
 and it provides a mechanism of specifying the data types. This allows the code
 to be optimized even further.
 
-What is an array?
------------------
+What is an "array"?
+-------------------
 
-An array is a central data structure of the NumPy library. An array is a grid of
-values and it contains information about the raw data, how to locate an element,
-and how to interpret an element. It has a grid of elements that can be indexed
-in :ref:`various ways <quickstart.indexing-slicing-and-iterating>`.
-The elements are all of the same type, referred to as the array ``dtype``.
+An "array" is an instance of the fundamental data structure of the NumPy
+library. A common way to think of an array is as a grid of elements.
 
-An array can be indexed by a tuple of nonnegative integers, by booleans, by
-another array, or by integers. The ``rank`` of the array is the number of
-dimensions. The ``shape`` of the array is a tuple of integers giving the size of
-the array along each dimension.
-
-One way we can initialize NumPy arrays is from Python lists, using nested lists
-for two- or higher-dimensional data.
-
+One way to initialize an array is using a Python sequence, such as a list.
 For example::
 
-  >>> a = np.array([1, 2, 3, 4, 5, 6])
+    >>> a = np.array([1, 2, 3, 4, 5, 6])
+    >>> a
+    array([1, 2, 3, 4, 5, 6])
 
-or::
+Elements of an array can be accessed in :ref:`various ways
+<quickstart.indexing-slicing-and-iterating>`. For instance, we can access an
+individual element of this array as we would access an element in the original
+list: using the integer index of the element within square brackets.
 
-  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    >>> a[0]
+    1
 
-We can access the elements in the array using square brackets. When you're
-accessing elements, remember that indexing in NumPy starts at 0. That means that
-if you want to access the first element in your array, you'll be accessing
-element "0".
+.. note::
 
-::
+     As with built-in Python sequences, NumPy arrays are "0-indexed": the first
+     element of the array is accessed using index ``0``, not ``1``.
 
-  >>> print(a[0])
-  [1 2 3 4]
+As with the original list, Python slice notation can be used for indexing.
 
+    >>> a[:3]
+    array([1, 2, 3])
 
-More information about arrays
------------------------------
+Also like the original list, the array is mutable.
 
-*This section covers* ``1D array``, ``2D array``, ``ndarray``, ``vector``, ``matrix``
+    >>> a[0] = 10
+    >>> a
+    array([10,  2,  3,  4,  5,  6])
 
-------
+One major difference between the array and the original list is that slicing
+returns a *view*: an object that refers to the data in the original array. The
+original array can be mutated using the view.
 
-You might occasionally hear an array referred to as a "ndarray," which is
-shorthand for "N-dimensional array." An N-dimensional array is simply an array
-with any number of dimensions. You might also hear **1-D**, or one-dimensional
-array, **2-D**, or two-dimensional array, and so on. The NumPy ``ndarray`` class
-is used to represent both matrices and vectors. A **vector** is an array with a
-single dimension (there's no difference
-between row and column vectors), while a **matrix** refers to an
-array with two dimensions. For **3-D** or higher dimensional arrays, the term
-**tensor** is also commonly used.
+    >>> b = a[3:]
+    >>> b
+    array([4, 5, 6])
+    >>> b[0] = 40
+    >>> a
+    array([ 1,  2,  3, 40,  5,  6])
 
-**What are the attributes of an array?**
+Two- and higher-dimensional arrays can be initialized from nested Python
+sequences::
 
-An array is usually a fixed-size container of items of the same type and size.
-The number of dimensions and items in an array is defined by its shape. The
-shape of an array is a tuple of non-negative integers that specify the sizes of
-each dimension.
+    >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    >>> a
+    array([[ 1,  2,  3,  4],
+           [ 5,  6,  7,  8],
+           [ 9, 10, 11, 12]])
 
-In NumPy, dimensions are called **axes**. This means that if you have a 2D array
-that looks like this::
+In NumPy, a dimension of an array is sometimes referred to as an "axis". This
+terminology may be useful to disambiguate between the dimensionality of an
+array and the dimensionality of the data represented by the array. For
+instance, the array ``a`` could represent three points, each lying within a
+four-dimensional space, but ``a`` has only two "axes".
 
-  [[0., 0., 0.],
-   [1., 1., 1.]]
+Another difference between an array and a list of lists is that an
+element of the array can be accessed by specifying the index along each
+axis within a *single* set of square brackets, separated by commas.
+For instance, the element ``8`` is in row ``1`` and column ``3``:
 
-Your array has 2 axes. The first axis has a length of 2 and the second axis has
-a length of 3.
+    >>> a[1, 3]
+    8
 
-Just like in other Python container objects, the contents of an array can be
-accessed and modified by indexing or slicing the array. Unlike the typical container
-objects, different arrays can share the same data, so changes made on one array might
-be visible in another.
+.. note::
 
-Array **attributes** reflect information intrinsic to the array itself. If you
-need to get, or even set, properties of an array without creating a new array,
-you can often access an array through its attributes.
+    It is familiar practice in mathematics to refer to elements of a matrix
+    by the row index first and the column index second. This happens to be true
+    for two-dimensional arrays, but a better mental model is to think of
+    the column index as coming *last* and the row index as *second to last*.
+    This generalizes to arrays with *any* number of dimensions.
 
-:ref:`Read more about array attributes here <arrays.ndarray>` and learn about
+.. note::
+
+    You might hear of a 0-D (zero-dimensional) array referred to as a "scalar",
+    a 1-D (one-dimensional) array as a "vector", a 2-D (two-dimensional) array
+    as a "matrix", or an N-D (N-dimensional, where "N" is typically an integer
+    greater than 2) array as a "tensor". For clarity, it is best to avoid the
+    mathematical terms when referring to an array because the mathematical
+    objects with these names behave differently than arrays (e.g. "matrix"
+    multiplication is fundamentally different from "array" multiplication), and
+    there are other objects in the scientific Python ecosystem that have these
+    names (e.g. the fundamental data structure of PyTorch is the "tensor").
+
+Array attributes
+----------------
+
+*This section covers the* ``ndim``, ``shape``, ``size``, *and* ``dtype``
+*attributes of an array*.
+
+-----
+
+The number of dimensions of an array is contained in the ``ndim`` attribute.
+
+    >>> a.ndim
+    2
+
+The shape of an array is a tuple of non-negative integers that specify the
+number of elements along each dimension.
+
+    >>> a.shape
+    (3, 4)
+    >>> len(a.shape) == a.ndim
+    True
+
+The fixed, total number of elements in array is contained in the ``size``
+attribute.
+
+    >>> a.size
+    12
+    >>> import math
+    >>> a.size == math.prod(a.shape)
+    True
+
+Arrays are typically "homogeneous", meaning that they contain elements of
+only one "data type", contained in the ``dtype`` attribute.
+
+    >>> a.dtype
+    dtype('int64')  # "int" for integer, "64" for 64-bit
+
+ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 :ref:`array objects here <arrays>`.
-
 
 How to create a basic array
 ---------------------------
-
 
 *This section covers* ``np.array()``, ``np.zeros()``, ``np.ones()``,
 ``np.empty()``, ``np.arange()``, ``np.linspace()``, ``dtype``
