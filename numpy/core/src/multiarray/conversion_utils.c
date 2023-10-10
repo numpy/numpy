@@ -1301,12 +1301,11 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_DEPRECATED_STRINGLTR2:
-            {
-                DEPRECATE(
-                    "Data type alias `a` was removed in NumPy 2.0. "
-                    "Use `S` alias instead."
-                );
-            }
+            DEPRECATE(
+                "Data type alias `a` was removed in NumPy 2.0. "
+                "Use `S` alias instead."
+            );
+            newtype = NPY_STRING;
             break;
 
         case NPY_UNICODELTR:

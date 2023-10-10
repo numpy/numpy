@@ -1,0 +1,2 @@
+``np.dtype("a")`` alias for ``np.dtype(np.bytes_)`` was deprecated.
+Use ``np.dtype("S")`` alias instead.
