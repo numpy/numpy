@@ -119,6 +119,10 @@ else:
         OSError
             If there is no library with the expected extension, or the
             library is defective and cannot be loaded.
+        Examples
+        ------
+        >>> np.ctypeslib.load_library('_rational_tests', np.core.__file__)
+        <CDLL '/home/ankur/.local/lib/python3.10/site-packages/numpy/core/_rational_tests.cpython-310-x86_64-linux-gnu.so', handle 55675a3a97f0 at 0x7f75d5ccf700>
         """
         # Convert path-like objects into strings
         libname = os.fsdecode(libname)
