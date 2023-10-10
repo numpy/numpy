@@ -31,9 +31,9 @@ steps:
     }
     elseif ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         python -m pip install scipy-openblas64 spin
-        spin config-openblas --with-scipy-openblas=64 -- -Duse-ilp64=true
+        spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        python -m pip install . -v -Csetup-args="--vsenv"
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Duse-ilp64=true"
     } else {
         python -m pip install scipy-openblas32 spin
         spin config-openblas --with-scipy-openblas=32
