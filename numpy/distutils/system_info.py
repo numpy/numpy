@@ -2357,7 +2357,10 @@ class openblas_info(blas_info):
         if self.symbol_prefix:
             info['define_macros'] += [('BLAS_SYMBOL_PREFIX', self.symbol_prefix)]
         if self.symbol_suffix:
-            info['define_macros'] += [('BLAS_SYMBOL_SUFFIX', self.symbol_suffix)]
+            info['define_macros'] += [
+                    ('BLAS_SYMBOL_SUFFIX', self.symbol_suffix),
+                    ('OPENBLAS_ILP64_NAMING_SCHEME', None),
+            ]
 
         return info
 
