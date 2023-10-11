@@ -65,10 +65,12 @@ _extra_aliases = {
     "complex": "complex128",
     "object": "object_",
     "bytes": "bytes_",
+    "a": "bytes_",
     "int": "int_",
     "long": "int_",
     "ulong": "uint",
     "str": "str_",
+    "unicode": "str_",
 }
 
 for k, v in _extra_aliases.items():

@@ -772,3 +772,19 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: row_stack([[]]))
         self.assert_deprecated(lambda: trapz([1], [1]))
         self.assert_deprecated(lambda: np.chararray)
+
+
+class TestDeprecatedDTypeAliases(_DeprecationTestCase):
+
+    @staticmethod
+    def _check_for_warning(func):
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            func()
+        assert len(caught_warnings) == 1
+        w = caught_warnings[0]
+        assert w.category is DeprecationWarning
+        assert "alias `a` was removed in NumPy 2.0" in str(w.message)
+
+    def test_a_dtype_alias(self):
+        self._check_for_warning(lambda: np.dtype("a"))
+        self._check_for_warning(lambda: np.dtype("a10"))
