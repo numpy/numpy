@@ -3,6 +3,58 @@
 ==========================
 NumPy 1.26.1 Release Notes
 ==========================
+
 NumPy 1.26.1 is a maintenance release that fixes bugs and regressions
-discovered after the 1.26.0 release. This is the last planned release in the
-The Python versions supported by this release are 3.9-3.12.
+discovered after the 1.26.0 release. In addition, it adds new functionality for
+detecting BLAS and LAPACK when building from source. The 1.26.release series is
+the last planned minor release series before NumPy 2.0. The Python versions
+supported by this release are 3.9-3.12.
+
+
+Build system changes
+====================
+
+Improved BLAS/LAPACK detection and control
+------------------------------------------
+
+Auto-detection for a number of BLAS and LAPACK is now implemented for Meson.
+By default, the build system will try to detect MKL, Accelerate (on macOS
+>=13.3), OpenBLAS, FlexiBLAS, BLIS and reference BLAS/LAPACK. Support for MKL
+was significantly improved, and support for FlexiBLAS was added.
+
+New command-line flags are available to further control the selection of the
+BLAS and LAPACK libraries to build against.
+
+To select a specific library, use the config-settings interface via ``pip`` or
+``pypa/build``. E.g., to select ``libblas``/``liblapack``, use::
+
+    $ pip install numpy -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack
+    $ # OR
+    $ python -m build . -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack
+
+This works not only for the libraries named above, but for any library that
+Meson is able to detect with the given name through ``pkg-config`` or CMake.
+
+Besides ``-Dblas`` and ``-Dlapack``, a number of other new flags are available
+to control BLAS/LAPACK selection and behavior:
+
+- ``-Dblas-order`` and ``-Dlapack-order``: a list of library names to search
+  for in order, overriding the default search order.
+- ``-Duse-ilp64``: if set to ``true``, use ILP64 (64-bit integer) BLAS and
+  LAPACK. Note that with this release, ILP64 support has been extended to
+  include MKL and FlexiBLAS. OpenBLAS and Accelerate were supported in previous
+  releases.
+- ``-Dallow-noblas``: if set to ``true``, allow NumPy to build with its
+  internal (very slow) fallback routines instead of linking against an external
+  BLAS/LAPACK library. *The default for this flag may be changed to ``false``
+  in a future 1.26.x release, however for 1.26.1 we'd prefer to keep it as
+  ``true`` because if failures to detect an installed library are happening,
+  we'd like a bug report for that, so we can quickly assess whether the new
+  auto-detection machinery needs further improvements.*
+- ``-Dmkl-threading``: to select the threading layer for MKL. There are four
+  options: ``seq``, ``iomp``, ``gomp`` and ``tbb``. The default is ``auto``,
+  which selects from those four as appropriate given the version of MKL
+  selected.
+- ``-Dblas-symbol-suffix``: manually select the symbol suffix to use for the
+  library - should only be needed for linking against libraries built in a
+  non-standard way.
