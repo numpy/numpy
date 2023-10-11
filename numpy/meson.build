@@ -225,6 +225,10 @@ python_sources = [
   'py.typed'
 ]
 
+if blas_name == 'scipy-openblas'
+  python_sources += ['_distributor_init_local.py']
+endif
+
 py.install_sources(
   python_sources,
   subdir: 'numpy'
