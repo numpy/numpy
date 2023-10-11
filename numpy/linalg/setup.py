@@ -51,7 +51,8 @@ def configuration(parent_package='', top_path=None):
                     # but use the "64_" convention here.
                     info['define_macros'] = [
                         ('HAVE_BLAS_ILP64', None),
-                        ('BLAS_SYMBOL_SUFFIX', '64_')
+                        ('BLAS_SYMBOL_SUFFIX', '64_'),
+                        ('OPENBLAS_ILP64_NAMING_SCHEME', None),
                     ]
                 self.set_info(**info)
 
