@@ -66,6 +66,7 @@ documentation = "https://numpy.org/doc/"
 source = "https://github.com/numpy/numpy"
 download = "https://pypi.org/project/numpy/#files"
 tracker = "https://github.com/numpy/numpy/issues"
+"release notes" = "https://numpy.org/doc/stable/release"
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
@@ -201,10 +202,11 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:config_openblas",
 ]
 "Environments" = [
-  ".spin/cmds.py:run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", ".spin/cmds.py:gdb"
+  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python", "spin.cmds.meson.gdb"
 ]
 "Documentation" = [".spin/cmds.py:docs"]
 "Metrics" = [".spin/cmds.py:bench"]
