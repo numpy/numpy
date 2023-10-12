@@ -2390,6 +2390,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> np.any([-1, 0, 5])
     True
 
+    The following two examples show the functioning of np.any when input is NaN and Positive Infinity
     >>> np.any(np.nan)
     True
 
@@ -2409,9 +2410,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     >>> id(z), id(o) # identity of z and o              # doctest: +SKIP
     (191614240, 191614240)
 
+    This example shows output of np.any when output parameter is set to type float
     >>> np.any([[1.0,3.5,-0.9],[4.5,7.9,0],[-5.6,11,3.7]],out=np.array(float))
     array(1.0, dtype=object)
-    
+
+    This example shows the working of np.any for a multi-dimensional array, when axis parameter is set and keepdims parameter is set to True    
     >>> np.shape([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]])
     (2,2,3)
     >>> ex = np.any([[[1,2,4],[3,5,6]],[[3,4,5],[7,8,9]]],axis=2,keepdims=True)
