@@ -942,7 +942,7 @@ def test_longdouble_operators_with_large_int(sctype, op):
         with pytest.raises(TypeError):
             op(sctype(3), 2**64)
     else:
-        assert op(sctype(3), 2**64) == op(sctype(3), sctype(2**64))
+        assert op(sctype(3), -2**64) == op(sctype(3), sctype(-2**64))
         assert op(2**64, sctype(3)) == op(sctype(2**64), sctype(3))
 
 
