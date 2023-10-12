@@ -3502,8 +3502,15 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
     if (PyArray_Check(from_obj)) {
         ret = PyArray_CanCastArrayTo((PyArrayObject *)from_obj, d2, casting);
     }
-    else if (PyArray_IsScalar(from_obj, Generic) ||
-                                PyArray_IsPythonNumber(from_obj)) {
+    else if (PyArray_IsPythonNumber(from_obj)) {
+        PyErr_SetString(PyExc_TypeError,
+                "can_cast() does not support Python ints, floats, and "
+                "complex because the result used to depend on the value.\n"
+                "This change was part of adopting NEP 50, we may "
+                "explicitly allow them again in the future.");
+        goto finish;
+    }
+    else if (PyArray_IsScalar(from_obj, Generic)) {
         PyArrayObject *arr;
         arr = (PyArrayObject *)PyArray_FROM_O(from_obj);
         if (arr == NULL) {
