@@ -5,7 +5,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_
 
-#define __EXPERIMENTAL_DTYPE_API_VERSION 13
+#define __EXPERIMENTAL_DTYPE_API_VERSION 14
 
 struct PyArrayMethodObject_tag;
 
@@ -257,7 +257,8 @@ typedef int translate_loop_descrs_func(int nin, int nout,
  * element of a single array.
  *
  * Currently this is used for array clearing, via the NPY_DT_get_clear_loop
- * API hook, and zero-filling, via the NPY_DT_get_fill_zero_loop API hook.
+ * API hook, and zero-filling, via the NPY_DT_get_fill_zero_loop API hook, or
+ * array initialization, via the NPY_DT_get_initialization_loop API hook.
  * These are most useful for handling arrays storing embedded references to
  * python objects or heap-allocated data.
  *
@@ -319,6 +320,7 @@ typedef int (get_traverse_loop_function)(
 #define NPY_DT_getitem 8
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
+#define NPY_DT_get_initialization_loop 11
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;

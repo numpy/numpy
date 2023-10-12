@@ -878,6 +878,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
     dt_slots->common_instance = NULL;
     dt_slots->ensure_canonical = ensure_native_byteorder;
     dt_slots->get_fill_zero_loop = NULL;
+    dt_slots->get_initialization_loop = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */

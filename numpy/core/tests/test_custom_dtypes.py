@@ -295,6 +295,12 @@ class TestSFloat:
         np.testing.assert_array_equal(
             arr.view(np.float64), arr2.view(np.float64))
 
+    def test_initialization_loop(self):
+        dt = SF(3.0)
+        assert dt.initialized == 0
+        arr = np.array([1.0, 2.0, 3.0], dtype=dt)
+        assert dt.initialized == 1
+
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)
     import pickle

@@ -738,10 +738,15 @@ PyArray_NewFromDescr_int(
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
 
-    /* needed for zero-filling logic below, defined and initialized up here
-       so cleanup logic can go in the fail block */
+
+    /*  the traversal info is heap allocated, we define it up
+     *  here so cleanup logic can go in the fail block */
+
     NPY_traverse_info fill_zero_info;
     NPY_traverse_info_init(&fill_zero_info);
+
+    NPY_traverse_info initialization_info;
+    NPY_traverse_info_init(&initialization_info);
 
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
@@ -812,15 +817,31 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
-        /* float errors do not matter and we do not release GIL */
-        NPY_ARRAYMETHOD_FLAGS zero_flags;
         get_traverse_loop_function *get_fill_zero_loop =
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+
+        get_traverse_loop_function *get_initialization_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_initialization_loop;
+
+        /* float errors do not matter and we do not release GIL */
+        NPY_ARRAYMETHOD_FLAGS zero_flags;
+        NPY_ARRAYMETHOD_FLAGS initialization_flags;
+
+        /* only one or the other will be defined, enforced
+           via a check when user dtypes are created */
+
         if (get_fill_zero_loop != NULL) {
             if (get_fill_zero_loop(
                     NULL, descr, 1, descr->elsize, &(fill_zero_info.func),
                     &(fill_zero_info.auxdata), &zero_flags) < 0) {
                 goto fail;
+            }
+        }
+        else if (get_initialization_loop != NULL) {
+            if (get_initialization_loop(
+                    NULL, descr, 1, descr->elsize, &(initialization_info.func),
+                    &(initialization_info.auxdata), &initialization_flags) < 0) {
+              goto fail;
             }
         }
 
@@ -832,9 +853,10 @@ PyArray_NewFromDescr_int(
          *
          * If the zero-filling loop is defined and zeroed is set, allocate
          * with malloc and let the zero-filling loop fill the array buffer
-         * with valid zero values for the dtype.
+         * with valid zero values for the dtype. If there is a initialization
+         * loop, use malloc and let the dtype's initialization loop handle it.
          */
-        int use_calloc = (
+        int use_calloc = (!(initialization_info.func == NULL)) || (
                 PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
                 ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
 
@@ -868,7 +890,7 @@ PyArray_NewFromDescr_int(
         }
 
         /*
-         * If the array needs special dtype-specific zero-filling logic, do that
+         * If the array needs special dtype-specific zero-filling or initialization logic, do that
          */
         if (NPY_UNLIKELY((cflags & _NPY_ARRAY_ZEROED)
                          && (fill_zero_info.func != NULL))) {
@@ -876,6 +898,14 @@ PyArray_NewFromDescr_int(
             if (fill_zero_info.func(
                     NULL, descr, data, size, descr->elsize,
                     fill_zero_info.auxdata) < 0) {
+                goto fail;
+            }
+        }
+        else if (initialization_info.func != NULL) {
+            npy_intp size = PyArray_MultiplyList(fa->dimensions, fa->nd);
+            if (initialization_info.func(
+                    NULL, descr, data, size, descr->elsize,
+                    initialization_info.auxdata) < 0) {
                 goto fail;
             }
         }
@@ -975,10 +1005,12 @@ PyArray_NewFromDescr_int(
         }
     }
     NPY_traverse_info_xfree(&fill_zero_info);
+    NPY_traverse_info_xfree(&initialization_info);
     return (PyObject *)fa;
 
  fail:
     NPY_traverse_info_xfree(&fill_zero_info);
+    NPY_traverse_info_xfree(&initialization_info);
     Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;

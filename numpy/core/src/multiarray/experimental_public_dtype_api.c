@@ -164,6 +164,8 @@ PyArrayInitDTypeMeta_FromSpec(
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
+    NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
+    NPY_DT_SLOTS(DType)->get_initialization_loop = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
@@ -280,6 +282,13 @@ PyArrayInitDTypeMeta_FromSpec(
         PyErr_SetString(PyExc_RuntimeError,
                         "A DType must provide an ensure_canonical implementation.");
         return -1;
+    }
+
+    if ((NPY_DT_SLOTS(DType)->get_fill_zero_loop != NULL) &&
+        (NPY_DT_SLOTS(DType)->get_initialization_loop != NULL)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "A DType cannot simultaneously define a zero-filling "
+                        "loop and an initialization loop");
     }
 
     /*

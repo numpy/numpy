@@ -37,6 +37,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
 typedef struct {
     PyArray_Descr base;
     double scaling;
+    int initialized;
 } PyArray_SFloatDescr;
 
 static PyArray_DTypeMeta PyArray_SFloatDType;
@@ -130,6 +131,39 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
     return 0;
 }
 
+static
+int sfloat_initialization_loop(
+        void *NPY_UNUSED(traverse_context),
+        PyArray_Descr *descr,
+        char *data,
+        npy_intp size,
+        npy_intp stride,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    ((PyArray_SFloatDescr *)descr)->initialized = 1;
+
+    while (size--) {
+        *(double *)data = 0;
+        data += stride;
+    }
+    return 0;
+}
+
+static int
+sfloat_get_initialization_loop(
+        void *NPY_UNUSED(traverse_context),
+        PyArray_Descr *NPY_UNUSED(descr),
+        int NPY_UNUSED(aligned),
+        npy_intp NPY_UNUSED(fixed_stride),
+        traverse_loop_function **out_loop,
+        NpyAuxData **NPY_UNUSED(auxdata),
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = 0;
+    *out_loop = &sfloat_initialization_loop;
+    return 0;
+}
+
 
 /* Special DType methods and the descr->f slot storage */
 NPY_DType_Slots sfloat_slots = {
@@ -138,6 +172,7 @@ NPY_DType_Slots sfloat_slots = {
     .default_descr = &sfloat_default_descr,
     .common_dtype = &sfloat_common_dtype,
     .common_instance = &sfloat_common_instance,
+    .get_initialization_loop = &sfloat_get_initialization_loop,
     .f = {
         .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
         .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
@@ -169,6 +204,7 @@ sfloat_scaled_copy(PyArray_SFloatDescr *self, double factor) {
             sizeof(PyArray_SFloatDescr) - sizeof(PyObject));
 
     new->scaling = new->scaling * factor;
+    new->initialized = 0;
     return (PyArray_Descr *)new;
 }
 
@@ -212,6 +248,13 @@ PyMethodDef sfloat_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+static
+PyMemberDef sfloat_members[] = {
+        {"initialized", T_INT, offsetof(PyArray_SFloatDescr, initialized), READONLY,
+         "1 if the initialization function has run, zero otherwise"},
+        {NULL, 0, 0, 0, NULL},
+};
+
 
 static PyObject *
 sfloat_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
@@ -252,6 +295,7 @@ static PyArray_DTypeMeta PyArray_SFloatDType = {{{
         .tp_repr = (reprfunc)sfloat_repr,
         .tp_str = (reprfunc)sfloat_repr,
         .tp_methods = sfloat_methods,
+        .tp_members = sfloat_members,
         .tp_new = sfloat_new,
     }},
     .type_num = -1,
