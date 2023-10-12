@@ -929,7 +929,7 @@ class TestAssertAllclose:
         assert_allclose(a, a)
 
     def test_error_message_unsigned(self):
-        """Check the the message is formatted correctly when overflow can occur
+        """Check the message is formatted correctly when overflow can occur
            (gh21768)"""
         # Ensure to test for potential overflow in the case of:
         #        x - y
