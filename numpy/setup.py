@@ -7,6 +7,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('array_api')
     config.add_subpackage('compat')
     config.add_subpackage('core')
+    config.add_subpackage('_core')
     config.add_subpackage('distutils')
     config.add_subpackage('doc')
     config.add_subpackage('f2py')
