@@ -246,6 +246,7 @@ pure_subdirs = [
   '_pyinstaller',
   '_typing',
   '_utils',
+  '_core',
   'array_api',
   'compat',
   'doc',
