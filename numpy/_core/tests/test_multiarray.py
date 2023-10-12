@@ -8707,14 +8707,9 @@ class TestConversion:
 
         # Unsigned integers
         for dt1 in 'BHILQP':
-            # NEP 50 broke comparison of unsigned with -1 for the time being
-            # (this may be fixed in the future of course).
-            with pytest.raises(OverflowError):
-                -1 < np.array(1, dtype=dt1)
-            with pytest.raises(OverflowError):
-                -1 > np.array(1, dtype=dt1)
-            with pytest.raises(OverflowError):
-                -1 != np.array(1, dtype=dt1)
+            assert_(-1 < np.array(1, dtype=dt1), "type %s failed" % (dt1,))
+            assert_(not -1 > np.array(1, dtype=dt1), "type %s failed" % (dt1,))
+            assert_(-1 != np.array(1, dtype=dt1), "type %s failed" % (dt1,))
 
             # Unsigned vs signed
             for dt2 in 'bhilqp':

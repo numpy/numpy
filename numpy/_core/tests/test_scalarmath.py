@@ -558,13 +558,9 @@ class TestConversion:
 
         #Unsigned integers
         for dt1 in 'BHILQP':
-            # NEP 50 means the -1 is currently rejected (we may change this)
-            with pytest.raises(OverflowError):
-                -1 < np.array(1, dtype=dt1)[()]
-            with pytest.raises(OverflowError):
-                -1 > np.array(1, dtype=dt1)[()]
-            with pytest.raises(OverflowError):
-                -1 != np.array(1, dtype=dt1)[()]
+            assert_(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
 
             #unsigned vs signed
             for dt2 in 'bhilqp':

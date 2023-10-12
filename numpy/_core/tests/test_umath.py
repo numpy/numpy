@@ -418,17 +418,17 @@ class TestComparisons:
             np_comp = np_comp_func
 
         arr = np.array([np.iinfo(dtype).max], dtype=dtype)
+        expected = py_comp(int(arr[0]), -1)
 
-        # NEP 50 broke this (for now), this could be salvaged eventually and
-        # the test should check equivalence to Python (no overflow).
-        # If not, the test can be simplified a bit more eventually.
-        with pytest.raises(OverflowError, match="Python integer -1"):
-            np_comp(arr, -1)
+        assert py_comp(arr, -1) == expected
+        assert np_comp(arr, -1) == expected
+
 
         scalar = arr[0]
-        with pytest.raises(OverflowError):
-            np_comp(scalar, -1)
-
+        assert isinstance(scalar, np.integer)
+        # The Python operator here is mainly interesting:
+        assert py_comp(scalar, -1) == expected
+        assert np_comp(scalar, -1) == expected
 
 class TestAdd:
     def test_reduce_alignment(self):
@@ -4058,14 +4058,16 @@ class TestRationalFunctions:
         assert_raises(TypeError, np.lcm, 0.3, 0.4)
 
     def test_huge_integers(self):
-        # As of now, you can still convert to an array first and then
-        # call a ufunc with huge integers:
+        # Converting to an array first is a bit different as it means we
+        # have an explicit object dtype:
         assert_equal(np.array(2**200), 2**200)
-        # but promotion rules mean that we try to use a normal integer
-        # in the following case:
-        with pytest.raises(OverflowError):
-            np.equal(2**200, 2**200)
+        # Special promotion rules should ensure that this also works for
+        # two Python integers (even if slow).
+        # (We do this for comparisons, as the result is always bool and
+        # we also special case array comparisons with Python integers)
+        np.equal(2**200, 2**200)
 
+        # But, we cannot do this when it would affect the result dtype:
         with pytest.raises(OverflowError):
             np.gcd(2**100, 3**100)
 
