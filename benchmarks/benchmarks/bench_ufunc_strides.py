@@ -100,7 +100,8 @@ class _AbstractUnary(Benchmark):
         ufunc(*self.ufunc_args)
 
 class UnaryFP(_AbstractUnary):
-    params = [[uf for uf in UFUNCS_UNARY if uf != np.invert],
+    params = [[uf for uf in UFUNCS_UNARY
+                   if uf not in (np.invert, np.bitwise_count)],
               [1, 4],
               [1, 2],
               ['e', 'f', 'd']]
