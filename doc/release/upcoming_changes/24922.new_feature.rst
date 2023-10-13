@@ -1,0 +1,5 @@
+`numpy.long` and `numpy.ulong`
+------------------------------
+
+`numpy.long` and `numpy.ulong` have been reintroduced as a direct
+mapping to C's ``long`` and ``unsigned long`` types.
