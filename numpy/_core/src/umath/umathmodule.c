@@ -27,7 +27,7 @@
 #include "number.h"
 #include "dispatching.h"
 #include "string_ufuncs.h"
-#include "special_comparisons.h"
+#include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 
 /* Automatically generated code to define all ufuncs: */

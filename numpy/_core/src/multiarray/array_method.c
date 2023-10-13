@@ -255,8 +255,8 @@ fill_arraymethod_from_slots(
      */
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
-            case NPY_METH_resolve_descriptors_raw:
-                meth->resolve_descriptors_raw = slot->pfunc;
+            case NPY_METH_resolve_descriptors_with_scalars:
+                meth->resolve_descriptors_with_scalars = slot->pfunc;
                 continue;
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;

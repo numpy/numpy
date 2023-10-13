@@ -4488,7 +4488,7 @@ resolve_descriptors(int nop, int nin,
 
     NPY_UF_DBG_PRINT("Resolving the descriptors\n");
 
-    if (NPY_UNLIKELY(ufuncimpl->resolve_descriptors_raw != NULL)) {
+    if (NPY_UNLIKELY(ufuncimpl->resolve_descriptors_with_scalars != NULL)) {
         /*
          * Allow a somewhat more powerful approach which:
          * 1. Has access to scalars (currently only ever Python ones)
@@ -4523,7 +4523,7 @@ resolve_descriptors(int nop, int nin,
         }
 
         npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
-        safety = ufuncimpl->resolve_descriptors_raw(
+        safety = ufuncimpl->resolve_descriptors_with_scalars(
             ufuncimpl, signature, original_dtypes, input_scalars,
             dtypes, &view_offset
         );

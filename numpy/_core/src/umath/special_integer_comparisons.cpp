@@ -15,7 +15,7 @@
 #include "convert_datatype.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */
-#include "special_comparisons.h"
+#include "special_integer_comparisons.h"
 
 
 /*
@@ -119,7 +119,7 @@ get_value_range(PyObject *value, int type_num)
     int overflow;
     long long val = PyLong_AsLongLongAndOverflow(value, &overflow);
     if (val == -1 && overflow == 0 && PyErr_Occurred()) {
-        return (NPY_CASTING)-1;
+        return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
     if (overflow == 0) {
@@ -166,19 +166,17 @@ get_value_range(PyObject *value, int type_num)
  * function supports *both* directions for all types.
  */
 static NPY_CASTING
-resolve_descriptors_raw(
+resolve_descriptors_with_scalars(
     PyArrayMethodObject *self, PyArray_DTypeMeta **dtypes,
     PyArray_Descr **given_descrs, PyObject **input_scalars,
     PyArray_Descr **loop_descrs, npy_intp *view_offset)
 {
     int value_range = 0;
-    int arr_idx = 0;
-    int scalar_idx = 1;
 
-    if (dtypes[0] == &PyArray_PyIntAbstractDType) {
-        arr_idx = 1;
-        scalar_idx = 0;
-    }
+    npy_bool first_is_pyint = dtypes[0] == &PyArray_PyIntAbstractDType;
+    int arr_idx = first_is_pyint? 1 : 0;
+    int scalar_idx = first_is_pyint? 0 : 1;
+    PyObject *scalar = input_scalars[scalar_idx];
     assert(PyTypeNum_ISINTEGER(dtypes[arr_idx]->type_num));
     PyArray_DTypeMeta *arr_dtype = dtypes[arr_idx];
 
@@ -188,22 +186,24 @@ resolve_descriptors_raw(
      *  1: The value came second and is larger or came first and is smaller.
      * -1: The value came second and is smaller or came first and is larger
      */
-    if (input_scalars[scalar_idx] != NULL
-            && PyLong_CheckExact(input_scalars[scalar_idx])) {
-        value_range = get_value_range(input_scalars[scalar_idx], arr_dtype->type_num);
+    if (scalar != NULL && PyLong_CheckExact(scalar)) {
+        value_range = get_value_range(scalar, arr_dtype->type_num);
         if (value_range == -2) {
-            return (NPY_CASTING)-1;
+            return _NPY_ERROR_OCCURRED_IN_CAST;
         }
-        if (arr_idx == 1) {
+        if (first_is_pyint == 1) {
             value_range *= -1;
         }
     }
 
     /*
      * Very small/large values always need to be encoded as `object` dtype
-     * in order to never fail casting.
+     * in order to never fail casting (NumPy will store the Python integer
+     * in a 0-D object array this way -- even if we never inspect it).
+     *
      * TRICK: We encode the value range by whether or not we use the object
-     *        singleton!  This information is then available in `get_loop()`.
+     *        singleton!  This information is then available in `get_loop()`
+     *        to pick a loop that returns always True or False.
      */
     if (value_range == 0) {
         Py_INCREF(arr_dtype->singleton);
@@ -215,7 +215,7 @@ resolve_descriptors_raw(
     else {
         loop_descrs[scalar_idx] = PyArray_DescrNewFromType(NPY_OBJECT);
         if (loop_descrs[scalar_idx] == NULL) {
-            return (NPY_CASTING)-1;
+            return _NPY_ERROR_OCCURRED_IN_CAST;
         }
     }
     Py_INCREF(arr_dtype->singleton);
@@ -290,7 +290,9 @@ get_loop(PyArrayMethod_Context *context,
 
 
 /*
- * Machinery to add the string loops to the existing ufuncs.
+ * Machinery to add the python integer to NumPy intger comparsisons as well
+ * as a special promotion to special case Python int with Python int
+ * comparisons.
  */
 
 /*
@@ -408,10 +410,9 @@ init_special_int_comparisons(PyObject *umath)
 {
     int res = -1;
     PyObject *info = NULL, *promoter = NULL;
-    /* NOTE: This should receive global symbols? */
     PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
 
-    /* We start with the string loops: */
+    /* All loops have a boolean out DType (others filled in later) */
     PyArray_DTypeMeta *dtypes[] = {NULL, NULL, Bool};
     /*
      * We only have one loop right now, the strided one.  The default type
@@ -419,18 +420,23 @@ init_special_int_comparisons(PyObject *umath)
      */
     PyType_Slot slots[] = {
         {_NPY_METH_get_loop, nullptr},
-        {NPY_METH_resolve_descriptors_raw, (void *)&resolve_descriptors_raw},
+        {NPY_METH_resolve_descriptors_with_scalars,
+             (void *)&resolve_descriptors_with_scalars},
         {0, NULL},
     };
 
     PyArrayMethod_Spec spec = {};
-    spec.name = "templated_pyint_comp";
+    spec.name = "templated_pyint_to_integers_comparisons";
     spec.nin = 2;
     spec.nout = 1;
     spec.dtypes = dtypes;
     spec.slots = slots;
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
+    /*
+     * The following sets up the correct promoter to make comparisons like
+     * `np.equal(2, 4)` (with two python integers) use an object loop.
+     */
     PyObject *dtype_tuple = PyTuple_Pack(3,
             &PyArray_PyIntAbstractDType, &PyArray_PyIntAbstractDType, Bool);
     if (dtype_tuple == NULL) {
@@ -439,7 +445,7 @@ init_special_int_comparisons(PyObject *umath)
     promoter = PyCapsule_New(
             (void *)&pyint_comparison_promoter, "numpy._ufunc_promoter", NULL);
     if (promoter == NULL) {
-        Py_DECREF(promoter);
+        Py_DECREF(dtype_tuple);
         goto finish;
     }
     info = PyTuple_Pack(2, dtype_tuple, promoter);
@@ -449,7 +455,7 @@ init_special_int_comparisons(PyObject *umath)
         goto finish;
     }
 
-    /* All String loops */
+    /* Add all combinations of PyInt and NumPy integer comparisons */
     using comp_looper = add_loops<COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
     if (comp_looper()(umath, &spec, info) < 0) {
         goto finish;

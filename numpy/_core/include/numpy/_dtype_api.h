@@ -129,7 +129,7 @@ typedef struct {
  * SLOTS IDs For the ArrayMethod creation, once fully public, IDs are fixed
  * but can be deprecated and arbitrarily extended.
  */
-#define NPY_METH_resolve_descriptors_raw 1
+#define NPY_METH_resolve_descriptors_with_scalars 1
 #define NPY_METH_resolve_descriptors 2
 /* We may want to adapt the `get_loop` signature a bit: */
 #define _NPY_METH_get_loop 4
@@ -167,7 +167,7 @@ typedef NPY_CASTING (resolve_descriptors_function)(
  * Rarely needed, slightly more powerful version of `resolve_descriptors`.
  * See also `resolve_descriptors_function` for details on shared arguments.
  */
-typedef NPY_CASTING (resolve_descriptors_raw_function)(
+typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
         struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta **dtypes,
         /* Unlike above, these can have any DType and we may allow NULL. */
@@ -178,7 +178,7 @@ typedef NPY_CASTING (resolve_descriptors_raw_function)(
          *     value passed is not available (NULL) or does not have the
          *     expected type.
          */
-        PyObject **input_scalars,
+        PyObject *const *input_scalars,
         PyArray_Descr **loop_descrs,
         npy_intp *view_offset);
 
