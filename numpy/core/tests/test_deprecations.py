@@ -689,8 +689,7 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-@pytest.mark.parametrize("name",
-        ["bool", "long", "ulong", "str", "bytes", "object"])
+@pytest.mark.parametrize("name", ["bool", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
     # FutureWarning added 2022-11-17, NumPy 1.24,
     assert name not in dir(np)  # we may want to not add them
