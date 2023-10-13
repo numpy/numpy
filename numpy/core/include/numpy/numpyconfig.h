@@ -116,18 +116,20 @@
  * 1.17 as default was the choice of oldest-support-numpy at the time and
  * has in practice no limit (compared to 1.19).  Even earlier becomes legacy.
  */
+#define _NPY_STRING_HELPER(x) #x
+#define _NPY_STRINGIFY(x) _NPY_STRING_HELPER(x)
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /* NumPy internal build, always use current version. */
     #define NPY_FEATURE_VERSION NPY_API_VERSION
-    #pragma message "NumPy internal build. Setting NPY_FEATURE_VERSION to " NPY_FEATURE_VERSION
+    #pragma message("NumPy internal build.  Using current API version for NPY_FEATURE_VERSION: "  _NPY_STRINGIFY(NPY_API_VERSION))
 #elif defined(NPY_TARGET_VERSION) && NPY_TARGET_VERSION
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
-    #pragma message "NPY_FEATURE_VERSION set to " NPY_FEATURE_VERSION
+    #pragma message("NPY_FEATURE_VERSION set by user to: " _NPY_STRINGIFY(NPY_FEATURE_VERSION))
 #else
     /* Use the default (increase when dropping Python 3.9 support) */
     #define NPY_FEATURE_VERSION NPY_1_19_API_VERSION
-    #pragma message "NPY_FEATURE_VERSION not set so using " NPY_FEATURE_VERSION
+    #pragma message("NPY_FEATURE_VERSION not set using the default NPY_1_19_API_VERSION: " _NPY_STRINGIFY(NPY_API_VERSION))
 #endif
 
 /* Sanity check the (requested) feature version */
@@ -137,6 +139,8 @@
     /* No support for irrelevant old targets, no need for error, but warn. */
     #warning "Requested NumPy target lower than supported NumPy 1.15."
 #endif
+#undef _NPY_STRINGIFY
+#undef _NPY_STRING_HELPER
 
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_NUMPYCONFIG_H_ */
