@@ -184,6 +184,7 @@ else:
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
+    err_msg = str(err_msg)
     if err_msg:
         if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
             msg = [msg[0] + ' ' + err_msg]
@@ -840,6 +841,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         remarks.append('Max relative difference: '
                                        + array2string(max_rel_error))
 
+            err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
@@ -2632,4 +2634,3 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
-
