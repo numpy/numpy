@@ -17,7 +17,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "1.26.1"
+version = "1.26.2"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
