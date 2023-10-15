@@ -556,10 +556,20 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     @type@ div, mod, floordiv;
 
     mod = npy_fmod@c@(a, b);
+
+    int is_inf_a = npy_isinf(a), is_inf_b = npy_isinf(b);
+    int are_both_inf = is_inf_a && is_inf_b;
+    /* adjust mod to return non nan values when inf is involved */
+    if(is_inf_a || are_both_inf) {
+        mod = 0;
+    }  
+    
     if (NPY_UNLIKELY(!b)) {
         /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
-        *modulus = mod;
+        *modulus = NPY_NAN;
         return a / b;
+    } else if (npy_isnan(b)) {
+        mod = NPY_NAN;
     }
 
     /* a - mod should be very nearly an integer multiple of b */
@@ -569,7 +579,11 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     if (mod) {
         if (isless(b, (@type@)0) != isless(mod, (@type@)0)) {
             mod += b;
-            div -= 1.0@c@;
+
+            /* div should not be reduced in the case of number / -inf = 0 */
+            if(!is_inf_b) {
+                div -= 1.0@c@;
+            }
         }
     }
     else {
@@ -587,7 +601,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
         /* if div is zero ensure correct sign */
         floordiv = npy_copysign@c@(0, a/b);
     }
-
+    
     *modulus = mod;
     return floordiv;
 }
