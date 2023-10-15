@@ -256,7 +256,7 @@ class GnuFCompiler(FCompiler):
 
         if sys.platform == 'darwin':
             return f'-Wl,-rpath,{dir}'
-        elif sys.platform[:3] == 'aix':
+        elif sys.platform.startswith(('aix', 'os400')):
             # AIX RPATH is called LIBPATH
             return f'-Wl,-blibpath:{dir}'
         else:
@@ -305,7 +305,7 @@ class Gnu95FCompiler(GnuFCompiler):
     module_dir_switch = '-J'
     module_include_switch = '-I'
 
-    if sys.platform[:3] == 'aix':
+    if sys.platform.startswith(('aix', 'os400')):
         executables['linker_so'].append('-lpthread')
         if platform.architecture()[0][:2] == '64':
             for key in ['compiler_f77', 'compiler_f90','compiler_fix','linker_so', 'linker_exe']:
@@ -324,7 +324,7 @@ class Gnu95FCompiler(GnuFCompiler):
             c_archs[c_archs.index("i386")] = "i686"
         # check the arches the Fortran compiler supports, and compare with
         # arch flags from C compiler
-        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
+        for arch in ["ppc", "i686", "x86_64", "ppc64", "s390x"]:
             if _can_target(cmd, arch) and arch in c_archs:
                 arch_flags.extend(["-arch", arch])
         return arch_flags
@@ -382,7 +382,13 @@ class Gnu95FCompiler(GnuFCompiler):
 
     def get_target(self):
         try:
-            output = subprocess.check_output(self.compiler_f77 + ['-v'])
+            p = subprocess.Popen(
+                self.compiler_f77 + ['-v'],
+                stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            stdout, stderr = p.communicate()
+            output = (stdout or b"") + (stderr or b"")
         except (OSError, subprocess.CalledProcessError):
             pass
         else:

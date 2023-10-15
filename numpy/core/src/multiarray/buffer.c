@@ -17,6 +17,7 @@
 #include "numpyos.h"
 #include "arrayobject.h"
 #include "scalartypes.h"
+#include "dtypemeta.h"
 
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
@@ -136,7 +137,7 @@ fail:
  * AND, the descr element size is a multiple of the alignment,
  * AND, the array data is positioned to alignment granularity.
  */
-static NPY_INLINE int
+static inline int
 _is_natively_aligned_at(PyArray_Descr *descr,
                         PyArrayObject *arr, Py_ssize_t offset)
 {
@@ -417,9 +418,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         default:
-            PyErr_Format(PyExc_ValueError,
-                         "cannot include dtype '%c' in a buffer",
-                         descr->type);
+            if (NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+                PyErr_Format(PyExc_ValueError,
+                             "cannot include dtype '%c' in a buffer",
+                             descr->type);
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                             "cannot include dtype '%s' in a buffer",
+                             ((PyTypeObject*)NPY_DTYPE(descr))->tp_name);
+            }
             return -1;
         }
     }
@@ -498,14 +506,11 @@ _buffer_info_new(PyObject *obj, int flags)
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
 
-#if NPY_RELAXED_STRIDES_CHECKING
             /*
-             * When NPY_RELAXED_STRIDES_CHECKING is used, some buffer users
-             * may expect a contiguous buffer to have well formatted strides
-             * also when a dimension is 1, but we do not guarantee this
-             * internally. Thus, recalculate strides for contiguous arrays.
-             * (This is unnecessary, but has no effect in the case where
-             * NPY_RELAXED_STRIDES CHECKING is disabled.)
+             * Some buffer users may expect a contiguous buffer to have well
+             * formatted strides also when a dimension is 1, but we do not
+             * guarantee this internally. Thus, recalculate strides for
+             * contiguous arrays.
              */
             int f_contiguous = (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS;
             if (PyArray_IS_C_CONTIGUOUS(arr) && !(
@@ -526,11 +531,6 @@ _buffer_info_new(PyObject *obj, int flags)
                 }
             }
             else {
-#else  /* NPY_RELAXED_STRIDES_CHECKING */
-            /* We can always use the arrays strides directly */
-            {
-#endif
-
                 for (k = 0; k < PyArray_NDIM(arr); ++k) {
                     info->shape[k] = PyArray_DIMS(arr)[k];
                     info->strides[k] = PyArray_STRIDES(arr)[k];
@@ -599,7 +599,7 @@ _buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
  * a useful error message instead of crashing hard if a C-subclass uses
  * the same field.
  */
-static NPY_INLINE void *
+static inline void *
 buffer_info_tag(void *buffer_info)
 {
     if (buffer_info == NULL) {
@@ -611,7 +611,7 @@ buffer_info_tag(void *buffer_info)
 }
 
 
-static NPY_INLINE int
+static inline int
 _buffer_info_untag(
         void *tagged_buffer_info, _buffer_info_t **buffer_info, PyObject *obj)
 {
@@ -708,8 +708,8 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
          if (info->ndim > 1 && next_info != NULL) {
              /*
               * Some arrays are C- and F-contiguous and if they have more
-              * than one dimension, the buffer-info may differ between
-              * the two due to RELAXED_STRIDES_CHECKING.
+              * than one dimension, the buffer-info may differ between the
+              * two because strides for length 1 dimension may be adjusted.
               * If we export both buffers, the first stored one may be
               * the one for the other contiguity, so check both.
               * This is generally very unlikely in all other cases, since
@@ -903,7 +903,7 @@ static int
 _descriptor_from_pep3118_format_fast(char const *s, PyObject **result);
 
 static int
-_pep3118_letter_to_type(char letter, int native, int complex);
+_pep3118_letter_to_type(char letter, int native, int is_complex);
 
 NPY_NO_EXPORT PyArray_Descr*
 _descriptor_from_pep3118_format(char const *s)
@@ -1048,19 +1048,25 @@ _descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
     }
 
     descr = PyArray_DescrFromType(type_num);
+    if (descr == NULL) {
+        return 0;
+    }
     if (byte_order == '=') {
         *result = (PyObject*)descr;
     }
     else {
         *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
         Py_DECREF(descr);
+        if (*result == NULL) {
+            return 0;
+        }
     }
 
     return 1;
 }
 
 static int
-_pep3118_letter_to_type(char letter, int native, int complex)
+_pep3118_letter_to_type(char letter, int native, int is_complex)
 {
     switch (letter)
     {
@@ -1076,9 +1082,9 @@ _pep3118_letter_to_type(char letter, int native, int complex)
     case 'q': return native ? NPY_LONGLONG : NPY_INT64;
     case 'Q': return native ? NPY_ULONGLONG : NPY_UINT64;
     case 'e': return NPY_HALF;
-    case 'f': return complex ? NPY_CFLOAT : NPY_FLOAT;
-    case 'd': return complex ? NPY_CDOUBLE : NPY_DOUBLE;
-    case 'g': return native ? (complex ? NPY_CLONGDOUBLE : NPY_LONGDOUBLE) : -1;
+    case 'f': return is_complex ? NPY_CFLOAT : NPY_FLOAT;
+    case 'd': return is_complex ? NPY_CDOUBLE : NPY_DOUBLE;
+    case 'g': return native ? (is_complex ? NPY_CLONGDOUBLE : NPY_LONGDOUBLE) : -1;
     default:
         /* Other unhandled cases */
         return -1;

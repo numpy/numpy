@@ -23,7 +23,7 @@ NEP 41 — First step towards a new datatype system
 
     - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 Abstract
@@ -74,7 +74,7 @@ cannot describe casting for such parametric datatypes implemented outside of Num
 This additional functionality for supporting parametric datatypes introduces
 increased complexity within NumPy itself,
 and furthermore is not available to external user-defined datatypes.
-In general the concerns of different datatypes are not well well-encapsulated.
+In general the concerns of different datatypes are not well-encapsulated.
 This burden is exacerbated by the exposure of internal C structures,
 limiting the addition of new fields
 (for example to support new sorting methods [new_sort]_).
@@ -532,7 +532,7 @@ are not yet fully clear, we anticipate, and accept the following changes:
     have to be changed to use the new API. Such changes are expected to be
     necessary in very few project.
 
-* **dtype implementors (C-API)**:
+* **dtype implementers (C-API)**:
 
   * The array which is currently provided to some functions (such as cast functions),
     will no longer be provided.

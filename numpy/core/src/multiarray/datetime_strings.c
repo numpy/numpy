@@ -187,7 +187,8 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
     return 0;
 }
 
-/*
+/*NUMPY_API
+ *
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
  * + The date "20100312" is parsed as the year 20100312, not as
@@ -219,12 +220,13 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char const *str, Py_ssize_t len,
-                    NPY_DATETIMEUNIT unit,
-                    NPY_CASTING casting,
-                    npy_datetimestruct *out,
-                    NPY_DATETIMEUNIT *out_bestunit,
-                    npy_bool *out_special)
+NpyDatetime_ParseISO8601Datetime(
+        char const *str, Py_ssize_t len,
+        NPY_DATETIMEUNIT unit,
+        NPY_CASTING casting,
+        npy_datetimestruct *out,
+        NPY_DATETIMEUNIT *out_bestunit,
+        npy_bool *out_special)
 {
     int year_leap = 0;
     int i, numdigits;
@@ -357,7 +359,7 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
             return -1;
         }
 
-        return convert_datetime_to_datetimestruct(&meta, rawtime, out);
+        return NpyDatetime_ConvertDatetime64ToDatetimeStruct(&meta, rawtime, out);
     }
 
     /* Anything else isn't a special value */
@@ -752,12 +754,13 @@ error:
     return -1;
 }
 
-/*
+/*NUMPY_API
+ *
  * Provides a string length to use for converting datetime
  * objects with the given local and unit settings.
  */
 NPY_NO_EXPORT int
-get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+NpyDatetime_GetDatetimeISO8601StrLen(int local, NPY_DATETIMEUNIT base)
 {
     int len = 0;
 
@@ -855,7 +858,8 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts an npy_datetimestruct to an (almost) ISO 8601
  * NULL-terminated string. If the string fits in the space exactly,
  * it leaves out the NULL terminator and returns success.
@@ -884,9 +888,10 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  string was too short).
  */
 NPY_NO_EXPORT int
-make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
-                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
-                    NPY_CASTING casting)
+NpyDatetime_MakeISO8601Datetime(
+        npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+        int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+        NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
@@ -1492,7 +1497,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
 
     /* Get a string size long enough for any datetimes we're given */
-    strsize = get_datetime_iso_8601_strlen(local, unit);
+    strsize = NpyDatetime_GetDatetimeISO8601StrLen(local, unit);
     /*
      * For Python3, allocate the output array as a UNICODE array, so
      * that it will behave as strings properly
@@ -1548,7 +1553,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             dt = *(npy_datetime *)dataptr[0];
 
             /* Convert it to a struct */
-            if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+            if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
                 goto fail;
             }
 
@@ -1563,7 +1568,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             /* Zero the destination string completely */
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
-            if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
+            if (NpyDatetime_MakeISO8601Datetime(&dts, (char *)dataptr[1], strsize,
                                 local, utc, unit, tzoffset, casting) < 0) {
                 goto fail;
             }

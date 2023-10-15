@@ -1,4 +1,0 @@
-Python 3.7 is no longer supported
----------------------------------
-Python support has been dropped. This is rather strict, there are
-changes that require Python >=3.8.

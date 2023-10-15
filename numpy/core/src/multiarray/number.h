@@ -53,9 +53,6 @@ NPY_NO_EXPORT int
 _PyArray_SetNumericOps(PyObject *dict);
 
 NPY_NO_EXPORT PyObject *
-_PyArray_GetNumericOps(void);
-
-NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyObject *m1, PyObject *m2, PyObject *op);
 
 NPY_NO_EXPORT PyObject *

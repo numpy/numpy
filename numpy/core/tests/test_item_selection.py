@@ -1,5 +1,7 @@
 import sys
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, HAS_REFCOUNT
@@ -84,3 +86,80 @@ class TestTake:
 
         b = np.array([0, 1, 2, 3, 4, 5])
         assert_array_equal(a, b)
+
+
+class TestPutMask:
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"]) + ["i,O"])
+    def test_simple(self, dtype):
+        if dtype.lower() == "m":
+            dtype += "8[ns]"
+
+        # putmask is weird and doesn't care about value length (even shorter)
+        vals = np.arange(1001).astype(dtype=dtype)
+
+        mask = np.random.randint(2, size=1000).astype(bool)
+        # Use vals.dtype in case of flexible dtype (i.e. string)
+        arr = np.zeros(1000, dtype=vals.dtype)
+        zeros = arr.copy()
+
+        np.putmask(arr, mask, vals)
+        assert_array_equal(arr[mask], vals[:len(mask)][mask])
+        assert_array_equal(arr[~mask], zeros[~mask])
+
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
+    @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+    def test_empty(self, dtype, mode):
+        arr = np.zeros(1000, dtype=dtype)
+        arr_copy = arr.copy()
+        mask = np.random.randint(2, size=1000).astype(bool)
+
+        # Allowing empty values like this is weird...
+        np.put(arr, mask, [])
+        assert_array_equal(arr, arr_copy)
+
+
+class TestPut:
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
+    @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+    def test_simple(self, dtype, mode):
+        if dtype.lower() == "m":
+            dtype += "8[ns]"
+
+        # put is weird and doesn't care about value length (even shorter)
+        vals = np.arange(1001).astype(dtype=dtype)
+
+        # Use vals.dtype in case of flexible dtype (i.e. string)
+        arr = np.zeros(1000, dtype=vals.dtype)
+        zeros = arr.copy()
+
+        if mode == "clip":
+            # Special because 0 and -1 value are "reserved" for clip test
+            indx = np.random.permutation(len(arr) - 2)[:-500] + 1
+
+            indx[-1] = 0
+            indx[-2] = len(arr) - 1
+            indx_put = indx.copy()
+            indx_put[-1] = -1389
+            indx_put[-2] = 1321
+        else:
+            # Avoid duplicates (for simplicity) and fill half only
+            indx = np.random.permutation(len(arr) - 3)[:-500]
+            indx_put = indx
+            if mode == "wrap":
+                indx_put = indx_put + len(arr)
+
+        np.put(arr, indx_put, vals, mode=mode)
+        assert_array_equal(arr[indx], vals[:len(indx)])
+        untouched = np.ones(len(arr), dtype=bool)
+        untouched[indx] = False
+        assert_array_equal(arr[untouched], zeros[:untouched.sum()])
+
+    @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
+    @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+    def test_empty(self, dtype, mode):
+        arr = np.zeros(1000, dtype=dtype)
+        arr_copy = arr.copy()
+
+        # Allowing empty values like this is weird...
+        np.put(arr, [1, 2, 3], [])
+        assert_array_equal(arr, arr_copy)

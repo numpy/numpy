@@ -1,7 +1,0 @@
-Generate C/C++ API reference documentation from comments blocks is now possible
--------------------------------------------------------------------------------
-This feature depends on Doxygen_ in the generation process and on Breathe_
-to integrate it with Sphinx.
-
-.. _`Doxygen`: https://www.doxygen.nl/index.html
-.. _`Breathe`: https://breathe.readthedocs.io/en/latest/

@@ -51,4 +51,17 @@ NPYV_IMPL_AVX512_MASK_ADDSUB(s64, b64, epi64)
 NPYV_IMPL_AVX512_MASK_ADDSUB(f32, b32, ps)
 NPYV_IMPL_AVX512_MASK_ADDSUB(f64, b64, pd)
 
+// division, m ? a / b : c
+NPY_FINLINE npyv_f32 npyv_ifdiv_f32(npyv_b32 m, npyv_f32 a, npyv_f32 b, npyv_f32 c)
+{ return _mm512_mask_div_ps(c, m, a, b); }
+// conditional division, m ? a / b : 0
+NPY_FINLINE npyv_f32 npyv_ifdivz_f32(npyv_b32 m, npyv_f32 a, npyv_f32 b)
+{ return _mm512_maskz_div_ps(m, a, b); }
+// division, m ? a / b : c
+NPY_FINLINE npyv_f64 npyv_ifdiv_f64(npyv_b32 m, npyv_f64 a, npyv_f64 b, npyv_f64 c)
+{ return _mm512_mask_div_pd(c, m, a, b); }
+// conditional division, m ? a / b : 0
+NPY_FINLINE npyv_f64 npyv_ifdivz_f64(npyv_b32 m, npyv_f64 a, npyv_f64 b)
+{ return _mm512_maskz_div_pd(m, a, b); }
+
 #endif // _NPY_SIMD_AVX512_MASKOP_H

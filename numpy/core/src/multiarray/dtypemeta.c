@@ -8,15 +8,24 @@
 
 #include <numpy/ndarraytypes.h>
 #include <numpy/arrayscalars.h>
+#include <numpy/npy_math.h>
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
+#include "abstractdtypes.h"
+#include "arraytypes.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "descriptor.h"
 #include "_datetime.h"
 #include "array_coercion.h"
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "usertypes.h"
+#include "conversion_utils.h"
+#include "templ_common.h"
+#include "refcount.h"
+#include "dtype_traversal.h"
 
 #include <assert.h>
 
@@ -72,7 +81,7 @@ dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
  * @param self
  * @return nonzero if the object is garbage collected
  */
-static NPY_INLINE int
+static inline int
 dtypemeta_is_gc(PyObject *dtype_class)
 {
     return PyType_Type.tp_is_gc(dtype_class);
@@ -121,6 +130,50 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     return (PyObject *)self->singleton;
 }
 
+static PyObject *
+string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
+{
+    npy_intp size;
+
+    static char *kwlist[] = {"", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&", kwlist,
+                                     PyArray_IntpFromPyIntConverter, &size)) {
+        return NULL;
+    }
+
+    if (size < 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Strings cannot have a negative size but a size of "
+                     "%"NPY_INTP_FMT" was given", size);
+        return NULL;
+    }
+
+    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
+
+    if (res == NULL) {
+        return NULL;
+    }
+
+    if (self->type_num == NPY_UNICODE) {
+        // unicode strings are 4 bytes per character
+        if (npy_mul_sizes_with_overflow(&size, size, 4)) {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "Strings too large to store inside array.");
+            return NULL;
+        }
+    }
+
+    if (size > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Strings too large to store inside array.");
+        return NULL;
+    }
+
+    res->elsize = (int)size;
+    return (PyObject *)res;
+}
 
 static PyArray_Descr *
 nonparametric_discover_descr_from_pyobject(
@@ -150,9 +203,12 @@ string_discover_descr_from_pyobject(
         }
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
-                    "string to large to store inside array.");
+                    "string too large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        if (res == NULL) {
+            return NULL;
+        }
         res->elsize = (int)itemsize;
         return res;
     }
@@ -171,10 +227,15 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
         Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
+            Py_DECREF(descr);
+            return NULL;
         }
         descr->elsize = (int)itemsize;
         return descr;
@@ -211,6 +272,23 @@ nonparametric_default_descr(PyArray_DTypeMeta *cls)
 {
     Py_INCREF(cls->singleton);
     return cls->singleton;
+}
+
+
+/*
+ * For most builtin (and legacy) dtypes, the canonical property means to
+ * ensure native byte-order.  (We do not care about metadata here.)
+ */
+static PyArray_Descr *
+ensure_native_byteorder(PyArray_Descr *descr)
+{
+    if (PyArray_ISNBO(descr->byteorder)) {
+        Py_INCREF(descr);
+        return descr;
+    }
+    else {
+        return PyArray_DescrNewByteorder(descr, NPY_NATIVE);
+    }
 }
 
 
@@ -257,10 +335,117 @@ static PyArray_Descr *
 string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
     if (descr1->elsize >= descr2->elsize) {
-        return ensure_dtype_nbo(descr1);
+        return NPY_DT_CALL_ensure_canonical(descr1);
     }
     else {
-        return ensure_dtype_nbo(descr2);
+        return NPY_DT_CALL_ensure_canonical(descr2);
+    }
+}
+
+
+static PyArray_Descr *
+void_ensure_canonical(PyArray_Descr *self)
+{
+    if (self->subarray != NULL) {
+        PyArray_Descr *new_base = NPY_DT_CALL_ensure_canonical(
+                self->subarray->base);
+        if (new_base == NULL) {
+            return NULL;
+        }
+        if (new_base == self->subarray->base) {
+            /* just return self, no need to modify */
+            Py_DECREF(new_base);
+            Py_INCREF(self);
+            return self;
+        }
+        PyArray_Descr *new = PyArray_DescrNew(self);
+        if (new == NULL) {
+            return NULL;
+        }
+        Py_SETREF(new->subarray->base, new_base);
+        return new;
+    }
+    else if (self->names != NULL) {
+        /*
+         * This branch is fairly complex, since it needs to build a new
+         * descriptor that is in canonical form.  This means that the new
+         * descriptor should be an aligned struct if the old one was, and
+         * otherwise it should be an unaligned struct.
+         * Any unnecessary empty space is stripped from the struct.
+         *
+         * TODO: In principle we could/should try to provide the identity when
+         *       no change is necessary. (Simple if we add a flag.)
+         */
+        Py_ssize_t field_num = PyTuple_GET_SIZE(self->names);
+
+        PyArray_Descr *new = PyArray_DescrNew(self);
+        if (new == NULL) {
+            return NULL;
+        }
+        Py_SETREF(new->fields, PyDict_New());
+        if (new->fields == NULL) {
+            Py_DECREF(new);
+            return NULL;
+        }
+        int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
+        new->flags = new->flags & ~NPY_FROM_FIELDS;
+        new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
+        int totalsize = 0;
+        int maxalign = 1;
+        for (Py_ssize_t i = 0; i < field_num; i++) {
+            PyObject *name = PyTuple_GET_ITEM(self->names, i);
+            PyObject *tuple = PyDict_GetItem(self->fields, name);
+            PyObject *new_tuple = PyTuple_New(PyTuple_GET_SIZE(tuple));
+            PyArray_Descr *field_descr = NPY_DT_CALL_ensure_canonical(
+                    (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0));
+            if (field_descr == NULL) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            new->flags |= field_descr->flags & NPY_FROM_FIELDS;
+            PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
+
+            if (aligned) {
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(
+                        totalsize, field_descr->alignment);
+                maxalign = PyArray_MAX(maxalign, field_descr->alignment);
+            }
+            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            if (offset_obj == NULL) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(new_tuple, 1, (PyObject *)offset_obj);
+            if (PyTuple_GET_SIZE(tuple) == 3) {
+                /* Be sure to set all items in the tuple before using it */
+                PyObject *title = PyTuple_GET_ITEM(tuple, 2);
+                Py_INCREF(title);
+                PyTuple_SET_ITEM(new_tuple, 2, title);
+                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
+                    Py_DECREF(new_tuple);
+                    Py_DECREF(new);
+                    return NULL;
+                }
+            }
+            if (PyDict_SetItem(new->fields, name, new_tuple) < 0) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
+            totalsize += field_descr->elsize;
+        }
+        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
+        new->elsize = totalsize;
+        new->alignment = maxalign;
+        return new;
+    }
+    else {
+        /* unstructured voids are always canonical. */
+        Py_INCREF(self);
+        return self;
     }
 }
 
@@ -268,27 +453,83 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 static PyArray_Descr *
 void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
-    /*
-     * We currently do not support promotion of void types unless they
-     * are equivalent.
-     */
-    if (!PyArray_CanCastTypeTo(descr1, descr2, NPY_EQUIV_CASTING)) {
-        if (descr1->subarray == NULL && descr1->names == NULL &&
-                descr2->subarray == NULL && descr2->names == NULL) {
-            PyErr_SetString(PyExc_TypeError,
+    if (descr1->subarray == NULL && descr1->names == NULL &&
+            descr2->subarray == NULL && descr2->names == NULL) {
+        if (descr1->elsize != descr2->elsize) {
+            PyErr_SetString(npy_DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
+            return NULL;
         }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "invalid type promotion with structured datatype(s).");
-        }
-        return NULL;
+        Py_INCREF(descr1);
+        return descr1;
     }
-    Py_INCREF(descr1);
-    return descr1;
+
+    if (descr1->names != NULL && descr2->names != NULL) {
+        /* If both have fields promoting individual fields may be possible */
+        static PyObject *promote_fields_func = NULL;
+        npy_cache_import("numpy.core._internal", "_promote_fields",
+                &promote_fields_func);
+        if (promote_fields_func == NULL) {
+            return NULL;
+        }
+        PyObject *result = PyObject_CallFunctionObjArgs(promote_fields_func,
+                descr1, descr2, NULL);
+        if (result == NULL) {
+            return NULL;
+        }
+        if (!PyObject_TypeCheck(result, Py_TYPE(descr1))) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Internal NumPy error: `_promote_fields` did not return "
+                    "a valid descriptor object.");
+            Py_DECREF(result);
+            return NULL;
+        }
+        return (PyArray_Descr *)result;
+    }
+    else if (descr1->subarray != NULL && descr2->subarray != NULL) {
+        int cmp = PyObject_RichCompareBool(
+                descr1->subarray->shape, descr2->subarray->shape, Py_EQ);
+        if (error_converting(cmp)) {
+            return NULL;
+        }
+        if (!cmp) {
+            PyErr_SetString(npy_DTypePromotionError,
+                    "invalid type promotion with subarray datatypes "
+                    "(shape mismatch).");
+            return NULL;
+        }
+        PyArray_Descr *new_base = PyArray_PromoteTypes(
+                descr1->subarray->base, descr2->subarray->base);
+        if (new_base == NULL) {
+            return NULL;
+        }
+        /*
+         * If it is the same dtype and the container did not change, we might
+         * as well preserve identity and metadata.  This could probably be
+         * changed.
+         */
+        if (descr1 == descr2 && new_base == descr1->subarray->base) {
+            Py_DECREF(new_base);
+            Py_INCREF(descr1);
+            return descr1;
+        }
+
+        PyArray_Descr *new_descr = PyArray_DescrNew(descr1);
+        if (new_descr == NULL) {
+            Py_DECREF(new_base);
+            return NULL;
+        }
+        Py_SETREF(new_descr->subarray->base, new_base);
+        return new_descr;
+    }
+
+    PyErr_SetString(npy_DTypePromotionError,
+            "invalid type promotion with structured datatype(s).");
+    return NULL;
 }
+
 
 NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
@@ -383,6 +624,43 @@ static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES);
+    if (NPY_UNLIKELY(NPY_DT_is_abstract(other))) {
+        /*
+         * The abstract complex has a lower priority than the concrete inexact
+         * types to ensure the correct promotion with integers.
+         */
+        if (other == &PyArray_PyComplexAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
+                Py_INCREF(cls);
+                return cls;
+            }
+            else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
+                    return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+            }
+            else if (cls->type_num == NPY_DOUBLE) {
+                return PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+            }
+            else if (cls->type_num == NPY_LONGDOUBLE) {
+                return PyArray_DTypeFromTypeNum(NPY_CLONGDOUBLE);
+            }
+        }
+        else if (other == &PyArray_PyFloatAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)
+                    || PyTypeNum_ISFLOAT(cls->type_num)) {
+                Py_INCREF(cls);
+                return cls;
+            }
+        }
+        else if (other == &PyArray_PyIntAbstractDType) {
+            if (PyTypeNum_ISCOMPLEX(cls->type_num)
+                    || PyTypeNum_ISFLOAT(cls->type_num)
+                    || PyTypeNum_ISINTEGER(cls->type_num)
+                    || cls->type_num == NPY_TIMEDELTA) {
+                Py_INCREF(cls);
+                return cls;
+            }
+        }
+    }
     if (!NPY_DT_is_legacy(other) || other->type_num > cls->type_num) {
         /*
          * Let the more generic (larger type number) DType handle this
@@ -425,9 +703,16 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     return cls;
 }
 
+
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
+    /*
+     * Timedelta/datetime shouldn't actually promote at all.  That they
+     * currently do means that we need additional hacks in the comparison
+     * type resolver.  For comparisons we have to make sure we reject it
+     * nicely in order to return an array of True/False values.
+     */
     if (cls->type_num == NPY_DATETIME && other->type_num == NPY_TIMEDELTA) {
         /*
          * TODO: We actually currently do allow promotion here. This is
@@ -482,12 +767,17 @@ object_common_dtype(
  * be a HeapType and its instances should be exact PyArray_Descr structs.
  *
  * @param descr The descriptor that should be wrapped.
- * @param name The name for the DType, if NULL the type character is used.
+ * @param name The name for the DType.
+ * @param alias A second name which is also set to the new class for builtins
+ *              (i.e. `np.types.LongDType` for `np.types.Int64DType`).
+ *              Some may have more aliases, as `intp` is not its own thing,
+ *              as of writing this, these are not added here.
  *
  * @returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
+dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr,
+        const char *name, const char *alias)
 {
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
@@ -514,47 +804,14 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         return -1;
     }
 
-    /*
-     * Note: we have no intention of freeing the memory again since this
-     * behaves identically to static type definition (see comment above).
-     * This is seems cleaner for the legacy API, in the new API both static
-     * and heap types are possible (some difficulty arises from the fact that
-     * these are instances of DTypeMeta and not type).
-     * In particular our own DTypes can be true static declarations.
-     * However, this function remains necessary for legacy user dtypes.
-     */
-
-    const char *scalar_name = descr->typeobj->tp_name;
-    /*
-     * We have to take only the name, and ignore the module to get
-     * a reasonable __name__, since static types are limited in this regard
-     * (this is not ideal, but not a big issue in practice).
-     * This is what Python does to print __name__ for static types.
-     */
-    const char *dot = strrchr(scalar_name, '.');
-    if (dot) {
-        scalar_name = dot + 1;
-    }
-    Py_ssize_t name_length = strlen(scalar_name) + 14;
-
-    char *tp_name = PyMem_Malloc(name_length);
-    if (tp_name == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    snprintf(tp_name, name_length, "numpy.dtype[%s]", scalar_name);
-
     NPY_DType_Slots *dt_slots = PyMem_Malloc(sizeof(NPY_DType_Slots));
     if (dt_slots == NULL) {
-        PyMem_Free(tp_name);
         return -1;
     }
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
 
     PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
-        PyMem_Free(tp_name);
         PyMem_Free(dt_slots);
         return -1;
     }
@@ -576,13 +833,19 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,
+            .tp_doc = (
+                "DType class corresponding to the scalar type and dtype of "
+                "the same name.\n\n"
+                "Please see `numpy.dtype` for the typical way to create\n"
+                "dtype instances and :ref:`arrays.dtypes` for additional\n"
+                "information."),
         },},
         .flags = NPY_DT_LEGACY,
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
     /* Fix name of the Type*/
-    ((PyTypeObject *)dtype_class)->tp_name = tp_name;
+    ((PyTypeObject *)dtype_class)->tp_name = name;
     dtype_class->dt_slots = dt_slots;
 
     /* Let python finish the initialization (probably unnecessary) */
@@ -613,6 +876,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
+    dt_slots->ensure_canonical = ensure_native_byteorder;
+    dt_slots->get_fill_zero_loop = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
@@ -624,6 +889,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (descr->type_num == NPY_OBJECT) {
         dt_slots->common_dtype = object_common_dtype;
+        dt_slots->get_fill_zero_loop = npy_object_get_fill_zero_loop;
+        dt_slots->get_clear_loop = npy_get_clear_object_strided_loop;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
@@ -644,6 +911,11 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
+            dt_slots->ensure_canonical = void_ensure_canonical;
+            dt_slots->get_fill_zero_loop = 
+                    npy_get_zerofill_void_and_legacy_user_dtype_loop;
+            dt_slots->get_clear_loop =
+                    npy_get_clear_void_and_legacy_user_dtype_loop;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
@@ -652,7 +924,12 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     string_discover_descr_from_pyobject);
             dt_slots->common_dtype = string_unicode_common_dtype;
             dt_slots->common_instance = string_unicode_common_instance;
+            ((PyTypeObject*)dtype_class)->tp_new = (newfunc)string_unicode_new;
         }
+    }
+
+    if (PyTypeNum_ISNUMBER(descr->type_num)) {
+        dtype_class->flags |= NPY_DT_NUMERIC;
     }
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
@@ -664,6 +941,21 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     /* Finally, replace the current class of the descr */
     Py_SET_TYPE(descr, (PyTypeObject *)dtype_class);
 
+    /* And it to the types submodule if it is a builtin dtype */
+    if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
+        static PyObject *add_dtype_helper = NULL;
+        npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
+        if (add_dtype_helper == NULL) {
+            return -1;
+        }
+
+        if (PyObject_CallFunction(
+                add_dtype_helper,
+                "Os", (PyObject *)dtype_class, alias) == NULL) {
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -674,8 +966,18 @@ dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
 }
 
 static PyObject *
+dtypemeta_get_legacy(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_legacy(self));
+}
+
+static PyObject *
 dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
+}
+
+static PyObject *
+dtypemeta_get_is_numeric(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_numeric(self));
 }
 
 /*
@@ -683,13 +985,16 @@ dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
  */
 static PyGetSetDef dtypemeta_getset[] = {
         {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
+        {"_legacy", (getter)dtypemeta_get_legacy, NULL, NULL, NULL},
         {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
+        {"_is_numeric", (getter)dtypemeta_get_is_numeric, NULL, NULL, NULL},
         {NULL, NULL, NULL, NULL, NULL}
 };
 
 static PyMemberDef dtypemeta_members[] = {
     {"type",
-        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
+        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
+        "scalar type corresponding to the DType."},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -702,12 +1007,12 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     /* Types are garbage collected (see dtypemeta_is_gc documentation) */
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-    .tp_getset = dtypemeta_getset,
+    .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
+    .tp_getset = dtypemeta_getset,
     .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_alloc = dtypemeta_alloc,
     .tp_init = (initproc)dtypemeta_init,
+    .tp_alloc = dtypemeta_alloc,
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
-    .tp_traverse = (traverseproc)dtypemeta_traverse,
 };

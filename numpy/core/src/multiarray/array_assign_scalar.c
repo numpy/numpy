@@ -8,11 +8,13 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <numpy/ndarraytypes.h>
+#include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -24,6 +26,8 @@
 
 #include "array_assign.h"
 #include "dtype_transfer.h"
+
+#include "umathmodule.h"
 
 /*
  * Assigns the scalar value to every element of the destination raw array.
@@ -39,7 +43,7 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned, needs_api = 0;
+    int aligned;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -62,15 +66,19 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         0, dst_strides_it[0],
                         src_dtype, dst_dtype,
                         0,
-                        &cast_info, &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &flags) != NPY_SUCCEED) {
         return -1;
     }
 
-    if (!needs_api) {
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier(src_data);
+    }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
         for (i = 0; i < ndim; i++) {
             nitems *= shape_it[i];
@@ -92,6 +100,14 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier(src_data);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            return -1;
+        }
+    }
+
     return 0;
 fail:
     NPY_END_THREADS;
@@ -117,7 +133,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned, needs_api = 0;
+    int aligned;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -142,15 +158,19 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         0, dst_strides_it[0], wheremask_strides_it[0],
                         src_dtype, dst_dtype, wheremask_dtype,
                         0,
-                        &cast_info, &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &flags) != NPY_SUCCEED) {
         return -1;
     }
 
-    if (!needs_api) {
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier(src_data);
+    }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
         for (i = 0; i < ndim; i++) {
             nitems *= shape_it[i];
@@ -170,7 +190,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
                 args, &shape_it[0], strides,
                 (npy_bool *)wheremask_data, wheremask_strides_it[0],
                 cast_info.auxdata) < 0) {
-            break;
+            goto fail;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
@@ -178,7 +198,20 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
 
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier(src_data);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+
+fail:
+    NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 /*

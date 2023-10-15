@@ -31,8 +31,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.compat import npy_load_module
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -44,7 +42,8 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
            'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs', 'sanitize_cxx_flags']
+           'get_num_build_jobs', 'sanitize_cxx_flags',
+           'exec_mod_from_location']
 
 class InstallableLib:
     """
@@ -359,7 +358,7 @@ if terminal_has_colors():
             fgcode = 30 + _colour_codes.get(fg.lower(), 0)
             seq.append(str(fgcode))
         if bg:
-            bgcode = 40 + _colour_codes.get(fg.lower(), 7)
+            bgcode = 40 + _colour_codes.get(bg.lower(), 7)
             seq.append(str(bgcode))
         if seq:
             return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)
@@ -417,7 +416,7 @@ def cyg2win32(path: str) -> str:
     if sys.platform != "cygwin":
         return path
     return subprocess.check_output(
-        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+        ["/usr/bin/cygpath", "--windows", path], text=True
     )
 
 
@@ -476,7 +475,7 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    with open(source, 'r') as f:
+    with open(source) as f:
         for line in f:
             m = f90_module_name_match(line)
             if m:
@@ -695,15 +694,11 @@ def get_shared_lib_extension(is_python_ext=False):
     -----
     For Python shared libs, `so_ext` will typically be '.so' on Linux and OS X,
     and '.pyd' on Windows.  For Python >= 3.2 `so_ext` has a tag prepended on
-    POSIX systems according to PEP 3149.  For Python 3.2 this is implemented on
-    Linux, but not on OS X.
+    POSIX systems according to PEP 3149.
 
     """
     confvars = distutils.sysconfig.get_config_vars()
-    # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
-    so_ext = confvars.get('EXT_SUFFIX', None)
-    if so_ext is None:
-        so_ext = confvars.get('SO', '')
+    so_ext = confvars.get('EXT_SUFFIX', '')
 
     if not is_python_ext:
         # hardcode known values, config vars (including SHLIB_SUFFIX) are
@@ -945,9 +940,8 @@ class Configuration:
         try:
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
+            setup_module = exec_mod_from_location(
+                                '_'.join(n.split('.')), setup_py)
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1938,7 +1932,7 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            with open(branch_cache_fn, 'r') as f:
+            with open(branch_cache_fn) as f:
                 for line in f:
                     branch1, revision1  = line.split()[:2]
                     if revision1==revision0:
@@ -1993,8 +1987,8 @@ class Configuration:
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
+                    version_module = exec_mod_from_location(
+                                        '_'.join(n.split('.')), fn)
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None
@@ -2354,11 +2348,7 @@ def generate_config_py(target):
             extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
             if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(extra_dll_dir)
-                else:
-                    os.environ.setdefault('PATH', '')
-                    os.environ['PATH'] += os.pathsep + extra_dll_dir
+                os.add_dll_directory(extra_dll_dir)
 
             """))
 
@@ -2481,7 +2471,7 @@ def get_build_architecture():
     return get_build_architecture()
 
 
-_cxx_ignore_flags = {'-Werror=implicit-function-declaration'}
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration', '-std=c99'}
 
 
 def sanitize_cxx_flags(cxxflags):
@@ -2491,3 +2481,13 @@ def sanitize_cxx_flags(cxxflags):
     return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
 
 
+def exec_mod_from_location(modname, modfile):
+    '''
+    Use importlib machinery to import a module `modname` from the file
+    `modfile`. Depending on the `spec.loader`, the module may not be
+    registered in sys.modules.
+    '''
+    spec = importlib.util.spec_from_file_location(modname, modfile)
+    foo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(foo)
+    return foo

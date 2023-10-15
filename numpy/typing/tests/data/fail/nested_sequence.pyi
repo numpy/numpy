@@ -1,13 +1,13 @@
-from typing import Sequence, Tuple, List
-import numpy.typing as npt
+from collections.abc import Sequence
+from numpy._typing import _NestedSequence
 
 a: Sequence[float]
-b: List[complex]
-c: Tuple[str, ...]
+b: list[complex]
+c: tuple[str, ...]
 d: int
 e: str
 
-def func(a: npt._NestedSequence[int]) -> None:
+def func(a: _NestedSequence[int]) -> None:
     ...
 
 reveal_type(func(a))  # E: incompatible type

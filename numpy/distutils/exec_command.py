@@ -276,14 +276,13 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     # Inherit environment by default
     env = env or None
     try:
-        # universal_newlines is set to False so that communicate()
+        # text is set to False so that communicate()
         # will return bytes. We need to decode the output ourselves
         # so that Python will not raise a UnicodeDecodeError when
         # it encounters an invalid character; rather, we simply replace it
-        proc = subprocess.Popen(command, shell=use_shell, env=env,
+        proc = subprocess.Popen(command, shell=use_shell, env=env, text=False,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                universal_newlines=False)
+                                stderr=subprocess.STDOUT)
     except OSError:
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''

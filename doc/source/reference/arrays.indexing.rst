@@ -68,3 +68,4 @@ Iterating over arrays
    nested_iters
    flatiter
    lib.Arrayterator
+   iterable

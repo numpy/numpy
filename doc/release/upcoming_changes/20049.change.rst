@@ -1,5 +1,0 @@
-Corrected ``advance`` in ``PCG64DSXM`` and ``PCG64``
-----------------------------------------------------
-Fixed a bug in the ``advance`` method of ``PCG64DSXM`` and ``PCG64``. The bug only
-affects results when the step was larger than :math:`2^{64}` on platforms
-that do not support 128-bit integers(e.g., Windows and 32-bit Linux).

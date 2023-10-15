@@ -3,6 +3,7 @@
 
 """
 import numpy as np
+from numpy.core.numerictypes import obj2sctype
 from collections import namedtuple
 
 # Generic object that can be added, but doesn't do anything else
@@ -48,14 +49,14 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
         if row == 'O':
             rowtype = GenericObject
         else:
-            rowtype = np.obj2sctype(row)
+            rowtype = obj2sctype(row)
 
         print(row, end=' ')
         for col in ntypes:
             if col == 'O':
                 coltype = GenericObject
             else:
-                coltype = np.obj2sctype(col)
+                coltype = obj2sctype(col)
             try:
                 if firstarray:
                     rowvalue = np.array([rowtype(inputfirstvalue)], dtype=rowtype)
@@ -87,11 +88,12 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     from numpy.core._multiarray_tests import get_all_cast_information
 
     cast_table = {
-        0 : "#",  # No cast (classify as equivalent here)
-        1 : "#",  # equivalent casting
-        2 : "=",  # safe casting
-        3 : "~",  # same-kind casting
-        4 : ".",  # unsafe casting
+        -1: " ",
+        0: "#",  # No cast (classify as equivalent here)
+        1: "#",  # equivalent casting
+        2: "=",  # safe casting
+        3: "~",  # same-kind casting
+        4: ".",  # unsafe casting
     }
     flags_table = {
         0 : "▗", 7: "█",

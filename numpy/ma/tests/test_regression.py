@@ -37,7 +37,7 @@ class TestRegression:
 
     def test_masked_array_repr_unicode(self):
         # Ticket #1256
-        repr(np.ma.array(u"Unicode"))
+        repr(np.ma.array("Unicode"))
 
     def test_atleast_2d(self):
         # Ticket #1559
@@ -89,3 +89,9 @@ class TestRegression:
     def test_masked_array_tobytes_fortran(self):
         ma = np.ma.arange(4).reshape((2,2))
         assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())
+
+    def test_structured_array(self):
+        # see gh-22041
+        np.ma.array((1, (b"", b"")),
+                    dtype=[("x", np.int_),
+                          ("y", [("i", np.void), ("j", np.void)])])

@@ -87,4 +87,16 @@
         ));                                                  \
     }
 
+#ifndef NPY_HAVE_AVX512BW
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv512_packs_epi16,  _mm256_packs_epi16)
+#else
+    #define npyv512_packs_epi16 _mm512_packs_epi16
+#endif
+
+NPY_FINLINE __m256i npyv512_pack_lo_hi(__m512i a) {
+    __m256i lo = npyv512_lower_si256(a);
+    __m256i hi = npyv512_higher_si256(a);
+    return _mm256_packs_epi32(lo, hi);
+}
+
 #endif // _NPY_SIMD_AVX512_UTILS_H

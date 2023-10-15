@@ -18,6 +18,9 @@ import sys
 import os
 import pprint
 import re
+from pathlib import Path
+from itertools import dropwhile
+import argparse
 
 from . import crackfortran
 from . import rules
@@ -27,6 +30,7 @@ from . import cfuncs
 from . import f90mod_rules
 from . import __version__
 from . import capi_maps
+from numpy.f2py._backends import f2py_build_generator
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -82,6 +86,9 @@ Options:
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.
 
+  '-include<header>'  Writes additional headers in the C wrapper, can be passed
+                      multiple times, generates #include <header> each time.
+
   --[no-]lower     Do [not] lower the cases in <fortran files>. By default,
                    --lower is assumed with -h key, and --no-lower without -h key.
 
@@ -118,10 +125,11 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
+  --skip-empty-wrappers   Only generate wrapper files when needed.
   -v               Print f2py version ID and exit.
 
 
-numpy.distutils options (only effective with -c):
+build backend options (only effective with -c):
 
   --fcompiler=         Specify Fortran compiler type by vendor
   --compiler=          Specify C compiler type (as defined by distutils)
@@ -136,6 +144,22 @@ numpy.distutils options (only effective with -c):
   --noopt              Compile without optimization
   --noarch             Compile without arch-dependent optimization
   --debug              Compile with debugging information
+
+  --dep                <dependency>
+                       Specify a meson dependency for the module. This may
+                       be passed multiple times for multiple dependencies.
+                       Dependencies are stored in a list for further processing.
+
+                       Example: --dep lapack --dep scalapack
+                       This will identify "lapack" and "scalapack" as dependencies
+                       and remove them from argv, leaving a dependencies list
+                       containing ["lapack", "scalapack"].
+
+  --backend            <backend_type>
+                       Specify the build backend for the compilation process.
+                       The supported backends are 'meson' and 'distutils'.
+                       If not specified, defaults to 'distutils'. On
+                       Python 3.12 or higher, the default is 'meson'.
 
 Extra options (only effective with -c):
 
@@ -175,6 +199,7 @@ def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
+    emptygen = True
     dolc = -1
     dolatexdoc = 0
     dorestdoc = 0
@@ -245,7 +270,11 @@ def scaninputline(inputline):
                 'f2py option --include_paths is deprecated, use --include-paths instead.\n')
             f7 = 1
         elif l[:15] in '--include-paths':
+            # Similar to using -I with -c, however this is
+            # also used during generation of wrappers
             f7 = 1
+        elif l == '--skip-empty-wrappers':
+            emptygen = False
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -286,7 +315,7 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s' % (buildpath))
+            outmess('Creating build directory %s\n' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
@@ -295,6 +324,7 @@ def scaninputline(inputline):
             'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
         sys.exit()
 
+    options['emptygen'] = emptygen
     options['debug'] = debug
     options['verbose'] = verbose
     if dolc == -1 and not signsfile:
@@ -408,15 +438,17 @@ def run_main(comline_list):
     where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
     ``-h`` is used, this function returns a dictionary containing
     information on generated modules and their dependencies on source
-    files.  For example, the command ``f2py -m scalar scalar.f`` can be
-    executed from Python as follows
+    files.
 
     You cannot build extension modules with this function, that is,
-    using ``-c`` is not allowed. Use ``compile`` command instead
+    using ``-c`` is not allowed. Use the ``compile`` command instead.
 
     Examples
     --------
-    .. literalinclude:: code/results/run_main_session.dat
+    The command ``f2py -m scalar scalar.f`` can be executed from Python as
+    follows.
+
+    .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
         :language: python
 
     """
@@ -456,7 +488,7 @@ def run_main(comline_list):
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
             raise TypeError('All blocks must be python module blocks but got %s' % (
-                repr(postlist[i]['block'])))
+                repr(plist['block'])))
     auxfuncs.debugoptions = options['debug']
     f90mod_rules.options = options
     auxfuncs.wrapfuncs = options['wrapfuncs']
@@ -490,12 +522,38 @@ def get_prefix(module):
     p = os.path.dirname(os.path.dirname(module.__file__))
     return p
 
+def preparse_sysargv():
+    # To keep backwards bug compatibility, newer flags are handled by argparse,
+    # and `sys.argv` is passed to the rest of `f2py` as is.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--dep", action="append", dest="dependencies")
+    parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
+
+    args, remaining_argv = parser.parse_known_args()
+    sys.argv = [sys.argv[0]] + remaining_argv
+
+    backend_key = args.backend
+    if sys.version_info >= (3, 12) and backend_key == 'distutils':
+        outmess('Cannot use distutils backend with Python 3.12, using meson backend instead.')
+        backend_key = 'meson'
+
+    return {
+        "dependencies": args.dependencies or [],
+        "backend": backend_key
+    }
 
 def run_compile():
     """
     Do it all in one call!
     """
     import tempfile
+
+    # Collect dependency flags, preprocess sys.argv
+    argy = preparse_sysargv()
+    dependencies = argy["dependencies"]
+    backend_key = argy["backend"]
+    build_backend = f2py_build_generator(backend_key)
+
 
     i = sys.argv.index('-c')
     del sys.argv[i]
@@ -520,7 +578,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -535,7 +593,6 @@ def run_compile():
     if f2py_flags2 and f2py_flags2[-1] != ':':
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
-
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
         r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
@@ -587,17 +644,17 @@ def run_compile():
             del sys.argv[i + 1], sys.argv[i]
             sources = sys.argv[1:]
 
+    pyf_files = []
     if '-m' in sys.argv:
         i = sys.argv.index('-m')
         modulename = sys.argv[i + 1]
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
     else:
-        from numpy.distutils.command.build_src import get_f2py_modulename
-        pyf_files, sources = filter_files('', '[.]pyf([.]src|)', sources)
-        sources = pyf_files + sources
+        pyf_files, _sources = filter_files('', '[.]pyf([.]src|)', sources)
+        sources = pyf_files + _sources
         for f in pyf_files:
-            modulename = get_f2py_modulename(f)
+            modulename = auxfuncs.get_f2py_modulename(f)
             if modulename:
                 break
 
@@ -616,52 +673,36 @@ def run_compile():
         else:
             print('Invalid use of -D:', name_value)
 
-    from numpy.distutils.system_info import get_info
+    # Construct wrappers / signatures / things
+    if backend_key == 'meson':
+        outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html')
+        f2py_flags.append('--lower')
+        if pyf_files:
+            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
+        else:
+            run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
 
-    num_info = {}
-    if num_info:
-        include_dirs.extend(num_info.get('include_dirs', []))
+    # Now use the builder
+    builder = build_backend(
+        modulename,
+        sources,
+        extra_objects,
+        build_dir,
+        include_dirs,
+        library_dirs,
+        libraries,
+        define_macros,
+        undef_macros,
+        f2py_flags,
+        sysinfo_flags,
+        fc_flags,
+        flib_flags,
+        setup_flags,
+        remove_build_dir,
+        {"dependencies": dependencies},
+    )
 
-    from numpy.distutils.core import setup, Extension
-    ext_args = {'name': modulename, 'sources': sources,
-                'include_dirs': include_dirs,
-                'library_dirs': library_dirs,
-                'libraries': libraries,
-                'define_macros': define_macros,
-                'undef_macros': undef_macros,
-                'extra_objects': extra_objects,
-                'f2py_options': f2py_flags,
-                }
-
-    if sysinfo_flags:
-        from numpy.distutils.misc_util import dict_append
-        for n in sysinfo_flags:
-            i = get_info(n)
-            if not i:
-                outmess('No %s resources found in system'
-                        ' (try `f2py --help-link`)\n' % (repr(n)))
-            dict_append(ext_args, **i)
-
-    ext = Extension(**ext_args)
-    sys.argv = [sys.argv[0]] + setup_flags
-    sys.argv.extend(['build',
-                     '--build-temp', build_dir,
-                     '--build-base', build_dir,
-                     '--build-platlib', '.',
-                     # disable CCompilerOpt
-                     '--disable-optimization'])
-    if fc_flags:
-        sys.argv.extend(['config_fc'] + fc_flags)
-    if flib_flags:
-        sys.argv.extend(['build_ext'] + flib_flags)
-
-    setup(ext_modules=[ext])
-
-    if remove_build_dir and os.path.exists(build_dir):
-        import shutil
-        outmess('Removing build directory %s\n' % (build_dir))
-        shutil.rmtree(build_dir)
-
+    builder.compile()
 
 def main():
     if '--help-link' in sys.argv[1:]:

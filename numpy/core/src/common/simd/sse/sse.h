@@ -4,12 +4,16 @@
 
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
+#define NPY_SIMD_F32 1
 #define NPY_SIMD_F64 1
 #if defined(NPY_HAVE_FMA3) || defined(NPY_HAVE_FMA4)
     #define NPY_SIMD_FMA3 1  // native support
 #else
     #define NPY_SIMD_FMA3 0  // fast emulated
 #endif
+#define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 1
+
 typedef __m128i npyv_u8;
 typedef __m128i npyv_s8;
 typedef __m128i npyv_u16;

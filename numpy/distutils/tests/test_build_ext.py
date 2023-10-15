@@ -5,7 +5,9 @@ import subprocess
 import sys
 from textwrap import indent, dedent
 import pytest
+from numpy.testing import IS_WASM
 
+@pytest.mark.skipif(IS_WASM, reason="cannot start subprocess in wasm")
 @pytest.mark.slow
 def test_multi_fortran_libs_link(tmp_path):
     '''

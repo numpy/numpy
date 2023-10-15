@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy._pytesttester import PytestTester
 
 from numpy.random._generator import Generator as Generator
@@ -25,6 +23,7 @@ from numpy.random.mtrand import (
     f as f,
     gamma as gamma,
     geometric as geometric,
+    get_bit_generator as get_bit_generator,
     get_state as get_state,
     gumbel as gumbel,
     hypergeometric as hypergeometric,
@@ -52,6 +51,7 @@ from numpy.random.mtrand import (
     rayleigh as rayleigh,
     sample as sample,
     seed as seed,
+    set_bit_generator as set_bit_generator,
     set_state as set_state,
     shuffle as shuffle,
     standard_cauchy as standard_cauchy,
@@ -67,6 +67,5 @@ from numpy.random.mtrand import (
     zipf as zipf,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
 test: PytestTester

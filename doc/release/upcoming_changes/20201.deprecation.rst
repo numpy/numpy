@@ -1,5 +1,0 @@
-The ``np.MachAr`` class has been deprecated
--------------------------------------------
-The `~numpy.MachAr` class and `finfo.machar <numpy.finfo>` attribute have
-been deprecated. Users are encouraged to access the property if interest
-directly from the corresponding `~numpy.finfo` attribute.

@@ -1,13 +1,13 @@
-``bit_count`` to compute the number of 1-bits in an integer
------------------------------------------------------------
+`np.bitwise_count` to compute the number of 1-bits in an integer array
+----------------------------------------------------------------------
 
-Computes the number of 1-bits in the absolute value of the input.
-This works on all the numpy integer types. Analogous to the builtin
-``int.bit_count`` or ``popcount`` in C++.
+This new function counts the number of 1-bits in a number.
+`np.bitwise_count` works on all the numpy integer types and
+integer-like objects.
 
 .. code-block:: python
 
-    >>> np.uint32(1023).bit_count()
-    10
-    >>> np.int32(-127).bit_count()
-    7
+    >>> a = np.array([2**i - 1 for i in range(16)])
+    >>> np.bitwise_count(a)
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
+          dtype=uint8)

@@ -45,6 +45,12 @@ class Core(Benchmark):
     def time_array_l_view(self):
         np.array(self.l_view)
 
+    def time_can_cast(self):
+        np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_can_cast_same_kind(self):
+        np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
+
     def time_vstack_l(self):
         np.vstack(self.l)
 
@@ -65,6 +71,9 @@ class Core(Benchmark):
 
     def time_empty_100(self):
         np.empty(100)
+
+    def time_empty_like(self):
+        np.empty_like(self.l10x10)
 
     def time_eye_100(self):
         np.eye(100)
@@ -206,13 +215,47 @@ class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
 
-class VarComplex(Benchmark):
-    params = [10**n for n in range(1, 9)]
-    def setup(self, n):
-        self.arr = np.random.randn(n) + 1j * np.random.randn(n)
 
-    def teardown(self, n):
-        del self.arr
+class StatsMethods(Benchmark):
+    params = [['int64', 'uint64', 'float32', 'float64',
+               'complex64', 'bool_'],
+              [100, 10000]]
+    param_names = ['dtype', 'size']
 
-    def time_var(self, n):
-        self.arr.var()
+    def setup(self, dtype, size):
+        self.data = np.ones(size, dtype=dtype)
+        if dtype.startswith('complex'):
+            self.data = np.random.randn(size) + 1j * np.random.randn(size)
+
+    def time_min(self, dtype, size):
+        self.data.min()
+
+    def time_max(self, dtype, size):
+        self.data.max()
+
+    def time_mean(self, dtype, size):
+        self.data.mean()
+
+    def time_std(self, dtype, size):
+        self.data.std()
+
+    def time_prod(self, dtype, size):
+        self.data.prod()
+
+    def time_var(self, dtype, size):
+        self.data.var()
+
+    def time_sum(self, dtype, size):
+        self.data.sum()
+
+
+class NumPyChar(Benchmark):
+    def setup(self):
+        self.A = np.array([100*'x', 100*'y'])
+        self.B = np.array(1000 * ['aa'])
+
+    def time_isalpha_small_list_big_string(self):
+        np.char.isalpha(self.A)
+
+    def time_isalpha_big_list_small_string(self):
+        np.char.isalpha(self.B)

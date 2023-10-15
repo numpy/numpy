@@ -74,13 +74,15 @@ assign a new type that satisfies all of the array elements involved in
 the computation, here ``uint32`` and ``int32`` can both be represented in
 as ``int64``. 
 
-The default NumPy behavior is to create arrays in either 64-bit signed
-integers or double precision floating point numbers, ``int64`` and
-``float``, respectively. If you expect your arrays to be a certain type,
-then you need to specify the ``dtype`` while you create the array. 
+The default NumPy behavior is to create arrays in either 32 or 64-bit signed
+integers (platform dependent and matches C ``long`` size) or double precision
+floating point numbers. If you expect your
+integer arrays to be a specific type, then you need to specify the dtype while
+you create the array.
 
 2) Intrinsic NumPy array creation functions
 ===========================================
+
 ..
   40 functions seems like a small number, but the routies.array-creation
   has ~47. I'm sure there are more. 
@@ -108,9 +110,9 @@ examples are shown::
  >>> np.arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
  >>> np.arange(2, 10, dtype=float)
- array([ 2., 3., 4., 5., 6., 7., 8., 9.])
+ array([2., 3., 4., 5., 6., 7., 8., 9.])
  >>> np.arange(2, 3, 0.1)
- array([ 2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
+ array([2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
 
 Note: best practice for :func:`numpy.arange` is to use integer start, end, and
 step values. There are some subtleties regarding ``dtype``. In the second
@@ -123,7 +125,7 @@ spaced equally between the specified beginning and end values. For
 example: ::
 
  >>> np.linspace(1., 4., 6)
- array([ 1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
+ array([1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
 
 The advantage of this creation function is that you guarantee the
 number of elements and the starting and end point. The previous
@@ -216,8 +218,8 @@ specified shape. The default dtype is ``float64``::
 ``zeros`` in all other respects as such::
 
  >>> np.ones((2, 3))
- array([[ 1., 1., 1.], 
-        [ 1., 1., 1.]])
+ array([[1., 1., 1.], 
+        [1., 1., 1.]])
  >>> np.ones((2, 3, 2))
  array([[[1., 1.],
          [1., 1.],
@@ -299,10 +301,10 @@ arrays into a 4-by-4 array using ``block``::
  >>> C = np.zeros((2, 2))
  >>> D = np.diag((-3, -4))
  >>> np.block([[A, B], [C, D]])
- array([[ 1.,  1.,  1.,  0. ],
-        [ 1.,  1.,  0.,  1. ],
-        [ 0.,  0., -3.,  0. ],
-        [ 0.,  0.,  0., -4. ]])
+ array([[ 1.,  1.,  1.,  0.],
+        [ 1.,  1.,  0.,  1.],
+        [ 0.,  0., -3.,  0.],
+        [ 0.,  0.,  0., -4.]])
 
 Other routines use similar syntax to join ndarrays. Check the
 routine's documentation for further examples and syntax. 
@@ -350,7 +352,7 @@ and :func:`numpy.genfromtxt`. These functions have more involved use cases in
  2, 4
  3, 9
 
-Importing ``simple.csv`` is accomplished using :func:`loadtxt`::
+Importing ``simple.csv`` is accomplished using :func:`numpy.loadtxt`::
 
  >>> np.loadtxt('simple.csv', delimiter = ',', skiprows = 1) # doctest: +SKIP
  array([[0., 0.],

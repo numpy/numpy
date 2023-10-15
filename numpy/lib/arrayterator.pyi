@@ -1,28 +1,26 @@
+from collections.abc import Generator
 from typing import (
-    List,
     Any,
     TypeVar,
-    Generator,
-    List,
-    Union,
-    Tuple,
     overload,
 )
 
 from numpy import ndarray, dtype, generic
-from numpy.typing import DTypeLike
+from numpy._typing import DTypeLike, NDArray
 
 # TODO: Set a shape bound once we've got proper shape support
 _Shape = TypeVar("_Shape", bound=Any)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
-_Index = Union[
-    Union[ellipsis, int, slice],
-    Tuple[Union[ellipsis, int, slice], ...],
-]
+_Index = (
+    ellipsis
+    | int
+    | slice
+    | tuple[ellipsis | int | slice, ...]
+)
 
-__all__: List[str]
+__all__: list[str]
 
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
@@ -31,22 +29,20 @@ __all__: List[str]
 class Arrayterator(ndarray[_Shape, _DType]):
     var: ndarray[_Shape, _DType]  # type: ignore[assignment]
     buf_size: None | int
-    start: List[int]
-    stop: List[int]
-    step: List[int]
+    start: list[int]
+    stop: list[int]
+    step: list[int]
 
     @property  # type: ignore[misc]
-    def shape(self) -> Tuple[int, ...]: ...
+    def shape(self) -> tuple[int, ...]: ...
     @property
-    def flat(  # type: ignore[override]
-        self: ndarray[Any, dtype[_ScalarType]]
-    ) -> Generator[_ScalarType, None, None]: ...
+    def flat(self: NDArray[_ScalarType]) -> Generator[_ScalarType, None, None]: ...
     def __init__(
         self, var: ndarray[_Shape, _DType], buf_size: None | int = ...
     ) -> None: ...
     @overload
     def __array__(self, dtype: None = ...) -> ndarray[Any, _DType]: ...
     @overload
-    def __array__(self, dtype: DTypeLike) -> ndarray[Any, dtype[Any]]: ...
+    def __array__(self, dtype: DTypeLike) -> NDArray[Any]: ...
     def __getitem__(self, index: _Index) -> Arrayterator[Any, _DType]: ...
     def __iter__(self) -> Generator[ndarray[Any, _DType], None, None]: ...

@@ -77,7 +77,7 @@
     #elif defined(__ARMEL__) || defined(__AARCH64EL__) || defined(_M_ARM64)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEL_AARCH32
-        #elif defined(__ARM_64BIT_STATE) || defined(_M_ARM64)
+        #elif defined(__ARM_64BIT_STATE) || defined(_M_ARM64) || defined(__AARCH64EL__)
             #define NPY_CPU_ARMEL_AARCH64
         #else
             #define NPY_CPU_ARMEL

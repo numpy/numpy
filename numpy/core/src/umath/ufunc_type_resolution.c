@@ -41,6 +41,7 @@
 #include "ufunc_object.h"
 #include "common.h"
 #include "convert_datatype.h"
+#include "dtypemeta.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -48,6 +49,7 @@
 #endif
 
 #include <stdbool.h>
+#include <arrayobject.h>
 
 static PyObject *
 npy_casting_to_py_object(NPY_CASTING casting)
@@ -356,20 +358,51 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
+        if (PyArray_ISDATETIME(operands[0])
+                && PyArray_ISDATETIME(operands[1])
+                && type_num1 != type_num2) {
+            /*
+             * Reject mixed datetime and timedelta explicitly, this was always
+             * implicitly rejected because casting fails (except with
+             * `casting="unsafe"` admittedly).
+             * This is required to ensure that `==` and `!=` can correctly
+             * detect that they should return a result array of False/True.
+             */
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
         /*
-         * DEPRECATED NumPy 1.20, 2020-12.
-         * This check is required to avoid the FutureWarning that
-         * ResultType will give for number->string promotions.
+         * This check is required to avoid a potential FutureWarning that
+         * ResultType would give for number->string promotions.
          * (We never supported flexible dtypes here.)
          */
-        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+        else if (!PyArray_ISFLEXIBLE(operands[0]) &&
                 !PyArray_ISFLEXIBLE(operands[1])) {
             out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            if (PyArray_ISINTEGER(operands[0])
+                    && PyArray_ISINTEGER(operands[1])
+                    && !PyDataType_ISINTEGER(out_dtypes[0])) {
+                /*
+                 * NumPy promotion allows uint+int to go to float, avoid it
+                 * (input must have been a mix of signed and unsigned)
+                 */
+                if (PyArray_ISSIGNED(operands[0])) {
+                    Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_LONGLONG));
+                    out_dtypes[1] = PyArray_DescrFromType(NPY_ULONGLONG);
+                    Py_INCREF(out_dtypes[1]);
+                }
+                else {
+                    Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_ULONGLONG));
+                    out_dtypes[1] = PyArray_DescrFromType(NPY_LONGLONG);
+                    Py_INCREF(out_dtypes[1]);
+                }
+            }
+            else {
+                out_dtypes[1] = out_dtypes[0];
+                Py_INCREF(out_dtypes[1]);
+            }
         }
         else {
             /* Not doing anything will lead to a loop no found error. */
@@ -380,64 +413,13 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
         }
     }
     else {
-        PyArray_Descr *descr;
-        /*
-         * DEPRECATED 2021-03, NumPy 1.20
-         *
-         * If the type tuple was originally a single element (probably),
-         * issue a deprecation warning, but otherwise accept it.  Since the
-         * result dtype is always boolean, this is not actually valid unless it
-         * is `object` (but if there is an object input we already deferred).
-         *
-         * TODO: Once this deprecation is gone, the special case for
-         *       `PyUFunc_SimpleBinaryComparisonTypeResolver` in dispatching.c
-         *       can be removed.
-         */
-        if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
-                PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
-                PyTuple_GET_ITEM(type_tup, 1) == Py_None &&
-                PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 2))) {
-            descr = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 2);
-            if (descr->type_num == NPY_OBJECT) {
-                if (DEPRECATE_FUTUREWARNING(
-                        "using `dtype=object` (or equivalent signature) will "
-                        "return object arrays in the future also when the "
-                        "inputs do not already have `object` dtype.") < 0) {
-                    return -1;
-                }
-            }
-            else if (descr->type_num != NPY_BOOL) {
-                if (DEPRECATE(
-                        "using `dtype=` in comparisons is only useful for "
-                        "`dtype=object` (and will do nothing for bool). "
-                        "This operation will fail in the future.") < 0) {
-                    return -1;
-                }
-            }
-        }
-        else {
-            /* Usually a failure, but let the the default version handle it */
-            return PyUFunc_DefaultTypeResolver(ufunc, casting,
-                    operands, type_tup, out_dtypes);
-        }
-
-        out_dtypes[0] = ensure_dtype_nbo(descr);
-        if (out_dtypes[0] == NULL) {
-            return -1;
-        }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        /* Usually a failure, but let the default version handle it */
+        return PyUFunc_DefaultTypeResolver(ufunc, casting,
+                operands, type_tup, out_dtypes);
     }
 
-    /* Output type is always boolean */
+    /* Output type is always boolean (cannot fail for builtins) */
     out_dtypes[2] = PyArray_DescrFromType(NPY_BOOL);
-    if (out_dtypes[2] == NULL) {
-        for (i = 0; i < 2; ++i) {
-            Py_DECREF(out_dtypes[i]);
-            out_dtypes[i] = NULL;
-        }
-        return -1;
-    }
 
     /* Check against the casting rules */
     if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
@@ -545,7 +527,8 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     if (type_tup == NULL) {
         /* PyArray_ResultType forgets to force a byte order when n == 1 */
         if (ufunc->nin == 1){
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
         }
         else {
             int iop;
@@ -629,7 +612,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             /* Prefer the input descriptor if it matches (preserve metadata) */
             descr = PyArray_DESCR(operands[0]);
         }
-        out_dtypes[0] = ensure_dtype_nbo(descr);
+        out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
     }
 
     /* All types are the same - copy the first one to the rest */
@@ -691,11 +674,11 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
 {
     if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
         PyErr_SetString(PyExc_TypeError,
-                "ufunc 'isnat' is only defined for datetime and timedelta.");
+                "ufunc 'isnat' is only defined for np.datetime64 and np.timedelta64.");
         return -1;
     }
 
-    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -714,7 +697,7 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
                                     type_tup, out_dtypes);
     }
 
-    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -816,7 +799,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                     PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -852,7 +836,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -876,7 +861,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -894,7 +880,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            out_dtypes[1] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[1]));
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -985,7 +972,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1021,7 +1009,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1061,7 +1050,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1122,7 +1112,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] * int## => m8[<A>] * int64 */
         if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1139,7 +1130,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
         }
         /* m8[<A>] * float## => m8[<A>] * float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1165,7 +1157,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            out_dtypes[1] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[1]));
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -1187,7 +1180,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            out_dtypes[1] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[1]));
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -1278,7 +1272,8 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
         }
         /* m8[<A>] / int## => m8[<A>] / int64 */
         else if (PyTypeNum_ISINTEGER(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1295,7 +1290,8 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
         }
         /* m8[<A>] / float## => m8[<A>] / float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -1498,7 +1494,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 int *out_needs_api)
 {
     int nargs = ufunc->nargs;
-    char *types;
+    const char *types;
     int i, j;
 
     /*
@@ -1528,7 +1524,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
         if (j == nargs) {
             *out_innerloop = ufunc->functions[i];
-            *out_innerloopdata = ufunc->data[i];
+            *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[i];
             return 0;
         }
 
@@ -1672,7 +1668,8 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
         }
         else if (op[i] != NULL &&
                  PyArray_DESCR(op[i])->type_num == type_nums[i]) {
-            out_dtypes[i] = ensure_dtype_nbo(PyArray_DESCR(op[i]));
+            out_dtypes[i] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(op[i]));
         }
         /*
          * For outputs, copy the dtype from op[0] if the type_num
@@ -1680,7 +1677,8 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
          */
         else if (i >= nin && op[0] != NULL &&
                             PyArray_DESCR(op[0])->type_num == type_nums[i]) {
-            out_dtypes[i] = ensure_dtype_nbo(PyArray_DESCR(op[0]));
+            out_dtypes[i] = NPY_DT_CALL_ensure_canonical(
+                    PyArray_DESCR(op[0]));
         }
         /* Otherwise create a plain descr from the type number */
         else {
@@ -1912,14 +1910,21 @@ linear_search_type_resolver(PyUFuncObject *self,
     int types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output = 0;
-    int use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    /* Always "use" with new promotion in case of Python int/float/complex */
+    int use_min_scalar;
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    }
+    else {
+        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
+    }
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
@@ -1955,7 +1960,7 @@ linear_search_type_resolver(PyUFuncObject *self,
      */
     no_castable_output = 0;
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < nop; ++j) {
@@ -2037,7 +2042,7 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
     }
 
     for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
+        const char *orig_types = self->types + i*self->nargs;
 
         /*
          * Check specified types and copy into an int array for matching
@@ -2109,11 +2114,19 @@ type_tuple_type_resolver(PyUFuncObject *self,
     int nin = self->nin, nop = nin + self->nout;
     int specified_types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output = 0, use_min_scalar;
+    int no_castable_output = 0;
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    /* Always "use" with new promotion in case of Python int/float/complex */
+    int use_min_scalar;
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    }
+    else {
+        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
+    }
 
     /* Fill in specified_types from the tuple or string */
     const char *bad_type_tup_msg = (

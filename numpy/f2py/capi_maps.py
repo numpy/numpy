@@ -19,6 +19,7 @@ import re
 import os
 from .crackfortran import markoutercomma
 from . import cb_rules
+from ._isocbind import iso_c_binding_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -31,9 +32,6 @@ __all__ = [
     'cb_sign2map', 'cb_routsign2map', 'common_sign2map'
 ]
 
-
-# Numarray and Numeric users should set this False
-using_newcore = True
 
 depargs = []
 lcb_map = {}
@@ -56,85 +54,50 @@ c2py_map = {'double': 'float',
             'complex_double': 'complex',
             'complex_long_double': 'complex',          # forced casting
             'string': 'string',
+            'character': 'bytes',
             }
-c2capi_map = {'double': 'NPY_DOUBLE',
-              'float': 'NPY_FLOAT',
-              'long_double': 'NPY_DOUBLE',           # forced casting
-              'char': 'NPY_STRING',
-              'unsigned_char': 'NPY_UBYTE',
-              'signed_char': 'NPY_BYTE',
-              'short': 'NPY_SHORT',
-              'unsigned_short': 'NPY_USHORT',
-              'int': 'NPY_INT',
-              'unsigned': 'NPY_UINT',
-              'long': 'NPY_LONG',
-              'long_long': 'NPY_LONG',                # forced casting
-              'complex_float': 'NPY_CFLOAT',
-              'complex_double': 'NPY_CDOUBLE',
-              'complex_long_double': 'NPY_CDOUBLE',   # forced casting
-              'string': 'NPY_STRING'}
 
-# These new maps aren't used anywhere yet, but should be by default
-#  unless building numeric or numarray extensions.
-if using_newcore:
-    c2capi_map = {'double': 'NPY_DOUBLE',
-                  'float': 'NPY_FLOAT',
-                  'long_double': 'NPY_LONGDOUBLE',
-                  'char': 'NPY_BYTE',
-                  'unsigned_char': 'NPY_UBYTE',
-                  'signed_char': 'NPY_BYTE',
-                  'short': 'NPY_SHORT',
-                  'unsigned_short': 'NPY_USHORT',
-                  'int': 'NPY_INT',
-                  'unsigned': 'NPY_UINT',
-                  'long': 'NPY_LONG',
-                  'unsigned_long': 'NPY_ULONG',
-                  'long_long': 'NPY_LONGLONG',
-                  'unsigned_long_long': 'NPY_ULONGLONG',
-                  'complex_float': 'NPY_CFLOAT',
-                  'complex_double': 'NPY_CDOUBLE',
-                  'complex_long_double': 'NPY_CDOUBLE',
-                  'string':'NPY_STRING'
-                  }
+c2capi_map = {'double': 'NPY_DOUBLE',
+                'float': 'NPY_FLOAT',
+                'long_double': 'NPY_LONGDOUBLE',
+                'char': 'NPY_BYTE',
+                'unsigned_char': 'NPY_UBYTE',
+                'signed_char': 'NPY_BYTE',
+                'short': 'NPY_SHORT',
+                'unsigned_short': 'NPY_USHORT',
+                'int': 'NPY_INT',
+                'unsigned': 'NPY_UINT',
+                'long': 'NPY_LONG',
+                'unsigned_long': 'NPY_ULONG',
+                'long_long': 'NPY_LONGLONG',
+                'unsigned_long_long': 'NPY_ULONGLONG',
+                'complex_float': 'NPY_CFLOAT',
+                'complex_double': 'NPY_CDOUBLE',
+                'complex_long_double': 'NPY_CDOUBLE',
+                'string': 'NPY_STRING',
+                'character': 'NPY_STRING'}
 
 c2pycode_map = {'double': 'd',
                 'float': 'f',
-                'long_double': 'd',                       # forced casting
-                'char': '1',
-                'signed_char': '1',
-                'unsigned_char': 'b',
-                'short': 's',
-                'unsigned_short': 'w',
+                'long_double': 'g',
+                'char': 'b',
+                'unsigned_char': 'B',
+                'signed_char': 'b',
+                'short': 'h',
+                'unsigned_short': 'H',
                 'int': 'i',
-                'unsigned': 'u',
+                'unsigned': 'I',
                 'long': 'l',
-                'long_long': 'L',
+                'unsigned_long': 'L',
+                'long_long': 'q',
+                'unsigned_long_long': 'Q',
                 'complex_float': 'F',
                 'complex_double': 'D',
-                'complex_long_double': 'D',               # forced casting
-                'string': 'c'
-                }
+                'complex_long_double': 'G',
+                'string': 'S',
+                'character': 'c'}
 
-if using_newcore:
-    c2pycode_map = {'double': 'd',
-                    'float': 'f',
-                    'long_double': 'g',
-                    'char': 'b',
-                    'unsigned_char': 'B',
-                    'signed_char': 'b',
-                    'short': 'h',
-                    'unsigned_short': 'H',
-                    'int': 'i',
-                    'unsigned': 'I',
-                    'long': 'l',
-                    'unsigned_long': 'L',
-                    'long_long': 'q',
-                    'unsigned_long_long': 'Q',
-                    'complex_float': 'F',
-                    'complex_double': 'D',
-                    'complex_long_double': 'G',
-                    'string': 'S'}
-
+# https://docs.python.org/3/c-api/arg.html#building-values
 c2buildvalue_map = {'double': 'd',
                     'float': 'f',
                     'char': 'b',
@@ -146,7 +109,8 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'y'}
+                    'string': 'y',
+                    'character': 'c'}
 
 f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
                        '12': 'long_double', '16': 'long_double'},
@@ -165,11 +129,12 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'double complex': {'': 'complex_double'},
               'double precision': {'': 'double'},
               'byte': {'': 'char'},
-              'character': {'': 'string'}
               }
 
+f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
+f2cmap_mapped = []
 
 def load_f2cmap_file(f2cmap_file):
     global f2cmap_all
@@ -189,8 +154,8 @@ def load_f2cmap_file(f2cmap_file):
     # they use PARAMETERS in type specifications.
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
-        with open(f2cmap_file, 'r') as f:
-            d = eval(f.read(), {}, {})
+        with open(f2cmap_file) as f:
+            d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
             for k1 in d1.keys():
                 d1[k1.lower()] = d1[k1]
@@ -206,6 +171,7 @@ def load_f2cmap_file(f2cmap_file):
                     f2cmap_all[k][k1] = d[k][k1]
                     outmess('\tMapping "%s(kind=%s)" to "%s"\n' %
                             (k, k1, d[k][k1]))
+                    f2cmap_mapped.append(d[k][k1])
                 else:
                     errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n" % (
                         k, k1, d[k][k1], d[k][k1], list(c2py_map.keys())))
@@ -230,7 +196,8 @@ cformat_map = {'double': '%g',
                'complex_float': '(%g,%g)',
                'complex_double': '(%g,%g)',
                'complex_long_double': '(%Lg,%Lg)',
-               'string': '%s',
+               'string': '\\"%s\\"',
+               'character': "'%c'",
                }
 
 # Auxiliary functions
@@ -252,6 +219,10 @@ def getctype(var):
             errmess('getctype: function %s has no return value?!\n' % a)
     elif issubroutine(var):
         return ctype
+    elif ischaracter_or_characterarray(var):
+        return 'character'
+    elif isstring_or_stringarray(var):
+        return 'string'
     elif 'typespec' in var and var['typespec'].lower() in f2cmap_all:
         typespec = var['typespec'].lower()
         f2cmap = f2cmap_all[typespec]
@@ -283,6 +254,21 @@ def getctype(var):
     return ctype
 
 
+def f2cexpr(expr):
+    """Rewrite Fortran expression as f2py supported C expression.
+
+    Due to the lack of a proper expression parser in f2py, this
+    function uses a heuristic approach that assumes that Fortran
+    arithmetic expressions are valid C arithmetic expressions when
+    mapping Fortran function calls to the corresponding C function/CPP
+    macros calls.
+
+    """
+    # TODO: support Fortran `len` function with optional kind parameter
+    expr = re.sub(r'\blen\b', 'f2py_slen', expr)
+    return expr
+
+
 def getstrlength(var):
     if isstringfunction(var):
         if 'result' in var:
@@ -302,7 +288,7 @@ def getstrlength(var):
         if '*' in a:
             len = a['*']
         elif 'len' in a:
-            len = a['len']
+            len = f2cexpr(a['len'])
     if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
@@ -314,9 +300,9 @@ def getstrlength(var):
 def getarrdims(a, var, verbose=0):
     ret = {}
     if isstring(var) and not isarray(var):
-        ret['dims'] = getstrlength(var)
-        ret['size'] = ret['dims']
-        ret['rank'] = '1'
+        ret['size'] = getstrlength(var)
+        ret['rank'] = '0'
+        ret['dims'] = ''
     elif isscalar(var):
         ret['size'] = '1'
         ret['rank'] = '0'
@@ -442,7 +428,7 @@ def getpydocsign(a, var):
         sigout = sig
     else:
         errmess(
-            'getpydocsign: Could not resolve docsignature for "%s".\\n' % a)
+            'getpydocsign: Could not resolve docsignature for "%s".\n' % a)
     return sig, sigout
 
 
@@ -499,12 +485,27 @@ def getinit(a, var):
     return init, showinit
 
 
+def get_elsize(var):
+    if isstring(var) or isstringarray(var):
+        elsize = getstrlength(var)
+        # override with user-specified length when available:
+        elsize = var['charselector'].get('f2py_len', elsize)
+        return elsize
+    if ischaracter(var) or ischaracterarray(var):
+        return '1'
+    # for numerical types, PyArray_New* functions ignore specified
+    # elsize, so we just return 1 and let elsize be determined at
+    # runtime, see fortranobject.c
+    return '1'
+
+
 def sign2map(a, var):
     """
     varname,ctype,atype
     init,init.r,init.i,pytype
     vardebuginfo,vardebugshowvalue,varshowvalue
-    varrfromat
+    varrformat
+
     intent
     """
     out_a = a
@@ -552,6 +553,7 @@ def sign2map(a, var):
         dim = copy.copy(var['dimension'])
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     # Debug info
     if debugcapi(var):
         il = [isintent_in, 'input', isintent_out, 'output',
@@ -719,6 +721,7 @@ def cb_sign2map(a, var, index=None):
     ret['ctype'] = getctype(var)
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     if ret['ctype'] in cformat_map:
         ret['showvalueformat'] = '%s' % (cformat_map[ret['ctype']])
     if isarray(var):
@@ -818,6 +821,7 @@ def common_sign2map(a, var):  # obsolute
         ret['ctype'] = 'char'
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     if ret['ctype'] in cformat_map:
         ret['showvalueformat'] = '%s' % (cformat_map[ret['ctype']])
     if isarray(var):

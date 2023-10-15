@@ -8,6 +8,9 @@
 #define NPY_TRACE_DOMAIN 389047
 
 NPY_NO_EXPORT PyObject *
+_get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
+
+NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
 
 NPY_NO_EXPORT void *
@@ -28,22 +31,20 @@ npy_alloc_cache_dim(npy_uintp sz);
 NPY_NO_EXPORT void
 npy_free_cache_dim(void * p, npy_uintp sd);
 
-static NPY_INLINE void
+static inline void
 npy_free_cache_dim_obj(PyArray_Dims dims)
 {
     npy_free_cache_dim(dims.ptr, dims.len);
 }
 
-static NPY_INLINE void
+static inline void
 npy_free_cache_dim_array(PyArrayObject * arr)
 {
     npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));
 }
 
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
-extern PyObject *current_handler; /* PyContextVar/PyCapsule */
 extern PyDataMem_Handler default_handler;
-#endif
+extern PyObject *current_handler; /* PyContextVar/PyCapsule */
 
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);

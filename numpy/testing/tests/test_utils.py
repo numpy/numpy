@@ -6,15 +6,15 @@ import pytest
 import weakref
 
 import numpy as np
+import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_array_less, build_err_msg, raises,
+    assert_array_almost_equal, assert_array_less, build_err_msg,
     assert_raises, assert_warns, assert_no_warnings, assert_allclose,
     assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
-from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
 class _GenericTest:
@@ -65,7 +65,7 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_equal
 
     def test_generic_rank1(self):
@@ -151,14 +151,13 @@ class TestArrayEqual(_GenericTest):
 
         self._test_equal(a, b)
 
-        c = np.empty(2, [('floupipi', float), ('floupa', float)])
+        c = np.empty(2, [('floupipi', float),
+                         ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 
-        with suppress_warnings() as sup:
-            l = sup.record(FutureWarning, message="elementwise == ")
+        with pytest.raises(TypeError):
             self._test_not_equal(c, b)
-            assert_equal(len(l), 1)
 
     def test_masked_nan_inf(self):
         # Regression test for gh-11121
@@ -192,8 +191,6 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
 
-    @pytest.mark.skipif(
-        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
@@ -206,6 +203,51 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
+
+    def test_suppress_overflow_warnings(self):
+        # Based on issue #18992
+        with pytest.raises(AssertionError):
+            with np.errstate(all="raise"):
+                np.testing.assert_array_equal(
+                    np.array([1, 2, 3], np.float32),
+                    np.array([1, 1e-40, 3], np.float32))
+
+    def test_array_vs_scalar_is_equal(self):
+        """Test comparing an array with a scalar when all values are equal."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        self._test_equal(a, b)
+
+    def test_array_vs_scalar_not_equal(self):
+        """Test comparing an array with a scalar when not all values equal."""
+        a = np.array([1., 2., 3.])
+        b = 1.
+
+        self._test_not_equal(a, b)
+
+    def test_array_vs_scalar_strict(self):
+        """Test comparing an array with a scalar with strict option."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        with pytest.raises(AssertionError):
+            self._assert_func(a, b, strict=True)
+
+    def test_array_vs_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1., 1., 1.])
+        b = np.array([1., 1., 1.])
+
+        self._assert_func(a, b, strict=True)
+
+    def test_array_vs_float_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1, 1, 1])
+        b = np.array([1., 1., 1.])
+
+        with pytest.raises(AssertionError):
+            self._assert_func(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
@@ -255,7 +297,7 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_equal
 
     def test_nan_items(self):
@@ -332,7 +374,7 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
 
     def test_negative_zero(self):
-        self._test_not_equal(np.PZERO, np.NZERO)
+        self._test_not_equal(ncu.PZERO, ncu.NZERO)
 
     def test_complex(self):
         x = np.array([complex(1, 2), complex(1, np.nan)])
@@ -350,7 +392,7 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_almost_equal
 
     def test_closeness(self):
@@ -448,7 +490,7 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_almost_equal
 
     def test_closeness(self):
@@ -599,7 +641,7 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_approx_equal
 
     def test_simple_0d_arrays(self):
@@ -642,7 +684,7 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_less
 
     def test_simple_arrays(self):
@@ -748,40 +790,17 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
-
-@pytest.mark.skip(reason="The raises decorator depends on Nose")
-class TestRaises:
-
-    def setup(self):
-        class MyException(Exception):
-            pass
-
-        self.e = MyException
-
-    def raises_exception(self, e):
-        raise e
-
-    def does_not_raise_exception(self):
-        pass
-
-    def test_correct_catch(self):
-        raises(self.e)(self.raises_exception)(self.e)  # raises?
-
-    def test_wrong_exception(self):
-        try:
-            raises(self.e)(self.raises_exception)(RuntimeError)  # raises?
-        except RuntimeError:
-            return
-        else:
-            raise AssertionError("should have caught RuntimeError")
-
-    def test_catch_no_raise(self):
-        try:
-            raises(self.e)(self.does_not_raise_exception)()  # raises?
-        except AssertionError:
-            return
-        else:
-            raise AssertionError("should have raised an AssertionError")
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.zeros(3)
+        y = np.ones(())
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y, strict=True)
+        y = np.broadcast_to(y, x.shape)
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y.astype(np.float32), strict=True)
 
 
 class TestWarns:
@@ -908,6 +927,31 @@ class TestAssertAllclose:
         # see gh-18286
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
         assert_allclose(a, a)
+
+    def test_error_message_unsigned(self):
+        """Check the message is formatted correctly when overflow can occur
+           (gh21768)"""
+        # Ensure to test for potential overflow in the case of:
+        #        x - y
+        # and
+        #        y - x
+        x = np.asarray([0, 1, 8], dtype='uint8')
+        y = np.asarray([4, 4, 4], dtype='uint8')
+        with pytest.raises(AssertionError) as exc_info:
+            assert_allclose(x, y, atol=3)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[4], 'Max absolute difference: 4')
+
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.ones(3)
+        y = np.ones(())
+        assert_allclose(x, y)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, y, strict=True)
+        assert_allclose(x, x)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, x.astype(np.float32), strict=True)
 
 
 class TestArrayAlmostEqualNulp:
@@ -1177,8 +1221,8 @@ class TestULP:
             nan = np.array([np.nan]).astype(dt)
             big = np.array([np.finfo(dt).max])
             tiny = np.array([np.finfo(dt).tiny])
-            zero = np.array([np.PZERO]).astype(dt)
-            nzero = np.array([np.NZERO]).astype(dt)
+            zero = np.array([0.0]).astype(dt)
+            nzero = np.array([-0.0]).astype(dt)
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, inf,
                           maxulp=maxulp))
@@ -1216,7 +1260,7 @@ class TestStringEqual:
                       lambda: assert_string_equal("aaa", "a+b"))
 
 
-def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
+def assert_warn_len_equal(mod, n_in_context):
     try:
         mod_warns = mod.__warningregistry__
     except AttributeError:
@@ -1230,25 +1274,14 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
         mod_warns = {}
 
     num_warns = len(mod_warns)
-    # Python 3.4 appears to clear any pre-existing warnings of the same type,
-    # when raising warnings inside a catch_warnings block. So, there is a
-    # warning generated by the tests within the context manager, but no
-    # previous warnings.
+
     if 'version' in mod_warns:
         # Python 3 adds a 'version' entry to the registry,
         # do not count it.
         num_warns -= 1
 
-        # Behavior of warnings is Python version dependent. Adjust the
-        # expected result to compensate. In particular, Python 3.7 does
-        # not make an entry for ignored warnings.
-        if sys.version_info[:2] >= (3, 7):
-            if py37 is not None:
-                n_in_context = py37
-        else:
-            if py34 is not None:
-                n_in_context = py34
     assert_equal(num_warns, n_in_context)
+
 
 def test_warn_len_equal_call_scenarios():
     # assert_warn_len_equal is called under
@@ -1298,24 +1331,28 @@ def test_clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
+    # Without specified modules, don't clear warnings during context.
+    # catch_warnings doesn't make an entry for 'ignore'.
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
+
+    # Manually adding two warnings to the registry:
+    my_mod.__warningregistry__ = {'warning1': 1,
+                                  'warning2': 2}
+
     # Confirm that specifying module keeps old warning, does not add new
     with clear_and_catch_warnings(modules=[my_mod]):
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
-    # Another warning, no module spec does add to warnings dict, except on
-    # Python 3.4 (see comments in `assert_warn_len_equal`)
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
+    assert_warn_len_equal(my_mod, 2)
+
+    # Another warning, no module spec it clears up registry
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 2, py34=1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_module():
@@ -1337,14 +1374,14 @@ def test_suppress_warnings_module():
         sup.record(UserWarning)
         # suppress warning from other module (may have .pyc ending),
         # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib.shape_base)
+        sup.filter(module=np.lib._shape_base_impl)
         warnings.warn("Some warning")
         warn_other_module()
     # Check that the suppression did test the file correctly (this module
     # got filtered)
     assert_equal(len(sup.log), 1)
     assert_equal(sup.log[0].message.args[0], "Some warning")
-    assert_warn_len_equal(my_mod, 0, py37=0)
+    assert_warn_len_equal(my_mod, 0)
     sup = suppress_warnings()
     # Will have to be changed if apply_along_axis is moved:
     sup.filter(module=my_mod)
@@ -1357,12 +1394,12 @@ def test_suppress_warnings_module():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
+
 
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
@@ -1385,12 +1422,11 @@ def test_suppress_warnings_type():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_decorate_no_record():

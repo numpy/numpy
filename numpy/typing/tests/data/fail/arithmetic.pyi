@@ -1,27 +1,29 @@
-from typing import List, Any
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
 
 b_ = np.bool_()
 dt = np.datetime64(0, "D")
 td = np.timedelta64(0, "D")
 
-AR_b: np.ndarray[Any, np.dtype[np.bool_]]
-AR_u: np.ndarray[Any, np.dtype[np.uint32]]
-AR_i: np.ndarray[Any, np.dtype[np.int64]]
-AR_f: np.ndarray[Any, np.dtype[np.float64]]
-AR_c: np.ndarray[Any, np.dtype[np.complex128]]
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]]
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
+AR_b: npt.NDArray[np.bool_]
+AR_u: npt.NDArray[np.uint32]
+AR_i: npt.NDArray[np.int64]
+AR_f: npt.NDArray[np.float64]
+AR_c: npt.NDArray[np.complex128]
+AR_m: npt.NDArray[np.timedelta64]
+AR_M: npt.NDArray[np.datetime64]
 
 ANY: Any
 
-AR_LIKE_b: List[bool]
-AR_LIKE_u: List[np.uint32]
-AR_LIKE_i: List[int]
-AR_LIKE_f: List[float]
-AR_LIKE_c: List[complex]
-AR_LIKE_m: List[np.timedelta64]
-AR_LIKE_M: List[np.datetime64]
+AR_LIKE_b: list[bool]
+AR_LIKE_u: list[np.uint32]
+AR_LIKE_i: list[int]
+AR_LIKE_f: list[float]
+AR_LIKE_c: list[complex]
+AR_LIKE_m: list[np.timedelta64]
+AR_LIKE_M: list[np.datetime64]
 
 # Array subtraction
 

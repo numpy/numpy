@@ -1,0 +1,15 @@
+
+Contributors
+============
+
+A total of 1 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+
+Pull requests merged
+====================
+
+A total of 1 pull requests were merged for this release.
+
+* `#21318 <https://github.com/numpy/numpy/pull/21318>`__: REV: Revert pull request #20464 from charris/backport-20354

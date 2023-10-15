@@ -282,6 +282,10 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     // negate multiply and subtract, -(a*b) - c
     #define npyv_nmulsub_f32 _mm_fnmsub_ps
     #define npyv_nmulsub_f64 _mm_fnmsub_pd
+    // multiply, add for odd elements and subtract even elements.
+    // (a * b) -+ c
+    #define npyv_muladdsub_f32 _mm_fmaddsub_ps
+    #define npyv_muladdsub_f64 _mm_fmaddsub_pd
 #elif defined(NPY_HAVE_FMA4)
     // multiply and add, a*b + c
     #define npyv_muladd_f32 _mm_macc_ps
@@ -292,6 +296,10 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     // negate multiply and add, -(a*b) + c
     #define npyv_nmuladd_f32 _mm_nmacc_ps
     #define npyv_nmuladd_f64 _mm_nmacc_pd
+    // multiply, add for odd elements and subtract even elements.
+    // (a * b) -+ c
+    #define npyv_muladdsub_f32 _mm_maddsub_ps
+    #define npyv_muladdsub_f64 _mm_maddsub_pd
 #else
     // multiply and add, a*b + c
     NPY_FINLINE npyv_f32 npyv_muladd_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
@@ -308,6 +316,28 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     { return npyv_sub_f32(c, npyv_mul_f32(a, b)); }
     NPY_FINLINE npyv_f64 npyv_nmuladd_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
     { return npyv_sub_f64(c, npyv_mul_f64(a, b)); }
+    // multiply, add for odd elements and subtract even elements.
+    // (a * b) -+ c
+    NPY_FINLINE npyv_f32 npyv_muladdsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    {
+        npyv_f32 m = npyv_mul_f32(a, b);
+    #ifdef NPY_HAVE_SSE3
+        return _mm_addsub_ps(m, c);
+    #else
+        const npyv_f32 msign = npyv_set_f32(-0.0f, 0.0f, -0.0f, 0.0f);
+        return npyv_add_f32(m, npyv_xor_f32(msign, c));
+    #endif
+    }
+    NPY_FINLINE npyv_f64 npyv_muladdsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    {
+        npyv_f64 m = npyv_mul_f64(a, b);
+    #ifdef NPY_HAVE_SSE3
+        return _mm_addsub_pd(m, c);
+    #else
+        const npyv_f64 msign = npyv_set_f64(-0.0, 0.0);
+        return npyv_add_f64(m, npyv_xor_f64(msign, c));
+    #endif
+    }
 #endif // NPY_HAVE_FMA3
 #ifndef NPY_HAVE_FMA3 // for FMA4 and NON-FMA3
     // negate multiply and subtract, -(a*b) - c

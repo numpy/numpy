@@ -15,16 +15,16 @@ information can be found in the docstring for the module of interest.
 This package provides *convenience classes* for each of six different kinds
 of polynomials:
 
-         ========================    ================
-         **Name**                    **Provides**
-         ========================    ================
-         `~polynomial.Polynomial`    Power series
-         `~chebyshev.Chebyshev`      Chebyshev series
-         `~legendre.Legendre`        Legendre series
-         `~laguerre.Laguerre`        Laguerre series
-         `~hermite.Hermite`          Hermite series
-         `~hermite_e.HermiteE`       HermiteE series
-         ========================    ================
+========================    ================
+**Name**                    **Provides**
+========================    ================
+`~polynomial.Polynomial`    Power series
+`~chebyshev.Chebyshev`      Chebyshev series
+`~legendre.Legendre`        Legendre series
+`~laguerre.Laguerre`        Laguerre series
+`~hermite.Hermite`          Hermite series
+`~hermite_e.HermiteE`       HermiteE series
+========================    ================
 
 These *convenience classes* provide a consistent interface for creating,
 manipulating, and fitting data with polynomials of different bases.
@@ -156,17 +156,17 @@ def set_default_printstyle(style):
     >>> c = np.polynomial.Chebyshev([1, 2, 3])
     >>> np.polynomial.set_default_printstyle('unicode')
     >>> print(p)
-    1.0 + 2.0·x¹ + 3.0·x²
+    1.0 + 2.0·x + 3.0·x²
     >>> print(c)
     1.0 + 2.0·T₁(x) + 3.0·T₂(x)
     >>> np.polynomial.set_default_printstyle('ascii')
     >>> print(p)
-    1.0 + 2.0 x**1 + 3.0 x**2
+    1.0 + 2.0 x + 3.0 x**2
     >>> print(c)
     1.0 + 2.0 T_1(x) + 3.0 T_2(x)
     >>> # Formatting supersedes all class/package-level defaults
     >>> print(f"{p:unicode}")
-    1.0 + 2.0·x¹ + 3.0·x²
+    1.0 + 2.0·x + 3.0·x²
     """
     if style not in ('unicode', 'ascii'):
         raise ValueError(

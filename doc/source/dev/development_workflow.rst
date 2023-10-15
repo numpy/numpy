@@ -118,8 +118,8 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. For more information, see `why the -a flag?`_ - and the
-   helpful use-case description in the `tangled working copy problem`_.
+   not careful. For more information, see the helpful use-case description in
+   the `tangled working copy problem`_.
 
 #. Push the changes to your forked repo on github_::
 
@@ -185,8 +185,91 @@ Standard acronyms to start the commit message with are::
    REV: revert an earlier commit
    STY: style fix (whitespace, PEP8)
    TST: addition or modification of tests
+   TYP: static typing
    REL: related to releasing numpy
 
+Commands to skip continuous integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default a lot of continuous integration (CI) jobs are run for every PR,
+from running the test suite on different operating systems and hardware
+platforms to building the docs. In some cases you already know that CI isn't
+needed (or not all of it), for example if you work on CI config files, text in
+the README, or other files that aren't involved in regular build, test or docs
+sequences. In such cases you may explicitly skip CI by including one or more of
+these fragments in each commit message of a PR:
+
+* ``[skip ci]``: skip all CI
+
+  Only recommended if you are still not ready for the checks to run on your PR
+  (for example, if this is only a draft.)
+
+* ``[skip actions]``: skip GitHub Actions jobs
+
+  `GitHub Actions <https://docs.github.com/actions>`__ is where most of the CI
+  checks are run, including the linter, benchmarking, running basic tests for
+  most architectures and OSs, and several compiler and CPU optimization
+  settings.
+  `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
+
+* ``[skip travis]``: skip TravisCI jobs
+
+  `TravisCI <https://www.travis-ci.com/>`__ will test your changes against
+  Python 3.9 on the PowerPC and s390x architectures.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.travis.yml>`__
+
+* ``[skip azp]``: skip Azure jobs
+
+  `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
+  where all comprehensive tests are run. This is an expensive run, and one you
+  could typically skip if you do documentation-only changes, for example.
+  `See the main configuration file for these checks. <https://github.com/numpy/numpy/blob/main/azure-pipelines.yml>`__
+
+* ``[skip circle]``: skip CircleCI jobs
+
+  `CircleCI <https://circleci.com/>`__ is where we build the documentation and
+  store the generated artifact for preview in each PR. This check will also run
+  all the docstrings examples and verify their results. If you don't make
+  documentation changes, but you make changes to a function's API, for example,
+  you may need to run these tests to verify that the doctests are still valid.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
+
+* ``[skip cirrus]``: skip Cirrus jobs
+
+  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
+  uploads.
+  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
+
+Test building wheels
+~~~~~~~~~~~~~~~~~~~~
+
+Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+in order to build wheels through continuous integration services. To save resources, the
+cibuildwheel wheel builders are not run by default on every single PR or commit to main.
+
+If you would like to test that your pull request do not break the wheel builders,
+you may either append ``[wheel build]`` to the end of the commit message of the commit
+or add one of the following labels to the pull request(if you have the permissions to do so):
+
+- ``36 - Build``: for pull requests changing build processes/configurations
+- ``03 - Maintenance``: for pull requests upgrading dependencies
+- ``14 - Release``: for pull requests preparing for a release
+
+The wheels built via github actions (including 64-bit linux, macOS, and
+windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
+files. You can access them from the Summary page of the "Wheel builder"
+Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
+Additionally, the wheels will be uploaded to
+https://anaconda.org/scientific-python-nightly-wheels/ on the following conditions:
+
+- by a weekly cron job or
+- if the github action or travis build has been manually triggered, which requires appropriate permissions
+
+The wheels will be uploaded to https://anaconda.org/multibuild-wheels-staging/
+if the build was triggered by a tag to the repo that begins with ``v``
+
+.. _Action: https://github.com/numpy/numpy/actions
+.. _travis: https://app.travis-ci.com/github/numpy/numpy/builds
 
 .. _workflow_mailing_list:
 
@@ -417,7 +500,7 @@ Then, go to your forked repository github page, say
 Click on the 'Admin' button, and add anyone else to the repo as a
 collaborator:
 
-   .. image:: pull_button.png
+.. image:: pull_button.png
 
 Now all those people can do::
 
@@ -431,6 +514,28 @@ usual::
 
      git commit -am 'ENH - much better code'
      git push origin my-feature-branch # pushes directly into your repo
+
+
+Checkout changes from an existing pull request
+==============================================
+
+If you want to test the changes in a pull request or continue the work in a
+new pull request, the commits are to be cloned into a local branch in your
+forked repository
+
+First ensure your upstream points to the main repo, as from :ref:`linking-to-upstream`
+
+Then, fetch the changes and create a local branch. Assuming ``$ID`` is the pull request number
+and ``$BRANCHNAME`` is the name of the *new local* branch you wish to create::
+
+    git fetch upstream pull/$ID/head:$BRANCHNAME
+
+Checkout the newly created branch::
+
+    git checkout $BRANCHNAME
+
+You now have the changes in the pull request.
+
 
 Exploring your repository
 =========================

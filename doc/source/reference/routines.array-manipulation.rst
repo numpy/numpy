@@ -55,11 +55,9 @@ Changing kind of array
    asarray
    asanyarray
    asmatrix
-   asfarray
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
-   asscalar
    require
 
 Joining arrays
@@ -74,7 +72,6 @@ Joining arrays
    hstack
    dstack
    column_stack
-   row_stack
 
 Splitting arrays
 ================

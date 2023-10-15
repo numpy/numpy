@@ -109,9 +109,6 @@ Still TODO in this module are:
 - The spec is still in an RFC phase and may still have minor updates, which
   will need to be reflected here.
 
-- The linear algebra extension in the spec will be added in a future pull
-  request.
-
 - Complex number support in array API spec is planned but not yet finalized,
   as are the fft extension and certain linear algebra functions such as eig
   that require complex dtypes.
@@ -124,7 +121,9 @@ warnings.warn(
     "The numpy.array_api submodule is still experimental. See NEP 47.", stacklevel=2
 )
 
-__all__ = []
+__array_api_version__ = "2022.12"
+
+__all__ = ["__array_api_version__"]
 
 from ._constants import e, inf, nan, pi
 
@@ -136,7 +135,7 @@ from ._creation_functions import (
     empty,
     empty_like,
     eye,
-    _from_dlpack,
+    from_dlpack,
     full,
     full_like,
     linspace,
@@ -155,7 +154,7 @@ __all__ += [
     "empty",
     "empty_like",
     "eye",
-    "_from_dlpack",
+    "from_dlpack",
     "full",
     "full_like",
     "linspace",
@@ -169,15 +168,18 @@ __all__ += [
 ]
 
 from ._data_type_functions import (
+    astype,
     broadcast_arrays,
     broadcast_to,
     can_cast,
     finfo,
+    isdtype,
     iinfo,
     result_type,
 )
 
 __all__ += [
+    "astype",
     "broadcast_arrays",
     "broadcast_to",
     "can_cast",
@@ -197,6 +199,8 @@ from ._dtypes import (
     uint64,
     float32,
     float64,
+    complex64,
+    complex128,
     bool,
 )
 
@@ -231,6 +235,7 @@ from ._elementwise_functions import (
     bitwise_right_shift,
     bitwise_xor,
     ceil,
+    conj,
     cos,
     cosh,
     divide,
@@ -241,6 +246,7 @@ from ._elementwise_functions import (
     floor_divide,
     greater,
     greater_equal,
+    imag,
     isfinite,
     isinf,
     isnan,
@@ -260,6 +266,7 @@ from ._elementwise_functions import (
     not_equal,
     positive,
     pow,
+    real,
     remainder,
     round,
     sign,
@@ -332,12 +339,17 @@ __all__ += [
     "trunc",
 ]
 
-# einsum is not yet implemented in the array API spec.
+from ._indexing_functions import take
 
-# from ._linear_algebra_functions import einsum
-# __all__ += ['einsum']
+__all__ += ["take"]
 
-from ._linear_algebra_functions import matmul, tensordot, matrix_transpose, vecdot
+# linalg is an extension in the array API spec, which is a sub-namespace. Only
+# a subset of functions in it are imported into the top-level namespace.
+from . import linalg
+
+__all__ += ["linalg"]
+
+from .linalg import matmul, tensordot, matrix_transpose, vecdot
 
 __all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
@@ -358,9 +370,9 @@ from ._searching_functions import argmax, argmin, nonzero, where
 
 __all__ += ["argmax", "argmin", "nonzero", "where"]
 
-from ._set_functions import unique
+from ._set_functions import unique_all, unique_counts, unique_inverse, unique_values
 
-__all__ += ["unique"]
+__all__ += ["unique_all", "unique_counts", "unique_inverse", "unique_values"]
 
 from ._sorting_functions import argsort, sort
 

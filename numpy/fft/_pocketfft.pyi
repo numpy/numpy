@@ -1,15 +1,12 @@
-from typing import (
-    Literal as L,
-    List,
-    Sequence,
-)
+from collections.abc import Sequence
+from typing import Literal as L
 
 from numpy import complex128, float64
-from numpy.typing import ArrayLike, NDArray, _ArrayLikeNumber_co
+from numpy._typing import ArrayLike, NDArray, _ArrayLikeNumber_co
 
 _NormKind = L[None, "backward", "ortho", "forward"]
 
-__all__: List[str]
+__all__: list[str]
 
 def fft(
     a: ArrayLike,

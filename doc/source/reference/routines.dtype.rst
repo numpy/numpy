@@ -13,7 +13,6 @@ Data type routines
    min_scalar_type
    result_type
    common_type
-   obj2sctype
 
 Creating data types
 -------------------
@@ -21,7 +20,7 @@ Creating data types
    :toctree: generated/
 
    dtype
-   format_parser
+   rec.format_parser
 
 Data type information
 ---------------------
@@ -30,18 +29,13 @@ Data type information
 
    finfo
    iinfo
-   MachAr
 
 Data type testing
 -----------------
 .. autosummary::
    :toctree: generated/
 
-   issctype
    issubdtype
-   issubsctype
-   issubclass_
-   find_common_type
 
 Miscellaneous
 -------------
@@ -49,6 +43,4 @@ Miscellaneous
    :toctree: generated/
 
    typename
-   sctype2char
    mintypecode
-   maximum_sctype

@@ -1,10 +1,13 @@
+from datetime import datetime
 import os
 import shutil
 import subprocess
 import sys
+import time
 import pytest
 
 import numpy as np
+from numpy.testing import IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -13,14 +16,14 @@ try:
 except ImportError:
     cython = None
 else:
-    from distutils.version import LooseVersion
+    from numpy._utils import _pep440
 
-    # Cython 0.29.21 is required for Python 3.9 and there are
+    # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion("0.29.21")
-    if LooseVersion(cython_version) < required_version:
+    required_version = "0.29.30"
+    if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
 
@@ -28,42 +31,31 @@ pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
 @pytest.fixture
-def install_temp(request, tmp_path):
+def install_temp(tmp_path):
     # Based in part on test_cython from random.tests.test_extending
+    if IS_WASM:
+        pytest.skip("No subprocess")
 
-    here = os.path.dirname(__file__)
-    ext_dir = os.path.join(here, "examples")
+    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
+    build_dir = tmp_path / "build"
+    os.makedirs(build_dir, exist_ok=True)
+    try:
+        subprocess.check_call(["meson", "--version"])
+    except FileNotFoundError:
+        pytest.skip("No usable 'meson' found")
+    if sys.platform == "win32":
+        subprocess.check_call(["meson", "setup",
+                               "--buildtype=release",
+                               "--vsenv", str(srcdir)],
+                              cwd=build_dir,
+                              )
+    else:
+        subprocess.check_call(["meson", "setup", str(srcdir)],
+                              cwd=build_dir
+                              )
+    subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
 
-    cytest = str(tmp_path / "cytest")
-
-    shutil.copytree(ext_dir, cytest)
-    # build the examples and "install" them into a temporary directory
-
-    install_log = str(tmp_path / "tmp_install_log.txt")
-    subprocess.check_call(
-        [
-            sys.executable,
-            "setup.py",
-            "build",
-            "install",
-            "--prefix", str(tmp_path / "installdir"),
-            "--single-version-externally-managed",
-            "--record",
-            install_log,
-        ],
-        cwd=cytest,
-    )
-
-    # In order to import the built module, we need its path to sys.path
-    # so parse that out of the record
-    with open(install_log) as fid:
-        for line in fid:
-            if "checks" in line:
-                sys.path.append(os.path.dirname(line))
-                break
-        else:
-            raise RuntimeError(f'could not parse "{install_log}"')
-
+    sys.path.append(str(build_dir))
 
 def test_is_timedelta64_object(install_temp):
     import checks
@@ -132,3 +124,41 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(1)
     assert checks.is_integer(np.int8(1))
     assert checks.is_integer(np.uint64(1))
+
+
+def test_convert_datetime64_to_datetimestruct(install_temp):
+    # GH#21199
+    import checks
+
+    res = checks.convert_datetime64_to_datetimestruct()
+
+    exp = {
+        "year": 2022,
+        "month": 3,
+        "day": 15,
+        "hour": 20,
+        "min": 1,
+        "sec": 55,
+        "us": 260292,
+        "ps": 0,
+        "as": 0,
+    }
+
+    assert res == exp
+
+
+class TestDatetimeStrings:
+    def test_make_iso_8601_datetime(self, install_temp):
+        # GH#21199
+        import checks
+        dt = datetime(2016, 6, 2, 10, 45, 19)
+        # uses NPY_FR_s
+        result = checks.make_iso_8601_datetime(dt)
+        assert result == b"2016-06-02T10:45:19"
+
+    def test_get_datetime_iso_8601_strlen(self, install_temp):
+        # GH#21199
+        import checks
+        # uses NPY_FR_ns
+        res = checks.get_datetime_iso_8601_strlen()
+        assert res == 48

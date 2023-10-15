@@ -1,7 +1,0 @@
-A ``.clang-format`` file has been added
----------------------------------------
-Clang-format is a C/C++ code formatter, together with the added
-``.clang-format`` file, it produces code close enough to the NumPy
-C_STYLE_GUIDE for general use. Clang-format version 12+ is required
-due to the use of several new features, it is available in
-Fedora 34 and Ubuntu Focal among other distributions.

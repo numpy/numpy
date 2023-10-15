@@ -26,7 +26,7 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
     [mypy]
     plugins = numpy.typing.mypy_plugin
 
-.. _mypy: http://mypy-lang.org/
+.. _mypy: https://mypy-lang.org/
 .. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
 
 """
@@ -70,13 +70,12 @@ def _get_precision_dict() -> dict[str, str]:
     ret = {}
     for name, typ in names:
         n: int = 8 * typ().dtype.itemsize
-        ret[f'numpy.typing._nbit.{name}'] = f"numpy._{n}Bit"
+        ret[f'numpy._typing._nbit.{name}'] = f"numpy._{n}Bit"
     return ret
 
 
 def _get_extended_precision_list() -> list[str]:
-    extended_types = [np.ulonglong, np.longlong, np.longdouble, np.clongdouble]
-    extended_names = {
+    extended_names = [
         "uint128",
         "uint256",
         "int128",
@@ -89,8 +88,8 @@ def _get_extended_precision_list() -> list[str]:
         "complex192",
         "complex256",
         "complex512",
-    }
-    return [i.__name__ for i in extended_types if i.__name__ in extended_names]
+    ]
+    return [i for i in extended_names if hasattr(np, i)]
 
 
 def _get_c_intp_name() -> str:
@@ -106,7 +105,7 @@ def _get_c_intp_name() -> str:
         return "c_long"
 
 
-#: A dictionary mapping type-aliases in `numpy.typing._nbit` to
+#: A dictionary mapping type-aliases in `numpy._typing._nbit` to
 #: concrete `numpy.typing.NBitBase` subclasses.
 _PRECISION_DICT: Final = _get_precision_dict()
 
@@ -121,7 +120,7 @@ def _hook(ctx: AnalyzeTypeContext) -> Type:
     """Replace a type-alias with a concrete ``NBitBase`` subclass."""
     typ, _, api = ctx
     name = typ.name.split(".")[-1]
-    name_new = _PRECISION_DICT[f"numpy.typing._nbit.{name}"]
+    name_new = _PRECISION_DICT[f"numpy._typing._nbit.{name}"]
     return api.named_type(name_new)
 
 
@@ -177,7 +176,7 @@ if TYPE_CHECKING or MYPY_EX is None:
 
             if file.fullname == "numpy":
                 _override_imports(
-                    file, "numpy.typing._extended_precision",
+                    file, "numpy._typing._extended_precision",
                     imports=[(v, v) for v in _EXTENDED_PRECISION_LIST],
                 )
             elif file.fullname == "numpy.ctypeslib":

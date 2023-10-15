@@ -11,6 +11,9 @@ NEP 29 — Recommend Python and NumPy version support as a community policy stan
 :Created: 2019-07-13
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-October/080128.html
 
+.. note::
+  This NEP is superseded by the scientific python ecosystem coordination guideline
+  `SPEC 0 — Minimum Supported Versions <https://scientific-python.org/specs/spec-0000/>`__.
 
 Abstract
 --------
@@ -74,11 +77,19 @@ a project with a major or minor version released in December 2019 should
 support Python 3.6 and newer, and a project with a major or minor version
 release in November 2020 should support Python 3.7 and newer.
 
-The current Python release cadence is 18 months so a 42 month window
-ensures that there will always be at least two minor versions of Python
-in the window.  The window is extended 6 months beyond the anticipated two-release
-interval for Python to provide resilience against small fluctuations /
-delays in its release schedule.
+When this NEP was drafted the Python release cadence was 18 months so a 42
+month window ensured that there would always be at least two minor versions of
+Python in the window.  The window was extended 6 months beyond the anticipated
+two-release interval for Python to provide resilience against small
+fluctuations / delays in its release schedule.
+
+The Python release cadence increased in `PEP 0602 <https://peps.python.org/pep-0602/>`__,
+with releases now every 12 months, so there will be 3-4
+Python releases in the support window at any time.  However, PEP 0602 does not
+decrease the support window of Python (18 months of regular full bug-fix
+releases and 42 months of as-needed source-only releases).  Thus, we do not
+expect our users to upgrade Python faster, and our 42 month support window will
+cover the same portion of the upstream support of any given Python release.
 
 Because Python minor version support is based only on historical
 release dates, a 42 month time window, and a planned project release
@@ -114,7 +125,15 @@ Jul 26, 2021 3.7+   1.18+
 Dec 22, 2021 3.7+   1.19+
 Dec 26, 2021 3.8+   1.19+
 Jun 21, 2022 3.8+   1.20+
-Apr 14, 2023 3.9+   1.20+
+Jan 31, 2023 3.8+   1.21+
+Apr 14, 2023 3.9+   1.21+
+Jun 23, 2023 3.9+   1.22+
+Jan 01, 2024 3.9+   1.23+
+Apr 05, 2024 3.10+  1.23+
+Jun 22, 2024 3.10+  1.24+
+Dec 18, 2024 3.10+  1.25+
+Apr 04, 2025 3.11+  1.25+
+Apr 24, 2026 3.12+  1.25+
 ============ ====== =====
 
 
@@ -132,7 +151,15 @@ Drop Schedule
   On Dec 22, 2021 drop support for NumPy 1.18 (initially released on Dec 22, 2019)
   On Dec 26, 2021 drop support for Python 3.7 (initially released on Jun 27, 2018)
   On Jun 21, 2022 drop support for NumPy 1.19 (initially released on Jun 20, 2020)
+  On Jan 31, 2023 drop support for NumPy 1.20 (initially released on Jan 31, 2021)
   On Apr 14, 2023 drop support for Python 3.8 (initially released on Oct 14, 2019)
+  On Jun 23, 2023 drop support for NumPy 1.21 (initially released on Jun 22, 2021)
+  On Jan 01, 2024 drop support for NumPy 1.22 (initially released on Dec 31, 2021)
+  On Apr 05, 2024 drop support for Python 3.9 (initially released on Oct 05, 2020)
+  On Jun 22, 2024 drop support for NumPy 1.23 (initially released on Jun 22, 2022)
+  On Dec 18, 2024 drop support for NumPy 1.24 (initially released on Dec 18, 2022)
+  On Apr 04, 2025 drop support for Python 3.10 (initially released on Oct 04, 2021)
+  On Apr 24, 2026 drop support for Python 3.11 (initially released on Oct 24, 2022)
 
 
 Implementation
@@ -261,6 +288,14 @@ Code to generate support and drop schedule tables ::
   Oct 14, 2019: Python 3.8
   Dec 22, 2019: NumPy 1.18
   Jun 20, 2020: NumPy 1.19
+  Oct 05, 2020: Python 3.9
+  Jan 30, 2021: NumPy 1.20
+  Jun 22, 2021: NumPy 1.21
+  Oct 04, 2021: Python 3.10
+  Dec 31, 2021: NumPy 1.22
+  Jun 22, 2022: NumPy 1.23
+  Oct 24, 2022: Python 3.11
+  Dec 18, 2022: NumPy 1.24
   """
 
   releases = []

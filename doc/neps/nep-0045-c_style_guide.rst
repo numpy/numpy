@@ -256,7 +256,7 @@ Discussion
 ----------
 
 https://github.com/numpy/numpy/issues/11911
-recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst.txt``,
+recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst``,
 be turned into an NEP.
 
 

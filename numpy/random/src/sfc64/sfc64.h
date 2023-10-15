@@ -14,7 +14,7 @@ typedef struct s_sfc64_state {
 } sfc64_state;
 
 
-static NPY_INLINE uint64_t rotl(const uint64_t value, unsigned int rot) {
+static inline uint64_t rotl(const uint64_t value, unsigned int rot) {
 #ifdef _WIN32
   return _rotl64(value, rot);
 #else
@@ -22,7 +22,7 @@ static NPY_INLINE uint64_t rotl(const uint64_t value, unsigned int rot) {
 #endif
 }
 
-static NPY_INLINE uint64_t sfc64_next(uint64_t *s) {
+static inline uint64_t sfc64_next(uint64_t *s) {
   const uint64_t tmp = s[0] + s[1] + s[3]++;
 
   s[0] = s[1] ^ (s[1] >> 11);
@@ -33,11 +33,11 @@ static NPY_INLINE uint64_t sfc64_next(uint64_t *s) {
 }
 
 
-static NPY_INLINE uint64_t sfc64_next64(sfc64_state *state) {
+static inline uint64_t sfc64_next64(sfc64_state *state) {
   return sfc64_next(&state->s[0]);
 }
 
-static NPY_INLINE uint32_t sfc64_next32(sfc64_state *state) {
+static inline uint32_t sfc64_next32(sfc64_state *state) {
   uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;

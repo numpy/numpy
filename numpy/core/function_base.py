@@ -3,8 +3,9 @@ import warnings
 import operator
 import types
 
+import numpy as np
 from . import numeric as _nx
-from .numeric import result_type, NaN, asanyarray, ndim
+from .numeric import result_type, nan, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -91,6 +92,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 scale (a geometric progression).
     logspace : Similar to `geomspace`, but with the end points specified as
                logarithms.
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -130,16 +132,21 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     dt = result_type(start, stop, float(num))
     if dtype is None:
         dtype = dt
+        integer_dtype = False
+    else:
+        integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
     delta = stop - start
     y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
-    _mult_inplace = _nx.isscalar(delta)
     if div > 0:
+        _mult_inplace = _nx.isscalar(delta)
         step = delta / div
-        if _nx.any(step == 0):
+        any_step_zero = (
+            step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
+        if any_step_zero:
             # Special handling for denormal numbers, gh-5437
             y /= div
             if _mult_inplace:
@@ -154,19 +161,19 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
-        step = NaN
+        step = nan
         # Multiply with delta to allow possible override of output class.
         y = y * delta
 
     y += start
 
     if endpoint and num > 1:
-        y[-1] = stop
+        y[-1, ...] = stop
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
 
-    if _nx.issubdtype(dtype, _nx.integer):
+    if integer_dtype:
         _nx.floor(y, out=y)
 
     if retstep:
@@ -177,7 +184,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
 def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
                          dtype=None, axis=None):
-    return (start, stop)
+    return (start, stop, base)
 
 
 @array_function_dispatch(_logspace_dispatcher)
@@ -192,6 +199,9 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     .. versionchanged:: 1.16.0
         Non-scalar `start` and `stop` are now supported.
+
+    .. versionchanged:: 1.25.0
+        Non-scalar 'base` is now supported
 
     Parameters
     ----------
@@ -217,9 +227,10 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         an integer; `float` is chosen even if the arguments would produce an
         array of integers.
     axis : int, optional
-        The axis in the result to store the samples.  Relevant only if start
-        or stop are array-like.  By default (0), the samples will be along a
-        new axis inserted at the beginning. Use -1 to get an axis at the end.
+        The axis in the result to store the samples.  Relevant only if start,
+        stop, or base are array-like.  By default (0), the samples will be
+        along a new axis inserted at the beginning. Use -1 to get an axis at
+        the end.
 
         .. versionadded:: 1.16.0
 
@@ -237,10 +248,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     linspace : Similar to logspace, but with the samples uniformly distributed
                in linear space, instead of log space.
     geomspace : Similar to logspace, but with endpoints specified directly.
+    :ref:`how-to-partition`
 
     Notes
     -----
-    Logspace is equivalent to the code
+    If base is a scalar, logspace is equivalent to the code
 
     >>> y = np.linspace(start, stop, num=num, endpoint=endpoint)
     ... # doctest: +SKIP
@@ -255,6 +267,9 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     array([100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
     array([4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    >>> np.logspace(2.0, 3.0, num=4, base=[2.0, 3.0], axis=-1)
+    array([[ 4.        ,  5.0396842 ,  6.34960421,  8.        ],
+           [ 9.        , 12.98024613, 18.72075441, 27.        ]])
 
     Graphical illustration:
 
@@ -272,7 +287,13 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     >>> plt.show()
 
     """
+    ndmax = np.broadcast(start, stop, base).ndim
+    start, stop, base = (
+        np.array(a, copy=False, subok=True, ndmin=ndmax)
+        for a in (start, stop, base)
+    )
     y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
+    base = np.expand_dims(base, axis=axis)
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype, copy=False)
@@ -333,6 +354,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
                progression.
     arange : Similar to linspace, with the step size specified instead of the
              number of samples.
+    :ref:`how-to-partition`
 
     Notes
     -----
@@ -483,9 +505,9 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     ----------
     place : str
         The absolute name of the module to import from
-    obj : str
+    obj : str or None
         The name of the object to add documentation to, typically a class or
-        function name
+        function name.
     doc : {str, Tuple[str, str], List[Tuple[str, str]]}
         If a string, the documentation to apply to `obj`
 

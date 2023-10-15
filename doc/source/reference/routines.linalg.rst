@@ -3,7 +3,7 @@
 .. module:: numpy.linalg
 
 Linear algebra (:mod:`numpy.linalg`)
-************************************
+====================================
 
 The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
 low level implementations of standard linear algebra algorithms. Those
@@ -95,6 +95,7 @@ Norms and other numbers
    linalg.matrix_rank
    linalg.slogdet
    trace
+   linalg.trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -107,6 +108,12 @@ Solving equations and inverting matrices
    linalg.inv
    linalg.pinv
    linalg.tensorinv
+
+Other matrix operations
+-----------------------
+
+   diagonal
+   linalg.diagonal (Array API compatible)
 
 Exceptions
 ----------

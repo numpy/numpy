@@ -6,10 +6,11 @@ are available in the main ``numpy`` namespace - use that instead.
 
 """
 
-from numpy.version import version as __version__
-
 import os
 import warnings
+
+from numpy.version import version as __version__
+
 
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
@@ -69,20 +70,18 @@ if not (hasattr(multiarray, '_multiarray_umath') and
     raise ImportError(msg.format(path))
 
 from . import numerictypes as nt
+from .numerictypes import sctypes, sctypeDict
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
 from .numeric import *
 from . import fromnumeric
 from .fromnumeric import *
-from . import defchararray as char
-from . import records as rec
-from .records import record, recarray, format_parser
+from .records import record, recarray
+# Note: module name memmap is overwritten by a class with same name
 from .memmap import *
-from .defchararray import chararray
 from . import function_base
 from .function_base import *
 from . import _machar
-from ._machar import *
 from . import getlimits
 from .getlimits import *
 from . import shape_base
@@ -91,7 +90,6 @@ from . import einsumfunc
 from .einsumfunc import *
 del nt
 
-from .fromnumeric import amax as max, amin as min, round_ as round
 from .numeric import absolute as abs
 
 # do this after everything else, to minimize the chance of this misleadingly
@@ -104,10 +102,8 @@ from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['char', 'rec', 'memmap']
+__all__ = ['memmap', 'sctypeDict', 'record', 'recarray', 'abs']
 __all__ += numeric.__all__
-__all__ += ['record', 'recarray', 'format_parser']
-__all__ += ['chararray']
 __all__ += function_base.__all__
 __all__ += getlimits.__all__
 __all__ += shape_base.__all__
@@ -142,22 +138,25 @@ def _DType_reconstruct(scalar_type):
 
 
 def _DType_reduce(DType):
-    # To pickle a DType without having to add top-level names, pickle the
-    # scalar type for now (and assume that reconstruction will be possible).
-    if DType is dtype:
-        return "dtype"  # must pickle `np.dtype` as a singleton.
-    scalar_type = DType.type  # pickle the scalar type for reconstruction
+    # As types/classes, most DTypes can simply be pickled by their name:
+    if not DType._legacy or DType.__module__ == "numpy.dtypes":
+        return DType.__name__
+
+    # However, user defined legacy dtypes (like rational) do not end up in
+    # `numpy.dtypes` as module and do not have a public class at all.
+    # For these, we pickle them by reconstructing them from the scalar type:
+    scalar_type = DType.type
     return _DType_reconstruct, (scalar_type,)
 
 
 def __getattr__(name):
-    # Deprecated 2021-10-20, NumPy 1.22
-    if name == "machar":
+    # Deprecated 2022-11-22, NumPy 1.25.
+    if name == "MachAr":
         warnings.warn(
-            "The `np.core.machar` module is deprecated (NumPy 1.22)",
+            "The `np.core.MachAr` is considered private API (NumPy 1.24)",
             DeprecationWarning, stacklevel=2,
         )
-        return _machar
+        return _machar.MachAr
     raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 

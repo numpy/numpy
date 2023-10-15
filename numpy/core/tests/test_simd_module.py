@@ -12,7 +12,9 @@ npyv, npyv2 = (npyvs + [None, None])[:2]
 
 unsigned_sfx = ["u8", "u16", "u32", "u64"]
 signed_sfx = ["s8", "s16", "s32", "s64"]
-fp_sfx = ["f32"]
+fp_sfx = []
+if npyv and npyv.simd_f32:
+    fp_sfx.append("f32")
 if npyv and npyv.simd_f64:
     fp_sfx.append("f64")
 
@@ -84,6 +86,8 @@ class Test_SIMD_MODULE:
         assert lanes == [0] * nlanes
 
     def test_truncate_f32(self):
+        if not npyv.simd_f32:
+            pytest.skip("F32 isn't support by the SIMD extension")
         f32 = npyv.setall_f32(0.1)[0]
         assert f32 != 0.1
         assert round(f32, 1) == 0.1

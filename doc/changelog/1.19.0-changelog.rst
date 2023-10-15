@@ -162,7 +162,7 @@ A total of 488 pull requests were merged for this release.
 * `#15035 <https://github.com/numpy/numpy/pull/15035>`__: BUG: add endfunction, endsubroutine to valid fortran end words
 * `#15040 <https://github.com/numpy/numpy/pull/15040>`__: TST: Add test for object method (and general unary) loops
 * `#15042 <https://github.com/numpy/numpy/pull/15042>`__: REL: Update master after 1.18.x branch.
-* `#15043 <https://github.com/numpy/numpy/pull/15043>`__: DOC: Update HOWTO_RELEASE.rst.txt
+* `#15043 <https://github.com/numpy/numpy/pull/15043>`__: DOC: Update HOWTO_RELEASE.rst
 * `#15046 <https://github.com/numpy/numpy/pull/15046>`__: API, DOC: change names to multivariate_hypergeometric, improve...
 * `#15050 <https://github.com/numpy/numpy/pull/15050>`__: DOC: Fix statement about norms
 * `#15052 <https://github.com/numpy/numpy/pull/15052>`__: MAINT: follow-up cleanup for blas64 PR

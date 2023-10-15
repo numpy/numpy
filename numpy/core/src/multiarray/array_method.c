@@ -27,15 +27,18 @@
  *    weak reference to the input DTypes.
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 
 /*
@@ -48,13 +51,19 @@
  *
  * We could allow setting the output descriptors specifically to simplify
  * this step.
+ *
+ * Note that the default version will indicate that the cast can be done
+ * as using `arr.view(new_dtype)` if the default cast-safety is
+ * set to "no-cast".  This default function cannot be used if a view may
+ * be sufficient for casting but the cast is not always "no-cast".
  */
 static NPY_CASTING
 default_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **input_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
 {
     int nin = method->nin;
     int nout = method->nout;
@@ -62,7 +71,7 @@ default_resolve_descriptors(
     for (int i = 0; i < nin + nout; i++) {
         PyArray_DTypeMeta *dtype = dtypes[i];
         if (input_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(input_descrs[i]);
         }
         else {
             output_descrs[i] = NPY_DT_CALL_default_descr(dtype);
@@ -76,6 +85,13 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
+    if (method->casting == NPY_NO_CASTING) {
+        /*
+         * By (current) definition no-casting should imply viewable.  This
+         * is currently indicated for example for object to object cast.
+         */
+        *view_offset = 0;
+    }
     return method->casting;
 
   fail:
@@ -86,7 +102,7 @@ default_resolve_descriptors(
 }
 
 
-NPY_INLINE static int
+static inline int
 is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {
@@ -102,9 +118,10 @@ is_contiguous(
 /**
  * The default method to fetch the correct loop for a cast or ufunc
  * (at the time of writing only casts).
- * The default version can return loops explicitly registered during method
- * creation. It does specialize contiguous loops, although has to check
- * all descriptors itemsizes for this.
+ * Note that the default function provided here will only indicate that a cast
+ * can be done as a view (i.e., arr.view(new_dtype)) when this is trivially
+ * true, i.e., for cast safety "no-cast". It will not recognize view as an
+ * option for other casts (e.g., viewing '>i8' as '>i4' with an offset of 4).
  *
  * @param context
  * @param aligned
@@ -119,7 +136,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -166,7 +183,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting & ~_NPY_CAST_IS_VIEW) {
+    switch (spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -234,6 +251,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_reduction_initial = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -246,13 +264,18 @@ fill_arraymethod_from_slots(
             case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
-            case NPY_METH_get_loop:
-                if (private) {
-                    /* Only allow override for private functions initially */
-                    meth->get_strided_loop = slot->pfunc;
-                    continue;
-                }
-                break;
+            case _NPY_METH_get_loop:
+                /*
+                 * NOTE: get_loop is considered "unstable" in the public API,
+                 *       I do not like the signature, and the `move_references`
+                 *       parameter must NOT be used.
+                 *       (as in: we should not worry about changing it, but of
+                 *       course that would not break it immediately.)
+                 */
+                /* Only allow override for private functions initially */
+                meth->get_strided_loop = slot->pfunc;
+                continue;
+            /* "Typical" loops, supported used by the default `get_loop` */
             case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
@@ -264,6 +287,12 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_reduction_initial:
+                meth->get_reduction_initial = slot->pfunc;
+                continue;
+            case NPY_METH_contiguous_indexed_loop:
+                meth->contiguous_indexed_loop = slot->pfunc;
                 continue;
             default:
                 break;
@@ -315,27 +344,39 @@ fill_arraymethod_from_slots(
     }
 
     /* Check whether the provided loops make sense. */
+    if (meth->flags & NPY_METH_SUPPORTS_UNALIGNED) {
+        if (meth->unaligned_strided_loop == NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must provide unaligned strided inner loop when using "
+                    "NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    else {
+        if (meth->unaligned_strided_loop != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must not provide unaligned strided inner loop when not "
+                    "using NPY_METH_SUPPORTS_UNALIGNED flag (in method: %s)",
+                    spec->name);
+            return -1;
+        }
+    }
+    /* Fill in the blanks: */
+    if (meth->unaligned_contiguous_loop == NULL) {
+        meth->unaligned_contiguous_loop = meth->unaligned_strided_loop;
+    }
     if (meth->strided_loop == NULL) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide a strided inner loop function. (method: %s)",
-                spec->name);
-        return -1;
+        meth->strided_loop = meth->unaligned_strided_loop;
     }
     if (meth->contiguous_loop == NULL) {
         meth->contiguous_loop = meth->strided_loop;
     }
-    if (meth->unaligned_contiguous_loop != NULL &&
-            meth->unaligned_strided_loop == NULL) {
+
+    if (meth->strided_loop == NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
-        return -1;
-    }
-    if ((meth->unaligned_strided_loop == NULL) !=
-            !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
+                "Must provide a strided inner loop function. (method: %s)",
+                spec->name);
         return -1;
     }
 
@@ -446,6 +487,15 @@ arraymethod_dealloc(PyObject *self)
 
     PyMem_Free(meth->name);
 
+    if (meth->wrapped_meth != NULL) {
+        /* Cleanup for wrapping array method (defined in umath) */
+        Py_DECREF(meth->wrapped_meth);
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
+            Py_XDECREF(meth->wrapped_dtypes[i]);
+        }
+        PyMem_Free(meth->wrapped_dtypes);
+    }
+
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -454,8 +504,8 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._ArrayMethod",
     .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = arraymethod_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 
 
@@ -495,8 +545,9 @@ boundarraymethod_dealloc(PyObject *self)
 
 
 /*
- * Calls resolve_descriptors() and returns the casting level and the resolved
- * descriptors as a tuple. If the operation is impossible returns (-1, None).
+ * Calls resolve_descriptors() and returns the casting level, the resolved
+ * descriptors as a tuple, and a possible view-offset (integer or None).
+ * If the operation is impossible returns (-1, None, None).
  * May raise an error, but usually should not.
  * The function validates the casting attribute compared to the returned
  * casting level.
@@ -551,14 +602,15 @@ boundarraymethod__resolve_descripors(
         }
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, given_descrs, loop_descrs);
+            self->method, self->dtypes, given_descrs, loop_descrs, &view_offset);
 
     if (casting < 0 && PyErr_Occurred()) {
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None);
+        return Py_BuildValue("iOO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -570,9 +622,22 @@ boundarraymethod__resolve_descripors(
         PyTuple_SET_ITEM(result_tuple, i, (PyObject *)loop_descrs[i]);
     }
 
+    PyObject *view_offset_obj;
+    if (view_offset == NPY_MIN_INTP) {
+        Py_INCREF(Py_None);
+        view_offset_obj = Py_None;
+    }
+    else {
+        view_offset_obj = PyLong_FromSsize_t(view_offset);
+        if (view_offset_obj == NULL) {
+            Py_DECREF(result_tuple);
+            return NULL;
+        }
+    }
+
     /*
-     * The casting flags should be the most generic casting level (except the
-     * cast-is-view flag.  If no input is parametric, it must match exactly.
+     * The casting flags should be the most generic casting level.
+     * If no input is parametric, it must match exactly.
      *
      * (Note that these checks are only debugging checks.)
      */
@@ -584,7 +649,7 @@ boundarraymethod__resolve_descripors(
         }
     }
     if (self->method->casting != -1) {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        NPY_CASTING cast = casting;
         if (self->method->casting !=
                 PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
@@ -592,6 +657,7 @@ boundarraymethod__resolve_descripors(
                     "(set level is %d, got %d for method %s)",
                     self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
+            Py_DECREF(view_offset_obj);
             return NULL;
         }
         if (!parametric) {
@@ -608,12 +674,13 @@ boundarraymethod__resolve_descripors(
                         "(set level is %d, got %d for method %s)",
                         self->method->casting, cast, self->method->name);
                 Py_DECREF(result_tuple);
+                Py_DECREF(view_offset_obj);
                 return NULL;
             }
         }
     }
 
-    return Py_BuildValue("iN", casting, result_tuple);
+    return Py_BuildValue("iNN", casting, result_tuple, view_offset_obj);
 }
 
 
@@ -694,8 +761,9 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, descrs, out_descrs);
+            self->method, self->dtypes, descrs, out_descrs, &view_offset);
 
     if (casting < 0) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
@@ -817,15 +885,17 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 
         /* Process unmasked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
-        int res = strided_loop(context,
-                dataptrs, &subloopsize, strides, strided_loop_auxdata);
-        if (res != 0) {
-            return res;
+        if (subloopsize > 0) {
+            int res = strided_loop(context,
+                    dataptrs, &subloopsize, strides, strided_loop_auxdata);
+            if (res != 0) {
+                return res;
+            }
+            for (int i = 0; i < nargs; i++) {
+                dataptrs[i] += subloopsize * strides[i];
+            }
+            N -= subloopsize;
         }
-        for (int i = 0; i < nargs; i++) {
-            dataptrs[i] += subloopsize * strides[i];
-        }
-        N -= subloopsize;
     } while (N > 0);
 
     return 0;
@@ -835,7 +905,7 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 /*
  * Fetches a strided-loop function that supports a boolean mask as additional
  * (last) operand to the strided-loop.  It is otherwise largely identical to
- * the `get_loop` method which it wraps.
+ * the `get_strided_loop` method which it wraps.
  * This is the core implementation for the ufunc `where=...` keyword argument.
  *
  * NOTE: This function does not support `move_references` or inner dimensions.
@@ -903,9 +973,9 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._BoundArrayMethod",
     .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
     .tp_dealloc = boundarraymethod_dealloc,
+    .tp_repr = (reprfunc)boundarraymethod_repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };

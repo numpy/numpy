@@ -6,7 +6,7 @@ Broadcasting
 ************
 
 .. seealso::
-    :class:`numpy.broadcast`   
+    :class:`numpy.broadcast`
 
 
 The term broadcasting describes how NumPy treats arrays with different
@@ -26,7 +26,7 @@ have exactly the same shape, as in the following example:
   >>> a = np.array([1.0, 2.0, 3.0])
   >>> b = np.array([2.0, 2.0, 2.0])
   >>> a * b
-  array([ 2.,  4.,  6.])
+  array([2.,  4.,  6.])
 
 NumPy's broadcasting rule relaxes this constraint when the arrays'
 shapes meet certain constraints. The simplest broadcasting example occurs
@@ -35,7 +35,7 @@ when an array and a scalar value are combined in an operation:
 >>> a = np.array([1.0, 2.0, 3.0])
 >>> b = 2.0
 >>> a * b
-array([ 2.,  4.,  6.])
+array([2.,  4.,  6.])
 
 The result is equivalent to the previous example where ``b`` was an array.
 We can think of the scalar ``b`` being *stretched* during the arithmetic
@@ -46,7 +46,7 @@ only conceptual.  NumPy is smart enough to use the original scalar value
 without actually making copies so that broadcasting operations are as
 memory and computationally efficient as possible.
 
-.. figure:: broadcasting_1.svg
+.. figure:: broadcasting_1.png
     :alt: A scalar is broadcast to match the shape of the 1-d array it
           is being multiplied to.
     :name: broadcasting.figure-1
@@ -66,21 +66,25 @@ because broadcasting moves less memory around during the multiplication
 General Broadcasting Rules
 ==========================
 When operating on two arrays, NumPy compares their shapes element-wise.
-It starts with the trailing (i.e. rightmost) dimensions and works its
+It starts with the trailing (i.e. rightmost) dimension and works its
 way left.  Two dimensions are compatible when
 
 1) they are equal, or
-2) one of them is 1
+2) one of them is 1.
 
 If these conditions are not met, a
-``ValueError: operands could not be broadcast together`` exception is 
-thrown, indicating that the arrays have incompatible shapes. The size of 
-the resulting array is the size that is not 1 along each axis of the inputs.
+``ValueError: operands could not be broadcast together`` exception is
+thrown, indicating that the arrays have incompatible shapes.
 
-Arrays do not need to have the same *number* of dimensions.  For example,
-if you have a ``256x256x3`` array of RGB values, and you want to scale
-each color in the image by a different value, you can multiply the image
-by a one-dimensional array with 3 values. Lining up the sizes of the
+Input arrays do not need to have the same *number* of dimensions.  The
+resulting array will have the same number of dimensions as the input array
+with the greatest number of dimensions, where the *size* of each dimension is
+the largest size of the corresponding dimension among the input arrays.  Note
+that missing dimensions are assumed to have size one.
+
+For example, if you have a ``256x256x3`` array of RGB values, and you want
+to scale each color in the image by a different value, you can multiply the
+image by a one-dimensional array with 3 values. Lining up the sizes of the
 trailing axes of these arrays according to the broadcast rules, shows that
 they are compatible::
 
@@ -158,18 +162,18 @@ Here are examples of shapes that do not broadcast::
 
 An example of broadcasting when a 1-d array is added to a 2-d array::
 
-  >>> a = array([[ 0.0,  0.0,  0.0],
-  ...            [10.0, 10.0, 10.0],
-  ...            [20.0, 20.0, 20.0],
-  ...            [30.0, 30.0, 30.0]])
-  >>> b = array([1.0, 2.0, 3.0])
+  >>> a = np.array([[ 0.0,  0.0,  0.0],
+  ...               [10.0, 10.0, 10.0],
+  ...               [20.0, 20.0, 20.0],
+  ...               [30.0, 30.0, 30.0]])
+  >>> b = np.array([1.0, 2.0, 3.0])
   >>> a + b
   array([[  1.,   2.,   3.],
-          [ 11.,  12.,  13.],
-          [ 21.,  22.,  23.],
-          [ 31.,  32.,  33.]])
-  >>> b = array([1.0, 2.0, 3.0, 4.0])
-  >>> a + b 
+          [11.,  12.,  13.],
+          [21.,  22.,  23.],
+          [31.,  32.,  33.]])
+  >>> b = np.array([1.0, 2.0, 3.0, 4.0])
+  >>> a + b
   Traceback (most recent call last):
   ValueError: operands could not be broadcast together with shapes (4,3) (4,)
 
@@ -177,8 +181,8 @@ As shown in :ref:`broadcasting.figure-2`, ``b`` is added to each row of ``a``.
 In :ref:`broadcasting.figure-3`, an exception is raised because of the
 incompatible shapes.
 
-.. figure:: broadcasting_2.svg
-    :alt: A 1-d array with shape (3) is strectched to match the 2-d array of
+.. figure:: broadcasting_2.png
+    :alt: A 1-d array with shape (3) is stretched to match the 2-d array of
           shape (4, 3) it is being added to, and the result is a 2-d array of shape
           (4, 3).
     :name: broadcasting.figure-2
@@ -189,7 +193,7 @@ incompatible shapes.
     broadcasting if number of 1-d array elements matches the number of 2-d
     array columns.*
 
-.. figure:: broadcasting_3.svg
+.. figure:: broadcasting_3.png
     :alt: A huge cross over the 2-d array of shape (4, 3) and the 1-d array
           of shape (4) shows that they can not be broadcast due to mismatch
           of shapes and thus produce no result.
@@ -208,12 +212,12 @@ outer addition operation of two 1-d arrays::
   >>> a = np.array([0.0, 10.0, 20.0, 30.0])
   >>> b = np.array([1.0, 2.0, 3.0])
   >>> a[:, np.newaxis] + b
-  array([[  1.,   2.,   3.],
-         [ 11.,  12.,  13.],
-         [ 21.,  22.,  23.],
-         [ 31.,  32.,  33.]])
+  array([[ 1.,   2.,   3.],
+         [11.,  12.,  13.],
+         [21.,  22.,  23.],
+         [31.,  32.,  33.]])
 
-.. figure:: broadcasting_4.svg
+.. figure:: broadcasting_4.png
     :alt: A 2-d array of shape (4, 1) and a 1-d array of shape (3) are
           stretched to match their shapes and produce a resultant array
           of shape (4, 3).
@@ -261,12 +265,12 @@ the shape of the ``codes`` array::
   Codes            (2d array):  4 x 2
   Diff             (2d array):  4 x 2
 
-.. figure:: broadcasting_5.svg
+.. figure:: broadcasting_5.png
     :alt: A height versus weight graph that shows data of a female
           gymnast, marathon runner, basketball player, football
           lineman and the athlete to be classified. Shortest distance
           is found between the basketball player and the athlete
-          to be classified. 
+          to be classified.
     :name: broadcasting.figure-5
 
     *Figure 5*
@@ -280,8 +284,8 @@ Typically, a large number of ``observations``, perhaps read from a database,
 are compared to a set of ``codes``. Consider this scenario::
 
   Observation      (2d array):      10 x 3
-  Codes            (2d array):       5 x 3
-  Diff             (3d array):  5 x 10 x 3 
+  Codes            (3d array):   5 x 1 x 3
+  Diff             (3d array):  5 x 10 x 3
 
 The three-dimensional array, ``diff``, is a consequence of broadcasting, not a
 necessity for the calculation. Large data sets will generate a large

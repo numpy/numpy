@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 
 #include "common_dtype.h"
+#include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
 
@@ -41,7 +42,7 @@
  * @param dtype2 Second DType class.
  * @return The common DType or NULL with an error set
  */
-NPY_NO_EXPORT NPY_INLINE PyArray_DTypeMeta *
+NPY_NO_EXPORT PyArray_DTypeMeta *
 PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 {
     if (dtype1 == dtype2) {
@@ -61,7 +62,7 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
     }
     if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_DECREF(Py_NotImplemented);
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(npy_DTypePromotionError,
                 "The DTypes %S and %S do not have a common DType. "
                 "For example they cannot be stored in a single array unless "
                 "the dtype is `object`.", dtype1, dtype2);
@@ -89,26 +90,18 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
  * NotImplemented (so `c` knows more).  You may notice that the result
  * `res = a.__common_dtype__(b)` is not important.  We could try to use it
  * to remove the whole branch if `res is c` or by checking if
- * `c.__common_dtype(res) is c`.
+ * `c.__common_dtype__(res) is c`.
  * Right now, we only clear initial elements in the most simple case where
- * `a.__common_dtype(b) is a` (and thus `b` cannot alter the end-result).
+ * `a.__common_dtype__(b) is a` (and thus `b` cannot alter the end-result).
  * Clearing means, we do not have to worry about them later.
  *
- * There is one further subtlety. If we have an abstract DType and a
- * non-abstract one, we "prioritize" the non-abstract DType here.
- * In this sense "prioritizing" means that we use:
- *       abstract.__common_dtype__(other)
- * If both return NotImplemented (which is acceptable and even expected in
- * this case, see later) then `other` will be considered to know more.
- *
- * The reason why this may be acceptable for abstract DTypes, is that
- * the value-dependent abstract DTypes may provide default fall-backs.
- * The priority inversion effectively means that abstract DTypes are ordered
- * just below their concrete counterparts.
- * (This fall-back is convenient but not perfect, it can lead to
- * non-minimal promotions: e.g. `np.uint24 + 2**20 -> int32`. And such
- * cases may also be possible in some mixed type scenarios; they can be
- * avoided by defining the promotion explicitly in the user DType.)
+ * Abstract dtypes are not handled specially here.  In a first
+ * version they were but this version also tried to be able to do value-based
+ * behavior.
+ * There may be some advantage to special casing the abstract ones (e.g.
+ * so that the concrete ones do not have to deal with it), but this would
+ * require more complex handling later on. See the logic in
+ * default_builtin_common_dtype
  *
  * @param length Number of DTypes
  * @param dtypes
@@ -125,20 +118,11 @@ reduce_dtypes_to_most_knowledgeable(
     for (npy_intp low = 0; low < half; low++) {
         npy_intp high = length - 1 - low;
         if (dtypes[high] == dtypes[low]) {
+            /* Fast path for identical dtypes: do not call common_dtype */
             Py_INCREF(dtypes[low]);
             Py_XSETREF(res, dtypes[low]);
         }
         else {
-            if (NPY_DT_is_abstract(dtypes[high])) {
-                /*
-                 * Priority inversion, start with abstract, because if it
-                 * returns `other`, we can let other pass instead.
-                 */
-                PyArray_DTypeMeta *tmp = dtypes[low];
-                dtypes[low] = dtypes[high];
-                dtypes[high] = tmp;
-            }
-
             Py_XSETREF(res, NPY_DT_CALL_common_dtype(dtypes[low], dtypes[high]));
             if (res == NULL) {
                 return NULL;
@@ -146,12 +130,13 @@ reduce_dtypes_to_most_knowledgeable(
         }
 
         if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            /* guess at other being more "knowledgable" */
             PyArray_DTypeMeta *tmp = dtypes[low];
             dtypes[low] = dtypes[high];
             dtypes[high] = tmp;
         }
-        if (res == dtypes[low]) {
-            /* `dtypes[high]` cannot influence the final result, so clear: */
+        else if (res == dtypes[low]) {
+            /* `dtypes[high]` cannot influence result: clear */
             dtypes[high] = NULL;
         }
     }
@@ -288,7 +273,7 @@ PyArray_PromoteDTypeSequence(
                 Py_INCREF(dtypes_in[l]);
                 PyTuple_SET_ITEM(dtypes_in_tuple, l, (PyObject *)dtypes_in[l]);
             }
-            PyErr_Format(PyExc_TypeError,
+            PyErr_Format(npy_DTypePromotionError,
                     "The DType %S could not be promoted by %S. This means that "
                     "no common DType exists for the given inputs. "
                     "For example they cannot be stored in a single array unless "

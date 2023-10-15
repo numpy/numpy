@@ -6,13 +6,13 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-from typing import Any
 import numpy as np
+import numpy.typing as npt
 
 f8: np.float64
-AR_f8: np.ndarray[Any, np.dtype[np.float64]]
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
-AR_b: np.ndarray[Any, np.dtype[np.bool_]]
+AR_f8: npt.NDArray[np.float64]
+AR_M: npt.NDArray[np.datetime64]
+AR_b: npt.NDArray[np.bool_]
 
 ctypes_obj = AR_f8.ctypes
 
@@ -39,3 +39,5 @@ AR_b.__index__()  # E: Invalid self argument
 AR_f8[1.5]  # E: No overload variant
 AR_f8["field_a"]  # E: No overload variant
 AR_f8[["field_a", "field_b"]]  # E: Invalid index type
+
+AR_f8.__array_finalize__(object())  # E: incompatible type

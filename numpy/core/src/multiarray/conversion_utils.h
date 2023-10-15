@@ -7,7 +7,19 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val);
+
+NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
+
+typedef enum {
+    NPY_COPY_IF_NEEDED = 0,
+    NPY_COPY_ALWAYS = 1,
+    NPY_COPY_NEVER = 2,
+} _PyArray_CopyMode;
+
+NPY_NO_EXPORT int
+PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copyflag);
 
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
@@ -40,7 +52,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_PyIntFromIntp(npy_intp const value)
 {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG

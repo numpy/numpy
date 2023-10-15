@@ -5,31 +5,27 @@ import types
 import warnings
 import unittest
 import contextlib
+from re import Pattern
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
-    Dict,
-    Iterable,
-    List,
     NoReturn,
     overload,
-    Pattern,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
     type_check_only,
     TypeVar,
-    Union,
     Final,
     SupportsIndex,
 )
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
 
-from numpy import generic, dtype, number, object_, bool_, _FloatValue
-from numpy.typing import (
+from numpy import number, object_, bool_, _FloatValue
+from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,
@@ -43,6 +39,7 @@ from unittest.case import (
     SkipTest as SkipTest,
 )
 
+_P = ParamSpec("_P")
 _T = TypeVar("_T")
 _ET = TypeVar("_ET", bound=BaseException)
 _FT = TypeVar("_FT", bound=Callable[..., Any])
@@ -51,22 +48,22 @@ _FT = TypeVar("_FT", bound=Callable[..., Any])
 # that is supported by `np.logical_and.reduce`
 _ComparisonFunc = Callable[
     [NDArray[Any], NDArray[Any]],
-    Union[
-        bool,
-        bool_,
-        number[Any],
-        NDArray[Union[bool_, number[Any], object_]],
-    ],
+    (
+        bool
+        | bool_
+        | number[Any]
+        | NDArray[bool_ | number[Any] | object_]
+    )
 ]
 
-__all__: List[str]
+__all__: list[str]
 
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
 class clear_and_catch_warnings(warnings.catch_warnings):
-    class_modules: ClassVar[Tuple[types.ModuleType, ...]]
-    modules: Set[types.ModuleType]
+    class_modules: ClassVar[tuple[types.ModuleType, ...]]
+    modules: set[types.ModuleType]
     @overload
     def __new__(
         cls,
@@ -85,10 +82,10 @@ class clear_and_catch_warnings(warnings.catch_warnings):
         record: bool,
         modules: Iterable[types.ModuleType] = ...,
     ) -> clear_and_catch_warnings: ...
-    def __enter__(self) -> None | List[warnings.WarningMessage]: ...
+    def __enter__(self) -> None | list[warnings.WarningMessage]: ...
     def __exit__(
         self,
-        __exc_type: None | Type[BaseException] = ...,
+        __exc_type: None | type[BaseException] = ...,
         __exc_val: None | BaseException = ...,
         __exc_tb: None | types.TracebackType = ...,
     ) -> None: ...
@@ -98,34 +95,34 @@ class clear_and_catch_warnings(warnings.catch_warnings):
 
 @type_check_only
 class _clear_and_catch_warnings_with_records(clear_and_catch_warnings):
-    def __enter__(self) -> List[warnings.WarningMessage]: ...
+    def __enter__(self) -> list[warnings.WarningMessage]: ...
 
 @type_check_only
 class _clear_and_catch_warnings_without_records(clear_and_catch_warnings):
     def __enter__(self) -> None: ...
 
 class suppress_warnings:
-    log: List[warnings.WarningMessage]
+    log: list[warnings.WarningMessage]
     def __init__(
         self,
         forwarding_rule: L["always", "module", "once", "location"] = ...,
     ) -> None: ...
     def filter(
         self,
-        category: Type[Warning] = ...,
+        category: type[Warning] = ...,
         message: str = ...,
         module: None | types.ModuleType = ...,
     ) -> None: ...
     def record(
         self,
-        category: Type[Warning] = ...,
+        category: type[Warning] = ...,
         message: str = ...,
         module: None | types.ModuleType = ...,
-    ) -> List[warnings.WarningMessage]: ...
+    ) -> list[warnings.WarningMessage]: ...
     def __enter__(self: _T) -> _T: ...
     def __exit__(
         self,
-        __exc_type: None | Type[BaseException] = ...,
+        __exc_type: None | type[BaseException] = ...,
         __exc_val: None | BaseException = ...,
         __exc_tb: None | types.TracebackType = ...,
     ) -> None: ...
@@ -151,10 +148,10 @@ else:
 if sys.platform == "linux":
     def jiffies(
         _proc_pid_stat: str | bytes | os.PathLike[Any] = ...,
-        _load_time: List[float] = ...,
+        _load_time: list[float] = ...,
     ) -> int: ...
 else:
-    def jiffies(_load_time: List[float] = ...) -> int: ...
+    def jiffies(_load_time: list[float] = ...) -> int: ...
 
 def build_err_msg(
     arrays: Iterable[object],
@@ -170,6 +167,8 @@ def assert_equal(
     desired: object,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def print_assert_equal(
@@ -205,6 +204,8 @@ def assert_array_compare(
     precision: SupportsIndex = ...,
     equal_nan: bool = ...,
     equal_inf: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_equal(
@@ -212,6 +213,8 @@ def assert_array_equal(
     y: ArrayLike,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal(
@@ -228,6 +231,8 @@ def assert_array_less(
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_array_less(
@@ -235,6 +240,8 @@ def assert_array_less(
     y: _ArrayLikeTD64_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_array_less(
@@ -242,11 +249,13 @@ def assert_array_less(
     y: _ArrayLikeDT64_co,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def runstring(
     astr: str | bytes | types.CodeType,
-    dict: None | Dict[str, Any],
+    dict: None | dict[str, Any],
 ) -> Any: ...
 
 def assert_string_equal(actual: str, desired: str) -> None: ...
@@ -256,42 +265,42 @@ def rundocs(
     raise_on_error: bool = ...,
 ) -> None: ...
 
-def raises(*args: Type[BaseException]) -> Callable[[_FT], _FT]: ...
+def raises(*args: type[BaseException]) -> Callable[[_FT], _FT]: ...
 
 @overload
 def assert_raises(  # type: ignore
-    expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
-    callable: Callable[..., Any],
+    expected_exception: type[BaseException] | tuple[type[BaseException], ...],
+    callable: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 @overload
 def assert_raises(
-    expected_exception: Type[_ET] | Tuple[Type[_ET], ...],
+    expected_exception: type[_ET] | tuple[type[_ET], ...],
     *,
     msg: None | str = ...,
 ) -> unittest.case._AssertRaisesContext[_ET]: ...
 
 @overload
 def assert_raises_regex(
-    expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
+    expected_exception: type[BaseException] | tuple[type[BaseException], ...],
     expected_regex: str | bytes | Pattern[Any],
-    callable: Callable[..., Any],
+    callable: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 @overload
 def assert_raises_regex(
-    expected_exception: Type[_ET] | Tuple[Type[_ET], ...],
+    expected_exception: type[_ET] | tuple[type[_ET], ...],
     expected_regex: str | bytes | Pattern[Any],
     *,
     msg: None | str = ...,
 ) -> unittest.case._AssertRaisesContext[_ET]: ...
 
 def decorate_methods(
-    cls: Type[Any],
+    cls: type[Any],
     decorator: Callable[[Callable[..., Any]], Any],
     testmatch: None | str | bytes | Pattern[Any] = ...,
 ) -> None: ...
@@ -311,6 +320,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 @overload
 def assert_allclose(
@@ -321,6 +332,8 @@ def assert_allclose(
     equal_nan: bool = ...,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal_nulp(
@@ -338,25 +351,25 @@ def assert_array_max_ulp(
 
 @overload
 def assert_warns(
-    warning_class: Type[Warning],
+    warning_class: type[Warning],
 ) -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_warns(
-    warning_class: Type[Warning],
-    func: Callable[..., _T],
+    warning_class: type[Warning],
+    func: Callable[_P, _T],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> _T: ...
 
 @overload
 def assert_no_warnings() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_warnings(
-    func: Callable[..., _T],
+    func: Callable[_P, _T],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> _T: ...
 
 @overload
@@ -391,10 +404,10 @@ def temppath(
 def assert_no_gc_cycles() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_gc_cycles(
-    func: Callable[..., Any],
+    func: Callable[_P, Any],
     /,
-    *args: Any,
-    **kwargs: Any,
+    *args: _P.args,
+    **kwargs: _P.kwargs,
 ) -> None: ...
 
 def break_cycles() -> None: ...

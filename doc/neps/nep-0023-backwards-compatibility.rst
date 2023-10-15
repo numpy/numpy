@@ -327,7 +327,7 @@ Discussion
 
 - `Mailing list discussion on the first version of this NEP in 2018 <https://mail.python.org/pipermail/numpy-discussion/2018-July/078432.html>`__
 - `Mailing list discussion on the Dec 2020 update of this NEP <https://mail.python.org/pipermail/numpy-discussion/2020-December/081358.html>`__
-- `PR with review comments on the the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
+- `PR with review comments on the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
 
 
 References and Footnotes

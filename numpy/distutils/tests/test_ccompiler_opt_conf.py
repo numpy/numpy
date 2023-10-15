@@ -161,9 +161,9 @@ class _TestConfFeatures(FakeCCompilerOpt):
 class TestConfFeatures(unittest.TestCase):
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.setup()
+        self._setup()
 
-    def setup(self):
+    def _setup(self):
         FakeCCompilerOpt.conf_nocache = True
 
     def test_features(self):

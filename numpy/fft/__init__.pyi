@@ -1,5 +1,3 @@
-from typing import Any, List
-
 from numpy._pytesttester import PytestTester
 
 from numpy.fft._pocketfft import (
@@ -26,6 +24,5 @@ from numpy.fft.helper import (
     rfftfreq as rfftfreq,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
 test: PytestTester

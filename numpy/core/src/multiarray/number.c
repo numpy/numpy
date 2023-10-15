@@ -53,6 +53,8 @@ static PyObject *
 array_inplace_remainder(PyArrayObject *m1, PyObject *m2);
 static PyObject *
 array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo));
+static PyObject *
+array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2);
 
 /*
  * Dictionary can contain any of the numeric operations, by name.
@@ -119,89 +121,6 @@ _PyArray_SetNumericOps(PyObject *dict)
     return 0;
 }
 
-/*NUMPY_API
- *Set internal structure with number functions that all arrays will use
- */
-NPY_NO_EXPORT int
-PyArray_SetNumericOps(PyObject *dict)
-{
-    /* 2018-09-09, 1.16 */
-    if (DEPRECATE("PyArray_SetNumericOps is deprecated. Use "
-        "PyUFunc_ReplaceLoopBySignature to replace ufunc inner loop functions "
-        "instead.") < 0) {
-        return -1;
-    }
-    return _PyArray_SetNumericOps(dict);
-}
-
-/* Note - macro contains goto */
-#define GET(op) if (n_ops.op &&                                         \
-                    (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
-        goto fail;
-
-NPY_NO_EXPORT PyObject *
-_PyArray_GetNumericOps(void)
-{
-    PyObject *dict;
-    if ((dict = PyDict_New())==NULL)
-        return NULL;
-    GET(add);
-    GET(subtract);
-    GET(multiply);
-    GET(divide);
-    GET(remainder);
-    GET(divmod);
-    GET(power);
-    GET(square);
-    GET(reciprocal);
-    GET(_ones_like);
-    GET(sqrt);
-    GET(negative);
-    GET(positive);
-    GET(absolute);
-    GET(invert);
-    GET(left_shift);
-    GET(right_shift);
-    GET(bitwise_and);
-    GET(bitwise_or);
-    GET(bitwise_xor);
-    GET(less);
-    GET(less_equal);
-    GET(equal);
-    GET(not_equal);
-    GET(greater);
-    GET(greater_equal);
-    GET(floor_divide);
-    GET(true_divide);
-    GET(logical_or);
-    GET(logical_and);
-    GET(floor);
-    GET(ceil);
-    GET(maximum);
-    GET(minimum);
-    GET(rint);
-    GET(conjugate);
-    GET(matmul);
-    GET(clip);
-    return dict;
-
- fail:
-    Py_DECREF(dict);
-    return NULL;
-}
-
-/*NUMPY_API
-  Get dictionary showing number functions that all arrays will use
-*/
-NPY_NO_EXPORT PyObject *
-PyArray_GetNumericOps(void)
-{
-    /* 2018-09-09, 1.16 */
-    if (DEPRECATE("PyArray_GetNumericOps is deprecated.") < 0) {
-        return NULL;
-    }
-    return _PyArray_GetNumericOps();
-}
 
 static PyObject *
 _get_keywords(int rtype, PyArrayObject *out)
@@ -339,7 +258,6 @@ array_divmod(PyObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divmod);
 }
 
-/* Need this to be version dependent on account of the slot check */
 static PyObject *
 array_matrix_multiply(PyObject *m1, PyObject *m2)
 {
@@ -348,13 +266,70 @@ array_matrix_multiply(PyObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_matrix_multiply(
-        PyArrayObject *NPY_UNUSED(m1), PyObject *NPY_UNUSED(m2))
+array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 {
-    PyErr_SetString(PyExc_TypeError,
-                    "In-place matrix multiplication is not (yet) supported. "
-                    "Use 'a = a @ b' instead of 'a @= b'.");
-    return NULL;
+    static PyObject *AxisError_cls = NULL;
+    npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
+    if (AxisError_cls == NULL) {
+        return NULL;
+    }
+
+    INPLACE_GIVE_UP_IF_NEEDED(self, other,
+            nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
+
+    /*
+     * Unlike `matmul(a, b, out=a)` we ensure that the result is not broadcast
+     * if the result without `out` would have less dimensions than `a`.
+     * Since the signature of matmul is '(n?,k),(k,m?)->(n?,m?)' this is the
+     * case exactly when the second operand has both core dimensions.
+     *
+     * The error here will be confusing, but for now, we enforce this by
+     * passing the correct `axes=`.
+     */
+    static PyObject *axes_1d_obj_kwargs = NULL;
+    static PyObject *axes_2d_obj_kwargs = NULL;
+    if (NPY_UNLIKELY(axes_1d_obj_kwargs == NULL)) {
+        axes_1d_obj_kwargs = Py_BuildValue(
+                "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
+        if (axes_1d_obj_kwargs == NULL) {
+            return NULL;
+        }
+    }
+    if (NPY_UNLIKELY(axes_2d_obj_kwargs == NULL)) {
+        axes_2d_obj_kwargs = Py_BuildValue(
+                "{s, [(i, i), (i, i), (i, i)]}", "axes", -2, -1, -2, -1, -2, -1);
+        if (axes_2d_obj_kwargs == NULL) {
+            return NULL;
+        }
+    }
+
+    PyObject *args = PyTuple_Pack(3, self, other, self);
+    if (args == NULL) {
+        return NULL;
+    }
+    PyObject *kwargs;
+    if (PyArray_NDIM(self) == 1) {
+        kwargs = axes_1d_obj_kwargs;
+    }
+    else {
+        kwargs = axes_2d_obj_kwargs;
+    }
+    PyObject *res = PyObject_Call(n_ops.matmul, args, kwargs);
+    Py_DECREF(args);
+
+    if (res == NULL) {
+        /*
+         * AxisError should indicate that the axes argument didn't work out
+         * which should mean the second operand not being 2 dimensional.
+         */
+        if (PyErr_ExceptionMatches(AxisError_cls)) {
+            PyErr_SetString(PyExc_ValueError,
+                "inplace matrix multiplication requires the first operand to "
+                "have at least one and the second at least two dimensions.");
+        }
+    }
+
+    return res;
 }
 
 /*
@@ -539,47 +514,10 @@ array_power(PyObject *a1, PyObject *o2, PyObject *modulo)
 static PyObject *
 array_positive(PyArrayObject *m1)
 {
-    /*
-     * For backwards compatibility, where + just implied a copy,
-     * we cannot just call n_ops.positive.  Instead, we do the following
-     * 1. Try n_ops.positive
-     * 2. If we get an exception, check whether __array_ufunc__ is
-     *    overridden; if so, we live in the future and we allow the
-     *    TypeError to be passed on.
-     * 3. If not, give a deprecation warning and return a copy.
-     */
-    PyObject *value;
     if (can_elide_temp_unary(m1)) {
-        value = PyArray_GenericInplaceUnaryFunction(m1, n_ops.positive);
+        return PyArray_GenericInplaceUnaryFunction(m1, n_ops.positive);
     }
-    else {
-        value = PyArray_GenericUnaryFunction(m1, n_ops.positive);
-    }
-    if (value == NULL) {
-        /*
-         * We first fetch the error, as it needs to be clear to check
-         * for the override.  When the deprecation is removed,
-         * this whole stanza can be deleted.
-         */
-        PyObject *exc, *val, *tb;
-        PyErr_Fetch(&exc, &val, &tb);
-        if (PyUFunc_HasOverride((PyObject *)m1)) {
-            PyErr_Restore(exc, val, tb);
-            return NULL;
-        }
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-
-        /* 2018-06-28, 1.16.0 */
-        if (DEPRECATE("Applying '+' to a non-numerical array is "
-                      "ill-defined. Returning a copy, but in the future "
-                      "this will error.") < 0) {
-            return NULL;
-        }
-        value = PyArray_Return((PyArrayObject *)PyArray_Copy(m1));
-    }
-    return value;
+    return PyArray_GenericUnaryFunction(m1, n_ops.positive);
 }
 
 static PyObject *
@@ -848,13 +786,11 @@ array_scalar_forward(PyArrayObject *v,
                      PyObject *(*builtin_func)(PyObject *),
                      const char *where)
 {
-    PyObject *scalar;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only size-1 arrays can be"\
-                        " converted to Python scalars");
+    if (check_is_convertible_to_scalar(v) < 0) {
         return NULL;
     }
 
+    PyObject *scalar;
     scalar = PyArray_GETITEM(v, PyArray_DATA(v));
     if (scalar == NULL) {
         return NULL;
@@ -925,7 +861,6 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
 
     .nb_int = (unaryfunc)array_int,
     .nb_float = (unaryfunc)array_float,
-    .nb_index = (unaryfunc)array_index,
 
     .nb_inplace_add = (binaryfunc)array_inplace_add,
     .nb_inplace_subtract = (binaryfunc)array_inplace_subtract,
@@ -942,6 +877,8 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     .nb_true_divide = array_true_divide,
     .nb_inplace_floor_divide = (binaryfunc)array_inplace_floor_divide,
     .nb_inplace_true_divide = (binaryfunc)array_inplace_true_divide,
+
+    .nb_index = (unaryfunc)array_index,
 
     .nb_matrix_multiply = array_matrix_multiply,
     .nb_inplace_matrix_multiply = (binaryfunc)array_inplace_matrix_multiply,

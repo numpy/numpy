@@ -17,6 +17,9 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_pycompat.h"
+#include "array_assign.h"
+#include "array_coercion.h"
+#include "array_method.h"
 #include "ctors.h"
 
 #include "numpy/ufuncobject.h"
@@ -68,7 +71,7 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * Returns -1 if an error occurred, and otherwise the reduce arrays size,
  * which is the number of elements already initialized.
  */
-NPY_NO_EXPORT int
+static npy_intp
 PyArray_CopyInitialReduceValues(
                     PyArrayObject *result, PyArrayObject *operand,
                     const npy_bool *axis_flags, const char *funcname,
@@ -148,24 +151,15 @@ PyArray_CopyInitialReduceValues(
  * context     : The ArrayMethod context (with ufunc, method, and descriptors).
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
- * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
- *               so that support can be added in the future without breaking
- *               API compatibility. Pass in NULL.
+ * wheremask   : Reduction mask of valid values used for `where=`.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
- * reorderable : If True, the reduction being done is reorderable, which
- *               means specifying multiple axes of reduction at once is ok,
- *               and the reduction code may calculate the reduction in an
- *               arbitrary order. The calculation may be reordered because
- *               of cache behavior or multithreading requirements.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
- *               this value is used to initialize the result to
- *               the reduction's unit.
+ * initial     : Initial value, if NULL the default is fetched from the
+ *               ArrayMethod (typically as the default from the ufunc).
  * loop        : `reduce_loop` from `ufunc_object.c`.  TODO: Refactor
- * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
  * errormask   : forwarded from _get_bufsize_errmask
@@ -182,9 +176,9 @@ PyArray_CopyInitialReduceValues(
 NPY_NO_EXPORT PyArrayObject *
 PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
-        npy_bool *axis_flags, int reorderable, int keepdims,
-        PyObject *identity, PyArray_ReduceLoopFunc *loop,
-        void *data, npy_intp buffersize, const char *funcname, int errormask)
+        npy_bool *axis_flags, int keepdims,
+        PyObject *initial, PyArray_ReduceLoopFunc *loop,
+        npy_intp buffersize, const char *funcname, int errormask)
 {
     assert(loop != NULL);
     PyArrayObject *result = NULL;
@@ -198,38 +192,35 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     /* Loop auxdata (must be freed on error) */
     NpyAuxData *auxdata = NULL;
 
-    /* More than one axis means multiple orders are possible */
-    if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
-        PyErr_Format(PyExc_ValueError,
-                     "reduction operation '%s' is not reorderable, "
-                     "so at most one axis may be specified",
-                     funcname);
-        return NULL;
-    }
-    /* Can only use where with an initial ( from identity or argument) */
-    if (wheremask != NULL && identity == Py_None) {
-        PyErr_Format(PyExc_ValueError,
-                     "reduction operation '%s' does not have an identity, "
-                     "so to use a where mask one has to specify 'initial'",
-                     funcname);
-        return NULL;
-    }
-
-
     /* Set up the iterator */
     op[0] = out;
     op[1] = operand;
     op_dtypes[0] = context->descriptors[0];
     op_dtypes[1] = context->descriptors[1];
 
+    /* Buffer to use when we need an initial value */
+    char *initial_buf = NULL;
+
+    /* More than one axis means multiple orders are possible */
+    if (!(context->method->flags & NPY_METH_IS_REORDERABLE)
+            && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
+        PyErr_Format(PyExc_ValueError,
+                "reduction operation '%s' is not reorderable, "
+                "so at most one axis may be specified",
+                funcname);
+        goto fail;
+    }
+
     it_flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
             NPY_ITER_GROWINNER |
-            NPY_ITER_DONT_NEGATE_STRIDES |
             NPY_ITER_ZEROSIZE_OK |
             NPY_ITER_REFS_OK |
             NPY_ITER_DELAY_BUFALLOC |
             NPY_ITER_COPY_IF_OVERLAP;
+    if (!(context->method->flags & NPY_METH_IS_REORDERABLE)) {
+        it_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
+    }
     op_flags[0] = NPY_ITER_READWRITE |
                   NPY_ITER_ALIGNED |
                   NPY_ITER_ALLOCATE |
@@ -297,24 +288,54 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         goto fail;
     }
 
+    npy_bool empty_iteration = NpyIter_GetIterSize(iter) == 0;
     result = NpyIter_GetOperandArray(iter)[0];
+
+    /*
+     * Get the initial value (if it exists).  If the iteration is empty
+     * then we assume the reduction is also empty.  The reason is that when
+     * the outer iteration is empty we just won't use the initial value
+     * in any case.  (`np.sum(np.zeros((0, 3)), axis=0)` is a length 3
+     * reduction but has an empty result.)
+     */
+    if ((initial == NULL && context->method->get_reduction_initial == NULL)
+            || initial == Py_None) {
+        /* There is no initial value, or initial value was explicitly unset */
+    }
+    else {
+        /* Not all functions will need initialization, but init always: */
+        initial_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
+        if (initial_buf == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        if (initial != NULL) {
+            /* must use user provided initial value */
+            if (PyArray_Pack(op_dtypes[0], initial_buf, initial) < 0) {
+                goto fail;
+            }
+        }
+        else {
+            /*
+             * Fetch initial from ArrayMethod, we pretend the reduction is
+             * empty when the iteration is.  This may be wrong, but when it is,
+             * we will not need the identity as the result is also empty.
+             */
+            int has_initial = context->method->get_reduction_initial(
+                    context, empty_iteration, initial_buf);
+            if (has_initial < 0) {
+                goto fail;
+            }
+            if (!has_initial) {
+                /* We have no initial value available, free buffer to indicate */
+                PyMem_FREE(initial_buf);
+                initial_buf = NULL;
+            }
+        }
+    }
 
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
-    npy_intp fixed_strides[3];
-    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-    if (wheremask != NULL) {
-        if (PyArrayMethod_GetMaskedStridedLoop(context,
-                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
-            goto fail;
-        }
-    }
-    else {
-        if (context->method->get_strided_loop(context,
-                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
-            goto fail;
-        }
-    }
 
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     needs_api |= NpyIter_IterationNeedsAPI(iter);
@@ -327,12 +348,27 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
      * Initialize the result to the reduction unit if possible,
      * otherwise copy the initial values and get a view to the rest.
      */
-    if (identity != Py_None) {
-        if (PyArray_FillWithScalar(result, identity) < 0) {
+    if (initial_buf != NULL) {
+        /* Loop provided an identity or default value, assign to result. */
+        int ret = raw_array_assign_scalar(
+                PyArray_NDIM(result), PyArray_DIMS(result),
+                PyArray_DESCR(result),
+                PyArray_BYTES(result), PyArray_STRIDES(result),
+                op_dtypes[0], initial_buf);
+        if (ret < 0) {
             goto fail;
         }
     }
     else {
+        /* Can only use where with an initial (from identity or argument) */
+        if (wheremask != NULL) {
+            PyErr_Format(PyExc_ValueError,
+                    "reduction operation '%s' does not have an identity, "
+                    "so to use a where mask one has to specify 'initial'",
+                    funcname);
+            goto fail;
+        }
+
         /*
          * For 1-D skip_first_count could be optimized to 0, but no-identity
          * reductions are not super common.
@@ -349,7 +385,26 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         goto fail;
     }
 
-    if (NpyIter_GetIterSize(iter) != 0) {
+    /*
+     * Note that we need to ensure that the iterator is reset before getting
+     * the fixed strides.  (The buffer information is uninitialized before.)
+     */
+    npy_intp fixed_strides[3];
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    if (wheremask != NULL) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context,
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (context->method->get_strided_loop(context,
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+
+    if (!empty_iteration) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *strideptr;
@@ -372,7 +427,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even on error */
-        if (_check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+        if (_check_ufunc_fperr(errormask, "reduce") < 0) {
             goto fail;
         }
     }
@@ -382,6 +437,11 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
     Py_INCREF(result);
 
+    if (initial_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(result))) {
+        PyArray_Item_XDECREF(initial_buf, PyArray_DESCR(result));
+    }
+    PyMem_FREE(initial_buf);
+    NPY_AUXDATA_FREE(auxdata);
     if (!NpyIter_Deallocate(iter)) {
         Py_DECREF(result);
         return NULL;
@@ -389,6 +449,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     return result;
 
 fail:
+    if (initial_buf != NULL && PyDataType_REFCHK(op_dtypes[0])) {
+        PyArray_Item_XDECREF(initial_buf, op_dtypes[0]);
+    }
+    PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);

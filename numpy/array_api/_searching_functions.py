@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
-from ._dtypes import _result_type
+from ._dtypes import _result_type, _real_numeric_dtypes
 
 from typing import Optional, Tuple
 
@@ -14,6 +14,8 @@ def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
 
     See its docstring for more information.
     """
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in argmax")
     return Array._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
 
 
@@ -23,6 +25,8 @@ def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
 
     See its docstring for more information.
     """
+    if x.dtype not in _real_numeric_dtypes:
+        raise TypeError("Only real numeric dtypes are allowed in argmin")
     return Array._new(np.asarray(np.argmin(x._array, axis=axis, keepdims=keepdims)))
 
 
@@ -43,4 +47,5 @@ def where(condition: Array, x1: Array, x2: Array, /) -> Array:
     """
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
+    x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.where(condition._array, x1._array, x2._array))

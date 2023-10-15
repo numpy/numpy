@@ -156,7 +156,7 @@ def polyfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    where the ``r_n`` are the roots specified in `roots`.  If a zero has
+    where the :math:`r_n` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
@@ -517,8 +517,8 @@ def polyder(c, m=1, scl=1, axis=0):
         # astype fails with NA
         c = c + 0.0
     cdt = c.dtype
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -627,8 +627,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     cdt = c.dtype
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -772,7 +772,7 @@ def polyvalfromroots(x, r, tensor=True):
 
     If `r` is a 1-D array, then `p(x)` will have the same shape as `x`.  If `r`
     is multidimensional, then the shape of the result depends on the value of
-    `tensor`. If `tensor is ``True`` the shape will be r.shape[1:] + x.shape;
+    `tensor`. If `tensor` is ``True`` the shape will be r.shape[1:] + x.shape;
     that is, each polynomial is evaluated at every value of `x`. If `tensor` is
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that
@@ -1026,7 +1026,7 @@ def polygrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1093,7 +1093,7 @@ def polyvander(x, deg):
     polyvander2d, polyvander3d
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1285,7 +1285,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         be turned off by:
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1339,7 +1339,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     >>> np.random.seed(123)
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
-    >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
+    >>> y = x**3 - x + np.random.randn(len(x))  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> np.random.seed(123)
     >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
@@ -1474,7 +1474,7 @@ class Polynomial(ABCPolyBase):
 
     The Polynomial class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    attributes and methods listed in the `ABCPolyBase` documentation.
+    attributes and methods listed below.
 
     Parameters
     ----------
@@ -1489,6 +1489,12 @@ class Polynomial(ABCPolyBase):
         Window, see `domain` for its use. The default value is [-1, 1].
 
         .. versionadded:: 1.6.0
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     """
     # Virtual Functions
@@ -1512,11 +1518,17 @@ class Polynomial(ABCPolyBase):
 
     @classmethod
     def _str_term_unicode(cls, i, arg_str):
-        return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
+        if i == '1':
+            return f"·{arg_str}"
+        else:
+            return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
 
     @staticmethod
     def _str_term_ascii(i, arg_str):
-        return f" {arg_str}**{i}"
+        if i == '1':
+            return f" {arg_str}"
+        else:
+            return f" {arg_str}**{i}"
 
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):

@@ -1,13 +1,15 @@
+import datetime
+import pickle
+
+import pytest
 
 import numpy
 import numpy as np
-import datetime
-import pytest
 from numpy.testing import (
+    IS_WASM,
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     assert_raises_regex, assert_array_equal,
     )
-from numpy.compat import pickle
 
 # Use pytz to test out various time zones if available
 try:
@@ -238,10 +240,10 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.datetime64('NaT')), 'NaT')
         assert_equal(repr(np.datetime64('NaT')),
-                     "numpy.datetime64('NaT')")
+                     "np.datetime64('NaT')")
         assert_equal(str(np.datetime64('2011-02')), '2011-02')
         assert_equal(repr(np.datetime64('2011-02')),
-                     "numpy.datetime64('2011-02')")
+                     "np.datetime64('2011-02')")
 
         # None gets constructed as NaT
         assert_equal(np.datetime64(None), np.datetime64('NaT'))
@@ -378,12 +380,12 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.timedelta64('NaT')), 'NaT')
         assert_equal(repr(np.timedelta64('NaT')),
-                     "numpy.timedelta64('NaT')")
+                     "np.timedelta64('NaT')")
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
         assert_equal(repr(np.timedelta64(-3, 's')),
-                     "numpy.timedelta64(-3,'s')")
+                     "np.timedelta64(-3,'s')")
         assert_equal(repr(np.timedelta64(12)),
-                     "numpy.timedelta64(12)")
+                     "np.timedelta64(12)")
 
         # Construction from an integer produces generic units
         assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
@@ -718,8 +720,8 @@ class TestDateTime:
         assert_equal(uni_a, uni_b)
 
         # Datetime to long string - gh-9712
-        assert_equal(str_a, dt_a.astype((np.string_, 128)))
-        str_b = np.empty(str_a.shape, dtype=(np.string_, 128))
+        assert_equal(str_a, dt_a.astype((np.bytes_, 128)))
+        str_b = np.empty(str_a.shape, dtype=(np.bytes_, 128))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
@@ -729,7 +731,7 @@ class TestDateTime:
         times_swapped = times.astype(times.dtype.newbyteorder())
         assert_array_equal(times, times_swapped)
 
-        unswapped = times_swapped.view(np.int64).newbyteorder()
+        unswapped = times_swapped.view(np.dtype("int64").newbyteorder())
         assert_array_equal(unswapped, times.view(np.int64))
 
     @pytest.mark.parametrize(["time1", "time2"],
@@ -1002,12 +1004,11 @@ class TestDateTime:
                      casting='unsafe'))
 
         # Shouldn't be able to compare datetime and timedelta
-        # TODO: Changing to 'same_kind' or 'safe' casting in the ufuncs by
-        #       default is needed to properly catch this kind of thing...
         a = np.array('2012-12-21', dtype='M8[D]')
         b = np.array(3, dtype='m8[D]')
-        #assert_raises(TypeError, np.less, a, b)
-        assert_raises(TypeError, np.less, a, b, casting='same_kind')
+        assert_raises(TypeError, np.less, a, b)
+        # not even if "unsafe"
+        assert_raises(TypeError, np.less, a, b, casting='unsafe')
 
     def test_datetime_like(self):
         a = np.array([3], dtype='m8[4D]')
@@ -1294,6 +1295,7 @@ class TestDateTime:
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),
@@ -1368,6 +1370,7 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
+    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
@@ -1437,7 +1440,7 @@ class TestDateTime:
 
         # NaTs
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
+            sup.filter(RuntimeWarning,  r".*encountered in divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1993,6 +1996,7 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
@@ -2029,19 +2033,25 @@ class TestDateTime:
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
 
+    def test_timedelta_correct_mean(self):
+        # test mainly because it worked only via a bug in that allowed:
+        # `timedelta.sum(dtype="f8")` to ignore the dtype request.
+        a = np.arange(1000, dtype="m8[s]")
+        assert_array_equal(a.mean(), a.sum() / len(a))
+
     def test_datetime_no_subtract_reducelike(self):
         # subtracting two datetime64 works, but we cannot reduce it, since
         # the result of that subtraction will have a different dtype.
         arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
-        msg = r"the resolved dtypes are not compatible with subtract\."
+        msg = r"the resolved dtypes are not compatible"
 
-        with pytest.raises(TypeError, match=msg + "reduce"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.reduce(arr)
 
-        with pytest.raises(TypeError, match=msg + "accumulate"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.accumulate(arr)
 
-        with pytest.raises(TypeError, match=msg + "reduceat"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.reduceat(arr, [0])
 
     def test_datetime_busday_offset(self):
@@ -2321,16 +2331,23 @@ class TestDateTime:
         assert_equal(np.busday_count('2011-01-01', dates, busdaycal=bdd),
                      np.arange(366))
         # Returns negative value when reversed
+        # -1 since the '2011-01-01' is not a busday
         assert_equal(np.busday_count(dates, '2011-01-01', busdaycal=bdd),
-                     -np.arange(366))
+                     -np.arange(366) - 1)
 
+        # 2011-12-31 is a saturday
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
+        # only the first generated date is in the future of 2011-12-31
+        expected = np.arange(366)
+        expected[0] = -1
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
-                     np.arange(366))
+                     expected)
         # Returns negative value when reversed
+        expected = -np.arange(366)+1
+        expected[0] = 0
         assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
-                     -np.arange(366))
+                     expected)
 
         # Can't supply both a weekmask/holidays and busdaycal
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
@@ -2342,6 +2359,17 @@ class TestDateTime:
         assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
         # Returns negative value when reversed
         assert_equal(np.busday_count('2011-04', '2011-03', weekmask='Mon'), -4)
+
+        sunday = np.datetime64('2023-03-05')
+        monday = sunday + 1
+        friday = sunday + 5
+        saturday = sunday + 6
+        assert_equal(np.busday_count(sunday, monday), 0)
+        assert_equal(np.busday_count(monday, sunday), -1)
+
+        assert_equal(np.busday_count(friday, saturday), 1)
+        assert_equal(np.busday_count(saturday, friday), 0)
+
 
     def test_datetime_is_busday(self):
         holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
@@ -2520,3 +2548,23 @@ class TestDateTimeData:
 
         dt = np.datetime64('2000', '5μs')
         assert np.datetime_data(dt.dtype) == ('us', 5)
+
+
+def test_comparisons_return_not_implemented():
+    # GH#17017
+
+    class custom:
+        __array_priority__ = 10000
+
+    obj = custom()
+
+    dt = np.datetime64('2000', 'ns')
+    td = dt - dt
+
+    for item in [dt, td]:
+        assert item.__eq__(obj) is NotImplemented
+        assert item.__ne__(obj) is NotImplemented
+        assert item.__le__(obj) is NotImplemented
+        assert item.__lt__(obj) is NotImplemented
+        assert item.__ge__(obj) is NotImplemented
+        assert item.__gt__(obj) is NotImplemented

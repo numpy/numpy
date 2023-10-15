@@ -1,5 +1,0 @@
-Passing boolean ``kth`` values to (arg-)partition has been deprecated
----------------------------------------------------------------------
-`~numpy.partition` and `~numpy.argpartition` would previously accept boolean
-values for the ``kth`` parameter, which would subsequently be converted into
-integers. This behavior has now been deprecated.

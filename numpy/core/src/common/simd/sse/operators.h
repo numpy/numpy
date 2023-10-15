@@ -115,6 +115,12 @@ NPY_FINLINE __m128i npyv_shr_s64(__m128i a, int c)
 #define npyv_not_b32 npyv_not_u8
 #define npyv_not_b64 npyv_not_u8
 
+// ANDC, ORC and XNOR
+#define npyv_andc_u8(A, B) _mm_andnot_si128(B, A)
+#define npyv_andc_b8(A, B) _mm_andnot_si128(B, A)
+#define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
+#define npyv_xnor_b8 _mm_cmpeq_epi8
+
 /***************************
  * Comparison
  ***************************/
@@ -276,5 +282,61 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 { return _mm_castps_si128(_mm_cmpord_ps(a, a)); }
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return _mm_castpd_si128(_mm_cmpord_pd(a, a)); }
+
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#define NPYV_IMPL_SSE_ANYALL(SFX)                 \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+    { return _mm_movemask_epi8(a) != 0; }         \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+    { return _mm_movemask_epi8(a) == 0xffff; }
+NPYV_IMPL_SSE_ANYALL(b8)
+NPYV_IMPL_SSE_ANYALL(b16)
+NPYV_IMPL_SSE_ANYALL(b32)
+NPYV_IMPL_SSE_ANYALL(b64)
+#undef NPYV_IMPL_SSE_ANYALL
+
+#define NPYV_IMPL_SSE_ANYALL(SFX, MSFX, TSFX, MASK) \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)   \
+    {                                               \
+        return _mm_movemask_##MSFX(                 \
+            _mm_cmpeq_##TSFX(a, npyv_zero_##SFX())  \
+        ) != MASK;                                  \
+    }                                               \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)   \
+    {                                               \
+        return _mm_movemask_##MSFX(                 \
+            _mm_cmpeq_##TSFX(a, npyv_zero_##SFX())  \
+        ) == 0;                                     \
+    }
+NPYV_IMPL_SSE_ANYALL(u8,  epi8, epi8, 0xffff)
+NPYV_IMPL_SSE_ANYALL(s8,  epi8, epi8, 0xffff)
+NPYV_IMPL_SSE_ANYALL(u16, epi8, epi16, 0xffff)
+NPYV_IMPL_SSE_ANYALL(s16, epi8, epi16, 0xffff)
+NPYV_IMPL_SSE_ANYALL(u32, epi8, epi32, 0xffff)
+NPYV_IMPL_SSE_ANYALL(s32, epi8, epi32, 0xffff)
+#ifdef NPY_HAVE_SSE41
+    NPYV_IMPL_SSE_ANYALL(u64, epi8, epi64, 0xffff)
+    NPYV_IMPL_SSE_ANYALL(s64, epi8, epi64, 0xffff)
+#else
+    NPY_FINLINE bool npyv_any_u64(npyv_u64 a)
+    {
+        return _mm_movemask_epi8(
+            _mm_cmpeq_epi32(a, npyv_zero_u64())
+        ) != 0xffff;
+    }
+    NPY_FINLINE bool npyv_all_u64(npyv_u64 a)
+    {
+        a = _mm_cmpeq_epi32(a, npyv_zero_u64());
+        a = _mm_and_si128(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1)));
+        return _mm_movemask_epi8(a) == 0;
+    }
+    #define npyv_any_s64 npyv_any_u64
+    #define npyv_all_s64 npyv_all_u64
+#endif
+NPYV_IMPL_SSE_ANYALL(f32, ps, ps, 0xf)
+NPYV_IMPL_SSE_ANYALL(f64, pd, pd, 0x3)
+#undef NPYV_IMPL_SSE_ANYALL
 
 #endif // _NPY_SIMD_SSE_OPERATORS_H

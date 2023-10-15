@@ -64,8 +64,8 @@ To access NumPy and its functions import it in your Python code like this::
   import numpy as np
 
 We shorten the imported name to ``np`` for better readability of code using
-NumPy. This is a widely adopted convention that you should follow so that
-anyone working with your code can easily understand it.
+NumPy. This is a widely adopted convention that makes your code more readable
+for everyone working on it. We recommend to always use import numpy as ``np``.
 
 Reading the example code
 ------------------------
@@ -229,8 +229,8 @@ content is random and depends on the state of the memory. The reason to use
 fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
-  >>> np.empty(2)
-  array([ 3.14, 42.  ])  # may vary
+  >>> np.empty(2) #doctest: +SKIP
+  array([3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
@@ -448,7 +448,7 @@ You can use ``np.newaxis`` to add a new axis::
   >>> a2.shape
   (1, 6)
 
-You can explicitly convert a 1D array with either a row vector or a column
+You can explicitly convert a 1D array to either a row vector or a column
 vector using ``np.newaxis``. For example, you can convert a 1D array to a row
 vector by inserting an axis along the first dimension::
 
@@ -581,10 +581,11 @@ example::
 
   >>> for coord in list_of_coordinates:
   ...     print(coord)
-  (0, 0)
-  (0, 1)
-  (0, 2)
-  (0, 3)
+  (np.int64(0), np.int64(0))
+  (np.int64(0), np.int64(1))
+  (np.int64(0), np.int64(2))
+  (np.int64(0), np.int64(3))
+
 
 You can also use ``np.nonzero()`` to print the elements in an array that are less
 than 5 with::
@@ -669,18 +670,18 @@ If you wanted to split this array into three equally shaped arrays, you would
 run::
 
   >>> np.hsplit(x, 3)
-  [array([[1,  2,  3,  4],
-          [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
-          [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
-          [21, 22, 23, 24]])]
+    [array([[ 1,  2,  3,  4],
+           [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+           [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+           [21, 22, 23, 24]])]
 
 If you wanted to split your array after the third and fourth column, you'd run::
 
   >>> np.hsplit(x, (3, 4))
-  [array([[1, 2, 3],
-          [13, 14, 15]]), array([[ 4],
-          [16]]), array([[ 5, 6, 7, 8, 9, 10, 11, 12],
-          [17, 18, 19, 20, 21, 22, 23, 24]])]
+    [array([[ 1,  2,  3],
+           [13, 14, 15]]), array([[ 4],
+           [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+           [17, 18, 19, 20, 21, 22, 23, 24]])]
 
 :ref:`Learn more about stacking and splitting arrays here <quickstart.stacking-arrays>`.
 
@@ -967,9 +968,8 @@ All you need to do is pass in the number of elements you want it to generate::
   array([1., 1., 1.])
   >>> np.zeros(3)
   array([0., 0., 0.])
-  # the simplest way to generate random numbers
-  >>> rng = np.random.default_rng(0)
-  >>> rng.random(3)
+  >>> rng = np.random.default_rng()  # the simplest way to generate random numbers
+  >>> rng.random(3) #doctest: +SKIP
   array([0.63696169, 0.26978671, 0.04097352])
 
 .. image:: images/np_ones_zeros_random.png
@@ -985,7 +985,7 @@ a 2D array if you give them a tuple describing the dimensions of the matrix::
   array([[0., 0.],
          [0., 0.],
          [0., 0.]])
-  >>> rng.random((3, 2))
+  >>> rng.random((3, 2)) #doctest: +SKIP
   array([[0.01652764, 0.81327024],
          [0.91275558, 0.60663578],
          [0.72949656, 0.54362499]])  # may vary
@@ -1011,7 +1011,7 @@ that this is inclusive with NumPy) to high (exclusive). You can set
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
-  >>> rng.integers(5, size=(2, 4))
+  >>> rng.integers(5, size=(2, 4)) #doctest: +SKIP
   array([[2, 1, 1, 0],
          [0, 0, 0, 4]])  # may vary
 
@@ -1345,7 +1345,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
   Length:          6
-  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  File:            ~/anaconda3/lib/python3.9/site-packages/numpy/__init__.py
   Docstring:       <no docstring>
   Class docstring:
   ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -1505,7 +1505,7 @@ You can use ``np.load()`` to reconstruct your array. ::
 
   >>> b = np.load('filename.npy')
 
-If you want to check your array, you can run:::
+If you want to check your array, you can run::
 
   >>> print(b)
   [1 2 3 4 5 6]
@@ -1589,7 +1589,7 @@ If you created this array "a" ::
 
 .. for doctests
    The continuous integration truncates dataframe display without this setting.
-   >>> pd.set_option('max_columns', 10)
+   >>> pd.set_option('display.max_columns', 10)
 
 You could create a Pandas dataframe ::
 
@@ -1699,4 +1699,4 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/*
+*Image credits: Jay Alammar https://jalammar.github.io/*

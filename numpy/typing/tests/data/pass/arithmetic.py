@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 import numpy as np
+import pytest
 
 c16 = np.complex128(1)
 f8 = np.float64(1)
@@ -185,6 +186,10 @@ AR_LIKE_f - AR_O
 AR_LIKE_c - AR_O
 AR_LIKE_O - AR_O
 
+AR_u += AR_b
+AR_u += AR_u
+AR_u += 1  # Allowed during runtime as long as the object is 0D and >=0
+
 # Array floor division
 
 AR_b // AR_LIKE_b
@@ -326,8 +331,9 @@ AR_O **= AR_LIKE_O
 -f4
 -i8
 -i4
--u8
--u4
+with pytest.warns(RuntimeWarning):
+    -u8
+    -u4
 -td
 -AR_f
 

@@ -1,5 +1,0 @@
-Symbolic parser for Fortran dimension specifications
-----------------------------------------------------
-A new symbolic parser has been added to f2py in order to correctly parse
-dimension specifications. The parser is the basis for future improvements
-and provides compatibility with Draft Fortran 202x.

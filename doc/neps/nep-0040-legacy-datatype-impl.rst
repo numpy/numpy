@@ -21,7 +21,7 @@ NEP 40 — Legacy datatype implementation in NumPy
 
     - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 

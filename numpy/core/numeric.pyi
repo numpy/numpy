@@ -1,23 +1,20 @@
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
-    Union,
-    Sequence,
-    Tuple,
-    Callable,
-    List,
     overload,
     TypeVar,
     Literal,
-    Type,
     SupportsAbs,
     SupportsIndex,
     NoReturn,
 )
-from typing_extensions import TypeGuard
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 from numpy import (
     ComplexWarning as ComplexWarning,
-    dtype,
     generic,
     unsignedinteger,
     signedinteger,
@@ -33,14 +30,14 @@ from numpy import (
     _OrderCF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     DTypeLike,
     _ShapeLike,
-    _SupportsDType,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _DTypeLike,
+    _ArrayLike,
+    _SupportsArrayFunc,
     _ScalarLike_co,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
@@ -49,21 +46,16 @@ from numpy.typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUnknown,
 )
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_DTypeLike = Union[
-    dtype[_SCT],
-    Type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _CorrelateMode = Literal["valid", "same", "full"]
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def zeros_like(
@@ -112,7 +104,7 @@ def ones(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def ones(
@@ -120,7 +112,7 @@ def ones(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ones(
@@ -128,7 +120,7 @@ def ones(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -179,7 +171,7 @@ def full(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def full(
@@ -188,7 +180,7 @@ def full(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def full(
@@ -197,7 +189,7 @@ def full(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -269,6 +261,12 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 
 @overload
 def correlate(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -312,6 +310,12 @@ def correlate(
 
 @overload
 def convolve(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -353,6 +357,12 @@ def convolve(
     mode: _CorrelateMode = ...,
 ) -> NDArray[object_]: ...
 
+@overload
+def outer(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    out: None = ...,
+) -> NDArray[Any]: ...
 @overload
 def outer(
     a: _ArrayLikeBool_co,
@@ -404,45 +414,51 @@ def outer(
 
 @overload
 def tensordot(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> NDArray[Any]: ...
+@overload
+def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[bool_]: ...
 @overload
 def tensordot(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[unsignedinteger[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeTD64_co,
     b: _ArrayLikeTD64_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def tensordot(
     a: _ArrayLikeObject_co,
     b: _ArrayLikeObject_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[object_]: ...
 
 @overload
@@ -470,6 +486,15 @@ def moveaxis(
     destination: _ShapeLike,
 ) -> NDArray[_SCT]: ...
 
+@overload
+def cross(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axisa: int = ...,
+    axisb: int = ...,
+    axisc: int = ...,
+    axis: None | int = ...,
+) -> NDArray[Any]: ...
 @overload
 def cross(
     a: _ArrayLikeBool_co,
@@ -528,15 +553,15 @@ def cross(
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: Type[int] = ...,
+    dtype: type[int] = ...,
     sparse: Literal[False] = ...,
 ) -> NDArray[int_]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: Type[int] = ...,
+    dtype: type[int] = ...,
     sparse: Literal[True] = ...,
-) -> Tuple[NDArray[int_], ...]: ...
+) -> tuple[NDArray[int_], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
@@ -548,7 +573,7 @@ def indices(
     dimensions: Sequence[int],
     dtype: _DTypeLike[_SCT],
     sparse: Literal[True],
-) -> Tuple[NDArray[_SCT], ...]: ...
+) -> tuple[NDArray[_SCT], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
@@ -560,14 +585,14 @@ def indices(
     dimensions: Sequence[int],
     dtype: DTypeLike,
     sparse: Literal[True],
-) -> Tuple[NDArray[Any], ...]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 def fromfunction(
     function: Callable[..., _T],
     shape: Sequence[int],
     *,
     dtype: DTypeLike = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
     **kwargs: Any,
 ) -> _T: ...
 
@@ -575,7 +600,7 @@ def isscalar(element: object) -> TypeGuard[
     generic | bool | int | float | complex | str | bytes | memoryview
 ]: ...
 
-def binary_repr(num: int, width: None | int = ...) -> str: ...
+def binary_repr(num: SupportsIndex, width: None | int = ...) -> str: ...
 
 def base_repr(
     number: SupportsAbs[float],
@@ -588,21 +613,21 @@ def identity(
     n: int,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def identity(
     n: int,
     dtype: _DTypeLike[_SCT],
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def identity(
     n: int,
     dtype: DTypeLike,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def allclose(

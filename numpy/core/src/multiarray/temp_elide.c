@@ -82,7 +82,12 @@
 #define NPY_MIN_ELIDE_BYTES (32)
 #endif
 #include <dlfcn.h>
+
+#if defined HAVE_EXECINFO_H
 #include <execinfo.h>
+#elif defined HAVE_LIBUNWIND_H
+#include <libunwind.h>
+#endif
 
 /*
  * linear search pointer in table
@@ -286,7 +291,6 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
             !PyArray_ISNUMBER(alhs) ||
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
-            PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
@@ -365,7 +369,6 @@ can_elide_temp_unary(PyArrayObject * m1)
             !PyArray_ISNUMBER(m1) ||
             !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(m1) ||
-            PyArray_CHKFLAGS(m1, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }

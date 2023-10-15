@@ -1,5 +1,5 @@
 Permuted Congruential Generator (64-bit, PCG64 DXSM)
-----------------------------------------------------
+====================================================
 
 .. currentmodule:: numpy.random
 
@@ -8,7 +8,7 @@ Permuted Congruential Generator (64-bit, PCG64 DXSM)
     :exclude-members: __init__
 
 State
-=====
+-----
 
 .. autosummary::
    :toctree: generated/
@@ -16,7 +16,7 @@ State
    ~PCG64DXSM.state
 
 Parallel generation
-===================
+-------------------
 .. autosummary::
    :toctree: generated/
 
@@ -24,7 +24,7 @@ Parallel generation
    ~PCG64DXSM.jumped
 
 Extending
-=========
+---------
 .. autosummary::
    :toctree: generated/
 

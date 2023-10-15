@@ -162,12 +162,12 @@ Added experimental support for the AArch64 architecture.
 C API
 -----
 
-New function ``PyArray_RequireWriteable`` provides a consistent interface
+New function ``PyArray_FailUnlessWriteable`` provides a consistent interface
 for checking array writeability -- any C code which works with arrays whose
 WRITEABLE flag is not known to be True a priori, should make sure to call
 this function before writing.
 
-NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst.txt``).
+NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst``).
 
 Changes
 =======
@@ -259,7 +259,7 @@ General
 -------
 
 Specifying a custom string formatter with a `_format` array attribute is
-deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
+deprecated. The new ``formatter`` keyword in ``numpy.set_printoptions`` or
 ``numpy.array2string`` can be used instead.
 
 The deprecated imports in the polynomial package have been removed.

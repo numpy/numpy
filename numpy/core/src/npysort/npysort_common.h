@@ -3,6 +3,11 @@
 
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
+#include <numpy/npy_math.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  *****************************************************************************
@@ -40,113 +45,113 @@
  *****************************************************************************
  */
 
-NPY_INLINE static int
+static inline int
 BOOL_LT(npy_bool a, npy_bool b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 BYTE_LT(npy_byte a, npy_byte b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 UBYTE_LT(npy_ubyte a, npy_ubyte b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 SHORT_LT(npy_short a, npy_short b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 USHORT_LT(npy_ushort a, npy_ushort b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 INT_LT(npy_int a, npy_int b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 UINT_LT(npy_uint a, npy_uint b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 LONG_LT(npy_long a, npy_long b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 ULONG_LT(npy_ulong a, npy_ulong b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 LONGLONG_LT(npy_longlong a, npy_longlong b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 ULONGLONG_LT(npy_ulonglong a, npy_ulonglong b)
 {
     return a < b;
 }
 
 
-NPY_INLINE static int
+static inline int
 FLOAT_LT(npy_float a, npy_float b)
 {
     return a < b || (b != b && a == a);
 }
 
 
-NPY_INLINE static int
+static inline int
 DOUBLE_LT(npy_double a, npy_double b)
 {
     return a < b || (b != b && a == a);
 }
 
 
-NPY_INLINE static int
+static inline int
 LONGDOUBLE_LT(npy_longdouble a, npy_longdouble b)
 {
     return a < b || (b != b && a == a);
 }
 
 
-NPY_INLINE static int
-npy_half_isnan(npy_half h)
+static inline int
+_npy_half_isnan(npy_half h)
 {
     return ((h&0x7c00u) == 0x7c00u) && ((h&0x03ffu) != 0x0000u);
 }
 
 
-NPY_INLINE static int
-npy_half_lt_nonan(npy_half h1, npy_half h2)
+static inline int
+_npy_half_lt_nonan(npy_half h1, npy_half h2)
 {
     if (h1&0x8000u) {
         if (h2&0x8000u) {
@@ -168,16 +173,16 @@ npy_half_lt_nonan(npy_half h1, npy_half h2)
 }
 
 
-NPY_INLINE static int
+static inline int
 HALF_LT(npy_half a, npy_half b)
 {
     int ret;
 
-    if (npy_half_isnan(b)) {
-        ret = !npy_half_isnan(a);
+    if (_npy_half_isnan(b)) {
+        ret = !_npy_half_isnan(a);
     }
     else {
-        ret = !npy_half_isnan(a) && npy_half_lt_nonan(a, b);
+        ret = !_npy_half_isnan(a) && _npy_half_lt_nonan(a, b);
     }
 
     return ret;
@@ -188,80 +193,80 @@ HALF_LT(npy_half a, npy_half b)
  * of an if statement. It's a SUN compiler thing, so assign the return value
  * to a variable instead.
  */
-NPY_INLINE static int
+static inline int
 CFLOAT_LT(npy_cfloat a, npy_cfloat b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_crealf(a) < npy_crealf(b)) {
+        ret = npy_cimagf(a) == npy_cimagf(a) || npy_cimagf(b) != npy_cimagf(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_crealf(a) > npy_crealf(b)) {
+        ret = npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_crealf(a) == npy_crealf(b) || (npy_crealf(a) != npy_crealf(a) && npy_crealf(b) != npy_crealf(b))) {
+        ret =  npy_cimagf(a) < npy_cimagf(b) || (npy_cimagf(b) != npy_cimagf(b) && npy_cimagf(a) == npy_cimagf(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_crealf(b) != npy_crealf(b);
     }
 
     return ret;
 }
 
 
-NPY_INLINE static int
+static inline int
 CDOUBLE_LT(npy_cdouble a, npy_cdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_creal(a) < npy_creal(b)) {
+        ret = npy_cimag(a) == npy_cimag(a) || npy_cimag(b) != npy_cimag(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_creal(a) > npy_creal(b)) {
+        ret = npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_creal(a) == npy_creal(b) || (npy_creal(a) != npy_creal(a) && npy_creal(b) != npy_creal(b))) {
+        ret =  npy_cimag(a) < npy_cimag(b) || (npy_cimag(b) != npy_cimag(b) && npy_cimag(a) == npy_cimag(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_creal(b) != npy_creal(b);
     }
 
     return ret;
 }
 
 
-NPY_INLINE static int
+static inline int
 CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 {
     int ret;
 
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
+    if (npy_creall(a) < npy_creall(b)) {
+        ret = npy_cimagl(a) == npy_cimagl(a) || npy_cimagl(b) != npy_cimagl(b);
     }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
+    else if (npy_creall(a) > npy_creall(b)) {
+        ret = npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a);
     }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    else if (npy_creall(a) == npy_creall(b) || (npy_creall(a) != npy_creall(a) && npy_creall(b) != npy_creall(b))) {
+        ret =  npy_cimagl(a) < npy_cimagl(b) || (npy_cimagl(b) != npy_cimagl(b) && npy_cimagl(a) == npy_cimagl(a));
     }
     else {
-        ret = b.real != b.real;
+        ret = npy_creall(b) != npy_creall(b);
     }
 
     return ret;
 }
 
 
-NPY_INLINE static void
-STRING_COPY(char *s1, char *s2, size_t len)
+static inline void
+STRING_COPY(char *s1, char const*s2, size_t len)
 {
     memcpy(s1, s2, len);
 }
 
 
-NPY_INLINE static void
+static inline void
 STRING_SWAP(char *s1, char *s2, size_t len)
 {
     while(len--) {
@@ -272,7 +277,7 @@ STRING_SWAP(char *s1, char *s2, size_t len)
 }
 
 
-NPY_INLINE static int
+static inline int
 STRING_LT(const char *s1, const char *s2, size_t len)
 {
     const unsigned char *c1 = (const unsigned char *)s1;
@@ -290,8 +295,8 @@ STRING_LT(const char *s1, const char *s2, size_t len)
 }
 
 
-NPY_INLINE static void
-UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+static inline void
+UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 const *s2, size_t len)
 {
     while(len--) {
         *s1++ = *s2++;
@@ -299,7 +304,7 @@ UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 }
 
 
-NPY_INLINE static void
+static inline void
 UNICODE_SWAP(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 {
     while(len--) {
@@ -310,7 +315,7 @@ UNICODE_SWAP(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 }
 
 
-NPY_INLINE static int
+static inline int
 UNICODE_LT(const npy_ucs4 *s1, const npy_ucs4 *s2, size_t len)
 {
     size_t i;
@@ -326,7 +331,7 @@ UNICODE_LT(const npy_ucs4 *s1, const npy_ucs4 *s2, size_t len)
 }
 
 
-NPY_INLINE static int
+static inline int
 DATETIME_LT(npy_datetime a, npy_datetime b)
 {
     if (a == NPY_DATETIME_NAT) {
@@ -341,7 +346,7 @@ DATETIME_LT(npy_datetime a, npy_datetime b)
 }
 
 
-NPY_INLINE static int
+static inline int
 TIMEDELTA_LT(npy_timedelta a, npy_timedelta b)
 {
     if (a == NPY_DATETIME_NAT) {
@@ -356,14 +361,14 @@ TIMEDELTA_LT(npy_timedelta a, npy_timedelta b)
 }
 
 
-NPY_INLINE static void
+static inline void
 GENERIC_COPY(char *a, char *b, size_t len)
 {
     memcpy(a, b, len);
 }
 
 
-NPY_INLINE static void
+static inline void
 GENERIC_SWAP(char *a, char *b, size_t len)
 {
     while(len--) {
@@ -372,5 +377,9 @@ GENERIC_SWAP(char *a, char *b, size_t len)
         *b++ = t;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

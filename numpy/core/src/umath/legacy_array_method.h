@@ -20,14 +20,14 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *NPY_UNUSED(strides),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
-        PyArray_DTypeMeta **, PyArray_Descr **, PyArray_Descr **);
+        PyArray_DTypeMeta **, PyArray_Descr **, PyArray_Descr **, npy_intp *);
 
 
 #endif  /*_NPY_LEGACY_ARRAY_METHOD_H */

@@ -74,12 +74,16 @@ is_mem_overlap(const void *src, npy_intp src_step, const void *dst, npy_intp dst
  * The recursion depth is O(lg n) as well.
  * when updating also update similar complex floats summation
  */
-static NPY_INLINE @type@
+static inline @type@
 @TYPE@_pairwise_sum(char *a, npy_intp n, npy_intp stride)
 {
     if (n < 8) {
         npy_intp i;
-        @type@ res = 0.;
+        /*
+         * Start with -0 to preserve -0 values.  The reason is that summing
+         * only -0 should return -0, but `0 + -0 == 0` while `-0 + -0 == -0`.
+         */
+        @type@ res = -0.0;
 
         for (i = 0; i < n; i++) {
             res += @trf@(*((@dtype@*)(a + i * stride)));
@@ -148,7 +152,7 @@ static NPY_INLINE @type@
  * #SIMD = 1, 1, 0#
  */
 /* similar to pairwise sum of real floats */
-static NPY_INLINE void
+static inline void
 @TYPE@_pairwise_sum(@ftype@ *rr, @ftype@ * ri, char * a, npy_intp n,
                     npy_intp stride)
 {
@@ -156,8 +160,8 @@ static NPY_INLINE void
     if (n < 8) {
         npy_intp i;
 
-        *rr = 0.;
-        *ri = 0.;
+        *rr = -0.0;
+        *ri = -0.0;
         for (i = 0; i < n; i += 2) {
             *rr += *((@ftype@ *)(a + i * stride + 0));
             *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));

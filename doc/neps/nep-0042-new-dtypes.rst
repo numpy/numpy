@@ -17,13 +17,13 @@ NEP 42 — New and extensible DTypes
 
     This NEP is third in a series:
 
-    - :ref:`NEP40` explains the shortcomings of NumPy's dtype implementation.
+    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
 
-    - :ref:`NEP41` gives an overview of our proposed replacement.
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
 
     - NEP 42 (this document) describes the new design's datatype-related APIs.
 
-    - :ref:`NEP43` describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 ******************************************************************************
@@ -302,7 +302,7 @@ user-defined DType::
     class UserDtype(dtype): ...
 
 one can do ``np.ndarray[UserDtype]``, keeping annotations concise in
-that case without introducing boilerplate in NumPy itself. For a user
+that case without introducing boilerplate in NumPy itself. For a
 user-defined scalar type::
 
     class UserScalar(generic): ...

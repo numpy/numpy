@@ -5,11 +5,12 @@ import textwrap
 import subprocess
 
 import numpy as np
+import numpy.core.umath as ncu
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
-    HAS_REFCOUNT, suppress_warnings, break_cycles
+    IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles
     )
 
 
@@ -822,13 +823,14 @@ def test_iter_nbo_align_contig():
 
     # Byte order change by requesting a specific dtype
     a = np.arange(6, dtype='f4')
-    au = a.byteswap().newbyteorder()
+    au = a.byteswap()
+    au = au.view(au.dtype.newbyteorder())
     assert_(a.dtype.byteorder != au.dtype.byteorder)
     i = nditer(au, [], [['readwrite', 'updateifcopy']],
                         casting='equiv',
                         op_dtypes=[np.dtype('f4')])
     with i:
-        # context manager triggers UPDATEIFCOPY on i at exit
+        # context manager triggers WRITEBACKIFCOPY on i at exit
         assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
         assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
         assert_equal(i.operands[0], a)
@@ -837,7 +839,8 @@ def test_iter_nbo_align_contig():
     del i  # should not raise a warning
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
-    au = a.byteswap().newbyteorder()
+    au = a.byteswap()
+    au = au.view(au.dtype.newbyteorder())
     assert_(a.dtype.byteorder != au.dtype.byteorder)
     with nditer(au, [], [['readwrite', 'updateifcopy', 'nbo']],
                         casting='equiv') as i:
@@ -1391,7 +1394,7 @@ def test_iter_copy():
 
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
-@pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+@pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:
     if loop_dtype.lower() == "m":
@@ -1455,6 +1458,38 @@ def test_iter_copy_casts_structured():
         expected = arr["b"][field].astype(out_dtype["b"][field].base)
         assert_array_equal(res1["b"][field], expected)
         assert_array_equal(res2["b"][field], expected)
+
+
+def test_iter_copy_casts_structured2():
+    # Similar to the above, this is a fairly arcane test to cover internals
+    in_dtype = np.dtype([("a", np.dtype("O,O")),
+                         ("b", np.dtype("(5)O,(3)O,(1,)O,(1,)i,(1,)O"))])
+    out_dtype = np.dtype([("a", np.dtype("O")),
+                          ("b", np.dtype("O,(3)i,(4)O,(4)O,(4)i"))])
+
+    arr = np.ones(1, dtype=in_dtype)
+    it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
+                   op_dtypes=[out_dtype], casting="unsafe")
+    it_copy = it.copy()
+
+    res1 = next(it)
+    del it
+    res2 = next(it_copy)
+    del it_copy
+
+    # Array of two structured scalars:
+    for res in res1, res2:
+        # Cast to tuple by getitem, which may be weird and changeable?:
+        assert type(res["a"][0]) == tuple
+        assert res["a"][0] == (1, 1)
+
+    for res in res1, res2:
+        assert_array_equal(res["b"]["f0"][0], np.ones(5, dtype=object))
+        assert_array_equal(res["b"]["f1"], np.ones((1, 3), dtype="i"))
+        assert res["b"]["f2"].shape == (1, 4)
+        assert_array_equal(res["b"]["f2"][0], np.ones(4, dtype=object))
+        assert_array_equal(res["b"]["f3"][0], np.ones(4, dtype=object))
+        assert_array_equal(res["b"]["f3"][0], np.ones(4, dtype="i"))
 
 
 def test_iter_allocate_output_simple():
@@ -1541,7 +1576,8 @@ def test_iter_allocate_output_types_byte_order():
     # Verify the rules for byte order changes
 
     # When there's just one input, the output type exactly matches
-    a = array([3], dtype='u4').newbyteorder()
+    a = array([3], dtype='u4')
+    a = a.view(a.dtype.newbyteorder())
     i = nditer([a, None], [],
                     [['readonly'], ['writeonly', 'allocate']])
     assert_equal(i.dtypes[0], i.dtypes[1])
@@ -1594,11 +1630,12 @@ def test_iter_allocate_output_errors():
     # Allocated output can't have buffering without delayed bufalloc
     assert_raises(ValueError, nditer, [a, None], ['buffered'],
                                             ['allocate', 'readwrite'])
-    # Must specify at least one input
-    assert_raises(ValueError, nditer, [None, None], [],
+    # Must specify dtype if there are no inputs (cannot promote existing ones;
+    # maybe this should use the 'f4' here, but it does not historically.)
+    assert_raises(TypeError, nditer, [None, None], [],
                         [['writeonly', 'allocate'],
                          ['writeonly', 'allocate']],
-                        op_dtypes=[np.dtype('f4'), np.dtype('f4')])
+                        op_dtypes=[None, np.dtype('f4')])
     # If using op_axes, must specify all the axes
     a = arange(24, dtype='i4').reshape(2, 3, 4)
     assert_raises(ValueError, nditer, [a, None], [],
@@ -1622,6 +1659,15 @@ def test_iter_allocate_output_errors():
                         [['readonly'], ['readwrite', 'allocate']],
                         op_dtypes=[None, np.dtype('f4')],
                         op_axes=[None, [0, np.newaxis, 2]])
+
+def test_all_allocated():
+    # When no output and no shape is given, `()` is used as shape.
+    i = np.nditer([None], op_dtypes=["int64"])
+    assert i.operands[0].shape == ()
+    assert i.dtypes == (np.dtype("int64"),)
+
+    i = np.nditer([None], op_dtypes=["int64"], itershape=(2, 3, 4))
+    assert i.operands[0].shape == (2, 3, 4)
 
 def test_iter_remove_axis():
     a = arange(24).reshape(2, 3, 4)
@@ -1743,8 +1789,9 @@ def test_iter_buffering():
     # Test buffering with several buffer sizes and types
     arrays = []
     # F-order swapped array
-    arrays.append(np.arange(24,
-                    dtype='c16').reshape(2, 3, 4).T.newbyteorder().byteswap())
+    _tmp = np.arange(24, dtype='c16').reshape(2, 3, 4).T
+    _tmp = _tmp.view(_tmp.dtype.newbyteorder()).byteswap()
+    arrays.append(_tmp)
     # Contiguous 1-dimensional array
     arrays.append(np.arange(10, dtype='f4'))
     # Unaligned array
@@ -1772,7 +1819,8 @@ def test_iter_write_buffering():
     # Test that buffering of writes is working
 
     # F-order swapped array
-    a = np.arange(24).reshape(2, 3, 4).T.newbyteorder().byteswap()
+    a = np.arange(24).reshape(2, 3, 4).T
+    a = a.view(a.dtype.newbyteorder()).byteswap()
     i = nditer(a, ['buffered'],
                    [['readwrite', 'nbo', 'aligned']],
                    casting='equiv',
@@ -1831,7 +1879,8 @@ def test_iter_buffered_cast_simple():
 def test_iter_buffered_cast_byteswapped():
     # Test that buffering can handle a cast which requires swap->cast->swap
 
-    a = np.arange(10, dtype='f4').newbyteorder().byteswap()
+    a = np.arange(10, dtype='f4')
+    a = a.view(a.dtype.newbyteorder()).byteswap()
     i = nditer(a, ['buffered', 'external_loop'],
                    [['readwrite', 'nbo', 'aligned']],
                    casting='same_kind',
@@ -1844,9 +1893,10 @@ def test_iter_buffered_cast_byteswapped():
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
     with suppress_warnings() as sup:
-        sup.filter(np.ComplexWarning)
+        sup.filter(np.exceptions.ComplexWarning)
 
-        a = np.arange(10, dtype='f8').newbyteorder().byteswap()
+        a = np.arange(10, dtype='f8')
+        a = a.view(a.dtype.newbyteorder()).byteswap()
         i = nditer(a, ['buffered', 'external_loop'],
                        [['readwrite', 'nbo', 'aligned']],
                        casting='unsafe',
@@ -1861,7 +1911,8 @@ def test_iter_buffered_cast_byteswapped():
 def test_iter_buffered_cast_byteswapped_complex():
     # Test that buffering can handle a cast which requires swap->cast->copy
 
-    a = np.arange(10, dtype='c8').newbyteorder().byteswap()
+    a = np.arange(10, dtype='c8')
+    a = a.view(a.dtype.newbyteorder()).byteswap()
     a += 2j
     i = nditer(a, ['buffered', 'external_loop'],
                    [['readwrite', 'nbo', 'aligned']],
@@ -1885,7 +1936,8 @@ def test_iter_buffered_cast_byteswapped_complex():
             v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
 
-    a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
+    a = np.arange(10, dtype=np.clongdouble)
+    a = a.view(a.dtype.newbyteorder()).byteswap()
     a += 2j
     i = nditer(a, ['buffered', 'external_loop'],
                    [['readwrite', 'nbo', 'aligned']],
@@ -1897,7 +1949,8 @@ def test_iter_buffered_cast_byteswapped_complex():
             v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
 
-    a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
+    a = np.arange(10, dtype=np.longdouble)
+    a = a.view(a.dtype.newbyteorder()).byteswap()
     i = nditer(a, ['buffered', 'external_loop'],
                    [['readwrite', 'nbo', 'aligned']],
                    casting='same_kind',
@@ -1990,13 +2043,13 @@ def test_iter_buffered_cast_structured_type_failure_with_cleanup():
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
 
     for intent in ["readwrite", "readonly", "writeonly"]:
-        # If the following assert fails, the place where the error is raised
-        # within nditer may change. That is fine, but it may make sense for
-        # a new (hard to design) test to replace it. The `simple_arr` is
-        # designed to require a multi-step cast (due to having fields).
-        assert np.can_cast(a.dtype, sdt2, casting="unsafe")
+        # This test was initially designed to test an error at a different
+        # place, but will now raise earlier to to the cast not being possible:
+        # `assert np.can_cast(a.dtype, sdt2, casting="unsafe")` fails.
+        # Without a faulty DType, there is probably no reliable
+        # way to get the initial tested behaviour.
         simple_arr = np.array([1, 2], dtype="i,i")  # requires clean up
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             nditer((simple_arr, a), ['buffered', 'refs_ok'], [intent, intent],
                    casting='unsafe', op_dtypes=["f,f", sdt2])
 
@@ -2015,6 +2068,7 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
@@ -2246,12 +2300,12 @@ def test_iter_buffering_string():
     assert_equal(i[0], b'abc')
     assert_equal(i[0].dtype, np.dtype('S6'))
 
-    a = np.array(['abc', 'a', 'abcd'], dtype=np.unicode_)
+    a = np.array(['abc', 'a', 'abcd'], dtype=np.str_)
     assert_equal(a.dtype, np.dtype('U4'))
     assert_raises(TypeError, nditer, a, ['buffered'], ['readonly'],
                     op_dtypes='U2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='U6')
-    assert_equal(i[0], u'abc')
+    assert_equal(i[0], 'abc')
     assert_equal(i[0].dtype, np.dtype('U6'))
 
 def test_iter_buffering_growinner():
@@ -2586,7 +2640,8 @@ def test_iter_buffering_reduction():
     # Test doing buffered reductions with the iterator
 
     a = np.arange(6)
-    b = np.array(0., dtype='f8').byteswap().newbyteorder()
+    b = np.array(0., dtype='f8').byteswap()
+    b = b.view(b.dtype.newbyteorder())
     i = nditer([a, b], ['reduce_ok', 'buffered'],
                     [['readonly'], ['readwrite', 'nbo']],
                     op_axes=[[0], [-1]])
@@ -2600,7 +2655,8 @@ def test_iter_buffering_reduction():
     assert_equal(b, np.sum(a))
 
     a = np.arange(6).reshape(2, 3)
-    b = np.array([0, 0], dtype='f8').byteswap().newbyteorder()
+    b = np.array([0, 0], dtype='f8').byteswap()
+    b = b.view(b.dtype.newbyteorder())
     i = nditer([a, b], ['reduce_ok', 'external_loop', 'buffered'],
                     [['readonly'], ['readwrite', 'nbo']],
                     op_axes=[[0, 1], [0, -1]])
@@ -2728,6 +2784,7 @@ def test_iter_writemasked_badinput():
                     op_dtypes=['f4', None],
                     casting='same_kind')
 
+
 def _is_buffered(iterator):
     try:
         iterator.itviews
@@ -2802,6 +2859,34 @@ def test_iter_writemasked(a):
     # Even though we violated the semantics, only the selected values
     # were copied back
     assert_equal(a, np.broadcast_to([3, 3, 2.5] * reps, shape))
+
+
+@pytest.mark.parametrize(["mask", "mask_axes"], [
+        # Allocated operand (only broadcasts with -1)
+        (None, [-1, 0]),
+        # Reduction along the first dimension (with and without op_axes)
+        (np.zeros((1, 4), dtype="bool"), [0, 1]),
+        (np.zeros((1, 4), dtype="bool"), None),
+        # Test 0-D and -1 op_axes
+        (np.zeros(4, dtype="bool"), [-1, 0]),
+        (np.zeros((), dtype="bool"), [-1, -1]),
+        (np.zeros((), dtype="bool"), None)])
+def test_iter_writemasked_broadcast_error(mask, mask_axes):
+    # This assumes that a readwrite mask makes sense. This is likely not the
+    # case and should simply be deprecated.
+    arr = np.zeros((3, 4))
+    itflags = ["reduce_ok"]
+    mask_flags = ["arraymask", "readwrite", "allocate"]
+    a_flags = ["writeonly", "writemasked"]
+    if mask_axes is None:
+        op_axes = None
+    else:
+        op_axes = [mask_axes, [0, 1]]
+
+    with assert_raises(ValueError):
+        np.nditer((mask, arr), flags=itflags, op_flags=[mask_flags, a_flags],
+                  op_axes=op_axes)
+
 
 def test_iter_writemasked_decref():
     # force casting (to make it interesting) by using a structured dtype.
@@ -2935,7 +3020,7 @@ def test_object_iter_cleanup():
     assert_raises(TypeError, lambda: np.zeros((17000, 2), dtype='f4') * None)
 
     # this more explicit code also triggers the invalid access
-    arr = np.arange(np.BUFSIZE * 10).reshape(10, -1).astype(str)
+    arr = np.arange(ncu.BUFSIZE * 10).reshape(10, -1).astype(str)
     oarr = arr.astype(object)
     oarr[:, -1] = None
     assert_raises(TypeError, lambda: np.add(oarr[:, ::-1], arr[:, ::-1]))
@@ -3016,7 +3101,8 @@ def test_iter_too_large_with_multiindex():
 
 def test_writebacks():
     a = np.arange(6, dtype='f4')
-    au = a.byteswap().newbyteorder()
+    au = a.byteswap()
+    au = au.view(au.dtype.newbyteorder())
     assert_(a.dtype.byteorder != au.dtype.byteorder)
     it = nditer(au, [], [['readwrite', 'updateifcopy']],
                         casting='equiv', op_dtypes=[np.dtype('f4')])
@@ -3119,7 +3205,8 @@ def test_close_parameters():
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')
-    au = a.byteswap().newbyteorder()
+    au = a.byteswap()
+    au = au.view(au.dtype.newbyteorder())
     with suppress_warnings() as sup:
         sup.record(RuntimeWarning)
         it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
@@ -3130,7 +3217,6 @@ def test_warn_noclose():
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 9) and sys.platform == "win32",
                     reason="Errors with Python 3.9 on Windows")
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases
          ("i,O", "O,O"),  # structured partially only copying O
@@ -3138,9 +3224,14 @@ def test_warn_noclose():
          ])
 @pytest.mark.parametrize("steps", [1, 2, 3])
 def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
-    value = 123  # relies on python cache (leak-check will still find it)
-    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
-    count = sys.getrefcount(value)
+    """
+    Checks for reference counting leaks during cleanup.  Using explicit
+    reference counts lead to occasional false positives (at least in parallel
+    test setups).  This test now should still test leaks correctly when
+    run e.g. with pytest-valgrind or pytest-leaks
+    """
+    value = 2**30 + 1  # just a random value that Python won't intern
+    arr = np.full(int(ncu.BUFSIZE * 2.5), value).astype(in_dtype)
 
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
             flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
@@ -3148,11 +3239,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
         # The iteration finishes in 3 steps, the first two are partial
         next(it)
 
-    # Note that resetting does not free references
-    del it
-    break_cycles()
-    break_cycles()
-    assert count == sys.getrefcount(value)
+    del it  # not necessary, but we test the cleanup
 
     # Repeat the test with `iternext`
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
@@ -3160,11 +3247,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
     for step in range(steps):
         it.iternext()
 
-    del it  # should ensure cleanup
-    break_cycles()
-    break_cycles()
-    assert count == sys.getrefcount(value)
-
+    del it  # not necessary, but we test the cleanup
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
@@ -3173,11 +3256,11 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
           ])
 def test_partial_iteration_error(in_dtype, buf_dtype):
     value = 123  # relies on python cache (leak-check will still find it)
-    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    arr = np.full(int(ncu.BUFSIZE * 2.5), value).astype(in_dtype)
     if in_dtype == "O":
-        arr[int(np.BUFSIZE * 1.5)] = None
+        arr[int(ncu.BUFSIZE * 1.5)] = None
     else:
-        arr[int(np.BUFSIZE * 1.5)]["f0"] = None
+        arr[int(ncu.BUFSIZE * 1.5)]["f0"] = None
 
     count = sys.getrefcount(value)
 

@@ -1,8 +1,9 @@
-from typing import Any, List, Set, Literal, Final
+import pickle
+from typing import Any, Literal, Final
 
-__all__: List[str]
+__all__: list[str]
 
-EXPECTED_KEYS: Final[Set[str]]
+EXPECTED_KEYS: Final[set[str]]
 MAGIC_PREFIX: Final[bytes]
 MAGIC_LEN: Literal[8]
 ARRAY_ALIGN: Literal[64]
@@ -20,3 +21,5 @@ def read_array_header_2_0(fp): ...
 def write_array(fp, array, version=..., allow_pickle=..., pickle_kwargs=...): ...
 def read_array(fp, allow_pickle=..., pickle_kwargs=...): ...
 def open_memmap(filename, mode=..., dtype=..., shape=..., fortran_order=..., version=...): ...
+
+class NumpyUnpickler(pickle.Unpickler): ...

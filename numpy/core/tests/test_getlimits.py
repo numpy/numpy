@@ -3,6 +3,7 @@
 """
 import warnings
 import numpy as np
+import pytest
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import assert_equal, assert_, assert_raises
@@ -40,19 +41,46 @@ class TestLongdouble:
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
+def assert_finfo_equal(f1, f2):
+    # assert two finfo instances have the same attributes
+    for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
+                 'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
+                 'nmant', 'precision', 'resolution', 'tiny',
+                 'smallest_normal', 'smallest_subnormal'):
+        assert_equal(getattr(f1, attr), getattr(f2, attr),
+                     f'finfo instances {f1} and {f2} differ on {attr}')
+
+def assert_iinfo_equal(i1, i2):
+    # assert two iinfo instances have the same attributes
+    for attr in ('bits', 'min', 'max'):
+        assert_equal(getattr(i1, attr), getattr(i2, attr),
+                     f'iinfo instances {i1} and {i2} differ on {attr}')
+
 class TestFinfo:
     def test_basic(self):
         dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
                        [np.float16, np.float32, np.float64, np.complex64,
                         np.complex128]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
-                         'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
-                         'nmant', 'precision', 'resolution', 'tiny',
-                         'smallest_normal', 'smallest_subnormal'):
-                assert_equal(getattr(finfo(dt1), attr),
-                             getattr(finfo(dt2), attr), attr)
+            assert_finfo_equal(finfo(dt1), finfo(dt2))
+
         assert_raises(ValueError, finfo, 'i4')
+
+    def test_regression_gh23108(self):
+        # np.float32(1.0) and np.float64(1.0) have the same hash and are
+        # equal under the == operator
+        f1 = np.finfo(np.float32(1.0))
+        f2 = np.finfo(np.float64(1.0))
+        assert f1 != f2
+
+    def test_regression_gh23867(self):
+        class NonHashableWithDtype:
+            __hash__ = None
+            dtype = np.dtype('float32')
+  
+        x = NonHashableWithDtype()
+        assert np.finfo(x) == np.finfo(x.dtype)
+        
 
 class TestIinfo:
     def test_basic(self):
@@ -61,15 +89,16 @@ class TestIinfo:
                   [np.int8, np.int16, np.int32, np.int64,
                    np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'min', 'max'):
-                assert_equal(getattr(iinfo(dt1), attr),
-                             getattr(iinfo(dt2), attr), attr)
+            assert_iinfo_equal(iinfo(dt1), iinfo(dt2))
+
         assert_raises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):
-        types = np.sctypes['uint']
+        types = np.core.sctypes['uint']
         for T in types:
-            assert_equal(iinfo(T).max, T(-1))
+            with np.errstate(over="ignore"):
+                max_calculated = T(0) - T(1)
+            assert_equal(iinfo(T).max, max_calculated)
 
 class TestRepr:
     def test_iinfo_repr(self):
@@ -83,8 +112,28 @@ class TestRepr:
 
 
 def test_instances():
-    iinfo(10)
-    finfo(3.0)
+    # Test the finfo and iinfo results on numeric instances agree with
+    # the results on the corresponding types
+
+    for c in [int, np.int16, np.int32, np.int64]:
+        class_iinfo = iinfo(c)
+        instance_iinfo = iinfo(c(12))
+
+        assert_iinfo_equal(class_iinfo, instance_iinfo)
+
+    for c in [float, np.float16, np.float32, np.float64]:
+        class_finfo = finfo(c)
+        instance_finfo = finfo(c(1.2))
+        assert_finfo_equal(class_finfo, instance_finfo)
+
+    with pytest.raises(ValueError):
+        iinfo(10.)
+
+    with pytest.raises(ValueError):
+        iinfo('hi')
+
+    with pytest.raises(ValueError):
+        finfo(np.int64(1))
 
 
 def assert_ma_equal(discovered, ma_like):
@@ -138,7 +187,7 @@ def test_subnormal_warning():
 
 def test_plausible_finfo():
     # Assert that finfo returns reasonable results for all types
-    for ftype in np.sctypes['float'] + np.sctypes['complex']:
+    for ftype in np.core.sctypes['float'] + np.core.sctypes['complex']:
         info = np.finfo(ftype)
         assert_(info.nmant > 1)
         assert_(info.minexp < -1)

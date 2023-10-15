@@ -36,9 +36,9 @@ def parse_distributions_h(ffi, inc_dir):
                 continue
     
             # skip any inlined function definition
-            # which starts with 'static NPY_INLINE xxx(...) {'
+            # which starts with 'static inline xxx(...) {'
             # and ends with a closing '}'
-            if line.strip().startswith('static NPY_INLINE'):
+            if line.strip().startswith('static inline'):
                 in_skip += line.count('{')
                 continue
             elif in_skip > 0:
@@ -48,7 +48,6 @@ def parse_distributions_h(ffi, inc_dir):
     
             # replace defines with their value or remove them
             line = line.replace('DECLDIR', '')
-            line = line.replace('NPY_INLINE', '')
             line = line.replace('RAND_INT_TYPE', 'int64_t')
             s.append(line)
         ffi.cdef('\n'.join(s))

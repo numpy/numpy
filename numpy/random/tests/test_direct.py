@@ -46,25 +46,27 @@ def assert_state_equal(actual, target):
             assert actual[key] == target[key]
 
 
+def uint32_to_float32(u):
+    return ((u >> np.uint32(8)) * (1.0 / 2**24)).astype(np.float32)
+
+
 def uniform32_from_uint64(x):
     x = np.uint64(x)
     upper = np.array(x >> np.uint64(32), dtype=np.uint32)
     lower = np.uint64(0xffffffff)
     lower = np.array(x & lower, dtype=np.uint32)
     joined = np.column_stack([lower, upper]).ravel()
-    out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(joined)
 
 
 def uniform32_from_uint53(x):
     x = np.uint64(x) >> np.uint64(16)
     x = np.uint32(x & np.uint64(0xffffffff))
-    out = (x >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint32(x):
-    return (x >> np.uint32(9)) * (1.0 / 2 ** 23)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint(x, bits):
@@ -126,6 +128,7 @@ def gauss_from_uint(x, n, bits):
 
     return gauss[:n]
 
+
 def test_seedsequence():
     from numpy.random.bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
@@ -143,6 +146,46 @@ def test_seedsequence():
     dummy = SeedlessSeedSequence()
     assert_raises(NotImplementedError, dummy.generate_state, 10)
     assert len(dummy.spawn(10)) == 10
+
+
+def test_generator_spawning():
+    """ Test spawning new generators and bit_generators directly.
+    """
+    rng = np.random.default_rng()
+    seq = rng.bit_generator.seed_seq
+    new_ss = seq.spawn(5)
+    expected_keys = [seq.spawn_key + (i,) for i in range(5)]
+    assert [c.spawn_key for c in new_ss] == expected_keys
+
+    new_bgs = rng.bit_generator.spawn(5)
+    expected_keys = [seq.spawn_key + (i,) for i in range(5, 10)]
+    assert [bg.seed_seq.spawn_key for bg in new_bgs] == expected_keys
+
+    new_rngs = rng.spawn(5)
+    expected_keys = [seq.spawn_key + (i,) for i in range(10, 15)]
+    found_keys = [rng.bit_generator.seed_seq.spawn_key for rng in new_rngs]
+    assert found_keys == expected_keys
+
+    # Sanity check that streams are actually different:
+    assert new_rngs[0].uniform() != new_rngs[1].uniform()
+
+
+def test_non_spawnable():
+    from numpy.random.bit_generator import ISeedSequence
+
+    class FakeSeedSequence:
+        def generate_state(self, n_words, dtype=np.uint32):
+            return np.zeros(n_words, dtype=dtype)
+
+    ISeedSequence.register(FakeSeedSequence)
+
+    rng = np.random.default_rng(FakeSeedSequence())
+
+    with pytest.raises(TypeError, match="The underlying SeedSequence"):
+        rng.spawn(5)
+
+    with pytest.raises(TypeError, match="The underlying SeedSequence"):
+        rng.bit_generator.spawn(5)
 
 
 class Base:

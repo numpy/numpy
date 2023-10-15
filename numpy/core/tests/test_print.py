@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, IS_MUSL
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
 
@@ -196,5 +196,7 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
     def test_locale_double(self):
         assert_equal(str(np.double(1.2)), str(float(1.2)))
 
+    @pytest.mark.skipif(IS_MUSL,
+                        reason="test flaky on musllinux")
     def test_locale_longdouble(self):
         assert_equal(str(np.longdouble('1.2')), str(float(1.2)))

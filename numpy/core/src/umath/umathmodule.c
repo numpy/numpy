@@ -14,6 +14,9 @@
 #include <Python.h>
 
 #include "npy_config.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -23,6 +26,13 @@
 #include "numpy/npy_math.h"
 #include "number.h"
 #include "dispatching.h"
+#include "string_ufuncs.h"
+#include "extobj.h"  /* for _extobject_contextvar exposure */
+
+/* Automatically generated code to define all ufuncs: */
+#include "funcs.inc"
+#include "__umath_generated.c"
+
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -48,19 +58,6 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
     return 0;
 }
 
-static int
-object_ufunc_loop_selector(PyUFuncObject *ufunc,
-                            PyArray_Descr **NPY_UNUSED(dtypes),
-                            PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata,
-                            int *out_needs_api)
-{
-    *out_innerloop = ufunc->functions[0];
-    *out_innerloopdata = ufunc->data[0];
-    *out_needs_api = 1;
-
-    return 0;
-}
 
 PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
@@ -156,7 +153,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
     PyObject_GC_Track(self);
 
     return (PyObject *)self;
@@ -209,6 +205,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
@@ -217,6 +214,10 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 static int
 intern_strings(void)
 {
+    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    if (npy_um_str_array_ufunc == NULL) {
+        return -1;
+    }
     npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
     if (npy_um_str_array_prepare == NULL) {
         return -1;
@@ -246,6 +247,10 @@ int initumath(PyObject *m)
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
+    if (InitOperators(d) < 0) {
+        return -1;
+    }
+
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
@@ -255,19 +260,6 @@ int initumath(PyObject *m)
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
-
-    ADDCONST(ERR_IGNORE);
-    ADDCONST(ERR_WARN);
-    ADDCONST(ERR_CALL);
-    ADDCONST(ERR_RAISE);
-    ADDCONST(ERR_PRINT);
-    ADDCONST(ERR_LOG);
-    ADDCONST(ERR_DEFAULT);
-
-    ADDCONST(SHIFT_DIVIDEBYZERO);
-    ADDCONST(SHIFT_OVERFLOW);
-    ADDCONST(SHIFT_UNDERFLOW);
-    ADDCONST(SHIFT_INVALID);
 
     ADDCONST(FPE_DIVIDEBYZERO);
     ADDCONST(FPE_OVERFLOW);
@@ -282,14 +274,17 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
+    Py_INCREF(npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar", npy_extobj_contextvar);
+
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
     PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
-    s = PyDict_GetItemString(d, "true_divide");
-    PyDict_SetItemString(d, "divide", s);
+    s = PyDict_GetItemString(d, "divide");
+    PyDict_SetItemString(d, "true_divide", s);
 
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");
@@ -334,5 +329,10 @@ int initumath(PyObject *m)
     if (install_logical_ufunc_promoter(s) < 0) {
         return -1;
     }
+
+    if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
     return 0;
 }

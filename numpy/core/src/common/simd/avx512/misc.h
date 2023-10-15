@@ -34,7 +34,7 @@ NPY_FINLINE __m512i npyv__setr_epi64(
 NPY_FINLINE npyv_u64 npyv_setall_u64(npy_uint64 a)
 {
     npy_int64 ai = (npy_int64)a;
-#if defined(_MSC_VER) && defined(_M_IX86) 
+#if defined(_MSC_VER) && defined(_M_IX86)
     return npyv__setr_epi64(ai, ai, ai, ai, ai, ai, ai, ai);
 #else
     return _mm512_set1_epi64(ai);
@@ -159,6 +159,18 @@ NPY_FINLINE __m512d npyv__setr_pd(double i0, double i1, double i2, double i3,
 #define npyv_select_s64 npyv_select_u64
 #define npyv_select_f32(MASK, A, B) _mm512_mask_blend_ps(MASK, B, A)
 #define npyv_select_f64(MASK, A, B) _mm512_mask_blend_pd(MASK, B, A)
+
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s8(A) ((npy_int8)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u16(A) ((npy_uint16)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s16(A) ((npy_int16)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u32(A) ((npy_uint32)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s32(A) ((npy_int32)_mm_cvtsi128_si32(_mm512_castsi512_si128(A)))
+#define npyv_extract0_u64(A) ((npy_uint64)npyv128_cvtsi128_si64(_mm512_castsi512_si128(A)))
+#define npyv_extract0_s64(A) ((npy_int64)npyv128_cvtsi128_si64(_mm512_castsi512_si128(A)))
+#define npyv_extract0_f32(A) _mm_cvtss_f32(_mm512_castps512_ps128(A))
+#define npyv_extract0_f64(A) _mm_cvtsd_f64(_mm512_castpd512_pd128(A))
 
 // reinterpret
 #define npyv_reinterpret_u8_u8(X)  X

@@ -1,0 +1,5 @@
+``iso_c_binding`` support for ``f2py``
+--------------------------------------
+Previously, users would have to define their own custom ``f2cmap`` file to use
+type mappings defined by the Fortran2003 ``iso_c_binding`` intrinsic module.
+These type maps are now natively supported by ``f2py``

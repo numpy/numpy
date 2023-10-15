@@ -70,8 +70,8 @@ generic array scalar type:
 Array scalar type     Related Python type          Inherits?
 ====================  ===========================  =============
 :class:`int_`         :class:`int`                 Python 2 only
-:class:`float_`       :class:`float`               yes
-:class:`complex_`     :class:`complex`             yes
+:class:`double`       :class:`float`               yes
+:class:`cdouble`      :class:`complex`             yes
 :class:`bytes_`       :class:`bytes`               yes
 :class:`str_`         :class:`str`                 yes
 :class:`bool_`        :class:`bool`                no
@@ -91,7 +91,7 @@ Python Boolean scalar.
    :class:`int` built-in under Python 3, because type :class:`int` is no
    longer a fixed-width integer type.
 
-.. tip:: The default data type in NumPy is :class:`float_`.
+.. tip:: The default data type in NumPy is :class:`double`.
 
 .. autoclass:: numpy.generic
    :members: __init__
@@ -102,7 +102,7 @@ Python Boolean scalar.
    :exclude-members: __init__
 
 Integer types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.integer
    :members: __init__
@@ -114,7 +114,7 @@ Integer types
    be subject to :ref:`overflow-errors`.
 
 Signed integer types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.signedinteger
    :members: __init__
@@ -141,7 +141,7 @@ Signed integer types
    :exclude-members: __init__
 
 Unsigned integer types
-++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.unsignedinteger
    :members: __init__
@@ -168,7 +168,7 @@ Unsigned integer types
    :exclude-members: __init__
 
 Inexact types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.inexact
    :members: __init__
@@ -209,7 +209,7 @@ Inexact types
        (0.1, 0.1, 0.1)
 
 Floating-point types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.floating
    :members: __init__
@@ -232,7 +232,7 @@ Floating-point types
    :exclude-members: __init__
 
 Complex floating-point types
-++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.complexfloating
    :members: __init__
@@ -251,7 +251,7 @@ Complex floating-point types
    :exclude-members: __init__
 
 Other types
-~~~~~~~~~~~
+-----------
 
 .. autoclass:: numpy.bool_
    :members: __init__
@@ -293,6 +293,10 @@ elements the data type consists of.)
    :members: __init__
    :exclude-members: __init__
 
+.. autoclass:: numpy.character
+   :members: __init__
+   :exclude-members: __init__
+
 .. autoclass:: numpy.bytes_
    :members: __init__
    :exclude-members: __init__
@@ -321,7 +325,7 @@ elements the data type consists of.)
 .. _sized-aliases:
 
 Sized aliases
-~~~~~~~~~~~~~
+-------------
 
 Along with their (mostly)
 C-derived names, the integer, float, and complex data-types are also
@@ -332,8 +336,6 @@ are also provided.
 
 .. note that these are documented with ..attribute because that is what
    autoclass does for aliases under the hood.
-
-.. autoclass:: numpy.bool8
 
 .. attribute:: int8
                int16
@@ -362,7 +364,7 @@ are also provided.
 .. attribute:: intp
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   `numpy.intc`, `numpy.int_` and `numpy.longlong`) that is the same size as a
    pointer.
 
    Compatible with the C ``intptr_t``.
@@ -372,7 +374,7 @@ are also provided.
 .. attribute:: uintp
 
    Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint` and `np.ulonglong`) that is the same size as a
+   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) that is the same size as a
    pointer.
 
    Compatible with the C ``uintptr_t``.
@@ -400,37 +402,6 @@ are also provided.
 
    Alias for `numpy.clongdouble`, named after its size in bits.
    The existence of these aliases depends on the platform.
-
-Other aliases
-~~~~~~~~~~~~~
-
-The first two of these are conveniences which resemble the names of the
-builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and
-`object_`:
-
-.. autoclass:: numpy.float_
-
-.. autoclass:: numpy.complex_
-
-Some more use alternate naming conventions for extended-precision floats and
-complex numbers:
-
-.. autoclass:: numpy.longfloat
-
-.. autoclass:: numpy.singlecomplex
-
-.. autoclass:: numpy.cfloat
-
-.. autoclass:: numpy.longcomplex
-
-.. autoclass:: numpy.clongfloat
-
-The following aliases originate from Python 2, and it is recommended that they
-not be used in new code.
-
-.. autoclass:: numpy.string_
-
-.. autoclass:: numpy.unicode_
 
 Attributes
 ==========

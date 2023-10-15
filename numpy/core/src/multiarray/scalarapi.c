@@ -88,82 +88,11 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
 
     /*
-     * Must be a user-defined type --- check to see which
-     * scalar it inherits from.
+     * Must be a user defined type with an associated (registered) dtype.
+     * Thus, it cannot be flexible (user dtypes cannot be), so we can (and
+     * pretty much have no choice but to) assume the below logic always works.
+     * I.e. this assumes that the logic would also works for most of our types.
      */
-
-#define _CHK(cls) PyObject_IsInstance(scalar, \
-            (PyObject *)&Py##cls##ArrType_Type)
-#define _IFCASE(cls) if (_CHK(cls)) return &PyArrayScalar_VAL(scalar, cls)
-
-    if (_CHK(Number)) {
-        if (_CHK(Integer)) {
-            if (_CHK(SignedInteger)) {
-                _IFCASE(Byte);
-                _IFCASE(Short);
-                _IFCASE(Int);
-                _IFCASE(Long);
-                _IFCASE(LongLong);
-                _IFCASE(Timedelta);
-            }
-            else {
-                /* Unsigned Integer */
-                _IFCASE(UByte);
-                _IFCASE(UShort);
-                _IFCASE(UInt);
-                _IFCASE(ULong);
-                _IFCASE(ULongLong);
-            }
-        }
-        else {
-            /* Inexact */
-            if (_CHK(Floating)) {
-                _IFCASE(Half);
-                _IFCASE(Float);
-                _IFCASE(Double);
-                _IFCASE(LongDouble);
-            }
-            else {
-                /*ComplexFloating */
-                _IFCASE(CFloat);
-                _IFCASE(CDouble);
-                _IFCASE(CLongDouble);
-            }
-        }
-    }
-    else if (_CHK(Bool)) {
-        return &PyArrayScalar_VAL(scalar, Bool);
-    }
-    else if (_CHK(Datetime)) {
-        return &PyArrayScalar_VAL(scalar, Datetime);
-    }
-    else if (_CHK(Flexible)) {
-        if (_CHK(String)) {
-            return (void *)PyBytes_AS_STRING(scalar);
-        }
-        if (_CHK(Unicode)) {
-            /* Treat this the same as the NPY_UNICODE base class */
-
-            /* lazy initialization, to reduce the memory used by string scalars */
-            if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
-                Py_UCS4 *raw_data = PyUnicode_AsUCS4Copy(scalar);
-                if (raw_data == NULL) {
-                    return NULL;
-                }
-                PyArrayScalar_VAL(scalar, Unicode) = raw_data;
-                return (void *)raw_data;
-            }
-            return PyArrayScalar_VAL(scalar, Unicode);
-        }
-        if (_CHK(Void)) {
-            /* Note: no & needed here, so can't use _IFCASE */
-            return PyArrayScalar_VAL(scalar, Void);
-        }
-    }
-    else {
-        _IFCASE(Object);
-    }
-
 
     /*
      * Use the alignment flag to figure out where the data begins
@@ -177,16 +106,20 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         memloc = ((memloc + align - 1)/align)*align;
     }
     return (void *)memloc;
-#undef _IFCASE
-#undef _CHK
 }
 
 /*NUMPY_API
- * return true an object is exactly a numpy scalar
+ * return 1 if an object is exactly a numpy scalar
  */
 NPY_NO_EXPORT int
 PyArray_CheckAnyScalarExact(PyObject * obj)
 {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_CheckAnyScalarExact");
+        return 0;
+    }
+
     return is_anyscalar_exact(obj);
 }
 
@@ -370,77 +303,6 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     return ret;
 }
 
-/*NUMPY_API
- * Get an Array Scalar From a Python Object
- *
- * Returns NULL if unsuccessful but error is only set if another error occurred.
- * Currently only Numeric-like object supported.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_ScalarFromObject(PyObject *object)
-{
-    PyObject *ret = NULL;
-
-    if (PyArray_IsZeroDim(object)) {
-        return PyArray_ToScalar(PyArray_DATA((PyArrayObject *)object),
-                                (PyArrayObject *)object);
-    }
-    /*
-     * Booleans in Python are implemented as a subclass of integers,
-     * so PyBool_Check must be called before PyLong_Check.
-     */
-    if (PyBool_Check(object)) {
-        if (object == Py_True) {
-            PyArrayScalar_RETURN_TRUE;
-        }
-        else {
-            PyArrayScalar_RETURN_FALSE;
-        }
-    }
-    else if (PyLong_Check(object)) {
-        /* Check if fits in long */
-        npy_long val_long = PyLong_AsLong(object);
-        if (!error_converting(val_long)) {
-            ret = PyArrayScalar_New(Long);
-            if (ret != NULL) {
-                PyArrayScalar_VAL(ret, Long) = val_long;
-            }
-            return ret;
-        }
-        PyErr_Clear();
-
-        /* Check if fits in long long */
-        npy_longlong val_longlong = PyLong_AsLongLong(object);
-        if (!error_converting(val_longlong)) {
-            ret = PyArrayScalar_New(LongLong);
-            if (ret != NULL) {
-                PyArrayScalar_VAL(ret, LongLong) = val_longlong;
-            }
-            return ret;
-        }
-        PyErr_Clear();
-
-        return NULL;
-    }
-    else if (PyFloat_Check(object)) {
-        ret = PyArrayScalar_New(Double);
-        if (ret != NULL) {
-            PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
-        }
-        return ret;
-    }
-    else if (PyComplex_Check(object)) {
-        ret = PyArrayScalar_New(CDouble);
-        if (ret != NULL) {
-            PyArrayScalar_VAL(ret, CDouble).real = PyComplex_RealAsDouble(object);
-            PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
-        }
-        return ret;
-    }
-    else {
-        return NULL;
-    }
-}
 
 /*New reference */
 /*NUMPY_API
@@ -625,6 +487,9 @@ PyArray_DescrFromScalar(PyObject *sc)
     }
     if (PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {
             descr->elsize = PyBytes_GET_SIZE(sc);
@@ -770,7 +635,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
             destptr = PyBytes_AS_STRING(obj);
-            ((PyBytesObject *)obj)->ob_shash = -1;
+            #if PY_VERSION_HEX < 0x030b00b0
+                ((PyBytesObject *)obj)->ob_shash = -1;
+            #endif
             memcpy(destptr, data, itemsize);
             return obj;
         }

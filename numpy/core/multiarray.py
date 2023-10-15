@@ -14,17 +14,18 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _fastCopyAndTranspose, _flagdict, _from_dlpack, _insert, _reconstruct,
+    _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _set_madvise_hugepage,
+    _get_madvise_hugepage, _set_madvise_hugepage,
+    _get_promotion_state, _set_promotion_state
     )
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
-    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
-    '_flagdict', '_from_dlpack', '_insert', '_reconstruct', '_vec_string',
+    'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
+    '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
     '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
@@ -38,16 +39,17 @@ __all__ = [
     'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
-    'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
-    'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
+    'set_legacy_print_mode',
+    'set_typeDict', 'shares_memory', 'typeinfo',
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    '_get_promotion_state', '_set_promotion_state']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
 scalar.__module__ = 'numpy.core.multiarray'
 
 
-_from_dlpack.__module__ = 'numpy'
+from_dlpack.__module__ = 'numpy'
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
 asarray.__module__ = 'numpy'
@@ -61,13 +63,13 @@ fromfile.__module__ = 'numpy'
 fromiter.__module__ = 'numpy'
 frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
-geterrobj.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
-set_numeric_ops.__module__ = 'numpy'
-seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
+_get_promotion_state.__module__ = 'numpy'
+_set_promotion_state.__module__ = 'numpy'
+normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -172,7 +174,8 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
-
+        For a description of the options, please see :term:`casting`.
+        
         .. versionadded:: 1.20.0
 
     Returns
@@ -287,7 +290,7 @@ def inner(a, b):
 
         np.inner(a, b) = sum(a[:]*b[:])
 
-    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+    More generally, if ``ndim(a) = r > 0`` and ``ndim(b) = s > 0``::
 
         np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
 
@@ -478,7 +481,7 @@ def lexsort(keys, axis=None):
     A normal ``argsort`` would have yielded:
 
     >>> [(a[i],b[i]) for i in np.argsort(a)]
-    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
+    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 1), (4, 2), (5, 4)]
 
     Structured arrays are sorted lexically by ``argsort``:
 
@@ -514,12 +517,12 @@ def can_cast(from_, to, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -710,7 +713,7 @@ def result_type(*arrays_and_dtypes):
     the data types are combined with :func:`promote_types`
     to produce the return value.
 
-    Otherwise, `min_scalar_type` is called on each array, and
+    Otherwise, `min_scalar_type` is called on each scalar, and
     the resulting data types are all combined with :func:`promote_types`
     to produce the return value.
 
@@ -746,16 +749,20 @@ def dot(a, b, out=None):
     - If both `a` and `b` are 2-D arrays, it is matrix multiplication,
       but using :func:`matmul` or ``a @ b`` is preferred.
 
-    - If either `a` or `b` is 0-D (scalar), it is equivalent to :func:`multiply`
-      and using ``numpy.multiply(a, b)`` or ``a * b`` is preferred.
+    - If either `a` or `b` is 0-D (scalar), it is equivalent to
+      :func:`multiply` and using ``numpy.multiply(a, b)`` or ``a * b`` is
+      preferred.
 
     - If `a` is an N-D array and `b` is a 1-D array, it is a sum product over
       the last axis of `a` and `b`.
 
     - If `a` is an N-D array and `b` is an M-D array (where ``M>=2``), it is a
-      sum product over the last axis of `a` and the second-to-last axis of `b`::
+      sum product over the last axis of `a` and the second-to-last axis of
+      `b`::
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
     ----------
@@ -1089,22 +1096,38 @@ def copyto(dst, src, casting=None, where=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur when copying.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
+
+    Examples
+    --------
+    >>> A = np.array([4, 5, 6])
+    >>> B = [1, 2, 3]
+    >>> np.copyto(A, B)
+    >>> A
+    array([1, 2, 3])
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> B = [[4, 5, 6], [7, 8, 9]]
+    >>> np.copyto(A, B)
+    >>> A
+    array([[4, 5, 6],
+           [7, 8, 9]])
+
     """
     return (dst, src, where)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
-def putmask(a, mask, values):
+def putmask(a, /, mask, values):
     """
     putmask(a, mask, values)
 
@@ -1321,7 +1344,7 @@ def shares_memory(a, b, max_work=None):
 
     Raises
     ------
-    numpy.TooHardError
+    numpy.exceptions.TooHardError
         Exceeded max_work.
 
     Returns
@@ -1355,7 +1378,7 @@ def shares_memory(a, b, max_work=None):
     >>> np.shares_memory(x1, x2, max_work=1000)
     Traceback (most recent call last):
     ...
-    numpy.TooHardError: Exceeded max_work
+    numpy.exceptions.TooHardError: Exceeded max_work
 
     Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
     around 1 minute for this case. It is possible to find problems
@@ -1482,18 +1505,18 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
-          * 'raise' means to raise an exception for an invalid day.
-          * 'nat' means to return a NaT (not-a-time) for an invalid day.
-          * 'forward' and 'following' mean to take the first valid day
-            later in time.
-          * 'backward' and 'preceding' mean to take the first valid day
-            earlier in time.
-          * 'modifiedfollowing' means to take the first valid day
-            later in time unless it is across a Month boundary, in which
-            case to take the first valid day earlier in time.
-          * 'modifiedpreceding' means to take the first valid day
-            earlier in time unless it is across a Month boundary, in which
-            case to take the first valid day later in time.
+        * 'raise' means to raise an exception for an invalid day.
+        * 'nat' means to return a NaT (not-a-time) for an invalid day.
+        * 'forward' and 'following' mean to take the first valid day
+          later in time.
+        * 'backward' and 'preceding' mean to take the first valid day
+          earlier in time.
+        * 'modifiedfollowing' means to take the first valid day
+          later in time unless it is across a Month boundary, in which
+          case to take the first valid day earlier in time.
+        * 'modifiedpreceding' means to take the first valid day
+          earlier in time unless it is across a Month boundary, in which
+          case to take the first valid day later in time.
     weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday are
         valid days. May be specified as a length-seven list or array, like

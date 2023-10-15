@@ -1045,6 +1045,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
         if (iter->iter == NULL) {
             Py_DECREF(ret);
+            Py_DECREF(iter);
             goto fail;
         }
 
@@ -1190,7 +1191,7 @@ npyiter_resetbasepointers(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_reset(NewNpyArrayIterObject *self)
+npyiter_reset(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1227,7 +1228,7 @@ npyiter_reset(NewNpyArrayIterObject *self)
  * copied.
  */
 static PyObject *
-npyiter_copy(NewNpyArrayIterObject *self)
+npyiter_copy(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     NewNpyArrayIterObject *iter;
 
@@ -1263,7 +1264,7 @@ npyiter_copy(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_iternext(NewNpyArrayIterObject *self)
+npyiter_iternext(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter != NULL && self->iternext != NULL &&
                         !self->finished && self->iternext(self->iter)) {
@@ -1320,7 +1321,8 @@ npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
 }
 
 static PyObject *
-npyiter_remove_multi_index(NewNpyArrayIterObject *self)
+npyiter_remove_multi_index(
+    NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1345,7 +1347,8 @@ npyiter_remove_multi_index(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_enable_external_loop(NewNpyArrayIterObject *self)
+npyiter_enable_external_loop(
+    NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1370,7 +1373,7 @@ npyiter_enable_external_loop(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_debug_print(NewNpyArrayIterObject *self)
+npyiter_debug_print(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter != NULL) {
         NpyIter_DebugPrint(self->iter);
@@ -2315,7 +2318,7 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
 }
 
 static PyObject *
-npyiter_enter(NewNpyArrayIterObject *self)
+npyiter_enter(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
@@ -2326,7 +2329,7 @@ npyiter_enter(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_close(NewNpyArrayIterObject *self)
+npyiter_close(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     NpyIter *iter = self->iter;
     int ret;
@@ -2347,7 +2350,7 @@ static PyObject *
 npyiter_exit(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     /* even if called via exception handling, writeback any data */
-    return npyiter_close(self);
+    return npyiter_close(self, NULL);
 }
 
 static PyMethodDef npyiter_methods[] = {

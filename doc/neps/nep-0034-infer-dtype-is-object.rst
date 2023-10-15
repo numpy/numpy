@@ -5,7 +5,7 @@ NEP 34 — Disallow inferring ``dtype=object`` from sequences
 ===========================================================
 
 :Author: Matti Picus
-:Status: Accepted
+:Status: Final
 :Type: Standards Track
 :Created: 2019-10-10
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-October/080200.html

@@ -27,22 +27,27 @@ typedef union
     /**end repeat**/
     // vectors
     /**begin repeat
-     * #sfx  = u8, u16, u32, u64, s8, s16, s32, s64, f32, b8, b16, b32, b64#
+     * #sfx  = u8, u16, u32, u64, s8, s16, s32, s64, b8, b16, b32, b64#
      */
     npyv_@sfx@ v@sfx@;
     /**end repeat**/
     // multi-vectors x2
     /**begin repeat
-     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32#
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64#
      */
     npyv_@sfx@x2 v@sfx@x2;
     /**end repeat**/
     // multi-vectors x3
     /**begin repeat
-     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32#
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64#
      */
     npyv_@sfx@x3 v@sfx@x3;
     /**end repeat**/
+#if NPY_SIMD_F32
+    npyv_f32    vf32;
+    npyv_f32x2  vf32x2;
+    npyv_f32x3  vf32x3;
+#endif
 #if NPY_SIMD_F64
     npyv_f64    vf64;
     npyv_f64x2  vf64x2;

@@ -5,16 +5,18 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-from typing import List
-import numpy as np
+from __future__ import annotations
 
-class SubClass(np.ndarray):
+import numpy as np
+import numpy.typing as npt
+
+class SubClass(npt.NDArray[np.float64]):
     ...
 
 i8 = np.int64(1)
 
 A = np.arange(27).reshape(3, 3, 3)
-B: List[List[List[int]]] = A.tolist()
+B: list[list[list[int]]] = A.tolist()
 C = np.empty((27, 27)).view(SubClass)
 
 np.count_nonzero(i8)

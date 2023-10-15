@@ -4,19 +4,13 @@
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_array_max_ulp,
     assert_array_almost_equal, assert_raises, assert_
-    )
-
+)
 from numpy import (
     arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
     tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
     tril_indices_from, vander,
-    )
-
+)
 import numpy as np
-
-
-from numpy.core.tests.test_overrides import requires_array_function
-
 
 import pytest
 
@@ -43,6 +37,12 @@ class TestEye:
 
         assert_equal(eye(3) == 1,
                      eye(3, dtype=bool))
+
+    def test_uint64(self):
+        # Regression test for gh-9982
+        assert_equal(eye(np.uint64(2), dtype=int), array([[1, 0], [0, 1]]))
+        assert_equal(eye(np.uint64(2), M=np.uint64(4), k=np.uint64(1)),
+                     array([[0, 1, 0, 0], [0, 0, 1, 0]]))
 
     def test_diag(self):
         assert_equal(eye(4, k=1),
@@ -277,7 +277,6 @@ class TestHistogram2d:
         assert_array_equal(H, answer)
         assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))
 
-    @requires_array_function
     def test_dispatch(self):
         class ShouldDispatch:
             def __array_function__(self, function, types, args, kwargs):
@@ -382,7 +381,7 @@ def test_tril_triu_dtype():
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 
-    arr = np.zeros((3,3), dtype='f4,f4')
+    arr = np.zeros((3, 3), dtype='f4,f4')
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 

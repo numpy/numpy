@@ -8,9 +8,10 @@ import pytest
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
+from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT,
+    assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
     )
 
 
@@ -423,12 +424,12 @@ class TestIndexing:
                 return np.array(0)
 
         a = np.zeros(())
-        assert_(isinstance(a[()], np.float_))
+        assert_(isinstance(a[()], np.float64))
         a = np.zeros(1)
-        assert_(isinstance(a[z], np.float_))
+        assert_(isinstance(a[z], np.float64))
         a = np.zeros((1, 1))
-        assert_(isinstance(a[z, np.array(0)], np.float_))
-        assert_(isinstance(a[z, ArrayLike()], np.float_))
+        assert_(isinstance(a[z, np.array(0)], np.float64))
+        assert_(isinstance(a[z, ArrayLike()], np.float64))
 
         # And object arrays do not call it too often:
         b = np.array(0)
@@ -563,6 +564,7 @@ class TestIndexing:
         with pytest.raises(IndexError):
             arr[(index,) * num] = 1.
 
+    @pytest.mark.skipif(IS_WASM, reason="no threading")
     def test_structured_advanced_indexing(self):
         # Test that copyswap(n) used by integer array indexing is threadsafe
         # for structured datatypes, see gh-15387. This test can behave randomly.
@@ -586,6 +588,12 @@ class TestIndexing:
             f.result()
 
         assert arr.dtype is dt
+
+    def test_nontuple_ndindex(self):
+        a = np.arange(25).reshape((5, 5))
+        assert_equal(a[[0, 1]], np.array([a[0], a[1]]))
+        assert_equal(a[[0, 1], [0, 1]], np.array([0, 6]))
+        assert_raises(IndexError, a.__getitem__, [slice(None)])
 
 
 class TestFieldIndexing:
@@ -741,12 +749,12 @@ class TestFancyIndexingCast:
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
-        assert_warns(np.ComplexWarning,
+        assert_warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
@@ -820,7 +828,7 @@ class TestMultiIndexingAutomated:
 
     """
 
-    def setup(self):
+    def setup_method(self):
         self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
         self.b = np.empty((3, 0, 5, 6))
         self.complex_indices = ['skip', Ellipsis,
@@ -1055,7 +1063,7 @@ class TestMultiIndexingAutomated:
                         if np.any(_indx >= _size) or np.any(_indx < -_size):
                                 raise IndexError
                 if len(indx[1:]) == len(orig_slice):
-                    if np.product(orig_slice) == 0:
+                    if np.prod(orig_slice) == 0:
                         # Work around for a crash or IndexError with 'wrap'
                         # in some 0-sized cases.
                         try:
@@ -1192,7 +1200,7 @@ class TestMultiIndexingAutomated:
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
             warnings.filterwarnings('error', '', DeprecationWarning)
-            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('error', '', VisibleDeprecationWarning)
 
             def isskip(idx):
                 return isinstance(idx, str) and idx == "skip"
@@ -1263,7 +1271,7 @@ class TestFloatNonIntegerArgument:
         def mult(a, b):
             return a * b
 
-        assert_raises(TypeError, mult, [1], np.float_(3))
+        assert_raises(TypeError, mult, [1], np.float64(3))
         # following should be OK
         mult([1], np.int_(3))
 
@@ -1291,10 +1299,9 @@ class TestBooleanIndexing:
     def test_boolean_indexing_weirdness(self):
         # Weird boolean indexing things
         a = np.ones((2, 3, 4))
-        a[False, True, ...].shape == (0, 2, 3, 4)
-        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert a[False, True, ...].shape == (0, 2, 3, 4)
+        assert a[True, [0, 1], True, True, [1], [[2]]].shape == (1, 2)
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
-
 
     def test_boolean_indexing_fast_path(self):
         # These used to either give the wrong error, or incorrectly give no
@@ -1332,7 +1339,7 @@ class TestBooleanIndexing:
 
 
 class TestArrayToIndexDeprecation:
-    """Creating an an index from array not 0-D is an error.
+    """Creating an index from array not 0-D is an error.
 
     """
     def test_array_to_index_error(self):

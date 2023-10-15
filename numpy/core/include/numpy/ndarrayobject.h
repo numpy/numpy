@@ -152,19 +152,16 @@ extern "C" {
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-/* Move to arrayobject.c once PyArray_XDECREF_ERR is removed */
-static NPY_INLINE void
+static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     if (fa && fa->base) {
-        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) ||
-                (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+        if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
             Py_DECREF(fa->base);
             fa->base = NULL;
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
-            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
     }
 }
@@ -204,12 +201,6 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 #define PyArray_Put(ap, items, values)                                        \
         PyArray_PutTo(ap, items, values, NPY_RAISE)
 
-/* Compatibility with old Numeric stuff -- don't use in new code */
-
-#define PyArray_FromDimsAndData(nd, d, type, data)                            \
-        PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type),   \
-                                        data)
-
 
 /*
    Check to see if this key in the dictionary is the "title"
@@ -217,7 +208,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
    dict).
 */
 
-static NPY_INLINE int
+static inline int
 NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 {
     PyObject *title;
@@ -245,20 +236,6 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)
-
-#if !defined(NPY_NO_DEPRECATED_API) || \
-    (NPY_NO_DEPRECATED_API < NPY_1_14_API_VERSION)
-static NPY_INLINE void
-PyArray_XDECREF_ERR(PyArrayObject *arr)
-{
-    /* 2017-Nov-10 1.14 */
-    DEPRECATE("PyArray_XDECREF_ERR is deprecated, call "
-        "PyArray_DiscardWritebackIfCopy then Py_XDECREF instead");
-    PyArray_DiscardWritebackIfCopy(arr);
-    Py_XDECREF(arr);
-}
-#endif
-
 
 #ifdef __cplusplus
 }

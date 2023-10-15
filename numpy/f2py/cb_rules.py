@@ -230,12 +230,21 @@ cb_rout_rules = [
         'latexdocstrcbs': '\\noindent Call-back functions:',
         'routnote': {hasnote: '--- #note#', l_not(hasnote): ''},
     }, {  # Function
-        'decl': '    #ctype# return_value;',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n");',
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
-                      ],
+        'decl': '    #ctype# return_value = 0;',
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            '''\
+    if (capi_j>capi_i) {
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
+          "#ctype#_from_pyobj failed in converting return_value of"
+          " call-back function #name# to C #ctype#\\n");
+    } else {
+        fprintf(stderr,"Warning: call-back function #name# did not provide"
+                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    }''',
+            {debugcapi:
+             '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
+        ],
         'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'}, 'GETSCALARFROMPYTUPLE'],
         'return': '    return return_value;',
         '_check': l_and(isfunction, l_not(isstringfunction), l_not(iscomplexfunction))
@@ -245,12 +254,18 @@ cb_rout_rules = [
         'args': '#ctype# return_value,int return_value_len',
         'args_nm': 'return_value,&return_value_len',
         'args_td': '#ctype# ,int',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
-                      """    if (capi_j>capi_i)
-        GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);""",
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
-                      ],
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
+            """\
+    if (capi_j>capi_i) {
+        GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);
+    } else {
+        fprintf(stderr,"Warning: call-back function #name# did not provide"
+                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    }""",
+            {debugcapi:
+             '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
+        ],
         'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'},
                  'string.h', 'GETSTRFROMPYTUPLE'],
         'return': 'return;',
@@ -274,27 +289,35 @@ return_value
 """,
         'decl': """
 #ifdef F2PY_CB_RETURNCOMPLEX
-    #ctype# return_value;
+    #ctype# return_value = {0, 0};
 #endif
 """,
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      """\
-    if (capi_j>capi_i)
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            """\
+    if (capi_j>capi_i) {
 #ifdef F2PY_CB_RETURNCOMPLEX
-        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
+          \"#ctype#_from_pyobj failed in converting return_value of call-back\"
+          \" function #name# to C #ctype#\\n\");
 #else
-        GETSCALARFROMPYTUPLE(capi_return,capi_i++,return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,return_value,#ctype#,
+          \"#ctype#_from_pyobj failed in converting return_value of call-back\"
+          \" function #name# to C #ctype#\\n\");
 #endif
-""",
-                      {debugcapi: """
+    } else {
+        fprintf(stderr,
+                \"Warning: call-back function #name# did not provide\"
+                \" return value (index=%d, type=#ctype#)\\n\",capi_i);
+    }""",
+            {debugcapi: """\
 #ifdef F2PY_CB_RETURNCOMPLEX
     fprintf(stderr,\"#showvalueformat#.\\n\",(return_value).r,(return_value).i);
 #else
     fprintf(stderr,\"#showvalueformat#.\\n\",(*return_value).r,(*return_value).i);
 #endif
-
 """}
-                      ],
+        ],
         'return': """
 #ifdef F2PY_CB_RETURNCOMPLEX
     return return_value;
@@ -401,8 +424,11 @@ cb_arg_rules = [
                  {debugcapi: 'CFUNCSMESS'}, 'string.h'],
         '_check': l_and(isstring, isintent_out)
     }, {
-        'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
-                      {isintent_in: """\
+        'pyobjfrom': [
+            {debugcapi:
+             ('    fprintf(stderr,"debug-capi:cb:#varname#=#showvalueformat#:'
+              '%d:\\n",#varname_i#,#varname_i#_cb_len);')},
+            {isintent_in: """\
     if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
             goto capi_fail;"""},
@@ -428,15 +454,21 @@ cb_arg_rules = [
         'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                       {isintent_c: """\
     if (cb->nofargs>capi_i) {
-        int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
-        /*XXX: Hmm, what will destroy this array??? */
-        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_CARRAY,NULL);
+        /* tmp_arr will be inserted to capi_arglist_list that will be
+           destroyed when leaving callback function wrapper together
+           with tmp_arr. */
+        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,
+          #rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,#elsize#,
+          NPY_ARRAY_CARRAY,NULL);
 """,
                        l_not(isintent_c): """\
     if (cb->nofargs>capi_i) {
-        int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
-        /*XXX: Hmm, what will destroy this array??? */
-        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_FARRAY,NULL);
+        /* tmp_arr will be inserted to capi_arglist_list that will be
+           destroyed when leaving callback function wrapper together
+           with tmp_arr. */
+        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,
+          #rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,#elsize#,
+          NPY_ARRAY_FARRAY,NULL);
 """,
                        },
                       """

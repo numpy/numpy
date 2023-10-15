@@ -1,13 +1,13 @@
+from collections.abc import Iterable
 from typing import (
     Literal as L,
-    List,
-    Iterable,
     overload,
     TypeVar,
     Any,
     SupportsIndex,
     SupportsInt,
-    Tuple,
+    NamedTuple,
+    Generic,
 )
 
 from numpy import (
@@ -21,7 +21,7 @@ from numpy import (
 
 from numpy.linalg import LinAlgError as LinAlgError
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ArrayLikeInt_co,
@@ -29,15 +29,41 @@ from numpy.typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    DTypeLike,
 )
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_SCT = TypeVar("_SCT", bound=generic, covariant=True)
+_SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
-_2Tuple = Tuple[_T, _T]
+_2Tuple = tuple[_T, _T]
 _ModeKind = L["reduced", "complete", "r", "raw"]
 
-__all__: List[str]
+__all__: list[str]
+
+class EigResult(NamedTuple):
+    eigenvalues: NDArray[Any]
+    eigenvectors: NDArray[Any]
+
+class EighResult(NamedTuple):
+    eigenvalues: NDArray[Any]
+    eigenvectors: NDArray[Any]
+
+class QRResult(NamedTuple):
+    Q: NDArray[Any]
+    R: NDArray[Any]
+
+class SlogdetResult(NamedTuple):
+    # TODO: `sign` and `logabsdet` are scalars for input 2D arrays and
+    # a `(x.ndim - 2)`` dimensionl arrays otherwise
+    sign: Any
+    logabsdet: Any
+
+class SVDResult(NamedTuple):
+    U: NDArray[Any]
+    S: NDArray[Any]
+    Vh: NDArray[Any]
 
 @overload
 def tensorsolve(
@@ -112,11 +138,11 @@ def cholesky(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
 def cholesky(a: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload
-def qr(a: _ArrayLikeInt_co, mode: _ModeKind = ...) -> _2Tuple[NDArray[float64]]: ...
+def qr(a: _ArrayLikeInt_co, mode: _ModeKind = ...) -> QRResult: ...
 @overload
-def qr(a: _ArrayLikeFloat_co, mode: _ModeKind = ...) -> _2Tuple[NDArray[floating[Any]]]: ...
+def qr(a: _ArrayLikeFloat_co, mode: _ModeKind = ...) -> QRResult: ...
 @overload
-def qr(a: _ArrayLikeComplex_co, mode: _ModeKind = ...) -> _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
+def qr(a: _ArrayLikeComplex_co, mode: _ModeKind = ...) -> QRResult: ...
 
 @overload
 def eigvals(a: _ArrayLikeInt_co) -> NDArray[float64] | NDArray[complex128]: ...
@@ -131,27 +157,27 @@ def eigvalsh(a: _ArrayLikeInt_co, UPLO: L["L", "U", "l", "u"] = ...) -> NDArray[
 def eigvalsh(a: _ArrayLikeComplex_co, UPLO: L["L", "U", "l", "u"] = ...) -> NDArray[floating[Any]]: ...
 
 @overload
-def eig(a: _ArrayLikeInt_co) -> _2Tuple[NDArray[float64]] | _2Tuple[NDArray[complex128]]: ...
+def eig(a: _ArrayLikeInt_co) -> EigResult: ...
 @overload
-def eig(a: _ArrayLikeFloat_co) -> _2Tuple[NDArray[floating[Any]]] | _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
+def eig(a: _ArrayLikeFloat_co) -> EigResult: ...
 @overload
-def eig(a: _ArrayLikeComplex_co) -> _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
+def eig(a: _ArrayLikeComplex_co) -> EigResult: ...
 
 @overload
 def eigh(
     a: _ArrayLikeInt_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[float64], NDArray[float64]]: ...
+) -> EighResult: ...
 @overload
 def eigh(
     a: _ArrayLikeFloat_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[floating[Any]], NDArray[floating[Any]]]: ...
+) -> EighResult: ...
 @overload
 def eigh(
     a: _ArrayLikeComplex_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[floating[Any]], NDArray[complexfloating[Any, Any]]]: ...
+) -> EighResult: ...
 
 @overload
 def svd(
@@ -159,33 +185,21 @@ def svd(
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
-    NDArray[float64],
-    NDArray[float64],
-    NDArray[float64],
-]: ...
+) -> SVDResult: ...
 @overload
 def svd(
     a: _ArrayLikeFloat_co,
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
-    NDArray[floating[Any]],
-    NDArray[floating[Any]],
-    NDArray[floating[Any]],
-]: ...
+) -> SVDResult: ...
 @overload
 def svd(
     a: _ArrayLikeComplex_co,
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
-    NDArray[complexfloating[Any, Any]],
-    NDArray[floating[Any]],
-    NDArray[complexfloating[Any, Any]],
-]: ...
+) -> SVDResult: ...
 @overload
 def svd(
     a: _ArrayLikeInt_co,
@@ -233,28 +247,28 @@ def pinv(
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
 # a 2-tuple of `(a.ndim - 2)`` dimensionl arrays otherwise
-def slogdet(a: _ArrayLikeComplex_co) -> _2Tuple[Any]: ...
+def slogdet(a: _ArrayLikeComplex_co) -> SlogdetResult: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
 # a 2-tuple of `(a.ndim - 2)`` dimensionl arrays otherwise
 def det(a: _ArrayLikeComplex_co) -> Any: ...
 
 @overload
-def lstsq(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, rcond: None | float = ...) -> tuple[
     NDArray[float64],
     NDArray[float64],
     int32,
     NDArray[float64],
 ]: ...
 @overload
-def lstsq(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, rcond: None | float = ...) -> tuple[
     NDArray[floating[Any]],
     NDArray[floating[Any]],
     int32,
     NDArray[floating[Any]],
 ]: ...
 @overload
-def lstsq(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: None | float = ...) -> tuple[
     NDArray[complexfloating[Any, Any]],
     NDArray[floating[Any]],
     int32,
@@ -272,7 +286,7 @@ def norm(
 def norm(
     x: ArrayLike,
     ord: None | float | L["fro", "nuc"] = ...,
-    axis: SupportsInt | SupportsIndex | Tuple[int, ...] = ...,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...] = ...,
     keepdims: bool = ...,
 ) -> Any: ...
 
@@ -281,4 +295,15 @@ def multi_dot(
     arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co],
     *,
     out: None | NDArray[Any] = ...,
+) -> Any: ...
+
+def diagonal(
+    x: ArrayLike,  # >= 2D array
+    offset: SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+def trace(
+    x: ArrayLike,  # >= 2D array
+    offset: SupportsIndex = ...,
+    dtype: DTypeLike = ...,
 ) -> Any: ...

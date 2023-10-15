@@ -5,13 +5,14 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
+import pickle
+
 import numpy as np
 import numpy.ma as ma
-from numpy import recarray
 from numpy.ma import masked, nomask
 from numpy.testing import temppath
 from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
     )
 from numpy.ma.mrecords import (
     MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
@@ -21,7 +22,6 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.compat import pickle
 
 
 class TestMRecords:
@@ -348,7 +348,7 @@ class TestMRecords:
 
 class TestView:
 
-    def setup(self):
+    def setup_method(self):
         (a, b) = (np.arange(10), np.random.rand(10))
         ndtype = [('a', float), ('b', float)]
         arr = np.array(list(zip(a, b)), dtype=ndtype)

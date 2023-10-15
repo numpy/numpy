@@ -2,7 +2,7 @@
 """
 Post-processes HTML and Latex files output by Sphinx.
 """
-import io
+
 
 def main():
     import argparse
@@ -15,13 +15,13 @@ def main():
     mode = args.mode
 
     for fn in args.file:
-        with io.open(fn, 'r', encoding="utf-8") as f:
+        with open(fn, encoding="utf-8") as f:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
             elif mode == 'tex':
                 lines = process_tex(f.readlines())
 
-        with io.open(fn, 'w', encoding="utf-8") as f:
+        with open(fn, 'w', encoding="utf-8") as f:
             f.write("".join(lines))
 
 def process_html(fn, lines):

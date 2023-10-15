@@ -22,7 +22,7 @@
 
 /*
  * This file contains a modified version of Ryan Juckett's Dragon4
- * implementation, obtained from http://www.ryanjuckett.com,
+ * implementation, obtained from https://www.ryanjuckett.com,
  * which has been ported from C++ to C and which has
  * modifications specific to printing floats in numpy.
  *

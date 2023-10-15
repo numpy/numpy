@@ -39,9 +39,6 @@ import re
 from git import Repo
 from github import Github
 
-if sys.version_info[:2] < (3, 6):
-    raise RuntimeError("Python version must be >= 3.6")
-
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 
 author_msg =\

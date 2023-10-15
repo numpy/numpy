@@ -1,6 +1,0 @@
-Add NEP 47-compatible dlpack support
-------------------------------------
-
-Add a ``ndarray.__dlpack__()`` method which returns a ``dlpack`` C structure
-wrapped in a ``PyCapsule``. Also add a ``np._from_dlpack(obj)`` function, where
-``obj`` supports ``__dlpack__()``, and returns an ``ndarray``.

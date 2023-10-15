@@ -1,8 +1,9 @@
-from typing import List, Any, Sequence, Mapping
+from collections.abc import Sequence, Mapping
+from typing import Any
 from numpy import matrix as matrix
-from numpy.typing import ArrayLike, DTypeLike, NDArray
+from numpy._typing import ArrayLike, DTypeLike, NDArray
 
-__all__: List[str]
+__all__: list[str]
 
 def bmat(
     obj: str | Sequence[ArrayLike] | NDArray[Any],

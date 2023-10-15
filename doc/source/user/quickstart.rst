@@ -193,7 +193,7 @@ state of the memory. By default, the dtype of the created array is
            [[1, 1, 1, 1],
             [1, 1, 1, 1],
             [1, 1, 1, 1]]], dtype=int16)
-    >>> np.empty((2, 3))
+    >>> np.empty((2, 3)) #doctest: +SKIP
     array([[3.73603959e-262, 6.02658058e-154, 6.55490914e-260],  # may vary
            [5.30498948e-313, 3.14673309e-307, 1.00000000e+000]])
 
@@ -230,8 +230,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.Generator.rand`,
-    `numpy.random.Generator.randn`,
+    `random.Generator.random`,
+    `random.Generator.normal`,
     `fromfunction`,
     `fromfile`
 
@@ -517,7 +517,7 @@ and other Python sequences.
     >>> for i in a:
     ...     print(i**(1 / 3.))
     ...
-    9.999999999999998
+    9.999999999999998  # may vary
     1.0
     9.999999999999998
     3.0
@@ -767,14 +767,6 @@ It is equivalent to `hstack` only for 2D arrays::
     array([[4., 3.],
            [2., 8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
-for any input arrays. In fact, `row_stack` is an alias for `vstack`::
-
-    >>> np.column_stack is np.hstack
-    False
-    >>> np.row_stack is np.vstack
-    True
-
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
@@ -868,9 +860,9 @@ copy.
     >>> def f(x):
     ...     print(id(x))
     ...
-    >>> id(a)  # id is a unique identifier of an object
+    >>> id(a)  # id is a unique identifier of an object #doctest: +SKIP
     148293216  # may vary
-    >>> f(a)
+    >>> f(a)   #doctest: +SKIP
     148293216  # may vary
 
 View or Shallow Copy
@@ -1272,6 +1264,7 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...         z[diverge] = r                          # avoid diverging too much
     ...
     ...     return divtime
+    >>> plt.clf()
     >>> plt.imshow(mandelbrot(400, 400))
 
 The second way of indexing with booleans is more similar to integer
@@ -1468,9 +1461,10 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> v = rg.normal(mu, sigma, 10000)
     >>> # Plot a normalized histogram with 50 bins
     >>> plt.hist(v, bins=50, density=True)       # matplotlib version (plot)
+    (array...)
     >>> # Compute the histogram with numpy and then plot it
     >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
-    >>> plt.plot(.5 * (bins[1:] + bins[:-1]), n)
+    >>> plt.plot(.5 * (bins[1:] + bins[:-1]), n) #doctest: +SKIP
 
 With Matplotlib >=3.4 you can also use ``plt.stairs(n, bins)``.
 
@@ -1480,7 +1474,7 @@ Further reading
 
 -  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
--  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
+-  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
--  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
--  :doc:`tutorial-svd <content/tutorial-svd>`
+-  A `matlab, R, IDL, NumPy/SciPy dictionary <https://mathesaurus.sourceforge.net/>`__
+-  :doc:`tutorial-svd <numpy-tutorials:content/tutorial-svd>`

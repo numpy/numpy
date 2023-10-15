@@ -1,13 +1,13 @@
 .. _routines.ma:
 
 Masked array operations
-***********************
+=======================
 
 .. currentmodule:: numpy
 
 
 Constants
-=========
+---------
 
 .. autosummary::
    :toctree: generated/
@@ -16,7 +16,7 @@ Constants
 
 
 Creation
-========
+--------
 
 From existing data
 ~~~~~~~~~~~~~~~~~~
@@ -31,6 +31,7 @@ From existing data
    ma.fromfunction
 
    ma.MaskedArray.copy
+   ma.diagflat
 
 
 Ones and zeros
@@ -52,7 +53,7 @@ Ones and zeros
 _____
 
 Inspecting the array
-====================
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -72,6 +73,9 @@ Inspecting the array
    ma.isMaskedArray
    ma.isMA
    ma.isarray
+   ma.isin
+   ma.in1d
+   ma.unique
 
 
    ma.MaskedArray.all
@@ -91,7 +95,7 @@ Inspecting the array
 _____
 
 Manipulating a MaskedArray
-==========================
+--------------------------
 
 Changing the shape
 ~~~~~~~~~~~~~~~~~~
@@ -141,7 +145,6 @@ Changing the number of dimensions
    ma.hstack
    ma.hsplit
    ma.mr_
-   ma.row_stack
    ma.vstack
 
 
@@ -162,7 +165,7 @@ Joining arrays
 _____
 
 Operations on masks
-===================
+-------------------
 
 Creating a mask
 ~~~~~~~~~~~~~~~
@@ -190,6 +193,7 @@ Finding masked data
 .. autosummary::
    :toctree: generated/
 
+   ma.ndenumerate
    ma.flatnotmasked_contiguous
    ma.flatnotmasked_edges
    ma.notmasked_contiguous
@@ -219,7 +223,7 @@ Modifying a mask
 _____
 
 Conversion operations
-======================
+----------------------
 
 > to a masked array
 ~~~~~~~~~~~~~~~~~~~
@@ -290,7 +294,7 @@ Filling a masked array
 _____
 
 Masked arrays arithmetic
-========================
+------------------------
 
 Arithmetic
 ~~~~~~~~~~
@@ -392,6 +396,17 @@ Clipping and rounding
 
    ma.MaskedArray.clip
    ma.MaskedArray.round
+
+Set operations
+~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+
+   ma.intersect1d
+   ma.setdiff1d
+   ma.setxor1d
+   ma.union1d
 
 
 Miscellanea

@@ -7,6 +7,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
@@ -20,19 +21,13 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
-#include "typeinfo.h"
-#if defined(__ARM_NEON__) || defined (__ARM_NEON)
-#include <arm_neon.h>
-#endif
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
-#endif
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -42,6 +37,9 @@
 #include "npy_cblas.h"
 #include "npy_buffer.h"
 
+#include "arraytypes.h"
+
+#include "umathmodule.h"
 
 /*
  * Define a stack allocated dummy array with only the minimum information set:
@@ -56,7 +54,7 @@
  * This is especially important for nonzero and copyswap, which may run with
  * the GIL released.
  */
-static NPY_INLINE PyArrayObject_fields
+static inline PyArrayObject_fields
 get_dummy_stack_array(PyArrayObject *orig)
 {
     PyArrayObject_fields new_fields;
@@ -69,7 +67,7 @@ get_dummy_stack_array(PyArrayObject *orig)
 
 
 /* check for sequences, but ignore the types numpy considers scalars */
-static NPY_INLINE npy_bool
+static inline npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
@@ -97,15 +95,37 @@ MyPyFloat_AsDouble(PyObject *obj)
     if (num == NULL) {
         return NPY_NAN;
     }
-    ret = PyFloat_AsDouble(num);
+    ret = PyFloat_AS_DOUBLE(num);
     Py_DECREF(num);
     return ret;
 }
 
+
+static float
+MyPyFloat_AsFloat(PyObject *obj)
+{
+    double d_val = MyPyFloat_AsDouble(obj);
+    float res = (float)d_val;
+    if (NPY_UNLIKELY(npy_isinf(res) && !npy_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+            return -1;
+        }
+    }
+    return res;
+}
+
+
 static npy_half
 MyPyFloat_AsHalf(PyObject *obj)
 {
-    return npy_double_to_half(MyPyFloat_AsDouble(obj));
+    double d_val = MyPyFloat_AsDouble(obj);
+    npy_half res = npy_double_to_half(d_val);
+    if (NPY_UNLIKELY(npy_half_isinf(res) && !npy_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+            return npy_double_to_half(-1.);
+        }
+    }
+    return res;
 }
 
 static PyObject *
@@ -154,6 +174,13 @@ MyPyLong_As@Type@ (PyObject *obj)
     return ret;
 }
 
+static @type@
+MyPyLong_As@Type@WithWrap(PyObject *obj, int *wraparound)
+{
+    *wraparound = 0;  /* Never happens within the function */
+    return MyPyLong_As@Type@(obj);
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -162,9 +189,10 @@ MyPyLong_As@Type@ (PyObject *obj)
  * #type = npy_ulong, npy_ulonglong#
  */
 static @type@
-MyPyLong_AsUnsigned@Type@ (PyObject *obj)
+MyPyLong_AsUnsigned@Type@WithWrap(PyObject *obj, int *wraparound)
 {
     @type@ ret;
+    *wraparound = 0;
     PyObject *num = PyNumber_Long(obj);
 
     if (num == NULL) {
@@ -173,11 +201,20 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
     ret = PyLong_AsUnsigned@Type@(num);
     if (PyErr_Occurred()) {
         PyErr_Clear();
+        *wraparound = 1;  /* negative wrapped to positive */
         ret = PyLong_As@Type@(num);
     }
     Py_DECREF(num);
     return ret;
 }
+
+static @type@
+MyPyLong_AsUnsigned@Type@(PyObject *obj)
+{
+    int wraparound;
+    return MyPyLong_AsUnsigned@Type@WithWrap(obj, &wraparound);
+}
+
 
 /**end repeat**/
 
@@ -186,8 +223,6 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  **                         GETITEM AND SETITEM                             **
  *****************************************************************************
  */
-
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
@@ -199,6 +234,88 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 
 /**begin repeat
  *
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #STYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG#
+ * #conv_type = npy_long*4, npy_longlong, npy_ulong*4, npy_ulonglong#
+ * #CSTYPE = LONG*4, LONGLONG, LONG*4, LONGLONG#
+ * #func = MyPyLong_AsLong*4, MyPyLong_AsLongLong,
+ *         MyPyLong_AsLong*2, MyPyLong_AsUnsignedLong*2,
+ *         MyPyLong_AsUnsignedLongLong#
+ */
+
+/*
+ * Helper for conversion from Python integers.  This uses the same conversion
+ * function as below for compatibility (which may seem strange).
+ * However, it adds more strict integer overflow checks to prevent mainly
+ * conversion of negative integers.  These are considered deprecated, which is
+ * related to NEP 50 (but somewhat independent).
+ */
+static int
+@TYPE@_safe_pyint_setitem(PyObject *obj, @type@ *result)
+{
+    /* Input is guaranteed to be a Python integer */
+    assert(PyLong_Check(obj));
+    int wraparound;
+    @conv_type@ value = @func@WithWrap(obj, &wraparound);
+    if (value == (@conv_type@)-1 && PyErr_Occurred()) {
+        return -1;
+    }
+    *result = (@type@)value;
+
+    if (wraparound
+#if NPY_SIZEOF_@STYPE@ < NPY_SIZEOF_@CSTYPE@
+            || *result != value
+#endif
+            ) {
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_@TYPE@);
+
+        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION || (
+                    npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+                        && !npy_give_promotion_warnings())) {
+            /*
+             * This path will be taken both for the "promotion" case such as
+             * `uint8_arr + 123` as well as the assignment case.
+             * The "legacy" path should only ever be taken for assignment
+             * (legacy promotion will prevent overflows by promoting up)
+             * so a normal deprecation makes sense.
+             * When weak promotion is active, we use "future" behavior unless
+             * warnings were explicitly opt-in.
+             */
+            if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                    "NumPy will stop allowing conversion of out-of-bound "
+                    "Python integers to integer arrays.  The conversion "
+                    "of %.100R to %S will fail in the future.\n"
+                    "For the old behavior, usually:\n"
+                    "    np.array(value).astype(dtype)\n"
+                    "will give the desired result (the cast overflows).",
+                    obj, descr) < 0) {
+                Py_DECREF(descr);
+                return -1;
+            }
+            Py_DECREF(descr);
+            return 0;
+        }
+        else {
+            /* Live in the future, outright error: */
+            PyErr_Format(PyExc_OverflowError,
+                    "Python integer %R out of bounds for %S", obj, descr);
+            Py_DECREF(descr);
+            return -1;
+            }
+        assert(0);
+    }
+    return 0;
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+ *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE#
  * #func1 = PyBool_FromLong, PyLong_FromLong*6, PyLong_FromUnsignedLong*2,
@@ -206,7 +323,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *          MyPyFloat_FromHalf, PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
  *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
- *          MyPyFloat_AsHalf, MyPyFloat_AsDouble*2#
+ *          MyPyFloat_AsHalf, MyPyFloat_AsFloat, MyPyFloat_AsDouble#
  * #type = npy_bool,
  *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_long, npy_uint, npy_ulong, npy_longlong, npy_ulonglong,
@@ -215,7 +332,8 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *          npy_half, npy_float, npy_double#
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
  *         LongLong, ULongLong, Half, Float, Double#
-*/
+ * #is_int = 0,1*10,0*3#
+ */
 static PyObject *
 @TYPE@_getitem(void *input, void *vap)
 {
@@ -233,11 +351,25 @@ static PyObject *
     }
 }
 
-static int
+NPY_NO_EXPORT int
 @TYPE@_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
     @type@ temp;  /* ensures alignment */
+
+#if @is_int@
+    if (PyLong_Check(op)) {
+        /*
+         * When weak promotion is enabled (using NEP 50) we also use more
+         * strict parsing of integers:  All out-of-bound Python integer
+         * parsing fails.
+         */
+        if (@TYPE@_safe_pyint_setitem(op, &temp) < 0) {
+            return -1;
+        }
+    }
+    else  /* continue with if below */
+#endif
 
     if (PyArray_IsScalar(op, @kind@)) {
         temp = PyArrayScalar_VAL(op, @kind@);
@@ -259,7 +391,7 @@ static int
         return -1;
     }
     if (ap == NULL || PyArray_ISBEHAVED(ap)) {
-        assert(npy_is_aligned(ov, _ALIGN(@type@)));
+        assert(npy_is_aligned(ov, NPY_ALIGNOF(@type@)));
         *((@type@ *)ov)=temp;
     }
     else {
@@ -270,6 +402,7 @@ static int
 }
 
 /**end repeat**/
+
 
 /**begin repeat
  *
@@ -307,14 +440,14 @@ static PyObject *
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
+ * #suffix = f, , l#
  */
-static int
+NPY_NO_EXPORT int
 @NAME@_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
     @type@ temp;
-    int rsize;
 
     if (PyArray_IsZeroDim(op)) {
         return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
@@ -367,22 +500,30 @@ static int
                 return -1;
             }
         }
-        temp.real = (@ftype@) oop.real;
-        temp.imag = (@ftype@) oop.imag;
+        npy_csetreal@suffix@(&temp, (@ftype@) oop.real);
+        npy_csetimag@suffix@(&temp, (@ftype@) oop.imag);
+
+#if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
+        /* Overflow could have occurred converting double to float */
+        if (NPY_UNLIKELY((npy_isinf(npy_creal@suffix@(temp)) && !npy_isinf(oop.real)) ||
+                         (npy_isinf(npy_cimag@suffix@(temp)) && !npy_isinf(oop.imag)))) {
+            if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+                return -1;
+            }
+        }
+#endif
     }
 
-    memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
-    if (PyArray_ISBYTESWAPPED(ap)) {
+    memcpy(ov, &temp, NPY_SIZEOF_@NAME@);
+    if (ap != NULL && PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@ftype@));
     }
-    rsize = sizeof(@ftype@);
-    copy_and_swap(ov, &temp, rsize, 2, rsize, PyArray_ISBYTESWAPPED(ap));
     return 0;
 }
 
 /**end repeat**/
 
-static NPY_INLINE npy_longdouble
+static inline npy_longdouble
 string_to_long_double(PyObject*op)
 {
     char *s;
@@ -457,7 +598,7 @@ LONGDOUBLE_getitem(void *ip, void *ap)
     return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
-static int
+NPY_NO_EXPORT int
 LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
@@ -668,7 +809,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
 
 /* OBJECT */
 
-#define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
+#define NPY__ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 
 static PyObject *
 OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
@@ -676,6 +817,7 @@ OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
     PyObject *obj;
     memcpy(&obj, ip, sizeof(obj));
     if (obj == NULL) {
+        /* We support NULL, but still try to guarantee this never happens! */
         Py_RETURN_NONE;
     }
     else {
@@ -693,6 +835,7 @@ OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
     memcpy(&obj, ov, sizeof(obj));
 
     Py_INCREF(op);
+    /* A newly created array/buffer may only be NULLed, so XDECREF */
     Py_XDECREF(obj);
 
     memcpy(ov, &op, sizeof(op));
@@ -772,7 +915,7 @@ VOID_getitem(void *input, void *vap)
          *       could have special handling.
          */
         PyObject *base = (PyObject *)ap;
-        while (Py_TYPE(base) == NULL) {
+        while (base != NULL && Py_TYPE(base) == NULL) {
             base = PyArray_BASE((PyArrayObject *)base);
         }
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
@@ -780,6 +923,15 @@ VOID_getitem(void *input, void *vap)
                 shape.len, shape.ptr, NULL, ip,
                 PyArray_FLAGS(ap) & ~NPY_ARRAY_F_CONTIGUOUS,
                 NULL, base);
+        if (base == NULL) {
+            /*
+             * Need to create a copy, or we may point to wrong data.  This path
+             * is taken when no "valid" array is passed.  This happens for
+             * casts.
+             */
+            PyObject *copy = PyArray_FromArray(ret, NULL, NPY_ARRAY_ENSURECOPY);
+            Py_SETREF(ret, (PyArrayObject *)copy);
+        }
         npy_free_cache_dim_obj(shape);
         return (PyObject *)ret;
     }
@@ -1157,13 +1309,22 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip++;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@ && @floatingpoint@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip++;
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)*ip++;
 #endif
         *op++ = t;
     }
@@ -1183,13 +1344,22 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip;
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)*ip;
 #endif
         *op++ = t;
         ip += 2;
@@ -1352,6 +1522,7 @@ HALF_to_BOOL(void *input, void *output, npy_intp n,
  *
  * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #fromtype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #ft = f, , l#
  */
 static void
 @FROMTYPE@_to_BOOL(void *input, void *output, npy_intp n,
@@ -1361,8 +1532,8 @@ static void
     npy_bool *op = output;
 
     while (n--) {
-        *op = (npy_bool)((ip->real != NPY_FALSE) ||
-                (ip->imag != NPY_FALSE));
+        *op = (npy_bool)((npy_creal@ft@(*ip) != NPY_FALSE) ||
+                (npy_cimag@ft@(*ip) != NPY_FALSE));
         op++;
         ip++;
     }
@@ -1601,13 +1772,6 @@ static void
         if (temp == NULL) {
             return;
         }
-#if @is_string_to_bool@
-        /* Legacy behaviour converts strings to integers before going to bool */
-        Py_SETREF(temp, PyNumber_Long(temp));
-        if (temp == NULL) {
-            return;
-        }
-#endif
         if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
@@ -1770,6 +1934,7 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
+ * #suffix = f, #
  */
 static int
 @fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
@@ -1784,7 +1949,7 @@ static int
     char next = getc(fp);
     if ((next == '+') || (next == '-')) {
         // Imaginary component specified
-        output.real = result;
+        npy_csetreal@suffix@(&output, result);
         // Revert peek and read imaginary component
         ungetc(next, fp);
         ret_imag = NumPyOS_ascii_ftolf(fp, &result);
@@ -1792,23 +1957,23 @@ static int
         next = getc(fp);
         if ((ret_imag == 1) && (next == 'j')) {
             // If read is successful and the immediate following char is j
-            output.imag = result;
+            npy_csetimag@suffix@(&output, result);
         }
         else {
-            output.imag = 0;
+            npy_csetimag@suffix@(&output, 0);
             // Push an invalid char to trigger the not everything is read error
             ungetc('a', fp);
         }
     }
     else if (next == 'j') {
         // Real component not specified
-        output.real = 0;
-        output.imag = result;
+        npy_csetreal@suffix@(&output, 0);
+        npy_csetimag@suffix@(&output, result);
     }
     else {
         // Imaginary component not specified
-        output.real = result;
-        output.imag = 0.;
+        npy_csetreal@suffix@(&output, result);
+        npy_csetimag@suffix@(&output, 0.);
         // Next character is not + / - / j. Revert peek.
         ungetc(next, fp);
     }
@@ -1913,6 +2078,7 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 /**begin repeat
  * #fname = CFLOAT, CDOUBLE#
  * #type = npy_cfloat, npy_cdouble#
+ * #suffix = f, #
  */
 static int
 @fname@_fromstr(char *str, void *ip, char **endptr,
@@ -1925,14 +2091,14 @@ static int
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
-        output.real = result;
+        npy_csetreal@suffix@(&output, result);
         // Reading imaginary component
         char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
         if (endptr && *endptr[0] == 'j') {
             // Read is successful if the immediate following char is j
-            output.imag = result;
+            npy_csetimag@suffix@(&output, result);
             // Skip j
             ++*endptr;
         }
@@ -1942,20 +2108,20 @@ static int
              * read error
              */
             endptr = prev;
-            output.imag = 0;
+            npy_csetimag@suffix@(&output, 0);
         }
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
-        output.real = 0;
-        output.imag = result;
+        npy_csetreal@suffix@(&output, 0);
+        npy_csetimag@suffix@(&output, result);
         // Skip j
         ++*endptr;
     }
     else {
         // Imaginary component not specified
-        output.real = result;
-        output.imag = 0.;
+        npy_csetreal@suffix@(&output, result);
+        npy_csetimag@suffix@(&output, 0.);
     }
     *(@type@ *)ip = output;
     return 0;
@@ -1980,7 +2146,7 @@ static int
  */
 
 
-static NPY_INLINE void
+static inline void
 _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
              npy_intp n, int elsize) {
     if (src == NULL) {
@@ -1995,7 +2161,7 @@ _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
     }
 }
 
-static NPY_INLINE void
+static inline void
 _basic_copy(void *dst, void *src, int elsize) {
     if (src == NULL) {
         return;
@@ -2256,10 +2422,10 @@ OBJECT_copyswapn(PyObject **dst, npy_intp dstride, PyObject **src,
 {
     npy_intp i;
     if (src != NULL) {
-        if (__ALIGNED(dst, sizeof(PyObject **))
-                && __ALIGNED(src, sizeof(PyObject **))
-                && __ALIGNED(dstride, sizeof(PyObject **))
-                && __ALIGNED(sstride, sizeof(PyObject **))) {
+        if (NPY__ALIGNED(dst, sizeof(PyObject **))
+                && NPY__ALIGNED(src, sizeof(PyObject **))
+                && NPY__ALIGNED(dstride, sizeof(PyObject **))
+                && NPY__ALIGNED(sstride, sizeof(PyObject **))) {
             dstride /= sizeof(PyObject **);
             sstride /= sizeof(PyObject **);
             for (i = 0; i < n; i++) {
@@ -2296,8 +2462,8 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap),
 {
 
     if (src != NULL) {
-        if (__ALIGNED(dst,sizeof(PyObject **)) &&
-                __ALIGNED(src,sizeof(PyObject **))) {
+        if (NPY__ALIGNED(dst,sizeof(PyObject **)) &&
+                NPY__ALIGNED(src,sizeof(PyObject **))) {
             Py_XINCREF(*src);
             Py_XDECREF(*dst);
             *dst = *src;
@@ -2614,97 +2780,64 @@ static npy_bool
  *
  * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #suffix = f, , l#
  */
 static npy_bool
 @fname@_nonzero (char *ip, PyArrayObject *ap)
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
-        return (npy_bool) ((ptmp->real != 0) || (ptmp->imag != 0));
+        return (npy_bool) ((npy_creal@suffix@(*ptmp) != 0) || (npy_cimag@suffix@(*ptmp) != 0));
     }
     else {
         @type@ tmp;
         PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
                                        ap);
-        return (npy_bool) ((tmp.real != 0) || (tmp.imag != 0));
+        return (npy_bool) ((npy_creal@suffix@(tmp) != 0) || (npy_cimag@suffix@(tmp) != 0));
     }
 }
 /**end repeat**/
 
 
-#define WHITESPACE " \t\n\r\v\f"
-#define WHITELEN 6
-
-static npy_bool
-Py_STRING_ISSPACE(char ch)
-{
-    char white[] = WHITESPACE;
-    int j;
-    npy_bool space = NPY_FALSE;
-
-    for (j = 0; j < WHITELEN; j++) {
-        if (ch == white[j]) {
-            space = NPY_TRUE;
-            break;
-        }
-    }
-    return space;
-}
 
 static npy_bool
 STRING_nonzero (char *ip, PyArrayObject *ap)
 {
     int len = PyArray_DESCR(ap)->elsize;
-    int i;
-    npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
 
-    for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
+    for (int i = 0; i < len; i++) {
+        if (ip[i]) {
+            return NPY_TRUE;
         }
-        else if (seen_null || !Py_STRING_ISSPACE(*ip)) {
-            nonz = NPY_TRUE;
-            break;
-        }
-        ip++;
     }
-    return nonz;
+
+    return NPY_FALSE;
 }
 
 static npy_bool
-UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
+UNICODE_nonzero (char *ip, PyArrayObject *ap)
 {
-    int len = PyArray_DESCR(ap)->elsize >> 2;
-    int i;
-    npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
-    char *buffer = NULL;
-
-    if (PyArray_ISBYTESWAPPED(ap) || !PyArray_ISALIGNED(ap)) {
-        buffer = PyArray_malloc(PyArray_DESCR(ap)->elsize);
-        if (buffer == NULL) {
-            return nonz;
+    if (PyArray_ISALIGNED(ap)) {
+        /* go character by character */
+        Py_UCS4 *chars = (Py_UCS4 *)ip;
+        int len = PyArray_DESCR(ap)->elsize / 4;
+        for (int i = 0; i < len; i++) {
+            if (chars[i]) {
+                return NPY_TRUE;
+            }
         }
-        memcpy(buffer, ip, PyArray_DESCR(ap)->elsize);
-        if (PyArray_ISBYTESWAPPED(ap)) {
-            byte_swap_vector(buffer, len, 4);
+    }
+    else {
+        /* go char/byte by char/byte, it doesn't matter where the nonzero is */
+        int len = PyArray_DESCR(ap)->elsize;
+        for (int i = 0; i < len; i++) {
+            if (ip[i]) {
+                return NPY_TRUE;
+            }
         }
-        ip = (npy_ucs4 *)buffer;
     }
 
-    for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
-        }
-        else if (seen_null || !Py_UNICODE_ISSPACE(*ip)) {
-            nonz = NPY_TRUE;
-            break;
-        }
-        ip++;
-    }
-    PyArray_free(buffer);
-    return nonz;
+    return NPY_FALSE;
 }
 
 static npy_bool
@@ -2715,7 +2848,11 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         if (*ip == NULL) {
             return NPY_FALSE;
         }
-        return (npy_bool) PyObject_IsTrue(*ip);
+        int istrue = PyObject_IsTrue(*ip);
+        if (istrue == -1) {
+            return (npy_bool) -1;
+        }
+        return (npy_bool) istrue;
     }
     else {
         PyObject *obj;
@@ -2723,7 +2860,11 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         if (obj == NULL) {
             return NPY_FALSE;
         }
-        return (npy_bool) PyObject_IsTrue(obj);
+        int istrue = PyObject_IsTrue(obj);
+        if (istrue == -1) {
+            return (npy_bool) -1;
+        }
+        return (npy_bool) istrue;
     }
 }
 
@@ -2757,7 +2898,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             }
 
             dummy_fields.descr = new;
-            if ((new->alignment > 1) && !__ALIGNED(ip + offset,
+            if ((new->alignment > 1) && !NPY__ALIGNED(ip + offset,
                         new->alignment)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
@@ -2782,7 +2923,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
     return nonz;
 }
 
-#undef __ALIGNED
+#undef NPY__ALIGNED
 
 
 /*
@@ -2849,7 +2990,7 @@ static int
 #define LT(a,b) ((a) < (b) || ((b) != (b) && (a) ==(a)))
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
@@ -2869,7 +3010,7 @@ static int
 
 
 static int
-C@TYPE@_compare(@type@ *pa, @type@ *pb)
+C@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ ar = pa[0];
     const @type@ ai = pa[1];
@@ -2924,7 +3065,7 @@ C@TYPE@_compare(@type@ *pa, @type@ *pb)
  */
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
@@ -3176,77 +3317,21 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-#if defined(__ARM_NEON__) || defined (__ARM_NEON)
-    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
-    {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-    }
-#endif
+
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
-
-static int
-BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
-            PyArrayObject *NPY_UNUSED(aip))
-
-{
-    npy_intp i = 0;
-    /* memcmp like logical_and on i386 is maybe slower for small arrays */
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-    const __m128i zero = _mm_setzero_si128();
-    for (; i < n - (n % 32); i+=32) {
-        __m128i d1 = _mm_loadu_si128((__m128i*)&ip[i]);
-        __m128i d2 = _mm_loadu_si128((__m128i*)&ip[i + 16]);
-        d1 = _mm_cmpeq_epi8(d1, zero);
-        d2 = _mm_cmpeq_epi8(d2, zero);
-        if (_mm_movemask_epi8(_mm_min_epu8(d1, d2)) != 0xFFFF) {
-            break;
-        }
-    }
-#else
-    #if defined(__ARM_NEON__) || defined (__ARM_NEON)
-        uint8x16_t zero = vdupq_n_u8(0);
-        for(; i < n - (n % 32); i+=32) {
-            uint8x16_t d1 = vld1q_u8((uint8_t *)&ip[i]);
-            uint8x16_t d2 = vld1q_u8((uint8_t *)&ip[i + 16]);
-            d1 = vceqq_u8(d1, zero);
-            d2 = vceqq_u8(d2, zero);
-            if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
-                break;
-            }
-        }
-    #endif
-#endif
-    for (; i < n; i++) {
-        if (ip[i]) {
-            *max_ind = i;
-            return 0;
-        }
-    }
-    *max_ind = 0;
-    return 0;
-}
 
 /**begin repeat
  *
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG,
- *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          DATETIME, TIMEDELTA#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_float, npy_double, npy_longdouble,
+ * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
- * #isfloat = 0*10, 1*7, 0*2#
- * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
- * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
- * #iscomplex = 0*14, 1*3, 0*2#
- * #incr = ip++*14, ip+=2*3, ip++*2#
- * #isdatetime = 0*17, 1*2#
+ * #isfloat = 1*4, 0*2#
+ * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
+ * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #iscomplex = 0, 1*3, 0*2#
+ * #incr = ip++, ip+=2*3, ip++*2#
+ * #isdatetime = 0*4, 1*2#
  */
 static int
 @fname@_argmax(@type@ *ip, npy_intp n, npy_intp *max_ind,
@@ -3337,22 +3422,16 @@ BOOL_argmin(npy_bool *ip, npy_intp n, npy_intp *min_ind,
 
 /**begin repeat
  *
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG,
- *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          DATETIME, TIMEDELTA#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_float, npy_double, npy_longdouble,
+ * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
- * #isfloat = 0*10, 1*7, 0*2#
- * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
- * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
- * #iscomplex = 0*14, 1*3, 0*2#
- * #incr = ip++*14, ip+=2*3, ip++*2#
- * #isdatetime = 0*17, 1*2#
+ * #isfloat = 1*4, 0*2#
+ * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
+ * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #iscomplex = 0, 1*3, 0*2#
+ * #incr = ip++, ip+=2*3, ip++*2#
+ * #isdatetime = 0*4, 1*2#
  */
 static int
 @fname@_argmin(@type@ *ip, npy_intp n, npy_intp *min_ind,
@@ -3409,7 +3488,7 @@ static int
             *min_ind = i;
             break;
         }
-#endif 
+#endif
         if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
             mp = *ip;
             *min_ind = i;
@@ -3640,7 +3719,8 @@ NPY_NO_EXPORT void
             CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             @type@ tmp[2];
 
-            CBLAS_FUNC(cblas_@prefix@dotu_sub)((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
+            CBLAS_FUNC(cblas_@prefix@dotu_sub)(
+                    (CBLAS_INT)chunk, ip1, is1b, ip2, is2b, tmp);
             sum[0] += (double)tmp[0];
             sum[1] += (double)tmp[1];
             /* use char strides here */
@@ -3692,17 +3772,23 @@ BOOL_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
     *((npy_bool *)op) = tmp;
 }
 
+/*
+ * `dot` does not make sense for times, for DATETIME it never worked.
+ *  For timedelta it does/did , but should probably also just be removed.
+ */
+#define DATETIME_dot NULL
+
 /**begin repeat
  *
  * #name = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         LONGDOUBLE, DATETIME, TIMEDELTA#
+ *         LONGDOUBLE, TIMEDELTA#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_longdouble, npy_datetime, npy_timedelta#
+ *         npy_longdouble, npy_timedelta#
  * #out = npy_long, npy_ulong, npy_long, npy_ulong, npy_long, npy_ulong,
  *        npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *        npy_longdouble, npy_datetime, npy_timedelta#
+ *        npy_longdouble, npy_timedelta#
  */
 static void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
@@ -3805,7 +3891,18 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
  */
 
 
-#define BOOL_fill NULL
+/* Boolean fill never works, but define it so that it works up to length 2 */
+static int
+BOOL_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyErr_SetString(PyExc_TypeError,
+            "arange() is only supported for booleans when the result has at "
+            "most length 2.");
+    NPY_DISABLE_C_API;
+    return -1;
+}
 
 /* this requires buffer to be filled with objects or NULL */
 static int
@@ -3890,6 +3987,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
  *
  * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #t = f, , l#
 */
 static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
@@ -3898,16 +3996,15 @@ static int
     @type@ start;
     @type@ delta;
 
-    start.real = buffer->real;
-    start.imag = buffer->imag;
-    delta.real = buffer[1].real;
-    delta.imag = buffer[1].imag;
-    delta.real -= start.real;
-    delta.imag -= start.imag;
+    npy_csetreal@t@(&start, npy_creal@t@(*buffer));
+    npy_csetimag@t@(&start, npy_cimag@t@(*buffer));
+    npy_csetreal@t@(&delta, npy_creal@t@(buffer[1]) - npy_creal@t@(start));
+    npy_csetimag@t@(&delta, npy_cimag@t@(buffer[1]) - npy_cimag@t@(start));
+
     buffer += 2;
     for (i = 2; i < length; i++, buffer++) {
-        buffer->real = start.real + i*delta.real;
-        buffer->imag = start.imag + i*delta.imag;
+        npy_csetreal@t@(buffer, npy_creal@t@(start) + i*npy_creal@t@(delta));
+        npy_csetimag@t@(buffer, npy_cimag@t@(start) + i*npy_cimag@t@(delta));
     }
     return 0;
 }
@@ -4174,9 +4271,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
     NULL,
-    (PyArray_FastClipFunc *)NULL,
-    (PyArray_FastPutmaskFunc *)NULL,
-    (PyArray_FastTakeFunc *)NULL,
+    NULL,
+    NULL,
+    NULL,
     (PyArray_ArgFunc*)@from@_argmin
 };
 
@@ -4200,7 +4297,7 @@ static PyArray_Descr @from@_Descr = {
     /* elsize */
     0,
     /* alignment */
-    _ALIGN(@align@),
+    NPY_ALIGNOF(@align@),
     /* subarray */
     NULL,
     /* fields */
@@ -4324,9 +4421,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
     NULL,
-    (PyArray_FastClipFunc*)NULL,
-    (PyArray_FastPutmaskFunc*)NULL,
-    (PyArray_FastTakeFunc*)NULL,
+    NULL,
+    NULL,
+    NULL,
     (PyArray_ArgFunc*)@from@_argmin
 };
 
@@ -4350,7 +4447,7 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* elsize */
     sizeof(@fromtype@),
     /* alignment */
-    _ALIGN(@fromtype@),
+    NPY_ALIGNOF(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4488,22 +4585,64 @@ PyArray_DescrFromType(int type)
 NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict)
 {
-    PyObject *infodict, *s;
+    PyObject *infodict = NULL;
     int i;
 
     PyArray_Descr *dtype;
     PyObject *cobj, *key;
 
+    // SIMD runtime dispatching
+    #ifndef NPY_DISABLE_OPTIMIZATION
+        #include "argfunc.dispatch.h"
+    #endif
+    /**begin repeat
+     * #FROM = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+     *         LONG, ULONG, LONGLONG, ULONGLONG,
+     *         FLOAT, DOUBLE, LONGDOUBLE#
+     * #NAME = Byte, UByte, Short, UShort, Int, UInt,
+     *         Long, ULong, LongLong, ULongLong,
+     *         Float, Double, LongDouble#
+     */
+    /**begin repeat1
+     * #func = argmax, argmin#
+     */
+    NPY_CPU_DISPATCH_CALL_XB(_Py@NAME@_ArrFuncs.@func@ = (PyArray_ArgFunc*)@FROM@_@func@);
+    {
+        char sig[2] = {NPY_@FROM@LTR , '\0'};
+        NPY_CPU_DISPATCH_TRACE("@func@", sig);
+    }
+    /**end repeat1**/
+    /**end repeat**/
+    NPY_CPU_DISPATCH_CALL_XB(_PyBool_ArrFuncs.argmax = (PyArray_ArgFunc*)BOOL_argmax);
+    NPY_CPU_DISPATCH_TRACE("argmax", "?");
     /*
      * Override the base class for all types, eventually all of this logic
      * should be defined on the class and inherited to the scalar.
      * (NPY_HALF is the largest builtin one.)
      */
-    for (i = 0; i <= NPY_HALF; i++) {
-        if (dtypemeta_wrap_legacy_descriptor(_builtin_descrs[i]) < 0) {
-            return -1;
-        }
+    /**begin repeat
+     *
+     * #NAME = BOOL,
+     *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+     *         LONG, ULONG, LONGLONG, ULONGLONG,
+     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+     *         OBJECT, STRING, UNICODE, VOID,
+     *         DATETIME, TIMEDELTA#
+     */
+    if (dtypemeta_wrap_legacy_descriptor(
+            _builtin_descrs[NPY_@NAME@],
+            "numpy.dtypes." NPY_@NAME@_Name "DType",
+#ifdef NPY_@NAME@_alias
+            "numpy.dtypes." NPY_@NAME@_Alias "DType"
+#else
+            NULL
+#endif
+            ) < 0) {
+        return -1;
     }
+
+    /**end repeat**/
 
     /*
      * Add cast functions for the new types
@@ -4584,8 +4723,6 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
-    _letter_to_num[NPY_STRINGLTR2] = NPY_STRING;
-
     /**begin repeat
       * #name = BOOL,
       *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
@@ -4616,196 +4753,88 @@ set_typeinfo(PyObject *dict)
     int ret;
     /**begin repeat
      *
-     * #name = BOOL,
+     * #NAME = BOOL,
+     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+     *         STRING, UNICODE, VOID, OBJECT,
+     *         DATETIME, TIMEDELTA,
      *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-     *         INTP, UINTP,
      *         LONG, ULONG, LONGLONG, ULONGLONG#
-     * #uname = BOOL,
-     *          BYTE*2, SHORT*2, INT*2,
-     *          INTP*2,
-     *          LONG*2, LONGLONG*2#
      * #Name = Bool,
+     *         Half, Float, Double, LongDouble,
+     *         CFloat, CDouble, CLongDouble,
+     *         Bytes, Str, Void, Object,
+     *         DateTime64, TimeDelta64,
      *         Byte, UByte, Short, UShort, Int, UInt,
-     *         Intp, UIntp,
      *         Long, ULong, LongLong, ULongLong#
-     * #type = npy_bool,
-     *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
-     *         npy_intp, npy_uintp,
-     *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
-     * #max= 1,
-     *       NPY_MAX_BYTE, NPY_MAX_UBYTE, NPY_MAX_SHORT,
-     *       NPY_MAX_USHORT, NPY_MAX_INT, PyLong_FromUnsignedLong(NPY_MAX_UINT),
-     *       PyLong_FromLongLong((npy_longlong) NPY_MAX_INTP),
-     *       PyLong_FromUnsignedLongLong((npy_ulonglong) NPY_MAX_UINTP),
-     *       NPY_MAX_LONG,
-     *       PyLong_FromUnsignedLong((npy_ulong) NPY_MAX_ULONG),
-     *       PyLong_FromLongLong((npy_longlong) NPY_MAX_LONGLONG),
-     *       PyLong_FromUnsignedLongLong((npy_ulonglong) NPY_MAX_ULONGLONG)#
-     * #min = 0, NPY_MIN_BYTE, 0, NPY_MIN_SHORT, 0, NPY_MIN_INT, 0,
-     *        PyLong_FromLongLong((npy_longlong) NPY_MIN_INTP),
-     *        0, NPY_MIN_LONG, 0,
-     *        PyLong_FromLongLong((npy_longlong) NPY_MIN_LONGLONG), 0#
-     * #cx = i*6, N, N, N, l, N, N, N#
-     * #cn = i*7, N, i, l, i, N, i#
      */
 
-    s = PyArray_typeinforanged(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, _ALIGN(@type@),
-        Py_BuildValue("@cx@", @max@),
-        Py_BuildValue("@cn@", @min@),
-        &Py@Name@ArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "@name@", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-
-
-    /**end repeat**/
-
-
-    /**begin repeat
-     *
-     * #type = npy_half, npy_float, npy_double, npy_longdouble,
-     *         npy_cfloat, npy_cdouble, npy_clongdouble#
-     * #name = HALF, FLOAT, DOUBLE, LONGDOUBLE,
-     *         CFLOAT, CDOUBLE, CLONGDOUBLE#
-     * #Name = Half, Float, Double, LongDouble,
-     *         CFloat, CDouble, CLongDouble#
+    /*
+     * Add the scalar dtypes with their names and aliases (integers have them)
+     * to the dict to populate the namespace in Python.
+     * Note that we do lose one piece of information due to intp/uintp since
+     * they are strict aliases and we do not add the "p" and "P" character
+     * codes for them.
      */
-    s = PyArray_typeinfo(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        _ALIGN(@type@), &Py@Name@ArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "@name@", s);
-    Py_DECREF(s);
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, NPY_@NAME@_name, (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
+    }
+#ifdef NPY_@NAME@_alias
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, NPY_@NAME@_alias, (PyObject *)dtype);
+    Py_DECREF(dtype);
+    if (ret < 0) {
+        goto error;
+    }
+#endif
+
+    dtype = PyArray_DescrFromType(NPY_@NAME@);
+    ret = PyDict_SetItemString(infodict, "NPY_@NAME@", (PyObject *)dtype);
+    Py_DECREF(dtype);
+    if (ret < 0) {
+        goto error;
     }
 
     /**end repeat**/
 
-    s = PyArray_typeinfo(
-        NPY_OBJECTLTR, NPY_OBJECT, sizeof(PyObject *) * CHAR_BIT,
-        _ALIGN(PyObject *),
-        &PyObjectArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "OBJECT", s);
-    Py_DECREF(s);
+    /* Intp and UIntp are an additional alias */
+    dtype = PyArray_DescrFromType(NPY_INTP);
+    ret = PyDict_SetItemString(infodict, "intp", (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
     }
-    s = PyArray_typeinfo(
-        NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
-        &PyStringArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "STRING", s);
-    Py_DECREF(s);
+    dtype = PyArray_DescrFromType(NPY_UINTP);
+    ret = PyDict_SetItemString(infodict, "uintp", (PyObject *)dtype);
+    Py_DECREF(dtype);
     if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinfo(
-        NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
-        &PyUnicodeArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "UNICODE", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinfo(
-        NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
-        &PyVoidArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "VOID", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinforanged(
-        NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
-        _ALIGN(npy_datetime),
-        MyPyLong_FromInt64(NPY_MAX_DATETIME),
-        MyPyLong_FromInt64(NPY_MIN_DATETIME),
-        &PyDatetimeArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "DATETIME", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    s = PyArray_typeinforanged(
-        NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
-        _ALIGN(npy_timedelta),
-        MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
-        MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
-        &PyTimedeltaArrType_Type
-    );
-    if (s == NULL) {
-        Py_DECREF(infodict);
-        return -1;
-    }
-    ret = PyDict_SetItemString(infodict, "TIMEDELTA", s);
-    Py_DECREF(s);
-    if (ret < 0) {
-        Py_DECREF(infodict);
-        return -1;
+        goto error;
     }
 
-#define SETTYPE(name)                                   \
-    Py_INCREF(&Py##name##ArrType_Type);                 \
-    if (PyDict_SetItemString(infodict, #name,           \
-            (PyObject *)&Py##name##ArrType_Type) < 0) { \
-        Py_DECREF(infodict);                            \
-        return -1;                                      \
+    /*
+     * Add the abstract scalar types to the `_multiarray_umath` namespace.
+     * (duplicates making the name lowercase)
+     */
+#define SETTYPE(Name, name)                                    \
+    Py_INCREF(&Py##Name##ArrType_Type);                  \
+    if (PyDict_SetItemString(dict, #name,                \
+            (PyObject *)&Py##Name##ArrType_Type) < 0) {  \
+        goto error;                                      \
     }
 
-    SETTYPE(Generic);
-    SETTYPE(Number);
-    SETTYPE(Integer);
-    SETTYPE(Inexact);
-    SETTYPE(SignedInteger);
-    SETTYPE(UnsignedInteger);
-    SETTYPE(Floating);
-    SETTYPE(ComplexFloating);
-    SETTYPE(Flexible);
-    SETTYPE(Character);
+    SETTYPE(Generic, generic);
+    SETTYPE(Number, number);
+    SETTYPE(Integer, integer);
+    SETTYPE(Inexact, inexact);
+    SETTYPE(SignedInteger, signedinteger);
+    SETTYPE(UnsignedInteger, unsignedinteger);
+    SETTYPE(Floating, floating);
+    SETTYPE(ComplexFloating, complexfloating);
+    SETTYPE(Flexible, flexible);
+    SETTYPE(Character, character);
 
 #undef SETTYPE
 
@@ -4815,6 +4844,10 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     return 0;
+
+  error:
+    Py_XDECREF(infodict);
+    return -1;
 }
 
 #undef _MAX_LETTER

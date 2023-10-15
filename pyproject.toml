@@ -1,17 +1,77 @@
 [build-system]
-# Minimum requirements for the build system to execute.
+build-backend = "mesonpy"
+backend-path = ['./vendored-meson/meson-python']
 requires = [
-    "packaging==20.5; platform_machine=='arm64'",  # macos M1
-    "setuptools<49.2.0",
-    "wheel==0.36.2",
-    "Cython>=0.29.24,<3.0",  # Note: keep in sync with tools/cythonize.py
+    "Cython>=3.0",
+    # All dependencies of the vendored meson-python (except for meson, because
+    # we've got that vendored too - that's the point of this exercise).
+    'pyproject-metadata >= 0.7.1',
+    'tomli >= 1.0.0; python_version < "3.11"',
+    'setuptools >= 60.0; python_version >= "3.12"',
+    'colorama; os_name == "nt"',
+    # Note that `ninja` and (on Linux) `patchelf` are added dynamically by
+    # meson-python if those tools are not already present on the system. No
+    # need to worry about those unless one does a non-isolated build - in that
+    # case they must already be installed on the system.
 ]
 
+[project]
+name = "numpy"
+version = "2.0.0.dev0"
+# TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
+license = {file = "LICENSE.txt"}
+
+description = "Fundamental package for array computing in Python"
+authors = [{name = "Travis E. Oliphant et al."}]
+maintainers = [
+    {name = "NumPy Developers", email="numpy-discussion@python.org"},
+]
+requires-python = ">=3.9"
+readme = "README.md"
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Programming Language :: C',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
+    'Typing :: Typed',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Operating System :: MacOS',
+]
+
+[project.scripts]
+f2py = 'numpy.f2py.f2py2e:main'
+
+[project.entry-points.array_api]
+numpy = 'numpy.array_api'
+
+[project.entry-points.pyinstaller40]
+hook-dirs = 'numpy:_pyinstaller_hooks_dir'
+
+[project.urls]
+homepage = "https://numpy.org"
+documentation = "https://numpy.org/doc/"
+source = "https://github.com/numpy/numpy"
+download = "https://pypi.org/project/numpy/#files"
+tracker = "https://github.com/numpy/numpy/issues"
+"release notes" = "https://numpy.org/doc/stable/release"
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
     # the name is hardcoded. Use "--version 1.18.0" to set the version
-    single_file = true
+    single_file = false
     filename = "doc/source/release/{version}-notes.rst"
     directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
@@ -28,6 +88,11 @@ requires = [
     [[tool.towncrier.type]]
         directory = "new_function"
         name = "New functions"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "python_removal"
+        name = "NumPy 2.0 Python API removals"
         showcontent = true
 
     [[tool.towncrier.type]]
@@ -56,6 +121,11 @@ requires = [
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "c_api_removal"
+        name = "NumPy 2.0 C API removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "new_feature"
         name = "New Features"
         showcontent = true
@@ -74,3 +144,69 @@ requires = [
         directory = "change"
         name = "Changes"
         showcontent = true
+
+
+[tool.cibuildwheel]
+# Note: the below skip command doesn't do much currently, the platforms to
+# build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
+# `tools/ci/cirrus_wheels.yml`.
+skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
+build-verbosity = "3"
+before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas setup-args=-Dblas-symbol-suffix=64_"
+# meson has a hard dependency on ninja, and we need meson to build
+# c-extensions in tests. There is a ninja PyPI package used in
+# build_requirements.txt for macOS, windows, linux but it cannot be in
+# test_requirements.txt since pyodide, which uses test_requirements.txt, does
+# not have it.
+before-test = "pip install ninja && pip install -r {project}/test_requirements.txt"
+test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux2014"
+manylinux-aarch64-image = "manylinux2014"
+musllinux-x86_64-image = "musllinux_1_1"
+environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
+
+[tool.cibuildwheel.macos]
+# For universal2 wheels, we will need to fuse them manually
+# instead of going through cibuildwheel
+# This is because cibuildwheel tries to make a fat wheel
+# https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
+# for more info
+archs = "x86_64 arm64"
+test-skip = "*_universal2:arm64"
+# MACOS linker doesn't support stripping symbols.
+# Note that NPY_USE_BLAS_ILP64 is used in `tools/openblas_support.py`.
+environment = {CFLAGS="-fno-strict-aliasing", CC="clang", CXX = "clang++", NPY_USE_BLAS_ILP64="1", RUNNER_OS="macOS"}
+
+[tool.cibuildwheel.windows]
+environment = {NPY_USE_BLAS_ILP64="1", PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
+config-settings = "setup-args=--vsenv setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas"
+repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-win32"
+environment = {PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
+repair-wheel-command = ""
+
+[tool.spin]
+package = 'numpy'
+
+[tool.spin.meson]
+cli = 'vendored-meson/meson/meson.py'
+
+[tool.spin.commands]
+"Build" = [
+  ".spin/cmds.py:build",
+  ".spin/cmds.py:test",
+  ".spin/cmds.py:mypy",
+  ".spin/cmds.py:config_openblas",
+]
+"Environments" = [
+  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python", "spin.cmds.meson.gdb"
+]
+"Documentation" = [".spin/cmds.py:docs"]
+"Metrics" = [".spin/cmds.py:bench"]

@@ -59,10 +59,9 @@ np.float64(None)
 np.float32("1")
 np.float16(b"2.5")
 
-if sys.version_info >= (3, 8):
-    np.uint64(D())
-    np.float32(D())
-    np.complex64(D())
+np.uint64(D())
+np.float32(D())
+np.complex64(D())
 
 np.bytes_(b"hello")
 np.bytes_("hello", 'utf-8')
@@ -114,6 +113,8 @@ np.void(True)
 np.void(np.bool_(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+np.void(object(), [("a", "O"), ("b", "O")])
+np.void(object(), dtype=[("a", "O"), ("b", "O")])
 
 # Protocols
 i8 = np.int64()
@@ -134,7 +135,7 @@ int(td)
 int(U)
 int(S)
 int(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     int(c16)
 
 float(i8)
@@ -145,7 +146,7 @@ float(td)
 float(U)
 float(S)
 float(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     float(c16)
 
 complex(i8)
@@ -174,18 +175,10 @@ c16.byteswap()
 c16.transpose()
 
 # Aliases
-np.str0()
-np.bool8()
-np.bytes0()
-np.string_()
-np.object0()
-np.void0(0)
-
 np.byte()
 np.short()
 np.intc()
 np.intp()
-np.int0()
 np.int_()
 np.longlong()
 
@@ -193,25 +186,17 @@ np.ubyte()
 np.ushort()
 np.uintc()
 np.uintp()
-np.uint0()
 np.uint()
 np.ulonglong()
 
 np.half()
 np.single()
 np.double()
-np.float_()
 np.longdouble()
-np.longfloat()
 
 np.csingle()
-np.singlecomplex()
 np.cdouble()
-np.complex_()
-np.cfloat()
 np.clongdouble()
-np.clongfloat()
-np.longcomplex()
 
 b.item()
 i8.item()

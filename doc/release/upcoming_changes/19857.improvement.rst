@@ -1,8 +1,0 @@
-Add new linear interpolation methods for ``quantile`` and ``percentile``
-------------------------------------------------------------------------
-
-``quantile`` and ``percentile`` now have 13 linear interpolation methods,
-nine of which can be found in the scientific literature.
-The remaining methods are NumPy specific and are kept for backwards
-compatibility. The default is "inclusive" (method 7), whose behavior is equivalent
-to the former default "linear".

@@ -1,5 +1,3 @@
-from typing import Any, List
-
 from numpy.linalg.linalg import (
     matrix_power as matrix_power,
     solve as solve,
@@ -21,12 +19,13 @@ from numpy.linalg.linalg import (
     cond as cond,
     matrix_rank as matrix_rank,
     multi_dot as multi_dot,
+    trace as trace,
+    diagonal as diagonal,
 )
 
 from numpy._pytesttester import PytestTester
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
 test: PytestTester
 
 class LinAlgError(Exception): ...
