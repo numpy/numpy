@@ -106,6 +106,10 @@ class memmap(ndarray):
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
         changes to disk.
+   madvise
+        Flush any changes in memory to file on disk.
+        When you delete a memmap object, flush is called first to write
+        changes to disk.
 
 
     See also
@@ -322,10 +326,72 @@ class memmap(ndarray):
         See Also
         --------
         memmap
-
         """
-        if self.base is not None and hasattr(self.base, 'flush'):
-            self.base.flush()
+        if self._mmap is None:
+            raise TypeError(
+                    "flush cannot be used, because the memory map it "
+                    "is not backed by any memory.")
+        if not(hasattr(self._mmap, "flush")):
+            raise TypeError("flush is not available on your system.")
+        self._mmap.flush()
+
+    def madvise(self, option, start=0, length=None):
+        """
+        Send advice option to the kernel about the memory region beginning at
+        `start` and extending `length` bytes. option must be one of the
+        mmap.MADV_* constants available on the system. If start and length are
+        omitted, the entire mapping is spanned. On some systems (including
+        Linux), start must be a multiple of the mmap.PAGESIZE, if not an
+        OSError is thrown.
+
+        Parameters
+        ----------
+        option: int
+            advice option one of the values obtained from enums mmap.MADV_*
+
+        start: int, optional
+            Start of memory region. By default, `start` will be zero.
+            On some systems (including Linux), start must
+            be a multiple of the mmap.PAGESIZE, if not an OSError is thrown.
+
+        length: int, optional
+            Length of memory region. By default, `length` will be as large as
+            the remaining mmap size starting from `start`. If it is larger
+            than the remaining memory region size, then it is reduced to the
+            remaining size.
+
+        See Also
+        --------
+        memmap
+        """
+        if self._mmap is None:
+            raise TypeError(
+                    "madvise cannot be used, because the memory map it "
+                    "is not backed by any memory.")
+        if not(hasattr(self._mmap, "madvise")):
+            raise TypeError("madvise is not available on your system.")
+
+        # if length is too large it is reduced to max possible length
+        # when invoking madvise of the mmap
+        if length is None:
+            length = self._mmap.size()
+
+        try:
+            self._mmap.madvise(option, start, length)
+        except OSError as e:
+            # Because the OSError is not descriptive, we give a hint user about
+            # potential reasons for failure
+            import mmap
+
+            if (start % mmap.PAGESIZE != 0 and
+                    e.errno == 22 and
+                    e.strerror == "Invalid argument"):
+                extra_info = (
+                    ". It might be because `start` is not a "
+                    "multiple of mmap.PAGESIZE.")
+            else:
+                extra_info = ""
+            raise OSError(e.errno, e.strerror + extra_info)
 
     def __array_wrap__(self, arr, context=None):
         arr = super().__array_wrap__(arr, context)

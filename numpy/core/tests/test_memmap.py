@@ -1,4 +1,5 @@
 import sys
+import re
 import os
 import mmap
 import pytest
@@ -104,6 +105,37 @@ class TestMemmap:
         fp[:] = self.data[:]
         assert_equal(fp[0], self.data[0])
         fp.flush()
+
+        # test type error when no mmap exists
+        fp._mmap = None
+        expected_err_msg = ("flush cannot be used, because the memory map it "
+                            "is not backed by any memory.")
+        with pytest.raises(TypeError, match=re.escape(expected_err_msg)):
+            fp.flush()
+
+    def test_madvise(self):
+        # create array larger than the PAGESIZE
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        fp.madvise(mmap.MADV_NORMAL)
+        fp[:] = self.data[:]
+
+        fp.madvise(mmap.MADV_NORMAL, 0, 4*4)
+        fp[0] = self.data[0]
+
+        # test extended error message on invalid `start`
+        if sys.platform == 'linux':
+            expected_err_msg = ("[Errno 22] Invalid argument. It might be because "
+                                "`start` is not a multiple of mmap.PAGESIZE")
+            with pytest.raises(OSError, match=re.escape(expected_err_msg)):
+                fp.madvise(mmap.MADV_NORMAL, start=3)
+
+        # test type error when no mmap exists
+        fp._mmap = None
+        expected_err_msg = ("madvise cannot be used, because the memory map it "
+                            "is not backed by any memory.")
+        with pytest.raises(TypeError, match=re.escape(expected_err_msg)):
+            fp.madvise(mmap.MADV_NORMAL)
 
     def test_del(self):
         # Make sure a view does not delete the underlying mmap

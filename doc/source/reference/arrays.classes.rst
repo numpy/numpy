@@ -443,16 +443,19 @@ the over-head of reading the entire file into memory is typically not
 significant, however for large files using memory mapping can save
 considerable resources.
 
-Memory-mapped-file arrays have one additional method (besides those
+Memory-mapped-file arrays have the additional methods (besides those
 they inherit from the ndarray): :meth:`.flush() <memmap.flush>` which
 must be called manually by the user to ensure that any changes to the
-array actually get written to disk.
+array actually get written to disk and :meth:`.madvise() <memmap.madvise>`
+which gives a hint to the OS how the memory region will be accessed and
+thus can potentially speed up read and writes.
 
 .. autosummary::
    :toctree: generated/
 
    memmap
    memmap.flush
+   memmap.madvise
 
 Example:
 
