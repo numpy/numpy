@@ -473,7 +473,7 @@ def _unary_dispatcher(a):
 @array_function_dispatch(_unary_dispatcher)
 def inv(a):
     """
-    Compute the (multiplicative) inverse of a matrix.
+    Compute the inverse of a matrix.
 
     Given a square matrix `a`, return the matrix `ainv` satisfying
     ``dot(a, ainv) = dot(ainv, a) = eye(a.shape[0])``.
@@ -486,7 +486,7 @@ def inv(a):
     Returns
     -------
     ainv : (..., M, M) ndarray or matrix
-        (Multiplicative) inverse of the matrix `a`.
+        Inverse of the matrix `a`.
 
     Raises
     ------
@@ -496,6 +496,8 @@ def inv(a):
     See Also
     --------
     scipy.linalg.inv : Similar function in SciPy.
+    numpy.linalg.cond : Compute the condition number of a matrix.
+    numpy.linalg.svd : Compute the singular value decomposition of a matrix.
 
     Notes
     -----
@@ -504,6 +506,10 @@ def inv(a):
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
+
+    If `a` is detected to be singular, a `LinAlgError` is raised. If `a` is
+    ill-conditioned, a `LinAlgError` may or may not be raised, and results may
+    be innacurate due to floating-point errors.
 
     Examples
     --------
@@ -530,6 +536,37 @@ def inv(a):
             [ 1.5 , -0.5 ]],
            [[-1.25,  0.75],
             [ 0.75, -0.25]]])
+
+    If a matrix is close to singular, the computed inverse may not satisfy
+    ``dot(a, ainv) = dot(ainv, a) = eye(a.shape[0])`` even if a `LinAlgError`
+    is not raised:
+
+    >>> a = np.array([[2,4,6],[2,0,2],[6,8,14]])
+    >>> inv(a)  # No errors raised
+    array([[-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
+       [-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
+       [ 1.12589991e+15,  5.62949953e+14, -5.62949953e+14]])
+    >>> np.dot(a, inv(a))
+    array([[ 0.  ,  0.  ,  0.  ],
+           [-0.5 ,  0.75,  0.25],
+           [ 0.  ,  0.  ,  1.  ]])
+
+    To detect ill-conditioned matrices, you can use `numpy.linalg.cond` to
+    compute its `condition number`. The larger the condition number, the more
+    ill-conditioned the matrix is. For the previous example,
+
+    >>> from numpy.linalg import cond
+    >>> cond(a)
+    np.float64(8.659885634118668e+17)
+
+    It is also possible to detect ill-conditioning by inspecting the matrix's
+    singular values directly. The ratio between the largest and the smallest
+    singular value is the condition number:
+
+    >>> from numpy.linalg import svd
+    >>> sigma = svd(a, compute_uv=False)  # Do not compute singular vectors
+    >>> sigma.max()/sigma.min()
+    8.659885634118668e+17
 
     """
     a, wrap = _makearray(a)
