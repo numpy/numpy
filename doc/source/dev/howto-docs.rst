@@ -443,20 +443,21 @@ following output:
 
 
 We strongly recommend that you also add a custom message, such as a new API to
-replace the old one. This message will be appended to the default message::
+replace the old one::
 
    .. legacy::
 
       For more details, see :ref:`distutils-status-migration`.
 
-will create the following output:
+This message will be appended to the default message and will create the
+following output:
 
 .. legacy::
 
    For more details, see :ref:`distutils-status-migration`.
 
 Finally, if you want to mention a function, method (or any custom object)
-instead of a *module*, you can use an optional argument::
+instead of a *submodule*, you can use an optional argument::
 
     .. legacy:: function
 
