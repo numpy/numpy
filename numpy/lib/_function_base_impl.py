@@ -5653,6 +5653,8 @@ def digitize(x, bins, right=False):
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
         raise TypeError("x may not be complex")
+    if np.issubdtype(bins.dtype, _nx.complexfloating):
+        raise TypeError("bins may not be complex")
 
     mono = _monotonicity(bins)
     if mono == 0:
