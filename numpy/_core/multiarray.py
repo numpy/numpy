@@ -498,6 +498,55 @@ def lexsort(keys, axis=None):
     >>> np.argsort(x) # or np.argsort(x, order=('x', 'y'))
     array([2, 0, 4, 6, 5, 3, 1])
 
+    For a 2D array, lexsort only work on the last axis, and rows are
+    the key:
+
+    >>> a = np.array([[4,3,2], [3,1,1],[1,2,2]])
+    >>> ind = np.lexsort(a)
+    >>> ind
+    array([0, 2, 1])
+    >>> a[:, ind]
+    array([[4, 2, 3],
+           [3, 1, 1],
+           [1, 2, 2]])
+
+    The ``ind`` value is the columns index, lexsort will sort the last row,
+    second last row etc. For a 2D array, the axis parameter is only allowed
+    to be 0 and -1 since only one axis can be used.
+    For a 3D array, the axis parameter can be 0,1,-1 and -2:
+
+    >>> a = np.array([[[4,3,2], [3,1,1],[1,2,2]]])
+    >>> ind = np.lexsort(a, axis=0)
+    >>> ind
+    array([[2, 1, 1],
+           [1, 2, 0],
+           [0, 0, 2]])
+
+    The first column values of ``ind`` is the index of the first three elements
+    in the last dimension, the second column values are for the second element,
+    etc:
+
+    >>> [(a[0][i[0]][0],a[0][i[1]][1], a[0][i[2]][2]) for i in ind]
+    [(np.int64(1), np.int64(1), np.int64(1)),
+     (np.int64(3), np.int64(2), np.int64(2)),
+     (np.int64(4), np.int64(3), np.int64(2))]
+
+    For axis is 1 or -1:
+
+    >>> ind = np.lexsort(a, axis=1)
+    >>> ind
+    array([[2, 1, 0],
+           [1, 2, 0],
+           [0, 1, 2]])
+
+    The values of ``ind`` is the index of the sorted three elements
+    in each list:
+
+    >>> [(x[y[0]], x[y[1]],x[y[2]]) for (x, y) in zip(a[0], ind)]
+    [(np.int64(2), np.int64(3), np.int64(4)),
+     (np.int64(1), np.int64(1), np.int64(3)),
+     (np.int64(1), np.int64(2), np.int64(2))]
+
     """
     if isinstance(keys, tuple):
         return keys
