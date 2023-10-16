@@ -158,7 +158,7 @@ else:
         ptp, put, putmask, rad2deg, radians, ravel, reciprocal,
         record, remainder, repeat, require, reshape, resize, result_type, 
         right_shift, rint, roll, rollaxis, round, 
-        searchsorted, set_printoptions,
+        searchsorted, set_printoptions, long, ulong,
         setbufsize, seterr, seterrcall, shape,
         shares_memory, short, sign, signbit, signedinteger, sin, single, 
         sinh, size, sometrue, sort, spacing, sqrt, square, 
@@ -288,7 +288,7 @@ else:
     # probably wait for NumPy 1.26 or 2.0.
     # When defined, these should possibly not be added to `__all__` to avoid
     # import with `from numpy import *`.
-    __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
+    __future_scalars__ = {"bool", "str", "bytes", "object"}
 
     # now that numpy core module is imported, can initialize limits
     core.getlimits._register_known_types()

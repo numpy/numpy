@@ -50,7 +50,9 @@ _aliases = {
     "cdouble": "complex128",
     "single": "float32",
     "csingle": "complex64",
-    "half": "float16"
+    "half": "float16",
+    "int_": "long",
+    "uint": "ulong",
 }
 
 for k, v in _aliases.items():
@@ -67,8 +69,6 @@ _extra_aliases = {
     "bytes": "bytes_",
     "a": "bytes_",
     "int": "int_",
-    "long": "int_",
-    "ulong": "uint",
     "str": "str_",
     "unicode": "str_",
 }
