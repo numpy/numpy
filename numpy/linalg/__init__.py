@@ -36,6 +36,7 @@ Decompositions
    cholesky
    qr
    svd
+   svdvals
 
 Matrix eigenvalues
 ------------------

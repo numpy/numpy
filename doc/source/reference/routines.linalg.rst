@@ -74,6 +74,7 @@ Decompositions
    linalg.cholesky
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------

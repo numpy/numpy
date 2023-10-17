@@ -11,6 +11,7 @@ from numpy.linalg._linalg import (
     slogdet as slogdet,
     det as det,
     svd as svd,
+    svdvals as svdvals,
     eig as eig,
     eigh as eigh,
     lstsq as lstsq,
