@@ -107,7 +107,7 @@ except NameError:
 if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
-    # Allow distributors to run custom init code before importing numpy.core
+    # Allow distributors to run custom init code before importing numpy._core
     from . import _distributor_init
 
     try:
@@ -118,8 +118,8 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    from . import core
-    from .core import (
+    from . import _core
+    from ._core import (
         _no_nep50_warning, memmap, iinfo, finfo, recarray,
         False_, ScalarType, True_, abs, absolute, add, all, allclose, alltrue,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
@@ -175,7 +175,7 @@ else:
     # should be removed.
     for ta in ["float96", "float128", "complex192", "complex256"]:
         try:
-            globals()[ta] = getattr(core, ta)
+            globals()[ta] = getattr(_core, ta)
         except AttributeError:
             pass
     del ta
@@ -247,7 +247,7 @@ else:
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test", "rec", "char"
+        "f2py", "test", "rec", "char", "core"
     }
 
     # We build warning messages for former attributes
@@ -291,10 +291,10 @@ else:
     __future_scalars__ = {"bool", "str", "bytes", "object"}
 
     # now that numpy core module is imported, can initialize limits
-    core.getlimits._register_known_types()
+    _core.getlimits._register_known_types()
 
     __all__ = list(
-        __numpy_submodules__ | set(core.__all__) | set(lib.__all__) | 
+        __numpy_submodules__ | set(_core.__all__) | set(lib.__all__) | 
         set(_mat.__all__) | set(lib._histograms_impl.__all__) | 
         set(lib._nanfunctions_impl.__all__) |
         set(lib._function_base_impl.__all__) |
@@ -366,6 +366,9 @@ else:
         elif attr == "array_api":
             import numpy.array_api as array_api
             return array_api
+        elif attr == "core":
+            import numpy.core as core
+            return core
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils
@@ -410,7 +413,7 @@ else:
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
-            "core", "matrixlib", "matlib", "tests", "conftest", "version", 
+            "matrixlib", "matlib", "tests", "conftest", "version", 
             "compat", "distutils", "array_api"
             }
         return list(public_symbols)
@@ -506,16 +509,16 @@ else:
         return use_hugepage
 
     # Note that this will currently only make a difference on Linux
-    core.multiarray._set_madvise_hugepage(hugepage_setup())
+    _core.multiarray._set_madvise_hugepage(hugepage_setup())
     del hugepage_setup
 
     # Give a warning if NumPy is reloaded or imported on a sub-interpreter
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
-    core.multiarray._multiarray_umath._reload_guard()
+    _core.multiarray._multiarray_umath._reload_guard()
 
     # TODO: Switch to defaulting to "weak".
-    core._set_promotion_state(
+    _core._set_promotion_state(
         os.environ.get("NPY_PROMOTION_STATE", "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py

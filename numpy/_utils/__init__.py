@@ -5,7 +5,7 @@ rest of NumPy.
 Everything in here must be self-contained so that it can be
 imported anywhere else without creating circular imports.
 If a utility requires the import of NumPy, it probably belongs
-in ``numpy.core``.
+in ``numpy._core``.
 """
 
 from ._convertions import asunicode, asbytes

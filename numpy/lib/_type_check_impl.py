@@ -9,9 +9,9 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'common_type']
 
 from .._utils import set_module
-import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, asanyarray, isnan, zeros
-from numpy.core import overrides, getlimits
+import numpy._core.numeric as _nx
+from numpy._core.numeric import asarray, asanyarray, isnan, zeros
+from numpy._core import overrides, getlimits
 from ._ufunclike_impl import isneginf, isposinf
 
 
@@ -354,7 +354,7 @@ def isrealobj(x):
 #-----------------------------------------------------------------------------
 
 def _getmaxmin(t):
-    from numpy.core import getlimits
+    from numpy._core import getlimits
     f = getlimits.finfo(t)
     return f.max, f.min
 

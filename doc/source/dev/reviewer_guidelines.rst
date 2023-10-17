@@ -120,7 +120,7 @@ For example ``PyUnicodeScalarObject`` struct contains the following::
 Because the ``buffer_fmt`` field was added to its end in NumPy 1.20 (all
 previous fields remained ABI compatible).
 Similarly, any function added to the API table in
-``numpy/core/code_generators/numpy_api.py`` must use the ``MinVersion``
+``numpy/_core/code_generators/numpy_api.py`` must use the ``MinVersion``
 annotation.
 For example::
 

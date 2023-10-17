@@ -30,12 +30,12 @@ from functools import reduce
 from typing import Dict
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.numerictypes as ntypes
-from numpy.core import multiarray as mu
+import numpy._core.umath as umath
+import numpy._core.numerictypes as ntypes
+from numpy._core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
 from numpy import array as narray, expand_dims, iinfo, finfo
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 
 
@@ -4029,7 +4029,7 @@ class MaskedArray(ndarray):
 
 
         # 2016-11-19: Demoted to legacy format
-        if np.core.arrayprint._get_legacy_print_mode() <= 113:
+        if np._core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
             parameters = dict(
                 name=name,
@@ -4049,7 +4049,7 @@ class MaskedArray(ndarray):
         prefix = f"masked_{name}("
 
         dtype_needed = (
-            not np.core.arrayprint.dtype_is_implied(self.dtype) or
+            not np._core.arrayprint.dtype_is_implied(self.dtype) or
             np.all(self.mask) or
             self.size == 0
         )
@@ -4107,7 +4107,7 @@ class MaskedArray(ndarray):
 
         reprs['fill_value'] = fill_repr
         if dtype_needed:
-            reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
+            reprs['dtype'] = np._core.arrayprint.dtype_short_repr(self.dtype)
 
         # join keys with values and indentations
         result = ',\n'.join(

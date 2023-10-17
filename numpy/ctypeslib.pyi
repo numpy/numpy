@@ -34,8 +34,8 @@ from numpy import (
     longdouble,
     void,
 )
-from numpy.core._internal import _ctypes
-from numpy.core.multiarray import flagsobj
+from numpy._core._internal import _ctypes
+from numpy._core.multiarray import flagsobj
 from numpy._typing import (
     # Arrays
     NDArray,

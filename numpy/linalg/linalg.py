@@ -20,7 +20,7 @@ import warnings
 from typing import NamedTuple, Any
 
 from numpy._utils import set_module
-from numpy.core import (
+from numpy._core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,

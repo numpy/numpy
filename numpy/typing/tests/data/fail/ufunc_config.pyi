@@ -1,4 +1,4 @@
-"""Typing tests for `numpy.core._ufunc_config`."""
+"""Typing tests for `numpy._core._ufunc_config`."""
 
 import numpy as np
 

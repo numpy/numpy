@@ -24,7 +24,7 @@ import functools
 import warnings
 import numpy as np
 from numpy.lib import _function_base_impl as fnb
-from numpy.core import overrides
+from numpy._core import overrides
 
 
 array_function_dispatch = functools.partial(

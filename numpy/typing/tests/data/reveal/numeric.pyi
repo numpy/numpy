@@ -1,5 +1,5 @@
 """
-Tests for :mod:`core.numeric`.
+Tests for :mod:`_core.numeric`.
 
 Does not include tests which fall under ``array_constructors``.
 

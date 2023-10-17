@@ -34,7 +34,7 @@ from numpy._typing import (
     _SupportsDType,
 )
 
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     unravel_index as unravel_index,
     ravel_multi_index as ravel_multi_index,
 )

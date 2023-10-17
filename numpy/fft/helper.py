@@ -2,8 +2,8 @@
 Discrete Fourier Transforms - helper.py
 
 """
-from numpy.core import integer, empty, arange, asarray, roll
-from numpy.core.overrides import array_function_dispatch, set_module
+from numpy._core import integer, empty, arange, asarray, roll
+from numpy._core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
 

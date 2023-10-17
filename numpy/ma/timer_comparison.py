@@ -2,7 +2,7 @@ import timeit
 from functools import reduce
 
 import numpy as np
-import numpy.core.fromnumeric as fromnumeric
+import numpy._core.fromnumeric as fromnumeric
 
 from numpy.testing import build_err_msg
 

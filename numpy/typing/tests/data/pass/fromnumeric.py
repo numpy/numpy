@@ -1,4 +1,4 @@
-"""Tests for :mod:`numpy.core.fromnumeric`."""
+"""Tests for :mod:`numpy._core.fromnumeric`."""
 
 import numpy as np
 

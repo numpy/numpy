@@ -4,14 +4,14 @@
 import functools
 import operator
 
-from numpy.core.numeric import (
+from numpy._core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
     diagonal, nonzero, indices
     )
-from numpy.core.overrides import set_array_function_like_doc, set_module
-from numpy.core import overrides
-from numpy.core import iinfo
+from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core import overrides
+from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
 
 
