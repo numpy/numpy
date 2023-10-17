@@ -3968,7 +3968,7 @@ cdef class RandomState:
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
-        # This cast to long is required to ensure that the values are inbounds
+        # This legacy function supports "long" values only (checked below).
         ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
         onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
         onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
