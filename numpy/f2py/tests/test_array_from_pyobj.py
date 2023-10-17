@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from numpy.testing import assert_, assert_equal
-from numpy.core._type_aliases import c_names_dict as _c_names_dict
+from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 
 wrap = None

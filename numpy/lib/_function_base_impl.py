@@ -6,22 +6,22 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numeric as _nx
-from numpy.core import transpose, overrides
-from numpy.core.numeric import (
+import numpy._core.numeric as _nx
+from numpy._core import transpose, overrides
+from numpy._core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, take, dot, where, intp, integer, isscalar, absolute
     )
-from numpy.core.umath import (
+from numpy._core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, not_equal, subtract
     )
-from numpy.core.fromnumeric import (
+from numpy._core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
-from numpy.core.numerictypes import typecodes
+from numpy._core.numerictypes import typecodes
 from numpy.lib._twodim_base_impl import diag
-from numpy.core.multiarray import (
+from numpy._core.multiarray import (
     _place, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )

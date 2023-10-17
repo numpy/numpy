@@ -1,4 +1,4 @@
-from numpy.core.defchararray import (
+from numpy._core.defchararray import (
     equal as equal,
     not_equal as not_equal,
     greater_equal as greater_equal,

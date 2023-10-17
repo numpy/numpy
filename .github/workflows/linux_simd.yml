@@ -188,7 +188,7 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -knm -- python -c "import numpy; numpy.show_config()" &&
-        sde -knm -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -knm -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     - name: SIMD tests (SPR)
       run: |
@@ -196,7 +196,7 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -spr -- python -c "import numpy; numpy.show_config()" &&
-        sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_simd*
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
 
     # Can't run on SDE just yet: see https://github.com/numpy/numpy/issues/23545#issuecomment-1659047365
     #
@@ -206,7 +206,7 @@ jobs:
     #    export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
     #    cd build-install &&
     #    sde -spr -- python -c "import numpy; numpy.show_config()" &&
-    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/core/tests/test_umath* \
-    #                                 $NUMPY_SITE/numpy/core/tests/test_ufunc.py \
+    #    sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+    #                                 $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
     #                                 $NUMPY_SITE/numpy/linalg/tests/test_*
 

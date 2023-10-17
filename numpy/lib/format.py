@@ -170,7 +170,7 @@ import numpy
 from numpy.lib._utils_impl import drop_metadata
 
 
-__all__ = ["NumpyUnpickler"]
+__all__ = []
 
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
@@ -1011,15 +1011,3 @@ def isfileobj(f):
         return True
     except OSError:
         return False
-
-
-class NumpyUnpickler(pickle.Unpickler):
-    """
-    A thin wrapper for :py:class:`pickle.Unpickler` that
-    allows to load 1.x array pickles with numpy 2.0.
-    """
-
-    def find_class(self, module: str, name: str) -> object:
-        if module.startswith("numpy.core"):
-            module = module.replace("core", "_core", 1)
-        return pickle.Unpickler.find_class(self, module, name)

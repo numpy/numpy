@@ -94,7 +94,7 @@ def _get_extended_precision_list() -> list[str]:
 
 
 def _get_c_intp_name() -> str:
-    # Adapted from `np.core._internal._getintp_ctype`
+    # Adapted from `np._core._internal._getintp_ctype`
     char = np.dtype('p').char
     if char == 'i':
         return "c_int"

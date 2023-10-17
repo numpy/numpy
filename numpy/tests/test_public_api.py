@@ -4,6 +4,7 @@ import subprocess
 import pkgutil
 import types
 import importlib
+import inspect
 import warnings
 
 import numpy as np
@@ -23,6 +24,8 @@ def check_dir(module, module_name=None):
         module_name = module.__name__
     results = {}
     for name in dir(module):
+        if name == "core":
+            continue
         item = getattr(module, name)
         if (hasattr(item, '__module__') and hasattr(item, '__name__')
                 and item.__module__ != module_name):
@@ -84,7 +87,7 @@ def test_numpy_fft():
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 def test_NPY_NO_EXPORT():
-    cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
+    cdll = ctypes.CDLL(np._core._multiarray_tests.__file__)
     # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
     f = getattr(cdll, 'test_not_exported', None)
     assert f is None, ("'test_not_exported' is mistakenly exported, "
@@ -164,20 +167,19 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "compat.py3k",
     "conftest",
     "core",
+    "core.multiarray",
+    "core.numeric",
+    "core.umath",
     "core.arrayprint",
     "core.defchararray",
     "core.einsumfunc",
     "core.fromnumeric",
     "core.function_base",
     "core.getlimits",
-    "core.memmap",
-    "core.multiarray",
-    "core.numeric",
     "core.numerictypes",
     "core.overrides",
     "core.records",
     "core.shape_base",
-    "core.umath",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -286,23 +288,10 @@ def is_unexpected(name):
     return True
 
 
-# These are present in a directory with an __init__.py but cannot be imported
-# code_generators/ isn't installed, but present for an inplace build
-SKIP_LIST = [
-    "numpy.core.code_generators",
-    "numpy.core.code_generators.genapi",
-    "numpy.core.code_generators.generate_umath",
-    "numpy.core.code_generators.ufunc_docstrings",
-    "numpy.core.code_generators.generate_numpy_api",
-    "numpy.core.code_generators.generate_ufunc_api",
-    "numpy.core.code_generators.numpy_api",
-    "numpy.core.code_generators.generate_umath_doc",
-    "numpy.core.code_generators.verify_c_api_version",
-    "numpy.core.cversions",
-    "numpy.core.generate_numpy_api",
-]
 if sys.version_info < (3, 12):
-    SKIP_LIST += ["numpy.distutils.msvc9compiler"]
+    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
+else:
+    SKIP_LIST = []
 
 
 # suppressing warnings from deprecated modules
@@ -516,3 +505,45 @@ def test_main_namespace_all_dir_coherence():
         "Members that break symmetry: "
         f"{all_members.symmetric_difference(dir_members)}"
     )
+
+
+@pytest.mark.filterwarnings(
+    r"ignore:numpy.core(\.\w+)? is deprecated:DeprecationWarning"
+)
+def test_core_shims_coherence():
+    """
+    Check that all "semi-public" members of `numpy._core` are also accessible
+    from `numpy.core` shims.
+    """
+    import numpy.core as core
+
+    for member_name in dir(np._core):
+        # skip private and test members
+        if member_name.startswith("_") or member_name == "tests":
+            continue
+
+        member = getattr(np._core, member_name)
+
+        # np.core is a shim and all submodules of np.core are shims
+        # but we should be able to import everything in those shims
+        # that are available in the "real" modules in np._core
+        if inspect.ismodule(member):
+            submodule = member
+            submodule_name = member_name
+            for submodule_member_name in dir(submodule):
+                # ignore dunder names
+                if submodule_member_name.startswith("__"):
+                    continue
+                submodule_member = getattr(submodule, submodule_member_name)
+
+                core_submodule = __import__(
+                    f"numpy.core.{submodule_name}",
+                    fromlist=[submodule_member_name]
+                )
+
+                assert submodule_member is getattr(
+                    core_submodule, submodule_member_name
+                )
+
+        else:
+            assert member is getattr(core, member_name)

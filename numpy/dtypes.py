@@ -65,7 +65,7 @@ __all__ = []
 
 def _add_dtype_helper(DType, alias):
     # Function to add DTypes a bit more conveniently without channeling them
-    # through `numpy.core._multiarray_umath` namespace or similar.
+    # through `numpy._core._multiarray_umath` namespace or similar.
     from numpy import dtypes
 
     setattr(dtypes, DType.__name__, DType)

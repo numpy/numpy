@@ -40,8 +40,8 @@ def replace_scalar_type_names():
     ]
 
     # prevent numpy attaching docstrings to the scalar types
-    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
-    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+    assert 'numpy._core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy._core._add_newdocs_scalars'] = object()
 
     import numpy
 
@@ -57,8 +57,8 @@ def replace_scalar_type_names():
         c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
 
     # now generate the docstrings as usual
-    del sys.modules['numpy.core._add_newdocs_scalars']
-    import numpy.core._add_newdocs_scalars
+    del sys.modules['numpy._core._add_newdocs_scalars']
+    import numpy._core._add_newdocs_scalars
 
 replace_scalar_type_names()
 
@@ -431,9 +431,9 @@ else:
 
 def _get_c_source_file(obj):
     if issubclass(obj, numpy.generic):
-        return r"core/src/multiarray/scalartypes.c.src"
+        return r"_core/src/multiarray/scalartypes.c.src"
     elif obj is numpy.ndarray:
-        return r"core/src/multiarray/arrayobject.c"
+        return r"_core/src/multiarray/arrayobject.c"
     else:
         # todo: come up with a better way to generate these
         return None

@@ -220,7 +220,7 @@ which types your new data-type can be cast to and from.
 
 The NumPy source code includes an example of a custom data-type as part
 of its test suite. The file ``_rational_tests.c.src`` in the source code
-directory  ``numpy/numpy/core/src/umath/`` contains an implementation of
+directory  ``numpy/_core/src/umath/`` contains an implementation of
 a data-type that represents a rational number as the ratio of two 32 bit
 integers.
 

@@ -1,15 +1,15 @@
 import functools
 import warnings
 
-import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, zeros, array, asanyarray
-from numpy.core.fromnumeric import reshape, transpose
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core import overrides
-from numpy.core import vstack, atleast_3d
-from numpy.core.numeric import normalize_axis_tuple
-from numpy.core.overrides import set_module
-from numpy.core.shape_base import _arrays_for_stack_dispatcher
+import numpy._core.numeric as _nx
+from numpy._core.numeric import asarray, zeros, array, asanyarray
+from numpy._core.fromnumeric import reshape, transpose
+from numpy._core.multiarray import normalize_axis_index
+from numpy._core import overrides
+from numpy._core import vstack, atleast_3d
+from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.overrides import set_module
+from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 

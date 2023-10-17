@@ -3,7 +3,7 @@ import pytest
 import inspect
 
 import numpy as np
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (

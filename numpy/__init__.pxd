@@ -939,19 +939,19 @@ cdef inline int import_array() except -1:
     try:
         __pyx_import_array()
     except Exception:
-        raise ImportError("numpy.core.multiarray failed to import")
+        raise ImportError("numpy._core.multiarray failed to import")
 
 cdef inline int import_umath() except -1:
     try:
         _import_umath()
     except Exception:
-        raise ImportError("numpy.core.umath failed to import")
+        raise ImportError("numpy._core.umath failed to import")
 
 cdef inline int import_ufunc() except -1:
     try:
         _import_umath()
     except Exception:
-        raise ImportError("numpy.core.umath failed to import")
+        raise ImportError("numpy._core.umath failed to import")
 
 cdef extern from *:
     # Leave a marker that the NumPy declarations came from this file

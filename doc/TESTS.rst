@@ -56,9 +56,9 @@ messages about which modules don't have tests::
   >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
-example, the ``core`` module, use the following::
+example, the ``_core`` module, use the following::
 
-  >>> numpy.core.test()
+  >>> numpy._core.test()
 
 Running tests from the command line
 -----------------------------------
@@ -70,7 +70,7 @@ utility. To run NumPy's full test suite::
 
 Testing a subset of NumPy::
 
-  $ spin test -t numpy/core/tests
+  $ spin test -t numpy/_core/tests
 
 For detailed info on testing, see :ref:`testing-builds`
 

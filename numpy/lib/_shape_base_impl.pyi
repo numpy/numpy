@@ -32,7 +32,7 @@ from numpy._typing import (
     _ArrayLikeObject_co,
 )
 
-from numpy.core.shape_base import vstack
+from numpy._core.shape_base import vstack
 
 _P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)

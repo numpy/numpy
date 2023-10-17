@@ -188,9 +188,9 @@ Check the C API version number
 ------------------------------
 The C API version needs to be tracked in three places
 
-- numpy/core/meson.build
-- numpy/core/code_generators/cversions.txt
-- numpy/core/include/numpy/numpyconfig.h
+- numpy/_core/meson.build
+- numpy/_core/code_generators/cversions.txt
+- numpy/_core/include/numpy/numpyconfig.h
 
 There are three steps to the process.
 
@@ -202,9 +202,9 @@ There are three steps to the process.
 
 2. If the C_API_VERSION in the first step has changed, or if the hash of
    the API has changed, the cversions.txt file needs to be updated. To check
-   the hash, run the script numpy/core/cversions.py and note the API hash that
+   the hash, run the script numpy/_core/cversions.py and note the API hash that
    is printed. If that hash does not match the last hash in
-   numpy/core/code_generators/cversions.txt the hash has changed. Using both
+   numpy/_core/code_generators/cversions.txt the hash has changed. Using both
    the appropriate C_API_VERSION and hash, add a new entry to cversions.txt.
    If the API version was not changed, but the hash differs, you will need to
    comment out the previous entry for that API version. For instance, in NumPy
@@ -215,14 +215,14 @@ There are three steps to the process.
    If steps 1 and 2 are done correctly, compiling the release should not give
    a warning "API mismatch detect at the beginning of the build".
 
-3. The numpy/core/include/numpy/numpyconfig.h will need a new
+3. The numpy/_core/include/numpy/numpyconfig.h will need a new
    NPY_X_Y_API_VERSION macro, where X and Y are the major and minor version
    numbers of the release. The value given to that macro only needs to be
    increased from the previous version if some of the functions or macros in
    the include files were deprecated.
 
-The C ABI version number in numpy/core/meson.build should only be updated for a
-major release.
+The C ABI version number in numpy/_core/meson.build should only be updated
+for a major release.
 
 
 Check the release notes

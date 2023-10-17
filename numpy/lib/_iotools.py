@@ -4,7 +4,7 @@
 __docformat__ = "restructuredtext en"
 
 import numpy as np
-import numpy.core.numeric as nx
+import numpy._core.numeric as nx
 from numpy._utils import asbytes, asunicode
 
 

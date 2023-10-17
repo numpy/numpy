@@ -6,7 +6,7 @@ import pytest
 import weakref
 
 import numpy as np
-import numpy.core._multiarray_umath as ncu
+import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_array_less, build_err_msg,
