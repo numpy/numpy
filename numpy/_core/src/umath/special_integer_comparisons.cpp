@@ -107,10 +107,10 @@ get_min_max(int typenum, long long *min, unsigned long long *max)
 /*
  * Determine if a Python long is within the typenums range, smaller, or larger.
  * 
- * Function returns -2 for errors.
+ * Function returns -1 for errors.
  */
-static int
-get_value_range(PyObject *value, int type_num)
+static inline int
+get_value_range(PyObject *value, int type_num, int *range)
 {
     long long min;
     unsigned long long max;
@@ -119,45 +119,49 @@ get_value_range(PyObject *value, int type_num)
     int overflow;
     long long val = PyLong_AsLongLongAndOverflow(value, &overflow);
     if (val == -1 && overflow == 0 && PyErr_Occurred()) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
+        return -1;
     }
 
     if (overflow == 0) {
         if (val < min) {
-            return -1;
+            *range = -1;
         }
         else if (val > 0 && (unsigned long long)val > max) {
-            return 1;
+            *range = 1;
         }
-        return 0;
+        else {
+            *range = 0;
+        }
     }
     else if (overflow < 0) {
-        return -1; 
+        *range = -1;
     }
     else if (max <= NPY_MAX_LONGLONG) {
-        return 1;
-    }
-
-    /*
-     * If we are checking for unisgned long long, the value may be larger
-     * then long long, but within range of unsigned long long.  Check this
-     * by doing the normal Python integer comparison.
-     */
-    PyObject *obj = PyLong_FromUnsignedLongLong(max);
-    if (obj == NULL) {
-        return -2;
-    }
-    int cmp = PyObject_RichCompareBool(value, obj, Py_GT);
-    Py_DECREF(obj);
-    if (cmp < 0) {
-        return -2;
-    }
-    if (cmp) {
-        return 1;
+        *range = 1;
     }
     else {
-        return 0;
+        /*
+        * If we are checking for unisgned long long, the value may be larger
+        * then long long, but within range of unsigned long long.  Check this
+        * by doing the normal Python integer comparison.
+        */
+        PyObject *obj = PyLong_FromUnsignedLongLong(max);
+        if (obj == NULL) {
+            return -1;
+        }
+        int cmp = PyObject_RichCompareBool(value, obj, Py_GT);
+        Py_DECREF(obj);
+        if (cmp < 0) {
+            return -1;
+        }
+        if (cmp) {
+            *range = 1;
+        }
+        else {
+            *range = 0;
+        }
     }
+    return 0;
 }
 
 
@@ -168,7 +172,7 @@ get_value_range(PyObject *value, int type_num)
 static NPY_CASTING
 resolve_descriptors_with_scalars(
     PyArrayMethodObject *self, PyArray_DTypeMeta **dtypes,
-    PyArray_Descr **given_descrs, PyObject **input_scalars,
+    PyArray_Descr **given_descrs, PyObject *const *input_scalars,
     PyArray_Descr **loop_descrs, npy_intp *view_offset)
 {
     int value_range = 0;
@@ -187,8 +191,7 @@ resolve_descriptors_with_scalars(
      * -1: The value came second and is smaller or came first and is larger
      */
     if (scalar != NULL && PyLong_CheckExact(scalar)) {
-        value_range = get_value_range(scalar, arr_dtype->type_num);
-        if (value_range == -2) {
+        if (get_value_range(scalar, arr_dtype->type_num, &value_range) < 0) {
             return _NPY_ERROR_OCCURRED_IN_CAST;
         }
         if (first_is_pyint == 1) {
