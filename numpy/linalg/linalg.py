@@ -547,13 +547,16 @@ def inv(a):
        [-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
        [ 1.12589991e+15,  5.62949953e+14, -5.62949953e+14]])
     >>> np.dot(a, inv(a))
-    array([[ 0.  ,  0.  ,  0.  ],
-           [-0.5 ,  0.75,  0.25],
-           [ 0.  ,  0.  ,  1.  ]])
+    array([[ 0.   , -0.5  ,  0.   ],
+           [-0.5  ,  0.625,  0.25 ],
+           [ 0.   ,  0.   ,  1.   ]])
 
     To detect ill-conditioned matrices, you can use `numpy.linalg.cond` to
     compute its `condition number`. The larger the condition number, the more
-    ill-conditioned the matrix is. For the previous example,
+    ill-conditioned the matrix is. As a rule of thumb, if the condition number
+    `cond(a) = 10**k`, then you may lose up to `k` digits of accuracy on top of
+    what would be lost to the numerical method due to loss of precision from
+    arithmetic methods. See https://en.wikipedia.org/wiki/Condition_number
 
     >>> from numpy.linalg import cond
     >>> cond(a)
