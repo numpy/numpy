@@ -476,7 +476,7 @@ def inv(a):
     Compute the inverse of a matrix.
 
     Given a square matrix `a`, return the matrix `ainv` satisfying
-    ``dot(a, ainv) = dot(ainv, a) = eye(a.shape[0])``.
+    ``a @ ainv = ainv @ a = eye(a.shape[0])``.
 
     Parameters
     ----------
@@ -511,14 +511,19 @@ def inv(a):
     ill-conditioned, a `LinAlgError` may or may not be raised, and results may
     be innacurate due to floating-point errors.
 
+    References
+    ----------
+    .. [1] Wikipedia, "Condition number",
+           https://en.wikipedia.org/wiki/Condition_number
+    
     Examples
     --------
     >>> from numpy.linalg import inv
     >>> a = np.array([[1., 2.], [3., 4.]])
     >>> ainv = inv(a)
-    >>> np.allclose(np.dot(a, ainv), np.eye(2))
+    >>> np.allclose(a @ ainv, np.eye(2))
     True
-    >>> np.allclose(np.dot(ainv, a), np.eye(2))
+    >>> np.allclose(ainv @ a, np.eye(2))
     True
 
     If a is a matrix object, then the return value is a matrix as well:
@@ -538,7 +543,7 @@ def inv(a):
             [ 0.75, -0.25]]])
 
     If a matrix is close to singular, the computed inverse may not satisfy
-    ``dot(a, ainv) = dot(ainv, a) = eye(a.shape[0])`` even if a `LinAlgError`
+    ``a @ ainv = ainv @ a = eye(a.shape[0])`` even if a `LinAlgError`
     is not raised:
 
     >>> a = np.array([[2,4,6],[2,0,2],[6,8,14]])
@@ -546,17 +551,17 @@ def inv(a):
     array([[-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
        [-1.12589991e+15, -5.62949953e+14,  5.62949953e+14],
        [ 1.12589991e+15,  5.62949953e+14, -5.62949953e+14]])
-    >>> np.dot(a, inv(a))
+    >>> a @ inv(a)
     array([[ 0.   , -0.5  ,  0.   ],
            [-0.5  ,  0.625,  0.25 ],
            [ 0.   ,  0.   ,  1.   ]])
 
     To detect ill-conditioned matrices, you can use `numpy.linalg.cond` to
-    compute its `condition number`. The larger the condition number, the more
-    ill-conditioned the matrix is. As a rule of thumb, if the condition number
-    `cond(a) = 10**k`, then you may lose up to `k` digits of accuracy on top of
-    what would be lost to the numerical method due to loss of precision from
-    arithmetic methods. See https://en.wikipedia.org/wiki/Condition_number
+    compute its *condition number* [1]_. The larger the condition number, the
+    more ill-conditioned the matrix is. As a rule of thumb, if the condition
+    number ``cond(a) = 10**k``, then you may lose up to ``k`` digits of
+    accuracy on top of what would be lost to the numerical method due to loss
+    of precision from arithmetic methods.
 
     >>> from numpy.linalg import cond
     >>> cond(a)
