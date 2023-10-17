@@ -769,11 +769,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 
     if ((type_num1 == NPY_STRING && type_num2 == NPY_STRING)
             || (type_num1 == NPY_UNICODE && type_num2 == NPY_UNICODE)) {
-        out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                             PyArray_DESCR(operands[1]));
-        if (out_dtypes[0] == NULL) {
-            return -1;
-        }
+        // This is wrong, but only the DType matters here (String or Unicode) and
+        // the loop has the correct implementation itself.
+        out_dtypes[0] = PyArray_DescrFromType(type_num1);
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
         out_dtypes[2] = out_dtypes[0];
