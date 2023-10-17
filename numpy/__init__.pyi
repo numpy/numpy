@@ -71,6 +71,7 @@ from numpy._typing import (
     _NBitIntC,
     _NBitIntP,
     _NBitInt,
+    _NBitLong,
     _NBitLongLong,
     _NBitHalf,
     _NBitSingle,
@@ -97,12 +98,14 @@ from numpy._typing import (
     _IntCCodes,
     _IntPCodes,
     _IntCodes,
+    _LongCodes,
     _LongLongCodes,
     _UByteCodes,
     _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
     _UIntCodes,
+    _ULongCodes,
     _ULongLongCodes,
     _HalfCodes,
     _SingleCodes,
@@ -2858,6 +2861,7 @@ short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
 int_ = signedinteger[_NBitInt]
+long = signedinteger[_NBitLong]
 longlong = signedinteger[_NBitLongLong]
 
 # TODO: `item`/`tolist` returns either `dt.timedelta` or `int`
@@ -2939,6 +2943,7 @@ ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
 uint = unsignedinteger[_NBitInt]
+ulong = unsignedinteger[_NBitLong]
 ulonglong = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit1]):  # type: ignore

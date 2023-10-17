@@ -58,7 +58,7 @@ PyArray_ClearBuffer(
 
 /*
  * Helper function to clear whole array.  It seems plausible that we should
- * be able to get away with assuming the the array is contiguous.
+ * be able to get away with assuming the array is contiguous.
  *
  * Must only be called on arrays which own their data (and asserts this).
  */

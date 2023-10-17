@@ -573,7 +573,7 @@ class TestRegression:
         x1 = np.array([[1, 2], [3, 4], [5, 6]])
         x2 = np.array(['a', 'dd', 'xyz'])
         x3 = np.array([1.1, 2, 3])
-        np.rec.fromarrays([x1, x2, x3], formats="(2,)i4,a3,f8")
+        np.rec.fromarrays([x1, x2, x3], formats="(2,)i4,S3,f8")
 
     def test_object_array_assign(self):
         x = np.empty((2, 2), object)

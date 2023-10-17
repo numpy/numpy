@@ -103,9 +103,9 @@ class format_parser:
     ----------
     formats : str or list of str
         The format description, either specified as a string with
-        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
+        comma-separated format descriptions in the form ``'f8, i4, S5'``, or
         a list of format description strings  in the form
-        ``['f8', 'i4', 'a5']``.
+        ``['f8', 'i4', 'S5']``.
     names : str or list/tuple of str
         The field names, either specified as a comma-separated string in the
         form ``'col1, col2, col3'``, or as a list or tuple of strings in the

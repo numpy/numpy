@@ -146,7 +146,7 @@ class TestBuiltin:
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
-         'i4, (2,3)f8, f4', 'a3, 3u8, (3,4)a10',
+         'i4, (2,3)f8, f4', 'S3, 3u8, (3,4)S10',
          '>f', '<f', '=f', '|f',
         ])
     def test_dtype_bytes_str_equivalence(self, value):
@@ -1372,12 +1372,24 @@ class TestPickling:
 
     @pytest.mark.parametrize("DType",
         [type(np.dtype(t)) for t in np.typecodes['All']] +
-        [np.dtype(rational), np.dtype])
-    def test_pickle_types(self, DType):
+        [type(np.dtype(rational)), np.dtype])
+    def test_pickle_dtype_class(self, DType):
         # Check that DTypes (the classes/types) roundtrip when pickling
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
             assert roundtrip_DType is DType
+
+    @pytest.mark.parametrize("dt",
+        [np.dtype(t) for t in np.typecodes['All']] +
+        [np.dtype(rational)])
+    def test_pickle_dtype(self, dt):
+        # Check that dtype instances roundtrip when pickling and that pickling
+        # doesn't change the hash value
+        pre_pickle_hash = hash(dt)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
+            assert roundtrip_dt == dt
+            assert hash(dt) == pre_pickle_hash
 
 
 class TestPromotion:

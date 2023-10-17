@@ -82,8 +82,8 @@ class TestFromInt:
             assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
 
 
-int_types = [np.byte, np.short, np.intc, np.int_, np.longlong]
-uint_types = [np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong]
+int_types = [np.byte, np.short, np.intc, np.long, np.longlong]
+uint_types = [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
 float_types = [np.half, np.single, np.double, np.longdouble]
 cfloat_types = [np.csingle, np.cdouble, np.clongdouble]
 

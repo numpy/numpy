@@ -12,26 +12,24 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot']
+           'LinAlgError', 'multi_dot', 'trace', 'diagonal']
 
 import functools
 import operator
 import warnings
 from typing import NamedTuple, Any
 
-from .._utils import set_module
+from numpy._utils import set_module
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
-    add, multiply, sqrt, sum, isfinite,
-    finfo, errstate, moveaxis, amin, amax, prod, abs,
-    atleast_2d, intp, asanyarray, object_, matmul,
+    add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
+    amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal
+    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace
 )
-from numpy.core.multiarray import normalize_axis_index
-from numpy.core import overrides
 from numpy.lib._twodim_base_impl import triu, eye
+from numpy.lib.array_utils import normalize_axis_index
 from numpy.linalg import _umath_linalg
 
 from numpy._typing import NDArray
@@ -1238,7 +1236,7 @@ def eig(a):
     The number `w` is an eigenvalue of `a` if there exists a vector `v` such
     that ``a @ v = w * v``. Thus, the arrays `a`, `eigenvalues`, and
     `eigenvectors` satisfy the equations ``a @ eigenvectors[:,i] =
-    eigenvalues[i] * eigenvalues[:,i]`` for :math:`i \\in \\{0,...,M-1\\}`.
+    eigenvalues[i] * eigenvectors[:,i]`` for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `eigenvectors` may not be of maximum rank, that is, some of the
     columns may be linearly dependent, although round-off error may obscure
@@ -2832,3 +2830,98 @@ def _multi_dot(arrays, order, i, j, out=None):
         return dot(_multi_dot(arrays, order, i, order[i, j]),
                    _multi_dot(arrays, order, order[i, j] + 1, j),
                    out=out)
+
+
+# diagonal
+
+def _diagonal_dispatcher(x, /, *, offset=None):
+    return (x,)
+
+
+@array_function_dispatch(_diagonal_dispatcher)
+def diagonal(x, /, *, offset=0):
+    """
+    Returns specified diagonals of a matrix (or a stack of matrices) ``x``.
+
+    This function is Array API compatible, contrary to
+    :py:func:`numpy.diagonal`.
+
+    Parameters
+    ----------
+    x : (...,M,N) array_like
+        Input array having shape (..., M, N) and whose innermost two
+        dimensions form MxN matrices.
+    offset : int, optional
+        Offset specifying the off-diagonal relative to the main diagonal,
+        where::
+
+            * offset = 0: the main diagonal.
+            * offset > 0: off-diagonal above the main diagonal.
+            * offset < 0: off-diagonal below the main diagonal.
+
+    Returns
+    -------
+    out : (...,min(N,M)) ndarray
+        An array containing the diagonals and whose shape is determined by
+        removing the last two dimensions and appending a dimension equal to
+        the size of the resulting diagonals. The returned array must have
+        the same data type as ``x``.
+
+    See Also
+    --------
+    numpy.diagonal
+    """
+    return _core_diagonal(x, offset, axis1=-2, axis2=-1)
+
+
+# trace
+
+def _trace_dispatcher(
+        x, /, *, offset=None, dtype=None):
+    return (x,)
+
+
+@array_function_dispatch(_trace_dispatcher)
+def trace(x, /, *, offset=0, dtype=None):
+    """
+    Returns the sum along the specified diagonals of a matrix
+    (or a stack of matrices) ``x``.
+
+    This function is Array API compatible, contrary to
+    :py:func:`numpy.trace`.
+
+    Parameters
+    ----------
+    x : (...,M,N) array_like
+        Input array having shape (..., M, N) and whose innermost two
+        dimensions form MxN matrices.
+    offset : int, optional
+        Offset specifying the off-diagonal relative to the main diagonal,
+        where::
+
+            * offset = 0: the main diagonal.
+            * offset > 0: off-diagonal above the main diagonal.
+            * offset < 0: off-diagonal below the main diagonal.
+
+    dtype : dtype, optional
+        Data type of the returned array.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the traces and whose shape is determined by
+        removing the last two dimensions and storing the traces in the last
+        array dimension. For example, if x has rank k and shape:
+        (I, J, K, ..., L, M, N), then an output array has rank k-2 and shape:
+        (I, J, K, ..., L) where::
+
+            out[i, j, k, ..., l] = trace(a[i, j, k, ..., l, :, :])
+
+        The returned array must have a data type as described by the dtype
+        parameter above.
+
+    See Also
+    --------
+    numpy.trace
+    """
+    return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)

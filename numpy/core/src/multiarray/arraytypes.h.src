@@ -123,8 +123,8 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int BOOL_argmax,
  * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
  *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
  * #CNAME = (BYTE, SHORT, INT, LONG, LONGLONG)*2#
- * #cname = byte, short, intc, int_, longlong,
- *          ubyte, ushort, uintc, uint, ulonglong#
+ * #cname = byte, short, intc, long, longlong,
+ *          ubyte, ushort, uintc, ulong, ulonglong#
  * #CName = Byte, Short, Int, Long, LongLong,
  *          UByte, UShort, UInt, ULong, ULongLong#
  * #bitname = int*5, uint*5#

@@ -65,9 +65,6 @@ class _TypeCodes(TypedDict):
     Datetime: L['Mm']
     All: L['?bhilqpBHILQPefdgFDGSUVOMm']
 
-class _typedict(dict[type[generic], _T]):
-    def __getitem__(self, key: DTypeLike) -> _T: ...
-
 if sys.version_info >= (3, 10):
     _TypeTuple = (
         type[Any]
@@ -116,7 +113,6 @@ def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 
 def sctype2char(sctype: DTypeLike) -> str: ...
 
-cast: _typedict[_CastFunc]
 typecodes: _TypeCodes
 ScalarType: tuple[
     type[int],

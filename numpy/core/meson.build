@@ -148,20 +148,32 @@ endforeach
 # Mandatory functions: if not found, fail the build
 # Some of these can still be blocklisted if the C99 implementation
 # is buggy, see numpy/core/src/common/npy_config.h
-mandatory_funcs = [
+mandatory_math_funcs = [
   'sin', 'cos', 'tan', 'sinh', 'cosh', 'tanh', 'fabs',
   'floor', 'ceil', 'sqrt', 'log10', 'log', 'exp', 'asin',
   'acos', 'atan', 'fmod', 'modf', 'frexp', 'ldexp',
   'expm1', 'log1p', 'acosh', 'asinh', 'atanh',
-  'rint', 'trunc', 'exp2',
-  'copysign', 'nextafter', 'strtoll', 'strtoull', 'cbrt',
+  'rint', 'trunc', 'exp2', 'copysign', 'nextafter', 'cbrt',
   'log2', 'pow', 'hypot', 'atan2',
-  'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh',
-  'creal', 'cimag', 'conj'
 ]
-foreach func: mandatory_funcs
-  if not cc.has_function(func)
-    error('Function `{func}` not found')
+foreach func: mandatory_math_funcs
+  if not cc.has_function(func, prefix: '#include <math.h>', dependencies: m_dep)
+    error(f'Function `@func@` not found')
+  endif
+endforeach
+
+mandatory_complex_math_funcs = [
+  'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh', 'creal', 'cimag', 'conj'
+]
+foreach func: mandatory_complex_math_funcs
+  if not cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
+    error(f'Function `@func@` not found')
+  endif
+endforeach
+
+foreach func: ['strtoll', 'strtoull']
+  if not cc.has_function(func, prefix: '#include <stdlib.h>')
+    error(f'Function `@func@` not found')
   endif
 endforeach
 
@@ -175,13 +187,13 @@ c99_complex_funcs = [
 foreach func: c99_complex_funcs
   func_single = func + 'f'
   func_longdouble = func + 'l'
-  if cc.has_function(func)
+  if cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
     cdata.set10('HAVE_' + func.to_upper(), true)
   endif
-  if cc.has_function(func_single)
+  if cc.has_function(func_single, prefix: '#include <complex.h>', dependencies: m_dep)
     cdata.set10('HAVE_' + func_single.to_upper(), true)
   endif
-  if cc.has_function(func_longdouble)
+  if cc.has_function(func_longdouble, prefix: '#include <complex.h>', dependencies: m_dep)
     cdata.set10('HAVE_' + func_longdouble.to_upper(), true)
   endif
 endforeach
@@ -190,7 +202,7 @@ endforeach
 # libnpymath as a C99 compat layer, these may still be relevant.
 c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
 foreach macro: c99_macros
-  if cc.has_function(macro)
+  if cc.has_function(macro, prefix: '#include <math.h>', dependencies: m_dep)
     cdata.set10('NPY_HAVE_DECL_' + macro.to_upper(), true)
     if not cc.has_header_symbol('Python.h', macro, dependencies: py_dep)
       # Add in config.h as well, except if it will clash with Python's config.h content
@@ -500,7 +512,8 @@ _numpyconfig_h = configure_file(
   output: '_numpyconfig.h',
   configuration: cdata,
   install: true,
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 # Build npymath static library
@@ -555,7 +568,8 @@ configure_file(
     'sep' : dir_separator,
   }),
   install: true,
-  install_dir: np_dir / 'core/lib/npy-pkg-config'
+  install_dir: np_dir / 'core/lib/npy-pkg-config',
+  install_tag: 'devel'
 )
 configure_file(
   input: 'mlib.ini.in',
@@ -565,7 +579,8 @@ configure_file(
     'msvc_mathlib' : 'm.lib',
   }),
   install: true,
-  install_dir: np_dir / 'core/lib/npy-pkg-config'
+  install_dir: np_dir / 'core/lib/npy-pkg-config',
+  install_tag: 'devel'
 )
 
 if false
@@ -610,7 +625,8 @@ src_numpy_api = custom_target('__multiarray_api',
   input : 'code_generators/generate_numpy_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 src_ufunc_api = custom_target('__ufunc_api',
@@ -618,7 +634,8 @@ src_ufunc_api = custom_target('__ufunc_api',
   input : 'code_generators/generate_ufunc_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@'],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
-  install_dir: np_dir / 'core/include/numpy'
+  install_dir: np_dir / 'core/include/numpy',
+  install_tag: 'devel'
 )
 
 
@@ -1040,7 +1057,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/scalarapi.c',
   'src/multiarray/strfuncs.c',
   'src/multiarray/temp_elide.c',
-  'src/multiarray/typeinfo.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
   'src/npysort/quicksort.cpp',
@@ -1249,4 +1265,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: np_dir / 'core')
+install_subdir('tests', install_dir: np_dir / 'core', install_tag: 'python-runtime')

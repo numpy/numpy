@@ -99,13 +99,7 @@ from ._string_helpers import (
 )
 
 from ._type_aliases import (
-    sctypeDict,
-    allTypes,
-    bitname,
-    sctypes,
-    _concrete_types,
-    _concrete_typeinfo,
-    _bits_of,
+    sctypeDict, allTypes, sctypes
 )
 from ._dtype import _kind_name
 
@@ -431,34 +425,6 @@ def issubdtype(arg1, arg2):
     return issubclass(arg1, arg2)
 
 
-# This dictionary allows look up based on any alias for an array data-type
-class _typedict(dict):
-    """
-    Base object for a dictionary for look-up with any alias for an array dtype.
-
-    Instances of `_typedict` can not be used as dictionaries directly,
-    first they have to be populated.
-
-    """
-
-    def __getitem__(self, obj):
-        return dict.__getitem__(self, obj2sctype(obj))
-
-_maxvals = _typedict()
-_minvals = _typedict()
-def _construct_lookups():
-    for info in _concrete_typeinfo.values():
-        obj = info.type
-        if len(info) > 5:
-            _maxvals[obj] = info.max
-            _minvals[obj] = info.min
-        else:
-            _maxvals[obj] = None
-            _minvals[obj] = None
-
-_construct_lookups()
-
-
 @set_module('numpy')
 def sctype2char(sctype):
     """
@@ -506,7 +472,7 @@ def sctype2char(sctype):
     sctype = obj2sctype(sctype)
     if sctype is None:
         raise ValueError("unrecognized type")
-    if sctype not in _concrete_types:
+    if sctype not in sctypeDict.values():
         # for compatibility
         raise KeyError(sctype)
     return dtype(sctype).char
@@ -519,7 +485,7 @@ def _scalar_type_key(typ):
 
 
 ScalarType = [int, float, complex, bool, bytes, str, memoryview]
-ScalarType += sorted(_concrete_types, key=_scalar_type_key)
+ScalarType += sorted(set(sctypeDict.values()), key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 

@@ -17,7 +17,7 @@ PyArray_NewFromDescrAndBase(
 /* Private options for NewFromDescriptor */
 typedef enum {
     /*
-     * Indicate the the array should be zeroed, we may use calloc to do so
+     * Indicate the array should be zeroed, we may use calloc to do so
      * (otherwise much like ).
      */
     _NPY_ARRAY_ZEROED = 1 << 0,

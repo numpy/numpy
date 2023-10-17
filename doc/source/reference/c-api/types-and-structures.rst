@@ -390,8 +390,7 @@ PyArrayDescr_Type and PyArray_Descr
    .. c:type:: npy_hash_t
    .. c:member:: npy_hash_t *hash
 
-       Currently unused. Reserved for future use in caching
-       hash values.
+       Used for caching hash values.
 
 .. c:macro:: NPY_ITEM_REFCOUNT
 

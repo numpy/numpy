@@ -67,7 +67,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "compiled_base.h"
 #include "mem_overlap.h"
-#include "typeinfo.h"
 #include "convert.h" /* for PyArray_AssignZero */
 #include "lowlevel_strided_loops.h"
 #include "dtype_transfer.h"
@@ -5109,11 +5108,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
-    /* Create the typeinfo types */
-    if (typeinfo_init_structsequences(d) < 0) {
-        goto err;
-    }
-
+    /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
         goto err;
     }

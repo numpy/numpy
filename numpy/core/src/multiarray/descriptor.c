@@ -1792,7 +1792,14 @@ _convert_from_str(PyObject *obj, int align)
             kind = type[0];
             switch (kind) {
                 case NPY_STRINGLTR:
-                case NPY_STRINGLTR2:
+                    check_num = NPY_STRING;
+                    break;
+
+                case NPY_DEPRECATED_STRINGLTR2:
+                    DEPRECATE(
+                        "Data type alias `a` was removed in NumPy 2.0. "
+                        "Use `S` alias instead."
+                    );
                     check_num = NPY_STRING;
                     break;
 
@@ -1856,7 +1863,15 @@ _convert_from_str(PyObject *obj, int align)
                         "without a digit at the end.", obj);
                 return NULL;
             }
+
             goto fail;
+        }
+
+        if (strcmp(type, "a") == 0) {
+            DEPRECATE(
+                "Data type alias `a` was removed in NumPy 2.0. "
+                "Use `S` alias instead."
+            );
         }
 
         /*

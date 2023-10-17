@@ -416,22 +416,13 @@ class TestIsSubDType:
 
 class TestSctypeDict:
     def test_longdouble(self):
-        assert_(np.core.sctypeDict['f8'] is not np.longdouble)
-        assert_(np.core.sctypeDict['c16'] is not np.clongdouble)
+        assert_(np.core.sctypeDict['float64'] is not np.longdouble)
+        assert_(np.core.sctypeDict['complex128'] is not np.clongdouble)
 
     def test_ulong(self):
-        # Test that 'ulong' behaves like 'long'. np.core.sctypeDict['long'] 
-        # is an alias for np.int_, but np.long is not supported for historical
-        # reasons (gh-21063)
-        assert_(np.core.sctypeDict['ulong'] is np.uint)
-        with pytest.warns(FutureWarning):
-            # We will probably allow this in the future:
-            assert not hasattr(np, 'ulong')
-
-
-class TestBitName:
-    def test_abstract(self):
-        assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
+        assert np.sctypeDict['ulong'] is np.ulong
+        assert np.dtype(np.ulong) is np.dtype("ulong")
+        assert np.dtype(np.ulong).itemsize == np.dtype(np.long).itemsize
 
 
 @pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
@@ -440,11 +431,15 @@ class TestMaximumSctype:
     # note that parametrizing with sctype['int'] and similar would skip types
     # with the same size (gh-11923)
 
-    @pytest.mark.parametrize('t', [np.byte, np.short, np.intc, np.int_, np.longlong])
+    @pytest.mark.parametrize(
+        't', [np.byte, np.short, np.intc, np.long, np.longlong]
+    )
     def test_int(self, t):
         assert_equal(maximum_sctype(t), np.core.sctypes['int'][-1])
 
-    @pytest.mark.parametrize('t', [np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong])
+    @pytest.mark.parametrize(
+        't', [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
+    )
     def test_uint(self, t):
         assert_equal(maximum_sctype(t), np.core.sctypes['uint'][-1])
 
@@ -523,8 +518,8 @@ class TestScalarTypeNames:
     # gh-9799
 
     numeric_types = [
-        np.byte, np.short, np.intc, np.int_, np.longlong,
-        np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong,
+        np.byte, np.short, np.intc, np.long, np.longlong,
+        np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong,
         np.half, np.single, np.double, np.longdouble,
         np.csingle, np.cdouble, np.clongdouble,
     ]

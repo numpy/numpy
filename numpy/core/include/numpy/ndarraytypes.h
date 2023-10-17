@@ -112,7 +112,7 @@ enum NPY_TYPECHAR {
         NPY_CLONGDOUBLELTR = 'G',
         NPY_OBJECTLTR = 'O',
         NPY_STRINGLTR = 'S',
-        NPY_STRINGLTR2 = 'a',
+        NPY_DEPRECATED_STRINGLTR2 = 'a',
         NPY_UNICODELTR = 'U',
         NPY_VOIDLTR = 'V',
         NPY_DATETIMELTR = 'M',

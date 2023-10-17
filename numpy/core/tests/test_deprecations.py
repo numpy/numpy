@@ -689,8 +689,7 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-@pytest.mark.parametrize("name",
-        ["bool", "long", "ulong", "str", "bytes", "object"])
+@pytest.mark.parametrize("name", ["bool", "str", "bytes", "object"])
 def test_future_scalar_attributes(name):
     # FutureWarning added 2022-11-17, NumPy 1.24,
     assert name not in dir(np)  # we may want to not add them
@@ -772,3 +771,19 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: row_stack([[]]))
         self.assert_deprecated(lambda: trapz([1], [1]))
         self.assert_deprecated(lambda: np.chararray)
+
+
+class TestDeprecatedDTypeAliases(_DeprecationTestCase):
+
+    @staticmethod
+    def _check_for_warning(func):
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            func()
+        assert len(caught_warnings) == 1
+        w = caught_warnings[0]
+        assert w.category is DeprecationWarning
+        assert "alias `a` was removed in NumPy 2.0" in str(w.message)
+
+    def test_a_dtype_alias(self):
+        self._check_for_warning(lambda: np.dtype("a"))
+        self._check_for_warning(lambda: np.dtype("a10"))

@@ -3729,6 +3729,7 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
+    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy3.{9, 10}-v7.3.13, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -9705,9 +9706,12 @@ def test_ragged_comparison_fails(op):
 def test_npymath_complex(fun, npfun, x, y, test_dtype):
     # Smoketest npymath functions
     z = test_dtype(complex(x, y))
-    got = fun(z)
-    expected = npfun(z)
-    assert_allclose(got, expected)
+    with np.errstate(invalid='ignore'):
+        # Fallback implementations may emit a warning for +-inf (see gh-24876):
+        #     RuntimeWarning: invalid value encountered in absolute
+        got = fun(z)
+        expected = npfun(z)
+        assert_allclose(got, expected)
 
 
 def test_npymath_real():

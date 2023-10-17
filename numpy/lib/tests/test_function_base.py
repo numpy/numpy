@@ -580,7 +580,7 @@ class TestInsert:
 
     def test_structured_array(self):
         a = np.array([(1, 'a'), (2, 'b'), (3, 'c')],
-                     dtype=[('foo', 'i'), ('bar', 'a1')])
+                     dtype=[('foo', 'i'), ('bar', 'S1')])
         val = (4, 'd')
         b = np.insert(a, 0, val)
         assert_array_equal(b[0], np.array(val, dtype=b.dtype))

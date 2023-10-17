@@ -27,13 +27,14 @@ import warnings
 import textwrap
 import re
 from functools import reduce
+from typing import Dict
 
 import numpy as np
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
 from numpy.core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
-from numpy import array as narray, expand_dims
+from numpy import array as narray, expand_dims, iinfo, finfo
 from numpy.core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 
@@ -182,11 +183,35 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
 
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
-max_filler = ntypes._minvals
+
+_minvals: Dict[type, int] = {}
+_maxvals: Dict[type, int] = {}
+
+for sctype in ntypes.sctypeDict.values():
+    scalar_dtype = np.dtype(sctype)
+
+    if scalar_dtype.kind in "Mm":
+        info = np.iinfo(np.int64)
+        min_val, max_val = info.min, info.max
+    elif np.issubdtype(scalar_dtype, np.integer):
+        info = np.iinfo(sctype)
+        min_val, max_val = info.min, info.max
+    elif np.issubdtype(scalar_dtype, np.floating):
+        info = np.finfo(sctype)
+        min_val, max_val = info.min, info.max
+    elif scalar_dtype.kind == "b":
+        min_val, max_val = 0, 1
+    else:
+        min_val, max_val = None, None
+
+    _minvals[sctype] = min_val
+    _maxvals[sctype] = max_val
+
+max_filler = _minvals
 max_filler.update([(k, -np.inf) for k in float_types_list[:4]])
 max_filler.update([(k, complex(-np.inf, -np.inf)) for k in float_types_list[-3:]])
 
-min_filler = ntypes._maxvals
+min_filler = _maxvals
 min_filler.update([(k,  +np.inf) for k in float_types_list[:4]])
 min_filler.update([(k, complex(+np.inf, +np.inf)) for k in float_types_list[-3:]])
 
@@ -282,7 +307,7 @@ def _extremum_fill_value(obj, extremum, extremum_name):
 
     def _scalar_fill_value(dtype):
         try:
-            return extremum[dtype]
+            return extremum[dtype.type]
         except KeyError as e:
             raise TypeError(
                 f"Unsuitable type {dtype} for calculating {extremum_name}."

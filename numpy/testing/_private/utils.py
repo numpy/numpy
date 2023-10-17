@@ -184,6 +184,7 @@ else:
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
+    err_msg = str(err_msg)
     if err_msg:
         if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
             msg = [msg[0] + ' ' + err_msg]
@@ -840,6 +841,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         remarks.append('Max relative difference: '
                                        + array2string(max_rel_error))
 
+            err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
@@ -868,6 +870,16 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
 
     The usual caution for verifying equality with floating point numbers is
     advised.
+
+    .. note:: When either `x` or `y` is already an instance of `numpy.ndarray`
+        and `y` is not a ``dict``, the behavior of ``assert_equal(x, y)`` is
+        identical to the behavior of this function. Otherwise, this function
+        performs `np.asanyarray` on the inputs before comparison, whereas
+        `assert_equal` defines special comparison rules for common Python
+        types. For example, only `assert_equal` can be used to compare nested
+        Python lists. In new code, consider using only `assert_equal`,
+        explicitly converting either `x` or `y` to arrays if the behavior of
+        `assert_array_equal` is desired.
 
     Parameters
     ----------
@@ -2632,4 +2644,3 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
-
