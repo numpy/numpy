@@ -26,6 +26,7 @@ __all__ = [
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'matrix_transpose',
 ]
 
 _gentype = types.GeneratorType
@@ -579,6 +580,53 @@ def swapaxes(a, axis1, axis2):
 
     """
     return _wrapfunc(a, 'swapaxes', axis1, axis2)
+
+
+def _matrix_transpose_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
+def matrix_transpose(a):
+    """
+    Returns an array with the axes matrix transposed
+
+    The matrix transpose is the transpose of the last two dimensions, even
+    if the array is of higher dimension.
+
+    .. versionadded::2.0
+
+    Raises
+    ------
+    ValueError
+        If the array is of dimension less than 2.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> a
+    array([[1, 2],
+           [3, 4]])
+    >>> np.matrix_transpose(a)
+    array([[1, 3],
+           [2, 4]])
+
+    >>> a = np.arange(8).reshape((2, 2, 2))
+    >>> a
+    array([[[0, 1],
+            [2, 3]],
+    <BLANKLINE>
+           [[4, 5],
+            [6, 7]]])
+    >>> np.matrix_transpose(a)
+    array([[[0, 2],
+            [1, 3]],
+    <BLANKLINE>
+           [[4, 6],
+            [5, 7]]])
+
+    """
+    return np.asarray(a).mT
 
 
 def _transpose_dispatcher(a, axes=None):

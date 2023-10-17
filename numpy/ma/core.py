@@ -72,7 +72,7 @@ __all__ = [
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
-    'var', 'where', 'zeros', 'zeros_like',
+    'var', 'where', 'zeros', 'zeros_like', 'matrix_transpose',
     ]
 
 MaskType = np.bool_
@@ -7398,6 +7398,48 @@ def putmask(a, mask, values):  # , mode='raise'):
         np.copyto(a._mask, valmask, where=mask)
     np.copyto(a._data, valdata, where=mask)
     return
+
+
+def matrix_transpose(a):
+    """
+    View of the matrix transposed array.
+
+    The matrix transpose is the transpose of the last two dimensions, even
+    if the array is of higher dimension.
+
+    .. versionadded:: 2.0
+
+    Raises
+    ------
+    ValueError
+        If the array is of dimension less than 2.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = ma.arange(4).reshape((2,2))
+    >>> x[1, 1] = ma.masked
+    >>> x
+    masked_array(
+      data=[[0, 1],
+            [2, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
+
+    >>> ma.matrix_transpose(x)
+    masked_array(
+      data=[[0, 2],
+            [1, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
+
+    """
+    try:
+        return a.mT
+    except AttributeError:
+        return narray(a, copy=False).mT.view(MaskedArray)
 
 
 def transpose(a, axes=None):

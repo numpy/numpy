@@ -24,10 +24,18 @@ ARRAY_SHAPES_TO_TEST = (
 
 
 @pytest.mark.parametrize("shape", ARRAY_SHAPES_TO_TEST)
-def test_matrix_transpose_equals_swapaxes(shape):
+@pytest.mark.parametrize("kind", ["attribute", "func"])
+def test_matrix_transpose_equals_swapaxes(shape, kind):
     num_of_axes = len(shape)
     vec = np.arange(shape[-1])
     arr = np.broadcast_to(vec, shape)
     tgt = np.swapaxes(arr, num_of_axes - 2, num_of_axes - 1)
-    mT = arr.mT
-    assert_array_equal(tgt, mT)
+
+    if kind == "attribute":
+        tst = arr.mT
+    elif kind == "func":
+        tst = np.matrix_transpose(arr)
+    else:
+        raise ValueError("kind must be either `attribute` or `func`.")
+
+    assert_array_equal(tgt, tst)
