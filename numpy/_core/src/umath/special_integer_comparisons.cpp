@@ -356,14 +356,14 @@ add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
         /* Register the spec/loop for both forward and backward direction */
         spec->dtypes[0] = Int;
         spec->dtypes[1] = PyInt;
-        int res = PyUFunc_AddLoopFromSpec((PyObject *)ufunc, spec);
+        int res = PyUFunc_AddLoopFromSpec_int((PyObject *)ufunc, spec, 1);
         if (res < 0) {
             Py_DECREF(Int);
             goto fail;
         }
         spec->dtypes[0] = PyInt;
         spec->dtypes[1] = Int;
-        res = PyUFunc_AddLoopFromSpec((PyObject *)ufunc, spec);
+        res = PyUFunc_AddLoopFromSpec_int((PyObject *)ufunc, spec, 1);
         Py_DECREF(Int);
         if (res < 0) {
             goto fail;

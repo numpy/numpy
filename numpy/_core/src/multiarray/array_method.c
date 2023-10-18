@@ -256,6 +256,13 @@ fill_arraymethod_from_slots(
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
             case NPY_METH_resolve_descriptors_with_scalars:
+                if (!private) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                            "the NPY_METH_resolve_descriptors_with_scalars "
+                            "slot private due to uncertainty about the right "
+                            "signature (see gh-24915)");
+                    return -1;
+                }
                 meth->resolve_descriptors_with_scalars = slot->pfunc;
                 continue;
             case NPY_METH_resolve_descriptors:
@@ -269,7 +276,6 @@ fill_arraymethod_from_slots(
                  *       (as in: we should not worry about changing it, but of
                  *       course that would not break it immediately.)
                  */
-                /* Only allow override for private functions initially */
                 meth->get_strided_loop = slot->pfunc;
                 continue;
             /* "Typical" loops, supported used by the default `get_loop` */
