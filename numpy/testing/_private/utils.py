@@ -1707,7 +1707,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
             max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:.0f})"
+            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
         raise AssertionError(msg)
 
 
