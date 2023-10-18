@@ -227,8 +227,38 @@ cdef extern from "numpy/arrayobject.h":
         pass
 
     ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
-        # Use through macros
-        pass
+
+        @property
+        cdef inline int numiter(self) nogil:
+            """The number of arrays that need to be broadcast to the same shape."""
+            return PyArray_MultiIter_NUMITER(self)
+
+        @property
+        cdef inline npy_intp size(self) nogil:
+            """The total broadcasted size."""
+            return PyArray_MultiIter_SIZE(self)
+
+        @property
+        cdef inline npy_intp index(self) nogil:
+            """The current (1-d) index into the broadcasted result."""
+            return PyArray_MultiIter_INDEX(self)
+
+        @property
+        cdef inline int nd(self) nogil:
+            """The number of dimensions in the broadcasted result."""
+            return PyArray_MultiIter_NDIM(self)
+
+        @property
+        cdef inline npy_intp* dimensions(self) nogil:
+            """The shape of the broadcasted result."""
+            return PyArray_MultiIter_DIMS(self)
+
+        @property
+        cdef inline void** iters(self) nogil:
+            """An array of iterator objects that holds the iterators for the arrays to be broadcast together.
+            On return, the iterators are adjusted for broadcasting."""
+            return PyArray_MultiIter_ITERS(self)
+
 
     ctypedef struct PyArrayObject:
         # For use in situations where ndarray can't replace PyArrayObject*,
@@ -542,6 +572,12 @@ cdef extern from "numpy/arrayobject.h":
     void* PyArray_MultiIter_DATA(broadcast multi, npy_intp i) nogil
     void PyArray_MultiIter_NEXTi(broadcast multi, npy_intp i) nogil
     bint PyArray_MultiIter_NOTDONE(broadcast multi) nogil
+    npy_intp PyArray_MultiIter_SIZE(broadcast multi) nogil
+    int PyArray_MultiIter_NDIM(broadcast multi) nogil
+    npy_intp PyArray_MultiIter_INDEX(broadcast multi) nogil
+    int PyArray_MultiIter_NUMITER(broadcast multi) nogil
+    npy_intp* PyArray_MultiIter_DIMS(broadcast multi) nogil
+    void** PyArray_MultiIter_ITERS(broadcast multi) nogil
 
     # Functions from __multiarray_api.h
 
