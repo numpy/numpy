@@ -1126,8 +1126,7 @@ def lower(a):
     array(['a1b c', '1bca', 'bca1'], dtype='<U5')
 
     """
-    a_arr = numpy.asarray(a)
-    return _vec_string(a_arr, a_arr.dtype, 'lower')
+    return numpy._core.umath.lower(a)
 
 
 def _strip_dispatcher(a, chars=None):
@@ -1804,8 +1803,7 @@ def upper(a):
     array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
 
     """
-    a_arr = numpy.asarray(a)
-    return _vec_string(a_arr, a_arr.dtype, 'upper')
+    return numpy._core.umath.upper(a)
 
 
 def _zfill_dispatcher(a, width):

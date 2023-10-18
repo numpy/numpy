@@ -1141,7 +1141,17 @@ defdict = {
     Ufunc(1, 1, False_,
           docstrings.get('numpy._core.umath.isalpha'),
           None,
-          )
+          ),
+'lower':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath.lower'),
+          None,
+          ),
+'upper':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath.upper'),
+          None,
+          ),
 }
 
 def indent(st, spaces):

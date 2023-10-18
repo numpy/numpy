@@ -4276,3 +4276,63 @@ add_newdoc('numpy._core.umath', 'isalpha',
     --------
     str.isalpha
     """)
+
+add_newdoc('numpy._core.umath', 'lower',
+    """
+    Return an array with the elements converted to lowercase.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ``bytes_`` or ``unicode_`` dtype, depending on input type
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.lower
+
+    Examples
+    --------
+    >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
+    >>> np._core.umath.lower(c)
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
+
+    """)
+
+add_newdoc('numpy._core.umath', 'upper',
+    """
+    Return an array with the elements converted to uppercase.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    x : array_like, with ``bytes_`` or ``unicode_`` dtype
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Output array of ``bytes_`` or ``unicode_`` dtype, depending on input type
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    str.upper
+
+    Examples
+    --------
+    >>> c = np.array(['a1b c', '1bca', 'bca1']); c
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
+    >>> np._core.umath.upper(c)
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
+
+    """)

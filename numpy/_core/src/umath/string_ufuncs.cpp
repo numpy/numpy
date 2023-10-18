@@ -160,6 +160,42 @@ string_isalpha(const character *str, int elsize)
 }
 
 
+template <typename character>
+static inline void
+string_lower(character *str, int elsize, character *out, int outsize)
+{
+    int len = get_length<character>(str, elsize);
+    if (len == 0) {
+        memset(out, 0, outsize * sizeof(character));
+    }
+
+    int i;
+    for (i = 0; i < len; i++) {
+        *out = Py_UNICODE_TOLOWER(str[i]);
+        out++;
+    }
+    memset(out, 0, (outsize - i) * sizeof(character));
+}
+
+
+template <typename character>
+static inline void
+string_upper(character *str, int elsize, character *out, int outsize)
+{
+    int len = get_length<character>(str, elsize);
+    if (len == 0) {
+        memset(out, 0, outsize * sizeof(character));
+    }
+
+    int i;
+    for (i = 0; i < len; i++) {
+        *out = Py_UNICODE_TOUPPER(str[i]);
+        out++;
+    }
+    memset(out, 0, (outsize - i) * sizeof(character));
+}
+
+
 /*
  * Helper for templating, avoids warnings about uncovered switch paths.
  */
@@ -287,6 +323,58 @@ string_isalpha_loop(PyArrayMethod_Context *context,
     while (N--) {
         npy_bool res = string_isalpha<character>((character *) in, elsize);
         *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <typename character>
+static int
+string_lower_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int outsize = context->descriptors[1]->elsize / sizeof(character);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        string_lower<character>((character *) in, elsize,
+                                (character *) out, outsize);
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <typename character>
+static int
+string_upper_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
+    int outsize = context->descriptors[1]->elsize / sizeof(character);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        string_upper<character>((character *) in, elsize,
+                                (character *) out, outsize);
 
         in += strides[0];
         out += strides[1];
@@ -526,6 +614,122 @@ init_isalpha(PyObject *umath)
 }
 
 
+static NPY_CASTING
+string_lower_upper_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[1] = loop_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+
+static int
+init_lower(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, String};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {NPY_METH_resolve_descriptors, (void *) &string_lower_upper_resolve_descriptors},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_lower";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "lower", &spec, string_lower_loop<npy_byte>) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    dtypes[1] = Unicode;
+    if (add_loop(umath, "lower", &spec, string_lower_loop<npy_ucs4>) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    return res;
+}
+
+
+static int
+init_upper(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, String};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {NPY_METH_resolve_descriptors, (void *) &string_lower_upper_resolve_descriptors},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_upper";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "upper", &spec, string_upper_loop<npy_byte>) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    dtypes[1] = Unicode;
+    if (add_loop(umath, "upper", &spec, string_upper_loop<npy_ucs4>) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    return res;
+}
+
+
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
@@ -538,6 +742,14 @@ init_string_ufuncs(PyObject *umath)
     }
 
     if (init_isalpha(umath) < 0) {
+        return -1;
+    }
+
+    if (init_lower(umath) < 0) {
+        return -1;
+    }
+
+    if (init_upper(umath) < 0) {
         return -1;
     }
 
