@@ -150,9 +150,91 @@ string_isalpha(const character *str, int elsize)
     }
 
     for (int i = 0; i < len; i++) {
-        npy_bool isalpha = (npy_bool) NumPyOS_ascii_isalpha(*str);
+        npy_bool isalpha = (npy_bool) Py_UNICODE_ISALPHA(*str);
         if (!isalpha) {
             return isalpha;
+        }
+        str++;
+    }
+    return (npy_bool) 1;
+}
+
+
+template <typename character>
+static inline npy_bool
+string_isdigit(const character *str, int elsize)
+{
+    int len = get_length(str, elsize);
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        npy_bool isdigit = (npy_bool) Py_UNICODE_ISDIGIT(*str);
+        if (!isdigit) {
+            return isdigit;
+        }
+        str++;
+    }
+    return (npy_bool) 1;
+}
+
+
+template <typename character>
+static inline npy_bool
+string_isspace(const character *str, int elsize)
+{
+    int len = get_length(str, elsize);
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        npy_bool isspace = (npy_bool) Py_UNICODE_ISSPACE(*str);
+        if (!isspace) {
+            return isspace;
+        }
+        str++;
+    }
+    return (npy_bool) 1;
+}
+
+
+static inline npy_bool
+string_isdecimal(const npy_ucs4 *str, int elsize)
+{
+    int len = get_length<npy_ucs4>(str, elsize);
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        npy_bool isdecimal = (npy_bool) Py_UNICODE_ISDECIMAL(*str);
+        if (!isdecimal) {
+            return isdecimal;
+        }
+        str++;
+    }
+    return (npy_bool) 1;
+}
+
+
+static inline npy_bool
+string_isnumeric(const npy_ucs4 *str, int elsize)
+{
+    int len = get_length<npy_ucs4>(str, elsize);
+
+    if (len == 0) {
+        return (npy_bool) 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        npy_bool isnumeric = (npy_bool) Py_UNICODE_ISNUMERIC(*str);
+        if (!isnumeric) {
+            return isnumeric;
         }
         str++;
     }
@@ -286,6 +368,104 @@ string_isalpha_loop(PyArrayMethod_Context *context,
 
     while (N--) {
         npy_bool res = string_isalpha<character>((character *) in, elsize);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <typename character>
+static int
+string_isdigit_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        npy_bool res = string_isdigit<character>((character *) in, elsize);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+template <typename character>
+static int
+string_isspace_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(character);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        npy_bool res = string_isspace<character>((character *) in, elsize);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+static int
+string_isdecimal_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(npy_ucs4);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        npy_bool res = string_isdecimal((npy_ucs4 *) in, elsize);
+        *(npy_bool *)out = res;
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    return 0;
+}
+
+
+static int
+string_isnumeric_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize = context->descriptors[0]->elsize / sizeof(npy_ucs4);
+
+    char *in = data[0];
+    char *out = data[1];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        npy_bool res = string_isnumeric((npy_ucs4 *) in, elsize);
         *(npy_bool *)out = res;
 
         in += strides[0];
@@ -526,6 +706,182 @@ init_isalpha(PyObject *umath)
 }
 
 
+static int
+init_isdigit(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isdigit";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isdigit", &spec, string_isdigit_loop<npy_byte>) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    if (add_loop(umath, "isdigit", &spec, string_isdigit_loop<npy_ucs4>) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+static int
+init_isspace(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isspace";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isspace", &spec, string_isspace_loop<npy_byte>) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    if (add_loop(umath, "isspace", &spec, string_isspace_loop<npy_ucs4>) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+static int
+init_isdecimal(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {Unicode, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isdecimal";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isdecimal", &spec, string_isdecimal_loop) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+static int
+init_isnumeric(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should receive global symbols? */
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {Unicode, Bool};
+    /*
+     * We only have one loop right now, the strided one.  The default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_isnumeric";
+    spec.nin = 1;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* All String loops */
+    if (add_loop(umath, "isnumeric", &spec, string_isnumeric_loop) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
@@ -538,6 +894,22 @@ init_string_ufuncs(PyObject *umath)
     }
 
     if (init_isalpha(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isdigit(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isspace(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isdecimal(umath) < 0) {
+        return -1;
+    }
+
+    if (init_isnumeric(umath) < 0) {
         return -1;
     }
 
