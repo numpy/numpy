@@ -9,8 +9,9 @@ import warnings
 
 import numpy as np
 import numpy
-import pytest
 from numpy.testing import IS_WASM
+
+import pytest
 
 try:
     import ctypes
@@ -547,3 +548,68 @@ def test_core_shims_coherence():
 
         else:
             assert member is getattr(core, member_name)
+
+
+def test_functions_single_location():
+    """
+    Check that each public function is available from one location only.
+
+    Test performs BFS search traversing NumPy's public API. It flags
+    any function-like object that is accessible from more that one place.
+    """
+    from typing import Any, Callable, Dict, List, Set, Tuple
+    from numpy._core._multiarray_umath import (
+        _ArrayFunctionDispatcher as dispatched_function
+    )
+
+    visited_modules: Set[types.ModuleType] = {np}
+    visited_functions: Set[Callable[..., Any]] = set()
+    # Functions often have `__name__` overridden, therefore we need
+    # to keep track of locations where functions have been found.
+    functions_original_paths: Dict[Callable[..., Any], str] = dict()
+
+    # Here we aggregate functions with more than one location.
+    # It must be empty for the test to pass.
+    duplicated_functions: List[Tuple] = []
+
+    modules_queue = [np]
+
+    while len(modules_queue) > 0:
+
+        module = modules_queue.pop()
+
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside numpy
+                not member_name.startswith("_") and  # not private
+                not "numpy._core" in member.__name__ and  # outside _core
+                member_name not in ["f2py", "ma"] and  # not a legacy module
+                member not in visited_modules  # not yet visited
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+
+            # else check if we got a function-like object
+            elif (
+                inspect.isfunction(member) or
+                isinstance(member, dispatched_function) or
+                isinstance(member, np.ufunc)
+            ):
+                if member in visited_functions:
+                    # function is present in more than one location!
+                    duplicated_functions.append(
+                        (member.__name__,
+                         module.__name__,
+                         functions_original_paths[member])
+                    )
+                else:
+                    visited_functions.add(member)
+                    functions_original_paths[member] = module.__name__
+
+    del visited_functions, visited_modules, functions_original_paths
+
+    assert len(duplicated_functions) == 0, duplicated_functions
