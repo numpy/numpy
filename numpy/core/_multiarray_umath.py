@@ -8,6 +8,12 @@ for item in _multiarray_umath.__dir__():
     if isinstance(attr, ufunc):
         globals()[item] = attr
 
+# The NumPy 1.x import_array() and import_ufunc() mechanisms expect
+# these symbols to be available without error. If an extension was compiled
+# against NumPy 1.x it will have these paths hard-coded.
+_ARRAY_API = _multiarray_umath._ARRAY_API
+_UFUNC_API = _multiarray_umath._UFUNC_API
+
 def __getattr__(attr_name):
     from numpy._core import _multiarray_umath
     from ._utils import _raise_warning
