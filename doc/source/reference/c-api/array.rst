@@ -733,7 +733,7 @@ General check of Python Type
 .. c:function:: int PyArray_CheckScalar(PyObject *op)
 
     Evaluates true if *op* is either an array scalar (an instance of a
-    sub-type of :c:data:`PyGenericArr_Type` ), or an instance of (a
+    sub-type of :c:data:`PyGenericArrType_Type` ), or an instance of (a
     sub-class of) :c:data:`PyArray_Type` whose dimensionality is 0.
 
 .. c:function:: int PyArray_IsPythonNumber(PyObject *op)
@@ -750,13 +750,13 @@ General check of Python Type
 
     Evaluates true if *op* is either a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
-    type of :c:data:`PyGenericArr_Type` ).
+    type of :c:data:`PyGenericArrType_Type` ).
 
 .. c:function:: int PyArray_CheckAnyScalar(PyObject *op)
 
     Evaluates true if *op* is a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
-    sub-type of :c:data:`PyGenericArr_Type`) or an instance of a sub-type of
+    sub-type of :c:data:`PyGenericArrType_Type`) or an instance of a sub-type of
     :c:data:`PyArray_Type` whose dimensionality is 0.
 
 
@@ -1080,13 +1080,13 @@ Converting data types
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
-    in the same way as `PyArray_ResultType`. The length of the sequence is
+    in the same way as :c:func:`PyArray_ResultType`. The length of the sequence is
     returned in *n*, and an *n* -length array of :c:type:`PyArrayObject`
     pointers is the return value (or ``NULL`` if an error occurs).
     The returned array must be freed by the caller of this routine
     (using :c:func:`PyDataMem_FREE` ) and all the array objects in it
     ``DECREF`` 'd or a memory-leak will occur. The example template-code
-    below shows a typically usage:
+    below shows a typical usage:
 
     .. versionchanged:: 1.18.0
        A mix of scalars and zero-dimensional arrays now produces a type
@@ -1249,7 +1249,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    `Py_DECREF` in order copy any changes back to ``base`` and
+    :c:func:`Py_DECREF` in order to copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
@@ -1580,7 +1580,7 @@ Conversion
     Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>`
     (*self*, *dtype*, *offset*). This function `steals a reference
     <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
-    to `PyArray_Descr` and returns a new array of the given `dtype` using
+    to :c:func:`PyArray_Descr` and returns a new array of the given `dtype` using
     the data in the current array at a specified `offset` in bytes. The
     `offset` plus the itemsize of the new array type must be less than
     ``self->descr->elsize`` or an error is raised. The same shape and strides
@@ -1994,8 +1994,7 @@ Calculation
 .. c:function:: PyObject* PyArray_Ptp( \
         PyArrayObject* self, int axis, PyArrayObject* out)
 
-    Equivalent to :meth:`ndarray.ptp<numpy.ndarray.ptp>` (*self*, *axis*). Return the difference
-    between the largest element of *self* along *axis* and the
+    Return the difference between the largest element of *self* along *axis* and the
     smallest element of *self* along *axis*. When the result is a single
     element, returns a numpy scalar instead of an ndarray.
 
@@ -2575,7 +2574,7 @@ cost of a slight overhead.
             was repeated. For example, for the array [1, 2, 3, 4], x[-2] will
             be 3, x[-2] will be 4, x[4] will be 1, x[5] will be 2, etc...
 
-    If the mode is constant filling (`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
+    If the mode is constant filling (:c:macro:`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
     fill_value should point to an array object which holds the filling value
     (the first item will be the filling value if the array contains more than
     one item). For other cases, fill_value may be NULL.
@@ -3119,21 +3118,21 @@ the C-API is needed then some additional steps must be taken.
 
     Internally, these #defines work as follows:
 
-        * If neither is defined, the C-API is declared to be
-          ``static void**``, so it is only visible within the
-          compilation unit that #includes numpy/arrayobject.h.
-        * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
-          :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be ``void**``, so that it will also be visible to other
-          compilation units.
-        * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
-          whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be ``extern void**``, so it is expected to
-          be defined in another compilation unit.
-        * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
-          also changes the name of the variable holding the C-API, which
-          defaults to ``PyArray_API``, to whatever the macro is
-          #defined to.
+    * If neither is defined, the C-API is declared to be
+      ``static void**``, so it is only visible within the
+      compilation unit that #includes numpy/arrayobject.h.
+    * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
+      :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
+      be ``void**``, so that it will also be visible to other
+      compilation units.
+    * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
+      whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
+      declared to be ``extern void**``, so it is expected to
+      be defined in another compilation unit.
+    * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
+      also changes the name of the variable holding the C-API, which
+      defaults to ``PyArray_API``, to whatever the macro is
+      #defined to.
 
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3152,11 +3151,11 @@ corresponds to the runtime numpy's version.
 
 The rules for ABI and API compatibilities can be summarized as follows:
 
-    * Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-      extension has to be recompiled (ABI incompatibility).
-    * :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-      :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-      backward compatible changes.
+* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
+  extension has to be recompiled (ABI incompatibility).
+* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
+  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
+  backward compatible changes.
 
 ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
@@ -3279,81 +3278,81 @@ variable ``NPY_NOSMP`` is set in which case
 Group 1
 """""""
 
-    This group is used to call code that may take some time but does not
-    use any Python C-API calls. Thus, the GIL should be released during
-    its calculation.
+This group is used to call code that may take some time but does not
+use any Python C-API calls. Thus, the GIL should be released during
+its calculation.
 
-    .. c:macro:: NPY_BEGIN_ALLOW_THREADS
+.. c:macro:: NPY_BEGIN_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_BEGIN_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_END_ALLOW_THREADS
+.. c:macro:: NPY_END_ALLOW_THREADS
 
-        Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
-        :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
-        replaced with white-space or not.
+    Equivalent to :c:macro:`Py_END_ALLOW_THREADS` except it uses
+    :c:data:`NPY_ALLOW_THREADS` to determine if the macro if
+    replaced with white-space or not.
 
-    .. c:macro:: NPY_BEGIN_THREADS_DEF
+.. c:macro:: NPY_BEGIN_THREADS_DEF
 
-        Place in the variable declaration area. This macro sets up the
-        variable needed for storing the Python state.
+    Place in the variable declaration area. This macro sets up the
+    variable needed for storing the Python state.
 
-    .. c:macro:: NPY_BEGIN_THREADS
+.. c:macro:: NPY_BEGIN_THREADS
 
-        Place right before code that does not need the Python
-        interpreter (no Python C-API calls). This macro saves the
-        Python state and releases the GIL.
+    Place right before code that does not need the Python
+    interpreter (no Python C-API calls). This macro saves the
+    Python state and releases the GIL.
 
-    .. c:macro:: NPY_END_THREADS
+.. c:macro:: NPY_END_THREADS
 
-        Place right after code that does not need the Python
-        interpreter. This macro acquires the GIL and restores the
-        Python state from the saved variable.
+    Place right after code that does not need the Python
+    interpreter. This macro acquires the GIL and restores the
+    Python state from the saved variable.
 
-    .. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to release the GIL only if *dtype* does not contain
-        arbitrary Python objects which may need the Python interpreter
-        during execution of the loop.
+    Useful to release the GIL only if *dtype* does not contain
+    arbitrary Python objects which may need the Python interpreter
+    during execution of the loop.
 
-    .. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
+.. c:function:: void NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
-        Useful to regain the GIL in situations where it was released
-        using the BEGIN form of this macro.
+    Useful to regain the GIL in situations where it was released
+    using the BEGIN form of this macro.
 
-    .. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
+.. c:function:: void NPY_BEGIN_THREADS_THRESHOLDED(int loop_size)
 
-        Useful to release the GIL only if *loop_size* exceeds a
-        minimum threshold, currently set to 500. Should be matched
-        with a :c:macro:`NPY_END_THREADS` to regain the GIL.
+    Useful to release the GIL only if *loop_size* exceeds a
+    minimum threshold, currently set to 500. Should be matched
+    with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
 """""""
 
-    This group is used to re-acquire the Python GIL after it has been
-    released. For example, suppose the GIL has been released (using the
-    previous calls), and then some path in the code (perhaps in a
-    different subroutine) requires use of the Python C-API, then these
-    macros are useful to acquire the GIL. These macros accomplish
-    essentially a reverse of the previous three (acquire the LOCK saving
-    what state it had) and then re-release it with the saved state.
+This group is used to re-acquire the Python GIL after it has been
+released. For example, suppose the GIL has been released (using the
+previous calls), and then some path in the code (perhaps in a
+different subroutine) requires use of the Python C-API, then these
+macros are useful to acquire the GIL. These macros accomplish
+essentially a reverse of the previous three (acquire the LOCK saving
+what state it had) and then re-release it with the saved state.
 
-    .. c:macro:: NPY_ALLOW_C_API_DEF
+.. c:macro:: NPY_ALLOW_C_API_DEF
 
-        Place in the variable declaration area to set up the necessary
-        variable.
+    Place in the variable declaration area to set up the necessary
+    variable.
 
-    .. c:macro:: NPY_ALLOW_C_API
+.. c:macro:: NPY_ALLOW_C_API
 
-        Place before code that needs to call the Python C-API (when it is
-        known that the GIL has already been released).
+    Place before code that needs to call the Python C-API (when it is
+    known that the GIL has already been released).
 
-    .. c:macro:: NPY_DISABLE_C_API
+.. c:macro:: NPY_DISABLE_C_API
 
-        Place after code that needs to call the Python C-API (to re-release
-        the GIL).
+    Place after code that needs to call the Python C-API (to re-release
+    the GIL).
 
 .. tip::
 

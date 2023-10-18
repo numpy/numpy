@@ -217,14 +217,14 @@ Conversion functions
     ``base`` restricts the output to that unit. Set ``base`` to
     -1 to auto-detect a base after which all the values are zero.
 
-     ``tzoffset`` is used if ``local`` is enabled, and ``tzoffset`` is
-     set to a value other than -1. This is a manual override for
-     the local time zone to use, as an offset in minutes.
+    ``tzoffset`` is used if ``local`` is enabled, and ``tzoffset`` is
+    set to a value other than -1. This is a manual override for
+    the local time zone to use, as an offset in minutes.
 
-     ``casting`` controls whether data loss is allowed by truncating
-     the data to a coarser unit. This interacts with ``local``, slightly,
-     in order to form a date unit string as a local time, the casting
-     must be unsafe.
+    ``casting`` controls whether data loss is allowed by truncating
+    the data to a coarser unit. This interacts with ``local``, slightly,
+    in order to form a date unit string as a local time, the casting
+    must be unsafe.
 
-     Returns 0 on success, -1 on failure (for example if the output
-     string was too short).
+    Returns 0 on success, -1 on failure (for example if the output
+    string was too short).

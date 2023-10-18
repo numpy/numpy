@@ -37,10 +37,3 @@ Arithmetic
    polydiv
    polymul
    polysub
-
-Warnings
---------
-.. autosummary::
-   :toctree: generated/
-
-   RankWarning

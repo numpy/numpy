@@ -13,7 +13,7 @@ from numpy.polynomial import (
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
-from numpy.polynomial.polyutils import RankWarning
+from numpy.exceptions import RankWarning
 
 #
 # fixtures

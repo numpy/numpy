@@ -61,7 +61,7 @@ which raises the bar. Test the waters by first presenting the fix as an issue.
 
 Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in
 C-extension modules have their docstrings defined separately in `_add_newdocs.py
-<https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
+<https://github.com/numpy/numpy/blob/main/numpy/_core/_add_newdocs.py>`__
 
 **********************
 Contributing new pages
@@ -138,7 +138,7 @@ documentation, converts the rST into HTML and other formats. For more on
 rST, see the `Quick reStructuredText Guide
 <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`__ or the
 `reStructuredText Primer
-<http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 
 
 ***********************
@@ -170,16 +170,16 @@ User documentation
 
 - NumPy style governs cases where:
 
-      - Google has no guidance, or
-      - We prefer not to use the Google style
+  - Google has no guidance, or
+  - We prefer not to use the Google style
 
   Our current rules:
 
-      - We pluralize *index* as *indices* rather than
-        `indexes <https://developers.google.com/style/word-list#letter-i>`_,
-        following the precedent of :func:`numpy.indices`.
+  - We pluralize *index* as *indices* rather than
+    `indexes <https://developers.google.com/style/word-list#letter-i>`_,
+    following the precedent of :func:`numpy.indices`.
 
-      - For consistency we also pluralize *matrix* as *matrices*.
+  - For consistency we also pluralize *matrix* as *matrices*.
 
 - Grammatical issues inadequately addressed by the NumPy or Google rules are
   decided by the section on "Grammar and Usage" in the most recent edition of
@@ -195,7 +195,7 @@ User documentation
 Docstrings
 ==========
 
-When using `Sphinx <http://www.sphinx-doc.org/>`_ in combination with the
+When using `Sphinx <https://www.sphinx-doc.org/>`_ in combination with the
 NumPy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the
 ``Parameters`` section from your docstring and convert it into a field

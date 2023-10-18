@@ -1,6 +1,6 @@
 from math import nan, inf
 import pytest
-from numpy.core import array, arange, printoptions
+from numpy._core import array, arange, printoptions
 import numpy.polynomial as poly
 from numpy.testing import assert_equal, assert_
 

@@ -4,6 +4,7 @@ import subprocess
 import pkgutil
 import types
 import importlib
+import inspect
 import warnings
 
 import numpy as np
@@ -23,6 +24,8 @@ def check_dir(module, module_name=None):
         module_name = module.__name__
     results = {}
     for name in dir(module):
+        if name == "core":
+            continue
         item = getattr(module, name)
         if (hasattr(item, '__module__') and hasattr(item, '__name__')
                 and item.__module__ != module_name):
@@ -31,30 +34,11 @@ def check_dir(module, module_name=None):
 
 
 def test_numpy_namespace():
-    # None of these objects are publicly documented to be part of the main
-    # NumPy namespace (some are useful though, others need to be cleaned up)
-    undocumented = {
-        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
-        'add_newdoc': 'numpy.core.function_base.add_newdoc',
-        'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'byte_bounds': 'numpy.lib.utils.byte_bounds',
-        'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
-        'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
-        'disp': 'numpy.lib.function_base.disp',
-        'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
-        'get_include': 'numpy.lib.utils.get_include',
-        'recfromcsv': 'numpy.lib.npyio.recfromcsv',
-        'recfromtxt': 'numpy.lib.npyio.recfromtxt',
-        'safe_eval': 'numpy.lib.utils.safe_eval',
-        'set_string_function': 'numpy.core.arrayprint.set_string_function',
-        'show_config': 'numpy.__config__.show',
-        'show_runtime': 'numpy.lib.utils.show_runtime',
-        'who': 'numpy.lib.utils.who',
-    }
     # We override dir to not show these members
-    allowlist = undocumented
+    allowlist = {
+        'recarray': 'numpy.rec.recarray',
+        'show_config': 'numpy.__config__.show',
+    }
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
@@ -103,7 +87,7 @@ def test_numpy_fft():
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 def test_NPY_NO_EXPORT():
-    cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
+    cdll = ctypes.CDLL(np._core._multiarray_tests.__file__)
     # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
     f = getattr(cdll, 'test_not_exported', None)
     assert f is None, ("'test_not_exported' is mistakenly exported, "
@@ -126,9 +110,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "array_api",
     "array_api.linalg",
     "ctypeslib",
-    "doc",
-    "doc.constants",
-    "doc.ufuncs",
     "dtypes",
     "exceptions",
     "f2py",
@@ -139,11 +120,13 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.recfunctions",
     "lib.scimath",
     "lib.stride_tricks",
+    "lib.npyio",
+    "lib.introspect",
+    "lib.array_utils",
     "linalg",
     "ma",
     "ma.extras",
     "ma.mrecords",
-    "matlib",
     "polynomial",
     "polynomial.chebyshev",
     "polynomial.hermite",
@@ -156,7 +139,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version",
+    "version"  # Should be removed for NumPy 2.0
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -184,20 +167,19 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "compat.py3k",
     "conftest",
     "core",
+    "core.multiarray",
+    "core.numeric",
+    "core.umath",
     "core.arrayprint",
     "core.defchararray",
     "core.einsumfunc",
     "core.fromnumeric",
     "core.function_base",
     "core.getlimits",
-    "core.memmap",
-    "core.multiarray",
-    "core.numeric",
     "core.numerictypes",
     "core.overrides",
     "core.records",
     "core.shape_base",
-    "core.umath",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -212,26 +194,14 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.symbolic",
     "f2py.use_rules",
     "fft.helper",
-    "lib.arraypad",
-    "lib.arraysetops",
     "lib.arrayterator",
-    "lib.function_base",
-    "lib.histograms",
-    "lib.index_tricks",
-    "lib.nanfunctions",
-    "lib.npyio",
-    "lib.polynomial",
-    "lib.shape_base",
-    "lib.twodim_base",
-    "lib.type_check",
-    "lib.ufunclike",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
-    "lib.utils",
     "linalg.lapack_lite",
     "linalg.linalg",
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
+    "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
     "polynomial.polyutils",
@@ -318,23 +288,10 @@ def is_unexpected(name):
     return True
 
 
-# These are present in a directory with an __init__.py but cannot be imported
-# code_generators/ isn't installed, but present for an inplace build
-SKIP_LIST = [
-    "numpy.core.code_generators",
-    "numpy.core.code_generators.genapi",
-    "numpy.core.code_generators.generate_umath",
-    "numpy.core.code_generators.ufunc_docstrings",
-    "numpy.core.code_generators.generate_numpy_api",
-    "numpy.core.code_generators.generate_ufunc_api",
-    "numpy.core.code_generators.numpy_api",
-    "numpy.core.code_generators.generate_umath_doc",
-    "numpy.core.code_generators.verify_c_api_version",
-    "numpy.core.cversions",
-    "numpy.core.generate_numpy_api",
-]
 if sys.version_info < (3, 12):
-    SKIP_LIST += ["numpy.distutils.msvc9compiler"]
+    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
+else:
+    SKIP_LIST = []
 
 
 # suppressing warnings from deprecated modules
@@ -363,8 +320,6 @@ def test_all_modules_are_expected():
 # below
 SKIP_LIST_2 = [
     'numpy.math',
-    'numpy.doc.constants.re',
-    'numpy.doc.constants.textwrap',
     'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
@@ -533,3 +488,62 @@ def test_array_api_entry_point():
         "does not point to our Array API implementation"
     )
     assert xp is numpy.array_api, msg
+
+
+def test_main_namespace_all_dir_coherence():
+    """
+    Checks if `dir(np)` and `np.__all__` are consistent
+    and return same content, excluding private members.
+    """
+    def _remove_private_members(member_set):
+        return {m for m in member_set if not m.startswith('_')}
+
+    all_members = _remove_private_members(np.__all__)
+    dir_members = _remove_private_members(np.__dir__())
+
+    assert all_members == dir_members, (
+        "Members that break symmetry: "
+        f"{all_members.symmetric_difference(dir_members)}"
+    )
+
+
+@pytest.mark.filterwarnings(
+    r"ignore:numpy.core(\.\w+)? is deprecated:DeprecationWarning"
+)
+def test_core_shims_coherence():
+    """
+    Check that all "semi-public" members of `numpy._core` are also accessible
+    from `numpy.core` shims.
+    """
+    import numpy.core as core
+
+    for member_name in dir(np._core):
+        # skip private and test members
+        if member_name.startswith("_") or member_name == "tests":
+            continue
+
+        member = getattr(np._core, member_name)
+
+        # np.core is a shim and all submodules of np.core are shims
+        # but we should be able to import everything in those shims
+        # that are available in the "real" modules in np._core
+        if inspect.ismodule(member):
+            submodule = member
+            submodule_name = member_name
+            for submodule_member_name in dir(submodule):
+                # ignore dunder names
+                if submodule_member_name.startswith("__"):
+                    continue
+                submodule_member = getattr(submodule, submodule_member_name)
+
+                core_submodule = __import__(
+                    f"numpy.core.{submodule_name}",
+                    fromlist=[submodule_member_name]
+                )
+
+                assert submodule_member is getattr(
+                    core_submodule, submodule_member_name
+                )
+
+        else:
+            assert member is getattr(core, member_name)

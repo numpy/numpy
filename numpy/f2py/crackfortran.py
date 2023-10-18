@@ -614,7 +614,8 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
-endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
+# block, the Fortran 2008 construct needs special handling in the rest of the file
+endifs = r'end\s*(if|do|where|select|while|forall|associate|' + \
          r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
@@ -695,7 +696,8 @@ def _simplifyargs(argsline):
     return ','.join(a)
 
 crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+\w*\b)\s*=.*', re.I)
-
+crackline_bind_1 = re.compile(r'\s*(?P<bind>\b[a-z]+\w*\b)\s*=.*', re.I)
+crackline_bindlang = re.compile(r'\s*bind\(\s*(?P<lang>[^,]+)\s*,\s*name\s*=\s*"(?P<lang_name>[^"]+)"\s*\)', re.I)
 
 def crackline(line, reset=0):
     """
@@ -966,12 +968,22 @@ def _resolvetypedefpattern(line):
         return m1.group('name'), attrs, m1.group('params')
     return None, [], None
 
+def parse_name_for_bind(line):
+    pattern = re.compile(r'bind\(\s*(?P<lang>[^,]+)(?:\s*,\s*name\s*=\s*["\'](?P<name>[^"\']+)["\']\s*)?\)', re.I)
+    match = pattern.search(line)
+    bind_statement = None
+    if match:
+        bind_statement = match.group(0)
+        # Remove the 'bind' construct from the line.
+        line = line[:match.start()] + line[match.end():]
+    return line, bind_statement
 
 def _resolvenameargspattern(line):
+    line, bind_cname = parse_name_for_bind(line)
     line = markouterparen(line)
     m1 = nameargspattern.match(line)
     if m1:
-        return m1.group('name'), m1.group('args'), m1.group('result'), m1.group('bind')
+        return m1.group('name'), m1.group('args'), m1.group('result'), bind_cname
     m1 = operatorpattern.match(line)
     if m1:
         name = m1.group('scheme') + '(' + m1.group('name') + ')'
@@ -1021,7 +1033,7 @@ def analyzeline(m, case, line):
             args = []
             result = None
         else:
-            name, args, result, _ = _resolvenameargspattern(m.group('after'))
+            name, args, result, bindcline = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block == 'block data':
                 name = '_BLOCK_DATA_'
@@ -1139,6 +1151,14 @@ def analyzeline(m, case, line):
             except Exception:
                 pass
         if block in ['function', 'subroutine']:  # set global attributes
+            # name is fortran name
+            if bindcline:
+                bindcdat = re.search(crackline_bindlang, bindcline)
+                if bindcdat:
+                    groupcache[groupcounter]['bindlang'] = {name : {}}
+                    groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
+                    if bindcdat.group('lang_name'):
+                        groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')
             try:
                 groupcache[groupcounter]['vars'][name] = appenddecl(
                     groupcache[groupcounter]['vars'][name], groupcache[groupcounter - 2]['vars'][''])
@@ -1172,7 +1192,7 @@ def analyzeline(m, case, line):
             groupcounter = groupcounter - 1  # end interface
 
     elif case == 'entry':
-        name, args, result, bind = _resolvenameargspattern(m.group('after'))
+        name, args, result, _= _resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
                 args = rmbadname([x.strip()
@@ -1405,45 +1425,61 @@ def analyzeline(m, case, line):
             if dl.startswith(','):
                 dl = dl[1:].strip()
             ll.append([dl, il])
-        vars = {}
-        if 'vars' in groupcache[groupcounter]:
-            vars = groupcache[groupcounter]['vars']
+        vars = groupcache[groupcounter].get('vars', {})
         last_name = None
         for l in ll:
-            l = [x.strip() for x in l]
-            if l[0][0] == ',':
+            l[0], l[1] = l[0].strip(), l[1].strip()
+            if l[0].startswith(','):
                 l[0] = l[0][1:]
-            if l[0][0] == '(':
-                outmess(
-                    'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
+            if l[0].startswith('('):
+                outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
-            i = 0
-            j = 0
-            llen = len(l[1])
-            for v in rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')]):
-                if v[0] == '(':
-                    outmess(
-                        'analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
+            for idx, v in enumerate(rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')])):
+                if v.startswith('('):
+                    outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % v)
                     # XXX: subsequent init expressions may get wrong values.
                     # Ignoring since data statements are irrelevant for
                     # wrapping.
                     continue
-                fc = 0
-                while (i < llen) and (fc or not l[1][i] == ','):
-                    if l[1][i] == "'":
-                        fc = not fc
-                    i = i + 1
-                i = i + 1
-                if v not in vars:
-                    vars[v] = {}
-                if '=' in vars[v] and not vars[v]['='] == l[1][j:i - 1]:
-                    outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (
-                        v, vars[v]['='], l[1][j:i - 1]))
-                vars[v]['='] = l[1][j:i - 1]
-                j = i
+                if '!' in l[1]:
+                    # Fixes gh-24746 pyf generation
+                    # XXX: This essentially ignores the value for generating the pyf which is fine:
+                    # integer dimension(3) :: mytab
+                    # common /mycom/ mytab
+                    # Since in any case it is initialized in the Fortran code
+                    outmess('Comment line in declaration "%s" is not supported. Skipping.\n' % l[1])
+                    continue
+                vars.setdefault(v, {})
+                vtype = vars[v].get('typespec')
+                vdim = getdimension(vars[v])
+                matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
+                try:
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                except IndexError:
+                    # gh-24746
+                    # Runs only if above code fails. Fixes the line
+                    # DATA IVAR1, IVAR2, IVAR3, IVAR4, EVAR5 /4*0,0.0D0/
+                    # by expanding to ['0', '0', '0', '0', '0.0d0']
+                    if any("*" in m for m in matches):
+                        expanded_list = []
+                        for match in matches:
+                            if "*" in match:
+                                try:
+                                    multiplier, value = match.split("*")
+                                    expanded_list.extend([value.strip()] * int(multiplier))
+                                except ValueError: # if int(multiplier) fails
+                                    expanded_list.append(match.strip())
+                            else:
+                                expanded_list.append(match.strip())
+                        matches = expanded_list
+                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                current_val = vars[v].get('=')
+                if current_val and (current_val != new_val):
+                    outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
+                vars[v]['='] = new_val
                 last_name = v
         groupcache[groupcounter]['vars'] = vars
-        if last_name is not None:
+        if last_name:
             previous_context = ('variable', last_name, groupcounter)
     elif case == 'common':
         line = m.group('after').strip()
@@ -1741,6 +1777,23 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                     else:
                         del d1[k]
 
+                if 'len' in d1 and 'array' in d1:
+                    if d1['len'] == '':
+                        d1['len'] = d1['array']
+                        del d1['array']
+                    elif typespec == 'character':
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector'] = {}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
+                        edecl['charselector']['*'] = d1['len']
+                        del d1['len']
+                    else:
+                        d1['array'] = d1['array'] + ',' + d1['len']
+                        del d1['len']
+                        errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
+                            typespec, e, typespec, ename, d1['array']))
+
                 if 'len' in d1:
                     if typespec in ['complex', 'integer', 'logical', 'real']:
                         if ('kindselector' not in edecl) or (not edecl['kindselector']):
@@ -1761,16 +1814,6 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                             ename, edecl['='], d1['init']))
                     else:
                         edecl['='] = d1['init']
-
-                if 'len' in d1 and 'array' in d1:
-                    if d1['len'] == '':
-                        d1['len'] = d1['array']
-                        del d1['array']
-                    else:
-                        d1['array'] = d1['array'] + ',' + d1['len']
-                        del d1['len']
-                        errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
-                            typespec, e, typespec, ename, d1['array']))
 
                 if 'array' in d1:
                     dm = 'dimension(%s)' % d1['array']
@@ -2409,7 +2452,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'arm64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+    if machine.startswith(('aarch64', 'arm64', 'loongarch', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 33:
             return 16
     else:

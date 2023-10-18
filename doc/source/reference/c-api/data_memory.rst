@@ -19,9 +19,7 @@ Historical overview
 
 Since version 1.7.0, NumPy has exposed a set of ``PyDataMem_*`` functions
 (:c:func:`PyDataMem_NEW`, :c:func:`PyDataMem_FREE`, :c:func:`PyDataMem_RENEW`)
-which are backed by `alloc`, `free`, `realloc` respectively. In that version
-NumPy also exposed the `PyDataMem_EventHook` function (now deprecated)
-described below, which wrap the OS-level calls.
+which are backed by `alloc`, `free`, `realloc` respectively.
 
 Since those early days, Python also improved its memory management
 capabilities, and began providing
@@ -49,8 +47,7 @@ less suited to NumPy's needs. User who wish to change the NumPy data memory
 management routines can use :c:func:`PyDataMem_SetHandler`, which uses a
 :c:type:`PyDataMem_Handler` structure to hold pointers to functions used to
 manage the data memory. The calls are still wrapped by internal routines to
-call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`, and will
-use the deprecated :c:func:`PyDataMem_EventHookFunc` mechanism. Since the
+call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`. Since the
 functions may change during the lifetime of the process, each ``ndarray``
 carries with it the functions used at the time of its instantiation, and these
 will be used to reallocate or free the data memory of the instance.
@@ -94,7 +91,7 @@ will be used to reallocate or free the data memory of the instance.
    next ``PyArrayObject``. On failure, return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
-:file:`numpy/core/tests/test_mem_policy.py`
+:file:`numpy/_core/tests/test_mem_policy.py`
 
 
 What happens when deallocating if there is no policy set

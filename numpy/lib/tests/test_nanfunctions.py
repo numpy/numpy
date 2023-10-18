@@ -3,9 +3,9 @@ import pytest
 import inspect
 
 import numpy as np
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
-from numpy.lib.nanfunctions import _nan_mask, _replace_nan
+from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
     assert_raises_regex, assert_array_equal, suppress_warnings
@@ -81,7 +81,7 @@ class TestSignatureMatch:
     def test_exhaustiveness(self):
         """Validate that all nan functions are actually tested."""
         np.testing.assert_equal(
-            set(self.IDS), set(np.lib.nanfunctions.__all__)
+            set(self.IDS), set(np.lib._nanfunctions_impl.__all__)
         )
 
 

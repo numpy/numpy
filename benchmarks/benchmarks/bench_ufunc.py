@@ -7,7 +7,7 @@ import operator
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
-          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
+          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'bitwise_not',
           'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
           'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
           'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
@@ -135,47 +135,98 @@ class NDArrayLRShifts(Benchmark):
         getattr(operator, methname)(*[self.vals, 2])
 
 
-class Methods0D(Benchmark):
+class Methods0DBoolComplex(Benchmark):
     """Zero dimension array methods
     """
-    params = [['__bool__', '__complex__', '__invert__',
-               '__float__', '__int__'], TYPES1]
+    params = [['__bool__', '__complex__'],
+              TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
     def setup(self, methname, npdtypes):
         self.xarg = np.array(3, dtype=npdtypes)
-        if (npdtypes.startswith('complex') and
-           methname in ['__float__', '__int__']) or \
-           (npdtypes.startswith('int') and methname == '__invert__'):
-            # Skip
-            raise NotImplementedError
 
     def time_ndarray__0d__(self, methname, npdtypes):
         meth = getattr(self.xarg, methname)
         meth()
 
 
+class Methods0DFloatInt(Benchmark):
+    """Zero dimension array methods
+    """
+    params = [['__int__', '__float__'],
+              [dt for dt in TYPES1 if not dt.startswith('complex')]]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+
+    def time_ndarray__0d__(self, methname, npdtypes):
+        meth = getattr(self.xarg, methname)
+        meth()
+
+
+class Methods0DInvert(Benchmark):
+    """Zero dimension array methods
+    """
+    params = ['int16', 'int32', 'int64']
+    param_names = ['npdtypes']
+    timeout = 10
+
+    def setup(self, npdtypes):
+        self.xarg = np.array(3, dtype=npdtypes)
+
+    def time_ndarray__0d__(self, npdtypes):
+        self.xarg.__invert__()
+
+
 class MethodsV1(Benchmark):
     """ Benchmark for the methods which take an argument
     """
-    params = [['__and__', '__add__', '__eq__', '__floordiv__', '__ge__',
-               '__gt__', '__le__', '__lt__', '__matmul__',
-               '__mod__', '__mul__', '__ne__', '__or__',
-               '__pow__', '__sub__', '__truediv__', '__xor__'],
+    params = [['__add__', '__eq__', '__ge__', '__gt__', '__le__',
+               '__lt__', '__matmul__', '__mul__', '__ne__',
+               '__pow__', '__sub__', '__truediv__'],
               TYPES1]
     param_names = ['methods', 'npdtypes']
     timeout = 10
 
     def setup(self, methname, npdtypes):
-        if (
-            npdtypes.startswith("complex")
-                and methname in ["__floordiv__", "__mod__"]
-        ) or (
-            not npdtypes.startswith("int")
-            and methname in ["__and__", "__or__", "__xor__"]
-        ):
-            raise NotImplementedError  # skip
+        values = get_squares_().get(npdtypes)
+        self.xargs = [values[0], values[1]]
+        if np.issubdtype(npdtypes, np.inexact):
+            # avoid overflow in __pow__/__matmul__ for low-precision dtypes
+            self.xargs[1] *= 0.01
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        getattr(operator, methname)(*self.xargs)
+
+
+class MethodsV1IntOnly(Benchmark):
+    """ Benchmark for the methods which take an argument
+    """
+    params = [['__and__', '__or__', '__xor__'],
+              ['int16', 'int32', 'int64']]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_().get(npdtypes)
+        self.xargs = [values[0], values[1]]
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        getattr(operator, methname)(*self.xargs)
+
+
+class MethodsV1NoComplex(Benchmark):
+    """ Benchmark for the methods which take an argument
+    """
+    params = [['__floordiv__', '__mod__'],
+              [dt for dt in TYPES1 if not dt.startswith('complex')]]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
         values = get_squares_().get(npdtypes)
         self.xargs = [values[0], values[1]]
 
@@ -259,7 +310,7 @@ class NDArrayAsType(Benchmark):
 class UFuncSmall(Benchmark):
     """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
-    Since the arrays and scalars are small, we are benchmarking the overhead 
+    Since the arrays and scalars are small, we are benchmarking the overhead
     of the numpy ufunc functionality
     """
     params = ['abs', 'sqrt', 'cos']
@@ -276,7 +327,7 @@ class UFuncSmall(Benchmark):
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
         self.python_float = 1.1
-        
+
     def time_ufunc_small_array(self, ufuncname):
         self.f(self.array_5)
 
@@ -291,7 +342,7 @@ class UFuncSmall(Benchmark):
 
     def time_ufunc_python_float(self, ufuncname):
         self.f(self.python_float)
-        
+
 
 class Custom(Benchmark):
     def setup(self):
@@ -391,14 +442,11 @@ class CustomComparison(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [8, -8, 43, -43])
+    params = (np._core.sctypes['int'],
+              [8, -8, 43, -43])
     param_names = ['dtype', 'divisors']
 
     def setup(self, dtype, divisor):
-        if dtype in np.sctypes['uint'] and divisor < 0:
-            raise NotImplementedError(
-                    "Skipping test for negative divisor with unsigned type")
-
         iinfo = np.iinfo(dtype)
         self.x = np.random.randint(
                     iinfo.min, iinfo.max, size=10000, dtype=dtype)
@@ -406,8 +454,24 @@ class CustomScalarFloorDivideInt(Benchmark):
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
 
+
+class CustomScalarFloorDivideUInt(Benchmark):
+    params = (np._core.sctypes['uint'],
+              [8, 43])
+    param_names = ['dtype', 'divisors']
+
+    def setup(self, dtype, divisor):
+        iinfo = np.iinfo(dtype)
+        self.x = np.random.randint(
+                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+
+    def time_floor_divide_uint(self, dtype, divisor):
+        self.x // divisor
+
+
 class CustomArrayFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [100, 10000, 1000000])
+    params = (np._core.sctypes['int'] + np._core.sctypes['uint'],
+              [100, 10000, 1000000])
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
@@ -501,7 +565,7 @@ class BinaryBench(Benchmark):
         self.b32 = np.random.rand(N).astype(np.float32)
         self.a64 = np.random.rand(N).astype(np.float64)
         self.b64 = np.random.rand(N).astype(np.float64)
-    
+
     def time_pow_32(self):
         np.power(self.a32, self.b32)
 

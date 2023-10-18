@@ -19,6 +19,7 @@ Warnings
 
    ComplexWarning             Given when converting complex to real.
    VisibleDeprecationWarning  Same as a DeprecationWarning, but more visible.
+   RankWarning                Issued when the design matrix is rank deficient.
 
 Exceptions
 ----------
@@ -69,6 +70,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
+    pass
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -79,6 +81,16 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
+    pass
+
+
+class RankWarning(RuntimeWarning):
+    """Matrix rank warning.
+    
+    Issued by polynomial functions when the design matrix is rank deficient.
+    
+    """
+    pass
 
 
 # Exception used in shares_memory()
@@ -91,7 +103,6 @@ class TooHardError(RuntimeError):
     to fail.
 
     """
-
     pass
 
 
@@ -101,9 +112,10 @@ class AxisError(ValueError, IndexError):
     This is raised whenever an ``axis`` parameter is specified that is larger
     than the number of array dimensions.
     For compatibility with code written against older numpy versions, which
-    raised a mixture of `ValueError` and `IndexError` for this situation, this
-    exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch ``AxisError``.
+    raised a mixture of :exc:`ValueError` and :exc:`IndexError` for this
+    situation, this exception subclasses both to ensure that
+    ``except ValueError`` and ``except IndexError`` statements continue
+    to catch ``AxisError``.
 
     .. versionadded:: 1.13
 

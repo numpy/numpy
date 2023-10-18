@@ -11,22 +11,21 @@ import hypothesis.strategies as st
 from functools import partial
 
 import numpy as np
-from numpy import ma
+from numpy import (
+    ma, angle, average, bartlett, blackman, corrcoef, cov,
+    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
+    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
+    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    )
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
     assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT, IS_WASM
     )
-import numpy.lib.function_base as nfb
+import numpy.lib._function_base_impl as nfb
 from numpy.random import rand
-from numpy.lib import (
-    add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
-    )
-from numpy.core.numeric import normalize_axis_tuple
+from numpy._core.numeric import normalize_axis_tuple
 
 
 def get_mat(n):
@@ -40,7 +39,7 @@ def _make_complex(real, imag):
     Like real + 1j * imag, but behaves as expected when imag contains non-finite
     values
     """
-    ret = np.zeros(np.broadcast(real, imag).shape, np.complex_)
+    ret = np.zeros(np.broadcast(real, imag).shape, np.complex128)
     ret.real = real
     ret.imag = imag
     return ret
@@ -460,7 +459,7 @@ class TestSelect:
 
     def test_return_dtype(self):
         assert_equal(select(self.conditions, self.choices, 1j).dtype,
-                     np.complex_)
+                     np.complex128)
         # But the conditions need to be stronger then the scalar default
         # if it is scalar.
         choices = [choice.astype(np.int8) for choice in self.choices]
@@ -581,7 +580,7 @@ class TestInsert:
 
     def test_structured_array(self):
         a = np.array([(1, 'a'), (2, 'b'), (3, 'c')],
-                     dtype=[('foo', 'i'), ('bar', 'a1')])
+                     dtype=[('foo', 'i'), ('bar', 'S1')])
         val = (4, 'd')
         b = np.insert(a, 0, val)
         assert_array_equal(b[0], np.array(val, dtype=b.dtype))
@@ -629,15 +628,15 @@ class TestPtp:
 
     def test_basic(self):
         a = np.array([3, 4, 5, 10, -3, -5, 6.0])
-        assert_equal(a.ptp(axis=0), 15.0)
+        assert_equal(np.ptp(a, axis=0), 15.0)
         b = np.array([[3, 6.0, 9.0],
                       [4, 10.0, 5.0],
                       [8, 3.0, 2.0]])
-        assert_equal(b.ptp(axis=0), [5.0, 7.0, 7.0])
-        assert_equal(b.ptp(axis=-1), [6.0, 6.0, 6.0])
+        assert_equal(np.ptp(b, axis=0), [5.0, 7.0, 7.0])
+        assert_equal(np.ptp(b, axis=-1), [6.0, 6.0, 6.0])
 
-        assert_equal(b.ptp(axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
-        assert_equal(b.ptp(axis=(0,1), keepdims=True), [[8.0]])
+        assert_equal(np.ptp(b, axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
+        assert_equal(np.ptp(b, axis=(0, 1), keepdims=True), [[8.0]])
 
 
 class TestCumsum:
@@ -1969,7 +1968,7 @@ class TestDigitize:
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
 
     @pytest.mark.xfail(
-        reason="gh-11022: np.core.multiarray._monoticity loses precision")
+        reason="gh-11022: np._core.multiarray._monoticity loses precision")
     def test_large_integers_decreasing(self):
         # gh-11022
         x = 2**54  # loses precision in a float
@@ -2115,6 +2114,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
+@pytest.mark.filterwarnings('ignore:.*trapz.*:DeprecationWarning')
 class TestTrapz:
 
     def test_simple(self):
@@ -2212,14 +2212,14 @@ class TestCheckFinite:
         a = [1, 2, 3]
         b = [1, 2, np.inf]
         c = [1, 2, np.nan]
-        np.lib.asarray_chkfinite(a)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, b)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, c)
+        np.asarray_chkfinite(a)
+        assert_raises(ValueError, np.asarray_chkfinite, b)
+        assert_raises(ValueError, np.asarray_chkfinite, c)
 
     def test_dtype_order(self):
         # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
-        a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
+        a = np.asarray_chkfinite(a, order='F', dtype=np.float64)
         assert_(a.dtype == np.float64)
 
 
@@ -2489,20 +2489,6 @@ class TestKaiser:
 
     def test_int_beta(self):
         kaiser(3, 4)
-
-
-class TestMsort:
-
-    def test_simple(self):
-        A = np.array([[0.44567325, 0.79115165, 0.54900530],
-                      [0.36844147, 0.37325583, 0.96098397],
-                      [0.64864341, 0.52929049, 0.39172155]])
-        with pytest.warns(DeprecationWarning, match="msort is deprecated"):
-            assert_almost_equal(
-                msort(A),
-                np.array([[0.36844147, 0.37325583, 0.39172155],
-                          [0.44567325, 0.52929049, 0.54900530],
-                          [0.64864341, 0.79115165, 0.96098397]]))
 
 
 class TestMeshgrid:
@@ -2887,7 +2873,7 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
 
     @pytest.fixture(params=[
-        lambda x: np.float_(x),
+        lambda x: np.float64(x),
         lambda x: _make_complex(x, 0),
         lambda x: _make_complex(0, x),
         lambda x: _make_complex(x, np.multiply(x, -2))
@@ -3061,12 +3047,12 @@ class TestPercentile:
     @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     def test_linear_nan_1D(self, dtype):
         # METHOD 1 of H&F
-        arr = np.asarray([15.0, np.NAN, 35.0, 40.0, 50.0], dtype=dtype)
+        arr = np.asarray([15.0, np.nan, 35.0, 40.0, 50.0], dtype=dtype)
         res = np.percentile(
             arr,
             40.0,
             method="linear")
-        np.testing.assert_equal(res, np.NAN)
+        np.testing.assert_equal(res, np.nan)
         np.testing.assert_equal(res.dtype, arr.dtype)
 
     H_F_TYPE_CODES = [(int_type, np.float64)
@@ -4107,65 +4093,6 @@ class TestMedian:
         a[pos, 1] = "NaT"
         res = np.median(a, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
-
-
-class TestAdd_newdoc_ufunc:
-
-    def test_ufunc_arg(self):
-        assert_raises(TypeError, add_newdoc_ufunc, 2, "blah")
-        assert_raises(ValueError, add_newdoc_ufunc, np.add, "blah")
-
-    def test_string_arg(self):
-        assert_raises(TypeError, add_newdoc_ufunc, np.add, 3)
-
-
-class TestAdd_newdoc:
-
-    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-    def test_add_doc(self):
-        # test that np.add_newdoc did attach a docstring successfully:
-        tgt = "Current flat index into the array."
-        assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
-        assert_(len(np.core.ufunc.identity.__doc__) > 300)
-        assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
-
-    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    def test_errors_are_ignored(self):
-        prev_doc = np.core.flatiter.index.__doc__
-        # nothing changed, but error ignored, this should probably
-        # give a warning (or even error) in the future.
-        np.add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
-        assert prev_doc == np.core.flatiter.index.__doc__
-
-
-class TestAddDocstring():
-    # Test should possibly be moved, but it also fits to be close to
-    # the newdoc tests...
-    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
-    def test_add_same_docstring(self):
-        # test for attributes (which are C-level defined)
-        np.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
-        # And typical functions:
-        def func():
-            """docstring"""
-            return
-
-        np.add_docstring(func, func.__doc__)
-
-    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    def test_different_docstring_fails(self):
-        # test for attributes (which are C-level defined)
-        with assert_raises(RuntimeError):
-            np.add_docstring(np.ndarray.flat, "different docstring")
-        # And typical functions:
-        def func():
-            """docstring"""
-            return
-
-        with assert_raises(RuntimeError):
-            np.add_docstring(func, "different docstring")
 
 
 class TestSortComplex:

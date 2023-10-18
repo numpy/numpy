@@ -1,0 +1,7 @@
+``diagonal`` and ``trace`` for `numpy.linalg`
+---------------------------------------------
+
+`numpy.linalg.diagonal` and `numpy.linalg.trace` have been
+added, which are Array API compatible variants of `numpy.diagonal`
+and `numpy.trace`. They differ in the default axis selection
+which define 2-D sub-arrays.

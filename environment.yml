@@ -18,14 +18,15 @@ dependencies:
   - meson-python
   - pip
   - spin
+  - ccache
   # For testing
   - pytest
   - pytest-cov
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=0.981
-  - typing_extensions>=4.2.0
+  - typing_extensions>=4.2.0  # needed for python < 3.10
+  - mypy=1.5.1
   # For building docs
   - sphinx>=4.5.0
   - sphinx-design

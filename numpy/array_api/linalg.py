@@ -11,7 +11,7 @@ from ._dtypes import (
 from ._manipulation_functions import reshape
 from ._array_object import Array
 
-from ..core.numeric import normalize_axis_tuple
+from .._core.numeric import normalize_axis_tuple
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

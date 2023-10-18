@@ -7,6 +7,7 @@ import weakref
 import re
 
 import numpy as np
+import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_array_less, build_err_msg,
@@ -268,14 +269,14 @@ class TestArrayEqual(_GenericTest):
         b = 1.
 
         with pytest.raises(AssertionError):
-            assert_array_equal(a, b, strict=True)
+            self._assert_func(a, b, strict=True)
 
     def test_array_vs_array_strict(self):
         """Test comparing two arrays with strict option."""
         a = np.array([1., 1., 1.])
         b = np.array([1., 1., 1.])
 
-        assert_array_equal(a, b, strict=True)
+        self._assert_func(a, b, strict=True)
 
     def test_array_vs_float_array_strict(self):
         """Test comparing two arrays with strict option."""
@@ -283,7 +284,7 @@ class TestArrayEqual(_GenericTest):
         b = np.array([1., 1., 1.])
 
         with pytest.raises(AssertionError):
-            assert_array_equal(a, b, strict=True)
+            self._assert_func(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
@@ -410,7 +411,7 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
 
     def test_negative_zero(self):
-        self._test_not_equal(np.PZERO, np.NZERO)
+        self._test_not_equal(ncu.PZERO, ncu.NZERO)
 
     def test_complex(self):
         x = np.array([complex(1, 2), complex(1, np.nan)])
@@ -988,6 +989,18 @@ class TestArrayAssertLess:
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.zeros(3)
+        y = np.ones(())
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y, strict=True)
+        y = np.broadcast_to(y, x.shape)
+        self._assert_func(x, y)
+        with pytest.raises(AssertionError):
+            self._assert_func(x, y.astype(np.float32), strict=True)
+
 
 class TestWarns:
 
@@ -1146,7 +1159,7 @@ class TestAssertAllclose:
         assert_allclose(a, a)
 
     def test_error_message_unsigned(self):
-        """Check the the message is formatted correctly when overflow can occur
+        """Check the message is formatted correctly when overflow can occur
            (gh21768)"""
         # Ensure to test for potential overflow in the case of:
         #        x - y
@@ -1157,6 +1170,17 @@ class TestAssertAllclose:
         expected_msg = 'Max absolute difference among violations: 4'
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(x, y, atol=3)
+
+    def test_strict(self):
+        """Test the behavior of the `strict` option."""
+        x = np.ones(3)
+        y = np.ones(())
+        assert_allclose(x, y)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, y, strict=True)
+        assert_allclose(x, x)
+        with pytest.raises(AssertionError):
+            assert_allclose(x, x.astype(np.float32), strict=True)
 
 
 class TestArrayAlmostEqualNulp:
@@ -1426,8 +1450,8 @@ class TestULP:
             nan = np.array([np.nan]).astype(dt)
             big = np.array([np.finfo(dt).max])
             tiny = np.array([np.finfo(dt).tiny])
-            zero = np.array([np.PZERO]).astype(dt)
-            nzero = np.array([np.NZERO]).astype(dt)
+            zero = np.array([0.0]).astype(dt)
+            nzero = np.array([-0.0]).astype(dt)
             assert_raises(AssertionError,
                           lambda: assert_array_max_ulp(nan, inf,
                                                        maxulp=maxulp))
@@ -1579,7 +1603,7 @@ def test_suppress_warnings_module():
         sup.record(UserWarning)
         # suppress warning from other module (may have .pyc ending),
         # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib.shape_base)
+        sup.filter(module=np.lib._shape_base_impl)
         warnings.warn("Some warning")
         warn_other_module()
     # Check that the suppression did test the file correctly (this module

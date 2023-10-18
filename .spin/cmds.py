@@ -5,10 +5,64 @@ import argparse
 import tempfile
 import pathlib
 import shutil
+import json
+import pathlib
 
 import click
-from spin.cmds import meson
 from spin import util
+from spin.cmds import meson
+
+
+# Check that the meson git submodule is present
+curdir = pathlib.Path(__file__).parent
+meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
+if not meson_import_dir.exists():
+    raise RuntimeError(
+        'The `vendored-meson/meson` git submodule does not exist! ' +
+        'Run `git submodule update --init` to fix this problem.'
+    )
+
+
+@click.command()
+@click.option(
+    "-j", "--jobs",
+    help="Number of parallel tasks to launch",
+    type=int
+)
+@click.option(
+    "--clean", is_flag=True,
+    help="Clean build directory before build"
+)
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Print all build output, even installation"
+)
+@click.option(
+    "--with-scipy-openblas", type=click.Choice(["32", "64"]),
+    default=None,
+    help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
+)
+@click.argument("meson_args", nargs=-1)
+@click.pass_context
+def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False):
+    """🔧 Build package with Meson/ninja and install
+
+    MESON_ARGS are passed through e.g.:
+
+    spin build -- -Dpkg_config_path=/lib64/pkgconfig
+
+    The package is installed to build-install
+
+    By default builds for release, to be able to use a debugger set CFLAGS
+    appropriately. For example, for linux use
+
+    CFLAGS="-O0 -g" spin build
+    """
+    # XXX keep in sync with upstream build
+    if with_scipy_openblas:
+        _config_openblas(with_scipy_openblas)
+    ctx.params.pop("with_scipy_openblas", None)
+    ctx.forward(meson.build)
 
 
 @click.command()
@@ -30,13 +84,8 @@ from spin import util
     default="auto",
     help="Number of parallel build jobs"
 )
-@click.option(
-    "--install-deps/--no-install-deps",
-    default=True,
-    help="Install dependencies before building"
-)
 @click.pass_context
-def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
+def docs(ctx, sphinx_target, clean, first_build, jobs):
     """📖 Build Sphinx documentation
 
     By default, SPHINXOPTS="-W", raising errors on warnings.
@@ -52,13 +101,12 @@ def docs(ctx, sphinx_target, clean, first_build, jobs, install_deps):
 
       spin docs TARGET
 
-    """
-    if sphinx_target not in ('targets', 'help'):
-        if install_deps:
-            util.run(['pip', 'install', '-q', '-r', 'doc_requirements.txt'])
+    E.g., to build a zipfile of the html docs for distribution:
 
+      spin docs dist
+
+    """
     meson.docs.ignore_unknown_options = True
-    del ctx.params['install_deps']
     ctx.forward(meson.docs)
 
 
@@ -148,51 +196,6 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
     ctx.forward(meson.test)
 
 
-@click.command()
-@click.option('--code', '-c', help='Python program passed in as a string')
-@click.argument('gdb_args', nargs=-1)
-def gdb(code, gdb_args):
-    """👾 Execute a Python snippet with GDB
-
-      spin gdb -c 'import numpy as np; print(np.__version__)'
-
-    Or pass arguments to gdb:
-
-      spin gdb -c 'import numpy as np; print(np.__version__)' -- --fullname
-
-    Or run another program, they way you normally would with gdb:
-
-     \b
-     spin gdb ls
-     spin gdb -- --args ls -al
-
-    You can also run Python programs:
-
-     \b
-     spin gdb my_tests.py
-     spin gdb -- my_tests.py --mytest-flag
-    """
-    meson._set_pythonpath()
-    gdb_args = list(gdb_args)
-
-    if gdb_args and gdb_args[0].endswith('.py'):
-        gdb_args = ['--args', sys.executable] + gdb_args
-
-    if sys.version_info[:2] >= (3, 11):
-        PYTHON_FLAGS = ['-P']
-        code_prefix = ''
-    else:
-        PYTHON_FLAGS = []
-        code_prefix = 'import sys; sys.path.pop(0); '
-
-    if code:
-        PYTHON_ARGS = ['-c', code_prefix + code]
-        gdb_args += ['--args', sys.executable] + PYTHON_FLAGS + PYTHON_ARGS
-
-    gdb_cmd = ['gdb', '-ex', 'set detach-on-fork on'] + gdb_args
-    util.run(gdb_cmd, replace=True)
-
-
 # From scipy: benchmarks/benchmarks/common.py
 def _set_mem_rlimit(max_mem=None):
     """
@@ -258,19 +261,7 @@ def _run_asv(cmd):
     except (ImportError, RuntimeError):
         pass
 
-    try:
-        util.run(cmd, cwd='benchmarks', env=env, sys_exit=False)
-    except FileNotFoundError:
-        click.secho((
-            "Cannot find `asv`. "
-            "Please install Airspeed Velocity:\n\n"
-            "  https://asv.readthedocs.io/en/latest/installing.html\n"
-            "\n"
-            "Depending on your system, one of the following should work:\n\n"
-            "  pip install asv\n"
-            "  conda install asv\n"
-        ), fg="red")
-        sys.exit(1)
+    util.run(cmd, cwd='benchmarks', env=env)
 
 
 @click.command()
@@ -291,13 +282,17 @@ def _run_asv(cmd):
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@click.option(
+    '--quick', '-q', is_flag=True, default=False,
+    help="Run each benchmark only once (timings won't be accurate)"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
     nargs=-1
 )
 @click.pass_context
-def bench(ctx, tests, compare, verbose, commits):
+def bench(ctx, tests, compare, verbose, quick, commits):
     """🏋 Run benchmarks.
 
     \b
@@ -337,6 +332,9 @@ def bench(ctx, tests, compare, verbose, commits):
     if verbose:
         bench_args = ['-v'] + bench_args
 
+    if quick:
+        bench_args = ['--quick'] + bench_args
+
     if not compare:
         # No comparison requested; we build and benchmark the current version
 
@@ -344,7 +342,7 @@ def bench(ctx, tests, compare, verbose, commits):
             "Invoking `build` prior to running benchmarks:",
             bold=True, fg="bright_green"
         )
-        ctx.invoke(meson.build)
+        ctx.invoke(build)
 
         meson._set_pythonpath()
 
@@ -364,27 +362,21 @@ def bench(ctx, tests, compare, verbose, commits):
         cmd = [
             'asv', 'run', '--dry-run', '--show-stderr', '--python=same'
         ] + bench_args
-
         _run_asv(cmd)
-
     else:
-        # Benchmark comparison
-
         # Ensure that we don't have uncommited changes
         commit_a, commit_b = [_commit_to_sha(c) for c in commits]
 
-        if commit_b == 'HEAD':
-            if _dirty_git_working_dir():
-                click.secho(
-                    "WARNING: you have uncommitted changes --- "
-                    "these will NOT be benchmarked!",
-                    fg="red"
-                )
+        if commit_b == 'HEAD' and _dirty_git_working_dir():
+            click.secho(
+                "WARNING: you have uncommitted changes --- "
+                "these will NOT be benchmarked!",
+                fg="red"
+            )
 
         cmd_compare = [
             'asv', 'continuous', '--factor', '1.05',
         ] + bench_args + [commit_a, commit_b]
-
         _run_asv(cmd_compare)
 
 
@@ -402,7 +394,6 @@ def python(ctx, python_args):
     """
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
-    ctx.invoke(meson.build)
     ctx.forward(meson.python)
 
 
@@ -421,7 +412,7 @@ def ipython(ctx, ipython_args):
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
 
-    ctx.invoke(meson.build)
+    ctx.invoke(build)
 
     ppath = meson._set_pythonpath()
 
@@ -434,23 +425,48 @@ def ipython(ctx, ipython_args):
 
 
 @click.command(context_settings={"ignore_unknown_options": True})
-@click.argument("args", nargs=-1)
 @click.pass_context
-def run(ctx, args):
-    """🏁 Run a shell command with PYTHONPATH set
-
-    \b
-    spin run make
-    spin run 'echo $PYTHONPATH'
-    spin run python -c 'import sys; del sys.path[0]; import mypkg'
-
-    If you'd like to expand shell variables, like `$PYTHONPATH` in the example
-    above, you need to provide a single, quoted command to `run`:
-
-    spin run 'echo $SHELL && echo $PWD'
-
-    On Windows, all shell commands are run via Bash.
-    Install Git for Windows if you don't have Bash already.
+def mypy(ctx):
+    """🦆 Run Mypy tests for NumPy
     """
-    ctx.invoke(meson.build)
-    ctx.forward(meson.run)
+    env = os.environ
+    env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
+    ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
+    ctx.params['markexpr'] = 'full'
+    ctx.forward(test)
+
+@click.command(context_settings={
+    'ignore_unknown_options': True
+})
+@click.option(
+    "--with-scipy-openblas", type=click.Choice(["32", "64"]),
+    default=None, required=True,
+    help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
+)
+def config_openblas(with_scipy_openblas):
+    """🔧 Create .openblas/scipy-openblas.pc file
+
+    Also create _distributor_init_local.py
+
+    Requires a pre-installed scipy-openblas64 or scipy-openblas32
+    """
+    _config_openblas(with_scipy_openblas)
+
+
+def _config_openblas(blas_variant):
+    import importlib
+    basedir = os.getcwd()
+    openblas_dir = os.path.join(basedir, ".openblas")
+    pkg_config_fname = os.path.join(openblas_dir, "scipy-openblas.pc")
+    if blas_variant:
+        module_name = f"scipy_openblas{blas_variant}"
+        try:
+            openblas = importlib.import_module(module_name)
+        except ModuleNotFoundError:
+            raise RuntimeError(f"'pip install {module_name} first")
+        local = os.path.join(basedir, "numpy", "_distributor_init_local.py")
+        with open(local, "wt", encoding="utf8") as fid:
+            fid.write(f"import {module_name}\n")
+        os.makedirs(openblas_dir, exist_ok=True)
+        with open(pkg_config_fname, "wt", encoding="utf8") as fid:
+            fid.write(openblas.get_pkg_config().replace("\\", "/"))

@@ -11,7 +11,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport cython
 import numpy as np
 cimport numpy as np
-from numpy.core.multiarray import normalize_axis_index
+from numpy.lib.array_utils import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
@@ -604,7 +604,7 @@ cdef class Generator:
         ----------
         .. [1] Daniel Lemire., "Fast Random Integer Generation in an Interval",
                ACM Transactions on Modeling and Computer Simulation 29 (1), 2019,
-               http://arxiv.org/abs/1805.10941.
+               https://arxiv.org/abs/1805.10941.
 
         """
         if high is None:
@@ -1276,7 +1276,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1364,7 +1364,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/GammaDistribution.html
+               https://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
                https://en.wikipedia.org/wiki/Gamma_distribution
 
@@ -1527,7 +1527,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Noncentral F-Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NoncentralF-Distribution.html
+               https://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
                https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
@@ -1753,7 +1753,7 @@ cdef class Generator:
               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
-              http://mathworld.wolfram.com/CauchyDistribution.html
+              https://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
               https://en.wikipedia.org/wiki/Cauchy_distribution
 
@@ -2311,7 +2311,7 @@ cdef class Generator:
                Generalizations, " Birkhauser, 2001.
         .. [3] Weisstein, Eric W. "Laplace Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LaplaceDistribution.html
+               https://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
                https://en.wikipedia.org/wiki/Laplace_distribution
 
@@ -2515,7 +2515,7 @@ cdef class Generator:
                Fields," Birkhauser Verlag, Basel, pp 132-133.
         .. [2] Weisstein, Eric W. "Logistic Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/LogisticDistribution.html
+               https://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
                https://en.wikipedia.org/wiki/Logistic_distribution
 
@@ -2953,7 +2953,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
                Wolfram Web Resource.
-               http://mathworld.wolfram.com/BinomialDistribution.html
+               https://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
                https://en.wikipedia.org/wiki/Binomial_distribution
 
@@ -3102,7 +3102,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+               https://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
                https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
@@ -3204,7 +3204,7 @@ cdef class Generator:
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution."
                From MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/PoissonDistribution.html
+               https://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
                https://en.wikipedia.org/wiki/Poisson_distribution
 
@@ -3449,7 +3449,7 @@ cdef class Generator:
                and Quigley, 1972.
         .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
                MathWorld--A Wolfram Web Resource.
-               http://mathworld.wolfram.com/HypergeometricDistribution.html
+               https://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
         .. [4] Stadlober, Ernst, "The ratio of uniforms approach for generating
@@ -3663,9 +3663,9 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
-            the diagonal)
+        - Spherical covariance (`cov` is a multiple of the identity matrix)
+        - Diagonal covariance (`cov` has non-negative elements, and only on
+          the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
         generated data-points:
@@ -4353,7 +4353,7 @@ cdef class Generator:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.org.uk/mackay/itila/
+               https://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
                https://en.wikipedia.org/wiki/Dirichlet_distribution
 

@@ -4,8 +4,8 @@ import pickle
 import pytest
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )
@@ -821,13 +821,15 @@ class TestArrayMethods:
     def test_ptp(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         (n, m) = X.shape
-        assert_equal(mx.ptp(), mx.compressed().ptp())
-        rows = np.zeros(n, np.float_)
-        cols = np.zeros(m, np.float_)
+        # print(type(mx), mx.compressed())
+        # raise Exception()
+        assert_equal(mx.ptp(), np.ptp(mx.compressed()))
+        rows = np.zeros(n, np.float64)
+        cols = np.zeros(m, np.float64)
         for k in range(m):
-            cols[k] = mX[:, k].compressed().ptp()
+            cols[k] = np.ptp(mX[:, k].compressed())
         for k in range(n):
-            rows[k] = mX[k].compressed().ptp()
+            rows[k] = np.ptp(mX[k].compressed())
         assert_(eq(mX.ptp(0), cols))
         assert_(eq(mX.ptp(1), rows))
 
