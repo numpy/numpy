@@ -201,7 +201,7 @@ For examples, see the various functions.
 """
 
 from . import _pocketfft, _helper
-# TODO: `numpy.fft.helper`` was depreacted in NumPy 2.0. It should
+# TODO: `numpy.fft.helper`` was deprecated in NumPy 2.0. It should
 # be deleted once downstream libraries move to `numpy.fft`.
 from . import helper
 from ._pocketfft import *
