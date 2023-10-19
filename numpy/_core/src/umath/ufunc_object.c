@@ -115,7 +115,7 @@ static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
 
 static int
-resolve_descriptors(int nop, int nin,
+resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
@@ -2804,7 +2804,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * casting safety could in principle be set to the default same-kind.
      * (although this should possibly happen through a deprecation)
      */
-    if (resolve_descriptors(3, 2, ufunc, ufuncimpl,
+    if (resolve_descriptors(3, ufunc, ufuncimpl,
             ops, out_descrs, signature, NULL, casting) < 0) {
         return NULL;
     }
@@ -4476,7 +4476,7 @@ _get_fixed_signature(PyUFuncObject *ufunc,
  * need to "cast" to string first).
  */
 static int
-resolve_descriptors(int nop, int nin,
+resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
@@ -4495,6 +4495,7 @@ resolve_descriptors(int nop, int nin,
          * 2. Can in principle customize `PyArray_CastDescrToDType()`
          *    (also because we want to avoid calling it for the scalars).
          */
+        int nin = ufunc->nin;
         PyObject *input_scalars[NPY_MAXARGS];
         for (int i = 0; i < nop; i++) {
             if (operands[i] == NULL) {
@@ -4905,7 +4906,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     /* Find the correct descriptors for the operation */
-    if (resolve_descriptors(nop, nin, ufunc, ufuncimpl,
+    if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, full_args.in, casting) < 0) {
         goto fail;
     }
@@ -6277,7 +6278,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
 
         /* Find the correct operation_descrs for the operation */
-        int resolve_result = resolve_descriptors(nop, ufunc->nin, ufunc, ufuncimpl,
+        int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
                 tmp_operands, operation_descrs, signature, NULL, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
@@ -6606,7 +6607,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
 
         /* Find the correct descriptors for the operation */
-        if (resolve_descriptors(ufunc->nargs, ufunc->nin, ufunc, ufuncimpl,
+        if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
                 dummy_arrays, operation_descrs, signature,
                 NULL, casting) < 0) {
             goto finish;

@@ -255,11 +255,11 @@ fill_arraymethod_from_slots(
      */
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
-            case NPY_METH_resolve_descriptors_with_scalars:
+            case _NPY_METH_resolve_descriptors_with_scalars:
                 if (!private) {
                     PyErr_SetString(PyExc_RuntimeError,
-                            "the NPY_METH_resolve_descriptors_with_scalars "
-                            "slot private due to uncertainty about the right "
+                            "the _NPY_METH_resolve_descriptors_with_scalars "
+                            "slot private due to uncertainty about the best "
                             "signature (see gh-24915)");
                     return -1;
                 }

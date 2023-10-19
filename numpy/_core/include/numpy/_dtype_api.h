@@ -129,17 +129,17 @@ typedef struct {
  * SLOTS IDs For the ArrayMethod creation, once fully public, IDs are fixed
  * but can be deprecated and arbitrarily extended.
  */
-#define NPY_METH_resolve_descriptors_with_scalars 1
+#define _NPY_METH_resolve_descriptors_with_scalars 1
 #define NPY_METH_resolve_descriptors 2
 /* We may want to adapt the `get_loop` signature a bit: */
-#define _NPY_METH_get_loop 4
-#define NPY_METH_get_reduction_initial 5
+#define _NPY_METH_get_loop 3
+#define NPY_METH_get_reduction_initial 4
 /* specific loops for constructions/default get_loop: */
-#define NPY_METH_strided_loop 6
-#define NPY_METH_contiguous_loop 7
-#define NPY_METH_unaligned_strided_loop 8
-#define NPY_METH_unaligned_contiguous_loop 9
-#define NPY_METH_contiguous_indexed_loop 10
+#define NPY_METH_strided_loop 5
+#define NPY_METH_contiguous_loop 6
+#define NPY_METH_unaligned_strided_loop 7
+#define NPY_METH_unaligned_contiguous_loop 8
+#define NPY_METH_contiguous_indexed_loop 9
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -166,6 +166,10 @@ typedef NPY_CASTING (resolve_descriptors_function)(
 /*
  * Rarely needed, slightly more powerful version of `resolve_descriptors`.
  * See also `resolve_descriptors_function` for details on shared arguments.
+ *
+ * NOTE: This function is private now as it is unclear how and what to pass
+ *       exactly as additional information to allow dealing with the scalars.
+ *       See also gh-24915.
  */
 typedef NPY_CASTING (resolve_descriptors_with_scalars_function)(
         struct PyArrayMethodObject_tag *method,
