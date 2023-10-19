@@ -30,4 +30,5 @@ __all__ = [
     'multiply', 'negative', 'nextafter', 'not_equal', 'pi', 'positive',
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
     'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square',
-    'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+    'subtract', 'tan', 'tanh', 'true_divide', 'trunc','gcd_extended', 'lcm_extended',
+    'hypot_ufunc', 'remainder_ufunc']
