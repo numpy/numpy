@@ -118,7 +118,8 @@ static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
-        PyArray_DTypeMeta *signature[], NPY_CASTING casting);
+        PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
+        NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -2804,7 +2805,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * (although this should possibly happen through a deprecation)
      */
     if (resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, casting) < 0) {
+            ops, out_descrs, signature, NULL, casting) < 0) {
         return NULL;
     }
 
@@ -4478,10 +4479,57 @@ static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
-        PyArray_DTypeMeta *signature[], NPY_CASTING casting)
+        PyArray_DTypeMeta *signature[], PyObject *inputs_tup,
+        NPY_CASTING casting)
 {
     int retval = -1;
+    NPY_CASTING safety;
     PyArray_Descr *original_dtypes[NPY_MAXARGS];
+
+    NPY_UF_DBG_PRINT("Resolving the descriptors\n");
+
+    if (NPY_UNLIKELY(ufuncimpl->resolve_descriptors_with_scalars != NULL)) {
+        /*
+         * Allow a somewhat more powerful approach which:
+         * 1. Has access to scalars (currently only ever Python ones)
+         * 2. Can in principle customize `PyArray_CastDescrToDType()`
+         *    (also because we want to avoid calling it for the scalars).
+         */
+        int nin = ufunc->nin;
+        PyObject *input_scalars[NPY_MAXARGS];
+        for (int i = 0; i < nop; i++) {
+            if (operands[i] == NULL) {
+                original_dtypes[i] = NULL;
+            }
+            else {
+                /* For abstract DTypes, we might want to change what this is */
+                original_dtypes[i] = PyArray_DTYPE(operands[i]);
+                Py_INCREF(original_dtypes[i]);
+            }
+            if (i < nin
+                    && NPY_DT_is_abstract(signature[i])
+                    && inputs_tup != NULL) {
+                /*
+                 * TODO: We may wish to allow any scalar here.  Checking for
+                 *       abstract assumes this works out for Python scalars,
+                 *       which is the important case (especially for now).
+                 *
+                 * One possible check would be `DType->type == type(obj)`.
+                 */
+                input_scalars[i] = PyTuple_GET_ITEM(inputs_tup, i);
+            }
+            else {
+                input_scalars[i] = NULL;
+            }
+        }
+
+        npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
+        safety = ufuncimpl->resolve_descriptors_with_scalars(
+            ufuncimpl, signature, original_dtypes, input_scalars,
+            dtypes, &view_offset
+        );
+        goto check_safety;
+    }
 
     for (int i = 0; i < nop; ++i) {
         if (operands[i] == NULL) {
@@ -4501,26 +4549,13 @@ resolve_descriptors(int nop,
         }
     }
 
-    NPY_UF_DBG_PRINT("Resolving the descriptors\n");
-
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
         /* The default: use the `ufuncimpl` as nature intended it */
         npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
 
-        NPY_CASTING safety = ufuncimpl->resolve_descriptors(ufuncimpl,
+        safety = ufuncimpl->resolve_descriptors(ufuncimpl,
                 signature, original_dtypes, dtypes, &view_offset);
-        if (safety < 0) {
-            goto finish;
-        }
-        if (NPY_UNLIKELY(PyArray_MinCastSafety(safety, casting) != casting)) {
-            /* TODO: Currently impossible to reach (specialized unsafe loop) */
-            PyErr_Format(PyExc_TypeError,
-                    "The ufunc implementation for %s with the given dtype "
-                    "signature is not possible under the casting rule %s",
-                    ufunc_get_name_cstr(ufunc), npy_casting_to_string(casting));
-            goto finish;
-        }
-        retval = 0;
+        goto check_safety;
     }
     else {
         /*
@@ -4528,7 +4563,22 @@ resolve_descriptors(int nop,
          * for datetime64/timedelta64 and custom ufuncs (in pyerfa/astropy).
          */
         retval = ufunc->type_resolver(ufunc, casting, operands, NULL, dtypes);
+        goto finish;
     }
+
+ check_safety:
+    if (safety < 0) {
+        goto finish;
+    }
+    if (NPY_UNLIKELY(PyArray_MinCastSafety(safety, casting) != casting)) {
+        /* TODO: Currently impossible to reach (specialized unsafe loop) */
+        PyErr_Format(PyExc_TypeError,
+                "The ufunc implementation for %s with the given dtype "
+                "signature is not possible under the casting rule %s",
+                ufunc_get_name_cstr(ufunc), npy_casting_to_string(casting));
+        goto finish;
+    }
+    retval = 0;
 
   finish:
     for (int i = 0; i < nop; i++) {
@@ -4857,7 +4907,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
-            operands, operation_descrs, signature, casting) < 0) {
+            operands, operation_descrs, signature, full_args.in, casting) < 0) {
         goto fail;
     }
 
@@ -6229,7 +6279,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         /* Find the correct operation_descrs for the operation */
         int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, NPY_UNSAFE_CASTING);
+                tmp_operands, operation_descrs, signature, NULL, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6558,7 +6608,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
         /* Find the correct descriptors for the operation */
         if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
-                dummy_arrays, operation_descrs, signature, casting) < 0) {
+                dummy_arrays, operation_descrs, signature,
+                NULL, casting) < 0) {
             goto finish;
         }
 
