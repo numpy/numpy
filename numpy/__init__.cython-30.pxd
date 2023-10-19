@@ -852,6 +852,7 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_ps
         NPY_FR_fs
         NPY_FR_as
+        NPY_FR_GENERIC
 
 
 #
