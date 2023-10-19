@@ -43,8 +43,9 @@ py.install_sources(
   [
     '__init__.py',
     '__init__.pyi',
+    '_linalg.py',
+    '_linalg.pyi',
     'linalg.py',
-    'linalg.pyi',
   ],
   subdir: 'numpy/linalg'
 )

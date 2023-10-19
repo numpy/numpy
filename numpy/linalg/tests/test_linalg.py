@@ -16,7 +16,7 @@ from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
-from numpy.linalg.linalg import _multi_dot_matrix_chain_order
+from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
