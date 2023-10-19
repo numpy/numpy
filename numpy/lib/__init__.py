@@ -35,13 +35,13 @@ from . import _polynomial_impl
 from . import _npyio_impl
 from . import npyio
 from . import arrayterator
+from . import introspect
 from . import _arraypad_impl
 from . import array_utils
 from . import _version
 
 from .arrayterator import Arrayterator
-from ._version import *
-from .introspect import *
+from ._version import NumpyVersion
 from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
 from numpy._core.function_base import add_newdoc
 

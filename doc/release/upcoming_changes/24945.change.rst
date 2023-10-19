@@ -1,0 +1,6 @@
+``numpy.fft.helper`` made private
+---------------------------------
+
+``numpy.fft.helper`` was renamed to `numpy.fft._helper` to indicate
+that it is a private submodule. All public functions exported by it
+should be accessed from `numpy.fft`.
