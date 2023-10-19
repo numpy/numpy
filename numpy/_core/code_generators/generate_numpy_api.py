@@ -53,15 +53,12 @@ _import_array(void)
   }
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError,
-                      "_multiarray_umath failed to import");
       return -1;
   }
 
   PyObject *c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
   Py_DECREF(numpy);
   if (c_api == NULL) {
-      PyErr_SetString(PyExc_AttributeError, "_ARRAY_API not found");
       return -1;
   }
 
