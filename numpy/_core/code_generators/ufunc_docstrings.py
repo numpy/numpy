@@ -4291,7 +4291,7 @@ add_newdoc('numpy._core.umath', 'lower',
     Returns
     -------
     y : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype, depending on input type
+        Output array of ``bytes_`` or ``unicode_`` dtype
         $OUT_SCALAR_1
 
     See Also
@@ -4321,7 +4321,7 @@ add_newdoc('numpy._core.umath', 'upper',
     Returns
     -------
     y : ndarray
-        Output array of ``bytes_`` or ``unicode_`` dtype, depending on input type
+        Output array of ``bytes_`` or ``unicode_`` dtype
         $OUT_SCALAR_1
 
     See Also
