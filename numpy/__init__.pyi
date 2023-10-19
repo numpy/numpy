@@ -398,7 +398,7 @@ from numpy._core.shape_base import (
 )
 
 from numpy.lib import (
-    emath as emath,
+    scimath as emath,
 )
 
 from numpy.lib._arraypad_impl import (
