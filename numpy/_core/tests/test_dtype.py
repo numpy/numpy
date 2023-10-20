@@ -1466,7 +1466,7 @@ class TestPromotion:
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2*100])
     def test_python_integer_promotion(self, val):
         # If we only pass scalars (mainly python ones!), NEP 50 means
-        # that we get either the default integer
+        # that we get the default integer
         expected_dtype = np.dtype(int)  # the default integer
         assert np.result_type(val, 0) == expected_dtype
         # With NEP 50, the NumPy scalar wins though:

@@ -3254,6 +3254,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
     PyArrayObject *arr, *ax, *ay = NULL;
     PyObject *ret = NULL;
+    PyArray_Descr *common_dt = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
     if (arr == NULL) {
@@ -3295,8 +3296,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         NPY_ITER_READONLY | NPY_ITER_ALIGNED,
         NPY_ITER_READONLY | NPY_ITER_ALIGNED
     };
-    PyArray_Descr * common_dt = PyArray_ResultType(2, &op_in[2],
-                                                    0, NULL);
+    common_dt = PyArray_ResultType(2, &op_in[2], 0, NULL);
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                 common_dt, common_dt};
     NpyIter * iter;
@@ -3304,14 +3304,12 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
     if (common_dt == NULL || op_dt[1] == NULL) {
         Py_XDECREF(op_dt[1]);
-        Py_XDECREF(common_dt);
         goto fail;
     }
-    iter =  NpyIter_MultiNew(4, op_in, flags,
-                                NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                                op_flags, op_dt);
+    iter =  NpyIter_MultiNew(
+            4, op_in, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+            op_flags, op_dt);
     Py_DECREF(op_dt[1]);
-    Py_DECREF(common_dt);
     if (iter == NULL) {
         goto fail;
     }
@@ -3420,6 +3418,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     Py_DECREF(arr);
     Py_DECREF(ax);
     Py_DECREF(ay);
+    Py_DECREF(common_dt);
     NPY_cast_info_xfree(&cast_info);
 
     if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
@@ -3433,6 +3432,7 @@ fail:
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
+    Py_XDECREF(common_dt);
     NPY_cast_info_xfree(&cast_info);
     return NULL;
 }

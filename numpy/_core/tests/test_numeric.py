@@ -1423,7 +1423,7 @@ class TestTypes:
                                 casting='unsafe'))
 
     @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50: no int/float/complex (yet)")
+            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
         # gh-5917
         for dt in sctypes['int'] + sctypes['uint']:

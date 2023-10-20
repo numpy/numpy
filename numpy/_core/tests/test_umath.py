@@ -423,12 +423,12 @@ class TestComparisons:
         assert py_comp(arr, -1) == expected
         assert np_comp(arr, -1) == expected
 
-
         scalar = arr[0]
         assert isinstance(scalar, np.integer)
         # The Python operator here is mainly interesting:
         assert py_comp(scalar, -1) == expected
         assert np_comp(scalar, -1) == expected
+
 
 class TestAdd:
     def test_reduce_alignment(self):

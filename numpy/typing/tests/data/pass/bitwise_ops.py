@@ -21,6 +21,12 @@ i8 | i8
 i8 ^ i8
 i8 & i8
 
+i << AR
+i >> AR
+i | AR
+i ^ AR
+i & AR
+
 i8 << AR
 i8 >> AR
 i8 | AR
@@ -62,12 +68,6 @@ u8 >> u8
 u8 | u8
 u8 ^ u8
 u8 & u8
-
-i << AR
-i >> AR
-i | AR
-i ^ AR
-i & AR
 
 u4 << u4
 u4 >> u4
