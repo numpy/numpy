@@ -584,11 +584,17 @@ def test_functions_single_location():
             # first check if we got a module
             if (
                 inspect.ismodule(member) and  # it's a module
-                "numpy" in member.__name__ and  # inside numpy
+                "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                not "numpy._core" in member.__name__ and  # outside _core
-                member_name not in ["f2py", "ma"] and  # not a legacy module
-                member not in visited_modules  # not yet visited
+                "numpy._core" not in member.__name__ and  # outside _core
+                # not a legacy or testing module
+                member_name not in ["f2py", "ma", "testing", "tests"] and
+                # skip numpy.polynomial
+                not (
+                    member_name == "polynomial" and
+                    module.__name__ == "numpy"
+                ) and
+                member not in visited_modules  # not visited yet
             ):
                 modules_queue.append(member)
                 visited_modules.add(member)
@@ -600,6 +606,20 @@ def test_functions_single_location():
                 isinstance(member, np.ufunc)
             ):
                 if member in visited_functions:
+
+                    # skip main namespace functions with aliases
+                    if (
+                        member.__name__ in [
+                            "absolute",  # np.abs
+                            "conjugate",  # np.conj
+                            "invert",  # np.bitwise_not
+                            "remainder",  # np.mod
+                            "divide",  # np.true_divide
+                        ] and
+                        module.__name__ == "numpy"
+                    ):
+                        continue
+
                     # function is present in more than one location!
                     duplicated_functions.append(
                         (member.__name__,
