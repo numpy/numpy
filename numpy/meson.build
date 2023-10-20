@@ -10,7 +10,7 @@ endif
 
 # Platform detection
 is_windows = host_machine.system() == 'windows'
-is_mingw = is_windows and cc.get_id() == 'gcc'
+is_mingw = is_windows and cc.get_define('__MINGW32__') != ''
 
 if is_mingw
   is_mingw_built_python = run_command(
