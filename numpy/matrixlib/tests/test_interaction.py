@@ -332,8 +332,8 @@ def test_array_equal_error_message_matrix():
     Arrays are not equal
 
     (shapes (2,), (1, 2) mismatch)
-     x: array([1, 2])
-     y: matrix([[1, 2]])""")
+     ACTUAL: array([1, 2])
+     DESIRED: matrix([[1, 2]])""")
     assert_equal(msg, msg_reference)
 
 

@@ -680,10 +680,10 @@ class TestAlmostEqual(_GenericTest):
                         'Max absolute difference among violations: 1.e-05\n'
                         'Max relative difference among violations: '
                         '3.33328889e-06\n'
-                        ' x: array([1.00000000001, '
+                        ' ACTUAL: array([1.00000000001, '
                         '2.00000000002, '
                         '3.00003      ])\n'
-                        ' y: array([1.00000000002, 2.00000000003, '
+                        ' DESIRED: array([1.00000000002, 2.00000000003, '
                         '3.00004      ])')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y, decimal=12)
@@ -695,8 +695,8 @@ class TestAlmostEqual(_GenericTest):
                         'Max absolute difference among violations: 1.e-05\n'
                         'Max relative difference among violations: '
                         '3.33328889e-06\n'
-                        ' x: array([1.     , 2.     , 3.00003])\n'
-                        ' y: array([1.     , 2.     , 3.00004])')
+                        ' ACTUAL: array([1.     , 2.     , 3.00003])\n'
+                        ' DESIRED: array([1.     , 2.     , 3.00004])')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
 
@@ -706,8 +706,8 @@ class TestAlmostEqual(_GenericTest):
         expected_msg = ('Mismatched elements: 1 / 2 (50%)\n'
                         'Max absolute difference among violations: 1.\n'
                         'Max relative difference among violations: 1.\n'
-                        ' x: array([inf,  0.])\n'
-                        ' y: array([inf,  1.])')
+                        ' ACTUAL: array([inf,  0.])\n'
+                        ' DESIRED: array([inf,  1.])')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
 
