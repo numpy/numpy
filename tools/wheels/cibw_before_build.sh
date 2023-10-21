@@ -15,7 +15,7 @@ fi
 
 # Install Openblas
 if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
-    basedir=$(python tools/openblas_support.py)
+    basedir=$(python tools/openblas_support.py --use-ilp64)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
         sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/lib/cmake/openblas
@@ -39,12 +39,9 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
 
     mkdir -p /c/opt/32/lib/pkgconfig
     mkdir -p /c/opt/64/lib/pkgconfig
-    target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); ilp64=obs.get_ilp64(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, ilp64);print(target)")
+    target=$(python -c "import tools.openblas_support as obs; plat=obs.get_plat(); target=f'openblas_{plat}.zip'; obs.download_openblas(target, plat, libsuffix='64_');print(target)")
     if [[ $PLATFORM == 'win-32' ]]; then
-        # 32-bit openBLAS
-        # Download 32 bit openBLAS and put it into c/opt/32/lib
-        unzip -o -d /c/opt/ $target
-        cp /c/opt/32/bin/*.dll /c/opt/openblas/openblas_dll
+        echo "No BLAS used for 32-bit wheels"
     else
         # 64-bit openBLAS
         unzip -o -d /c/opt/ $target

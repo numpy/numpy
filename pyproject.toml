@@ -166,7 +166,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux"}
+environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
 # For universal2 wheels, we will need to fuse them manually
@@ -177,11 +177,10 @@ environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", NPY_U
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols.
-# Note that NPY_USE_BLAS_ILP64 is used in `tools/openblas_support.py`.
-environment = {CFLAGS="-fno-strict-aliasing", CC="clang", CXX = "clang++", NPY_USE_BLAS_ILP64="1", RUNNER_OS="macOS"}
+environment = {CFLAGS="-fno-strict-aliasing", RUNNER_OS="macOS"}
 
 [tool.cibuildwheel.windows]
-environment = {NPY_USE_BLAS_ILP64="1", PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
+environment = {PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
 config-settings = "setup-args=--vsenv setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas"
 repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
