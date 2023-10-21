@@ -312,9 +312,9 @@ for scalar in scalars:
         basic = np.arange(1500).astype(dtype)
         basic_arrays.extend([
             # Empty
-            np.array([], dtype=dtype),
+            np.array([], dtype=),
             # Rank-0
-            np.array(10, dtype=dtype),
+            np.array(10, dtype=),
             # 1-D
             basic,
             # 2-D C-contiguous
@@ -475,7 +475,7 @@ def test_memmap_roundtrip(tmpdir):
         fortran_order = (
             arr.flags.f_contiguous and not arr.flags.c_contiguous)
         ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
-                                shape=arr.shape, fortran_order=fortran_order)
+                                shape=arr.shape, fortran_order=)
         ma[...] = arr
         ma.flush()
 
@@ -494,7 +494,7 @@ def test_memmap_roundtrip(tmpdir):
 def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
     npz_file = os.path.join(tmpdir, 'compressed.npz')
-    np.savez_compressed(npz_file, arr=arr)
+    np.savez_compressed(npz_file, arr=)
     with np.load(npz_file) as npz:
         arr1 = npz['arr']
     assert_array_equal(arr, arr1)
@@ -521,7 +521,7 @@ def test_load_padded_dtype(tmpdir, dt):
     for i in range(3):
         arr[i] = i + 5
     npz_file = os.path.join(tmpdir, 'aligned.npz')
-    np.savez(npz_file, arr=arr)
+    np.savez(npz_file, arr=)
     with np.load(npz_file) as npz:
         arr1 = npz['arr']
     assert_array_equal(arr, arr1)
@@ -551,7 +551,7 @@ def test_pickle_python2_python3():
         path = os.path.join(data_dir, fname)
 
         for encoding in ['bytes', 'latin1']:
-            data_f = np.load(path, allow_pickle=True, encoding=encoding)
+            data_f = np.load(path, allow_pickle=True, encoding=)
             if fname.endswith('.npz'):
                 data = data_f['x']
                 data_f.close()
@@ -720,15 +720,15 @@ def test_huge_header(tmpdir, mmap_mode):
         np.save(f, arr)
     
     with pytest.raises(ValueError, match="Header.*large"):
-        np.load(f, mmap_mode=mmap_mode)
+        np.load(f, mmap_mode=)
 
     with pytest.raises(ValueError, match="Header.*large"):
-        np.load(f, mmap_mode=mmap_mode, max_header_size=20000)
+        np.load(f, mmap_mode=, max_header_size=20000)
 
-    res = np.load(f, mmap_mode=mmap_mode, allow_pickle=True)
+    res = np.load(f, mmap_mode=, allow_pickle=True)
     assert_array_equal(res, arr)
 
-    res = np.load(f, mmap_mode=mmap_mode, max_header_size=180000)
+    res = np.load(f, mmap_mode=, max_header_size=180000)
     assert_array_equal(res, arr)
 
 def test_huge_header_npz(tmpdir):
@@ -736,7 +736,7 @@ def test_huge_header_npz(tmpdir):
     arr = np.array(1, dtype="i,"*10000+"i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
-        np.savez(f, arr=arr)
+        np.savez(f, arr=)
     
     # Only getting the array from the file actually reads it
     with pytest.raises(ValueError, match="Header.*large"):
@@ -775,7 +775,7 @@ def test_write_version():
     for version in bad_versions:
         with assert_raises_regex(ValueError,
                                  'we only support format version.*'):
-            format.write_array(f, arr, version=version)
+            format.write_array(f, arr, version=)
 
 
 bad_version_magic = [

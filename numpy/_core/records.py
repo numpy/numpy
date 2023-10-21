@@ -429,13 +429,11 @@ class recarray(ndarray):
             ).dtype
 
         if buf is None:
-            self = ndarray.__new__(
-                subtype, shape, (record, descr), order=order
-            )
+            self = ndarray.__new__(subtype, shape, (record, descr), order=)
         else:
             self = ndarray.__new__(
                 subtype, shape, (record, descr), buffer=buf, 
-                offset=offset, strides=strides, order=order
+                offset=, strides=, order=
             )
         return self
 
@@ -558,8 +556,7 @@ class recarray(ndarray):
 
         # get data/shape string. logic taken from numeric.array_repr
         if self.size > 0 or self.shape == (0,):
-            lst = sb.array2string(
-                self, separator=', ', prefix=prefix, suffix=',')
+            lst = sb.array2string(self, separator=', ', prefix=, suffix=',')
         else:
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
@@ -743,8 +740,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         arrlist = [
             sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])
         ]
-        return fromarrays(arrlist, formats=formats, shape=shape, names=names,
-                          titles=titles, aligned=aligned, byteorder=byteorder)
+        return fromarrays(arrlist, formats=, shape=, names=,
+                          titles=, aligned=, byteorder=)
 
     if dtype is not None:
         descr = sb.dtype((record, dtype))
@@ -855,7 +852,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     if shape in (None, -1):
         shape = (len(datastring) - offset) // itemsize
 
-    _array = recarray(shape, descr, buf=datastring, offset=offset)
+    _array = recarray(shape, descr, buf=datastring, offset=)
     return _array
 
 def get_remaining_size(fd):
@@ -1079,16 +1076,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     if obj is None:
         if shape is None:
             raise ValueError("Must define a shape if obj is None")
-        return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
+        return recarray(shape, dtype, buf=obj, offset=, strides=)
 
     elif isinstance(obj, bytes):
-        return fromstring(obj, dtype, shape=shape, offset=offset, **kwds)
+        return fromstring(obj, dtype, shape=, offset=, **kwds)
 
     elif isinstance(obj, (list, tuple)):
         if isinstance(obj[0], (tuple, list)):
-            return fromrecords(obj, dtype=dtype, shape=shape, **kwds)
+            return fromrecords(obj, dtype=, shape=, **kwds)
         else:
-            return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
+            return fromarrays(obj, dtype=, shape=, **kwds)
 
     elif isinstance(obj, recarray):
         if dtype is not None and (obj.dtype != dtype):
@@ -1100,7 +1097,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         return new
 
     elif hasattr(obj, 'readinto'):
-        return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
+        return fromfile(obj, dtype=, shape=, offset=)
 
     elif isinstance(obj, ndarray):
         if dtype is not None and (obj.dtype != dtype):

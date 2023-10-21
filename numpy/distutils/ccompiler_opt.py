@@ -629,7 +629,7 @@ class _Distutils:
         test = False
         try:
             self.dist_compile(
-                [source], flags, macros=macros, output_dir=self.conf_tmp_path
+                [source], flags, macros=, output_dir=self.conf_tmp_path
             )
             test = True
         except CompileError as e:
@@ -1299,9 +1299,7 @@ class _Feature:
             names = self.feature_supported.keys()
         supported_names = set()
         for f in names:
-            if self.feature_is_supported(
-                f, force_flags=force_flags, macros=macros
-            ):
+            if self.feature_is_supported(f, force_flags=, macros=):
                 supported_names.add(f)
         return supported_names
 
@@ -1342,7 +1340,7 @@ class _Feature:
             # multi targets
             rank += len(k) -1
             return rank
-        return sorted(names, reverse=reverse, key=sort_cb)
+        return sorted(names, reverse=, key=sort_cb)
 
     def feature_implies(self, names, keep_origins=False):
         """
@@ -1569,7 +1567,7 @@ class _Feature:
             self.dist_fatal("feature test file is not exist", test_path)
 
         test = self.dist_test(
-            test_path, force_flags + self.cc_flags["werror"], macros=macros
+            test_path, force_flags + self.cc_flags["werror"], macros=
         )
         if not test:
             self.dist_log("testing failed", stderr=True)
@@ -1598,9 +1596,9 @@ class _Feature:
         supported = name in self.feature_supported
         if supported:
             for impl in self.feature_implies(name):
-                if not self.feature_test(impl, force_flags, macros=macros):
+                if not self.feature_test(impl, force_flags, macros=):
                     return False
-            if not self.feature_test(name, force_flags, macros=macros):
+            if not self.feature_test(name, force_flags, macros=):
                 return False
         return supported
 
@@ -2329,7 +2327,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             has_baseline, targets, extra_flags = self.parse_targets(src)
             nochange = self._generate_config(output_dir, src, targets, has_baseline)
             for tar in targets:
-                tar_src = self._wrap_target(output_dir, src, tar, nochange=nochange)
+                tar_src = self._wrap_target(output_dir, src, tar, nochange=)
                 flags = tuple(extra_flags + self.feature_flags(tar))
                 to_compile.setdefault(flags, []).append(tar_src)
 
@@ -2348,7 +2346,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         objects = []
         for flags, srcs in to_compile.items():
             objects += self.dist_compile(
-                srcs, list(flags), ccompiler=ccompiler, **kwargs
+                srcs, list(flags), ccompiler=, **kwargs
             )
         return objects
 
@@ -2406,9 +2404,9 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
                 {dispatch_calls}
             """).format(
                 pfx=self.conf_c_prefix, baseline_str=" ".join(baseline_names),
-                dispatch_str=" ".join(dispatch_names), baseline_len=baseline_len,
-                dispatch_len=dispatch_len, baseline_calls=baseline_calls,
-                dispatch_calls=dispatch_calls
+                dispatch_str=" ".join(dispatch_names), baseline_len=,
+                dispatch_len=, baseline_calls=,
+                dispatch_calls=
             ))
             baseline_pre = ''
             for name in baseline_names:
@@ -2421,7 +2419,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
                 {pre}
                 #endif /*{pfx}CPU_TARGET_{name}*/
                 """).format(
-                    pfx=self.conf_c_prefix_, name=name, pre=self.feature_c_preprocessor(
+                    pfx=self.conf_c_prefix_, name=, pre=self.feature_c_preprocessor(
                     name, tabs=1
                 ))
 
@@ -2430,10 +2428,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             {baseline_pre}
             /******* dispatch features *******/
             {dispatch_pre}
-            """).format(
-                pfx=self.conf_c_prefix_, baseline_pre=baseline_pre,
-                dispatch_pre=dispatch_pre
-            ))
+            """).format(pfx=self.conf_c_prefix_, baseline_pre=, dispatch_pre=))
 
     def report(self, full=False):
         report = []
@@ -2577,8 +2572,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             {target_defs}
             #include "{path}"
             """).format(
-                pfx=self.conf_c_prefix_, target_name=target_name,
-                path=os.path.abspath(dispatch_src), target_defs=target_defs
+                pfx=self.conf_c_prefix_, target_name=,
+                path=os.path.abspath(dispatch_src), target_defs=
             ))
         return wrap_path
 
@@ -2639,8 +2634,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             #define {pfx}CPU_DISPATCH_CALL(CHK, CB, ...) \\
             {dispatch_calls}
             """).format(
-                pfx=self.conf_c_prefix_, baseline_calls=baseline_calls,
-                dispatch_calls=dispatch_calls, cache_hash=cache_hash
+                pfx=self.conf_c_prefix_, baseline_calls=,
+                dispatch_calls=, cache_hash=
             ))
         return False
 

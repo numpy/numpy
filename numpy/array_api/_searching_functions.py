@@ -16,7 +16,7 @@ def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
     """
     if x.dtype not in _real_numeric_dtypes:
         raise TypeError("Only real numeric dtypes are allowed in argmax")
-    return Array._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
+    return Array._new(np.asarray(np.argmax(x._array, axis=, keepdims=)))
 
 
 def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
@@ -27,7 +27,7 @@ def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
     """
     if x.dtype not in _real_numeric_dtypes:
         raise TypeError("Only real numeric dtypes are allowed in argmin")
-    return Array._new(np.asarray(np.argmin(x._array, axis=axis, keepdims=keepdims)))
+    return Array._new(np.asarray(np.argmin(x._array, axis=, keepdims=)))
 
 
 def nonzero(x: Array, /) -> Tuple[Array, ...]:

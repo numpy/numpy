@@ -57,7 +57,7 @@ def empty(shape, dtype=None, order='C'):
             [ 6586976, 22740995]])
 
     """
-    return ndarray.__new__(matrix, shape, dtype, order=order)
+    return ndarray.__new__(matrix, shape, dtype, order=)
 
 def ones(shape, dtype=None, order='C'):
     """
@@ -100,7 +100,7 @@ def ones(shape, dtype=None, order='C'):
     matrix([[1.,  1.]])
 
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+    a = ndarray.__new__(matrix, shape, dtype, order=)
     a.fill(1)
     return a
 
@@ -144,7 +144,7 @@ def zeros(shape, dtype=None, order='C'):
     matrix([[0.,  0.]])
 
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+    a = ndarray.__new__(matrix, shape, dtype, order=)
     a.fill(0)
     return a
 
@@ -179,8 +179,8 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0], dtype=dtype)
-    b = empty((n, n), dtype=dtype)
+    a = array([1]+n*[0], dtype=)
+    b = empty((n, n), dtype=)
     b.flat = a
     return b
 
@@ -226,7 +226,7 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
             [0.,  0.,  0.]])
 
     """
-    return asmatrix(np.eye(n, M=M, k=k, dtype=dtype, order=order))
+    return asmatrix(np.eye(n, M=, k=, dtype=, order=))
 
 def rand(*args):
     """

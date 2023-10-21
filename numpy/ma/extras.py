@@ -643,7 +643,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = wgt*(~a.mask)
             wgt.mask |= a.mask
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
+        scl = wgt.sum(axis=, dtype=result_dtype, **keepdims_kw)
         avg = np.multiply(a, wgt,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
@@ -722,16 +722,15 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
     if not hasattr(a, 'mask'):
-        m = np.median(getdata(a, subok=True), axis=axis,
-                      out=out, overwrite_input=overwrite_input,
-                      keepdims=keepdims)
+        m = np.median(getdata(a, subok=True), axis=,
+                      out=, overwrite_input=,
+                      keepdims=)
         if isinstance(m, np.ndarray) and 1 <= m.ndim:
             return masked_array(m, copy=False)
         else:
             return m
 
-    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
+    return _ureduce(a, func=_median, keepdims=, axis=, out=, overwrite_input=)
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
@@ -744,12 +743,12 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     if overwrite_input:
         if axis is None:
             asorted = a.ravel()
-            asorted.sort(fill_value=fill_value)
+            asorted.sort(fill_value=)
         else:
-            a.sort(axis=axis, fill_value=fill_value)
+            a.sort(axis=, fill_value=)
             asorted = a
     else:
-        asorted = sort(a, axis=axis, fill_value=fill_value)
+        asorted = sort(a, axis=, fill_value=)
 
     if axis is None:
         axis = 0
@@ -762,19 +761,19 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer = [slice(None)] * asorted.ndim
         indexer[axis] = slice(0, 0)
         indexer = tuple(indexer)
-        return np.ma.mean(asorted[indexer], axis=axis, out=out)
+        return np.ma.mean(asorted[indexer], axis=, out=)
 
     if asorted.ndim == 1:
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
             # avoid inf / x = masked
-            s = mid.sum(out=out)
+            s = mid.sum(out=)
             if not odd:
-                s = np.true_divide(s, 2., casting='safe', out=out)
+                s = np.true_divide(s, 2., casting='safe', out=)
             s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
         else:
-            s = mid.mean(out=out)
+            s = mid.mean(out=)
 
         # if result is masked either the input contained enough
         # minimum_fill_value so that it would be the median or all values
@@ -783,17 +782,17 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             return np.ma.minimum_fill_value(asorted)
         return s
 
-    counts = count(asorted, axis=axis, keepdims=True)
+    counts = count(asorted, axis=, keepdims=True)
     h = counts // 2
 
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     l = np.where(odd, h, h-1)
 
-    lh = np.concatenate([l,h], axis=axis)
+    lh = np.concatenate([l, h], axis=)
 
     # get low and high median
-    low_high = np.take_along_axis(asorted, lh, axis=axis)
+    low_high = np.take_along_axis(asorted, lh, axis=)
 
     def replace_masked(s):
         # Replace masked entries with minimum_full_value unless it all values
@@ -801,7 +800,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # larger than the fill value is undefined and a valid value placed
         # elsewhere, e.g. [4, --, inf].
         if np.ma.is_masked(s):
-            rep = (~np.all(asorted.mask, axis=axis, keepdims=True)) & s.mask
+            rep = (~np.all(asorted.mask, axis=, keepdims=True)) & s.mask
             s.data[rep] = np.ma.minimum_fill_value(asorted)
             s.mask[rep] = False
 
@@ -809,12 +808,12 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
-        s = np.ma.sum(low_high, axis=axis, out=out)
+        s = np.ma.sum(low_high, axis=, out=)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
         s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
     else:
-        s = np.ma.mean(low_high, axis=axis, out=out)
+        s = np.ma.mean(low_high, axis=, out=)
 
     return s
 
@@ -914,7 +913,7 @@ def compress_rowcols(x, axis=None):
     """
     if asarray(x).ndim != 2:
         raise NotImplementedError("compress_rowcols works for 2D arrays only.")
-    return compress_nd(x, axis=axis)
+    return compress_nd(x, axis=)
 
 
 def compress_rows(a):
@@ -1214,9 +1213,7 @@ def unique(ar1, return_index=False, return_inverse=False):
                 mask=[False, False, False,  True],
         fill_value=999999), array([0, 1, 4, 2]), array([0, 1, 3, 1, 2]))
     """
-    output = np.unique(ar1,
-                       return_index=return_index,
-                       return_inverse=return_inverse)
+    output = np.unique(ar1, return_index=, return_inverse=)
     if isinstance(output, tuple):
         output = list(output)
         output[0] = output[0].view(MaskedArray)
@@ -1346,8 +1343,8 @@ def isin(element, test_elements, assume_unique=False, invert=False):
 
     """
     element = ma.asarray(element)
-    return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(element.shape)
+    return in1d(element, test_elements, assume_unique=,
+                invert=).reshape(element.shape)
 
 
 def union1d(ar1, ar2):

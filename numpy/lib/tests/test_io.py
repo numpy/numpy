@@ -212,7 +212,7 @@ class TestSavezLoad(RoundtripTest):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
         with temppath(prefix="numpy_test_big_arrays_", suffix=".npz") as tmp:
-            np.savez(tmp, a=a)
+            np.savez(tmp, a=)
             del a
             npfile = np.load(tmp)
             a = npfile['a']  # Should succeed
@@ -239,7 +239,7 @@ class TestSavezLoad(RoundtripTest):
         # gh-23748
         a = np.array([1, 2, 3])
         f = BytesIO()
-        np.savez(f, a=a)
+        np.savez(f, a=)
         f.seek(0)
         l = np.load(f)
         with pytest.raises(KeyError, match="(1, 2)"):
@@ -265,7 +265,7 @@ class TestSavezLoad(RoundtripTest):
             with temppath(suffix='.npz') as tmp:
                 arr = np.random.randn(500, 500)
                 try:
-                    np.savez(tmp, arr=arr)
+                    np.savez(tmp, arr=)
                 except OSError as err:
                     error_list.append(err)
 
@@ -327,7 +327,7 @@ class TestSavezLoad(RoundtripTest):
         # cause a second error will be raised when the attempt to remove
         # the open file is made.
         prefix = 'numpy_test_closing_zipfile_after_load_'
-        with temppath(suffix='.npz', prefix=prefix) as tmp:
+        with temppath(suffix='.npz', prefix=) as tmp:
             np.savez(tmp, lab='place holder')
             data = np.load(tmp)
             fp = data.zip.fp
@@ -355,7 +355,7 @@ class TestSaveTxt:
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
         c = BytesIO()
-        np.savetxt(c, a, fmt=fmt)
+        np.savetxt(c, a, fmt=)
         c.seek(0)
         assert_equal(c.readlines(),
                      [asbytes((fmt + ' ' + fmt + '\n') % (1, 2)),
@@ -615,8 +615,7 @@ class TestSaveTxt:
                                         np.random.randint(50,100),4)
                                         for i in range(800000)], dtype=object)
                 with tempdir() as tmpdir:
-                    np.savez(os.path.join(tmpdir, 'test.npz'),
-                             test_data=test_data)
+                    np.savez(os.path.join(tmpdir, 'test.npz'), test_data=)
             except MemoryError:
                 memoryerror_raised.value = True
                 raise
@@ -647,7 +646,7 @@ class LoadTxtBase:
         for sep in linesep:
             data = '0 1 2' + sep + '3 4 5'
             for suffix in suffixes:
-                with temppath(suffix=suffix) as name:
+                with temppath(suffix=) as name:
                     with fopen(name, mode='wt', encoding='UTF-32-LE') as f:
                         f.write(data)
                     res = self.loadfunc(name, encoding='UTF-32-LE')
@@ -997,7 +996,7 @@ class TestLoadTxt(LoadTxtBase):
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.loadtxt(TextIO(data), delimiter=";", dtype=ndtype,
-                          converters=converters)
+                          converters=)
         control = np.array(
             [(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
             dtype=ndtype)
@@ -1493,7 +1492,7 @@ class TestFromTxt(LoadTxtBase):
                       'formats': ('S1', 'i4', 'f4')}
         data = TextIO(b'M 64.0 75.0\nF 25.0 60.0')
         names = ('gender', 'age', 'weight')
-        test = np.genfromtxt(data, dtype=descriptor, names=names)
+        test = np.genfromtxt(data, dtype=descriptor, names=)
         descriptor['names'] = names
         control = np.array([('M', 64.0, 75.0),
                             ('F', 25.0, 60.0)], dtype=descriptor)
@@ -1677,7 +1676,7 @@ M   33  21.99
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.genfromtxt(TextIO(data), delimiter=";", dtype=ndtype,
-                             converters=converters)
+                             converters=)
         control = np.array(
             [(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
             dtype=ndtype)
@@ -1687,14 +1686,14 @@ M   33  21.99
         with assert_raises_regex(NotImplementedError,
                                  'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
-                                 dtype=ndtype, converters=converters)
+                                 dtype=ndtype, converters=)
 
         # nested but empty fields also aren't supported
         ndtype = [('idx', int), ('code', object), ('nest', [])]
         with assert_raises_regex(NotImplementedError,
                                  'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
-                                 dtype=ndtype, converters=converters)
+                                 dtype=ndtype, converters=)
 
     def test_dtype_with_object_no_converter(self):
         # Object without a converter uses bytes:
@@ -1994,7 +1993,7 @@ M   33  21.99
         mdata = TextIO("\n".join(data))
 
         converters = {4: lambda x: "(%s)" % x.decode()}
-        kwargs = dict(delimiter=",", converters=converters,
+        kwargs = dict(delimiter=",", converters=,
                       dtype=[(_, int) for _ in 'abcde'],)
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
@@ -2343,9 +2342,8 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         dtype = [('a', int), ('b', float)]
-        test = recfromcsv(data, missing_values='N/A', dtype=dtype)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=dtype)
+        test = recfromcsv(data, missing_values='N/A', dtype=)
+        control = np.array([(0, 1), (2, 3)], dtype=)
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
@@ -2736,7 +2734,7 @@ def test_npzfile_dict():
     x = np.zeros((3, 3))
     y = np.zeros((3, 3))
 
-    np.savez(s, x=x, y=y)
+    np.savez(s, x=, y=)
     s.seek(0)
 
     z = np.load(s)

@@ -644,7 +644,7 @@ class TestUfunc:
 
                 res = np.true_divide(x, y)
                 rtol = max(np.finfo(res).resolution, 1e-15)
-                assert_allclose(res, tgt, rtol=rtol)
+                assert_allclose(res, tgt, rtol=)
 
                 if tc in 'bhilqBHILQ':
                     assert_(res.dtype.name == 'float64')
@@ -681,7 +681,7 @@ class TestUfunc:
                             res = np.true_divide(x, y, dtype=dtout)
                         if not np.isfinite(res) and tcout == 'e':
                             continue
-                        assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                        assert_allclose(res, tgt, rtol=, atol=)
                         assert_(res.dtype.name == dtout.name)
 
                 for tcout in 'FDG':
@@ -698,7 +698,7 @@ class TestUfunc:
                     res = np.true_divide(x, y, dtype=dtout)
                     if not np.isfinite(res):
                         continue
-                    assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                    assert_allclose(res, tgt, rtol=, atol=)
                     assert_(res.dtype.name == dtout.name)
 
         # Check booleans
@@ -850,11 +850,11 @@ class TestUfunc:
         # exist at all in the inputs.
         arr = np.arange(3).reshape(1, 3)
         out = np.empty((5, 4, 3))
-        np.add(arr, arr, out=out)
+        np.add(arr, arr, out=)
         assert (out == np.arange(3) * 2).all()
 
         # The same holds for gufuncs (gh-16484)
-        umt.inner1d(arr, arr, out=out)
+        umt.inner1d(arr, arr, out=)
         # the result would be just a scalar `5`, but is broadcast fully:
         assert (out == 5).all()
 
@@ -867,10 +867,10 @@ class TestUfunc:
         # Output is (currently) allowed to broadcast inputs, but it cannot be
         # smaller than the actual result.
         with pytest.raises(ValueError, match="non-broadcastable"):
-            np.positive(arr, out=out)
+            np.positive(arr, out=)
 
         with pytest.raises(ValueError, match="non-broadcastable"):
-            np.add(np.ones(()), arr, out=out)
+            np.add(np.ones(()), arr, out=)
 
     def test_type_cast(self):
         msg = "type cast"
@@ -1064,7 +1064,7 @@ class TestUfunc:
         c = inner1d(a, b, axis=-1)
         assert_array_equal(c, (a * b).sum(-1))
         out = np.zeros_like(c)
-        d = inner1d(a, b, axis=-1, out=out)
+        d = inner1d(a, b, axis=-1, out=)
         assert_(d is out)
         assert_array_equal(d, c)
         c = inner1d(a, b, axis=0)
@@ -1078,10 +1078,10 @@ class TestUfunc:
         assert_array_equal(umt.cumsum(a, axis=0), np.cumsum(a, axis=0))
         assert_array_equal(umt.cumsum(a, axis=-1), np.cumsum(a, axis=-1))
         out = np.empty_like(a)
-        b = umt.cumsum(a, out=out, axis=0)
+        b = umt.cumsum(a, out=, axis=0)
         assert_(out is b)
         assert_array_equal(b, np.cumsum(a, axis=0))
-        b = umt.cumsum(a, out=out, axis=1)
+        b = umt.cumsum(a, out=, axis=1)
         assert_(out is b)
         assert_array_equal(b, np.cumsum(a, axis=-1))
         # Check errors.
@@ -1094,7 +1094,7 @@ class TestUfunc:
         assert_raises(TypeError, mm, a, b, axis=1)
         # Output wrong size in axis.
         out = np.empty((1, 2, 3), dtype=a.dtype)
-        assert_raises(ValueError, umt.cumsum, a, out=out, axis=0)
+        assert_raises(ValueError, umt.cumsum, a, out=, axis=0)
         # Regular ufuncs should not accept axis.
         assert_raises(TypeError, np.add, 1., 1., axis=0)
 
@@ -1110,7 +1110,7 @@ class TestUfunc:
         c = inner1d(a, b, keepdims=True)
         assert_array_equal(c, (a * b).sum(-1, keepdims=True))
         out = np.zeros_like(c)
-        d = inner1d(a, b, keepdims=True, out=out)
+        d = inner1d(a, b, keepdims=True, out=)
         assert_(d is out)
         assert_array_equal(d, c)
         # Now combined with axis and axes.
@@ -1267,10 +1267,10 @@ class TestUfunc:
         # Finally, check that things are *not* squeezed if one gives an
         # output.
         out = np.zeros_like(mm_row_col_array)
-        out = umt.matrix_multiply(row_vec_array, col_vec_array, out=out)
+        out = umt.matrix_multiply(row_vec_array, col_vec_array, out=)
         assert_array_equal(out, mm_row_col_array)
         out[:] = 0
-        out = umt.matmul(row_vec_array, col_vec_array, out=out)
+        out = umt.matmul(row_vec_array, col_vec_array, out=)
         assert_array_equal(out, mm_row_col_array)
         # And check one cannot put missing dimensions back.
         out = np.zeros_like(mm_row_col_vec)
@@ -1580,7 +1580,7 @@ class TestUfunc:
 
         where = a > 0.3
         out = np.full_like(a, 0)
-        np.less(a, b, where=where, out=out)
+        np.less(a, b, where=, out=)
         b_where = np.broadcast_to(b, a.shape)[where]
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
@@ -1676,7 +1676,7 @@ class TestUfunc:
         out = np.array(None, dtype=object)
         # When the loop is float64 but `out` is object this does not happen,
         # the result is float64 cast to object (which gives Python `float`).
-        np.add.reduce([], out=out, dtype=np.float64)
+        np.add.reduce([], out=, dtype=np.float64)
         assert type(out[()]) is float
 
     def test_initial_reduction(self):
@@ -1738,9 +1738,9 @@ class TestUfunc:
         a = np.arange(9.).reshape(3, 3)
         a_copy = a.copy()
         a_check = np.zeros_like(a)
-        np.positive(a, out=a_check, where=where)
+        np.positive(a, out=a_check, where=)
 
-        res = np.add.reduce(a, axis=axis, where=where)
+        res = np.add.reduce(a, axis=, where=)
         check = a_check.sum(axis)
         assert_equal(res, check)
         # Check we do not overwrite elements of a internally.
@@ -1755,10 +1755,10 @@ class TestUfunc:
         a = np.arange(9.).reshape(3, 3)
         a_copy = a.copy()
         a_check = np.full(a.shape, -np.inf)
-        np.positive(a, out=a_check, where=where)
+        np.positive(a, out=a_check, where=)
 
-        res = np.maximum.reduce(a, axis=axis, where=where, initial=initial)
-        check = a_check.max(axis, initial=initial)
+        res = np.maximum.reduce(a, axis=, where=, initial=)
+        check = a_check.max(axis, initial=)
         assert_equal(res, check)
 
     def test_reduction_where_initial_needed(self):
@@ -2387,7 +2387,7 @@ class TestUfunc:
               (None, object, None)])
     def test_logical_ufuncs_object_signatures(self, ufunc, signature):
         a = np.array([True, None, False], dtype=object)
-        res = ufunc(a, a, signature=signature)
+        res = ufunc(a, a, signature=)
         assert res.dtype == object
 
     @pytest.mark.parametrize("ufunc",
@@ -2399,7 +2399,7 @@ class TestUfunc:
         # Most mixed signatures fail (except those with bool out, e.g. `OO->?`)
         a = np.array([True, None, False])
         with pytest.raises(TypeError):
-            ufunc(a, a, signature=signature)
+            ufunc(a, a, signature=)
 
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
@@ -2412,14 +2412,14 @@ class TestUfunc:
         # check that the output has no effect:
         out = np.zeros(2, dtype=np.int32)
         expected = ufunc([True, True], True).astype(out.dtype)
-        assert_array_equal(ufunc(a, c, out=out), expected)
+        assert_array_equal(ufunc(a, c, out=), expected)
         out = np.zeros((), dtype=np.int32)
-        assert ufunc.reduce(a, out=out) == True
+        assert ufunc.reduce(a, out=) == True
         # Last check, test reduction when out and a match (the complexity here
         # is that the "i,i->?" may seem right, but should not match.
         a = np.array([3], dtype="i")
         out = np.zeros((), dtype=a.dtype)
-        assert ufunc.reduce(a, out=out) == 1
+        assert ufunc.reduce(a, out=) == 1
 
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
@@ -2446,7 +2446,7 @@ class TestUfunc:
         out = a.copy()
         with pytest.raises(TypeError):
             # It would be safe, but not equiv casting:
-            ufunc(a, c, out=out, casting="equiv")
+            ufunc(a, c, out=, casting="equiv")
 
     def test_reducelike_byteorder_resolution(self):
         # See gh-20699, byte-order changes need some extra care in the type
@@ -2466,9 +2466,9 @@ class TestUfunc:
         # do not up-cast to the default integer for add and prod
         arr = np.ones(1000, dtype=np.uint8)
         out = np.zeros((), dtype=np.uint16)
-        assert np.add.reduce(arr, out=out) == 1000
+        assert np.add.reduce(arr, out=) == 1000
         arr[:10] = 2
-        assert np.multiply.reduce(arr, out=out) == 2**10
+        assert np.multiply.reduce(arr, out=) == 2**10
 
         # For legacy dtypes, the signature currently has to be forced if `out=`
         # is passed.  The two paths below should differ, without `dtype=` the
@@ -2489,17 +2489,17 @@ class TestUfunc:
         arr = np.ones(20, dtype="f8")
         out = np.empty((), dtype=arr.dtype.newbyteorder())
         expected = np.add.reduce(arr)
-        np.add.reduce(arr, out=out)
+        np.add.reduce(arr, out=)
         assert_array_equal(expected, out)
         # Check reduceat:
         out = np.empty(2, dtype=arr.dtype.newbyteorder())
         expected = np.add.reduceat(arr, [0, 1])
-        np.add.reduceat(arr, [0, 1], out=out)
+        np.add.reduceat(arr, [0, 1], out=)
         assert_array_equal(expected, out)
         # And accumulate:
         out = np.empty(arr.shape, dtype=arr.dtype.newbyteorder())
         expected = np.add.accumulate(arr)
-        np.add.accumulate(arr, out=out)
+        np.add.accumulate(arr, out=)
         assert_array_equal(expected, out)
 
     def test_reduce_noncontig_output(self):
@@ -2534,10 +2534,10 @@ class TestUfunc:
             out = out.astype(np.float64)
 
         with pytest.raises(ValueError, match="(shape|size)"):
-            np.add.reduceat(arr, [0, 3], out=out)
+            np.add.reduceat(arr, [0, 3], out=)
 
         with pytest.raises(ValueError, match="(shape|size)"):
-            np.add.accumulate(arr, out=out)
+            np.add.accumulate(arr, out=)
 
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
@@ -2549,12 +2549,12 @@ class TestUfunc:
         a = np.arange(12.).reshape(4, 3)
         out = np.empty(out_shape, a.dtype)
 
-        correct_out = f_reduce(a, axis=0, keepdims=keepdims)
+        correct_out = f_reduce(a, axis=0, keepdims=)
         if out_shape != correct_out.shape:
             with assert_raises(ValueError):
-                f_reduce(a, axis=0, out=out, keepdims=keepdims)
+                f_reduce(a, axis=0, out=, keepdims=)
         else:
-            check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
+            check = f_reduce(a, axis=0, out=, keepdims=)
             assert_(check is out)
             assert_array_equal(check, correct_out)
 
@@ -2576,9 +2576,9 @@ class TestUfunc:
             pass
 
         out = np.empty(())
-        np.add.reduce(np.ones(5), out=out)  # no subclass, all fine
+        np.add.reduce(np.ones(5), out=)  # no subclass, all fine
         out = out.view(MyArr)
-        assert np.add.reduce(np.ones(5), out=out) is out
+        assert np.add.reduce(np.ones(5), out=) is out
         assert type(np.add.reduce(out)) is MyArr
 
     def test_no_doc_string(self):
@@ -2712,7 +2712,7 @@ def test_ufunc_out_casterrors():
     count = sys.getrefcount(value)
     with pytest.raises(ValueError):
         # Output casting failure:
-        np.add(arr, arr, out=out, casting="unsafe")
+        np.add(arr, arr, out=, casting="unsafe")
 
     assert count == sys.getrefcount(value)
     # output is unchanged after the error, this shows that the iteration
@@ -2721,7 +2721,7 @@ def test_ufunc_out_casterrors():
 
     with pytest.raises(ValueError):
         # Input casting failure:
-        np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
+        np.add(arr, arr, out=, dtype=np.intp, casting="unsafe")
 
     assert count == sys.getrefcount(value)
     # output is unchanged after the error, this shows that the iteration
@@ -2780,7 +2780,7 @@ def test_reduce_casterrors(offset):
         # Note that the double loop is picked, but the cast fails.
         # `initial=None` disables the use of an identity here to test failures
         # while copying the first values path (not used when identity exists).
-        np.add.reduce(arr, dtype=np.intp, out=out, initial=None)
+        np.add.reduce(arr, dtype=np.intp, out=, initial=None)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
     # the error occurs (the result of which would be `value * offset`) and -1
@@ -2860,7 +2860,7 @@ def test_addition_reduce_negative_zero(dtype, use_initial):
     # Test various length, in case SIMD paths or chunking play a role.
     # 150 extends beyond the pairwise blocksize; probably not important.
     for i in range(0, 150):
-        arr = np.array([neg_zero] * i, dtype=dtype)
+        arr = np.array([neg_zero] * i, dtype=)
         res = np.sum(arr, **kwargs)
         if i > 0 or use_initial:
             assert _check_neg_zero(res)

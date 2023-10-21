@@ -35,7 +35,7 @@ def _makenames_list(adict, align):
         num = int(obj[1])
         if num < 0:
             raise ValueError("invalid offset.")
-        format = dtype(obj[0], align=align)
+        format = dtype(obj[0], align=)
         if n > 2:
             title = obj[2]
         else:
@@ -831,7 +831,7 @@ def _add_trailing_padding(value, padding):
         fields = value.fields
         names = value.names
         field_spec = dict(
-            names=names,
+            names=,
             formats=[fields[name][0] for name in names],
             offsets=[fields[name][1] for name in names],
             itemsize=value.itemsize
@@ -916,9 +916,9 @@ def _ufunc_doc_signature_formatter(ufunc):
     # join all the parts together
     return '{name}({in_args}{out_args}, *{kwargs})'.format(
         name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
+        in_args=,
+        out_args=,
+        kwargs=
     )
 
 

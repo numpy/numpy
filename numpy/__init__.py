@@ -273,7 +273,7 @@ else:
         ("int", _int_extended_msg.format("int"))]
 
     __former_attrs__ = {
-         n: _msg.format(n=n, extended_msg=extended_msg)
+         n: _msg.format(n=, extended_msg=)
          for n, extended_msg in _type_info
      }
 

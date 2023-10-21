@@ -58,13 +58,13 @@ def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_any(a, axis, dtype, out, keepdims)
-    return umr_any(a, axis, dtype, out, keepdims, where=where)
+    return umr_any(a, axis, dtype, out, keepdims, where=)
 
 def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_all(a, axis, dtype, out, keepdims)
-    return umr_all(a, axis, dtype, out, keepdims, where=where)
+    return umr_all(a, axis, dtype, out, keepdims, where=)
 
 def _count_reduce_items(arr, axis, keepdims=False, where=True):
     # fast-path for the default case
@@ -94,18 +94,18 @@ def _clip(a, min=None, max=None, out=None, **kwargs):
         raise ValueError("One of max or min must be given")
 
     if min is None:
-        return um.minimum(a, max, out=out, **kwargs)
+        return um.minimum(a, max, out=, **kwargs)
     elif max is None:
-        return um.maximum(a, min, out=out, **kwargs)
+        return um.maximum(a, min, out=, **kwargs)
     else:
-        return um.clip(a, min, max, out=out, **kwargs)
+        return um.clip(a, min, max, out=, **kwargs)
 
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     arr = asanyarray(a)
 
     is_float16_result = False
 
-    rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
+    rcount = _count_reduce_items(arr, axis, keepdims=, where=)
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
         warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
 
@@ -117,7 +117,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
             dtype = mu.dtype('f4')
             is_float16_result = True
 
-    ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
+    ret = umr_sum(arr, axis, dtype, out, keepdims, where=)
     if isinstance(ret, mu.ndarray):
         with _no_nep50_warning():
             ret = um.true_divide(
@@ -138,7 +138,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
          where=True, mean=None):
     arr = asanyarray(a)
 
-    rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
+    rcount = _count_reduce_items(arr, axis, keepdims=, where=)
     # Make this warning show up on top.
     if ddof >= rcount if where is True else umr_any(ddof >= rcount, axis=None):
         warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning,
@@ -154,7 +154,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
         # Compute the mean.
         # Note that if dtype is not of inexact type then arraymean will
         # not be either.
-        arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=where)
+        arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=)
         # The shape of rcount has to match arrmean to not change the shape of
         # out in broadcasting. Otherwise, it cannot be stored back to arrmean.
         if rcount.ndim == 0:
@@ -189,7 +189,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     else:
         x = um.multiply(x, um.conjugate(x), out=x).real
 
-    ret = umr_sum(x, axis, dtype, out, keepdims=keepdims, where=where)
+    ret = umr_sum(x, axis, dtype, out, keepdims=, where=)
 
     # Compute degrees of freedom and make sure it is not negative.
     rcount = um.maximum(rcount - ddof, 0)
@@ -208,8 +208,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
          where=True, mean=None):
-    ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-               keepdims=keepdims, where=where, mean=mean)
+    ret = _var(a, axis=, dtype=, out=, ddof=, keepdims=, where=, mean=)
 
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
@@ -233,12 +232,11 @@ def _dump(self, file, protocol=2):
     else:
         ctx = open(os.fspath(file), "wb")
     with ctx as f:
-        pickle.dump(self, f, protocol=protocol)
+        pickle.dump(self, f, protocol=)
 
 def _dumps(self, protocol=2):
-    return pickle.dumps(self, protocol=protocol)
+    return pickle.dumps(self, protocol=)
 
 def _bitwise_count(a, out=None, *, where=True, casting='same_kind',
           order='K', dtype=None, subok=True):
-    return umr_bitwise_count(a, out, where=where, casting=casting,
-            order=order, dtype=dtype, subok=subok)
+    return umr_bitwise_count(a, out, where=, casting=, order=, dtype=, subok=)

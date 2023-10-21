@@ -20,14 +20,14 @@ def argsort(
     # Note: this keyword argument is different, and the default is different.
     kind = "stable" if stable else "quicksort"
     if not descending:
-        res = np.argsort(x._array, axis=axis, kind=kind)
+        res = np.argsort(x._array, axis=, kind=)
     else:
         # As NumPy has no native descending sort, we imitate it here. Note that
         # simply flipping the results of np.argsort(x._array, ...) would not
         # respect the relative order like it would in native descending sorts.
         res = np.flip(
-            np.argsort(np.flip(x._array, axis=axis), axis=axis, kind=kind),
-            axis=axis,
+            np.argsort(np.flip(x._array, axis=), axis=, kind=),
+            axis=,
         )
         # Rely on flip()/argsort() to validate axis
         normalised_axis = axis if axis >= 0 else x.ndim + axis
@@ -48,7 +48,7 @@ def sort(
         raise TypeError("Only real numeric dtypes are allowed in sort")
     # Note: this keyword argument is different, and the default is different.
     kind = "stable" if stable else "quicksort"
-    res = np.sort(x._array, axis=axis, kind=kind)
+    res = np.sort(x._array, axis=, kind=)
     if descending:
-        res = np.flip(res, axis=axis)
+        res = np.flip(res, axis=)
     return Array._new(res)

@@ -100,8 +100,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     old.pop("call", None)
     old.pop("bufsize", None)
 
-    extobj = _make_extobj(
-            all=all, divide=divide, over=over, under=under, invalid=invalid)
+    extobj = _make_extobj(all=, divide=, over=, under=, invalid=)
     _extobj_contextvar.set(extobj)
     return old
 

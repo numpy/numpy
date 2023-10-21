@@ -39,13 +39,13 @@ class TestTake:
                         if real_index is IndexError and index_array.size != 0:
                             index_array.put(0, index)
                             assert_raises(IndexError, ta.take, index_array,
-                                          mode=mode, axis=1)
+                                          mode=, axis=1)
                         elif index_array.size != 0:
                             index_array.put(0, index)
-                            res = ta.take(index_array, mode=mode, axis=1)
+                            res = ta.take(index_array, mode=, axis=1)
                             assert_array_equal(res, tresult[real_index])
                         else:
-                            res = ta.take(index_array, mode=mode, axis=1)
+                            res = ta.take(index_array, mode=, axis=1)
                             assert_(res.shape == (2,) + index_array.shape)
 
     def test_refcounting(self):
@@ -53,13 +53,13 @@ class TestTake:
         for mode in ('raise', 'clip', 'wrap'):
             a = np.array(objects)
             b = np.array([2, 2, 4, 5, 3, 5])
-            a.take(b, out=a[:6], mode=mode)
+            a.take(b, out=a[:6], mode=)
             del a
             if HAS_REFCOUNT:
                 assert_(all(sys.getrefcount(o) == 3 for o in objects))
             # not contiguous, example:
             a = np.array(objects * 2)[::2]
-            a.take(b, out=a[:6], mode=mode)
+            a.take(b, out=a[:6], mode=)
             del a
             if HAS_REFCOUNT:
                 assert_(all(sys.getrefcount(o) == 3 for o in objects))
@@ -95,7 +95,7 @@ class TestPutMask:
             dtype += "8[ns]"
 
         # putmask is weird and doesn't care about value length (even shorter)
-        vals = np.arange(1001).astype(dtype=dtype)
+        vals = np.arange(1001).astype(dtype=)
 
         mask = np.random.randint(2, size=1000).astype(bool)
         # Use vals.dtype in case of flexible dtype (i.e. string)
@@ -109,7 +109,7 @@ class TestPutMask:
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
     @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
     def test_empty(self, dtype, mode):
-        arr = np.zeros(1000, dtype=dtype)
+        arr = np.zeros(1000, dtype=)
         arr_copy = arr.copy()
         mask = np.random.randint(2, size=1000).astype(bool)
 
@@ -126,7 +126,7 @@ class TestPut:
             dtype += "8[ns]"
 
         # put is weird and doesn't care about value length (even shorter)
-        vals = np.arange(1001).astype(dtype=dtype)
+        vals = np.arange(1001).astype(dtype=)
 
         # Use vals.dtype in case of flexible dtype (i.e. string)
         arr = np.zeros(1000, dtype=vals.dtype)
@@ -148,7 +148,7 @@ class TestPut:
             if mode == "wrap":
                 indx_put = indx_put + len(arr)
 
-        np.put(arr, indx_put, vals, mode=mode)
+        np.put(arr, indx_put, vals, mode=)
         assert_array_equal(arr[indx], vals[:len(indx)])
         untouched = np.ones(len(arr), dtype=bool)
         untouched[indx] = False
@@ -157,7 +157,7 @@ class TestPut:
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
     @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
     def test_empty(self, dtype, mode):
-        arr = np.zeros(1000, dtype=dtype)
+        arr = np.zeros(1000, dtype=)
         arr_copy = arr.copy()
 
         # Allowing empty values like this is weird...

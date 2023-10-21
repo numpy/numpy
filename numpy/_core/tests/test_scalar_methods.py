@@ -160,7 +160,7 @@ class TestClassGetItem:
             assert np.complexfloating[arg_tup]
         else:
             match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
-            with pytest.raises(TypeError, match=match):
+            with pytest.raises(TypeError, match=):
                 np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])

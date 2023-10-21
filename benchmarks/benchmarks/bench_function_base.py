@@ -151,7 +151,7 @@ class SortGenerator:
         """
         Returns a randomly-shuffled array.
         """
-        arr = np.arange(size, dtype=dtype)
+        arr = np.arange(size, dtype=)
         np.random.shuffle(arr)
         return arr
 
@@ -161,7 +161,7 @@ class SortGenerator:
         """
         Returns an ordered array.
         """
-        return np.arange(size, dtype=dtype)
+        return np.arange(size, dtype=)
 
     @staticmethod
     @memoize
@@ -169,7 +169,7 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        return np.arange(size-1, -1, -1, dtype=dtype)
+        return np.arange(size-1, -1, -1, dtype=)
 
     @staticmethod
     @memoize
@@ -177,7 +177,7 @@ class SortGenerator:
         """
         Returns an array that has the same value everywhere.
         """
-        return np.ones(size, dtype=dtype)
+        return np.ones(size, dtype=)
 
     @staticmethod
     @memoize
@@ -186,7 +186,7 @@ class SortGenerator:
         Returns an ordered array, but one that has ``swap_frac * size``
         pairs swapped.
         """
-        a = np.arange(size, dtype=dtype)
+        a = np.arange(size, dtype=)
         for _ in range(int(size * swap_frac)):
             x, y = np.random.randint(0, size, 2)
             a[x], a[y] = a[y], a[x]
@@ -198,7 +198,7 @@ class SortGenerator:
         """
         Returns an array with blocks that are all sorted.
         """
-        a = np.arange(size, dtype=dtype)
+        a = np.arange(size, dtype=)
         b = []
         if size < block_size:
             return a
@@ -218,7 +218,7 @@ class SortGenerator:
             area_size = cls.AREA_SIZE
 
         area_num = int(size * frac / area_size)
-        a = np.arange(size, dtype=dtype)
+        a = np.arange(size, dtype=)
         for _ in range(area_num):
             start = np.random.randint(size-area_size)
             end = start + area_size
@@ -281,10 +281,10 @@ class Sort(Benchmark):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
         # This is important because the data is prepared once per benchmark, but
         # used across multiple runs.
-        np.sort(self.arr, kind=kind)
+        np.sort(self.arr, kind=)
 
     def time_argsort(self, kind, dtype, array_type):
-        np.argsort(self.arr, kind=kind)
+        np.argsort(self.arr, kind=)
 
 
 class Partition(Benchmark):

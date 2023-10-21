@@ -1716,27 +1716,27 @@ def test_iter_iterindex():
     buffersize = 5
     a = arange(24).reshape(4, 3, 2)
     for flags in ([], ['buffered']):
-        i = nditer(a, flags, buffersize=buffersize)
+        i = nditer(a, flags, buffersize=)
         assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 2
         assert_equal(iter_iterindices(i), list(range(2, 24)))
 
-        i = nditer(a, flags, order='F', buffersize=buffersize)
+        i = nditer(a, flags, order='F', buffersize=)
         assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 5
         assert_equal(iter_iterindices(i), list(range(5, 24)))
 
-        i = nditer(a[::-1], flags, order='F', buffersize=buffersize)
+        i = nditer(a[::-1], flags, order='F', buffersize=)
         assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 9
         assert_equal(iter_iterindices(i), list(range(9, 24)))
 
-        i = nditer(a[::-1, ::-1], flags, order='C', buffersize=buffersize)
+        i = nditer(a[::-1, ::-1], flags, order='C', buffersize=)
         assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 13
         assert_equal(iter_iterindices(i), list(range(13, 24)))
 
-        i = nditer(a[::1, ::-1], flags, buffersize=buffersize)
+        i = nditer(a[::1, ::-1], flags, buffersize=)
         assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 23
         assert_equal(iter_iterindices(i), list(range(23, 24)))
@@ -1751,8 +1751,7 @@ def test_iter_iterrange():
     a = arange(24, dtype='i4').reshape(4, 3, 2)
     a_fort = a.ravel(order='F')
 
-    i = nditer(a, ['ranged'], ['readonly'], order='F',
-                buffersize=buffersize)
+    i = nditer(a, ['ranged'], ['readonly'], order='F', buffersize=)
     assert_equal(i.iterrange, (0, 24))
     assert_equal([x[()] for x in i], a_fort)
     for r in [(0, 24), (1, 2), (3, 24), (5, 5), (0, 20), (23, 24)]:
@@ -1761,7 +1760,7 @@ def test_iter_iterrange():
         assert_equal([x[()] for x in i], a_fort[r[0]:r[1]])
 
     i = nditer(a, ['ranged', 'buffered'], ['readonly'], order='F',
-                op_dtypes='f8', buffersize=buffersize)
+                op_dtypes='f8', buffersize=)
     assert_equal(i.iterrange, (0, 24))
     assert_equal([x[()] for x in i], a_fort)
     for r in [(0, 24), (1, 2), (3, 24), (5, 5), (0, 20), (23, 24)]:
@@ -1777,7 +1776,7 @@ def test_iter_iterrange():
 
     i = nditer(a, ['ranged', 'buffered', 'external_loop'],
                 ['readonly'], order='F',
-                op_dtypes='f8', buffersize=buffersize)
+                op_dtypes='f8', buffersize=)
     assert_equal(i.iterrange, (0, 24))
     assert_equal(get_array(i), a_fort)
     for r in [(0, 24), (1, 2), (3, 24), (5, 5), (0, 20), (23, 24)]:
@@ -1808,7 +1807,7 @@ def test_iter_buffering():
                            [['readonly', 'nbo', 'aligned']],
                            order='C',
                            casting='equiv',
-                           buffersize=buffersize)
+                           buffersize=)
             while not i.finished:
                 assert_(i[0].size <= buffersize)
                 vals.append(i[0].copy())
@@ -2341,8 +2340,8 @@ def test_iter_buffered_reduce_reuse():
 
     for arr, op_axes, skip in get_params():
         nditer2 = np.nditer([arr.copy(), None],
-                            op_axes=op_axes, flags=flags, op_flags=op_flags,
-                            op_dtypes=op_dtypes)
+                            op_axes=, flags=, op_flags=,
+                            op_dtypes=)
         with nditer2:
             nditer2.operands[-1][...] = 0
             nditer2.reset()
@@ -2355,8 +2354,8 @@ def test_iter_buffered_reduce_reuse():
 
         for bufsize in range(0, 3**3):
             nditer1 = np.nditer([arr, None],
-                                op_axes=op_axes, flags=flags, op_flags=op_flags,
-                                buffersize=bufsize, op_dtypes=op_dtypes)
+                                op_axes=, flags=, op_flags=,
+                                buffersize=bufsize, op_dtypes=)
             with nditer1:
                 nditer1.operands[-1][...] = 0
                 nditer1.reset()
@@ -2885,7 +2884,7 @@ def test_iter_writemasked_broadcast_error(mask, mask_axes):
 
     with assert_raises(ValueError):
         np.nditer((mask, arr), flags=itflags, op_flags=[mask_flags, a_flags],
-                  op_axes=op_axes)
+                  op_axes=)
 
 
 def test_iter_writemasked_decref():
@@ -3049,7 +3048,7 @@ def test_object_iter_cleanup_large_reduce(arr):
     # More complicated calls are possible for large arrays:
     out = np.ones(8000, dtype=np.intp)
     # force casting with `dtype=object`
-    res = np.sum(arr, axis=(1, 2), dtype=object, out=out)
+    res = np.sum(arr, axis=(1, 2), dtype=object, out=)
     assert_array_equal(res, np.full(8000, 4, dtype=object))
 
 def test_iter_too_large():

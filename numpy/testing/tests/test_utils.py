@@ -1453,20 +1453,15 @@ class TestULP:
             zero = np.array([0.0]).astype(dt)
             nzero = np.array([-0.0]).astype(dt)
             assert_raises(AssertionError,
-                          lambda: assert_array_max_ulp(nan, inf,
-                                                       maxulp=maxulp))
+                          lambda: assert_array_max_ulp(nan, inf, maxulp=))
             assert_raises(AssertionError,
-                          lambda: assert_array_max_ulp(nan, big,
-                                                       maxulp=maxulp))
+                          lambda: assert_array_max_ulp(nan, big, maxulp=))
             assert_raises(AssertionError,
-                          lambda: assert_array_max_ulp(nan, tiny,
-                                                       maxulp=maxulp))
+                          lambda: assert_array_max_ulp(nan, tiny, maxulp=))
             assert_raises(AssertionError,
-                          lambda: assert_array_max_ulp(nan, zero,
-                                                       maxulp=maxulp))
+                          lambda: assert_array_max_ulp(nan, zero, maxulp=))
             assert_raises(AssertionError,
-                          lambda: assert_array_max_ulp(nan, nzero,
-                                                       maxulp=maxulp))
+                          lambda: assert_array_max_ulp(nan, nzero, maxulp=))
 
 
 class TestStringEqual:

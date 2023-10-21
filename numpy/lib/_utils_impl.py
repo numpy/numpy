@@ -475,7 +475,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     if object is None:
         info(info)
     elif isinstance(object, ndarray):
-        _info(object, output=output)
+        _info(object, output=)
     elif isinstance(object, str):
         if _namedict is None:
             _namedict, _dictlist = _makenamedict(toplevel)
@@ -647,7 +647,7 @@ def _median_nancheck(data, result, axis):
     """
     if data.size == 0:
         return result
-    potential_nans = data.take(-1, axis=axis)
+    potential_nans = data.take(-1, axis=)
     n = np.isnan(potential_nans)
     # masked NaN values are ok, although for masked the copyto may fail for
     # unmasked ones (this was always broken) when the result is a scalar.
@@ -738,7 +738,7 @@ def drop_metadata(dtype, /):
             return dtype
 
         structure = dict(
-            names=names, formats=formats, offsets=offsets, titles=titles,
+            names=, formats=, offsets=, titles=,
             itemsize=dtype.itemsize)
 
         # NOTE: Could pass (dtype.type, structure) to preserve record dtypes...

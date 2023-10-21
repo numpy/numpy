@@ -94,7 +94,7 @@ class UnknownFortranRoutine(FortranRoutine):
     """
     type = 'unknown'
     def __init__(self, name):
-        FortranRoutine.__init__(self, name=name, filename='<unknown>')
+        FortranRoutine.__init__(self, name=, filename='<unknown>')
 
     def dependencies(self):
         return []

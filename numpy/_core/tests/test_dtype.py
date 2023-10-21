@@ -128,19 +128,19 @@ class TestBuiltin:
 
     def test_expired_dtypes_with_bad_bytesize(self):
         match: str = r".*removed in NumPy 2.0.*"
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("int0")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("uint0")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("bool8")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("bytes0")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("str0")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("object0")
-        with pytest.raises(TypeError, match=match):
+        with pytest.raises(TypeError, match=):
             np.dtype("void0")
 
     @pytest.mark.parametrize(
@@ -261,7 +261,7 @@ class TestRecord:
         formats = ["f8"]
         titles = ["t1"]
         offsets = [0]
-        d = dict(names=names, formats=formats, titles=titles, offsets=offsets)
+        d = dict(names=, formats=, titles=, offsets=)
         refcounts = {k: sys.getrefcount(i) for k, i in d.items()}
         np.dtype(d)
         refcounts_new = {k: sys.getrefcount(i) for k, i in d.items()}
@@ -426,11 +426,11 @@ class TestRecord:
          (["1", "2"], "(2)i,", None)])
     def test_subarray_list(self, obj, dtype, expected):
         dtype = np.dtype(dtype)
-        res = np.array(obj, dtype=dtype)
+        res = np.array(obj, dtype=)
 
         if expected is None:
             # iterate the 1-d list to fill the array
-            expected = np.empty(len(obj), dtype=dtype)
+            expected = np.empty(len(obj), dtype=)
             for i in range(len(expected)):
                 expected[i] = obj[i]
 
@@ -1320,7 +1320,7 @@ class TestPickling:
             if dtype.metadata is not None:
                 assert_equal(pickled.metadata, dtype.metadata)
             # Check the reconstructed dtype is functional
-            x = np.zeros(3, dtype=dtype)
+            x = np.zeros(3, dtype=)
             y = np.zeros(3, dtype=pickled)
             assert_equal(x, y)
             assert_equal(x[0], y[0])

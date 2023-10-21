@@ -1785,13 +1785,11 @@ def get_atlas_version(**config):
     atlas_version = None
     info = {}
     try:
-        s, o = c.get_output(atlas_version_c_text,
-                            libraries=libraries, library_dirs=library_dirs,
-                           )
+        s, o = c.get_output(atlas_version_c_text, libraries=, library_dirs=)
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
-                                library_dirs=library_dirs,
+                                library_dirs=,
                                )
             if not s:
                 warnings.warn(textwrap.dedent("""
@@ -2418,7 +2416,7 @@ class openblas_info(blas_info):
             {
                 %(calls)s
                 return 0;
-            }""") % dict(prototypes=prototypes, calls=calls)
+            }""") % dict(prototypes=, calls=)
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments
@@ -3025,15 +3023,15 @@ class _pkg_config_info(system_info):
         if macros:
             dict_append(info, define_macros=macros)
         if libraries:
-            dict_append(info, libraries=libraries)
+            dict_append(info, libraries=)
         if library_dirs:
-            dict_append(info, library_dirs=library_dirs)
+            dict_append(info, library_dirs=)
         if include_dirs:
-            dict_append(info, include_dirs=include_dirs)
+            dict_append(info, include_dirs=)
         if extra_link_args:
-            dict_append(info, extra_link_args=extra_link_args)
+            dict_append(info, extra_link_args=)
         if extra_compile_args:
-            dict_append(info, extra_compile_args=extra_compile_args)
+            dict_append(info, extra_compile_args=)
         if info:
             self.set_info(**info)
         return

@@ -180,11 +180,11 @@ class TestHistogram:
         weights = np.array([1, -1, 2]) + 1j * np.array([2, 1, 2])
 
         # Check with custom bins
-        wa, wb = histogram(values, bins=[0, 2, 3], weights=weights)
+        wa, wb = histogram(values, bins=[0, 2, 3], weights=)
         assert_array_almost_equal(wa, np.array([1, 1]) + 1j * np.array([2, 3]))
 
         # Check with even bins
-        wa, wb = histogram(values, bins=2, range=[1, 3], weights=weights)
+        wa, wb = histogram(values, bins=2, range=[1, 3], weights=)
         assert_array_almost_equal(wa, np.array([1, 1]) + 1j * np.array([2, 3]))
 
         # Decimal weights
@@ -193,11 +193,11 @@ class TestHistogram:
         weights = np.array([Decimal(1), Decimal(2), Decimal(3)])
 
         # Check with custom bins
-        wa, wb = histogram(values, bins=[0, 2, 3], weights=weights)
+        wa, wb = histogram(values, bins=[0, 2, 3], weights=)
         assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
 
         # Check with even bins
-        wa, wb = histogram(values, bins=2, range=[1, 3], weights=weights)
+        wa, wb = histogram(values, bins=2, range=[1, 3], weights=)
         assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
 
     def test_no_side_effects(self):
@@ -252,7 +252,7 @@ class TestHistogram:
         vals = np.linspace(0.0, 1.0, num=100)
         bins = np.array([[0, 0.5], [0.6, 1.0]])
         with assert_raises_regex(ValueError, "must be 1d"):
-            np.histogram(vals, bins=bins)
+            np.histogram(vals, bins=)
 
     def test_unsigned_monotonicity_check(self):
         # Ensures ValueError is raised if bins not increasing monotonically
@@ -260,7 +260,7 @@ class TestHistogram:
         arr = np.array([2])
         bins = np.array([1, 3, 1], dtype='uint64')
         with assert_raises(ValueError):
-            hist, edges = np.histogram(arr, bins=bins)
+            hist, edges = np.histogram(arr, bins=)
 
     def test_object_array_of_0d(self):
         # gh-7864
@@ -312,7 +312,7 @@ class TestHistogram:
         # work on datetimes or timedeltas
         d_count, d_edge = histogram(dates, bins=date_bins)
         t_count, t_edge = histogram(offsets.astype(td), bins=bins.astype(td))
-        i_count, i_edge = histogram(offsets, bins=bins)
+        i_count, i_edge = histogram(offsets, bins=)
 
         assert_equal(d_count, i_count)
         assert_equal(t_count, i_count)
@@ -325,7 +325,7 @@ class TestHistogram:
 
     def do_signed_overflow_bounds(self, dtype):
         exponent = 8 * np.dtype(dtype).itemsize - 1
-        arr = np.array([-2**exponent + 4, 2**exponent - 4], dtype=dtype)
+        arr = np.array([-2**exponent + 4, 2**exponent - 4], dtype=)
         hist, e = histogram(arr, bins=2)
         assert_equal(e, [-2**exponent + 4, 0, 2**exponent - 4])
         assert_equal(hist, [1, 1])
@@ -348,7 +348,7 @@ class TestHistogram:
             return
 
         # previously crashed
-        count, x_loc = np.histogram(arr, bins=1, range=range)
+        count, x_loc = np.histogram(arr, bins=1, range=)
         assert_equal(count, [1])
 
         # gh-10322 means that the type comes from arr - this may change
@@ -365,7 +365,7 @@ class TestHistogram:
             return
 
         # previously crashed
-        count, x_loc = np.histogram(arr, bins=1, range=range)
+        count, x_loc = np.histogram(arr, bins=1, range=)
         assert_equal(count, [1])
 
         # gh-10322 means that the type comes from arr - this may change
@@ -405,7 +405,7 @@ class TestHistogram:
         xbins = 400
         ybins = 400
         zbins = np.arange(16000)
-        hist = np.histogramdd(sample=sample, bins=(xbins, ybins, zbins))
+        hist = np.histogramdd(sample=, bins=(xbins, ybins, zbins))
         assert_equal(type(hist), type((1, 2)))
 
     def test_gh_23110(self):
@@ -542,7 +542,7 @@ class TestHistogramOptimBinNums:
 
         def nbins_ratio(seed, size):
             rng = np.random.RandomState(seed)
-            x = rng.normal(loc=0, scale=2, size=size)
+            x = rng.normal(loc=0, scale=2, size=)
             a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
             return a / (a + b)
 
@@ -589,8 +589,8 @@ class TestHistogramOptimBinNums:
     def test_signed_integer_data(self, bins):
         # Regression test for gh-14379.
         a = np.array([-2, 0, 127], dtype=np.int8)
-        hist, edges = np.histogram(a, bins=bins)
-        hist32, edges32 = np.histogram(a.astype(np.int32), bins=bins)
+        hist, edges = np.histogram(a, bins=)
+        hist32, edges32 = np.histogram(a.astype(np.int32), bins=)
         assert_array_equal(hist, hist32)
         assert_array_equal(edges, edges32)
 
@@ -714,22 +714,22 @@ class TestHistogramdd:
         # Test event very close to rightmost binedge. See Github issue #4266
         x = [0.9999999995]
         bins = [[0., 0.5, 1.0]]
-        hist, _ = histogramdd(x, bins=bins)
+        hist, _ = histogramdd(x, bins=)
         assert_(hist[0] == 0.0)
         assert_(hist[1] == 1.)
         x = [1.0]
         bins = [[0., 0.5, 1.0]]
-        hist, _ = histogramdd(x, bins=bins)
+        hist, _ = histogramdd(x, bins=)
         assert_(hist[0] == 0.0)
         assert_(hist[1] == 1.)
         x = [1.0000000001]
         bins = [[0., 0.5, 1.0]]
-        hist, _ = histogramdd(x, bins=bins)
+        hist, _ = histogramdd(x, bins=)
         assert_(hist[0] == 0.0)
         assert_(hist[1] == 0.0)
         x = [1.0001]
         bins = [[0., 0.5, 1.0]]
-        hist, _ = histogramdd(x, bins=bins)
+        hist, _ = histogramdd(x, bins=)
         assert_(hist[0] == 0.0)
         assert_(hist[1] == 0.0)
 

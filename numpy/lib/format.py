@@ -525,8 +525,7 @@ def read_array_header_1_0(fp, max_header_size=_MAX_HEADER_SIZE):
         If the data is invalid.
 
     """
-    return _read_array_header(
-            fp, version=(1, 0), max_header_size=max_header_size)
+    return _read_array_header(fp, version=(1, 0), max_header_size=)
 
 def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
     """
@@ -563,8 +562,7 @@ def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
         If the data is invalid.
 
     """
-    return _read_array_header(
-            fp, version=(2, 0), max_header_size=max_header_size)
+    return _read_array_header(fp, version=(2, 0), max_header_size=)
 
 
 def _filter_header(s):
@@ -748,7 +746,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         else:
             for chunk in numpy.nditer(
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='F'):
+                    buffersize=, order='F'):
                 fp.write(chunk.tobytes('C'))
     else:
         if isfileobj(fp):
@@ -756,7 +754,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         else:
             for chunk in numpy.nditer(
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
+                    buffersize=, order='C'):
                 fp.write(chunk.tobytes('C'))
 
 
@@ -807,7 +805,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
     version = read_magic(fp)
     _check_version(version)
     shape, fortran_order, dtype = _read_array_header(
-            fp, version, max_header_size=max_header_size)
+            fp, version, max_header_size=)
     if len(shape) == 0:
         count = 1
     else:
@@ -831,7 +829,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.
-            array = numpy.fromfile(fp, dtype=dtype, count=count)
+            array = numpy.fromfile(fp, dtype=, count=)
         else:
             # This is not a real file. We have to read it the
             # memory-intensive way.
@@ -844,7 +842,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
             # Use np.ndarray instead of np.empty since the latter does
             # not correctly instantiate zero-width string dtypes; see
             # https://github.com/numpy/numpy/pull/6430
-            array = numpy.ndarray(count, dtype=dtype)
+            array = numpy.ndarray(count, dtype=)
 
             if dtype.itemsize > 0:
                 # If dtype.itemsize == 0 then there's nothing more to read
@@ -854,7 +852,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                     read_count = min(max_read_count, count - i)
                     read_size = int(read_count * dtype.itemsize)
                     data = _read_bytes(fp, read_size, "array data")
-                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                    array[i:i+read_count] = numpy.frombuffer(data, dtype=,
                                                              count=read_count)
 
         if fortran_order:
@@ -935,11 +933,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
-        d = dict(
-            descr=dtype_to_descr(dtype),
-            fortran_order=fortran_order,
-            shape=shape,
-        )
+        d = dict(descr=dtype_to_descr(dtype), fortran_order=, shape=)
         # If we got here, then it should be safe to create the file.
         with open(os.fspath(filename), mode+'b') as fp:
             _write_array_header(fp, d, version)
@@ -951,7 +945,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             _check_version(version)
 
             shape, fortran_order, dtype = _read_array_header(
-                    fp, version, max_header_size=max_header_size)
+                    fp, version, max_header_size=)
             if dtype.hasobject:
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
@@ -967,8 +961,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     if mode == 'w+':
         mode = 'r+'
 
-    marray = numpy.memmap(filename, dtype=dtype, shape=shape, order=order,
-        mode=mode, offset=offset)
+    marray = numpy.memmap(filename, dtype=, shape=, order=, mode=, offset=)
 
     return marray
 

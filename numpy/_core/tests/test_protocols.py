@@ -24,7 +24,7 @@ def test_getattr_warning():
             return getattr(self.array, name)
 
         def __repr__(self):
-            return "<Wrapper({self.array})>".format(self=self)
+            return "<Wrapper({self.array})>".format(self=)
 
     array = Wrapper(np.arange(10))
     with pytest.raises(UserWarning, match="object got converted"):

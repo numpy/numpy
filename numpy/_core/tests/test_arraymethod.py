@@ -83,5 +83,5 @@ class TestClassGetItem:
             assert cls[arg_tup]
         else:
             match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
-            with pytest.raises(TypeError, match=match):
+            with pytest.raises(TypeError, match=):
                 cls[arg_tup]

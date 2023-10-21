@@ -320,7 +320,7 @@ class TestRecFunctions:
 
         def inspect(dt, dtype=None):
             arr = np.zeros((), dt)
-            ret = structured_to_unstructured(arr, dtype=dtype)
+            ret = structured_to_unstructured(arr, dtype=)
             backarr = unstructured_to_structured(ret, dt)
             return ret.shape, ret.dtype, backarr.dtype
 
@@ -725,7 +725,7 @@ class TestStackArrays:
         zz = np.array([('a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],
                       dtype=[('A', '|S3'), ('B', float), ('C', float)])
         defaults = {'A': '???', 'B': -999., 'C': -9999., 'D': -99999.}
-        test = stack_arrays((z, zz), defaults=defaults)
+        test = stack_arrays((z, zz), defaults=)
         control = ma.array([('A', 1, -9999.), ('B', 2, -9999.),
                             (
                                 'a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],

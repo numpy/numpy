@@ -127,7 +127,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
             flags |= 4
 
         flags = flags_table[flags]
-        to_dict[cast["to"]] = cast_info(can_cast=can_cast, legacy=legacy, flags=flags)
+        to_dict[cast["to"]] = cast_info(can_cast=, legacy=, flags=)
 
     # The np.dtype(x.type) is a bit strange, because dtype classes do
     # not expose much yet.

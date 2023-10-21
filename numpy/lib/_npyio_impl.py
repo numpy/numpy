@@ -414,7 +414,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # result can similarly silently corrupt numerical data.
         raise ValueError("encoding must be 'ASCII', 'latin1', or 'bytes'")
 
-    pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)
+    pickle_kwargs = dict(encoding=, fix_imports=)
 
     with contextlib.ExitStack() as stack:
         if hasattr(file, 'read'):
@@ -438,9 +438,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
-            ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
-                          pickle_kwargs=pickle_kwargs,
-                          max_header_size=max_header_size)
+            ret = NpzFile(fid, own_fid=, allow_pickle=,
+                          pickle_kwargs=,
+                          max_header_size=)
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
@@ -448,11 +448,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                 if allow_pickle:
                     max_header_size = 2**64
                 return format.open_memmap(file, mode=mmap_mode,
-                                          max_header_size=max_header_size)
+                                          max_header_size=)
             else:
-                return format.read_array(fid, allow_pickle=allow_pickle,
-                                         pickle_kwargs=pickle_kwargs,
-                                         max_header_size=max_header_size)
+                return format.read_array(fid, allow_pickle=,
+                                         pickle_kwargs=,
+                                         max_header_size=)
         else:
             # Try a pickle
             if not allow_pickle:
@@ -540,8 +540,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     with file_ctx as fid:
         arr = np.asanyarray(arr)
-        format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs=dict(fix_imports=fix_imports))
+        format.write_array(fid, arr, allow_pickle=,
+                           pickle_kwargs=dict(fix_imports=))
 
 
 def _savez_dispatcher(file, *args, **kwds):
@@ -730,16 +730,14 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     else:
         compression = zipfile.ZIP_STORED
 
-    zipf = zipfile_factory(file, mode="w", compression=compression)
+    zipf = zipfile_factory(file, mode="w", compression=)
 
     for key, val in namedict.items():
         fname = key + '.npy'
         val = np.asanyarray(val)
         # always force zip64, gh-10776
         with zipf.open(fname, 'w', force_zip64=True) as fid:
-            format.write_array(fid, val,
-                               allow_pickle=allow_pickle,
-                               pickle_kwargs=pickle_kwargs)
+            format.write_array(fid, val, allow_pickle=, pickle_kwargs=)
 
     zipf.close()
 
@@ -963,7 +961,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         if isinstance(fname, os.PathLike):
             fname = os.fspath(fname)
         if isinstance(fname, str):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            fh = np.lib._datasource.open(fname, 'rt', encoding=)
             if encoding is None:
                 encoding = getattr(fh, 'encoding', 'latin1')
 
@@ -988,12 +986,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
         if read_dtype_via_object_chunks is None:
             arr = _load_from_filelike(
-                data, delimiter=delimiter, comment=comment, quote=quote,
-                imaginary_unit=imaginary_unit,
-                usecols=usecols, skiplines=skiplines, max_rows=max_rows,
-                converters=converters, dtype=dtype,
-                encoding=encoding, filelike=filelike,
-                byte_converters=byte_converters)
+                data, delimiter=, comment=, quote=,
+                imaginary_unit=,
+                usecols=, skiplines=, max_rows=,
+                converters=, dtype=,
+                encoding=, filelike=,
+                byte_converters=)
 
         else:
             # This branch reads the file into chunks of object arrays and then
@@ -1015,13 +1013,13 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                     chunk_size = min(_loadtxt_chunksize, max_rows)
 
                 next_arr = _load_from_filelike(
-                    data, delimiter=delimiter, comment=comment, quote=quote,
-                    imaginary_unit=imaginary_unit,
-                    usecols=usecols, skiplines=skiplines, max_rows=max_rows,
-                    converters=converters, dtype=dtype,
-                    encoding=encoding, filelike=filelike,
-                    byte_converters=byte_converters,
-                    c_byte_converters=c_byte_converters)
+                    data, delimiter=, comment=, quote=,
+                    imaginary_unit=,
+                    usecols=, skiplines=, max_rows=,
+                    converters=, dtype=,
+                    encoding=, filelike=,
+                    byte_converters=,
+                    c_byte_converters=)
                 # Cast here already.  We hope that this is better even for
                 # large files because the storage is more compact.  It could
                 # be adapted (in principle the concatenate could cast).
@@ -1047,7 +1045,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     #       these would return a 1D result plus the structured dimension,
     #       so ndmin=2 adds a third dimension even when no squeezing occurs.
     #       A `squeeze=False` could be a better solution (pandas uses squeeze).
-    arr = _ensure_ndmin_ndarray(arr, ndmin=ndmin)
+    arr = _ensure_ndmin_ndarray(arr, ndmin=)
 
     if arr.shape:
         if arr.shape[0] == 0:
@@ -1322,10 +1320,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _loadtxt_with_like(
-            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
-            converters=converters, skiprows=skiprows, usecols=usecols,
-            unpack=unpack, ndmin=ndmin, encoding=encoding,
-            max_rows=max_rows
+            like, fname, dtype=, comments=, delimiter=,
+            converters=, skiprows=, usecols=,
+            unpack=, ndmin=, encoding=,
+            max_rows=
         )
 
     if isinstance(delimiter, bytes):
@@ -1344,10 +1342,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if isinstance(delimiter, bytes):
         delimiter = delimiter.decode('latin1')
 
-    arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
-                converters=converters, skiplines=skiprows, usecols=usecols,
-                unpack=unpack, ndmin=ndmin, encoding=encoding,
-                max_rows=max_rows, quote=quotechar)
+    arr = _read(fname, dtype=, comment=, delimiter=,
+                converters=, skiplines=skiprows, usecols=,
+                unpack=, ndmin=, encoding=,
+                max_rows=, quote=quotechar)
 
     return arr
 
@@ -1523,7 +1521,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
         open(fname, 'wt').close()
-        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
+        fh = np.lib._datasource.open(fname, 'wt', encoding=)
         own_fh = True
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
@@ -1669,7 +1667,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     own_fh = False
     if not hasattr(file, "read"):
         file = os.fspath(file)
-        file = np.lib._datasource.open(file, 'rt', encoding=encoding)
+        file = np.lib._datasource.open(file, 'rt', encoding=)
         own_fh = True
 
     try:
@@ -1693,7 +1691,7 @@ def fromregex(file, regexp, dtype, encoding=None):
             output = np.array(seq, dtype=newdtype)
             output.dtype = dtype
         else:
-            output = np.array(seq, dtype=dtype)
+            output = np.array(seq, dtype=)
 
         return output
     finally:
@@ -1906,16 +1904,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if like is not None:
         return _genfromtxt_with_like(
-            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
-            skip_header=skip_header, skip_footer=skip_footer,
-            converters=converters, missing_values=missing_values,
-            filling_values=filling_values, usecols=usecols, names=names,
-            excludelist=excludelist, deletechars=deletechars,
-            replace_space=replace_space, autostrip=autostrip,
-            case_sensitive=case_sensitive, defaultfmt=defaultfmt,
-            unpack=unpack, usemask=usemask, loose=loose,
-            invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
-            ndmin=ndmin,
+            like, fname, dtype=, comments=, delimiter=,
+            skip_header=, skip_footer=,
+            converters=, missing_values=,
+            filling_values=, usecols=, names=,
+            excludelist=, deletechars=,
+            replace_space=, autostrip=,
+            case_sensitive=, defaultfmt=,
+            unpack=, usemask=, loose=,
+            invalid_raise=, max_rows=, encoding=,
+            ndmin=,
         )
 
     _ensure_ndmin_ndarray_check_param(ndmin)
@@ -1947,7 +1945,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if isinstance(fname, os.PathLike):
         fname = os.fspath(fname)
     if isinstance(fname, str):
-        fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+        fid = np.lib._datasource.open(fname, 'rt', encoding=)
         fid_ctx = contextlib.closing(fid)
     else:
         fid = fname
@@ -1960,12 +1958,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             f"or an iterator of strings. Got {type(fname)} instead."
         ) from e
     with fid_ctx:
-        split_line = LineSplitter(delimiter=delimiter, comments=comments,
-                                  autostrip=autostrip, encoding=encoding)
-        validate_names = NameValidator(excludelist=excludelist,
-                                       deletechars=deletechars,
-                                       case_sensitive=case_sensitive,
-                                       replace_space=replace_space)
+        split_line = LineSplitter(delimiter=, comments=, autostrip=, encoding=)
+        validate_names = NameValidator(excludelist=,
+                                       deletechars=,
+                                       case_sensitive=,
+                                       replace_space=)
 
         # Skip the first `skip_header` rows
         try:
@@ -2018,11 +2015,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             names = validate_names(names)
         # Get the dtype
         if dtype is not None:
-            dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names,
-                               excludelist=excludelist,
-                               deletechars=deletechars,
-                               case_sensitive=case_sensitive,
-                               replace_space=replace_space)
+            dtype = easy_dtype(dtype, defaultfmt=, names=,
+                               excludelist=,
+                               deletechars=,
+                               case_sensitive=,
+                               replace_space=)
         # Make sure the names is a list (for 2.5)
         if names is not None:
             names = list(names)
@@ -2198,11 +2195,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     if type(x) is bytes:
                         return conv(x)
                     return conv(x.encode("latin1"))
-                user_conv = functools.partial(tobytes_first, conv=conv)
+                user_conv = functools.partial(tobytes_first, conv=)
             else:
                 user_conv = conv
             converters[i].update(user_conv, locked=True,
-                                 testing_value=testing_value,
+                                 testing_value=,
                                  default=filling_values[i],
                                  missing_values=missing_values[i],)
             uc_update.append((i, user_conv))
@@ -2386,7 +2383,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     raise NotImplementedError(
                         "Nested fields involving objects are not supported...")
                 else:
-                    output = np.array(data, dtype=dtype)
+                    output = np.array(data, dtype=)
             else:
                 rows = np.array(data, dtype=[('', _) for _ in dtype_flat])
                 output = rows.view(dtype)
@@ -2441,7 +2438,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         output = output.view(MaskedArray)
         output._mask = outputmask
 
-    output = _ensure_ndmin_ndarray(output, ndmin=ndmin)
+    output = _ensure_ndmin_ndarray(output, ndmin=)
 
     if unpack:
         if names is None:

@@ -161,7 +161,7 @@ class build_ext (old_build_ext):
                 self.compiler_opt.cache_flush()
 
             self.compiler_opt = new_ccompiler_opt(
-                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                compiler=self.compiler, dispatch_hpath=,
                 cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
                 cache_path=opt_cache_path
             )
@@ -489,10 +489,10 @@ class build_ext (old_build_ext):
             log.info("compiling C++ dispatch-able sources")
             c_objects += self.compiler_opt.try_dispatch(
                 copt_cxx_sources,
-                output_dir=output_dir,
+                output_dir=,
                 src_dir=copt_build_src,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=extra_args + extra_cxxflags,
                 ccompiler=cxx_compiler,
@@ -502,10 +502,10 @@ class build_ext (old_build_ext):
             log.info("compiling C dispatch-able sources")
             c_objects += self.compiler_opt.try_dispatch(
                 copt_c_sources,
-                output_dir=output_dir,
+                output_dir=,
                 src_dir=copt_build_src,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=extra_args + extra_cflags,
                 **kws)
@@ -513,9 +513,9 @@ class build_ext (old_build_ext):
             log.info("compiling C sources")
             c_objects += self.compiler.compile(
                 c_sources,
-                output_dir=output_dir,
+                output_dir=,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=(extra_args + copt_baseline_flags +
                                 extra_cflags),
@@ -524,9 +524,9 @@ class build_ext (old_build_ext):
             log.info("compiling C++ sources")
             c_objects += cxx_compiler.compile(
                 cxx_sources,
-                output_dir=output_dir,
+                output_dir=,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=(extra_args + copt_baseline_flags +
                                 extra_cxxflags),
@@ -548,10 +548,10 @@ class build_ext (old_build_ext):
                 module_dirs, module_build_dir)
             f_objects += fcompiler.compile(fmodule_sources,
                                            output_dir=self.build_temp,
-                                           macros=macros,
-                                           include_dirs=include_dirs,
+                                           macros=,
+                                           include_dirs=,
                                            debug=self.debug,
-                                           extra_postargs=extra_postargs,
+                                           extra_postargs=,
                                            depends=ext.depends)
 
             if fcompiler.module_dir_switch is None:
@@ -572,10 +572,10 @@ class build_ext (old_build_ext):
             log.info("compiling Fortran sources")
             f_objects += fcompiler.compile(f_sources,
                                            output_dir=self.build_temp,
-                                           macros=macros,
-                                           include_dirs=include_dirs,
+                                           macros=,
+                                           include_dirs=,
                                            debug=self.debug,
-                                           extra_postargs=extra_postargs,
+                                           extra_postargs=,
                                            depends=ext.depends)
 
         if f_objects and not fcompiler.can_ccompiler_link(self.compiler):
@@ -618,8 +618,8 @@ class build_ext (old_build_ext):
                     unlinkable_fobjects)
 
         linker(objects, ext_filename,
-               libraries=libraries,
-               library_dirs=library_dirs,
+               libraries=,
+               library_dirs=,
                runtime_library_dirs=ext.runtime_library_dirs,
                extra_postargs=extra_args,
                export_symbols=self.get_export_symbols(ext),

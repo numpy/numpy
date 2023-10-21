@@ -81,9 +81,9 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
             # This branch is needed for reductions like any which don't
             # support a dtype.
             if dtype is not None:
-                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
+                return reduction(axis=, dtype=, out=, **passkwargs)
             else:
-                return reduction(axis=axis, out=out, **passkwargs)
+                return reduction(axis=, out=, **passkwargs)
 
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
@@ -189,7 +189,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     array([[4, 3],
            [5, 7]])
     """
-    return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
+    return _wrapfunc(a, 'take', indices, axis=, out=, mode=)
 
 
 def _reshape_dispatcher(a, newshape, order=None):
@@ -282,7 +282,7 @@ def reshape(a, newshape, order='C'):
            [3, 4],
            [5, 6]])
     """
-    return _wrapfunc(a, 'reshape', newshape, order=order)
+    return _wrapfunc(a, 'reshape', newshape, order=)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
@@ -413,7 +413,7 @@ def choose(a, choices, out=None, mode='raise'):
             [-1, -2, -3, -4, -5]]])
 
     """
-    return _wrapfunc(a, 'choose', choices, out=out, mode=mode)
+    return _wrapfunc(a, 'choose', choices, out=, mode=)
 
 
 def _repeat_dispatcher(a, repeats, axis=None):
@@ -463,7 +463,7 @@ def repeat(a, repeats, axis=None):
            [3, 4]])
 
     """
-    return _wrapfunc(a, 'repeat', repeats, axis=axis)
+    return _wrapfunc(a, 'repeat', repeats, axis=)
 
 
 def _put_dispatcher(a, ind, v, mode=None):
@@ -527,7 +527,7 @@ def put(a, ind, v, mode='raise'):
         raise TypeError("argument 1 must be numpy.ndarray, "
                         "not {name}".format(name=type(a).__name__)) from e
 
-    return put(ind, v, mode=mode)
+    return put(ind, v, mode=)
 
 
 def _swapaxes_dispatcher(a, axis1, axis2):
@@ -768,7 +768,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.partition(kth, axis=axis, kind=kind, order=order)
+    a.partition(kth, axis=, kind=, order=)
     return a
 
 
@@ -856,7 +856,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
            [1, 1, 3]])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    return _wrapfunc(a, 'argpartition', kth, axis=, kind=, order=)
 
 
 def _sort_dispatcher(a, axis=None, kind=None, order=None):
@@ -1017,7 +1017,7 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order)
+    a.sort(axis=, kind=, order=)
     return a
 
 
@@ -1133,7 +1133,7 @@ def argsort(a, axis=-1, kind=None, order=None):
     array([0, 1])
 
     """
-    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+    return _wrapfunc(a, 'argsort', axis=, kind=, order=)
 
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
@@ -1230,7 +1230,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     (2, 1, 4)
     """
     kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
-    return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
+    return _wrapfunc(a, 'argmax', axis=, out=, **kwds)
 
 
 def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
@@ -1327,7 +1327,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     (2, 1, 4)
     """
     kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
-    return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
+    return _wrapfunc(a, 'argmin', axis=, out=, **kwds)
 
 
 def _searchsorted_dispatcher(a, v, side=None, sorter=None):
@@ -1403,7 +1403,7 @@ def searchsorted(a, v, side='left', sorter=None):
     array([0, 5, 1, 2])
 
     """
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+    return _wrapfunc(a, 'searchsorted', v, side=, sorter=)
 
 
 def _resize_dispatcher(a, new_shape):
@@ -1560,11 +1560,11 @@ def squeeze(a, axis=None):
     try:
         squeeze = a.squeeze
     except AttributeError:
-        return _wrapit(a, 'squeeze', axis=axis)
+        return _wrapit(a, 'squeeze', axis=)
     if axis is None:
         return squeeze()
     else:
-        return squeeze(axis=axis)
+        return squeeze(axis=)
 
 
 def _diagonal_dispatcher(a, offset=None, axis1=None, axis2=None):
@@ -1696,9 +1696,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     """
     if isinstance(a, np.matrix):
         # Make diagonal of matrix 1-D to preserve backward compatibility.
-        return asarray(a).diagonal(offset=offset, axis1=axis1, axis2=axis2)
+        return asarray(a).diagonal(offset=, axis1=, axis2=)
     else:
-        return asanyarray(a).diagonal(offset=offset, axis1=axis1, axis2=axis2)
+        return asanyarray(a).diagonal(offset=, axis1=, axis2=)
 
 
 def _trace_dispatcher(
@@ -1765,13 +1765,9 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     if isinstance(a, np.matrix):
         # Get trace of matrix via an array to preserve backward compatibility.
-        return asarray(a).trace(
-            offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out
-        )
+        return asarray(a).trace(offset=, axis1=, axis2=, dtype=, out=)
     else:
-        return asanyarray(a).trace(
-            offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out
-        )
+        return asanyarray(a).trace(offset=, axis1=, axis2=, dtype=, out=)
 
 
 def _ravel_dispatcher(a, order=None):
@@ -1882,9 +1878,9 @@ def ravel(a, order='C'):
 
     """
     if isinstance(a, np.matrix):
-        return asarray(a).ravel(order=order)
+        return asarray(a).ravel(order=)
     else:
-        return asanyarray(a).ravel(order=order)
+        return asanyarray(a).ravel(order=)
 
 
 def _nonzero_dispatcher(a):
@@ -2103,7 +2099,7 @@ def compress(condition, a, axis=None, out=None):
     array([2])
 
     """
-    return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
+    return _wrapfunc(a, 'compress', condition, axis=, out=)
 
 
 def _clip_dispatcher(a, a_min, a_max, out=None, **kwargs):
@@ -2179,7 +2175,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
-    return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)
+    return _wrapfunc(a, 'clip', a_min, a_max, out=, **kwargs)
 
 
 def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -2323,7 +2319,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     return _wrapreduction(
         a, np.add, 'sum', axis, dtype, out, 
-        keepdims=keepdims, initial=initial, where=where
+        keepdims=, initial=, where=
     )
 
 
@@ -2423,7 +2419,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     """
     return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+                          keepdims=, where=)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2515,7 +2511,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     """
     return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
-                          keepdims=keepdims, where=where)
+                          keepdims=, where=)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -2595,7 +2591,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
     1000000.0050000029
 
     """
-    return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
+    return _wrapfunc(a, 'cumsum', axis=, dtype=, out=)
 
 
 def _ptp_dispatcher(a, axis=None, out=None, keepdims=None):
@@ -2686,7 +2682,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    return _methods._ptp(a, axis=axis, out=out, **kwargs)
+    return _methods._ptp(a, axis=, out=, **kwargs)
 
 
 def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
@@ -2813,7 +2809,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     5
     """
     return _wrapreduction(a, np.maximum, 'max', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims=, initial=, where=)
 
 
 @array_function_dispatch(_max_dispatcher)
@@ -2830,7 +2826,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     ndarray.max : equivalent method
     """
     return _wrapreduction(a, np.maximum, 'max', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims=, initial=, where=)
 
 
 def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
@@ -2956,7 +2952,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     6
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims=, initial=, where=)
 
 
 @array_function_dispatch(_min_dispatcher)
@@ -2973,7 +2969,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     ndarray.min : equivalent method
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims=, initial=, where=)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -3105,7 +3101,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     10
     """
     return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims=, initial=, where=)
 
 
 def _cumprod_dispatcher(a, axis=None, dtype=None, out=None):
@@ -3173,7 +3169,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
            [  4,  20, 120]])
 
     """
-    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
+    return _wrapfunc(a, 'cumprod', axis=, dtype=, out=)
 
 
 def _ndim_dispatcher(a):
@@ -3364,7 +3360,7 @@ def round(a, decimals=0, out=None):
     array([ 0,  0,  0, 10])
 
     """
-    return _wrapfunc(a, 'round', decimals=decimals, out=out)
+    return _wrapfunc(a, 'round', decimals=, out=)
 
 
 @array_function_dispatch(_round_dispatcher)
@@ -3381,7 +3377,7 @@ def around(a, decimals=0, out=None):
     ceil, fix, floor, rint, trunc
 
     """
-    return _wrapfunc(a, 'round', decimals=decimals, out=out)
+    return _wrapfunc(a, 'round', decimals=, out=)
 
 
 def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None, *,
@@ -3506,10 +3502,9 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         except AttributeError:
             pass
         else:
-            return mean(axis=axis, dtype=dtype, out=out, **kwargs)
+            return mean(axis=, dtype=, out=, **kwargs)
 
-    return _methods._mean(a, axis=axis, dtype=dtype,
-                          out=out, **kwargs)
+    return _methods._mean(a, axis=, dtype=, out=, **kwargs)
 
 
 def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
@@ -3672,10 +3667,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         except AttributeError:
             pass
         else:
-            return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
+            return std(axis=, dtype=, out=, ddof=, **kwargs)
 
-    return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                         **kwargs)
+    return _methods._std(a, axis=, dtype=, out=, ddof=, **kwargs)
 
 
 def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
@@ -3839,10 +3833,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         except AttributeError:
             pass
         else:
-            return var(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
+            return var(axis=, dtype=, out=, ddof=, **kwargs)
 
-    return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                         **kwargs)
+    return _methods._var(a, axis=, dtype=, out=, ddof=, **kwargs)
 
 
 # Aliases of other functions. Provided unique docstrings

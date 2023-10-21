@@ -67,7 +67,7 @@ def mixed_types_structured():
             (5001, 4.4, "epsilon", -99),
             (6543, 7.8, "omega", -1)
         ],
-        dtype=dtype
+        dtype=
     )
     return data, dtype, expected
 
@@ -76,14 +76,14 @@ def mixed_types_structured():
 def test_structured_dtype_and_skiprows_no_empty_lines(
         skiprows, mixed_types_structured):
     data, dtype, expected = mixed_types_structured
-    a = np.loadtxt(data, dtype=dtype, delimiter=";", skiprows=skiprows)
+    a = np.loadtxt(data, dtype=, delimiter=";", skiprows=)
     assert_array_equal(a, expected[skiprows:])
 
 
 def test_unpack_structured(mixed_types_structured):
     data, dtype, expected = mixed_types_structured
 
-    a, b, c, d = np.loadtxt(data, dtype=dtype, delimiter=";", unpack=True)
+    a, b, c, d = np.loadtxt(data, dtype=, delimiter=";", unpack=True)
     assert_array_equal(a, expected["f0"])
     assert_array_equal(b, expected["f1"])
     assert_array_equal(c, expected["f2"])
@@ -93,15 +93,15 @@ def test_unpack_structured(mixed_types_structured):
 def test_structured_dtype_with_shape():
     dtype = np.dtype([("a", "u1", 2), ("b", "u1", 2)])
     data = StringIO("0,1,2,3\n6,7,8,9\n")
-    expected = np.array([((0, 1), (2, 3)), ((6, 7), (8, 9))], dtype=dtype)
-    assert_array_equal(np.loadtxt(data, delimiter=",", dtype=dtype), expected)
+    expected = np.array([((0, 1), (2, 3)), ((6, 7), (8, 9))], dtype=)
+    assert_array_equal(np.loadtxt(data, delimiter=",", dtype=), expected)
 
 
 def test_structured_dtype_with_multi_shape():
     dtype = np.dtype([("a", "u1", (2, 2))])
     data = StringIO("0 1 2 3\n")
-    expected = np.array([(((0, 1), (2, 3)),)], dtype=dtype)
-    assert_array_equal(np.loadtxt(data, dtype=dtype), expected)
+    expected = np.array([(((0, 1), (2, 3)),)], dtype=)
+    assert_array_equal(np.loadtxt(data, dtype=), expected)
 
 
 def test_nested_structured_subarray():
@@ -200,9 +200,9 @@ def test_blank_lines_normal_delimiter():
 @pytest.mark.parametrize("dtype", (float, object))
 def test_maxrows_no_blank_lines(dtype):
     txt = StringIO("1.5,2.5\n3.0,4.0\n5.5,6.0")
-    res = np.loadtxt(txt, dtype=dtype, delimiter=",", max_rows=2)
+    res = np.loadtxt(txt, dtype=, delimiter=",", max_rows=2)
     assert_equal(res.dtype, dtype)
-    assert_equal(res, np.array([["1.5", "2.5"], ["3.0", "4.0"]], dtype=dtype))
+    assert_equal(res, np.array([["1.5", "2.5"], ["3.0", "4.0"]], dtype=))
 
 
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
@@ -212,7 +212,7 @@ def test_exception_message_bad_values(dtype):
     txt = StringIO("1,2\n3,XXX\n5,6")
     msg = f"could not convert string 'XXX' to {dtype} at row 1, column 2"
     with pytest.raises(ValueError, match=msg):
-        np.loadtxt(txt, dtype=dtype, delimiter=",")
+        np.loadtxt(txt, dtype=, delimiter=",")
 
 
 def test_converters_negative_indices():
@@ -341,7 +341,7 @@ def test_huge_float(dtype):
     # Covers a non-optimized path that is rarely taken:
     field = "0" * 1000 + ".123456789"
     dtype = np.dtype(dtype)
-    value = np.loadtxt([field], dtype=dtype)[()]
+    value = np.loadtxt([field], dtype=)[()]
     assert value == dtype.type("0.123456789")
 
 
@@ -402,16 +402,16 @@ def test_bool():
 @pytest.mark.filterwarnings("error:.*integer via a float.*:DeprecationWarning")
 def test_integer_signs(dtype):
     dtype = np.dtype(dtype)
-    assert np.loadtxt(["+2"], dtype=dtype) == 2
+    assert np.loadtxt(["+2"], dtype=) == 2
     if dtype.kind == "u":
         with pytest.raises(ValueError):
-            np.loadtxt(["-1\n"], dtype=dtype)
+            np.loadtxt(["-1\n"], dtype=)
     else:
-        assert np.loadtxt(["-2\n"], dtype=dtype) == -2
+        assert np.loadtxt(["-2\n"], dtype=) == -2
 
     for sign in ["++", "+-", "--", "-+"]:
         with pytest.raises(ValueError):
-            np.loadtxt([f"{sign}2\n"], dtype=dtype)
+            np.loadtxt([f"{sign}2\n"], dtype=)
 
 
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
@@ -421,7 +421,7 @@ def test_integer_signs(dtype):
 def test_implicit_cast_float_to_int_fails(dtype):
     txt = StringIO("1.0, 2.1, 3.7\n4, 5, 6")
     with pytest.raises(ValueError):
-        np.loadtxt(txt, dtype=dtype, delimiter=",")
+        np.loadtxt(txt, dtype=, delimiter=",")
 
 @pytest.mark.parametrize("dtype", (np.complex64, np.complex128))
 @pytest.mark.parametrize("with_parens", (False, True))
@@ -430,10 +430,8 @@ def test_complex_parsing(dtype, with_parens):
     if not with_parens:
         s = s.replace("(", "").replace(")", "")
 
-    res = np.loadtxt(StringIO(s), dtype=dtype, delimiter=",")
-    expected = np.array(
-        [[1.0-2.5j, 3.75, 7-5j], [4.0, -1900j, 0]], dtype=dtype
-    )
+    res = np.loadtxt(StringIO(s), dtype=, delimiter=",")
+    expected = np.array([[1.0-2.5j, 3.75, 7-5j], [4.0, -1900j, 0]], dtype=)
     assert_equal(res, expected)
 
 
@@ -534,10 +532,10 @@ def test_quoted_field(q):
     )
     dtype = np.dtype([('f0', 'U8'), ('f1', np.float64)])
     expected = np.array(
-        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=dtype
+        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=
     )
 
-    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar=q)
+    res = np.loadtxt(txt, dtype=, delimiter=",", quotechar=q)
     assert_array_equal(res, expected)
 
 
@@ -548,10 +546,10 @@ def test_quoted_field_with_whitepace_delimiter(q):
     )
     dtype = np.dtype([('f0', 'U8'), ('f1', np.float64)])
     expected = np.array(
-        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=dtype
+        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=
     )
 
-    res = np.loadtxt(txt, dtype=dtype, delimiter=None, quotechar=q)
+    res = np.loadtxt(txt, dtype=, delimiter=None, quotechar=q)
     assert_array_equal(res, expected)
 
 
@@ -562,13 +560,13 @@ def test_quote_support_default():
 
     with pytest.raises(ValueError,
             match="the dtype passed requires 3 columns but 4 were"):
-        np.loadtxt(txt, dtype=dtype, delimiter=",")
+        np.loadtxt(txt, dtype=, delimiter=",")
 
     # Enable quoting support with non-None value for quotechar param
     txt.seek(0)
-    expected = np.array([("lat,long", 45., 30.)], dtype=dtype)
+    expected = np.array([("lat,long", 45., 30.)], dtype=)
 
-    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar='"')
+    res = np.loadtxt(txt, dtype=, delimiter=",", quotechar='"')
     assert_array_equal(res, expected)
 
 
@@ -620,9 +618,9 @@ def test_structured_dtype_with_quotes():
             (5001, 4.4, "epsilon", -99),
             (6543, 7.8, "omega", -1)
         ],
-        dtype=dtype
+        dtype=
     )
-    res = np.loadtxt(data, dtype=dtype, delimiter=";", quotechar="'")
+    res = np.loadtxt(data, dtype=, delimiter=";", quotechar="'")
     assert_array_equal(res, expected)
 
 
@@ -661,14 +659,14 @@ def test_warn_on_no_data(data, ndmin, usecols):
 
     txt = StringIO(data)
     with pytest.warns(UserWarning, match="input contained no data"):
-        res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
+        res = np.loadtxt(txt, ndmin=, usecols=)
     assert res.shape == expected_shape
 
     with NamedTemporaryFile(mode="w") as fh:
         fh.write(data)
         fh.seek(0)
         with pytest.warns(UserWarning, match="input contained no data"):
-            res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
+            res = np.loadtxt(txt, ndmin=, usecols=)
         assert res.shape == expected_shape
 
 @pytest.mark.parametrize("skiprows", (2, 3))
@@ -676,7 +674,7 @@ def test_warn_on_skipped_data(skiprows):
     data = "1 2 3\n4 5 6"
     txt = StringIO(data)
     with pytest.warns(UserWarning, match="input contained no data"):
-        np.loadtxt(txt, skiprows=skiprows)
+        np.loadtxt(txt, skiprows=)
 
 
 @pytest.mark.parametrize(["dtype", "value"], [
@@ -719,7 +717,7 @@ def test_unicode_whitespace_stripping(dtype):
     # Currently, skip float128 as it did not always support this and has no
     # "custom" parsing:
     txt = StringIO(' 3 ,"\u202F2\n"')
-    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar='"')
+    res = np.loadtxt(txt, dtype=, delimiter=",", quotechar='"')
     assert_array_equal(res, np.array([3, 2]).astype(dtype))
 
 
@@ -729,7 +727,7 @@ def test_unicode_whitespace_stripping_complex(dtype):
     # parentheses
     line = " 1 , 2+3j , ( 4+5j ), ( 6+-7j )  , 8j , ( 9j ) \n"
     data = [line, line.replace(" ", "\u202F")]
-    res = np.loadtxt(data, dtype=dtype, delimiter=',')
+    res = np.loadtxt(data, dtype=, delimiter=',')
     assert_array_equal(res, np.array([[1, 2+3j, 4+5j, 6-7j, 8j, 9j]] * 2))
 
 
@@ -740,7 +738,7 @@ def test_unicode_whitespace_stripping_complex(dtype):
         ["1 +2j", "1+ 2j", "1+2 j", "1+-+3", "(1j", "(1", "(1+2j", "1+2j)"])
 def test_bad_complex(dtype, field):
     with pytest.raises(ValueError):
-        np.loadtxt([field + "\n"], dtype=dtype, delimiter=",")
+        np.loadtxt([field + "\n"], dtype=, delimiter=",")
 
 
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
@@ -753,7 +751,7 @@ def test_nul_character_error(dtype):
     if dtype.lower() == "g":
         pytest.xfail("longdouble/clongdouble assignment may misbehave.")
     with pytest.raises(ValueError):
-        np.loadtxt(["1\000"], dtype=dtype, delimiter=",", quotechar='"')
+        np.loadtxt(["1\000"], dtype=, delimiter=",", quotechar='"')
 
 
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
@@ -771,7 +769,7 @@ def test_no_thousands_support(dtype):
 
     assert int("1_1") == float("1_1") == complex("1_1") == 11
     with pytest.raises(ValueError):
-        np.loadtxt(["1_1\n"], dtype=dtype)
+        np.loadtxt(["1_1\n"], dtype=)
 
 
 @pytest.mark.parametrize("data", [

@@ -219,8 +219,8 @@ class LogisticRegression(Benchmark):
         self.X_train = np.random.rand(self.size,features).astype(dtype)
         self.Y_train = np.random.choice(2,self.size).astype(dtype)
         # Initialize weights
-        self.W = np.zeros((features,1), dtype=dtype)
-        self.b = np.zeros((1,1), dtype=dtype)
+        self.W = np.zeros((features,1), dtype=)
+        self.b = np.zeros((1,1), dtype=)
         self.alpha = 0.1
 
     def time_train(self, dtype):

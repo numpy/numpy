@@ -265,7 +265,7 @@ class TestAverage:
                          [0, 1, 0, 0, 0]], dtype=bool)
         a = masked_array([[0, 1+2j, 3+4j, 5+6j, 7+8j],
                           [9j, 0+1j, 2+3j, 4+5j, 7+7j]],
-                         mask=mask)
+                         mask=)
 
         av = average(a)
         expected = np.average(a.compressed())
@@ -310,15 +310,15 @@ class TestAverage:
     )
     def test_basic_keepdims(self, x, axis, expected_avg,
                             weights, expected_wavg, expected_wsum):
-        avg = np.ma.average(x, axis=axis, keepdims=True)
+        avg = np.ma.average(x, axis=, keepdims=True)
         assert avg.shape == np.shape(expected_avg)
         assert_array_equal(avg, expected_avg)
 
-        wavg = np.ma.average(x, axis=axis, weights=weights, keepdims=True)
+        wavg = np.ma.average(x, axis=, weights=, keepdims=True)
         assert wavg.shape == np.shape(expected_wavg)
         assert_array_equal(wavg, expected_wavg)
 
-        wavg, wsum = np.ma.average(x, axis=axis, weights=weights,
+        wavg, wsum = np.ma.average(x, axis=, weights=,
                                    returned=True, keepdims=True)
         assert wavg.shape == np.shape(expected_wavg)
         assert_array_equal(wavg, expected_wavg)
@@ -658,7 +658,7 @@ class TestCompressFunctions:
                   mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
 
         with assert_warns(DeprecationWarning):
-            res = func(x, axis=axis)
+            res = func(x, axis=)
             assert_equal(res, mask_rowcols(x, rowcols_axis))
 
     def test_dot(self):
@@ -784,7 +784,7 @@ class TestCompressFunctions:
     def test_dot_out(self):
         a = array(np.eye(3))
         out = array(np.zeros((3, 3)))
-        res = dot(a, a, out=out)
+        res = dot(a, a, out=)
         assert_(res is out)
         assert_equal(a, res)
 
@@ -887,13 +887,13 @@ class TestMedian:
         msg = "mask = %s, ndim = %s, axis = %s, overwrite_input = %s"
         for ndmin in range(5):
             for mask in [False, True]:
-                x = array(1, ndmin=ndmin, mask=mask)
+                x = array(1, ndmin=, mask=)
 
                 # Valid axis values should not raise exception
                 args = itertools.product(range(-ndmin, ndmin), [False, True])
                 for axis, over in args:
                     try:
-                        np.ma.median(x, axis=axis, overwrite_input=over)
+                        np.ma.median(x, axis=, overwrite_input=over)
                     except Exception:
                         raise AssertionError(msg % (mask, ndmin, axis, over))
 
@@ -901,7 +901,7 @@ class TestMedian:
                 args = itertools.product([-(ndmin + 1), ndmin], [False, True])
                 for axis, over in args:
                     try:
-                        np.ma.median(x, axis=axis, overwrite_input=over)
+                        np.ma.median(x, axis=, overwrite_input=over)
                     except np.exceptions.AxisError:
                         pass
                     else:
@@ -1006,7 +1006,7 @@ class TestMedian:
             x = masked_array(np.arange(v))
             x[:3] = x[-3:] = masked
             out = masked_array(np.ones(()))
-            r = median(x, out=out)
+            r = median(x, out=)
             if v == 30:
                 assert_equal(out, 14.5)
             else:
@@ -1020,7 +1020,7 @@ class TestMedian:
             x = masked_array(np.arange(v).reshape(10, -1))
             x[:3] = x[-3:] = masked
             out = masked_array(np.ones(10))
-            r = median(x, axis=1, out=out)
+            r = median(x, axis=1, out=)
             if v == 30:
                 e = masked_array([0.]*3 + [10, 13, 16, 19] + [0.]*3,
                                  mask=[True] * 3 + [False] * 4 + [True] * 3)
@@ -1047,7 +1047,7 @@ class TestMedian:
         w = np.random.random((4, 200)) * np.array(mask.shape)[:, None]
         w = w.astype(np.intp)
         mask[tuple(w)] = np.nan
-        d = masked_array(np.ones(mask.shape), mask=mask)
+        d = masked_array(np.ones(mask.shape), mask=)
         if axis is None:
             shape_out = (1,) * d.ndim
         else:
@@ -1055,7 +1055,7 @@ class TestMedian:
             shape_out = tuple(
                 1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
         out = masked_array(np.empty(shape_out))
-        result = median(d, axis=axis, keepdims=True, out=out)
+        result = median(d, axis=, keepdims=True, out=)
         assert result is out
         assert_equal(result.shape, shape_out)
 
@@ -1440,7 +1440,7 @@ class TestPolynomial:
         xs = x[1:-1]
         ys = y[1:-1]
         ws = w[1:-1]
-        (C, R, K, S, D) = polyfit(x, y, 3, full=True, w=w)
+        (C, R, K, S, D) = polyfit(x, y, 3, full=True, w=)
         (c, r, k, s, d) = np.polyfit(xs, ys, 3, full=True, w=ws)
         assert_equal(w, wo)
         for (a, a_) in zip((C, R, K, S, D), (c, r, k, s, d)):
@@ -1617,7 +1617,7 @@ class TestArraySetOps:
         a = np.arange(24).reshape([2, 3, 4])
         mask = np.zeros([2, 3, 4])
         mask[1, 2, 0] = 1
-        a = array(a, mask=mask)
+        a = array(a, mask=)
         b = array(data=[0, 10, 20, 30,  1,  3, 11, 22, 33],
                   mask=[0,  1,  0,  1,  0,  1,  0,  1,  0])
         ec = zeros((2, 3, 4), dtype=bool)

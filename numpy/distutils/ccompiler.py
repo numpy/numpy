@@ -142,9 +142,9 @@ def CCompiler_spawn(self, cmd, display=None, env=None):
     log.info(display)
     try:
         if self.verbose:
-            subprocess.check_output(cmd, env=env)
+            subprocess.check_output(cmd, env=)
         else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=)
     except subprocess.CalledProcessError as exc:
         o = exc.output
         s = exc.returncode

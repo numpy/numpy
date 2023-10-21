@@ -73,7 +73,7 @@ def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     # Note: this is different from np.cross(), which allows dimension 2
     if x1.shape[axis] != 3:
         raise ValueError('cross() dimension must equal 3')
-    return Array._new(np.cross(x1._array, x2._array, axis=axis))
+    return Array._new(np.cross(x1._array, x2._array, axis=))
 
 def det(x: Array, /) -> Array:
     """
@@ -96,7 +96,7 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
     """
     # Note: diagonal always operates on the last two axes, whereas np.diagonal
     # operates on the first two axes by default
-    return Array._new(np.diagonal(x._array, offset=offset, axis1=-2, axis2=-1))
+    return Array._new(np.diagonal(x._array, offset=, axis1=-2, axis2=-1))
 
 
 def eigh(x: Array, /) -> EighResult:
@@ -174,7 +174,7 @@ def matrix_norm(x: Array, /, *, keepdims: bool = False, ord: Optional[Union[int,
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in matrix_norm')
 
-    return Array._new(np.linalg.norm(x._array, axis=(-2, -1), keepdims=keepdims, ord=ord))
+    return Array._new(np.linalg.norm(x._array, axis=(-2, -1), keepdims=, ord=))
 
 
 def matrix_power(x: Array, n: int, /) -> Array:
@@ -270,7 +270,7 @@ def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRRe
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.qr, which only returns a tuple.
-    return QRResult(*map(Array._new, np.linalg.qr(x._array, mode=mode)))
+    return QRResult(*map(Array._new, np.linalg.qr(x._array, mode=)))
 
 def slogdet(x: Array, /) -> SlogdetResult:
     """
@@ -320,7 +320,7 @@ def _solve(a, b):
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        r = gufunc(a, b, signature=signature, extobj=extobj)
+        r = gufunc(a, b, signature=, extobj=)
 
     return wrap(r.astype(result_t, copy=False))
 
@@ -350,7 +350,7 @@ def svd(x: Array, /, *, full_matrices: bool = True) -> SVDResult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.svd, which only returns a tuple.
-    return SVDResult(*map(Array._new, np.linalg.svd(x._array, full_matrices=full_matrices)))
+    return SVDResult(*map(Array._new, np.linalg.svd(x._array, full_matrices=)))
 
 # Note: svdvals is not in NumPy (but it is in SciPy). It is equivalent to
 # np.linalg.svd(compute_uv=False).
@@ -368,7 +368,7 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in tensordot')
 
-    return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
+    return Array._new(np.tensordot(x1._array, x2._array, axes=))
 
 # Note: trace is the numpy top-level namespace, not np.linalg
 def trace(x: Array, /, *, offset: int = 0, dtype: Optional[Dtype] = None) -> Array:
@@ -389,7 +389,7 @@ def trace(x: Array, /, *, offset: int = 0, dtype: Optional[Dtype] = None) -> Arr
             dtype = complex128
     # Note: trace always operates on the last two axes, whereas np.trace
     # operates on the first two axes by default
-    return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1, dtype=dtype)))
+    return Array._new(np.asarray(np.trace(x._array, offset=, axis1=-2, axis2=-1, dtype=)))
 
 # Note: vecdot is not in NumPy
 def vecdot(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
@@ -446,7 +446,7 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = No
     else:
         _axis = axis
 
-    res = Array._new(np.linalg.norm(a, axis=_axis, ord=ord))
+    res = Array._new(np.linalg.norm(a, axis=_axis, ord=))
 
     if keepdims:
         # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks

@@ -108,17 +108,17 @@ class MaskedRecords(MaskedArray):
                 copy=False,
                 **options):
 
-        self = recarray.__new__(cls, shape, dtype=dtype, buf=buf, offset=offset,
-                                strides=strides, formats=formats, names=names,
-                                titles=titles, byteorder=byteorder,
-                                aligned=aligned,)
+        self = recarray.__new__(cls, shape, dtype=, buf=, offset=,
+                                strides=, formats=, names=,
+                                titles=, byteorder=,
+                                aligned=,)
 
         mdtype = ma.make_mask_descr(self.dtype)
         if mask is nomask or not np.size(mask):
             if not keep_mask:
                 self._mask = tuple([False] * len(mdtype))
         else:
-            mask = np.array(mask, copy=copy)
+            mask = np.array(mask, copy=)
             if mask.shape != self.shape:
                 (nd, nm) = (self.size, mask.size)
                 if nm == 1:
@@ -155,7 +155,7 @@ class MaskedRecords(MaskedArray):
                                dtype=mdescr).view(recarray)
         # Update some of the attributes
         _dict = self.__dict__
-        _dict.update(_mask=_mask)
+        _dict.update(_mask=)
         self._update_from(obj)
         if _dict['_baseclass'] == ndarray:
             _dict['_baseclass'] = recarray
@@ -535,9 +535,9 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
     datalist = [getdata(x) for x in arraylist]
     masklist = [np.atleast_1d(getmaskarray(x)) for x in arraylist]
     _array = recfromarrays(datalist,
-                           dtype=dtype, shape=shape, formats=formats,
-                           names=names, titles=titles, aligned=aligned,
-                           byteorder=byteorder).view(mrecarray)
+                           dtype=, shape=, formats=,
+                           names=, titles=, aligned=,
+                           byteorder=).view(mrecarray)
     _array._mask.flat = list(zip(*masklist))
     if fill_value is not None:
         _array.fill_value = fill_value
@@ -588,9 +588,9 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         if dtype is None:
             dtype = reclist.dtype
         reclist = reclist.tolist()
-    mrec = recfromrecords(reclist, dtype=dtype, shape=shape, formats=formats,
-                          names=names, titles=titles,
-                          aligned=aligned, byteorder=byteorder).view(mrecarray)
+    mrec = recfromrecords(reclist, dtype=, shape=, formats=,
+                          names=, titles=,
+                          aligned=, byteorder=).view(mrecarray)
     # Set the fill_value if needed
     if fill_value is not None:
         mrec.fill_value = fill_value

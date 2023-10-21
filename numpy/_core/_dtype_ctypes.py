@@ -58,9 +58,9 @@ def _from_ctypes_structure(t):
             current_offset += ctypes.sizeof(ftyp)
 
         return np.dtype(dict(
-            formats=formats,
-            offsets=offsets,
-            names=names,
+            formats=,
+            offsets=,
+            names=,
             itemsize=ctypes.sizeof(t)))
     else:
         fields = []
@@ -94,9 +94,9 @@ def _from_ctypes_union(t):
         offsets.append(0)  # Union fields are offset to 0
 
     return np.dtype(dict(
-        formats=formats,
-        offsets=offsets,
-        names=names,
+        formats=,
+        offsets=,
+        names=,
         itemsize=ctypes.sizeof(t)))
 
 

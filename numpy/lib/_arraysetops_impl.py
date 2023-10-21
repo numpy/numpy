@@ -271,7 +271,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-                        equal_nan=equal_nan)
+                        equal_nan=)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -285,7 +285,7 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [('f{i}'.format(i=), ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
     # data type with `m` fields where each field has the data type of `ar`.
@@ -300,7 +300,7 @@ def unique(ar, return_index=False, return_inverse=False,
             # fail.  Instead, we'll use `np.empty` to explicitly create the
             # array with shape `(len(ar),)`.  Because `dtype` in this case has
             # itemsize 0, the total size of the result is still 0 bytes.
-            consolidated = np.empty(len(ar), dtype=dtype)
+            consolidated = np.empty(len(ar), dtype=)
     except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
@@ -314,7 +314,7 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nan=equal_nan)
+                       return_inverse, return_counts, equal_nan=)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
@@ -614,7 +614,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         stacklevel=2
     )
 
-    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)
+    return _in1d(ar1, ar2, assume_unique, invert, kind=)
 
 
 def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
@@ -886,8 +886,8 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
            [ True, False]])
     """
     element = np.asarray(element)
-    return _in1d(element, test_elements, assume_unique=assume_unique,
-                 invert=invert, kind=kind).reshape(element.shape)
+    return _in1d(element, test_elements, assume_unique=,
+                 invert=, kind=).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):

@@ -46,12 +46,12 @@ class TestFFT1D:
     def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
         assert_allclose(
-            x, np.fft.ifft(np.fft.fft(x, norm=norm), norm=norm),
+            x, np.fft.ifft(np.fft.fft(x, norm=), norm=),
             atol=1e-6)
         # Ensure we get the correct error message
         with pytest.raises(ValueError,
                            match='Invalid number of FFT data points'):
-            np.fft.ifft([], norm=norm)
+            np.fft.ifft([], norm=)
 
     def test_fft2(self):
         x = random((30, 20)) + 1j*random((30, 20))
@@ -104,17 +104,17 @@ class TestFFT1D:
         for n in [x.size, 2*x.size]:
             for norm in [None, 'backward', 'ortho', 'forward']:
                 assert_allclose(
-                    np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
-                    np.fft.rfft(x, n=n, norm=norm), atol=1e-6)
+                    np.fft.fft(x, n=, norm=)[:(n//2 + 1)],
+                    np.fft.rfft(x, n=, norm=), atol=1e-6)
             assert_allclose(
-                np.fft.rfft(x, n=n),
-                np.fft.rfft(x, n=n, norm="backward"), atol=1e-6)
+                np.fft.rfft(x, n=),
+                np.fft.rfft(x, n=, norm="backward"), atol=1e-6)
             assert_allclose(
-                np.fft.rfft(x, n=n) / np.sqrt(n),
-                np.fft.rfft(x, n=n, norm="ortho"), atol=1e-6)
+                np.fft.rfft(x, n=) / np.sqrt(n),
+                np.fft.rfft(x, n=, norm="ortho"), atol=1e-6)
             assert_allclose(
-                np.fft.rfft(x, n=n) / n,
-                np.fft.rfft(x, n=n, norm="forward"), atol=1e-6)
+                np.fft.rfft(x, n=) / n,
+                np.fft.rfft(x, n=, norm="forward"), atol=1e-6)
 
     def test_irfft(self):
         x = random(30)
@@ -214,8 +214,8 @@ class TestFFT1D:
         for forw, back in func_pairs:
             for n in [x.size, 2*x.size]:
                 for norm in [None, 'backward', 'ortho', 'forward']:
-                    tmp = forw(x, n=n, norm=norm)
-                    tmp = back(tmp, n=n, norm=norm)
+                    tmp = forw(x, n=, norm=)
+                    tmp = back(tmp, n=, norm=)
                     assert_allclose(x_norm,
                                     np.linalg.norm(tmp), atol=1e-6)
 
@@ -253,8 +253,8 @@ def test_fft_with_order(dtype, order, fft):
 
     if fft.__name__.endswith('fft'):
         for axis in range(3):
-            X_res = fft(X, axis=axis)
-            Y_res = fft(Y, axis=axis)
+            X_res = fft(X, axis=)
+            Y_res = fft(Y, axis=)
             assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     elif fft.__name__.endswith(('fft2', 'fftn')):
         axes = [(0, 1), (1, 2), (0, 2)]

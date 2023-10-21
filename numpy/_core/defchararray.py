@@ -2085,13 +2085,12 @@ class chararray(ndarray):
 
         _globalvar = 1
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
-                                   order=order)
+            self = ndarray.__new__(subtype, shape, (dtype, itemsize), order=)
         else:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
-                                   buffer=buffer,
-                                   offset=offset, strides=strides,
-                                   order=order)
+                                   buffer=,
+                                   offset=, strides=,
+                                   order=)
         if filler is not None:
             self[...] = filler
         _globalvar = 0
@@ -2816,8 +2815,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             itemsize = len(obj)
         shape = len(obj) // itemsize
 
-        return chararray(shape, itemsize=itemsize, unicode=unicode,
-                         buffer=obj, order=order)
+        return chararray(shape, itemsize=, unicode=, buffer=obj, order=)
 
     if isinstance(obj, (list, tuple)):
         obj = numpy.asarray(obj)
@@ -2848,7 +2846,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             dtype = bytes_
 
         if order is not None:
-            obj = numpy.asarray(obj, order=order)
+            obj = numpy.asarray(obj, order=)
         if (copy or
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, str_)) or
@@ -2870,9 +2868,9 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         dtype = bytes_
 
     if itemsize is None:
-        val = narray(obj, dtype=dtype, order=order, subok=True)
+        val = narray(obj, dtype=, order=, subok=True)
     else:
-        val = narray(obj, dtype=(dtype, itemsize), order=order, subok=True)
+        val = narray(obj, dtype=(dtype, itemsize), order=, subok=True)
     return val.view(chararray)
 
 
@@ -2926,5 +2924,4 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         will be in Fortran-contiguous order (first-index varies the
         fastest).
     """
-    return array(obj, itemsize, copy=False,
-                 unicode=unicode, order=order)
+    return array(obj, itemsize, copy=False, unicode=, order=)

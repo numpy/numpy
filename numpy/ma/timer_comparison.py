@@ -74,7 +74,7 @@ class ModuleTester:
                 msg = build_err_msg([x, y],
                                     err_msg
                                     + f'\n(shapes {x.shape}, {y.shape} mismatch)',
-                                    header=header,
+                                    header=,
                                     names=('x', 'y'))
                 assert cond, msg
             val = comparison(x, y)
@@ -92,11 +92,11 @@ class ModuleTester:
                 msg = build_err_msg([x, y],
                                     err_msg
                                     + '\n(mismatch %s%%)' % (match,),
-                                    header=header,
+                                    header=,
                                     names=('x', 'y'))
                 assert cond, msg
         except ValueError as e:
-            msg = build_err_msg([x, y], err_msg, header=header, names=('x', 'y'))
+            msg = build_err_msg([x, y], err_msg, header=, names=('x', 'y'))
             raise ValueError(msg) from e
 
     def assert_array_equal(self, x, y, err_msg=''):
@@ -104,7 +104,7 @@ class ModuleTester:
         Checks the elementwise equality of two masked arrays.
 
         """
-        self.assert_array_compare(self.equal, x, y, err_msg=err_msg,
+        self.assert_array_compare(self.equal, x, y, err_msg=,
                                   header='Arrays are not equal')
 
     @np.errstate(all='ignore')

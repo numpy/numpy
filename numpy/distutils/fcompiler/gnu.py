@@ -504,7 +504,7 @@ class Gnu95FCompiler(GnuFCompiler):
                     [archive],
                     output_dir,
                     extra_dll_dir,
-                    chained_dlls=chained_dlls,
+                    chained_dlls=,
                     is_archive=True)
                 chained_libs.insert(0, lib)
                 chained_dlls.insert(0, dll)
@@ -516,7 +516,7 @@ class Gnu95FCompiler(GnuFCompiler):
                 plain_objects,
                 output_dir,
                 extra_dll_dir,
-                chained_dlls=chained_dlls,
+                chained_dlls=,
                 is_archive=False)
             return [lib] + chained_libs
         else:

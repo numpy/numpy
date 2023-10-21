@@ -392,7 +392,7 @@ def solve(a, b):
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        r = gufunc(a, b, signature=signature)
+        r = gufunc(a, b, signature=)
 
     return wrap(r.astype(result_t, copy=False))
 
@@ -590,7 +590,7 @@ def inv(a):
     signature = 'D->D' if isComplexType(t) else 'd->d'
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        ainv = _umath_linalg.inv(a, signature=signature)
+        ainv = _umath_linalg.inv(a, signature=)
     return wrap(ainv.astype(result_t, copy=False))
 
 
@@ -809,7 +809,7 @@ def cholesky(a):
     signature = 'D->D' if isComplexType(t) else 'd->d'
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        r = gufunc(a, signature=signature)
+        r = gufunc(a, signature=)
     return wrap(r.astype(result_t, copy=False))
 
 
@@ -983,7 +983,7 @@ def qr(a, mode='reduced'):
     signature = 'D->D' if isComplexType(t) else 'd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        tau = gufunc(a, signature=signature)
+        tau = gufunc(a, signature=)
 
     # handle modes that don't return q
     if mode == 'r':
@@ -1015,7 +1015,7 @@ def qr(a, mode='reduced'):
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        q = gufunc(a, tau, signature=signature)
+        q = gufunc(a, tau, signature=)
     r = triu(a[..., :mc, :])
 
     q = q.astype(result_t, copy=False)
@@ -1108,7 +1108,7 @@ def eigvals(a):
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
-        w = _umath_linalg.eigvals(a, signature=signature)
+        w = _umath_linalg.eigvals(a, signature=)
 
     if not isComplexType(t):
         if all(w.imag == 0):
@@ -1216,7 +1216,7 @@ def eigvalsh(a, UPLO='L'):
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
-        w = gufunc(a, signature=signature)
+        w = gufunc(a, signature=)
     return w.astype(_realType(result_t), copy=False)
 
 def _convertarray(a):
@@ -1371,7 +1371,7 @@ def eig(a):
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
-        w, vt = _umath_linalg.eig(a, signature=signature)
+        w, vt = _umath_linalg.eig(a, signature=)
 
     if not isComplexType(t) and all(w.imag == 0.0):
         w = w.real
@@ -1526,7 +1526,7 @@ def eigh(a, UPLO='L'):
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
-        w, vt = gufunc(a, signature=signature)
+        w, vt = gufunc(a, signature=)
     w = w.astype(_realType(result_t), copy=False)
     vt = vt.astype(result_t, copy=False)
     return EighResult(w, wrap(vt))
@@ -1721,7 +1721,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
-            u, s, vh = gufunc(a, signature=signature)
+            u, s, vh = gufunc(a, signature=)
         u = u.astype(result_t, copy=False)
         s = s.astype(_realType(result_t), copy=False)
         vh = vh.astype(result_t, copy=False)
@@ -1736,7 +1736,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
-            s = gufunc(a, signature=signature)
+            s = gufunc(a, signature=)
         s = s.astype(_realType(result_t), copy=False)
         return s
 
@@ -1844,7 +1844,7 @@ def cond(x, p=None):
         t, result_t = _commonType(x)
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
-            invx = _umath_linalg.inv(x, signature=signature)
+            invx = _umath_linalg.inv(x, signature=)
             r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
 
@@ -1966,7 +1966,7 @@ def matrix_rank(A, tol=None, hermitian=False):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
-    S = svd(A, compute_uv=False, hermitian=hermitian)
+    S = svd(A, compute_uv=False, hermitian=)
     if tol is None:
         tol = (
             S.max(axis=-1, keepdims=True) * 
@@ -2070,7 +2070,7 @@ def pinv(a, rcond=1e-15, hermitian=False):
         res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
         return wrap(res)
     a = a.conjugate()
-    u, s, vt = svd(a, full_matrices=False, hermitian=hermitian)
+    u, s, vt = svd(a, full_matrices=False, hermitian=)
 
     # discard small singular values
     cutoff = rcond[..., newaxis] * amax(s, axis=-1, keepdims=True)
@@ -2169,7 +2169,7 @@ def slogdet(a):
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
-    sign, logdet = _umath_linalg.slogdet(a, signature=signature)
+    sign, logdet = _umath_linalg.slogdet(a, signature=)
     sign = sign.astype(result_t, copy=False)
     logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
@@ -2229,7 +2229,7 @@ def det(a):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
-    r = _umath_linalg.det(a, signature=signature)
+    r = _umath_linalg.det(a, signature=)
     r = r.astype(result_t, copy=False)
     return r
 
@@ -2378,7 +2378,7 @@ def lstsq(a, b, rcond="warn"):
 
     with errstate(call=_raise_linalgerror_lstsq, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
-        x, resids, rank, s = gufunc(a, b, rcond, signature=signature)
+        x, resids, rank, s = gufunc(a, b, rcond, signature=)
     if m == 0:
         x[...] = 0
     if n_rhs == 0:
@@ -2627,23 +2627,23 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if len(axis) == 1:
         if ord == inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
+            return abs(x).max(axis=, keepdims=)
         elif ord == -inf:
-            return abs(x).min(axis=axis, keepdims=keepdims)
+            return abs(x).min(axis=, keepdims=)
         elif ord == 0:
             # Zero norm
             return (
                 (x != 0)
                 .astype(x.real.dtype)
-                .sum(axis=axis, keepdims=keepdims)
+                .sum(axis=, keepdims=)
             )
         elif ord == 1:
             # special case for speedup
-            return add.reduce(abs(x), axis=axis, keepdims=keepdims)
+            return add.reduce(abs(x), axis=, keepdims=)
         elif ord is None or ord == 2:
             # special case for speedup
             s = (x.conj() * x).real
-            return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            return sqrt(add.reduce(s, axis=, keepdims=))
         # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
@@ -2651,7 +2651,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         else:
             absx = abs(x)
             absx **= ord
-            ret = add.reduce(absx, axis=axis, keepdims=keepdims)
+            ret = add.reduce(absx, axis=, keepdims=)
             ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
     elif len(axis) == 2:
@@ -2681,7 +2681,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
-            ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+            ret = sqrt(add.reduce((x.conj() * x).real, axis=))
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum)
         else:
@@ -2794,7 +2794,7 @@ def multi_dot(arrays, *, out=None):
     if n < 2:
         raise ValueError("Expecting at least two arrays.")
     elif n == 2:
-        return dot(arrays[0], arrays[1], out=out)
+        return dot(arrays[0], arrays[1], out=)
 
     arrays = [asanyarray(a) for a in arrays]
 
@@ -2810,10 +2810,10 @@ def multi_dot(arrays, *, out=None):
 
     # _multi_dot_three is much faster than _multi_dot_matrix_chain_order
     if n == 3:
-        result = _multi_dot_three(arrays[0], arrays[1], arrays[2], out=out)
+        result = _multi_dot_three(arrays[0], arrays[1], arrays[2], out=)
     else:
         order = _multi_dot_matrix_chain_order(arrays)
-        result = _multi_dot(arrays, order, 0, n - 1, out=out)
+        result = _multi_dot(arrays, order, 0, n - 1, out=)
 
     # return proper shape
     if ndim_first == 1 and ndim_last == 1:
@@ -2840,9 +2840,9 @@ def _multi_dot_three(A, B, C, out=None):
     cost2 = a1b0 * c1 * (a0 + b1c0)
 
     if cost1 < cost2:
-        return dot(dot(A, B), C, out=out)
+        return dot(dot(A, B), C, out=)
     else:
-        return dot(A, dot(B, C), out=out)
+        return dot(A, dot(B, C), out=)
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
@@ -2896,7 +2896,7 @@ def _multi_dot(arrays, order, i, j, out=None):
     else:
         return dot(_multi_dot(arrays, order, i, order[i, j]),
                    _multi_dot(arrays, order, order[i, j] + 1, j),
-                   out=out)
+                   out=)
 
 
 # diagonal
@@ -2991,4 +2991,4 @@ def trace(x, /, *, offset=0, dtype=None):
     --------
     numpy.trace
     """
-    return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=dtype)
+    return _core_trace(x, offset, axis1=-2, axis2=-1, dtype=)

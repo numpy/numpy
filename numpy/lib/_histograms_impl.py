@@ -150,7 +150,7 @@ def _hist_bin_stone(x, range):
 
     def jhat(nbins):
         hh = ptp_x / nbins
-        p_k = np.histogram(x, bins=nbins, range=range)[0] / n
+        p_k = np.histogram(x, bins=nbins, range=)[0] / n
         return (2 - (n + 1) * p_k.dot(p_k)) / hh
 
     nbins_upper_bound = max(100, int(np.sqrt(n)))

@@ -107,7 +107,7 @@ class Array:
             mid = str(self.shape)
         else:
             prefix = "Array("
-            mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
+            mid = np.array2string(self._array, separator=', ', prefix=, suffix=)
         return prefix + mid + suffix
 
     # This function is not required by the spec, but we implement it here for
@@ -119,7 +119,7 @@ class Array:
         will be present in other implementations.
 
         """
-        return np.asarray(self._array, dtype=dtype)
+        return np.asarray(self._array, dtype=)
 
     # These are various helper functions to make the array behavior match the
     # spec in places where it either deviates from or is more strict than
@@ -483,7 +483,7 @@ class Array:
         """
         Performs the operation __dlpack__.
         """
-        return self._array.__dlpack__(stream=stream)
+        return self._array.__dlpack__(stream=)
 
     def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
         """

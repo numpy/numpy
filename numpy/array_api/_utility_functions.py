@@ -19,7 +19,7 @@ def all(
 
     See its docstring for more information.
     """
-    return Array._new(np.asarray(np.all(x._array, axis=axis, keepdims=keepdims)))
+    return Array._new(np.asarray(np.all(x._array, axis=, keepdims=)))
 
 
 def any(
@@ -34,4 +34,4 @@ def any(
 
     See its docstring for more information.
     """
-    return Array._new(np.asarray(np.any(x._array, axis=axis, keepdims=keepdims)))
+    return Array._new(np.asarray(np.any(x._array, axis=, keepdims=)))

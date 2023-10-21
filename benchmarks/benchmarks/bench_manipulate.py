@@ -76,7 +76,7 @@ class DimsManipulations(Benchmark):
     timeout = 10
 
     def setup(self, shape):
-        self.xarg = np.ones(shape=shape)
+        self.xarg = np.ones(shape=)
         self.reshaped = deque(shape)
         self.reshaped.rotate(1)
         self.reshaped = tuple(self.reshaped)

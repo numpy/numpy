@@ -40,9 +40,9 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
 
 for order_set, func in order_list:
     for order in order_set:
-        func(order=order)
+        func(order=)
 
     invalid_orders = KACF - order_set
     for order in invalid_orders:
         with pytest.raises(ValueError):
-            func(order=order)
+            func(order=)

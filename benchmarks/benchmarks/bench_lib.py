@@ -164,10 +164,8 @@ class Isin(Benchmark):
     ]
 
     def setup(self, size, highest_element):
-        self.array = np.random.randint(
-                low=0, high=highest_element, size=size)
-        self.in_array = np.random.randint(
-                low=0, high=highest_element, size=size)
+        self.array = np.random.randint(low=0, high=highest_element, size=)
+        self.in_array = np.random.randint(low=0, high=highest_element, size=)
 
     def time_isin(self, size, highest_element):
         np.isin(self.array, self.in_array)

@@ -1422,7 +1422,7 @@ class poly1d:
         polyint : equivalent function
 
         """
-        return poly1d(polyint(self.coeffs, m=m, k=k))
+        return poly1d(polyint(self.coeffs, m=, k=))
 
     def deriv(self, m=1):
         """
@@ -1435,7 +1435,7 @@ class poly1d:
         polyder : equivalent function
 
         """
-        return poly1d(polyder(self.coeffs, m=m))
+        return poly1d(polyder(self.coeffs, m=))
 
 # Stuff to do on module import
 

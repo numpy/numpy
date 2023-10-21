@@ -95,15 +95,10 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     """
     if like is not None:
-        return _require_with_like(
-            like,
-            a,
-            dtype=dtype,
-            requirements=requirements,
-        )
+        return _require_with_like(like, a, dtype=, requirements=)
 
     if not requirements:
-        return asanyarray(a, dtype=dtype)
+        return asanyarray(a, dtype=)
 
     requirements = {POSSIBLE_FLAGS[x.upper()] for x in requirements}
 
@@ -123,7 +118,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
         order = 'C'
         requirements.remove('C')
 
-    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
+    arr = array(a, dtype=, order=, copy=False, subok=)
 
     for prop in requirements:
         if not arr.flags[prop]:

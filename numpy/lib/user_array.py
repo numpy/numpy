@@ -28,7 +28,7 @@ class container:
 
     """
     def __init__(self, data, dtype=None, copy=True):
-        self.array = array(data, dtype, copy=copy)
+        self.array = array(data, dtype, copy=)
 
     def __repr__(self):
         if self.ndim > 0:

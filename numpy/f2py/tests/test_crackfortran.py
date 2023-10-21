@@ -203,11 +203,7 @@ class TestDimSpec(util.F2PyTest):
     code = ""
     for count, dimspec in enumerate(all_dimspecs):
         lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
-        code += code_template.format(
-            count=count,
-            dimspec=dimspec,
-            first=", ".join(lst),
-        )
+        code += code_template.format(count=, dimspec=, first=", ".join(lst))
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
     def test_array_size(self, dimspec):
@@ -267,7 +263,7 @@ class TestFortranReader(util.F2PyTest):
     def test_input_encoding(self, tmp_path, encoding):
         # gh-635
         f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
-        with f_path.open('w', encoding=encoding) as ff:
+        with f_path.open('w', encoding=) as ff:
             ff.write("""
                      subroutine foo()
                      end subroutine foo

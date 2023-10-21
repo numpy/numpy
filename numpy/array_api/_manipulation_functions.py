@@ -20,7 +20,7 @@ def concat(
     # (no for scalars with axis=None, no cross-kind casting)
     dtype = result_type(*arrays)
     arrays = tuple(a._array for a in arrays)
-    return Array._new(np.concatenate(arrays, axis=axis, dtype=dtype))
+    return Array._new(np.concatenate(arrays, axis=, dtype=))
 
 
 def expand_dims(x: Array, /, *, axis: int) -> Array:
@@ -38,7 +38,7 @@ def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
 
     See its docstring for more information.
     """
-    return Array._new(np.flip(x._array, axis=axis))
+    return Array._new(np.flip(x._array, axis=))
 
 
 # Note: The function name is different here (see also matrix_transpose).
@@ -88,7 +88,7 @@ def roll(
 
     See its docstring for more information.
     """
-    return Array._new(np.roll(x._array, shift, axis=axis))
+    return Array._new(np.roll(x._array, shift, axis=))
 
 
 def squeeze(x: Array, /, axis: Union[int, Tuple[int, ...]]) -> Array:
@@ -97,7 +97,7 @@ def squeeze(x: Array, /, axis: Union[int, Tuple[int, ...]]) -> Array:
 
     See its docstring for more information.
     """
-    return Array._new(np.squeeze(x._array, axis=axis))
+    return Array._new(np.squeeze(x._array, axis=))
 
 
 def stack(arrays: Union[Tuple[Array, ...], List[Array]], /, *, axis: int = 0) -> Array:
@@ -109,4 +109,4 @@ def stack(arrays: Union[Tuple[Array, ...], List[Array]], /, *, axis: int = 0) ->
     # Call result type here just to raise on disallowed type combinations
     result_type(*arrays)
     arrays = tuple(a._array for a in arrays)
-    return Array._new(np.stack(arrays, axis=axis))
+    return Array._new(np.stack(arrays, axis=))

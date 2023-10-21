@@ -249,7 +249,7 @@ class FCompiler(CCompiler):
         def fget(self):
             assert self._is_customised
             return self.executables[key]
-        return property(fget=fget)
+        return property(fget=)
     version_cmd = _command_property('version_cmd')
     compiler_f77 = _command_property('compiler_f77')
     compiler_f90 = _command_property('compiler_f90')
@@ -350,14 +350,14 @@ class FCompiler(CCompiler):
             else:
                 raise CompilerNotFound('%s: f90 nor f77' % ctype)
         else:
-            f77 = set_exe('compiler_f77', f90=f90)
+            f77 = set_exe('compiler_f77', f90=)
             if not f77:
                 log.warn('%s: no Fortran 77 compiler found' % ctype)
-            set_exe('compiler_fix', f90=f90)
+            set_exe('compiler_fix', f90=)
 
-        set_exe('linker_so', f77=f77, f90=f90)
-        set_exe('linker_exe', f77=f77, f90=f90)
-        set_exe('version_cmd', f77=f77, f90=f90)
+        set_exe('linker_so', f77=, f90=)
+        set_exe('linker_exe', f77=, f90=)
+        set_exe('version_cmd', f77=, f90=)
         set_exe('archiver')
         set_exe('ranlib')
 
@@ -426,7 +426,7 @@ class FCompiler(CCompiler):
 
     def get_version(self, force=False, ok_status=[0]):
         assert self._is_customised
-        version = CCompiler.get_version(self, force=force, ok_status=ok_status)
+        version = CCompiler.get_version(self, force=, ok_status=)
         if version is None:
             raise CompilerNotFound()
         return version
@@ -619,7 +619,7 @@ class FCompiler(CCompiler):
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
         try:
-            self.spawn(command, display=display)
+            self.spawn(command, display=)
         except DistutilsExecError as e:
             msg = str(e)
             raise CompileError(msg) from None
@@ -810,7 +810,7 @@ def _find_existing_fcompiler(compiler_types,
         v = None
         try:
             c = new_fcompiler(plat=platform, compiler=compiler_type,
-                              c_compiler=c_compiler)
+                              c_compiler=)
             c.customize(dist)
             v = c.get_version()
             if requiref90 and c.compiler_f90 is None:
@@ -821,7 +821,7 @@ def _find_existing_fcompiler(compiler_types,
                              'compiler for f90 support.' % (compiler_type,
                                                             new_compiler))
                     c = new_fcompiler(plat=platform, compiler=new_compiler,
-                                      c_compiler=c_compiler)
+                                      c_compiler=)
                     c.customize(dist)
                     v = c.get_version()
                     if v is not None:
@@ -861,10 +861,10 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False,
     log.info("get_default_fcompiler: matching types: '%s'",
              matching_compiler_types)
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
-                                              osname=osname,
-                                              platform=platform,
-                                              requiref90=requiref90,
-                                              c_compiler=c_compiler)
+                                              osname=,
+                                              platform=,
+                                              requiref90=,
+                                              c_compiler=)
     return compiler_type
 
 # Flag to avoid rechecking for Fortran compiler every time
@@ -889,8 +889,7 @@ def new_fcompiler(plat=None,
     if plat is None:
         plat = os.name
     if compiler is None:
-        compiler = get_default_fcompiler(plat, requiref90=requiref90,
-                                         c_compiler=c_compiler)
+        compiler = get_default_fcompiler(plat, requiref90=, c_compiler=)
     if compiler in fcompiler_class:
         module_name, klass, long_description = fcompiler_class[compiler]
     elif compiler in fcompiler_aliases:
@@ -905,7 +904,7 @@ def new_fcompiler(plat=None,
         failed_fcompilers.add(fcompiler_key)
         return None
 
-    compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
+    compiler = klass(verbose=, dry_run=, force=)
     compiler.c_compiler = c_compiler
     return compiler
 
@@ -936,7 +935,7 @@ def show_fcompilers(dist=None):
         v = None
         log.set_verbosity(-2)
         try:
-            c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
+            c = new_fcompiler(compiler=, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
         except (DistutilsModuleError, CompilerNotFound) as e:

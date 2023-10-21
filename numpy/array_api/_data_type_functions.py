@@ -27,7 +27,7 @@ import numpy as np
 def astype(x: Array, dtype: Dtype, /, *, copy: bool = True) -> Array:
     if not copy and dtype == x.dtype:
         return x
-    return Array._new(x._array.astype(dtype=dtype, copy=copy))
+    return Array._new(x._array.astype(dtype=, copy=))
 
 
 def broadcast_arrays(*arrays: Array) -> List[Array]:

@@ -195,7 +195,7 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
 
             if isinstance(a, ndarray):
                 # precision argument is only needed if the objects are ndarrays
-                r_func = partial(array_repr, precision=precision)
+                r_func = partial(array_repr, precision=)
             else:
                 r_func = repr
 
@@ -329,9 +329,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
     from numpy._core import ndarray, isscalar, signbit
     from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
-        return assert_array_equal(actual, desired, err_msg, verbose,
-                                  strict=strict)
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
+        return assert_array_equal(actual, desired, err_msg, verbose, strict=)
+    msg = build_err_msg([actual, desired], err_msg, verbose=)
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -545,8 +544,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
 
     def _build_err_msg():
         header = ('Arrays are not almost equal to %d decimals' % decimal)
-        return build_err_msg([actual, desired], err_msg, verbose=verbose,
-                             header=header)
+        return build_err_msg([actual, desired], err_msg, verbose=, header=)
 
     if usecomplex:
         if iscomplexobj(actual):
@@ -562,8 +560,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
             desiredr = desired
             desiredi = 0
         try:
-            assert_almost_equal(actualr, desiredr, decimal=decimal)
-            assert_almost_equal(actuali, desiredi, decimal=decimal)
+            assert_almost_equal(actualr, desiredr, decimal=)
+            assert_almost_equal(actuali, desiredi, decimal=)
         except AssertionError:
             raise AssertionError(_build_err_msg())
 
@@ -670,7 +668,7 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
     msg = build_err_msg(
         [actual, desired], err_msg,
         header='Items are not equal to %d significant digits:' % significant,
-        verbose=verbose)
+        verbose=)
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
@@ -735,9 +733,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
-                % (hasval), verbose=verbose, header=header,
-                names=names,
-                precision=precision)
+                % (hasval), verbose=, header=,
+                names=,
+                precision=)
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
@@ -761,9 +759,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             msg = build_err_msg([x, y],
                                 err_msg
                                 + reason,
-                                verbose=verbose, header=header,
-                                names=names,
-                                precision=precision)
+                                verbose=, header=,
+                                names=,
+                                precision=)
             raise AssertionError(msg)
 
         flagged = bool_(False)
@@ -860,17 +858,17 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
-                                verbose=verbose, header=header,
-                                names=names,
-                                precision=precision)
+                                verbose=, header=,
+                                names=,
+                                precision=)
             raise AssertionError(msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
         header = f'error during assertion:\n\n{efmt}\n\n{header}'
 
-        msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
-                            names=names, precision=precision)
+        msg = build_err_msg([x, y], err_msg, verbose=, header=,
+                            names=, precision=)
         raise ValueError(msg)
 
 
@@ -996,9 +994,9 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
      DESIRED: array([2., 2., 2.], dtype=float32)
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
-                         verbose=verbose, header='Arrays are not equal',
-                         strict=strict)
+    assert_array_compare(operator.__eq__, x, y, err_msg=,
+                         verbose=, header='Arrays are not equal',
+                         strict=)
 
 
 @np._no_nep50_warning()
@@ -1110,7 +1108,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
         return z < 1.5 * 10.0**(-decimal)
 
-    assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(compare, x, y, err_msg=, verbose=,
              header=('Arrays are not almost equal to %d decimals' % decimal),
              precision=decimal)
 
@@ -1222,11 +1220,11 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
      y: array([5, 5])
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    assert_array_compare(operator.__lt__, x, y, err_msg=err_msg,
-                         verbose=verbose,
+    assert_array_compare(operator.__lt__, x, y, err_msg=,
+                         verbose=,
                          header='Arrays are not strictly ordered `x < y`',
                          equal_inf=False,
-                         strict=strict,
+                         strict=,
                          names=('x', 'y'))
 
 
@@ -1345,7 +1343,7 @@ def rundocs(filename=None, raise_on_error=True):
         out = None
 
     for test in tests:
-        runner.run(test, out=out)
+        runner.run(test, out=)
 
     if runner.failures > 0 and raise_on_error:
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
@@ -1651,14 +1649,13 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     import numpy as np
 
     def compare(x, y):
-        return np._core.numeric.isclose(x, y, rtol=rtol, atol=atol,
-                                       equal_nan=equal_nan)
+        return np._core.numeric.isclose(x, y, rtol=, atol=, equal_nan=)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
-                         verbose=verbose, header=header, equal_nan=equal_nan,
-                         strict=strict)
+                         verbose=, header=, equal_nan=,
+                         strict=)
 
 
 def assert_array_almost_equal_nulp(x, y, nulp=1):
@@ -1810,8 +1807,8 @@ def nulp_diff(x, y, dtype=None):
     """
     import numpy as np
     if dtype:
-        x = np.asarray(x, dtype=dtype)
-        y = np.asarray(y, dtype=dtype)
+        x = np.asarray(x, dtype=)
+        y = np.asarray(y, dtype=)
     else:
         x = np.asarray(x)
         y = np.asarray(y)
@@ -2010,8 +2007,8 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
     for o in range(3):
         for s in range(o + 2, max(o + 3, max_size)):
             if type == 'unary':
-                inp = lambda: arange(s, dtype=dtype)[o:]
-                out = empty((s,), dtype=dtype)[o:]
+                inp = lambda: arange(s, dtype=)[o:]
+                out = empty((s,), dtype=)[o:]
                 yield out, inp(), ufmt % (o, o, s, dtype, 'out of place')
                 d = inp()
                 yield d, d, ufmt % (o, o, s, dtype, 'in place')
@@ -2024,9 +2021,9 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 yield inp()[1:], inp()[:-1], ufmt % \
                     (o + 1, o, s - 1, dtype, 'aliased')
             if type == 'binary':
-                inp1 = lambda: arange(s, dtype=dtype)[o:]
-                inp2 = lambda: arange(s, dtype=dtype)[o:]
-                out = empty((s,), dtype=dtype)[o:]
+                inp1 = lambda: arange(s, dtype=)[o:]
+                inp2 = lambda: arange(s, dtype=)[o:]
+                out = empty((s,), dtype=)[o:]
                 yield out, inp1(), inp2(),  bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
@@ -2138,7 +2135,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     def __init__(self, record=False, modules=()):
         self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
-        super().__init__(record=record)
+        super().__init__(record=)
 
     def __enter__(self):
         for mod in self.modules:
@@ -2260,12 +2257,11 @@ class suppress_warnings:
             record = None
         if self._entered:
             if module is None:
-                warnings.filterwarnings(
-                    "always", category=category, message=message)
+                warnings.filterwarnings("always", category=, message=)
             else:
                 module_regex = module.__name__.replace('.', r'\.') + '$'
                 warnings.filterwarnings(
-                    "always", category=category, message=message,
+                    "always", category=, message=,
                     module=module_regex)
                 self._tmp_modules.add(module)
                 self._clear_registries()
@@ -2298,8 +2294,7 @@ class suppress_warnings:
         When added within a context, filters are only added inside
         the context and will be forgotten when the context is exited.
         """
-        self._filter(category=category, message=message, module=module,
-                     record=False)
+        self._filter(category=, message=, module=, record=False)
 
     def record(self, category=Warning, message="", module=None):
         """
@@ -2328,8 +2323,7 @@ class suppress_warnings:
         When added within a context, filters are only added inside
         the context and will be forgotten when the context is exited.
         """
-        return self._filter(category=category, message=message, module=module,
-                            record=True)
+        return self._filter(category=, message=, module=, record=True)
 
     def __enter__(self):
         if self._entered:

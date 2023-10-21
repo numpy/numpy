@@ -39,7 +39,7 @@ class TestInit:
         """
         Values for symbol that should pass input validation.
         """
-        p = poly.Polynomial(self.c, symbol=symbol)
+        p = poly.Polynomial(self.c, symbol=)
         assert_equal(p.symbol, symbol)
 
     def test_property(self):

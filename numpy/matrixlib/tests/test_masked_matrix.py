@@ -14,7 +14,7 @@ class MMatrix(MaskedArray, np.matrix,):
 
     def __new__(cls, data, mask=nomask):
         mat = np.matrix(data)
-        _data = MaskedArray.__new__(cls, data=mat, mask=mask)
+        _data = MaskedArray.__new__(cls, data=mat, mask=)
         return _data
 
     def __array_finalize__(self, obj):

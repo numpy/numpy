@@ -311,8 +311,8 @@ class TestScalarDiscovery:
                     # this, but has different rules than the cast.
                     with pytest.raises(TypeError):
                         np.array(scalar).astype(dtype)
-                    np.array(scalar, dtype=dtype)
-                    np.array([scalar], dtype=dtype)
+                    np.array(scalar, dtype=)
+                    np.array([scalar], dtype=)
                     continue
 
             # The main test, we first try to use casting and if it succeeds
@@ -323,26 +323,26 @@ class TestScalarDiscovery:
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
                 with pytest.raises(Exception):
-                    np.array(scalar, dtype=dtype)
+                    np.array(scalar, dtype=)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
                 with pytest.raises(Exception):
-                    np.array([scalar], dtype=dtype)
+                    np.array([scalar], dtype=)
                 # assignment should also raise
-                res = np.zeros((), dtype=dtype)
+                res = np.zeros((), dtype=)
                 with pytest.raises(Exception):
                     res[()] = scalar
 
                 return
 
             # Non error path:
-            arr = np.array(scalar, dtype=dtype)
+            arr = np.array(scalar, dtype=)
             assert_array_equal(arr, cast)
             # assignment behaves the same
-            ass = np.zeros((), dtype=dtype)
+            ass = np.zeros((), dtype=)
             ass[()] = scalar
             assert_array_equal(ass, cast)
 
@@ -391,13 +391,13 @@ class TestScalarDiscovery:
         # This is a special case using casting logic. It warns for the NaN
         # but allows the cast (giving undefined behaviour).
         with np.errstate(invalid="ignore"):
-            coerced = np.array(scalar, dtype=dtype)
+            coerced = np.array(scalar, dtype=)
             cast = np.array(scalar).astype(dtype)
         assert_array_equal(coerced, cast)
 
         # However these fail:
         with pytest.raises(error):
-            np.array([scalar], dtype=dtype)
+            np.array([scalar], dtype=)
         with pytest.raises(error):
             cast[()] = scalar
 
@@ -412,11 +412,11 @@ class TestTimeScalars:
     def test_coercion_basic(self, dtype, scalar):
         # Note the `[scalar]` is there because np.array(scalar) uses stricter
         # `scalar.__int__()` rules for backward compatibility right now.
-        arr = np.array(scalar, dtype=dtype)
+        arr = np.array(scalar, dtype=)
         cast = np.array(scalar).astype(dtype)
         assert_array_equal(arr, cast)
 
-        ass = np.ones((), dtype=dtype)
+        ass = np.ones((), dtype=)
         if issubclass(dtype, np.integer):
             with pytest.raises(TypeError):
                 # raises, as would np.array([scalar], dtype=dtype), this is
@@ -433,9 +433,9 @@ class TestTimeScalars:
     def test_coercion_timedelta_convert_to_number(self, dtype, scalar):
         # Only "ns" and "generic" timedeltas can be converted to numbers
         # so these are slightly special.
-        arr = np.array(scalar, dtype=dtype)
+        arr = np.array(scalar, dtype=)
         cast = np.array(scalar).astype(dtype)
-        ass = np.ones((), dtype=dtype)
+        ass = np.ones((), dtype=)
         ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
 
         assert_array_equal(arr, cast)
@@ -455,9 +455,9 @@ class TestTimeScalars:
         dtype = np.dtype(dtype)
         cut_string = dtype.type(str(scalar)[:6])
 
-        arr = np.array(scalar, dtype=dtype)
+        arr = np.array(scalar, dtype=)
         assert arr[()] == cut_string
-        ass = np.ones((), dtype=dtype)
+        ass = np.ones((), dtype=)
         ass[()] = scalar
         assert ass[()] == cut_string
 

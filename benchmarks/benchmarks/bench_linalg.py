@@ -124,18 +124,18 @@ class Einsum(Benchmark):
     param_names = ['dtype']
     params = [[np.float32, np.float64]]
     def setup(self, dtype):
-        self.one_dim_small = np.arange(600, dtype=dtype)
-        self.one_dim = np.arange(3000, dtype=dtype)
-        self.one_dim_big = np.arange(480000, dtype=dtype)
-        self.two_dim_small = np.arange(1200, dtype=dtype).reshape(30, 40)
-        self.two_dim = np.arange(240000, dtype=dtype).reshape(400, 600)
-        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10,100,10)
-        self.three_dim = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
+        self.one_dim_small = np.arange(600, dtype=)
+        self.one_dim = np.arange(3000, dtype=)
+        self.one_dim_big = np.arange(480000, dtype=)
+        self.two_dim_small = np.arange(1200, dtype=).reshape(30, 40)
+        self.two_dim = np.arange(240000, dtype=).reshape(400, 600)
+        self.three_dim_small = np.arange(10000, dtype=).reshape(10,100,10)
+        self.three_dim = np.arange(24000, dtype=).reshape(20, 30, 40)
         # non_contiguous arrays
-        self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
-        self.non_contiguous_dim1 = np.arange(1, 4000, 2, dtype=dtype)
-        self.non_contiguous_dim2 = np.arange(1, 2400, 2, dtype=dtype).reshape(30, 40)
-        self.non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype).reshape(20, 30, 40)
+        self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=)
+        self.non_contiguous_dim1 = np.arange(1, 4000, 2, dtype=)
+        self.non_contiguous_dim2 = np.arange(1, 2400, 2, dtype=).reshape(30, 40)
+        self.non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=).reshape(20, 30, 40)
 
     # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):

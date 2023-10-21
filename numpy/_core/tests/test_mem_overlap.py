@@ -177,7 +177,7 @@ def check_may_share_memory_exact(a, b):
             "size_b = %r" % (b.size,)
         ])
 
-    assert_equal(got, exact, err_msg=err_msg)
+    assert_equal(got, exact, err_msg=)
 
 
 def test_may_share_memory_manual():
@@ -264,7 +264,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     # An array with zero stride internal overlap
     strides = list(x.strides)
     strides[0] = 0
-    xp = as_strided(x, shape=x.shape, strides=strides)
+    xp = as_strided(x, shape=x.shape, strides=)
     yield x, xp
     yield xp, xp
 
@@ -272,7 +272,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     strides = list(x.strides)
     if strides[0] > 1:
         strides[0] = 1
-    xp = as_strided(x, shape=x.shape, strides=strides)
+    xp = as_strided(x, shape=x.shape, strides=)
     yield x, xp
     yield xp, xp
 
@@ -529,7 +529,7 @@ def test_internal_overlap_fuzz():
         shape = tuple(rng.randint(1, 30, dtype=np.intp)
                       for j in range(ndim))
 
-        a = as_strided(x, strides=strides, shape=shape)
+        a = as_strided(x, strides=, shape=)
         result = check_internal_overlap(a)
 
         if result:
@@ -662,7 +662,7 @@ class TestUFunc:
                             overlapping += 1
 
                         # Check result
-                        assert_copy_equivalent(operation, [a], out=b_out, axis=axis)
+                        assert_copy_equivalent(operation, [a], out=b_out, axis=)
 
     @pytest.mark.slow
     def test_unary_ufunc_call_fuzz(self):
@@ -711,7 +711,7 @@ class TestUFunc:
                 size = a.shape[axis]
                 step = a.shape[axis] // out.shape[axis]
             idx = np.arange(0, size, step)
-            return np.add.reduceat(a, idx, out=out, axis=axis)
+            return np.add.reduceat(a, idx, out=, axis=)
 
         self.check_unary_fuzz(do_reduceat, get_out_axis_size,
                               dtype=np.int16, count=500)
@@ -719,7 +719,7 @@ class TestUFunc:
     def test_binary_ufunc_reduceat_manual(self):
         def check(ufunc, a, ind, out):
             c1 = ufunc.reduceat(a.copy(), ind.copy(), out=out.copy())
-            c2 = ufunc.reduceat(a, ind, out=out)
+            c2 = ufunc.reduceat(a, ind, out=)
             assert_array_equal(c1, c2)
 
         # Exactly same input/output arrays
@@ -853,7 +853,7 @@ class TestUFunc:
             ]
 
             for xi, yi in itertools.product(indices, indices):
-                v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                v = np.arange(1, 1 + n*2 + k, dtype=)
                 x = v[xi]
                 y = v[yi]
 
@@ -872,7 +872,7 @@ class TestUFunc:
 
         def check(a, out, mask):
             c1 = ufunc(a, out=out.copy(), where=mask.copy())
-            c2 = ufunc(a, out=out, where=mask)
+            c2 = ufunc(a, out=, where=mask)
             assert_array_equal(c1, c2)
 
         # Check behavior with same input and output arrays

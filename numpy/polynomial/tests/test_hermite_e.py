@@ -217,7 +217,7 @@ class TestIntegral:
         # test integration of zero polynomial
         for i in range(2, 5):
             k = [0]*(i - 2) + [1]
-            res = herme.hermeint([0], m=i, k=k)
+            res = herme.hermeint([0], m=i, k=)
             assert_almost_equal(res, [0, 1])
 
         # check single integration with integration constant
@@ -447,14 +447,14 @@ class TestFitting:
         yw = y.copy()
         w[1::2] = 1
         y[0::2] = 0
-        wcoef3 = herme.hermefit(x, yw, 3, w=w)
+        wcoef3 = herme.hermefit(x, yw, 3, w=)
         assert_almost_equal(wcoef3, coef3)
-        wcoef3 = herme.hermefit(x, yw, [0, 1, 2, 3], w=w)
+        wcoef3 = herme.hermefit(x, yw, [0, 1, 2, 3], w=)
         assert_almost_equal(wcoef3, coef3)
         #
-        wcoef2d = herme.hermefit(x, np.array([yw, yw]).T, 3, w=w)
+        wcoef2d = herme.hermefit(x, np.array([yw, yw]).T, 3, w=)
         assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
-        wcoef2d = herme.hermefit(x, np.array([yw, yw]).T, [0, 1, 2, 3], w=w)
+        wcoef2d = herme.hermefit(x, np.array([yw, yw]).T, [0, 1, 2, 3], w=)
         assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
         # test scaling with complex values x points whose square
         # is zero when summed.

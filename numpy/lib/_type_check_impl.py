@@ -457,7 +457,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     >>> np.nan_to_num(y, nan=111111, posinf=222222)
     array([222222.+111111.j, 111111.     +0.j, 111111.+222222.j])
     """
-    x = _nx.array(x, subok=True, copy=copy)
+    x = _nx.array(x, subok=True, copy=)
     xtype = x.dtype.type
 
     isscalar = (x.ndim == 0)

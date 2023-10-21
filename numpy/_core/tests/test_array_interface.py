@@ -124,10 +124,10 @@ def get_module(tmp_path):
     # if it does not exist, build and load it
     return extbuild.build_and_import_extension('array_interface_testing',
                                                functions,
-                                               prologue=prologue,
+                                               prologue=,
                                                include_dirs=[np.get_include()],
                                                build_dir=tmp_path,
-                                               more_init=more_init)
+                                               more_init=)
 
 
 @pytest.mark.slow

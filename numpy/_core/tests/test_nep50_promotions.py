@@ -85,7 +85,7 @@ def test_nep50_weak_integers(dtype):
 
     # Array operations are not expected to warn, but should give the same
     # result dtype.
-    res = np.array(100, dtype=dtype) + maxint
+    res = np.array(100, dtype=) + maxint
     assert res.dtype == dtype
 
 
@@ -105,7 +105,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
             scalar_type(1) + too_big_int
 
         with pytest.raises(OverflowError):
-            np.array(1, dtype=dtype) + too_big_int
+            np.array(1, dtype=) + too_big_int
     else:
         # NumPy uses (or used) `int -> string -> longdouble` for the
         # conversion.  But Python may refuse `str(int)` for huge ints.
@@ -127,7 +127,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
             # We force the dtype here, since windows may otherwise pick the
             # double instead of the longdouble loop.  That leads to slightly
             # different results (conversion of the int fails as above).
-            res = np.add(np.array(1, dtype=dtype), too_big_int, dtype=dtype)
+            res = np.add(np.array(1, dtype=), too_big_int, dtype=)
         assert res.dtype == dtype
         assert res == np.inf
 

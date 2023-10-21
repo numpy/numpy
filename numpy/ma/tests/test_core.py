@@ -1260,7 +1260,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0, 10, 12), mask=mask)
+        xm = array(np.random.uniform(0, 10, 12), mask=)
         xm.shape = (3, 4)
         for funcname in ('min', 'max'):
             # Initialize
@@ -3472,7 +3472,7 @@ class TestMaskedArrayMethods:
         arr[0, :] = 0
         mask = np.ones((10, 5), dtype=bool, order=data_order).T
         mask[0, :] = False
-        x = array(arr, mask=mask)
+        x = array(arr, mask=)
         assert x._data.flags.fnc != x._mask.flags.fnc
         assert (x.filled(0) == 0).all()
         raveled = x.ravel(order)
@@ -4640,7 +4640,7 @@ class TestMaskedArrayFunctions:
         # (Also astropy projects, but were ok with it gh-22720 and gh-22842)
         a = np.ma.array([1, 2, 3, 4])
         assert a._mask is nomask
-        res = np.ma.masked_invalid(a, copy=copy)
+        res = np.ma.masked_invalid(a, copy=)
         assert res.mask is not nomask
         # mask of a should not be mutated
         assert a.mask is nomask
@@ -4837,9 +4837,9 @@ class TestMaskedArrayFunctions:
             pass
         # Using nested arrays
         dtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
-        amask = np.array([(0, (1, 0)), (0, (1, 0))], dtype=dtype)
-        bmask = np.array([(1, (0, 1)), (0, (0, 0))], dtype=dtype)
-        cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=dtype)
+        amask = np.array([(0, (1, 0)), (0, (1, 0))], dtype=)
+        bmask = np.array([(1, (0, 1)), (0, (0, 0))], dtype=)
+        cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=)
         assert_equal(mask_or(amask, bmask), cntrl)
 
     def test_flatten_mask(self):
@@ -4947,8 +4947,8 @@ class TestMaskedFields:
         ddtype = [('a', int), ('b', float), ('c', '|S8')]
         mdtype = [('a', bool), ('b', bool), ('c', bool)]
         mask = [0, 1, 0, 0, 1]
-        base = array(list(zip(ilist, flist, slist)), mask=mask, dtype=ddtype)
-        self.data = dict(base=base, mask=mask, ddtype=ddtype, mdtype=mdtype)
+        base = array(list(zip(ilist, flist, slist)), mask=, dtype=ddtype)
+        self.data = dict(base=, mask=, ddtype=, mdtype=)
 
     def test_set_records_masks(self):
         base = self.data['base']
@@ -5654,7 +5654,7 @@ def test_gh_21022():
     # testing for absence of reported error
     source = np.ma.masked_array(data=[-1, -1], mask=True, dtype=np.float64)
     axis = np.array(0)
-    result = np.prod(source, axis=axis, keepdims=False)
+    result = np.prod(source, axis=, keepdims=False)
     result = np.ma.masked_array(result,
                                 mask=np.ones(result.shape, dtype=np.bool_))
     array = np.ma.masked_array(data=-1, mask=True, dtype=np.float64)

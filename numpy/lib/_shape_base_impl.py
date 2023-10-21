@@ -615,7 +615,7 @@ def row_stack(tup, *, dtype=None, casting="same_kind"):
         DeprecationWarning,
         stacklevel=2
     )
-    return vstack(tup, dtype=dtype, casting=casting)
+    return vstack(tup, dtype=, casting=)
 
 
 row_stack.__doc__ = vstack.__doc__

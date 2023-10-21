@@ -2074,7 +2074,7 @@ class Chebyshev(ABCPolyBase):
             domain = cls.domain
         xfunc = lambda x: func(pu.mapdomain(x, cls.window, domain), *args)
         coef = chebinterpolate(xfunc, deg)
-        return cls(coef, domain=domain)
+        return cls(coef, domain=)
 
     # Virtual properties
     domain = np.array(chebdomain)

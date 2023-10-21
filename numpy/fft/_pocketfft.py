@@ -704,7 +704,7 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
     itl = list(range(len(axes)))
     itl.reverse()
     for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm)
+        a = function(a, n=s[ii], axis=axes[ii], norm=)
     return a
 
 

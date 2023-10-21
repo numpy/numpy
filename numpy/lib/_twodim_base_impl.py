@@ -205,10 +205,10 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     """
     if like is not None:
-        return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
+        return _eye_with_like(like, N, M=, k=, dtype=, order=)
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype, order=order)
+    m = zeros((N, M), dtype=, order=)
     if k >= M:
         return m
     # Ensure M and k are integers, so we don't get any surprise casting
@@ -406,7 +406,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     """
     if like is not None:
-        return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
+        return _tri_with_like(like, N, M=, k=, dtype=)
 
     if M is None:
         M = N
@@ -477,7 +477,7 @@ def tril(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k, dtype=bool)
+    mask = tri(*m.shape[-2:], k=, dtype=bool)
 
     return where(mask, m, zeros(1, m.dtype))
 
@@ -958,7 +958,7 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    tri_ = tri(n, m, k=k, dtype=bool)
+    tri_ = tri(n, m, k=, dtype=bool)
 
     return tuple(broadcast_to(inds, tri_.shape)[tri_]
                  for inds in indices(tri_.shape, sparse=True))
@@ -1027,7 +1027,7 @@ def tril_indices_from(arr, k=0):
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
-    return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+    return tril_indices(arr.shape[-2], k=, m=arr.shape[-1])
 
 
 @set_module('numpy')
@@ -1180,4 +1180,4 @@ def triu_indices_from(arr, k=0):
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
-    return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+    return triu_indices(arr.shape[-2], k=, m=arr.shape[-1])

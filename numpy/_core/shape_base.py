@@ -284,7 +284,7 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, list):
         arrs = [arrs]
-    return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
+    return _nx.concatenate(arrs, 0, dtype=, casting=)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
@@ -353,9 +353,9 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
         arrs = [arrs]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
-        return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
+        return _nx.concatenate(arrs, 0, dtype=, casting=)
     else:
-        return _nx.concatenate(arrs, 1, dtype=dtype, casting=casting)
+        return _nx.concatenate(arrs, 1, dtype=, casting=)
 
 
 def _stack_dispatcher(arrays, axis=None, out=None, *,
@@ -452,8 +452,7 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis, out=out,
-                           dtype=dtype, casting=casting)
+    return _nx.concatenate(expanded_arrays, axis=, out=, dtype=, casting=)
 
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
@@ -902,7 +901,7 @@ def _block_slicing(arrays, list_ndim, result_ndim):
     F_order = all(arr.flags['F_CONTIGUOUS'] for arr in arrays)
     C_order = all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
     order = 'F' if F_order and not C_order else 'C'
-    result = _nx.empty(shape=shape, dtype=dtype, order=order)
+    result = _nx.empty(shape=, dtype=, order=)
     # Note: In a c implementation, the function
     # PyArray_CreateMultiSortedStridePerm could be used for more advanced
     # guessing of the desired order.

@@ -360,7 +360,7 @@ class AxisConcatenator:
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
-                    newobj = array(newobj, copy=False, ndmin=ndmin)
+                    newobj = array(newobj, copy=False, ndmin=)
                     if trans1d != -1:
                         newobj = newobj.swapaxes(-1, trans1d)
             elif isinstance(item, str):
@@ -392,7 +392,7 @@ class AxisConcatenator:
                 newobj = item
             else:
                 item_ndim = np.ndim(item)
-                newobj = array(item, copy=False, subok=True, ndmin=ndmin)
+                newobj = array(item, copy=False, subok=True, ndmin=)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
                     k1 = trans1d
@@ -414,9 +414,9 @@ class AxisConcatenator:
             final_dtype = _nx.result_type(*result_type_objs)
             # concatenate could do cast, but that can be overridden:
             objs = [array(obj, copy=False, subok=True,
-                          ndmin=ndmin, dtype=final_dtype) for obj in objs]
+                          ndmin=, dtype=final_dtype) for obj in objs]
 
-        res = self.concatenate(tuple(objs), axis=axis)
+        res = self.concatenate(tuple(objs), axis=)
 
         if matrix:
             oldndim = res.ndim
@@ -664,8 +664,7 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape,
-                       strides=_nx.zeros_like(shape))
+        x = as_strided(_nx.zeros(1), shape=, strides=_nx.zeros_like(shape))
         self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
                               order='C')
 

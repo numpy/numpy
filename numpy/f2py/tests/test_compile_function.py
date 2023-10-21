@@ -55,8 +55,8 @@ def test_f2py_init_compile(extra_args):
         with util.switchdir(moddir):
             ret_val = numpy.f2py.compile(fsource,
                                          modulename=modname,
-                                         extra_args=extra_args,
-                                         source_fn=source_fn)
+                                         extra_args=,
+                                         source_fn=)
 
             # check for compile success return value
             assert ret_val == 0

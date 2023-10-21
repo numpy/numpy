@@ -409,7 +409,7 @@ class CustomScalar(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.ones(20000, dtype=dtype)
+        self.d = np.ones(20000, dtype=)
 
     def time_add_scalar2(self, dtype):
         np.add(self.d, 1)
@@ -427,9 +427,9 @@ class CustomComparison(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.x = np.ones(50000, dtype=dtype)
-        self.y = np.ones(50000, dtype=dtype)
-        self.s = np.ones(1, dtype=dtype)
+        self.x = np.ones(50000, dtype=)
+        self.y = np.ones(50000, dtype=)
+        self.s = np.ones(1, dtype=)
 
     def time_less_than_binary(self, dtype):
         (self.x < self.y)
@@ -448,8 +448,7 @@ class CustomScalarFloorDivideInt(Benchmark):
 
     def setup(self, dtype, divisor):
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=10000, dtype=)
 
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
@@ -462,8 +461,7 @@ class CustomScalarFloorDivideUInt(Benchmark):
 
     def setup(self, dtype, divisor):
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=10000, dtype=)
 
     def time_floor_divide_uint(self, dtype, divisor):
         self.x // divisor
@@ -476,9 +474,8 @@ class CustomArrayFloorDivideInt(Benchmark):
 
     def setup(self, dtype, size):
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=size, dtype=dtype)
-        self.y = np.random.randint(2, 32, size=size, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=, dtype=)
+        self.y = np.random.randint(2, 32, size=, dtype=)
 
     def time_floor_divide_int(self, dtype, size):
         self.x // self.y
@@ -525,9 +522,9 @@ class ArgParsing(Benchmark):
     params = [[
         ArgPack(x, y),
         ArgPack(x, y, out),
-        ArgPack(x, y, out=out),
+        ArgPack(x, y, out=),
         ArgPack(x, y, out=(out,)),
-        ArgPack(x, y, out=out, subok=True, where=True),
+        ArgPack(x, y, out=, subok=True, where=True),
         ArgPack(x, y, subok=True),
         ArgPack(x, y, subok=True, where=True),
         ArgPack(x, y, out, subok=True, where=True)
@@ -551,8 +548,8 @@ class ArgParsingReduce(Benchmark):
         ArgPack(a, 0, None),
         ArgPack(a, axis=0, dtype=None),
         ArgPack(a, 0, None, out),
-        ArgPack(a, axis=0, dtype=None, out=out),
-        ArgPack(a, out=out)
+        ArgPack(a, axis=0, dtype=None, out=),
+        ArgPack(a, out=)
     ]]
 
     def time_add_reduce_arg_parsing(self, arg_pack):

@@ -115,8 +115,7 @@ class TestRavelUnravelIndex:
         # Test with different data types
         for dtype in [np.int16, np.uint16, np.int32,
                       np.uint32, np.int64, np.uint64]:
-            coords = np.array(
-                [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0]], dtype=dtype)
+            coords = np.array([[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0]], dtype=)
             shape = (5, 8)
             uncoords = 8*coords[0]+coords[1]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
@@ -128,7 +127,7 @@ class TestRavelUnravelIndex:
 
             coords = np.array(
                 [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0], [1, 3, 1, 0, 9, 5]],
-                dtype=dtype)
+                dtype=)
             shape = (5, 8, 10)
             uncoords = 10*(8*coords[0]+coords[1])+coords[2]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
@@ -168,12 +167,12 @@ class TestRavelUnravelIndex:
     @pytest.mark.parametrize("mode", ["clip", "wrap", "raise"])
     def test_empty_array_ravel(self, mode):
         res = np.ravel_multi_index(
-                    np.zeros((3, 0), dtype=np.intp), (2, 1, 0), mode=mode)
+                    np.zeros((3, 0), dtype=np.intp), (2, 1, 0), mode=)
         assert(res.shape == (0,))
 
         with assert_raises(ValueError):
             np.ravel_multi_index(
-                    np.zeros((3, 1), dtype=np.intp), (2, 1, 0), mode=mode)
+                    np.zeros((3, 1), dtype=np.intp), (2, 1, 0), mode=)
 
     def test_empty_array_unravel(self):
         res = np.unravel_index(np.zeros(0, dtype=np.intp), (2, 1, 0))

@@ -117,21 +117,21 @@ class TestConditionalShortcuts:
     def test_zero_padding_shortcuts(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
         pad_amt = [(0, 0) for _ in test.shape]
-        assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
+        assert_array_equal(test, np.pad(test, pad_amt, mode=))
 
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
         pad_amt = [(1, 1) for _ in test.shape]
         assert_array_equal(np.pad(test, pad_amt, mode='edge'),
-                           np.pad(test, pad_amt, mode=mode, stat_length=1))
+                           np.pad(test, pad_amt, mode=, stat_length=1))
 
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_clip_statistic_range(self, mode):
         test = np.arange(30).reshape(5, 6)
         pad_amt = [(3, 3) for _ in test.shape]
-        assert_array_equal(np.pad(test, pad_amt, mode=mode),
-                           np.pad(test, pad_amt, mode=mode, stat_length=30))
+        assert_array_equal(np.pad(test, pad_amt, mode=),
+                           np.pad(test, pad_amt, mode=, stat_length=30))
 
 
 class TestStatistic:
@@ -448,8 +448,8 @@ class TestStatistic:
     def test_check_negative_stat_length(self, mode, stat_length):
         arr = np.arange(30).reshape((6, 5))
         match = "index can't contain negative values"
-        with pytest.raises(ValueError, match=match):
-            np.pad(arr, 2, mode, stat_length=stat_length)
+        with pytest.raises(ValueError, match=):
+            np.pad(arr, 2, mode, stat_length=)
 
     def test_simple_stat_length(self):
         a = np.arange(30)
@@ -485,13 +485,13 @@ class TestStatistic:
     @pytest.mark.parametrize("mode", ["minimum", "maximum"])
     def test_zero_stat_length_invalid(self, mode):
         match = "stat_length of 0 yields no value for padding"
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad([1., 2.], 0, mode, stat_length=0)
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad([1., 2.], 0, mode, stat_length=(1, 0))
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad([1., 2.], 1, mode, stat_length=0)
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad([1., 2.], 1, mode, stat_length=(1, 0))
 
 
@@ -748,14 +748,14 @@ class TestLinearRamp:
         to be independent of implementation. Test behavior for all other dtypes
         in case dtype casting interferes with complex dtypes. See gh-14191.
         """
-        x = np.array([3], dtype=dtype)
+        x = np.array([3], dtype=)
         result = np.pad(x, 3, mode="linear_ramp", end_values=0)
-        expected = np.array([0, 1, 2, 3, 2, 1, 0], dtype=dtype)
+        expected = np.array([0, 1, 2, 3, 2, 1, 0], dtype=)
         assert_equal(result, expected)
 
-        x = np.array([0], dtype=dtype)
+        x = np.array([0], dtype=)
         result = np.pad(x, 3, mode="linear_ramp", end_values=3)
-        expected = np.array([3, 2, 1, 0, 1, 2, 3], dtype=dtype)
+        expected = np.array([3, 2, 1, 0, 1, 2, 3], dtype=)
         assert_equal(result, expected)
 
 
@@ -880,16 +880,16 @@ class TestEmptyArray:
     def test_pad_empty_dimension(self, mode):
         match = ("can't extend empty axis 0 using modes other than 'constant' "
                  "or 'empty'")
-        with pytest.raises(ValueError, match=match):
-            np.pad([], 4, mode=mode)
-        with pytest.raises(ValueError, match=match):
-            np.pad(np.ndarray(0), 4, mode=mode)
-        with pytest.raises(ValueError, match=match):
-            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode=mode)
+        with pytest.raises(ValueError, match=):
+            np.pad([], 4, mode=)
+        with pytest.raises(ValueError, match=):
+            np.pad(np.ndarray(0), 4, mode=)
+        with pytest.raises(ValueError, match=):
+            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode=)
 
     @pytest.mark.parametrize("mode", _all_modes.keys())
     def test_pad_non_empty_dimension(self, mode):
-        result = np.pad(np.ones((2, 0, 2)), ((3,), (0,), (1,)), mode=mode)
+        result = np.pad(np.ones((2, 0, 2)), ((3,), (0,), (1,)), mode=)
         assert result.shape == (8, 0, 4)
 
 
@@ -1242,7 +1242,7 @@ def test_object_input(mode):
     a = np.full((4, 3), fill_value=None)
     pad_amt = ((2, 3), (3, 2))
     b = np.full((9, 8), fill_value=None)
-    assert_array_equal(np.pad(a, pad_amt, mode=mode), b)
+    assert_array_equal(np.pad(a, pad_amt, mode=), b)
 
 
 class TestPadWidth:
@@ -1256,7 +1256,7 @@ class TestPadWidth:
     def test_misshaped_pad_width(self, pad_width, mode):
         arr = np.arange(30).reshape((6, 5))
         match = "operands could not be broadcast together"
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad(arr, pad_width, mode)
 
     @pytest.mark.parametrize("mode", _all_modes.keys())
@@ -1264,7 +1264,7 @@ class TestPadWidth:
         arr = np.arange(30).reshape((6, 5))
         match = ("input operand has more dimensions than allowed by the axis "
                  "remapping")
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad(arr, (((3,), (4,), (5,)), ((0,), (1,), (2,))), mode)
 
     @pytest.mark.parametrize(
@@ -1273,7 +1273,7 @@ class TestPadWidth:
     def test_negative_pad_width(self, pad_width, mode):
         arr = np.arange(30).reshape((6, 5))
         match = "index can't contain negative values"
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad(arr, pad_width, mode)
 
     @pytest.mark.parametrize("pad_width, dtype", [
@@ -1292,12 +1292,12 @@ class TestPadWidth:
         match = "`pad_width` must be of integral type."
         if dtype is not None:
             # avoid DeprecationWarning when not specifying dtype
-            with pytest.raises(TypeError, match=match):
-                np.pad(arr, np.array(pad_width, dtype=dtype), mode)
+            with pytest.raises(TypeError, match=):
+                np.pad(arr, np.array(pad_width, dtype=), mode)
         else:
-            with pytest.raises(TypeError, match=match):
+            with pytest.raises(TypeError, match=):
                 np.pad(arr, pad_width, mode)
-            with pytest.raises(TypeError, match=match):
+            with pytest.raises(TypeError, match=):
                 np.pad(arr, np.array(pad_width), mode)
 
     def test_pad_width_as_ndarray(self):
@@ -1323,7 +1323,7 @@ class TestPadWidth:
     @pytest.mark.parametrize("mode", _all_modes.keys())
     def test_zero_pad_width(self, pad_width, mode):
         arr = np.arange(30).reshape(6, 5)
-        assert_array_equal(arr, np.pad(arr, pad_width, mode=mode))
+        assert_array_equal(arr, np.pad(arr, pad_width, mode=))
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())
@@ -1339,7 +1339,7 @@ def test_kwargs(mode):
     # Test if prohibited keyword arguments of other modes raise an error
     for key, value in not_allowed.items():
         match = "unsupported keyword arguments for mode '{}'".format(mode)
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
 
@@ -1351,8 +1351,8 @@ def test_constant_zero_default():
 @pytest.mark.parametrize("mode", [1, "const", object(), None, True, False])
 def test_unsupported_mode(mode):
     match= "mode '{}' is not supported".format(mode)
-    with pytest.raises(ValueError, match=match):
-        np.pad([1, 2, 3], 4, mode=mode)
+    with pytest.raises(ValueError, match=):
+        np.pad([1, 2, 3], 4, mode=)
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())
@@ -1375,6 +1375,6 @@ def test_memory_layout_persistence(mode):
 @pytest.mark.parametrize("dtype", _numeric_dtypes)
 @pytest.mark.parametrize("mode", _all_modes.keys())
 def test_dtype_persistence(dtype, mode):
-    arr = np.zeros((3, 2, 1), dtype=dtype)
-    result = np.pad(arr, 1, mode=mode)
+    arr = np.zeros((3, 2, 1), dtype=)
+    result = np.pad(arr, 1, mode=)
     assert result.dtype == dtype

@@ -55,8 +55,8 @@ def interesting_binop_operands(val1, val2, dtype):
     """
     fill_value = 1  # could be a parameter, but maybe not an optional one?
 
-    arr1 = np.full(10003, dtype=dtype, fill_value=fill_value)
-    arr2 = np.full(10003, dtype=dtype, fill_value=fill_value)
+    arr1 = np.full(10003, dtype=, fill_value=)
+    arr2 = np.full(10003, dtype=, fill_value=)
 
     arr1[0] = val1
     arr2[0] = val2
@@ -144,49 +144,49 @@ class TestOut:
             a = np.array(0.5)
             o = np.empty(())
 
-            r = np.add(a, 2, o, subok=subok)
+            r = np.add(a, 2, o, subok=)
             assert_(r is o)
-            r = np.add(a, 2, out=o, subok=subok)
+            r = np.add(a, 2, out=o, subok=)
             assert_(r is o)
-            r = np.add(a, 2, out=(o,), subok=subok)
+            r = np.add(a, 2, out=(o,), subok=)
             assert_(r is o)
 
             d = np.array(5.7)
             o1 = np.empty(())
             o2 = np.empty((), dtype=np.int32)
 
-            r1, r2 = np.frexp(d, o1, None, subok=subok)
+            r1, r2 = np.frexp(d, o1, None, subok=)
             assert_(r1 is o1)
-            r1, r2 = np.frexp(d, None, o2, subok=subok)
+            r1, r2 = np.frexp(d, None, o2, subok=)
             assert_(r2 is o2)
-            r1, r2 = np.frexp(d, o1, o2, subok=subok)
+            r1, r2 = np.frexp(d, o1, o2, subok=)
             assert_(r1 is o1)
             assert_(r2 is o2)
 
-            r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
+            r1, r2 = np.frexp(d, out=(o1, None), subok=)
             assert_(r1 is o1)
-            r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
+            r1, r2 = np.frexp(d, out=(None, o2), subok=)
             assert_(r2 is o2)
-            r1, r2 = np.frexp(d, out=(o1, o2), subok=subok)
+            r1, r2 = np.frexp(d, out=(o1, o2), subok=)
             assert_(r1 is o1)
             assert_(r2 is o2)
 
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
-                r1, r2 = np.frexp(d, out=o1, subok=subok)
+                r1, r2 = np.frexp(d, out=o1, subok=)
 
-            assert_raises(TypeError, np.add, a, 2, o, o, subok=subok)
-            assert_raises(TypeError, np.add, a, 2, o, out=o, subok=subok)
-            assert_raises(TypeError, np.add, a, 2, None, out=o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=subok)
-            assert_raises(ValueError, np.add, a, 2, out=(), subok=subok)
-            assert_raises(TypeError, np.add, a, 2, [], subok=subok)
-            assert_raises(TypeError, np.add, a, 2, out=[], subok=subok)
-            assert_raises(TypeError, np.add, a, 2, out=([],), subok=subok)
+            assert_raises(TypeError, np.add, a, 2, o, o, subok=)
+            assert_raises(TypeError, np.add, a, 2, o, out=o, subok=)
+            assert_raises(TypeError, np.add, a, 2, None, out=o, subok=)
+            assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=)
+            assert_raises(ValueError, np.add, a, 2, out=(), subok=)
+            assert_raises(TypeError, np.add, a, 2, [], subok=)
+            assert_raises(TypeError, np.add, a, 2, out=[], subok=)
+            assert_raises(TypeError, np.add, a, 2, out=([],), subok=)
             o.flags.writeable = False
-            assert_raises(ValueError, np.add, a, 2, o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, out=o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, out=(o,), subok=subok)
+            assert_raises(ValueError, np.add, a, 2, o, subok=)
+            assert_raises(ValueError, np.add, a, 2, out=o, subok=)
+            assert_raises(ValueError, np.add, a, 2, out=(o,), subok=)
 
     def test_out_wrap_subok(self):
         class ArrayWrap(np.ndarray):
@@ -201,25 +201,25 @@ class TestOut:
         for subok in (True, False):
             a = ArrayWrap([0.5])
 
-            r = np.add(a, 2, subok=subok)
+            r = np.add(a, 2, subok=)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
                 assert_(type(r) == np.ndarray)
 
-            r = np.add(a, 2, None, subok=subok)
+            r = np.add(a, 2, None, subok=)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
                 assert_(type(r) == np.ndarray)
 
-            r = np.add(a, 2, out=None, subok=subok)
+            r = np.add(a, 2, out=None, subok=)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
                 assert_(type(r) == np.ndarray)
 
-            r = np.add(a, 2, out=(None,), subok=subok)
+            r = np.add(a, 2, out=(None,), subok=)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
@@ -229,31 +229,31 @@ class TestOut:
             o1 = np.empty((1,))
             o2 = np.empty((1,), dtype=np.int32)
 
-            r1, r2 = np.frexp(d, o1, subok=subok)
+            r1, r2 = np.frexp(d, o1, subok=)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
                 assert_(type(r2) == np.ndarray)
 
-            r1, r2 = np.frexp(d, o1, None, subok=subok)
+            r1, r2 = np.frexp(d, o1, None, subok=)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
                 assert_(type(r2) == np.ndarray)
 
-            r1, r2 = np.frexp(d, None, o2, subok=subok)
+            r1, r2 = np.frexp(d, None, o2, subok=)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
                 assert_(type(r1) == np.ndarray)
 
-            r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
+            r1, r2 = np.frexp(d, out=(o1, None), subok=)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
                 assert_(type(r2) == np.ndarray)
 
-            r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
+            r1, r2 = np.frexp(d, out=(None, o2), subok=)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
@@ -261,7 +261,7 @@ class TestOut:
 
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
-                r1, r2 = np.frexp(d, out=o1, subok=subok)
+                r1, r2 = np.frexp(d, out=o1, subok=)
 
 
 class TestComparisons:
@@ -417,7 +417,7 @@ class TestComparisons:
             py_comp = py_comp_func
             np_comp = np_comp_func
 
-        arr = np.array([np.iinfo(dtype).max], dtype=dtype)
+        arr = np.array([np.iinfo(dtype).max], dtype=)
         expected = py_comp(int(arr[0]), -1)
 
         assert py_comp(arr, -1) == expected
@@ -536,7 +536,7 @@ class TestDivision:
                 ac = a.copy()
                 ac //= 0
 
-            np.array([], dtype=dtype) // 0
+            np.array([], dtype=) // 0
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
@@ -569,7 +569,7 @@ class TestDivision:
                 with pytest.raises(FloatingPointError,
                         match='overflow encountered in reduce'):
                     np.floor_divide.reduce(
-                        np.array([fo.min, 1, -1], dtype=dtype)
+                        np.array([fo.min, 1, -1], dtype=)
                     )
 
     @pytest.mark.parametrize(
@@ -653,10 +653,10 @@ class TestDivision:
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_errors(self, dtype):
-        fnan = np.array(np.nan, dtype=dtype)
-        fone = np.array(1.0, dtype=dtype)
-        fzer = np.array(0.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
+        fnan = np.array(np.nan, dtype=)
+        fone = np.array(1.0, dtype=)
+        fzer = np.array(0.0, dtype=)
+        finf = np.array(np.inf, dtype=)
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
@@ -673,12 +673,12 @@ class TestDivision:
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
         # test corner cases like 1.0//0.0 for errors and return vals
-        x = np.zeros(10, dtype=dtype)
-        y = np.ones(10, dtype=dtype)
-        fnan = np.array(np.nan, dtype=dtype)
-        fone = np.array(1.0, dtype=dtype)
-        fzer = np.array(0.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
+        x = np.zeros(10, dtype=)
+        y = np.ones(10, dtype=)
+        fnan = np.array(np.nan, dtype=)
+        fone = np.array(1.0, dtype=)
+        fzer = np.array(0.0, dtype=)
+        finf = np.array(np.inf, dtype=)
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
@@ -772,10 +772,10 @@ class TestRemainder:
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
-        fzero = np.array(0.0, dtype=dtype)
-        fone = np.array(1.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
-        fnan = np.array(np.nan, dtype=dtype)
+        fzero = np.array(0.0, dtype=)
+        fone = np.array(1.0, dtype=)
+        finf = np.array(np.inf, dtype=)
+        fnan = np.array(np.nan, dtype=)
         # since divmod is combination of both remainder and divide
         # ops it will set both dividebyzero and invalid flags
         with np.errstate(divide='raise', invalid='ignore'):
@@ -801,10 +801,10 @@ class TestRemainder:
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
-        fzero = np.array(0.0, dtype=dtype)
-        fone = np.array(1.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
-        fnan = np.array(np.nan, dtype=dtype)
+        fzero = np.array(0.0, dtype=)
+        fone = np.array(1.0, dtype=)
+        finf = np.array(np.inf, dtype=)
+        fnan = np.array(np.nan, dtype=)
 
         # The following already contain a NaN and should not warn.
         with np.errstate(all='raise'):
@@ -1078,7 +1078,7 @@ class TestPower:
                                                  max_size=11):
             exp = [ncu.sqrt(i) for i in inp]
             assert_almost_equal(inp**(0.5), exp, err_msg=msg)
-            np.sqrt(inp, out=out)
+            np.sqrt(inp, out=)
             assert_equal(out, exp, err_msg=msg)
 
         for out, inp, msg in _gen_alignment_data(dtype=np.float64,
@@ -1086,7 +1086,7 @@ class TestPower:
                                                  max_size=7):
             exp = [ncu.sqrt(i) for i in inp]
             assert_almost_equal(inp**(0.5), exp, err_msg=msg)
-            np.sqrt(inp, out=out)
+            np.sqrt(inp, out=)
             assert_equal(out, exp, err_msg=msg)
 
     def test_power_complex(self):
@@ -1488,8 +1488,8 @@ class TestSpecialFloats:
         with np.errstate(all='ignore'):
             x = [np.nan, np.nan, np.nan, np.nan]
             y = [np.nan, -np.nan, np.inf, -np.inf]
-            xf = np.array(x, dtype=dtype)
-            yf = np.array(y, dtype=dtype)
+            xf = np.array(x, dtype=)
+            yf = np.array(y, dtype=)
             assert_equal(np.sin(yf), xf)
             assert_equal(np.cos(yf), xf)
 
@@ -1514,7 +1514,7 @@ class TestSpecialFloats:
     def test_sincos_errors(self, callable, dtype, value):
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, callable,
-                np.array([value], dtype=dtype))
+                np.array([value], dtype=))
 
     @pytest.mark.parametrize('callable', [np.sin, np.cos])
     @pytest.mark.parametrize('dtype', ['f', 'd'])
@@ -1813,7 +1813,7 @@ class TestSpecialFloats:
         #  - spacing/float16 on almost all platforms
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
-        array = np.array(data, dtype=dtype)
+        array = np.array(data, dtype=)
         with assert_no_warnings():
             ufunc(array)
 
@@ -1840,7 +1840,7 @@ class TestFPClass:
     def test_fp_noncontiguous(self, dtype):
         data = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0,
                             1.0, -0.0, 0.0, 2.2251e-308,
-                            -2.2251e-308], dtype=dtype)
+                            -2.2251e-308], dtype=)
         nan = np.array([True, True, False, False, False, False,
                             False, False, False, False])
         inf = np.array([False, False, True, True, False, False,
@@ -1886,11 +1886,11 @@ class TestLDExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
     def test_ldexp(self, dtype, stride):
-        mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=dtype)
+        mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=)
         exp  = np.array([3, 2, 1, 0, 0, -1, -2, -3], dtype='i')
-        out  = np.zeros(8, dtype=dtype)
-        assert_equal(np.ldexp(mant[::stride], exp[::stride], out=out[::stride]), np.ones(8, dtype=dtype)[::stride])
-        assert_equal(out[::stride], np.ones(8, dtype=dtype)[::stride])
+        out  = np.zeros(8, dtype=)
+        assert_equal(np.ldexp(mant[::stride], exp[::stride], out=out[::stride]), np.ones(8, dtype=)[::stride])
+        assert_equal(out[::stride], np.ones(8, dtype=)[::stride])
 
 class TestFRExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
@@ -1899,10 +1899,10 @@ class TestFRExp:
     @pytest.mark.skipif(not sys.platform.startswith('linux'),
                         reason="np.frexp gives different answers for NAN/INF on windows and linux")
     def test_frexp(self, dtype, stride):
-        arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
-        mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
+        arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=)
+        mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=)
         exp_true  = np.array([0, 0, 0, 0, 0, 0, 1, 1], dtype='i')
-        out_mant  = np.ones(8, dtype=dtype)
+        out_mant  = np.ones(8, dtype=)
         out_exp   = 2*np.ones(8, dtype='i')
         mant, exp = np.frexp(arr[::stride], out=(out_mant[::stride], out_exp[::stride]))
         assert_equal(mant_true[::stride], mant)
@@ -1932,7 +1932,7 @@ class TestAVXUfuncs:
             for size in range(1,32):
                 myfunc = getattr(np, func)
                 x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
-                    size=size))
+                    size=))
                 x_f64 = np.float64(x_f32)
                 x_f128 = np.longdouble(x_f32)
                 y_true128 = myfunc(x_f128)
@@ -2563,8 +2563,8 @@ class TestBool:
                      + np.typecodes['AllInteger']
                      + '?')     # boolean
         for dtype in map(np.dtype, typecodes):
-            arg1 = np.asarray(input1, dtype=dtype)
-            arg2 = np.asarray(input2, dtype=dtype)
+            arg1 = np.asarray(input1, dtype=)
+            arg2 = np.asarray(input2, dtype=)
 
             # OR
             out = [False, True, True, True]
@@ -2857,12 +2857,12 @@ class TestAbsoluteNegative:
             for out, inp, msg in _gen_alignment_data(dtype=dt, type='unary',
                                                      max_size=sz):
                 tgt = [ncu.absolute(i) for i in inp]
-                np.absolute(inp, out=out)
+                np.absolute(inp, out=)
                 assert_equal(out, tgt, err_msg=msg)
                 assert_((out >= 0).all())
 
                 tgt = [-1*(i) for i in inp]
-                np.negative(inp, out=out)
+                np.negative(inp, out=)
                 assert_equal(out, tgt, err_msg=msg)
 
                 for v in [np.nan, -np.inf, np.inf]:
@@ -2872,12 +2872,12 @@ class TestAbsoluteNegative:
                         inp[i] = v
                         d[i] = -v if v == -np.inf else v
                         assert_array_equal(np.abs(inp), d, err_msg=msg)
-                        np.abs(inp, out=out)
+                        np.abs(inp, out=)
                         assert_array_equal(out, d, err_msg=msg)
 
                         assert_array_equal(-inp, -1*inp, err_msg=msg)
                         d = -1 * inp
-                        np.negative(inp, out=out)
+                        np.negative(inp, out=)
                         assert_array_equal(out, d, err_msg=msg)
 
     def test_lower_align(self):
@@ -2895,13 +2895,13 @@ class TestAbsoluteNegative:
     @pytest.mark.parametrize("big", [True, False])
     def test_noncontiguous(self, dtype, big):
         data = np.array([-1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.5, 2.5, -6,
-                            6, -2.2251e-308, -8, 10], dtype=dtype)
+                            6, -2.2251e-308, -8, 10], dtype=)
         expect = np.array([1.0, -1.0, 0.0, -0.0, -2.2251e-308, 2.5, -2.5, 6,
-                            -6, 2.2251e-308, 8, -10], dtype=dtype)
+                            -6, 2.2251e-308, 8, -10], dtype=)
         if big:
             data = np.repeat(data, 10)
             expect = np.repeat(expect, 10)
-        out = np.ndarray(data.shape, dtype=dtype)
+        out = np.ndarray(data.shape, dtype=)
         ncontig_in = data[1::2]
         ncontig_out = out[1::2]
         contig_in = np.array(ncontig_in)
@@ -2925,7 +2925,7 @@ class TestPositive:
     def test_valid(self):
         valid_dtypes = [int, float, complex, object]
         for dtype in valid_dtypes:
-            x = np.arange(5, dtype=dtype)
+            x = np.arange(5, dtype=)
             result = np.positive(x)
             assert_equal(x, result, err_msg=str(dtype))
 
@@ -3669,7 +3669,7 @@ class TestSpecialMethods:
 
         array = np.array([1, 2, 3])
         where = np.array([True, False, True])
-        expected = ufunc(array, where=where)
+        expected = ufunc(array, where=)
 
         with pytest.raises(TypeError):
             ufunc(array, where=where.view(OverriddenArrayOld))
@@ -3679,14 +3679,14 @@ class TestSpecialMethods:
             where=where.view(OverriddenArrayNew)
         )
         assert isinstance(result_1, OverriddenArrayNew)
-        assert np.all(np.array(result_1) == expected, where=where)
+        assert np.all(np.array(result_1) == expected, where=)
 
         result_2 = ufunc(
             array.view(OverriddenArrayNew),
             where=where.view(OverriddenArrayNew)
         )
         assert isinstance(result_2, OverriddenArrayNew)
-        assert np.all(np.array(result_2) == expected, where=where)
+        assert np.all(np.array(result_2) == expected, where=)
 
     def test_ufunc_override_exception(self):
 
@@ -3987,18 +3987,18 @@ class TestRationalFunctions:
 
     def _test_lcm_inner(self, dtype):
         # basic use
-        a = np.array([12, 120], dtype=dtype)
-        b = np.array([20, 200], dtype=dtype)
+        a = np.array([12, 120], dtype=)
+        b = np.array([20, 200], dtype=)
         assert_equal(np.lcm(a, b), [60, 600])
 
         if not issubclass(dtype, np.unsignedinteger):
             # negatives are ignored
-            a = np.array([12, -12,  12, -12], dtype=dtype)
-            b = np.array([20,  20, -20, -20], dtype=dtype)
+            a = np.array([12, -12, 12, -12], dtype=)
+            b = np.array([20, 20, -20, -20], dtype=)
             assert_equal(np.lcm(a, b), [60]*4)
 
         # reduce
-        a = np.array([3, 12, 20], dtype=dtype)
+        a = np.array([3, 12, 20], dtype=)
         assert_equal(np.lcm.reduce([3, 12, 20]), 60)
 
         # broadcasting, and a test including 0
@@ -4008,18 +4008,18 @@ class TestRationalFunctions:
 
     def _test_gcd_inner(self, dtype):
         # basic use
-        a = np.array([12, 120], dtype=dtype)
-        b = np.array([20, 200], dtype=dtype)
+        a = np.array([12, 120], dtype=)
+        b = np.array([20, 200], dtype=)
         assert_equal(np.gcd(a, b), [4, 40])
 
         if not issubclass(dtype, np.unsignedinteger):
             # negatives are ignored
-            a = np.array([12, -12,  12, -12], dtype=dtype)
-            b = np.array([20,  20, -20, -20], dtype=dtype)
+            a = np.array([12, -12, 12, -12], dtype=)
+            b = np.array([20, 20, -20, -20], dtype=)
             assert_equal(np.gcd(a, b), [4]*4)
 
         # reduce
-        a = np.array([15, 25, 35], dtype=dtype)
+        a = np.array([15, 25, 35], dtype=)
         assert_equal(np.gcd.reduce(a), 5)
 
         # broadcasting, and a test including 0
@@ -4272,7 +4272,7 @@ class TestComplexFunctions:
 
         # Check a few points
 
-        z = np.array([1e-5*(1+1j)], dtype=dtype)
+        z = np.array([1e-5*(1+1j)], dtype=)
         p = 9.999999999333333333e-6 + 1.000000000066666666e-5j
         d = np.absolute(1-np.arctanh(z)/p)
         assert_(np.all(d < 1e-15))
@@ -4292,7 +4292,7 @@ class TestComplexFunctions:
         # Check continuity across switchover points
 
         def check(func, z0, d=1):
-            z0 = np.asarray(z0, dtype=dtype)
+            z0 = np.asarray(z0, dtype=)
             zp = z0 + abs(z0) * d * eps * 2
             zm = z0 - abs(z0) * d * eps * 2
             assert_(np.all(zp != zm), (zp, zm))
@@ -4645,7 +4645,7 @@ def test_memoverlap_accumulate_cmp(ufunc, dtype):
     if ufunc.signature:
         pytest.skip('For generic signatures only')
     for size in (2, 8, 32, 64, 128, 256):
-        arr = np.array([0, 1, 1]*size, dtype=dtype)
+        arr = np.array([0, 1, 1]*size, dtype=)
         acc = ufunc.accumulate(arr, dtype='?')
         acc_u8 = acc.view(np.uint8)
         exp = np.array(list(itertools.accumulate(arr, ufunc)), dtype=np.uint8)
@@ -4663,8 +4663,8 @@ def test_memoverlap_accumulate_symmetric(ufunc, dtype):
     with np.errstate(all='ignore'):
         for size in (2, 8, 32, 64, 128, 256):
             arr = np.array([0, 1, 2]*size).astype(dtype)
-            acc = ufunc.accumulate(arr, dtype=dtype)
-            exp = np.array(list(itertools.accumulate(arr, ufunc)), dtype=dtype)
+            acc = ufunc.accumulate(arr, dtype=)
+            exp = np.array(list(itertools.accumulate(arr, ufunc)), dtype=)
             assert_equal(exp, acc)
 
 def test_signaling_nan_exceptions():

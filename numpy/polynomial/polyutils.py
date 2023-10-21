@@ -136,7 +136,7 @@ def as_series(alist, trim=True):
             dtype = np.common_type(*arrays)
         except Exception as e:
             raise ValueError("Coefficient arrays have no common type") from e
-        ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
+        ret = [np.array(a, copy=True, dtype=) for a in arrays]
     return ret
 
 
@@ -745,13 +745,13 @@ def format_float(x, parens=False):
 
     if exp_format:
         s = dragon4_scientific(x, precision=opts['precision'],
-                               unique=unique, trim=trim, 
+                               unique=, trim=, 
                                sign=opts['sign'] == '+')
         if parens:
             s = '(' + s + ')'
     else:
         s = dragon4_positional(x, precision=opts['precision'],
                                fractional=True,
-                               unique=unique, trim=trim,
+                               unique=, trim=,
                                sign=opts['sign'] == '+')
     return s

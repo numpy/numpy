@@ -237,10 +237,7 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     _update_environment( **env )
 
     try:
-        st = _exec_command(command,
-                           use_shell=use_shell,
-                           use_tee=use_tee,
-                           **env)
+        st = _exec_command(command, use_shell=, use_tee=, **env)
     finally:
         if oldcwd!=execute_in:
             os.chdir(oldcwd)
@@ -280,7 +277,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         # will return bytes. We need to decode the output ourselves
         # so that Python will not raise a UnicodeDecodeError when
         # it encounters an invalid character; rather, we simply replace it
-        proc = subprocess.Popen(command, shell=use_shell, env=env, text=False,
+        proc = subprocess.Popen(command, shell=use_shell, env=, text=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
     except OSError:

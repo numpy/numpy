@@ -127,7 +127,7 @@ def download_openblas(target, plat, ilp64, *, nightly=False):
         f'openblas{fnsuffix}-{openblas_version}-{suffix}'
     )
     print(f'Attempting to download {filename}', file=sys.stderr)
-    req = Request(url=filename, headers=headers)
+    req = Request(url=filename, headers=)
     try:
         response = urlopen(req)
     except HTTPError:
@@ -161,7 +161,7 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
     _, tmp = mkstemp()
     if not plat:
         raise ValueError('unknown platform')
-    typ = download_openblas(tmp, plat, ilp64, nightly=nightly)
+    typ = download_openblas(tmp, plat, ilp64, nightly=)
     if not typ:
         return ''
     osname, arch = plat.split("-")

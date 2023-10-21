@@ -179,8 +179,8 @@ def test_fit(Poly):
     z = y + random(y.shape)*.25
     w[::2] = 1
     p1 = Poly.fit(x[::2], z[::2], 3)
-    p2 = Poly.fit(x, z, 3, w=w)
-    p3 = Poly.fit(x, z, [0, 1, 2, 3], w=w)
+    p2 = Poly.fit(x, z, 3, w=)
+    p3 = Poly.fit(x, z, [0, 1, 2, 3], w=)
     assert_almost_equal(p1(x), p2(x))
     assert_almost_equal(p2(x), p3(x))
 

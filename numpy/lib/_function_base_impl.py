@@ -541,7 +541,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
+        scl = wgt.sum(axis=, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
@@ -620,7 +620,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     ValueError
 
     """
-    a = asarray(a, dtype=dtype, order=order)
+    a = asarray(a, dtype=, order=)
     if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
         raise ValueError(
             "array must not contain infs or NaNs")
@@ -954,7 +954,7 @@ def copy(a, order='K', subok=False):
     array([1, 'm', list([2, 3, 4])], dtype=object)
 
     """
-    return array(a, order=order, subok=subok, copy=True)
+    return array(a, order=, subok=, copy=True)
 
 # Basic operations
 
@@ -1720,7 +1720,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     """
     p = asarray(p)
     nd = p.ndim
-    dd = diff(p, axis=axis)
+    dd = diff(p, axis=)
     if discont is None:
         discont = period/2
     slice1 = [slice(None, None)]*nd     # full slices
@@ -1743,7 +1743,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
                    where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
+    up = array(p, copy=True, dtype=)
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
@@ -2112,10 +2112,10 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
     if dtypes is None:
         dtypes = [None] * len(shapes)
     if results is None:
-        arrays = tuple(np.empty(shape=shape, dtype=dtype)
+        arrays = tuple(np.empty(shape=, dtype=)
                        for shape, dtype in zip(shapes, dtypes))
     else:
-        arrays = tuple(np.empty_like(result, shape=shape, dtype=dtype)
+        arrays = tuple(np.empty_like(result, shape=, dtype=)
                        for result, shape, dtype
                        in zip(results, shapes, dtypes))
     return arrays
@@ -2370,7 +2370,7 @@ class vectorize:
             vargs = [args[_i] for _i in inds]
             vargs.extend([kwargs[_n] for _n in names])
 
-        return self._vectorize_call(func=func, args=vargs)
+        return self._vectorize_call(func=, args=vargs)
 
     def __call__(self, *args, **kwargs):
         if self.pyfunc is np._NoValue:
@@ -2455,7 +2455,7 @@ class vectorize:
         elif not args:
             res = func()
         else:
-            ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
+            ufunc, otypes = self._get_ufunc_and_otypes(func=, args=)
 
             # Convert args to object arrays first
             inputs = [asanyarray(a, dtype=object) for a in args]
@@ -2679,13 +2679,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         else:
             dtype = np.result_type(m, y, np.float64)
 
-    X = array(m, ndmin=2, dtype=dtype)
+    X = array(m, ndmin=2, dtype=)
     if not rowvar and X.shape[0] != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
-        y = array(y, copy=False, ndmin=2, dtype=dtype)
+        y = array(y, copy=False, ndmin=2, dtype=)
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
@@ -2894,7 +2894,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=2)
-    c = cov(x, y, rowvar, dtype=dtype)
+    c = cov(x, y, rowvar, dtype=)
     try:
         d = diag(c)
     except ValueError:
@@ -3848,8 +3848,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
-    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
+    return _ureduce(a, func=_median, keepdims=, axis=, out=, overwrite_input=)
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
@@ -3878,10 +3877,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             part = a.ravel()
             part.partition(kth)
         else:
-            a.partition(kth, axis=axis)
+            a.partition(kth, axis=)
             part = a
     else:
-        part = partition(a, kth, axis=axis)
+        part = partition(a, kth, axis=)
 
     if part.shape == ():
         # make 0-D arrays work
@@ -3900,7 +3899,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     # Use mean in both odd and even case to coerce data type,
     # using out array if needed.
-    rout = mean(part[indexer], axis=axis, out=out)
+    rout = mean(part[indexer], axis=, out=)
     if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
         rout = np.lib._utils_impl._median_nancheck(part, rout, axis)
@@ -4478,12 +4477,12 @@ def _quantile_unchecked(a,
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
-                    q=q,
-                    keepdims=keepdims,
-                    axis=axis,
-                    out=out,
-                    overwrite_input=overwrite_input,
-                    method=method)
+                    q=,
+                    keepdims=,
+                    axis=,
+                    out=,
+                    overwrite_input=,
+                    method=)
 
 
 def _quantile_is_valid(q):
@@ -4578,7 +4577,7 @@ def _lerp(a, b, t, out=None):
     """
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
+    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=))
     subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
@@ -4587,7 +4586,7 @@ def _lerp(a, b, t, out=None):
 
 def _get_gamma_mask(shape, default_value, conditioned_value, where):
     out = np.full(shape, default_value)
-    np.copyto(out, conditioned_value, where=where, casting="unsafe")
+    np.copyto(out, conditioned_value, where=, casting="unsafe")
     return out
 
 
@@ -4642,11 +4641,7 @@ def _quantile_ureduce_func(
             arr = a.flatten()
         else:
             arr = a.copy()
-    result = _quantile(arr,
-                       quantiles=q,
-                       axis=axis,
-                       method=method,
-                       out=out)
+    result = _quantile(arr, quantiles=q, axis=, method=, out=)
     return result
 
 
@@ -4738,7 +4733,7 @@ def _quantile(
             # cannot contain nan
             arr.partition(virtual_indexes.ravel(), axis=0)
             slices_having_nans = np.array(False, dtype=bool)
-        result = take(arr, virtual_indexes, axis=0, out=out)
+        result = take(arr, virtual_indexes, axis=0, out=)
     else:
         previous_indexes, next_indexes = _get_indexes(arr,
                                                       virtual_indexes,
@@ -4761,10 +4756,7 @@ def _quantile(
         gamma = _get_gamma(virtual_indexes, previous_indexes, method)
         result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
         gamma = gamma.reshape(result_shape)
-        result = _lerp(previous,
-                       next,
-                       gamma,
-                       out=out)
+        result = _lerp(previous, next, gamma, out=)
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
             # can't write to a scalar, but indexing will be correct
@@ -4903,7 +4895,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
             shape[axis] = d.shape[0]
             d = d.reshape(shape)
         else:
-            d = diff(x, axis=axis)
+            d = diff(x, axis=)
     nd = y.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
@@ -4927,7 +4919,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 assert not hasattr(trapz, "__code__")
 
 def _fake_trapz(y, x=None, dx=1.0, axis=-1):
-    return trapz(y, x=x, dx=dx, axis=axis)
+    return trapz(y, x=, dx=, axis=)
 
 
 trapz.__code__ = _fake_trapz.__code__
@@ -5549,7 +5541,7 @@ def append(arr, values, axis=None):
             arr = arr.ravel()
         values = ravel(values)
         axis = arr.ndim-1
-    return concatenate((arr, values), axis=axis)
+    return concatenate((arr, values), axis=)
 
 
 def _digitize_dispatcher(x, bins, right=None):
@@ -5662,6 +5654,6 @@ def digitize(x, bins, right=False):
     side = 'left' if right else 'right'
     if mono == -1:
         # reverse the bins, and invert the results
-        return len(bins) - _nx.searchsorted(bins[::-1], x, side=side)
+        return len(bins) - _nx.searchsorted(bins[::-1], x, side=)
     else:
-        return _nx.searchsorted(bins, x, side=side)
+        return _nx.searchsorted(bins, x, side=)

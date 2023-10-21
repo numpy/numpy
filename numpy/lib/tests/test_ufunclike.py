@@ -94,5 +94,5 @@ class TestUfunclike:
         assert_equal(type(actual), type(expected))
 
         out = np.array(0.0)
-        actual = np.fix(x, out=out)
+        actual = np.fix(x, out=)
         assert_(actual is out)

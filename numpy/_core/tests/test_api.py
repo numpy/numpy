@@ -319,7 +319,7 @@ def test_string_to_boolean_cast(dtype, out_dtype):
     # Only the last two (empty) strings are falsy (the `\0` is stripped):
     arr = np.array(
             ["10", "10\0\0\0", "0\0\0", "0", "False", " ", "", "\0"],
-            dtype=dtype)
+            dtype=)
     expected = np.array(
             [True, True, True, True, True, True, False, False],
             dtype=out_dtype)
@@ -344,11 +344,11 @@ def test_string_to_complex_cast(str_type, scalar_type):
 def test_none_to_nan_cast(dtype):
     # Note that at the time of writing this test, the scalar constructors
     # reject None
-    arr = np.zeros(1, dtype=dtype)
+    arr = np.zeros(1, dtype=)
     arr[0] = None
     assert np.isnan(arr)[0]
-    assert np.isnan(np.array(None, dtype=dtype))[()]
-    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None, dtype=))[()]
+    assert np.isnan(np.array([None], dtype=))[0]
     assert np.isnan(np.array(None).astype(dtype))[()]
 
 def test_copyto_fromscalar():

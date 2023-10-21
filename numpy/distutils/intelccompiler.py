@@ -26,7 +26,7 @@ class IntelCCompiler(UnixCCompiler):
             shared_flag = '-Wl,-undefined,dynamic_lookup'
         else:
             shared_flag = '-shared'
-        self.set_executables(compiler=compiler,
+        self.set_executables(compiler=,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',
@@ -66,7 +66,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
             shared_flag = '-Wl,-undefined,dynamic_lookup'
         else:
             shared_flag = '-shared'
-        self.set_executables(compiler=compiler,
+        self.set_executables(compiler=,
                              compiler_so=compiler,
                              compiler_cxx=compiler,
                              archiver='xiar' + ' cru',

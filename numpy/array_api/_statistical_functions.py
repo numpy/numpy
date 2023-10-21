@@ -25,7 +25,7 @@ def max(
 ) -> Array:
     if x.dtype not in _real_numeric_dtypes:
         raise TypeError("Only real numeric dtypes are allowed in max")
-    return Array._new(np.max(x._array, axis=axis, keepdims=keepdims))
+    return Array._new(np.max(x._array, axis=, keepdims=))
 
 
 def mean(
@@ -37,7 +37,7 @@ def mean(
 ) -> Array:
     if x.dtype not in _real_floating_dtypes:
         raise TypeError("Only real floating-point dtypes are allowed in mean")
-    return Array._new(np.mean(x._array, axis=axis, keepdims=keepdims))
+    return Array._new(np.mean(x._array, axis=, keepdims=))
 
 
 def min(
@@ -49,7 +49,7 @@ def min(
 ) -> Array:
     if x.dtype not in _real_numeric_dtypes:
         raise TypeError("Only real numeric dtypes are allowed in min")
-    return Array._new(np.min(x._array, axis=axis, keepdims=keepdims))
+    return Array._new(np.min(x._array, axis=, keepdims=))
 
 
 def prod(
@@ -70,7 +70,7 @@ def prod(
             dtype = float64
         elif x.dtype == complex64:
             dtype = complex128
-    return Array._new(np.prod(x._array, dtype=dtype, axis=axis, keepdims=keepdims))
+    return Array._new(np.prod(x._array, dtype=, axis=, keepdims=))
 
 
 def std(
@@ -84,7 +84,7 @@ def std(
     # Note: the keyword argument correction is different here
     if x.dtype not in _real_floating_dtypes:
         raise TypeError("Only real floating-point dtypes are allowed in std")
-    return Array._new(np.std(x._array, axis=axis, ddof=correction, keepdims=keepdims))
+    return Array._new(np.std(x._array, axis=, ddof=correction, keepdims=))
 
 
 def sum(
@@ -105,7 +105,7 @@ def sum(
             dtype = float64
         elif x.dtype == complex64:
             dtype = complex128
-    return Array._new(np.sum(x._array, axis=axis, dtype=dtype, keepdims=keepdims))
+    return Array._new(np.sum(x._array, axis=, dtype=, keepdims=))
 
 
 def var(
@@ -119,4 +119,4 @@ def var(
     # Note: the keyword argument correction is different here
     if x.dtype not in _real_floating_dtypes:
         raise TypeError("Only real floating-point dtypes are allowed in var")
-    return Array._new(np.var(x._array, axis=axis, ddof=correction, keepdims=keepdims))
+    return Array._new(np.var(x._array, axis=, ddof=correction, keepdims=))

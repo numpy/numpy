@@ -1433,7 +1433,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
                         % unknown_kwargs)
 
     # Build the contraction list and operand
-    operands, contraction_list = einsum_path(*operands, optimize=optimize,
+    operands, contraction_list = einsum_path(*operands, optimize=,
                                              einsum_call=True)
 
     # Handle order kwarg for output array, c_einsum allows mixed case

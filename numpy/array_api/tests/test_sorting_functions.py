@@ -19,5 +19,5 @@ def test_stable_desc_argsort(obj, axis, expected):
     See https://github.com/numpy/numpy/issues/20778
     """
     x = xp.asarray(obj)
-    out = xp.argsort(x, axis=axis, stable=True, descending=True)
+    out = xp.argsort(x, axis=, stable=True, descending=True)
     assert xp.all(out == xp.asarray(expected))

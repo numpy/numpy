@@ -111,7 +111,7 @@ def _pad_simple(array, pad_width, fill_value=None):
         for size, (left, right) in zip(array.shape, pad_width)
     )
     order = 'F' if array.flags.fnc else 'C'  # Fortran and not also C-order
-    padded = np.empty(new_shape, dtype=array.dtype, order=order)
+    padded = np.empty(new_shape, dtype=array.dtype, order=)
 
     if fill_value is not None:
         padded.fill(fill_value)
@@ -214,7 +214,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             num=width,
             endpoint=False,
             dtype=padded.dtype,
-            axis=axis
+            axis=
         )
         for end_value, edge, width in zip(
             end_value_pair, edge_pair, width_pair
@@ -276,7 +276,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     left_slice = _slice_at_axis(
         slice(left_index, left_index + left_length), axis)
     left_chunk = padded[left_slice]
-    left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
+    left_stat = stat_func(left_chunk, axis=, keepdims=True)
     _round_if_needed(left_stat, padded.dtype)
 
     if left_length == right_length == max_length:
@@ -287,7 +287,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     right_slice = _slice_at_axis(
         slice(right_index - right_length, right_index), axis)
     right_chunk = padded[right_slice]
-    right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
+    right_stat = stat_func(right_chunk, axis=, keepdims=True)
     _round_if_needed(right_stat, padded.dtype)
 
     return left_stat, right_stat

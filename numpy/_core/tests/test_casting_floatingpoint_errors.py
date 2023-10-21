@@ -59,38 +59,38 @@ def check_operations(dtype, value):
     if dtype.kind != 'i':
         # These assignments use the stricter setitem logic:
         def assignment():
-            arr = np.empty(3, dtype=dtype)
+            arr = np.empty(3, dtype=)
             arr[0] = value
 
         yield assignment
 
         def fill():
-            arr = np.empty(3, dtype=dtype)
+            arr = np.empty(3, dtype=)
             arr.fill(value)
 
         yield fill
 
     def copyto_scalar():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         np.copyto(arr, value, casting="unsafe")
 
     yield copyto_scalar
 
     def copyto():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         np.copyto(arr, np.array([value, value, value]), casting="unsafe")
 
     yield copyto
 
     def copyto_scalar_masked():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         np.copyto(arr, value, casting="unsafe",
                   where=[True, False, True])
 
     yield copyto_scalar_masked
 
     def copyto_masked():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         np.copyto(arr, np.array([value, value, value]), casting="unsafe",
                   where=[True, False, True])
 
@@ -108,13 +108,13 @@ def check_operations(dtype, value):
     yield direct_cast_nd_strided
 
     def boolean_array_assignment():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         arr[[True, False, True]] = np.array([value, value])
 
     yield boolean_array_assignment
 
     def integer_array_assignment():
-        arr = np.empty(3, dtype=dtype)
+        arr = np.empty(3, dtype=)
         values = np.array([value, value])
 
         arr[[0, 1]] = values
@@ -122,7 +122,7 @@ def check_operations(dtype, value):
     yield integer_array_assignment
 
     def integer_array_assignment_with_subspace():
-        arr = np.empty((5, 3), dtype=dtype)
+        arr = np.empty((5, 3), dtype=)
         values = np.array([value, value, value])
 
         arr[[0, 2]] = values
@@ -130,7 +130,7 @@ def check_operations(dtype, value):
     yield integer_array_assignment_with_subspace
 
     def flat_assignment():
-        arr = np.empty((3,), dtype=dtype)
+        arr = np.empty((3,), dtype=)
         values = np.array([value, value, value])
         arr.flat[:] = values
 
@@ -145,10 +145,10 @@ def test_floatingpoint_errors_casting(dtype, value):
         dtype = np.dtype(dtype)
 
         match = "invalid" if dtype.kind in 'iu' else "overflow"
-        with pytest.warns(RuntimeWarning, match=match):
+        with pytest.warns(RuntimeWarning, match=):
             operation()
 
         with np.errstate(all="raise"):
-            with pytest.raises(FloatingPointError, match=match):
+            with pytest.raises(FloatingPointError, match=):
                 operation()
 

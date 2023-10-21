@@ -453,28 +453,28 @@ class RNG:
             dtype = np.uint32
         else:
             dtype = np.uint64
-        seed = np.array([1], dtype=dtype)
+        seed = np.array([1], dtype=)
         bg = self.bit_generator(seed)
         state1 = bg.state
         bg = self.bit_generator(1)
         state2 = bg.state
         assert_(comp_state(state1, state2))
 
-        seed = np.arange(4, dtype=dtype)
+        seed = np.arange(4, dtype=)
         bg = self.bit_generator(seed)
         state1 = bg.state
         bg = self.bit_generator(seed[0])
         state2 = bg.state
         assert_(not comp_state(state1, state2))
 
-        seed = np.arange(1500, dtype=dtype)
+        seed = np.arange(1500, dtype=)
         bg = self.bit_generator(seed)
         state1 = bg.state
         bg = self.bit_generator(seed[0])
         state2 = bg.state
         assert_(not comp_state(state1, state2))
 
-        seed = 2 ** np.mod(np.arange(1500, dtype=dtype),
+        seed = 2 ** np.mod(np.arange(1500, dtype=),
                            self.seed_vector_bits - 1) + 1
         bg = self.bit_generator(seed)
         state1 = bg.state
@@ -542,7 +542,7 @@ class RNG:
         rg.bit_generator.state = state
         rg.standard_normal(out=existing)
         rg.bit_generator.state = state
-        direct = rg.standard_normal(size=size)
+        direct = rg.standard_normal(size=)
         assert_equal(direct, existing)
 
         sized = np.empty(size)
@@ -553,7 +553,7 @@ class RNG:
         rg.bit_generator.state = state
         rg.standard_normal(out=existing, dtype=np.float32)
         rg.bit_generator.state = state
-        direct = rg.standard_normal(size=size, dtype=np.float32)
+        direct = rg.standard_normal(size=, dtype=np.float32)
         assert_equal(direct, existing)
 
     def test_output_filling_uniform(self):
@@ -564,14 +564,14 @@ class RNG:
         rg.bit_generator.state = state
         rg.random(out=existing)
         rg.bit_generator.state = state
-        direct = rg.random(size=size)
+        direct = rg.random(size=)
         assert_equal(direct, existing)
 
         existing = np.empty(size, dtype=np.float32)
         rg.bit_generator.state = state
         rg.random(out=existing, dtype=np.float32)
         rg.bit_generator.state = state
-        direct = rg.random(size=size, dtype=np.float32)
+        direct = rg.random(size=, dtype=np.float32)
         assert_equal(direct, existing)
 
     def test_output_filling_exponential(self):
@@ -582,14 +582,14 @@ class RNG:
         rg.bit_generator.state = state
         rg.standard_exponential(out=existing)
         rg.bit_generator.state = state
-        direct = rg.standard_exponential(size=size)
+        direct = rg.standard_exponential(size=)
         assert_equal(direct, existing)
 
         existing = np.empty(size, dtype=np.float32)
         rg.bit_generator.state = state
         rg.standard_exponential(out=existing, dtype=np.float32)
         rg.bit_generator.state = state
-        direct = rg.standard_exponential(size=size, dtype=np.float32)
+        direct = rg.standard_exponential(size=, dtype=np.float32)
         assert_equal(direct, existing)
 
     def test_output_filling_gamma(self):
@@ -600,14 +600,14 @@ class RNG:
         rg.bit_generator.state = state
         rg.standard_gamma(1.0, out=existing)
         rg.bit_generator.state = state
-        direct = rg.standard_gamma(1.0, size=size)
+        direct = rg.standard_gamma(1.0, size=)
         assert_equal(direct, existing)
 
         existing = np.zeros(size, dtype=np.float32)
         rg.bit_generator.state = state
         rg.standard_gamma(1.0, out=existing, dtype=np.float32)
         rg.bit_generator.state = state
-        direct = rg.standard_gamma(1.0, size=size, dtype=np.float32)
+        direct = rg.standard_gamma(1.0, size=, dtype=np.float32)
         assert_equal(direct, existing)
 
     def test_output_filling_gamma_broadcast(self):
@@ -619,14 +619,14 @@ class RNG:
         rg.bit_generator.state = state
         rg.standard_gamma(mu, out=existing)
         rg.bit_generator.state = state
-        direct = rg.standard_gamma(mu, size=size)
+        direct = rg.standard_gamma(mu, size=)
         assert_equal(direct, existing)
 
         existing = np.zeros(size, dtype=np.float32)
         rg.bit_generator.state = state
         rg.standard_gamma(mu, out=existing, dtype=np.float32)
         rg.bit_generator.state = state
-        direct = rg.standard_gamma(mu, size=size, dtype=np.float32)
+        direct = rg.standard_gamma(mu, size=, dtype=np.float32)
         assert_equal(direct, existing)
 
     def test_output_fill_error(self):
@@ -661,41 +661,41 @@ class RNG:
             upper = int(info.max) + 1
             lower = info.min
         self._reset_state()
-        a = self.rg.integers(lower, [upper] * 10, dtype=dtype)
+        a = self.rg.integers(lower, [upper] * 10, dtype=)
         self._reset_state()
-        b = self.rg.integers([lower] * 10, upper, dtype=dtype)
+        b = self.rg.integers([lower] * 10, upper, dtype=)
         assert_equal(a, b)
         self._reset_state()
-        c = self.rg.integers(lower, upper, size=10, dtype=dtype)
+        c = self.rg.integers(lower, upper, size=10, dtype=)
         assert_equal(a, c)
         self._reset_state()
         d = self.rg.integers(np.array(
             [lower] * 10), np.array([upper], dtype=object), size=10,
-            dtype=dtype)
+            dtype=)
         assert_equal(a, d)
         self._reset_state()
         e = self.rg.integers(
             np.array([lower] * 10), np.array([upper] * 10), size=10,
-            dtype=dtype)
+            dtype=)
         assert_equal(a, e)
 
         self._reset_state()
-        a = self.rg.integers(0, upper, size=10, dtype=dtype)
+        a = self.rg.integers(0, upper, size=10, dtype=)
         self._reset_state()
-        b = self.rg.integers([upper] * 10, dtype=dtype)
+        b = self.rg.integers([upper] * 10, dtype=)
         assert_equal(a, b)
 
     def test_integers_numpy(self, dtype):
         high = np.array([1])
         low = np.array([0])
 
-        out = self.rg.integers(low, high, dtype=dtype)
+        out = self.rg.integers(low, high, dtype=)
         assert out.shape == (1,)
 
-        out = self.rg.integers(low[0], high, dtype=dtype)
+        out = self.rg.integers(low[0], high, dtype=)
         assert out.shape == (1,)
 
-        out = self.rg.integers(low, high[0], dtype=dtype)
+        out = self.rg.integers(low, high[0], dtype=)
         assert out.shape == (1,)
 
     def test_integers_broadcast_errors(self, dtype):
@@ -707,13 +707,13 @@ class RNG:
             upper = int(info.max) + 1
             lower = info.min
         with pytest.raises(ValueError):
-            self.rg.integers(lower, [upper + 1] * 10, dtype=dtype)
+            self.rg.integers(lower, [upper + 1] * 10, dtype=)
         with pytest.raises(ValueError):
-            self.rg.integers(lower - 1, [upper] * 10, dtype=dtype)
+            self.rg.integers(lower - 1, [upper] * 10, dtype=)
         with pytest.raises(ValueError):
-            self.rg.integers([lower - 1], [upper] * 10, dtype=dtype)
+            self.rg.integers([lower - 1], [upper] * 10, dtype=)
         with pytest.raises(ValueError):
-            self.rg.integers([0], [0], dtype=dtype)
+            self.rg.integers([0], [0], dtype=)
 
 
 class TestMT19937(RNG):

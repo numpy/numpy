@@ -379,7 +379,7 @@ class NameValidator:
         return tuple(validatednames)
 
     def __call__(self, names, defaultfmt="f%i", nbfields=None):
-        return self.validate(names, defaultfmt=defaultfmt, nbfields=nbfields)
+        return self.validate(names, defaultfmt=, nbfields=)
 
 
 def str2bool(value):
@@ -866,8 +866,8 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
             names = [''] * len(ndtype)
         elif isinstance(names, str):
             names = names.split(",")
-        names = validate(names, nbfields=nbfields, defaultfmt=defaultfmt)
-        ndtype = np.dtype(dict(formats=ndtype, names=names))
+        names = validate(names, nbfields=, defaultfmt=)
+        ndtype = np.dtype(dict(formats=ndtype, names=))
     else:
         # Explicit names
         if names is not None:
@@ -877,21 +877,20 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
             # Simple dtype: repeat to match the nb of names
             if ndtype.names is None:
                 formats = tuple([ndtype.type] * len(names))
-                names = validate(names, defaultfmt=defaultfmt)
+                names = validate(names, defaultfmt=)
                 ndtype = np.dtype(list(zip(names, formats)))
             # Structured dtype: just validate the names as needed
             else:
                 ndtype.names = validate(names, nbfields=len(ndtype.names),
-                                        defaultfmt=defaultfmt)
+                                        defaultfmt=)
         # No implicit names
         elif ndtype.names is not None:
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
             numbered_names = tuple("f%i" % i for i in range(len(ndtype.names)))
             if ((ndtype.names == numbered_names) and (defaultfmt != "f%i")):
-                ndtype.names = validate([''] * len(ndtype.names),
-                                        defaultfmt=defaultfmt)
+                ndtype.names = validate([''] * len(ndtype.names), defaultfmt=)
             # Explicit initial names : just validate
             else:
-                ndtype.names = validate(ndtype.names, defaultfmt=defaultfmt)
+                ndtype.names = validate(ndtype.names, defaultfmt=)
     return ndtype

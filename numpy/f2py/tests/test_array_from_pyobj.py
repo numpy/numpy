@@ -422,7 +422,7 @@ class TestSharedMemory:
     def test_in_nocopy(self, write, order, inp):
         """Test if intent(in) array can be passed without copies"""
         seq = getattr(self, "num" + inp)
-        obj = np.array(seq, dtype=self.type.dtype, order=order)
+        obj = np.array(seq, dtype=self.type.dtype, order=)
         obj.setflags(write=(write == 'w'))
         a = self.array(obj.shape,
                        ((order == 'C' and intent.in_.c) or intent.in_), obj)

@@ -164,4 +164,4 @@ class TestIRFFTN:
         axes = (-2,)
 
         # Should not raise error
-        fft.irfftn(a, axes=axes)
+        fft.irfftn(a, axes=)

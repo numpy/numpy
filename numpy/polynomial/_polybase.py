@@ -435,7 +435,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return r'\text{{{}}}'.format(pu.format_float(x, parens=))
 
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions
@@ -818,7 +818,7 @@ class ABCPolyBase(abc.ABC):
             domain = kind.domain
         if window is None:
             window = kind.window
-        return self(kind.identity(domain, window=window, symbol=self.symbol))
+        return self(kind.identity(domain, window=, symbol=self.symbol))
 
     def mapparms(self):
         """Return the mapping parameters.
@@ -1033,15 +1033,15 @@ class ABCPolyBase(abc.ABC):
             window = cls.window
 
         xnew = pu.mapdomain(x, domain, window)
-        res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
+        res = cls._fit(xnew, y, deg, w=, rcond=, full=)
         if full:
             [coef, status] = res
             return (
-                cls(coef, domain=domain, window=window, symbol=symbol), status
+                cls(coef, domain=, window=, symbol=), status
             )
         else:
             coef = res
-            return cls(coef, domain=domain, window=window, symbol=symbol)
+            return cls(coef, domain=, window=, symbol=)
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None, symbol='x'):
@@ -1084,7 +1084,7 @@ class ABCPolyBase(abc.ABC):
         off, scl = pu.mapparms(domain, window)
         rnew = off + scl*roots
         coef = cls._fromroots(rnew) / scl**deg
-        return cls(coef, domain=domain, window=window, symbol=symbol)
+        return cls(coef, domain=, window=, symbol=)
 
     @classmethod
     def identity(cls, domain=None, window=None, symbol='x'):

@@ -311,10 +311,7 @@ def make_temp_file(suffix='', prefix='', text=True):
     if not hasattr(_tdata, 'tempdir'):
         _tdata.tempdir = tempfile.mkdtemp()
         _tmpdirs.append(_tdata.tempdir)
-    fid, name = tempfile.mkstemp(suffix=suffix,
-                                 prefix=prefix,
-                                 dir=_tdata.tempdir,
-                                 text=text)
+    fid, name = tempfile.mkstemp(suffix=, prefix=, dir=_tdata.tempdir, text=)
     fo = os.fdopen(fid, 'w')
     return fo, name
 
@@ -925,7 +922,7 @@ class Configuration:
                 continue
             n = '.'.join(d.split(os.sep)[-len(l):])
             c = self.get_subpackage(n,
-                                    parent_name = parent_name,
+                                    parent_name=,
                                     caller_level = caller_level+1)
             config_list.extend(c)
         return config_list
@@ -1048,7 +1045,7 @@ class Configuration:
         else:
             parent_name = self.name
         config_list = self.get_subpackage(subpackage_name, subpackage_path,
-                                          parent_name = parent_name,
+                                          parent_name=,
                                           caller_level = 2)
         if not config_list:
             self.warn('No configuration returned, assuming unavailable.')
@@ -1429,7 +1426,7 @@ class Configuration:
         include_non_existing = kws.get('include_non_existing', True)
         return gpaths(paths,
                       local_path = self.local_path,
-                      include_non_existing=include_non_existing)
+                      include_non_existing=)
 
     def _fix_paths_dict(self, kw):
         for k in kw.keys():

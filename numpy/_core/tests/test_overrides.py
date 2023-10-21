@@ -200,7 +200,7 @@ class TestNDArrayArrayFunction:
         array = np.array(1)
         func = lambda x: x
         with assert_raises_regex(AttributeError, '_implementation'):
-            array.__array_function__(func=func, types=(np.ndarray,),
+            array.__array_function__(func=, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
 

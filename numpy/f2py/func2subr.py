@@ -163,18 +163,18 @@ def createfuncwrapper(rout, signature=0):
         if a in dumped_args:
             continue
         if isscalar(vars[a]):
-            add(var2fixfortran(vars, a, f90mode=f90mode))
+            add(var2fixfortran(vars, a, f90mode=))
             dumped_args.append(a)
     for a in args:
         if a in dumped_args:
             continue
         if isintent_in(vars[a]):
-            add(var2fixfortran(vars, a, f90mode=f90mode))
+            add(var2fixfortran(vars, a, f90mode=))
             dumped_args.append(a)
     for a in args:
         if a in dumped_args:
             continue
-        add(var2fixfortran(vars, a, f90mode=f90mode))
+        add(var2fixfortran(vars, a, f90mode=))
 
     add(l1)
     if rl is not None:
@@ -261,12 +261,12 @@ def createsubrwrapper(rout, signature=0):
         if a in dumped_args:
             continue
         if isscalar(vars[a]):
-            add(var2fixfortran(vars, a, f90mode=f90mode))
+            add(var2fixfortran(vars, a, f90mode=))
             dumped_args.append(a)
     for a in args:
         if a in dumped_args:
             continue
-        add(var2fixfortran(vars, a, f90mode=f90mode))
+        add(var2fixfortran(vars, a, f90mode=))
 
     if need_interface:
         if f90mode:

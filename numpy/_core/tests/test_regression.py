@@ -1048,9 +1048,9 @@ class TestRegression:
             dtype = np.dtype('>i4')
         else:
             dtype = np.dtype('<i4')
-        x = np.empty([1], dtype=dtype)
+        x = np.empty([1], dtype=)
         x.fill(1)
-        assert_equal(x, np.array([1], dtype=dtype))
+        assert_equal(x, np.array([1], dtype=))
 
     def test_dot_alignment_sse2(self):
         # Test for ticket #551, changeset r5140
@@ -1163,7 +1163,7 @@ class TestRegression:
         # Comparisons fail for NaN, so we can't use random memory
         # for the test.
         buf = np.zeros(40, dtype=np.int8)
-        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
+        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=)
         b = a.tolist()
         assert_( a[0].tolist() == b[0])
         assert_( a[1].tolist() == b[1])
@@ -1432,7 +1432,7 @@ class TestRegression:
                 assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype.newbyteorder()))
             else:
                 # big-endian machine
-                assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype))
+                assert_equal(x, np.frombuffer(y.tobytes(), dtype=))
             # double check real and imaginary parts:
             assert_equal(x.real, y.real.byteswap())
             assert_equal(x.imag, y.imag.byteswap())
@@ -1536,11 +1536,11 @@ class TestRegression:
         data = np.array(((1, 2, 3), (4, 5, 6), (7, 8, 9)))
         out = np.zeros((3,))
 
-        ret = data.var(axis=1, out=out)
+        ret = data.var(axis=1, out=)
         assert_(ret is out)
         assert_array_equal(ret, data.var(axis=1))
 
-        ret = data.std(axis=1, out=out)
+        ret = data.std(axis=1, out=)
         assert_(ret is out)
         assert_array_equal(ret, data.std(axis=1))
 
@@ -2023,15 +2023,15 @@ class TestRegression:
         # mixed sequence of numeric values and strings (gh-2583)
         for val in [True, 1234, 123.4, complex(1, 234)]:
             for tostr, dtype in [(asunicode, "U"), (asbytes, "S")]:
-                b = np.array([val, tostr('xx')], dtype=dtype)
+                b = np.array([val, tostr('xx')], dtype=)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xx'), val], dtype=dtype)
+                b = np.array([tostr('xx'), val], dtype=)
                 assert_equal(tostr(b[1]), tostr(val))
 
                 # test also with longer strings
-                b = np.array([val, tostr('xxxxxxxxxx')], dtype=dtype)
+                b = np.array([val, tostr('xxxxxxxxxx')], dtype=)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xxxxxxxxxx'), val], dtype=dtype)
+                b = np.array([tostr('xxxxxxxxxx'), val], dtype=)
                 assert_equal(tostr(b[1]), tostr(val))
 
     def test_string_truncation_ucs2(self):
@@ -2216,7 +2216,7 @@ class TestRegression:
         # gh-5743
         a = np.arange(60).reshape(3, 4, 5)
         for axis in chain(range(-a.ndim, a.ndim), [None]):
-            assert_equal(a.repeat(2, axis=axis), a.repeat([2], axis=axis))
+            assert_equal(a.repeat(2, axis=), a.repeat([2], axis=))
 
     def test_frompyfunc_nout_0(self):
         # gh-2014
@@ -2365,7 +2365,7 @@ class TestRegression:
             sctype = np.dtype(ch).type
             scvalue = sctype(values.get(ch, 3))
             for axis in [None, ()]:
-                squeezed = scvalue.squeeze(axis=axis)
+                squeezed = scvalue.squeeze(axis=)
                 assert_equal(squeezed, scvalue)
                 assert_equal(type(squeezed), type(scvalue))
 

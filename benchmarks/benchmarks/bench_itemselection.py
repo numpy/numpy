@@ -15,7 +15,7 @@ class Take(Benchmark):
         self.indices = np.arange(1000)
 
     def time_contiguous(self, shape, mode, dtype):
-        self.arr.take(self.indices, axis=-2, mode=mode)
+        self.arr.take(self.indices, axis=-2, mode=)
 
 
 class PutMask(Benchmark):
@@ -26,11 +26,11 @@ class PutMask(Benchmark):
 
     def setup(self, values_is_scalar, dtype):
         if values_is_scalar:
-            self.vals = np.array(1., dtype=dtype)
+            self.vals = np.array(1., dtype=)
         else:
-            self.vals = np.ones(1000, dtype=dtype)
+            self.vals = np.ones(1000, dtype=)
 
-        self.arr = np.ones(1000, dtype=dtype)
+        self.arr = np.ones(1000, dtype=)
 
         self.dense_mask = np.ones(1000, dtype="bool")
         self.sparse_mask = np.zeros(1000, dtype="bool")
@@ -50,11 +50,11 @@ class Put(Benchmark):
 
     def setup(self, values_is_scalar, dtype):
         if values_is_scalar:
-            self.vals = np.array(1., dtype=dtype)
+            self.vals = np.array(1., dtype=)
         else:
-            self.vals = np.ones(1000, dtype=dtype)
+            self.vals = np.ones(1000, dtype=)
 
-        self.arr = np.ones(1000, dtype=dtype)
+        self.arr = np.ones(1000, dtype=)
         self.indx = np.arange(1000, dtype=np.intp)
 
     def time_ordered(self, values_is_scalar, dtype):

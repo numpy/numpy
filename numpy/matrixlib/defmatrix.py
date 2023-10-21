@@ -67,7 +67,7 @@ def asmatrix(data, dtype=None):
             [3, 4]])
 
     """
-    return matrix(data, dtype=dtype, copy=False)
+    return matrix(data, dtype=, copy=False)
 
 
 @set_module('numpy')
@@ -144,7 +144,7 @@ class matrix(N.ndarray):
             data = _convert_from_string(data)
 
         # now convert data to an array
-        arr = N.array(data, dtype=dtype, copy=copy)
+        arr = N.array(data, dtype=, copy=)
         ndim = arr.ndim
         shape = arr.shape
         if (ndim > 2):
@@ -161,9 +161,7 @@ class matrix(N.ndarray):
         if not (order or arr.flags.contiguous):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(subtype, shape, arr.dtype,
-                                buffer=arr,
-                                order=order)
+        ret = N.ndarray.__new__(subtype, shape, arr.dtype, buffer=arr, order=)
         return ret
 
     def __array_finalize__(self, obj):
@@ -371,7 +369,7 @@ class matrix(N.ndarray):
                 [3, 4]])
 
         """
-        return N.ndarray.squeeze(self, axis=axis)
+        return N.ndarray.squeeze(self, axis=)
 
 
     # To update docstring from array to matrix...
@@ -410,7 +408,7 @@ class matrix(N.ndarray):
         matrix([[1, 3, 2, 4]])
 
         """
-        return N.ndarray.flatten(self, order=order)
+        return N.ndarray.flatten(self, order=)
 
     def mean(self, axis=None, dtype=None, out=None):
         """
@@ -932,7 +930,7 @@ class matrix(N.ndarray):
         numpy.ravel : related function which returns an ndarray
 
         """
-        return N.ndarray.ravel(self, order=order)
+        return N.ndarray.ravel(self, order=)
 
     @property
     def T(self):

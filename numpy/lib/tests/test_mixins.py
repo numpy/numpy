@@ -57,15 +57,15 @@ def wrap_array_like(result):
 
 
 def _assert_equal_type_and_value(result, expected, err_msg=None):
-    assert_equal(type(result), type(expected), err_msg=err_msg)
+    assert_equal(type(result), type(expected), err_msg=)
     if isinstance(result, tuple):
-        assert_equal(len(result), len(expected), err_msg=err_msg)
+        assert_equal(len(result), len(expected), err_msg=)
         for result_item, expected_item in zip(result, expected):
             _assert_equal_type_and_value(result_item, expected_item, err_msg)
     else:
-        assert_equal(result.value, expected.value, err_msg=err_msg)
+        assert_equal(result.value, expected.value, err_msg=)
         assert_equal(getattr(result.value, 'dtype', None),
-                     getattr(expected.value, 'dtype', None), err_msg=err_msg)
+                     getattr(expected.value, 'dtype', None), err_msg=)
 
 
 _ALL_BINARY_OPERATORS = [
@@ -183,14 +183,14 @@ class TestNDArrayOperatorsMixin:
             expected = wrap_array_like(op(array, 1))
             actual = op(array_like, 1)
             err_msg = 'failed for operator {}'.format(op)
-            _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
+            _assert_equal_type_and_value(expected, actual, err_msg=)
 
     def test_reflected_binary_methods(self):
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(2, 1))
             actual = op(2, ArrayLike(1))
             err_msg = 'failed for operator {}'.format(op)
-            _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
+            _assert_equal_type_and_value(expected, actual, err_msg=)
 
     def test_matmul(self):
         array = np.array([1, 2], dtype=np.float64)

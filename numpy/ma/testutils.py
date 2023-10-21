@@ -185,10 +185,9 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
 
     """
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
-        return assert_array_almost_equal(actual, desired, decimal=decimal,
-                                         err_msg=err_msg, verbose=verbose)
-    msg = build_err_msg([actual, desired],
-                        err_msg=err_msg, verbose=verbose)
+        return assert_array_almost_equal(actual, desired, decimal=,
+                                         err_msg=, verbose=)
+    msg = build_err_msg([actual, desired], err_msg=, verbose=)
     if not round(abs(desired - actual), decimal) == 0:
         raise AssertionError(msg)
 
@@ -210,15 +209,15 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     y = masked_array(y, copy=False, mask=m, keep_mask=False, subok=False)
     if ((x is masked) and not (y is masked)) or \
             ((y is masked) and not (x is masked)):
-        msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,
-                            header=header, names=('x', 'y'))
+        msg = build_err_msg([x, y], err_msg=, verbose=,
+                            header=, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
     return np.testing.assert_array_compare(comparison,
                                            x.filled(fill_value),
                                            y.filled(fill_value),
-                                           err_msg=err_msg,
-                                           verbose=verbose, header=header)
+                                           err_msg=,
+                                           verbose=, header=)
 
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
@@ -227,7 +226,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
 
     """
     assert_array_compare(operator.__eq__, x, y,
-                         err_msg=err_msg, verbose=verbose,
+                         err_msg=, verbose=,
                          header='Arrays are not equal')
 
 
@@ -238,7 +237,7 @@ def fail_if_array_equal(x, y, err_msg='', verbose=True):
     """
     def compare(x, y):
         return (not np.all(approx(x, y)))
-    assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(compare, x, y, err_msg=, verbose=,
                          header='Arrays are not equal')
 
 
@@ -252,7 +251,7 @@ def assert_array_approx_equal(x, y, decimal=6, err_msg='', verbose=True):
     def compare(x, y):
         "Returns the result of the loose comparison between x and y)."
         return approx(x, y, rtol=10. ** -decimal)
-    assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(compare, x, y, err_msg=, verbose=,
                          header='Arrays are not almost equal')
 
 
@@ -266,7 +265,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     def compare(x, y):
         "Returns the result of the loose comparison between x and y)."
         return almost(x, y, decimal)
-    assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(compare, x, y, err_msg=, verbose=,
                          header='Arrays are not almost equal')
 
 
@@ -276,7 +275,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
 
     """
     assert_array_compare(operator.__lt__, x, y,
-                         err_msg=err_msg, verbose=verbose,
+                         err_msg=, verbose=,
                          header='Arrays are not less-ordered')
 
 
@@ -289,4 +288,4 @@ def assert_mask_equal(m1, m2, err_msg=''):
         assert_(m2 is nomask)
     if m2 is nomask:
         assert_(m1 is nomask)
-    assert_array_equal(m1, m2, err_msg=err_msg)
+    assert_array_equal(m1, m2, err_msg=)

@@ -170,7 +170,7 @@ class TestMultinomial:
         p /= np.sum(p[1::3])
         pvals = p[1::3]
         random.seed(1432985819)
-        non_contig = random.multinomial(100, pvals=pvals)
+        non_contig = random.multinomial(100, pvals=)
         random.seed(1432985819)
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
@@ -180,7 +180,7 @@ class TestMultinomial:
                       1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
         pvals = x / x.sum()
         match = r"[\w\s]*pvals array is cast to 64-bit floating"
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(ValueError, match=):
             random.multinomial(1, pvals)
 
 
@@ -387,7 +387,7 @@ class TestRandint:
         for size in [None, (5, 3, 3)]:
             random.seed(12345)
             x = self.rfunc([[-1], [0], [1]], [2**32 - 1, 2**32, 2**32 + 1],
-                           size=size)
+                           size=)
             assert_array_equal(x, desired if size is not None else desired[0])
 
     def test_int64_uint64_corner_case(self):
@@ -613,8 +613,8 @@ class TestRandomDist:
         # Check scalar
         assert_(np.isscalar(random.choice(2, replace=True)))
         assert_(np.isscalar(random.choice(2, replace=False)))
-        assert_(np.isscalar(random.choice(2, replace=True, p=p)))
-        assert_(np.isscalar(random.choice(2, replace=False, p=p)))
+        assert_(np.isscalar(random.choice(2, replace=True, p=)))
+        assert_(np.isscalar(random.choice(2, replace=False, p=)))
         assert_(np.isscalar(random.choice([1, 2], replace=True)))
         assert_(random.choice([None], replace=True) is None)
         a = np.array([1, 2])
@@ -626,8 +626,8 @@ class TestRandomDist:
         s = tuple()
         assert_(not np.isscalar(random.choice(2, s, replace=True)))
         assert_(not np.isscalar(random.choice(2, s, replace=False)))
-        assert_(not np.isscalar(random.choice(2, s, replace=True, p=p)))
-        assert_(not np.isscalar(random.choice(2, s, replace=False, p=p)))
+        assert_(not np.isscalar(random.choice(2, s, replace=True, p=)))
+        assert_(not np.isscalar(random.choice(2, s, replace=False, p=)))
         assert_(not np.isscalar(random.choice([1, 2], s, replace=True)))
         assert_(random.choice([None], s, replace=True).ndim == 0)
         a = np.array([1, 2])
@@ -640,8 +640,8 @@ class TestRandomDist:
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
         assert_equal(random.choice(6, s, replace=True).shape, s)
         assert_equal(random.choice(6, s, replace=False).shape, s)
-        assert_equal(random.choice(6, s, replace=True, p=p).shape, s)
-        assert_equal(random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(random.choice(6, s, replace=True, p=).shape, s)
+        assert_equal(random.choice(6, s, replace=False, p=).shape, s)
         assert_equal(random.choice(np.arange(6), s, replace=True).shape, s)
 
         # Check zero-size
@@ -657,7 +657,7 @@ class TestRandomDist:
     def test_choice_nan_probabilities(self):
         a = np.array([42, 1, 2])
         p = [None, None, None]
-        assert_raises(ValueError, random.choice, a, p=p)
+        assert_raises(ValueError, random.choice, a, p=)
 
     def test_choice_p_non_contiguous(self):
         p = np.ones(10) / 5

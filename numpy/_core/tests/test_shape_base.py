@@ -291,7 +291,7 @@ class TestConcatenate:
 
         out = np.zeros(a.size + len(b))
         r = np.concatenate((a, b), axis=None)
-        rout = np.concatenate((a, b), axis=None, out=out)
+        rout = np.concatenate((a, b), axis=None, out=)
         assert_(out is rout)
         assert_equal(r, rout)
 
@@ -344,7 +344,7 @@ class TestConcatenate:
         assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
 
         out = res.copy()
-        rout = concatenate((a0, a1, a2), 2, out=out)
+        rout = concatenate((a0, a1, a2), 2, out=)
         assert_(out is rout)
         assert_equal(res, rout)
 
@@ -379,23 +379,21 @@ class TestConcatenate:
         out = np.empty(4, dtype=out_dtype)
         to_concat = (array([1.1, 2.2]), array([3.3, 4.4]))
 
-        if not np.can_cast(to_concat[0], out_dtype, casting=casting):
+        if not np.can_cast(to_concat[0], out_dtype, casting=):
             with assert_raises(TypeError):
-                concatenate(to_concat, out=out, axis=axis, casting=casting)
+                concatenate(to_concat, out=, axis=, casting=)
             with assert_raises(TypeError):
-                concatenate(to_concat, dtype=out.dtype,
-                            axis=axis, casting=casting)
+                concatenate(to_concat, dtype=out.dtype, axis=, casting=)
         else:
-            res_out = concatenate(to_concat, out=out,
-                                  axis=axis, casting=casting)
+            res_out = concatenate(to_concat, out=, axis=, casting=)
             res_dtype = concatenate(to_concat, dtype=out.dtype,
-                                    axis=axis, casting=casting)
+                                    axis=, casting=)
             assert res_out is out
             assert_array_equal(out, res_dtype)
             assert res_dtype.dtype == out_dtype
 
         with assert_raises(TypeError):
-            concatenate(to_concat, out=out, dtype=out_dtype, axis=axis)
+            concatenate(to_concat, out=, dtype=out_dtype, axis=)
 
     @pytest.mark.parametrize("axis", [None, 0])
     @pytest.mark.parametrize("string_dt", ["S", "U", "S0", "U0"])
@@ -404,21 +402,21 @@ class TestConcatenate:
     def test_dtype_with_promotion(self, arrs, string_dt, axis):
         # Note that U0 and S0 should be deprecated eventually and changed to
         # actually give the empty string result (together with `np.array`)
-        res = np.concatenate(arrs, axis=axis, dtype=string_dt, casting="unsafe")
+        res = np.concatenate(arrs, axis=, dtype=string_dt, casting="unsafe")
         # The actual dtype should be identical to a cast (of a double array):
         assert res.dtype == np.array(1.).astype(string_dt).dtype
 
     @pytest.mark.parametrize("axis", [None, 0])
     def test_string_dtype_does_not_inspect(self, axis):
         with pytest.raises(TypeError):
-            np.concatenate(([None], [1]), dtype="S", axis=axis)
+            np.concatenate(([None], [1]), dtype="S", axis=)
         with pytest.raises(TypeError):
-            np.concatenate(([None], [1]), dtype="U", axis=axis)
+            np.concatenate(([None], [1]), dtype="U", axis=)
 
     @pytest.mark.parametrize("axis", [None, 0])
     def test_subarray_error(self, axis):
         with pytest.raises(TypeError, match=".*subarray dtype"):
-            np.concatenate(([1], [1]), dtype="(2,)i", axis=axis)
+            np.concatenate(([1], [1]), dtype="(2,)i", axis=)
 
 
 def test_stack():
@@ -459,7 +457,7 @@ def test_stack():
     assert_(stack([[], [], []], axis=1).shape == (0, 3))
     # out
     out = np.zeros_like(r1)
-    np.stack((a, b), out=out)
+    np.stack((a, b), out=)
     assert_array_equal(out, r1)
     # edge cases
     assert_raises_regex(ValueError, 'need at least one array', stack, [])
@@ -498,21 +496,18 @@ def test_stack_out_and_dtype(axis, out_dtype, casting):
     res = array([[1, 2], [3, 4]])
     out = np.zeros_like(res)
 
-    if not np.can_cast(to_concat[0], out_dtype, casting=casting):
+    if not np.can_cast(to_concat[0], out_dtype, casting=):
         with assert_raises(TypeError):
-            stack(to_concat, dtype=out_dtype,
-                  axis=axis, casting=casting)
+            stack(to_concat, dtype=out_dtype, axis=, casting=)
     else:
-        res_out = stack(to_concat, out=out,
-                        axis=axis, casting=casting)
-        res_dtype = stack(to_concat, dtype=out_dtype,
-                          axis=axis, casting=casting)
+        res_out = stack(to_concat, out=, axis=, casting=)
+        res_dtype = stack(to_concat, dtype=out_dtype, axis=, casting=)
         assert res_out is out
         assert_array_equal(out, res_dtype)
         assert res_dtype.dtype == out_dtype
 
     with assert_raises(TypeError):
-        stack(to_concat, out=out, dtype=out_dtype, axis=axis)
+        stack(to_concat, out=, dtype=out_dtype, axis=)
 
 
 class TestBlock:

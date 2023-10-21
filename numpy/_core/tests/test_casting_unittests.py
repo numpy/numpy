@@ -715,8 +715,8 @@ class TestCasting:
         # test case corresponding to gh-19325
         dtype = np.dtype([("foo", "<f4", (3, 2))])
         expected = casting == "unsafe"
-        assert np.can_cast("V4", dtype, casting=casting) == expected
-        assert np.can_cast(dtype, "V4", casting=casting) == expected
+        assert np.can_cast("V4", dtype, casting=) == expected
+        assert np.can_cast(dtype, "V4", casting=) == expected
 
     @pytest.mark.parametrize(["to_dt", "expected_off"],
             [  # Same as `from_dt` but with both fields shifted:

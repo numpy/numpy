@@ -189,7 +189,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
 
     ds = DataSource(destpath)
-    return ds.open(path, mode, encoding=encoding, newline=newline)
+    return ds.open(path, mode, encoding=, newline=)
 
 
 @set_module('numpy.lib.npyio')
@@ -526,8 +526,7 @@ class DataSource:
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")
-            return _file_openers[ext](found, mode=mode,
-                                      encoding=encoding, newline=newline)
+            return _file_openers[ext](found, mode=, encoding=, newline=)
         else:
             raise FileNotFoundError(f"{path} not found.")
 
@@ -574,7 +573,7 @@ class Repository (DataSource):
 
     def __init__(self, baseurl, destpath=os.curdir):
         """Create a Repository with a shared url or directory of baseurl."""
-        DataSource.__init__(self, destpath=destpath)
+        DataSource.__init__(self, destpath=)
         self._baseurl = baseurl
 
     def __del__(self):
@@ -680,7 +679,7 @@ class Repository (DataSource):
 
         """
         return DataSource.open(self, self._fullpath(path), mode,
-                               encoding=encoding, newline=newline)
+                               encoding=, newline=)
 
     def listdir(self):
         """

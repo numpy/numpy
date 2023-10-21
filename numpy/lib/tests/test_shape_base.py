@@ -21,10 +21,10 @@ def _add_keepdims(func):
     """ hack in keepdims behavior into a function taking an axis """
     @functools.wraps(func)
     def wrapped(a, axis, **kwargs):
-        res = func(a, axis=axis, **kwargs)
+        res = func(a, axis=, **kwargs)
         if axis is None:
             axis = 0  # res is now a scalar, so we can insert this anywhere
-        return np.expand_dims(res, axis=axis)
+        return np.expand_dims(res, axis=)
     return wrapped
 
 
@@ -43,9 +43,9 @@ class TestTakeAlongAxis:
 
         for func, argfunc, kwargs in funcs:
             for axis in list(range(a.ndim)) + [None]:
-                a_func = func(a, axis=axis, **kwargs)
-                ai_func = argfunc(a, axis=axis, **kwargs)
-                assert_equal(a_func, take_along_axis(a, ai_func, axis=axis))
+                a_func = func(a, axis=, **kwargs)
+                ai_func = argfunc(a, axis=, **kwargs)
+                assert_equal(a_func, take_along_axis(a, ai_func, axis=))
 
     def test_invalid(self):
         """ Test it errors when indices has too few dimensions """
@@ -89,11 +89,11 @@ class TestPutAlongAxis:
             a = a_base.copy()
 
             # replace the max with a small value
-            i_max = _add_keepdims(np.argmax)(a, axis=axis)
-            put_along_axis(a, i_max, -99, axis=axis)
+            i_max = _add_keepdims(np.argmax)(a, axis=)
+            put_along_axis(a, i_max, -99, axis=)
 
             # find the new minimum, which should max
-            i_min = _add_keepdims(np.argmin)(a, axis=axis)
+            i_min = _add_keepdims(np.argmin)(a, axis=)
 
             assert_equal(i_min, i_max)
 

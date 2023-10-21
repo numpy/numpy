@@ -62,13 +62,13 @@ def asarray(
         if dtype is not None and obj.dtype != dtype:
             copy = True
         if copy in (True, np._CopyMode.ALWAYS):
-            return Array._new(np.array(obj._array, copy=True, dtype=dtype))
+            return Array._new(np.array(obj._array, copy=True, dtype=))
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2 ** 64 or obj < -(2 ** 63)):
         # Give a better error message in this case. NumPy would convert this
         # to an object array. TODO: This won't handle large integers in lists.
         raise OverflowError("Integer out of bounds for array dtypes")
-    res = np.asarray(obj, dtype=dtype)
+    res = np.asarray(obj, dtype=)
     return Array._new(res)
 
 
@@ -91,7 +91,7 @@ def arange(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.arange(start, stop=stop, step=step, dtype=dtype))
+    return Array._new(np.arange(start, stop=, step=, dtype=))
 
 
 def empty(
@@ -110,7 +110,7 @@ def empty(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.empty(shape, dtype=dtype))
+    return Array._new(np.empty(shape, dtype=))
 
 
 def empty_like(
@@ -126,7 +126,7 @@ def empty_like(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.empty_like(x._array, dtype=dtype))
+    return Array._new(np.empty_like(x._array, dtype=))
 
 
 def eye(
@@ -148,7 +148,7 @@ def eye(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
+    return Array._new(np.eye(n_rows, M=n_cols, k=, dtype=))
 
 
 def from_dlpack(x: object, /) -> Array:
@@ -176,7 +176,7 @@ def full(
         raise ValueError(f"Unsupported device {device!r}")
     if isinstance(fill_value, Array) and fill_value.ndim == 0:
         fill_value = fill_value._array
-    res = np.full(shape, fill_value, dtype=dtype)
+    res = np.full(shape, fill_value, dtype=)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
@@ -202,7 +202,7 @@ def full_like(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    res = np.full_like(x._array, fill_value, dtype=dtype)
+    res = np.full_like(x._array, fill_value, dtype=)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
@@ -230,7 +230,7 @@ def linspace(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
+    return Array._new(np.linspace(start, stop, num, dtype=, endpoint=))
 
 
 def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
@@ -249,7 +249,7 @@ def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
 
     return [
         Array._new(array)
-        for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)
+        for array in np.meshgrid(*[a._array for a in arrays], indexing=)
     ]
 
 
@@ -269,7 +269,7 @@ def ones(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.ones(shape, dtype=dtype))
+    return Array._new(np.ones(shape, dtype=))
 
 
 def ones_like(
@@ -285,7 +285,7 @@ def ones_like(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.ones_like(x._array, dtype=dtype))
+    return Array._new(np.ones_like(x._array, dtype=))
 
 
 def tril(x: Array, /, *, k: int = 0) -> Array:
@@ -299,7 +299,7 @@ def tril(x: Array, /, *, k: int = 0) -> Array:
     if x.ndim < 2:
         # Note: Unlike np.tril, x must be at least 2-D
         raise ValueError("x must be at least 2-dimensional for tril")
-    return Array._new(np.tril(x._array, k=k))
+    return Array._new(np.tril(x._array, k=))
 
 
 def triu(x: Array, /, *, k: int = 0) -> Array:
@@ -313,7 +313,7 @@ def triu(x: Array, /, *, k: int = 0) -> Array:
     if x.ndim < 2:
         # Note: Unlike np.triu, x must be at least 2-D
         raise ValueError("x must be at least 2-dimensional for triu")
-    return Array._new(np.triu(x._array, k=k))
+    return Array._new(np.triu(x._array, k=))
 
 
 def zeros(
@@ -332,7 +332,7 @@ def zeros(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.zeros(shape, dtype=dtype))
+    return Array._new(np.zeros(shape, dtype=))
 
 
 def zeros_like(
@@ -348,4 +348,4 @@ def zeros_like(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    return Array._new(np.zeros_like(x._array, dtype=dtype))
+    return Array._new(np.zeros_like(x._array, dtype=))

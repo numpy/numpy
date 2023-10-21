@@ -131,7 +131,7 @@ class _DeprecationTestCase:
                         exceptions=tuple(), args=args, kwargs=kwargs)
         """
         self.assert_deprecated(function, num=0, ignore_others=True,
-                        exceptions=tuple(), args=args, kwargs=kwargs)
+                        exceptions=tuple(), args=, kwargs=)
 
 
 class _VisibleDeprecationTestCase(_DeprecationTestCase):
@@ -192,7 +192,7 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
 
         self.message = ("Insufficient bit width provided. This behavior "
                         "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
+        self.assert_deprecated(np.binary_repr, args=, kwargs=)
 
     def test_insufficient_width_negative(self):
         args = (-5,)
@@ -200,7 +200,7 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
 
         self.message = ("Insufficient bit width provided. This behavior "
                         "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
+        self.assert_deprecated(np.binary_repr, args=, kwargs=)
 
 
 class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
@@ -630,7 +630,7 @@ class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_deprecated_warning(self, dtype):
         with pytest.warns(DeprecationWarning, match=self.message):
-            np.loadtxt(["10.5"], dtype=dtype)
+            np.loadtxt(["10.5"], dtype=)
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_deprecated_raised(self, dtype):
@@ -638,7 +638,7 @@ class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("error", DeprecationWarning)
             try:
-                np.loadtxt(["10.5"], dtype=dtype)
+                np.loadtxt(["10.5"], dtype=)
             except ValueError as e:
                 assert isinstance(e.__cause__, DeprecationWarning)
 
@@ -669,11 +669,11 @@ class TestPyIntConversion(_DeprecationTestCase):
             dtype.type(value)
 
         def assign(value, dtype):
-            arr = np.array([0, 0, 0], dtype=dtype)
+            arr = np.array([0, 0, 0], dtype=)
             arr[2] = value
 
         def create(value, dtype):
-            np.array([value], dtype=dtype)
+            np.array([value], dtype=)
 
         for creation_func in [scalar, assign, create]:
             try:

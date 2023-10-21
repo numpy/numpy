@@ -140,10 +140,10 @@ class CorrConv(Benchmark):
         self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
-        np.correlate(self.x1, self.x2, mode=mode)
+        np.correlate(self.x1, self.x2, mode=)
 
     def time_convolve(self, size1, size2, mode):
-        np.convolve(self.x1, self.x2, mode=mode)
+        np.convolve(self.x1, self.x2, mode=)
 
 
 class CountNonzero(Benchmark):
@@ -174,8 +174,8 @@ class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
     def setup(self, dtype):
-        self.d = np.ones(10000, dtype=dtype)
-        self.d2 = np.ones((200, 1000), dtype=dtype)
+        self.d = np.ones(10000, dtype=)
+        self.d2 = np.ones((200, 1000), dtype=)
 
     def time_packbits(self, dtype):
         np.packbits(self.d)
@@ -223,7 +223,7 @@ class StatsMethods(Benchmark):
     param_names = ['dtype', 'size']
 
     def setup(self, dtype, size):
-        self.data = np.ones(size, dtype=dtype)
+        self.data = np.ones(size, dtype=)
         if dtype.startswith('complex'):
             self.data = np.random.randn(size) + 1j * np.random.randn(size)
 

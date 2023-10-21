@@ -420,8 +420,8 @@ class TestRandomDist:
         # Check scalar
         assert_(np.isscalar(np.random.choice(2, replace=True)))
         assert_(np.isscalar(np.random.choice(2, replace=False)))
-        assert_(np.isscalar(np.random.choice(2, replace=True, p=p)))
-        assert_(np.isscalar(np.random.choice(2, replace=False, p=p)))
+        assert_(np.isscalar(np.random.choice(2, replace=True, p=)))
+        assert_(np.isscalar(np.random.choice(2, replace=False, p=)))
         assert_(np.isscalar(np.random.choice([1, 2], replace=True)))
         assert_(np.random.choice([None], replace=True) is None)
         a = np.array([1, 2])
@@ -433,8 +433,8 @@ class TestRandomDist:
         s = tuple()
         assert_(not np.isscalar(np.random.choice(2, s, replace=True)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False)))
-        assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
-        assert_(not np.isscalar(np.random.choice(2, s, replace=False, p=p)))
+        assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=)))
+        assert_(not np.isscalar(np.random.choice(2, s, replace=False, p=)))
         assert_(not np.isscalar(np.random.choice([1, 2], s, replace=True)))
         assert_(np.random.choice([None], s, replace=True).ndim == 0)
         a = np.array([1, 2])
@@ -447,8 +447,8 @@ class TestRandomDist:
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
         assert_equal(np.random.choice(6, s, replace=True).shape, s)
         assert_equal(np.random.choice(6, s, replace=False).shape, s)
-        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=).shape, s)
         assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
         # Check zero-size
@@ -464,7 +464,7 @@ class TestRandomDist:
     def test_choice_nan_probabilities(self):
         a = np.array([42, 1, 2])
         p = [None, None, None]
-        assert_raises(ValueError, np.random.choice, a, p=p)
+        assert_raises(ValueError, np.random.choice, a, p=)
 
     def test_bytes(self):
         np.random.seed(self.seed)

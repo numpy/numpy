@@ -261,7 +261,7 @@ def _run_asv(cmd):
     except (ImportError, RuntimeError):
         pass
 
-    util.run(cmd, cwd='benchmarks', env=env)
+    util.run(cmd, cwd='benchmarks', env=)
 
 
 @click.command()

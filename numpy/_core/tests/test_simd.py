@@ -1326,7 +1326,7 @@ for target_name, npyv in targets.items():
         for sfx in sfxes:
             skip_m = skip_sfx.get(sfx, skip)
             inhr = (cls,)
-            attr = dict(npyv=targets[target_name], sfx=sfx, target_name=target_name)
+            attr = dict(npyv=targets[target_name], sfx=, target_name=)
             tcls = type(f"Test{cls.__name__}_{simd_width}_{target_name}_{sfx}", inhr, attr)
             if skip_m:
                 pytest.mark.skip(reason=skip_m)(tcls)

@@ -239,7 +239,7 @@ class _Test_CCompilerOpt:
         match = self.arg_regex(**kwargs)
         if match is None:
             return
-        targets, _ = self.get_targets(targets=targets, groups=groups, **kwargs)
+        targets, _ = self.get_targets(targets=, groups=, **kwargs)
         targets = ' '.join(targets)
         if not match:
             if len(targets) != 0:
@@ -257,7 +257,7 @@ class _Test_CCompilerOpt:
         if match_dict is None:
             return
         assert(isinstance(match_dict, dict))
-        _, tar_flags = self.get_targets(targets=targets, groups=groups)
+        _, tar_flags = self.get_targets(targets=, groups=)
 
         for match_tar, match_flags in match_dict.items():
             if match_tar not in tar_flags:
@@ -781,16 +781,12 @@ def new_test(arch, cc):
         def __init__(self, methodName="runTest"):
             unittest.TestCase.__init__(self, methodName)
             self.setup_class()
-    """).format(
-        class_name=arch + '_' + cc, arch=arch, cc=cc
-    )
+    """).format(class_name=arch + '_' + cc, arch=, cc=)
     return textwrap.dedent("""\
     class TestCCompilerOpt_{class_name}(_Test_CCompilerOpt):
         arch = '{arch}'
         cc   = '{cc}'
-    """).format(
-        class_name=arch + '_' + cc, arch=arch, cc=cc
-    )
+    """).format(class_name=arch + '_' + cc, arch=, cc=)
 """
 if 1 and is_standalone:
     FakeCCompilerOpt.fake_info = "x86_icc"

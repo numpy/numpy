@@ -69,8 +69,8 @@ def test_packbits_large(bitorder):
                   1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0])
     a = a.repeat(3)
     for dtype in '?bBhHiIlLqQ':
-        arr = np.array(a, dtype=dtype)
-        b = np.packbits(arr, axis=None, bitorder=bitorder)
+        arr = np.array(a, dtype=)
+        b = np.packbits(arr, axis=None, bitorder=)
         assert_equal(b.dtype, np.uint8)
         r = [252, 127, 192, 3, 254, 7, 252, 0, 7, 31, 240, 0, 28, 1, 255, 252,
              113, 248, 3, 255, 192, 28, 15, 192, 28, 126, 0, 224, 127, 255,
@@ -83,7 +83,7 @@ def test_packbits_large(bitorder):
         if bitorder == 'big':
             assert_array_equal(b, r)
         # equal for size being multiple of 8
-        assert_array_equal(np.unpackbits(b, bitorder=bitorder)[:-4], a)
+        assert_array_equal(np.unpackbits(b, bitorder=)[:-4], a)
 
         # check last byte of different remainders (16 byte vectorization)
         b = [np.packbits(arr[:-i], axis=None)[-1] for i in range(1, 16)]
@@ -199,10 +199,10 @@ def test_packbits_large(bitorder):
 
     # result is the same if input is multiplied with a nonzero value
     for dtype in 'bBhHiIlLqQ':
-        arr = np.array(a, dtype=dtype)
+        arr = np.array(a, dtype=)
         rnd = np.random.randint(low=np.iinfo(dtype).min,
                                 high=np.iinfo(dtype).max, size=arr.size,
-                                dtype=dtype)
+                                dtype=)
         rnd[rnd == 0] = 1
         arr *= rnd.astype(dtype)
         b = np.packbits(arr, axis=-1)
@@ -308,8 +308,8 @@ class TestCount():
         else:
             cutoff = count
         # test complete invertibility of packbits and unpackbits with count
-        packed = np.packbits(self.x, bitorder=bitorder)
-        unpacked = np.unpackbits(packed, count=count, bitorder=bitorder)
+        packed = np.packbits(self.x, bitorder=)
+        unpacked = np.unpackbits(packed, count=, bitorder=)
         assert_equal(unpacked.dtype, np.uint8)
         assert_array_equal(unpacked, self.padded1[:cutoff])
 
@@ -331,15 +331,13 @@ class TestCount():
             cutoff = count - 1
         else:
             cutoff = count
-        packed0 = np.packbits(self.x, axis=0, bitorder=bitorder)
-        unpacked0 = np.unpackbits(packed0, axis=0, count=count,
-                                  bitorder=bitorder)
+        packed0 = np.packbits(self.x, axis=0, bitorder=)
+        unpacked0 = np.unpackbits(packed0, axis=0, count=, bitorder=)
         assert_equal(unpacked0.dtype, np.uint8)
         assert_array_equal(unpacked0, self.padded2[:cutoff, :self.x.shape[1]])
 
-        packed1 = np.packbits(self.x, axis=1, bitorder=bitorder)
-        unpacked1 = np.unpackbits(packed1, axis=1, count=count,
-                                  bitorder=bitorder)
+        packed1 = np.packbits(self.x, axis=1, bitorder=)
+        unpacked1 = np.unpackbits(packed1, axis=1, count=, bitorder=)
         assert_equal(unpacked1.dtype, np.uint8)
         assert_array_equal(unpacked1, self.padded2[:self.x.shape[0], :cutoff])
 

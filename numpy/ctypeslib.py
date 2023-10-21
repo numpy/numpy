@@ -423,7 +423,7 @@ if ctypes is not None:
 
             # we inserted manual padding, so always `_pack_`
             return type('union', (ctypes.Union,), dict(
-                _fields_=_fields_,
+                _fields_=,
                 _pack_=1,
                 __module__=None,
             ))
@@ -447,7 +447,7 @@ if ctypes is not None:
 
             # we inserted manual padding, so always `_pack_`
             return type('struct', (ctypes.Structure,), dict(
-                _fields_=_fields_,
+                _fields_=,
                 _pack_=1,
                 __module__=None,
             ))

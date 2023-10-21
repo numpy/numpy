@@ -279,7 +279,7 @@ class memmap(ndarray):
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
             self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                                   offset=array_offset, order=order)
+                                   offset=array_offset, order=)
             self._mmap = mm
             self.offset = offset
             self.mode = mode

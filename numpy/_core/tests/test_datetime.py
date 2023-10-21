@@ -222,8 +222,8 @@ class TestDateTime:
         'm8[ns]', 'm8[us]'])
     def test_datetime_timedelta_sort_nat(self, arr, expected, dtype):
         # fix for gh-12629 and gh-15063; NaT sorting to end of array
-        arr = np.array(arr, dtype=dtype)
-        expected = np.array(expected, dtype=dtype)
+        arr = np.array(arr, dtype=)
+        expected = np.array(expected, dtype=)
         arr.sort()
         assert_equal(arr, expected)
 
@@ -2219,67 +2219,67 @@ class TestDateTime:
         holidays = ['2011-10-10', '2011-11-11', '2011-11-24',
                   '2011-12-25', '2011-05-30', '2011-02-21',
                   '2011-12-26', '2012-01-02']
-        bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
+        bdd = np.busdaycalendar(weekmask='1111100', holidays=)
         assert_equal(
-            np.busday_offset('2011-10-03', 4, holidays=holidays),
+            np.busday_offset('2011-10-03', 4, holidays=),
             np.busday_offset('2011-10-03', 4))
         assert_equal(
-            np.busday_offset('2011-10-03', 5, holidays=holidays),
+            np.busday_offset('2011-10-03', 5, holidays=),
             np.busday_offset('2011-10-03', 5 + 1))
         assert_equal(
-            np.busday_offset('2011-10-03', 27, holidays=holidays),
+            np.busday_offset('2011-10-03', 27, holidays=),
             np.busday_offset('2011-10-03', 27 + 1))
         assert_equal(
-            np.busday_offset('2011-10-03', 28, holidays=holidays),
+            np.busday_offset('2011-10-03', 28, holidays=),
             np.busday_offset('2011-10-03', 28 + 2))
         assert_equal(
-            np.busday_offset('2011-10-03', 35, holidays=holidays),
+            np.busday_offset('2011-10-03', 35, holidays=),
             np.busday_offset('2011-10-03', 35 + 2))
         assert_equal(
-            np.busday_offset('2011-10-03', 36, holidays=holidays),
+            np.busday_offset('2011-10-03', 36, holidays=),
             np.busday_offset('2011-10-03', 36 + 3))
         assert_equal(
-            np.busday_offset('2011-10-03', 56, holidays=holidays),
+            np.busday_offset('2011-10-03', 56, holidays=),
             np.busday_offset('2011-10-03', 56 + 3))
         assert_equal(
-            np.busday_offset('2011-10-03', 57, holidays=holidays),
+            np.busday_offset('2011-10-03', 57, holidays=),
             np.busday_offset('2011-10-03', 57 + 4))
         assert_equal(
-            np.busday_offset('2011-10-03', 60, holidays=holidays),
+            np.busday_offset('2011-10-03', 60, holidays=),
             np.busday_offset('2011-10-03', 60 + 4))
         assert_equal(
-            np.busday_offset('2011-10-03', 61, holidays=holidays),
+            np.busday_offset('2011-10-03', 61, holidays=),
             np.busday_offset('2011-10-03', 61 + 5))
         assert_equal(
             np.busday_offset('2011-10-03', 61, busdaycal=bdd),
             np.busday_offset('2011-10-03', 61 + 5))
         # A bigger backward jump across more than one week/holiday
         assert_equal(
-            np.busday_offset('2012-01-03', -1, holidays=holidays),
+            np.busday_offset('2012-01-03', -1, holidays=),
             np.busday_offset('2012-01-03', -1 - 1))
         assert_equal(
-            np.busday_offset('2012-01-03', -4, holidays=holidays),
+            np.busday_offset('2012-01-03', -4, holidays=),
             np.busday_offset('2012-01-03', -4 - 1))
         assert_equal(
-            np.busday_offset('2012-01-03', -5, holidays=holidays),
+            np.busday_offset('2012-01-03', -5, holidays=),
             np.busday_offset('2012-01-03', -5 - 2))
         assert_equal(
-            np.busday_offset('2012-01-03', -25, holidays=holidays),
+            np.busday_offset('2012-01-03', -25, holidays=),
             np.busday_offset('2012-01-03', -25 - 2))
         assert_equal(
-            np.busday_offset('2012-01-03', -26, holidays=holidays),
+            np.busday_offset('2012-01-03', -26, holidays=),
             np.busday_offset('2012-01-03', -26 - 3))
         assert_equal(
-            np.busday_offset('2012-01-03', -33, holidays=holidays),
+            np.busday_offset('2012-01-03', -33, holidays=),
             np.busday_offset('2012-01-03', -33 - 3))
         assert_equal(
-            np.busday_offset('2012-01-03', -34, holidays=holidays),
+            np.busday_offset('2012-01-03', -34, holidays=),
             np.busday_offset('2012-01-03', -34 - 4))
         assert_equal(
-            np.busday_offset('2012-01-03', -56, holidays=holidays),
+            np.busday_offset('2012-01-03', -56, holidays=),
             np.busday_offset('2012-01-03', -56 - 4))
         assert_equal(
-            np.busday_offset('2012-01-03', -57, holidays=holidays),
+            np.busday_offset('2012-01-03', -57, holidays=),
             np.busday_offset('2012-01-03', -57 - 5))
         assert_equal(
             np.busday_offset('2012-01-03', -57, busdaycal=bdd),
@@ -2289,20 +2289,17 @@ class TestDateTime:
         assert_raises(ValueError, np.busday_offset, '2012-01-03', -15,
                         weekmask='1111100', busdaycal=bdd)
         assert_raises(ValueError, np.busday_offset, '2012-01-03', -15,
-                        holidays=holidays, busdaycal=bdd)
+                        holidays=, busdaycal=bdd)
 
         # Roll with the holidays
         assert_equal(
-            np.busday_offset('2011-12-25', 0,
-                roll='forward', holidays=holidays),
+            np.busday_offset('2011-12-25', 0, roll='forward', holidays=),
             np.datetime64('2011-12-27'))
         assert_equal(
-            np.busday_offset('2011-12-26', 0,
-                roll='forward', holidays=holidays),
+            np.busday_offset('2011-12-26', 0, roll='forward', holidays=),
             np.datetime64('2011-12-27'))
         assert_equal(
-            np.busday_offset('2011-12-26', 0,
-                roll='backward', holidays=holidays),
+            np.busday_offset('2011-12-26', 0, roll='backward', holidays=),
             np.datetime64('2011-12-23'))
         assert_equal(
             np.busday_offset('2012-02-27', 0,
@@ -2322,7 +2319,7 @@ class TestDateTime:
                     '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
                     '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
                     '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10']
-        bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
+        bdd = np.busdaycalendar(weekmask='1111100', holidays=)
 
         # Validate against busday_offset broadcast against
         # a range of offsets
@@ -2353,7 +2350,7 @@ class TestDateTime:
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
                         weekmask='1111100', busdaycal=bdd)
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
-                        holidays=holidays, busdaycal=bdd)
+                        holidays=, busdaycal=bdd)
 
         # Number of Mondays in March 2011
         assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
@@ -2377,7 +2374,7 @@ class TestDateTime:
                     '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
                     '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10',
                     'NaT']
-        bdd = np.busdaycalendar(weekmask='1111100', holidays=holidays)
+        bdd = np.busdaycalendar(weekmask='1111100', holidays=)
 
         # Weekend/weekday tests
         assert_equal(np.is_busday('2011-01-01'), False)

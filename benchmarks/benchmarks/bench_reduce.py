@@ -22,7 +22,7 @@ class AddReduceSeparate(Benchmark):
         self.a = get_squares()[typename]
 
     def time_reduce(self, axis, typename):
-        np.add.reduce(self.a, axis=axis)
+        np.add.reduce(self.a, axis=)
 
 
 class AnyAll(Benchmark):
@@ -50,7 +50,7 @@ class StatsReductions(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.data = np.ones(200, dtype=dtype)
+        self.data = np.ones(200, dtype=)
         if dtype.startswith('complex'):
             self.data = self.data * self.data.T*1j
 
@@ -78,7 +78,7 @@ class FMinMax(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.ones(20000, dtype=dtype)
+        self.d = np.ones(20000, dtype=)
 
     def time_min(self, dtype):
         np.fmin.reduce(self.d)
@@ -93,7 +93,7 @@ class ArgMax(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.zeros(200000, dtype=dtype)
+        self.d = np.zeros(200000, dtype=)
 
     def time_argmax(self, dtype):
         np.argmax(self.d)
@@ -105,7 +105,7 @@ class ArgMin(Benchmark):
     param_names = ['dtype']
 
     def setup(self, dtype):
-        self.d = np.ones(200000, dtype=dtype)
+        self.d = np.ones(200000, dtype=)
 
     def time_argmin(self, dtype):
         np.argmin(self.d)

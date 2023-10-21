@@ -176,6 +176,6 @@ def array_function_from_dispatcher(
 
     def decorator(dispatcher):
         return array_function_dispatch(
-            dispatcher, module, verify=verify,
-            docs_from_dispatcher=docs_from_dispatcher)(implementation)
+            dispatcher, module, verify=,
+            docs_from_dispatcher=)(implementation)
     return decorator

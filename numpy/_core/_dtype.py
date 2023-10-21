@@ -93,11 +93,11 @@ def _construction_repr(dtype, include_align=False, short=False):
         provided as the second parameter.
     """
     if dtype.fields is not None:
-        return _struct_str(dtype, include_align=include_align)
+        return _struct_str(dtype, include_align=)
     elif dtype.subdtype:
         return _subarray_str(dtype)
     else:
-        return _scalar_str(dtype, short=short)
+        return _scalar_str(dtype, short=)
 
 
 def _scalar_str(dtype, short):

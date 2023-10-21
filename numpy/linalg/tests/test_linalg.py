@@ -46,7 +46,7 @@ def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
         decimal = single_decimal
     else:
         decimal = double_decimal
-    old_assert_almost_equal(a, b, decimal=decimal, **kw)
+    old_assert_almost_equal(a, b, decimal=, **kw)
 
 
 def get_real_dtype(dtype):
@@ -472,7 +472,7 @@ class SolveCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestSolve(SolveCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         assert_equal(linalg.solve(x, x).dtype, dtype)
 
     def test_0_size(self):
@@ -539,7 +539,7 @@ class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestInv(InvCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         assert_equal(linalg.inv(x).dtype, dtype)
 
     def test_0_size(self):
@@ -570,9 +570,9 @@ class EigvalsCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestEigvals(EigvalsCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         assert_equal(linalg.eigvals(x).dtype, dtype)
-        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=)
         assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
     def test_0_size(self):
@@ -608,12 +608,12 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestEig(EigCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         w, v = np.linalg.eig(x)
         assert_equal(w.dtype, dtype)
         assert_equal(v.dtype, dtype)
 
-        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=)
         w, v = np.linalg.eig(x)
         assert_equal(w.dtype, get_complex_dtype(dtype))
         assert_equal(v.dtype, get_complex_dtype(dtype))
@@ -646,7 +646,7 @@ class SVDBaseTests:
 
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         res = linalg.svd(x)
         U, S, Vh = res.U, res.S, res.Vh
         assert_equal(U.dtype, dtype)
@@ -693,7 +693,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         def hermitian(mat):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]
-            return np.conj(np.transpose(mat, axes=axes))
+            return np.conj(np.transpose(mat, axes=))
 
         assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
         assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
@@ -887,7 +887,7 @@ class TestDet(DetCases):
 
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         assert_equal(np.linalg.det(x).dtype, dtype)
         ph, s = np.linalg.slogdet(x)
         assert_equal(s.dtype, get_real_dtype(dtype))
@@ -1099,7 +1099,7 @@ class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
 class TestEigvalsh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         w = np.linalg.eigvalsh(x)
         assert_equal(w.dtype, get_real_dtype(dtype))
 
@@ -1117,19 +1117,19 @@ class TestEigvalsh:
 
         # Check default is 'L'
         w = np.linalg.eigvalsh(Klo)
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'L'
         w = np.linalg.eigvalsh(Klo, UPLO='L')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'l'
         w = np.linalg.eigvalsh(Klo, UPLO='l')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'U'
         w = np.linalg.eigvalsh(Kup, UPLO='U')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'u'
         w = np.linalg.eigvalsh(Kup, UPLO='u')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -1176,7 +1176,7 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
 class TestEigh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
-        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=)
         w, v = np.linalg.eigh(x)
         assert_equal(w.dtype, get_real_dtype(dtype))
         assert_equal(v.dtype, dtype)
@@ -1195,19 +1195,19 @@ class TestEigh:
 
         # Check default is 'L'
         w, v = np.linalg.eigh(Klo)
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'L'
         w, v = np.linalg.eigh(Klo, UPLO='L')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'l'
         w, v = np.linalg.eigh(Klo, UPLO='l')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'U'
         w, v = np.linalg.eigh(Kup, UPLO='U')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
         # Check 'u'
         w, v = np.linalg.eigh(Kup, UPLO='u')
-        assert_allclose(w, tgt, rtol=rtol)
+        assert_allclose(w, tgt, rtol=)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -1345,9 +1345,9 @@ class _TestNormGeneral(_TestNormBase):
                 if col_axis < 0:
                     col_axis += nd
                 if row_axis == col_axis:
-                    assert_raises(ValueError, norm, B, ord=order, axis=axis)
+                    assert_raises(ValueError, norm, B, ord=order, axis=)
                 else:
-                    n = norm(B, ord=order, axis=axis)
+                    n = norm(B, ord=order, axis=)
 
                     # The logic using k_index only works for nd = 3.
                     # This has to be changed if nd is increased.
@@ -1810,7 +1810,7 @@ class TestCholesky:
         t[-2:] = -1, -2
 
         a = np.matmul(a.transpose(t).conj(), a)
-        a = np.asarray(a, dtype=dtype)
+        a = np.asarray(a, dtype=)
 
         c = np.linalg.cholesky(a)
 
@@ -1818,7 +1818,7 @@ class TestCholesky:
         b = np.matmul(c, c.transpose(t).conj())
         with np._no_nep50_warning():
             atol = 500 * a.shape[0] * np.finfo(dtype).eps
-        assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
+        assert_allclose(b, a, atol=, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
         # Check diag(L) is real and positive
         d = np.diagonal(c, axis1=-2, axis2=-1)
@@ -1953,13 +1953,11 @@ def test_sdot_bug_8577():
     """)
 
     for bad_lib in bad_libs:
-        code = template.format(before="import numpy as np", after="",
-                               bad_lib=bad_lib)
+        code = template.format(before="import numpy as np", after="", bad_lib=)
         subprocess.check_call([sys.executable, "-c", code])
 
         # Swapped import order
-        code = template.format(after="import numpy as np", before="",
-                               bad_lib=bad_lib)
+        code = template.format(after="import numpy as np", before="", bad_lib=)
         subprocess.check_call([sys.executable, "-c", code])
 
 
@@ -2030,7 +2028,7 @@ class TestMultiDot:
         C = np.random.random((6, 2))
 
         out = np.zeros((6, 2))
-        ret = multi_dot([A, B, C], out=out)
+        ret = multi_dot([A, B, C], out=)
         assert out is ret
         assert_almost_equal(out, A.dot(B).dot(C))
         assert_almost_equal(out, np.dot(A, np.dot(B, C)))
@@ -2040,7 +2038,7 @@ class TestMultiDot:
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
         out = np.zeros((6, 6))
-        ret = multi_dot([A, B], out=out)
+        ret = multi_dot([A, B], out=)
         assert out is ret
         assert_almost_equal(out, A.dot(B))
         assert_almost_equal(out, np.dot(A, B))
@@ -2053,7 +2051,7 @@ class TestMultiDot:
         C = np.random.random((6, 2))
         D = np.random.random((2, 1))
         out = np.zeros((6, 1))
-        ret = multi_dot([A, B, C, D], out=out)
+        ret = multi_dot([A, B, C, D], out=)
         assert out is ret
         assert_almost_equal(out, A.dot(B).dot(C).dot(D))
 
@@ -2100,7 +2098,7 @@ class TestTensorinv:
         ])
     def test_non_square_handling(self, arr, ind):
         with assert_raises(LinAlgError):
-            linalg.tensorinv(arr, ind=ind)
+            linalg.tensorinv(arr, ind=)
 
     @pytest.mark.parametrize("shape, ind", [
         # examples from docstring
@@ -2110,7 +2108,7 @@ class TestTensorinv:
     def test_tensorinv_shape(self, shape, ind):
         a = np.eye(24)
         a.shape = shape
-        ainv = linalg.tensorinv(a=a, ind=ind)
+        ainv = linalg.tensorinv(a=, ind=)
         expected = a.shape[ind:] + a.shape[:ind]
         actual = ainv.shape
         assert_equal(actual, expected)
@@ -2122,7 +2120,7 @@ class TestTensorinv:
         a = np.eye(24)
         a.shape = (4, 6, 8, 3)
         with assert_raises(ValueError):
-            linalg.tensorinv(a=a, ind=ind)
+            linalg.tensorinv(a=, ind=)
 
     def test_tensorinv_result(self):
         # mimic a docstring example
@@ -2142,7 +2140,7 @@ class TestTensorsolve:
     def test_non_square_handling(self, a, axes):
         with assert_raises(LinAlgError):
             b = np.ones(a.shape[:2])
-            linalg.tensorsolve(a, b, axes=axes)
+            linalg.tensorsolve(a, b, axes=)
 
     @pytest.mark.parametrize("shape",
         [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
@@ -2188,9 +2186,9 @@ def test_blas64_geqrf_lwork_smoketest():
 
     # Dummy arrays, not referenced by the lapack routine, so don't
     # need to be of the right size
-    a = np.zeros([1, 1], dtype=dtype)
-    work = np.zeros([1], dtype=dtype)
-    tau = np.zeros([1], dtype=dtype)
+    a = np.zeros([1, 1], dtype=)
+    work = np.zeros([1], dtype=)
+    tau = np.zeros([1], dtype=)
 
     # Size query
     results = lapack_routine(m, n, a, lda, tau, work, -1, 0)

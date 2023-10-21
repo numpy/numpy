@@ -157,7 +157,7 @@ class Expr:
     def parse(s, language=Language.C):
         """Parse a Fortran expression to a Expr.
         """
-        return fromstring(s, language=language)
+        return fromstring(s, language=)
 
     def __init__(self, op, data):
         assert isinstance(op, Op)
@@ -276,7 +276,7 @@ class Expr:
             r = str(self.data[0]) + (f'_{self.data[1]}'
                                      if self.data[1] != 4 else '')
         elif self.op is Op.COMPLEX:
-            r = ', '.join(item.tostring(Precedence.TUPLE, language=language)
+            r = ', '.join(item.tostring(Precedence.TUPLE, language=)
                           for item in self.data)
             r = '(' + r + ')'
             precedence = Precedence.ATOM
@@ -289,7 +289,7 @@ class Expr:
                 r = self.data[1] + '_' + r
             precedence = Precedence.ATOM
         elif self.op is Op.ARRAY:
-            r = ', '.join(item.tostring(Precedence.TUPLE, language=language)
+            r = ', '.join(item.tostring(Precedence.TUPLE, language=)
                           for item in self.data)
             r = '[' + r + ']'
             precedence = Precedence.ATOM
@@ -302,13 +302,13 @@ class Expr:
                 else:
                     op = ' + '
                 if coeff == 1:
-                    term = term.tostring(Precedence.SUM, language=language)
+                    term = term.tostring(Precedence.SUM, language=)
                 else:
                     if term == as_number(1):
                         term = str(coeff)
                     else:
                         term = f'{coeff} * ' + term.tostring(
-                            Precedence.PRODUCT, language=language)
+                            Precedence.PRODUCT, language=)
                 if terms:
                     terms.append(op)
                 elif op == ' - ':
@@ -322,25 +322,21 @@ class Expr:
             for base, exp in sorted(self.data.items()):
                 op = ' * '
                 if exp == 1:
-                    factor = base.tostring(Precedence.PRODUCT,
-                                           language=language)
+                    factor = base.tostring(Precedence.PRODUCT, language=)
                 elif language is Language.C:
                     if exp in range(2, 10):
-                        factor = base.tostring(Precedence.PRODUCT,
-                                               language=language)
+                        factor = base.tostring(Precedence.PRODUCT, language=)
                         factor = ' * '.join([factor] * exp)
                     elif exp in range(-10, 0):
-                        factor = base.tostring(Precedence.PRODUCT,
-                                               language=language)
+                        factor = base.tostring(Precedence.PRODUCT, language=)
                         tail += [factor] * -exp
                         continue
                     else:
-                        factor = base.tostring(Precedence.TUPLE,
-                                               language=language)
+                        factor = base.tostring(Precedence.TUPLE, language=)
                         factor = f'pow({factor}, {exp})'
                 else:
                     factor = base.tostring(Precedence.POWER,
-                                           language=language) + f' ** {exp}'
+                                           language=) + f' ** {exp}'
                 if factors:
                     factors.append(op)
                 factors.append(factor)
@@ -353,13 +349,12 @@ class Expr:
         elif self.op is Op.APPLY:
             name, args, kwargs = self.data
             if name is ArithOp.DIV and language is Language.C:
-                numer, denom = [arg.tostring(Precedence.PRODUCT,
-                                             language=language)
+                numer, denom = [arg.tostring(Precedence.PRODUCT, language=)
                                 for arg in args]
                 r = f'{numer} / {denom}'
                 precedence = Precedence.PRODUCT
             else:
-                args = [arg.tostring(Precedence.TUPLE, language=language)
+                args = [arg.tostring(Precedence.TUPLE, language=)
                         for arg in args]
                 args += [k + '=' + v.tostring(Precedence.NONE)
                          for k, v in kwargs.items()]
@@ -367,18 +362,17 @@ class Expr:
                 precedence = Precedence.ATOM
         elif self.op is Op.INDEXING:
             name = self.data[0]
-            args = [arg.tostring(Precedence.TUPLE, language=language)
+            args = [arg.tostring(Precedence.TUPLE, language=)
                     for arg in self.data[1:]]
             r = f'{name}[{", ".join(args)}]'
             precedence = Precedence.ATOM
         elif self.op is Op.CONCAT:
-            args = [arg.tostring(Precedence.PRODUCT, language=language)
+            args = [arg.tostring(Precedence.PRODUCT, language=)
                     for arg in self.data]
             r = " // ".join(args)
             precedence = Precedence.PRODUCT
         elif self.op is Op.TERNARY:
-            cond, expr1, expr2 = [a.tostring(Precedence.TUPLE,
-                                             language=language)
+            cond, expr1, expr2 = [a.tostring(Precedence.TUPLE, language=)
                                   for a in self.data]
             if language is Language.C:
                 r = f'({cond}?{expr1}:{expr2})'
@@ -391,18 +385,18 @@ class Expr:
                     f'tostring for {self.op} and {language}')
             precedence = Precedence.ATOM
         elif self.op is Op.REF:
-            r = '&' + self.data.tostring(Precedence.UNARY, language=language)
+            r = '&' + self.data.tostring(Precedence.UNARY, language=)
             precedence = Precedence.UNARY
         elif self.op is Op.DEREF:
-            r = '*' + self.data.tostring(Precedence.UNARY, language=language)
+            r = '*' + self.data.tostring(Precedence.UNARY, language=)
             precedence = Precedence.UNARY
         elif self.op is Op.RELATIONAL:
             rop, left, right = self.data
             precedence = (Precedence.EQ if rop in (RelOp.EQ, RelOp.NE)
                           else Precedence.LT)
-            left = left.tostring(precedence, language=language)
-            right = right.tostring(precedence, language=language)
-            rop = rop.tostring(language=language)
+            left = left.tostring(precedence, language=)
+            right = right.tostring(precedence, language=)
+            rop = rop.tostring(language=)
             r = f'{left} {rop} {right}'
         else:
             raise NotImplementedError(f'tostring for op {self.op}')
@@ -1267,7 +1261,7 @@ def fromstring(s, language=Language.C):
     This is a "lazy" parser, that is, only arithmetic operations are
     resolved, non-arithmetic operations are treated as symbols.
     """
-    r = _FromStringWorker(language=language).parse(s)
+    r = _FromStringWorker(language=).parse(s)
     if isinstance(r, Expr):
         return r
     raise ValueError(f'failed to parse `{s}` to Expr instance: got `{r}`')

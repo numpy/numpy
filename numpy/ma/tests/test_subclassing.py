@@ -59,7 +59,7 @@ class MSubArray(SubArray, MaskedArray):
 
     def __new__(cls, data, info={}, mask=nomask):
         subarr = SubArray(data, info)
-        _data = MaskedArray.__new__(cls, data=subarr, mask=mask)
+        _data = MaskedArray.__new__(cls, data=subarr, mask=)
         _data.info = subarr.info
         return _data
 

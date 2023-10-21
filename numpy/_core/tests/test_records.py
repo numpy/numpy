@@ -27,7 +27,7 @@ class TestFromrecords:
     def test_fromrecords_0len(self):
         """ Verify fromrecords works with a 0-length input """
         dtype = [('a', float), ('b', float)]
-        r = np.rec.fromrecords([], dtype=dtype)
+        r = np.rec.fromrecords([], dtype=)
         assert_equal(r.shape, (0,))
 
     def test_fromrecords_2d(self):

@@ -58,8 +58,8 @@ class TestMemmap:
     def test_attributes(self):
         offset = 1
         mode = "w+"
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
-                    shape=self.shape, offset=offset)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode=,
+                    shape=self.shape, offset=)
         assert_equal(offset, fp.offset)
         assert_equal(mode, fp.mode)
         del fp
@@ -196,7 +196,7 @@ class TestMemmap:
     def test_mmap_offset_greater_than_allocation_granularity(self):
         size = 5 * mmap.ALLOCATIONGRANULARITY
         offset = mmap.ALLOCATIONGRANULARITY + 1
-        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=)
         assert_(fp.offset == offset)
 
     def test_no_shape(self):

@@ -545,7 +545,7 @@ def check_rest(module, names, dots=True):
     if module.__name__[6:] not in OTHER_MODULE_DOCS:
         results += [(module.__name__,) +
                     validate_rst_syntax(inspect.getdoc(module),
-                                        module.__name__, dots=dots)]
+                                        module.__name__, dots=)]
 
     for name in names:
         full_name = module.__name__ + '.' + name
@@ -586,7 +586,7 @@ def check_rest(module, names, dots=True):
         else:
             file_full_name = full_name
 
-        results.append((full_name,) + validate_rst_syntax(text, file_full_name, dots=dots))
+        results.append((full_name,) + validate_rst_syntax(text, file_full_name, dots=))
 
     return results
 
@@ -626,8 +626,7 @@ class DTRunner(doctest.DocTestRunner):
 
     def __init__(self, item_name, checker=None, verbose=None, optionflags=0):
         self._item_name = item_name
-        doctest.DocTestRunner.__init__(self, checker=checker, verbose=verbose,
-                                       optionflags=optionflags)
+        doctest.DocTestRunner.__init__(self, checker=, verbose=, optionflags=)
 
     def _report_item_name(self, out, new_line=False):
         if self._item_name is not None:
@@ -784,7 +783,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     """
     flags = NORMALIZE_WHITESPACE | ELLIPSIS
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
-                      verbose=verbose)
+                      verbose=)
 
     output = io.StringIO(newline='')
     success = True
@@ -1079,7 +1078,7 @@ def check_documentation(base_path, results, args, dots):
 
         tut_results = check_doctests_testfile(
             filename,
-            (args.verbose >= 2), dots=dots,
+            (args.verbose >= 2), dots=,
             doctest_warnings=args.doctest_warnings)
 
         # stub out a "module" which is needed when reporting the result
@@ -1180,9 +1179,9 @@ def main(argv):
             mod_results += check_items(all_dict, names, deprecated, others,
                                        module.__name__)
             mod_results += check_rest(module, set(names).difference(deprecated),
-                                      dots=dots)
+                                      dots=)
             if args.doctests:
-                mod_results += check_doctests(module, (args.verbose >= 2), dots=dots,
+                mod_results += check_doctests(module, (args.verbose >= 2), dots=,
                                               doctest_warnings=args.doctest_warnings)
 
             for v in mod_results:

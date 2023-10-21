@@ -31,7 +31,7 @@ class TestMRecords:
     slist = [b'one', b'two', b'three', b'four', b'five']
     ddtype = [('a', int), ('b', float), ('c', '|S8')]
     mask = [0, 1, 0, 0, 1]
-    base = ma.array(list(zip(ilist, flist, slist)), mask=mask, dtype=ddtype)
+    base = ma.array(list(zip(ilist, flist, slist)), mask=, dtype=ddtype)
 
     def test_byview(self):
         # Test creation by view

@@ -157,9 +157,7 @@ class TestSetOps:
         # prepend with an incompatible type
         msg = 'dtype of `{}` must be compatible'.format(expected)
         with assert_raises_regex(TypeError, msg):
-            ediff1d(ary=ary,
-                    to_end=append,
-                    to_begin=prepend)
+            ediff1d(ary=, to_end=append, to_begin=prepend)
 
     @pytest.mark.parametrize(
         "ary,prepend,append,expected",
@@ -190,9 +188,7 @@ class TestSetOps:
         # maintain backwards-compatibility
         # of scalar prepend / append behavior
         # in ediff1d following fix for gh-11490
-        actual = np.ediff1d(ary=ary,
-                            to_end=append,
-                            to_begin=prepend)
+        actual = np.ediff1d(ary=, to_end=append, to_begin=prepend)
         assert_equal(actual, expected)
         assert actual.dtype == expected.dtype
 
@@ -204,7 +200,7 @@ class TestSetOps:
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
 
         def assert_isin_equal(a, b):
-            x = isin(a, b, kind=kind)
+            x = isin(a, b, kind=)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
 
@@ -244,11 +240,11 @@ class TestSetOps:
                 continue
 
             if dtype in {np.int64, np.float64}:
-                ar = np.array([10, 20, 30], dtype=dtype)
+                ar = np.array([10, 20, 30], dtype=)
             elif dtype in {bool}:
                 ar = np.array([True, False, False])
 
-            empty_array = np.array([], dtype=dtype)
+            empty_array = np.array([], dtype=)
 
             assert_isin_equal(empty_array, ar)
             assert_isin_equal(ar, empty_array)
@@ -263,58 +259,58 @@ class TestSetOps:
             a = [5, 7, 1, 2]
             b = [2, 4, 3, 1, 5] * mult
             ec = np.array([True, False, True, True])
-            c = isin(a, b, assume_unique=True, kind=kind)
+            c = isin(a, b, assume_unique=True, kind=)
             assert_array_equal(c, ec)
 
             a[0] = 8
             ec = np.array([False, False, True, True])
-            c = isin(a, b, assume_unique=True, kind=kind)
+            c = isin(a, b, assume_unique=True, kind=)
             assert_array_equal(c, ec)
 
             a[0], a[3] = 4, 8
             ec = np.array([True, False, True, False])
-            c = isin(a, b, assume_unique=True, kind=kind)
+            c = isin(a, b, assume_unique=True, kind=)
             assert_array_equal(c, ec)
 
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
             b = [2, 3, 4] * mult
             ec = [False, True, False, True, True, True, True, True, True,
                   False, True, False, False, False]
-            c = isin(a, b, kind=kind)
+            c = isin(a, b, kind=)
             assert_array_equal(c, ec)
 
             b = b + [5, 5, 4] * mult
             ec = [True, True, True, True, True, True, True, True, True, True,
                   True, False, True, True]
-            c = isin(a, b, kind=kind)
+            c = isin(a, b, kind=)
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 2])
             b = np.array([2, 4, 3, 1, 5] * mult)
             ec = np.array([True, False, True, True])
-            c = isin(a, b, kind=kind)
+            c = isin(a, b, kind=)
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 1, 2])
             b = np.array([2, 4, 3, 3, 1, 5] * mult)
             ec = np.array([True, False, True, True, True])
-            c = isin(a, b, kind=kind)
+            c = isin(a, b, kind=)
             assert_array_equal(c, ec)
 
             a = np.array([5, 5])
             b = np.array([2, 2] * mult)
             ec = np.array([False, False])
-            c = isin(a, b, kind=kind)
+            c = isin(a, b, kind=)
             assert_array_equal(c, ec)
 
         a = np.array([5])
         b = np.array([2])
         ec = np.array([False])
-        c = isin(a, b, kind=kind)
+        c = isin(a, b, kind=)
         assert_array_equal(c, ec)
 
         if kind in {None, "sort"}:
-            assert_array_equal(isin([], [], kind=kind), [])
+            assert_array_equal(isin([], [], kind=), [])
 
     def test_isin_char_array(self):
         a = np.array(['a', 'b', 'c', 'd', 'e', 'c', 'e', 'b'])
@@ -333,8 +329,8 @@ class TestSetOps:
         for mult in (1, 10):
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
             b = [2, 3, 4] * mult
-            assert_array_equal(np.invert(isin(a, b, kind=kind)),
-                               isin(a, b, invert=True, kind=kind))
+            assert_array_equal(np.invert(isin(a, b, kind=)),
+                               isin(a, b, invert=True, kind=))
 
         # float:
         if kind in {None, "sort"}:
@@ -343,8 +339,8 @@ class TestSetOps:
                             dtype=np.float32)
                 b = [2, 3, 4] * mult
                 b = np.array(b, dtype=np.float32)
-                assert_array_equal(np.invert(isin(a, b, kind=kind)),
-                                   isin(a, b, invert=True, kind=kind))
+                assert_array_equal(np.invert(isin(a, b, kind=)),
+                                   isin(a, b, invert=True, kind=))
 
     def test_isin_hit_alternate_algorithm(self):
         """Hit the standard isin code with integers"""
@@ -369,9 +365,9 @@ class TestSetOps:
         b = np.array([False, False, False])
         expected = np.array([False, True])
         assert_array_equal(expected,
-                           isin(a, b, kind=kind))
+                           isin(a, b, kind=))
         assert_array_equal(np.invert(expected),
-                           isin(a, b, invert=True, kind=kind))
+                           isin(a, b, invert=True, kind=))
 
     @pytest.mark.parametrize("kind", [None, "sort"])
     def test_isin_timedelta(self, kind):
@@ -382,7 +378,7 @@ class TestSetOps:
         truth = isin(a, b)
         a_timedelta = a.astype("timedelta64[s]")
         b_timedelta = b.astype("timedelta64[s]")
-        assert_array_equal(truth, isin(a_timedelta, b_timedelta, kind=kind))
+        assert_array_equal(truth, isin(a_timedelta, b_timedelta, kind=))
 
     def test_isin_table_timedelta_fails(self):
         a = np.array([0, 1, 2], dtype="timedelta64[s]")
@@ -422,22 +418,22 @@ class TestSetOps:
 
         if expect_failure:
             with pytest.raises(RuntimeError, match="exceed the maximum"):
-                isin(ar1, ar2, kind=kind)
+                isin(ar1, ar2, kind=)
         else:
-            assert_array_equal(isin(ar1, ar2, kind=kind), expected)
+            assert_array_equal(isin(ar1, ar2, kind=), expected)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_mixed_boolean(self, kind):
         """Test that isin works as expected for bool/int input."""
         for dtype in np.typecodes["AllInteger"]:
             a = np.array([True, False, False], dtype=bool)
-            b = np.array([0, 0, 0, 0], dtype=dtype)
+            b = np.array([0, 0, 0, 0], dtype=)
             expected = np.array([False, True, True], dtype=bool)
-            assert_array_equal(isin(a, b, kind=kind), expected)
+            assert_array_equal(isin(a, b, kind=), expected)
 
             a, b = b, a
             expected = np.array([True, True, True, True], dtype=bool)
-            assert_array_equal(isin(a, b, kind=kind), expected)
+            assert_array_equal(isin(a, b, kind=), expected)
 
     def test_isin_first_array_is_object(self):
         ar1 = [None]
@@ -517,9 +513,9 @@ class TestSetOps:
         assert_raises(ValueError, isin, obj_ar1, obj_ar2, kind='table')
 
         for dtype in [np.int32, np.int64]:
-            ar1 = np.array([-1, 2, 3, 4, 5], dtype=dtype)
+            ar1 = np.array([-1, 2, 3, 4, 5], dtype=)
             # The range of this array will overflow:
-            overflow_ar2 = np.array([-1, np.iinfo(dtype).max], dtype=dtype)
+            overflow_ar2 = np.array([-1, np.iinfo(dtype).max], dtype=)
 
             # Error 3: `kind="table"` will trigger a runtime error
             #  if there is an integer overflow expected when computing the
@@ -807,7 +803,7 @@ class TestUnique:
     @pytest.mark.parametrize("axis", [0, -1])
     def test_unique_1d_with_axis(self, axis):
         x = np.array([4, 3, 2, 3, 2, 1, 2, 2])
-        uniq = unique(x, axis=axis)
+        uniq = unique(x, axis=)
         assert_array_equal(uniq, [1, 2, 3, 4])
 
     def test_unique_axis_zeros(self):
@@ -835,7 +831,7 @@ class TestUnique:
 
         # test a "complicated" shape
         shape = (0, 2, 0, 3, 0, 4, 0)
-        multiple_zeros = np.empty(shape=shape)
+        multiple_zeros = np.empty(shape=)
         for axis in range(len(shape)):
             expected_shape = list(shape)
             if shape[axis] == 0:
@@ -843,7 +839,7 @@ class TestUnique:
             else:
                 expected_shape[axis] = 1
 
-            assert_array_equal(unique(multiple_zeros, axis=axis),
+            assert_array_equal(unique(multiple_zeros, axis=),
                                np.empty(shape=expected_shape))
 
     def test_unique_masked(self):

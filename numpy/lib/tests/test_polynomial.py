@@ -66,7 +66,7 @@ class TestPolynomial:
     @pytest.mark.parametrize("type_code", TYPE_CODES)
     def test_poly1d_misc(self, type_code: str) -> None:
         dtype = np.dtype(type_code)
-        ar = np.array([1, 2, 3], dtype=dtype)
+        ar = np.array([1, 2, 3], dtype=)
         p = np.poly1d(ar)
 
         # `__eq__`
@@ -198,12 +198,12 @@ class TestPolynomial:
         assert_almost_equal(np.sqrt(cov.mean()), 0.5)
         # If we estimate our errors wrong, no change with scaling:
         w = np.full(y.shape[0], 1./0.5)
-        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov=True)
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=, deg=0, cov=True)
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
         # But if we do not scale, our estimate for the error in the mean will
         # differ.
-        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov="unscaled")
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=, deg=0, cov="unscaled")
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 

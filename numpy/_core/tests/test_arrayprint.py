@@ -328,7 +328,7 @@ class TestArray2String:
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)
-        assert_equal(eval(repr(a[0]), dict(np=np)), a[0])
+        assert_equal(eval(repr(a[0]), dict(np=)), a[0])
 
     def test_edgeitems_kwarg(self):
         # previously the global print options would be taken over the kwarg
@@ -1143,7 +1143,7 @@ class TestContextManager:
 def test_scalar_repr_numbers(dtype, value):
     # Test NEP 51 scalar repr (and legacy option) for numeric types
     dtype = np.dtype(dtype)
-    scalar = np.array(value, dtype=dtype)[()]
+    scalar = np.array(value, dtype=)[()]
     assert isinstance(scalar, np.generic)
 
     string = str(scalar)

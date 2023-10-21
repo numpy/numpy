@@ -79,9 +79,9 @@ class TestLogspace:
         stop = 2
         num = 6
         base = array([1, 2])
-        t1 = logspace(start, stop, num=num, base=base, axis=axis)
+        t1 = logspace(start, stop, num=, base=, axis=)
         t2 = stack(
-            [logspace(start, stop, num=num, base=_base) for _base in base],
+            [logspace(start, stop, num=, base=_base) for _base in base],
             axis=(axis + 1) % t1.ndim,
         )
         assert_equal(t1, t2)
@@ -92,9 +92,9 @@ class TestLogspace:
         stop = array([2, 3])
         num = 6
         base = array([1, 2])
-        t1 = logspace(start, stop, num=num, base=base, axis=axis)
+        t1 = logspace(start, stop, num=, base=, axis=)
         t2 = stack(
-            [logspace(start, _stop, num=num, base=_base)
+            [logspace(start, _stop, num=, base=_base)
              for _stop, _base in zip(stop, base)],
             axis=(axis + 1) % t1.ndim,
         )

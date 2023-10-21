@@ -180,7 +180,7 @@ def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
         else:
             dispt = None
         tds.append(TypeDescription(
-            t, f=fd, in_=i, out=o, astype=astype, cfunc_alias=cfunc_alias,
+            t, f=fd, in_=i, out=o, astype=, cfunc_alias=,
             dispatch=dispt
         ))
     return tds
@@ -1319,7 +1319,7 @@ def make_ufuncs(funcdict):
             }}
         """)
         args = dict(
-            name=name,
+            name=,
             funcs=f"{name}_functions" if not uf.empty else "NULL",
             data=f"{name}_data" if not uf.empty else "NULL",
             signatures=f"{name}_signatures" if not uf.empty else "NULL",
@@ -1329,7 +1329,7 @@ def make_ufuncs(funcdict):
             identity='PyUFunc_IdentityValue',
             identity_expr=uf.identity,
             doc=uf.docstring,
-            sig=sig,
+            sig=,
         )
 
         # Only PyUFunc_None means don't reorder - we pass this using the old
@@ -1372,7 +1372,7 @@ def make_ufuncs(funcdict):
             mlist.append(fmt.format(
                 typenum=f"NPY_{english_upper(chartoname[c])}",
                 count=uf.nin+uf.nout,
-                name=name,
+                name=,
                 funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 

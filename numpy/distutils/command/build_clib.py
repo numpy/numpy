@@ -133,7 +133,7 @@ class build_clib(old_build_clib):
                 self.compiler_opt.cache_flush()
 
             self.compiler_opt = new_ccompiler_opt(
-                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                compiler=self.compiler, dispatch_hpath=,
                 cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
                 cache_path=opt_cache_path
             )
@@ -262,7 +262,7 @@ class build_clib(old_build_clib):
                                       verbose=self.verbose,
                                       dry_run=self.dry_run,
                                       force=self.force,
-                                      requiref90=requiref90,
+                                      requiref90=,
                                       c_compiler=self.compiler)
             if fcompiler is not None:
                 dist = self.distribution
@@ -344,7 +344,7 @@ class build_clib(old_build_clib):
                 output_dir=self.build_temp,
                 src_dir=copt_build_src,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=extra_postargs + extra_cxxflags,
                 ccompiler=cxx_compiler
@@ -357,7 +357,7 @@ class build_clib(old_build_clib):
                 output_dir=self.build_temp,
                 src_dir=copt_build_src,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=extra_postargs + extra_cflags)
 
@@ -367,7 +367,7 @@ class build_clib(old_build_clib):
                 c_sources,
                 output_dir=self.build_temp,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=(extra_postargs +
                                 copt_baseline_flags +
@@ -380,7 +380,7 @@ class build_clib(old_build_clib):
                 cxx_sources,
                 output_dir=self.build_temp,
                 macros=macros + copt_macros,
-                include_dirs=include_dirs,
+                include_dirs=,
                 debug=self.debug,
                 extra_postargs=(extra_postargs +
                                 copt_baseline_flags +
@@ -401,10 +401,10 @@ class build_clib(old_build_clib):
                 log.info("compiling Fortran 90 module sources")
                 f_objects += fcompiler.compile(fmodule_sources,
                                                output_dir=self.build_temp,
-                                               macros=macros,
-                                               include_dirs=include_dirs,
+                                               macros=,
+                                               include_dirs=,
                                                debug=self.debug,
-                                               extra_postargs=extra_postargs)
+                                               extra_postargs=)
 
             if requiref90 and self._f_compiler.module_dir_switch is None:
                 # move new compiled F90 module files to module_build_dir
@@ -426,10 +426,10 @@ class build_clib(old_build_clib):
                 log.info("compiling Fortran sources")
                 f_objects += fcompiler.compile(f_sources,
                                                output_dir=self.build_temp,
-                                               macros=macros,
-                                               include_dirs=include_dirs,
+                                               macros=,
+                                               include_dirs=,
                                                debug=self.debug,
-                                               extra_postargs=extra_postargs)
+                                               extra_postargs=)
         else:
             f_objects = []
 

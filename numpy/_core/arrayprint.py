@@ -392,7 +392,7 @@ def _leading_trailing(a, edgeitems, index=()):
         return concatenate((
             _leading_trailing(a, edgeitems, index + np.index_exp[:edgeitems]),
             _leading_trailing(a, edgeitems, index + np.index_exp[-edgeitems:])
-        ), axis=axis)
+        ), axis=)
     else:
         return _leading_trailing(a, edgeitems, index + np.index_exp[:])
 
@@ -425,14 +425,14 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data, sign),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, legacy=),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, legacy=),
         'complexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, legacy=),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
-        'datetime': lambda: DatetimeFormat(data, legacy=legacy),
+            data, precision, floatmode, suppress, sign, legacy=),
+        'datetime': lambda: DatetimeFormat(data, legacy=),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
@@ -985,7 +985,7 @@ class FloatingFormat:
             if self.floatmode == 'fixed' or self._legacy <= 113:
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
-                               unique=unique, trim=trim, sign=self.sign == '+')
+                               unique=, trim=, sign=self.sign == '+')
                     for x in finite_vals)
             frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
             int_part, frac_part = zip(*(s.split('.') for s in frac_strs))
@@ -1010,7 +1010,7 @@ class FloatingFormat:
                 trim, unique = 'k', False
             strs = (dragon4_positional(x, precision=self.precision,
                                        fractional=True,
-                                       unique=unique, trim=trim,
+                                       unique=, trim=,
                                        sign=self.sign == '+')
                     for x in finite_vals)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
@@ -1153,9 +1153,9 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     min_digits = _none_or_positive_arg(min_digits, 'min_digits')
     if min_digits > 0 and precision > 0 and min_digits > precision:
         raise ValueError("min_digits must be less than or equal to precision")
-    return dragon4_scientific(x, precision=precision, unique=unique,
-                              trim=trim, sign=sign, pad_left=pad_left,
-                              exp_digits=exp_digits, min_digits=min_digits)
+    return dragon4_scientific(x, precision=, unique=,
+                              trim=, sign=, pad_left=,
+                              exp_digits=, min_digits=)
 
 
 @set_module('numpy')
@@ -1244,10 +1244,10 @@ def format_float_positional(x, precision=None, unique=True,
                          "fractional=False")
     if min_digits > 0 and precision > 0 and min_digits > precision:
         raise ValueError("min_digits must be less than or equal to precision")
-    return dragon4_positional(x, precision=precision, unique=unique,
-                              fractional=fractional, trim=trim,
-                              sign=sign, pad_left=pad_left,
-                              pad_right=pad_right, min_digits=min_digits)
+    return dragon4_positional(x, precision=, unique=,
+                              fractional=, trim=,
+                              sign=, pad_left=,
+                              pad_right=, min_digits=)
 
 class IntegerFormat:
     def __init__(self, data, sign='-'):
@@ -1293,11 +1293,11 @@ class ComplexFloatingFormat:
 
         self.real_format = FloatingFormat(
             x.real, precision, floatmode_real, suppress_small,
-            sign=sign, legacy=legacy
+            sign=, legacy=
         )
         self.imag_format = FloatingFormat(
             x.imag, precision, floatmode_imag, suppress_small,
-            sign='+', legacy=legacy
+            sign='+', legacy=
         )
 
     def __call__(self, x):
@@ -1558,7 +1558,7 @@ def _array_repr_implementation(
         lst = repr(arr.item())
     elif arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', prefix, suffix=suffix)
+                           ', ', prefix, suffix=)
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
 

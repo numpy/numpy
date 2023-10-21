@@ -67,13 +67,13 @@ class TestRot90:
               [3, 4, 5]]
 
         for k in range(-3, 13, 4):
-            assert_equal(rot90(a, k=k), b1)
+            assert_equal(rot90(a, k=), b1)
         for k in range(-2, 13, 4):
-            assert_equal(rot90(a, k=k), b2)
+            assert_equal(rot90(a, k=), b2)
         for k in range(-1, 13, 4):
-            assert_equal(rot90(a, k=k), b3)
+            assert_equal(rot90(a, k=), b3)
         for k in range(0, 13, 4):
-            assert_equal(rot90(a, k=k), b4)
+            assert_equal(rot90(a, k=), b4)
 
         assert_equal(rot90(rot90(a, axes=(0,1)), axes=(1,0)), a)
         assert_equal(rot90(a, k=1, axes=(1,0)), rot90(a, k=-1, axes=(0,1)))
@@ -109,7 +109,7 @@ class TestRot90:
         assert_equal(rot90(a, axes=(1, 2)), a_rot90_12)
 
         for k in range(1,5):
-            assert_equal(rot90(a, k=k, axes=(2, 0)),
+            assert_equal(rot90(a, k=, axes=(2, 0)),
                          rot90(a_rot90_20, k=k-1, axes=(2, 0)))
 
 
@@ -314,15 +314,15 @@ class TestAverage:
     )
     def test_basic_keepdims(self, x, axis, expected_avg,
                             weights, expected_wavg, expected_wsum):
-        avg = np.average(x, axis=axis, keepdims=True)
+        avg = np.average(x, axis=, keepdims=True)
         assert avg.shape == np.shape(expected_avg)
         assert_array_equal(avg, expected_avg)
 
-        wavg = np.average(x, axis=axis, weights=weights, keepdims=True)
+        wavg = np.average(x, axis=, weights=, keepdims=True)
         assert wavg.shape == np.shape(expected_wavg)
         assert_array_equal(wavg, expected_wavg)
 
-        wavg, wsum = np.average(x, axis=axis, weights=weights, returned=True,
+        wavg, wsum = np.average(x, axis=, weights=, returned=True,
                                 keepdims=True)
         assert wavg.shape == np.shape(expected_wavg)
         assert_array_equal(wavg, expected_wavg)
@@ -760,7 +760,7 @@ class TestDiff:
     def test_n(self):
         x = list(range(3))
         assert_raises(ValueError, diff, x, n=-1)
-        output = [diff(x, n=n) for n in range(1, 5)]
+        output = [diff(x, n=) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
         assert_(diff(x, n=0) is x)
         for n, (expected, out) in enumerate(zip(expected, output), start=1):
@@ -777,7 +777,7 @@ class TestDiff:
         ]
         expected.extend([np.array([], dtype='timedelta64[D]')] * 3)
         for n, exp in enumerate(expected, start=1):
-            out = diff(x, n=n)
+            out = diff(x, n=)
             assert_array_equal(out, exp)
             assert_equal(out.dtype, exp.dtype)
 
@@ -1077,40 +1077,36 @@ class TestGradient:
 
         # evenly spaced
         for edge_order, exp_res in [(1, fdx_even_ord1), (2, fdx_even_ord2)]:
-            res1 = gradient(f, 1., axis=(0,1), edge_order=edge_order)
-            res2 = gradient(f, x_even, x_even,
-                            axis=(0,1), edge_order=edge_order)
-            res3 = gradient(f, x_even, x_even,
-                            axis=None, edge_order=edge_order)
+            res1 = gradient(f, 1., axis=(0,1), edge_order=)
+            res2 = gradient(f, x_even, x_even, axis=(0,1), edge_order=)
+            res3 = gradient(f, x_even, x_even, axis=None, edge_order=)
             assert_array_equal(res1, res2)
             assert_array_equal(res2, res3)
             assert_almost_equal(res1[0], exp_res.T)
             assert_almost_equal(res1[1], exp_res)
 
-            res1 = gradient(f, 1., axis=0, edge_order=edge_order)
-            res2 = gradient(f, x_even, axis=0, edge_order=edge_order)
+            res1 = gradient(f, 1., axis=0, edge_order=)
+            res2 = gradient(f, x_even, axis=0, edge_order=)
             assert_(res1.shape == res2.shape)
             assert_almost_equal(res2, exp_res.T)
 
-            res1 = gradient(f, 1., axis=1, edge_order=edge_order)
-            res2 = gradient(f, x_even, axis=1, edge_order=edge_order)
+            res1 = gradient(f, 1., axis=1, edge_order=)
+            res2 = gradient(f, x_even, axis=1, edge_order=)
             assert_(res1.shape == res2.shape)
             assert_array_equal(res2, exp_res)
 
         # unevenly spaced
         for edge_order, exp_res in [(1, fdx_uneven_ord1), (2, fdx_uneven_ord2)]:
-            res1 = gradient(f, x_uneven, x_uneven,
-                            axis=(0,1), edge_order=edge_order)
-            res2 = gradient(f, x_uneven, x_uneven,
-                            axis=None, edge_order=edge_order)
+            res1 = gradient(f, x_uneven, x_uneven, axis=(0,1), edge_order=)
+            res2 = gradient(f, x_uneven, x_uneven, axis=None, edge_order=)
             assert_array_equal(res1, res2)
             assert_almost_equal(res1[0], exp_res.T)
             assert_almost_equal(res1[1], exp_res)
 
-            res1 = gradient(f, x_uneven, axis=0, edge_order=edge_order)
+            res1 = gradient(f, x_uneven, axis=0, edge_order=)
             assert_almost_equal(res1, exp_res.T)
 
-            res1 = gradient(f, x_uneven, axis=1, edge_order=edge_order)
+            res1 = gradient(f, x_uneven, axis=1, edge_order=)
             assert_almost_equal(res1, exp_res)
 
         # mixed
@@ -1547,7 +1543,7 @@ class TestVectorize:
         assert_equal(f.__doc__, foo.__doc__)
 
         doc = "Provided documentation"
-        f = vectorize(foo, doc=doc)
+        f = vectorize(foo, doc=)
         assert_equal(f.__doc__, doc)
 
     def test_UnboundMethod_ticket_1156(self):
@@ -2009,7 +2005,7 @@ class TestUnwrap:
 class TestFilterwindows:
 
     def test_hanning(self, dtype: str, M: int) -> None:
-        scalar = np.array(M, dtype=dtype)[()]
+        scalar = np.array(M, dtype=)[()]
 
         w = hanning(scalar)
         if dtype == "O":
@@ -2030,7 +2026,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self, dtype: str, M: int) -> None:
-        scalar = np.array(M, dtype=dtype)[()]
+        scalar = np.array(M, dtype=)[()]
 
         w = hamming(scalar)
         if dtype == "O":
@@ -2051,7 +2047,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self, dtype: str, M: int) -> None:
-        scalar = np.array(M, dtype=dtype)[()]
+        scalar = np.array(M, dtype=)[()]
 
         w = bartlett(scalar)
         if dtype == "O":
@@ -2072,7 +2068,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self, dtype: str, M: int) -> None:
-        scalar = np.array(M, dtype=dtype)[()]
+        scalar = np.array(M, dtype=)[()]
 
         w = blackman(scalar)
         if dtype == "O":
@@ -2093,7 +2089,7 @@ class TestFilterwindows:
             assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
     def test_kaiser(self, dtype: str, M: int) -> None:
-        scalar = np.array(M, dtype=dtype)[()]
+        scalar = np.array(M, dtype=)[()]
 
         w = kaiser(scalar, 0)
         if dtype == "O":
@@ -2153,7 +2149,7 @@ class TestTrapz:
         assert_almost_equal(r, qz)
 
         # 1-d `x`
-        r = trapz(q, x=x, axis=0)
+        r = trapz(q, x=, axis=0)
         assert_almost_equal(r, qx)
         r = trapz(q, x=y, axis=1)
         assert_almost_equal(r, qy)
@@ -2166,14 +2162,14 @@ class TestTrapz:
         x = np.arange(5)
         y = x * x
         mask = x == 2
-        ym = np.ma.array(y, mask=mask)
+        ym = np.ma.array(y, mask=)
         r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
         assert_almost_equal(trapz(ym, x), r)
 
-        xm = np.ma.array(x, mask=mask)
+        xm = np.ma.array(x, mask=)
         assert_almost_equal(trapz(ym, xm), r)
 
-        xm = np.ma.array(x, mask=mask)
+        xm = np.ma.array(x, mask=)
         assert_almost_equal(trapz(y, xm), r)
 
 
@@ -2940,10 +2936,10 @@ class TestInterp:
         # test complex left and right
         x0 = -1
         left = 2 + 3.0j
-        assert_almost_equal(np.interp(x0, x, y, left=left), left)
+        assert_almost_equal(np.interp(x0, x, y, left=), left)
         x0 = 2.0
         right = 2 + 3.0j
-        assert_almost_equal(np.interp(x0, x, y, right=right), right)
+        assert_almost_equal(np.interp(x0, x, y, right=), right)
         # test complex non finite
         x = [1, 2, 2.5, 3, 4]
         xp = [1, 2, 3, 4]
@@ -3047,7 +3043,7 @@ class TestPercentile:
     @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     def test_linear_nan_1D(self, dtype):
         # METHOD 1 of H&F
-        arr = np.asarray([15.0, np.nan, 35.0, 40.0, 50.0], dtype=dtype)
+        arr = np.asarray([15.0, np.nan, 35.0, 40.0, 50.0], dtype=)
         res = np.percentile(
             arr,
             40.0,
@@ -3085,7 +3081,7 @@ class TestPercentile:
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
-        actual = np.percentile(arr, 40.0, method=method)
+        actual = np.percentile(arr, 40.0, method=)
 
         np.testing.assert_almost_equal(
             actual, expected_dtype.type(expected), 14)
@@ -3104,27 +3100,27 @@ class TestPercentile:
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_lower_higher(self, dtype):
-        assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
+        assert_equal(np.percentile(np.arange(10, dtype=), 50,
                                    method='lower'), 4)
-        assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
+        assert_equal(np.percentile(np.arange(10, dtype=), 50,
                                    method='higher'), 5)
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_midpoint(self, dtype):
-        assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
+        assert_equal(np.percentile(np.arange(10, dtype=), 51,
                                    method='midpoint'), 4.5)
-        assert_equal(np.percentile(np.arange(9, dtype=dtype) + 1, 50,
+        assert_equal(np.percentile(np.arange(9, dtype=) + 1, 50,
                                    method='midpoint'), 5)
-        assert_equal(np.percentile(np.arange(11, dtype=dtype), 51,
+        assert_equal(np.percentile(np.arange(11, dtype=), 51,
                                    method='midpoint'), 5.5)
-        assert_equal(np.percentile(np.arange(11, dtype=dtype), 50,
+        assert_equal(np.percentile(np.arange(11, dtype=), 50,
                                    method='midpoint'), 5)
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_nearest(self, dtype):
-        assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
+        assert_equal(np.percentile(np.arange(10, dtype=), 51,
                                    method='nearest'), 5)
-        assert_equal(np.percentile(np.arange(10, dtype=dtype), 49,
+        assert_equal(np.percentile(np.arange(10, dtype=), 49,
                                    method='nearest'), 4)
 
     def test_linear_interpolation_extrapolation(self):
@@ -3189,13 +3185,13 @@ class TestPercentile:
         assert_equal(np.percentile(x, 50, axis=1).shape, r1.shape)
 
         out = np.empty(1)
-        assert_equal(np.percentile(x, 50, out=out), 5.5)
+        assert_equal(np.percentile(x, 50, out=), 5.5)
         assert_equal(out, 5.5)
         out = np.empty(4)
-        assert_equal(np.percentile(x, 50, axis=0, out=out), r0)
+        assert_equal(np.percentile(x, 50, axis=0, out=), r0)
         assert_equal(out, r0)
         out = np.empty(3)
-        assert_equal(np.percentile(x, 50, axis=1, out=out), r1)
+        assert_equal(np.percentile(x, 50, axis=1, out=), r1)
         assert_equal(out, r1)
 
         # test for no empty dimensions for compatibility with old percentile
@@ -3212,15 +3208,15 @@ class TestPercentile:
         assert_equal(c1.shape, r1.shape)
 
         out = np.empty((), dtype=x.dtype)
-        c = np.percentile(x, 50, method='lower', out=out)
+        c = np.percentile(x, 50, method='lower', out=)
         assert_equal(c, 5)
         assert_equal(out, 5)
         out = np.empty(4, dtype=x.dtype)
-        c = np.percentile(x, 50, method='lower', axis=0, out=out)
+        c = np.percentile(x, 50, method='lower', axis=0, out=)
         assert_equal(c, r0)
         assert_equal(out, r0)
         out = np.empty(3, dtype=x.dtype)
-        c = np.percentile(x, 50, method='lower', axis=1, out=out)
+        c = np.percentile(x, 50, method='lower', axis=1, out=)
         assert_equal(c, r1)
         assert_equal(out, r1)
 
@@ -3257,22 +3253,22 @@ class TestPercentile:
         # q.dim > 1, float
         r0 = np.array([[2.,  3.,  4., 5.], [4., 5., 6., 7.]])
         out = np.empty((2, 4))
-        assert_equal(np.percentile(x, (25, 50), axis=0, out=out), r0)
+        assert_equal(np.percentile(x, (25, 50), axis=0, out=), r0)
         assert_equal(out, r0)
         r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
         out = np.empty((2, 3))
-        assert_equal(np.percentile(x, (25, 50), axis=1, out=out), r1)
+        assert_equal(np.percentile(x, (25, 50), axis=1, out=), r1)
         assert_equal(out, r1)
 
         # q.dim > 1, int
         r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
         out = np.empty((2, 4), dtype=x.dtype)
-        c = np.percentile(x, (25, 50), method='lower', axis=0, out=out)
+        c = np.percentile(x, (25, 50), method='lower', axis=0, out=)
         assert_equal(c, r0)
         assert_equal(out, r0)
         r1 = np.array([[0,  4,  8], [1,  5,  9]])
         out = np.empty((2, 3), dtype=x.dtype)
-        c = np.percentile(x, (25, 50), method='lower', axis=1, out=out)
+        c = np.percentile(x, (25, 50), method='lower', axis=1, out=)
         assert_equal(c, r1)
         assert_equal(out, r1)
 
@@ -3414,7 +3410,7 @@ class TestPercentile:
         shape_out = np.shape(q) + shape_out
 
         out = np.empty(shape_out)
-        result = np.percentile(d, q, axis=axis, keepdims=True, out=out)
+        result = np.percentile(d, q, axis=, keepdims=True, out=)
         assert result is out
         assert_equal(result.shape, shape_out)
 
@@ -3526,7 +3522,7 @@ class TestPercentile:
     def test_nat_basic(self, dtype, pos):
         # TODO: Note that times have dubious rounding as of fixing NaTs!
         # NaT and NaN should behave the same, do basic tests for NaT:
-        a = np.arange(0, 24, dtype=dtype)
+        a = np.arange(0, 24, dtype=)
         a[pos] = "NaT"
         res = np.percentile(a, 30)
         assert res.dtype == dtype
@@ -3535,7 +3531,7 @@ class TestPercentile:
         assert res.dtype == dtype
         assert np.isnat(res).all()
 
-        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a = np.arange(0, 24*3, dtype=).reshape(-1, 3)
         a[pos, 1] = "NaT"
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
@@ -3629,7 +3625,7 @@ class TestQuantile:
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_quantile_preserve_int_type(self, dtype):
-        res = np.quantile(np.array([1, 2], dtype=dtype), [0.5],
+        res = np.quantile(np.array([1, 2], dtype=), [0.5],
                           method="nearest")
         assert res.dtype == dtype
 
@@ -3640,11 +3636,11 @@ class TestQuantile:
         # Also tests that the boundary values are not mishandled.
         p0 = np.linspace(0, 1, 101)
         quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
-                                         8, 8, 7]) * 0.1, p0, method=method)
+                                         8, 8, 7]) * 0.1, p0, method=)
         assert_equal(np.sort(quantile), quantile)
 
         # Also test one where the number of data points is clearly divisible:
-        quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
+        quantile = np.quantile([0., 1., 2., 3.], p0, method=)
         assert_equal(np.sort(quantile), quantile)
 
     @hypothesis.given(
@@ -3681,7 +3677,7 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        x = np.quantile(y, alpha, method=method)
+        x = np.quantile(y, alpha, method=)
         if method in ("higher",):
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
@@ -3711,15 +3707,15 @@ class TestQuantile:
         #  - n * alpha is a float that gest rounded up
         n = 102  # n * alpha = 20.4, 51. , 91.8
         y = rng.random(n)
-        q = np.quantile(y, alpha, method=method)
+        q = np.quantile(y, alpha, method=)
         c = 13.5
 
         # 1
-        assert_allclose(np.quantile(c + y, alpha, method=method), c + q)
+        assert_allclose(np.quantile(c + y, alpha, method=), c + q)
         # 2
-        assert_allclose(np.quantile(c * y, alpha, method=method), c * q)
+        assert_allclose(np.quantile(c * y, alpha, method=), c * q)
         # 3
-        q = -np.quantile(-y, 1 - alpha, method=method)
+        q = -np.quantile(-y, 1 - alpha, method=)
         if method == "inverted_cdf":
             if (
                 n * alpha == int(n * alpha)
@@ -3737,12 +3733,12 @@ class TestQuantile:
             else:
                 assert_allclose(q, np.quantile(y, alpha, method="lower"))
         elif method == "interpolated_inverted_cdf":
-            assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+            assert_allclose(q, np.quantile(y, alpha + 1/n, method=))
         elif method == "nearest":
             if n * alpha == int(n * alpha):
-                assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+                assert_allclose(q, np.quantile(y, alpha + 1/n, method=))
             else:
-                assert_allclose(q, np.quantile(y, alpha, method=method))
+                assert_allclose(q, np.quantile(y, alpha, method=))
         elif method == "lower":
             assert_allclose(q, np.quantile(y, alpha, method="higher"))
         elif method == "higher":
@@ -3750,7 +3746,7 @@ class TestQuantile:
         else:
             # "averaged_inverted_cdf", "hazen", "weibull", "linear",
             # "median_unbiased", "normal_unbiased", "midpoint"
-            assert_allclose(q, np.quantile(y, alpha, method=method))
+            assert_allclose(q, np.quantile(y, alpha, method=))
 
 
 class TestLerp:
@@ -4071,7 +4067,7 @@ class TestMedian:
             shape_out = tuple(
                 1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
         out = np.empty(shape_out)
-        result = np.median(d, axis=axis, keepdims=True, out=out)
+        result = np.median(d, axis=, keepdims=True, out=)
         assert result is out
         assert_equal(result.shape, shape_out)
 
@@ -4080,7 +4076,7 @@ class TestMedian:
     def test_nat_behavior(self, dtype, pos):
         # TODO: Median does not support Datetime, due to `mean`.
         # NaT and NaN should behave the same, do basic tests for NaT.
-        a = np.arange(0, 24, dtype=dtype)
+        a = np.arange(0, 24, dtype=)
         a[pos] = "NaT"
         res = np.median(a)
         assert res.dtype == dtype
@@ -4089,7 +4085,7 @@ class TestMedian:
         assert res.dtype == dtype
         assert np.isnat(res).all()
 
-        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a = np.arange(0, 24*3, dtype=).reshape(-1, 3)
         a[pos, 1] = "NaT"
         res = np.median(a, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])

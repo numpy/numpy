@@ -54,16 +54,16 @@ class Extension(old_Extension):
 
         old_Extension.__init__(
                 self, name, [],
-                include_dirs=include_dirs,
-                define_macros=define_macros,
-                undef_macros=undef_macros,
-                library_dirs=library_dirs,
-                libraries=libraries,
-                runtime_library_dirs=runtime_library_dirs,
-                extra_objects=extra_objects,
-                extra_compile_args=extra_compile_args,
-                extra_link_args=extra_link_args,
-                export_symbols=export_symbols)
+                include_dirs=,
+                define_macros=,
+                undef_macros=,
+                library_dirs=,
+                libraries=,
+                runtime_library_dirs=,
+                extra_objects=,
+                extra_compile_args=,
+                extra_link_args=,
+                export_symbols=)
 
         # Avoid assert statements checking that sources contains strings:
         self.sources = sources

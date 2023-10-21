@@ -296,8 +296,8 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         np.array(a, copy=False, subok=True, ndmin=ndmax)
         for a in (start, stop, base)
     )
-    y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
-    base = np.expand_dims(base, axis=axis)
+    y = linspace(start, stop, num=, endpoint=, axis=)
+    base = np.expand_dims(base, axis=)
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype, copy=False)
@@ -448,8 +448,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
-    result = logspace(log_start, log_stop, num=num,
-                      endpoint=endpoint, base=10.0, dtype=dtype)
+    result = logspace(log_start, log_stop, num=, endpoint=, base=10.0, dtype=)
 
     # Make sure the endpoints match the start and stop arguments. This is
     # necessary because np.exp(np.log(x)) is not necessarily equal to x.

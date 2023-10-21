@@ -106,7 +106,7 @@ def compile_extension_module(
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,
-        include_dirs=include_dirs, libraries=[], library_dirs=[],
+        include_dirs=, libraries=[], library_dirs=[],
         )
 
 
@@ -141,7 +141,7 @@ def _make_methods(functions, modname):
         {{
         {code}
         }}
-        """.format(cfuncname=cfuncname, signature=signature, code=code)
+        """.format(cfuncname=, signature=, code=)
         codes.append(func_code)
 
     body = "\n".join(codes) + """
@@ -156,7 +156,7 @@ def _make_methods(functions, modname):
         -1,             /* m_size */
         methods,        /* m_methods */
     };
-    """ % dict(methods='\n'.join(methods_table), modname=modname)
+    """ % dict(methods='\n'.join(methods_table), modname=)
     return body
 
 
@@ -172,9 +172,7 @@ def _make_source(name, init, body):
     PyInit_%(name)s(void) {
     %(init)s
     }
-    """ % dict(
-        name=name, init=init, body=body,
-    )
+    """ % dict(name=, init=, body=)
     return code
 
 

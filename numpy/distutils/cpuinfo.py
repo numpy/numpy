@@ -28,7 +28,7 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
         status, output = getstatusoutput(cmd)
     except OSError as e:
-        warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
+        warnings.warn(str(e), UserWarning, stacklevel=)
         return False, ""
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
         return True, output
@@ -37,15 +37,14 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
 def command_info(successful_status=(0,), stacklevel=1, **kw):
     info = {}
     for key in kw:
-        ok, output = getoutput(kw[key], successful_status=successful_status,
+        ok, output = getoutput(kw[key], successful_status=,
                                stacklevel=stacklevel+1)
         if ok:
             info[key] = output.strip()
     return info
 
 def command_by_line(cmd, successful_status=(0,), stacklevel=1):
-    ok, output = getoutput(cmd, successful_status=successful_status,
-                           stacklevel=stacklevel+1)
+    ok, output = getoutput(cmd, successful_status=, stacklevel=stacklevel+1)
     if not ok:
         return
     for line in output.splitlines():
@@ -54,7 +53,7 @@ def command_by_line(cmd, successful_status=(0,), stacklevel=1):
 def key_value_from_command(cmd, sep, successful_status=(0,),
                            stacklevel=1):
     d = {}
-    for line in command_by_line(cmd, successful_status=successful_status,
+    for line in command_by_line(cmd, successful_status=,
                                 stacklevel=stacklevel+1):
         l = [s.strip() for s in line.split(sep, 1)]
         if len(l) == 2:

@@ -11,10 +11,10 @@ class Copy(Benchmark):
 
     def setup(self, typename):
         dtype = np.dtype(typename)
-        self.d = np.arange((50 * 500), dtype=dtype).reshape((500, 50))
-        self.e = np.arange((50 * 500), dtype=dtype).reshape((50, 500))
+        self.d = np.arange((50 * 500), dtype=).reshape((500, 50))
+        self.e = np.arange((50 * 500), dtype=).reshape((50, 500))
         self.e_d = self.e.reshape(self.d.shape)
-        self.dflat = np.arange((50 * 500), dtype=dtype)
+        self.dflat = np.arange((50 * 500), dtype=)
 
     def time_memcpy(self, typename):
         self.d[...] = self.e_d
@@ -125,9 +125,7 @@ class LoadtxtCSVdtypes(Benchmark):
         # state-dependent timing benchmark requires
         # rewind of StringIO object
 
-        np.loadtxt(self.csv_data,
-                   delimiter=',',
-                   dtype=dtype)
+        np.loadtxt(self.csv_data, delimiter=',', dtype=)
         self.csv_data.seek(0)
 
 class LoadtxtCSVStructured(Benchmark):
@@ -170,9 +168,7 @@ class LoadtxtCSVSkipRows(Benchmark):
                    delimiter=',')
 
     def time_skiprows_csv(self, skiprows):
-        np.loadtxt(self.fname,
-                   delimiter=',',
-                   skiprows=skiprows)
+        np.loadtxt(self.fname, delimiter=',', skiprows=)
 
 class LoadtxtReadUint64Integers(Benchmark):
     # pandas has a similar CSV reading benchmark
@@ -215,9 +211,7 @@ class LoadtxtUseColsCSV(Benchmark):
     def time_loadtxt_usecols_csv(self, usecols):
         # must rewind StringIO because of state
         # dependence of file reading
-        np.loadtxt(self.csv_data,
-                   delimiter=',',
-                   usecols=usecols)
+        np.loadtxt(self.csv_data, delimiter=',', usecols=)
         self.csv_data.seek(0)
 
 class LoadtxtCSVDateTime(Benchmark):

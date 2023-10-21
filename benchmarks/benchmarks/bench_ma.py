@@ -23,7 +23,7 @@ class MACreation(Benchmark):
               [True, False, None]]
 
     def time_ma_creations(self, data, mask):
-        np.ma.array(data=np.zeros(int(data)), mask=mask)
+        np.ma.array(data=np.zeros(int(data)), mask=)
 
 
 class Indexing(Benchmark):

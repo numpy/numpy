@@ -77,7 +77,7 @@ class Block2D(Benchmark):
 
         self.block_list = [
              [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
-                     fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
+                     fill_value=1, dtype=) for _ in range(n_chunks[1])]
             for _ in range(n_chunks[0])
         ]
 

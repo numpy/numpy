@@ -49,7 +49,7 @@ def get_values():
 @lru_cache(typed=True)
 def get_square(dtype):
     values = get_values()
-    arr = values.astype(dtype=dtype).reshape((nx, ny))
+    arr = values.astype(dtype=).reshape((nx, ny))
 
     # adjust complex ones to have non-degenerated imagery part -- use
     # original data transposed for that
@@ -198,12 +198,12 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
         rands = [np.random.rand(lsize).astype(dtype)]
         if not finite:
             rands += [
-                np.empty(lsize, dtype=dtype), np.empty(lsize, dtype=dtype)
+                np.empty(lsize, dtype=), np.empty(lsize, dtype=)
             ]
             rands[1].fill(float('nan'))
             rands[2].fill(float('inf'))
         if denormal:
-            rands += [np.empty(lsize, dtype=dtype)]
+            rands += [np.empty(lsize, dtype=)]
             rands[-1].fill(dinfo.smallest_subnormal)
 
     if rands:

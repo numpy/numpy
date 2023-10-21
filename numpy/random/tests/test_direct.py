@@ -175,7 +175,7 @@ def test_non_spawnable():
 
     class FakeSeedSequence:
         def generate_state(self, n_words, dtype=np.uint32):
-            return np.zeros(n_words, dtype=dtype)
+            return np.zeros(n_words, dtype=)
 
     ISeedSequence.register(FakeSeedSequence)
 

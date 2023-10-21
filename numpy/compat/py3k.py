@@ -58,7 +58,7 @@ def isfileobj(f):
         return False
 
 def open_latin1(filename, mode='r'):
-    return open(filename, mode=mode, encoding='iso-8859-1')
+    return open(filename, mode=, encoding='iso-8859-1')
 
 def sixu(s):
     return s

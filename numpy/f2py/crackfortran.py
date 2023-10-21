@@ -328,7 +328,7 @@ def openhook(filename, mode):
             else:
                 # Fallback, without charset_normalizer
                 encoding = 'ascii'
-    return open(filename, mode, encoding=encoding)
+    return open(filename, mode, encoding=)
 
 
 def is_free_format(fname):
@@ -388,7 +388,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     ll, l1 = '', ''
     spacedigits = [' '] + [str(_m) for _m in range(10)]
     filepositiontext = ''
-    fin = fileinput.FileInput(ffile, openhook=openhook)
+    fin = fileinput.FileInput(ffile, openhook=)
     while True:
         try:
             l = fin.readline()
@@ -534,7 +534,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         if m:
             fn = m.group('name')
             if os.path.isfile(fn):
-                readfortrancode(fn, dowithline=dowithline, istop=0)
+                readfortrancode(fn, dowithline=, istop=0)
             else:
                 include_dirs = [
                     os.path.dirname(currentfilename)] + include_paths
@@ -543,7 +543,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                     fn1 = os.path.join(inc_dir, fn)
                     if os.path.isfile(fn1):
                         foundfile = 1
-                        readfortrancode(fn1, dowithline=dowithline, istop=0)
+                        readfortrancode(fn1, dowithline=, istop=0)
                         break
                 if not foundfile:
                     outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n' % (
@@ -562,7 +562,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     if m:
         fn = m.group('name')
         if os.path.isfile(fn):
-            readfortrancode(fn, dowithline=dowithline, istop=0)
+            readfortrancode(fn, dowithline=, istop=0)
         else:
             include_dirs = [os.path.dirname(currentfilename)] + include_paths
             foundfile = 0
@@ -570,7 +570,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 fn1 = os.path.join(inc_dir, fn)
                 if os.path.isfile(fn1):
                     foundfile = 1
-                    readfortrancode(fn1, dowithline=dowithline, istop=0)
+                    readfortrancode(fn1, dowithline=, istop=0)
                     break
             if not foundfile:
                 outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n' % (
@@ -2019,7 +2019,7 @@ def postcrack2(block, tab='', param_map=None):
     if not f90modulevars:
         return block
     if isinstance(block, list):
-        ret = [postcrack2(g, tab=tab + '\t', param_map=param_map)
+        ret = [postcrack2(g, tab=tab + '\t', param_map=)
                for g in block]
         return ret
     setmesstext(block)
@@ -2038,7 +2038,7 @@ def postcrack2(block, tab='', param_map=None):
                     val = kind['kind']
                     if val in param_map:
                         kind['kind'] = param_map[val]
-    new_body = [postcrack2(b, tab=tab + '\t', param_map=param_map)
+    new_body = [postcrack2(b, tab=tab + '\t', param_map=)
                 for b in block['body']]
     block['body'] = new_body
 
@@ -2077,7 +2077,7 @@ def postcrack(block, args=None, tab=''):
     block['sortvars'] = sortvarnames(block['vars'])
     if 'args' in block and block['args']:
         args = block['args']
-    block['body'] = analyzebody(block, args, tab=tab)
+    block['body'] = analyzebody(block, args, tab=)
 
     userisdefined = []
     if 'use' in block:
@@ -3106,7 +3106,7 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
                     continue
                 if onlyfuncs and g['name'] not in onlyfuncs:
                     continue
-            ret = ret + crack2fortrangen(g, tab, as_interface=as_interface)
+            ret = ret + crack2fortrangen(g, tab, as_interface=)
         return ret
     prefix = ''
     name = ''
@@ -3150,9 +3150,9 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
         result = ' result (%s)' % block['result']
         if block['result'] not in argsl:
             argsl.append(block['result'])
-    body = crack2fortrangen(block['body'], tab + tabchar, as_interface=as_interface)
+    body = crack2fortrangen(block['body'], tab + tabchar, as_interface=)
     vars = vars2fortran(
-        block, block['vars'], argsl, tab + tabchar, as_interface=as_interface)
+        block, block['vars'], argsl, tab + tabchar, as_interface=)
     mess = ''
     if 'from' in block and not as_interface:
         mess = '! in %s' % block['from']
@@ -3441,7 +3441,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
         for index, value in enumerate(obj):
             new_index, new_item = traverse((index, value), visit,
                                            parents=parents + [parent],
-                                           result=result, *args, **kwargs)
+                                           result=, *args, **kwargs)
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
@@ -3449,7 +3449,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
                                           parents=parents + [parent],
-                                          result=result, *args, **kwargs)
+                                          result=, *args, **kwargs)
             if new_key is not None:
                 new_result[new_key] = new_value
     else:

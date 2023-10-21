@@ -70,7 +70,7 @@ class TestResize:
         A = np.arange(0, 10, dtype=np.float32)
         new_shape = (-10, -1)
         with pytest.raises(ValueError, match=r"negative"):
-            np.resize(A, new_shape=new_shape)
+            np.resize(A, new_shape=)
 
     def test_subclass(self):
         class MyArray(np.ndarray):
@@ -318,11 +318,7 @@ class TestNonarrayArgs:
         # The returned  object should be the object specified during calling
         assert mean_out is mean
 
-        std = np.std(A,
-                     out=std_out,
-                     axis=1,
-                     keepdims=True,
-                     mean=mean)
+        std = np.std(A, out=std_out, axis=1, keepdims=True, mean=)
 
         # The returned  object should be the object specified during calling
         assert std_out is std
@@ -353,11 +349,7 @@ class TestNonarrayArgs:
         # The returned  object should be the object specified during calling
         assert mean_out is mean
 
-        var = np.var(A,
-                     out=var_out,
-                     axis=1,
-                     keepdims=True,
-                     mean=mean)
+        var = np.var(A, out=var_out, axis=1, keepdims=True, mean=)
 
         # The returned  object should be the object specified during calling
         assert var_out is var
@@ -380,10 +372,7 @@ class TestNonarrayArgs:
                        axis=1,
                        keepdims=True)
 
-        std = np.std(A,
-                     axis=1,
-                     keepdims=False,
-                     mean=mean)
+        std = np.std(A, axis=1, keepdims=False, mean=)
 
         # Shape of returned mean and std should be same
         assert std.shape == (10, 5)
@@ -403,10 +392,7 @@ class TestNonarrayArgs:
                        axis=1,
                        keepdims=True)
 
-        var = np.var(A,
-                     axis=1,
-                     keepdims=False,
-                     mean=mean)
+        var = np.var(A, axis=1, keepdims=False, mean=)
 
         # Shape of returned mean and var should be same
         assert var.shape == (10, 5)
@@ -424,23 +410,16 @@ class TestNonarrayArgs:
 
         where = A > 0.5
 
-        mean = np.mean(A,
-                       axis=1,
-                       keepdims=True,
-                       where=where)
+        mean = np.mean(A, axis=1, keepdims=True, where=)
 
-        std = np.std(A,
-                     axis=1,
-                     keepdims=False,
-                     mean=mean,
-                     where=where)
+        std = np.std(A, axis=1, keepdims=False, mean=, where=)
 
         # Shape of returned mean and std should be same
         assert std.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A, axis=1, where=where)
-        mean_old = np.mean(A, axis=1, where=where)
+        std_old = np.std(A, axis=1, where=)
+        mean_old = np.mean(A, axis=1, where=)
 
         assert std_old.shape == mean_old.shape
         assert_equal(std, std_old)
@@ -451,23 +430,16 @@ class TestNonarrayArgs:
 
         where = A > 0.5
 
-        mean = np.mean(A,
-                       axis=1,
-                       keepdims=True,
-                       where=where)
+        mean = np.mean(A, axis=1, keepdims=True, where=)
 
-        var = np.var(A,
-                     axis=1,
-                     keepdims=False,
-                     mean=mean,
-                     where=where)
+        var = np.var(A, axis=1, keepdims=False, mean=, where=)
 
         # Shape of returned mean and var should be same
         assert var.shape == (10, 5)
 
         # Output should be the same as from the individual algorithms
-        var_old = np.var(A, axis=1, where=where)
-        mean_old = np.mean(A, axis=1, where=where)
+        var_old = np.var(A, axis=1, where=)
+        mean_old = np.mean(A, axis=1, where=)
 
         assert var_old.shape == mean_old.shape
         assert_equal(var, var_old)
@@ -479,22 +451,15 @@ class TestNonarrayArgs:
 
         axis = (0, 2)
 
-        mean = np.mean(A,
-                       out=None,
-                       axis=axis,
-                       keepdims=True)
+        mean = np.mean(A, out=None, axis=, keepdims=True)
 
-        std = np.std(A,
-                     out=None,
-                     axis=axis,
-                     keepdims=False,
-                     mean=mean)
+        std = np.std(A, out=None, axis=, keepdims=False, mean=)
 
         # Shape of returned mean and std should be same
         assert std.shape == (20,)
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A, axis=axis, keepdims=False)
+        std_old = np.std(A, axis=, keepdims=False)
 
         assert_almost_equal(std, std_old)
 
@@ -505,22 +470,15 @@ class TestNonarrayArgs:
 
         axis = None
 
-        mean = np.mean(A,
-                       out=None,
-                       axis=axis,
-                       keepdims=True)
+        mean = np.mean(A, out=None, axis=, keepdims=True)
 
-        std = np.std(A,
-                     out=None,
-                     axis=axis,
-                     keepdims=False,
-                     mean=mean)
+        std = np.std(A, out=None, axis=, keepdims=False, mean=)
 
         # Shape of returned mean and std should be same
         assert std.shape == ()
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A, axis=axis, keepdims=False)
+        std_old = np.std(A, axis=, keepdims=False)
 
         assert_almost_equal(std, std_old)
 
@@ -543,20 +501,17 @@ class TestNonarrayArgs:
 
         axis = 0
 
-        mean = np.mean(A, out=mean_out,
-                       axis=axis, keepdims=True)
+        mean = np.mean(A, out=mean_out, axis=, keepdims=True)
 
-        std = np.std(A, out=std_out,
-                     axis=axis, keepdims=True,
-                     mean=mean)
+        std = np.std(A, out=std_out, axis=, keepdims=True, mean=)
 
         # Shape of returned mean and std should be same
         assert std.shape == mean.shape
         assert std.shape == (1, 4)
 
         # Output should be the same as from the individual algorithms
-        std_old = np.std(A, axis=axis, keepdims=True)
-        mean_old = np.mean(A, axis=axis, keepdims=True)
+        std_old = np.std(A, axis=, keepdims=True)
+        mean_old = np.mean(A, axis=, keepdims=True)
 
         assert std_old.shape == mean_old.shape
         assert_almost_equal(std, std_old)
@@ -566,8 +521,8 @@ class TestNonarrayArgs:
         assert std_out is std
 
         # masked elements should be ignored
-        mean_b = np.mean(B, axis=axis, keepdims=True)
-        std_b = np.std(B, axis=axis, keepdims=True, mean=mean_b)
+        mean_b = np.mean(B, axis=, keepdims=True)
+        std_b = np.std(B, axis=, keepdims=True, mean=mean_b)
         assert_almost_equal(std, std_b)
         assert_almost_equal(mean, mean_b)
 
@@ -590,20 +545,17 @@ class TestNonarrayArgs:
 
         axis = 0
 
-        mean = np.mean(A, out=mean_out,
-                       axis=axis, keepdims=True)
+        mean = np.mean(A, out=mean_out, axis=, keepdims=True)
 
-        var = np.var(A, out=var_out,
-                     axis=axis, keepdims=True,
-                     mean=mean)
+        var = np.var(A, out=var_out, axis=, keepdims=True, mean=)
 
         # Shape of returned mean and var should be same
         assert var.shape == mean.shape
         assert var.shape == (1, 4)
 
         # Output should be the same as from the individual algorithms
-        var_old = np.var(A, axis=axis, keepdims=True)
-        mean_old = np.mean(A, axis=axis, keepdims=True)
+        var_old = np.var(A, axis=, keepdims=True)
+        mean_old = np.mean(A, axis=, keepdims=True)
 
         assert var_old.shape == mean_old.shape
         assert_almost_equal(var, var_old)
@@ -613,8 +565,8 @@ class TestNonarrayArgs:
         assert var_out is var
 
         # masked elements should be ignored
-        mean_b = np.mean(B, axis=axis, keepdims=True)
-        var_b = np.var(B, axis=axis, keepdims=True, mean=mean_b)
+        mean_b = np.mean(B, axis=, keepdims=True)
+        var_b = np.var(B, axis=, keepdims=True, mean=mean_b)
         assert_almost_equal(var, var_b)
         assert_almost_equal(mean, mean_b)
 
@@ -1240,7 +1192,7 @@ class TestTypes:
         # The same type passed in twice to promote types always
         # preserves metadata
         metadata = {1: 1}
-        dtype = np.dtype(dtype, metadata=metadata)
+        dtype = np.dtype(dtype, metadata=)
 
         res = np.promote_types(dtype, dtype)
         assert res.metadata == dtype.metadata
@@ -1489,14 +1441,14 @@ class TestFromiter:
         # has `count` elements but errors at `error_index`
         iterable = self.load_data(count, error_index)
         with pytest.raises(NIterError):
-            np.fromiter(iterable, dtype=dtype, count=count)
+            np.fromiter(iterable, dtype=, count=)
 
     @pytest.mark.parametrize("dtype", ["S", "S0", "V0", "U0"])
     def test_empty_not_structured(self, dtype):
         # Note, "S0" could be allowed at some point, so long "S" (without
         # any length) is rejected.
         with pytest.raises(ValueError, match="Must specify length"):
-            np.fromiter([], dtype=dtype)
+            np.fromiter([], dtype=)
 
     @pytest.mark.parametrize(["dtype", "data"],
             [("d", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
@@ -1522,8 +1474,8 @@ class TestFromiter:
             def __iter__(self):
                 return iter(data)
 
-        res = np.fromiter(MyIter(), dtype=dtype)
-        expected = np.array(data, dtype=dtype)
+        res = np.fromiter(MyIter(), dtype=)
+        expected = np.array(data, dtype=)
 
         assert_array_equal(res, expected)
 
@@ -1673,8 +1625,8 @@ class TestNonzero:
         msg = "Mismatch for dtype: %s"
 
         def assert_equal_w_dt(a, b, err_msg):
-            assert_equal(a.dtype, b.dtype, err_msg=err_msg)
-            assert_equal(a, b, err_msg=err_msg)
+            assert_equal(a.dtype, b.dtype, err_msg=)
+            assert_equal(a, b, err_msg=)
 
         for dt in np.typecodes['All']:
             err_msg = msg % (np.dtype(dt).name,)
@@ -1697,19 +1649,18 @@ class TestNonzero:
 
                 expected = np.array([2, 0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=0),
-                                  expected, err_msg=err_msg)
+                                  expected, err_msg=)
 
                 expected = np.array([1, 1, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=1),
-                                  expected, err_msg=err_msg)
+                                  expected, err_msg=)
 
                 expected = np.array(2)
                 assert_equal(np.count_nonzero(m, axis=(0, 1)),
-                             expected, err_msg=err_msg)
+                             expected, err_msg=)
                 assert_equal(np.count_nonzero(m, axis=None),
-                             expected, err_msg=err_msg)
-                assert_equal(np.count_nonzero(m),
-                             expected, err_msg=err_msg)
+                             expected, err_msg=)
+                assert_equal(np.count_nonzero(m), expected, err_msg=)
 
             if dt == 'V':
                 # There are no 'nonzero' objects for np.void, so the testing
@@ -1718,19 +1669,18 @@ class TestNonzero:
 
                 expected = np.array([0, 0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=0),
-                                  expected, err_msg=err_msg)
+                                  expected, err_msg=)
 
                 expected = np.array([0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=1),
-                                  expected, err_msg=err_msg)
+                                  expected, err_msg=)
 
                 expected = np.array(0)
                 assert_equal(np.count_nonzero(m, axis=(0, 1)),
-                             expected, err_msg=err_msg)
+                             expected, err_msg=)
                 assert_equal(np.count_nonzero(m, axis=None),
-                             expected, err_msg=err_msg)
-                assert_equal(np.count_nonzero(m),
-                             expected, err_msg=err_msg)
+                             expected, err_msg=)
+                assert_equal(np.count_nonzero(m), expected, err_msg=)
 
     def test_count_nonzero_axis_consistent(self):
         # Check that the axis behaviour for valid axes in
@@ -1744,7 +1694,7 @@ class TestNonzero:
         msg = "Mismatch for axis: %s"
 
         rng = np.random.RandomState(1234)
-        m = rng.randint(-100, 100, size=size)
+        m = rng.randint(-100, 100, size=)
         n = m.astype(object)
 
         for length in range(len(axis)):
@@ -1940,7 +1890,7 @@ class TestBinaryRepr:
         for width in range(1, 11):
             num = -2**(width - 1)
             exp = '1' + (width - 1) * '0'
-            assert_equal(np.binary_repr(num, width=width), exp)
+            assert_equal(np.binary_repr(num, width=), exp)
 
     def test_large_neg_int64(self):
         # See gh-14289.
@@ -2063,7 +2013,7 @@ class TestArrayComparisons:
 
     @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
     def test_compare_unstructured_voids(self, dtype):
-        zeros = np.zeros(3, dtype=dtype)
+        zeros = np.zeros(3, dtype=)
 
         assert_array_equal(zeros, zeros)
         assert not (zeros != zeros).any()
@@ -2072,7 +2022,7 @@ class TestArrayComparisons:
             # Can't test != of actually different data
             return
 
-        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=)
 
         assert not (zeros == nonzeros).any()
         assert (zeros != nonzeros).all()
@@ -2101,12 +2051,12 @@ class TestClip:
         self.nc = 3
 
     def fastclip(self, a, m, M, out=None, **kwargs):
-        return a.clip(m, M, out=out, **kwargs)
+        return a.clip(m, M, out=, **kwargs)
 
     def clip(self, a, m, M, out=None):
         # use a.choose to verify fastclip result
         selector = np.less(a, m) + 2*np.greater(a, M)
-        return selector.choose((a, m, M), out=out)
+        return selector.choose((a, m, M), out=)
 
     # Handy functions
     def _generate_data(self, n, m):
@@ -2145,8 +2095,8 @@ class TestClip:
         # for preservation of behavior described in
         # gh-12519; amin > amax behavior may still change
         # in the future
-        arr = np.ones(10, dtype=dtype)
-        expected = np.zeros(10, dtype=dtype)
+        arr = np.ones(10, dtype=)
+        expected = np.zeros(10, dtype=)
         actual = np.clip(arr, 1, 0)
         if dtype == 'O':
             assert actual.tolist() == expected.tolist()
@@ -2261,10 +2211,10 @@ class TestClip:
         act = ac.copy()
         if casting is None:
             with pytest.raises(TypeError):
-                self.fastclip(a, m, M, ac, casting=casting)
+                self.fastclip(a, m, M, ac, casting=)
         else:
             # explicitly passing "unsafe" will silence warning
-            self.fastclip(a, m, M, ac, casting=casting)
+            self.fastclip(a, m, M, ac, casting=)
             self.clip(a, m, M, act)
             assert_array_strict_equal(ac, act)
 
@@ -2514,7 +2464,7 @@ class TestClip:
         # Test that the out argument works when transposed
         a = np.arange(16).reshape(4, 4)
         out = np.empty_like(a).T
-        a.clip(4, 10, out=out)
+        a.clip(4, 10, out=)
         expected = self.clip(a, 4, 10)
         assert_array_equal(out, expected)
 
@@ -2952,13 +2902,13 @@ class TestStdVar:
     def test_out_scalar(self):
         d = np.arange(10)
         out = np.array(0.)
-        r = np.std(d, out=out)
+        r = np.std(d, out=)
         assert_(r is out)
         assert_array_equal(r, out)
-        r = np.var(d, out=out)
+        r = np.var(d, out=)
         assert_(r is out)
         assert_array_equal(r, out)
-        r = np.mean(d, out=out)
+        r = np.mean(d, out=)
         assert_(r is out)
         assert_array_equal(r, out)
 
@@ -3010,8 +2960,7 @@ class TestCreationFuncs:
             if fill_kwarg and is_void:
                 continue
 
-            arr = func(shape, order=order, dtype=dtype,
-                       **fill_kwarg)
+            arr = func(shape, order=, dtype=, **fill_kwarg)
 
             if isinstance(dtype, np.dtype):
                 assert_equal(arr.dtype, dtype)
@@ -3105,7 +3054,7 @@ class TestLikeFuncs:
             fill_kwarg = {}
         for d, dtype in self.data:
             # default (K) order, dtype
-            dz = like_function(d, dtype=dtype, **fill_kwarg)
+            dz = like_function(d, dtype=, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_equal(np.array(dz.strides)*d.dtype.itemsize,
                          np.array(d.strides)*dz.dtype.itemsize)
@@ -3118,7 +3067,7 @@ class TestLikeFuncs:
             self.compare_array_value(dz, value, fill_value)
 
             # C order, default dtype
-            dz = like_function(d, order='C', dtype=dtype, **fill_kwarg)
+            dz = like_function(d, order='C', dtype=, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_(dz.flags.c_contiguous)
             if dtype is None:
@@ -3128,7 +3077,7 @@ class TestLikeFuncs:
             self.compare_array_value(dz, value, fill_value)
 
             # F order, default dtype
-            dz = like_function(d, order='F', dtype=dtype, **fill_kwarg)
+            dz = like_function(d, order='F', dtype=, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_(dz.flags.f_contiguous)
             if dtype is None:
@@ -3138,7 +3087,7 @@ class TestLikeFuncs:
             self.compare_array_value(dz, value, fill_value)
 
             # A order
-            dz = like_function(d, order='A', dtype=dtype, **fill_kwarg)
+            dz = like_function(d, order='A', dtype=, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             if d.flags.f_contiguous:
                 assert_(dz.flags.f_contiguous)
@@ -3153,7 +3102,7 @@ class TestLikeFuncs:
             # Test the 'shape' parameter
             for s in self.shapes:
                 for o in 'CFA':
-                    sz = like_function(d, dtype=dtype, shape=s, order=o,
+                    sz = like_function(d, dtype=, shape=s, order=o,
                                        **fill_kwarg)
                     assert_equal(sz.shape, s)
                     if dtype is None:
@@ -3167,13 +3116,13 @@ class TestLikeFuncs:
                     self.compare_array_value(sz, value, fill_value)
 
                 if (d.ndim != len(s)):
-                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                    assert_equal(np.argsort(like_function(d, dtype=,
                                                           shape=s, order='K',
                                                           **fill_kwarg).strides),
-                                 np.argsort(np.empty(s, dtype=dtype,
+                                 np.argsort(np.empty(s, dtype=,
                                                      order='C').strides))
                 else:
-                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                    assert_equal(np.argsort(like_function(d, dtype=,
                                                           shape=s, order='K',
                                                           **fill_kwarg).strides),
                                  np.argsort(d.strides))
@@ -3216,7 +3165,7 @@ class TestLikeFuncs:
         a = np.arange(16).reshape(2, 8)
         b = a[:, ::2]  # Ensure b is not contiguous.
         kwargs = {'fill_value': ''} if likefunc == np.full_like else {}
-        result = likefunc(b, dtype=dtype, **kwargs)
+        result = likefunc(b, dtype=, **kwargs)
         if dtype == str:
             assert result.strides == (16, 4)
         else:
@@ -3649,7 +3598,7 @@ class TestCross:
         # gh-5885
         u = np.ones((3, 4, 2))
         for axisc in range(-2, 2):
-            assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
+            assert_equal(np.cross(u, u, axisc=).shape, (3, 4))
 
     def test_uint8_int32_mixed_dtypes(self):
         # regression test for gh-19138
@@ -3711,10 +3660,10 @@ class TestIndices:
     @pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
     @pytest.mark.parametrize("dims", [(), (0,), (4, 3)])
     def test_return_type(self, dtype, dims):
-        inds = np.indices(dims, dtype=dtype)
+        inds = np.indices(dims, dtype=)
         assert_(inds.dtype == dtype)
 
-        for arr in np.indices(dims, dtype=dtype, sparse=True):
+        for arr in np.indices(dims, dtype=, sparse=True):
             assert_(arr.dtype == dtype)
 
 

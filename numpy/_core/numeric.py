@@ -122,7 +122,7 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     array([0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(a, dtype=, order=, subok=, shape=)
     # needed instead of a 0 to get same result as zeros for string dtypes
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
@@ -182,7 +182,7 @@ def ones(shape, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _ones_with_like(like, shape, dtype=dtype, order=order)
+        return _ones_with_like(like, shape, dtype=, order=)
 
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
@@ -258,7 +258,7 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     array([1.,  1.,  1.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(a, dtype=, order=, subok=, shape=)
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
@@ -316,8 +316,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _full_with_like(
-                like, shape, fill_value, dtype=dtype, order=order)
+        return _full_with_like(like, shape, fill_value, dtype=, order=)
 
     if dtype is None:
         fill_value = asarray(fill_value)
@@ -401,7 +400,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
            [[  0,   0, 255],
             [  0,   0, 255]]])
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like(a, dtype=, order=, subok=, shape=)
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
@@ -481,7 +480,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     else:
         a_bool = a.astype(np.bool_, copy=False)
 
-    return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
+    return a_bool.sum(axis=, dtype=np.intp, keepdims=)
 
 
 @set_module('numpy')
@@ -1764,9 +1763,9 @@ def indices(dimensions, dtype=int, sparse=False):
     if sparse:
         res = tuple()
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
+        res = empty((N,)+dimensions, dtype=)
     for i, dim in enumerate(dimensions):
-        idx = arange(dim, dtype=dtype).reshape(
+        idx = arange(dim, dtype=).reshape(
             shape[:i] + (dim,) + shape[i+1:]
         )
         if sparse:
@@ -1841,10 +1840,9 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     """
     if like is not None:
-        return _fromfunction_with_like(
-                like, function, shape, dtype=dtype, **kwargs)
+        return _fromfunction_with_like(like, function, shape, dtype=, **kwargs)
 
-    args = indices(shape, dtype=dtype)
+    args = indices(shape, dtype=)
     return function(*args, **kwargs)
 
 
@@ -1852,7 +1850,7 @@ _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
 def _frombuffer(buf, dtype, shape, order):
-    return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
+    return frombuffer(buf, dtype=).reshape(shape, order=)
 
 
 @set_module('numpy')
@@ -2157,10 +2155,10 @@ def identity(n, dtype=None, *, like=None):
 
     """
     if like is not None:
-        return _identity_with_like(like, n, dtype=dtype)
+        return _identity_with_like(like, n, dtype=)
 
     from numpy import eye
-    return eye(n, dtype=dtype, like=like)
+    return eye(n, dtype=, like=)
 
 
 _identity_with_like = array_function_dispatch()(identity)
@@ -2241,7 +2239,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     True
 
     """
-    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    res = all(isclose(a, b, rtol=, atol=, equal_nan=))
     return bool(res)
 
 

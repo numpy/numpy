@@ -20,5 +20,5 @@ def test_take_function(x, indices, axis, expected):
     """
     x = xp.asarray(x)
     indices = xp.asarray(indices)
-    out = xp.take(x, indices, axis=axis)
+    out = xp.take(x, indices, axis=)
     assert xp.all(out == xp.asarray(expected))

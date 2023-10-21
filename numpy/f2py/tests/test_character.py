@@ -243,11 +243,11 @@ class TestCharacter(util.F2PyTest):
     def test_input(self, dtype):
         f = getattr(self.module, self.fprefix + '_input')
 
-        assert_equal(f(np.array('a', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array(b'a', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array(['a'], dtype=dtype)), ord('a'))
-        assert_equal(f(np.array('abc', dtype=dtype)), ord('a'))
-        assert_equal(f(np.array([['a']], dtype=dtype)), ord('a'))
+        assert_equal(f(np.array('a', dtype=)), ord('a'))
+        assert_equal(f(np.array(b'a', dtype=)), ord('a'))
+        assert_equal(f(np.array(['a'], dtype=)), ord('a'))
+        assert_equal(f(np.array('abc', dtype=)), ord('a'))
+        assert_equal(f(np.array([['a']], dtype=)), ord('a'))
 
     def test_input_varia(self):
         f = getattr(self.module, self.fprefix + '_input')
@@ -288,9 +288,9 @@ class TestCharacter(util.F2PyTest):
     def test_array_input(self, dtype):
         f = getattr(self.module, self.fprefix + '_array_input')
 
-        assert_array_equal(f(np.array(['a', 'b', 'c'], dtype=dtype)),
+        assert_array_equal(f(np.array(['a', 'b', 'c'], dtype=)),
                            np.array(list(map(ord, 'abc')), dtype='i1'))
-        assert_array_equal(f(np.array([b'a', b'b', b'c'], dtype=dtype)),
+        assert_array_equal(f(np.array([b'a', b'b', b'c'], dtype=)),
                            np.array(list(map(ord, 'abc')), dtype='i1'))
 
     def test_array_input_varia(self):
@@ -314,8 +314,7 @@ class TestCharacter(util.F2PyTest):
     def test_2d_array_input(self, dtype):
         f = getattr(self.module, self.fprefix + '_2d_array_input')
 
-        a = np.array([['a', 'b', 'c'],
-                      ['d', 'e', 'f']], dtype=dtype, order='F')
+        a = np.array([['a', 'b', 'c'], ['d', 'e', 'f']], dtype=, order='F')
         expected = a.view(np.uint32 if dtype == 'U1' else np.uint8)
         assert_array_equal(f(a), expected)
 
@@ -342,13 +341,13 @@ class TestCharacter(util.F2PyTest):
     def test_inout(self, dtype):
         f = getattr(self.module, self.fprefix + '_inout')
 
-        a = np.array(list('abc'), dtype=dtype)
+        a = np.array(list('abc'), dtype=)
         f(a, 'A')
         assert_array_equal(a, np.array(list('Abc'), dtype=a.dtype))
         f(a[1:], 'B')
         assert_array_equal(a, np.array(list('ABc'), dtype=a.dtype))
 
-        a = np.array(['abc'], dtype=dtype)
+        a = np.array(['abc'], dtype=)
         f(a, 'A')
         assert_array_equal(a, np.array(['Abc'], dtype=a.dtype))
 
@@ -373,21 +372,21 @@ class TestCharacter(util.F2PyTest):
     @pytest.mark.parametrize("dtype", ['c', 'S1'])
     def test_array_inout(self, dtype):
         f = getattr(self.module, self.fprefix + '_array_inout')
-        n = np.array(['A', 'B', 'C'], dtype=dtype, order='F')
+        n = np.array(['A', 'B', 'C'], dtype=, order='F')
 
-        a = np.array(['a', 'b', 'c'], dtype=dtype, order='F')
+        a = np.array(['a', 'b', 'c'], dtype=, order='F')
         f(a, n)
         assert_array_equal(a, n)
 
-        a = np.array(['a', 'b', 'c', 'd'], dtype=dtype)
+        a = np.array(['a', 'b', 'c', 'd'], dtype=)
         f(a[1:], n)
-        assert_array_equal(a, np.array(['a', 'A', 'B', 'C'], dtype=dtype))
+        assert_array_equal(a, np.array(['a', 'A', 'B', 'C'], dtype=))
 
-        a = np.array([['a', 'b', 'c']], dtype=dtype, order='F')
+        a = np.array([['a', 'b', 'c']], dtype=, order='F')
         f(a, n)
-        assert_array_equal(a, np.array([['A', 'B', 'C']], dtype=dtype))
+        assert_array_equal(a, np.array([['A', 'B', 'C']], dtype=))
 
-        a = np.array(['a', 'b', 'c', 'd'], dtype=dtype, order='F')
+        a = np.array(['a', 'b', 'c', 'd'], dtype=, order='F')
         try:
             f(a, n)
         except ValueError as msg:
@@ -401,12 +400,8 @@ class TestCharacter(util.F2PyTest):
     @pytest.mark.parametrize("dtype", ['c', 'S1'])
     def test_2d_array_inout(self, dtype):
         f = getattr(self.module, self.fprefix + '_2d_array_inout')
-        n = np.array([['A', 'B', 'C'],
-                      ['D', 'E', 'F']],
-                     dtype=dtype, order='F')
-        a = np.array([['a', 'b', 'c'],
-                      ['d', 'e', 'f']],
-                     dtype=dtype, order='F')
+        n = np.array([['A', 'B', 'C'], ['D', 'E', 'F']], dtype=, order='F')
+        a = np.array([['a', 'b', 'c'], ['d', 'e', 'f']], dtype=, order='F')
         f(a, n)
         assert_array_equal(a, n)
 
