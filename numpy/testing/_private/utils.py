@@ -19,7 +19,7 @@ import pprint
 import sysconfig
 
 import numpy as np
-from numpy.core import (
+from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
@@ -326,7 +326,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
                          verbose)
         return
-    from numpy.core import ndarray, isscalar, signbit
+    from numpy._core import ndarray, isscalar, signbit
     from numpy import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose,
@@ -525,14 +525,14 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     Arrays are not almost equal to 9 decimals
     <BLANKLINE>
     Mismatched elements: 1 / 2 (50%)
-    Max absolute difference: 6.66669964e-09
-    Max relative difference: 2.85715698e-09
+    Max absolute difference among violations: 6.66669964e-09
+    Max relative difference among violations: 2.85715698e-09
      ACTUAL: array([1.         , 2.333333333])
      DESIRED: array([1.        , 2.33333334])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import ndarray
+    from numpy._core import ndarray
     from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
@@ -694,7 +694,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import (array2string, isnan, inf, bool_, errstate,
+    from numpy._core import (array2string, isnan, inf, bool_, errstate,
                             all, max, object_)
 
     x = np.asanyarray(x)
@@ -794,6 +794,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return
 
         val = comparison(x, y)
+        invalids = np.logical_not(val)
 
         if isinstance(val, bool):
             cond = val
@@ -821,29 +822,41 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     if np.issubdtype(x.dtype, np.unsignedinteger):
                         error2 = abs(y - x)
                         np.minimum(error, error2, out=error)
-                    max_abs_error = max(error)
-                    if getattr(error, 'dtype', object_) == object_:
-                        remarks.append('Max absolute difference: '
-                                       + str(max_abs_error))
-                    else:
-                        remarks.append('Max absolute difference: '
-                                       + array2string(max_abs_error))
 
+                    reduced_error = error[invalids]
+                    max_abs_error = max(reduced_error)
+                    if getattr(error, 'dtype', object_) == object_:
+                        remarks.append(
+                            'Max absolute difference among violations: '
+                            + str(max_abs_error))
+                    else:
+                        remarks.append(
+                            'Max absolute difference among violations: '
+                            + array2string(max_abs_error))
+                        
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
                     nonzero = bool_(y != 0)
-                    if all(~nonzero):
+                    nonzero_and_invalid = np.logical_and(invalids, nonzero)
+                    
+                    if all(~nonzero_and_invalid):
                         max_rel_error = array(inf)
                     else:
-                        max_rel_error = max(error[nonzero] / abs(y[nonzero]))
-                    if getattr(error, 'dtype', object_) == object_:
-                        remarks.append('Max relative difference: '
-                                       + str(max_rel_error))
-                    else:
-                        remarks.append('Max relative difference: '
-                                       + array2string(max_rel_error))
+                        nonzero_invalid_error = error[nonzero_and_invalid]
+                        broadcasted_y = np.broadcast_to(y, error.shape)
+                        nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
+                        max_rel_error = max(nonzero_invalid_error 
+                                            / abs(nonzero_invalid_y))
 
+                    if getattr(error, 'dtype', object_) == object_: 
+                        remarks.append(
+                            'Max relative difference among violations: '
+                            + str(max_rel_error))
+                    else:               
+                        remarks.append(
+                            'Max relative difference among violations: '
+                            + array2string(max_rel_error))
             err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
@@ -936,8 +949,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     Arrays are not equal
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Max absolute difference: 4.4408921e-16
-    Max relative difference: 1.41357986e-16
+    Max absolute difference among violations: 4.4408921e-16
+    Max relative difference among violations: 1.41357986e-16
      ACTUAL: array([1.      , 3.141593,      nan])
      DESIRED: array([1.      , 3.141593,      nan])
 
@@ -1049,8 +1062,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     Arrays are not almost equal to 5 decimals
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Max absolute difference: 6.e-05
-    Max relative difference: 2.57136612e-05
+    Max absolute difference among violations: 6.e-05
+    Max relative difference among violations: 2.57136612e-05
      ACTUAL: array([1.     , 2.33333,     nan])
      DESIRED: array([1.     , 2.33339,     nan])
 
@@ -1067,9 +1080,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, result_type
-    from numpy.core.numerictypes import issubdtype
-    from numpy.core.fromnumeric import any as npany
+    from numpy._core import number, result_type
+    from numpy._core.numerictypes import issubdtype
+    from numpy._core.fromnumeric import any as npany
 
     def compare(x, y):
         try:
@@ -1169,8 +1182,8 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
     Arrays are not strictly ordered `x < y`
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Max absolute difference: 1.
-    Max relative difference: 0.5
+    Max absolute difference among violations: 0.
+    Max relative difference among violations: 0.
      x: array([ 1.,  1., nan])
      y: array([ 1.,  2., nan])
 
@@ -1638,7 +1651,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     import numpy as np
 
     def compare(x, y):
-        return np.core.numeric.isclose(x, y, rtol=rtol, atol=atol,
+        return np._core.numeric.isclose(x, y, rtol=rtol, atol=atol,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
@@ -2114,11 +2127,11 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     --------
     >>> import warnings
     >>> with np.testing.clear_and_catch_warnings(
-    ...         modules=[np.core.fromnumeric]):
+    ...         modules=[np._core.fromnumeric]):
     ...     warnings.simplefilter('always')
-    ...     warnings.filterwarnings('ignore', module='np.core.fromnumeric')
+    ...     warnings.filterwarnings('ignore', module='np._core.fromnumeric')
     ...     # do something that raises a warning but ignore those in
-    ...     # np.core.fromnumeric
+    ...     # np._core.fromnumeric
     """
     class_modules = ()
 

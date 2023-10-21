@@ -487,7 +487,7 @@ A typical implementation would convert any inputs or outputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case
-``test_ufunc_override_with_super`` in ``core/tests/test_umath.py``, is the
+``test_ufunc_override_with_super`` in ``_core/tests/test_umath.py``, is the
 following.
 
 .. testcode::
@@ -739,7 +739,7 @@ to know whether or not to do some specific cleanup when the subclassed
 array is deleted.  For example, we may only want to do the cleanup if
 the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
-``numpy.core``.
+``numpy._core``.
 
 Subclassing and Downstream Compatibility
 ========================================

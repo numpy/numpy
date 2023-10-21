@@ -60,7 +60,7 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -117,7 +117,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel openblas-devel -y
 
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -152,7 +152,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel flexiblas-devel -y
 
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -182,7 +182,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -209,7 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Netlib BLAS/LAPACK"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -237,7 +237,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -300,7 +300,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0
@@ -335,7 +335,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-depth: 0

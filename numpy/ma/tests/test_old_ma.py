@@ -4,8 +4,8 @@ import pickle
 import pytest
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )

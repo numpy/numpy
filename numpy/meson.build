@@ -259,7 +259,8 @@ pure_subdirs = [
   'tests',
   'typing',
   'rec',
-  'char'
+  'char',
+  'core'
 ]
 if py.version().version_compare('<3.12')
   pure_subdirs += 'distutils'
@@ -375,7 +376,7 @@ configure_file(
   install_tag: 'python-runtime'
 )
 
-subdir('core')
+subdir('_core')
 subdir('fft')
 subdir('linalg')
 subdir('random')

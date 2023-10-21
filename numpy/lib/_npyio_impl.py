@@ -13,10 +13,10 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
-from numpy.core import overrides
-from numpy.core.multiarray import packbits, unpackbits
-from numpy.core._multiarray_umath import _load_from_filelike
-from numpy.core.overrides import set_array_function_like_doc, set_module
+from numpy._core import overrides
+from numpy._core.multiarray import packbits, unpackbits
+from numpy._core._multiarray_umath import _load_from_filelike
+from numpy._core.overrides import set_array_function_like_doc, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -404,7 +404,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
-        # NumPy. The unpickling code in numpy.core.multiarray is
+        # NumPy. The unpickling code in numpy._core.multiarray is
         # written to assume that unicode data appearing where binary
         # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.
         #

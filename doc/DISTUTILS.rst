@@ -14,7 +14,7 @@ Currently SciPy project consists of two packages:
 
   + numpy.distutils - extension to Python distutils
   + numpy.f2py - a tool to bind Fortran/C codes to Python
-  + numpy.core - future replacement of Numeric and numarray packages
+  + numpy._core - future replacement of Numeric and numarray packages
   + numpy.lib - extra utility functions
   + numpy.testing - numpy-style tools for unit testing
   + etc

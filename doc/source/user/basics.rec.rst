@@ -640,7 +640,7 @@ Additional helper functions for creating and manipulating structured arrays
 can be found in :mod:`numpy.lib.recfunctions`.
 
 The simplest way to create a record array is with
-:func:`numpy.rec.array <numpy.core.records.array>`::
+:func:`numpy.rec.array <numpy.rec.array>`::
 
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
@@ -656,7 +656,7 @@ The simplest way to create a record array is with
  >>> recordarr[1].baz
  b'World'
 
-:func:`numpy.rec.array <numpy.core.records.array>` can convert a wide variety
+:func:`numpy.rec.array <numpy.rec.array>` can convert a wide variety
 of arguments into record arrays, including structured arrays::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],

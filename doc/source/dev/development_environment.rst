@@ -88,7 +88,7 @@ one of::
 
     $ spin test -v
     $ spin test numpy/random  # to run the tests in a specific module
-    $ spin test -v -t numpy/core/tests/test_nditer.py::test_iter_c_order
+    $ spin test -v -t numpy/_core/tests/test_nditer.py::test_iter_c_order
 
 This builds NumPy first, so the first time it may take a few minutes.
 
@@ -109,7 +109,7 @@ arguments after a bare ``--``. For example, to run a test method with the
 You can also  `match test names using python operators`_ by passing the ``-k``
 argument to pytest::
 
-    $ spin test -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
+    $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 .. note::
 
@@ -193,7 +193,7 @@ If there are no errors, the script exits with no message. In case of errors,
 check the error message for details::
 
     $ python tools/linter.py --branch main
-    ./numpy/core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
+    ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
     1       E303 too many blank lines (3)
 
 It is advisable to run lint checks before pushing commits to a remote branch

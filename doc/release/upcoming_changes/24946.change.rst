@@ -1,0 +1,6 @@
+``numpy.linalg.linalg`` made private
+------------------------------------
+
+``numpy.linalg.linalg`` was renamed to `numpy.linalg._linalg`
+to indicate that it is a private submodule. All public functions
+exported by it should be accessed from `numpy.linalg`.

@@ -154,3 +154,11 @@ ptp                     Use ``np.ptp(arr, ...)`` instead.
 setitem                 Use ``arr[index] = value`` instead.
 ...                     ...
 ======================  ========================================================
+
+
+Note about pickled files
+------------------------
+
+NumPy 2.0 is designed to load pickle files created with NumPy 1.26,
+and vice versa. For versions 1.25 and earlier loading NumPy 2.0
+pickle file will throw an exception.

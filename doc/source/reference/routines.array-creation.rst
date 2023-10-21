@@ -53,25 +53,25 @@ Creating record arrays
 .. autosummary::
    :toctree: generated/
 
-   core.records.array
-   core.records.fromarrays
-   core.records.fromrecords
-   core.records.fromstring
-   core.records.fromfile
+   rec.array
+   rec.fromarrays
+   rec.fromrecords
+   rec.fromstring
+   rec.fromfile
 
 .. _routines.array-creation.char:
 
 Creating character arrays (:mod:`numpy.char`)
 ---------------------------------------------
 
-.. note:: :mod:`numpy.char` is the preferred alias for
-   ``numpy.core.defchararray`` module.
+.. note:: :mod:`numpy.char` is used to create character
+   arrays.
 
 .. autosummary::
    :toctree: generated/
 
-   core.defchararray.array
-   core.defchararray.asarray
+   char.array
+   char.asarray
 
 Numerical ranges
 ----------------

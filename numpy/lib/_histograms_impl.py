@@ -7,7 +7,7 @@ import operator
 import warnings
 
 import numpy as np
-from numpy.core import overrides
+from numpy._core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 

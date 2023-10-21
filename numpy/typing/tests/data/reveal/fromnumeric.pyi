@@ -1,4 +1,4 @@
-"""Tests for :mod:`core.fromnumeric`."""
+"""Tests for :mod:`_core.fromnumeric`."""
 
 import sys
 from typing import Any

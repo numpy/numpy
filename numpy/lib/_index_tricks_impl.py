@@ -5,13 +5,13 @@ import warnings
 
 import numpy as np
 from .._utils import set_module
-import numpy.core.numeric as _nx
-from numpy.core.numeric import ScalarType, array
-from numpy.core.numerictypes import issubdtype
+import numpy._core.numeric as _nx
+from numpy._core.numeric import ScalarType, array
+from numpy._core.numerictypes import issubdtype
 
 import numpy.matrixlib as matrixlib
-from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core import overrides, linspace
+from numpy._core.multiarray import ravel_multi_index, unravel_index
+from numpy._core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 from numpy.lib._function_base_impl import diff
 

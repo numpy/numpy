@@ -9,10 +9,10 @@ from numpy.lib._arraypad_impl import _as_pairs
 
 
 _numeric_dtypes = (
-    np.core.sctypes["uint"]
-    + np.core.sctypes["int"]
-    + np.core.sctypes["float"]
-    + np.core.sctypes["complex"]
+    np._core.sctypes["uint"]
+    + np._core.sctypes["int"]
+    + np._core.sctypes["float"]
+    + np._core.sctypes["complex"]
 )
 _all_modes = {
     'constant': {'constant_values': 0},

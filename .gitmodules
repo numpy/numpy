@@ -1,11 +1,11 @@
 [submodule "doc/source/_static/scipy-mathjax"]
 	path = doc/source/_static/scipy-mathjax
 	url = https://github.com/scipy/scipy-mathjax.git
-[submodule "numpy/core/src/umath/svml"]
-	path = numpy/core/src/umath/svml
+[submodule "numpy/_core/src/umath/svml"]
+	path = numpy/_core/src/umath/svml
 	url = https://github.com/numpy/SVML.git
-[submodule "numpy/core/src/npysort/x86-simd-sort"]
-	path = numpy/core/src/npysort/x86-simd-sort
+[submodule "numpy/_core/src/npysort/x86-simd-sort"]
+	path = numpy/_core/src/npysort/x86-simd-sort
 	url = https://github.com/intel/x86-simd-sort
 [submodule "vendored-meson/meson"]
 	path = vendored-meson/meson
