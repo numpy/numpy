@@ -109,12 +109,15 @@ function get_gf_lib_for_suf {
 }
 
 if [ "$(uname)" == "Darwin" ]; then
+    # Set deployment target to match the one Python was built for, if the env
+    # var wasn't explicitly set already.
     mac_target=${MACOSX_DEPLOYMENT_TARGET:-$(get_macosx_target)}
     export MACOSX_DEPLOYMENT_TARGET=$mac_target
     # Keep this for now as some builds might depend on this being
     # available before install_gfortran is called
     export GFORTRAN_SHA=c469a420d2d003112749dcdcbe3c684eef42127e
-    # Set SDKROOT env variable if not set
+    # SDKROOT needs to be set for repackaged conda-forge gfortran compilers
+    # supplied by isuruf. So set it if it's not already set.
     export SDKROOT=${SDKROOT:-$(xcrun --show-sdk-path)}
 
     function download_and_unpack_gfortran {

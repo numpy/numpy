@@ -16,8 +16,20 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_win32.txt >> $PROJECT_DIR/LICENSE.txt
 fi
 
+install_openblas=true
+if [[ $RUNNER_OS == "macOS" ]]; then
+    if [[ $(sw_vers --productVersion) == 14.* ]]; then
+        # This is the wheel build with Accelerate
+        export MACOSX_DEPLOYMENT_TARGET=14.0
+        install_openblas=false
+    else
+        # Done in gfortran_utils.sh
+        echo "deployment target determined from Python interpreter"
+    fi
+fi
+
 # Install Openblas
-if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
+if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" && install_openblas ]] ; then
     basedir=$(python tools/openblas_support.py --use-ilp64)
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         # /usr/local/lib doesn't exist on cirrus-ci runners
@@ -52,6 +64,10 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         PLAT="arm64"
     fi
+
+    # Needed for OpenBLAS and gfortran
+    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
     pip install "delocate==0.10.4"
