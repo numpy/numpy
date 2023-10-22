@@ -202,6 +202,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
   ".spin/cmds.py:config_openblas",
+  ".spin/cmds.py:lint",
 ]
 "Environments" = [
   "spin.cmds.meson.run", ".spin/cmds.py:ipython",

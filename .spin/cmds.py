@@ -319,6 +319,38 @@ def _run_asv(cmd):
 
     util.run(cmd, cwd='benchmarks', env=env)
 
+@click.command()
+@click.option(
+    "-b", "--branch",
+    metavar='branch',
+    default="main",
+)
+@click.option(
+    '--uncommitted',
+    is_flag=True,
+    default=False,
+    required=False,
+)
+@click.pass_context
+def lint(ctx, branch, uncommitted):
+    """🔦 Run lint checks on diff.
+    Provide target branch name or `uncommitted` to check before committing:
+
+    \b
+    Examples:
+
+    \b
+    $ spin lint
+    $ spin lint --branch main
+    $ spin lint uncommitted
+    """
+    click.secho(
+        f"Performing lint checks against {'uncommitted changes' if uncommitted else branch + ' branch'}",
+        bold=True, fg="bright_green",
+    )
+    from tools.linter import DiffLinter
+    ret = DiffLinter(branch).run_lint(uncommitted)
+    print(ret)
 
 @click.command()
 @click.option(
