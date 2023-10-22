@@ -5,106 +5,57 @@ NumPy: the absolute basics for beginners
 
 .. currentmodule:: numpy
 
-Welcome to the absolute beginner's guide to NumPy! If you have comments or
-suggestions, please don’t hesitate to `reach out
-<https://numpy.org/community/>`_!
+Welcome to the absolute beginner's guide to NumPy!
 
-
-Welcome to NumPy!
------------------
-
-NumPy (**Numerical Python**) is an open source Python library that's used in
-almost every field of science and engineering. It's the universal standard for
-working with numerical data in Python, and it's at the core of the scientific
-Python and PyData ecosystems. NumPy users include everyone from beginning coders
-to experienced researchers doing state-of-the-art scientific and industrial
-research and development. The NumPy API is used extensively in Pandas, SciPy,
-Matplotlib, scikit-learn, scikit-image and most other data science and
-scientific Python packages.
-
-The NumPy library contains multidimensional array and matrix data structures
-(you'll find more information about this in later sections). It provides
-**ndarray**, a homogeneous n-dimensional array object, with methods to
-efficiently operate on it. NumPy can be used to perform a wide variety of
-mathematical operations on arrays.  It adds powerful data structures to Python
-that support efficient calculations with arrays and matrices and it supplies
-an enormous library of high-level mathematical functions that operate on these
-arrays and matrices.
-
-Learn more about :ref:`NumPy here <whatisnumpy>`!
-
-Installing NumPy
-----------------
-
-To install NumPy, we strongly recommend using a scientific Python distribution.
-If you're looking for the full instructions for installing NumPy on your
-operating system, see `Installing NumPy <https://numpy.org/install/>`_.
-
-
-
-If you already have Python, you can install NumPy with::
-
-  conda install numpy
-
-or ::
-
-  pip install numpy
-
-If you don't have Python yet, you might want to consider using `Anaconda
-<https://www.anaconda.com/>`_. It's the easiest way to get started. The good
-thing about getting this distribution is the fact that you don’t need to worry
-too much about separately installing NumPy or any of the major packages that
-you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
+NumPy (**Num**\ erical **Py**\ thon) is an open source Python library that's
+widely used in science and engineering. The NumPy library contains
+multidimensional array data structures, such as the homogeneous, N-dimensional
+``ndarray``, and a large library of functions that operate efficiently on these
+data structures. Learn more about NumPy at :ref:`What is NumPy <whatisnumpy>`,
+and if you have comments or suggestions, please
+`reach out <https://numpy.org/community/>`_!
 
 How to import NumPy
 -------------------
 
-To access NumPy and its functions import it in your Python code like this::
+After `installing NumPy <https://numpy.org/install/>`_, it may be imported
+into Python code like::
 
   import numpy as np
 
-We shorten the imported name to ``np`` for better readability of code using
-NumPy. This is a widely adopted convention that makes your code more readable
-for everyone working on it. We recommend to always use import numpy as ``np``.
+This convention allows access to NumPy features with a short, recognizable
+prefix (``np.``) while distinguishing NumPy features from others that have the
+same name.
 
 Reading the example code
 ------------------------
 
-If you aren't already comfortable with reading tutorials that contain a lot of code,
-you might not know how to interpret a code block that looks
-like this::
+Throughout the NumPy documentation, you will find blocks that look like::
 
-  >>> a = np.arange(6)
-  >>> a2 = a[np.newaxis, :]
-  >>> a2.shape
-  (1, 6)
+  >>> a = np.array([[1, 2, 3],
+  ...               [4, 5, 6]])
+  >>> a.shape
+  (2, 3)
 
-If you aren't familiar with this style, it's very easy to understand.
-If you see ``>>>``, you're looking at **input**, or the code that
-you would enter. Everything that doesn't have ``>>>`` in front of it
-is **output**, or the results of running your code. This is the style
-you see when you run ``python`` on the command line, but if you're using
-IPython, you might see a different style. Note that it is not part of the
-code and will cause an error if typed or pasted into the Python
-shell. It can be safely typed or pasted into the IPython shell; the ``>>>``
-is ignored.
-
+Text preceded by ``>>>`` or ``...`` is **input**, the code that you would
+enter in a script or at a Python prompt. Everything else is **output**, the
+results of running your code. Note that ``>>>`` and ``...`` are not part of the
+code and may cause an error if entered at a Python prompt.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------
 
-NumPy gives you an enormous range of fast and efficient ways of creating arrays
-and manipulating numerical data inside them. While a Python list can contain
-different data types within a single list, all of the elements in a NumPy array
-should be homogeneous. The mathematical operations that are meant to be performed
-on arrays would be extremely inefficient if the arrays weren't homogeneous.
+Python lists are excellent, general-purpose containers. They can be
+"heterogeneous", meaning that they can contain elements of a variety of types,
+and they are quite fast when used to perform individual operations on a handful
+of elements.
 
-**Why use NumPy?**
-
-NumPy arrays are faster and more compact than Python lists. An array consumes
-less memory and is convenient to use. NumPy uses much less memory to store data
-and it provides a mechanism of specifying the data types. This allows the code
-to be optimized even further.
+Depending on the characteristics of the data and the types of operations that
+need to be performed, other containers may be more appropriate; they can
+exploit these characteristics to improve speed, reduce memory consumption, and
+offer a high-level syntax for performing a variety of common processing tasks.
+NumPy shines when there are large quantities of "homogeneous" (same-type) data
+to be processed on the CPU.
 
 What is an "array"?
 -------------------
@@ -239,25 +190,10 @@ ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 How to create a basic array
 ---------------------------
 
-*This section covers* ``np.array()``, ``np.zeros()``, ``np.ones()``,
-``np.empty()``, ``np.arange()``, ``np.linspace()``, ``dtype``
+*This section covers* ``np.zeros()``, ``np.ones()``,
+``np.empty()``, ``np.arange()``, ``np.linspace()``
 
 -----
-
-To create a NumPy array, you can use the function ``np.array()``.
-
-All you need to do to create a simple array is pass a list to it. If you choose
-to, you can also specify the type of data in your list.
-:ref:`You can find more information about data types here <arrays.dtypes>`. ::
-
-    >>> import numpy as np
-    >>> a = np.array([1, 2, 3])
-
-You can visualize your array this way:
-
-.. image:: images/np_array.png
-
-*Be aware that these visualizations are meant to simplify ideas and give you a basic understanding of NumPy concepts and mechanics. Arrays and array operations are much more complicated than are captured here!*
 
 Besides creating an array from a sequence of elements, you can easily create an
 array filled with ``0``'s::
