@@ -7,13 +7,10 @@ import pathlib
 import shutil
 import json
 import pathlib
-from github.GithubException import GithubException
-from git.exc import GitError
 
 import click
 from spin import util
 from spin.cmds import meson
-from tools.changelog import main as generate_changelog
 
 
 # Check that the meson git submodule is present
@@ -47,6 +44,14 @@ def authors(ctx, token, revision_range):
     \b
     $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
     """
+    try:
+        from github.GithubException import GithubException
+        from git.exc import GitError
+        from tools.changelog import main as generate_changelog
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
     click.secho(
         f"Generating change log for range {revision_range}",
         bold=True, fg="bright_green",
