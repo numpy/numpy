@@ -357,7 +357,13 @@ def lint(ctx, branch, uncommitted):
         else f"against {branch} branch",
         bold=True, fg="bright_green",
     )
-    from tools.linter import DiffLinter
+    try:
+        from tools.linter import DiffLinter
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install using linter_requirements.txt"
+        )
+
     DiffLinter(branch).run_lint(uncommitted)
 
 @click.command()
