@@ -7,10 +7,13 @@ import pathlib
 import shutil
 import json
 import pathlib
+from github.GithubException import GithubException
+from git.exc import GitError
 
 import click
 from spin import util
 from spin.cmds import meson
+from tools.changelog import main as generate_changelog
 
 
 # Check that the meson git submodule is present
@@ -21,6 +24,45 @@ if not meson_import_dir.exists():
         'The `vendored-meson/meson` git submodule does not exist! ' +
         'Run `git submodule update --init` to fix this problem.'
     )
+
+
+@click.command()
+@click.option(
+    "-t", "--token",
+    help="GitHub access token",
+    required=True
+)
+@click.option(
+    "--revision-range",
+    help="<revision>..<revision>",
+    required=True
+)
+@click.pass_context
+def authors(ctx, token, revision_range):
+    """👩 Get change log for provided revision range
+
+    \b
+    Example:
+
+    \b
+    $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
+    """
+    click.secho(
+        f"Generating change log for range {revision_range}",
+        bold=True, fg="bright_green",
+    )
+    try:
+        generate_changelog(token, revision_range)
+    except GithubException as e:
+        raise click.ClickException(
+            f"GithubException raised with status: {e.status} "
+            f"and message: {e.data['message']}"
+        )
+    except GitError as e:
+        raise click.ClickException(
+            f"Git error in command `{' '.join(e.command)}` "
+            f"with error message: {e.stderr}"
+        )
 
 
 @click.command()
