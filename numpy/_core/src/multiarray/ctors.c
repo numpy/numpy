@@ -658,6 +658,13 @@ PyArray_NewFromDescr_int(
         return NULL;
     }
 
+    /* finalize the descriptor if the DType defines a finalization function */
+    finalize_descr_function *finalize =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr;
+    if (finalize != NULL && data == NULL) {
+        Py_SETREF(descr, finalize(descr));
+    }
+
     nbytes = descr->elsize;
     /*
      * Unless explicitly asked not to, we do replace dtypes in some cases.
