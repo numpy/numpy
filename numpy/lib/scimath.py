@@ -1,3 +1,4 @@
 from ._scimath_impl import (
-    __all__, sqrt, log, log2, logn, log10, power, arccos, arcsin, arctanh
+    __all__, __doc__, sqrt, log, log2, logn, log10, power, arccos, arcsin,
+    arctanh
 )

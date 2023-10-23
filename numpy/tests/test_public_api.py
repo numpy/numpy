@@ -589,11 +589,6 @@ def test_functions_single_location():
                 "numpy._core" not in member.__name__ and  # outside _core
                 # not a legacy or testing module
                 member_name not in ["f2py", "ma", "testing", "tests"] and
-                # skip numpy.polynomial
-                not (
-                    member_name == "polynomial" and
-                    module.__name__ == "numpy"
-                ) and
                 member not in visited_modules  # not visited yet
             ):
                 modules_queue.append(member)
@@ -617,6 +612,13 @@ def test_functions_single_location():
                             "divide",  # np.true_divide
                         ] and
                         module.__name__ == "numpy"
+                    ):
+                        continue
+                    # skip trimcoef from numpy.polynomial as it is
+                    # duplicated by design.
+                    if (
+                        member.__name__ == "trimcoef" and
+                        module.__name__.startswith("numpy.polynomial")
                     ):
                         continue
 

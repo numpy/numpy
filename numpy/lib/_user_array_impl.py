@@ -1,8 +1,10 @@
 """
-Standard container-class for easy multiple-inheritance.
+Container class for backward compatibility with NumArray.
 
-Try to inherit from the ndarray instead of using this class as this is not
-complete.
+The user_array.container class exists for backward compatibility with NumArray
+and is not meant to be used in new code. If you need to create an array
+container class, we recommend either creating a class that wraps an ndarray
+or subclasses ndarray.
 
 """
 from numpy._core import (
