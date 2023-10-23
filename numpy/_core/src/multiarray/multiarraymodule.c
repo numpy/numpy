@@ -3297,15 +3297,14 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         NPY_ITER_READONLY | NPY_ITER_ALIGNED
     };
     common_dt = PyArray_ResultType(2, &op_in[2], 0, NULL);
+    if (common_dt == NULL) {
+        goto fail;
+    }
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                 common_dt, common_dt};
     NpyIter * iter;
     NPY_BEGIN_THREADS_DEF;
 
-    if (common_dt == NULL || op_dt[1] == NULL) {
-        Py_XDECREF(op_dt[1]);
-        goto fail;
-    }
     iter =  NpyIter_MultiNew(
             4, op_in, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
             op_flags, op_dt);
