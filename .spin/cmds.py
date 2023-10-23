@@ -333,24 +333,32 @@ def _run_asv(cmd):
 )
 @click.pass_context
 def lint(ctx, branch, uncommitted):
-    """🔦 Run lint checks on diff.
-    Provide target branch name or `uncommitted` to check before committing:
+    """🔦 Run lint checks on diffs.
+    Provide target branch name or `uncommitted` to check changes before committing:
 
     \b
     Examples:
 
     \b
-    $ spin lint
-    $ spin lint --branch main
-    $ spin lint uncommitted
+    For lint checks of your development brach with `main` or a custom branch:
+
+    \b
+    $ spin lint # defaults to main
+    $ spin lint --branch custom_branch
+
+    \b
+    To check just the uncommitted changes before committing
+
+    \b
+    $ spin lint --uncommitted
     """
     click.secho(
-        f"Performing lint checks against {'uncommitted changes' if uncommitted else branch + ' branch'}",
+        "Performing lint checks " + "for uncommitted changes" if uncommitted
+        else f"against {branch} branch",
         bold=True, fg="bright_green",
     )
     from tools.linter import DiffLinter
-    ret = DiffLinter(branch).run_lint(uncommitted)
-    print(ret)
+    DiffLinter(branch).run_lint(uncommitted)
 
 @click.command()
 @click.option(
