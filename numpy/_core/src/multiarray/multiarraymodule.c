@@ -3252,7 +3252,7 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
 NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
-    PyArrayObject *arr, *ax, *ay = NULL;
+    PyArrayObject *arr = NULL, *ax = NULL, *ay = NULL;
     PyObject *ret = NULL;
     PyArray_Descr *common_dt = NULL;
 
@@ -3300,6 +3300,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     if (common_dt == NULL) {
         goto fail;
     }
+    /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL),
                                 common_dt, common_dt};
     NpyIter * iter;

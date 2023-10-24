@@ -944,6 +944,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
              *       We should eventually have special loops for isnan and once
              *       we do, we may just deprecate all remaining ones (e.g.
              *       `negative(2**100)` not working as it is an object.)
+             *
+             *       This is issue is part of the NEP 50 adoption.
              */
             break;
         }
