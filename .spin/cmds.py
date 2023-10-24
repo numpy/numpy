@@ -319,6 +319,47 @@ def _run_asv(cmd):
 
     util.run(cmd, cwd='benchmarks', env=env)
 
+@click.command()
+@click.option(
+    "-b", "--branch",
+    metavar='branch',
+    default="main",
+)
+@click.option(
+    '--uncommitted',
+    is_flag=True,
+    default=False,
+    required=False,
+)
+@click.pass_context
+def lint(ctx, branch, uncommitted):
+    """🔦 Run lint checks on diffs.
+    Provide target branch name or `uncommitted` to check changes before committing:
+
+    \b
+    Examples:
+
+    \b
+    For lint checks of your development brach with `main` or a custom branch:
+
+    \b
+    $ spin lint # defaults to main
+    $ spin lint --branch custom_branch
+
+    \b
+    To check just the uncommitted changes before committing
+
+    \b
+    $ spin lint --uncommitted
+    """
+    try:
+        linter = _get_numpy_tools(pathlib.Path('linter.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install using linter_requirements.txt"
+        )
+
+    linter.DiffLinter(branch).run_lint(uncommitted)
 
 @click.command()
 @click.option(
