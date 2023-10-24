@@ -210,6 +210,6 @@ cli = 'vendored-meson/meson/meson.py'
 ]
 "Documentation" = [
   ".spin/cmds.py:docs",
-  ".spin/cmds.py:authors",
+  ".spin/cmds.py:changelog",
 ]
 "Metrics" = [".spin/cmds.py:bench"]

@@ -35,7 +35,7 @@ if not meson_import_dir.exists():
     required=True
 )
 @click.pass_context
-def authors(ctx, token, revision_range):
+def changelog(ctx, token, revision_range):
     """👩 Get change log for provided revision range
 
     \b
