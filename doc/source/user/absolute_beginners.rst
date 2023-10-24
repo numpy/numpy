@@ -23,9 +23,9 @@ into Python code like::
 
   import numpy as np
 
-This convention allows access to NumPy features with a short, recognizable
-prefix (``np.``) while distinguishing NumPy features from others that have the
-same name.
+This widespread convention allows access to NumPy features with a short,
+recognizable prefix (``np.``) while distinguishing NumPy features from others
+that have the same name.
 
 Reading the example code
 ------------------------
@@ -51,8 +51,8 @@ and they are quite fast when used to perform individual operations on a handful
 of elements.
 
 Depending on the characteristics of the data and the types of operations that
-need to be performed, other containers may be more appropriate; they can
-exploit these characteristics to improve speed, reduce memory consumption, and
+need to be performed, other containers may be more appropriate; by exploiting
+these characterists, we can improve speed, reduce memory consumption, and
 offer a high-level syntax for performing a variety of common processing tasks.
 NumPy shines when there are large quantities of "homogeneous" (same-type) data
 to be processed on the CPU.
@@ -60,8 +60,9 @@ to be processed on the CPU.
 What is an "array"?
 -------------------
 
-An "array" is an instance of the fundamental data structure of the NumPy
-library. A common way to think of an array is as a grid of elements.
+An "array" is an instance of the fundamental data structure class of the NumPy
+library, ``ndarray``. A common way to think of an array is as a grid of
+elements.
 
 One way to initialize an array is using a Python sequence, such as a list.
 For example::
@@ -83,27 +84,30 @@ list: using the integer index of the element within square brackets.
      As with built-in Python sequences, NumPy arrays are "0-indexed": the first
      element of the array is accessed using index ``0``, not ``1``.
 
-As with the original list, Python slice notation can be used for indexing.
-
-    >>> a[:3]
-    array([1, 2, 3])
-
-Also like the original list, the array is mutable.
+Like the original list, the array is mutable.
 
     >>> a[0] = 10
     >>> a
     array([10,  2,  3,  4,  5,  6])
 
-One major difference between the array and the original list is that slicing
-returns a *view*: an object that refers to the data in the original array. The
-original array can be mutated using the view.
+Also like the original list, Python slice notation can be used for indexing.
+
+    >>> a[:3]
+    array([10, 2, 3])
+
+One major difference is that slice indexing of a list copies the elements into
+a new list, but slicing an array returns a *view*: an object that refers to the
+data in the original array. The original array can be mutated using the view.
 
     >>> b = a[3:]
     >>> b
     array([4, 5, 6])
     >>> b[0] = 40
     >>> a
-    array([ 1,  2,  3, 40,  5,  6])
+    array([ 10,  2,  3, 40,  5,  6])
+
+See :ref:`basics.copies-and-views` for a more comprehensive explanation of when
+array operations return views rather than copies.
 
 Two- and higher-dimensional arrays can be initialized from nested Python
 sequences::
@@ -179,7 +183,7 @@ attribute.
     True
 
 Arrays are typically "homogeneous", meaning that they contain elements of
-only one "data type", contained in the ``dtype`` attribute.
+only one "data type". The data type is recorded in the ``dtype`` attribute.
 
     >>> a.dtype
     dtype('int64')  # "int" for integer, "64" for 64-bit
