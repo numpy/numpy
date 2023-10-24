@@ -7,6 +7,7 @@ import pathlib
 import shutil
 import json
 import pathlib
+import importlib
 
 import click
 from spin import util
@@ -21,6 +22,14 @@ if not meson_import_dir.exists():
         'The `vendored-meson/meson` git submodule does not exist! ' +
         'Run `git submodule update --init` to fix this problem.'
     )
+
+
+def _get_numpy_tools(filename):
+    filepath = pathlib.Path('tools', filename)
+    spec = importlib.util.spec_from_file_location(filename.stem, filepath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 @click.command()
@@ -47,7 +56,7 @@ def changelog(ctx, token, revision_range):
     try:
         from github.GithubException import GithubException
         from git.exc import GitError
-        from tools.changelog import main as generate_changelog
+        changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install the missing packages to use this command."
@@ -57,7 +66,7 @@ def changelog(ctx, token, revision_range):
         bold=True, fg="bright_green",
     )
     try:
-        generate_changelog(token, revision_range)
+        changelog.main(token, revision_range)
     except GithubException as e:
         raise click.ClickException(
             f"GithubException raised with status: {e.status} "
