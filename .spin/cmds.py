@@ -7,6 +7,7 @@ import pathlib
 import shutil
 import json
 import pathlib
+import importlib
 
 import click
 from spin import util
@@ -21,6 +22,61 @@ if not meson_import_dir.exists():
         'The `vendored-meson/meson` git submodule does not exist! ' +
         'Run `git submodule update --init` to fix this problem.'
     )
+
+
+def _get_numpy_tools(filename):
+    filepath = pathlib.Path('tools', filename)
+    spec = importlib.util.spec_from_file_location(filename.stem, filepath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@click.command()
+@click.option(
+    "-t", "--token",
+    help="GitHub access token",
+    required=True
+)
+@click.option(
+    "--revision-range",
+    help="<revision>..<revision>",
+    required=True
+)
+@click.pass_context
+def changelog(ctx, token, revision_range):
+    """👩 Get change log for provided revision range
+
+    \b
+    Example:
+
+    \b
+    $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
+    """
+    try:
+        from github.GithubException import GithubException
+        from git.exc import GitError
+        changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
+    except ModuleNotFoundError as e:
+        raise click.ClickException(
+            f"{e.msg}. Install the missing packages to use this command."
+        )
+    click.secho(
+        f"Generating change log for range {revision_range}",
+        bold=True, fg="bright_green",
+    )
+    try:
+        changelog.main(token, revision_range)
+    except GithubException as e:
+        raise click.ClickException(
+            f"GithubException raised with status: {e.status} "
+            f"and message: {e.data['message']}"
+        )
+    except GitError as e:
+        raise click.ClickException(
+            f"Git error in command `{' '.join(e.command)}` "
+            f"with error message: {e.stderr}"
+        )
 
 
 @click.command()
