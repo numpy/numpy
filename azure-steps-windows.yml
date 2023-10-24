@@ -29,7 +29,7 @@ steps:
     If ( Test-Path env:DISABLE_BLAS ) {
         python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
     }
-    elseif ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
+    elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
         python -m pip install scipy-openblas64 spin
         spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
