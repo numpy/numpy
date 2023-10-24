@@ -352,19 +352,14 @@ def lint(ctx, branch, uncommitted):
     \b
     $ spin lint --uncommitted
     """
-    click.secho(
-        "Performing lint checks " + "for uncommitted changes" if uncommitted
-        else f"against {branch} branch",
-        bold=True, fg="bright_green",
-    )
     try:
-        from tools.linter import DiffLinter
+        linter = _get_numpy_tools(pathlib.Path('linter.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install using linter_requirements.txt"
         )
 
-    DiffLinter(branch).run_lint(uncommitted)
+    linter.DiffLinter(branch).run_lint(uncommitted)
 
 @click.command()
 @click.option(
