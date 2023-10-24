@@ -422,6 +422,7 @@ class TestComparisons:
 
         assert py_comp(arr, -1) == expected
         assert np_comp(arr, -1) == expected
+
         scalar = arr[0]
         assert isinstance(scalar, np.integer)
         # The Python operator here is mainly interesting:
@@ -4056,17 +4057,29 @@ class TestRationalFunctions:
         assert_raises(TypeError, np.gcd, 0.3, 0.4)
         assert_raises(TypeError, np.lcm, 0.3, 0.4)
 
-    def test_builtin_long(self):
-        # sanity check that array coercion is alright for builtin longs
-        assert_equal(np.array(2**200).item(), 2**200)
+    def test_huge_integers(self):
+        # Converting to an array first is a bit different as it means we
+        # have an explicit object dtype:
+        assert_equal(np.array(2**200), 2**200)
+        # Special promotion rules should ensure that this also works for
+        # two Python integers (even if slow).
+        # (We do this for comparisons, as the result is always bool and
+        # we also special case array comparisons with Python integers)
+        np.equal(2**200, 2**200)
 
-        # expressed as prime factors
+        # But, we cannot do this when it would affect the result dtype:
+        with pytest.raises(OverflowError):
+            np.gcd(2**100, 3**100)
+
+        # Asking for `object` explicitly is fine, though:
+        assert np.gcd(2**100, 3**100, dtype=object) == 1
+
+        # As of now, the below work, because it is using arrays (which
+        # will be object arrays)
         a = np.array(2**100 * 3**5)
         b = np.array([2**100 * 5**7, 2**50 * 3**10])
         assert_equal(np.gcd(a, b), [2**100,               2**50 * 3**5])
         assert_equal(np.lcm(a, b), [2**100 * 3**5 * 5**7, 2**100 * 3**10])
-
-        assert_equal(np.gcd(2**100, 3**100), 1)
 
 
 class TestRoundingFunctions:
