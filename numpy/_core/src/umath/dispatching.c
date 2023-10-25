@@ -899,13 +899,6 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  *        (outputs and the second input can be NULL for reductions).
  *        NOTE: In some cases, the promotion machinery may currently modify
  *        these including clearing the output.
- * @param force_legacy_promotion If set, we have to use the old type resolution
- *        to implement value-based promotion/casting.
- * @param promoting_pyscalars Indication that some of the initial inputs were
- *        int, float, or complex.  In this case weak-scalar promotion is used
- *        which can lead to a lower result precision even when legacy promotion
- *        does not kick in: `np.int8(1) + 1` is the example.
- *        (Legacy promotion is skipped because `np.int8(1)` is also scalar)
  * @param ensure_reduce_compatible Must be set for reductions, in which case
  *        the found implementation is checked for reduce-like compatibility.
  *        If it is *not* compatible and `signature[2] != NULL`, we assume its
@@ -919,9 +912,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *op_dtypes[],
-        npy_bool force_legacy_promotion,
         npy_bool allow_legacy_promotion,
-        npy_bool promoting_pyscalars,
         npy_bool ensure_reduce_compatible)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
@@ -951,26 +942,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    if (force_legacy_promotion
-            && npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        /*
-         * We must use legacy promotion for value-based logic. Call the old
-         * resolver once up-front to get the "actual" loop dtypes.
-         * After this (additional) promotion, we can even use normal caching.
-         */
-        int cacheable = 1;  /* unused, as we modify the original `op_dtypes` */
-        if (legacy_promote_using_legacy_type_resolver(ufunc,
-                ops, signature, op_dtypes, &cacheable, NPY_FALSE) < 0) {
-            goto handle_error;
-        }
-    }
-
-    /* Pause warnings and always use "new" path */
-    int old_promotion_state = npy_promotion_state;
-    npy_promotion_state = NPY_USE_WEAK_PROMOTION;
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, allow_legacy_promotion);
-    npy_promotion_state = old_promotion_state;
 
     if (info == NULL) {
         goto handle_error;
@@ -978,26 +951,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
     PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
-
-    /* If necessary, check if the old result would have been different */
-    if (NPY_UNLIKELY(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN)
-            && (force_legacy_promotion || promoting_pyscalars)
-            && npy_give_promotion_warnings()) {
-        PyArray_DTypeMeta *check_dtypes[NPY_MAXARGS];
-        for (int i = 0; i < nargs; i++) {
-            check_dtypes[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(
-                    all_dtypes, i);
-        }
-        /* Before calling to the legacy promotion, pretend that is the state: */
-        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
-        int res = legacy_promote_using_legacy_type_resolver(ufunc,
-                ops, signature, check_dtypes, NULL, NPY_TRUE);
-        /* Reset the promotion state: */
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
-        if (res < 0) {
-            goto handle_error;
-        }
-    }
 
     /*
      * In certain cases (only the logical ufuncs really), the loop we found may
@@ -1015,8 +968,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         Py_INCREF(signature[0]);
         return promote_and_get_ufuncimpl(ufunc,
                 ops, signature, op_dtypes,
-                force_legacy_promotion, allow_legacy_promotion,
-                promoting_pyscalars, NPY_FALSE);
+                allow_legacy_promotion,
+                NPY_FALSE);
     }
 
     for (int i = 0; i < nargs; i++) {

@@ -9,22 +9,8 @@ extern "C" {
 
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
-#define NPY_USE_LEGACY_PROMOTION 0
-#define NPY_USE_WEAK_PROMOTION 1
-#define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-extern NPY_NO_EXPORT int npy_promotion_state;
-extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
 extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
 extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
-
-NPY_NO_EXPORT int
-npy_give_promotion_warnings(void);
-
-NPY_NO_EXPORT PyObject *
-npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
-
-NPY_NO_EXPORT PyObject *
-npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
 
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);

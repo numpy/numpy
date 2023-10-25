@@ -18,7 +18,7 @@ from .multiarray import (
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
+    zeros, normalize_axis_index)
 
 from . import overrides
 from . import umath
@@ -28,7 +28,7 @@ from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import bool_
 from ..exceptions import AxisError
-from ._ufunc_config import errstate, _no_nep50_warning
+from ._ufunc_config import errstate
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -52,8 +52,7 @@ __all__ = [
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not', 
-    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory',
-    '_get_promotion_state', '_set_promotion_state']
+    'full', 'full_like', 'matmul', 'shares_memory', 'may_share_memory']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -2331,7 +2330,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'), _no_nep50_warning():
+        with errstate(invalid='ignore'):
             return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)

@@ -1422,7 +1422,7 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
+    @pytest.mark.xfail(
             reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
         # gh-5917

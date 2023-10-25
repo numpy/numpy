@@ -1816,8 +1816,7 @@ class TestCholesky:
 
         # Check A = L L^H
         b = np.matmul(c, c.transpose(t).conj())
-        with np._no_nep50_warning():
-            atol = 500 * a.shape[0] * np.finfo(dtype).eps
+        atol = 500 * a.shape[0] * np.finfo(dtype).eps
         assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
         # Check diag(L) is real and positive

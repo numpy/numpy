@@ -4575,14 +4575,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"get_handler_version",
         (PyCFunction) get_handler_version,
         METH_VARARGS, NULL},
-    {"_get_promotion_state",
-        (PyCFunction)npy__get_promotion_state,
-        METH_NOARGS, "Get the current NEP 50 promotion state."},
-    {"_set_promotion_state",
-         (PyCFunction)npy__set_promotion_state,
-         METH_O, "Set the NEP 50 promotion state.  This is not thread-safe.\n"
-                 "The optional warnings can be safely silenced using the \n"
-                 "`np._no_nep50_warning()` context manager."},
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},

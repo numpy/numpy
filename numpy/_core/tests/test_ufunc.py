@@ -547,7 +547,7 @@ class TestUfunc:
         with pytest.raises(TypeError):
             np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
+    @pytest.mark.xfail(
             reason="NEP 50 impl breaks casting checks when `dtype=` is used "
                    "together with python scalars.")
     def test_use_output_signature_for_all_arguments(self):
@@ -2645,7 +2645,6 @@ def test_ufunc_types(ufunc):
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
-@np._no_nep50_warning()
 def test_ufunc_noncontiguous(ufunc):
     '''
     Check that contiguous and non-contiguous calls to ufuncs
