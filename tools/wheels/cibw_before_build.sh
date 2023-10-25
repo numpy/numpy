@@ -5,7 +5,7 @@ PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_s
 
 # Update license
 echo "" >> $PROJECT_DIR/LICENSE.txt
-echo ""----" >> $PROJECT_DIR/LICENSE.txt
+echo "----" >> $PROJECT_DIR/LICENSE.txt
 echo "" >> $PROJECT_DIR/LICENSE.txt
 cat $PROJECT_DIR/LICENSES_bundled.txt >> $PROJECT_DIR/LICENSE.txt
 if [[ $RUNNER_OS == "Linux" ]] ; then
