@@ -641,26 +641,6 @@ dtype_kind_to_ordering(char kind)
     }
 }
 
-/* Converts a type number from unsigned to signed */
-static int
-type_num_unsigned_to_signed(int type_num)
-{
-    switch (type_num) {
-        case NPY_UBYTE:
-            return NPY_BYTE;
-        case NPY_USHORT:
-            return NPY_SHORT;
-        case NPY_UINT:
-            return NPY_INT;
-        case NPY_ULONG:
-            return NPY_LONG;
-        case NPY_ULONGLONG:
-            return NPY_LONGLONG;
-        default:
-            return type_num;
-    }
-}
-
 
 /*NUMPY_API
  * Returns true if data of type 'from' may be cast to data of type
@@ -698,88 +678,6 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         return 0;
     }
     return is_valid;
-}
-
-
-/* CanCastArrayTo needs this function */
-static int min_scalar_type_num(char *valueptr, int type_num,
-                                            int *is_small_unsigned);
-
-
-/*
- * NOTE: This function uses value based casting logic for scalars. It will
- *       require updates when we phase out value-based-casting.
- */
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                    PyArray_Descr *to, NPY_CASTING casting)
-{
-    /*
-     * If the two dtypes are actually references to the same object
-     * or if casting type is forced unsafe then always OK.
-     *
-     * TODO: Assuming that unsafe casting always works is not actually correct
-     */
-    if (scal_type == to || casting == NPY_UNSAFE_CASTING ) {
-        return 1;
-    }
-
-    int valid = PyArray_CheckCastSafety(casting, scal_type, to, NPY_DTYPE(to));
-    if (valid == 1) {
-        /* This is definitely a valid cast. */
-        return 1;
-    }
-    if (valid < 0) {
-        /* Probably must return 0, but just keep trying for now. */
-        PyErr_Clear();
-    }
-
-    /*
-     * If the scalar isn't a number, value-based casting cannot kick in and
-     * we must not attempt it.
-     * (Additional fast-checks would be possible, but probably unnecessary.)
-     */
-    if (!PyTypeNum_ISNUMBER(scal_type->type_num)) {
-        return 0;
-    }
-
-    /*
-     * At this point we have to check value-based casting.
-     */
-    PyArray_Descr *dtype;
-    int is_small_unsigned = 0, type_num;
-    /* An aligned memory buffer large enough to hold any builtin numeric type */
-    npy_longlong value[4];
-
-    int swap = !PyArray_ISNBO(scal_type->byteorder);
-    scal_type->f->copyswap(&value, scal_data, swap, NULL);
-
-    type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
-                                    &is_small_unsigned);
-
-    /*
-     * If we've got a small unsigned scalar, and the 'to' type
-     * is not unsigned, then make it signed to allow the value
-     * to be cast more appropriately.
-     */
-    if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
-        type_num = type_num_unsigned_to_signed(type_num);
-    }
-
-    dtype = PyArray_DescrFromType(type_num);
-    if (dtype == NULL) {
-        return 0;
-    }
-#if 0
-    printf("min scalar cast ");
-    PyObject_Print(dtype, stdout, 0);
-    printf(" to ");
-    PyObject_Print(to, stdout, 0);
-    printf("\n");
-#endif
-    npy_bool ret = PyArray_CanCastTypeTo(dtype, to, casting);
-    Py_DECREF(dtype);
-    return ret;
 }
 
 
@@ -1489,74 +1387,6 @@ dtype_kind_to_simplified_ordering(char kind)
         default:
             return 3;
     }
-}
-
-
-/*
- * Determine if there is a mix of scalars and arrays/dtypes.
- * If this is the case, the scalars should be handled as the minimum type
- * capable of holding the value when the maximum "category" of the scalars
- * surpasses the maximum "category" of the arrays/dtypes.
- * If the scalars are of a lower or same category as the arrays, they may be
- * demoted to a lower type within their category (the lowest type they can
- * be cast to safely according to scalar casting rules).
- *
- * If any new style dtype is involved (non-legacy), always returns 0.
- */
-NPY_NO_EXPORT int
-should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
-                      npy_intp ndtypes, PyArray_Descr **dtypes)
-{
-    int use_min_scalar = 0;
-
-    if (narrs > 0) {
-        int all_scalars;
-        int max_scalar_kind = -1;
-        int max_array_kind = -1;
-
-        all_scalars = (ndtypes > 0) ? 0 : 1;
-
-        /* Compute the maximum "kinds" and whether everything is scalar */
-        for (npy_intp i = 0; i < narrs; ++i) {
-            if (!NPY_DT_is_legacy(NPY_DTYPE(PyArray_DESCR(arr[i])))) {
-                return 0;
-            }
-            if (PyArray_NDIM(arr[i]) == 0) {
-                int kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
-                if (kind > max_scalar_kind) {
-                    max_scalar_kind = kind;
-                }
-            }
-            else {
-                int kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
-                if (kind > max_array_kind) {
-                    max_array_kind = kind;
-                }
-                all_scalars = 0;
-            }
-        }
-        /*
-         * If the max scalar kind is bigger than the max array kind,
-         * finish computing the max array kind
-         */
-        for (npy_intp i = 0; i < ndtypes; ++i) {
-            if (!NPY_DT_is_legacy(NPY_DTYPE(dtypes[i]))) {
-                return 0;
-            }
-            int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
-            if (kind > max_array_kind) {
-                max_array_kind = kind;
-            }
-        }
-
-        /* Indicate whether to use the min_scalar_type function */
-        if (!all_scalars && max_array_kind >= max_scalar_kind) {
-            use_min_scalar = 1;
-        }
-    }
-    return use_min_scalar;
 }
 
 
