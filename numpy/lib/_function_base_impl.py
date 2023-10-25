@@ -2272,7 +2272,7 @@ class vectorize:
            [0., 0., 0., 1., 2., 1.]])
 
     Decorator syntax is supported.  The decorator can be called as
-    a function to provide keyword arguments.
+    a function to provide keyword arguments:
 
     >>> @np.vectorize
     ... def identity(x):
