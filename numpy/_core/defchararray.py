@@ -607,8 +607,10 @@ def decode(a, encoding=None, errors=None):
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
+    if len(a) == 0:
+        return a.astype('U')
     return _to_bytes_or_str_array(
-        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
+        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)), "U") #.astype('float64')
 
 
 @array_function_dispatch(_code_dispatcher)

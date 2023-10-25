@@ -352,7 +352,11 @@ class TestMethods:
 
     def test_decode(self):
         A = np.char.array([b'\\u03a3'])
+        B = np.char.array([])
         assert_(A.decode('unicode-escape')[0] == '\u03a3')
+        assert_(A.decode('unicode-escape').dtype.str.startswith('<U'))
+        assert_(B.decode('unicode-escape').dtype.str.startswith('<U'))
+
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
