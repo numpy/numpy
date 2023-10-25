@@ -195,15 +195,7 @@ concepts to remember include:
   *p*-th entry which is a slice object ``i:j:k``,
   then the returned array has dimension *N* formed by
   stacking, along the *p*-th axis, the sub-arrays returned by integer
-  indexing of elements *i*, *i+k*, ..., *i + (m - 1) k < j*. This means
-  that, for example, with the array::
-
-      >>> x = np.arange(24).reshape(2, 4, 3)
-
-  The following are equivalent::
-
-      >>> x[:, 1:3, :]
-      >>> np.stack([x[:, i, :] for i in range(1, 3)], axis=1)
+  indexing of elements *i*, *i+k*, ..., *i + (m - 1) k < j*.
 
 - Basic slicing with more than one non-``:`` entry in the slicing
   tuple, acts like repeated application of slicing using a single
