@@ -79,7 +79,7 @@ Generate the changelog
 
 The changelog is generated using the changelog tool::
 
-    $ python tools/changelog.py $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
+    $ spin changelog $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
 
 where ``GITHUB`` contains your GitHub access token. The text will need to be
 checked for non-standard contributor names and dependabot entries removed. It
