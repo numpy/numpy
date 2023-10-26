@@ -3573,6 +3573,9 @@ class TestMoveaxis:
 
 
 class TestCross:
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_2x2(self):
         u = [1, 2]
         v = [3, 4]
@@ -3582,6 +3585,9 @@ class TestCross:
         cp = np.cross(v, u)
         assert_equal(cp, -z)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_2x3(self):
         u = [1, 2]
         v = [3, 4, 5]
@@ -3600,6 +3606,9 @@ class TestCross:
         cp = np.cross(v, u)
         assert_equal(cp, -z)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_broadcasting(self):
         # Ticket #2624 (Trac #2032)
         u = np.tile([1, 2], (11, 1))
@@ -3630,6 +3639,9 @@ class TestCross:
         assert_equal(np.cross(v.T, u), -z)
         assert_equal(np.cross(u, u), 0)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
+    )
     def test_broadcasting_shapes(self):
         u = np.ones((2, 1, 3))
         v = np.ones((5, 3))
