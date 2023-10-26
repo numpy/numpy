@@ -66,19 +66,27 @@ cell storing one element of the data. For instance, if each element of the
 data were a number, we might visualize a "one-dimensional" array like a
 list:
 
-+---+---+---+---+
-| 1 | 5 | 2 | 0 |
-+---+---+---+---+
+.. math::
+
+    \begin{array}{|c||c|c|c|}
+    \hline
+    1 & 5 & 2 & 0 \\
+    \hline
+    \end{array}
 
 A two-dimensional array would be like a table:
 
-+---+---+---+---+
-| 1 | 5 | 2 | 0 |
-+---+---+---+---+
-| 8 | 3 | 6 | 1 |
-+---+---+---+---+
-| 1 | 7 | 2 | 9 |
-+---+---+---+---+
+.. math::
+
+    \begin{array}{|c||c|c|c|}
+    \hline
+    1 & 5 & 2 & 0 \\
+    \hline
+    8 & 3 & 6 & 1 \\
+    \hline
+    1 & 7 & 2 & 9 \\
+    \hline
+    \end{array}
 
 A three-dimensional array would be like a set of tables, perhaps stacked
 as though they were printed on separate pages. In NumPy, this idea is
@@ -100,7 +108,7 @@ less restrictive data structures.
 For the remainder of this document, we will use the word "array" to refer to
 an instance of ``ndarray``.
 
-Array Fundamentals
+Array fundamentals
 ------------------
 
 One way to initialize an array is using a Python sequence, such as a list.
