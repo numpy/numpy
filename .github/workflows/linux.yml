@@ -202,7 +202,6 @@ jobs:
     - name: Install test dependencies
       run: |
         pip install -r test_requirements.txt
-        pip install ninja
     - name: Run test suite
       run: |
         cd tools
