@@ -56,19 +56,6 @@ allow_noblas = get_option('allow-noblas')
 blas_symbol_suffix = get_option('blas-symbol-suffix')
 
 use_ilp64 = get_option('use-ilp64')
-if not use_ilp64
-  # TODO: clean this up
-  # For now, keep supporting the `NPY_USE_BLAS_ILP64` environment variable too
-  # `false` is the default for the CLI flag, so check if env var was set
-  use_ilp64 = run_command(py,
-    [
-      '-c',
-      'import os; print(1) if os.environ.get("NPY_USE_BLAS_ILP64", "0") != "0" else print(0)'
-    ],
-    check: true
-  ).stdout().strip() == '1'
-endif
-
 if use_ilp64
   blas_interface = ['interface: ilp64']
 else
@@ -93,7 +80,7 @@ mkl_may_use_sdl = not use_ilp64 and _threading_opt in ['auto', 'iomp']
 # First try scipy-openblas, and if found don't look for cblas or lapack, we
 # know what's inside the scipy-openblas wheels already.
 if blas_name == 'openblas' or blas_name == 'auto'
-  blas = dependency('scipy-openblas', required: false)
+  blas = dependency('scipy-openblas', method: 'pkg-config', required: false)
   if blas.found()
     blas_name = 'scipy-openblas'
   endif

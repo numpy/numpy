@@ -935,6 +935,21 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
 
+        if (nin == 1) {
+            /*
+             * TODO: If nin == 1 we don't promote!  This has exactly the effect
+             *       that right now integers can still go to object/uint64 and
+             *       their behavior is thus unchanged for unary ufuncs (like
+             *       isnan).  This is not ideal, but pragmatic...
+             *       We should eventually have special loops for isnan and once
+             *       we do, we may just deprecate all remaining ones (e.g.
+             *       `negative(2**100)` not working as it is an object.)
+             *
+             *       This is issue is part of the NEP 50 adoption.
+             */
+            break;
+        }
+
         if (!NPY_DT_is_legacy(out_op_DTypes[i])) {
             *allow_legacy_promotion = NPY_FALSE;
             // TODO: A subclass of int, float, complex could reach here and

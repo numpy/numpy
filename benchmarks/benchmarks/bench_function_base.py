@@ -2,6 +2,13 @@ from .common import Benchmark
 
 import numpy as np
 
+try:
+    # SkipNotImplemented is available since 6.0
+    from asv_runner.benchmarks.mark import SkipNotImplemented
+except ImportError:
+    SkipNotImplemented = NotImplementedError
+
+
 class Linspace(Benchmark):
     def setup(self):
         self.d = np.array([1, 2, 3])
@@ -169,6 +176,13 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
+        dtype = np.dtype(dtype)
+        try:
+            with np.errstate(over="raise"):
+                res = dtype.type(size-1)
+        except (OverflowError, FloatingPointError):
+            raise SkipNotImplemented("Cannot construct arange for this size.")
+
         return np.arange(size-1, -1, -1, dtype=dtype)
 
     @staticmethod

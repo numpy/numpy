@@ -1893,7 +1893,7 @@ add_newdoc('numpy._core.umath', 'left_shift',
     result and can lead to unexpected results in some cases (see
     :ref:`Casting Rules <ufuncs.casting>`):
 
-    >>> a = np.left_shift(np.uint8(255), 1) # Expect 254
+    >>> a = np.left_shift(np.uint8(255), np.int64(1))  # Expect 254
     >>> print(a, type(a)) # Unexpected result due to upcasting
     510 <class 'numpy.int64'>
     >>> b = np.left_shift(np.uint8(255), np.uint8(1))

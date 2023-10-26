@@ -4875,8 +4875,8 @@ def default_rng(seed=None):
     seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
-        ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        ``array_like[ints]`` is passed, then all values must be non-negative and will be
+        passed to `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.

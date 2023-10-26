@@ -76,6 +76,7 @@ Exceptions
 
 """
 # To get sub-modules
+from . import linalg  # deprecated in NumPy 2.0
 from . import _linalg
 from ._linalg import *
 
