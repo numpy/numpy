@@ -764,9 +764,17 @@ endforeach
 # -----------------------------------
 foreach gen_mtargets : [
   [
+    'simd_argsort.dispatch.h',
+    'src/npysort/simd_argsort.dispatch.cpp',
+    [AVX512_SKX]
+  ],
+  [
     'simd_qsort.dispatch.h',
     'src/npysort/simd_qsort.dispatch.cpp',
-    [AVX512_SKX, ASIMD]
+    [
+      AVX512_SKX, AVX2,
+      ASIMD,
+    ]
   ],
   [
     'simd_qsort_16bit.dispatch.h',

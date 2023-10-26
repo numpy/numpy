@@ -13,7 +13,7 @@ namespace np { namespace qsort_simd {
 #endif
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size))
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp num, npy_intp kth))
-#endif
+#endif // DISABLE_HIGHWAY_OPTIMIZATION
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "simd_argsort.dispatch.h"
