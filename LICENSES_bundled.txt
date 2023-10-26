@@ -30,11 +30,6 @@ Files: vendored-meson/meson/*
 License: Apache 2.0
   For license text, see vendored-meson/meson/COPYING
 
-Name: meson-python
-Files: vendored-meson/meson-python/*
-License: MIT
-  For license text, see vendored-meson/meson-python/LICENSE
-
 Name: spin
 Files: .spin/cmds.py
 License: BSD-3
