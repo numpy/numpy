@@ -125,12 +125,7 @@ def generate_api(output_dir, force=False):
     targets = (h_file, c_file)
 
     sources = ['ufunc_api_order.txt']
-
-    if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
-        return targets
-    else:
-        do_generate_api(targets, sources)
-
+    do_generate_api(targets, sources)
     return targets
 
 def do_generate_api(targets, sources):
