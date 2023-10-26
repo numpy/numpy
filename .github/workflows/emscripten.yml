@@ -73,6 +73,8 @@ jobs:
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
           python -c "import sys; print(sys.platform)"
+          # TODO: when re-enabled this workflow, install test deps differently
+          # since ninja isn't installable with pyodide
           pip install -r test_requirements.txt
       - name: Test
         run: |
