@@ -152,14 +152,11 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
+# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
 environment = {RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
-# For universal2 wheels, we will need to fuse them manually
-# instead of going through cibuildwheel
-# This is because cibuildwheel tries to make a fat wheel
-# https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
-# for more info
+# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols.
