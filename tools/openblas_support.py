@@ -47,14 +47,6 @@ def get_plat():
     return plat
 
 
-def get_ilp64():
-    if os.environ.get("NPY_USE_BLAS_ILP64", "0") == "0":
-        return None
-    if IS_32BIT:
-        raise RuntimeError("NPY_USE_BLAS_ILP64 set on 32-bit arch")
-    return "64_"
-
-
 def get_manylinux(arch):
     default = '2014'
     ml_ver = os.environ.get("MB_ML_VER", default)
@@ -92,9 +84,9 @@ def get_linux(arch):
         return get_musllinux(arch)
 
 
-def download_openblas(target, plat, ilp64, *, nightly=False):
+def download_openblas(target, plat, libsuffix, *, nightly=False):
     osname, arch = plat.split("-")
-    fnsuffix = {None: "", "64_": "64_"}[ilp64]
+    fnsuffix = {None: "", "64_": "64_"}[libsuffix]
     filename = ''
     headers = {'User-Agent':
                ('Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 ; '
@@ -147,7 +139,7 @@ def download_openblas(target, plat, ilp64, *, nightly=False):
     return typ
 
 
-def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
+def setup_openblas(plat=get_plat(), use_ilp64=False, nightly=False):
     '''
     Download and setup an openblas library for building. If successful,
     the configuration script will find it automatically.
@@ -158,10 +150,15 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64(), nightly=False):
         path to extracted files on success, otherwise indicates what went wrong
         To determine success, do ``os.path.exists(msg)``
     '''
+    if use_ilp64 and IS_32BIT:
+        raise RuntimeError("Cannot use 64-bit BLAS on 32-bit arch")
+
     _, tmp = mkstemp()
     if not plat:
         raise ValueError('unknown platform')
-    typ = download_openblas(tmp, plat, ilp64, nightly=nightly)
+
+    libsuffix = '64_' if use_ilp64 else None
+    typ = download_openblas(tmp, plat, libsuffix, nightly=nightly)
     if not typ:
         return ''
     osname, arch = plat.split("-")
@@ -345,6 +342,7 @@ def test_version(expected_version=None):
         )
     print("OK")
 
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
@@ -358,11 +356,13 @@ if __name__ == '__main__':
                              'against available OpenBLAS')
     parser.add_argument('--nightly', action='store_true',
                         help='If set, use nightly OpenBLAS build.')
+    parser.add_argument('--use-ilp64', action='store_true',
+                        help='If set, download the ILP64 OpenBLAS build.')
     args = parser.parse_args()
     if args.check_version != '':
         test_version(args.check_version)
     elif args.test is None:
-        print(setup_openblas(nightly=args.nightly))
+        print(setup_openblas(nightly=args.nightly, use_ilp64=args.use_ilp64))
     else:
         if len(args.test) == 0 or 'all' in args.test:
             test_setup(SUPPORTED_PLATFORMS)

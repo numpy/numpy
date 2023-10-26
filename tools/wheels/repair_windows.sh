@@ -29,4 +29,4 @@ rm -rf tmp
 
 # the libopenblas.dll is placed into this directory in the cibw_before_build
 # script.
-delvewheel repair --add-path /c/opt/openblas/openblas_dll -w $DEST_DIR $WHEEL
+delvewheel repair --add-path /c/opt/64/bin -w $DEST_DIR $WHEEL
