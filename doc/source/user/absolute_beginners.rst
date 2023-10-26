@@ -42,8 +42,8 @@ enter in a script or at a Python prompt. Everything else is **output**, the
 results of running your code. Note that ``>>>`` and ``...`` are not part of the
 code and may cause an error if entered at a Python prompt.
 
-What’s the difference between a Python list and a NumPy array?
---------------------------------------------------------------
+Why use NumPy?
+--------------
 
 Python lists are excellent, general-purpose containers. They can be
 "heterogeneous", meaning that they can contain elements of a variety of types,
@@ -52,7 +52,7 @@ of elements.
 
 Depending on the characteristics of the data and the types of operations that
 need to be performed, other containers may be more appropriate; by exploiting
-these characterists, we can improve speed, reduce memory consumption, and
+these characteristics, we can improve speed, reduce memory consumption, and
 offer a high-level syntax for performing a variety of common processing tasks.
 NumPy shines when there are large quantities of "homogeneous" (same-type) data
 to be processed on the CPU.
@@ -60,9 +60,48 @@ to be processed on the CPU.
 What is an "array"?
 -------------------
 
-An "array" is an instance of the fundamental data structure class of the NumPy
-library, ``ndarray``. A common way to think of an array is as a grid of
-elements.
+In computer programming, an array is a structure for storing and retrieving
+data. We often talk about an array as if it were a grid in space, with each
+cell storing one element of the data. For instance, if each element of the
+data were a number, we might visualize a "one-dimensional" array like a
+list:
+
++---+---+---+---+
+| 1 | 5 | 2 | 0 |
++---+---+---+---+
+
+A two-dimensional array would be like a table:
+
++---+---+---+---+
+| 1 | 5 | 2 | 0 |
++---+---+---+---+
+| 8 | 3 | 6 | 1 |
++---+---+---+---+
+| 1 | 7 | 2 | 9 |
++---+---+---+---+
+
+A three-dimensional array would be like a set of tables, perhaps stacked
+as though they were printed on separate pages. In NumPy, this idea is
+generalized to an arbitrary number of dimensions, and so the fundamental
+array class is called ``ndarray``: it represents an "N-dimensional
+array".
+
+Most NumPy arrays have some restrictions. For instance:
+
+- All elements of the array must be of the same type of data.
+- Once created, the total size of the the array can't change.
+- The shape must be "rectangular", not "jagged"; e.g., each row of
+  a two-dimensional array must have the same number of columns.
+
+When these conditions are met, NumPy exploits these characteristics to
+make the array faster, more memory efficient, and more convenient to use than
+less restrictive data structures.
+
+For the remainder of this document, we will use the word "array" to refer to
+an instance of ``ndarray``.
+
+Array Fundamentals
+------------------
 
 One way to initialize an array is using a Python sequence, such as a list.
 For example::
