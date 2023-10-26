@@ -42,11 +42,11 @@ template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(uint64_t*arr, npy_intp* arg, 
 }
 template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(float *arr, npy_intp* arg, npy_intp num, npy_intp kth)
 {
-    avx512_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
+    avx512_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num, true);
 }
 template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(double *arr, npy_intp* arg, npy_intp num, npy_intp kth)
 {
-    avx512_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num);
+    avx512_argselect(arr, reinterpret_cast<size_t*>(arg), kth, num, true);
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int32_t *arr, npy_intp num, npy_intp kth)
 {
@@ -90,11 +90,11 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint64_t *arr, npy_intp size)
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(float *arr, npy_intp size)
 {
-    avx512_qsort(arr, size);
+    avx512_qsort(arr, size, true);
 }
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(double *arr, npy_intp size)
 {
-    avx512_qsort(arr, size);
+    avx512_qsort(arr, size, true);
 }
 #elif USE_HIGHWAY
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int32_t *arr, intptr_t size)
