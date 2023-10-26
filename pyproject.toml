@@ -157,7 +157,7 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 musllinux-x86_64-image = "musllinux_1_1"
-environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", RUNNER_OS="Linux"}
+environment = {RUNNER_OS="Linux"}
 
 [tool.cibuildwheel.macos]
 # For universal2 wheels, we will need to fuse them manually
@@ -168,7 +168,7 @@ environment = {CFLAGS="-fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", RUNNE
 archs = "x86_64 arm64"
 test-skip = "*_universal2:arm64"
 # MACOS linker doesn't support stripping symbols.
-environment = {CFLAGS="-fno-strict-aliasing", RUNNER_OS="macOS"}
+environment = {RUNNER_OS="macOS"}
 
 [tool.cibuildwheel.windows]
 environment = {PKG_CONFIG_PATH="C:/opt/64/lib/pkgconfig"}
