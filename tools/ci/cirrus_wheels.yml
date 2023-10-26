@@ -17,7 +17,7 @@ linux_aarch64_task:
     image: family/docker-builder-arm64
     architecture: arm64
     platform: linux
-    cpu: 2
+    cpu: 1
     memory: 8G
   matrix:
     # build in a matrix because building and testing all four wheels in a
