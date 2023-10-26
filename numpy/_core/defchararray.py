@@ -608,7 +608,8 @@ def decode(a, encoding=None, errors=None):
 
     """
     decoded_arr = _to_bytes_or_str_array(
-                        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
+                             _vec_string(a, object_, 'decode',
+                             _clean_args(encoding, errors)))
     if not (numpy.issubdtype(decoded_arr.dtype, numpy.str_)):
         return decoded_arr.astype(numpy.str_)
     return decoded_arr
