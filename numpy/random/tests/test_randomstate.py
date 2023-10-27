@@ -423,14 +423,14 @@ class TestRandint:
             assert_equal(sample.dtype, np.dtype(dt))
 
         for dt in (bool, int):
-            lbnd = 0 if dt is bool else np.iinfo(dt).min
-            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+            # The legacy random generation forces the use of "long" on this
+            # branch even when the input is `int` and the default dtype
+            # for int changed (dtype=int is also the functions default)
+            op_dtype = "long" if dt is int else "bool"
+            lbnd = 0 if dt is bool else np.iinfo(op_dtype).min
+            ubnd = 2 if dt is bool else np.iinfo(op_dtype).max + 1
 
-            # gh-7284: Ensure that we get Python data types
-            # Note: using `np.dtype(int)` explicitly.  The `.type` works
-            # around a bug which crashes and could probably be fixed (but
-            # this is the legacy API).
-            sample = self.rfunc(lbnd, ubnd, dtype=np.dtype(int).type)
+            sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_(not hasattr(sample, 'dtype'))
             assert_equal(type(sample), dt)
 
