@@ -526,12 +526,12 @@ class TestScalarTypeNames:
     ]
 
     def test_names_are_unique(self):
-        # exactly np.int and np.uint will cause a duplicate in the above
-        assert len(set(self.numeric_types)) == len(self.numeric_types) - 2
+        # none of the above may be aliases for each other
+        assert len(set(self.numeric_types)) == len(self.numeric_types)
 
-        # names must be unique except those two
+        # names must be unique
         names = [t.__name__ for t in self.numeric_types]
-        assert len(set(names)) == len(names) - 2
+        assert len(set(names)) == len(names)
 
     @pytest.mark.parametrize('t', numeric_types)
     def test_names_reflect_attributes(self, t):
