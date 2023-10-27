@@ -38,7 +38,7 @@ npy_fasttake_impl(
         npy_intp n, npy_intp m, npy_intp max_item,
         npy_intp nelem, npy_intp chunk,
         NPY_CLIPMODE clipmode, npy_intp itemsize, int needs_refcounting,
-        PyArray_Descr *dtype, int axis)
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int axis)
 {
     NPY_BEGIN_THREADS_DEF;
 
@@ -52,7 +52,7 @@ npy_fasttake_impl(
     }
     else {
         if (PyArray_GetDTypeTransferFunction(
-                1, itemsize, itemsize, dtype, dtype, 0,
+                1, itemsize, itemsize, src_dtype, dst_dtype, 0,
                 &cast_info, &flags) < 0) {
             return -1;
         }
@@ -174,44 +174,51 @@ npy_fasttake(
         npy_intp n, npy_intp m, npy_intp max_item,
         npy_intp nelem, npy_intp chunk,
         NPY_CLIPMODE clipmode, npy_intp itemsize, int needs_refcounting,
-        PyArray_Descr *dtype, int axis)
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int axis)
 {
     if (!needs_refcounting) {
         if (chunk == 1) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
         if (chunk == 2) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
         if (chunk == 4) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
         if (chunk == 8) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
         if (chunk == 16) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
         if (chunk == 32) {
             return npy_fasttake_impl(
                     dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, dtype, axis);
+                    clipmode, itemsize, needs_refcounting, src_dtype,
+                    dst_dtype, axis);
         }
     }
 
     return npy_fasttake_impl(
             dest, src, indices, n, m, max_item, nelem, chunk,
-            clipmode, itemsize, needs_refcounting, dtype, axis);
+            clipmode, itemsize, needs_refcounting, src_dtype,
+            dst_dtype, axis);
 }
 
 
@@ -310,6 +317,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     chunk = chunk * itemsize;
     char *src = PyArray_DATA(self);
     char *dest = PyArray_DATA(obj);
+    PyArray_Descr *src_descr = PyArray_DESCR(self);
+    PyArray_Descr *dst_descr = PyArray_DESCR(obj);
     needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(self));
     npy_intp *indices_data = (npy_intp *)PyArray_DATA(indices);
 
@@ -322,7 +331,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     if (npy_fasttake(
             dest, src, indices_data, n, m, max_item, nelem, chunk,
-            clipmode, itemsize, needs_refcounting, dtype, axis) < 0) {
+            clipmode, itemsize, needs_refcounting, src_descr, dst_descr,
+            axis) < 0) {
         goto fail;
     }
 
