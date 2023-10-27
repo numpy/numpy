@@ -21,13 +21,11 @@ from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_BOUNDED_LT_0_1, CONS_GTE_1, CONS_GT_1, LEGACY_CONS_POISSON,
+            LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
         )
-
-cdef extern from "limits.h":
-    cdef long LONG_MAX  # NumPy has it, maybe `__init__.pyd` should expose it
 
 cdef extern from "numpy/random/distributions.h":
     struct s_binomial_t:
@@ -3479,7 +3477,7 @@ cdef class RandomState:
 
         if not is_scalar:
             check_array_constraint(p_arr, 'p', CONS_BOUNDED_0_1)
-            check_array_constraint(n_arr, 'n', CONS_NON_NEGATIVE)
+            check_array_constraint(n_arr, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
             if size is not None:
                 randoms = <np.ndarray>np.empty(size, np.long)
             else:
@@ -3494,10 +3492,6 @@ cdef class RandomState:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 2))[0]
-                    if _in > LONG_MAX:
-                        raise ValueError(
-                                "`n` is out of bounds for long, consider using "
-                                "the new generator API for 64bit integers.")
                     (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
                         legacy_random_binomial(&self._bitgen, _dp, _in,
                                                &self._binomial)
@@ -3509,11 +3503,7 @@ cdef class RandomState:
         _dp = PyFloat_AsDouble(p)
         _in = int(n)
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1)
-        check_constraint(<double>_in, 'n', CONS_NON_NEGATIVE)
-        if _in > LONG_MAX:
-            raise ValueError(
-                    "`n` is out of bounds for long, consider using "
-                    "the new generator API for 64bit integers.")
+        check_constraint(<double>_in, 'n', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG)
 
         if size is None:
             with self.lock:
@@ -3977,15 +3967,11 @@ cdef class RandomState:
             lngood = <int64_t>ngood
             lnbad = <int64_t>nbad
             lnsample = <int64_t>nsample
-            if lnsample > LONG_MAX:
-                raise ValueError(
-                        "`nsample` is out of bounds for long, consider using "
-                        "the new generator API for 64bit integers.")
 
             if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
             out = disc(&legacy_random_hypergeometric, &self._bitgen, size, self.lock, 0, 3,
-                       lngood, 'ngood', CONS_NON_NEGATIVE,
+                       lngood, 'ngood', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
                        lnbad, 'nbad', CONS_NON_NEGATIVE,
                        lnsample, 'nsample', CONS_GTE_1)
             # Match historical output type
@@ -3993,13 +3979,9 @@ cdef class RandomState:
 
         if np.any(np.less(np.add(ongood, onbad), onsample)):
             raise ValueError("ngood + nbad < nsample")
-        if np.any(onsample > LONG_MAX):
-            raise ValueError(
-                    "`nsample` is out of bounds for long, consider using "
-                    "the new generator API for 64bit integers.")
 
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
-                                     ongood, 'ngood', CONS_NON_NEGATIVE,
+                                     ongood, 'ngood', LEGACY_CONS_NON_NEGATVE_INBOUNDS_LONG,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
                                      onsample, 'nsample', CONS_GTE_1)
         # Match historical output type
