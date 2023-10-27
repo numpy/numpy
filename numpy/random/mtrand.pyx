@@ -626,7 +626,7 @@ cdef class RandomState:
         [0, ``np.iinfo("long").max``].
 
         .. warning::
-           This function users the C-long dtype, which is 32bit on windows
+           This function uses the C-long dtype, which is 32bit on windows
            and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
            Since NumPy 2.0, NumPy's default integer is 32bit on 32bit platforms
            and 64bit on 64bit platforms.
