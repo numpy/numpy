@@ -67,13 +67,24 @@ confusion with builtin python type names, such as `numpy.bool_`.
 
     * - `numpy.intp`
       - N/A
-      - ``intptr_t`` (defined in ``stdint.h``)
-      - Platform-defined integer type capable of holding a pointer.
+      - ``ssize_t``/``Py_ssize_t``
+      - Platform-defined integer of size ``size_t``; used e.g. for sizes.
 
     * - `numpy.uintp`
       - N/A
-      - ``uintptr_t`` (defined in ``stdint.h``)
-      - Platform-defined integer type capable of holding a pointer without sign.
+      - ``size_t``
+      - Platform-defined integer type capable of storing the maximum
+        allocation size.
+
+    * - N/A
+      - ``'p'``
+      - ``intptr_t``
+      - Guaranteed to hold pointers. Character code only (Python and C).
+
+    * - N/A
+      - ``'P'``
+      - ``uintptr_t``
+      - Guaranteed to hold pointers. Character code only (Python and C).
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`
