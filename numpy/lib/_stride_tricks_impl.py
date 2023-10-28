@@ -535,7 +535,9 @@ def broadcast_arrays(*args, subok=False):
     #                  order='C').itviews
 
     if hasattr(args, "__len__"):
-        args = [np.array(_m, copy=False, subok=subok, dtype=_m.dtype.type) if isinstance(_m, np.ndarray) else np.array(_m, copy=False, subok=subok) for _m in args]
+        args = [np.array(_m, copy=False, subok=subok, dtype=_m.dtype.type) 
+                if isinstance(_m, np.ndarray) 
+                else np.array(_m, copy=False, subok=subok) for _m in args]
     else:
         args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
