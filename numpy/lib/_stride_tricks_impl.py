@@ -534,7 +534,10 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = [np.array(_m, copy=False, subok=subok) for _m in args]
+    if hasattr(args, "__len__"):
+        args = [np.array(_m, copy=False, subok=subok, dtype=_m.dtype.type) if isinstance(_m, np.ndarray) else np.array(_m, copy=False, subok=subok) for _m in args]
+    else:
+        args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
 
