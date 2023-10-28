@@ -16,7 +16,7 @@ Troubleshooting
     viewing the most `up-to-date version <https://numpy.org/devdocs/user/troubleshooting-importerror.html>`_.
 
 
-ImportError
+Importerror
 ===========
 
 In certain cases a failed installation or setup issue can cause you to
@@ -52,7 +52,7 @@ If none of the following tips help you, please be sure to note the following:
 when investigating further and asking for support.
 
 
-Using Python from ``conda`` (Anaconda)
+Using Python from ``conda`` (anaconda)
 --------------------------------------
 
 Please make sure that you have activated your conda environment.
@@ -60,13 +60,13 @@ See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/u
 If you use an external editor/development environment it will have to be set
 up correctly.  See below for solutions for some common setups.
 
-Using PyCharm with Anaconda/conda Python
+Using pycharm with anaconda/conda Python
 ----------------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
 
-Using VSCode with Anaconda/conda Python (or environments)
+Using vscode with anaconda/conda Python (or environments)
 ---------------------------------------------------------
 
 A commonly reported issue is related to the environment activation within
@@ -74,7 +74,7 @@ VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/pytho
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
-Using Eclipse/PyDev with Anaconda/conda Python (or environments)
+Using eclipse/pydev with anaconda/conda Python (or environments)
 ----------------------------------------------------------------
 
 Please see the
@@ -83,7 +83,7 @@ on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.
 
 
-Raspberry Pi
+Raspberry pi
 ------------
 
 There are sometimes issues reported on Raspberry Pi setups when installing
@@ -105,7 +105,7 @@ to install the missing libraries expected by the self-compiled NumPy
     apt install python3-numpy
 
 
-Debug build on Windows
+Debug build on windows
 ----------------------
 
 Rather than building your project in ``DEBUG`` mode on windows, try
@@ -116,7 +116,7 @@ need to recompile the entire stack of python modules you work with
 including NumPy
 
 
-All Setups
+All setups
 ----------
 
 Occasionally there may be simple issues with old or bad installations
@@ -124,7 +124,7 @@ of NumPy. In this case you may just try to uninstall and reinstall NumPy.
 Make sure that NumPy is not found after uninstalling.
 
 
-Development Setup
+Development setup
 -----------------
 
 If you are using a development setup, make sure to run ``git clean -xdf``
@@ -133,7 +133,7 @@ any modifications you made, e.g. ``site.cfg``).
 In many cases files from old builds may lead to incorrect builds.
 
 
-Check Environment Variables
+Check environment variables
 ---------------------------
 
 In general how to set and check your environment variables depends on

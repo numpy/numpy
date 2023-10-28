@@ -1,4 +1,4 @@
-Improved CPU Optimization Tracking
+Improved cpu optimization tracking
 ----------------------------------
 
 Introduces a tracer mechanism that enables tracking of the enabled targets

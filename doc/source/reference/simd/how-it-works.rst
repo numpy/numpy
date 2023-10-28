@@ -1,5 +1,5 @@
 *********************************
-How does the CPU dispatcher work?
+How does the cpu dispatcher work?
 *********************************
 
 NumPy dispatcher is based on multi-source compiling, which means taking

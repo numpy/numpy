@@ -1,4 +1,4 @@
-extending.pyx
+Extending.pyx
 -------------
 
 .. literalinclude:: ../../../../../../numpy/random/_examples/cython/extending.pyx

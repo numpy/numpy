@@ -1,4 +1,4 @@
-Parallel Random Number Generation
+Parallel random number generation
 =================================
 
 There are four main strategies implemented that can be used to produce
@@ -9,7 +9,7 @@ or distributed).
 
 .. _seedsequence-spawn:
 
-`~SeedSequence` spawning
+`~seedsequence` spawning
 ------------------------
 
 NumPy allows you to spawn new (with very high probability) independent
@@ -126,7 +126,7 @@ territory ([2]_).
 
 .. _sequence-of-seeds:
 
-Sequence of Integer Seeds
+Sequence of integer seeds
 -------------------------
 
 As discussed in the previous section, `~SeedSequence` can not only take an
@@ -207,7 +207,7 @@ mechanisms are the same.
 
 .. _independent-streams:
 
-Independent Streams
+Independent streams
 -------------------
 
 `Philox` is a counter-based RNG based which generates values by
@@ -234,7 +234,7 @@ coordination between the parallel processes.
 
 .. _parallel-jumped:
 
-Jumping the BitGenerator state
+Jumping the bitgenerator state
 ------------------------------
 
 ``jumped`` advances the state of the BitGenerator *as-if* a large number of

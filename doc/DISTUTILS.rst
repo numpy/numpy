@@ -1,6 +1,6 @@
 .. -*- rest -*-
 
-NumPy Distutils - Users Guide
+NumPy distutils - users guide
 =============================
 
 .. contents::
@@ -94,7 +94,7 @@ Finally, ``Configuration`` has ``.todict()`` method that returns all
 the configuration data as a dictionary suitable for passing on to the
 ``setup(..)`` function.
 
-``Configuration`` instance attributes
+``configuration`` instance attributes
 -------------------------------------
 
 In addition to attributes that can be specified via keyword arguments
@@ -109,7 +109,7 @@ in writing setup scripts:
 
 + ``config.top_path`` - path to the location of main ``setup.py`` file.
 
-``Configuration`` instance methods
+``configuration`` instance methods
 ----------------------------------
 
 + ``config.todict()`` --- returns configuration dictionary suitable for
@@ -300,7 +300,7 @@ in writing setup scripts:
 
 .. _templating:
 
-Conversion of ``.src`` files using Templates
+Conversion of ``.src`` files using templates
 --------------------------------------------
 
 NumPy distutils supports automatic conversion of source files named

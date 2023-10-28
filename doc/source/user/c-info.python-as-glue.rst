@@ -111,7 +111,7 @@ distributed with NumPy and allows easy integration with Fortran and
 next section.
 
 
-f2py
+F2py
 ====
 
 F2py allows you to automatically construct an extension module that
@@ -195,7 +195,7 @@ implemented using Cython. These examples were compiled into extension
 modules using Cython 0.21.1.
 
 
-Complex addition in Cython
+Complex addition in cython
 --------------------------
 
 Here is part of a Cython module named ``add.pyx`` which implements the
@@ -248,7 +248,7 @@ view syntax, we could also have used Cython's special NumPy array syntax,
 but the view syntax is preferred.
 
 
-Image filter in Cython
+Image filter in cython
 ----------------------
 
 The two-dimensional example we created using Fortran is just as easy to write
@@ -330,7 +330,7 @@ C or Fortran code.
    single: cython
 
 
-ctypes
+Ctypes
 ======
 
 `Ctypes <https://docs.python.org/3/library/ctypes.html>`_
@@ -813,7 +813,7 @@ you as many options as possible for tackling the problem of easily integrating
 your code.
 
 
-SWIG
+Swig
 ----
 
 .. index::
@@ -884,7 +884,7 @@ need to be integrated cleanly into Python, consider learning about and using
 Boost.Python.
 
 
-PyFort
+Pyfort
 ------
 
 PyFort is a nice tool for wrapping Fortran and Fortran-like C-code

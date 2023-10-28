@@ -19,7 +19,7 @@ The functions mentioned here are
 * `numpy.mgrid`
 * `numpy.ogrid`
 
-1D domains (intervals)
+1d domains (intervals)
 ======================
 
 ``linspace`` vs. ``arange``
@@ -155,7 +155,7 @@ of ``start``) and ends with ``base ** stop``::
   >>> np.logspace(2, 3, num=5, base=2)
   array([4.        , 4.75682846, 5.65685425, 6.72717132, 8.        ])
 
-nD domains
+Nd domains
 ==========
 
 nD domains can be partitioned into *grids*. This can be done using one of the

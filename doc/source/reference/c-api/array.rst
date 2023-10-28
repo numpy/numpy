@@ -2279,7 +2279,7 @@ Other functions
     1 if the lists are identical; otherwise, return 0.
 
 
-Auxiliary Data With Object Semantics
+Auxiliary data with object semantics
 ------------------------------------
 
 .. versionadded:: 1.7.0
@@ -2371,7 +2371,7 @@ an element copier function as a primitive.
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
 
-Array Iterators
+Array iterators
 ---------------
 
 As of NumPy 1.6.0, these array iterators are superseded by
@@ -2713,7 +2713,7 @@ Array mapping is the machinery behind advanced indexing.
     input is modified during the iteration. ``iter->array`` may contain a
     copied array (WRITEBACKIFCOPY set).
 
-Array Scalars
+Array scalars
 -------------
 
 .. c:function:: PyObject* PyArray_Return(PyArrayObject* arr)
@@ -2932,7 +2932,7 @@ Data-type descriptors
     as is stored in the names field of the :c:type:`PyArray_Descr` object.
 
 
-Conversion Utilities
+Conversion utilities
 --------------------
 
 

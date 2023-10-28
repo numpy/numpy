@@ -46,7 +46,7 @@ defines several constants.
 
 .. _maskedarray.baseclass:
 
-The :class:`MaskedArray` class
+The :class:`maskedarray` class
 ==============================
 
 
@@ -111,7 +111,7 @@ As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array
 
 
 
-:class:`MaskedArray` methods
+:class:`maskedarray` methods
 ============================
 
 .. seealso:: :ref:`Array methods <array.ndarray.methods>`

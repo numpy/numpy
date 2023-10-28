@@ -51,7 +51,7 @@ or run the commands above.
 In detail
 =========
 
-user.name and user.email
+User.name and user.email
 ------------------------
 
 It is good practice to tell git_ who you are, for labeling any changes

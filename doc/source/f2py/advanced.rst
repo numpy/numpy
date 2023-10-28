@@ -1,8 +1,8 @@
 ========================
-Advanced F2PY use cases
+Advanced f2py use cases
 ========================
 
-Adding user-defined functions to F2PY generated modules
+Adding user-defined functions to f2py generated modules
 =========================================================
 
 User-defined Python C/API functions can be defined inside
@@ -43,7 +43,7 @@ Usage in Python:
   :language: python
 
 
-Dealing with KIND specifiers
+Dealing with kind specifiers
 ============================
 
 Currently, F2PY can handle only ``<type spec>(kind=<kindselector>)``

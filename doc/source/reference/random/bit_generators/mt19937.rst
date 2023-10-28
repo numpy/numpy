@@ -1,4 +1,4 @@
-Mersenne Twister (MT19937)
+Mersenne twister (mt19937)
 ==========================
 
 .. currentmodule:: numpy.random

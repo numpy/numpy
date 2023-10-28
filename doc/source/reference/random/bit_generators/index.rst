@@ -2,7 +2,7 @@
 
 .. _random-bit-generators:
 
-Bit Generators
+Bit generators
 ==============
 
 The random values produced by :class:`~Generator`
@@ -12,7 +12,7 @@ setting the state, jumping or advancing the state, and for accessing
 low-level wrappers for consumption by code that can efficiently
 access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
-Supported BitGenerators
+Supported bitgenerators
 -----------------------
 
 The included BitGenerators are:
@@ -54,7 +54,7 @@ The included BitGenerators are:
 
 .. _seeding_and_entropy:
 
-Seeding and Entropy
+Seeding and entropy
 ===================
 
 A BitGenerator provides a stream of random values. In order to generate

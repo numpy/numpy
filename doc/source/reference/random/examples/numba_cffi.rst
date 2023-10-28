@@ -1,4 +1,4 @@
-Extending via Numba and CFFI
+Extending via numba and cffi
 ----------------------------
 
 .. literalinclude:: ../../../../../numpy/random/_examples/numba/extending_distributions.py

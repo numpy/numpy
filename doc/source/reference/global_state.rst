@@ -14,7 +14,7 @@ of users.
 Performance-related options
 ===========================
 
-Number of threads used for Linear Algebra
+Number of threads used for linear algebra
 -----------------------------------------
 
 NumPy itself is normally intentionally limited to a single thread
@@ -28,7 +28,7 @@ One way to control the number of threads is the package
 `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
 
 
-Madvise Hugepage on Linux
+Madvise hugepage on linux
 -------------------------
 
 When working with very large arrays on modern Linux kernels,
@@ -49,7 +49,7 @@ is to use madvise on Kernels 4.6 and newer. These kernels presumably
 experience a large speedup with hugepage support.
 This flag is checked at import time.
 
-SIMD feature selection
+Simd feature selection
 ----------------------
 
 Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.

@@ -1,7 +1,7 @@
 .. _f2py-win-conda:
 
 =========================
-F2PY and Conda on Windows
+F2py and conda on windows
 =========================
 
 As a convenience measure, we will additionally assume the

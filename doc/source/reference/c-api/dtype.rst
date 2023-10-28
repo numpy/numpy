@@ -1,4 +1,4 @@
-Data Type API
+Data type API
 =============
 
 .. sectionauthor:: Travis E. Oliphant
@@ -22,7 +22,7 @@ select the precision desired.
     clarity.
 
 
-Enumerated Types
+Enumerated types
 ----------------
 
 .. c:enum:: NPY_TYPES
@@ -425,7 +425,7 @@ bit-widths are available is platform dependent. The bolded bit-widths
 are usually available on all platforms.
 
 
-Printf Formatting
+Printf formatting
 -----------------
 
 For help in printing, the following strings are defined as the correct

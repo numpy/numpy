@@ -1,7 +1,7 @@
 .. _f2py-win-msys2:
 
 ===========================
-F2PY and Windows with MSYS2
+F2py and windows with msys2
 ===========================
 
 Follow the standard `installation instructions`_. Then, to grab the requisite Fortran compiler with ``MVSC``:

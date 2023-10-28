@@ -1,5 +1,5 @@
 #################
-Using NumPy C-API
+Using NumPy c-API
 #################
 
 .. toctree::

@@ -16,7 +16,7 @@ Iterating over elements in the array
 
 .. _`sec:array_iterator`:
 
-Basic Iteration
+Basic iteration
 ---------------
 
 One common algorithmic requirement is to be able to walk over all
@@ -361,7 +361,7 @@ an error condition set if it was not successful.
    pair: dtype; adding new
 
 
-Subtyping the ndarray in C
+Subtyping the ndarray in c
 ==========================
 
 One of the lesser-used features that has been lurking in Python since

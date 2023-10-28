@@ -53,7 +53,7 @@ This issue was:
         1.18.4 3.7.5 (default, Nov  7 2019, 10:50:52) [GCC 8.3.0]
 
 *******************************
-1. Set up a virtual environment
+1. set up a virtual environment
 *******************************
 
 Create a new directory, enter into it, and set up a virtual environment using
@@ -69,7 +69,7 @@ This ensures the system/global/default Python/NumPy installation will not be
 altered.
 
 **********************************************************
-2. Install the NumPy version in which the bug was reported
+2. install the NumPy version in which the bug was reported
 **********************************************************
 
 The report references NumPy version 1.18.4, so that is the version you need to
@@ -86,7 +86,7 @@ report. To learn how to do that, visit
 
 
 ********************
-1. Reproduce the bug
+1. reproduce the bug
 ********************
 
 The issue reported in `#16354 <https://github.com/numpy/numpy/issues/16354>`_ is
@@ -115,7 +115,7 @@ arguments to `numpy.polymul`, an incorrect ``dtype`` is returned.
 
 
 *************************************************
-4. Check for fixes in the latest version of NumPy
+4. check for fixes in the latest version of NumPy
 *************************************************
 
 If the issue report for your bug has not yet been resolved, further action or
@@ -156,7 +156,7 @@ Note that the correct ``dtype`` is now returned even when a zero array is one of
 the arguments to `numpy.polymul`.
 
 *********************************************************
-5. Support NumPy development by verifying and fixing bugs
+5. support NumPy development by verifying and fixing bugs
 *********************************************************
 
 Go to the `NumPy GitHub issues page <https://github.com/numpy/numpy/issues>`_

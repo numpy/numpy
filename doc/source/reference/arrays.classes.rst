@@ -563,7 +563,7 @@ encouraged to use the ndarray class directly if you can.
    single: container class
 
 
-Array Iterators
+Array iterators
 ===============
 
 .. currentmodule:: numpy

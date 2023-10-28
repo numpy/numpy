@@ -2,7 +2,7 @@
 .. _git-development:
 
 =====================
- Git for development
+ git for development
 =====================
 
 These pages describe a general git_ and github_ workflow.

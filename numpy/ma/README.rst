@@ -1,5 +1,5 @@
 ==================================
-A Guide to Masked Arrays in NumPy
+A guide to masked arrays in NumPy
 ==================================
 
 .. Contents::

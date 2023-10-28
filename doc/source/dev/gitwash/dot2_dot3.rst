@@ -1,7 +1,7 @@
 .. _dot2-dot3:
 
 ========================================
- Two and three dots in difference specs
+ two and three dots in difference specs
 ========================================
 
 Thanks to Yarik Halchenko for this explanation.

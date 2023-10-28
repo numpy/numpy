@@ -1,4 +1,4 @@
-extending_distributions.pyx
+Extending_distributions.pyx
 ---------------------------
 
 .. literalinclude:: ../../../../../../numpy/random/_examples/cython/extending_distributions.pyx

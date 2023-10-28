@@ -94,7 +94,7 @@ Inspecting the array
 
 _____
 
-Manipulating a MaskedArray
+Manipulating a maskedarray
 --------------------------
 
 Changing the shape

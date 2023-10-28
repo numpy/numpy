@@ -29,7 +29,7 @@ Then set your name and email: ::
 .. _set-up-and-configure-a-github-account:
 
 ******************************************************************************
-Create a GitHub account
+Create a github account
 ******************************************************************************
 
 If you don't have a GitHub account, visit https://github.com/join to create
@@ -156,7 +156,7 @@ Look it over
 
 
 ******************************************************************************
-Optional: set up SSH keys to avoid passwords
+Optional: set up ssh keys to avoid passwords
 ******************************************************************************
 
 Cloning your NumPy fork repo required no password, because it read the remote

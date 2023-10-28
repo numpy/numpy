@@ -1,4 +1,4 @@
-Extending via CFFI
+Extending via cffi
 ------------------
 
 .. literalinclude:: ../../../../../numpy/random/_examples/cffi/extending.py

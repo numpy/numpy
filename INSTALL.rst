@@ -47,7 +47,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
    https://numpy.org/devdocs/user/building.html#building-from-source
 
 
-Basic Installation
+Basic installation
 ==================
 
 To install NumPy, run::
@@ -117,13 +117,13 @@ The Intel compilers work with Intel MKL, see the application note linked above.
 For an overview of the state of BLAS/LAPACK libraries on Windows, see
 `here <https://mingwpy.github.io/blas_lapack.html>`_.
 
-macOS
+Macos
 -----
 
 On macOS >= 13.3, you can use Apple's Accelerate library. On older macOS versions,
 Accelerate has bugs and we recommend using OpenBLAS or (on x86-64) Intel MKL.
 
-Ubuntu/Debian
+Ubuntu/debian
 -------------
 
 For best performance, a development package providing BLAS and CBLAS should be

@@ -1,4 +1,4 @@
-SFC64 Small Fast Chaotic PRNG
+Sfc64 small fast chaotic prng
 =============================
 
 .. currentmodule:: numpy.random

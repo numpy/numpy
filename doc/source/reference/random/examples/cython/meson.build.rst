@@ -1,4 +1,4 @@
-meson.build
+Meson.build
 -----------
 
 .. literalinclude:: ../../../../../../numpy/random/_examples/cython/meson.build

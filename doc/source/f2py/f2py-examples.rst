@@ -1,12 +1,12 @@
 .. _f2py-examples:
 
-F2PY examples
+F2py examples
 =============
 
 Below are some examples of F2PY usage. This list is not comprehensive, but can
 be used as a starting point when wrapping your own code.
 
-F2PY walkthrough: a basic extension module
+F2py walkthrough: a basic extension module
 ------------------------------------------
 
 Creating source for a basic extension module
@@ -55,7 +55,7 @@ how the module method may be called:
 
     Wrapper for ``zadd``.
 
-    Parameters
+    parameters
     ----------
     a : input rank-1 array('D') with bounds (*)
     b : input rank-1 array('D') with bounds (*)
@@ -127,12 +127,12 @@ The new interface's docstring is:
 
     Wrapper for ``zadd``.
 
-    Parameters
+    parameters
     ----------
     a : input rank-1 array('D') with bounds (n)
     b : input rank-1 array('D') with bounds (n)
 
-    Returns
+    returns
     -------
     c : rank-1 array('D') with bounds (n)
 

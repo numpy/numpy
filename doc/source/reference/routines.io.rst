@@ -5,7 +5,7 @@ Input and output
 
 .. currentmodule:: numpy
 
-NumPy binary files (NPY, NPZ)
+NumPy binary files (npy, npz)
 -----------------------------
 .. autosummary::
    :toctree: generated/

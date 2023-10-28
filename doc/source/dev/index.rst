@@ -185,7 +185,7 @@ Guidelines
 
 .. _stylistic-guidelines:
 
-Stylistic Guidelines
+Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/

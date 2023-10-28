@@ -12,7 +12,7 @@ compared to other Python objects.  On this page we explain the machinery
 that allows you to subclass ndarray, and the implications for
 implementing a subclass.
 
-ndarrays and object creation
+Ndarrays and object creation
 ----------------------------
 
 Subclassing ndarray is complicated by the fact that new instances of
@@ -741,7 +741,7 @@ the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
 ``numpy._core``.
 
-Subclassing and Downstream Compatibility
+Subclassing and downstream compatibility
 ========================================
 
 When sub-classing ``ndarray`` or creating duck-types that mimic the ``ndarray``
