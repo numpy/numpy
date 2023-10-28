@@ -542,7 +542,7 @@ class Array:
     def __getitem__(
         self: Array,
         key: Union[
-            int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], Array
+            int, slice, ellipsis, Tuple[Union[int, slice, ellipsis, None], ...], Array
         ],
         /,
     ) -> Array:
