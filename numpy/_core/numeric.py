@@ -2174,7 +2174,7 @@ _identity_with_like = array_function_dispatch()(identity)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b)
+    return (a, b, rtol, atol)
 
 
 @array_function_dispatch(_allclose_dispatcher)
@@ -2195,9 +2195,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ----------
     a, b : array_like
         Input arrays to compare.
-    rtol : float
+    rtol : array_like
         The relative tolerance parameter (see Notes).
-    atol : float
+    atol : array_like
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
@@ -2253,7 +2253,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
 
 def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b)
+    return (a, b, rtol, atol)
 
 
 @array_function_dispatch(_isclose_dispatcher)
@@ -2274,9 +2274,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ----------
     a, b : array_like
         Input arrays to compare.
-    rtol : float
+    rtol : array_like
         The relative tolerance parameter (see Notes).
-    atol : float
+    atol : array_like
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
@@ -2341,8 +2341,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         with errstate(invalid='ignore'), _no_nep50_warning():
             return less_equal(abs(x-y), atol + rtol * abs(y))
 
-    x = asanyarray(a)
-    y = asanyarray(b)
+    x, y, atol, rtol = np.broadcast_arrays(a, b, atol, rtol, subok=True)
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2362,13 +2361,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     else:
         finite = xfin & yfin
         cond = zeros_like(finite, subok=True)
-        # Because we're using boolean indexing, x & y must be the same shape.
-        # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
-        # lib.stride_tricks, though, so we can't import it here.
-        x = x * ones_like(cond)
-        y = y * ones_like(cond)
         # Avoid subtraction with infinite/nan values...
-        cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
+        cond[finite] = within_tol(x[finite], y[finite],
+                                  atol[finite], rtol[finite])
         # Check for equality of infinite values...
         cond[~finite] = (x[~finite] == y[~finite])
         if equal_nan:

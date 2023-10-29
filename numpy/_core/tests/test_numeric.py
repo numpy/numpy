@@ -2926,20 +2926,21 @@ class TestIsclose:
         for (x, y), result in zip(tests, results):
             assert_array_equal(np.isclose(x, y), result)
 
-        x = np.array([1, 2, 5, np.nan])
-        y = np.array([1, 2, np.nan, 5])
-        expected = np.array([True, True, False, False])
-        assert_array_equal(np.isclose(x, y), expected)
-
-        atol = np.array([1e-8, 1e-8, 1e-8, 1e-8])
-        rtol = np.array([1e-5, 1e-5, 1e-5, 1e-5])
+        x = np.array([2.1, 2.1, 2.1, 2.1, 5, np.nan])
+        y = np.array([2, 2, 2, 2, np.nan, 5])
+        atol = [0.11, 0.09, 1e-8, 1e-8, 1, 1]
+        rtol = [1e-8, 1e-8, 0.06, 0.04, 1, 1]
+        expected = np.array([True, False, True, False, False, False])
         assert_array_equal(np.isclose(x, y, rtol=rtol, atol=atol), expected)
 
+        message = "operands could not be broadcast together..."
         atol = np.array([1e-8, 1e-8])
-        assert_raises(ValueError, np.isclose, x, y, atol=atol)
+        with assert_raises(ValueError, msg=message):
+            np.isclose(x, y, atol=atol)
 
         rtol = np.array([1e-5, 1e-5])
-        assert_raises(ValueError, np.isclose, x, y, rtol=rtol)
+        with assert_raises(ValueError, msg=message):
+            np.isclose(x, y, rtol=rtol)
 
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
@@ -2960,13 +2961,17 @@ class TestIsclose:
         self._setup()
         for (x, y) in self.all_close_tests:
             self.tst_all_isclose(x, y)
-        x = np.array([1, 2, np.nan])
-        y = np.array([1, 2, np.nan])
-        expected_nan_is_equal = True
-        assert_equal(np.allclose(x, y, equal_nan=True), expected_nan_is_equal)
 
-        atol = np.array([1e-8, 1e-8, 1e-8])
-        assert_equal(np.allclose(x, y, atol=atol, equal_nan=True), expected_nan_is_equal)
+        x = np.array([2.3, 3.6, 4.4, np.nan])
+        y = np.array([2, 3, 4, np.nan])
+        atol = [0.31, 0, 0, 1]
+        rtol = [0, 0.21, 0.11, 1]
+        assert np.allclose(x, y, atol=atol, rtol=rtol, equal_nan=True)
+        assert not np.allclose(x, y, atol=0.1, rtol=0.1, equal_nan=True)
+
+        # Show that gh-14330 is resolved
+        assert np.allclose([1, 2, float('nan')], [1, 2, float('nan')],
+                           atol=[1, 1, 1], equal_nan=True)
 
     def test_ip_none_isclose(self):
         self._setup()
