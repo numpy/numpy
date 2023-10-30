@@ -2385,14 +2385,17 @@ def _array_equal_dispatcher(a1, a2, equal_nan=None):
     return (a1, a2)
 
 
-_no_nan_types = None
+_no_nan_types = {
+    np.dtypes.BoolDType,
+    np.dtypes.Int8DType,
+    np.dtypes.Int16DType,
+    np.dtypes.Int32DType,
+    np.dtypes.Int64DType,
+}
 
 
 def _dtype_cannot_hold_nan(dtype):
-    global _no_nan_types
-    if _no_nan_types is None:
-        _no_nan_types = {np.bool_, np.int8, np.int16, np.int32, np.int64}
-    return dtype.type in _no_nan_types
+    return type(dtype) in _no_nan_types
 
 
 @array_function_dispatch(_array_equal_dispatcher)
@@ -2457,8 +2460,8 @@ def array_equal(a1, a2, equal_nan=False):
         return False
     if not equal_nan:
         return bool((a1 == a2).all())
-    cannot_have_nan = _dtype_cannot_hold_nan(a1.dtype)\
-            and _dtype_cannot_hold_nan(a2.dtype)
+    cannot_have_nan = (_dtype_cannot_hold_nan(a1.dtype)
+                       and _dtype_cannot_hold_nan(a2.dtype))
     if cannot_have_nan:
         if a1 is a2:
             return True
