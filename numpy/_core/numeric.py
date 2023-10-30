@@ -8,6 +8,7 @@ import builtins
 
 import numpy as np
 from . import multiarray
+from . import numerictypes as nt
 from .multiarray import (
     ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
@@ -2386,11 +2387,11 @@ def _array_equal_dispatcher(a1, a2, equal_nan=None):
 
 
 _no_nan_types = {
-    np.dtypes.BoolDType,
-    np.dtypes.Int8DType,
-    np.dtypes.Int16DType,
-    np.dtypes.Int32DType,
-    np.dtypes.Int64DType,
+    nt.bool,
+    nt.int8,
+    nt.int16,
+    nt.int32,
+    nt.int64,
 }
 
 
