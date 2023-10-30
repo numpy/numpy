@@ -35,8 +35,11 @@ of the flexible itemsize array types (:class:`str_`,
 
 .. figure:: figures/dtype-hierarchy.png
 
-   **Figure:** Hierarchy of type objects representing the array data types.
-   All the number types can be obtained using bit-width names as well.
+   **Figure:** Hierarchy of type objects representing the array data
+   types. Not shown are the two integer types :class:`intp` and
+   :class:`uintp` which just point to the integer type that holds a
+   pointer for the platform. All the number types can be obtained
+   using bit-width names as well.
 
 
 .. TODO - use something like this instead of the diagram above, as it generates
