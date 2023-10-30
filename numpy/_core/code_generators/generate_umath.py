@@ -94,6 +94,11 @@ class TypeDescription:
 
 
 def _check_order(types1, types2):
+    """
+    Helper to check that the loop types are ordered. The legacy type resolver
+    (and potentially downstream) may pick use the first loop to which operands
+    can be cast safely.
+    """
     # Insert kK (int64) after all other ints (assumes long long isn't larger)
     dtype_order = bints + 'kK' + times + flts + cmplxP + "O"
     for t1, t2 in zip(types1, types2):
