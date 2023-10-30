@@ -304,15 +304,6 @@ def find_functions(filename, tag='API'):
     fo.close()
     return functions
 
-def should_rebuild(targets, source_files):
-    from distutils.dep_util import newer_group
-    for t in targets:
-        if not os.path.exists(t):
-            return True
-    sources = API_FILES + list(source_files) + [__file__]
-    if newer_group(sources, targets[0], missing='newer'):
-        return True
-    return False
 
 def write_file(filename, data):
     """

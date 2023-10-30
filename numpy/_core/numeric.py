@@ -1597,6 +1597,13 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
            "(dimension must be 2 or 3)")
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
         raise ValueError(msg)
+    if a.shape[-1] == 2 or b.shape[-1] == 2:
+        # Deprecated in NumPy 2.0, 2023-09-26
+        warnings.warn(
+            "Arrays of 2-dimensional vectors are deprecated. Use arrays of "
+            "3-dimensional vectors instead. (deprecated in NumPy 2.0)",
+            DeprecationWarning, stacklevel=2
+        )
 
     # Create the output array
     shape = broadcast(a[..., 0], b[..., 0]).shape

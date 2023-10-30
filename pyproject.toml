@@ -1,18 +1,8 @@
 [build-system]
 build-backend = "mesonpy"
-backend-path = ['./vendored-meson/meson-python']
 requires = [
+    "meson-python>=0.15.0",
     "Cython>=3.0",
-    # All dependencies of the vendored meson-python (except for meson, because
-    # we've got that vendored too - that's the point of this exercise).
-    'pyproject-metadata >= 0.7.1',
-    'tomli >= 1.0.0; python_version < "3.11"',
-    'setuptools >= 60.0; python_version >= "3.12"',
-    'colorama; os_name == "nt"',
-    # Note that `ninja` and (on Linux) `patchelf` are added dynamically by
-    # meson-python if those tools are not already present on the system. No
-    # need to worry about those unless one does a non-isolated build - in that
-    # case they must already be installed on the system.
 ]
 
 [project]
@@ -150,7 +140,7 @@ tracker = "https://github.com/numpy/numpy/issues"
 # Note: the below skip command doesn't do much currently, the platforms to
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
-skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux_aarch64"
+skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dblas=openblas setup-args=-Dlapack=openblas setup-args=-Dblas-symbol-suffix=64_"
@@ -189,6 +179,9 @@ select = "*-win32"
 environment = {PKG_CONFIG_PATH="/opt/32/lib/pkgconfig"}
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
 repair-wheel-command = ""
+
+[tool.meson-python]
+meson = 'vendored-meson/meson/meson.py'
 
 [tool.spin]
 package = 'numpy'
